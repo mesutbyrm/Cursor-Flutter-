@@ -20,9 +20,12 @@ APK: ${APK_URL}
 
 Sıra: P0-j ✅ · cihaz testi **SONRA** · agent P1/P2 prep **ŞİMDİ**
 
-★ ÖNERİLEN:
-  bash scripts/kalan-isler-agent.sh            # agent paralel (cihaz sonra)
-  bash scripts/cihaz-sonra.sh                  # cihaz testi (sonuç sonra)
+★ KULLANICI:
+  bash scripts/kullanici-sonraki.sh            # kalan adımlar (agent prep ✅)
+  bash scripts/agent-prep-tamam.sh             # prep doğrula
+
+★ AGENT (isteğe bağlı API yenile):
+  bash scripts/devam-et.sh
 
 Komutlar:
   0) bash scripts/kalan-isler-agent.sh         # agent · şimdi (= devam-et)
@@ -158,6 +161,9 @@ case "${1:-}" in
     ;;
   upload-day|yukleme|play-upload)
     exec bash "$ROOT/scripts/print-play-upload-day-checklist.sh"
+    ;;
+  kullanici|sonraki|user-next)
+    exec bash "$ROOT/scripts/kullanici-sonraki.sh"
     ;;
   prep-tamam|agent-prep-tamam|prep-complete)
     exec bash "$ROOT/scripts/agent-prep-tamam.sh"

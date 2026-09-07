@@ -3,7 +3,7 @@
 
 > **Sürüm:** `1.0.371+409` · Release gate **FINAL PASS** · **RELEASE READY: NO**
 
-Mobil kod, CI ve API otomasyon **tamam**. **Cihaz testi sonucu sonra** — agent **P1/P2 hazırlığına** devam eder (`bash scripts/devam-et.sh`). Hotfix yalnızca **Psychic P0 FAIL** ile.
+Mobil kod, CI, API otomasyon ve **P2 prep betik paketi tamam**. **Cihaz testi sonucu sonra** — hotfix yalnızca **Psychic P0 FAIL** ile.
 
 ---
 
@@ -69,4 +69,4 @@ P0+P1 PASS sonrası: `bash scripts/on-release-ready-candidate.sh`
 
 ---
 
-_Agent oturumu: cihaz sonucu **sonra** — paralel P1/P2 hazırlık **devam** (`bash scripts/devam-et.sh`)._
+_Agent P2 prep **tamam** (`bash scripts/agent-prep-tamam.sh`). Kalan: cihaz P0/P1 · keystore · Play Console._

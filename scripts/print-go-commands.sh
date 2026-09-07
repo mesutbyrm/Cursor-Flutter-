@@ -6,10 +6,9 @@ cat <<'EOF'
 === Canlifal — GO / prep komutları ===
 
 Paralel mod:
-  bash scripts/devam-et.sh                 # agent devam (tam API + P1/P2 prep)
-  bash scripts/print-paralel-mod.sh        # tek ekran özet
-  bash scripts/print-release-blockers.sh   # RELEASE READY engelleri
-  bash scripts/kalan-isler.sh              # durum tablosu
+  bash scripts/kullanici-sonraki.sh          # kullanıcı kalan adımlar
+  bash scripts/agent-prep-tamam.sh           # agent prep doğrula
+  bash scripts/devam-et.sh                 # API yenile (isteğe bağlı)
 
 Cihaz (sonra):
   bash scripts/basla.sh                    # canlı durum + devir teslim

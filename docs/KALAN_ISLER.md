@@ -3,7 +3,7 @@
 
 > **Sürüm:** `1.0.371+409` · **RELEASE READY: NO** · Canlı durum: `bash scripts/kalan-isler.sh`
 
-Agent tarafı **tamam** (kod, CI, API, falcı onayı). **Cihaz testi sonuçları sonra** — agent **P1/P2 hazırlığına** devam eder.
+Agent tarafı **tamam** (kod, CI, API, falcı, P2 prep betikleri). **Cihaz + keystore + Play Console** sizde.
 
 ---
 
@@ -12,7 +12,7 @@ Agent tarafı **tamam** (kod, CI, API, falcı onayı). **Cihaz testi sonuçları
 | Hat | Durum | Komut |
 |-----|--------|--------|
 | **Cihaz** (P0→P1) | ⏸ sonuç sonra | `bash scripts/cihaz-sonra.sh` |
-| **Agent** (P1/P2 prep) | ▶ devam | `bash scripts/devam-et.sh` |
+| **Agent** (P1/P2 prep) | ✅ tamam | `bash scripts/agent-prep-tamam.sh` |
 
 ---
 
@@ -23,7 +23,7 @@ Agent tarafı **tamam** (kod, CI, API, falcı onayı). **Cihaz testi sonuçları
 | P0-j | Danışan jeton | ✅ ~98k | — |
 | **P0** | Psychic TRTC, 2 telefon | ⏸ **sonra** | `bash scripts/cihaz-sonra.sh` |
 | P1 | Platform, 2 telefon | ⏸ sonuç sonra | `bash scripts/p1-prep-go.sh` |
-| P2 | Play Store / AAB | ▶ agent prep | `bash scripts/p2-prep-go.sh` |
+| P2 | Play Store / AAB | ⏸ yükleme P0+P1 sonrası | `bash scripts/print-play-upload-day-checklist.sh` |
 
 ---
 
@@ -41,7 +41,8 @@ APK: https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/c
 ## Komutlar (sırayla)
 
 ```bash
-bash scripts/devam-et.sh            # agent devam (= kalan-isler-agent)
+bash scripts/kullanici-sonraki.sh         # ★ kullanıcı kalan adımlar
+bash scripts/agent-prep-tamam.sh          # agent prep doğrula
 bash scripts/print-release-blockers.sh      # RELEASE READY engelleri
 bash scripts/print-paralel-mod.sh   # paralel mod tek ekran
 bash scripts/cihaz-sonra.sh         # cihaz (sonra)

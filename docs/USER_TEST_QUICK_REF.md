@@ -1,7 +1,7 @@
 # Cihaz testi — hızlı referans (1 sayfa)
 
 
-> **Sürüm:** `1.0.371+409` · **RELEASE READY: NO** · Cihaz sonucu **sonra** · Agent prep **devam**
+> **Sürüm:** `1.0.371+409` · **RELEASE READY: NO** · Agent prep **✅ TAMAM** · Cihaz + keystore sizde
 
 ## APK
 
@@ -19,8 +19,8 @@ Host = onaylı falcı (`Cursor Host Test`). Doğrula: `bash scripts/probe-psychi
 ## Komut sırası
 
 ```bash
-bash scripts/devam-et.sh                    # ★ agent devam (tam)
-bash scripts/print-paralel-mod.sh           # paralel mod özet
+bash scripts/kullanici-sonraki.sh           # ★ kullanıcı kalan adımlar
+bash scripts/agent-prep-tamam.sh            # agent prep OK?
 bash scripts/print-release-blockers.sh      # RELEASE READY engelleri
 bash scripts/cihaz-sonra.sh                 # cihaz (sonra)
 bash scripts/basla.sh                       # canlı durum + devir teslim

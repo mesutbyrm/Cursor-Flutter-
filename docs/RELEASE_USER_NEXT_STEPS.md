@@ -1,20 +1,22 @@
 # Release — kullanıcı sonraki adımlar
 
 
-> **Güncel (2026-09-07):** **`1.0.371+409`** · **RELEASE READY: NO** · Cihaz sonucu **sonra** · Agent P2 prep **devam**
+> **Güncel (2026-09-07):** **`1.0.371+409`** · **RELEASE READY: NO** · Agent P2 prep **✅ TAMAM** · Cihaz + keystore + Play **sizde**
 
-**İki hat:** Cihaz testi sonraya bırakıldı; agent Play Store / P1 checklist hazırlığına devam eder.
+**İki hat:** Agent prep bitti (`agent-prep-tamam.sh`). Cihaz testi + Play yükleme sizde.
 
 ---
 
 ## Tek giriş
 
 ```bash
-bash scripts/kalan-isler-agent.sh    # agent · şimdi (= devam-et)
-bash scripts/devam-et.sh             # agent devam
-bash scripts/print-paralel-mod.sh    # tek ekran özet
-bash scripts/cihaz-sonra.sh            # cihaz · sonra
-bash scripts/kalan-isler.sh            # durum tablosu
+bash scripts/kullanici-sonraki.sh          # ★ kullanıcı kalan adımlar
+bash scripts/agent-prep-tamam.sh           # agent prep doğrula
+bash scripts/print-release-blockers.sh     # engeller
+bash scripts/devam-et.sh                   # API yenile (isteğe bağlı)
+bash scripts/print-paralel-mod.sh          # tek ekran özet
+bash scripts/cihaz-sonra.sh                # cihaz · sonra
+bash scripts/kalan-isler.sh                # durum tablosu
 ```
 
 ---
@@ -23,14 +25,14 @@ bash scripts/kalan-isler.sh            # durum tablosu
 
 | # | İş | Durum | Komut |
 |---|-----|--------|-------|
-| A | **Agent P2 prep** | ▶ devam | `p2-prep-go.sh` · `p2-prep-all.sh` |
+| A | **Agent P2 prep** | ✅ tamam | `agent-prep-tamam.sh` · `p2-prep-all.sh` |
 | A2 | Keystore / AAB CI | ⏳ secret sizde | `play-keystore-secrets-cheatsheet.sh` |
 | 0 | Jeton (danışan) | ✅ ~98k | `psychic-p0-prereqs.sh` |
 | 0b | Falcı hesabı | ✅ host onaylı | `probe-psychic-teller.sh` |
 | 1 | **Psychic P0** | ⏸ sonuç sonra | `cihaz-sonra.sh` → `user-test-start.sh p0` |
 | 2 | **P1 platform** | ⏸ sonuç sonra | `p1-prep-now.sh` (checklist şimdi) |
 | 3 | M5 cihaz (müzik) | ⏸ | [`M5_DEVICE_TEST_CHECKLIST.md`](M5_DEVICE_TEST_CHECKLIST.md) |
-| 4 | Play Store P2 | ▶ agent prep | [`PLAY_STORE_AGENT_CHECKLIST.md`](PLAY_STORE_AGENT_CHECKLIST.md) |
+| 4 | Play Store P2 | ⏸ yükleme P0+P1 sonrası | `print-play-upload-day-checklist.sh` |
 
 ---
 
@@ -90,6 +92,6 @@ Canlı durum (jeton + falcı): `bash scripts/p0-go.sh`
 
 ## Agent ne zaman kod değiştirir?
 
-Yalnızca **`Psychic P0 FAIL`** (hotfix) veya yeni özellik isteği. Paralel P1/P2 hazırlık **devam** (`bash scripts/devam-et.sh`).
+Yalnızca **`Psychic P0 FAIL`** (hotfix) veya yeni özellik isteği. Agent prep **tamam** — `bash scripts/agent-prep-tamam.sh`.
 
 Detay: [`REMAINING_WORK.md`](REMAINING_WORK.md) · [`AGENTS.md`](../AGENTS.md)

@@ -45,9 +45,8 @@ RELEASE READY: NO
   [x] Kod + CI release gate FINAL PASS
   [x] API M5/M7 + Gate 3 TRTC
   [x] Host falcı listede · jeton ~98k
-  [x] P1/P2 prep betikleri + Play Console print metinleri
+  [x] P2 prep betik paketi — bash scripts/agent-prep-tamam.sh
 
-Sonraki agent: bash scripts/devam-et.sh
-Özet:         bash scripts/print-paralel-mod.sh
-Detay:        bash scripts/kalan-isler.sh
+Sonraki (kullanıcı): bash scripts/kullanici-sonraki.sh
+Agent API yenile:   bash scripts/devam-et.sh
 EOF

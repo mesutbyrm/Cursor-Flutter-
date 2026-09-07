@@ -34,9 +34,8 @@ Cihaz (sonra): Psychic P0 → P1 · T+5s donma yok
 
 Rehberler:
   docs/KALAN_ISLER.md
-  docs/USER_TEST_QUICK_REF.md
   docs/RELEASE_USER_NEXT_STEPS.md
-  docs/PLAY_STORE_AGENT_CHECKLIST.md
+  bash scripts/kullanici-sonraki.sh
 
 EOF
 

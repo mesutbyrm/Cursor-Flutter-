@@ -15,7 +15,7 @@ cat <<EOF
 ║  Canlifal — paralel mod (${VERSION})                              ║
 ╚══════════════════════════════════════════════════════════════════╝
 
-RELEASE READY: NO · Cihaz P0/P1 sonucu SONRA · Agent prep DEVAM
+RELEASE READY: NO · Agent prep ✅ TAMAM · Cihaz + keystore + Play sizde
 
 APK: ${APK_URL}
 

@@ -35,7 +35,13 @@ else
   echo "⚠️  Bazı adımlarda uyarı — yukarıya bakın"
 fi
 echo ""
-echo "Cihaz (sonra):  bash scripts/cihaz-sonra.sh"
+if bash "$ROOT/scripts/agent-prep-tamam.sh" >/dev/null 2>&1; then
+  echo "✅ Agent P2 prep paketi TAMAM — sırada kullanıcı adımları"
+else
+  echo "⏳ Agent prep paketi — bash scripts/agent-prep-tamam.sh"
+fi
+echo ""
+echo "Kullanıcı:      bash scripts/kullanici-sonraki.sh"
 echo "P1 prep GO:     bash scripts/p1-prep-go.sh"
 echo "P2 prep GO:     bash scripts/p2-prep-go.sh"
 echo "Agent prep:     bash scripts/print-agent-prep-status.sh"
