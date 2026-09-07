@@ -87,6 +87,7 @@ echo ""
 # --- Agent ---
 echo "── Agent ──"
 echo "Kod/CI/docs: ✅ TAMAM · RELEASE READY: NO"
+echo "Hızlı özet: bash scripts/print-user-test-quick-ref.sh"
 echo "APK: ${APK_URL}"
 echo ""
 echo "Sonraki adım:"

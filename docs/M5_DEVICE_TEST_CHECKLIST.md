@@ -6,8 +6,8 @@
 
 **Son güncelleme:** 2026-09-07  
 **APK:** `1.0.371+409` (`apk-latest`) — https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk  
-**Öncelik:** Psychic P0 önce — `bash scripts/psychic-p0-checklist.sh` · [`LIVE_PSYCHICS_REMAINING.md`](LIVE_PSYCHICS_REMAINING.md)  
-**Hazırlık:** `bash scripts/faz0-handoff.sh` veya `bash scripts/m5-device-prep.sh`
+**Öncelik:** Psychic P0 önce — `bash scripts/user-test-start.sh p0` · [`USER_TEST_QUICK_REF.md`](USER_TEST_QUICK_REF.md)  
+**Hazırlık:** `bash scripts/validate-pre-device-handoff.sh` veya `bash scripts/m5-device-prep.sh`
 
 ---
 

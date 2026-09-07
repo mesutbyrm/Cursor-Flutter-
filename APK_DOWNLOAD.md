@@ -42,11 +42,13 @@ Tüm sürümler: https://github.com/mesutbyrm/Cursor-Flutter-/releases
 Agent işleri bitti. Sıra: **onaylı falcı + 2 telefon → T+5s donma testi**
 
 ```bash
-bash scripts/user-test-start.sh
-bash scripts/record-user-test-result.sh p0 PASS   # veya FAIL "not"
+bash scripts/print-user-test-quick-ref.sh   # 1 sayfa özet
+bash scripts/user-test-start.sh p0
+bash scripts/on-p0-pass.sh
+bash scripts/on-p1-pass.sh
 ```
 
-Rehber: [`docs/PSYCHIC_P0_START.md`](docs/PSYCHIC_P0_START.md) · [`docs/PSYCHIC_TELLER_STATUS.md`](docs/PSYCHIC_TELLER_STATUS.md)
+Rehber: [`docs/USER_TEST_QUICK_REF.md`](docs/USER_TEST_QUICK_REF.md) · [`docs/RELEASE_USER_NEXT_STEPS.md`](docs/RELEASE_USER_NEXT_STEPS.md)
 
 ## Kurulum
 
