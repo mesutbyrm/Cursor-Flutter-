@@ -30,6 +30,8 @@ bash scripts/on-release-ready-candidate.sh   # 5 · RELEASE adayı
 
 FAIL: `bash scripts/on-p0-fail.sh "T+5s donma"`
 
+Kayıt: `docs/USER_DEVICE_TEST_LOG.md` · `bash scripts/record-user-test-result.sh p0 PASS`
+
 ## Kritik (P0)
 
 **T+5s** — video/audio donmamalı (eski bug buradaydı)

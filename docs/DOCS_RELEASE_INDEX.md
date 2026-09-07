@@ -18,11 +18,11 @@
 | [`REMAINING_WORK.md`](REMAINING_WORK.md) | Agent vs kullanıcı kalan iş |
 | [`LIVE_PSYCHICS_REMAINING.md`](LIVE_PSYCHICS_REMAINING.md) | Psychic P0 freeze + E2E |
 | [`USER_TEST_QUICK_REF.md`](USER_TEST_QUICK_REF.md) | 1 sayfa cihaz test özeti |
+| [`USER_DEVICE_TEST_LOG.md`](USER_DEVICE_TEST_LOG.md) | P0/P1 sonuç günlüğü |
 | [`AGENT_CLOSED.md`](AGENT_CLOSED.md) | Agent kapalı — özet durum |
 | [`RELEASE_USER_NEXT_STEPS.md`](RELEASE_USER_NEXT_STEPS.md) | **Agent kapalı — kullanıcı tek sayfa rehber** |
 | [`PSYCHIC_P0_START.md`](PSYCHIC_P0_START.md) | **2 telefon hızlı başlangıç (jeton → P0)** |
 | [`PSYCHIC_TELLER_STATUS.md`](PSYCHIC_TELLER_STATUS.md) | Falcı listesi probe — host vs onaylı falcı |
-| [`USER_DEVICE_TEST_LOG.md`](USER_DEVICE_TEST_LOG.md) | Kullanıcı PASS/FAIL günlüğü (record script) |
 | [`P1_DEVICE_START.md`](P1_DEVICE_START.md) | P0 sonrası genel platform 2-cihaz |
 | [`P2_PLAY_STORE_START.md`](P2_PLAY_STORE_START.md) | Play Store / Stage 8 backlog (P0+P1 sonrası) |
 | [`LATEST_APK_BUILD.md`](LATEST_APK_BUILD.md) | Son CI derlemesi |

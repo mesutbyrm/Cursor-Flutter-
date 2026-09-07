@@ -84,6 +84,11 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 
 ---
 
+## Oturum günlüğü (2026-09-07 — test günlüğü şablonu)
+
+- `USER_DEVICE_TEST_LOG.md` oluşturuldu (P0/P1 kayıt şablonu)
+- DOCS_RELEASE_INDEX + USER_TEST_QUICK_REF senkron
+
 ## Oturum günlüğü (2026-09-07 — quick ref senkron)
 
 - USER_TEST_QUICK_REF + AGENT_CLOSED: print-p0-live-status adım 0
