@@ -12,7 +12,7 @@
 |----------|--------|-----|
 | `ci.yml` | ✅ PASS | Analyze + flutter test (1081+) |
 | `build-apk.yml` | ✅ **FINAL PASS** | [Run 34146919509](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34146919509) |
-| `build-aab.yml` | ⏸ manuel | Play Store AAB — `workflow_dispatch` · `ANDROID_KEYSTORE_*` |
+| `build-aab.yml` | ⏸ manuel | Play Store AAB — `workflow_dispatch` · `ANDROID_KEYSTORE_*` · adımlar: `bash scripts/print-ci-aab-steps.sh` |
 | `apk-latest` | ✅ | `1.0.371+409` |
 | `[skip ci]` push | ✅ | CI/CodeQL/APK/cleanup atlanır — docs/CI-only commit |
 
@@ -48,3 +48,11 @@ Repo özel ise Actions kotası gerekebilir. Eski hata:
 https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk
 
 Detay: [`LATEST_APK_BUILD.md`](LATEST_APK_BUILD.md) · [`APK_DOWNLOAD.md`](../APK_DOWNLOAD.md)
+
+## Play Store AAB (manuel)
+
+```bash
+bash scripts/print-ci-aab-steps.sh          # GitHub Actions adımları
+bash scripts/play-keystore-secrets-cheatsheet.sh
+bash scripts/p2-prep-go.sh                # agent P2 GO
+```

@@ -54,6 +54,7 @@ bash scripts/user-test-start.sh ready         # pre-device doğrulama (validate)
 bash scripts/basla.sh                       # tek komut başlangıç
 bash scripts/kalan-isler-agent.sh           # agent paralel (cihaz sonra)
 bash scripts/cihaz-sonra.sh                   # cihaz testi sonraya
+bash scripts/p2-prep-go.sh                    # P2 agent GO
 bash scripts/p2-prep-all.sh                   # Play Store hazırlık (tam)
 bash scripts/p2-prep-now.sh                   # Play Store özet
 bash scripts/play-aab-readiness.sh            # AAB öncesi kontrol

@@ -6,6 +6,7 @@ cat <<'EOF'
 === Play Console agent prep — print betikleri ===
 
 Tam prep:     bash scripts/p2-prep-all.sh
+P2 GO:        bash scripts/p2-prep-go.sh
 Checklist:    bash scripts/play-store-checklist.sh
 AAB readiness: bash scripts/play-aab-readiness.sh
 

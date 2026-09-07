@@ -44,6 +44,7 @@ APK: https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/c
 bash scripts/kalan-isler-agent.sh   # agent paralel (şimdi)
 bash scripts/cihaz-sonra.sh         # cihaz (sonra)
 bash scripts/kalan-isler.sh         # durum tablosu
+bash scripts/p2-prep-go.sh                # P2 agent GO (özet)
 bash scripts/p2-prep-all.sh         # Play Store hazırlık (tam)
 bash scripts/p2-prep-now.sh         # Play Store özet
 bash scripts/play-aab-readiness.sh  # AAB öncesi

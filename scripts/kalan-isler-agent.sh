@@ -36,6 +36,7 @@ else
 fi
 echo ""
 echo "Cihaz (sonra):  bash scripts/cihaz-sonra.sh"
+echo "P2 prep GO:     bash scripts/p2-prep-go.sh"
 echo "P2 tek komut:   bash scripts/p2-prep-all.sh"
 echo "Tam non-device: bash scripts/run-non-device-release-prep.sh"
 echo "Durum tablosu:  bash scripts/kalan-isler.sh"

@@ -33,6 +33,7 @@ Hesaplar:
   6) bash scripts/on-release-ready-candidate.sh
 
 Agent paralel (şimdi): bash scripts/kalan-isler-agent.sh
+P2 prep GO:            bash scripts/p2-prep-go.sh
 
 Kayıt: docs/USER_DEVICE_TEST_LOG.md
 EOF

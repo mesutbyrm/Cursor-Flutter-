@@ -85,11 +85,13 @@ echo ""
 
 # --- P2 ---
 echo "── P2 · Play Store / Stage 8 ──"
-echo "Durum: ⏸ backlog (P0+P1 sonrası)"
-echo "  bash scripts/p2-go.sh"
+echo "Durum: ▶ agent prep (yükleme P0+P1 PASS sonrası)"
+echo "  bash scripts/p2-prep-go.sh"
+echo "  bash scripts/p2-prep-all.sh"
+echo "  bash scripts/p2-go.sh                    # yükleme günü"
+echo "  bash scripts/print-ci-aab-steps.sh"
 echo "  docs/P2_PLAY_STORE_START.md"
-echo "  docs/PLAY_STORE_PRODUCTION_ACCESS.md"
-echo "  docs/STAGE8_FINAL_ACCEPTANCE_REPORT.md"
+echo "  docs/PLAY_STORE_AGENT_CHECKLIST.md"
 echo ""
 
 # --- Agent ---

@@ -21,7 +21,7 @@ bash scripts/kalan-isler.sh            # durum tablosu
 
 | # | İş | Durum | Komut |
 |---|-----|--------|-------|
-| A | **Agent P2 prep** | ▶ devam | `kalan-isler-agent.sh` · `p2-prep-all.sh` |
+| A | **Agent P2 prep** | ▶ devam | `p2-prep-go.sh` · `p2-prep-all.sh` |
 | A2 | Keystore / AAB CI | ⏳ secret sizde | `play-keystore-secrets-cheatsheet.sh` |
 | 0 | Jeton (danışan) | ✅ ~98k | `psychic-p0-prereqs.sh` |
 | 0b | Falcı hesabı | ✅ host onaylı | `probe-psychic-teller.sh` |

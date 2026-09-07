@@ -18,6 +18,7 @@ Cihaz (sonra): Psychic P0 → P1 · T+5s donma yok
 
 ── Agent (şimdi) ──
   bash scripts/kalan-isler-agent.sh
+  bash scripts/p2-prep-go.sh
   bash scripts/p2-prep-all.sh
 
 ── Cihaz (sonra) ──

@@ -50,7 +50,10 @@ Agent'a bildirin (kopyala-yapıştır):
   P0 PASS + P1 PASS — RELEASE READY adayı
 
 Sonraki (P2 backlog):
+  bash scripts/p2-prep-go.sh
+  bash scripts/p2-prep-all.sh
   bash scripts/p2-go.sh
+  bash scripts/print-ci-aab-steps.sh
   bash scripts/build-play-aab.sh   # keystore secret gerekir
 
 EOF

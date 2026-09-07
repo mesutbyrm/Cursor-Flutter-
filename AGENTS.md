@@ -80,6 +80,7 @@ Güncel envanter metni (dış kaynak): https://canlifal.com/canlifal-envanter-ra
 |-------|--------|
 | **Agent paralel (şimdi)** | `bash scripts/kalan-isler-agent.sh` |
 | **Cihaz (sonra)** | `bash scripts/cihaz-sonra.sh` |
+| **P2 prep GO** | `bash scripts/p2-prep-go.sh` |
 | **P2 Play Store prep (tam)** | `bash scripts/p2-prep-all.sh` |
 | **P2 Play Store özet** | `bash scripts/p2-prep-now.sh` |
 | **Play FGS metni** | `bash scripts/print-play-foreground-service-declaration.sh` |

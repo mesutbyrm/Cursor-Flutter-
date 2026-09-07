@@ -32,7 +32,7 @@ else
 fi
 echo ""
 
-bash "$ROOT/scripts/p2-prep-all.sh" 2>&1 | tail -16
+bash "$ROOT/scripts/print-ci-aab-steps.sh" 2>&1 | head -14
 
 cat <<'EOF'
 
@@ -49,7 +49,9 @@ EOF
 if [[ "$p0_ok" -eq 1 && "$p1_ok" -eq 1 ]]; then
   echo "✅ P0+P1 PASS — RELEASE adayı kontrol listesi:"
   echo "   bash scripts/on-release-ready-candidate.sh"
+  echo "   bash scripts/print-ci-aab-steps.sh"
   echo "   bash scripts/build-play-aab.sh   # CI keystore secret gerekir"
 else
-  echo "Önce cihaz testleri: bash scripts/kalan-isler.sh"
+  echo "Agent prep (şimdi): bash scripts/p2-prep-go.sh"
+  echo "Önce cihaz testleri: bash scripts/cihaz-sonra.sh"
 fi

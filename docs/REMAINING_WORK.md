@@ -6,7 +6,7 @@
 
 **Son güncelleme:** 2026-09-07 — sürüm `1.0.371+409` · **Cihaz testi SONRA** · **Agent P2 prep devam**  
 **Agent paralel:** `bash scripts/kalan-isler-agent.sh` · **Cihaz sonra:** `bash scripts/cihaz-sonra.sh`  
-**Tek komut:** `bash scripts/kalan-isler.sh` · P0: `p0-go.sh` · P1: `p1-go.sh` · P2: `p2-go.sh`  
+**Tek komut:** `bash scripts/kalan-isler.sh` · P0: `p0-go.sh` · P1: `p1-go.sh` · P2 prep: `p2-prep-go.sh` · P2 yükleme: `p2-go.sh`  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Release:** `docs/RELEASE_CHECKLIST.md` | **Psychic P0:** `docs/LIVE_PSYCHICS_REMAINING.md` | **Tüm MD indeks:** [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
 ---
@@ -36,7 +36,7 @@
 | **P0-j** | Danışan jeton (admin) | ✅ ~98k (2026-09-07) |
 | **P0** | Psychic TRTC 2-cihaz (T+5s donma yok) | ⏳ **OPEN** — `bash scripts/p0-go.sh` |
 | P1 | Voice / gift / PK / müzik 2-cihaz | ⏸ P0 sonrası — `bash scripts/p1-go.sh` |
-| P2 | Stage 8 / Play Store closed test | ⏸ P0+P1 — `bash scripts/p2-go.sh` |
+| P2 | Stage 8 / Play Store | ▶ agent prep · yükleme P0+P1 sonrası | `p2-prep-go.sh` · `p2-go.sh` |
 
 **Otomatik işler tamam** — kalan yalnızca cihaz kabul testleri.
 
@@ -203,6 +203,12 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 
 - `on-release-ready-candidate.sh` — P0+P1 sonrası RELEASE READY kontrol listesi
 - README, P2, RELEASE_GATE_CLOSURE, user-test-start güncellendi
+
+## Oturum günlüğü (2026-09-07 — p2-prep-go + status sync)
+
+- `p2-prep-go.sh` — agent P2 GO ekranı (cihaz beklemeden)
+- `release-remaining-status` P2 → paralel agent prep
+- `p2-go.sh` → CI AAB adımları · `validate-pre-device-handoff` paralel yönlendirme
 
 ## Oturum günlüğü (2026-09-07 — Play Console print paketi)
 

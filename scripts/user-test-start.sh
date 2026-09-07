@@ -28,6 +28,7 @@ Komutlar:
   0) bash scripts/kalan-isler-agent.sh         # agent · şimdi
   1) bash scripts/cihaz-sonra.sh               # cihaz · sonra
   2) bash scripts/p2-prep-all.sh               # Play Store hazırlık (tam)
+  2b) bash scripts/p2-prep-go.sh               # P2 prep GO (özet)
   3) bash scripts/p1-prep-now.sh               # P1 checklist ön
   4) bash scripts/basla.sh                     # canlı durum
   5) bash scripts/p0-go.sh
@@ -152,6 +153,9 @@ case "${1:-}" in
     ;;
   p2-prep|p2prep)
     exec bash "$ROOT/scripts/p2-prep-now.sh"
+    ;;
+  p2-prep-go|p2prepgo)
+    exec bash "$ROOT/scripts/p2-prep-go.sh"
     ;;
   p2-prep-all|p2all)
     exec bash "$ROOT/scripts/p2-prep-all.sh"
