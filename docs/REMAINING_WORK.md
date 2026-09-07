@@ -84,6 +84,11 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 
 ---
 
+## Oturum günlüğü (2026-09-07 — KULLANICI_TEST senkron)
+
+- KULLANICI_TEST_KILAVUZU → user-test-start / on-p0-pass akışı
+- print-user-test-quick-ref.sh
+
 ## Oturum günlüğü (2026-09-07 — hızlı referans)
 
 - `USER_TEST_QUICK_REF.md` — 1 sayfa cihaz test özeti
