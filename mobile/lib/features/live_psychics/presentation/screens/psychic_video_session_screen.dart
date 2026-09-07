@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/economy/presentation/providers/economy_providers.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_close_dialog.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_entity.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychic_video_controller.dart';
@@ -63,6 +64,7 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
     final ctrl = ref.read(psychicVideoControllerProvider(session).notifier);
     final chat = ref.watch(_psychicSessionChatProvider(session));
     final psychic = session.psychic;
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     ref.listen(psychicVideoControllerProvider(session), (prev, next) {
       if (next.timeUpPending && session.isClient) {
@@ -255,7 +257,7 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                             Padding(
                               padding: const EdgeInsets.only(top: 6),
                               child: Text(
-                                '${state.tipThankYouAmount} jeton',
+                                '${state.tipThankYouAmount} $jetonLabel',
                                 style: TextStyle(
                                   color: Colors.white.withValues(alpha: 0.75),
                                   fontSize: 13,

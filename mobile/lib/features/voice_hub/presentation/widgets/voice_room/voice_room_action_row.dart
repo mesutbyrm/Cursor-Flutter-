@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
+
+import '../../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../domain/entities/chat_room_dj_state.dart';
 import '../../../domain/entities/chat_room_message.dart';
 
-class VoiceRoomActionRow extends StatelessWidget {
+class VoiceRoomActionRow extends ConsumerWidget {
   const VoiceRoomActionRow({
     super.key,
     required this.dj,
@@ -31,7 +34,8 @@ class VoiceRoomActionRow extends StatelessWidget {
   final VoidCallback? onPkTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final tiles = <Widget>[];
 
     if (showMusicCard) {
@@ -62,7 +66,7 @@ class VoiceRoomActionRow extends StatelessWidget {
                       const SizedBox(height: 1),
                       Text(
                         dj.musicQueue.isEmpty
-                            ? '${dj.musicRequestCost} jeton'
+                            ? '${dj.musicRequestCost} $jetonLabel'
                             : 'Sıra: ${dj.musicQueue.length}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

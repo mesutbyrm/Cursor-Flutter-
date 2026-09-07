@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../fortune/presentation/data/fortune_catalog.dart';
 import '../../../platform/data/models/fortune_request_type.dart';
 import '../providers/home_providers.dart';
@@ -81,7 +82,7 @@ class HomeFortuneRequestTypesSection extends ConsumerWidget {
   }
 }
 
-class _TypeCard extends StatelessWidget {
+class _TypeCard extends ConsumerWidget {
   const _TypeCard({required this.type});
 
   final FortuneRequestType type;
@@ -92,8 +93,9 @@ class _TypeCard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final cost = type.jetonCost;
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final catalog = FortuneCatalog.bySlug(type.key);
     final accent = catalog?.accent ?? HomeApprovedDesign.purple;
 
@@ -133,7 +135,7 @@ class _TypeCard extends StatelessWidget {
               if (cost != null && cost > 0) ...[
                 const SizedBox(height: 4),
                 Text(
-                  '$cost jeton',
+                  '$cost $jetonLabel',
                   style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,

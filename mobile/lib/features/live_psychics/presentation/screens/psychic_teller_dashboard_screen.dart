@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:canlifal_social/core/widgets/user_avatar.dart';
+import 'package:canlifal_social/core/economy/presentation/providers/economy_providers.dart';
 import 'package:canlifal_social/features/auth/presentation/providers/auth_providers.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/ui/premium_2026/cosmic_galaxy_background.dart';
@@ -289,6 +290,7 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
     );
     final approved = ref.watch(approvedPsychicProvider);
     final profile = dashProfile ?? approved.profile;
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     if ((loading || (approved.loading && !approved.checked)) &&
         profile == null) {
@@ -466,6 +468,7 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
                 return RepaintBoundary(
                   child: _PendingTile(
                     request: req,
+                    jetonLabel: jetonLabel,
                     processing: processingId == req.sessionId,
                     onAccept: () => ref
                         .read(psychicTellerDashboardProvider.notifier)
@@ -768,12 +771,14 @@ class _ProfileHeader extends StatelessWidget {
 class _PendingTile extends StatelessWidget {
   const _PendingTile({
     required this.request,
+    required this.jetonLabel,
     required this.processing,
     required this.onAccept,
     required this.onReject,
   });
 
   final PsychicRequestEntity request;
+  final String jetonLabel;
   final bool processing;
   final VoidCallback onAccept;
   final VoidCallback onReject;
@@ -793,7 +798,7 @@ class _PendingTile extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.w800),
             ),
             Text(
-              '${request.durationMinutes} dk · ${request.totalJeton} jeton',
+              '${request.durationMinutes} dk · ${request.totalJeton} $jetonLabel',
               style: TextStyle(
                 fontSize: 12,
                 color: Colors.white.withValues(alpha: 0.65),

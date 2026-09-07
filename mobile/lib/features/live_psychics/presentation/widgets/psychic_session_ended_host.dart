@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:canlifal_social/app/router/app_router.dart';
+import 'package:canlifal_social/core/economy/presentation/providers/economy_providers.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_ended_provider.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_review_sheet.dart';
 
@@ -60,15 +61,18 @@ class _PsychicSessionEndedHostState extends ConsumerState<PsychicSessionEndedHos
     final duration = event.durationMinutes;
     final jeton = event.totalJeton;
     final tips = event.tipsJeton;
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final lines = <String>[
       if (event.message != null && event.message!.trim().isNotEmpty)
         event.message!.trim(),
       if (duration != null && duration > 0) 'Süre: $duration dk',
       if (jeton != null && jeton > 0)
-        event.isTeller ? 'Seans geliri: $jeton jeton' : 'Harcanan jeton: $jeton',
-      if (tips != null && tips > 0) 'Bahşiş: $tips jeton',
+        event.isTeller
+            ? 'Seans geliri: $jeton $jetonLabel'
+            : 'Harcanan $jetonLabel: $jeton',
+      if (tips != null && tips > 0) 'Bahşiş: $tips $jetonLabel',
       if (event.isTeller && (tips ?? 0) > 0 && (jeton ?? 0) > 0)
-        'Toplam kazanç: ${(jeton ?? 0) + tips!} jeton',
+        'Toplam kazanç: ${(jeton ?? 0) + tips!} $jetonLabel',
     ];
     final body = lines.isEmpty
         ? 'Canlı fal seansınız sona erdi.'

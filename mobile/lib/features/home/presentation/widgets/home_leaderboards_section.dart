@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../agency/domain/entities/agency_leaderboard_entry.dart';
 import '../../../gifts/domain/gift_leaderboard_entry.dart';
 import '../../../live/domain/pk/pk_leaderboard_models.dart';
@@ -62,6 +63,7 @@ class _HomeLeaderboardsSectionState extends ConsumerState<HomeLeaderboardsSectio
       if (hasAgency) _LeaderboardTab.agency,
     ];
     final tab = _resolveTab(tabs);
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     void openFull() {
       switch (tab) {
@@ -105,7 +107,10 @@ class _HomeLeaderboardsSectionState extends ConsumerState<HomeLeaderboardsSectio
         SizedBox(
           height: 92,
           child: switch (tab) {
-            _LeaderboardTab.gift => _GiftRow(entries: giftData.take(3).toList()),
+            _LeaderboardTab.gift => _GiftRow(
+                entries: giftData.take(3).toList(),
+                jetonLabel: jetonLabel,
+              ),
             _LeaderboardTab.pk => _PkRow(entries: pkData.take(3).toList()),
             _LeaderboardTab.agency => _AgencyRow(entries: agencyData.take(3).toList()),
           },
@@ -163,9 +168,10 @@ class _TabChip extends StatelessWidget {
 }
 
 class _GiftRow extends StatelessWidget {
-  const _GiftRow({required this.entries});
+  const _GiftRow({required this.entries, required this.jetonLabel});
 
   final List<GiftLeaderboardEntry> entries;
+  final String jetonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -181,7 +187,7 @@ class _GiftRow extends StatelessWidget {
             : 'Kullanıcı',
         avatarUrl: entries[i].avatarUrl,
         scoreLabel:
-            '${_HomeLeaderboardsSectionState._formatCompact(entries[i].totalCoins)} jeton',
+            '${_HomeLeaderboardsSectionState._formatCompact(entries[i].totalCoins)} $jetonLabel',
         accent: HomeApprovedDesign.gold,
         onTap: () => context.push('/gifts/leaderboard'),
       ),

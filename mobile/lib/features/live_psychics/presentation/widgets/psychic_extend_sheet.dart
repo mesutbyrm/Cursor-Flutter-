@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/performance/list_perf.dart';
+
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 
 class PsychicExtendOption {
   const PsychicExtendOption({
@@ -32,15 +35,18 @@ Future<PsychicExtendOption?> showPsychicExtendSheet(
     barrierLabel: 'Süre ekle',
     barrierColor: Colors.black.withValues(alpha: 0.72),
     transitionDuration: const Duration(milliseconds: 200),
-    pageBuilder: (ctx, _, _) => Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Material(
-          color: Colors.transparent,
-          child: _PsychicExtendSheet(
-            jetonBalance: jetonBalance,
-            jetonPerMinute: jetonPerMinute,
-            staffExempt: staffExempt,
+    pageBuilder: (ctx, _, _) => UncontrolledProviderScope(
+      container: ProviderScope.containerOf(context),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Material(
+            color: Colors.transparent,
+            child: _PsychicExtendSheet(
+              jetonBalance: jetonBalance,
+              jetonPerMinute: jetonPerMinute,
+              staffExempt: staffExempt,
+            ),
           ),
         ),
       ),
@@ -52,7 +58,7 @@ Future<PsychicExtendOption?> showPsychicExtendSheet(
   );
 }
 
-class _PsychicExtendSheet extends StatelessWidget {
+class _PsychicExtendSheet extends ConsumerWidget {
   const _PsychicExtendSheet({
     required this.jetonBalance,
     required this.jetonPerMinute,
@@ -64,7 +70,8 @@ class _PsychicExtendSheet extends StatelessWidget {
   final bool staffExempt;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
       decoration: BoxDecoration(
@@ -108,8 +115,8 @@ class _PsychicExtendSheet extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             staffExempt
-                ? 'Staff hesabı — uzatma için jeton düşülmez'
-                : '💰 Jetonunuz: $jetonBalance ($jetonPerMinute jeton/dk)',
+                ? 'Staff hesabı — uzatma için $jetonLabel düşülmez'
+                : '💰 $jetonLabel bakiyeniz: $jetonBalance ($jetonPerMinute $jetonLabel/dk)',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: staffExempt

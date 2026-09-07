@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/images/canlifal_network_image.dart';
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../home/presentation/theme/home_approved_design.dart';
@@ -30,7 +32,7 @@ class PsychicPremiumCardSkeleton extends StatelessWidget {
 }
 
 /// Ana sayfa yatay kart — premium V2.
-class PsychicPremiumCard extends StatelessWidget {
+class PsychicPremiumCard extends ConsumerWidget {
   const PsychicPremiumCard({
     super.key,
     required this.name,
@@ -59,7 +61,8 @@ class PsychicPremiumCard extends StatelessWidget {
   final bool showLiveBadge;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final trimmed = avatarUrl?.trim();
     return Material(
       color: Colors.transparent,
@@ -176,7 +179,7 @@ class PsychicPremiumCard extends StatelessWidget {
                       if (pricePerMinute > 0) ...[
                         const SizedBox(height: 5),
                         Text(
-                          '$pricePerMinute jeton/dk',
+                          '$pricePerMinute $jetonLabel/dk',
                           style: const TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
@@ -196,7 +199,7 @@ class PsychicPremiumCard extends StatelessWidget {
   }
 }
 
-class PsychicPremiumListTile extends StatelessWidget {
+class PsychicPremiumListTile extends ConsumerWidget {
   const PsychicPremiumListTile({
     super.key,
     required this.name,
@@ -221,7 +224,8 @@ class PsychicPremiumListTile extends StatelessWidget {
   final bool showLiveBadge;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     return Material(
       color: HomePremiumDesign.surface.withValues(alpha: 0.92),
       borderRadius: BorderRadius.circular(PsychicPremiumCard.radius),
@@ -325,7 +329,7 @@ class PsychicPremiumListTile extends StatelessWidget {
               if (pricePerMinute > 0) ...[
                 const SizedBox(width: 8),
                 Text(
-                  '$pricePerMinute\njeton/dk',
+                  '$pricePerMinute\n$jetonLabel/dk',
                   textAlign: TextAlign.right,
                   style: const TextStyle(
                     fontSize: 11,

@@ -178,7 +178,7 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
     unawaited(
       showInsufficientJetonDialog(
         context,
-        message: 'Yetersiz jeton ($cost gerekli, $balance mevcut).',
+        message: 'Yetersiz $jetonLabel ($cost gerekli, $balance mevcut).',
         ref: ref,
       ),
     );

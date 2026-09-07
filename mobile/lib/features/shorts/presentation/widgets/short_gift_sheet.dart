@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../gifts/domain/gift_platform.dart';
@@ -119,6 +120,7 @@ class _ShortGiftSheetState extends ConsumerState<_ShortGiftSheet> {
   @override
   Widget build(BuildContext context) {
     final coins = ref.watch(coinBalanceProvider) ?? 0;
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.only(
@@ -132,9 +134,9 @@ class _ShortGiftSheetState extends ConsumerState<_ShortGiftSheet> {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Jeton hediyesi',
+                      '$jetonLabel hediyesi',
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 18,
@@ -142,7 +144,7 @@ class _ShortGiftSheetState extends ConsumerState<_ShortGiftSheet> {
                     ),
                   ),
                   Text(
-                    '$coins jeton',
+                    '$coins $jetonLabel',
                     style: const TextStyle(color: Colors.amber, fontSize: 13),
                   ),
                 ],
