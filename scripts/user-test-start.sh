@@ -81,7 +81,7 @@ case "${1:-}" in
   api)
     exec bash "$ROOT/scripts/run-api-automation-summary.sh"
     ;;
-  list)
+  list|tellers)
     exec bash "$ROOT/scripts/list-production-tellers.sh"
     ;;
   closure|agent)

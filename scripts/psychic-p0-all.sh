@@ -27,6 +27,12 @@ if ! echo "$PREREQ" | grep -qE '✅ APK|✅ Danışan|✅ Falcı'; then
   exit 1
 fi
 
+if echo "$PREREQ" | grep -q 'Falcı listesinde DEĞİL'; then
+  echo "── Onaylı falcı listesi (P0 falcı telefonu) ──"
+  bash "$ROOT/scripts/list-production-tellers.sh"
+  echo ""
+fi
+
 echo "── P0 checklist (2 telefon) ──"
 "$ROOT/scripts/psychic-p0-checklist.sh"
 echo ""

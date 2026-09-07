@@ -25,8 +25,8 @@ if [[ -x "${ROOT}/scripts/psychic-p0-prereqs.sh" ]]; then
   fi
   if echo "$PREREQ_OUT" | grep -q 'Falcı listesinde DEĞİL'; then
     PREREQ_NOTE="${PREREQ_NOTE}
-⚠️  Host hesabı falcı listesinde değil — onaylı falcı hesabı veya admin onayı gerekir
-    bash scripts/probe-psychic-teller.sh
+⚠️  Host hesabı falcı listesinde değil — onaylı falcı hesabı gerekir
+    bash scripts/list-production-tellers.sh
     docs/PSYCHIC_TELLER_STATUS.md
 "
   fi
@@ -43,8 +43,9 @@ Gereksinim: 2 fiziksel cihaz VEYA 2 hesap (danışan + falcı)
 
 Hesaplar (docs/KULLANICI_TEST_KILAVUZU.md):
   Danışan: cursor.test.1786235468@mailinator.com
-  Falcı:   cursor.host.1786235468@mailinator.com
-  Şifre:   CursorTest!1786235468
+  Falcı:   ONAYLI FALCI (host değil — admin panel hesabı)
+           bash scripts/list-production-tellers.sh
+  Şifre:   CursorTest!1786235468 (danışan) · falcı hesabına göre
 
 Her adımda kontrol: çift yönlü A/V · senkron · rejoin yok · duplicate stream yok
 

@@ -88,7 +88,7 @@ if [[ "$jeton_warn" -gt 0 ]]; then
 fi
 if [[ "$teller_warn" -gt 0 ]]; then
   echo "Jeton OK — falcı uyarısı var; onaylı falcı hesabı ile P0 deneyin."
-  echo "  docs/PSYCHIC_TELLER_STATUS.md · bash scripts/probe-psychic-teller.sh"
+  echo "  docs/PSYCHIC_TELLER_STATUS.md · bash scripts/list-production-tellers.sh"
   exit 0
 fi
 echo "Önkoşullar hazır — cihaz testine geçilebilir."

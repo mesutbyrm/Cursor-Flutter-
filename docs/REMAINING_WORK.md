@@ -84,6 +84,13 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 
 ---
 
+## Oturum günlüğü (2026-09-07 — P0 falcı rehberi)
+
+- psychic-p0-checklist: falcı = onaylı hesap (host değil)
+- psychic-p0-all: falcı uyarısında otomatik list-production-tellers
+- validate-pre-device-handoff: tekrarlayan falcı probe kaldırıldı
+- API raporları yenilendi (M5/M7 probe)
+
 ## Oturum günlüğü (2026-09-07 — host token bootstrap)
 
 - `bootstrap_host_token`: username `cursorhost1786235468` önce; USER_USERNAME yalnız HOST_EMAIL==USER_EMAIL

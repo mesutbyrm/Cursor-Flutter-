@@ -25,7 +25,6 @@ run_step() {
 
 run_step "Durum özeti" "bash '$ROOT/scripts/release-remaining-status.sh'"
 run_step "P0 önkoşullar" "bash '$ROOT/scripts/psychic-p0-prereqs.sh'" || true
-run_step "Falcı probe" "bash '$ROOT/scripts/probe-psychic-teller.sh'" || true
 
 echo "── API otomasyon (M5/M7) ──"
 if bash "$ROOT/scripts/run-api-automation-summary.sh" 2>&1 | tail -12; then
