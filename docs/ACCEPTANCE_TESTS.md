@@ -86,7 +86,7 @@ Genişletilmiş kontrol listesi için `scripts/run-acceptance-tests.sh` kullanı
 - **Secret yoksa** release gate dokümante test hesaplarını kullanır (`scripts/acceptance-tests/defaults.sh`)
 - **Secret hatalıysa** otomatik olarak aynı dokümante hesaplara düşülür (uyarı loglanır)
 - Admin/teller secret yoksa ilgili maddeler `SKIP` olur
-- **Gate 3:** `cursor.host.*` falcı listesinde değil — `ACCEPTANCE_TELLER_*` veya onaylı falcı hesabı; `bash scripts/probe-psychic-teller.sh`
+- **Gate 3:** `cursor.host.*` falcı listesinde değil → **SKIP** (FAIL değil); tam otomasyon için `ACCEPTANCE_TELLER_*` veya cihaz P0 onaylı falcı; TRTC `POST /api/trtc/token`; `bash scripts/probe-psychic-teller.sh`
 - **Jeton (M5/M7):** danışan ~100k (2026-09-07) — P0-j kapandı
 - Secret varken ve API testi başarısızsa APK **engellenir**
 - Canlı yayın testi geçici stream oluşturur ve işlem sonunda siler
