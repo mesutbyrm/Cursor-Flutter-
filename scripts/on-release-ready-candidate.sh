@@ -56,7 +56,7 @@ Sonraki (P2 yükleme günü):
   bash scripts/print-release-blockers.sh
   bash scripts/build-play-aab.sh   # keystore secret gerekir
 
-Agent prep (şimdi): bash scripts/print-agent-prep-status.sh
+Agent prep: ✅ TAMAM · bash scripts/agent-prep-tamam.sh
 
 EOF
 

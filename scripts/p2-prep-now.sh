@@ -15,7 +15,8 @@ echo "╔═══════════════════════�
 echo "║  P2 hazırlık — agent (${VERSION})                                 ║"
 echo "╚══════════════════════════════════════════════════════════════════╝"
 echo ""
-echo "Cihaz P0/P1 sonucu: SONRA · Bu betik Play Store hazırlığı (şimdi)"
+echo "Agent prep: ✅ TAMAM · referans print betikleri"
+echo "Cihaz P0/P1 sonucu: SONRA · Yükleme: print-play-upload-day-checklist.sh"
 echo ""
 
 # Sürüm / paket

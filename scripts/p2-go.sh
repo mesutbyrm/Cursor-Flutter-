@@ -50,6 +50,6 @@ if [[ "$p0_ok" -eq 1 && "$p1_ok" -eq 1 ]]; then
   echo "✅ P0+P1 PASS — yükleme günü:"
   bash "$ROOT/scripts/print-play-upload-day-checklist.sh" 2>&1 | tail -20
 else
-  echo "Agent prep (şimdi): bash scripts/p2-prep-go.sh"
+  echo "Agent prep: ✅ TAMAM · bash scripts/kullanici-sonraki.sh"
   echo "Önce cihaz testleri: bash scripts/cihaz-sonra.sh"
 fi

@@ -32,8 +32,8 @@ Hesaplar:
   5) bash scripts/on-p1-pass.sh
   6) bash scripts/on-release-ready-candidate.sh
 
-Agent paralel (şimdi): bash scripts/devam-et.sh
-P2 prep GO:            bash scripts/p2-prep-go.sh
+Agent prep: ✅ TAMAM · bash scripts/kullanici-sonraki.sh
+API yenile (isteğe bağlı): bash scripts/devam-et.sh
 
 Kayıt: docs/USER_DEVICE_TEST_LOG.md
 EOF

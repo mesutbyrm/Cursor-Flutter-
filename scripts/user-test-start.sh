@@ -18,7 +18,7 @@ show_menu() {
 
 APK: ${APK_URL}
 
-Sıra: P0-j ✅ · cihaz testi **SONRA** · agent P1/P2 prep **ŞİMDİ**
+Sıra: P0-j ✅ · agent prep **TAMAM** · cihaz + keystore + Play **sizde**
 
 ★ KULLANICI:
   bash scripts/kullanici-sonraki.sh            # kalan adımlar (agent prep ✅)
@@ -28,8 +28,8 @@ Sıra: P0-j ✅ · cihaz testi **SONRA** · agent P1/P2 prep **ŞİMDİ**
   bash scripts/devam-et.sh
 
 Komutlar:
-  0) bash scripts/kalan-isler-agent.sh         # agent · şimdi (= devam-et)
-  0b) bash scripts/devam-et.sh                 # agent · devam et alias
+  0) bash scripts/kalan-isler-agent.sh         # API yenile (= devam-et)
+  0b) bash scripts/devam-et.sh                 # API yenile alias
   0c) bash scripts/print-paralel-mod.sh        # paralel mod özet
   1) bash scripts/cihaz-sonra.sh               # cihaz · sonra
   2) bash scripts/p2-prep-all.sh               # Play Store hazırlık (tam)
