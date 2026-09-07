@@ -27,7 +27,9 @@ cat <<'EOF'
         cursor.test.1786235468@mailinator.com
         cursor.host.1786235468@mailinator.com
         Şifre: CursorTest!1786235468
-  [ ] Data safety formu (docs/PLAY_STORE_PRODUCTION_ACCESS.md)
+  [ ] Data safety formu
+        bash scripts/print-play-data-safety-summary.sh
+        docs/PLAY_STORE_PRODUCTION_ACCESS.md
   [ ] Foreground service declaration
         bash scripts/print-play-foreground-service-declaration.sh
         docs/PLAY_FOREGROUND_SERVICE_DECLARATION.md

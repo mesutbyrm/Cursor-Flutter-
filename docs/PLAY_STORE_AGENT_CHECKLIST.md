@@ -11,6 +11,7 @@ bash scripts/play-aab-readiness.sh      # keystore + Gradle + Sign-In
 bash scripts/play-store-checklist.sh    # Console adımları
 bash scripts/print-play-console-app-access.sh  # App access metni
 bash scripts/print-play-foreground-service-declaration.sh  # FGS kopyala-yapıştır
+bash scripts/print-play-data-safety-summary.sh  # Data safety özeti
 bash scripts/p2-prep-now.sh             # özet
 bash scripts/build-play-aab.sh          # AAB yerel (keystore gerekir)
 ```

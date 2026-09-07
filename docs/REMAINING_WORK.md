@@ -204,9 +204,15 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 - `on-release-ready-candidate.sh` — P0+P1 sonrası RELEASE READY kontrol listesi
 - README, P2, RELEASE_GATE_CLOSURE, user-test-start güncellendi
 
-## Oturum günlüğü (2026-09-07 — agent kapalı özeti)
+## Oturum günlüğü (2026-09-07 — P2 prep ALL + paralel mod)
 
-- `AGENT_CLOSED.md` — final agent durumu
+- `p2-prep-all.sh` — Play Store + app access + FGS + data safety + keystore
+- `print-play-data-safety-summary.sh` — Play Console Data safety rehberi
+- `kalan-isler.sh` / `run-non-device-release-prep.sh` — paralel P2 yol haritası
+
+## Oturum günlüğü (2026-09-07 — agent paralel mod özeti)
+
+- `AGENT_CLOSED.md` — paralel mod (cihaz sonra, agent P1/P2 devam)
 - `print-full-user-checklist.sh` — P0+P1 birleşik yazdır
 - release-remaining-status → user-test-start öncelik
 

@@ -21,7 +21,7 @@ bash scripts/kalan-isler.sh            # durum tablosu
 
 | # | İş | Durum | Komut |
 |---|-----|--------|-------|
-| A | **Agent P2 prep** | ▶ devam | `kalan-isler-agent.sh` · `p2-prep-now.sh` |
+| A | **Agent P2 prep** | ▶ devam | `kalan-isler-agent.sh` · `p2-prep-all.sh` |
 | A2 | Keystore / AAB CI | ⏳ secret sizde | `play-keystore-secrets-cheatsheet.sh` |
 | 0 | Jeton (danışan) | ✅ ~98k | `psychic-p0-prereqs.sh` |
 | 0b | Falcı hesabı | ✅ host onaylı | `probe-psychic-teller.sh` |
@@ -86,8 +86,8 @@ P0 PASS → P1 → **`P1 PASS`** → `bash scripts/on-release-ready-candidate.sh
 
 Canlı durum (jeton + falcı): `bash scripts/p0-go.sh`
 
-## Agent ne zaman tekrar açılır?
+## Agent ne zaman kod değiştirir?
 
-Yalnızca **`Psychic P0 FAIL`** (hotfix) veya yeni özellik isteği.
+Yalnızca **`Psychic P0 FAIL`** (hotfix) veya yeni özellik isteği. Paralel P1/P2 hazırlık **devam** (`bash scripts/kalan-isler-agent.sh`).
 
 Detay: [`REMAINING_WORK.md`](REMAINING_WORK.md) · [`AGENTS.md`](../AGENTS.md)

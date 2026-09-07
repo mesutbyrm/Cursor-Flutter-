@@ -59,6 +59,7 @@ bash scripts/p2-prep-now.sh                   # Play Store özet
 bash scripts/play-aab-readiness.sh            # AAB öncesi kontrol
 bash scripts/play-store-checklist.sh          # Console checklist
 bash scripts/print-play-foreground-service-declaration.sh  # FGS metni
+bash scripts/print-play-data-safety-summary.sh  # Data safety özeti
 bash scripts/p1-prep-now.sh                   # P1 checklist ön
 bash scripts/kalan-isler.sh                 # kalan işler + yol haritası
 bash scripts/p0-go.sh                       # P0 GO ekranı

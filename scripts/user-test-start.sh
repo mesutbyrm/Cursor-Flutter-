@@ -159,6 +159,9 @@ case "${1:-}" in
   fgs|foreground|play-fgs)
     exec bash "$ROOT/scripts/print-play-foreground-service-declaration.sh"
     ;;
+  data-safety|play-data)
+    exec bash "$ROOT/scripts/print-play-data-safety-summary.sh"
+    ;;
   play-checklist|play-store)
     exec bash "$ROOT/scripts/play-store-checklist.sh"
     ;;

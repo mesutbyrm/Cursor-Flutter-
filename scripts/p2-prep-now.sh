@@ -71,6 +71,9 @@ echo "── AAB readiness ──"
 bash "$ROOT/scripts/play-aab-readiness.sh" 2>&1 | sed 's/^/  /'
 echo ""
 echo "Tam Console checklist: bash scripts/play-store-checklist.sh"
+echo "P2 tam prep:           bash scripts/p2-prep-all.sh"
 echo "Keystore secret:       bash scripts/play-keystore-secrets-cheatsheet.sh"
 echo "App access metni:      bash scripts/print-play-console-app-access.sh"
+echo "FGS metni:             bash scripts/print-play-foreground-service-declaration.sh"
+echo "Data safety özeti:     bash scripts/print-play-data-safety-summary.sh"
 bash "$ROOT/scripts/release-remaining-status.sh" 2>&1 | grep -E 'P2 ·|RELEASE READY' || true

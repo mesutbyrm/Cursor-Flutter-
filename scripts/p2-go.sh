@@ -32,7 +32,7 @@ else
 fi
 echo ""
 
-bash "$ROOT/scripts/p2-play-store-prep.sh" 2>&1 | tail -12
+bash "$ROOT/scripts/p2-prep-all.sh" 2>&1 | tail -16
 
 cat <<'EOF'
 

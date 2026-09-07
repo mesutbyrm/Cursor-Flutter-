@@ -1,7 +1,7 @@
 # Cihaz testi — hızlı referans (1 sayfa)
 
 
-> **Sürüm:** `1.0.371+409` · **RELEASE READY: NO** · Agent **kapalı**
+> **Sürüm:** `1.0.371+409` · **RELEASE READY: NO** · Cihaz sonucu **sonra** · Agent prep **devam**
 
 ## APK
 
@@ -19,6 +19,8 @@ Host = onaylı falcı (`Cursor Host Test`). Doğrula: `bash scripts/probe-psychi
 ## Komut sırası
 
 ```bash
+bash scripts/kalan-isler-agent.sh           # agent paralel (şimdi)
+bash scripts/cihaz-sonra.sh                 # cihaz (sonra)
 bash scripts/basla.sh                       # ★ tek komut: canlı durum + devir teslim
 bash scripts/kalan-isler.sh                  # 0 · tüm kalan işler
 bash scripts/p0-go.sh                         # GO (jeton + falcı + hesaplar)
@@ -26,6 +28,7 @@ bash scripts/user-test-start.sh p0           # Psychic P0 (2 telefon)
 bash scripts/on-p0-pass.sh                 # PASS → P1
 bash scripts/on-p1-pass.sh                 # P1 PASS
 bash scripts/on-release-ready-candidate.sh   # RELEASE adayı
+bash scripts/p2-prep-all.sh                 # Play Store hazırlık (agent)
 ```
 
 FAIL: `bash scripts/on-p0-fail.sh "T+5s donma"`

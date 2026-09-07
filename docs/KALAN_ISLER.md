@@ -50,6 +50,7 @@ bash scripts/play-aab-readiness.sh  # AAB öncesi
 bash scripts/play-store-checklist.sh # Console checklist
 bash scripts/play-keystore-secrets-cheatsheet.sh  # GitHub keystore
 bash scripts/print-play-console-app-access.sh   # App access metni
+bash scripts/print-play-data-safety-summary.sh  # Data safety özeti
 bash scripts/print-play-foreground-service-declaration.sh  # FGS metni
 bash scripts/p1-prep-now.sh         # P1 checklist (ön)
 bash scripts/basla.sh               # canlı durum

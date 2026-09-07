@@ -30,10 +30,7 @@ run_step "API otomasyon özeti" "bash '$ROOT/scripts/run-api-automation-summary.
 run_step "API release gate (madde 3–8)" "bash '$ROOT/scripts/acceptance-tests/api-release-gate.sh' 2>&1 | tail -12"
 run_step "Psychic Flutter unit" "bash '$ROOT/scripts/run-psychic-unit-tests.sh'"
 
-echo "══════════════════════════════════════════════════════════════════"
-echo "── P2 backlog (özet) ──"
-bash "$ROOT/scripts/p2-play-store-prep.sh" 2>&1 | tail -14
-echo ""
+run_step "P2 prep ALL" "bash '$ROOT/scripts/p2-prep-all.sh' 2>&1 | tail -28"
 
 if [[ "$fail" -eq 0 ]]; then
   echo "✅ Cihaz dışı hazırlık tamam — Psychic P0/P1 testi sizde (sonra)"
@@ -41,5 +38,7 @@ else
   echo "⚠️  Bazı adımlarda uyarı — detay yukarıda"
 fi
 echo ""
+echo "Agent (şimdi): bash scripts/kalan-isler-agent.sh"
+echo "P2 tam prep:   bash scripts/p2-prep-all.sh"
 echo "Cihaz (sonra): bash scripts/basla.sh"
 echo "Durum:         bash scripts/kalan-isler.sh"
