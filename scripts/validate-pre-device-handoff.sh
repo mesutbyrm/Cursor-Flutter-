@@ -41,6 +41,7 @@ else
 fi
 echo ""
 echo "Sonraki:"
+echo "  bash scripts/basla.sh"
 echo "  bash scripts/kalan-isler.sh"
 echo "  bash scripts/p0-go.sh"
 echo "  docs/RELEASE_USER_NEXT_STEPS.md"

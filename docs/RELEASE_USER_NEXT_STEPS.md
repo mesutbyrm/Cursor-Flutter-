@@ -10,6 +10,7 @@ Agent tarafı **tamamlandı**. Kalan iş yalnızca **cihaz kabul testleri** (siz
 ## Tek giriş
 
 ```bash
+bash scripts/basla.sh
 bash scripts/kalan-isler.sh
 bash scripts/agent-closure-status.sh          # aynı — canlı durum + yol haritası
 ```

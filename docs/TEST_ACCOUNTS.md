@@ -7,7 +7,7 @@
 **Son güncelleme:** 2026-09-07  
 **APK:** `1.0.371+409` (`apk-latest`)  
 **Release gate:** FINAL PASS — [Run 34146919509](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34146919509)  
-**Jeton:** ✅ ~99k · **Falcı:** host onaylı ✅ · **P0:** `bash scripts/p0-go.sh` · **Özet:** `bash scripts/kalan-isler.sh`
+**Jeton:** ✅ ~98k · **Falcı:** host onaylı ✅ · **P0:** `bash scripts/p0-go.sh` · **Özet:** `bash scripts/basla.sh`
 
 ---
 

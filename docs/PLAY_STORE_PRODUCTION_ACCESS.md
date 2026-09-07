@@ -212,7 +212,7 @@ Production blocker değil.
 9. Production AdMob App ID (şu an test ID manifest'te)
 10. App access test hesapları (şifreler yalnızca Play Console'a; source code'a konmaz):
     - HOST / FALCI: `cursor.host.1786235468@mailinator.com` (onaylı falcı ✅, Psychic P0 falcı telefonu)
-    - VIEWER / DANISAN: `cursor.test.1786235468@mailinator.com` (~99k jeton)
+    - VIEWER / DANISAN: `cursor.test.1786235468@mailinator.com` (~98k jeton)
 
 ### Play Console'dan doldurulacak alanlar
 

@@ -45,7 +45,7 @@ APK: https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/c
 
 **Önkoşul:** `bash scripts/p0-go.sh`
 
-- [x] Jeton OK (~99k) + falcı probe ✅ (`cursor.host.*` listede)
+- [x] Jeton OK (~98k) + falcı probe ✅ (`cursor.host.*` listede)
 - [ ] T0–T+60s: çift yönlü A/V, **T+5s donma yok**
 - [ ] WiFi ↔ mobil data — kontrollü reconnect
 - [ ] Oturum A→B→A — duplicate stream yok
