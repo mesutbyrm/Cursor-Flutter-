@@ -737,6 +737,11 @@ jobs:
         run: |
           set -eux
           mkdir -p docs
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git checkout main
+          git pull --rebase origin main
           {
             echo "# Son APK derlemesi"
             echo ""
@@ -754,12 +759,9 @@ jobs:
             echo ""
             echo "_Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._"
           } > docs/LATEST_APK_BUILD.md
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/LATEST_APK_BUILD.md
-          git diff --staged --quiet || git commit -m "chore(docs): APK derleme bildirimi ${{ steps.meta.outputs.version }}"
-          git pull --rebase origin main 2>/dev/null || git pull --no-rebase origin main -X ours || true
-          git push origin main 2>/dev/null || true
+          git diff --staged --quiet || git commit -m "chore(docs): APK derleme bildirimi ${{ steps.meta.outputs.version }} [skip ci]"
+          git push origin main
 
       - name: APK download HTTP + metadata doğrulama
         id: apk_http_verify
