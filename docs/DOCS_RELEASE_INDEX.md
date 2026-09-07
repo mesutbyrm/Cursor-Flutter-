@@ -44,6 +44,7 @@ bash scripts/agent-closure-status.sh      # agent kapalı + canlı durum
 bash scripts/list-production-tellers.sh   # üretim falcı listesi (8)
 bash scripts/on-p0-pass.sh                 # P0 PASS sonrası P1
 bash scripts/on-p1-pass.sh                 # P1 PASS sonrası özet
+bash scripts/on-release-ready-candidate.sh # P0+P1 sonrası RELEASE adayı
 bash scripts/on-p0-fail.sh                 # P0 FAIL hotfix kaydı
 bash scripts/record-user-test-result.sh p0 PASS  # sonuç kaydı
 bash scripts/release-remaining-status.sh   # P0-j/P0/P1/P2 canlı özet

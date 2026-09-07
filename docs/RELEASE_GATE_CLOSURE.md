@@ -41,6 +41,8 @@
 
 **RELEASE READY:** `NO` — otomatik kapılar PASS; Psychic P0 kabul kullanıcı testine bağlı.
 
+Agent kapalı özeti: [`AGENT_CLOSED.md`](AGENT_CLOSED.md)
+
 ## APK
 
 - **İndir:** https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk

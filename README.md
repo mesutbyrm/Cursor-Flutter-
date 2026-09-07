@@ -25,14 +25,17 @@ Kod hatası değilse, GitHub **faturalandırma / harcama limiti** yüzünden Act
 
 ## Kullanıcı testi (Psychic P0 — öncelik)
 
-Agent işi bitti. Jeton ✅ · **Onaylı falcı hesabı** gerekir (host listede değil):
+Agent **kapalı** — [`docs/AGENT_CLOSED.md`](docs/AGENT_CLOSED.md). Jeton ✅ · onaylı **falcı** gerekir:
 
 ```bash
-bash scripts/user-test-start.sh        # Tek menü girişi
-bash scripts/record-user-test-result.sh p0 PASS   # sonuç kaydı
+bash scripts/validate-pre-device-handoff.sh
+bash scripts/user-test-start.sh p0
+bash scripts/on-p0-pass.sh
+bash scripts/on-p1-pass.sh
+bash scripts/on-release-ready-candidate.sh   # P0+P1 sonrası
 ```
 
-Rehber: [`docs/PSYCHIC_P0_START.md`](docs/PSYCHIC_P0_START.md) · Falcı: [`docs/PSYCHIC_TELLER_STATUS.md`](docs/PSYCHIC_TELLER_STATUS.md)
+Rehber: [`docs/RELEASE_USER_NEXT_STEPS.md`](docs/RELEASE_USER_NEXT_STEPS.md)
 
 ## Hızlı başlangıç (geliştirici)
 

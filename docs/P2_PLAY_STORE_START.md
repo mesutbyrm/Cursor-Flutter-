@@ -32,4 +32,11 @@ Play Store production access — P0/P1 cihaz kabulünden **sonra**.
 - Play Store paketi: tarihsel doc — **release keystore + güncel AAB** gerekir
 - Agent: doc/backlog; Console işlemleri **kullanıcı**
 
-Takip: `bash scripts/release-remaining-status.sh`
+P0 PASS → P1 PASS sonrası:
+
+```bash
+bash scripts/on-release-ready-candidate.sh
+bash scripts/build-play-aab.sh   # keystore secret gerekir
+```
+
+Takip: `bash scripts/release-remaining-status.sh` · [`AGENT_CLOSED.md`](AGENT_CLOSED.md)

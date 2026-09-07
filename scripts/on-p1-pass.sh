@@ -16,5 +16,5 @@ echo "  P1 platform: PASS"
 echo ""
 echo "Agent'a bildirin: P0 PASS + P1 PASS — RELEASE READY adayı"
 echo ""
-echo "Sonraki (backlog): docs/P2_PLAY_STORE_START.md"
-bash "$ROOT/scripts/release-remaining-status.sh" 2>&1 | tail -8
+echo "Sonraki: bash scripts/on-release-ready-candidate.sh"
+echo "Detay: docs/P2_PLAY_STORE_START.md"

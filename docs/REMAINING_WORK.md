@@ -84,6 +84,11 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 
 ---
 
+## Oturum günlüğü (2026-09-07 — RELEASE adayı akışı)
+
+- `on-release-ready-candidate.sh` — P0+P1 sonrası RELEASE READY kontrol listesi
+- README, P2, RELEASE_GATE_CLOSURE, user-test-start güncellendi
+
 ## Oturum günlüğü (2026-09-07 — agent kapalı özeti)
 
 - `AGENT_CLOSED.md` — final agent durumu

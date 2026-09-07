@@ -88,7 +88,7 @@ Güncel envanter metni (dış kaynak): https://canlifal.com/canlifal-envanter-ra
 | Admin jeton | `bash scripts/admin-jeton-cheatsheet.sh` |
 | Derleme durumu | `bash scripts/print-build-status.sh` |
 
-Rehber: [`docs/PSYCHIC_P0_START.md`](docs/PSYCHIC_P0_START.md) · Falcı: [`docs/PSYCHIC_TELLER_STATUS.md`](docs/PSYCHIC_TELLER_STATUS.md) · Takip: [`docs/REMAINING_WORK.md`](docs/REMAINING_WORK.md) (Agent: **KAPALI**)
+Rehber: [`docs/PSYCHIC_P0_START.md`](docs/PSYCHIC_P0_START.md) · Falcı: [`docs/PSYCHIC_TELLER_STATUS.md`](docs/PSYCHIC_TELLER_STATUS.md) · Agent kapalı: [`docs/AGENT_CLOSED.md`](docs/AGENT_CLOSED.md) · Takip: [`docs/REMAINING_WORK.md`](docs/REMAINING_WORK.md)
 
 Kullanıcı **`Psychic P0 PASS`** yazana kadar `RELEASE READY: NO`. PASS → checklist güncelle; FAIL → freeze hotfix.
 
