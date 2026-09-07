@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/performance/list_perf.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
 import '../../../profile/presentation/widgets/jeton_store_widgets.dart';
@@ -302,7 +304,7 @@ class PremiumBalanceLines extends StatelessWidget {
   }
 }
 
-class PremiumTierCard extends StatelessWidget {
+class PremiumTierCard extends ConsumerWidget {
   const PremiumTierCard({
     super.key,
     required this.package,
@@ -322,7 +324,8 @@ class PremiumTierCard extends StatelessWidget {
       };
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final accent = accentFor(package.id);
     final active = package.isActive && (package.daysRemaining ?? 0) > 0;
     final btnLabel = active
@@ -377,7 +380,7 @@ class PremiumTierCard extends StatelessWidget {
             ),
             SizedBox(height: 10),
             Text(
-              '${package.priceJeton} Jeton',
+              '${package.priceJeton} $jetonLabel',
               style: TextStyle(
                 color: AppThemeColors.coinGold,
                 fontWeight: FontWeight.w900,

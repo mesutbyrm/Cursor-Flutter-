@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../../core/navigation/wallet_navigation.dart';
 import '../../../../../core/theme/app_theme_extensions.dart';
 import '../../../../../core/widgets/discover_tab_layout.dart';
@@ -45,11 +46,12 @@ class _WheelOfFortunePageState extends ConsumerState<WheelOfFortunePage>
 
   Future<void> _doSpin({required bool paid}) async {
     if (_spinning) return;
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     if (paid) {
       final balance = await ref.read(gameCenterJetonProvider.future);
       if (!mounted) return;
       if (balance < 10) {
-        showJetonAwareError(context, '10 jeton gerekli', ref: ref);
+        showJetonAwareError(context, '10 $jetonLabel gerekli', ref: ref);
         return;
       }
     } else if (_freeUsed) {
@@ -75,7 +77,7 @@ class _WheelOfFortunePageState extends ConsumerState<WheelOfFortunePage>
     final won = _prizes[index];
     setState(() {
       _spinning = false;
-      _result = won > 0 ? '$won Jeton kazandın!' : 'Bir dahaki sefere!';
+      _result = won > 0 ? '$won $jetonLabel kazandın!' : 'Bir dahaki sefere!';
     });
 
     await recordGameCenterResult(
@@ -92,6 +94,7 @@ class _WheelOfFortunePageState extends ConsumerState<WheelOfFortunePage>
 
   @override
   Widget build(BuildContext context) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     return DiscoverSubPage(
       title: 'Kader Çarkı',
       body: Center(
@@ -143,7 +146,7 @@ class _WheelOfFortunePageState extends ConsumerState<WheelOfFortunePage>
             const SizedBox(height: 8),
             FilledButton.tonal(
               onPressed: _spinning ? null : () => _doSpin(paid: true),
-              child: const Text('10 JETON İLE ÇEVİR'),
+              child: Text('10 ${jetonLabel.toUpperCase()} İLE ÇEVİR'),
             ),
           ],
         ),
@@ -553,10 +556,11 @@ class LiveQuizRoomPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     return _LiveRoomLauncher(
       title: 'Oda Bilgi Yarışması',
       gameId: 'quiz-1v1',
-      prizeLabel: '500 Jeton ödül',
+      prizeLabel: '500 $jetonLabel ödül',
     );
   }
 }
@@ -715,6 +719,7 @@ class _TreasureChestPageState extends ConsumerState<TreasureChestPage> {
 
   @override
   Widget build(BuildContext context) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     return DiscoverSubPage(
       title: 'Günlük Hazine Sandığı',
       body: Center(
@@ -728,7 +733,9 @@ class _TreasureChestPageState extends ConsumerState<TreasureChestPage> {
             ),
             const SizedBox(height: 20),
             Text(
-              _opened ? '$_reward Jeton kazandın!' : 'Sandığı aç ve ödülünü al',
+              _opened
+                  ? '$_reward $jetonLabel kazandın!'
+                  : 'Sandığı aç ve ödülünü al',
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 24),
@@ -755,10 +762,11 @@ class _LuckyDicePageState extends ConsumerState<LuckyDicePage> {
   int? _d2;
 
   Future<void> _roll() async {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final balance = await ref.read(gameCenterJetonProvider.future);
     if (!mounted) return;
     if (balance < 5) {
-      showJetonAwareError(context, '5 jeton gerekli', ref: ref);
+      showJetonAwareError(context, '5 $jetonLabel gerekli', ref: ref);
       return;
     }
     final a = 1 + Random().nextInt(6);
@@ -779,12 +787,13 @@ class _LuckyDicePageState extends ConsumerState<LuckyDicePage> {
     );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('+$win jeton (5 jeton harcandı)')),
+      SnackBar(content: Text('+$win $jetonLabel (5 $jetonLabel harcandı)')),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     return DiscoverSubPage(
       title: 'Şanslı Zar',
       body: Center(
@@ -802,7 +811,7 @@ class _LuckyDicePageState extends ConsumerState<LuckyDicePage> {
             const SizedBox(height: 24),
             FilledButton(
               onPressed: _roll,
-              child: const Text('Zar At (5 Jeton)'),
+              child: Text('Zar At (5 $jetonLabel)'),
             ),
           ],
         ),
