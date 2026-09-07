@@ -84,6 +84,11 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 
 ---
 
+## Oturum günlüğü (2026-09-07 — hızlı referans)
+
+- `USER_TEST_QUICK_REF.md` — 1 sayfa cihaz test özeti
+- RELEASE_CHECKLIST / user-handoff / user-test-start senkron
+
 ## Oturum günlüğü (2026-09-07 — RELEASE adayı akışı)
 
 - `on-release-ready-candidate.sh` — P0+P1 sonrası RELEASE READY kontrol listesi
