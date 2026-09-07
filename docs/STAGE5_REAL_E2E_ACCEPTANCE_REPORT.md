@@ -1,3 +1,5 @@
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Cihaz E2E bekleniyor — [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md)
+
 # Stage 5 — Real E2E Acceptance Report
 
 | Alan | Değer |

@@ -1,6 +1,8 @@
 # Canlifal Flutter — Faz Planı (Master Prompt)
 
-**Tarih:** 2026-08-18  
+> **Güncel (2026-09-07):** Faz 1–2 mobil fix main · Release gate **PASS** · Kalan: **cihaz testleri** (Psychic P0). [`REMAINING_WORK.md`](REMAINING_WORK.md)
+
+**Tarih (plan):** 2026-08-18  
 **Kural:** Bir faz **PASS** olmadan sonrakine geçilmez.  
 **Test:** Android gerçek cihaz zorunlu.
 

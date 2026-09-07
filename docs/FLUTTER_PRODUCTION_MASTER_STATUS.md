@@ -1,7 +1,8 @@
 # Flutter Production Master — Durum Matrisi
 
-> **Tarih:** 9 Ağustos 2026 (Stage 4 gate)  
-> **Sürüm:** `1.0.144+178`  
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate PASS · Psychic TRTC Faz 2 · SSE Faz 1 · Cihaz testi bekleniyor — [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md).
+
+> **Tarihsel kayıt (2026-08-09):** Stage 4 gate · **`1.0.144+178`**
 > **Tek kaynak:** `https://canlifal.com` + `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9  
 > **Üretim envanteri:** 692 handler / 440 benzersiz yol (ENDPOINTS.md)
 

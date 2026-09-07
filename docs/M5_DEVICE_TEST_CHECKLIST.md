@@ -1,7 +1,8 @@
 # M5 — Cihaz test kontrol listesi (!istek / müzik)
 
-**Tarih:** 2026-08-20  
-**APK:** `1.0.291+327` veya üzeri (`apk-latest`)  
+**Son güncelleme:** 2026-09-07  
+**APK:** `1.0.371+409` (`apk-latest`) — https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk  
+**Öncelik:** Psychic P0 önce — `bash scripts/psychic-p0-checklist.sh` · [`LIVE_PSYCHICS_REMAINING.md`](LIVE_PSYCHICS_REMAINING.md)  
 **Hazırlık:** `bash scripts/faz0-handoff.sh` veya `bash scripts/m5-device-prep.sh`
 
 ---

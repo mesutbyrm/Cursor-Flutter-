@@ -1,7 +1,9 @@
 # SOCIAL V2 — Aşama 9 Raporu
 
+> **Güncel APK:** `1.0.371+409` (`apk-latest`) · Release gate PASS · Cihaz testi: [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md)
+
 **Dal:** `cursor/social-v2-premium-5ac6`  
-**Sürüm:** `1.0.328+364`  
+**Sürüm (rapor):** `1.0.328+364`  
 **Tarih:** 2026-08-21
 
 Sosyal ana akış, Shorts, hikâyeler, takip, beğeni, yorum, paylaşım ve DM — mevcut backend API + SSE/HTTP mimarisine hizalandı. Socket.IO eklenmedi; yeni endpoint uydurulmadı.

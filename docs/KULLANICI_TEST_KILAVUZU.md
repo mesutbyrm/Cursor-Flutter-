@@ -1,6 +1,8 @@
 # Canlifal — Sizin İçin Basit Test Kılavuzu
 
-**Teknik bilgi gerekmez.** Aşağıdaki 3 adımı yapmanız yeterli; geri kalanını sistem otomatik test eder.
+**Sürüm:** `1.0.371+409` · **Son release gate:** [FINAL PASS](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34146919509)
+
+**Teknik bilgi gerekmez.** Önce Psychic TRTC (2 telefon), sonra diğer testler.
 
 ---
 
@@ -19,9 +21,21 @@
 
 ---
 
-## Adım 3 — Telefon testi (sonraki iş — bilgisayar gerekir)
+## Adım 3 — Psychic TRTC (öncelik — 2 telefon)
 
-Ses, mikrofon ve kamera testleri için **bilgisayar + USB kablo + Android telefon** gerekir. Şimdilik atlanabilir; API tarafı hazır.
+Canlı falcı görüntülü görüşme — **T+5 saniyede donma olmamalı**.
+
+1. APK'yı **iki telefona** yükleyin (danışan + falcı hesapları).
+2. Terminalde checklist: `bash scripts/psychic-p0-checklist.sh`
+3. Detay: [`LIVE_PSYCHICS_REMAINING.md`](LIVE_PSYCHICS_REMAINING.md)
+
+Sonuç: **Psychic P0 PASS** veya **FAIL** yazın.
+
+---
+
+## Adım 4 — Diğer telefon testleri (sonra)
+
+Sesli oda, müzik, PK vb. — [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md) P1 bölümü.
 
 ---
 
@@ -48,8 +62,8 @@ Jeton: her hesapta **~5000** (hediye ve müzik testleri için).
 | TRTC token (sunucu) | ✅ Otomatik geçti | — |
 | Gift SSE olayı | ✅ Otomatik geçti | — |
 | **Canlı yayın açma** | ✅ Otomatik geçti | Host onaylandı |
-| Falcı isteği kabul | ❌ Bekliyor | Falcı hesabı secret (isteğe bağlı) |
-| Ses / kamera / TRTC oda | ⏳ Sonraki iş | Bilgisayar + telefon (şimdilik atlandı) |
+| **Psychic TRTC 1:1 (T+5s)** | ⏳ **Sizin testiniz** | 2 telefon — `psychic-p0-checklist.sh` |
+| Ses / kamera / sesli oda | ⏳ Sonra | [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md) |
 
 ---
 

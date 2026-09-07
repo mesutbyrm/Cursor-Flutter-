@@ -1,7 +1,9 @@
 # GIFT + PK + MUSIC V2 — Aşama 8 Raporu
 
+> **Güncel APK:** `1.0.371+409` · Release gate PASS
+
 **Dal:** `cursor/gift-pk-music-v2-premium-5ac6`  
-**Sürüm:** `1.0.327+363`  
+**Sürüm (rapor):** `1.0.327+363`  
 **Tarih:** 2026-08-21
 
 Bu aşama; hediye, PK, müzik/!istek ve oda içi etkileşim akışlarını mevcut backend API + SSE mimarisine hizalar. Tencent RTC, Agora ve Socket.IO eklenmedi; yeni endpoint uydurulmadı.

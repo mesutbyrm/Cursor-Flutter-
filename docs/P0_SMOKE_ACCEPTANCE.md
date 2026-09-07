@@ -1,6 +1,8 @@
 # Acceptance Test Raporu
 
-| Alan | Değer |
+> **Güncel (2026-09-07):** Release gate script **PASS** · Psychic TRTC cihaz testi ayrı — `bash scripts/psychic-p0-checklist.sh`
+
+| Alan | Değer (tarihsel run) |
 |------|--------|
 | Tarih | 2026-08-09 10:48:47 UTC |
 | Run | local-1786272503 |

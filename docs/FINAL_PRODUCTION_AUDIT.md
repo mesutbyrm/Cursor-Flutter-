@@ -1,6 +1,8 @@
 # Canlifal — Final Production Audit (Aşama 12)
 
-**Sürüm:** 1.0.331+367  
+> **Güncel (2026-09-07):** Sürüm **`1.0.371+409`** · Faz 1 SSE + Faz 2 Psychic TRTC fix main'de · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz). Canlı: [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md), [`RELEASE_GATE_CLOSURE.md`](RELEASE_GATE_CLOSURE.md).
+
+**Sürüm (bu rapor):** 1.0.331+367  
 **Dal:** `cursor/final-production-audit-5ac6`  
 **Tarih:** 2026-08-21  
 **Kapsam:** Performance · Memory · API · Real-time · Multi-device readiness

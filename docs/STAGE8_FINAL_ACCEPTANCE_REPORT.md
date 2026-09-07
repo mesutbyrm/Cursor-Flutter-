@@ -1,6 +1,8 @@
 # FINAL CANLIFAL FLUTTER ACCEPTANCE REPORT — Aşama 8
 
-| Alan | Değer |
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Otomatik release **PASS** · Stage 8 cihaz maddeleri + **Psychic P0** hâlâ manuel. [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md)
+
+| Alan | Değer (tarihsel) |
 |------|--------|
 | Tarih | 2026-08-09 UTC |
 | Sürüm | 1.0.144+178 |

@@ -10,7 +10,15 @@
 
 ---
 
-## Release durumu: ❌ BLOKE
+## Release durumu: ⏳ CİHAZ TESTİ BEKLİYOR
+
+Otomatik CI/release gate **PASS** (`1.0.371+409`). Production işareti için Psychic P0 2-cihaz kabul gerekir.
+
+Canlı checklist: [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md) · [`RELEASE_GATE_CLOSURE.md`](RELEASE_GATE_CLOSURE.md)
+
+---
+
+## Release durumu (tarihsel — 2026-08-04): ❌ BLOKE
 
 APK ve App Bundle **bilinçli olarak derlenmedi**. Kullanıcı talimatı: tüm audit raporları ve parity tamamlanmadan release yok.
 

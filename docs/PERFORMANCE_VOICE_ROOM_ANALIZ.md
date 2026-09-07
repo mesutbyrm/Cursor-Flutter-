@@ -226,7 +226,7 @@ VoiceRoomRtcPage (ince kabuk)
 | `flutter analyze` | 0 error | **Pass** (408 info/warning, 0 error) |
 | `presence_canonical_test` | sticky speaking yok | **Pass** (8 test) |
 | `flutter test test/features/voice_hub/` | pass | **115 pass** (`pk_invite_page` `unawaited` import düzeltildi) |
-| Manuel TEST 1–9 | Kullanıcı cihazı | APK `1.0.354+392` ile doğrulanmalı |
+| Manuel TEST 1–9 | Kullanıcı cihazı | APK `1.0.371+409` ile doğrulanmalı |
 
 ### Ölçüm notu (Cloud Agent)
 

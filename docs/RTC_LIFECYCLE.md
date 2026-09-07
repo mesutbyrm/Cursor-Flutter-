@@ -1,4 +1,6 @@
-# Tencent RTC — singleton ve imha denetimi
+# Tencent RTC — singleton ve imza denetimi
+
+> **Güncel (2026-09-07):** Psychic **`1.0.371+409`** — yalnızca `POST /api/trtc/token` + paylaşımlı `TrtcRoomManager`; live join-room/heartbeat yok. [`LIVE_PSYCHICS_REMAINING.md`](LIVE_PSYCHICS_REMAINING.md)
 
 ## Motor örnekleri
 

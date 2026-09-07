@@ -1,5 +1,7 @@
 # LIVE + VOICE V2
 
+> **Güncel:** Faz 1 SSE SoT main (`1.0.370+408`) · APK `1.0.371+409` · Cihaz testi [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md)
+
 Canlifal Flutter — Canlı Yayın + Sesli Sohbet Odaları (Aşama 7)
 
 ## Tencent RTC

@@ -1,28 +1,22 @@
 # Faz master takip — Canlifal Flutter
 
-**Son güncelleme:** 2026-08-20 11:05 UTC — APK `1.0.291+327` + API voice seat probe  
-**Faz testleri:** 15 PASS, 0 FAIL (`docs/PHASE_TEST_REPORT.md`)
+**Son güncelleme:** 2026-09-07 — APK **`1.0.371+409`** · Release gate **FINAL PASS** ([Run 34146919509](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34146919509))  
+**Canlı checklist:** [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md) · [`REMAINING_WORK.md`](REMAINING_WORK.md) · Psychic P0: `bash scripts/psychic-p0-checklist.sh`  
+**Faz testleri:** CI 1081+ pass (`docs/PHASE_TEST_REPORT.md` tarihsel)
 
 ---
 
-## Özet tablo
+## Özet tablo (2026-09-07)
 
 | Faz | Ad | Otomatik | Manuel bloker | Durum |
 |-----|-----|----------|---------------|--------|
-| **0** | Audit | ✅ A1–A8, M1–M12, push/PK teardown | M5 cihaz, M7 jeton | 🔄 INCOMPLETE |
-| **1** | Core + Auth | ✅ **AUTOMATED_PASS** | God-file refactor | ✅ otomatik |
-| **2** | Profile | ✅ **AUTOMATED_PASS** | Skeleton UI | ✅ otomatik |
-| **3** | Social | ✅ **AUTOMATED_PASS** | Story repo | ✅ otomatik |
-| **4** | Fortune | ✅ **AUTOMATED_PASS** | SSE body | ✅ otomatik |
-| **5** | Live | ✅ **AUTOMATED_PASS** | Comments uç | ✅ otomatik |
-| **6** | Voice | ✅ **AUTOMATED_PASS** | M5 cihaz | ✅ otomatik |
-| **7** | Gifts | ✅ **AUTOMATED_PASS** | gifts/send | ✅ otomatik |
-| **8** | Shorts | ✅ **AUTOMATED_PASS** | Pagination prod | ✅ otomatik |
-| **9** | Messages | ✅ **AUTOMATED_PASS** | SSE/request UI | ✅ otomatik |
-| **10** | Performance | ✅ **AUTOMATED_PASS** | Cihaz profil (opsiyonel) | ✅ otomatik |
-| **11** | Security | ✅ **AUTOMATED_PASS** | — | ✅ otomatik |
-| **12** | E2E QA | ✅ otomatik kapılar PASS | 25 senaryo cihaz | 🔄 INCOMPLETE |
-| **13** | Release | ✅ CI APK | Signing | 🔄 HAZIRLIK |
+| **0** | Audit | ✅ A1–A8, M1–M12 | M5 cihaz (müzik) | 🔄 cihaz testi |
+| **1** | Core + Auth | ✅ | — | ✅ SSE SoT (1.0.370) |
+| **2–11** | Modüller | ✅ otomatik | — | ✅ |
+| **12** | E2E QA | ✅ CI kapıları | 25 senaryo + **Psychic P0** | 🔄 **P0 OPEN** |
+| **13** | Release | ✅ **FINAL PASS** | Psychic 2-cihaz | 🔄 **RELEASE READY: NO** |
+
+**Agent işleri tamam.** Kalan: cihaz kabul testleri (Psychic öncelik).
 
 ---
 

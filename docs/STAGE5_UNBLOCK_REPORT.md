@@ -1,3 +1,5 @@
+> **Güncel APK:** `1.0.371+409` · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 # Acceptance Test Raporu
 
 | Alan | Değer |

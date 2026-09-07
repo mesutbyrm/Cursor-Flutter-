@@ -1,7 +1,7 @@
 # Sesli Sohbet Odası — Performans Kontrol Listesi
 
-**Sürüm:** `1.0.354+392`  
-**Tarih:** 2026-08-24  
+**Sürüm (test):** `1.0.371+409` (`apk-latest`)  
+**Son güncelleme:** 2026-09-07  
 **Detay rapor:** [`PERFORMANCE_VOICE_ROOM_ANALIZ.md`](PERFORMANCE_VOICE_ROOM_ANALIZ.md)
 
 ---

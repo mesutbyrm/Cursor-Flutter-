@@ -1,6 +1,8 @@
 # CANLIFAL MASTER ACCEPTANCE REPORT
 
-| Alan | Değer |
+> **Güncel (2026-09-07):** **`1.0.371+409`** · CI/release otomatik **PASS** · Real device **INCOMPLETE** — Psychic P0 öncelik. [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md)
+
+| Alan | Değer (tarihsel) |
 |------|--------|
 | Tarih (UTC) | 2026-08-10 12:20 |
 | Sürüm | `1.0.146+180` |

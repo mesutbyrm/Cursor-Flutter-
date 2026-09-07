@@ -1,5 +1,7 @@
 # PROFILE V2
 
+> **Güncel APK:** `1.0.371+409` · Release gate PASS
+
 Canlifal Flutter — Profil + Cüzdan + Jeton + Üyelik + Kullanıcı Hesabı (Aşama 6)
 
 ## Kullanılan API'ler

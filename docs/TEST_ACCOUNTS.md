@@ -1,8 +1,9 @@
 # Test hesapları — Flutter QA / acceptance
 
-**Tarih:** 2026-08-19  
-**APK:** `1.0.287+323` (`apk-latest`)  
-**Jeton:** `bash scripts/admin-jeton-cheatsheet.sh` · **Jeton sonrası:** `bash scripts/after-admin-jeton.sh` · **M5:** `docs/M5_DEVICE_TEST_CHECKLIST.md`
+**Son güncelleme:** 2026-09-07  
+**APK:** `1.0.371+409` (`apk-latest`)  
+**Release gate:** FINAL PASS — [Run 34146919509](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34146919509)  
+**Jeton:** `bash scripts/admin-jeton-cheatsheet.sh` · **M5:** `docs/M5_DEVICE_TEST_CHECKLIST.md` · **Psychic P0:** `bash scripts/psychic-p0-checklist.sh`
 
 ---
 
@@ -50,7 +51,7 @@ Kaynak: `docs/STAGE5_REAL_E2E_ACCEPTANCE_REPORT.md`
 | Tam oda id (SSE) | `cmoohrbrx00a4nt08zlkdjyil` |
 | Slug (API listesi) | `canlfal-` |
 | Komut | `!istek Sanatçı - Şarkı` |
-| APK | `1.0.287+323` veya üzeri (`apk-latest`) |
+| APK | `1.0.371+409` veya üzeri (`apk-latest`) |
 | Hesap | `ACCEPTANCE_USER_*` — **≥10 jeton** gerekli (credits≠jeton; test hesabı credits≈140+, jeton=0) |
 | Oda sahibi (üretim) | `admin` (`cmokscu2y0000pnko11nctqw5`) |
 

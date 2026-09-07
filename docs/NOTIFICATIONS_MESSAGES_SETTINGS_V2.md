@@ -1,6 +1,8 @@
 # Bildirimler + Mesajlar + Ayarlar + Navigasyon V2
 
-Sürüm: **1.0.330+366**  
+> **Güncel APK:** `1.0.371+409` · Release gate PASS
+
+Sürüm (rapor): **1.0.330+366**  
 Dal: `cursor/notifications-messages-settings-v2-5ac6`
 
 ## NOTIFICATIONS

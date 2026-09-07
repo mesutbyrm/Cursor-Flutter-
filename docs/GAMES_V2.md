@@ -1,6 +1,8 @@
 # Canlifal — Oyun Merkezi + Tüm Oyunlar V2
 
-**Sürüm:** 1.0.329+365  
+> **Güncel APK:** `1.0.371+409` · Release gate PASS
+
+**Sürüm (rapor):** 1.0.329+365  
 **Dal:** `cursor/games-v2-premium-5ac6`  
 **Tarih:** 2026-08-21
 

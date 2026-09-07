@@ -1,6 +1,7 @@
 # M5 / M7 — Jeton engeli ve çözüm
 
-**Durum:** Jeton yüklü (≈9600); M7 + API smoke ✅ — `ACCEPTANCE_ADMIN_*` atlandı (jeton zaten var). M5 cihaz bekliyor.
+**Son güncelleme:** 2026-09-07 · APK `1.0.371+409`  
+**Durum:** Jeton yüklü (≈9600); M7 + API smoke ✅. **M5 cihaz** + **Psychic P0** kullanıcı testinde.
 
 ---
 

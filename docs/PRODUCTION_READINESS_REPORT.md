@@ -1,6 +1,8 @@
 # Production Readiness Report — Canlifal Flutter
 
-**Date:** 2026-07-11  
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Otomatik release gate **PASS** · Manuel Psychic P0 bekleniyor — [`RELEASE_GATE_CLOSURE.md`](RELEASE_GATE_CLOSURE.md).
+
+**Date (tarihsel):** 2026-07-11  
 **Branch:** `cursor/production-ready-repair-9aef`  
 **Version:** `1.0.11+15`  
 **Analyzer:** `flutter analyze` → **0 errors, 0 warnings** (119 info-level lints remain)
