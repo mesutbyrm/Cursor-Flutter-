@@ -79,6 +79,12 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 
 ---
 
+## Oturum günlüğü (2026-09-07 devam 7)
+
+- `docs/PSYCHIC_P0_START.md` — jeton → APK → P0 tek sayfa rehber
+- `after-admin-jeton.sh`: varsayılan min 100 jeton, Psychic P0 yönlendirme
+- `user-handoff.sh`, DOCS_RELEASE_INDEX, REMAINING_WORK jeton satırı
+
 ## Oturum günlüğü (2026-09-07 devam 6)
 
 - Jeton probe: danışan jeton=0 — Psychic P0 bloker (credits≠jeton)
