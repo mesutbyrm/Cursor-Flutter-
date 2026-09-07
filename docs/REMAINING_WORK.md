@@ -84,6 +84,12 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 
 ---
 
+## Oturum günlüğü (2026-09-07 — KALAN_ISLER.md + menü sadeleştirme)
+
+- docs/KALAN_ISLER.md — statik kalan işler özeti
+- user-test-start menü: kalan-isler/p0-go öncelik, numaralar sadeleştirildi
+- print-kalan-isler.sh · USER_TEST_QUICK_REF güncellendi
+
 ## Oturum günlüğü (2026-09-07 — rehber senkron kalan-isler)
 
 - PSYCHIC_P0_START, faz0-handoff, user-handoff, on-p1-pass

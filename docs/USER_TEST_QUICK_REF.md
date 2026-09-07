@@ -19,13 +19,12 @@ Host = onaylı falcı (`Cursor Host Test`). Doğrula: `bash scripts/probe-psychi
 ## Komut sırası
 
 ```bash
-bash scripts/p0-go.sh                         # 0 · GO (jeton + falcı + hesaplar)
-bash scripts/user-test-start.sh              # menü
-bash scripts/validate-pre-device-handoff.sh  # 1 · API doğrulama
-bash scripts/user-test-start.sh p0           # 2 · Psychic P0 (2 telefon)
-bash scripts/on-p0-pass.sh                 # 3 · PASS → P1
-bash scripts/on-p1-pass.sh                 # 4 · P1 PASS
-bash scripts/on-release-ready-candidate.sh   # 5 · RELEASE adayı
+bash scripts/kalan-isler.sh                  # 0 · tüm kalan işler
+bash scripts/p0-go.sh                         # GO (jeton + falcı + hesaplar)
+bash scripts/user-test-start.sh p0           # Psychic P0 (2 telefon)
+bash scripts/on-p0-pass.sh                 # PASS → P1
+bash scripts/on-p1-pass.sh                 # P1 PASS
+bash scripts/on-release-ready-candidate.sh   # RELEASE adayı
 ```
 
 FAIL: `bash scripts/on-p0-fail.sh "T+5s donma"`

@@ -18,30 +18,30 @@ show_menu() {
 
 APK: ${APK_URL}
 
-Sıra: P0-j (jeton) ✅ → P0 Psychic → P1 platform → P2 Play Store
+Sıra: P0-j ✅ → **P0 OPEN** → P1 → P2
+
+★ ÖNERİLEN (başla):
+  bash scripts/kalan-isler.sh                 # kalan işler + canlı durum
+  bash scripts/p0-go.sh                       # P0 GO (jeton + falcı + hesaplar)
 
 Komutlar:
-  1) bash scripts/validate-pre-device-handoff.sh  # otomatik doğrulama (API+jeton)
-  2) bash scripts/release-remaining-status.sh   # canlı durum
-  3) bash scripts/psychic-p0-prereqs.sh         # jeton + falcı uyarısı
-  4) bash scripts/list-production-tellers.sh    # üretim falcı listesi
-  4b) bash scripts/open-approved-teller.sh      # host → onaylı falcı aç/doğrula
-  5) bash scripts/print-p0-live-status.sh     # jeton + falcı (tek ekran)
-  5c) bash scripts/p0-go.sh                    # P0 GO (durum + hesaplar + komutlar)
-  5b) bash scripts/user-test-start.sh ready   # tam pre-device doğrulama
-  6) bash scripts/print-full-user-checklist.sh  # P0+P1 birleşik yazdır
-  7) bash scripts/psychic-p0-all.sh             # P0 akışı
-  8) bash scripts/p1-platform-checklist.sh    # P0 PASS sonrası
-  8b) bash scripts/p1-go.sh                   # P1 GO ekranı
-  9) bash scripts/on-p0-pass.sh              # P0 PASS → P1 checklist
- 10) bash scripts/on-p0-fail.sh "not"        # P0 FAIL → hotfix kaydı
- 11) bash scripts/on-p1-pass.sh              # P1 PASS → RELEASE adayı
- 12) bash scripts/on-release-ready-candidate.sh  # P0+P1 sonrası
-  13) bash scripts/run-psychic-unit-tests.sh     # Flutter unit (cihaz yok)
- 14) bash scripts/p2-play-store-prep.sh          # P2 backlog özeti
- 15) bash scripts/kalan-isler.sh                 # kalan işler yol haritası
+  0) bash scripts/kalan-isler.sh              # yol haritası (★)
+  1) bash scripts/p0-go.sh                    # P0 GO (★)
+  2) bash scripts/validate-pre-device-handoff.sh
+  3) bash scripts/user-test-start.sh p0       # P0 checklist
+  4) bash scripts/on-p0-pass.sh | on-p0-fail.sh
+  5) bash scripts/p1-go.sh                    # P0 PASS sonrası
+  6) bash scripts/p1-platform-checklist.sh
+  7) bash scripts/on-p1-pass.sh
+  8) bash scripts/p2-go.sh                    # Play Store backlog
+  9) bash scripts/on-release-ready-candidate.sh
+ 10) bash scripts/psychic-p0-prereqs.sh
+ 11) bash scripts/probe-psychic-teller.sh
+ 12) bash scripts/open-approved-teller.sh
+ 13) bash scripts/run-non-device-release-prep.sh
 
 Rehberler:
+  docs/KALAN_ISLER.md               ← kalan işler (statik özet)
   docs/USER_TEST_QUICK_REF.md       ← 1 sayfa özet
   docs/RELEASE_USER_NEXT_STEPS.md   ← agent kapalı, tek sayfa
   docs/PSYCHIC_P0_START.md

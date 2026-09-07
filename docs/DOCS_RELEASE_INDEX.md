@@ -16,6 +16,7 @@
 | [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md) | Production checklist, P0/P1 maddeler |
 | [`RELEASE_GATE_CLOSURE.md`](RELEASE_GATE_CLOSURE.md) | Otomatik kapı özeti |
 | [`REMAINING_WORK.md`](REMAINING_WORK.md) | Agent vs kullanıcı kalan iş |
+| [`KALAN_ISLER.md`](KALAN_ISLER.md) | Kalan işler statik özet (1 sayfa) |
 | [`LIVE_PSYCHICS_REMAINING.md`](LIVE_PSYCHICS_REMAINING.md) | Psychic P0 freeze + E2E |
 | [`USER_TEST_QUICK_REF.md`](USER_TEST_QUICK_REF.md) | 1 sayfa cihaz test özeti |
 | [`USER_DEVICE_TEST_LOG.md`](USER_DEVICE_TEST_LOG.md) | P0/P1 sonuç günlüğü |
