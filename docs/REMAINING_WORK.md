@@ -78,6 +78,13 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 
 ---
 
+## Oturum günlüğü (2026-09-07 devam 4)
+
+- README: eski `1.0.93+95` → `1.0.371+409`; kullanıcı test bölümü
+- `print-live-psychics-e2e-checklist.sh`: P0 önceliği + sürüm
+- API acceptance gate 3–8: 3 PASS, 0 FAIL (local preflight)
+- `docs/ACCEPTANCE_TEST_REPORT.md` güncellendi
+
 ## Oturum günlüğü (2026-09-07 devam 3)
 
 - `scripts/user-handoff.sh` — kullanıcı devir özeti (Psychic P0, hesaplar, APK)
