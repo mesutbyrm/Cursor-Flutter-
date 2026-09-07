@@ -1,9 +1,9 @@
-# Agent işi — kapalı (2026-09-07)
+# Agent durumu — paralel mod (2026-09-07)
 
 
-> **Sürüm:** `1.0.371+409` · Release gate **FINAL PASS** · **RELEASE READY: NO** · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+> **Sürüm:** `1.0.371+409` · Release gate **FINAL PASS** · **RELEASE READY: NO**
 
-Mobil kod, CI release gate ve otomatik API doğrulama **tamamlandı**. Cihaz testleri **kullanıcıda** (P0 → P1 → P2). Agent **yeni commit beklemez** — hotfix yalnızca **Psychic P0 FAIL** ile.
+Mobil kod, CI ve API otomasyon **tamam**. **Cihaz testi sonucu sonra** — agent **P1/P2 hazırlığına** devam eder (`bash scripts/kalan-isler-agent.sh`). Hotfix yalnızca **Psychic P0 FAIL** ile.
 
 ---
 
@@ -26,6 +26,7 @@ Mobil kod, CI release gate ve otomatik API doğrulama **tamamlandı**. Cihaz tes
 | Non-device prep (tek komut) | ✅ `run-non-device-release-prep.sh` |
 | P0 GO ekranı | ✅ `p0-go.sh` |
 | P1/P2 GO + yol haritası | ✅ `p1-go.sh` · `p2-go.sh` · `kalan-isler.sh` |
+| P2 agent prep | ✅ `p2-prep-all.sh` · `build-aab.yml` · Play Console metinleri |
 | Kalan işler doc | ✅ `docs/KALAN_ISLER.md` |
 
 ---
@@ -65,7 +66,5 @@ veya `bash scripts/on-p0-fail.sh "not"`
 P0+P1 PASS sonrası: `bash scripts/on-release-ready-candidate.sh`
 
 ---
-
-_Agent oturumu kapandı — yeni mobil özellik veya P0 FAIL hotfix dışında commit beklenmez._
 
 _Agent oturumu: cihaz sonucu **sonra** — paralel P1/P2 hazırlık **devam** (`bash scripts/kalan-isler-agent.sh`)._

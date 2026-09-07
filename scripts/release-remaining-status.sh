@@ -106,5 +106,5 @@ if [[ "$P0J" == "OPEN" ]]; then
 else
   echo "  Agent (şimdi): bash scripts/kalan-isler-agent.sh"
   echo "  Cihaz (sonra): bash scripts/cihaz-sonra.sh"
-  echo "  P2 hazırlık:   bash scripts/p2-prep-now.sh"
+  echo "  P2 hazırlık:   bash scripts/p2-prep-all.sh"
 fi

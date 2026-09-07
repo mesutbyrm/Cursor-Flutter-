@@ -72,15 +72,17 @@ Güncel envanter metni (dış kaynak): https://canlifal.com/canlifal-envanter-ra
 - Emülatör yok — doğrulama: `cd mobile && flutter build apk --debug`
 - İlk Gradle derlemesi NDK/platform indirebilir (~3 dk)
 
-### Kullanıcı testi (agent KAPALI — 2026-09-07)
+### Kullanıcı testi (paralel mod — 2026-09-07)
 
-**Agent işi bitti.** Mobil kod/CI/docs değiştirme — yalnızca **`Psychic P0 FAIL`** sonrası hotfix.
+**Cihaz testi sonucu sonra** — agent **P1/P2 hazırlığına** devam eder. Mobil kod değiştirme yalnızca **`Psychic P0 FAIL`** hotfix ile.
 
 | Görev | Komut |
 |-------|--------|
 | **Agent paralel (şimdi)** | `bash scripts/kalan-isler-agent.sh` |
 | **Cihaz (sonra)** | `bash scripts/cihaz-sonra.sh` |
-| **P2 Play Store prep** | `bash scripts/p2-prep-now.sh` |
+| **P2 Play Store prep (tam)** | `bash scripts/p2-prep-all.sh` |
+| **P2 Play Store özet** | `bash scripts/p2-prep-now.sh` |
+| **Play FGS metni** | `bash scripts/print-play-foreground-service-declaration.sh` |
 | **AAB readiness** | `bash scripts/play-aab-readiness.sh` |
 | **Play Console checklist** | `bash scripts/play-store-checklist.sh` |
 | **Keystore secret rehberi** | `bash scripts/play-keystore-secrets-cheatsheet.sh` |

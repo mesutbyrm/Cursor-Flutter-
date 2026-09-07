@@ -89,7 +89,7 @@ echo "  ✅ Birleşik kullanıcı sheet + VIP giriş P2 — 1.0.291+327"
 echo "  ✅ Müzik arama CI retry (502) — scripts"
 echo "  ✅ API müzik 6/6 + API voice seat + voice_hub + 15 faz test"
 echo ""
-echo "  📋 Agent kapalı — cihaz: bash scripts/user-test-start.sh"
+echo "  📋 Paralel mod — agent: bash scripts/kalan-isler-agent.sh · cihaz: bash scripts/cihaz-sonra.sh"
 echo ""
 
 if [[ "$BLOCKERS" -gt 0 ]]; then

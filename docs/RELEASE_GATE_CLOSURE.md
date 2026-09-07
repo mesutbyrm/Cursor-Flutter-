@@ -42,7 +42,7 @@
 
 **RELEASE READY:** `NO` — otomatik kapılar PASS; Psychic P0 kabul kullanıcı testine bağlı.
 
-Agent kapalı özeti: [`AGENT_CLOSED.md`](AGENT_CLOSED.md)
+Agent paralel mod özeti: [`AGENT_CLOSED.md`](AGENT_CLOSED.md)
 
 ## APK
 

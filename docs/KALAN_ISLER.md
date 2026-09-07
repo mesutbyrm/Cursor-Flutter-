@@ -23,7 +23,7 @@ Agent tarafı **tamam** (kod, CI, API, falcı onayı). **Cihaz testi sonuçları
 | P0-j | Danışan jeton | ✅ ~98k | — |
 | **P0** | Psychic TRTC, 2 telefon | ⏸ **sonra** | `bash scripts/cihaz-sonra.sh` |
 | P1 | Platform, 2 telefon | ⏸ sonuç sonra | `bash scripts/p1-prep-now.sh` |
-| P2 | Play Store / AAB | ▶ agent prep | `bash scripts/p2-prep-now.sh` |
+| P2 | Play Store / AAB | ▶ agent prep | `bash scripts/p2-prep-all.sh` |
 
 ---
 
@@ -44,11 +44,13 @@ APK: https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/c
 bash scripts/kalan-isler-agent.sh   # agent paralel (şimdi)
 bash scripts/cihaz-sonra.sh         # cihaz (sonra)
 bash scripts/kalan-isler.sh         # durum tablosu
-bash scripts/p2-prep-now.sh         # Play Store hazırlık
+bash scripts/p2-prep-all.sh         # Play Store hazırlık (tam)
+bash scripts/p2-prep-now.sh         # Play Store özet
 bash scripts/play-aab-readiness.sh  # AAB öncesi
 bash scripts/play-store-checklist.sh # Console checklist
 bash scripts/play-keystore-secrets-cheatsheet.sh  # GitHub keystore
 bash scripts/print-play-console-app-access.sh   # App access metni
+bash scripts/print-play-foreground-service-declaration.sh  # FGS metni
 bash scripts/p1-prep-now.sh         # P1 checklist (ön)
 bash scripts/basla.sh               # canlı durum
 ```

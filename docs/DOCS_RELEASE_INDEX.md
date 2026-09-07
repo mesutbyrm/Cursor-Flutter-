@@ -20,8 +20,8 @@
 | [`LIVE_PSYCHICS_REMAINING.md`](LIVE_PSYCHICS_REMAINING.md) | Psychic P0 freeze + E2E |
 | [`USER_TEST_QUICK_REF.md`](USER_TEST_QUICK_REF.md) | 1 sayfa cihaz test özeti |
 | [`USER_DEVICE_TEST_LOG.md`](USER_DEVICE_TEST_LOG.md) | P0/P1 sonuç günlüğü |
-| [`AGENT_CLOSED.md`](AGENT_CLOSED.md) | Agent kapalı — özet durum |
-| [`RELEASE_USER_NEXT_STEPS.md`](RELEASE_USER_NEXT_STEPS.md) | **Agent kapalı — kullanıcı tek sayfa rehber** |
+| [`AGENT_CLOSED.md`](AGENT_CLOSED.md) | Agent paralel mod — özet durum |
+| [`RELEASE_USER_NEXT_STEPS.md`](RELEASE_USER_NEXT_STEPS.md) | Kullanıcı tek sayfa rehber (cihaz sonra + agent P2) |
 | [`PSYCHIC_P0_START.md`](PSYCHIC_P0_START.md) | **2 telefon hızlı başlangıç (jeton → P0)** |
 | [`PSYCHIC_TELLER_STATUS.md`](PSYCHIC_TELLER_STATUS.md) | Falcı probe — host onaylı (`Cursor Host Test`) |
 | [`P1_DEVICE_START.md`](P1_DEVICE_START.md) | P0 sonrası genel platform 2-cihaz |
@@ -49,14 +49,16 @@ bash scripts/print-full-user-checklist.sh  # P0+P1 birleşik yazdır
 bash scripts/print-user-test-quick-ref.sh    # 1 sayfa terminal özeti
 bash scripts/print-p0-live-status.sh       # jeton + falcı tek ekran
 bash scripts/validate-pre-device-handoff.sh  # cihaz öncesi API+jeton doğrulama
-bash scripts/agent-closure-status.sh      # agent kapalı + canlı durum
+bash scripts/agent-closure-status.sh      # agent paralel mod + canlı durum
 bash scripts/user-test-start.sh ready         # pre-device doğrulama (validate)
 bash scripts/basla.sh                       # tek komut başlangıç
 bash scripts/kalan-isler-agent.sh           # agent paralel (cihaz sonra)
 bash scripts/cihaz-sonra.sh                   # cihaz testi sonraya
-bash scripts/p2-prep-now.sh                   # Play Store hazırlık
+bash scripts/p2-prep-all.sh                   # Play Store hazırlık (tam)
+bash scripts/p2-prep-now.sh                   # Play Store özet
 bash scripts/play-aab-readiness.sh            # AAB öncesi kontrol
 bash scripts/play-store-checklist.sh          # Console checklist
+bash scripts/print-play-foreground-service-declaration.sh  # FGS metni
 bash scripts/p1-prep-now.sh                   # P1 checklist ön
 bash scripts/kalan-isler.sh                 # kalan işler + yol haritası
 bash scripts/p0-go.sh                       # P0 GO ekranı

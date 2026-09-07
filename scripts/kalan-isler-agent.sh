@@ -25,8 +25,7 @@ run() {
 run "Canlı API + jeton + falcı" "bash '$ROOT/scripts/psychic-p0-prereqs.sh' 2>&1 | tail -8"
 run "API otomasyon özeti" "bash '$ROOT/scripts/run-api-automation-summary.sh' 2>&1 | tail -10"
 run "P1 checklist (ön hazırlık)" "bash '$ROOT/scripts/p1-prep-now.sh' 2>&1 | head -25"
-run "P2 Play Store hazırlık" "bash '$ROOT/scripts/p2-prep-now.sh' 2>&1 | head -40"
-run "Keystore secret rehberi" "bash '$ROOT/scripts/play-keystore-secrets-cheatsheet.sh' 2>&1 | head -28"
+run "P2 prep ALL (Play Store + FGS + keystore)" "bash '$ROOT/scripts/p2-prep-all.sh' 2>&1 | tail -40"
 run "Play Console checklist" "bash '$ROOT/scripts/play-store-checklist.sh' 2>&1 | tail -18"
 
 echo "══════════════════════════════════════════════════════════════════"
@@ -37,5 +36,6 @@ else
 fi
 echo ""
 echo "Cihaz (sonra):  bash scripts/cihaz-sonra.sh"
+echo "P2 tek komut:   bash scripts/p2-prep-all.sh"
 echo "Tam non-device: bash scripts/run-non-device-release-prep.sh"
 echo "Durum tablosu:  bash scripts/kalan-isler.sh"

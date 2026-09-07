@@ -27,7 +27,7 @@ Sıra: P0-j ✅ · cihaz testi **SONRA** · agent P1/P2 prep **ŞİMDİ**
 Komutlar:
   0) bash scripts/kalan-isler-agent.sh         # agent · şimdi
   1) bash scripts/cihaz-sonra.sh               # cihaz · sonra
-  2) bash scripts/p2-prep-now.sh               # Play Store hazırlık
+  2) bash scripts/p2-prep-all.sh               # Play Store hazırlık (tam)
   3) bash scripts/p1-prep-now.sh               # P1 checklist ön
   4) bash scripts/basla.sh                     # canlı durum
   5) bash scripts/p0-go.sh
@@ -46,7 +46,7 @@ Komutlar:
 Rehberler:
   docs/KALAN_ISLER.md               ← kalan işler (statik özet)
   docs/USER_TEST_QUICK_REF.md       ← 1 sayfa özet
-  docs/RELEASE_USER_NEXT_STEPS.md   ← agent kapalı, tek sayfa
+  docs/RELEASE_USER_NEXT_STEPS.md   ← paralel mod, tek sayfa
   docs/PSYCHIC_P0_START.md
   docs/PSYCHIC_TELLER_STATUS.md   ← falcı durumu / open-approved-teller
   docs/P1_DEVICE_START.md
@@ -152,6 +152,12 @@ case "${1:-}" in
     ;;
   p2-prep|p2prep)
     exec bash "$ROOT/scripts/p2-prep-now.sh"
+    ;;
+  p2-prep-all|p2all)
+    exec bash "$ROOT/scripts/p2-prep-all.sh"
+    ;;
+  fgs|foreground|play-fgs)
+    exec bash "$ROOT/scripts/print-play-foreground-service-declaration.sh"
     ;;
   play-checklist|play-store)
     exec bash "$ROOT/scripts/play-store-checklist.sh"

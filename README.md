@@ -23,11 +23,13 @@ Ayrıntılar: [`APK_DOWNLOAD.md`](APK_DOWNLOAD.md)
 
 Kod hatası değilse, GitHub **faturalandırma / harcama limiti** yüzünden Actions başlamıyor olabilir (özel repo). Adımlar: [`docs/GITHUB_ACTIONS_CI.md`](docs/GITHUB_ACTIONS_CI.md) · yerel kontrol: `bash scripts/ci-local.sh`
 
-## Kullanıcı testi (Psychic P0 — öncelik)
+## Kullanıcı testi (Psychic P0 — paralel mod)
 
-Agent **kapalı** — [`docs/AGENT_CLOSED.md`](docs/AGENT_CLOSED.md). Jeton ✅ · host falcı ✅ — yalnızca **2 telefon P0** kaldı:
+Cihaz testi **sonra** — agent **P1/P2 hazırlığı** devam eder: [`docs/AGENT_CLOSED.md`](docs/AGENT_CLOSED.md). Jeton ✅ · host falcı ✅
 
 ```bash
+bash scripts/kalan-isler-agent.sh           # agent paralel (şimdi)
+bash scripts/cihaz-sonra.sh                 # cihaz testi (sonra)
 bash scripts/basla.sh                       # tek komut: canlı durum + devir teslim
 bash scripts/kalan-isler.sh                 # kalan işler özeti
 bash scripts/p0-go.sh
