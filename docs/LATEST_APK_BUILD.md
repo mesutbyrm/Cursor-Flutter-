@@ -2,29 +2,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.359+397` |
-| Tarih (UTC) | 2026-08-24 22:55 |
-| Commit | [`e1e9e343`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/e1e9e34303bdc035909a431cf1de60c1cebd4b3d) |
-| İş akışı | [Run 32785528630](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/32785528630) |
+| Sürüm | `1.0.371+409` |
+| Tarih (UTC) | 2026-08-27 23:02 |
+| Commit | [`2c0aa773`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/2c0aa773) |
+| İş akışı | [Run 33123752104](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/33123752104) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.359+397 (2026-08-24) — Canlı Falcılar TRTC + bekleme
+## 1.0.371+409 (2026-08-27) — Faz 2: Psychic TRTC 5 sn freeze kök nedeni
 
-- **TRTC kopma:** Koordinatör `onConnectionLost` / `onReconnected` UI ile senkron — otomatik yeniden bağlanma görünür
-- **Bekleme ekranı:** Durum poll 2 sn; uygulama ön plana gelince anında kabul kontrolü
-
-## 1.0.358+396 (2026-08-24) — Canlı Falcılar bağlantı stabilitesi
-
-- **Oturum başlangıcı:** Oda kimliği backend'den gelene kadar kısa bekleme
-- **TRTC yeniden bağlanma:** Kanal değişiminde 800ms debounce
-- **Oda SSE:** Kopunca otomatik yeniden bağlanma; resume'da SSE yenileme
-- **Falcı timer:** Oturum açılınca süre otomatik başlar
-- **Gelen çağrı SSE:** Max reconnect sonrası hızlı poll + retry
-
-## 1.0.356+394 (2026-08-24) — Müzik isteği ANR düzeltmesi
-
-- Sheet gecikmesi, flash/chat ayrımı, WebView gecikmesi
+- **Yanlış canlı-yayın stack kaldırıldı:** Psychic artık `POST /api/live/join-room` + 10 sn live heartbeat kullanmaz
+- **Token:** yalnızca `POST /api/trtc/token` (kılavuz §9.13); token client’ta üretilmez
+- **trtcRoomId drift:** SSE/`GET /room` takma adları (`room_`, `fortune_room_`) rejoin tetiklemez
+- **Tek engine:** paylaşılan `TrtcRoomManager` + join/leave tek kuyruk; duplicate listener yok
+- **Reconnect:** yalnızca gerçek `onConnectionLost` / ağ dönüşü / odada değilken resume; SSE veya remote A/V değil
+- **Analyze gate:** gelen kutu uyumluluk sayfalarındaki bozuk inbox import yolları düzeltildi (CI ERROR=0)
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
