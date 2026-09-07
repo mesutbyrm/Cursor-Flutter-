@@ -43,7 +43,7 @@ Son release gate: [Run 34146919509](https://github.com/mesutbyrm/Cursor-Flutter-
 
 APK: https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk
 
-**Önkoşul:** `bash scripts/psychic-p0-all.sh`
+**Önkoşul:** `bash scripts/user-test-start.sh` veya `psychic-p0-all.sh`
 
 - [ ] Jeton OK (~100k) + falcı probe (`probe-psychic-teller.sh`) — onaylı falcı hesabı
 - [ ] T0–T+60s: çift yönlü A/V, **T+5s donma yok**

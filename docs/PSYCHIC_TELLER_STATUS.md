@@ -14,8 +14,20 @@
 | `cursor.host.1786235468@mailinator.com` | ❌ Hayır | Canlı yayın host — seans kabul edilmeyebilir |
 | `cursor.test.1786235468@mailinator.com` | — (danışan) | Jeton OK (~100k) |
 
-**Üretim falcı sayısı:** 8  
-**Örnek listedeki falcılar:** İlhamperisi, CanliFal, Deneme, Test Falcı, Ayhan Uçan
+**Üretim falcı sayısı:** 8
+
+| # | Görünen ad | Not |
+|---|------------|-----|
+| 1 | İlhamperisi | Üretim falcı |
+| 2 | CanliFal | Üretim falcı |
+| 3 | Deneme | Test |
+| 4 | Test Falcı | Test |
+| 5 | Ayhan Uçan | |
+| 6 | Ayşe Kise | |
+| 7 | Onur Kalafat | |
+| 8 | DESTEK | |
+
+Tam liste (id): `bash scripts/list-production-tellers.sh`
 
 ---
 

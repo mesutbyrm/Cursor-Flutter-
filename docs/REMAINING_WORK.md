@@ -84,6 +84,12 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 
 ---
 
+## Oturum günlüğü (2026-09-07 — agent kapanış rehberi)
+
+- `RELEASE_USER_NEXT_STEPS.md` — kullanıcı tek sayfa (agent kapalı)
+- `list-production-tellers.sh` — 8 üretim falcısı tablosu
+- `agent-closure-status.sh` → release-remaining-status
+
 ## Oturum günlüğü (2026-09-07 — test sonuç kaydı)
 
 - `record-user-test-result.sh` — P0/P1 PASS/FAIL → `USER_DEVICE_TEST_LOG.md`

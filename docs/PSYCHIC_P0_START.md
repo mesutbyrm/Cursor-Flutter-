@@ -21,6 +21,19 @@ Detay: [`M5_M7_JETON_BLOCKER.md`](M5_M7_JETON_BLOCKER.md)
 
 ---
 
+## 1.5 Falcı hesabı (Psychic P0)
+
+Host (`cursor.host.*`) **falcı listesinde değil**. Falcı telefonu için admin onaylı hesap kullanın.
+
+```bash
+bash scripts/probe-psychic-teller.sh           # listede mi?
+bash scripts/list-production-tellers.sh        # 8 üretim falcısı
+```
+
+Detay: [`PSYCHIC_TELLER_STATUS.md`](PSYCHIC_TELLER_STATUS.md)
+
+---
+
 ## 2. APK (2 telefon)
 
 https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk
@@ -46,10 +59,14 @@ Kritik satır: **T+5s** — eski bug burada donuyordu.
 
 ## 4. Sonuç bildirimi
 
-Bize yazın (tek satır yeter):
+```bash
+bash scripts/record-user-test-result.sh p0 PASS    # veya FAIL "not"
+```
 
-- **`Psychic P0 PASS`** → RELEASE READY adayı
-- **`Psychic P0 FAIL`** → hangi adım + logcat / ekran kaydı
+Agent'a tek satır:
+
+- **`Psychic P0 PASS`** → P1 checklist
+- **`Psychic P0 FAIL`** → hotfix + logcat / ekran kaydı
 
 ---
 
@@ -66,8 +83,9 @@ Genel platform: [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md) P1
 ## Tek komut özeti
 
 ```bash
-bash scripts/psychic-p0-all.sh    # Önkoşul + jeton uyarısı + checklist
-bash scripts/user-handoff.sh
+bash scripts/user-test-start.sh       # menü (önerilen)
+bash scripts/psychic-p0-all.sh        # P0 akışı
+bash scripts/record-user-test-result.sh p0 PASS
 ```
 
-İlgili: [`LIVE_PSYCHICS_REMAINING.md`](LIVE_PSYCHICS_REMAINING.md) · [`KULLANICI_TEST_KILAVUZU.md`](KULLANICI_TEST_KILAVUZU.md)
+Tam rehber: [`RELEASE_USER_NEXT_STEPS.md`](RELEASE_USER_NEXT_STEPS.md)

@@ -17,6 +17,7 @@
 | [`RELEASE_GATE_CLOSURE.md`](RELEASE_GATE_CLOSURE.md) | Otomatik kapı özeti |
 | [`REMAINING_WORK.md`](REMAINING_WORK.md) | Agent vs kullanıcı kalan iş |
 | [`LIVE_PSYCHICS_REMAINING.md`](LIVE_PSYCHICS_REMAINING.md) | Psychic P0 freeze + E2E |
+| [`RELEASE_USER_NEXT_STEPS.md`](RELEASE_USER_NEXT_STEPS.md) | **Agent kapalı — kullanıcı tek sayfa rehber** |
 | [`PSYCHIC_P0_START.md`](PSYCHIC_P0_START.md) | **2 telefon hızlı başlangıç (jeton → P0)** |
 | [`PSYCHIC_TELLER_STATUS.md`](PSYCHIC_TELLER_STATUS.md) | Falcı listesi probe — host vs onaylı falcı |
 | [`USER_DEVICE_TEST_LOG.md`](USER_DEVICE_TEST_LOG.md) | Kullanıcı PASS/FAIL günlüğü (record script) |
@@ -36,6 +37,8 @@
 
 ```bash
 bash scripts/user-test-start.sh           # cihaz testi tek giriş (P0/P1)
+bash scripts/agent-closure-status.sh      # agent kapalı + canlı durum
+bash scripts/list-production-tellers.sh   # üretim falcı listesi (8)
 bash scripts/record-user-test-result.sh p0 PASS  # sonuç kaydı
 bash scripts/release-remaining-status.sh   # P0-j/P0/P1/P2 canlı özet
 bash scripts/run-api-automation-summary.sh # M5/M7 otomatik API özeti (cihaz ayrı)

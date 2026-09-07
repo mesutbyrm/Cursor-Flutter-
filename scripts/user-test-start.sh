@@ -23,13 +23,14 @@ Sıra: P0-j (jeton) ✅ → P0 Psychic → P1 platform → P2 Play Store
 Komutlar:
   1) bash scripts/release-remaining-status.sh   # canlı durum
   2) bash scripts/psychic-p0-prereqs.sh         # jeton + falcı uyarısı
-  3) bash scripts/probe-psychic-teller.sh       # falcı listesinde mi?
+  3) bash scripts/list-production-tellers.sh    # üretim falcı listesi
   4) bash scripts/psychic-p0-all.sh             # P0 checklist (2 telefon)
   5) bash scripts/p1-platform-checklist.sh    # P0 PASS sonrası
-  6) bash scripts/user-handoff.sh               # tam devir özeti
-  7) bash scripts/record-user-test-result.sh p0 PASS   # sonuç kaydı
+  6) bash scripts/record-user-test-result.sh p0 PASS
+  7) bash scripts/user-handoff.sh               # tam devir özeti
 
 Rehberler:
+  docs/RELEASE_USER_NEXT_STEPS.md   ← agent kapalı, tek sayfa
   docs/PSYCHIC_P0_START.md
   docs/PSYCHIC_TELLER_STATUS.md   ← host falcı listesinde değilse okuyun
   docs/P1_DEVICE_START.md
@@ -62,6 +63,12 @@ case "${1:-}" in
     ;;
   api)
     exec bash "$ROOT/scripts/run-api-automation-summary.sh"
+    ;;
+  list)
+    exec bash "$ROOT/scripts/list-production-tellers.sh"
+    ;;
+  closure|agent)
+    exec bash "$ROOT/scripts/agent-closure-status.sh"
     ;;
   record)
     shift
