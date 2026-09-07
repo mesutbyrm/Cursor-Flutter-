@@ -25,7 +25,7 @@ Kaynak: `docs/ACCEPTANCE_TESTS.md`
 | `ACCEPTANCE_ADMIN_EMAIL` | Admin (`TEST_ADMIN`) | — (secret zorunlu) |
 | `ACCEPTANCE_ADMIN_PASSWORD` | Admin şifresi | — |
 | `ACCEPTANCE_VIEWER_*` | İzleyici / hediye testi | Opsiyonel |
-| `ACCEPTANCE_TELLER_*` | Falcı (`TEST_FORTUNE_TELLER`) | Yoksa **host** denenir — host `/api/fortune-tellers` listesinde olmayabilir; Psychic P0 için **onaylı falcı hesabı** gerekir |
+| `ACCEPTANCE_TELLER_*` | Falcı (`TEST_FORTUNE_TELLER`) | Yoksa **host** kullanılır — host onaylı falcı ✅ (`Cursor Host Test`) |
 
 Kurulum:
 
@@ -43,7 +43,7 @@ Kaynak: `docs/STAGE5_REAL_E2E_ACCEPTANCE_REPORT.md`
 | Rol | E-posta | Kullanıcı ID (örnek) |
 |-----|---------|----------------------|
 | TEST_USER_A | cursor.test.1786235468@mailinator.com | cmsyoxjh80066mo08fo7nv5o6 |
-| TEST_USER_B | cursor.host.1786235468@mailinator.com | Canlı yayın host — **falcı listesinde değil** (Psychic P0 için onaylı falcı) |
+| TEST_USER_B | cursor.host.1786235468@mailinator.com | Canlı yayın + **Psychic falcı** (onaylı, listede ✅) |
 
 ---
 

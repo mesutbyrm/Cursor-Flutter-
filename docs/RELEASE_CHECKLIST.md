@@ -45,7 +45,7 @@ APK: https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/c
 
 **Önkoşul:** `bash scripts/user-test-start.sh` veya `psychic-p0-all.sh`
 
-- [ ] Jeton OK (~100k) + falcı probe (`probe-psychic-teller.sh`) — onaylı falcı hesabı
+- [x] Jeton OK (~99k) + falcı probe ✅ (`cursor.host.*` listede)
 - [ ] T0–T+60s: çift yönlü A/V, **T+5s donma yok**
 - [ ] WiFi ↔ mobil data — kontrollü reconnect
 - [ ] Oturum A→B→A — duplicate stream yok

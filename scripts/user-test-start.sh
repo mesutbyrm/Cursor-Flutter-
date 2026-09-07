@@ -27,6 +27,7 @@ Komutlar:
   4) bash scripts/list-production-tellers.sh    # üretim falcı listesi
   4b) bash scripts/open-approved-teller.sh      # host → onaylı falcı aç/doğrula
   5) bash scripts/print-p0-live-status.sh     # jeton + falcı (tek ekran)
+  5b) bash scripts/user-test-start.sh ready   # tam pre-device doğrulama
   6) bash scripts/print-full-user-checklist.sh  # P0+P1 birleşik yazdır
   7) bash scripts/psychic-p0-all.sh             # P0 akışı
   8) bash scripts/p1-platform-checklist.sh    # P0 PASS sonrası
@@ -112,6 +113,9 @@ case "${1:-}" in
     ;;
   live|p0-status)
     exec bash "$ROOT/scripts/print-p0-live-status.sh"
+    ;;
+  ready|p0-ready)
+    exec bash "$ROOT/scripts/validate-pre-device-handoff.sh"
     ;;
   p2|play-store)
     exec bash "$ROOT/scripts/p2-play-store-prep.sh"

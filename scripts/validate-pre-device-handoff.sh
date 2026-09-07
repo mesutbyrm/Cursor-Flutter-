@@ -42,6 +42,6 @@ fi
 echo ""
 echo "Sonraki:"
 echo "  bash scripts/user-test-start.sh p0"
-echo "  bash scripts/list-production-tellers.sh"
+echo "  Falcı: cursor.host.1786235468@mailinator.com · Danışan: cursor.test.*"
 echo "  docs/RELEASE_USER_NEXT_STEPS.md"
 exit 0

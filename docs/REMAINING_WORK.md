@@ -85,6 +85,12 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 
 ---
 
+## Oturum günlüğü (2026-09-07 — P0 betik + kullanıcı rehberi senkron)
+
+- psychic-p0-checklist / psychic-p0-all / user-handoff — host = falcı
+- TEST_ACCOUNTS, KULLANICI_TEST_KILAVUZU, LIVE_PSYCHICS_REMAINING, RELEASE_CHECKLIST
+- user-test-start: `ready` → validate-pre-device-handoff
+
 ## Oturum günlüğü (2026-09-07 — host onaylı falcı + doc senkron)
 
 - `open-approved-teller.sh` — host başvuru/onay; probe ✅ (9 falcı)

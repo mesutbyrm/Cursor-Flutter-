@@ -28,8 +28,11 @@ if ! echo "$PREREQ" | grep -qE '✅ APK|✅ Danışan|✅ Falcı'; then
 fi
 
 if echo "$PREREQ" | grep -q 'Falcı listesinde DEĞİL'; then
-  echo "── Onaylı falcı listesi (P0 falcı telefonu) ──"
-  bash "$ROOT/scripts/list-production-tellers.sh"
+  echo "── Falcı aç/doğrula ──"
+  bash "$ROOT/scripts/open-approved-teller.sh" || true
+  echo ""
+elif echo "$PREREQ" | grep -q 'Falcı listesinde'; then
+  echo "✅ Falcı: cursor.host.1786235468@mailinator.com"
   echo ""
 fi
 

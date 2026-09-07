@@ -23,9 +23,9 @@
 | Rol | E-posta | Şifre | Not |
 |-----|---------|-------|-----|
 | Danışan | `cursor.test.1786235468@mailinator.com` | `CursorTest!1786235468` | Jeton ~100k ✅ |
-| Host (canlı yayın) | `cursor.host.1786235468@mailinator.com` | `CursorTest!1786235468` | Canlı yayın onaylı — **Psychic falcı listesinde değil** |
+| Falcı | `cursor.host.1786235468@mailinator.com` | `CursorTest!1786235468` | Onaylı falcı ✅ (`Cursor Host Test`) |
 
-Psychic P0 için **falcı telefonu:** admin panelde **onaylı falcı hesabı** kullanın.
+Psychic P0: **danışan + falcı** yukarıdaki iki hesap — aynı şifre.
 
 ```bash
 bash scripts/probe-psychic-teller.sh    # falcı listede mi?
@@ -43,7 +43,7 @@ bash scripts/user-test-start.sh p0              # P0 akışı + checklist
 bash scripts/on-p0-pass.sh                    # PASS kaydı → P1
 ```
 
-1. APK'yı **iki telefona** yükleyin (danışan + **onaylı falcı**).
+1. APK'yı **iki telefona** yükleyin (danışan + **falcı** — `cursor.host.*`).
 2. Kritik: **T+5s** donma olmamalı.
 
 FAIL: `bash scripts/on-p0-fail.sh "hangi adım"`

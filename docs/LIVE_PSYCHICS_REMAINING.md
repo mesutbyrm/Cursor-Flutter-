@@ -58,8 +58,8 @@ Referans: `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9.6–9.7, `docs/prompts/FLUT
 Kod main'de; **P0 kapatılmadı**. İki fiziksel cihaz (danışan + falcı veya iki hesap):
 
 **Önkoşul (2026-09-07):**
-- Danışan **jeton ~100k** ✅ (`bash scripts/psychic-p0-prereqs.sh`)
-- Falcı: host **falcı listesinde değil** — onaylı falcı hesabı (`docs/PSYCHIC_TELLER_STATUS.md`)
+- Danışan **jeton ~99k** ✅ (`bash scripts/psychic-p0-prereqs.sh`)
+- Falcı: **cursor.host.*** onaylı listede ✅ — `bash scripts/probe-psychic-teller.sh`
 
 ```bash
 bash scripts/psychic-p0-prereqs.sh
