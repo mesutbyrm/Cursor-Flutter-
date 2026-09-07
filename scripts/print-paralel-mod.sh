@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Paralel mod — tek ekran özet (agent şimdi · cihaz sonra).
+# Paralel mod — tek ekran özet (agent prep ✅ · kullanıcı adımları).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -19,16 +19,17 @@ RELEASE READY: NO · Agent prep ✅ TAMAM · Cihaz + keystore + Play sizde
 
 APK: ${APK_URL}
 
-┌─ Agent (şimdi) ─────────────────────────────────────────────────┐
-│ bash scripts/devam-et.sh               # agent devam (tam)       │
-│ bash scripts/print-paralel-mod.sh      # bu özet                   │
-│ bash scripts/p1-prep-go.sh             # P1 checklist GO          │
-│ bash scripts/p2-prep-go.sh             # Play Store GO             │
-│ bash scripts/p2-prep-all.sh            # Play Console print paketi │
-│ bash scripts/print-agent-prep-status.sh # prep envanter          │
-│ bash scripts/print-go-commands.sh      # GO indeks               │
+┌─ Kullanıcı (sırada) ────────────────────────────────────────────┐
+│ bash scripts/kullanici-sonraki.sh      # ★ kalan 3 blok           │
 │ bash scripts/print-release-blockers.sh # RELEASE READY engelleri │
 │ bash scripts/print-play-upload-day-checklist.sh # yükleme günü   │
+└──────────────────────────────────────────────────────────────────┘
+
+┌─ Agent ✅ tamam (referans) ─────────────────────────────────────┐
+│ bash scripts/agent-prep-tamam.sh       # prep doğrula             │
+│ bash scripts/devam-et.sh               # API yenile (isteğe bağlı)│
+│ bash scripts/p2-prep-all.sh            # Play Console print paketi│
+│ bash scripts/print-go-commands.sh      # GO indeks               │
 └──────────────────────────────────────────────────────────────────┘
 
 ┌─ Cihaz (sonra) ─────────────────────────────────────────────────┐

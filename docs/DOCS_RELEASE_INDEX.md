@@ -65,7 +65,7 @@ bash scripts/print-play-content-rating-summary.sh  # IARC
 bash scripts/print-play-store-listing.sh      # Store listing
 bash scripts/print-ci-aab-steps.sh            # CI AAB
 bash scripts/print-play-console-prep-index.sh # Prep indeks
-bash scripts/devam-et.sh                    # agent devam
+bash scripts/devam-et.sh                    # API yenile (isteğe bağlı)
 bash scripts/print-release-blockers.sh        # RELEASE READY engelleri
 bash scripts/print-paralel-mod.sh           # paralel özet
 bash scripts/kullanici-sonraki.sh               # kullanıcı kalan adımlar

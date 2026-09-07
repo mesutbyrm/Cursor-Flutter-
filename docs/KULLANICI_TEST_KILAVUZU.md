@@ -109,4 +109,4 @@ Admin ile otomatik host onayı için:
 
 Detaylı teknik rapor: `docs/STAGE5_REAL_E2E_ACCEPTANCE_REPORT.md`
 
-**Özet:** API testleri geçti. Cihaz testi **sonra** — agent **P1/P2 hazırlığı** devam eder. [`AGENT_CLOSED.md`](AGENT_CLOSED.md)
+**Özet:** API testleri geçti. Agent prep **✅ tamam** — sırada cihaz P0→P1, keystore ve Play Console. [`AGENT_CLOSED.md`](AGENT_CLOSED.md) · `bash scripts/kullanici-sonraki.sh`

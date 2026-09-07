@@ -25,8 +25,8 @@ P1 sonrası:
   bash scripts/on-p1-pass.sh               # P1 PASS kaydı
   bash scripts/on-release-ready-candidate.sh
 
-Agent P2 (şimdi):
-  bash scripts/p2-prep-go.sh               # Play Store GO
+Agent P2 (✅ tamam — referans):
+  bash scripts/p2-prep-go.sh               # Play Store GO özeti
   bash scripts/p2-prep-all.sh              # tam Console print paketi
   bash scripts/print-play-console-prep-index.sh
 
