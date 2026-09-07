@@ -90,6 +90,6 @@ Canlı durum (jeton + falcı): `bash scripts/p0-go.sh`
 
 ## Agent ne zaman kod değiştirir?
 
-Yalnızca **`Psychic P0 FAIL`** (hotfix) veya yeni özellik isteği. Paralel P1/P2 hazırlık **devam** (`bash scripts/kalan-isler-agent.sh`).
+Yalnızca **`Psychic P0 FAIL`** (hotfix) veya yeni özellik isteği. Paralel P1/P2 hazırlık **devam** (`bash scripts/devam-et.sh`).
 
 Detay: [`REMAINING_WORK.md`](REMAINING_WORK.md) · [`AGENTS.md`](../AGENTS.md)

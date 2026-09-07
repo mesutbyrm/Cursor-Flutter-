@@ -7,6 +7,7 @@ cat <<'EOF'
 
 Tam prep:     bash scripts/p2-prep-all.sh
 P2 GO:        bash scripts/p2-prep-go.sh
+GO indeks:    bash scripts/print-go-commands.sh
 Checklist:    bash scripts/play-store-checklist.sh
 AAB readiness: bash scripts/play-aab-readiness.sh
 
@@ -14,6 +15,7 @@ Kopyala-yapıştır metinler:
   bash scripts/print-play-console-app-access.sh      # App access
   bash scripts/print-play-foreground-service-declaration.sh  # FGS
   bash scripts/print-play-data-safety-summary.sh     # Data safety
+  bash scripts/print-play-target-audience-summary.sh  # Target audience + ads
   bash scripts/print-play-content-rating-summary.sh  # Content rating (IARC)
   bash scripts/print-play-store-listing.sh           # Store listing taslak
 

@@ -5,7 +5,7 @@
 > **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
 **Son güncelleme:** 2026-09-07 — sürüm `1.0.371+409` · **Cihaz testi SONRA** · **Agent P2 prep devam**  
-**Agent paralel:** `bash scripts/kalan-isler-agent.sh` · **Cihaz sonra:** `bash scripts/cihaz-sonra.sh`  
+**Agent paralel:** `bash scripts/devam-et.sh` · **Cihaz sonra:** `bash scripts/cihaz-sonra.sh`  
 **Tek komut:** `bash scripts/kalan-isler.sh` · P0: `p0-go.sh` · P1: `p1-go.sh` · P2 prep: `p2-prep-go.sh` · P2 yükleme: `p2-go.sh`  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Release:** `docs/RELEASE_CHECKLIST.md` | **Psychic P0:** `docs/LIVE_PSYCHICS_REMAINING.md` | **Tüm MD indeks:** [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
@@ -203,6 +203,12 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 
 - `on-release-ready-candidate.sh` — P0+P1 sonrası RELEASE READY kontrol listesi
 - README, P2, RELEASE_GATE_CLOSURE, user-test-start güncellendi
+
+## Oturum günlüğü (2026-09-07 — GO indeks + target audience)
+
+- `print-go-commands.sh` — tüm GO/prep komut indeksi
+- `print-play-target-audience-summary.sh` — Play Console audience + ads
+- `p2-play-store-prep.sh` → `p2-prep-go` alias; devam-et birincil referans sync
 
 ## Oturum günlüğü (2026-09-07 — release blockers + devam-et sync)
 

@@ -150,8 +150,14 @@ case "${1:-}" in
   blockers|engeller|release-blockers)
     exec bash "$ROOT/scripts/print-release-blockers.sh"
     ;;
+  go|go-commands|komutlar)
+    exec bash "$ROOT/scripts/print-go-commands.sh"
+    ;;
   paralel|paralel-mod|mod)
     exec bash "$ROOT/scripts/print-paralel-mod.sh"
+    ;;
+  target-audience|play-audience|ads)
+    exec bash "$ROOT/scripts/print-play-target-audience-summary.sh"
     ;;
   p1-prep-go|p1prepgo)
     exec bash "$ROOT/scripts/p1-prep-go.sh"

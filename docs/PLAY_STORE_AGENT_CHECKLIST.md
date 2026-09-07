@@ -17,7 +17,8 @@ bash scripts/print-play-data-safety-summary.sh  # Data safety özeti
 bash scripts/print-play-content-rating-summary.sh  # IARC
 bash scripts/print-play-store-listing.sh      # Store listing taslak
 bash scripts/print-ci-aab-steps.sh            # GitHub Actions AAB
-bash scripts/print-play-console-prep-index.sh # Tüm print betikleri
+bash scripts/print-play-target-audience-summary.sh  # Target audience + ads
+bash scripts/print-go-commands.sh             # GO / prep indeks
 bash scripts/p2-prep-now.sh             # özet
 bash scripts/build-play-aab.sh          # AAB yerel (keystore gerekir)
 ```

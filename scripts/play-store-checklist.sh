@@ -33,6 +33,8 @@ cat <<'EOF'
   [ ] Foreground service declaration
         bash scripts/print-play-foreground-service-declaration.sh
         docs/PLAY_FOREGROUND_SERVICE_DECLARATION.md
+  [ ] Target audience + Ads declaration
+        bash scripts/print-play-target-audience-summary.sh
   [ ] Content rating anketi
         bash scripts/print-play-content-rating-summary.sh
   [ ] Store listing (açıklama + grafikler)

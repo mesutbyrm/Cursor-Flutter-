@@ -41,7 +41,7 @@ else
 fi
 echo ""
 echo "Sonraki:"
-echo "  Agent (şimdi): bash scripts/kalan-isler-agent.sh"
+echo "  Agent (şimdi): bash scripts/devam-et.sh"
 echo "  P2 prep:       bash scripts/p2-prep-go.sh"
 echo "  Cihaz (sonra): bash scripts/cihaz-sonra.sh"
 echo "  bash scripts/basla.sh"

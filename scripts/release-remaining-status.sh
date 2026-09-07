@@ -97,7 +97,7 @@ echo ""
 # --- Agent ---
 echo "── Agent ──"
 echo "Kod/CI/docs: ✅ TAMAM · RELEASE READY: NO"
-echo "Cihaz testi: ⏸ SONRA · Agent paralel: bash scripts/kalan-isler-agent.sh"
+echo "Cihaz testi: ⏸ SONRA · Agent: bash scripts/devam-et.sh"
 echo "Canlı durum: bash scripts/kalan-isler.sh"
 echo "Hızlı özet: bash scripts/print-kalan-isler.sh · bash scripts/print-user-test-quick-ref.sh"
 echo "APK: ${APK_URL}"
@@ -108,6 +108,8 @@ if [[ "$P0J" == "OPEN" ]]; then
 else
   echo "  Agent (şimdi): bash scripts/devam-et.sh"
   echo "  Özet:          bash scripts/print-paralel-mod.sh"
+  echo "  Engeller:      bash scripts/print-release-blockers.sh"
+  echo "  GO indeks:     bash scripts/print-go-commands.sh"
   echo "  Cihaz (sonra): bash scripts/cihaz-sonra.sh"
   echo "  P2 hazırlık:   bash scripts/p2-prep-all.sh"
 fi
