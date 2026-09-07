@@ -1,5 +1,8 @@
 # CanlıFal — Hediye (Gift) Sistemi Tam Dokümantasyonu
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 > **Amaç:** Flutter mobil uygulamasının hediyeleri web ile **%100 aynı** göstermesi ve aynı iş mantığını çalıştırması için gereken tüm alt sistemlerin uçtan uca referansı. Bu doküman **yalnızca gerçek kod tabanından** (schema + API route'ları + client bileşenleri) çıkarılmıştır. Var olmayan bir sistem "yok" olarak açıkça işaretlenmiştir.
 
 **Sürüm:** 1.0 · **Kapsam:** Web (`nextjs_space`) + ortak Backend + veritabanı · **Dil:** TR/EN çift dilli veri modeli · **Durum:** Kod tabanından doğrulanmış

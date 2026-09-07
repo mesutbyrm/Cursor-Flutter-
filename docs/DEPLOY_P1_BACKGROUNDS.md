@@ -1,5 +1,8 @@
 # P1 Deploy — Sesli Oda Arka Planları
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 Parite raporu **#2**. Web referansı: `https://canlifal.com/images/voice-bg-1.jpg` … `voice-bg-20.jpg`.
 
 ## Durum

@@ -1,5 +1,8 @@
 # Firebase (Messaging + Analytics)
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · Psychic P0 cihaz · [`../../docs/DOCS_RELEASE_INDEX.md`](../../docs/DOCS_RELEASE_INDEX.md)
+
 Uygulama Firebase’i **isteğe bağlı** başlatır. `google-services.json` veya dart-define olmadan CI ve yerel derleme çalışmaya devam eder.
 
 ## Hızlı etkinleştirme

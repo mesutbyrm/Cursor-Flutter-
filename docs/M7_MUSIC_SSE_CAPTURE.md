@@ -1,5 +1,8 @@
 # M7 — Müzik probe yakalama (üretim)
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Tarih:** 2026-08-21 01:54 UTC  
 **Oda slug:** `cmoohrbr`  
 **Oda id (SSE):** `cmoohrbrx00a4nt08zlkdjyil`  

@@ -1,5 +1,8 @@
 # Sesli oda anahtarı çözümleme (route → API / SSE)
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Tarih:** 2026-08-18  
 **Kod:** `mobile/lib/features/voice_hub/presentation/utils/voice_room_key_resolver.dart`  
 **Sürüm:** `1.0.264+` (önek), `1.0.265+` (SSE katalog bekleme)

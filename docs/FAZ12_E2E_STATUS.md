@@ -1,6 +1,9 @@
 # FAZ 12 — Full E2E QA
 
-**Durum:** BEKLIYOR — 25 senaryo Android gerçek cihaz
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
+**Durum:** Cihaz testi bekleniyor — Psychic P0 öncelik · 25 senaryo Android
 
 | Önkoşul | Durum |
 |---------|--------|

@@ -1,5 +1,8 @@
 # LIVE + VOICE V2
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 > **Güncel:** Faz 1 SSE SoT main (`1.0.370+408`) · APK `1.0.371+409` · Cihaz testi [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md)
 
 Canlifal Flutter — Canlı Yayın + Sesli Sohbet Odaları (Aşama 7)

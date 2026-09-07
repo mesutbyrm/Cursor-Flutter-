@@ -1,5 +1,8 @@
 # PK Sistemi — Flutter Entegrasyon Dokümantasyonu
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Sürüm:** 1.0.492+496  
 **Backend:** `https://canlifalapi.abacusai.app` (birleşik PK Faz 1–3)  
 **Ana site:** `https://canlifal.com` (auth, yayın listesi, hediye kataloğu)

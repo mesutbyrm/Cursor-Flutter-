@@ -1,5 +1,8 @@
 # Ana sayfa & Kısa video performans raporu
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Sürüm:** 1.0.477+481  
 **Tarih:** 2026-07-03 (UTC)
 

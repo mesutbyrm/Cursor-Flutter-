@@ -1,5 +1,8 @@
 # 🔮 CanlıFal — Flutter Backend API Referansı
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 > **Base URL:** `https://canlifal.com`  
 > **Son Güncelleme:** 23 Temmuz 2026  
 > **Auth:** Tüm endpoint'ler JWT Bearer token gerektirir

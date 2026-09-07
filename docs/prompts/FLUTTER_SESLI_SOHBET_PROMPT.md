@@ -1,5 +1,8 @@
 # FLUTTER SESLİ SOHBET ODASI — TAM UYGULAMA PROMPTU
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 > **Amaç:** Flutter uygulamasındaki Sesli Sohbet sistemini, web sitesiyle **%100 aynı** davranacak şekilde yeniden düzenlemek.
 >
 > **Kurallar (DEĞİŞTİRİLEMEZ):**

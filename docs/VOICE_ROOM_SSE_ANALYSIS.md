@@ -1,5 +1,8 @@
 # Sesli Oda — SSE Analiz (Socket.IO değil)
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Üretim:** https://canlifal.com  
 **Örnek oda id:** `cmokyb9o9007iod09gi6pb1tb` (GET `/api/chat/rooms`)
 

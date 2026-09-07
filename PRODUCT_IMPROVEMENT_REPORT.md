@@ -1,5 +1,8 @@
 # Canlifal Ürün İyileştirme ve Büyüme Roadmap Raporu
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · Psychic P0 cihaz · [`docs/DOCS_RELEASE_INDEX.md`](docs/DOCS_RELEASE_INDEX.md)
+
 Tarih: 2026-06-10  
 Kapsam: Canlifal web deneyimi ile Flutter mobil uygulamasını ürün sahibi bakışıyla büyüme, gelir, bağlılık ve davranış eşitliği açısından değerlendirme.
 

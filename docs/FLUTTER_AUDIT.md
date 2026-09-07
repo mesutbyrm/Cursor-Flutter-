@@ -1,5 +1,8 @@
 # CanliFal Flutter — `mobile/lib/` Audit
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Date:** 2026-08-04  
 **Scope:** `/workspace/mobile/lib/` (1,441 Dart source files excl. `.freezed.dart` / `.g.dart`; ~236k LOC)  
 **App version:** `1.0.125+159` (`mobile/pubspec.yaml`)  

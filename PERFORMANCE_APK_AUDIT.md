@@ -1,5 +1,8 @@
 # APK Boyutu Denetimi (FAZ 10)
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · Psychic P0 cihaz · [`docs/DOCS_RELEASE_INDEX.md`](docs/DOCS_RELEASE_INDEX.md)
+
 **Tarih:** 2026-08-23  
 **Sürüm:** `1.0.341+377`  
 **Mevcut release APK (CI):** ~240,6 MiB (`252 276 640` bayt — `1.0.339+375`)

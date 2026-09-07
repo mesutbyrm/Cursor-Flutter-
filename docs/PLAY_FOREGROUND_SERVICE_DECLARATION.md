@@ -1,5 +1,8 @@
 # Google Play — Ön Plan Hizmeti (Foreground Service) Beyanı
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 Play Console şu uyarıyı veriyorsa:
 
 > *Uygulamanızda aşağıdaki beyan edilmemiş ön plan hizmeti izinleri kullanılıyor*

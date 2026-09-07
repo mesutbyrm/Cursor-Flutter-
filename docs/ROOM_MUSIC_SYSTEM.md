@@ -1,5 +1,8 @@
 # Oda müzik sistemi (SongQueueService)
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 TikTok/Bigo benzeri sesli oda müzik kuyruğu — **yalnızca** YouTube Data API v3 (arama) ve YouTube IFrame Player API (Flutter oynatma).
 
 ## Backend (`api/`)

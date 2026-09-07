@@ -1,5 +1,8 @@
 # Flutter ↔ Web Senkronizasyon Raporu
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 > **Tarih:** 3 Ağustos 2026  
 > **Sürüm:** `1.0.119+152`  
 > **Referans:** Backend denetim raporu (`CANLIFAL_BACKEND_DENETIM_RAPORU`) + web üretim davranışı  

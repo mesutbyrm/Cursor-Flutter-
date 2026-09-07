@@ -1,5 +1,8 @@
 # 🔮 CANLI FALCILAR — Flutter Entegrasyon Prompt'u
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 > **Uygulama:** canlifal_social (Flutter)  
 > **Backend:** canlifal.com  
 > **Base URL:** `https://canlifal.com`  

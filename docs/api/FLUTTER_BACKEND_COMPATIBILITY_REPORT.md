@@ -1,5 +1,8 @@
 # CanlıFal — Flutter Backend Uyumluluk Raporu
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 > **Oluşturulma:** 16 Temmuz 2026  
 > **Backend:** Next.js 14 API Routes (`https://canlifal.com`)  
 > **Toplam endpoint:** ~431 (Admin ~130, Kullanıcı ~301)  

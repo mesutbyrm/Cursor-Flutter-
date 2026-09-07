@@ -1,5 +1,8 @@
 # M7 — song-request HTTP 200 yanıt şablonu (bekleyen)
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Durum:** Üretimde henüz yakalanmadı — test hesabı 0 jeton (HTTP 400).  
 **Sözleşme:** `docs/MUSIC_SONG_REQUEST_CONTRACT.md`  
 **Flutter parse:** `chat_room_remote_datasource.dart` → `requestMusic` / `music.queue.add.ok`

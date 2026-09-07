@@ -1,5 +1,8 @@
 # FAZ 0 — Flutter Proje Audit
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Tarih:** 2026-08-18  
 **Sürüm:** `1.0.256+292` (`mobile/pubspec.yaml`)  
 **Kapsam:** `mobile/` — kod değiştirilmedi, yalnızca analiz  

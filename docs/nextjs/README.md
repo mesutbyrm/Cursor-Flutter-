@@ -1,5 +1,8 @@
 # canlifal.com Next.js — P0 API Deploy Paketi
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 Bu klasör, **canlifal.com** web reposuna kopyalanacak üretim route referanslarını içerir. Flutter mobil uygulama bu uçları `https://canlifal.com` üzerinden çağırır.
 
 ## Hızlı kurulum

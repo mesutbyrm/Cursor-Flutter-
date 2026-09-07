@@ -1,5 +1,8 @@
 # Final Acceptance Test
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 Date: 2026-08-08
 
 This is the current repository acceptance matrix after the backend/Flutter sync pass. Items marked `PENDING DEVICE` require a real Android device/emulator with camera/microphone and production credentials. They are not claimed as passed.

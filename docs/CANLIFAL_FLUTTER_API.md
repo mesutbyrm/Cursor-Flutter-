@@ -1,5 +1,8 @@
 # Canlifal — Flutter API (mobil)
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Tam doküman (canlifal.com):** https://canlifal.com/canlifal-flutter-api-docs.txt  
 **Repo kopyası:** [`FLUTTER_API_DOCS.md`](FLUTTER_API_DOCS.md) (güncel) · [`canlifal-flutter-api-docs.txt`](canlifal-flutter-api-docs.txt) — `scripts/sync-canlifal-config.sh` ile senkron.
 

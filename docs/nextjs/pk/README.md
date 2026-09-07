@@ -1,5 +1,8 @@
 # PK Battle — canlifal.com deploy paketi
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 Prod'da kalan **tek büyük API gap**: `/api/pk/*` ve oda/yayın PK uçları.
 
 ## Hızlı başlangıç

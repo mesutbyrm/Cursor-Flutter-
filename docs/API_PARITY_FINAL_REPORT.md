@@ -1,5 +1,8 @@
 # API Parity Final Report — Phase 2 (Gerçek Kod Entegrasyonu)
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 Date: 2026-08-09  
 Branch: `cursor/backend-flutter-sync-0cde`  
 Production base: `https://canlifal.com`  

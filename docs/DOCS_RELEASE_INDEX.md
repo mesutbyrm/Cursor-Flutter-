@@ -5,6 +5,8 @@
 **Release gate:** **FINAL PASS** — [Run 34146919509](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34146919509)  
 **RELEASE READY:** `NO` — Psychic P0 cihaz testi bekleniyor
 
+> Tüm `docs/**/*.md`, kök `*.md` parity raporları ve `mobile/docs/*.md` dosyalarına **2026-09-07** güncel durum banner'ı eklendi. Gövde metni tarihsel olabilir; karar için **birincil** tabloya bakın.
+
 ---
 
 ## Birincil (güncel — önce bunlara bakın)
@@ -20,7 +22,10 @@
 | [`GITHUB_ACTIONS_CI.md`](GITHUB_ACTIONS_CI.md) | CI/APK iş akışları |
 | [`KULLANICI_TEST_KILAVUZU.md`](KULLANICI_TEST_KILAVUZU.md) | Basit kullanıcı test adımları |
 | [`TEST_ACCOUNTS.md`](TEST_ACCOUNTS.md) | QA hesapları |
+| [`FAZ0_STATUS.md`](FAZ0_STATUS.md) | Faz 0 özet |
+| [`PHASE_MASTER_TRACKER.md`](PHASE_MASTER_TRACKER.md) | Faz master tablo |
 | [`../APK_DOWNLOAD.md`](../APK_DOWNLOAD.md) | İndirme linkleri |
+| [`../AGENTS.md`](../AGENTS.md) | Agent handoff (Cloud) |
 
 ## Script
 
@@ -29,26 +34,31 @@ bash scripts/print-build-status.sh      # Özet
 bash scripts/psychic-p0-checklist.sh    # Psychic P0 tablosu
 ```
 
-## Tarihsel raporlar (üst banner güncellendi)
+## Modül V2 raporları (banner güncel, gövde tarihsel)
 
-Aşağıdaki dosyaların gövdesi eski oturumlara aittir; karar için **birincil** tabloya bakın.
+| Dosya | Aşama |
+|-------|--------|
+| [`SOCIAL_V2.md`](SOCIAL_V2.md) | Sosyal |
+| [`GAMES_V2.md`](GAMES_V2.md) | Oyunlar |
+| [`GIFT_PK_MUSIC_V2.md`](GIFT_PK_MUSIC_V2.md) | Hediye/PK/Müzik |
+| [`LIVE_VOICE_V2.md`](LIVE_VOICE_V2.md) | Canlı + sesli (Faz 1 SSE) |
+| [`PROFILE_V2.md`](PROFILE_V2.md) | Profil |
+| [`NOTIFICATIONS_MESSAGES_SETTINGS_V2.md`](NOTIFICATIONS_MESSAGES_SETTINGS_V2.md) | Gelen kutu |
 
-| Dosya | Orijinal tarih |
-|-------|----------------|
-| [`FINAL_PRODUCTION_AUDIT.md`](FINAL_PRODUCTION_AUDIT.md) | 2026-08-21 |
-| [`MASTER_ACCEPTANCE_REPORT.md`](MASTER_ACCEPTANCE_REPORT.md) | 2026-08-10 |
-| [`STAGE8_FINAL_ACCEPTANCE_REPORT.md`](STAGE8_FINAL_ACCEPTANCE_REPORT.md) | 2026-08-09 |
-| [`PRODUCTION_READINESS_REPORT.md`](PRODUCTION_READINESS_REPORT.md) | 2026-07-11 |
-| [`FLUTTER_PRODUCTION_MASTER_STATUS.md`](FLUTTER_PRODUCTION_MASTER_STATUS.md) | 2026-08-09 |
-| [`RELEASE_REPORT.md`](RELEASE_REPORT.md) | 2026-08-04 |
-| [`PHASE_MASTER_TRACKER.md`](PHASE_MASTER_TRACKER.md) | Faz tablosu + tarihsel detay |
-| [`PHASE_PLAN.md`](PHASE_PLAN.md) | Faz planı |
-| [`M5_DEVICE_TEST_CHECKLIST.md`](M5_DEVICE_TEST_CHECKLIST.md) | Müzik M5 cihaz |
-| [`M5_M7_JETON_BLOCKER.md`](M5_M7_JETON_BLOCKER.md) | Jeton |
+## Faz parity / status (banner güncel)
+
+`FAZ1_STATUS.md` … `FAZ12_E2E_STATUS.md`, `FAZ2_*_PARITY.md` … `FAZ9_*_PARITY.md`
+
+## Stage / acceptance (banner güncel, gövde tarihsel)
+
+`STAGE5_*`, `STAGE6_*`, `STAGE7_*`, `STAGE8_*`, `STAGE10_*`, `MASTER_ACCEPTANCE_REPORT.md`, `FINAL_*`, `P0_*`
 
 ## Mobil değişiklik özeti
 
-[`../mobile/CHANGELOG.md`](../mobile/CHANGELOG.md) — **1.0.371+409** Faz 2 Psychic TRTC + Faz 1 SSE
+[`../mobile/CHANGELOG.md`](../mobile/CHANGELOG.md) — **1.0.371+409**
+
+- **Faz 1:** SSE SoT, Socket.IO kapalı (`1.0.370+408`)
+- **Faz 2:** Psychic TRTC 5 sn freeze kök nedeni (`1.0.371+409`)
 
 ---
 

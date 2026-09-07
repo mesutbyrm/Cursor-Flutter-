@@ -1,5 +1,8 @@
 # Backend ↔ Flutter Senkronizasyon Raporu
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 > **Tarih:** 5 Ağustos 2026  
 > **Tek kaynak:** `https://canlifal.com` + `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` + `api/` mirror  
 > **Sürüm:** `1.0.141+175` (RTC selective watch)

@@ -1,5 +1,8 @@
 # Flutter ↔ Backend Uyumluluk Raporu
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 > **Tarih:** 21 Temmuz 2026  
 > **Sürüm:** `1.0.68+95`  
 > **Tek referans:** [`docs/FLUTTER_ENTegrasyon_KILAVUZU.md`](FLUTTER_ENTegrasyon_KILAVUZU.md) (27 Haziran 2026)  

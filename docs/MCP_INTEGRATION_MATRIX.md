@@ -1,5 +1,8 @@
 # MCP Integration Matrix
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 Source: uploaded MCP README and `cursor-mcp.example`. MCP is read-only developer tooling and is not a Flutter runtime dependency.
 
 | MCP | Amaç | Backendde mevcut | Flutter gerekli mi | Kullanıldığı yer | Status |

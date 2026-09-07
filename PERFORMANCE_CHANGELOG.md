@@ -1,5 +1,8 @@
 # Performans Değişiklik Günlüğü
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · Psychic P0 cihaz · [`docs/DOCS_RELEASE_INDEX.md`](docs/DOCS_RELEASE_INDEX.md)
+
 **Sürüm:** `1.0.348+384`  
 **Tarih:** 2026-08-23  
 **Fazlar:** FAZ 3 (network/startup), FAZ 5 (social video), FAZ 6 (SSE)

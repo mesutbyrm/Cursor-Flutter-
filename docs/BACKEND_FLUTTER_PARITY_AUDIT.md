@@ -1,5 +1,8 @@
 # FAZ 0 — Backend ↔ Flutter Parity Audit
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Tarih:** 2026-08-18 (güncelleme: B1.12 + canlı probe)  
 **Kaynak önceliği:** (1) `backend-docs/` (OpenAPI, endpoints_index, B1.12) → (2) Canlı HTTP probe → (3) `FLUTTER_ENTegrasyon_KILAVUZU.md` → (4) Flutter kodu
 

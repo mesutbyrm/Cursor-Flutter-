@@ -1,5 +1,8 @@
 # Backend Requirements To Request
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Tarih:** 2026-08-18  
 **Kural:** Endpoint/alan uydurma yasak. Eksik bilgi buraya eklenir; backend sağlayınca ilgili faz devam eder.
 

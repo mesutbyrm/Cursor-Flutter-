@@ -1,5 +1,8 @@
 # CanliFal — Release Report
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 > **Güncel durum (2026-09-07):** Sürüm **`1.0.371+409`**, release gate **FINAL PASS**.  
 > Canlı checklist: [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md) · Gate özeti: [`RELEASE_GATE_CLOSURE.md`](RELEASE_GATE_CLOSURE.md)  
 > **RELEASE READY: NO** — Psychic P0 cihaz testi bekleniyor (testler en son).

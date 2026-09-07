@@ -1,5 +1,8 @@
 # Canlifal — Agent talimatları
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`docs/DOCS_RELEASE_INDEX.md`](docs/DOCS_RELEASE_INDEX.md)
+
 ## Flutter entegrasyon kılavuzu (tek kaynak — zorunlu)
 
 Tüm mobil API entegrasyonu **yalnızca** [`docs/FLUTTER_ENTegrasyon_KILAVUZU.md`](docs/FLUTTER_ENTegrasyon_KILAVUZU.md) dosyasına göre yapılır. Bu kılavuz dışına çıkma: endpoint path, HTTP metodu, JSON body alanları, auth/SSE/retry kuralları buradan gelir.
@@ -117,17 +120,6 @@ Kullanıcı mesajlarına cevap verirken **en sonda** şu sabit indirme bağlant�
 
 Kullanıcı GitHub’da **Watch → Releases** ile e-posta alabilir.
 
-### Güncel release handoff (2026-09-07)
+### Release handoff
 
-| Alan | Durum |
-|------|--------|
-| Sürüm | `1.0.371+409` (`mobile/pubspec.yaml`) |
-| Release gate | **FINAL PASS** — [Run 34146919509](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34146919509) |
-| Faz 1 | SSE SoT, Socket.IO kapalı — main |
-| Faz 2 | Psychic TRTC freeze fix — main |
-| Agent kalan | **Yok** (CI/docs/release pipeline tamam) |
-| Kullanıcı kalan | **Psychic P0** 2-cihaz test — `bash scripts/psychic-p0-checklist.sh` |
-
-`[skip ci]` push: CI/CodeQL/APK/cleanup atlanır. Mobil değişiklik push'unda tam CI + APK koşar.
-
-**RELEASE READY:** `NO` — Psychic P0 cihaz kabulü kapalı değil. Detay: `docs/RELEASE_CHECKLIST.md`, `docs/REMAINING_WORK.md`.
+Güncel sürüm, gate durumu ve kalan iş: [`docs/DOCS_RELEASE_INDEX.md`](docs/DOCS_RELEASE_INDEX.md) · Psychic P0: `bash scripts/psychic-p0-checklist.sh` · `[skip ci]` push CI/APK atlar.

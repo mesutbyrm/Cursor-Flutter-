@@ -1,5 +1,8 @@
 # Canlifal Flutter — Cursor Agent Prompt
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Repo:** `mobile/` · **API:** `https://canlifal.com` · **Sürüm:** 1.0.135+137
 
 Tüm başlıklar mobilde uygulandı (2026-05-19):

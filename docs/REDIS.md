@@ -1,5 +1,8 @@
 # Canlifal Redis Entegrasyonu
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 PostgreSQL + Prisma **değiştirilmedi**. Redis yalnızca önbellek, kuyruk ve gerçek zamanlı durum için kullanılır. Tüm mevcut API uçları ve Flutter sözleşmeleri korunur.
 
 ## Kurulum

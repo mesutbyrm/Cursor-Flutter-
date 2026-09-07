@@ -1,5 +1,8 @@
 # API Parity — Stage 4 Final Gate
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Tarih:** 2026-08-09  
 **Dal:** `cursor/backend-flutter-sync-0cde`  
 **Üretim API:** `https://canlifal.com`  

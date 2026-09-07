@@ -1,5 +1,8 @@
 # SOCIAL V2 — Aşama 9 Raporu
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 > **Güncel APK:** `1.0.371+409` (`apk-latest`) · Release gate PASS · Cihaz testi: [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md)
 
 **Dal:** `cursor/social-v2-premium-5ac6`  

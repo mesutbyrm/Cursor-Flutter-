@@ -1,9 +1,12 @@
 # FAZ 0 — Durum özeti
 
-**Sonuç:** **INCOMPLETE** — Otomatik iş tamam; **jeton + M5 cihaz** bekleniyor  
-**APK:** `1.0.287+323` (`apk-latest`)  
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
+**Sonuç:** Otomatik kapılar **PASS** · **M5 cihaz + Psychic P0** kullanıcı testinde  
+**APK:** `1.0.371+409` (`apk-latest`)  
 **Sürüm:** `mobile/pubspec.yaml`  
-**Tek engel:** Test hesabı jeton=0 — `docs/M5_M7_JETON_BLOCKER.md`
+**Checklist:** `bash scripts/psychic-p0-checklist.sh` · `docs/M5_M7_JETON_BLOCKER.md`
 
 ---
 

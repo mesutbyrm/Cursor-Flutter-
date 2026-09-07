@@ -1,5 +1,8 @@
 # Falcı daveti — OneSignal Kabul / Reddet aksiyon düğmeleri
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 Flutter tarafı hazır: `PsychicPushActionBridge` (`mobile/lib/features/live_psychics/presentation/controllers/psychic_push_action_bridge.dart`) ve `OneSignalBootstrap` tıklama dinleyicisi.
 
 **Sunucu / OneSignal dashboard** aşağıdaki sözleşmeyi göndermelidir.

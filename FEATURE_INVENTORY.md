@@ -1,5 +1,8 @@
 # Canlifal Web ↔ Flutter Özellik Envanteri
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · Psychic P0 cihaz · [`docs/DOCS_RELEASE_INDEX.md`](docs/DOCS_RELEASE_INDEX.md)
+
 Tarih: 2026-06-10  
 Kaynaklar: `https://canlifal.com/canlifal-envanter-raporu.txt`, mevcut parite raporları, `mobile/lib/app/router/app_router.dart`, `mobile/lib/core/network/api_endpoints.dart`, `mobile/lib/features/**`.
 

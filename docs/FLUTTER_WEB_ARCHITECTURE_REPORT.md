@@ -1,5 +1,8 @@
 # Flutter Web Parite & Performans Raporu
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Sürüm:** 1.0.121+154  
 **Tarih:** 2026-08-03  
 **Referans:** canlifal.com web uygulaması + `docs/FLUTTER_ENTegrasyon_KILAVUZU.md`

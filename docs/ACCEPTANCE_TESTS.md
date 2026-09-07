@@ -1,5 +1,8 @@
 # Release Gate (9 madde) — APK/AAB öncesi zorunlu
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 Release APK veya AAB (`build-apk.yml`) oluşturulmadan **önce** 9 maddelik release gate otomatik çalışır. **Herhangi biri başarısızsa APK/AAB ve sürüm etiketi oluşturulmaz.**
 
 ## Çalıştırma

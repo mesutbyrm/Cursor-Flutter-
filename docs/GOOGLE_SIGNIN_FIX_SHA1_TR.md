@@ -1,5 +1,8 @@
 # Google giriş hatası (ApiException 10 / SHA-1) — telefon rehberi
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 ## Neden oluyor?
 
 Play Console’daki SHA-1’leri Firebase’e eklemeniz **doğruydu**.  

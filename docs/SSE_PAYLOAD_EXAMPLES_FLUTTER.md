@@ -1,5 +1,8 @@
 # SSE payload örnekleri — Flutter test fixture'larından
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Tarih:** 2026-08-18  
 **Uyarı:** Bunlar **resmi backend dump değil**; Flutter unit testlerinde kullanılan ve parser'ların geçtiği örneklerdir. Backend doğrulaması gelene kadar A7 yedeği.
 

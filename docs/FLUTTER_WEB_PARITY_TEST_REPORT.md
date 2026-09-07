@@ -1,5 +1,8 @@
 # Canlifal Flutter — Web Özellik Paritesi Test Raporu
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Tarih:** 2026-06-18  
 **Uygulama sürümü:** `1.0.263+266` (`mobile/pubspec.yaml`)  
 **Üretim API:** `https://canlifal.com`  

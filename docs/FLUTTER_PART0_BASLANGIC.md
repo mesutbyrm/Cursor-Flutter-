@@ -1,5 +1,8 @@
 # CanlıFal Flutter — Başlangıç Kılavuzu (PART 0)
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 > **Amaç:** `FLUTTER_PART1` … `FLUTTER_PART12` dosyalarının önerdiği sırayı tek sayfada özetlemek.  
 > **2026 Premium şartname:** [`FLUTTER_PREMIUM_2026_SARTNAME.md`](./FLUTTER_PREMIUM_2026_SARTNAME.md) — özellik matrisi ve yayın kontrol listesi.  
 > **Bu repoda API tek kaynağı:** [`FLUTTER_ENTegrasyon_KILAVUZU.md`](./FLUTTER_ENTegrasyon_KILAVUZU.md) (27 Haziran 2026). PART dosyaları ile çelişkide **kılavuz geçerlidir**.

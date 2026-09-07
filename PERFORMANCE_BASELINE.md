@@ -1,5 +1,8 @@
 # Canlifal Flutter — Performans Baseline (FAZ 2 öncesi)
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · Psychic P0 cihaz · [`docs/DOCS_RELEASE_INDEX.md`](docs/DOCS_RELEASE_INDEX.md)
+
 **Tarih:** 2026-08-22  
 **Sürüm:** `1.0.336+372`  
 **Audit eşleniği:** [`PERFORMANCE_AUDIT.md`](PERFORMANCE_AUDIT.md)  

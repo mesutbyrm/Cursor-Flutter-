@@ -1,5 +1,8 @@
 # CanlıFal — Flutter Resmî Servis Entegrasyon Dokümanı
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 > **Amaç:** Flutter mobil uygulamasının, web sürümüyle **aynı veritabanını, aynı iş kurallarını ve aynı gerçek zamanlı davranışı** kullanmasını garanti etmek. Backend, Flutter için **resmî (birinci sınıf) servis** olarak tanımlanmıştır. Hiçbir özellikte web ↔ mobil farkı kalmamalıdır.
 
 **Backend teknolojisi:** Next.js App Router (`app/api/**/route.ts`) · Tek PostgreSQL (Prisma) · Paylaşımlı veritabanı (web + mobil aynı DB).

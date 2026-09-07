@@ -1,5 +1,8 @@
 # CANLIFAL FLUTTER — CANLI YAYIN SİSTEMİ TAM ENTEGRASYON PROMPT'U
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Base URL**: `https://canlifal.com`
 **Auth Header**: `Authorization: Bearer {JWT}` (tüm isteklerde)
 **Agora App ID**: `f1cf983a38114b04a4e9102c303ba63e`

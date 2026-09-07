@@ -1,5 +1,8 @@
 # canlifal.com — Sizin yapmanız gerekenler
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 Uygulama varsayılan olarak **https://canlifal.com** adresine bağlanır. Aşağıdakiler **canlifal.com sunucusundaki** web/API projesine eklenmelidir (bu Flutter repo’sundaki `api/` klasörü sadece yerel/test içindir).
 
 ## 1. Veritabanı (kullanıcı tablosu)

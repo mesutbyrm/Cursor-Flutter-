@@ -1,5 +1,8 @@
 # Premium 2026 — sürüm matrisi
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 | Part | Konu | `pubspec` sürümü | CHANGELOG |
 |------|------|------------------|-----------|
 | 3 | Sesli sohbet Premium 2026 | 1.0.75+77 | `## 1.0.75+77` |

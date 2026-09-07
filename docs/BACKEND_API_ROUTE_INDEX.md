@@ -1,5 +1,8 @@
 # Backend API route index (OpenAPI / endpoints_index)
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Kaynak:** `backend-docs/endpoints_index.json`
 **Üretim:** `bash scripts/generate-api-route-index.sh`
 **Not:** `nextjs_space/app/api/**/route.ts` repoda yok; A6 yedeği.

@@ -1,5 +1,8 @@
 # Flutter API Audit — Canlifal Mobile
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 Sürüm: **1.0.331+367**  
 Kaynak: `mobile/lib/core/network/api_endpoints.dart` + `docs/FLUTTER_ENTegrasyon_KILAVUZU.md`  
 Tarih: **2026-08-21**

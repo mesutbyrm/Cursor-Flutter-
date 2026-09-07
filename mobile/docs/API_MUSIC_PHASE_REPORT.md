@@ -1,5 +1,8 @@
 # Acceptance Test Raporu
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · Psychic P0 cihaz · [`../../docs/DOCS_RELEASE_INDEX.md`](../../docs/DOCS_RELEASE_INDEX.md)
+
 | Alan | Değer |
 |------|--------|
 | Tarih | 2026-08-09 09:36:35 UTC |

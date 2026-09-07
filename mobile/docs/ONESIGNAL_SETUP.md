@@ -1,5 +1,8 @@
 # OneSignal push bildirimleri
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · Psychic P0 cihaz · [`../../docs/DOCS_RELEASE_INDEX.md`](../../docs/DOCS_RELEASE_INDEX.md)
+
 ## Uygulama kimliği (App ID)
 
 | Alan | Değer |

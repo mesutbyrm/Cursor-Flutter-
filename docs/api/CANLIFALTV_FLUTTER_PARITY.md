@@ -1,5 +1,8 @@
 # CanlifalTV Flutter API — Entegrasyon Paritesi
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Kaynak:** CanlifalTV Flutter Mobil API Dokümantasyonu (Mayıs 2026)  
 **Üretim:** `https://canlifal.com`  
 **Flutter teknik kılavuz:** `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` (çelişkide öncelikli)  

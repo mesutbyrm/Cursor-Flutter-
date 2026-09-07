@@ -1,5 +1,8 @@
 # Abacus Deploy — FLUTTER_CURSOR_PROMPT Tam Parite + APK
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 Aşağıdaki metni **Abacus.ai**'ye olduğu gibi yapıştırın.
 
 ---

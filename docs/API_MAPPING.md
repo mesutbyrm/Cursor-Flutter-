@@ -1,5 +1,8 @@
 # CanliFal Backend Contract Audit — API Mapping
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Generated:** 2026-08-04  
 **Sources:** `api/` (Express mirror), `docs/FLUTTER_ENTegrasyon_KILAVUZU.md`, `mobile/lib/core/network/api_endpoints.dart`  
 **Production reference:** `https://canlifal.com` (~384 API routes, 149 Prisma models per envanter)

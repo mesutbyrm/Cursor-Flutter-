@@ -1,5 +1,8 @@
 # Premium Özellikler — Eksiklik Tespiti (19 Temmuz 2026)
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 > **Mobil sürüm:** `1.0.57+84`  
 > **Kılavuz:** [`FLUTTER_ENTegrasyon_KILAVUZU.md`](./FLUTTER_ENTegrasyon_KILAVUZU.md)  
 > **Önemli:** Bu repo yalnızca Flutter istemcisidir. Aşağıdaki **Backend gerekli** satırlar `canlifal.com` deploy’u olmadan tamamlanamaz.

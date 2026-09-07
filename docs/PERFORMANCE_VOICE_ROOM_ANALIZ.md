@@ -1,5 +1,8 @@
 # Canlifal — Sesli Sohbet Odaları Performans Analizi
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Tarih:** 2026-08-24  
 **Kapsam:** `mobile/lib/features/voice_hub/`, `mobile/lib/features/trtc/`, ilgili gift/PK/SSE katmanları  
 **Backend:** `https://canlifal.com` — mevcut API sözleşmesi değiştirilmedi  

@@ -1,5 +1,8 @@
 # Flutter ↔ Backend Parite — Deploy Kontrol Listesi
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 Güncelleme: 2026-05-19. Bu repo `api/` altında Express mirror; **canlifal.com** üretimi Next.js’tir.
 
 ## Müzik arama (P0)

@@ -1,5 +1,8 @@
 # P0 Deploy — Müzik Arama + TRTC (canlifal.com)
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 Parite raporu madde **#1**. Bu belge, üretimde Flutter sesli oda ve canlı yayın için gerekli minimum API’leri deploy etmeyi anlatır.
 
 ## Durum kontrolü (2026-05-19)

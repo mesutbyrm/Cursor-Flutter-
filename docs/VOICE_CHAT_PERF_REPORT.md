@@ -1,5 +1,8 @@
 # Sesli sohbet performans ve senkronizasyon raporu — 1.0.30+35
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Tarih:** 2026-07-14  
 **Kapsam:** Flutter mobil istemci (`mobile/`). Backend (PostgreSQL/Redis) bu repoda değildir; sunucu tarafı için canlifal.com API ekibi gerekir.
 

@@ -1,5 +1,8 @@
 # Flutter Platform & Performans Yükseltmesi
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Sürüm:** 1.0.122+155  
 **Tarih:** 2026-08-03
 

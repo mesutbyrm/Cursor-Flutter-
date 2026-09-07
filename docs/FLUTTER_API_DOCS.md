@@ -1,5 +1,8 @@
 # 🔮 CanLıFal Flutter API Dokümantasyonu
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Base URL:** `https://canlifal.com/api`  
 **Tarih:** 2026-06-11  
 **Toplam Endpoint:** ~300+ (admin dahil ~400)

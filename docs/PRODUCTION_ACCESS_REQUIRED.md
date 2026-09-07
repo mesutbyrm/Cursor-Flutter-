@@ -1,5 +1,8 @@
 # Production Access Required
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 > **Durum:** `PRODUCTION SOURCE ACCESS = BLOCKED`  
 > **Tarih:** 2026-08-09  
 > **Flutter repo (bu workspace):** `mesutbyrm/Cursor-Flutter-`

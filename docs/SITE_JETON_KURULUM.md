@@ -1,5 +1,8 @@
 # canlifal.com — Jeton yükleme sayfaları
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 Mobil uygulamadaki jeton ödeme ekranlarının web karşılığı:
 
 - **Önerilen (canlifal.com Next.js):** `site/canlifal-jeton-web/` — mockup ile birebir React sayfaları

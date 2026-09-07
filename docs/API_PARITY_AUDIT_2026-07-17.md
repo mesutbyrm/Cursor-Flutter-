@@ -1,5 +1,8 @@
 # Backend ↔ Flutter API Parity Audit
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Tarih:** 2026-07-17  
 **Kaynak:** `api/src/**` (yerel mirror), `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9 (üretim sözleşmesi), `mobile/lib/**`
 

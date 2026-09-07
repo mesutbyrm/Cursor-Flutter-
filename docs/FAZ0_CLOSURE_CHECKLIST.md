@@ -1,5 +1,8 @@
 # FAZ 0 — Kapanış kontrol listesi
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Durum:** Jeton + M7 + preflight ✅ — yalnızca M5 cihaz bekliyor  
 **APK:** `1.0.291+327` (`apk-latest`)  
 **Otomatik:** `bash scripts/faz0-sequential.sh` (sıralı ilerleme) · `bash scripts/faz0-verify.sh` (özet)

@@ -1,5 +1,8 @@
 # canlifal.com → Flutter Parite Matrisi
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 Bu belge, **canlifal.com** web sitesi ile **canlifal_social** mobil uygulaması arasındaki sayfa, özellik ve API eşlemesini izler. Güncelleme: 2026-05-19.
 
 ## Tasarım sistemi (web → mobil)

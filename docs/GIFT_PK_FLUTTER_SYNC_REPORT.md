@@ -1,5 +1,8 @@
 # GIFT + PK Flutter Sync Report
 
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 > **Tarih:** 2026-08-12  
 > **Sürüm (dal):** `1.0.161+196` (planlı)  
 > **API:** `https://canlifal.com`  
