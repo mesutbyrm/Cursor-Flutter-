@@ -72,6 +72,22 @@ Güncel envanter metni (dış kaynak): https://canlifal.com/canlifal-envanter-ra
 - Emülatör yok — doğrulama: `cd mobile && flutter build apk --debug`
 - İlk Gradle derlemesi NDK/platform indirebilir (~3 dk)
 
+### Kullanıcı testi (agent KAPALI — 2026-09-07)
+
+**Agent işi bitti.** Mobil kod/CI/docs değiştirme — yalnızca **`Psychic P0 FAIL`** sonrası hotfix.
+
+| Görev | Komut |
+|-------|--------|
+| Tek akış (jeton + checklist) | `bash scripts/psychic-p0-all.sh` |
+| Özet handoff | `bash scripts/user-handoff.sh` |
+| Önkoşul (APK, giriş, jeton) | `bash scripts/psychic-p0-prereqs.sh` |
+| Admin jeton | `bash scripts/admin-jeton-cheatsheet.sh` |
+| Derleme durumu | `bash scripts/print-build-status.sh` |
+
+Rehber: [`docs/PSYCHIC_P0_START.md`](docs/PSYCHIC_P0_START.md) · Takip: [`docs/REMAINING_WORK.md`](docs/REMAINING_WORK.md) (Agent: **KAPALI**)
+
+Kullanıcı **`Psychic P0 PASS`** yazana kadar `RELEASE READY: NO`. PASS → checklist güncelle; FAIL → freeze hotfix.
+
 ### Komutlar (`mobile/`)
 
 | Görev | Komut |
