@@ -24,6 +24,8 @@ bash scripts/build-play-aab.sh          # AAB yerel (keystore gerekir)
 
 Yerel: `cp mobile/android/key.properties.example mobile/android/key.properties`
 
+Secret kurulum: `bash scripts/play-keystore-secrets-cheatsheet.sh`
+
 ## AAB CI workflow
 
 GitHub → **Actions** → **Build release AAB** → Run workflow (dal `main`)  
