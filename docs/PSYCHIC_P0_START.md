@@ -18,7 +18,7 @@ bash scripts/p0-go.sh          # jeton + falcı + hesaplar
 
 ## 1. Jeton (zorunlu)
 
-Probe (2026-09-07): danışan `cursor.test.*` hesabında **jeton≈100000** — P0-j kapandı.
+Probe (2026-09-07): danışan `cursor.test.*` hesabında **jeton≈98k** — P0-j kapandı.
 
 ```bash
 bash scripts/psychic-p0-prereqs.sh       # jeton + APK + giriş doğrulama

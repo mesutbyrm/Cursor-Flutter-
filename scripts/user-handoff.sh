@@ -4,60 +4,41 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-APK_URL="https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk"
 
-VERSION="?"
-if [[ -f "${ROOT}/mobile/pubspec.yaml" ]]; then
-  VERSION=$(grep -E '^version:' "${ROOT}/mobile/pubspec.yaml" | head -1 | sed 's/version:[[:space:]]*//')
-fi
+bash "$ROOT/scripts/print-p0-live-status.sh"
 
-echo "╔══════════════════════════════════════════════════════════════════╗"
-echo "║  Canlifal — kullanıcı devir teslimi (${VERSION})                  ║"
-echo "╚══════════════════════════════════════════════════════════════════╝"
-echo ""
-echo "Agent tarafı: TAMAM (kod, CI, API otomasyon M5/M7, dokümantasyon)"
-echo "Sizin tarafınız: Psychic P0 — 2 telefon (T+5s donma yok)"
-echo ""
-echo "── Canlı durum ──"
-echo "  bash scripts/kalan-isler.sh"
-echo ""
-echo "── Jeton ──"
-echo "  ✅ P0-j kapandı (~100k jeton) — bash scripts/psychic-p0-prereqs.sh ile doğrula"
-echo ""
-echo "── Falcı hesabı ──"
-echo "  ✅ cursor.host.* onaylı falcı (Cursor Host Test)"
-echo "  bash scripts/probe-psychic-teller.sh"
-echo "  bash scripts/open-approved-teller.sh   # yeniden doğrula"
-echo ""
-echo "── APK ──"
-echo "  ${APK_URL}"
-echo ""
-echo "── Önkoşul (APK + giriş + jeton) ──"
-echo "  bash scripts/psychic-p0-prereqs.sh"
-echo ""
-echo "── Psychic P0 checklist (yazdır) ──"
-echo "  bash scripts/psychic-p0-checklist.sh"
-echo ""
-echo "── Tam E2E (P0 PASS sonrası) ──"
-echo "  bash scripts/print-live-psychics-e2e-checklist.sh"
-echo ""
-echo "── Hızlı referans ──"
-echo "  docs/USER_TEST_QUICK_REF.md"
-echo ""
-echo "── Falcı listesi ──"
-echo "  bash scripts/list-production-tellers.sh"
-echo "  bash scripts/probe-psychic-teller.sh"
-echo ""
-echo "── Test hesapları ──"
-echo "  Danışan: cursor.test.1786235468@mailinator.com"
-echo "  Falcı:   cursor.host.1786235468@mailinator.com (onaylı ✅)"
-echo "  Şifre:   CursorTest!1786235468"
-echo ""
-echo "── Sonuç kaydı ──"
-echo "  bash scripts/record-user-test-result.sh p0 PASS"
-echo ""
-echo "── Sonra (P1) ──"
-echo "  docs/RELEASE_CHECKLIST.md — sesli oda, hediye, PK, müzik"
-echo ""
-echo "── Derleme özeti ──"
-bash "${ROOT}/scripts/print-build-status.sh" 2>/dev/null | head -25
+cat <<'EOF'
+
+╔══════════════════════════════════════════════════════════════════╗
+║  Devir teslim — agent tamam, cihaz sizde                         ║
+╚══════════════════════════════════════════════════════════════════╝
+
+Agent: kod · CI · API (M5/M7/Gate 3) · falcı onayı ✅
+Siz: Psychic P0 — 2 telefon · T+5s donma yok
+
+── Başla (önerilen) ──
+  bash scripts/kalan-isler.sh
+  bash scripts/p0-go.sh
+  bash scripts/user-test-start.sh p0
+
+── Doğrulama (isteğe bağlı) ──
+  bash scripts/validate-pre-device-handoff.sh
+  bash scripts/user-test-start.sh ready
+
+── Sonuç ──
+  PASS → bash scripts/on-p0-pass.sh
+  FAIL → bash scripts/on-p0-fail.sh "hangi adım"
+
+── P0 PASS sonrası ──
+  bash scripts/p1-go.sh
+  bash scripts/on-p1-pass.sh
+  bash scripts/on-release-ready-candidate.sh
+
+Rehberler:
+  docs/KALAN_ISLER.md
+  docs/USER_TEST_QUICK_REF.md
+  docs/RELEASE_USER_NEXT_STEPS.md
+
+EOF
+
+bash "$ROOT/scripts/print-build-status.sh" 2>/dev/null | head -12

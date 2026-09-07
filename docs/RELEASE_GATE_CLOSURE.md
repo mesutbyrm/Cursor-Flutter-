@@ -32,7 +32,7 @@
 
 | ID | Madde | Durum |
 |----|-------|-------|
-| P0-j | Danışan jeton (admin top-up) | ✅ **~100000** jeton (2026-09-07) |
+| P0-j | Danışan jeton (admin top-up) | ✅ **~98k** jeton (2026-09-07) |
 | API otomasyon | M5 smoke + M7 song-request | ✅ PASS=6, HTTP 200 |
 | Falcı probe | Host falcı listesinde | ✅ `Cursor Host Test` (9 falcı) |
 | API Gate 3 (acceptance) | Session + TRTC | ✅ PASS (host listede) |

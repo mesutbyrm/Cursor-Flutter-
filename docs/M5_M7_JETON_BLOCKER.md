@@ -5,7 +5,7 @@
 > **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
 **Son güncelleme:** 2026-09-07 · APK `1.0.371+409`  
-**Durum (probe 2026-09-07):** Test danışan **jeton=100000** — P0-j kapandı. **Psychic P0** cihaz testi sırada.
+**Durum (probe 2026-09-07):** Test danışan **jeton≈98k** — P0-j kapandı. **Psychic P0** cihaz testi sırada.
 
 ---
 
@@ -13,7 +13,7 @@
 
 | Madde | Gereksinim | Şu an (2026-09-07) |
 |-------|------------|---------------------------|
-| **P0-j jeton** | Danışan jeton | ✅ **~99880+** (admin) |
+| **P0-j jeton** | Danışan jeton | ✅ **~98k** (admin) |
 | **M7 API** | song-request HTTP **200** | ✅ [`M7_MUSIC_SSE_CAPTURE.md`](M7_MUSIC_SSE_CAPTURE.md) |
 | **M5 API smoke** | Test 1–4 + SSE | ✅ PASS=6 (`M5_API_SMOKE_REPORT.md`) |
 | **m5-preflight** | Jeton + voice seat API | ✅ geçti |

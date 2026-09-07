@@ -123,7 +123,7 @@ case "${1:-}" in
   ready|p0-ready|device-ready)
     exec bash "$ROOT/scripts/validate-pre-device-handoff.sh"
     ;;
-  go|p0-go)
+  go|p0-go|start|basla)
     exec bash "$ROOT/scripts/p0-go.sh"
     ;;
   p2|play-store)

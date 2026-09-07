@@ -33,7 +33,7 @@
 
 | # | İş | Referans |
 |---|-----|----------|
-| **P0-j** | Danışan jeton (admin) | ✅ **100000** jeton (2026-09-07) |
+| **P0-j** | Danışan jeton (admin) | ✅ ~98k (2026-09-07) |
 | **P0** | Psychic TRTC 2-cihaz (T+5s donma yok) | ⏳ **OPEN** — `bash scripts/p0-go.sh` |
 | P1 | Voice / gift / PK / müzik 2-cihaz | ⏸ P0 sonrası — `bash scripts/p1-go.sh` |
 | P2 | Stage 8 / Play Store closed test | ⏸ P0+P1 — `bash scripts/p2-go.sh` |
@@ -254,7 +254,7 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 
 ## Oturum günlüğü (2026-09-07 — jeton eklendi)
 
-- Kullanıcı admin jeton → **jeton=100000** (probe OK)
+- Kullanıcı admin jeton → **jeton≈98k** (probe OK)
 - P0-j ✅ kapandı; P0 cihaz testi sırada
 - API gate 3: respond=403 (host/teller API — cihaz akışı ayrı doğrulanacak)
 
