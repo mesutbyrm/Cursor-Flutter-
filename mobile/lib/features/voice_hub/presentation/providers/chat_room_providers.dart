@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/auth/voice_staff_rank.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';

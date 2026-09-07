@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/live_debug_log.dart';
 import '../../../../core/network/live_event_log.dart';
@@ -487,7 +488,10 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
         LiveRoomChatMessage(
           id: msgId,
           user: 'Sistem',
-          text: GiftSystemMessage.format(ev),
+          text: GiftSystemMessage.format(
+            ev,
+            jetonLabel: economyCurrencyLabel(ref, key: 'jeton'),
+          ),
           isSystem: true,
         ),
       ],

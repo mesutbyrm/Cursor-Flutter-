@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 
+import '../../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../../core/theme/app_theme_extensions.dart';
 import '../../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../domain/game_center_models.dart';
@@ -382,7 +384,7 @@ class GameCenterLiveCard extends StatelessWidget {
 }
 
 /// Ödüllü oyun kartı.
-class GameCenterRewardCard extends StatelessWidget {
+class GameCenterRewardCard extends ConsumerWidget {
   const GameCenterRewardCard({
     super.key,
     required this.item,
@@ -393,7 +395,12 @@ class GameCenterRewardCard extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(
+      ref,
+      key: 'jeton',
+      locale: Localizations.localeOf(context),
+    );
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       child: ListTile(
@@ -412,7 +419,7 @@ class GameCenterRewardCard extends StatelessWidget {
         subtitle: Text(item.subtitle ?? ''),
         trailing: item.jetonCost > 0
             ? Text(
-                '${item.jetonCost} Jeton',
+                '${item.jetonCost} $jetonLabel',
                 style: TextStyle(
                   color: context.coinGold,
                   fontWeight: FontWeight.w800,

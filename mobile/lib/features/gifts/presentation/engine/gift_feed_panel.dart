@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../domain/gift_engine_models.dart';
 import '../sync/gift_session_controller.dart';
 
@@ -22,6 +23,11 @@ class GiftFeedPanel extends ConsumerWidget {
       giftSessionProvider(sessionKey).select((s) => s.feedItems),
     );
     if (items.isEmpty) return const SizedBox.shrink();
+    final jetonLabel = economyCurrencyLabel(
+      ref,
+      key: 'jeton',
+      locale: Localizations.localeOf(context),
+    );
 
     return Positioned(
       right: 8,
@@ -32,7 +38,8 @@ class GiftFeedPanel extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              for (final item in items.take(4)) _FeedRow(item: item),
+              for (final item in items.take(4))
+                _FeedRow(item: item, jetonLabel: jetonLabel),
             ],
           ),
         ),
@@ -42,9 +49,10 @@ class GiftFeedPanel extends ConsumerWidget {
 }
 
 class _FeedRow extends StatelessWidget {
-  const _FeedRow({required this.item});
+  const _FeedRow({required this.item, required this.jetonLabel});
 
   final GiftFeedItem item;
+  final String jetonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -103,7 +111,7 @@ class _FeedRow extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Text(
-              '${item.jetonAmount} Jeton${item.comboLabel}',
+              '${item.jetonAmount} $jetonLabel${item.comboLabel}',
               style: TextStyle(
                 color: const Color(0xFFFFD54F).withValues(alpha: 0.95),
                 fontSize: 10,
