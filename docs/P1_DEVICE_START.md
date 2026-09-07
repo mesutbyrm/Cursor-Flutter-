@@ -10,6 +10,7 @@ P0 (Psychic TRTC freeze) **PASS** olduktan sonra iki cihazla genel platform kabu
 ## Checklist
 
 ```bash
+bash scripts/p1-go.sh
 bash scripts/p1-platform-checklist.sh
 bash scripts/print-full-user-checklist.sh   # P0+P1 birleşik yazdır
 ```

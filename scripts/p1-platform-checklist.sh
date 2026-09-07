@@ -14,10 +14,14 @@ cat <<EOF
 ║  P1 — Genel platform 2-cihaz (${VERSION})                         ║
 ╚══════════════════════════════════════════════════════════════════╝
 
-ÖNCE: Psychic P0 PASS — bash scripts/psychic-p0-all.sh
+ÖNCE: Psychic P0 PASS — bash scripts/on-p0-pass.sh
 
 APK: ${APK_URL}
-Hesaplar: docs/TEST_ACCOUNTS.md (A + B veya iki cihaz)
+
+Hesaplar (2 cihaz):
+  Cihaz A → cursor.test.1786235468@mailinator.com
+  Cihaz B → cursor.host.1786235468@mailinator.com
+  Şifre   → CursorTest!1786235468
 
 ┌─────────────────────────────────────────────────────────────────┐
 │ Alan                     │ PASS │ FAIL │ Not                      │

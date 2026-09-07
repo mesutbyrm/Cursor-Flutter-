@@ -15,6 +15,7 @@ bash "$ROOT/scripts/p1-platform-checklist.sh"
 
 echo ""
 echo "P1 bitince:"
+echo "  bash scripts/p1-go.sh"
 echo "  bash scripts/record-user-test-result.sh p1 PASS"
 echo "  veya: bash scripts/on-p1-pass.sh"
 echo ""

@@ -28,7 +28,20 @@ Agent'a kopyala-yapıştır: **`Psychic P0 PASS`** veya **`Psychic P0 FAIL`**
 | Danışan | `cursor.test.1786235468@mailinator.com` | `CursorTest!1786235468` |
 | Falcı | `cursor.host.1786235468@mailinator.com` | `CursorTest!1786235468` |
 
-Doğrula: `bash scripts/print-p0-live-status.sh`
+Doğrula: `bash scripts/p0-go.sh`
+
+---
+
+## Akış (P0 → P1 → RELEASE)
+
+| Adım | Komut |
+|------|--------|
+| P0 GO | `bash scripts/p0-go.sh` |
+| P0 test | `bash scripts/user-test-start.sh p0` |
+| P0 PASS | `bash scripts/on-p0-pass.sh` |
+| P1 GO | `bash scripts/p1-go.sh` |
+| P1 PASS | `bash scripts/on-p1-pass.sh` |
+| RELEASE adayı | `bash scripts/on-release-ready-candidate.sh` |
 
 ---
 

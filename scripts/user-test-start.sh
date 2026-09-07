@@ -32,6 +32,7 @@ Komutlar:
   6) bash scripts/print-full-user-checklist.sh  # P0+P1 birleşik yazdır
   7) bash scripts/psychic-p0-all.sh             # P0 akışı
   8) bash scripts/p1-platform-checklist.sh    # P0 PASS sonrası
+  8b) bash scripts/p1-go.sh                   # P1 GO ekranı
   9) bash scripts/on-p0-pass.sh              # P0 PASS → P1 checklist
  10) bash scripts/on-p0-fail.sh "not"        # P0 FAIL → hotfix kaydı
  11) bash scripts/on-p1-pass.sh              # P1 PASS → RELEASE adayı
@@ -83,6 +84,9 @@ case "${1:-}" in
     ;;
   p1)
     exec bash "$ROOT/scripts/p1-platform-checklist.sh"
+    ;;
+  p1-go|p1go)
+    exec bash "$ROOT/scripts/p1-go.sh"
     ;;
   handoff)
     exec bash "$ROOT/scripts/user-handoff.sh"

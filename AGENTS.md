@@ -78,10 +78,12 @@ Güncel envanter metni (dış kaynak): https://canlifal.com/canlifal-envanter-ra
 
 | Görev | Komut |
 |-------|--------|
-| **Cihaz testi giriş** | `bash scripts/user-test-start.sh` |
+| **P0 GO (öncelik)** | `bash scripts/p0-go.sh` |
+| **Cihaz testi menü** | `bash scripts/user-test-start.sh` |
 | Cihaz öncesi doğrulama | `bash scripts/validate-pre-device-handoff.sh` |
-| Tek akış (jeton + checklist) | `bash scripts/psychic-p0-all.sh` |
-| Falcı listesi kontrolü | `bash scripts/probe-psychic-teller.sh` |
+| P0 akış (checklist) | `bash scripts/user-test-start.sh p0` |
+| P1 GO (P0 sonrası) | `bash scripts/p1-go.sh` |
+| Falcı doğrula | `bash scripts/probe-psychic-teller.sh` |
 | Özet handoff | `bash scripts/user-handoff.sh` |
 | Sonuç kaydı | `bash scripts/record-user-test-result.sh p0 PASS` |
 | Önkoşul (APK, giriş, jeton) | `bash scripts/psychic-p0-prereqs.sh` |
@@ -142,4 +144,4 @@ Kullanıcı GitHub’da **Watch → Releases** ile e-posta alabilir.
 
 ### Release handoff
 
-Güncel sürüm ve kalan iş: [`docs/DOCS_RELEASE_INDEX.md`](docs/DOCS_RELEASE_INDEX.md) · Kullanıcı: `bash scripts/user-test-start.sh` · Rehber: [`docs/PSYCHIC_P0_START.md`](docs/PSYCHIC_P0_START.md) · `[skip ci]` push CI/APK atlar.
+Güncel sürüm ve kalan iş: [`docs/DOCS_RELEASE_INDEX.md`](docs/DOCS_RELEASE_INDEX.md) · P0: `bash scripts/p0-go.sh` · Rehber: [`docs/PSYCHIC_P0_START.md`](docs/PSYCHIC_P0_START.md) · `[skip ci]` push CI/APK atlar.

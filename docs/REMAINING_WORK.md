@@ -85,6 +85,12 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 
 ---
 
+## Oturum günlüğü (2026-09-07 — P1 GO + AGENTS senkron)
+
+- `p1-go.sh` — P0 PASS sonrası platform test GO ekranı
+- p1-platform-checklist: cursor.test + cursor.host hesapları
+- AGENTS.md, P1_DEVICE_START, USER_DEVICE_TEST_LOG akış tablosu
+
 ## Oturum günlüğü (2026-09-07 — P0 GO ekranı)
 
 - `p0-go.sh` — canlı durum + hesaplar + başlat komutları
