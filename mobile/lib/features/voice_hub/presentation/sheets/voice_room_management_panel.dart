@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/performance/list_perf.dart';
 import '../../../moderation/domain/entities/report_target.dart';
@@ -398,6 +399,7 @@ class _VoiceRoomManagementPanelState
     final ui = ref.watch(voiceRoomUiProvider);
     final user = ref.watch(authControllerProvider).valueOrNull;
     final role = VoiceRoomMenuRole.label(perms, user: user, live: _live);
+    final jetonTopUpLabel = economyJetonTopUpShortLabel(ref);
 
     return ListView(
       controller: scroll,
@@ -468,7 +470,7 @@ class _VoiceRoomManagementPanelState
           ),
         ListTile(
           leading: const Icon(Icons.diamond_outlined, color: VoiceRoomTokens.gold),
-          title: const Text('Jeton yükle'),
+          title: Text(jetonTopUpLabel),
           onTap: () => _closeAndVoid(() => openJetonStore(context, ref: ref)),
         ),
         ListTile(
@@ -738,6 +740,7 @@ class _VoiceRoomManagementPanelState
     final pk = ref.watch(pkBattleForRoomProvider(room));
     final pkLive = isPkBattleLive(pk);
     final roomKey = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     return ListView(
       controller: scroll,
@@ -779,7 +782,7 @@ class _VoiceRoomManagementPanelState
             title: const Text('Müzik ayarları'),
             subtitle: Text(
               'DJ: ${_live.dj.musicEnabled ? "açık" : "kapalı"} · '
-              '${_live.dj.musicRequestCost} jeton · kuyruk ${_live.dj.maxMusicQueue}',
+              '${_live.dj.musicRequestCost} $jetonLabel · kuyruk ${_live.dj.maxMusicQueue}',
             ),
             onTap: () => _closeAndVoid(() {
               showVoiceRoomMusicSettingsDialog(context, ref, room: room);
@@ -958,6 +961,7 @@ class _VoiceRoomManagementPanelState
   }
 
   Future<void> _startGiftGoal() async {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final target = await showModalBottomSheet<int>(
       context: context,
       backgroundColor: const Color(0xFF12082A),
@@ -965,19 +969,22 @@ class _VoiceRoomManagementPanelState
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: Text('Hedef jeton miktarı',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 16)),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                'Hedef $jetonLabel miktarı',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                ),
+              ),
             ),
-            for (final opt in const [
-              (10000, '10K jeton'),
-              (50000, '50K jeton'),
-              (100000, '100K jeton'),
-              (500000, '500K jeton'),
+            for (final opt in [
+              (10000, '10K $jetonLabel'),
+              (50000, '50K $jetonLabel'),
+              (100000, '100K $jetonLabel'),
+              (500000, '500K $jetonLabel'),
             ])
               ListTile(
                 leading:
@@ -997,7 +1004,7 @@ class _VoiceRoomManagementPanelState
       final goal = await ref.read(giftGoalRemoteProvider).createGoal(
             context: 'voice_room',
             contextId: contextId,
-            title: 'Hedef: ${_fmtCoins(target)} jeton',
+            title: 'Hedef: ${_fmtCoins(target)} $jetonLabel',
             targetAmount: target,
           );
       if (goal != null) {

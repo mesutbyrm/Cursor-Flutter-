@@ -4,10 +4,10 @@ import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/economy/presentation/widgets/topup_bonus_info_banner.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
-import '../premium_2026/profile_membership_helpers.dart';
 import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_providers.dart';
 import '../widgets/jeton_payment_status_listener.dart';
@@ -69,13 +69,14 @@ class JetonPurchasePage extends ConsumerWidget {
   }
 }
 
-class _JetonStoreHeader extends StatelessWidget {
+class _JetonStoreHeader extends ConsumerWidget {
   const _JetonStoreHeader({required this.onBack});
 
   final VoidCallback onBack;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = Localizations.localeOf(context);
     return Column(
       children: [
         Align(
@@ -93,7 +94,7 @@ class _JetonStoreHeader extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          buildMembershipJetonPurchasePageTitle(),
+          economyJetonPurchasePageTitle(ref, locale: locale),
           textAlign: TextAlign.center,
           style: TextStyle(
             color: context.colors.onSurface,
@@ -104,7 +105,7 @@ class _JetonStoreHeader extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          buildMembershipJetonPurchasePageSubtitle(),
+          economyJetonPurchasePageSubtitle(ref, locale: locale),
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 13,

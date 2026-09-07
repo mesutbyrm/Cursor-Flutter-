@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/performance/list_perf.dart';
 import '../../../../core/theme/app_theme_colors.dart';
@@ -417,6 +418,8 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
   Widget build(BuildContext context) {
     final coins = ref.watch(coinBalanceProvider) ?? 0;
     final coinLabel = NumberFormat.decimalPattern('tr').format(coins);
+    final jetonTopUpLabel = economyJetonTopUpShortLabel(ref);
+    final jetonBalanceHeader = economyJetonBalanceHeaderLabel(ref);
     final canModerate = widget.perms.canModerate || widget.isOwner;
     final top = MediaQuery.paddingOf(context).top;
 
@@ -514,6 +517,8 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
                 const SizedBox(height: 20),
                 _JetonCard(
                   balance: coinLabel,
+                  balanceHeader: jetonBalanceHeader,
+                  topUpLabel: jetonTopUpLabel,
                   onTopUp: () {
                     final ctx = context;
                     Navigator.pop(ctx);
@@ -777,11 +782,15 @@ class _SectionHeader extends StatelessWidget {
 class _JetonCard extends StatelessWidget {
   const _JetonCard({
     required this.balance,
+    required this.balanceHeader,
+    required this.topUpLabel,
     required this.onTopUp,
     this.onGrowthHub,
   });
 
   final String balance;
+  final String balanceHeader;
+  final String topUpLabel;
   final VoidCallback onTopUp;
   final VoidCallback? onGrowthHub;
 
@@ -801,9 +810,9 @@ class _JetonCard extends StatelessWidget {
             children: [
               Icon(Icons.link_rounded, color: VoiceRoomTokens.gold.withValues(alpha: 0.8)),
               const SizedBox(width: 8),
-              const Text(
-                'Jeton Bakiye',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+              Text(
+                balanceHeader,
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
               ),
             ],
           ),
@@ -827,7 +836,7 @@ class _JetonCard extends StatelessWidget {
           FilledButton.icon(
             onPressed: onTopUp,
             icon: const Icon(Icons.link_rounded),
-            label: const Text('Jeton Yükle'),
+            label: Text(topUpLabel),
             style: FilledButton.styleFrom(
               backgroundColor: VoiceRoomTokens.gold,
               foregroundColor: Colors.black,

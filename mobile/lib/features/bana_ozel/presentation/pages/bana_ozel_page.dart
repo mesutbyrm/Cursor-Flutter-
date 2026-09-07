@@ -232,6 +232,7 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
       }
     });
     final catalog = ref.watch(banaOzelCatalogProvider);
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     return Scaffold(
       backgroundColor: UltraFortuneTokens.deepNight,
@@ -321,7 +322,7 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Kişisel fal ve tarot içerikleri — jeton ile açın.',
+                                    'Kişisel fal ve tarot içerikleri — $jetonLabel ile açın.',
                                     style: TextStyle(
                                       color: Colors.white.withValues(alpha: 0.72),
                                       fontSize: 13,

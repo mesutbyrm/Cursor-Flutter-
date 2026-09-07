@@ -3,6 +3,7 @@ import 'package:canlifal_social/core/performance/list_perf.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../../core/widgets/dual_balance_chips.dart';
 import '../../premium_2026/profile_membership_helpers.dart';
 import '../../providers/profile_hub_providers.dart';
@@ -33,19 +34,20 @@ class ProfileWalletSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final info = ref.watch(profileMembershipInfoProvider);
+    final locale = Localizations.localeOf(context);
     final subscriptionsLabel =
         buildMembershipWalletSubscriptionsTileLabel(info: info);
 
     final actions = [
       (
         icon: Icons.add_card_rounded,
-        label: buildMembershipWalletJetonTopUpActionLabel(),
+        label: economyJetonTopUpShortLabel(ref, locale: locale),
         onTap: onTopUp,
         accent: AppThemeColors.coinGold,
       ),
       (
         icon: Icons.diamond_rounded,
-        label: buildMembershipWalletCenterCfcStoreTitle(),
+        label: economyCfcTopUpShortLabel(ref, locale: locale),
         onTap: onCfcTopUp,
         accent: AppThemeColors.diamondBlue,
       ),

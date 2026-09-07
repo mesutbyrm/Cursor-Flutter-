@@ -118,3 +118,27 @@ String economyJetonBuyActionLabel(WidgetRef ref, {Locale? locale}) {
   final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
   return '$label Al';
 }
+
+/// Tek satır: «CFC Yükle» (markalı).
+String economyCfcTopUpShortLabel(WidgetRef ref, {Locale? locale}) {
+  final label = economyCurrencyLabel(ref, key: 'cfc', locale: locale);
+  return '$label Yükle';
+}
+
+/// Jeton mağazası sayfa başlığı.
+String economyJetonPurchasePageTitle(WidgetRef ref, {Locale? locale}) {
+  final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
+  return '$label Satın Al';
+}
+
+/// Jeton mağazası alt başlık.
+String economyJetonPurchasePageSubtitle(WidgetRef ref, {Locale? locale}) {
+  final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
+  return 'İstediğiniz tutarı girin — $label otomatik hesaplanır';
+}
+
+/// Bakiye kartı başlığı: «Jeton Bakiye».
+String economyJetonBalanceHeaderLabel(WidgetRef ref, {Locale? locale}) {
+  final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
+  return '$label Bakiye';
+}

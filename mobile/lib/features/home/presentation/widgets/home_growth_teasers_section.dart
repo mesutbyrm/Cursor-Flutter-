@@ -54,7 +54,7 @@ class HomeGrowthTeasersSection extends ConsumerWidget {
             ? value.rewardHint!
             : invited > 0
                 ? '$invited arkadaş davet edildi'
-                : 'Arkadaşlarını davet et, jeton kazan';
+                : 'Arkadaşlarını davet et, $jetonLabel kazan';
         cards.add(
           _GrowthCardData(
             emoji: '🎁',
