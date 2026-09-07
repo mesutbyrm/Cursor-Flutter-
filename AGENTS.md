@@ -116,3 +116,18 @@ Kullanıcı mesajlarına cevap verirken **en sonda** şu sabit indirme bağlant�
 4. CI `docs/LATEST_APK_BUILD.md` dosyasını günceller — kullanıcıya bu yolu da söyle
 
 Kullanıcı GitHub’da **Watch → Releases** ile e-posta alabilir.
+
+### Güncel release handoff (2026-09-07)
+
+| Alan | Durum |
+|------|--------|
+| Sürüm | `1.0.371+409` (`mobile/pubspec.yaml`) |
+| Release gate | **FINAL PASS** — [Run 34146919509](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34146919509) |
+| Faz 1 | SSE SoT, Socket.IO kapalı — main |
+| Faz 2 | Psychic TRTC freeze fix — main |
+| Agent kalan | **Yok** (CI/docs/release pipeline tamam) |
+| Kullanıcı kalan | **Psychic P0** 2-cihaz test — `bash scripts/psychic-p0-checklist.sh` |
+
+`[skip ci]` push: CI/CodeQL/APK/cleanup atlanır. Mobil değişiklik push'unda tam CI + APK koşar.
+
+**RELEASE READY:** `NO` — Psychic P0 cihaz kabulü kapalı değil. Detay: `docs/RELEASE_CHECKLIST.md`, `docs/REMAINING_WORK.md`.
