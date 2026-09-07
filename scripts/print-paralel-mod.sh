@@ -25,7 +25,10 @@ APK: ${APK_URL}
 │ bash scripts/p1-prep-go.sh             # P1 checklist GO          │
 │ bash scripts/p2-prep-go.sh             # Play Store GO             │
 │ bash scripts/p2-prep-all.sh            # Play Console print paketi │
+│ bash scripts/print-agent-prep-status.sh # prep envanter          │
+│ bash scripts/print-go-commands.sh      # GO indeks               │
 │ bash scripts/print-release-blockers.sh # RELEASE READY engelleri │
+│ bash scripts/print-play-upload-day-checklist.sh # yükleme günü   │
 └──────────────────────────────────────────────────────────────────┘
 
 ┌─ Cihaz (sonra) ─────────────────────────────────────────────────┐

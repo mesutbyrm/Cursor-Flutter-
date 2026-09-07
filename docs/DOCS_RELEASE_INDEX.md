@@ -68,7 +68,10 @@ bash scripts/print-play-console-prep-index.sh # Prep indeks
 bash scripts/devam-et.sh                    # agent devam
 bash scripts/print-release-blockers.sh        # RELEASE READY engelleri
 bash scripts/print-paralel-mod.sh           # paralel özet
-bash scripts/p1-prep-go.sh                  # P1 checklist GO
+bash scripts/agent-prep-tamam.sh              # prep paketi doğrula
+bash scripts/print-agent-prep-status.sh       # prep envanter
+bash scripts/print-play-upload-day-checklist.sh  # yükleme günü
+bash scripts/print-go-commands.sh             # GO indeks
 bash scripts/kalan-isler.sh                 # kalan işler + yol haritası
 bash scripts/p0-go.sh                       # P0 GO ekranı
 bash scripts/p1-go.sh                       # P1 GO (P0 PASS sonrası)

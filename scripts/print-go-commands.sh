@@ -38,6 +38,7 @@ Yükleme günü (P0+P1 PASS):
 
 Agent prep envanter:
   bash scripts/print-agent-prep-status.sh
+  bash scripts/agent-prep-tamam.sh
 
 Sonuç kaydı:
   bash scripts/record-user-test-result.sh p0 PASS|FAIL

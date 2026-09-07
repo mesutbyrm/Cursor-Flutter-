@@ -19,6 +19,9 @@ bash scripts/print-play-store-listing.sh      # Store listing taslak
 bash scripts/print-ci-aab-steps.sh            # GitHub Actions AAB
 bash scripts/print-play-target-audience-summary.sh  # Target audience + ads
 bash scripts/print-go-commands.sh             # GO / prep indeks
+bash scripts/print-agent-prep-status.sh       # prep envanter
+bash scripts/agent-prep-tamam.sh              # prep paketi doğrula
+bash scripts/print-play-upload-day-checklist.sh  # yükleme günü
 bash scripts/p2-prep-now.sh             # özet
 bash scripts/build-play-aab.sh          # AAB yerel (keystore gerekir)
 ```

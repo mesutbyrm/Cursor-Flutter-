@@ -159,6 +159,9 @@ case "${1:-}" in
   upload-day|yukleme|play-upload)
     exec bash "$ROOT/scripts/print-play-upload-day-checklist.sh"
     ;;
+  prep-tamam|agent-prep-tamam|prep-complete)
+    exec bash "$ROOT/scripts/agent-prep-tamam.sh"
+    ;;
   agent-prep|prep-status)
     exec bash "$ROOT/scripts/print-agent-prep-status.sh"
     ;;

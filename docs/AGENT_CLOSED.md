@@ -28,6 +28,7 @@ Mobil kod, CI ve API otomasyon **tamam**. **Cihaz testi sonucu sonra** — agent
 | P1 prep GO | ✅ `p1-prep-go.sh` |
 | P2 agent prep | ✅ `p2-prep-go.sh` · `p2-prep-all.sh` · Console print · `build-aab.yml` |
 | Paralel giriş | ✅ `devam-et.sh` · `print-paralel-mod.sh` · `print-release-blockers.sh` |
+| Agent prep paketi | ✅ `agent-prep-tamam.sh` · upload day checklist · tüm print betikleri |
 | Kalan işler doc | ✅ `docs/KALAN_ISLER.md` |
 
 ---

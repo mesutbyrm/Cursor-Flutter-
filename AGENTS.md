@@ -83,6 +83,7 @@ Güncel envanter metni (dış kaynak): https://canlifal.com/canlifal-envanter-ra
 | **Paralel mod özet** | `bash scripts/print-paralel-mod.sh` |
 | **RELEASE READY engelleri** | `bash scripts/print-release-blockers.sh` |
 | **GO komut indeks** | `bash scripts/print-go-commands.sh` |
+| **Agent prep tamam mı?** | `bash scripts/agent-prep-tamam.sh` |
 | **Agent prep durumu** | `bash scripts/print-agent-prep-status.sh` |
 | **Play Target audience + ads** | `bash scripts/print-play-target-audience-summary.sh` |
 | **Play yükleme günü** | `bash scripts/print-play-upload-day-checklist.sh` |

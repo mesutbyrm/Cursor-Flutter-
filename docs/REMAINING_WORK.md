@@ -204,6 +204,11 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 - `on-release-ready-candidate.sh` — P0+P1 sonrası RELEASE READY kontrol listesi
 - README, P2, RELEASE_GATE_CLOSURE, user-test-start güncellendi
 
+## Oturum günlüğü (2026-09-07 — agent-prep-tamam kapanış)
+
+- `agent-prep-tamam.sh` — prep betik paketi doğrulama (exit 0 = agent tarafı tamam)
+- `print-paralel-mod` genişletildi; PLAY_STORE_AGENT_CHECKLIST güncellendi
+
 ## Oturum günlüğü (2026-09-07 — upload day + agent prep status)
 
 - `print-play-upload-day-checklist.sh` — P0+P1 PASS sonrası Play yükleme adımları
