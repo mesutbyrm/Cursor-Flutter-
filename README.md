@@ -29,6 +29,7 @@ Agent P2 prep bitti. Kalan: **cihaz P0→P1**, **keystore/AAB**, **Play Console*
 
 ```bash
 bash scripts/kullanici-sonraki.sh           # ★ kalan adımlar
+bash scripts/agent-bitti.sh               # agent ✅ bitti (hızlı durum)
 bash scripts/agent-prep-tamam.sh            # prep doğrula
 bash scripts/cihaz-sonra.sh                 # cihaz (sonra)
 bash scripts/basla.sh                       # canlı durum + devir teslim

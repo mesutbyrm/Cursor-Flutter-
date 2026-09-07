@@ -24,13 +24,17 @@ Sıra: P0-j ✅ · agent prep **TAMAM** · cihaz + keystore + Play **sizde**
   bash scripts/kullanici-sonraki.sh            # kalan adımlar (agent prep ✅)
   bash scripts/agent-prep-tamam.sh             # prep doğrula
 
-★ AGENT (isteğe bağlı API yenile):
-  bash scripts/devam-et.sh
+★ AGENT (prep ✅ — hızlı durum):
+  bash scripts/agent-bitti.sh
+  bash scripts/devam-et.sh                 # aynı (hızlı)
+  bash scripts/devam-et.sh --api           # + API raporları
+  bash scripts/devam-et.sh --full          # tam yenileme (~1 dk)
 
 Komutlar:
-  0) bash scripts/kalan-isler-agent.sh         # API yenile (= devam-et)
-  0b) bash scripts/devam-et.sh                 # API yenile alias
-  0c) bash scripts/print-paralel-mod.sh        # paralel mod özet
+  0) bash scripts/agent-bitti.sh               # agent ✅ bitti (hızlı)
+  0b) bash scripts/devam-et.sh                 # hızlı (= agent-bitti)
+  0c) bash scripts/devam-et.sh --full          # tam yenileme
+  0d) bash scripts/print-paralel-mod.sh        # paralel mod özet
   1) bash scripts/cihaz-sonra.sh               # cihaz · sonra
   2) bash scripts/p2-prep-all.sh               # Play Store hazırlık (tam)
   2b) bash scripts/p2-prep-go.sh               # P2 prep GO (özet)
@@ -167,6 +171,9 @@ case "${1:-}" in
     ;;
   prep-tamam|agent-prep-tamam|prep-complete)
     exec bash "$ROOT/scripts/agent-prep-tamam.sh"
+    ;;
+  bitti|agent-bitti|kapali|done)
+    exec bash "$ROOT/scripts/agent-bitti.sh" "${@:2}"
     ;;
   agent-prep|prep-status)
     exec bash "$ROOT/scripts/print-agent-prep-status.sh"

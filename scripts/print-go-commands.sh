@@ -8,7 +8,9 @@ cat <<'EOF'
 Paralel mod:
   bash scripts/kullanici-sonraki.sh          # kullanıcı kalan adımlar
   bash scripts/agent-prep-tamam.sh           # agent prep doğrula
-  bash scripts/devam-et.sh                 # API yenile (isteğe bağlı)
+  bash scripts/devam-et.sh                 # hızlı durum (prep ✅ ise)
+  bash scripts/devam-et.sh --full        # tam yenileme (~1 dk)
+  bash scripts/devam-et.sh --api         # hızlı + API raporları
 
 Cihaz (sonra):
   bash scripts/basla.sh                    # canlı durum + devir teslim

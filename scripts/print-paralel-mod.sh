@@ -27,7 +27,8 @@ APK: ${APK_URL}
 
 ┌─ Agent ✅ tamam (referans) ─────────────────────────────────────┐
 │ bash scripts/agent-prep-tamam.sh       # prep doğrula             │
-│ bash scripts/devam-et.sh               # API yenile (isteğe bağlı)│
+│ bash scripts/devam-et.sh               # hızlı durum (prep ✅ ise)│
+│ bash scripts/devam-et.sh --full        # tam yenileme (~1 dk)      │
 │ bash scripts/p2-prep-all.sh            # Play Console print paketi│
 │ bash scripts/print-go-commands.sh      # GO indeks               │
 └──────────────────────────────────────────────────────────────────┘
