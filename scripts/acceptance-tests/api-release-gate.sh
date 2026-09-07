@@ -194,7 +194,7 @@ print(pick(d))
 }
 
 resolve_gate_teller_ids() {
-  local teller_id="$TELLER_ID" teller_user="$TELLER_USER_ID"
+  local teller_id="${TELLER_ID:-}" teller_user="${TELLER_USER_ID:-}"
   if [[ -n "$teller_id" && -n "$teller_user" ]]; then
     printf '%s %s' "$teller_id" "$teller_user"
     return 0
@@ -205,8 +205,7 @@ resolve_gate_teller_ids() {
   fi
   local tellers
   tellers=$(curl_json "$BASE/api/fortune-tellers")
-  read -r teller_id teller_user <<<"$(TELLER_USER_ID="$teller_user" TELLER_EMAIL="$TELLER_EMAIL" TELLER_USERNAME="$TELLER_USERNAME" \
-    printf '%s' "$tellers" | python3 -c "
+  read -r teller_id teller_user <<<"$(printf '%s' "$tellers" | TELLER_USER_ID="$teller_user" TELLER_EMAIL="$TELLER_EMAIL" TELLER_USERNAME="${TELLER_USERNAME:-}" python3 -c "
 import json,sys,os
 target_user=(os.environ.get('TELLER_USER_ID') or '').strip()
 email=(os.environ.get('TELLER_EMAIL') or '').lower().strip()

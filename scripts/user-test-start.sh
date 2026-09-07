@@ -25,6 +25,7 @@ Komutlar:
   2) bash scripts/release-remaining-status.sh   # canlı durum
   3) bash scripts/psychic-p0-prereqs.sh         # jeton + falcı uyarısı
   4) bash scripts/list-production-tellers.sh    # üretim falcı listesi
+  4b) bash scripts/open-approved-teller.sh      # host → onaylı falcı aç/doğrula
   5) bash scripts/print-p0-live-status.sh     # jeton + falcı (tek ekran)
   6) bash scripts/print-full-user-checklist.sh  # P0+P1 birleşik yazdır
   7) bash scripts/psychic-p0-all.sh             # P0 akışı
@@ -59,6 +60,9 @@ case "${1:-}" in
     ;;
   teller)
     exec bash "$ROOT/scripts/probe-psychic-teller.sh"
+    ;;
+  open-teller|teller-open)
+    exec bash "$ROOT/scripts/open-approved-teller.sh"
     ;;
   p0)
     exec bash "$ROOT/scripts/psychic-p0-all.sh"
