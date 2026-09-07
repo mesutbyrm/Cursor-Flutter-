@@ -65,6 +65,18 @@ Detay: `docs/LIVE_PSYCHICS_REMAINING.md` § P0 freeze kabul
 
 ## Release gate
 
-**RELEASE READY: NO** — Otomatik kapılar PASS; **Psychic P0 iki-cihaz kabul** kapatılmadan production işaretlenmez.
+**RELEASE READY: NO** — Otomatik kapılar PASS; **Psychic P0 + P1 cihaz kabul** gerekir.
 
-Psychic P0 PASS + P1 checklist tamamlandıktan sonra `RELEASE READY: YES` yazılabilir.
+Kullanıcı test akışı:
+
+```bash
+bash scripts/validate-pre-device-handoff.sh
+bash scripts/user-test-start.sh p0
+bash scripts/on-p0-pass.sh
+bash scripts/on-p1-pass.sh
+bash scripts/on-release-ready-candidate.sh
+```
+
+P0+P1 PASS bildirildikten sonra agent `RELEASE READY: YES` işaretleyebilir.
+
+Hızlı referans: [`USER_TEST_QUICK_REF.md`](USER_TEST_QUICK_REF.md)

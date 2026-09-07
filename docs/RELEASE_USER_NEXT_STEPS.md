@@ -75,9 +75,13 @@ bash scripts/on-p0-fail.sh "T+5s donma"       # P0 FAIL → hotfix
 
 Agent'a tek satır: **`Psychic P0 PASS`** veya **`Psychic P0 FAIL`**
 
-P0 PASS → P1 → **`P1 PASS`** → RELEASE READY adayı.
+P0 PASS → P1 → **`P1 PASS`** → `bash scripts/on-release-ready-candidate.sh`
 
 ---
+
+## Hızlı referans
+
+[`USER_TEST_QUICK_REF.md`](USER_TEST_QUICK_REF.md) — tek sayfa özet
 
 ## Agent ne zaman tekrar açılır?
 

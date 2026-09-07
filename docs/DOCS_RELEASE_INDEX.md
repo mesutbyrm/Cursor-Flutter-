@@ -17,6 +17,7 @@
 | [`RELEASE_GATE_CLOSURE.md`](RELEASE_GATE_CLOSURE.md) | Otomatik kapı özeti |
 | [`REMAINING_WORK.md`](REMAINING_WORK.md) | Agent vs kullanıcı kalan iş |
 | [`LIVE_PSYCHICS_REMAINING.md`](LIVE_PSYCHICS_REMAINING.md) | Psychic P0 freeze + E2E |
+| [`USER_TEST_QUICK_REF.md`](USER_TEST_QUICK_REF.md) | 1 sayfa cihaz test özeti |
 | [`AGENT_CLOSED.md`](AGENT_CLOSED.md) | Agent kapalı — özet durum |
 | [`RELEASE_USER_NEXT_STEPS.md`](RELEASE_USER_NEXT_STEPS.md) | **Agent kapalı — kullanıcı tek sayfa rehber** |
 | [`PSYCHIC_P0_START.md`](PSYCHIC_P0_START.md) | **2 telefon hızlı başlangıç (jeton → P0)** |

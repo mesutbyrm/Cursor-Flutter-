@@ -38,4 +38,4 @@ bash scripts/on-p1-pass.sh
 - **`P1 PASS`** — RELEASE adayı (P0 + P1 birlikte)
 - **`P1 FAIL`** — madde + ekran kaydı · `record-user-test-result.sh p1 FAIL`
 
-Takip: [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md) · [`REMAINING_WORK.md`](REMAINING_WORK.md)
+Takip: [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md) · `bash scripts/on-release-ready-candidate.sh`

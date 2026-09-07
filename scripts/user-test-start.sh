@@ -31,8 +31,10 @@ Komutlar:
   8) bash scripts/on-p0-pass.sh              # P0 PASS → P1 checklist
   9) bash scripts/on-p0-fail.sh "not"        # P0 FAIL → hotfix kaydı
  10) bash scripts/on-p1-pass.sh              # P1 PASS → RELEASE adayı
+ 11) bash scripts/on-release-ready-candidate.sh  # P0+P1 sonrası
 
 Rehberler:
+  docs/USER_TEST_QUICK_REF.md       ← 1 sayfa özet
   docs/RELEASE_USER_NEXT_STEPS.md   ← agent kapalı, tek sayfa
   docs/PSYCHIC_P0_START.md
   docs/PSYCHIC_TELLER_STATUS.md   ← host falcı listesinde değilse okuyun
