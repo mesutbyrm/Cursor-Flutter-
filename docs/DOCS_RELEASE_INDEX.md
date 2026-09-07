@@ -17,6 +17,7 @@
 | [`RELEASE_GATE_CLOSURE.md`](RELEASE_GATE_CLOSURE.md) | Otomatik kapı özeti |
 | [`REMAINING_WORK.md`](REMAINING_WORK.md) | Agent vs kullanıcı kalan iş |
 | [`LIVE_PSYCHICS_REMAINING.md`](LIVE_PSYCHICS_REMAINING.md) | Psychic P0 freeze + E2E |
+| [`PSYCHIC_P0_START.md`](PSYCHIC_P0_START.md) | **2 telefon hızlı başlangıç (jeton → P0)** |
 | [`LATEST_APK_BUILD.md`](LATEST_APK_BUILD.md) | Son CI derlemesi |
 | [`FAZ13_RELEASE_STATUS.md`](FAZ13_RELEASE_STATUS.md) | Faz 13 release |
 | [`GITHUB_ACTIONS_CI.md`](GITHUB_ACTIONS_CI.md) | CI/APK iş akışları |

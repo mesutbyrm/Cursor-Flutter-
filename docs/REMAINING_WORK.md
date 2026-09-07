@@ -18,6 +18,7 @@
 | Release gate CI | `[x]` | apk-latest + metadata PASS |
 | Release 502 fix | `[x]` | `814f8758` |
 | docs/LATEST_APK_BUILD | `[x]` | Run `34146919509` |
+| **Jeton (danışan)** | `[ ]` | Probe: jeton=0 — admin gerekli (`PSYCHIC_P0_START.md`) |
 | **Manuel testler** | `[ ]` | **En son — kullanıcı** (Psychic P0 öncelik) |
 | FAZ 0–13 otomatik | `[x]` | Geçmiş faz testleri CI'da |
 | APK `1.0.371+409` | `[x]` | apk-latest güncel |

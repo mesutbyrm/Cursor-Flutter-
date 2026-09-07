@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# Admin panelden jeton ekledikten hemen sonra — tek tur doğrulama + M7 + M5 preflight.
+# Admin panelden jeton ekledikten hemen sonra — doğrulama + Psychic P0 / M7 / M5.
 # Jeton henüz yansımadıysa kısa bekleme önerir.
-# Kullanım: bash scripts/after-admin-jeton.sh [min_jeton=10]
+# Kullanım: bash scripts/after-admin-jeton.sh [min_jeton=100]
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=acceptance-tests/lib.sh
 source "$ROOT/scripts/acceptance-tests/lib.sh"
 
-MIN="${1:-10}"
+MIN="${1:-100}"
 apply_acceptance_credential_defaults
 
 echo "=== after-admin-jeton (min=$MIN) ==="
@@ -45,10 +45,14 @@ if [[ "$J" -lt "$MIN" ]]; then
 fi
 
 echo ""
-echo "✅ Jeton yeterli — M7 probe"
-bash "$ROOT/scripts/m7-on-jeton.sh"
+echo "✅ Jeton yeterli — Psychic P0 önkoşul"
+bash "$ROOT/scripts/psychic-p0-prereqs.sh" || true
 echo ""
-echo "── M5 preflight ──"
-bash "$ROOT/scripts/m5-preflight.sh"
+echo "── M7 probe (opsiyonel) ──"
+bash "$ROOT/scripts/m7-on-jeton.sh" || true
 echo ""
-echo "Sonraki: docs/M5_DEVICE_TEST_CHECKLIST.md (Android cihaz)"
+echo "── M5 preflight (opsiyonel) ──"
+bash "$ROOT/scripts/m5-preflight.sh" || true
+echo ""
+echo "Sonraki: bash scripts/psychic-p0-checklist.sh (2 telefon P0)"
+echo "Detay: docs/PSYCHIC_P0_START.md"
