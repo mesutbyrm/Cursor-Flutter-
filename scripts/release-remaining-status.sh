@@ -42,8 +42,23 @@ echo "  docs/PSYCHIC_P0_START.md"
 echo "  Sonuç: Psychic P0 PASS veya FAIL"
 echo ""
 
+# --- API automation ---
+echo "── Otomatik API (jeton sonrası) ──"
+if [[ -f "${ROOT}/docs/M7_MUSIC_SSE_CAPTURE.md" ]] && grep -q 'HTTP 200' "${ROOT}/docs/M7_MUSIC_SSE_CAPTURE.md" 2>/dev/null; then
+  echo "  M7 song-request: ✅ HTTP 200 (M7_MUSIC_SSE_CAPTURE.md)"
+else
+  echo "  M7: bash scripts/m7-on-jeton.sh"
+fi
+if [[ -f "${ROOT}/docs/M5_API_SMOKE_REPORT.md" ]] && grep -qE 'PASS=6|\| 6 \| 2 \| 0 \|' "${ROOT}/docs/M5_API_SMOKE_REPORT.md" 2>/dev/null; then
+  echo "  M5 API smoke: ✅ PASS=6 SKIP=2"
+else
+  echo "  M5: bash scripts/m5-api-smoke.sh"
+fi
+echo "  Özet: bash scripts/run-api-automation-summary.sh"
+echo ""
+
 # --- P1 ---
-echo "── P1 · Genel platform 2-cihaz (P0 sonrası) ──"
+echo "── P1 · Platform 2-cihaz (voice/gift/PK/müzik) ──"
 echo "Durum: ⏸ P0 PASS sonrası"
 echo "  bash scripts/p1-platform-checklist.sh"
 echo "  docs/P1_DEVICE_START.md"
@@ -52,7 +67,8 @@ echo ""
 
 # --- P2 ---
 echo "── P2 · Play Store / Stage 8 ──"
-echo "Durum: ⏸ backlog"
+echo "Durum: ⏸ backlog (P0+P1 sonrası)"
+echo "  docs/P2_PLAY_STORE_START.md"
 echo "  docs/PLAY_STORE_PRODUCTION_ACCESS.md"
 echo "  docs/STAGE8_FINAL_ACCEPTANCE_REPORT.md"
 echo ""

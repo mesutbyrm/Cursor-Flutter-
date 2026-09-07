@@ -19,6 +19,7 @@
 | [`LIVE_PSYCHICS_REMAINING.md`](LIVE_PSYCHICS_REMAINING.md) | Psychic P0 freeze + E2E |
 | [`PSYCHIC_P0_START.md`](PSYCHIC_P0_START.md) | **2 telefon hızlı başlangıç (jeton → P0)** |
 | [`P1_DEVICE_START.md`](P1_DEVICE_START.md) | P0 sonrası genel platform 2-cihaz |
+| [`P2_PLAY_STORE_START.md`](P2_PLAY_STORE_START.md) | Play Store / Stage 8 backlog (P0+P1 sonrası) |
 | [`LATEST_APK_BUILD.md`](LATEST_APK_BUILD.md) | Son CI derlemesi |
 | [`FAZ13_RELEASE_STATUS.md`](FAZ13_RELEASE_STATUS.md) | Faz 13 release |
 | [`GITHUB_ACTIONS_CI.md`](GITHUB_ACTIONS_CI.md) | CI/APK iş akışları |
@@ -33,6 +34,7 @@
 
 ```bash
 bash scripts/release-remaining-status.sh   # P0-j/P0/P1/P2 canlı özet
+bash scripts/run-api-automation-summary.sh # M5/M7 otomatik API özeti (cihaz ayrı)
 bash scripts/psychic-p0-all.sh            # Önkoşul + checklist (tek akış)
 bash scripts/p1-platform-checklist.sh     # P1 (P0 PASS sonrası)
 bash scripts/psychic-p0-prereqs.sh        # APK + giriş + jeton (P0 öncesi)

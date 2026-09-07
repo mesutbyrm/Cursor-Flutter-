@@ -32,9 +32,9 @@
 
 | ID | Madde | Durum |
 |----|-------|-------|
-| P0 | Psychic TRTC 2-cihaz kabul (T+5s freeze) | **OPEN** — [`PSYCHIC_P0_START.md`](PSYCHIC_P0_START.md) |
-| P0-j | Danışan jeton (admin top-up) | **OPEN** — probe jeton=0 · `admin-jeton-cheatsheet.sh` |
-| P1 | Voice/gift/PK/müzik 2-cihaz checklist | Bekliyor |
+| P0-j | Danışan jeton (admin top-up) | ✅ **~100000** jeton (2026-09-07) |
+| P0 | Psychic TRTC 2-cihaz kabul (T+5s freeze) | **OPEN** — `psychic-p0-all.sh` |
+| P1 | Voice/gift/PK/müzik 2-cihaz checklist | Bekliyor (P0 sonrası) |
 | P2 | `bana_ozel_hub_section_test` overflow | ✅ Düzeltildi (CHANGELOG); CI 1081 pass — bloker değil |
 
 **RELEASE READY:** `NO` — otomatik kapılar PASS; Psychic P0 kabul kullanıcı testine bağlı.

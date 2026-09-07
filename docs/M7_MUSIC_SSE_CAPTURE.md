@@ -1,12 +1,9 @@
 # M7 — Müzik probe yakalama (üretim)
 
-
-> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
-
-**Tarih:** 2026-08-21 01:54 UTC  
+**Tarih:** 2026-09-07 18:20 UTC  
 **Oda slug:** `cmoohrbr`  
 **Oda id (SSE):** `cmoohrbrx00a4nt08zlkdjyil`  
-**Hesap:** `cursor.test.1786235468@mailinator.com` — jeton=0  
+**Hesap:** `cursor.test.1786235468@mailinator.com` — jeton 99790→99790 (admin top-up)  
 **Üretim:** `https://canlifal.com`
 
 > Otomatik: `MUSIC_PROBE_ROOM=cmoohrbr bash scripts/probe-music-room.sh`  
@@ -14,11 +11,161 @@
 
 ---
 
-## POST song-request (id `cmoohrbrx00a4nt08zlkdjyil`, slug `cmoohrbr`) → HTTP 400
+## POST song-request (id `cmoohrbrx00a4nt08zlkdjyil`, slug `cmoohrbr`) → HTTP 200
 
 ```json
 {
-    "error": "Yetersiz jeton. 10 jeton gerekiyor."
+    "success": true,
+    "newBalance": 99780,
+    "queued": false,
+    "startedImmediately": true,
+    "queuePosition": 0,
+    "playing": true,
+    "nowPlaying": {
+        "videoId": "cpp69ghR1IM",
+        "title": "TARKAN - \u015e\u0131mar\u0131k (Official Music Video)",
+        "startedAt": "2026-09-07T18:20:11.916Z",
+        "startedAtMs": 1788805211916,
+        "elapsedSeconds": 0,
+        "duration": "",
+        "embedUrl": "https://www.youtube.com/embed/cpp69ghR1IM?autoplay=1&start=0&enablejsapi=1&playsinline=1"
+    },
+    "musicUrl": "https://www.youtube.com/embed/cpp69ghR1IM?autoplay=1&start=0&enablejsapi=1&playsinline=1",
+    "queue": [
+        {
+            "id": "cmtrkct2n004rnz07c3sastbm",
+            "videoId": "dQw4w9WgXcQ",
+            "title": "Test Song",
+            "dedication": "",
+            "note": "",
+            "duration": "",
+            "requestType": "audio",
+            "isPaid": true,
+            "userId": "cmsyoxjh80066mo08fo7nv5o6",
+            "userName": "Cursor Test",
+            "createdAt": "2026-09-07T18:17:54.479Z"
+        },
+        {
+            "id": "cmtrkct6q004ynz076f0tg0qo",
+            "videoId": "dQw4w9WgXcQ",
+            "title": "Test Song",
+            "dedication": "",
+            "note": "",
+            "duration": "",
+            "requestType": "audio",
+            "isPaid": true,
+            "userId": "cmsyoxjh80066mo08fo7nv5o6",
+            "userName": "Cursor Test",
+            "createdAt": "2026-09-07T18:17:54.627Z"
+        },
+        {
+            "id": "cmtrkez2t0073nz072yd4lb0s",
+            "videoId": "dQw4w9WgXcQ",
+            "title": "Probe",
+            "dedication": "",
+            "note": "",
+            "duration": "",
+            "requestType": "audio",
+            "isPaid": true,
+            "userId": "cmsyoxjh80066mo08fo7nv5o6",
+            "userName": "Cursor Test",
+            "createdAt": "2026-09-07T18:19:35.573Z"
+        },
+        {
+            "id": "cmtrkezbe007anz07h1rmspc3",
+            "videoId": "dQw4w9WgXcQ",
+            "title": "Test Song",
+            "dedication": "",
+            "note": "",
+            "duration": "",
+            "requestType": "audio",
+            "isPaid": true,
+            "userId": "cmsyoxjh80066mo08fo7nv5o6",
+            "userName": "Cursor Test",
+            "createdAt": "2026-09-07T18:19:35.882Z"
+        },
+        {
+            "id": "cmtrkezez007hnz07qs94j3ru",
+            "videoId": "dQw4w9WgXcQ",
+            "title": "Test Song",
+            "dedication": "",
+            "note": "",
+            "duration": "",
+            "requestType": "audio",
+            "isPaid": true,
+            "userId": "cmsyoxjh80066mo08fo7nv5o6",
+            "userName": "Cursor Test",
+            "createdAt": "2026-09-07T18:19:36.011Z"
+        }
+    ],
+    "musicQueue": [
+        {
+            "id": "cmtrkct2n004rnz07c3sastbm",
+            "videoId": "dQw4w9WgXcQ",
+            "title": "Test Song",
+            "dedication": "",
+            "note": "",
+            "duration": "",
+            "requestType": "audio",
+            "isPaid": true,
+            "userId": "cmsyoxjh80066mo08fo7nv5o6",
+            "userName": "Cursor Test",
+            "createdAt": "2026-09-07T18:17:54.479Z"
+        },
+        {
+            "id": "cmtrkct6q004ynz076f0tg0qo",
+            "videoId": "dQw4w9WgXcQ",
+            "title": "Test Song",
+            "dedication": "",
+            "note": "",
+            "duration": "",
+            "requestType": "audio",
+            "isPaid": true,
+            "userId": "cmsyoxjh80066mo08fo7nv5o6",
+            "userName": "Cursor Test",
+            "createdAt": "2026-09-07T18:17:54.627Z"
+        },
+        {
+            "id": "cmtrkez2t0073nz072yd4lb0s",
+            "videoId": "dQw4w9WgXcQ",
+            "title": "Probe",
+            "dedication": "",
+            "note": "",
+            "duration": "",
+            "requestType": "audio",
+            "isPaid": true,
+            "userId": "cmsyoxjh80066mo08fo7nv5o6",
+            "userName": "Cursor Test",
+            "createdAt": "2026-09-07T18:19:35.573Z"
+        },
+        {
+            "id": "cmtrkezbe007anz07h1rmspc3",
+            "videoId": "dQw4w9WgXcQ",
+            "title": "Test Song",
+            "dedication": "",
+            "note": "",
+            "duration": "",
+            "requestType": "audio",
+            "isPaid": true,
+            "userId": "cmsyoxjh80066mo08fo7nv5o6",
+            "userName": "Cursor Test",
+            "createdAt": "2026-09-07T18:19:35.882Z"
+        },
+        {
+            "id": "cmtrkezez007hnz07qs94j3ru",
+            "videoId": "dQw4w9WgXcQ",
+            "title": "Test Song",
+            "dedication": "",
+            "note": "",
+            "duration": "",
+            "requestType": "audio",
+            "isPaid": true,
+            "userId": "cmsyoxjh80066mo08fo7nv5o6",
+            "userName": "Cursor Test",
+            "createdAt": "2026-09-07T18:19:36.011Z"
+        }
+    ],
+    "queueLength": 5
 }
 ```
 
@@ -47,9 +194,9 @@
 ```
 data: {"type":"connected","roomId":"cmoohrbrx00a4nt08zlkdjyil"}
 
-data: {"type":"dj","event":"QUEUE_UPDATED","playing":true,"nowPlaying":{"videoId":"dQw4w9WgXcQ","title":"Test Song","startedAt":"2026-08-21T00:35:48.260Z","startedAtMs":1787272548260,"elapsedSeconds":4681,"duration":"","embedUrl":"https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&start=4681&enablejsapi=1&playsinline=1"},"musicUrl":"https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&start=4681&enablejsapi=1&playsinline=1","embedUrl":"https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&start=4681&enablejsapi=1&playsinline=1","musicQueue":[],"queue":[],"queueLength":0}
+data: {"type":"dj","event":"QUEUE_UPDATED","playing":true,"nowPlaying":{"videoId":"cpp69ghR1IM","title":"TARKAN - Şımarık (Official Music Video)","startedAt":"2026-09-07T18:20:12.045Z","startedAtMs":1788805212045,"elapsedSeconds":0,"duration":"","embedUrl":"https://www.youtube.com/embed/cpp69ghR1IM?autoplay=1&start=0&enablejsapi=1&playsinline=1"},"musicUrl":"https://www.youtube.com/embed/cpp69ghR1IM?autoplay=1&start=0&enablejsapi=1&playsinline=1","embedUrl":"https://www.youtube.com/embed/cpp69ghR1IM?autoplay=1&start=0&enablejsapi=1&playsinline=1","musicQueue":[{"id":"cmtrkct2n004rnz07c3sastbm","videoId":"dQw4w9WgXcQ","title":"Test Song","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:17:54.479Z"},{"id":"cmtrkct6q004ynz076f0tg0qo","videoId":"dQw4w9WgXcQ","title":"Test Song","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:17:54.627Z"},{"id":"cmtrkez2t0073nz072yd4lb0s","videoId":"dQw4w9WgXcQ","title":"Probe","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:19:35.573Z"},{"id":"cmtrkezbe007anz07h1rmspc3","videoId":"dQw4w9WgXcQ","title":"Test Song","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:19:35.882Z"},{"id":"cmtrkezez007hnz07qs94j3ru","videoId":"dQw4w9WgXcQ","title":"Test Song","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:19:36.011Z"}],"queue":[{"id":"cmtrkct2n004rnz07c3sastbm","videoId":"dQw4w9WgXcQ","title":"Test Song","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:17:54.479Z"},{"id":"cmtrkct6q004ynz076f0tg0qo","videoId":"dQw4w9WgXcQ","title":"Test Song","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:17:54.627Z"},{"id":"cmtrkez2t0073nz072yd4lb0s","videoId":"dQw4w9WgXcQ","title":"Probe","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:19:35.573Z"},{"id":"cmtrkezbe007anz07h1rmspc3","videoId":"dQw4w9WgXcQ","title":"Test Song","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:19:35.882Z"},{"id":"cmtrkezez007hnz07qs94j3ru","videoId":"dQw4w9WgXcQ","title":"Test Song","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:19:36.011Z"}],"queueLength":5}
 
-data: {"type":"presence","users":[{"id":"cmsyoxjh80066mo08fo7nv5o6","name":"Cursor Test","image":null,"nickname":"Cursor Test","lastSeen":"2026-08-21T01:53:28.934Z","seatIndex":1,"micOn":false,"chatRole":null,"roleSymbol":null,"roleLevel":0,"isAdmin":false}],"onlineCount":1,"totalCount":1}
+data: {"type":"presence","users":[{"id":"cmsyoxjh80066mo08fo7nv5o6","name":"Cursor Test","image":null,"nickname":"Cursor Test","lastSeen":"2026-09-07T18:20:02.043Z","seatIndex":2,"micOn":false,"chatRole":null,"roleSymbol":null,"roleLevel":0,"isAdmin":false}],"onlineCount":1,"totalCount":1}
 ```
 
 ---
@@ -65,7 +212,7 @@ data: {"type":"presence","users":[{"id":"cmsyoxjh80066mo08fo7nv5o6","name":"Curs
             "thumbnail": "https://i.ytimg.com/vi/cpp69ghR1IM/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAFL20hyg2MZSmMLkic82LMnae-Lg",
             "duration": "3:12",
             "channel": "Tarkan",
-            "views": 103053168
+            "views": 104272326
         },
         {
             "id": "pu9co0YRKHg",
@@ -73,7 +220,7 @@ data: {"type":"presence","users":[{"id":"cmsyoxjh80066mo08fo7nv5o6","name":"Curs
             "thumbnail": "https://i.ytimg.com/vi/pu9co0YRKHg/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDEavpd5f0hzpOfThiOFcHocOYnUQ",
             "duration": "3:13",
             "channel": "Tarkan",
-            "views": 17937418
+            "views": 18085884
         },
         {
             "id": "c9r1Vfb51X8",
@@ -81,7 +228,7 @@ data: {"type":"presence","users":[{"id":"cmsyoxjh80066mo08fo7nv5o6","name":"Curs
             "thumbnail": "https://i.ytimg.com/vi/c9r1Vfb51X8/hqdefault.jpg?sqp=-oaymwE2COADEI4CSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgBzgWAAuADigIMCAAQARh_IFAoIDAP&rs=AOn4CLD0qIgxN_NPCqUYekSJ5PpIFK1Y3A",
             "duration": "3:11",
             "channel": "TiredOfYou",
-            "views": 3566720
+            "views": 3723957
         },
         {
             "id": "SSMoILdzGDg",
@@ -89,7 +236,7 @@ data: {"type":"presence","users":[{"id":"cmsyoxjh80066mo08fo7nv5o6","name":"Curs
             "thumbnail": "https://i.ytimg.com/vi/SSMoILdzGDg/hqdefault.jpg?sqp=-oaymwEcCOADEI4CSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDTldu0uezSMjvlVItdp6sie7z0Fw",
             "duration": "3:11",
             "channel": "seven7lyrics",
-            "views": 8761101
+            "views": 9018331
         },
         {
             "id": "OG4ggvY_8p0",
@@ -97,14 +244,14 @@ data: {"type":"presence","users":[{"id":"cmsyoxjh80066mo08fo7nv5o6","name":"Curs
             "thumbnail": "https://i.ytimg.com/vi/OG4ggvY_8p0/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgBzgWAAtAFigIMCAAQARhyIFkoOTAP&rs=AOn4CLDZ5W2IHvOd4XA9sMjSsheWz46IUQ",
             "duration": "3:56",
             "channel": "M\u00fczik A\u015f\u0131\u011f\u0131",
-            "views": 559971
+            "views": 571984
         },
         {
-            "id": "M0-joG_2SZY",
-            "title": "\u2102\u22c6Tarkan | \u015e\u0131mar\u0131k \"Official Music Video\" Full HD",
-            "thumbnail": "https://i.ytimg.com/vi/M0-joG_2SZY/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAvD7ytb3m6NOzHLxmHEXI7Ibjy5Q",
-            "duration": "4:00",
-            "channel": "\u2102\u22c6Tarkanland",
-            "views": 407574
+            "id": "ARCxyt9GS5o",
+            "title": "TARKAN : THE WORLD MUSIC AWARDS IN MONACO 1999",
+            "thumbnail": "https://i.ytimg.com/vi/ARCxyt9GS5o/hqdefault.jpg?sqp=-oaymwE2COADEI4CSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gSAAuADigIMCAAQARhyIEIoNjAP&rs=AOn4CLCQyOzBDTLZB1PY2PjZXzOwci-wRA",
+            "duration": "3:29",
+            "channel": "F6FGrumman",
+            "views": 18165003
         },
 ```

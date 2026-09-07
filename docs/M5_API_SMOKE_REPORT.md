@@ -1,12 +1,9 @@
 # M5 API smoke raporu
 
-
-> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
-
-**Tarih:** 2026-08-20 11:42 UTC  
-**APK:** `1.0.291+327`  
+**Tarih:** 2026-09-07 18:20 UTC  
+**APK:** `1.0.371+409`  
 **Oda:** `cmoohrbr` → `cmoohrbrx00a4nt08zlkdjyil`  
-**Hesap:** `cursor.test.1786235468@mailinator.com` — jeton 9580→9560
+**Hesap:** `cursor.test.1786235468@mailinator.com` — jeton 99810→99790
 
 | Geçti | Atlandı | Başarısız |
 |-------|---------|-----------|
@@ -16,7 +13,7 @@
 
 | Test | Durum | Detay |
 |------|--------|-------|
-| Jeton | PASS | jeton=9580 |
+| Jeton | PASS | jeton=99810 |
 | Oda çözümleme | PASS | cmoohrbr → cmoohrbrx00a4nt08zlkdjyil |
 | Test1-2 song-request | PASS | HTTP 200 jeton -20 |
 | Müzik kuyruğu | PASS | nowPlaying veya queue dolu |

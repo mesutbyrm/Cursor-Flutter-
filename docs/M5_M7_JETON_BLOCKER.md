@@ -11,13 +11,15 @@
 
 ## Ne engelleniyor?
 
-| Madde | Gereksinim | Şu an (2026-09-07 probe) |
+| Madde | Gereksinim | Şu an (2026-09-07) |
 |-------|------------|---------------------------|
-| **Psychic P0** | Danışan seans oluşturma (jeton) | jeton=0 → HTTP 400 |
-| **M5** | Cihazda `!istek` → song-request **200** + müzik | jeton=0 → 400 |
-| **M7** | Üretim `song-request` HTTP **200** JSON dump | jeton=0 → 400 |
-| **m5-preflight** | Jeton ≥10 | FAIL (jeton=0) |
-| **API gate 3** | Session + TRTC token API | SKIP (jeton=0; falcı API OK) |
+| **P0-j jeton** | Danışan jeton | ✅ **~99880+** (admin) |
+| **M7 API** | song-request HTTP **200** | ✅ [`M7_MUSIC_SSE_CAPTURE.md`](M7_MUSIC_SSE_CAPTURE.md) |
+| **M5 API smoke** | Test 1–4 + SSE | ✅ PASS=6 (`M5_API_SMOKE_REPORT.md`) |
+| **m5-preflight** | Jeton + voice seat API | ✅ geçti |
+| **M5 cihaz** | Test 1–10 Android | ⏳ kullanıcı (sonra) |
+| **Psychic P0 cihaz** | T+5s TRTC | ⏳ kullanıcı (sonra) |
+| **API gate 3** | Session accept + token | ⚠️ respond=403 — host falcı listesinde değil; cihazda onaylı falcı hesabı gerekir |
 
 Önkoşul kontrolü: `bash scripts/psychic-p0-prereqs.sh`
 

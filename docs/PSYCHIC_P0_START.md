@@ -9,13 +9,13 @@ Tek manuel bloker: **Canlı falcı TRTC** — T+5 saniyede A/V donması olmamal�
 
 ## 1. Jeton (zorunlu)
 
-Probe (2026-09-07): danışan `cursor.test.*` hesabında **jeton=0** → seans oluşturulamaz.
+Probe (2026-09-07): danışan `cursor.test.*` hesabında **jeton≈100000** — P0-j kapandı.
 
 ```bash
-bash scripts/admin-jeton-cheatsheet.sh   # Admin panel + user ID
-# Admin: ≥500 jeton önerilir (min. deneme ≥100)
-bash scripts/psychic-p0-prereqs.sh       # jeton OK olana kadar tekrar
+bash scripts/psychic-p0-prereqs.sh       # jeton + APK + giriş doğrulama
 ```
+
+Jeton 0 ise: `bash scripts/admin-jeton-cheatsheet.sh` (≥500 önerilir)
 
 Detay: [`M5_M7_JETON_BLOCKER.md`](M5_M7_JETON_BLOCKER.md)
 
@@ -29,6 +29,8 @@ https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlif
 |-----|---------|-------|
 | Danışan | `cursor.test.1786235468@mailinator.com` | `CursorTest!1786235468` |
 | Falcı | `cursor.host.1786235468@mailinator.com` | `CursorTest!1786235468` |
+
+> **Falcı notu:** Host hesabı canlı yayın içindir; `/api/fortune-tellers` listesinde olmayabilir. Psychic P0'da seans kabul edilmiyorsa admin panelden **onaylı falcı** hesabı kullanın veya `ACCEPTANCE_TELLER_*` secret ekleyin — [`TEST_ACCOUNTS.md`](TEST_ACCOUNTS.md).
 
 ---
 

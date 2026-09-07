@@ -5,8 +5,8 @@
 > **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
 **Son güncelleme:** 2026-09-07 — sürüm `1.0.371+409`, release gate **FINAL PASS** (run `34146919509`)  
-**Agent durumu:** **KAPALI** — kod/CI/docs tamam; kalan yalnızca kullanıcı cihaz testi  
-**Tek komut:** `bash scripts/release-remaining-status.sh` · P0: [`PSYCHIC_P0_START.md`](PSYCHIC_P0_START.md)  
+**Agent durumu:** **API otomasyon tamam** — M5/M7 PASS; **cihaz testleri kullanıcıda (sonra)**  
+**Tek komut:** `bash scripts/release-remaining-status.sh` · API özet: `bash scripts/run-api-automation-summary.sh`  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Release:** `docs/RELEASE_CHECKLIST.md` | **Psychic P0:** `docs/LIVE_PSYCHICS_REMAINING.md` | **Tüm MD indeks:** [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
 ---
@@ -20,8 +20,10 @@
 | Release gate CI | `[x]` | apk-latest + metadata PASS |
 | Release 502 fix | `[x]` | `814f8758` |
 | docs/LATEST_APK_BUILD | `[x]` | Run `34146919509` |
-| **Jeton (danışan)** | `[x]` | **100000** (2026-09-07 — kullanıcı admin) |
-| **Manuel testler** | `[ ]` | **Psychic P0** — 2 telefon (`psychic-p0-all.sh`) |
+| **Jeton (danışan)** | `[x]` | ~99880+ (admin 2026-09-07) |
+| **M7 API / M5 API smoke** | `[x]` | song-request 200 + smoke PASS=6 |
+| **m5-preflight** | `[x]` | Jeton + voice seat API OK |
+| **Manuel testler** | `[ ]` | **Kullanıcı sonra** — P0 → P1 → M5 cihaz |
 | FAZ 0–13 otomatik | `[x]` | Geçmiş faz testleri CI'da |
 | APK `1.0.371+409` | `[x]` | apk-latest güncel |
 
@@ -81,6 +83,14 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 | 4–13 | `FAZ4_FORTUNE_PARITY.md` … `FAZ13_RELEASE_STATUS.md` |
 
 ---
+
+## Oturum günlüğü (2026-09-07 — API otomasyon + kalan işler)
+
+- `run-api-automation-summary.sh` — M5/M7 otomatik özet (cihaz ayrı)
+- `release-remaining-status.sh` — P1/P2 bölüm düzeltmesi, M5 PASS algılama
+- `P2_PLAY_STORE_START.md` — Play Store backlog rehberi
+- `PSYCHIC_P0_START.md` — jeton OK + onaylı falcı notu
+- M5/M7 raporları yenilendi (song-request 200, smoke 6/2/0)
 
 ## Oturum günlüğü (2026-09-07 — jeton eklendi)
 
