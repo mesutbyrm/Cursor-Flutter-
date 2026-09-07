@@ -86,7 +86,7 @@ Güncel envanter metni (dış kaynak): https://canlifal.com/canlifal-envanter-ra
 | P0 akış (checklist) | `bash scripts/user-test-start.sh p0` |
 | P1 GO (P0 sonrası) | `bash scripts/p1-go.sh` |
 | Falcı doğrula | `bash scripts/probe-psychic-teller.sh` |
-| Özet handoff | `bash scripts/user-handoff.sh` |
+| Özet handoff | `bash scripts/basla.sh` |
 | Sonuç kaydı | `bash scripts/record-user-test-result.sh p0 PASS` |
 | Önkoşul (APK, giriş, jeton) | `bash scripts/psychic-p0-prereqs.sh` |
 | Admin jeton | `bash scripts/admin-jeton-cheatsheet.sh` |

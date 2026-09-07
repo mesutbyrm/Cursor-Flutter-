@@ -10,7 +10,8 @@ Tek manuel bloker: **Canlı falcı TRTC** — T+5 saniyede A/V donması olmamal�
 ## 0. GO ekranı (önerilen)
 
 ```bash
-bash scripts/kalan-isler.sh    # tüm kalan işler
+bash scripts/basla.sh          # tek komut: canlı durum + devir teslim
+bash scripts/kalan-isler.sh    # yol haritası tablosu
 bash scripts/p0-go.sh          # jeton + falcı + hesaplar
 ```
 
