@@ -11,7 +11,10 @@ P0 (Psychic TRTC freeze) **PASS** olduktan sonra iki cihazla genel platform kabu
 
 ```bash
 bash scripts/p1-platform-checklist.sh
+bash scripts/print-full-user-checklist.sh   # P0+P1 birleşik yazdır
 ```
+
+P0 PASS kaydı: `bash scripts/on-p0-pass.sh` (P1 checklist'i de açar)
 
 | Alan | Beklenen |
 |------|----------|
@@ -28,7 +31,11 @@ Müzik ayrıntı: [`M5_DEVICE_TEST_CHECKLIST.md`](M5_DEVICE_TEST_CHECKLIST.md)
 
 ## Sonuç
 
+```bash
+bash scripts/on-p1-pass.sh
+```
+
 - **`P1 PASS`** — RELEASE adayı (P0 + P1 birlikte)
-- **`P1 FAIL`** — madde + ekran kaydı
+- **`P1 FAIL`** — madde + ekran kaydı · `record-user-test-result.sh p1 FAIL`
 
 Takip: [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md) · [`REMAINING_WORK.md`](REMAINING_WORK.md)

@@ -46,10 +46,11 @@ elif [[ -x "${ROOT}/scripts/probe-psychic-teller.sh" ]]; then
 else
   echo "Durum: ⏳ OPEN — 2 telefon manuel test"
 fi
-echo "  bash scripts/psychic-p0-all.sh"
+echo "  bash scripts/user-test-start.sh p0"
+echo "  bash scripts/validate-pre-device-handoff.sh"
 echo "  bash scripts/probe-psychic-teller.sh"
-echo "  docs/PSYCHIC_P0_START.md"
-echo "  Sonuç: Psychic P0 PASS veya FAIL"
+echo "  docs/RELEASE_USER_NEXT_STEPS.md"
+echo "  Sonuç: bash scripts/on-p0-pass.sh | on-p0-fail.sh"
 echo ""
 
 # --- API automation ---

@@ -34,7 +34,7 @@
 | # | İş | Referans |
 |---|-----|----------|
 | **P0-j** | Danışan jeton (admin) | ✅ **100000** jeton (2026-09-07) |
-| **P0** | Psychic TRTC 2-cihaz (T+5s donma yok) | ⏳ **OPEN** — `psychic-p0-all.sh` |
+| **P0** | Psychic TRTC 2-cihaz (T+5s donma yok) | ⏳ **OPEN** — `user-test-start.sh p0` |
 | P1 | Voice / gift / PK / müzik 2-cihaz | [`P1_DEVICE_START.md`](P1_DEVICE_START.md) · `p1-platform-checklist.sh` |
 | P2 | Stage 8 / Play Store closed test | `PLAY_STORE_PRODUCTION_ACCESS.md` |
 
@@ -83,6 +83,12 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 | 4–13 | `FAZ4_FORTUNE_PARITY.md` … `FAZ13_RELEASE_STATUS.md` |
 
 ---
+
+## Oturum günlüğü (2026-09-07 — agent kapalı özeti)
+
+- `AGENT_CLOSED.md` — final agent durumu
+- `print-full-user-checklist.sh` — P0+P1 birleşik yazdır
+- release-remaining-status → user-test-start öncelik
 
 ## Oturum günlüğü (2026-09-07 — pre-device doğrulama)
 

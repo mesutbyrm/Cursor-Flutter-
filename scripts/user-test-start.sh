@@ -25,11 +25,12 @@ Komutlar:
   2) bash scripts/release-remaining-status.sh   # canlı durum
   3) bash scripts/psychic-p0-prereqs.sh         # jeton + falcı uyarısı
   4) bash scripts/list-production-tellers.sh    # üretim falcı listesi
-  5) bash scripts/psychic-p0-all.sh             # P0 checklist (2 telefon)
-  6) bash scripts/p1-platform-checklist.sh    # P0 PASS sonrası
-  7) bash scripts/on-p0-pass.sh              # P0 PASS → P1 checklist
-  8) bash scripts/on-p0-fail.sh "not"        # P0 FAIL → hotfix kaydı
-  9) bash scripts/on-p1-pass.sh              # P1 PASS → RELEASE adayı
+  5) bash scripts/print-full-user-checklist.sh  # P0+P1 birleşik yazdır
+  6) bash scripts/psychic-p0-all.sh             # P0 akışı
+  7) bash scripts/p1-platform-checklist.sh    # P0 PASS sonrası
+  8) bash scripts/on-p0-pass.sh              # P0 PASS → P1 checklist
+  9) bash scripts/on-p0-fail.sh "not"        # P0 FAIL → hotfix kaydı
+ 10) bash scripts/on-p1-pass.sh              # P1 PASS → RELEASE adayı
 
 Rehberler:
   docs/RELEASE_USER_NEXT_STEPS.md   ← agent kapalı, tek sayfa
@@ -87,6 +88,9 @@ case "${1:-}" in
   record)
     shift
     exec bash "$ROOT/scripts/record-user-test-result.sh" "$@"
+    ;;
+  full|checklist)
+    exec bash "$ROOT/scripts/print-full-user-checklist.sh"
     ;;
   validate|check)
     exec bash "$ROOT/scripts/validate-pre-device-handoff.sh"

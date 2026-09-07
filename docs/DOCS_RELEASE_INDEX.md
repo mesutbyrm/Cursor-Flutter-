@@ -17,6 +17,7 @@
 | [`RELEASE_GATE_CLOSURE.md`](RELEASE_GATE_CLOSURE.md) | Otomatik kapı özeti |
 | [`REMAINING_WORK.md`](REMAINING_WORK.md) | Agent vs kullanıcı kalan iş |
 | [`LIVE_PSYCHICS_REMAINING.md`](LIVE_PSYCHICS_REMAINING.md) | Psychic P0 freeze + E2E |
+| [`AGENT_CLOSED.md`](AGENT_CLOSED.md) | Agent kapalı — özet durum |
 | [`RELEASE_USER_NEXT_STEPS.md`](RELEASE_USER_NEXT_STEPS.md) | **Agent kapalı — kullanıcı tek sayfa rehber** |
 | [`PSYCHIC_P0_START.md`](PSYCHIC_P0_START.md) | **2 telefon hızlı başlangıç (jeton → P0)** |
 | [`PSYCHIC_TELLER_STATUS.md`](PSYCHIC_TELLER_STATUS.md) | Falcı listesi probe — host vs onaylı falcı |
@@ -37,6 +38,7 @@
 
 ```bash
 bash scripts/user-test-start.sh           # cihaz testi tek giriş (P0/P1)
+bash scripts/print-full-user-checklist.sh  # P0+P1 birleşik yazdır
 bash scripts/validate-pre-device-handoff.sh  # cihaz öncesi API+jeton doğrulama
 bash scripts/agent-closure-status.sh      # agent kapalı + canlı durum
 bash scripts/list-production-tellers.sh   # üretim falcı listesi (8)
