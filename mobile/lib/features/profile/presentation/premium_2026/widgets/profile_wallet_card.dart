@@ -142,13 +142,13 @@ class ProfileWalletCard extends ConsumerWidget {
               final tiles = <Widget>[
                 ProfileActionTile(
                   icon: Icons.add_card_rounded,
-                  label: buildMembershipWalletJetonTopUpActionLabel(),
+                  label: economyJetonTopUpShortLabel(ref, locale: locale),
                   onTap: onTopUp,
                   gradient: [const Color(0xFF4A3818), const Color(0xFF1A1408)],
                 ),
                 ProfileActionTile(
                   icon: Icons.diamond_outlined,
-                  label: '$cfcLabel Yükle',
+                  label: economyCfcTopUpShortLabel(ref, locale: locale),
                   onTap: onCfcTopUp,
                   gradient: [const Color(0xFF183050), const Color(0xFF081018)],
                 ),

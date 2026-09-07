@@ -109,14 +109,7 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
     ),
   ];
 
-  static const _modGrid = [
-    _PromoCard(
-      title: 'Duyuru Yayınla',
-      subtitle: 'Üst bant · yetkili ücretsiz / 5 jeton',
-      icon: Icons.campaign_rounded,
-      color: Color(0xFF3B82F6),
-      kind: _PromoKind.duyuru,
-    ),
+  static const _modGridRest = [
     _PromoCard(
       title: 'Sohbet Temizle',
       subtitle: 'Tüm mesajları sil',
@@ -132,6 +125,17 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
       kind: _PromoKind.userMgmt,
     ),
   ];
+
+  List<_PromoCard> _modGridCards(String jetonLabel) => [
+        _PromoCard(
+          title: 'Duyuru Yayınla',
+          subtitle: 'Üst bant · yetkili ücretsiz / 5 $jetonLabel',
+          icon: Icons.campaign_rounded,
+          color: const Color(0xFF3B82F6),
+          kind: _PromoKind.duyuru,
+        ),
+        ..._modGridRest,
+      ];
 
   @override
   void initState() {
@@ -326,7 +330,10 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
 
   Future<String?> _promptDuyuru() async {
     final ctrl = TextEditingController();
-    final cost = VoiceRoomDuyuruAccess.costLabel(widget.perms);
+    final cost = VoiceRoomDuyuruAccess.costLabel(
+      widget.perms,
+      jetonLabel: economyCurrencyLabel(ref, key: 'jeton'),
+    );
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -420,6 +427,8 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
     final coinLabel = NumberFormat.decimalPattern('tr').format(coins);
     final jetonTopUpLabel = economyJetonTopUpShortLabel(ref);
     final jetonBalanceHeader = economyJetonBalanceHeaderLabel(ref);
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+    final modGrid = _modGridCards(jetonLabel);
     final canModerate = widget.perms.canModerate || widget.isOwner;
     final top = MediaQuery.paddingOf(context).top;
 
@@ -475,7 +484,7 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
                       const spacing = 8.0;
                       const aspect = 1.55;
                       final gridHeight = ListPerf.nestedGridHeight(
-                        itemCount: _modGrid.length,
+                        itemCount: modGrid.length,
                         crossAxisCount: crossAxisCount,
                         mainAxisSpacing: spacing,
                         crossAxisSpacing: spacing,
@@ -493,9 +502,9 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
                             crossAxisSpacing: spacing,
                             childAspectRatio: aspect,
                           ),
-                          itemCount: _modGrid.length,
+                          itemCount: modGrid.length,
                           itemBuilder: (context, index) {
-                            final c = _modGrid[index];
+                            final c = modGrid[index];
                             return _PromoActionCard(
                               card: c,
                               compact: true,

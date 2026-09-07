@@ -48,11 +48,11 @@ class _VoiceRoomToolsSheet extends ConsumerWidget {
   final VoiceRoomPermissions perms;
   final bool isOwner;
 
-  static const _roomCommands = [
-    ('!duyuru', 'Duyuru yayınla (yetkili ücretsiz / 5 jeton)'),
-    ('!temizle', 'Sohbeti temizle'),
-    ('!muzik', 'Müzik / DJ bilgisi'),
-  ];
+  List<(String, String)> _roomCommands(String jetonLabel) => [
+        ('!duyuru', 'Duyuru yayınla (yetkili ücretsiz / 5 $jetonLabel)'),
+        ('!temizle', 'Sohbeti temizle'),
+        ('!muzik', 'Müzik / DJ bilgisi'),
+      ];
 
   static const _staffCommands = [
     ('!kick @kullanıcı', 'Odadan çıkar (REST ban önerilir)'),
@@ -105,7 +105,7 @@ class _VoiceRoomToolsSheet extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             _SectionTitle('Oda komutları'),
-            ..._roomCommands.map((c) => _CommandTile(command: c.$1, hint: c.$2)),
+            ..._roomCommands(jetonLabel).map((c) => _CommandTile(command: c.$1, hint: c.$2)),
             const SizedBox(height: 12),
             _SectionTitle('Yetkili komutları'),
             ..._staffCommands.map((c) => _CommandTile(command: c.$1, hint: c.$2)),

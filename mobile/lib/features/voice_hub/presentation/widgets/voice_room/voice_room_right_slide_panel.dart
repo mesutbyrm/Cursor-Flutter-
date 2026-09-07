@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../../core/navigation/wallet_navigation.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
@@ -164,6 +165,8 @@ class _PanelBodyState extends ConsumerState<_PanelBody> {
   Widget build(BuildContext context) {
     final coins = ref.watch(coinBalanceProvider) ?? 0;
     final coinLabel = NumberFormat.decimalPattern('tr').format(coins);
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+    final jetonTopUpLabel = economyJetonTopUpShortLabel(ref);
     final rules = (widget.room.rulesTr ?? widget.room.descTr ?? '').trim();
     final canModerate = widget.perms.canModerate || widget.isOwner;
 
@@ -206,12 +209,12 @@ class _PanelBodyState extends ConsumerState<_PanelBody> {
           _section('Yetkiler', Icons.admin_panel_settings_outlined),
           ..._roleTags(),
           const SizedBox(height: 12),
-          _section('Jeton Yükle', Icons.monetization_on_rounded),
+          _section(jetonTopUpLabel, Icons.monetization_on_rounded),
           ListTile(
             dense: true,
             contentPadding: EdgeInsets.zero,
             title: Text(
-              'Bakiye: $coinLabel',
+              'Bakiye: $coinLabel $jetonLabel',
               style: const TextStyle(fontSize: 11, color: Colors.white),
             ),
             trailing: FilledButton(

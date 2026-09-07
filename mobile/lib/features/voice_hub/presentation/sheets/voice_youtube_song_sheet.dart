@@ -180,6 +180,7 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
     final notifier = ref.read(voiceRoomLiveProvider(liveKey).notifier);
     final cost = withVideo ? videoCost : audioCost;
     final songTitle = hit.title;
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     // Sheet kapanmadan provider güncellemesi tüm odayı yeniden çizer → ANR riski.
     if (mounted) Navigator.of(context).pop();
@@ -191,7 +192,7 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
       ),
       onComplete: (err) {
         _showMusicResultSnack(
-          err ?? '«$songTitle» sıraya eklendi · $cost jeton',
+          err ?? '«$songTitle» sıraya eklendi · $cost $jetonLabel',
           isError: err != null,
         );
       },
