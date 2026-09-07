@@ -1,11 +1,26 @@
 #!/usr/bin/env bash
-# Canlı Falcılar — cihaz E2E kontrol listesi (manuel test).
+# Canlı Falcılar — tam E2E kontrol listesi (P0 freeze sonrası / P1).
 set -euo pipefail
 
-cat <<'EOF'
-=== Canlı Falcılar — Manuel E2E Checklist ===
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+APK_URL="https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk"
+VERSION="?"
+if [[ -f "${ROOT}/mobile/pubspec.yaml" ]]; then
+  VERSION=$(grep -E '^version:' "${ROOT}/mobile/pubspec.yaml" | head -1 | sed 's/version:[[:space:]]*//')
+fi
+
+cat <<EOF
+=== Canlı Falcılar — Manuel E2E Checklist (${VERSION}) ===
+
+ÖNCE: Psychic P0 (T+5s TRTC donma) — bash scripts/psychic-p0-checklist.sh
+Bu liste: P0 PASS sonrası tam akış (P1)
+
 İki cihaz veya danışan + falcı hesabı gerekir.
-APK: https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk
+APK: ${APK_URL}
+
+[ ] 0. TRTC freeze (P0 — zorunlu)
+    T+5s donma yok · WiFi↔mobil · oturum A→B→A · arka plan
+    → bash scripts/psychic-p0-checklist.sh
 
 [ ] 1. Danışan happy path
     Liste → profil → randevu (10 dk) → bekleme → falcı kabul → reklam → TRTC → chat → uzat → bitir → yıldız/yorum
@@ -31,5 +46,5 @@ APK: https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/c
 [ ] 8. Deep link / restore
     Görüşme sırasında uygulamayı öldür → /canli-falcilar/{id}/session → diskten devam
 
-Detay: docs/LIVE_PSYCHICS_REMAINING.md
+Detay: docs/LIVE_PSYCHICS_REMAINING.md · docs/KULLANICI_TEST_KILAVUZU.md
 EOF

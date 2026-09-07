@@ -15,7 +15,7 @@ Flutter sosyal medya ve canlı yayın istemcisi — **https://canlifal.com** API
 | Bağlantı | Açıklama |
 |----------|----------|
 | **[canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk)** | Her zaman son `main` derlemesi (`apk-latest`) |
-| **[Sürüm arşivi](https://github.com/mesutbyrm/Cursor-Flutter-/releases)** | Tüm test APK’ları (**güncel: 1.0.93+95**, `apk-latest`) |
+| **[Sürüm arşivi](https://github.com/mesutbyrm/Cursor-Flutter-/releases)** | Tüm test APK’ları (**güncel: 1.0.371+409**, `apk-latest`) |
 
 Ayrıntılar: [`APK_DOWNLOAD.md`](APK_DOWNLOAD.md)
 
@@ -23,7 +23,19 @@ Ayrıntılar: [`APK_DOWNLOAD.md`](APK_DOWNLOAD.md)
 
 Kod hatası değilse, GitHub **faturalandırma / harcama limiti** yüzünden Actions başlamıyor olabilir (özel repo). Adımlar: [`docs/GITHUB_ACTIONS_CI.md`](docs/GITHUB_ACTIONS_CI.md) · yerel kontrol: `bash scripts/ci-local.sh`
 
-## Hızlı başlangıç
+## Kullanıcı testi (Psychic P0 — öncelik)
+
+Agent işi bitti; release için **2 telefon** Psychic TRTC testi gerekir:
+
+```bash
+bash scripts/user-handoff.sh              # Özet + hesaplar + APK
+bash scripts/psychic-p0-checklist.sh      # T+5s donma tablosu
+bash scripts/print-live-psychics-e2e-checklist.sh  # Tam E2E (P0 sonrası)
+```
+
+Detay: [`docs/KULLANICI_TEST_KILAVUZU.md`](docs/KULLANICI_TEST_KILAVUZU.md)
+
+## Hızlı başlangıç (geliştirici)
 
 ```bash
 cd mobile
