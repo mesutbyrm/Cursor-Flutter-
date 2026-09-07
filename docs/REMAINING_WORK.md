@@ -20,8 +20,8 @@
 | Release gate CI | `[x]` | apk-latest + metadata PASS |
 | Release 502 fix | `[x]` | `814f8758` |
 | docs/LATEST_APK_BUILD | `[x]` | Run `34146919509` |
-| **Jeton (danışan)** | `[ ]` | Probe: jeton=0 — admin gerekli (`PSYCHIC_P0_START.md`) |
-| **Manuel testler** | `[ ]` | **En son — kullanıcı** (Psychic P0 öncelik) |
+| **Jeton (danışan)** | `[x]` | **100000** (2026-09-07 — kullanıcı admin) |
+| **Manuel testler** | `[ ]` | **Psychic P0** — 2 telefon (`psychic-p0-all.sh`) |
 | FAZ 0–13 otomatik | `[x]` | Geçmiş faz testleri CI'da |
 | APK `1.0.371+409` | `[x]` | apk-latest güncel |
 
@@ -31,8 +31,8 @@
 
 | # | İş | Referans |
 |---|-----|----------|
-| **P0-j** | Danışan jeton (admin) | jeton=0 probe — `admin-jeton-cheatsheet.sh` |
-| **P0** | Psychic TRTC 2-cihaz (T+5s donma yok) | [`PSYCHIC_P0_START.md`](PSYCHIC_P0_START.md) · `psychic-p0-all.sh` |
+| **P0-j** | Danışan jeton (admin) | ✅ **100000** jeton (2026-09-07) |
+| **P0** | Psychic TRTC 2-cihaz (T+5s donma yok) | ⏳ **OPEN** — `psychic-p0-all.sh` |
 | P1 | Voice / gift / PK / müzik 2-cihaz | [`P1_DEVICE_START.md`](P1_DEVICE_START.md) · `p1-platform-checklist.sh` |
 | P2 | Stage 8 / Play Store closed test | `PLAY_STORE_PRODUCTION_ACCESS.md` |
 
