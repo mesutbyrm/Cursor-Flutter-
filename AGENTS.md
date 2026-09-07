@@ -78,16 +78,14 @@ Agent P2 prep bitti. **Kalan:** cihaz P0→P1, keystore/AAB, Play Console. Mobil
 
 | Görev | Komut |
 |-------|--------|
-| **Kullanıcı sonraki adımlar** | `bash scripts/kullanici-sonraki.sh` |
+| **Başlangıç (cihaz + Play)** | `bash scripts/basla.sh` (= `kullanici-sonraki` + canlı durum) |
+| **Kullanıcı kalan adımlar** | `bash scripts/kullanici-sonraki.sh` |
+| **Agent ✅ bitti (hızlı)** | `bash scripts/agent-bitti.sh` |
 | **Agent prep doğrula** | `bash scripts/agent-prep-tamam.sh` |
-| **API yenile (isteğe bağlı)** | `bash scripts/devam-et.sh` |
+| **Durum yenile** | `bash scripts/devam-et.sh` (--full · --api) |
 | **Paralel mod özet** | `bash scripts/print-paralel-mod.sh` |
 | **RELEASE READY engelleri** | `bash scripts/print-release-blockers.sh` |
 | **GO komut indeks** | `bash scripts/print-go-commands.sh` |
-| **Kullanıcı sonraki adımlar** | `bash scripts/kullanici-sonraki.sh` |
-| **Agent prep tamam mı?** | `bash scripts/agent-prep-tamam.sh` |
-| **Agent prep durumu** | `bash scripts/print-agent-prep-status.sh` |
-| **Play Target audience + ads** | `bash scripts/print-play-target-audience-summary.sh` |
 | **Play yükleme günü** | `bash scripts/print-play-upload-day-checklist.sh` |
 | **P1 prep GO** | `bash scripts/p1-prep-go.sh` |
 | **Cihaz (sonra)** | `bash scripts/cihaz-sonra.sh` |

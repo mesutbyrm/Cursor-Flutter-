@@ -21,7 +21,7 @@
 | [`USER_TEST_QUICK_REF.md`](USER_TEST_QUICK_REF.md) | 1 sayfa cihaz test özeti |
 | [`USER_DEVICE_TEST_LOG.md`](USER_DEVICE_TEST_LOG.md) | P0/P1 sonuç günlüğü |
 | [`AGENT_CLOSED.md`](AGENT_CLOSED.md) | Agent paralel mod — özet durum |
-| [`RELEASE_USER_NEXT_STEPS.md`](RELEASE_USER_NEXT_STEPS.md) | Kullanıcı tek sayfa rehber (cihaz sonra + agent P2) |
+| [`RELEASE_USER_NEXT_STEPS.md`](RELEASE_USER_NEXT_STEPS.md) | Kullanıcı tek sayfa rehber (cihaz · keystore · Play) |
 | [`PSYCHIC_P0_START.md`](PSYCHIC_P0_START.md) | **2 telefon hızlı başlangıç (jeton → P0)** |
 | [`PSYCHIC_TELLER_STATUS.md`](PSYCHIC_TELLER_STATUS.md) | Falcı probe — host onaylı (`Cursor Host Test`) |
 | [`P1_DEVICE_START.md`](P1_DEVICE_START.md) | P0 sonrası genel platform 2-cihaz |
@@ -65,10 +65,11 @@ bash scripts/print-play-content-rating-summary.sh  # IARC
 bash scripts/print-play-store-listing.sh      # Store listing
 bash scripts/print-ci-aab-steps.sh            # CI AAB
 bash scripts/print-play-console-prep-index.sh # Prep indeks
-bash scripts/devam-et.sh                    # API yenile (isteğe bağlı)
+bash scripts/devam-et.sh                    # hızlı durum (--full · --api)
 bash scripts/print-release-blockers.sh        # RELEASE READY engelleri
 bash scripts/print-paralel-mod.sh           # paralel özet
 bash scripts/kullanici-sonraki.sh               # kullanıcı kalan adımlar
+bash scripts/agent-bitti.sh                   # agent ✅ bitti (hızlı)
 bash scripts/agent-prep-tamam.sh              # prep paketi doğrula
 bash scripts/print-play-upload-day-checklist.sh  # yükleme günü
 bash scripts/print-go-commands.sh             # GO indeks

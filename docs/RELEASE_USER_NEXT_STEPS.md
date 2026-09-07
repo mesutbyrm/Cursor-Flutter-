@@ -11,9 +11,10 @@
 
 ```bash
 bash scripts/kullanici-sonraki.sh          # ★ kullanıcı kalan adımlar
+bash scripts/agent-bitti.sh                # agent ✅ bitti (hızlı durum)
 bash scripts/agent-prep-tamam.sh           # agent prep doğrula
 bash scripts/print-release-blockers.sh     # engeller
-bash scripts/devam-et.sh                   # API yenile (isteğe bağlı)
+bash scripts/devam-et.sh                   # hızlı durum (--full · --api)
 bash scripts/print-paralel-mod.sh          # tek ekran özet
 bash scripts/cihaz-sonra.sh                # cihaz · sonra
 bash scripts/kalan-isler.sh                # durum tablosu
