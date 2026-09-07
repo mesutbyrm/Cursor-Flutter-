@@ -1,44 +1,53 @@
-# Canlifal — Release Checklist (Aşama 12)
+# Canlifal — Release Checklist
 
-Sürüm hedefi: **1.0.331+367**  
-Tarih: **2026-08-21**  
-Dal: `cursor/final-production-audit-5ac6`
+Sürüm: **1.0.371+409**  
+Tarih: **2026-09-07**  
+Dal: `main`  
+Son release gate: [Run 34146919509](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34146919509) — **FINAL: PASS**
 
 ## Otomatik CI
 
 | Kontrol | Durum | Not |
 |---------|-------|-----|
-| `dart analyze` | ✅ PASS | 0 error |
-| `flutter test` | ⚠️ 907 pass, 1 fail, 2 skip | `bana_ozel_hub_section_test` — önceden var (P2) |
-| `flutter build apk --release` | ⏳ CI / local | Cloud agent release build |
+| `dart analyze` | ✅ PASS | 0 error (release gate) |
+| `flutter test` | ✅ PASS | 1081 geçti, 2 skip (run `34144153254`) |
+| `flutter build apk --release` | ✅ PASS | Gate 9 — versionName 1.0.371, versionCode 409 |
+| apk-latest upload | ✅ PASS | 502 dayanıklılığı (`814f8758`) |
+| APK HTTP + metadata | ✅ PASS | HTTP 200, aapt doğrulama |
 
 ## Fonksiyonel checklist
 
 | Alan | Durum | Not |
 |------|-------|-----|
-| Auth | ✅ | JWT refresh, logout SSE teardown eklendi |
+| Auth | ✅ | JWT refresh, logout SSE teardown |
 | Home | ✅ | Lazy section load, paralel bootstrap |
-| Live | ⚠️ | TRTC singleton guard eklendi; çift cihaz test gerekli |
-| Voice | ⚠️ | PiP ensureActiveSession SSE guard; 2-device test gerekli |
-| Tencent RTC | ✅ fix | `_activeSession` — çoklu manager engeli |
-| Participant | ⚠️ | Backend canonical; manuel test |
-| Seat | ⚠️ | Auto-seat backend kuralı; manuel test |
-| Heartbeat | ✅ | 15s presence; leave/logout stop |
+| Live / Voice (Faz 1) | ✅ kod | SSE SoT, Socket.IO kapalı; 2-cihaz manuel |
+| **Psychic TRTC (Faz 2)** | ⚠️ **P0 OPEN** | 5 sn freeze fix kodda; **2-cihaz kabul bekleniyor** |
+| Tencent RTC | ✅ fix | Tek `TrtcRoomManager`, gate + psychic token yolu |
+| Participant / Seat | ⚠️ | Backend canonical; manuel test |
+| Heartbeat | ✅ | Psychic live heartbeat kaldırıldı; presence SSE |
 | Gift | ✅ | SSE + canonical refresh |
-| PK | ⚠️ | SSE + 4s poll overlap (P2) |
+| PK | ⚠️ | SSE; 4s poll overlap (P2) |
 | Music | ✅ | Leave → player stop + SSE release |
-| Social | ✅ | Pagination, cache invalidation |
-| Shorts | ⚠️ | Controller pool; 50 swipe memory test cihazda |
-| Stories | ✅ | Timer dispose OK |
+| Social / Shorts / Stories | ✅ / ⚠️ | Shorts 50 swipe memory — cihazda |
 | Fortune | ✅ | SSE streaming ayrı |
-| Wallet | ✅ | No stale cache on purchase paths |
-| Profile | ✅ | Hub refresh guarded |
-| Messages | ✅ | DM poll scope daraltıldı |
-| Notifications | ✅ | SSE + list; logout clear |
-| Games | ✅ | Repository pattern |
+| Wallet / Profile / Messages / Notifications / Games | ✅ | |
 | Logout | ✅ | SSE hub dispose + provider invalidation |
 
-## Multi-device (manuel — release öncesi zorunlu)
+## Multi-device (manuel — production öncesi)
+
+### P0 — Psychic TRTC (öncelik)
+
+APK: https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk
+
+- [ ] T0–T+60s: çift yönlü A/V, **T+5s donma yok**
+- [ ] WiFi ↔ mobil data — kontrollü reconnect
+- [ ] Oturum A→B→A — duplicate stream yok
+- [ ] Arka plan / ön plan — gereksiz rejoin yok
+
+Detay: `docs/LIVE_PSYCHICS_REMAINING.md` § P0 freeze kabul
+
+### P1 — Genel platform
 
 - [ ] Device A + B voice room join/leave/rejoin
 - [ ] Seat sync owner/viewer
@@ -50,6 +59,6 @@ Dal: `cursor/final-production-audit-5ac6`
 
 ## Release gate
 
-**RELEASE READY: NO** — P0 TRTC fix uygulandı; P1 manuel 2-cihaz acceptance + 1 pre-existing test fail kapatılmalı.
+**RELEASE READY: NO** — Otomatik kapılar PASS; **Psychic P0 iki-cihaz kabul** kapatılmadan production işaretlenmez.
 
-P0/P1 kapatıldıktan sonra `RELEASE READY: YES` işaretlenebilir.
+Psychic P0 PASS + P1 checklist tamamlandıktan sonra `RELEASE READY: YES` yazılabilir.

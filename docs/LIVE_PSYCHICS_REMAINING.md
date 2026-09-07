@@ -1,7 +1,8 @@
-# Canlı Falcılar — kalan işler (2026-08-20)
+# Canlı Falcılar — kalan işler (2026-09-07)
 
 Modül: `mobile/lib/features/live_psychics/`  
-Referans: `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9.6–9.7, `docs/prompts/FLUTTER_CANLI_FALCILAR_PROMPT.md`
+Referans: `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9.6–9.7, `docs/prompts/FLUTTER_CANLI_FALCILAR_PROMPT.md`  
+**APK:** `1.0.371+409` — [Run 34146919509](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34146919509) FINAL PASS
 
 ## Tamamlanan (bu oturum serisi)
 
@@ -43,6 +44,27 @@ Referans: `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9.6–9.7, `docs/prompts/FLUT
 | Review sheet | `psychic_review_sheet_test` — gönder / şimdi değil |
 | Close dialog | `psychic_close_dialog_test` — onay / vazgeç |
 | Tip sheet | `psychic_tip_sheet_test` — bahşiş seçimi / iptal |
+| **Faz 2 TRTC freeze (1.0.371)** | `POST /api/trtc/token` + `TrtcRoomManager`; live join-room/heartbeat yok |
+| **trtcRoomId drift** | SSE/`GET /room` alias rejoin engeli; `psychic_trtc_freeze_test` (15 test) |
+| **Tek engine / gate** | `TrtcOperationGate`, connection state machine, session dispose |
+
+---
+
+## P0 — TRTC 5 sn freeze kabul (cihaz — BLOKER)
+
+Kod main'de; **P0 kapatılmadı**. İki fiziksel cihaz (danışan + falcı veya iki hesap):
+
+| Zaman | Beklenen |
+|-------|----------|
+| T0 | Join — her iki tarafta video+audio |
+| T+1s, T+3s | Donma yok |
+| **T+5s** | **Kritik** — eski bug burada donuyordu |
+| T+10s, T+30s, T+60s | Stabil A/V |
+| WiFi ↔ mobil data | Kontrollü reconnect; donma yok |
+| Oturum A→B→A | Eski stream kapanır; duplicate yok |
+| Arka plan → ön plan | Gereksiz rejoin yok; A/V devam |
+
+Sonuç raporu: `Psychic P0 PASS` veya `FAIL` + ekran kaydı / logcat.
 
 ---
 
@@ -52,13 +74,13 @@ Referans: `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9.6–9.7, `docs/prompts/FLUT
 |-----|--------|
 | **CI** | Flutter cihaz E2E yok (API smoke: `scripts/acceptance-tests/api-release-gate.sh` Gate 3) |
 
-Mevcut: `psychic_push_payload_test`, `psychic_model_teller_test`, `psychic_incoming_sse_parser_test`, `psychic_room_sse_parser_test`, `psychic_flow_push_test`, `live_psychics_remote_datasource_test`, `psychic_client_session_guard_test`, `psychic_waiting_screen_test`, `psychic_booking_sheet_test`, `psychic_incoming_call_dialog_test`, `psychic_video_state_test`, `psychic_session_restore_test`, `psychic_push_action_bridge_test`, `psychic_session_store_test`, `psychic_extend_sheet_test`, `psychic_review_sheet_test`, `psychic_close_dialog_test`, `psychic_tip_sheet_test`, `session_room_sse_event_test`, invite coordinator, phase guard, profile resolver.
+Mevcut: `psychic_trtc_freeze_test`, `psychic_push_payload_test`, `psychic_model_teller_test`, `psychic_incoming_sse_parser_test`, `psychic_room_sse_parser_test`, `psychic_flow_push_test`, `live_psychics_remote_datasource_test`, `psychic_client_session_guard_test`, `psychic_waiting_screen_test`, `psychic_booking_sheet_test`, `psychic_incoming_call_dialog_test`, `psychic_video_state_test`, `psychic_session_restore_test`, `psychic_push_action_bridge_test`, `psychic_session_store_test`, `psychic_extend_sheet_test`, `psychic_review_sheet_test`, `psychic_close_dialog_test`, `psychic_tip_sheet_test`, `session_room_sse_event_test`, invite coordinator, phase guard, profile resolver.
 
 ---
 
-## Kalan — manuel / E2E (cihaz)
+## Kalan — manuel / E2E (cihaz — genel akış)
 
-APK: `1.0.310+346` — iki cihaz veya iki hesap (danışan + falcı) gerekir. CI: [Run 32411289241](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/32411289241).
+APK: `1.0.371+409` — iki cihaz veya iki hesap (danışan + falcı). İndir: [apk-latest](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk)
 
 1. **Danışan happy path** — Liste → profil → randevu (10 dk) → bekleme → falcı kabul → reklam → TRTC görüşme → chat → uzat → bitir → yıldız/yorum  
 2. **Falcı happy path** — Dashboard çevrimiçi → gelen diyalog/SSE → kabul → timer başlat → süre ekle → bitir → bahşiş bildirimi  
@@ -97,5 +119,6 @@ APK: `1.0.310+346` — iki cihaz veya iki hesap (danışan + falcı) gerekir. CI
 | 1.0.309+345 | Extend sheet test layout CI düzeltmesi |
 | 1.0.308+344 | Session store, extend/review sheet testleri |
 | 1.0.307+343 | Session restore + push action bridge testleri, manuel E2E checklist |
+| 1.0.371+409 | Faz 2: Psychic TRTC freeze kök nedeni; token-only join; alias drift fix |
 
 _Bu dosya agent oturumlarında güncellenir; tamamlandıkça maddeler silinir veya «Tamamlandı» bölümüne taşınır._
