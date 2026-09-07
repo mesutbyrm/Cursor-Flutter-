@@ -24,7 +24,8 @@ echo "║  P0 canlı durum (${VERSION})                                      ║
 echo "╚══════════════════════════════════════════════════════════════════╝"
 echo ""
 echo "APK: $APK_URL"
-echo "RELEASE READY: NO (Psychic P0 cihaz bekliyor)"
+echo "RELEASE READY: NO · Agent prep ✅ TAMAM · Cihaz bekliyor"
+echo "Kullanıcı: bash scripts/kullanici-sonraki.sh"
 echo ""
 
 # APK

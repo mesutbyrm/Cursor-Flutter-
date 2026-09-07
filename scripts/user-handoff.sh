@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Kullanıcı devir teslimi — paralel mod (cihaz sonra, agent P2 prep devam).
-# Kullanım: bash scripts/user-handoff.sh
+# Kullanıcı devir teslimi — agent prep ✅ tamam, kalan adımlar sizde.
+# Kullanım: bash scripts/user-handoff.sh  (= basla.sh)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -10,36 +10,27 @@ bash "$ROOT/scripts/print-p0-live-status.sh"
 cat <<'EOF'
 
 ╔══════════════════════════════════════════════════════════════════╗
-║  Devir teslim — paralel mod                                       ║
+║  Devir teslim — agent prep ✅ · kalan adımlar sizde               ║
 ╚══════════════════════════════════════════════════════════════════╝
 
-Agent (şimdi): API ✅ · falcı ✅ · P2 Play Console prep devam
-Cihaz (sonra): Psychic P0 → P1 · T+5s donma yok
+Agent: kod · CI · API · falcı · P2 prep betikleri ✅ TAMAM
+Siz: cihaz P0→P1 · keystore · Play Console yükleme
 
-── Agent (şimdi) ──
-  bash scripts/devam-et.sh
-  bash scripts/print-paralel-mod.sh
-  bash scripts/p1-prep-go.sh
-  bash scripts/p2-prep-go.sh
-  bash scripts/p2-prep-all.sh
+── ★ Başlangıç ──
+  bash scripts/kullanici-sonraki.sh
+  bash scripts/agent-prep-tamam.sh
+  bash scripts/print-release-blockers.sh
 
 ── Cihaz (sonra) ──
   bash scripts/cihaz-sonra.sh
-  bash scripts/p0-go.sh
-  bash scripts/user-test-start.sh p0
+  bash scripts/p0-go.sh → user-test-start.sh p0
 
-── Sonuç (test bitince) ──
-  PASS → bash scripts/on-p0-pass.sh
-  FAIL → bash scripts/on-p0-fail.sh "hangi adım"
+── Play (P0+P1 PASS sonrası) ──
+  bash scripts/print-play-upload-day-checklist.sh
+  bash scripts/print-ci-aab-steps.sh
 
-Rehberler:
-  docs/KALAN_ISLER.md
-  docs/RELEASE_USER_NEXT_STEPS.md
-  bash scripts/kullanici-sonraki.sh
+Rehber: docs/RELEASE_USER_NEXT_STEPS.md · docs/KALAN_ISLER.md
 
 EOF
 
-bash "$ROOT/scripts/print-build-status.sh" 2>/dev/null | head -12
-
-echo ""
-bash "$ROOT/scripts/print-release-blockers.sh" 2>/dev/null | head -22 || true
+bash "$ROOT/scripts/print-build-status.sh" 2>/dev/null | head -8 || true

@@ -68,8 +68,8 @@ bash scripts/print-play-console-prep-index.sh # Prep indeks
 bash scripts/devam-et.sh                    # agent devam
 bash scripts/print-release-blockers.sh        # RELEASE READY engelleri
 bash scripts/print-paralel-mod.sh           # paralel özet
+bash scripts/kullanici-sonraki.sh               # kullanıcı kalan adımlar
 bash scripts/agent-prep-tamam.sh              # prep paketi doğrula
-bash scripts/print-agent-prep-status.sh       # prep envanter
 bash scripts/print-play-upload-day-checklist.sh  # yükleme günü
 bash scripts/print-go-commands.sh             # GO indeks
 bash scripts/kalan-isler.sh                 # kalan işler + yol haritası

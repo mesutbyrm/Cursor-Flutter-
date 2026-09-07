@@ -4,7 +4,7 @@
 
 > **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
-**Son güncelleme:** 2026-09-07 — sürüm `1.0.371+409` · **Cihaz testi SONRA** · **Agent P2 prep devam**  
+**Son güncelleme:** 2026-09-07 — sürüm `1.0.371+409` · Agent P2 prep **✅ TAMAM** · **Kullanıcı:** cihaz + keystore + Play  
 **Agent paralel:** ✅ prep tamam (`agent-prep-tamam.sh`) · **Kullanıcı:** `kullanici-sonraki.sh` · **Cihaz:** `cihaz-sonra.sh`  
 **Tek komut:** `bash scripts/kalan-isler.sh` · P0: `p0-go.sh` · P1: `p1-go.sh` · P2 prep: `p2-prep-go.sh` · P2 yükleme: `p2-go.sh`  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Release:** `docs/RELEASE_CHECKLIST.md` | **Psychic P0:** `docs/LIVE_PSYCHICS_REMAINING.md` | **Tüm MD indeks:** [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
@@ -36,7 +36,7 @@
 | **P0-j** | Danışan jeton (admin) | ✅ ~98k (2026-09-07) |
 | **P0** | Psychic TRTC 2-cihaz (T+5s donma yok) | ⏳ **OPEN** — `bash scripts/p0-go.sh` |
 | P1 | Voice / gift / PK / müzik 2-cihaz | ⏸ P0 sonrası — `bash scripts/p1-go.sh` |
-| P2 | Stage 8 / Play Store | ▶ agent prep · yükleme P0+P1 sonrası | `p2-prep-go.sh` · `p2-go.sh` |
+| P2 | Stage 8 / Play Store | ⏸ P0+P1 sonrası yükleme | `kullanici-sonraki.sh` · `p2-go.sh` |
 
 **Otomatik işler tamam** — kalan yalnızca cihaz kabul testleri.
 

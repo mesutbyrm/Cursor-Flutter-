@@ -17,7 +17,7 @@ cat <<'EOF'
 | P0-j | Jeton | ✅ | (tamam) |
 | P0 | Psychic TRTC 2 telefon | ⏸ sonuç sonra | bash scripts/cihaz-sonra.sh |
 | P1 | Platform 2 telefon | ⏸ sonuç sonra | bash scripts/p1-prep-go.sh |
-| P2 | Play Store / AAB | ▶ agent prep | bash scripts/p2-prep-go.sh |
+| P2 | Play Store / AAB | ⏸ P0+P1 sonrası | bash scripts/kullanici-sonraki.sh |
 
 Hesaplar: cursor.test.* (danışan) · cursor.host.* (falcı/host) · CursorTest!1786235468
 
