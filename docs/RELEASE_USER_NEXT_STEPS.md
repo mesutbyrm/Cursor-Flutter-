@@ -10,10 +10,8 @@ Agent tarafı **tamamlandı**. Kalan iş yalnızca **cihaz kabul testleri** (siz
 ## Tek giriş
 
 ```bash
-bash scripts/p0-go.sh
-bash scripts/user-test-start.sh
-bash scripts/validate-pre-device-handoff.sh   # API + jeton + falcı (cihaz öncesi)
-bash scripts/agent-closure-status.sh          # canlı durum özeti
+bash scripts/kalan-isler.sh
+bash scripts/agent-closure-status.sh          # aynı — canlı durum + yol haritası
 ```
 
 ---

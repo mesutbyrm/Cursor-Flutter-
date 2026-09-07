@@ -5,6 +5,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 APK_URL="https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk"
 LOG="${ROOT}/docs/USER_DEVICE_TEST_LOG.md"
+# shellcheck source=device-test-log-lib.sh
+source "$ROOT/scripts/device-test-log-lib.sh"
 
 VERSION="?"
 if [[ -f "${ROOT}/mobile/pubspec.yaml" ]]; then
@@ -18,7 +20,7 @@ echo ""
 echo "APK: $APK_URL"
 echo ""
 
-if [[ -f "$LOG" ]] && grep -qE '^## .* — Psychic P0 \*\*PASS\*\*' "$LOG" 2>/dev/null; then
+if device_test_log_has_pass "Psychic P0" "$LOG"; then
   echo "✅ Psychic P0 PASS kaydı bulundu (USER_DEVICE_TEST_LOG.md)"
 else
   echo "⚠️  Psychic P0 PASS kaydı yok — önce:"

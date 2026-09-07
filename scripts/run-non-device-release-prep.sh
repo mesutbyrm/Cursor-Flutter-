@@ -41,5 +41,5 @@ else
   echo "⚠️  Bazı adımlarda uyarı — detay yukarıda"
 fi
 echo ""
-echo "Cihaz (sonra): bash scripts/user-test-start.sh p0"
-echo "Durum:         bash scripts/release-remaining-status.sh"
+echo "Cihaz (sonra): bash scripts/kalan-isler.sh"
+echo "Durum:         bash scripts/p0-go.sh"

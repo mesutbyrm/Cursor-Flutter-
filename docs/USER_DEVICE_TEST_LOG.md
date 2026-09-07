@@ -42,6 +42,7 @@ Doğrula: `bash scripts/p0-go.sh`
 | P1 GO | `bash scripts/p1-go.sh` |
 | P1 PASS | `bash scripts/on-p1-pass.sh` |
 | RELEASE adayı | `bash scripts/on-release-ready-candidate.sh` |
+| P2 GO | `bash scripts/p2-go.sh` |
 
 ---
 

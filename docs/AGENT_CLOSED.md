@@ -32,9 +32,9 @@ Mobil kod, CI release gate ve otomatik API doğrulama **tamamlandı**. Cihaz tes
 
 | # | İş | Komut |
 |---|-----|--------|
-| 0 | Canlı durum (jeton + falcı) | `bash scripts/p0-go.sh` |
+| 0 | Canlı durum + yol haritası | `bash scripts/kalan-isler.sh` |
 | 1 | Pre-device doğrulama | `bash scripts/validate-pre-device-handoff.sh` |
-| 2 | Psychic P0 (2 telefon) | `bash scripts/user-test-start.sh p0` |
+| 2 | Psychic P0 (2 telefon) | `bash scripts/p0-go.sh` → `user-test-start.sh p0` |
 | 3 | P1 platform | `bash scripts/on-p0-pass.sh` |
 | 4 | Sonuç | `bash scripts/on-p1-pass.sh` |
 

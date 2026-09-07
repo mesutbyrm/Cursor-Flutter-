@@ -78,7 +78,8 @@ Güncel envanter metni (dış kaynak): https://canlifal.com/canlifal-envanter-ra
 
 | Görev | Komut |
 |-------|--------|
-| **P0 GO (öncelik)** | `bash scripts/p0-go.sh` |
+| **Kalan işler** | `bash scripts/kalan-isler.sh` |
+| **P0 GO** | `bash scripts/p0-go.sh` |
 | **Cihaz testi menü** | `bash scripts/user-test-start.sh` |
 | Cihaz öncesi doğrulama | `bash scripts/validate-pre-device-handoff.sh` |
 | P0 akış (checklist) | `bash scripts/user-test-start.sh p0` |

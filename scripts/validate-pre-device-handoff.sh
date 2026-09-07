@@ -41,7 +41,7 @@ else
 fi
 echo ""
 echo "Sonraki:"
-echo "  bash scripts/user-test-start.sh p0"
-echo "  Falcı: cursor.host.1786235468@mailinator.com · Danışan: cursor.test.*"
+echo "  bash scripts/kalan-isler.sh"
+echo "  bash scripts/p0-go.sh"
 echo "  docs/RELEASE_USER_NEXT_STEPS.md"
 exit 0

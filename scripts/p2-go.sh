@@ -4,6 +4,8 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 LOG="${ROOT}/docs/USER_DEVICE_TEST_LOG.md"
+# shellcheck source=device-test-log-lib.sh
+source "$ROOT/scripts/device-test-log-lib.sh"
 
 VERSION="?"
 if [[ -f "${ROOT}/mobile/pubspec.yaml" ]]; then
@@ -16,13 +18,13 @@ echo "╚═══════════════════════�
 echo ""
 
 p0_ok=0 p1_ok=0
-if [[ -f "$LOG" ]] && grep -qE '^## .* — Psychic P0 \*\*PASS\*\*' "$LOG" 2>/dev/null; then
+if device_test_log_has_pass "Psychic P0" "$LOG"; then
   echo "✅ Psychic P0 PASS kaydı var"
   p0_ok=1
 else
   echo "⏳ Psychic P0 PASS yok — önce: bash scripts/on-p0-pass.sh"
 fi
-if [[ -f "$LOG" ]] && grep -qE '^## .* — P1 Platform \*\*PASS\*\*' "$LOG" 2>/dev/null; then
+if device_test_log_has_pass "P1 Platform" "$LOG"; then
   echo "✅ P1 Platform PASS kaydı var"
   p1_ok=1
 else

@@ -84,6 +84,12 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 
 ---
 
+## Oturum günlüğü (2026-09-07 — device-test-log + giriş noktaları)
+
+- `device-test-log-lib.sh` — P0/P1 PASS log satırı kontrolü
+- on-release-ready-candidate: doğru log grep; agent-closure → kalan-isler
+- README/AGENTS/print-build-status: kalan-isler birincil giriş
+
 ## Oturum günlüğü (2026-09-07 — kalan işler yol haritası)
 
 - `kalan-isler.sh` — P0→P1→P2 tablo + release-remaining-status
