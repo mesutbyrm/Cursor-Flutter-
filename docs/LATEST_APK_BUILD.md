@@ -1,15 +1,13 @@
 # Son APK derlemesi
 
-
-
-> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+> **Güncel:** Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
 | Alan | Değer |
 |------|--------|
 | Sürüm | `1.0.371+409` |
-| Tarih (UTC) | 2026-09-07 17:25 |
-| Commit | [`2c96cf12`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/2c96cf12) |
-| İş akışı | [Run 34146919509](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34146919509) |
+| Tarih (UTC) | 2026-09-07 19:10 |
+| Commit | [`6b888f8e1ef4634b41bcfaf0aa9bffc14c22ba9a`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/6b888f8e1ef4634b41bcfaf0aa9bffc14c22ba9a) |
+| İş akışı | [Run 34153988264](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34153988264) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
@@ -22,5 +20,6 @@
 - **Tek engine:** paylaşılan `TrtcRoomManager` + join/leave tek kuyruk; duplicate listener yok
 - **Reconnect:** yalnızca gerçek `onConnectionLost` / ağ dönüşü / odada değilken resume; SSE veya remote A/V değil
 - **Analyze gate:** gelen kutu uyumluluk sayfalarındaki bozuk inbox import yolları düzeltildi (CI ERROR=0)
+
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
