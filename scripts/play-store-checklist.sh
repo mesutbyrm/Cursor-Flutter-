@@ -34,12 +34,17 @@ cat <<'EOF'
         bash scripts/print-play-foreground-service-declaration.sh
         docs/PLAY_FOREGROUND_SERVICE_DECLARATION.md
   [ ] Content rating anketi
+        bash scripts/print-play-content-rating-summary.sh
+  [ ] Store listing (açıklama + grafikler)
+        bash scripts/print-play-store-listing.sh
   [ ] Release-signed AAB yükle (Closed test track)
+        bash scripts/print-ci-aab-steps.sh
   [ ] Internal/Closed testers davet et
   [ ] Production access başvurusu (14 gün closed test sonrası)
 
 ── AAB üretimi ──
   CI: GitHub Actions → Build release AAB (ANDROID_KEYSTORE_* secrets)
+        bash scripts/print-ci-aab-steps.sh
   Yerel: bash scripts/build-play-aab.sh
   App access metni: bash scripts/print-play-console-app-access.sh
 

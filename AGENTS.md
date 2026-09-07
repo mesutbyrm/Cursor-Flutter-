@@ -84,6 +84,10 @@ Güncel envanter metni (dış kaynak): https://canlifal.com/canlifal-envanter-ra
 | **P2 Play Store özet** | `bash scripts/p2-prep-now.sh` |
 | **Play FGS metni** | `bash scripts/print-play-foreground-service-declaration.sh` |
 | **Play Data safety özeti** | `bash scripts/print-play-data-safety-summary.sh` |
+| **Play Console prep indeks** | `bash scripts/print-play-console-prep-index.sh` |
+| **Play Content rating (IARC)** | `bash scripts/print-play-content-rating-summary.sh` |
+| **Play Store listing taslak** | `bash scripts/print-play-store-listing.sh` |
+| **CI AAB adımları** | `bash scripts/print-ci-aab-steps.sh` |
 | **AAB readiness** | `bash scripts/play-aab-readiness.sh` |
 | **Play Console checklist** | `bash scripts/play-store-checklist.sh` |
 | **Keystore secret rehberi** | `bash scripts/play-keystore-secrets-cheatsheet.sh` |

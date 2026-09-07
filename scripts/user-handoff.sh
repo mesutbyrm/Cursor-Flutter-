@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Kullanıcı devir teslimi — Psychic P0 öncelik (agent işi bitti).
+# Kullanıcı devir teslimi — paralel mod (cihaz sonra, agent P2 prep devam).
 # Kullanım: bash scripts/user-handoff.sh
 set -euo pipefail
 
@@ -10,34 +10,30 @@ bash "$ROOT/scripts/print-p0-live-status.sh"
 cat <<'EOF'
 
 ╔══════════════════════════════════════════════════════════════════╗
-║  Devir teslim — agent tamam, cihaz sizde                         ║
+║  Devir teslim — paralel mod                                       ║
 ╚══════════════════════════════════════════════════════════════════╝
 
-Agent: kod · CI · API (M5/M7/Gate 3) · falcı onayı ✅
-Siz: Psychic P0 — 2 telefon · T+5s donma yok
+Agent (şimdi): API ✅ · falcı ✅ · P2 Play Console prep devam
+Cihaz (sonra): Psychic P0 → P1 · T+5s donma yok
 
-── Başla (önerilen) ──
-  bash scripts/kalan-isler.sh
+── Agent (şimdi) ──
+  bash scripts/kalan-isler-agent.sh
+  bash scripts/p2-prep-all.sh
+
+── Cihaz (sonra) ──
+  bash scripts/cihaz-sonra.sh
   bash scripts/p0-go.sh
   bash scripts/user-test-start.sh p0
 
-── Doğrulama (isteğe bağlı) ──
-  bash scripts/validate-pre-device-handoff.sh
-  bash scripts/user-test-start.sh ready
-
-── Sonuç ──
+── Sonuç (test bitince) ──
   PASS → bash scripts/on-p0-pass.sh
   FAIL → bash scripts/on-p0-fail.sh "hangi adım"
-
-── P0 PASS sonrası ──
-  bash scripts/p1-go.sh
-  bash scripts/on-p1-pass.sh
-  bash scripts/on-release-ready-candidate.sh
 
 Rehberler:
   docs/KALAN_ISLER.md
   docs/USER_TEST_QUICK_REF.md
   docs/RELEASE_USER_NEXT_STEPS.md
+  docs/PLAY_STORE_AGENT_CHECKLIST.md
 
 EOF
 

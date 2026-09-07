@@ -60,6 +60,10 @@ bash scripts/play-aab-readiness.sh            # AAB öncesi kontrol
 bash scripts/play-store-checklist.sh          # Console checklist
 bash scripts/print-play-foreground-service-declaration.sh  # FGS metni
 bash scripts/print-play-data-safety-summary.sh  # Data safety özeti
+bash scripts/print-play-content-rating-summary.sh  # IARC
+bash scripts/print-play-store-listing.sh      # Store listing
+bash scripts/print-ci-aab-steps.sh            # CI AAB
+bash scripts/print-play-console-prep-index.sh # Prep indeks
 bash scripts/p1-prep-now.sh                   # P1 checklist ön
 bash scripts/kalan-isler.sh                 # kalan işler + yol haritası
 bash scripts/p0-go.sh                       # P0 GO ekranı

@@ -130,7 +130,7 @@ case "${1:-}" in
     exec bash "$ROOT/scripts/p0-go.sh"
     ;;
   p2|play-store)
-    exec bash "$ROOT/scripts/p2-play-store-prep.sh"
+    exec bash "$ROOT/scripts/p2-prep-all.sh"
     ;;
   unit|psychic-test)
     exec bash "$ROOT/scripts/run-psychic-unit-tests.sh"
@@ -161,6 +161,18 @@ case "${1:-}" in
     ;;
   data-safety|play-data)
     exec bash "$ROOT/scripts/print-play-data-safety-summary.sh"
+    ;;
+  content-rating|iarc)
+    exec bash "$ROOT/scripts/print-play-content-rating-summary.sh"
+    ;;
+  store-listing|listing)
+    exec bash "$ROOT/scripts/print-play-store-listing.sh"
+    ;;
+  ci-aab|aab-ci)
+    exec bash "$ROOT/scripts/print-ci-aab-steps.sh"
+    ;;
+  play-index|console-prep)
+    exec bash "$ROOT/scripts/print-play-console-prep-index.sh"
     ;;
   play-checklist|play-store)
     exec bash "$ROOT/scripts/play-store-checklist.sh"

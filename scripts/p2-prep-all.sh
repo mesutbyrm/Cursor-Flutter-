@@ -20,7 +20,17 @@ echo ""
 echo "── Data safety ──"
 bash "$ROOT/scripts/print-play-data-safety-summary.sh"
 echo ""
+echo "── Content rating (IARC) ──"
+bash "$ROOT/scripts/print-play-content-rating-summary.sh"
+echo ""
+echo "── Store listing ──"
+bash "$ROOT/scripts/print-play-store-listing.sh" 2>&1 | head -28
+echo ""
+echo "── CI AAB adımları ──"
+bash "$ROOT/scripts/print-ci-aab-steps.sh" 2>&1 | head -22
+echo ""
 echo "── Keystore secrets ──"
 bash "$ROOT/scripts/play-keystore-secrets-cheatsheet.sh" 2>&1 | head -22
 echo ""
 echo "Tam checklist: bash scripts/play-store-checklist.sh"
+echo "Prep indeks:   bash scripts/print-play-console-prep-index.sh"
