@@ -3,7 +3,7 @@
 
 > **Sürüm:** `1.0.371+409` · Release gate **FINAL PASS** · **RELEASE READY: NO** · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
-Mobil kod, CI release gate ve otomatik API doğrulama **tamamlandı**. Agent yalnızca **Psychic P0 FAIL** hotfix için açılır.
+Mobil kod, CI release gate ve otomatik API doğrulama **tamamlandı**. Cihaz testleri **kullanıcı tarafından sonraya bırakıldı** — agent cihaz dışı hazırlığa devam eder; mobil hotfix yalnızca **Psychic P0 FAIL** ile açılır.
 
 ---
 
@@ -20,6 +20,9 @@ Mobil kod, CI release gate ve otomatik API doğrulama **tamamlandı**. Agent yal
 | M7 song-request | ✅ HTTP 200 |
 | m5-preflight | ✅ |
 | Dokümantasyon + handoff betikleri | ✅ |
+| API Gate 3 (host → SKIP, TRTC) | ✅ cihaz dışı düzeltme |
+| Psychic unit test betiği | ✅ `run-psychic-unit-tests.sh` |
+| P2 hazırlık betiği | ✅ `p2-play-store-prep.sh` |
 
 ---
 

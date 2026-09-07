@@ -5,7 +5,8 @@
 > **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
 **Son güncelleme:** 2026-09-07 — sürüm `1.0.371+409`, release gate **FINAL PASS** (run `34146919509`)  
-**Agent durumu:** **API otomasyon tamam** — M5/M7 PASS; **cihaz testleri kullanıcıda (sonra)**  
+**Agent durumu:** **API otomasyon tamam** — cihaz testleri **kullanıcı sonra** (P0 → P1)  
+**Agent devam:** Gate 3 düzeltmesi, psychic unit test betiği, P2 hazırlık (cihaz dışı)  
 **Tek komut:** `bash scripts/user-test-start.sh` · durum: `bash scripts/release-remaining-status.sh`  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Release:** `docs/RELEASE_CHECKLIST.md` | **Psychic P0:** `docs/LIVE_PSYCHICS_REMAINING.md` | **Tüm MD indeks:** [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
@@ -83,6 +84,13 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 | 4–13 | `FAZ4_FORTUNE_PARITY.md` … `FAZ13_RELEASE_STATUS.md` |
 
 ---
+
+## Oturum günlüğü (2026-09-07 — cihaz dışı devam)
+
+- Kullanıcı: cihaz testleri sonraya bırakıldı
+- `api-release-gate.sh` Gate 3: pool[0] fallback kaldırıldı; host → SKIP (FAIL değil); TRTC token
+- `run-psychic-unit-tests.sh`, `p2-play-store-prep.sh`
+- AGENT_CLOSED: cihaz dışı hazırlık notu
 
 ## Oturum günlüğü (2026-09-07 — test günlüğü şablonu)
 

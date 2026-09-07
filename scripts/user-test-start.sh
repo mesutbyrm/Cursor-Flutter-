@@ -33,6 +33,8 @@ Komutlar:
  10) bash scripts/on-p0-fail.sh "not"        # P0 FAIL → hotfix kaydı
  11) bash scripts/on-p1-pass.sh              # P1 PASS → RELEASE adayı
  12) bash scripts/on-release-ready-candidate.sh  # P0+P1 sonrası
+ 13) bash scripts/run-psychic-unit-tests.sh     # Flutter unit (cihaz yok)
+ 14) bash scripts/p2-play-store-prep.sh          # P2 backlog özeti
 
 Rehberler:
   docs/USER_TEST_QUICK_REF.md       ← 1 sayfa özet
@@ -106,6 +108,12 @@ case "${1:-}" in
     ;;
   live|p0-status)
     exec bash "$ROOT/scripts/print-p0-live-status.sh"
+    ;;
+  p2|play-store)
+    exec bash "$ROOT/scripts/p2-play-store-prep.sh"
+    ;;
+  unit|psychic-test)
+    exec bash "$ROOT/scripts/run-psychic-unit-tests.sh"
     ;;
   ""|help|-h|--help)
     show_menu

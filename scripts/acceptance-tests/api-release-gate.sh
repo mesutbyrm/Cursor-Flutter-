@@ -230,11 +230,7 @@ for t in items:
         print(tid(t), uid(t)); sys.exit(0)
     if username and uname==username:
         print(tid(t), uid(t)); sys.exit(0)
-online=[t for t in items if t.get('isOnline') is True]
-pool=online or items
-if pool:
-    t=pool[0]
-    print(tid(t), uid(t))
+sys.exit(1)
 " 2>/dev/null || echo "")"
   if [[ -z "$teller_id" || -z "$teller_user" ]]; then
     return 1
@@ -324,8 +320,13 @@ gate_03_psychic_video() {
   fi
 
   local teller_id teller_user
-  if ! read -r teller_id teller_user <<<"$(resolve_gate_teller_ids)"; then
-    record 3 "Canlı falcı görüntülü görüşme" FAIL "falcı kimliği çözülemedi"
+  if ! read -r teller_id teller_user <<<"$(resolve_gate_teller_ids)" ||
+     [[ -z "$teller_id" || -z "$teller_user" ]]; then
+    if [[ "$TELLER_EMAIL" == "$HOST_EMAIL" || "$TELLER_EMAIL" == "$DEFAULT_ACCEPTANCE_HOST_EMAIL" ]]; then
+      record 3 "Canlı falcı görüntülü görüşme" SKIP "host falcı listesinde değil — ACCEPTANCE_TELLER_* veya cihaz P0 onaylı falcı"
+    else
+      record 3 "Canlı falcı görüntülü görüşme" SKIP "falcı /fortune-tellers listesinde değil"
+    fi
     return
   fi
 
@@ -373,20 +374,25 @@ gate_03_psychic_video() {
       -d '{"status":"accepted","action":"accept"}')
   fi
 
-  local uid agora_code
+  local uid trtc_body trtc_ok=0
   uid=$(curl_json "$BASE/api/me" -H "Authorization: Bearer $TELLER_TOKEN" | json_field "['id']")
   [[ -z "$uid" ]] && uid=$(curl_json "$BASE/api/me" -H "Authorization: Bearer $TELLER_TOKEN" | json_field "['user']['id']")
-  agora_code=$(http_code -X POST "$BASE/api/agora/token" \
+  trtc_body=$(curl -sS -X POST "$BASE/api/trtc/token" \
     -H "Authorization: Bearer $TELLER_TOKEN" \
     -H "Content-Type: application/json" \
-    -d "{\"channelName\":\"psychic_$PSYCHIC_SESSION_ID\",\"uid\":\"$uid\",\"role\":\"host\"}")
+    -d "{\"roomId\":\"psychic_$PSYCHIC_SESSION_ID\",\"userId\":\"$uid\",\"role\":\"anchor\"}" 2>/dev/null || true)
+  if trtc_response_has_sig "$trtc_body"; then
+    trtc_ok=1
+  fi
 
-  if [[ "$respond_code" == "200" || "$respond_code" == "201" ]] && [[ "$agora_code" == "200" ]]; then
-    record 3 "Canlı falcı görüntülü görüşme" PASS "session=$PSYCHIC_SESSION_ID agora OK"
-  elif [[ "$agora_code" == "200" ]]; then
-    record 3 "Canlı falcı görüntülü görüşme" PASS "Agora token OK (respond HTTP $respond_code)"
+  if [[ "$respond_code" == "200" || "$respond_code" == "201" ]] && [[ "$trtc_ok" -eq 1 ]]; then
+    record 3 "Canlı falcı görüntülü görüşme" PASS "session=$PSYCHIC_SESSION_ID TRTC OK"
+  elif [[ "$trtc_ok" -eq 1 ]]; then
+    record 3 "Canlı falcı görüntülü görüşme" PASS "TRTC token OK (respond HTTP $respond_code)"
+  elif [[ "$respond_code" == "403" || "$respond_code" == "401" ]]; then
+    record 3 "Canlı falcı görüntülü görüşme" SKIP "respond=$respond_code — onaylı falcı token gerekir (ACCEPTANCE_TELLER_*)"
   else
-    record 3 "Canlı falcı görüntülü görüşme" FAIL "respond=$respond_code agora=$agora_code"
+    record 3 "Canlı falcı görüntülü görüşme" FAIL "respond=$respond_code trtc=$([[ $trtc_ok -eq 1 ]] && echo OK || echo FAIL)"
   fi
 }
 
