@@ -76,7 +76,7 @@ echo ""
 
 # --- P1 ---
 echo "── P1 · Platform 2-cihaz (voice/gift/PK/müzik) ──"
-echo "Durum: ⏸ P0 sonucu sonra · checklist şimdi: bash scripts/p1-prep-go.sh"
+echo "Durum: ⏸ P0 sonucu sonra · P1 checklist: bash scripts/p1-prep-go.sh"
 echo "  bash scripts/p1-prep-go.sh"
 echo "  bash scripts/p1-prep-now.sh"
 echo "  docs/P1_DEVICE_START.md"

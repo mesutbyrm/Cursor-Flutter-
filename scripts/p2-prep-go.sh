@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# P2 prep GO — agent Play Store hazırlığı (cihaz sonucu beklemeden).
+# P2 prep GO — Play Store referans (agent prep ✅ tamam).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -16,7 +16,7 @@ echo "╔═══════════════════════�
 echo "║  P2 prep GO — Play Store agent (${VERSION})                       ║"
 echo "╚══════════════════════════════════════════════════════════════════╝"
 echo ""
-echo "Cihaz P0/P1 sonucu: SONRA · Console formları + AAB hazırlığı: ŞİMDİ"
+echo "Agent prep: ✅ TAMAM · Yükleme P0+P1 PASS sonrası · Keystore/GitHub Secrets sizde"
 echo ""
 
 if [[ -f "$LOG" ]]; then
@@ -50,4 +50,7 @@ cat <<'EOF'
   bash scripts/p2-go.sh                          # P0+P1 PASS sonrası yükleme günü
 
 Rehber: docs/PLAY_STORE_AGENT_CHECKLIST.md · docs/P2_PLAY_STORE_START.md
+Kullanıcı: bash scripts/kullanici-sonraki.sh
 EOF
+
+bash "$ROOT/scripts/agent-prep-tamam.sh" 2>&1 | tail -3 || true

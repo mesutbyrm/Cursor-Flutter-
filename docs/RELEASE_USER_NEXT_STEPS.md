@@ -30,7 +30,7 @@ bash scripts/kalan-isler.sh                # durum tablosu
 | 0 | Jeton (danışan) | ✅ ~98k | `psychic-p0-prereqs.sh` |
 | 0b | Falcı hesabı | ✅ host onaylı | `probe-psychic-teller.sh` |
 | 1 | **Psychic P0** | ⏸ sonuç sonra | `cihaz-sonra.sh` → `user-test-start.sh p0` |
-| 2 | **P1 platform** | ⏸ sonuç sonra | `p1-prep-now.sh` (checklist şimdi) |
+| 2 | **P1 platform** | ⏸ sonuç sonra | `p1-prep-go.sh` (checklist hazır) |
 | 3 | M5 cihaz (müzik) | ⏸ | [`M5_DEVICE_TEST_CHECKLIST.md`](M5_DEVICE_TEST_CHECKLIST.md) |
 | 4 | Play Store P2 | ⏸ yükleme P0+P1 sonrası | `print-play-upload-day-checklist.sh` |
 

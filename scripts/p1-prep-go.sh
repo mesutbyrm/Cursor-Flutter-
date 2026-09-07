@@ -17,7 +17,7 @@ echo "╔═══════════════════════�
 echo "║  P1 prep GO — platform checklist (${VERSION})                     ║"
 echo "╚══════════════════════════════════════════════════════════════════╝"
 echo ""
-echo "P0 sonucu: SONRA kaydedilebilir · P1 checklist: ŞİMDİ hazırlanabilir"
+echo "P0 sonucu: SONRA kaydedilebilir · P1 checklist hazır (bash scripts/p1-prep-now.sh)"
 echo ""
 echo "APK: ${APK_URL}"
 echo ""
@@ -43,6 +43,6 @@ cat <<'EOF'
   bash scripts/on-p1-pass.sh
   bash scripts/on-release-ready-candidate.sh
 
-Agent P2 (paralel): bash scripts/p2-prep-go.sh
+Kullanıcı: bash scripts/kullanici-sonraki.sh
 Detay: docs/P1_DEVICE_START.md · docs/M5_DEVICE_TEST_CHECKLIST.md
 EOF
