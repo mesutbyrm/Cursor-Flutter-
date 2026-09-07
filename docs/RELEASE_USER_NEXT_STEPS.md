@@ -22,7 +22,7 @@ bash scripts/agent-closure-status.sh          # canlı durum özeti
 | # | İş | Durum | Komut |
 |---|-----|--------|-------|
 | 0 | Jeton (danışan) | ✅ ~100k | `psychic-p0-prereqs.sh` |
-| 0b | Falcı hesabı | ⚠️ host listede değil | `probe-psychic-teller.sh` · [`PSYCHIC_TELLER_STATUS.md`](PSYCHIC_TELLER_STATUS.md) |
+| 0b | Falcı hesabı | ⚠️ host listede değil | `list-production-tellers.sh` · [`PSYCHIC_TELLER_STATUS.md`](PSYCHIC_TELLER_STATUS.md) |
 | 1 | **Psychic P0** | ⏳ OPEN | `user-test-start.sh p0` — onaylı falcı + 2 telefon |
 | 2 | **P1 platform** | ⏸ P0 sonrası | `p1-platform-checklist.sh` |
 | 3 | M5 cihaz (müzik) | ⏸ | [`M5_DEVICE_TEST_CHECKLIST.md`](M5_DEVICE_TEST_CHECKLIST.md) |
@@ -82,6 +82,8 @@ P0 PASS → P1 → **`P1 PASS`** → `bash scripts/on-release-ready-candidate.sh
 ## Hızlı referans
 
 [`USER_TEST_QUICK_REF.md`](USER_TEST_QUICK_REF.md) — tek sayfa özet
+
+Canlı durum (jeton + falcı): `bash scripts/print-p0-live-status.sh`
 
 ## Agent ne zaman tekrar açılır?
 

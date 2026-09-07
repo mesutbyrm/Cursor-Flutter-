@@ -41,9 +41,9 @@ https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlif
 | Rol | E-posta | Şifre |
 |-----|---------|-------|
 | Danışan | `cursor.test.1786235468@mailinator.com` | `CursorTest!1786235468` |
-| Falcı | `cursor.host.1786235468@mailinator.com` | `CursorTest!1786235468` |
+| Falcı | **Onaylı falcı** (admin panel) | hesaba göre |
 
-> **Falcı notu:** Host hesabı canlı yayın içindir; `/api/fortune-tellers` listesinde olmayabilir. Psychic P0'da seans kabul edilmiyorsa admin panelden **onaylı falcı** hesabı kullanın veya `ACCEPTANCE_TELLER_*` secret ekleyin — [`TEST_ACCOUNTS.md`](TEST_ACCOUNTS.md).
+> **Falcı notu:** `cursor.host.*` canlı yayın içindir; falcı listesinde değildir. `bash scripts/list-production-tellers.sh` — 8 üretim falcısı. Psychic P0 falcı telefonu listeden bir hesap olmalı — [`PSYCHIC_TELLER_STATUS.md`](PSYCHIC_TELLER_STATUS.md).
 
 ---
 

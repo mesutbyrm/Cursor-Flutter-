@@ -84,6 +84,12 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 
 ---
 
+## Oturum günlüğü (2026-09-07 — P0 canlı durum)
+
+- `print-p0-live-status.sh` — jeton + falcı tek ekran
+- `user-test-start.sh live` — kısayol
+- PSYCHIC_P0_START: falcı tablosu onaylı hesap olarak düzeltildi
+
 ## Oturum günlüğü (2026-09-07 — P0 falcı rehberi)
 
 - psychic-p0-checklist: falcı = onaylı hesap (host değil)
