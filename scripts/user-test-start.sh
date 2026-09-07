@@ -21,6 +21,7 @@ APK: ${APK_URL}
 Sıra: P0-j ✅ → **P0 OPEN** → P1 → P2
 
 ★ ÖNERİLEN (başla):
+  bash scripts/basla.sh                       # tek komut: canlı durum + devir teslim
   bash scripts/kalan-isler.sh                 # kalan işler + canlı durum
   bash scripts/p0-go.sh                       # P0 GO (jeton + falcı + hesaplar)
 
@@ -89,8 +90,8 @@ case "${1:-}" in
   p1-go|p1go)
     exec bash "$ROOT/scripts/p1-go.sh"
     ;;
-  handoff)
-    exec bash "$ROOT/scripts/user-handoff.sh"
+  basla|handoff)
+    exec bash "$ROOT/scripts/basla.sh"
     ;;
   api)
     exec bash "$ROOT/scripts/run-api-automation-summary.sh"
@@ -123,7 +124,7 @@ case "${1:-}" in
   ready|p0-ready|device-ready)
     exec bash "$ROOT/scripts/validate-pre-device-handoff.sh"
     ;;
-  go|p0-go|start|basla)
+  go|p0-go|start)
     exec bash "$ROOT/scripts/p0-go.sh"
     ;;
   p2|play-store)

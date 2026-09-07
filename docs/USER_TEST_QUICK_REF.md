@@ -19,6 +19,7 @@ Host = onaylı falcı (`Cursor Host Test`). Doğrula: `bash scripts/probe-psychi
 ## Komut sırası
 
 ```bash
+bash scripts/basla.sh                       # ★ tek komut: canlı durum + devir teslim
 bash scripts/kalan-isler.sh                  # 0 · tüm kalan işler
 bash scripts/p0-go.sh                         # GO (jeton + falcı + hesaplar)
 bash scripts/user-test-start.sh p0           # Psychic P0 (2 telefon)

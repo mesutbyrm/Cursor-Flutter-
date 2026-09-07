@@ -49,6 +49,7 @@ bash scripts/print-p0-live-status.sh       # jeton + falcı tek ekran
 bash scripts/validate-pre-device-handoff.sh  # cihaz öncesi API+jeton doğrulama
 bash scripts/agent-closure-status.sh      # agent kapalı + canlı durum
 bash scripts/user-test-start.sh ready         # pre-device doğrulama (validate)
+bash scripts/basla.sh                       # tek komut başlangıç
 bash scripts/kalan-isler.sh                 # kalan işler + yol haritası
 bash scripts/p0-go.sh                       # P0 GO ekranı
 bash scripts/p1-go.sh                       # P1 GO (P0 PASS sonrası)

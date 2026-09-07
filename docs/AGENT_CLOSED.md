@@ -15,7 +15,7 @@ Mobil kod, CI release gate ve otomatik API doğrulama **tamamlandı**. Cihaz tes
 | Faz 2 Psychic TRTC freeze fix (kod) | ✅ |
 | Release gate CI (1–9) | ✅ [34146919509](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34146919509) |
 | Release 502 / metadata fix | ✅ |
-| P0-j jeton | ✅ ~99k |
+| P0-j jeton | ✅ ~98k |
 | M5 API smoke | ✅ 6/2/0 |
 | M7 song-request | ✅ HTTP 200 |
 | m5-preflight | ✅ |
@@ -34,11 +34,12 @@ Mobil kod, CI release gate ve otomatik API doğrulama **tamamlandı**. Cihaz tes
 
 | # | İş | Komut |
 |---|-----|--------|
-| 0 | Canlı durum + yol haritası | `bash scripts/kalan-isler.sh` |
-| 1 | Pre-device doğrulama | `bash scripts/validate-pre-device-handoff.sh` |
-| 2 | Psychic P0 (2 telefon) | `bash scripts/p0-go.sh` → `user-test-start.sh p0` |
-| 3 | P1 platform | `bash scripts/on-p0-pass.sh` |
-| 4 | Sonuç | `bash scripts/on-p1-pass.sh` |
+| 0 | Tek komut başlangıç | `bash scripts/basla.sh` |
+| 1 | Canlı durum + yol haritası | `bash scripts/kalan-isler.sh` |
+| 2 | Pre-device doğrulama | `bash scripts/validate-pre-device-handoff.sh` |
+| 3 | Psychic P0 (2 telefon) | `bash scripts/p0-go.sh` → `user-test-start.sh p0` |
+| 4 | P1 platform | `bash scripts/on-p0-pass.sh` |
+| 5 | Sonuç | `bash scripts/on-p1-pass.sh` |
 
 **Falcı:** `cursor.host.*` — onaylı, listede ✅ · `bash scripts/probe-psychic-teller.sh`
 

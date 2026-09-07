@@ -78,6 +78,7 @@ Güncel envanter metni (dış kaynak): https://canlifal.com/canlifal-envanter-ra
 
 | Görev | Komut |
 |-------|--------|
+| **Tek komut başlangıç** | `bash scripts/basla.sh` |
 | **Kalan işler** | `bash scripts/kalan-isler.sh` |
 | **P0 GO** | `bash scripts/p0-go.sh` |
 | **Cihaz testi menü** | `bash scripts/user-test-start.sh` |

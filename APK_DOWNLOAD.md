@@ -44,6 +44,7 @@ Agent işleri bitti. Sıra: **2 telefon (danışan + falcı) → T+5s donma test
 Hesaplar: `cursor.test.*` (danışan) · `cursor.host.*` (falcı) · şifre `CursorTest!1786235468`
 
 ```bash
+bash scripts/basla.sh                       # ★ tek komut başlangıç
 bash scripts/p0-go.sh                       # canlı durum + GO ekranı
 bash scripts/user-test-start.sh p0
 bash scripts/on-p0-pass.sh

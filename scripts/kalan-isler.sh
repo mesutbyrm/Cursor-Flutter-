@@ -26,6 +26,7 @@ Sonuç bildirimi:
   P1 PASS         → bash scripts/on-p1-pass.sh
   RELEASE adayı   → bash scripts/on-release-ready-candidate.sh
 
+Başlangıç: bash scripts/basla.sh
 Detay: docs/REMAINING_WORK.md · docs/RELEASE_USER_NEXT_STEPS.md
 Statik özet: docs/KALAN_ISLER.md · bash scripts/print-kalan-isler.sh
 

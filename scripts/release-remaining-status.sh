@@ -103,6 +103,7 @@ echo "Sonraki adım:"
 if [[ "$P0J" == "OPEN" ]]; then
   echo "  1) Admin jeton → bash scripts/user-test-start.sh"
 else
+  echo "  0) bash scripts/basla.sh  (tek komut — canlı durum + devir teslim)"
   echo "  1) bash scripts/p0-go.sh  (veya: user-test-start.sh p0)"
   echo "  2) Doğrulama: bash scripts/validate-pre-device-handoff.sh"
   echo "  3) Sonuç: bash scripts/on-p0-pass.sh  veya  on-p0-fail.sh"
