@@ -84,6 +84,13 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 
 ---
 
+## Oturum günlüğü (2026-09-07 — host token bootstrap)
+
+- `bootstrap_host_token`: username `cursorhost1786235468` önce; USER_USERNAME yalnız HOST_EMAIL==USER_EMAIL
+- `psychic-p0-prereqs`: `/api/me` e-posta doğrulaması (danışan token uyarısı)
+- `faz0-status` / `faz0-next`: user-test-start yönlendirmesi
+- Doğrulama: psychic-p0-prereqs + release-remaining-status host girişi ✅
+
 ## Oturum günlüğü (2026-09-07 — doc giriş noktaları)
 
 - APK_DOWNLOAD, M5_DEVICE, TEST_ACCOUNTS → user-test-start / quick ref
