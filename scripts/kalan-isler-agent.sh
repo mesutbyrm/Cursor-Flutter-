@@ -25,7 +25,8 @@ run() {
 run "Canlı API + jeton + falcı" "bash '$ROOT/scripts/psychic-p0-prereqs.sh' 2>&1 | tail -8"
 run "API otomasyon özeti" "bash '$ROOT/scripts/run-api-automation-summary.sh' 2>&1 | tail -10"
 run "P1 checklist (ön hazırlık)" "bash '$ROOT/scripts/p1-prep-now.sh' 2>&1 | head -25"
-run "P2 Play Store hazırlık" "bash '$ROOT/scripts/p2-prep-now.sh' 2>&1 | head -35"
+run "P2 Play Store hazırlık" "bash '$ROOT/scripts/p2-prep-now.sh' 2>&1 | head -40"
+run "Play Console checklist" "bash '$ROOT/scripts/play-store-checklist.sh' 2>&1 | tail -18"
 
 echo "══════════════════════════════════════════════════════════════════"
 if [[ "$fail" -eq 0 ]]; then

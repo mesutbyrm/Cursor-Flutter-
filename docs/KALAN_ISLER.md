@@ -45,6 +45,8 @@ bash scripts/kalan-isler-agent.sh   # agent paralel (şimdi)
 bash scripts/cihaz-sonra.sh         # cihaz (sonra)
 bash scripts/kalan-isler.sh         # durum tablosu
 bash scripts/p2-prep-now.sh         # Play Store hazırlık
+bash scripts/play-aab-readiness.sh  # AAB öncesi
+bash scripts/play-store-checklist.sh # Console checklist
 bash scripts/p1-prep-now.sh         # P1 checklist (ön)
 bash scripts/basla.sh               # canlı durum
 ```

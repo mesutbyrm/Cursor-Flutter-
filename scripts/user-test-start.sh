@@ -153,6 +153,12 @@ case "${1:-}" in
   p2-prep|p2prep)
     exec bash "$ROOT/scripts/p2-prep-now.sh"
     ;;
+  play-checklist|play-store)
+    exec bash "$ROOT/scripts/play-store-checklist.sh"
+    ;;
+  aab-ready|aab-readiness)
+    exec bash "$ROOT/scripts/play-aab-readiness.sh"
+    ;;
   p2-go|p2go)
     exec bash "$ROOT/scripts/p2-go.sh"
     ;;

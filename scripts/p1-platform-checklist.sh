@@ -9,13 +9,22 @@ if [[ -f "${ROOT}/mobile/pubspec.yaml" ]]; then
   VERSION=$(grep -E '^version:' "${ROOT}/mobile/pubspec.yaml" | head -1 | sed 's/version:[[:space:]]*//')
 fi
 
+P1_PREP_NOTE=""
+if [[ "${P1_PREP_MODE:-}" == "1" || "${1:-}" == "--prep" ]]; then
+  P1_PREP_NOTE="
+ℹ️  P0 sonucu SONRA kaydedilecek — checklist şimdiden kullanılabilir.
+"
+else
+  P1_PREP_NOTE="
+ÖNCE: Psychic P0 PASS — bash scripts/on-p0-pass.sh
+"
+fi
+
 cat <<EOF
 ╔══════════════════════════════════════════════════════════════════╗
 ║  P1 — Genel platform 2-cihaz (${VERSION})                         ║
 ╚══════════════════════════════════════════════════════════════════╝
-
-ÖNCE: Psychic P0 PASS — bash scripts/on-p0-pass.sh
-
+${P1_PREP_NOTE}
 APK: ${APK_URL}
 
 Hesaplar (2 cihaz):

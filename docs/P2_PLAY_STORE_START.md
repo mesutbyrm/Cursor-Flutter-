@@ -3,11 +3,23 @@
 
 > **Güncel (2026-09-07):** **`1.0.371+409`** · **RELEASE READY: NO** · P0 + P1 cihaz testleri sonrası · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
-Play Store production access — P0/P1 cihaz kabulünden **sonra**.
+Play Store production access — cihaz P0/P1 **sonra** yüklenir; agent hazırlığı **şimdi**.
 
 ---
 
-## Önkoşullar
+## Agent (şimdi — cihaz sonucu beklemeden)
+
+```bash
+bash scripts/play-aab-readiness.sh
+bash scripts/play-store-checklist.sh
+bash scripts/p2-prep-now.sh
+```
+
+Özet: [`PLAY_STORE_AGENT_CHECKLIST.md`](PLAY_STORE_AGENT_CHECKLIST.md)
+
+---
+
+## Önkoşullar (yükleme günü)
 
 - [ ] Psychic **P0 PASS**
 - [ ] Platform **P1 PASS**

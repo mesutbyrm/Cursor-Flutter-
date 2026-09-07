@@ -67,4 +67,8 @@ echo "  docs/STAGE8_FINAL_ACCEPTANCE_REPORT.md"
 echo "  docs/PLAY_FOREGROUND_SERVICE_DECLARATION.md"
 echo ""
 
+echo "── AAB readiness ──"
+bash "$ROOT/scripts/play-aab-readiness.sh" 2>&1 | sed 's/^/  /'
+echo ""
+echo "Tam Console checklist: bash scripts/play-store-checklist.sh"
 bash "$ROOT/scripts/release-remaining-status.sh" 2>&1 | grep -E 'P2 ·|RELEASE READY' || true

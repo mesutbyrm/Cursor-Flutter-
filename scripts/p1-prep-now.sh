@@ -7,7 +7,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 echo "ℹ️  P0 sonucu sonra kaydedilecek — checklist şimdiden hazırlanabilir."
 echo ""
 
-bash "$ROOT/scripts/p1-platform-checklist.sh"
+bash "$ROOT/scripts/p1-platform-checklist.sh" --prep
 
 cat <<'EOF'
 
