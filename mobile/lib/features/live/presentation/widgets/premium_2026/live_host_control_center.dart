@@ -13,6 +13,7 @@ import '../../providers/live_host_dashboard_provider.dart';
 import '../../providers/live_video_pk_provider.dart';
 import '../../providers/live_stream_engagement_provider.dart';
 import '../../providers/live_stream_viewers_provider.dart';
+import '../../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../../core/widgets/lazy_list_views.dart';
 import '../../widgets/broadcast_room/live_moderation_sheet.dart';
 import 'live_host_dashboard_chart.dart';
@@ -175,6 +176,7 @@ class _FortuneTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(liveFortuneRequestsProvider(streamId));
     final grouped = _groupByPriority(state.requests);
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     if (state.requests.isEmpty) {
       return const Center(
         child: Padding(
@@ -206,6 +208,7 @@ class _FortuneTab extends ConsumerWidget {
           _FortuneTitle(:final label) => _sectionTitle(label),
           _FortuneRequest(:final request) => _FortuneSwipeCard(
               request: request,
+              jetonLabel: jetonLabel,
               onAccept: () =>
                   _setStatus(ref, request.id, LiveFortuneRequestStatus.reviewing),
               onHold: () =>
@@ -258,6 +261,7 @@ class _FortuneTab extends ConsumerWidget {
 class _FortuneSwipeCard extends StatelessWidget {
   const _FortuneSwipeCard({
     required this.request,
+    required this.jetonLabel,
     required this.onAccept,
     required this.onHold,
     required this.onComplete,
@@ -265,6 +269,7 @@ class _FortuneSwipeCard extends StatelessWidget {
   });
 
   final LiveFortuneRequestEntity request;
+  final String jetonLabel;
   final VoidCallback onAccept;
   final VoidCallback onHold;
   final VoidCallback onComplete;
@@ -303,7 +308,7 @@ class _FortuneSwipeCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '${request.fortuneType}\n${request.question}\n$waitLabel · ${request.jetonCost} jeton',
+                '${request.fortuneType}\n${request.question}\n$waitLabel · ${request.jetonCost} $jetonLabel',
                 style: const TextStyle(color: Colors.white70, fontSize: 11, height: 1.3),
               ),
               const SizedBox(height: 6),
@@ -362,6 +367,7 @@ class _GiftsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final gifts = ref.watch(liveGiftControllerProvider).notifications;
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     return ListView.builder(
       padding: const EdgeInsets.all(12),
       itemCount: gifts.length,
@@ -374,7 +380,7 @@ class _GiftsTab extends ConsumerWidget {
           ),
           title: Text(g.senderName, style: const TextStyle(color: Colors.white)),
           subtitle: Text(
-            '${g.giftName} · ${g.coinCost} jeton',
+            '${g.giftName} · ${g.coinCost} $jetonLabel',
             style: const TextStyle(color: Colors.white60, fontSize: 11),
           ),
         );

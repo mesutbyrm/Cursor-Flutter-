@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/navigation/native_site_routes.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/widgets/cfc_reward_overlay.dart';
 import '../../../fortune/data/services/rewarded_ad_service.dart';
 import '../../../../core/theme/app_theme_colors.dart';
@@ -315,7 +316,8 @@ class GrowthHubPage extends ConsumerWidget {
         return;
       }
       if (!context.mounted) return;
-      await CfcRewardOverlay.show(context, amount: reward);
+      final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
+      await CfcRewardOverlay.show(context, amount: reward, label: cfcLabel);
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

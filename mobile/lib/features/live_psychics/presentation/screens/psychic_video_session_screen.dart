@@ -294,7 +294,7 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            '${state.tipReceivedAmount} Jeton',
+                            '${state.tipReceivedAmount} $jetonLabel',
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               color: Color(0xFFFFD54F),

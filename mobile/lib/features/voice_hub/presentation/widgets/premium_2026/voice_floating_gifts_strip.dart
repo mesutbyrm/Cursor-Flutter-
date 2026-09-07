@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../domain/entities/chat_room_message.dart';
 import '../../theme/voice_room_tokens.dart';
 
 /// Son hediye bildirimleri — TikTok Live tarzı kayan şerit.
-class VoiceFloatingGiftsStrip extends StatelessWidget {
+class VoiceFloatingGiftsStrip extends ConsumerWidget {
   const VoiceFloatingGiftsStrip({
     super.key,
     required this.messages,
@@ -15,7 +17,7 @@ class VoiceFloatingGiftsStrip extends StatelessWidget {
   final int maxItems;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final gifts = messages
         .where((m) => m.kind == ChatMessageKind.gift)
         .toList()
@@ -24,13 +26,14 @@ class VoiceFloatingGiftsStrip extends StatelessWidget {
         .toList();
     if (gifts.isEmpty) return const SizedBox.shrink();
 
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (final g in gifts)
           Padding(
             padding: const EdgeInsets.only(bottom: 6),
-            child: _GiftBanner(message: g),
+            child: _GiftBanner(message: g, jetonLabel: jetonLabel),
           ),
       ],
     );
@@ -38,9 +41,10 @@ class VoiceFloatingGiftsStrip extends StatelessWidget {
 }
 
 class _GiftBanner extends StatelessWidget {
-  const _GiftBanner({required this.message});
+  const _GiftBanner({required this.message, required this.jetonLabel});
 
   final ChatRoomMessage message;
+  final String jetonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -97,7 +101,7 @@ class _GiftBanner extends StatelessWidget {
               ),
             ),
             Text(
-              jeton != null && jeton > 0 ? '$jeton jeton' : 'x$count',
+              jeton != null && jeton > 0 ? '$jeton $jetonLabel' : 'x$count',
               style: TextStyle(
                 fontWeight: FontWeight.w900,
                 fontSize: jeton != null && jeton > 0 ? 13 : 18,

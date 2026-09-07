@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../../core/ui/premium/premium_skeleton.dart';
+import '../../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../membership/domain/membership_package_entity.dart';
 import '../../../../membership/presentation/pages/premium_membership_page.dart';
 import '../../data/section_visual_catalog.dart';
@@ -62,9 +63,10 @@ class GoldSection extends ConsumerWidget {
     final catalog = ref.watch(membershipCatalogProvider);
     return catalog.when(
       loading: () => _skeleton(context),
-      error: (_, _) => _content(context, _fallbackPackages),
+      error: (_, _) => _content(context, ref, _fallbackPackages),
       data: (cat) => _content(
         context,
+        ref,
         cat.packages.isNotEmpty ? cat.packages : _fallbackPackages,
       ),
     );
@@ -97,7 +99,8 @@ class GoldSection extends ConsumerWidget {
     );
   }
 
-  Widget _content(BuildContext context, List<MembershipPackageEntity> packages) {
+  Widget _content(BuildContext context, WidgetRef ref, List<MembershipPackageEntity> packages) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     return Column(
       children: [
         HomeSectionTitle(
@@ -122,7 +125,7 @@ class GoldSection extends ConsumerWidget {
               final theme = _tierTheme(pkg);
               return PremiumHomeGlassCard(
                 title: pkg.title,
-                subtitle: '₺${pkg.priceJeton ~/ 2}/ay · +${pkg.bonusJeton} jeton',
+                subtitle: '₺${pkg.priceJeton ~/ 2}/ay · +${pkg.bonusJeton} $jetonLabel',
                 coverSlug: SectionVisualCatalog.goldSlug(
                   pkg.planId.isNotEmpty ? pkg.planId : pkg.id,
                 ),

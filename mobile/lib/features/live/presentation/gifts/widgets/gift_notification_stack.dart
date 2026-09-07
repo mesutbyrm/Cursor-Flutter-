@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
+import '../../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../domain/entities/live_gift_catalog.dart';
 import '../../../domain/entities/live_gift_event.dart';
 
 /// Chat üstü hediye bildirimi — kompakt, gönderen + jeton net görünür.
-class GiftNotificationStack extends StatelessWidget {
+class GiftNotificationStack extends ConsumerWidget {
   const GiftNotificationStack({super.key, required this.events});
 
   final List<LiveGiftEvent> events;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (events.isEmpty) return const SizedBox.shrink();
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -22,7 +25,7 @@ class GiftNotificationStack extends StatelessWidget {
         for (final e in events.take(2))
           Padding(
             padding: const EdgeInsets.only(bottom: 6),
-            child: _GiftBanner(event: e)
+            child: _GiftBanner(event: e, jetonLabel: jetonLabel)
                 .animate(key: ValueKey(e.id))
                 .fadeIn(duration: 220.ms)
                 .slideX(begin: -0.08, end: 0)
@@ -35,9 +38,10 @@ class GiftNotificationStack extends StatelessWidget {
 }
 
 class _GiftBanner extends StatelessWidget {
-  const _GiftBanner({required this.event});
+  const _GiftBanner({required this.event, required this.jetonLabel});
 
   final LiveGiftEvent event;
+  final String jetonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -122,7 +126,7 @@ class _GiftBanner extends StatelessWidget {
                       if (totalJeton > 0) ...[
                         const SizedBox(height: 2),
                         Text(
-                          '🪙 $totalJeton jeton',
+                          '🪙 $totalJeton $jetonLabel',
                           style: TextStyle(
                             fontSize: 12,
                             height: 1.1,
