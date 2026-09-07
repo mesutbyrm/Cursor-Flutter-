@@ -38,7 +38,7 @@ else
   echo "⚠️  Bazı adımlarda uyarı — detay yukarıda"
 fi
 echo ""
-echo "Agent (şimdi): bash scripts/devam-et.sh"
-echo "P2 tam prep:   bash scripts/p2-prep-all.sh"
+echo "Agent prep: ✅ TAMAM · API yenile: bash scripts/devam-et.sh"
+echo "Kullanıcı:  bash scripts/kullanici-sonraki.sh"
 echo "Cihaz (sonra): bash scripts/basla.sh"
 echo "Durum:         bash scripts/kalan-isler.sh"

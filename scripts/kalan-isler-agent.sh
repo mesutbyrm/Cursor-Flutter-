@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Agent kalan işler — cihaz testi sonraya bırakıldığında paralel hazırlık.
+# Agent kalan işler — isteğe bağlı API yenileme (prep ✅ tamam).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 echo "╔══════════════════════════════════════════════════════════════════╗"
-echo "║  Agent kalan işler (cihaz testi SONRA)                            ║"
+echo "║  Agent — API yenileme (prep ✅ tamam · isteğe bağlı)              ║"
 echo "╚══════════════════════════════════════════════════════════════════╝"
 echo ""
 
