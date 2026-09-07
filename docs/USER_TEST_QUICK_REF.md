@@ -41,4 +41,4 @@ Kayıt: `docs/USER_DEVICE_TEST_LOG.md` · `bash scripts/record-user-test-result.
 
 `Psychic P0 PASS` → `P1 PASS` → agent RELEASE READY günceller
 
-Detay: [`RELEASE_USER_NEXT_STEPS.md`](RELEASE_USER_NEXT_STEPS.md) · [`AGENT_CLOSED.md`](AGENT_CLOSED.md)
+Detay: [`KALAN_ISLER.md`](KALAN_ISLER.md) · [`RELEASE_USER_NEXT_STEPS.md`](RELEASE_USER_NEXT_STEPS.md) · [`AGENT_CLOSED.md`](AGENT_CLOSED.md)

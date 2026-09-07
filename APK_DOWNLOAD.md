@@ -50,7 +50,12 @@ bash scripts/on-p0-pass.sh
 bash scripts/on-p1-pass.sh
 ```
 
-Rehber: [`docs/USER_TEST_QUICK_REF.md`](docs/USER_TEST_QUICK_REF.md) · [`docs/RELEASE_USER_NEXT_STEPS.md`](docs/RELEASE_USER_NEXT_STEPS.md)
+```bash
+bash scripts/kalan-isler.sh
+bash scripts/p0-go.sh
+```
+
+Detay: [`docs/KALAN_ISLER.md`](docs/KALAN_ISLER.md) · [`USER_TEST_QUICK_REF.md`](docs/USER_TEST_QUICK_REF.md)
 
 ## Kurulum
 

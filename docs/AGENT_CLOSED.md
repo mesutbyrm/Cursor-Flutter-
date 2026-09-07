@@ -3,7 +3,7 @@
 
 > **Sürüm:** `1.0.371+409` · Release gate **FINAL PASS** · **RELEASE READY: NO** · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
-Mobil kod, CI release gate ve otomatik API doğrulama **tamamlandı**. Cihaz testleri **kullanıcı tarafından sonraya bırakıldı** — agent cihaz dışı hazırlığa devam eder; mobil hotfix yalnızca **Psychic P0 FAIL** ile açılır.
+Mobil kod, CI release gate ve otomatik API doğrulama **tamamlandı**. Cihaz testleri **kullanıcıda** (P0 → P1 → P2). Agent **yeni commit beklemez** — hotfix yalnızca **Psychic P0 FAIL** ile.
 
 ---
 
@@ -25,6 +25,8 @@ Mobil kod, CI release gate ve otomatik API doğrulama **tamamlandı**. Cihaz tes
 | P2 hazırlık betiği | ✅ `p2-play-store-prep.sh` |
 | Non-device prep (tek komut) | ✅ `run-non-device-release-prep.sh` |
 | P0 GO ekranı | ✅ `p0-go.sh` |
+| P1/P2 GO + yol haritası | ✅ `p1-go.sh` · `p2-go.sh` · `kalan-isler.sh` |
+| Kalan işler doc | ✅ `docs/KALAN_ISLER.md` |
 
 ---
 
@@ -40,7 +42,7 @@ Mobil kod, CI release gate ve otomatik API doğrulama **tamamlandı**. Cihaz tes
 
 **Falcı:** `cursor.host.*` — onaylı, listede ✅ · `bash scripts/probe-psychic-teller.sh`
 
-**1 sayfa:** [`USER_TEST_QUICK_REF.md`](USER_TEST_QUICK_REF.md) · `bash scripts/print-user-test-quick-ref.sh`
+**1 sayfa:** [`KALAN_ISLER.md`](KALAN_ISLER.md) · [`USER_TEST_QUICK_REF.md`](USER_TEST_QUICK_REF.md)
 
 ---
 

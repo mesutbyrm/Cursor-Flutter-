@@ -27,5 +27,6 @@ Sonuç bildirimi:
   RELEASE adayı   → bash scripts/on-release-ready-candidate.sh
 
 Detay: docs/REMAINING_WORK.md · docs/RELEASE_USER_NEXT_STEPS.md
+Statik özet: docs/KALAN_ISLER.md · bash scripts/print-kalan-isler.sh
 
 EOF
