@@ -170,7 +170,7 @@ class WalletBalanceHeader extends ConsumerWidget {
               Expanded(
                 child: _QuickLink(
                   icon: Icons.diamond_rounded,
-                  label: buildMembershipWalletCenterCfcStoreTitle(),
+                  label: '$cfcLabel Yükle',
                   color: AppThemeColors.diamondBlue,
                   onTap: () => context.push('/cfc-store'),
                 ),

@@ -148,7 +148,7 @@ class ProfileWalletCard extends ConsumerWidget {
                 ),
                 ProfileActionTile(
                   icon: Icons.diamond_outlined,
-                  label: buildMembershipWalletCenterCfcStoreTitle(),
+                  label: '$cfcLabel Yükle',
                   onTap: onCfcTopUp,
                   gradient: [const Color(0xFF183050), const Color(0xFF081018)],
                 ),

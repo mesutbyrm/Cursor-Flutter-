@@ -60,6 +60,8 @@ class WalletCenterPage extends ConsumerWidget {
       store: MembershipStoreKind.cfc,
       catalogTier: catalogTier,
     );
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+    final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -112,7 +114,7 @@ class WalletCenterPage extends ConsumerWidget {
                 const SizedBox(height: 12),
                 _HubCard(
                   icon: Icons.diamond_rounded,
-                  title: buildMembershipWalletCenterCfcStoreTitle(),
+                  title: '$cfcLabel Yükle',
                   subtitleWidget: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -138,7 +140,7 @@ class WalletCenterPage extends ConsumerWidget {
                 const SizedBox(height: 12),
                 _HubCard(
                   icon: Icons.monetization_on_rounded,
-                  title: buildMembershipWalletCenterJetonStoreTitle(),
+                  title: '$jetonLabel Mağazası',
                   subtitle: jetonHubSubtitle,
                   color: AppThemeColors.coinGold,
                   onTap: () => context.push('/jeton-store'),

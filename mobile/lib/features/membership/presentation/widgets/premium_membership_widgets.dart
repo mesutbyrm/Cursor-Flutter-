@@ -257,7 +257,7 @@ class PremiumActiveMembershipCard extends StatelessWidget {
   }
 }
 
-class PremiumBalanceLines extends StatelessWidget {
+class PremiumBalanceLines extends ConsumerWidget {
   const PremiumBalanceLines({
     super.key,
     required this.jeton,
@@ -268,12 +268,14 @@ class PremiumBalanceLines extends StatelessWidget {
   final int cfc;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+    final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
     return Column(
       children: [
-        _line(context, Icons.monetization_on_rounded, 'Jeton Bakiyeniz:', '$jeton', AppThemeColors.coinGold),
+        _line(context, Icons.monetization_on_rounded, '$jetonLabel Bakiyeniz:', '$jeton', AppThemeColors.coinGold),
         SizedBox(height: 8),
-        _line(context, Icons.auto_awesome_rounded, 'CFC Bakiyeniz:', '$cfc', const Color(0xFFD8B4FE)),
+        _line(context, Icons.auto_awesome_rounded, '$cfcLabel Bakiyeniz:', '$cfc', const Color(0xFFD8B4FE)),
       ],
     );
   }
@@ -580,11 +582,12 @@ class PremiumMembershipBody extends StatelessWidget {
 }
 
 /// Üyelik satın alma adımları — kısa ve anlaşılır.
-class PremiumHowToBuyCard extends StatelessWidget {
+class PremiumHowToBuyCard extends ConsumerWidget {
   const PremiumHowToBuyCard({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -608,9 +611,9 @@ class PremiumHowToBuyCard extends StatelessWidget {
             number: '1',
             text: 'Aşağıdan paket seçin (Premium, Gold veya Diamond).',
           ),
-          const _HowToStep(
+          _HowToStep(
             number: '2',
-            text: 'Jeton bakiyeniz yeterliyse anında aktif olur.',
+            text: '$jetonLabel bakiyeniz yeterliyse anında aktif olur.',
           ),
           const _HowToStep(
             number: '3',

@@ -103,9 +103,11 @@ void _pushWalletRoute(
     final authed = ref.read(authControllerProvider).valueOrNull != null;
     final guest = ref.read(guestModeProvider);
     if (!authed && guest) {
+      final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+      final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Jeton ve CFC yüklemek için giriş yapın.'),
+        SnackBar(
+          content: Text('$jetonLabel ve $cfcLabel yüklemek için giriş yapın.'),
         ),
       );
       context.push('/login');

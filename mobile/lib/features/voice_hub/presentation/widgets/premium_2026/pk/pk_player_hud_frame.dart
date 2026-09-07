@@ -2,8 +2,10 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../domain/entities/chat_room_presence.dart';
 import '../../../theme/voice_room_tokens.dart';
 
@@ -14,7 +16,7 @@ String _fmtScore(int n) {
   return '$n';
 }
 
-class PkPlayerHudFrame extends StatelessWidget {
+class PkPlayerHudFrame extends ConsumerWidget {
   const PkPlayerHudFrame({
     super.key,
     required this.user,
@@ -33,7 +35,8 @@ class PkPlayerHudFrame extends StatelessWidget {
   final int score;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final name = user?.displayName ?? 'PLAYER';
     final img = user?.image;
 
@@ -122,7 +125,7 @@ class PkPlayerHudFrame extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    'Jeton',
+                    jetonLabel,
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
