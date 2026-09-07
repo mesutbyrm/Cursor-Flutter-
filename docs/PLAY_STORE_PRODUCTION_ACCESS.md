@@ -86,7 +86,7 @@ Son gerçek sonuç (closed-test tester kanıtı yoksa **NOT VERIFIED**). Otomasy
 |----|------|----------|-------|
 | B-sign | Release AAB debug imzalı | CRITICAL (release) | Açık |
 | B-device | Fiziksel cihaz smoke yok | HIGH (validation) | Açık |
-| B-host | HOST test hesabı jeton=0, teller pending | HIGH (LIVE FALCI test) | Açık |
+| B-host | HOST falcı onaylı ✅; cihaz smoke yok | HIGH (validation) | Kısmen kapalı (API ✅) |
 
 ---
 

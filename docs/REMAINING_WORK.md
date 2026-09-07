@@ -85,6 +85,12 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 
 ---
 
+## Oturum günlüğü (2026-09-07 — indeks + P2 Play Store senkron)
+
+- README, DOCS_RELEASE_INDEX, PLAY_STORE_PRODUCTION_ACCESS — host falcı ✅
+- USER_DEVICE_TEST_LOG hesap tablosu; on-release-ready-candidate checklist
+- run-non-device-release-prep: open-approved-teller idempotent adım
+
 ## Oturum günlüğü (2026-09-07 — P0 betik + kullanıcı rehberi senkron)
 
 - psychic-p0-checklist / psychic-p0-all / user-handoff — host = falcı

@@ -52,7 +52,12 @@ PROBE=$("$ROOT/scripts/probe-psychic-teller.sh" 2>&1 || true)
 echo "$PROBE" | grep -E '^(✅|⚠️|❌|──|Falcı probe)' || true
 
 echo ""
+echo "── Hesaplar ──"
+echo "  Danışan: cursor.test.1786235468@mailinator.com"
+echo "  Falcı:   cursor.host.1786235468@mailinator.com"
+echo "  Şifre:   CursorTest!1786235468"
+echo ""
 echo "── Sonraki ──"
+echo "  bash scripts/p0-go.sh"
 echo "  bash scripts/user-test-start.sh p0"
-echo "  bash scripts/list-production-tellers.sh"
 echo "  Sonuç: bash scripts/on-p0-pass.sh | on-p0-fail.sh"
