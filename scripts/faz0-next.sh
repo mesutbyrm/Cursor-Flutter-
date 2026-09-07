@@ -35,6 +35,6 @@ bash "$ROOT/scripts/probe-jeton-earn.sh" || true
 echo ""
 echo "Jeton < 10 — admin panel veya ACCEPTANCE_ADMIN_* gerekli."
 echo "Jeton ekledikten sonra: bash scripts/after-admin-jeton.sh"
-echo "Otomatik bekleme: bash scripts/wait-for-jeton.sh 10 3600"
-echo "Özet: bash scripts/faz0-handoff.sh"
+echo "Cihaz testi: bash scripts/user-test-start.sh"
+echo "Özet: bash scripts/print-user-test-quick-ref.sh"
 exit 1

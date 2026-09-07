@@ -53,8 +53,15 @@ else
 fi
 
 if bootstrap_host_token; then
-  echo "✅ Falcı/host girişi OK ($HOST_EMAIL)"
-  ok=$((ok + 1))
+  host_me=$(curl_json "$BASE/api/me" -H "Authorization: Bearer $HOST_TOKEN" 2>/dev/null || echo "{}")
+  host_email_me=$(printf '%s' "$host_me" | python3 -c "import json,sys; d=json.load(sys.stdin); print((d.get('email') or d.get('user',{}).get('email') or '').lower())" 2>/dev/null || echo "")
+  if [[ -n "$host_email_me" && "$host_email_me" != "${HOST_EMAIL,,}" ]]; then
+    echo "⚠️  Host token danışan hesabına düşmüş — probe yine de devam eder"
+    warn=$((warn + 1))
+  else
+    echo "✅ Falcı/host girişi OK ($HOST_EMAIL)"
+    ok=$((ok + 1))
+  fi
 else
   echo "❌ Falcı/host girişi başarısız"
 fi

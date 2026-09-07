@@ -250,6 +250,12 @@ bootstrap_host_token() {
     return 0
   fi
   if [[ "$HOST_EMAIL" == "$DEFAULT_ACCEPTANCE_HOST_EMAIL" ]]; then
+    resp=$(mobile_login_identifier username "cursorhost1786235468" "$HOST_PASSWORD")
+    tok=$(extract_token "$resp")
+    if [[ -n "$tok" ]]; then
+      HOST_TOKEN="$tok"
+      return 0
+    fi
     tok=$(register_acceptance_user \
       "$DEFAULT_ACCEPTANCE_HOST_EMAIL" \
       "cursorhost1786235468" \
@@ -260,7 +266,7 @@ bootstrap_host_token() {
       return 0
     fi
   fi
-  if [[ -n "${USER_USERNAME:-}" ]]; then
+  if [[ -n "${USER_USERNAME:-}" && "$HOST_EMAIL" == "$USER_EMAIL" ]]; then
     resp=$(mobile_login_identifier username "$USER_USERNAME" "$HOST_PASSWORD")
     tok=$(extract_token "$resp")
     if [[ -n "$tok" ]]; then
