@@ -82,6 +82,12 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 
 ---
 
+## Oturum günlüğü (2026-09-07 — jeton eklendi)
+
+- Kullanıcı admin jeton → **jeton=100000** (probe OK)
+- P0-j ✅ kapandı; P0 cihaz testi sırada
+- API gate 3: respond=403 (host/teller API — cihaz akışı ayrı doğrulanacak)
+
 ## Oturum günlüğü (2026-09-07 devam 9 — kalanlar)
 
 - `release-remaining-status.sh` — P0-j/P0/P1/P2 canlı özet
