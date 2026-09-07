@@ -18,6 +18,13 @@ HOST_PASSWORD="${HOST_PASSWORD:-$DEFAULT_ACCEPTANCE_HOST_PASSWORD}"
 echo "=== Psychic falcı probe ==="
 echo ""
 
+# ACCEPTANCE_TELLER host ile aynı hesapsa yalnızca host yolu (çift login / rate limit önlenir).
+teller_same_as_host=0
+if [[ -n "${ACCEPTANCE_TELLER_EMAIL:-}" ]] &&
+   [[ "${ACCEPTANCE_TELLER_EMAIL,,}" == "${HOST_EMAIL,,}" ]]; then
+  teller_same_as_host=1
+fi
+
 check_teller_token() {
   local label="$1" email="$2" token="$3"
   local me_body user_id username profile_body tellers_body result listed profile_id app_status list_count matched_id
@@ -116,7 +123,8 @@ if names:
 
 exit_code=0
 
-  if [[ -n "${ACCEPTANCE_TELLER_EMAIL:-}" || -n "${ACCEPTANCE_TELLER_USERNAME:-}" ]]; then
+if [[ "$teller_same_as_host" -eq 0 ]] &&
+   [[ -n "${ACCEPTANCE_TELLER_EMAIL:-}" || -n "${ACCEPTANCE_TELLER_USERNAME:-}" ]]; then
   teller_email="${ACCEPTANCE_TELLER_EMAIL:-}"
   teller_pass="${ACCEPTANCE_TELLER_PASSWORD:-}"
   teller_token=""

@@ -52,7 +52,17 @@ else
   echo "❌ Danışan girişi başarısız"
 fi
 
-if bootstrap_host_token; then
+host_ok=0
+for host_attempt in 1 2 3; do
+  if bootstrap_host_token; then
+    host_ok=1
+    break
+  fi
+  if [[ "$host_attempt" -lt 3 ]]; then
+    sleep 2
+  fi
+done
+if [[ "$host_ok" -eq 1 ]]; then
   host_me=$(curl_json "$BASE/api/me" -H "Authorization: Bearer $HOST_TOKEN" 2>/dev/null || echo "{}")
   host_email_me=$(printf '%s' "$host_me" | python3 -c "import json,sys; d=json.load(sys.stdin); print((d.get('email') or d.get('user',{}).get('email') or '').lower())" 2>/dev/null || echo "")
   if [[ -n "$host_email_me" && "$host_email_me" != "${HOST_EMAIL,,}" ]]; then
@@ -69,9 +79,19 @@ fi
 echo ""
 echo "── Falcı listesi (Psychic seans) ──"
 if [[ -x "${ROOT}/scripts/probe-psychic-teller.sh" ]]; then
+  # Önkoşulda zaten host oturumu var — subprocess'e aktar (çift login / rate limit).
+  [[ -n "${HOST_TOKEN:-}" ]] && export HOST_TOKEN
+  if [[ -z "${HOST_TOKEN:-}" ]]; then
+    sleep 2
+  fi
   PROBE=$("${ROOT}/scripts/probe-psychic-teller.sh" 2>&1 || true)
   echo "$PROBE" | grep -E '^(──|✅|⚠️|❌|  |Falcı probe)' || true
   if echo "$PROBE" | grep -q 'Falcı listesinde DEĞİL'; then
+    teller_warn=1
+    warn=$((warn + 1))
+  elif echo "$PROBE" | grep -q 'Falcı probe: listede'; then
+    : # OK
+  elif echo "$PROBE" | grep -qE 'giriş hatası|Host girişi başarısız|ACCEPTANCE_TELLER girişi başarısız'; then
     teller_warn=1
     warn=$((warn + 1))
   fi
@@ -88,8 +108,9 @@ if [[ "$jeton_warn" -gt 0 ]]; then
   exit 0
 fi
 if [[ "$teller_warn" -gt 0 ]]; then
-  echo "Jeton OK — falcı uyarısı var; onaylı falcı hesabı ile P0 deneyin."
-  echo "  docs/PSYCHIC_TELLER_STATUS.md · bash scripts/list-production-tellers.sh"
+  echo "Falcı uyarısı — onaylı falcı hesabı ile P0 deneyin veya probe tekrarlayın."
+  echo "  bash scripts/probe-psychic-teller.sh"
+  echo "  docs/PSYCHIC_TELLER_STATUS.md · bash scripts/open-approved-teller.sh"
   exit 0
 fi
 echo "Önkoşullar hazır — cihaz testine geçilebilir."

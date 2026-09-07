@@ -48,6 +48,7 @@ fi
 
 # Falcı probe (kısa)
 echo ""
+[[ -n "${HOST_TOKEN:-}" ]] && export HOST_TOKEN
 PROBE=$("$ROOT/scripts/probe-psychic-teller.sh" 2>&1 || true)
 echo "$PROBE" | grep -E '^(✅|⚠️|❌|──|Falcı probe)' || true
 
