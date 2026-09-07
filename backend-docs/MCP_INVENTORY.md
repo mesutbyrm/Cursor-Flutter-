@@ -1,5 +1,9 @@
 # MCP_INVENTORY.md — MCP Sunucu Envanteri
 
+
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`../docs/DOCS_RELEASE_INDEX.md`](../docs/DOCS_RELEASE_INDEX.md)
+
 > **AŞAMA A çıktısı — SALT OKUMA.** Hiçbir dosya değiştirilmedi.  
 > Tarama kapsamı: ana backend (`nextjs_space/`), Flutter reposu (`mobile/`, `api/`, `mcp-server/`, `site/`), editör yapılandırması (`.cursor/`).
 

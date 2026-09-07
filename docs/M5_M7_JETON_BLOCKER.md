@@ -1,5 +1,9 @@
 # M5 / M7 — Jeton engeli ve çözüm
 
+
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Son güncelleme:** 2026-09-07 · APK `1.0.371+409`  
 **Durum:** Jeton yüklü (≈9600); M7 + API smoke ✅. **M5 cihaz** + **Psychic P0** kullanıcı testinde.
 

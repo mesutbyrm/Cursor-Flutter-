@@ -1,5 +1,9 @@
 # M5 — Cihaz test kontrol listesi (!istek / müzik)
 
+
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Son güncelleme:** 2026-09-07  
 **APK:** `1.0.371+409` (`apk-latest`) — https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk  
 **Öncelik:** Psychic P0 önce — `bash scripts/psychic-p0-checklist.sh` · [`LIVE_PSYCHICS_REMAINING.md`](LIVE_PSYCHICS_REMAINING.md)  

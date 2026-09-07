@@ -1,5 +1,9 @@
 # Sesli Sohbet Odası — Performans Kontrol Listesi
 
+
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Sürüm (test):** `1.0.371+409` (`apk-latest`)  
 **Son güncelleme:** 2026-09-07  
 **Detay rapor:** [`PERFORMANCE_VOICE_ROOM_ANALIZ.md`](PERFORMANCE_VOICE_ROOM_ANALIZ.md)

@@ -1,5 +1,9 @@
 # Backend reference artifacts (read-only)
 
+
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`../docs/DOCS_RELEASE_INDEX.md`](../docs/DOCS_RELEASE_INDEX.md)
+
 **Kaynak:** Backend MCP export — 11 Ağustos 2026 (B1.12 denetimi)  
 **Kullanım:** FAZ 0 parity audit, Cursor MCP, Flutter DTO doğrulama — **üretim API değildir**.
 

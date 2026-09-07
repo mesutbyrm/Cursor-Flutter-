@@ -1,5 +1,9 @@
 # Faz master takip — Canlifal Flutter
 
+
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Son güncelleme:** 2026-09-07 — APK **`1.0.371+409`** · Release gate **FINAL PASS** ([Run 34146919509](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34146919509))  
 **Canlı checklist:** [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md) · [`REMAINING_WORK.md`](REMAINING_WORK.md) · Psychic P0: `bash scripts/psychic-p0-checklist.sh`  
 **Faz testleri:** CI 1081+ pass (`docs/PHASE_TEST_REPORT.md` tarihsel)

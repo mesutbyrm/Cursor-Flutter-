@@ -1,5 +1,9 @@
 # Kalan işler — canlı takip listesi
 
+
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+
 **Son güncelleme:** 2026-09-07 — sürüm `1.0.371+409`, release gate **FINAL PASS** (run `34146919509`)  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Release:** `docs/RELEASE_CHECKLIST.md` | **Psychic P0:** `docs/LIVE_PSYCHICS_REMAINING.md` | **Tüm MD indeks:** [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
@@ -73,6 +77,13 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 | 4–13 | `FAZ4_FORTUNE_PARITY.md` … `FAZ13_RELEASE_STATUS.md` |
 
 ---
+
+## Oturum günlüğü (2026-09-07 devam 2)
+
+- **213 MD banner:** `docs/**`, kök parity, `mobile/docs/*` — commit `8db37eea`
+- **Birincil MD tamamlama:** FAZ13, GITHUB_*, PHASE_MASTER, TEST_ACCOUNTS, mobile/README, backend-docs/*, LATEST_APK_BUILD banner
+- **CI:** `build-apk.yml` LATEST_APK_BUILD şablonuna banner eklendi
+- Agent kalan: **yok** — yalnızca Psychic P0 cihaz
 
 ## Oturum günlüğü (2026-08-20 devam 6)
 

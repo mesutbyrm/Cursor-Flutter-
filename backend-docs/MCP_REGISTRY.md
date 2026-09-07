@@ -1,5 +1,9 @@
 # CanlıFal MCP Kayıt Defteri
 
+
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`../docs/DOCS_RELEASE_INDEX.md`](../docs/DOCS_RELEASE_INDEX.md)
+
 MCP sunucusu (`mcp-server/`) REST API'den **tamamen ayrıdır**.
 
 - **REST API** → `https://canlifal.com/api/**` — Flutter ve web istemcileri buradan konuşur.

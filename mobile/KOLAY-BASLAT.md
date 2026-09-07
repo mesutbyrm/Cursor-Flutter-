@@ -1,5 +1,9 @@
 # Canlifal uygulamasını çalıştırma (kolay rehber)
 
+
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`../docs/DOCS_RELEASE_INDEX.md`](../docs/DOCS_RELEASE_INDEX.md)
+
 Benim (bulut ortamının) sizin telefonunuzda uygulamayı açması mümkün değil. Aşağıdaki yollardan **birini** seçin.
 
 ## Yol 1 — Hazır APK (en kolay, bilgisayar bilgisi az)

@@ -55,7 +55,12 @@ bash scripts/psychic-p0-checklist.sh    # Psychic P0 tablosu
 
 ## Mobil değişiklik özeti
 
-[`../mobile/CHANGELOG.md`](../mobile/CHANGELOG.md) — **1.0.371+409**
+| Dosya | Not |
+|-------|-----|
+| [`../mobile/CHANGELOG.md`](../mobile/CHANGELOG.md) | **1.0.371+409** sürüm geçmişi |
+| [`../mobile/README.md`](../mobile/README.md) | Geliştirici giriş |
+| [`../mobile/ARCHITECTURE.md`](../mobile/ARCHITECTURE.md) | Mimari |
+| [`../backend-docs/README.md`](../backend-docs/README.md) | MCP/OpenAPI referans |
 
 - **Faz 1:** SSE SoT, Socket.IO kapalı (`1.0.370+408`)
 - **Faz 2:** Psychic TRTC 5 sn freeze kök nedeni (`1.0.371+409`)

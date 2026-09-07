@@ -745,6 +745,8 @@ jobs:
           {
             echo "# Son APK derlemesi"
             echo ""
+            echo "> **Güncel:** Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [\`DOCS_RELEASE_INDEX.md\`](DOCS_RELEASE_INDEX.md)"
+            echo ""
             echo "| Alan | Değer |"
             echo "|------|--------|"
             echo "| Sürüm | \`${{ steps.meta.outputs.version }}\` |"

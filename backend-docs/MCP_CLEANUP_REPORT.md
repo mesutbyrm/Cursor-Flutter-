@@ -1,5 +1,9 @@
 # MCP_CLEANUP_REPORT.md — MCP Temizlik Değerlendirmesi
 
+
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`../docs/DOCS_RELEASE_INDEX.md`](../docs/DOCS_RELEASE_INDEX.md)
+
 > **AŞAMA A çıktısı — HİÇBİR ŞEY SİLİNMEDİ.** Aşağıdaki değerlendirme yalnızca öneri niteliğindedir; uygulama Aşama C'de ve kullanıcı onayıyla yapılır.
 
 ## 1. Değerlendirme tablosu

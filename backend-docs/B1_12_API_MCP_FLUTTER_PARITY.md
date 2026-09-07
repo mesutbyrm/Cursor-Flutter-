@@ -1,5 +1,9 @@
 # B1.12 — API / MCP / FLUTTER TAM ENTEGRASYON DENETİMİ
 
+
+
+> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`../docs/DOCS_RELEASE_INDEX.md`](../docs/DOCS_RELEASE_INDEX.md)
+
 **Tarih:** 11 Ağustos 2026
 **Kapsam:** Yalnızca DENETİM ve RAPOR. Hiçbir dosya değiştirilmedi, hiçbir endpoint oluşturulmadı, backend/DB/Redis'e dokunulmadı, signing/keystore/APK/AAB/deployment işlemi yapılmadı.
 **Flutter kaynağı:** `mesutbyrm/Cursor-Flutter-` @ `a5ce815` (`mobile/lib/**`)
