@@ -104,4 +104,4 @@ fi
 echo ""
 echo "══ AGENT DURUMU ══"
 echo "FAZ1–11 otomatik PASS | Release gate FINAL PASS"
-echo "Cihaz: Psychic P0 → P1 — bash scripts/print-user-test-quick-ref.sh"
+echo "Cihaz: Psychic P0 → P1 — bash scripts/kalan-isler.sh"

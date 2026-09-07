@@ -19,6 +19,9 @@ Hesaplar (aynı şifre):
 
 Kritik: T+5 saniyede video/ses DONMAMALI.
 
+Doğrulama (isteğe bağlı):
+  bash scripts/validate-pre-device-handoff.sh
+
 Başlat:
   bash scripts/user-test-start.sh p0      # checklist yazdır
   bash scripts/psychic-p0-all.sh          # önkoşul + checklist

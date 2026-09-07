@@ -27,7 +27,7 @@ Sıra: P0-j ✅ → **P0 OPEN** → P1 → P2
 Komutlar:
   0) bash scripts/kalan-isler.sh              # yol haritası (★)
   1) bash scripts/p0-go.sh                    # P0 GO (★)
-  2) bash scripts/validate-pre-device-handoff.sh
+  2) bash scripts/validate-pre-device-handoff.sh   # user-test-start.sh device-ready
   3) bash scripts/user-test-start.sh p0       # P0 checklist
   4) bash scripts/on-p0-pass.sh | on-p0-fail.sh
   5) bash scripts/p1-go.sh                    # P0 PASS sonrası
@@ -108,7 +108,7 @@ case "${1:-}" in
   quick|ref)
     exec bash "$ROOT/scripts/print-user-test-quick-ref.sh"
     ;;
-  release-ready|ready)
+  release-ready)
     exec bash "$ROOT/scripts/on-release-ready-candidate.sh"
     ;;
   full|checklist)
@@ -120,7 +120,7 @@ case "${1:-}" in
   live|p0-status)
     exec bash "$ROOT/scripts/print-p0-live-status.sh"
     ;;
-  ready|p0-ready)
+  ready|p0-ready|device-ready)
     exec bash "$ROOT/scripts/validate-pre-device-handoff.sh"
     ;;
   go|p0-go)

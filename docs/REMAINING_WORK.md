@@ -20,7 +20,7 @@
 | Release gate CI | `[x]` | apk-latest + metadata PASS |
 | Release 502 fix | `[x]` | `814f8758` |
 | docs/LATEST_APK_BUILD | `[x]` | Run `34146919509` |
-| **Jeton (danışan)** | `[x]` | ~99880+ (admin 2026-09-07) |
+| **Jeton (danışan)** | `[x]` | ~98k (2026-09-07) |
 | **M7 API / M5 API smoke** | `[x]` | song-request 200 + smoke PASS=6 |
 | **m5-preflight** | `[x]` | Jeton + voice seat API OK |
 | **Manuel testler** | `[ ]` | **Kullanıcı sonra** — P0 → P1 → M5 cihaz |
