@@ -34,6 +34,8 @@ Mobil kod, CI release gate ve otomatik API doğrulama **tamamlandı**. Agent yal
 
 **Falcı:** Host listede değil — `bash scripts/list-production-tellers.sh`
 
+**1 sayfa:** [`USER_TEST_QUICK_REF.md`](USER_TEST_QUICK_REF.md) · `bash scripts/print-user-test-quick-ref.sh`
+
 ---
 
 ## Tek sayfa rehber

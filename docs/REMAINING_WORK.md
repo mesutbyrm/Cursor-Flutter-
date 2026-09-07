@@ -84,6 +84,12 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 
 ---
 
+## Oturum günlüğü (2026-09-07 — doc giriş noktaları)
+
+- APK_DOWNLOAD, M5_DEVICE, TEST_ACCOUNTS → user-test-start / quick ref
+- release-remaining-status: print-user-test-quick-ref satırı
+- API music/voice raporları validate yenilemesi
+
 ## Oturum günlüğü (2026-09-07 — KULLANICI_TEST senkron)
 
 - KULLANICI_TEST_KILAVUZU → user-test-start / on-p0-pass akışı
