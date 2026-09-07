@@ -66,6 +66,7 @@ bash scripts/print-play-store-listing.sh      # Store listing
 bash scripts/print-ci-aab-steps.sh            # CI AAB
 bash scripts/print-play-console-prep-index.sh # Prep indeks
 bash scripts/devam-et.sh                    # agent devam
+bash scripts/print-release-blockers.sh        # RELEASE READY engelleri
 bash scripts/print-paralel-mod.sh           # paralel özet
 bash scripts/p1-prep-go.sh                  # P1 checklist GO
 bash scripts/kalan-isler.sh                 # kalan işler + yol haritası

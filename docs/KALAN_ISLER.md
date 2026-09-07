@@ -42,6 +42,7 @@ APK: https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/c
 
 ```bash
 bash scripts/devam-et.sh            # agent devam (= kalan-isler-agent)
+bash scripts/print-release-blockers.sh      # RELEASE READY engelleri
 bash scripts/print-paralel-mod.sh   # paralel mod tek ekran
 bash scripts/cihaz-sonra.sh         # cihaz (sonra)
 bash scripts/kalan-isler.sh         # durum tablosu

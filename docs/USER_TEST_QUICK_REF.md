@@ -19,16 +19,19 @@ Host = onaylı falcı (`Cursor Host Test`). Doğrula: `bash scripts/probe-psychi
 ## Komut sırası
 
 ```bash
-bash scripts/kalan-isler-agent.sh           # agent paralel (şimdi)
+bash scripts/devam-et.sh                    # ★ agent devam (tam)
+bash scripts/print-paralel-mod.sh           # paralel mod özet
+bash scripts/print-release-blockers.sh      # RELEASE READY engelleri
 bash scripts/cihaz-sonra.sh                 # cihaz (sonra)
-bash scripts/basla.sh                       # ★ tek komut: canlı durum + devir teslim
-bash scripts/kalan-isler.sh                  # 0 · tüm kalan işler
-bash scripts/p0-go.sh                         # GO (jeton + falcı + hesaplar)
-bash scripts/user-test-start.sh p0           # Psychic P0 (2 telefon)
-bash scripts/on-p0-pass.sh                 # PASS → P1
-bash scripts/on-p1-pass.sh                 # P1 PASS
-bash scripts/on-release-ready-candidate.sh   # RELEASE adayı
-bash scripts/p2-prep-all.sh                 # Play Store hazırlık (agent)
+bash scripts/basla.sh                       # canlı durum + devir teslim
+bash scripts/kalan-isler.sh                 # durum tablosu
+bash scripts/p0-go.sh                       # P0 GO
+bash scripts/p1-prep-go.sh                  # P1 checklist GO
+bash scripts/p2-prep-go.sh                  # Play Store GO
+bash scripts/user-test-start.sh p0          # Psychic P0 (2 telefon)
+bash scripts/on-p0-pass.sh                  # PASS → P1
+bash scripts/on-p1-pass.sh                  # P1 PASS
+bash scripts/on-release-ready-candidate.sh  # RELEASE adayı
 ```
 
 FAIL: `bash scripts/on-p0-fail.sh "T+5s donma"`

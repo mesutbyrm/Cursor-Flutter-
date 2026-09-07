@@ -17,7 +17,9 @@ Agent (şimdi): API ✅ · falcı ✅ · P2 Play Console prep devam
 Cihaz (sonra): Psychic P0 → P1 · T+5s donma yok
 
 ── Agent (şimdi) ──
-  bash scripts/kalan-isler-agent.sh
+  bash scripts/devam-et.sh
+  bash scripts/print-paralel-mod.sh
+  bash scripts/p1-prep-go.sh
   bash scripts/p2-prep-go.sh
   bash scripts/p2-prep-all.sh
 

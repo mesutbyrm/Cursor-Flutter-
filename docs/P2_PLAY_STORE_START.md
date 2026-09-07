@@ -10,10 +10,12 @@ Play Store production access — cihaz P0/P1 **sonra** yüklenir; agent hazırl�
 ## Agent (şimdi — cihaz sonucu beklemeden)
 
 ```bash
+bash scripts/devam-et.sh
+bash scripts/p2-prep-go.sh
 bash scripts/p2-prep-all.sh
 bash scripts/play-aab-readiness.sh
 bash scripts/play-store-checklist.sh
-bash scripts/p2-prep-now.sh
+bash scripts/print-play-console-prep-index.sh
 ```
 
 Özet: [`PLAY_STORE_AGENT_CHECKLIST.md`](PLAY_STORE_AGENT_CHECKLIST.md)

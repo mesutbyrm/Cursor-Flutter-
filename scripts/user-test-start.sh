@@ -147,6 +147,9 @@ case "${1:-}" in
   agent|kalan-agent|agent-kalan|devam-et|devam)
     exec bash "$ROOT/scripts/kalan-isler-agent.sh"
     ;;
+  blockers|engeller|release-blockers)
+    exec bash "$ROOT/scripts/print-release-blockers.sh"
+    ;;
   paralel|paralel-mod|mod)
     exec bash "$ROOT/scripts/print-paralel-mod.sh"
     ;;

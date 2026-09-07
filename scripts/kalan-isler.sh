@@ -26,7 +26,8 @@ Sonuç bildirimi:
   P1 PASS         → bash scripts/on-p1-pass.sh
   RELEASE adayı   → bash scripts/on-release-ready-candidate.sh
 
-Başlangıç: bash scripts/kalan-isler-agent.sh  (agent · şimdi)
+Başlangıç: bash scripts/devam-et.sh  (agent · şimdi)
+Paralel özet: bash scripts/print-paralel-mod.sh
 Cihaz sonra: bash scripts/cihaz-sonra.sh
 Detay: docs/REMAINING_WORK.md · docs/RELEASE_USER_NEXT_STEPS.md
 Statik özet: docs/KALAN_ISLER.md · bash scripts/print-kalan-isler.sh

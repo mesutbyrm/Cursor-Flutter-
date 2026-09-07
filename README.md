@@ -28,10 +28,12 @@ Kod hatası değilse, GitHub **faturalandırma / harcama limiti** yüzünden Act
 Cihaz testi **sonra** — agent **P1/P2 hazırlığı** devam eder: [`docs/AGENT_CLOSED.md`](docs/AGENT_CLOSED.md). Jeton ✅ · host falcı ✅
 
 ```bash
-bash scripts/kalan-isler-agent.sh           # agent paralel (şimdi)
+bash scripts/devam-et.sh                    # agent devam (tam)
+bash scripts/print-paralel-mod.sh           # tek ekran özet
 bash scripts/cihaz-sonra.sh                 # cihaz testi (sonra)
-bash scripts/basla.sh                       # tek komut: canlı durum + devir teslim
+bash scripts/basla.sh                       # canlı durum + devir teslim
 bash scripts/kalan-isler.sh                 # kalan işler özeti
+bash scripts/print-release-blockers.sh      # RELEASE READY engelleri
 bash scripts/p0-go.sh
 bash scripts/user-test-start.sh p0
 ```

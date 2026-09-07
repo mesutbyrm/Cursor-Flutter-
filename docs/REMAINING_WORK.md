@@ -204,6 +204,11 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 - `on-release-ready-candidate.sh` — P0+P1 sonrası RELEASE READY kontrol listesi
 - README, P2, RELEASE_GATE_CLOSURE, user-test-start güncellendi
 
+## Oturum günlüğü (2026-09-07 — release blockers + devam-et sync)
+
+- `print-release-blockers.sh` — RELEASE READY engelleri tek ekran
+- USER_TEST_QUICK_REF / RELEASE_USER / kalan-isler → devam-et birincil giriş
+
 ## Oturum günlüğü (2026-09-07 — paralel mod giriş noktaları)
 
 - `devam-et.sh` — kalan-isler-agent alias

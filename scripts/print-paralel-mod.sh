@@ -20,11 +20,12 @@ RELEASE READY: NO · Cihaz P0/P1 sonucu SONRA · Agent prep DEVAM
 APK: ${APK_URL}
 
 ┌─ Agent (şimdi) ─────────────────────────────────────────────────┐
-│ bash scripts/kalan-isler-agent.sh    # API + P1/P2 prep (tam)   │
-│ bash scripts/p2-prep-go.sh            # Play Store GO             │
-│ bash scripts/p1-prep-go.sh            # P1 checklist GO          │
-│ bash scripts/p2-prep-all.sh           # Play Console print paketi │
-│ bash scripts/print-paralel-mod.sh     # bu özet                   │
+│ bash scripts/devam-et.sh               # agent devam (tam)       │
+│ bash scripts/print-paralel-mod.sh      # bu özet                   │
+│ bash scripts/p1-prep-go.sh             # P1 checklist GO          │
+│ bash scripts/p2-prep-go.sh             # Play Store GO             │
+│ bash scripts/p2-prep-all.sh            # Play Console print paketi │
+│ bash scripts/print-release-blockers.sh # RELEASE READY engelleri │
 └──────────────────────────────────────────────────────────────────┘
 
 ┌─ Cihaz (sonra) ─────────────────────────────────────────────────┐

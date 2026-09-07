@@ -10,7 +10,9 @@
 ## Tek giriş
 
 ```bash
-bash scripts/kalan-isler-agent.sh    # agent · şimdi
+bash scripts/kalan-isler-agent.sh    # agent · şimdi (= devam-et)
+bash scripts/devam-et.sh             # agent devam
+bash scripts/print-paralel-mod.sh    # tek ekran özet
 bash scripts/cihaz-sonra.sh            # cihaz · sonra
 bash scripts/kalan-isler.sh            # durum tablosu
 ```

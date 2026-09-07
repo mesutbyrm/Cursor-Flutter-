@@ -27,7 +27,7 @@ Mobil kod, CI ve API otomasyon **tamam**. **Cihaz testi sonucu sonra** — agent
 | P1/P2 GO + yol haritası | ✅ `p1-go.sh` · `p2-go.sh` · `kalan-isler.sh` |
 | P1 prep GO | ✅ `p1-prep-go.sh` |
 | P2 agent prep | ✅ `p2-prep-go.sh` · `p2-prep-all.sh` · Console print · `build-aab.yml` |
-| Paralel giriş | ✅ `devam-et.sh` · `print-paralel-mod.sh` |
+| Paralel giriş | ✅ `devam-et.sh` · `print-paralel-mod.sh` · `print-release-blockers.sh` |
 | Kalan işler doc | ✅ `docs/KALAN_ISLER.md` |
 
 ---
