@@ -4,9 +4,9 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-echo "ℹ️  Güncel kalan işler: bash scripts/kalan-isler.sh"
+echo "ℹ️  Güncel: bash scripts/basla.sh"
 echo "    P0 GO: bash scripts/p0-go.sh"
-echo "    Rehber: docs/RELEASE_USER_NEXT_STEPS.md"
+echo "    Rehber: docs/KALAN_ISLER.md"
 echo ""
 
 if [[ "${1:-}" == "--verify" ]]; then
@@ -24,7 +24,7 @@ echo ""
 echo "Agent: TAMAM · Jeton ✅ · Host falcı ✅"
 echo ""
 echo "── Başla ──"
+echo "  bash scripts/basla.sh"
 echo "  bash scripts/kalan-isler.sh"
 echo "  bash scripts/p0-go.sh"
-echo "  bash scripts/user-handoff.sh"
 echo ""

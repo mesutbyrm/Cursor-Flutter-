@@ -79,8 +79,9 @@ fi
 
 echo ""
 echo "── Sonraki adım (2 telefon) ──"
-echo "  bash scripts/psychic-p0-checklist.sh"
-echo "  bash scripts/user-handoff.sh"
+echo "  bash scripts/basla.sh"
+echo "  bash scripts/p0-go.sh"
+echo "  bash scripts/user-test-start.sh p0"
 echo ""
 if [[ "$jeton_warn" -gt 0 ]]; then
   echo "Jeton düşük — seans oluşturulamaz; önce admin jeton, sonra P0."

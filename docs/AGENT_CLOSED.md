@@ -67,3 +67,5 @@ P0+P1 PASS sonrası: `bash scripts/on-release-ready-candidate.sh`
 ---
 
 _Agent oturumu kapandı — yeni mobil özellik veya P0 FAIL hotfix dışında commit beklenmez._
+
+**“Devam et” sonrası:** Agent yalnızca **Psychic P0 PASS/FAIL** (veya P1 sonucu) bildiriminde devam eder. Cihaz testi öncesi ek agent işi yok — `bash scripts/basla.sh` ile başlayın.

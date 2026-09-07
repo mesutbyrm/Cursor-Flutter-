@@ -10,6 +10,7 @@ Psychic P0 ve P1 sonuçlarını buraya kaydedin. Agent'a tek satır bildirim yet
 ## Nasıl kaydedilir
 
 ```bash
+bash scripts/basla.sh                            # canlı durum + yol haritası
 bash scripts/record-user-test-result.sh p0 PASS
 bash scripts/record-user-test-result.sh p0 FAIL "T+5s video dondu"
 bash scripts/on-p0-pass.sh                    # PASS + P1 checklist

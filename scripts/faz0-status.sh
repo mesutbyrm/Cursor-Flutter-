@@ -98,6 +98,7 @@ if [[ "$BLOCKERS" -gt 0 ]]; then
   echo "  bash scripts/validate-pre-device-handoff.sh"
 else
   echo "── Sonraki adım ──"
+  echo "  bash scripts/basla.sh"
   echo "  bash scripts/user-test-start.sh p0"
   echo "  docs/M5_DEVICE_TEST_CHECKLIST.md (P0 sonrası)"
 fi
