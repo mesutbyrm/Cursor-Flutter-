@@ -41,6 +41,7 @@
 bash scripts/user-test-start.sh           # cihaz testi tek giriş (P0/P1)
 bash scripts/print-full-user-checklist.sh  # P0+P1 birleşik yazdır
 bash scripts/print-user-test-quick-ref.sh    # 1 sayfa terminal özeti
+bash scripts/print-p0-live-status.sh       # jeton + falcı tek ekran
 bash scripts/validate-pre-device-handoff.sh  # cihaz öncesi API+jeton doğrulama
 bash scripts/agent-closure-status.sh      # agent kapalı + canlı durum
 bash scripts/list-production-tellers.sh   # üretim falcı listesi (8)
