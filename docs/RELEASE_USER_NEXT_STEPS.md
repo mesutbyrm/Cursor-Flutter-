@@ -10,6 +10,7 @@ Agent tarafı **tamamlandı**. Kalan iş yalnızca **cihaz kabul testleri** (siz
 ## Tek giriş
 
 ```bash
+bash scripts/p0-go.sh
 bash scripts/user-test-start.sh
 bash scripts/validate-pre-device-handoff.sh   # API + jeton + falcı (cihaz öncesi)
 bash scripts/agent-closure-status.sh          # canlı durum özeti
@@ -23,7 +24,7 @@ bash scripts/agent-closure-status.sh          # canlı durum özeti
 |---|-----|--------|-------|
 | 0 | Jeton (danışan) | ✅ ~100k | `psychic-p0-prereqs.sh` |
 | 0b | Falcı hesabı | ✅ host onaylı | `probe-psychic-teller.sh` · [`PSYCHIC_TELLER_STATUS.md`](PSYCHIC_TELLER_STATUS.md) |
-| 1 | **Psychic P0** | ⏳ OPEN | `user-test-start.sh p0` — host + danışan, 2 telefon |
+| 1 | **Psychic P0** | ⏳ OPEN | `p0-go.sh` → `user-test-start.sh p0` — 2 telefon |
 | 2 | **P1 platform** | ⏸ P0 sonrası | `p1-platform-checklist.sh` |
 | 3 | M5 cihaz (müzik) | ⏸ | [`M5_DEVICE_TEST_CHECKLIST.md`](M5_DEVICE_TEST_CHECKLIST.md) |
 | 4 | Play Store P2 | ⏸ backlog | [`P2_PLAY_STORE_START.md`](P2_PLAY_STORE_START.md) |
@@ -82,7 +83,7 @@ P0 PASS → P1 → **`P1 PASS`** → `bash scripts/on-release-ready-candidate.sh
 
 [`USER_TEST_QUICK_REF.md`](USER_TEST_QUICK_REF.md) — tek sayfa özet
 
-Canlı durum (jeton + falcı): `bash scripts/print-p0-live-status.sh`
+Canlı durum (jeton + falcı): `bash scripts/p0-go.sh`
 
 ## Agent ne zaman tekrar açılır?
 

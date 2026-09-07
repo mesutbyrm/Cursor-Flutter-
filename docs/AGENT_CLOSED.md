@@ -24,6 +24,7 @@ Mobil kod, CI release gate ve otomatik API doğrulama **tamamlandı**. Cihaz tes
 | Psychic unit test betiği | ✅ `run-psychic-unit-tests.sh` |
 | P2 hazırlık betiği | ✅ `p2-play-store-prep.sh` |
 | Non-device prep (tek komut) | ✅ `run-non-device-release-prep.sh` |
+| P0 GO ekranı | ✅ `p0-go.sh` |
 
 ---
 
@@ -31,7 +32,7 @@ Mobil kod, CI release gate ve otomatik API doğrulama **tamamlandı**. Cihaz tes
 
 | # | İş | Komut |
 |---|-----|--------|
-| 0 | Canlı durum (jeton + falcı) | `bash scripts/print-p0-live-status.sh` |
+| 0 | Canlı durum (jeton + falcı) | `bash scripts/p0-go.sh` |
 | 1 | Pre-device doğrulama | `bash scripts/validate-pre-device-handoff.sh` |
 | 2 | Psychic P0 (2 telefon) | `bash scripts/user-test-start.sh p0` |
 | 3 | P1 platform | `bash scripts/on-p0-pass.sh` |

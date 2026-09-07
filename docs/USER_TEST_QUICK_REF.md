@@ -19,7 +19,7 @@ Host = onaylı falcı (`Cursor Host Test`). Doğrula: `bash scripts/probe-psychi
 ## Komut sırası
 
 ```bash
-bash scripts/print-p0-live-status.sh         # 0 · jeton + falcı (hızlı)
+bash scripts/p0-go.sh                         # 0 · GO (jeton + falcı + hesaplar)
 bash scripts/user-test-start.sh              # menü
 bash scripts/validate-pre-device-handoff.sh  # 1 · API doğrulama
 bash scripts/user-test-start.sh p0           # 2 · Psychic P0 (2 telefon)

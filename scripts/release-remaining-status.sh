@@ -92,7 +92,7 @@ echo ""
 # --- Agent ---
 echo "── Agent ──"
 echo "Kod/CI/docs: ✅ TAMAM · RELEASE READY: NO"
-echo "Canlı durum: bash scripts/print-p0-live-status.sh"
+echo "Canlı durum: bash scripts/p0-go.sh"
 echo "Hızlı özet: bash scripts/print-user-test-quick-ref.sh"
 echo "APK: ${APK_URL}"
 echo ""
@@ -100,7 +100,7 @@ echo "Sonraki adım:"
 if [[ "$P0J" == "OPEN" ]]; then
   echo "  1) Admin jeton → bash scripts/user-test-start.sh"
 else
-  echo "  1) bash scripts/user-test-start.sh  (veya: psychic-p0-all.sh)"
+  echo "  1) bash scripts/p0-go.sh  (veya: user-test-start.sh p0)"
   echo "  2) Doğrulama: bash scripts/validate-pre-device-handoff.sh"
   echo "  3) Sonuç: bash scripts/on-p0-pass.sh  veya  on-p0-fail.sh"
 fi

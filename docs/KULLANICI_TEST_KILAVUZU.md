@@ -38,6 +38,7 @@ Detay: [`PSYCHIC_TELLER_STATUS.md`](PSYCHIC_TELLER_STATUS.md)
 Canlı falcı görüntülü görüşme — **T+5 saniyede donma olmamalı**.
 
 ```bash
+bash scripts/p0-go.sh                         # GO ekranı
 bash scripts/validate-pre-device-handoff.sh   # önce API doğrulama
 bash scripts/user-test-start.sh p0              # P0 akışı + checklist
 bash scripts/on-p0-pass.sh                    # PASS kaydı → P1

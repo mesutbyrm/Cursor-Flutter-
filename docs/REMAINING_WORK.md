@@ -85,6 +85,12 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 
 ---
 
+## Oturum günlüğü (2026-09-07 — P0 GO ekranı)
+
+- `p0-go.sh` — canlı durum + hesaplar + başlat komutları
+- user-test-start: `go` / `p0-go` kısayolu
+- APK_DOWNLOAD, FAZ13, PLAY_STORE B-host güncellendi
+
 ## Oturum günlüğü (2026-09-07 — indeks + P2 Play Store senkron)
 
 - README, DOCS_RELEASE_INDEX, PLAY_STORE_PRODUCTION_ACCESS — host falcı ✅
