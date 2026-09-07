@@ -93,5 +93,6 @@ if [[ "$P0J" == "OPEN" ]]; then
   echo "  1) Admin jeton → bash scripts/user-test-start.sh"
 else
   echo "  1) bash scripts/user-test-start.sh  (veya: psychic-p0-all.sh)"
-  echo "  2) Sonuç: bash scripts/record-user-test-result.sh p0 PASS|FAIL"
+  echo "  2) Doğrulama: bash scripts/validate-pre-device-handoff.sh"
+  echo "  3) Sonuç: bash scripts/on-p0-pass.sh  veya  on-p0-fail.sh"
 fi

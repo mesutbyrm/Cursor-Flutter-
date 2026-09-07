@@ -84,6 +84,11 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 
 ---
 
+## Oturum günlüğü (2026-09-07 — pre-device doğrulama)
+
+- `validate-pre-device-handoff.sh` — API + jeton + falcı tek doğrulama
+- print-build-status, after-admin-jeton, release-status güncellendi
+
 ## Oturum günlüğü (2026-09-07 — PASS/FAIL akış betikleri)
 
 - `on-p0-pass.sh` / `on-p0-fail.sh` / `on-p1-pass.sh` — test sonrası otomatik adımlar

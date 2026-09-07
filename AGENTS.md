@@ -79,6 +79,7 @@ Güncel envanter metni (dış kaynak): https://canlifal.com/canlifal-envanter-ra
 | Görev | Komut |
 |-------|--------|
 | **Cihaz testi giriş** | `bash scripts/user-test-start.sh` |
+| Cihaz öncesi doğrulama | `bash scripts/validate-pre-device-handoff.sh` |
 | Tek akış (jeton + checklist) | `bash scripts/psychic-p0-all.sh` |
 | Falcı listesi kontrolü | `bash scripts/probe-psychic-teller.sh` |
 | Özet handoff | `bash scripts/user-handoff.sh` |

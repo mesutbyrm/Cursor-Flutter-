@@ -30,9 +30,9 @@ echo "--- Son özellikler (CHANGELOG) ---"
 "${ROOT}/scripts/extract-changelog-head.sh" 2>/dev/null || true
 echo ""
 echo "--- Kalan (agent bitti — cihaz testi) ---"
-echo "Özet: bash scripts/release-remaining-status.sh"
-echo "P0: bash scripts/psychic-p0-all.sh"
-echo "P1: bash scripts/p1-platform-checklist.sh (P0 sonrası)"
+echo "Tek giriş: bash scripts/user-test-start.sh"
+echo "Doğrulama: bash scripts/validate-pre-device-handoff.sh"
+echo "Rehber: docs/RELEASE_USER_NEXT_STEPS.md"
 echo ""
 
 RUN_JSON=$(gh run list --repo "$REPO" --workflow=build-apk.yml --branch=main --limit=1 --json status,conclusion,url,displayTitle,createdAt 2>/dev/null || echo '[]')

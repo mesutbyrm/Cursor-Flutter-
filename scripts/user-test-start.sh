@@ -21,14 +21,15 @@ APK: ${APK_URL}
 Sıra: P0-j (jeton) ✅ → P0 Psychic → P1 platform → P2 Play Store
 
 Komutlar:
-  1) bash scripts/release-remaining-status.sh   # canlı durum
-  2) bash scripts/psychic-p0-prereqs.sh         # jeton + falcı uyarısı
-  3) bash scripts/list-production-tellers.sh    # üretim falcı listesi
-  4) bash scripts/psychic-p0-all.sh             # P0 checklist (2 telefon)
-  5) bash scripts/p1-platform-checklist.sh    # P0 PASS sonrası
-  6) bash scripts/record-user-test-result.sh p0 PASS
+  1) bash scripts/validate-pre-device-handoff.sh  # otomatik doğrulama (API+jeton)
+  2) bash scripts/release-remaining-status.sh   # canlı durum
+  3) bash scripts/psychic-p0-prereqs.sh         # jeton + falcı uyarısı
+  4) bash scripts/list-production-tellers.sh    # üretim falcı listesi
+  5) bash scripts/psychic-p0-all.sh             # P0 checklist (2 telefon)
+  6) bash scripts/p1-platform-checklist.sh    # P0 PASS sonrası
   7) bash scripts/on-p0-pass.sh              # P0 PASS → P1 checklist
-  8) bash scripts/on-p1-pass.sh              # P1 PASS → RELEASE adayı
+  8) bash scripts/on-p0-fail.sh "not"        # P0 FAIL → hotfix kaydı
+  9) bash scripts/on-p1-pass.sh              # P1 PASS → RELEASE adayı
 
 Rehberler:
   docs/RELEASE_USER_NEXT_STEPS.md   ← agent kapalı, tek sayfa
@@ -86,6 +87,9 @@ case "${1:-}" in
   record)
     shift
     exec bash "$ROOT/scripts/record-user-test-result.sh" "$@"
+    ;;
+  validate|check)
+    exec bash "$ROOT/scripts/validate-pre-device-handoff.sh"
     ;;
   ""|help|-h|--help)
     show_menu

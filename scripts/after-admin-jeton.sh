@@ -54,5 +54,6 @@ echo ""
 echo "── M5 preflight (opsiyonel) ──"
 bash "$ROOT/scripts/m5-preflight.sh" || true
 echo ""
-echo "Sonraki: bash scripts/psychic-p0-checklist.sh (2 telefon P0)"
-echo "Detay: docs/PSYCHIC_P0_START.md"
+echo "Sonraki: bash scripts/user-test-start.sh p0"
+echo "Doğrulama: bash scripts/validate-pre-device-handoff.sh"
+echo "Detay: docs/RELEASE_USER_NEXT_STEPS.md"

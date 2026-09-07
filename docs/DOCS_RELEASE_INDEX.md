@@ -37,6 +37,7 @@
 
 ```bash
 bash scripts/user-test-start.sh           # cihaz testi tek giriş (P0/P1)
+bash scripts/validate-pre-device-handoff.sh  # cihaz öncesi API+jeton doğrulama
 bash scripts/agent-closure-status.sh      # agent kapalı + canlı durum
 bash scripts/list-production-tellers.sh   # üretim falcı listesi (8)
 bash scripts/on-p0-pass.sh                 # P0 PASS sonrası P1

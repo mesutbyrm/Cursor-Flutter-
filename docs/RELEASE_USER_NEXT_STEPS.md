@@ -11,7 +11,8 @@ Agent tarafı **tamamlandı**. Kalan iş yalnızca **cihaz kabul testleri** (siz
 
 ```bash
 bash scripts/user-test-start.sh
-bash scripts/agent-closure-status.sh    # canlı durum özeti
+bash scripts/validate-pre-device-handoff.sh   # API + jeton + falcı (cihaz öncesi)
+bash scripts/agent-closure-status.sh          # canlı durum özeti
 ```
 
 ---

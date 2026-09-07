@@ -1,9 +1,9 @@
 # M7 — Müzik probe yakalama (üretim)
 
-**Tarih:** 2026-09-07 18:20 UTC  
+**Tarih:** 2026-09-07 18:30 UTC  
 **Oda slug:** `cmoohrbr`  
 **Oda id (SSE):** `cmoohrbrx00a4nt08zlkdjyil`  
-**Hesap:** `cursor.test.1786235468@mailinator.com` — jeton 99790→99790 (admin top-up)  
+**Hesap:** `cursor.test.1786235468@mailinator.com` — jeton 99700→99700 (admin top-up)  
 **Üretim:** `https://canlifal.com`
 
 > Otomatik: `MUSIC_PROBE_ROOM=cmoohrbr bash scripts/probe-music-room.sh`  
@@ -16,7 +16,7 @@
 ```json
 {
     "success": true,
-    "newBalance": 99780,
+    "newBalance": 99690,
     "queued": false,
     "startedImmediately": true,
     "queuePosition": 0,
@@ -24,8 +24,8 @@
     "nowPlaying": {
         "videoId": "cpp69ghR1IM",
         "title": "TARKAN - \u015e\u0131mar\u0131k (Official Music Video)",
-        "startedAt": "2026-09-07T18:20:11.916Z",
-        "startedAtMs": 1788805211916,
+        "startedAt": "2026-09-07T18:30:19.087Z",
+        "startedAtMs": 1788805819087,
         "elapsedSeconds": 0,
         "duration": "",
         "embedUrl": "https://www.youtube.com/embed/cpp69ghR1IM?autoplay=1&start=0&enablejsapi=1&playsinline=1"
@@ -96,6 +96,45 @@
             "userId": "cmsyoxjh80066mo08fo7nv5o6",
             "userName": "Cursor Test",
             "createdAt": "2026-09-07T18:19:36.011Z"
+        },
+        {
+            "id": "cmtrkrzc600bqnz07kj320hr1",
+            "videoId": "dQw4w9WgXcQ",
+            "title": "Probe",
+            "dedication": "",
+            "note": "",
+            "duration": "",
+            "requestType": "audio",
+            "isPaid": true,
+            "userId": "cmsyoxjh80066mo08fo7nv5o6",
+            "userName": "Cursor Test",
+            "createdAt": "2026-09-07T18:29:42.425Z"
+        },
+        {
+            "id": "cmtrkrzjw00bxnz07p2b8guij",
+            "videoId": "dQw4w9WgXcQ",
+            "title": "Test Song",
+            "dedication": "",
+            "note": "",
+            "duration": "",
+            "requestType": "audio",
+            "isPaid": true,
+            "userId": "cmsyoxjh80066mo08fo7nv5o6",
+            "userName": "Cursor Test",
+            "createdAt": "2026-09-07T18:29:42.717Z"
+        },
+        {
+            "id": "cmtrkrzna00c4nz07cd2bd1gm",
+            "videoId": "dQw4w9WgXcQ",
+            "title": "Test Song",
+            "dedication": "",
+            "note": "",
+            "duration": "",
+            "requestType": "audio",
+            "isPaid": true,
+            "userId": "cmsyoxjh80066mo08fo7nv5o6",
+            "userName": "Cursor Test",
+            "createdAt": "2026-09-07T18:29:42.838Z"
         }
     ],
     "musicQueue": [
@@ -163,9 +202,48 @@
             "userId": "cmsyoxjh80066mo08fo7nv5o6",
             "userName": "Cursor Test",
             "createdAt": "2026-09-07T18:19:36.011Z"
+        },
+        {
+            "id": "cmtrkrzc600bqnz07kj320hr1",
+            "videoId": "dQw4w9WgXcQ",
+            "title": "Probe",
+            "dedication": "",
+            "note": "",
+            "duration": "",
+            "requestType": "audio",
+            "isPaid": true,
+            "userId": "cmsyoxjh80066mo08fo7nv5o6",
+            "userName": "Cursor Test",
+            "createdAt": "2026-09-07T18:29:42.425Z"
+        },
+        {
+            "id": "cmtrkrzjw00bxnz07p2b8guij",
+            "videoId": "dQw4w9WgXcQ",
+            "title": "Test Song",
+            "dedication": "",
+            "note": "",
+            "duration": "",
+            "requestType": "audio",
+            "isPaid": true,
+            "userId": "cmsyoxjh80066mo08fo7nv5o6",
+            "userName": "Cursor Test",
+            "createdAt": "2026-09-07T18:29:42.717Z"
+        },
+        {
+            "id": "cmtrkrzna00c4nz07cd2bd1gm",
+            "videoId": "dQw4w9WgXcQ",
+            "title": "Test Song",
+            "dedication": "",
+            "note": "",
+            "duration": "",
+            "requestType": "audio",
+            "isPaid": true,
+            "userId": "cmsyoxjh80066mo08fo7nv5o6",
+            "userName": "Cursor Test",
+            "createdAt": "2026-09-07T18:29:42.838Z"
         }
     ],
-    "queueLength": 5
+    "queueLength": 8
 }
 ```
 
@@ -194,9 +272,9 @@
 ```
 data: {"type":"connected","roomId":"cmoohrbrx00a4nt08zlkdjyil"}
 
-data: {"type":"dj","event":"QUEUE_UPDATED","playing":true,"nowPlaying":{"videoId":"cpp69ghR1IM","title":"TARKAN - Şımarık (Official Music Video)","startedAt":"2026-09-07T18:20:12.045Z","startedAtMs":1788805212045,"elapsedSeconds":0,"duration":"","embedUrl":"https://www.youtube.com/embed/cpp69ghR1IM?autoplay=1&start=0&enablejsapi=1&playsinline=1"},"musicUrl":"https://www.youtube.com/embed/cpp69ghR1IM?autoplay=1&start=0&enablejsapi=1&playsinline=1","embedUrl":"https://www.youtube.com/embed/cpp69ghR1IM?autoplay=1&start=0&enablejsapi=1&playsinline=1","musicQueue":[{"id":"cmtrkct2n004rnz07c3sastbm","videoId":"dQw4w9WgXcQ","title":"Test Song","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:17:54.479Z"},{"id":"cmtrkct6q004ynz076f0tg0qo","videoId":"dQw4w9WgXcQ","title":"Test Song","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:17:54.627Z"},{"id":"cmtrkez2t0073nz072yd4lb0s","videoId":"dQw4w9WgXcQ","title":"Probe","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:19:35.573Z"},{"id":"cmtrkezbe007anz07h1rmspc3","videoId":"dQw4w9WgXcQ","title":"Test Song","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:19:35.882Z"},{"id":"cmtrkezez007hnz07qs94j3ru","videoId":"dQw4w9WgXcQ","title":"Test Song","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:19:36.011Z"}],"queue":[{"id":"cmtrkct2n004rnz07c3sastbm","videoId":"dQw4w9WgXcQ","title":"Test Song","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:17:54.479Z"},{"id":"cmtrkct6q004ynz076f0tg0qo","videoId":"dQw4w9WgXcQ","title":"Test Song","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:17:54.627Z"},{"id":"cmtrkez2t0073nz072yd4lb0s","videoId":"dQw4w9WgXcQ","title":"Probe","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:19:35.573Z"},{"id":"cmtrkezbe007anz07h1rmspc3","videoId":"dQw4w9WgXcQ","title":"Test Song","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:19:35.882Z"},{"id":"cmtrkezez007hnz07qs94j3ru","videoId":"dQw4w9WgXcQ","title":"Test Song","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:19:36.011Z"}],"queueLength":5}
+data: {"type":"dj","event":"QUEUE_UPDATED","playing":true,"nowPlaying":{"videoId":"cpp69ghR1IM","title":"TARKAN - Şımarık (Official Music Video)","startedAt":"2026-09-07T18:30:19.236Z","startedAtMs":1788805819236,"elapsedSeconds":0,"duration":"","embedUrl":"https://www.youtube.com/embed/cpp69ghR1IM?autoplay=1&start=0&enablejsapi=1&playsinline=1"},"musicUrl":"https://www.youtube.com/embed/cpp69ghR1IM?autoplay=1&start=0&enablejsapi=1&playsinline=1","embedUrl":"https://www.youtube.com/embed/cpp69ghR1IM?autoplay=1&start=0&enablejsapi=1&playsinline=1","musicQueue":[{"id":"cmtrkct2n004rnz07c3sastbm","videoId":"dQw4w9WgXcQ","title":"Test Song","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:17:54.479Z"},{"id":"cmtrkct6q004ynz076f0tg0qo","videoId":"dQw4w9WgXcQ","title":"Test Song","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:17:54.627Z"},{"id":"cmtrkez2t0073nz072yd4lb0s","videoId":"dQw4w9WgXcQ","title":"Probe","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:19:35.573Z"},{"id":"cmtrkezbe007anz07h1rmspc3","videoId":"dQw4w9WgXcQ","title":"Test Song","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:19:35.882Z"},{"id":"cmtrkezez007hnz07qs94j3ru","videoId":"dQw4w9WgXcQ","title":"Test Song","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:19:36.011Z"},{"id":"cmtrkrzc600bqnz07kj320hr1","videoId":"dQw4w9WgXcQ","title":"Probe","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:29:42.425Z"},{"id":"cmtrkrzjw00bxnz07p2b8guij","videoId":"dQw4w9WgXcQ","title":"Test Song","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:29:42.717Z"},{"id":"cmtrkrzna00c4nz07cd2bd1gm","videoId":"dQw4w9WgXcQ","title":"Test Song","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:29:42.838Z"}],"queue":[{"id":"cmtrkct2n004rnz07c3sastbm","videoId":"dQw4w9WgXcQ","title":"Test Song","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:17:54.479Z"},{"id":"cmtrkct6q004ynz076f0tg0qo","videoId":"dQw4w9WgXcQ","title":"Test Song","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:17:54.627Z"},{"id":"cmtrkez2t0073nz072yd4lb0s","videoId":"dQw4w9WgXcQ","title":"Probe","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:19:35.573Z"},{"id":"cmtrkezbe007anz07h1rmspc3","videoId":"dQw4w9WgXcQ","title":"Test Song","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:19:35.882Z"},{"id":"cmtrkezez007hnz07qs94j3ru","videoId":"dQw4w9WgXcQ","title":"Test Song","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:19:36.011Z"},{"id":"cmtrkrzc600bqnz07kj320hr1","videoId":"dQw4w9WgXcQ","title":"Probe","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:29:42.425Z"},{"id":"cmtrkrzjw00bxnz07p2b8guij","videoId":"dQw4w9WgXcQ","title":"Test Song","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:29:42.717Z"},{"id":"cmtrkrzna00c4nz07cd2bd1gm","videoId":"dQw4w9WgXcQ","title":"Test Song","dedication":"","note":"","duration":"","requestType":"audio","isPaid":true,"userId":"cmsyoxjh80066mo08fo7nv5o6","userName":"Cursor Test","createdAt":"2026-09-07T18:29:42.838Z"}],"queueLength":8}
 
-data: {"type":"presence","users":[{"id":"cmsyoxjh80066mo08fo7nv5o6","name":"Cursor Test","image":null,"nickname":"Cursor Test","lastSeen":"2026-09-07T18:20:02.043Z","seatIndex":2,"micOn":false,"chatRole":null,"roleSymbol":null,"roleLevel":0,"isAdmin":false}],"onlineCount":1,"totalCount":1}
+data: {"type":"presence","users":[{"id":"cmsyoxjh80066mo08fo7nv5o6","name":"Cursor Test","image":null,"nickname":"Cursor Test","lastSeen":"2026-09-07T18:30:09.060Z","seatIndex":2,"micOn":false,"chatRole":null,"roleSymbol":null,"roleLevel":0,"isAdmin":false}],"onlineCount":1,"totalCount":1}
 ```
 
 ---
