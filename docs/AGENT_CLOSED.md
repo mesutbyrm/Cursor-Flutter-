@@ -27,6 +27,7 @@ Mobil kod, CI release gate ve otomatik API doğrulama **tamamlandı**. Agent yal
 
 | # | İş | Komut |
 |---|-----|--------|
+| 0 | Canlı durum (jeton + falcı) | `bash scripts/print-p0-live-status.sh` |
 | 1 | Pre-device doğrulama | `bash scripts/validate-pre-device-handoff.sh` |
 | 2 | Psychic P0 (2 telefon) | `bash scripts/user-test-start.sh p0` |
 | 3 | P1 platform | `bash scripts/on-p0-pass.sh` |

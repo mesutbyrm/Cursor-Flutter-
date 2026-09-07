@@ -19,6 +19,7 @@ https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlif
 ## Komut sırası
 
 ```bash
+bash scripts/print-p0-live-status.sh         # 0 · jeton + falcı (hızlı)
 bash scripts/user-test-start.sh              # menü
 bash scripts/validate-pre-device-handoff.sh  # 1 · API doğrulama
 bash scripts/user-test-start.sh p0           # 2 · Psychic P0 (2 telefon)
