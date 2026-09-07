@@ -5,7 +5,7 @@
 
 **Sürüm:** `1.0.371+409` · **Son release gate:** [FINAL PASS](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34146919509)
 
-**Teknik bilgi gerekmez.** Tek giriş: `bash scripts/user-test-start.sh` · Psychic TRTC (2 telefon): [`PSYCHIC_P0_START.md`](PSYCHIC_P0_START.md)
+**Teknik bilgi gerekmez.** Hızlı özet: [`USER_TEST_QUICK_REF.md`](USER_TEST_QUICK_REF.md) · Menü: `bash scripts/user-test-start.sh`
 
 ---
 
@@ -37,17 +37,29 @@ Detay: [`PSYCHIC_TELLER_STATUS.md`](PSYCHIC_TELLER_STATUS.md)
 
 Canlı falcı görüntülü görüşme — **T+5 saniyede donma olmamalı**.
 
-1. APK'yı **iki telefona** yükleyin (danışan + falcı hesapları).
-2. Terminalde checklist: `bash scripts/psychic-p0-checklist.sh`
-3. Detay: [`LIVE_PSYCHICS_REMAINING.md`](LIVE_PSYCHICS_REMAINING.md)
+```bash
+bash scripts/validate-pre-device-handoff.sh   # önce API doğrulama
+bash scripts/user-test-start.sh p0              # P0 akışı + checklist
+bash scripts/on-p0-pass.sh                    # PASS kaydı → P1
+```
 
-Sonuç: **Psychic P0 PASS** veya **FAIL** yazın.
+1. APK'yı **iki telefona** yükleyin (danışan + **onaylı falcı**).
+2. Kritik: **T+5s** donma olmamalı.
+
+FAIL: `bash scripts/on-p0-fail.sh "hangi adım"`
+
+Detay: [`PSYCHIC_P0_START.md`](PSYCHIC_P0_START.md) · [`LIVE_PSYCHICS_REMAINING.md`](LIVE_PSYCHICS_REMAINING.md)
 
 ---
 
-## Adım 4 — Diğer telefon testleri (sonra)
+## Adım 4 — Platform testleri (P0 PASS sonrası)
 
-Sesli oda, müzik, PK vb. — [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md) P1 bölümü.
+```bash
+bash scripts/on-p1-pass.sh                      # P1 PASS kaydı
+bash scripts/on-release-ready-candidate.sh      # RELEASE adayı
+```
+
+Sesli oda, müzik, PK vb. — [`P1_DEVICE_START.md`](P1_DEVICE_START.md) · [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md)
 
 ---
 
@@ -58,7 +70,7 @@ Sesli oda, müzik, PK vb. — [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md) P1 
 | Kullanıcı A | `cursor.test.1786235468@mailinator.com` | `CursorTest!1786235468` |
 | Host (yayıncı) | `cursor.host.1786235468@mailinator.com` | `CursorTest!1786235468` |
 
-Jeton: danışan hesabında **Psychic seans için yeterli jeton** gerekir (probe: `bash scripts/psychic-p0-prereqs.sh`). Jeton 0 ise admin panel — `bash scripts/admin-jeton-cheatsheet.sh`
+Jeton: danışan **~100k** ✅ (`bash scripts/psychic-p0-prereqs.sh`)
 
 ---
 
@@ -74,8 +86,8 @@ Jeton: danışan hesabında **Psychic seans için yeterli jeton** gerekir (probe
 | TRTC token (sunucu) | ✅ Otomatik geçti | — |
 | Gift SSE olayı | ✅ Otomatik geçti | — |
 | **Canlı yayın açma** | ✅ Otomatik geçti | Host onaylandı |
-| **Psychic TRTC 1:1 (T+5s)** | ⏳ **Sizin testiniz** | 2 telefon — `psychic-p0-checklist.sh` |
-| Ses / kamera / sesli oda | ⏳ Sonra | [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md) |
+| **Psychic TRTC 1:1 (T+5s)** | ⏳ **Sizin testiniz** | `user-test-start.sh p0` |
+| Ses / kamera / sesli oda (P1) | ⏳ P0 sonrası | `on-p0-pass.sh` → P1 |
 
 ---
 
@@ -96,4 +108,4 @@ Admin ile otomatik host onayı için:
 
 Detaylı teknik rapor: `docs/STAGE5_REAL_E2E_ACCEPTANCE_REPORT.md`
 
-**Özet:** API testleri (giriş, jeton, hediye, müzik, canlı yayın oluşturma, PK, TRTC token) **geçti**. Telefon/ses testi bilgisayarınız olduğunda yapılır.
+**Özet:** API testleri geçti. Agent **kapalı** — sırada 2 telefon Psychic P0 → P1. [`AGENT_CLOSED.md`](AGENT_CLOSED.md)

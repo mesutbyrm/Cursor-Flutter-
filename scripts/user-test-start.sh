@@ -91,6 +91,9 @@ case "${1:-}" in
     shift
     exec bash "$ROOT/scripts/record-user-test-result.sh" "$@"
     ;;
+  quick|ref)
+    exec bash "$ROOT/scripts/print-user-test-quick-ref.sh"
+    ;;
   release-ready|ready)
     exec bash "$ROOT/scripts/on-release-ready-candidate.sh"
     ;;
