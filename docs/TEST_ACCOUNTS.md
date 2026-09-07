@@ -25,7 +25,7 @@ Kaynak: `docs/ACCEPTANCE_TESTS.md`
 | `ACCEPTANCE_ADMIN_EMAIL` | Admin (`TEST_ADMIN`) | — (secret zorunlu) |
 | `ACCEPTANCE_ADMIN_PASSWORD` | Admin şifresi | — |
 | `ACCEPTANCE_VIEWER_*` | İzleyici / hediye testi | Opsiyonel |
-| `ACCEPTANCE_TELLER_*` | Falcı (`TEST_FORTUNE_TELLER`) | Opsiyonel |
+| `ACCEPTANCE_TELLER_*` | Falcı (`TEST_FORTUNE_TELLER`) | Yoksa **host hesabı** kullanılır (API gate 3) |
 
 Kurulum:
 

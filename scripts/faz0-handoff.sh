@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 # FAZ 0 agent → kullanıcı devir teslimi (jeton + M5 cihaz).
+# Güncel release handoff: bash scripts/user-handoff.sh
 # Kullanım: bash scripts/faz0-handoff.sh [--verify]
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+echo "ℹ️  Güncel release (Psychic P0): bash scripts/user-handoff.sh"
+echo ""
 if [[ "${1:-}" == "--verify" ]]; then
   echo "── Tam otomatik doğrulama (faz0-verify) ──"
   bash "$ROOT/scripts/faz0-verify.sh"

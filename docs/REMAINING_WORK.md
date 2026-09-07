@@ -78,6 +78,13 @@ A1–A8 `[x]` | A9 `[ ]` M5 PASS
 
 ---
 
+## Oturum günlüğü (2026-09-07 devam 5)
+
+- `psychic-p0-prereqs.sh`: APK HTTP, giriş, jeton uyarısı
+- API gate 3: falcı secret yoksa host fallback (`defaults.sh`)
+- KULLANICI_TEST: jeton ~5000 → gerçek probe (jeton 0 uyarısı)
+- `faz0-handoff.sh` → `user-handoff.sh` yönlendirmesi
+
 ## Oturum günlüğü (2026-09-07 devam 4)
 
 - README: eski `1.0.93+95` → `1.0.371+409`; kullanıcı test bölümü

@@ -49,7 +49,7 @@ Sesli oda, müzik, PK vb. — [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md) P1 
 | Kullanıcı A | `cursor.test.1786235468@mailinator.com` | `CursorTest!1786235468` |
 | Host (yayıncı) | `cursor.host.1786235468@mailinator.com` | `CursorTest!1786235468` |
 
-Jeton: her hesapta **~5000** (hediye ve müzik testleri için).
+Jeton: danışan hesabında **Psychic seans için yeterli jeton** gerekir (probe: `bash scripts/psychic-p0-prereqs.sh`). Jeton 0 ise admin panel — `bash scripts/admin-jeton-cheatsheet.sh`
 
 ---
 

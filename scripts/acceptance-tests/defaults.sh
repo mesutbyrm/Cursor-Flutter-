@@ -31,3 +31,16 @@ apply_acceptance_credential_defaults() {
   VIEWER_EMAIL="$(_acceptance_or_default "${VIEWER_EMAIL:-}" "${ACCEPTANCE_VIEWER_EMAIL:-}" "$USER_EMAIL")"
   VIEWER_PASSWORD="$(_acceptance_or_default "${VIEWER_PASSWORD:-}" "${ACCEPTANCE_VIEWER_PASSWORD:-}" "$USER_PASSWORD")"
 }
+
+# Falcı secret yoksa onaylı host hesabı (KULLANICI_TEST_KILAVUZU — canlı yayın onaylı).
+apply_acceptance_teller_fallback() {
+  local host_email="${1:-}" host_pass="${2:-}"
+  local teller_email="${3:-}" teller_user="${4:-}" teller_pass="${5:-}"
+  if [[ -n "${ACCEPTANCE_TELLER_EMAIL:-}" || -n "${ACCEPTANCE_TELLER_USERNAME:-}" ]]; then
+    return 0
+  fi
+  if [[ -z "$teller_email" && -z "$teller_user" && -n "$host_email" && -n "$host_pass" ]]; then
+    TELLER_EMAIL="$host_email"
+    TELLER_PASSWORD="$host_pass"
+  fi
+}

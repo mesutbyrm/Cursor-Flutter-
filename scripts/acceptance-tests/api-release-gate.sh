@@ -36,6 +36,10 @@ done
 
 apply_acceptance_credential_defaults
 
+if [[ -z "$TELLER_EMAIL" && -z "$TELLER_USERNAME" ]]; then
+  apply_acceptance_teller_fallback "$HOST_EMAIL" "$HOST_PASSWORD" "$TELLER_EMAIL" "$TELLER_USERNAME" "$TELLER_PASSWORD"
+fi
+
 USER_TOKEN=""
 HOST_TOKEN=""
 VIEWER_TOKEN=""
@@ -298,8 +302,8 @@ gate_03_jeton_block_skip() {
 }
 
 gate_03_psychic_video() {
-  if ! acceptance_teller_secrets_configured; then
-    record 3 "Canlı falcı görüntülü görüşme" SKIP "ACCEPTANCE_TELLER_* yok"
+  if [[ -z "$TELLER_EMAIL" && -z "$TELLER_USERNAME" ]] || [[ -z "$TELLER_PASSWORD" ]]; then
+    record 3 "Canlı falcı görüntülü görüşme" SKIP "falcı kimlik bilgisi yok (ACCEPTANCE_TELLER_* veya host)"
     return
   fi
   skip_unless_user_token 3 "Canlı falcı görüntülü görüşme" || return 0

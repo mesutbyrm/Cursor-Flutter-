@@ -29,6 +29,7 @@ Agent işi bitti; release için **2 telefon** Psychic TRTC testi gerekir:
 
 ```bash
 bash scripts/user-handoff.sh              # Özet + hesaplar + APK
+bash scripts/psychic-p0-prereqs.sh          # APK + giriş + jeton uyarısı
 bash scripts/psychic-p0-checklist.sh      # T+5s donma tablosu
 bash scripts/print-live-psychics-e2e-checklist.sh  # Tam E2E (P0 sonrası)
 ```
