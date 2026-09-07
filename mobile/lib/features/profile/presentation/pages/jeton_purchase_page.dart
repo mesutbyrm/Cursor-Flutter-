@@ -4,6 +4,7 @@ import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/economy/presentation/widgets/topup_bonus_info_banner.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
 import '../premium_2026/profile_membership_helpers.dart';
@@ -46,7 +47,12 @@ class JetonPurchasePage extends ConsumerWidget {
                         ResponsiveConstrained(
                           child: Padding(
                             padding: ResponsiveLayout.pagePadding(context),
-                            child: _JetonStoreHeader(onBack: () => context.pop()),
+                            child: Column(
+                              children: [
+                                _JetonStoreHeader(onBack: () => context.pop()),
+                                const TopupBonusInfoBanner(),
+                              ],
+                            ),
                           ),
                         ),
                         const JetonPremiumPurchaseView(),

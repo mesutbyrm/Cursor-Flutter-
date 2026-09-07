@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:canlifal_social/core/economy/domain/economy_payment_models.dart';
 import 'package:canlifal_social/core/network/api_endpoints.dart';
+import 'package:canlifal_social/features/bana_ozel/data/datasources/bana_ozel_remote_datasource.dart';
 import 'package:canlifal_social/features/bana_ozel/domain/entities/bana_ozel_entities.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';

@@ -70,6 +70,7 @@ class WalletCenterPage extends ConsumerWidget {
           onRefresh: () async {
             await ref.read(walletBalancesProvider.notifier).refresh(force: true);
             ref.invalidate(economyWalletProvider);
+            ref.invalidate(unifiedEconomyWalletProvider);
           },
           body: wallet.isLoading && cached == null
               ? const Center(child: DiscoverAccentLoader())

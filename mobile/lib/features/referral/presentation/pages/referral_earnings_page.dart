@@ -7,6 +7,7 @@ import '../../../../core/economy/presentation/widgets/currency_amount_label.dart
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glow_panel.dart';
+import '../widgets/agency_invite_earnings_section.dart';
 import '../providers/referral_providers.dart';
 
 /// Kazançlarım — tüm tutarlar backend'den.
@@ -32,15 +33,18 @@ class ReferralEarningsPage extends ConsumerWidget {
           ref.invalidate(referralEarningsProvider);
           ref.invalidate(referralLedgerProvider);
           ref.invalidate(referralEconomyProvider);
+          ref.invalidate(agencyInviteEarningsProvider);
           await Future.wait([
             ref.read(referralEarningsProvider.future),
             ref.read(referralLedgerProvider.future),
             ref.read(referralEconomyProvider.future),
+            ref.read(agencyInviteEarningsProvider.future),
           ]);
         },
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            const AgencyInviteEarningsSection(),
             earnings.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Text(ApiException.userMessage(e)),

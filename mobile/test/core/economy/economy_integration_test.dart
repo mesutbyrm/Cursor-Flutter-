@@ -116,6 +116,7 @@ void main() {
       expect(ApiEndpoints.referralEarnings, '/api/referral/earnings');
       expect(ApiEndpoints.gameSosCreate, '/api/games/sos/create');
       expect(ApiEndpoints.banaOzelOpen, '/api/bana-ozel/open');
+      expect(ApiEndpoints.gameSosEconomy, '/api/games/sos');
     });
   });
 }

@@ -56,6 +56,12 @@ final economyWalletProvider =
   );
 });
 
+/// Yalnızca `GET /api/user/wallet` — fallback yok; UI ekleri için.
+final unifiedEconomyWalletProvider =
+    FutureProvider<EconomyWalletSnapshot?>((ref) async {
+  return ref.watch(economyWalletRemoteProvider).fetchWallet();
+});
+
 /// Yeni referral ucu — başarısızsa null (mevcut referral akışı korunur).
 final referralEconomyProvider =
     FutureProvider<ReferralEconomySnapshot?>((ref) async {

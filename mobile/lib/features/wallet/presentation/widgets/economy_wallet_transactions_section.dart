@@ -12,8 +12,8 @@ class EconomyWalletTransactionsSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final economy = ref.watch(economyWalletProvider);
-    return economy.when(
+    final unified = ref.watch(unifiedEconomyWalletProvider);
+    return unified.when(
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
       data: (snapshot) {
