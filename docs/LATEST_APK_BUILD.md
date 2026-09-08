@@ -4,20 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.396+434` |
-| Tarih (UTC) | 2026-09-08 18:48 |
-| Commit | [`ffc98ba6a1cefb54683f3ca7f4fbbe74802d21e7`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/ffc98ba6a1cefb54683f3ca7f4fbbe74802d21e7) |
-| İş akışı | [Run 34263473387](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34263473387) |
+| Sürüm | `1.0.397+435` |
+| Tarih (UTC) | 2026-09-08 19:18 |
+| Commit | [`ec4eae0d1892e318c7b2a5af45a73f5734011985`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/ec4eae0d1892e318c7b2a5af45a73f5734011985) |
+| İş akışı | [Run 34266039513](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34266039513) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.396+434 (2026-09-08) — Site Animation: CDN admin + Rive/SVGA fallback
+## 1.0.398+436 (2026-09-08) — Site Animation: SSE ses/cooldown + CDN rehber
 
-- Admin editör: CDN asset/önizleme/ses doldur chip'leri + ses önizle
-- Admin önizleme: ses test butonu
-- `SiteAnimationMedia`: Rive/SVGA → native kart fallback
-- CDN ses path + `.riv` prefetch; `docs/SITE_ANIMATION_CDN.md`
+- API SSE `animation`: `soundUrl` + `cooldownMs` zenginleştirme
+- Parser/resolver: SSE metadata + katalog birleştirme (ses, cooldown)
+- Admin önizleme sahnesi: ses otomatik oynatma
+- Admin hub: CDN yükleme rehberi diyalogu (production/preview/sounds)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
