@@ -149,6 +149,12 @@ class AdminDashboardPage extends ConsumerWidget {
                           icon: Icons.pending_actions_rounded,
                           highlight: pending > 0,
                         ),
+                        _StatTile(
+                          label: 'Okunmamış bildirim',
+                          value: stats.unreadNotifications,
+                          icon: Icons.notifications_rounded,
+                          highlight: stats.unreadNotifications > 0,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 22),
@@ -193,6 +199,12 @@ class AdminDashboardPage extends ConsumerWidget {
                           icon: Icons.meeting_room_rounded,
                           label: 'Sesli odalar',
                           onTap: () => context.push('/admin/voice-rooms'),
+                        ),
+                      if (access.canManagePayments || access.canManageVoiceRooms)
+                        _AdminAction(
+                          icon: Icons.receipt_long_rounded,
+                          label: 'Oda finans denetimi',
+                          onTap: () => context.push('/admin/voice-finance'),
                         ),
                       if (access.canManageLiveStreams)
                         _AdminAction(

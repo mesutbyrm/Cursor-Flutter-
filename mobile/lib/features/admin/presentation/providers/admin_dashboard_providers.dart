@@ -1,8 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/admin_remote_datasource.dart';
 import 'admin_panel_providers.dart';
 import 'admin_providers.dart';
 import 'staff_access_provider.dart';
+import '../../../live/presentation/providers/live_streams_list_notifier.dart';
+import '../../../live/presentation/providers/voice_rooms_list_notifier.dart';
 
 /// Admin dashboard — site geneli özet istatistikler.
 final adminDashboardStatsProvider =
@@ -17,6 +20,7 @@ final adminDashboardStatsProvider =
   List<Map<String, dynamic>> activities = const [];
   var pendingPayments = 0;
   var pendingWithdrawals = 0;
+  var unreadNotifications = 0;
 
   try {
     stats = await remote.fetchDashboardStats();
@@ -31,13 +35,51 @@ final adminDashboardStatsProvider =
   try {
     pendingWithdrawals = await remote.pendingWithdrawalsCount();
   } catch (_) {}
+  try {
+    final notifs = await ref.read(adminPaymentNotificationsProvider.future);
+    unreadNotifications =
+        notifs.where((n) => n['read'] != true).length;
+  } catch (_) {}
 
-  return AdminDashboardStats.fromMaps(
+  var base = AdminDashboardStats.fromMaps(
     stats: stats,
     activities: activities,
     pendingPayments: pendingPayments,
     pendingWithdrawals: pendingWithdrawals,
+    unreadNotifications: unreadNotifications,
   );
+
+  var activeVoiceRooms = base.activeVoiceRooms;
+  if (activeVoiceRooms <= 0) {
+    try {
+      final rooms = await ref.read(voiceRoomsListNotifierProvider.future);
+      activeVoiceRooms = rooms.length;
+    } catch (_) {}
+  }
+
+  var activeLiveStreams = base.activeLiveStreams;
+  if (activeLiveStreams <= 0) {
+    try {
+      final streams = await ref.read(liveStreamsListNotifierProvider.future);
+      activeLiveStreams = streams.where((s) => s.isLive).length;
+    } catch (_) {}
+  }
+
+  return base.copyWith(
+    activeVoiceRooms: activeVoiceRooms,
+    activeLiveStreams: activeLiveStreams,
+    unreadNotifications: unreadNotifications,
+  );
+});
+
+/// Sesli oda finans denetim kayıtları.
+final adminVoiceRoomFinanceAuditProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  final access = ref.watch(staffAccessProvider);
+  if (!access.canManagePayments && !access.canManageVoiceRooms) {
+    return const [];
+  }
+  return ref.watch(adminRemoteProvider).fetchVoiceRoomFinanceAudit();
 });
 
 class AdminDashboardStats {
@@ -65,11 +107,39 @@ class AdminDashboardStats {
   final int pendingWithdrawals;
   final int unreadNotifications;
 
+  AdminDashboardStats copyWith({
+    int? totalUsers,
+    int? activeUsers,
+    int? onlineUsers,
+    int? totalJeton,
+    int? totalCfc,
+    int? activeVoiceRooms,
+    int? activeLiveStreams,
+    int? pendingPayments,
+    int? pendingWithdrawals,
+    int? unreadNotifications,
+  }) {
+    return AdminDashboardStats(
+      totalUsers: totalUsers ?? this.totalUsers,
+      activeUsers: activeUsers ?? this.activeUsers,
+      onlineUsers: onlineUsers ?? this.onlineUsers,
+      totalJeton: totalJeton ?? this.totalJeton,
+      totalCfc: totalCfc ?? this.totalCfc,
+      activeVoiceRooms: activeVoiceRooms ?? this.activeVoiceRooms,
+      activeLiveStreams: activeLiveStreams ?? this.activeLiveStreams,
+      pendingPayments: pendingPayments ?? this.pendingPayments,
+      pendingWithdrawals: pendingWithdrawals ?? this.pendingWithdrawals,
+      unreadNotifications:
+          unreadNotifications ?? this.unreadNotifications,
+    );
+  }
+
   factory AdminDashboardStats.fromMaps({
     required Map<String, dynamic> stats,
     required List<Map<String, dynamic>> activities,
     required int pendingPayments,
     required int pendingWithdrawals,
+    int unreadNotifications = 0,
   }) {
     int read(Map<String, dynamic> m, List<String> keys) {
       for (final k in keys) {
@@ -127,6 +197,7 @@ class AdminDashboardStats {
       ]),
       pendingPayments: pendingPayments,
       pendingWithdrawals: pendingWithdrawals,
+      unreadNotifications: unreadNotifications,
     );
   }
 }

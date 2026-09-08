@@ -125,7 +125,7 @@ class _ProfileRealtimeSyncState extends ConsumerState<ProfileRealtimeSync> {
   @override
   void initState() {
     super.initState();
-    _pollTimer = Timer.periodic(const Duration(seconds: 120), (_) {
+    _pollTimer = Timer.periodic(const Duration(seconds: 60), (_) {
       if (!mounted) return;
       _softRefresh();
     });
@@ -139,6 +139,8 @@ class _ProfileRealtimeSyncState extends ConsumerState<ProfileRealtimeSync> {
 
   void _softRefresh() {
     ref.read(walletBalancesProvider.notifier).refresh(force: false);
+    ref.invalidate(profileStatsProvider);
+    ref.invalidate(userLevelProvider);
   }
 
   @override

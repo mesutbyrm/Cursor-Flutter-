@@ -318,6 +318,25 @@ class AdminRemoteDataSource {
     }
   }
 
+  /// Sesli oda finans denetimi — `GET /api/admin/voice-room-finance-audit`.
+  Future<List<Map<String, dynamic>>> fetchVoiceRoomFinanceAudit({
+    int limit = 100,
+  }) async {
+    try {
+      final res = await _adminTimeout(
+        _dio.safeGet<dynamic>(
+          ApiEndpoints.adminVoiceRoomFinanceAudit,
+          query: {'limit': '$limit'},
+          forceRefresh: true,
+        ),
+      );
+      return _flattenList(res.data, listKey: 'audits');
+    } on ApiException catch (e) {
+      if (e.statusCode == 403 || e.statusCode == 404) return const [];
+      rethrow;
+    }
+  }
+
   Map<String, dynamic> _unwrapMap(dynamic data) {
     if (data is Map && data['success'] == true && data['data'] is Map) {
       return asJsonMap(data['data']);

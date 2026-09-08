@@ -9,6 +9,7 @@ import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../domain/entities/profile_extended_entity.dart';
 import '../premium_2026/profile_membership_helpers.dart';
+import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../premium_2026/profile_screen_state.dart';
 import '../premium_2026/profile_theme.dart';
 import '../providers/profile_hub_providers.dart';
@@ -53,6 +54,7 @@ class ProfileHubHeader extends ConsumerWidget {
     final siteFrame = ref.watch(resolvedSiteAnimationProfileFrameProvider);
     final siteAvatarFx = ref.watch(resolvedSiteAnimationAvatarEffectProvider);
     final useProfileStagger = siteFrame != null || siteAvatarFx != null;
+    final staff = ref.watch(staffAccessProvider);
 
     final avatarBlock = _AvatarBlock(
       user: user,
@@ -117,6 +119,10 @@ class ProfileHubHeader extends ConsumerWidget {
           zodiac: ext.zodiacSign,
           team: ext.favoriteTeam ?? state.wallet?.favoriteTeam,
         ),
+        if (staff.isStaffMember) ...[
+          const SizedBox(height: 6),
+          _StaffRoleChip(label: staff.roleLabel),
+        ],
       ],
     );
 
@@ -368,6 +374,34 @@ class _AvatarBlock extends ConsumerWidget {
                 size: 92,
               ),
             ),
+          Positioned(
+            left: -2,
+            top: -2,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    ProfilePremiumTheme.neonPurple,
+                    ProfilePremiumTheme.neonPink,
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: ProfilePremiumTheme.deepBg,
+                  width: 1.5,
+                ),
+              ),
+              child: Text(
+                'Lv.$level',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ),
           if (isOnline)
             Positioned(
               right: 4,
@@ -611,6 +645,41 @@ class _ActionBtn extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _StaffRoleChip extends StatelessWidget {
+  const _StaffRoleChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: const Color(0xFF25F4EE).withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFF25F4EE).withValues(alpha: 0.45),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.verified_user_rounded, size: 12, color: Color(0xFF25F4EE)),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF25F4EE),
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
       ),
     );
   }

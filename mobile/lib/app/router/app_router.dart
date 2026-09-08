@@ -42,6 +42,7 @@ import '../../features/admin/presentation/pages/admin_hub_page.dart';
 import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
 import '../../features/admin/presentation/pages/admin_live_streams_page.dart';
 import '../../features/admin/presentation/pages/admin_voice_rooms_page.dart';
+import '../../features/admin/presentation/pages/admin_voice_room_finance_page.dart';
 import '../../features/admin/presentation/pages/admin_sub_pages.dart';
 import '../../features/admin_web/presentation/pages/admin_web_panel_page.dart';
 import '../../features/fortune/presentation/pages/fortune_tarot_hub_page.dart';
@@ -633,6 +634,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin/voice-rooms',
         builder: (context, state) => const AdminVoiceRoomsPage(),
+      ),
+      GoRoute(
+        path: '/admin/voice-finance',
+        builder: (context, state) => const AdminVoiceRoomFinancePage(),
       ),
       GoRoute(
         path: '/admin/panel',
