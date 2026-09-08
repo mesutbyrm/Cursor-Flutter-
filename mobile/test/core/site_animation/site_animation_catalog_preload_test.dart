@@ -4,6 +4,8 @@ import 'package:canlifal_social/core/site_animation/domain/site_animation_tier.d
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   test('warm completes for empty snapshot', () async {
     await SiteAnimationCatalogPreload.warm(const SiteAnimationCatalogSnapshot());
   });
