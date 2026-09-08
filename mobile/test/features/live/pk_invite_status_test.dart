@@ -54,4 +54,10 @@ void main() {
       isTrue,
     );
   });
+
+  test('broadcast invite gate accepts invited status', () {
+    expect(isPkInvitePendingStatus('invited'), isTrue);
+    expect(isPkInvitePendingStatus('pending'), isTrue);
+    expect(isPkInvitePendingStatus('active'), isFalse);
+  });
 }
