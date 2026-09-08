@@ -1,5 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import type { SiteAnimation } from "@prisma/client";
+import { prisma } from "./prisma";
+import { SITE_ANIMATION_DEFAULTS, SITE_ANIMATION_SEED } from "./siteAnimationSeed";
 
 export type SiteAnimationRecord = {
   id: string;
@@ -30,73 +33,49 @@ type StoreFile = {
 
 const STORE_PATH = path.join(process.cwd(), "data", "site_animations.json");
 
-const SEED: SiteAnimationRecord[] = [
-  {
-    id: "anim_entrance_normal",
-    name: "Normal Giriş — Hoş geldin",
-    category: "entrance",
-    membership: "normal",
-    animationType: "native",
-    durationMs: 2500,
-    priority: 50,
-    rarity: "common",
-    context: "voice_room",
-    anchor: "TOP_LEFT",
-    scale: 1,
-    cooldownMs: 0,
-    isActive: true,
-    description: "Mavi halka, sade banner — 2.5 sn",
-  },
-  {
-    id: "anim_entrance_gold_crown",
-    name: "Golden Crown — Gold Üye Girişi",
-    category: "entrance",
-    membership: "gold",
-    animationType: "native",
-    durationMs: 3000,
-    priority: 70,
-    rarity: "common",
-    context: "voice_room",
-    anchor: "TOP_LEFT",
-    scale: 1,
-    cooldownMs: 0,
-    isActive: true,
-    description: "Altın taç + glow + VIP rozeti",
-    previewMp4Key: "gold_uye_girisi.mp4",
-  },
-  {
-    id: "anim_entrance_diamond_burst",
-    name: "Diamond Burst — Diamond Üye Girişi",
-    category: "entrance",
-    membership: "diamond",
-    animationType: "native",
-    durationMs: 4000,
-    priority: 90,
-    rarity: "epic",
-    context: "voice_room",
-    anchor: "TOP_LEFT",
-    scale: 1,
-    cooldownMs: 0,
-    isActive: true,
-    description: "Mavi kristal patlaması",
-    previewMp4Key: "diamond_uye_girisi.mp4",
-  },
-];
-
-const DEFAULT_DEFAULTS: Record<string, string> = {
-  normal: "anim_entrance_normal",
-  gold: "anim_entrance_gold_crown",
-  premium: "anim_entrance_premium_star",
-  diamond: "anim_entrance_diamond_burst",
-  vip: "anim_entrance_vip_galaxy",
-  svip: "anim_entrance_svip_emperor",
-  admin: "anim_entrance_admin_galaxy",
-  host: "anim_host_seat_crown",
-};
-
 let memory: StoreFile | null = null;
+let usePrisma: boolean | null = null;
 
-async function readStore(): Promise<StoreFile> {
+function dbEnabled() {
+  return Boolean(process.env.DATABASE_URL);
+}
+
+async function canUsePrisma(): Promise<boolean> {
+  if (!dbEnabled()) return false;
+  if (usePrisma != null) return usePrisma;
+  try {
+    await prisma.siteAnimation.count();
+    usePrisma = true;
+  } catch {
+    usePrisma = false;
+  }
+  return usePrisma;
+}
+
+function toRecord(row: SiteAnimation): SiteAnimationRecord {
+  return {
+    id: row.id,
+    name: row.name,
+    category: row.category,
+    membership: row.membership,
+    animationType: row.animationType,
+    assetUrl: row.assetUrl,
+    previewUrl: row.previewUrl,
+    soundUrl: row.soundUrl,
+    durationMs: row.durationMs,
+    priority: row.priority,
+    rarity: row.rarity,
+    context: row.context,
+    anchor: row.anchor,
+    scale: row.scale,
+    cooldownMs: row.cooldownMs,
+    isActive: row.isActive,
+    description: row.description,
+    previewMp4Key: row.previewMp4Key,
+  };
+}
+
+async function readJsonStore(): Promise<StoreFile> {
   if (memory) return memory;
   try {
     const raw = await fs.readFile(STORE_PATH, "utf8");
@@ -104,28 +83,41 @@ async function readStore(): Promise<StoreFile> {
     return memory;
   } catch {
     memory = {
-      animations: [...SEED],
-      defaults: { ...DEFAULT_DEFAULTS },
+      animations: [...SITE_ANIMATION_SEED],
+      defaults: { ...SITE_ANIMATION_DEFAULTS },
       assignments: {},
     };
-    await writeStore(memory);
+    await writeJsonStore(memory);
     return memory;
   }
 }
 
-async function writeStore(next: StoreFile): Promise<void> {
+async function writeJsonStore(next: StoreFile): Promise<void> {
   memory = next;
   await fs.mkdir(path.dirname(STORE_PATH), { recursive: true });
   await fs.writeFile(STORE_PATH, JSON.stringify(next, null, 2), "utf8");
 }
 
 export async function listSiteAnimations(): Promise<SiteAnimationRecord[]> {
-  const store = await readStore();
+  if (await canUsePrisma()) {
+    const rows = await prisma.siteAnimation.findMany({
+      orderBy: [{ priority: "desc" }, { name: "asc" }],
+    });
+    return rows.map(toRecord);
+  }
+  const store = await readJsonStore();
   return store.animations;
 }
 
 export async function listActiveSiteAnimations(): Promise<SiteAnimationRecord[]> {
-  const store = await readStore();
+  if (await canUsePrisma()) {
+    const rows = await prisma.siteAnimation.findMany({
+      where: { isActive: true },
+      orderBy: [{ priority: "desc" }, { name: "asc" }],
+    });
+    return rows.map(toRecord);
+  }
+  const store = await readJsonStore();
   return store.animations.filter((a) => a.isActive);
 }
 
@@ -149,7 +141,6 @@ export async function getSiteAnimationStats() {
 export async function createSiteAnimation(
   body: Partial<SiteAnimationRecord>,
 ): Promise<SiteAnimationRecord> {
-  const store = await readStore();
   const id = body.id?.trim() || `anim_${Date.now()}`;
   const item: SiteAnimationRecord = {
     id,
@@ -171,8 +162,36 @@ export async function createSiteAnimation(
     description: body.description ?? null,
     previewMp4Key: body.previewMp4Key ?? null,
   };
+
+  if (await canUsePrisma()) {
+    const row = await prisma.siteAnimation.create({
+      data: {
+        id: item.id,
+        name: item.name,
+        category: item.category,
+        membership: item.membership,
+        animationType: item.animationType,
+        assetUrl: item.assetUrl,
+        previewUrl: item.previewUrl,
+        soundUrl: item.soundUrl,
+        durationMs: item.durationMs,
+        priority: item.priority,
+        rarity: item.rarity,
+        context: item.context,
+        anchor: item.anchor,
+        scale: item.scale,
+        cooldownMs: item.cooldownMs,
+        isActive: item.isActive,
+        description: item.description,
+        previewMp4Key: item.previewMp4Key,
+      },
+    });
+    return toRecord(row);
+  }
+
+  const store = await readJsonStore();
   store.animations.push(item);
-  await writeStore(store);
+  await writeJsonStore(store);
   return item;
 }
 
@@ -180,30 +199,91 @@ export async function updateSiteAnimation(
   id: string,
   patch: Partial<SiteAnimationRecord>,
 ): Promise<SiteAnimationRecord | null> {
-  const store = await readStore();
+  if (await canUsePrisma()) {
+    try {
+      const row = await prisma.siteAnimation.update({
+        where: { id },
+        data: {
+          name: patch.name,
+          category: patch.category,
+          membership: patch.membership,
+          animationType: patch.animationType,
+          assetUrl: patch.assetUrl,
+          previewUrl: patch.previewUrl,
+          soundUrl: patch.soundUrl,
+          durationMs: patch.durationMs,
+          priority: patch.priority,
+          rarity: patch.rarity,
+          context: patch.context,
+          anchor: patch.anchor,
+          scale: patch.scale,
+          cooldownMs: patch.cooldownMs,
+          isActive: patch.isActive,
+          description: patch.description,
+          previewMp4Key: patch.previewMp4Key,
+        },
+      });
+      return toRecord(row);
+    } catch {
+      return null;
+    }
+  }
+
+  const store = await readJsonStore();
   const idx = store.animations.findIndex((a) => a.id === id);
   if (idx < 0) return null;
   store.animations[idx] = { ...store.animations[idx], ...patch, id };
-  await writeStore(store);
+  await writeJsonStore(store);
   return store.animations[idx];
 }
 
 export async function getSiteAnimationDefaults(): Promise<Record<string, string>> {
-  const store = await readStore();
+  if (await canUsePrisma()) {
+    const rows = await prisma.siteAnimationDefault.findMany();
+    const out: Record<string, string> = {};
+    for (const row of rows) out[row.membership] = row.animationId;
+    return Object.keys(out).length ? out : { ...SITE_ANIMATION_DEFAULTS };
+  }
+  const store = await readJsonStore();
   return store.defaults;
 }
 
 export async function saveSiteAnimationDefaults(
   defaults: Record<string, string>,
 ): Promise<Record<string, string>> {
-  const store = await readStore();
+  if (await canUsePrisma()) {
+    for (const [membership, animationId] of Object.entries(defaults)) {
+      if (!membership || !animationId) continue;
+      await prisma.siteAnimationDefault.upsert({
+        where: { membership },
+        create: { membership, animationId },
+        update: { animationId },
+      });
+    }
+    return getSiteAnimationDefaults();
+  }
+
+  const store = await readJsonStore();
   store.defaults = { ...store.defaults, ...defaults };
-  await writeStore(store);
+  await writeJsonStore(store);
   return store.defaults;
 }
 
 export async function getUserSiteAnimationAssignments(userId: string) {
-  const store = await readStore();
+  if (await canUsePrisma()) {
+    const rows = await prisma.siteAnimationUserAssignment.findMany({
+      where: { userId },
+    });
+    const out: Record<string, string | null> = {};
+    for (const row of rows) {
+      out[row.slot] = row.animationId;
+      if (row.expiresAt) {
+        out[`${row.slot}_expiresAt`] = row.expiresAt.toISOString();
+      }
+    }
+    return out;
+  }
+  const store = await readJsonStore();
   return store.assignments[userId] ?? {};
 }
 
@@ -213,12 +293,32 @@ export async function assignSiteAnimation(input: {
   animationId?: string | null;
   expiresAt?: string | null;
 }) {
-  const store = await readStore();
+  if (await canUsePrisma()) {
+    const expiresAt = input.expiresAt ? new Date(input.expiresAt) : null;
+    await prisma.siteAnimationUserAssignment.upsert({
+      where: {
+        userId_slot: { userId: input.userId, slot: input.slot },
+      },
+      create: {
+        userId: input.userId,
+        slot: input.slot,
+        animationId: input.animationId ?? null,
+        expiresAt,
+      },
+      update: {
+        animationId: input.animationId ?? null,
+        expiresAt,
+      },
+    });
+    return getUserSiteAnimationAssignments(input.userId);
+  }
+
+  const store = await readJsonStore();
   const user = { ...(store.assignments[input.userId] ?? {}) };
   user[input.slot] = input.animationId ?? null;
   if (input.expiresAt) user[`${input.slot}_expiresAt`] = input.expiresAt;
   store.assignments[input.userId] = user;
-  await writeStore(store);
+  await writeJsonStore(store);
   return user;
 }
 
@@ -239,9 +339,7 @@ export async function bulkAssignSiteAnimation(input: {
 }
 
 export async function activeCatalogPayload() {
-  const store = await readStore();
-  return {
-    animations: store.animations.filter((a) => a.isActive),
-    defaults: store.defaults,
-  };
+  const animations = await listActiveSiteAnimations();
+  const defaults = await getSiteAnimationDefaults();
+  return { animations, defaults };
 }

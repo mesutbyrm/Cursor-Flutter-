@@ -2,30 +2,45 @@ import '../domain/site_animation_asset.dart';
 import '../domain/site_animation_tier.dart';
 import '../domain/site_animation_type.dart';
 
-/// Tier / tür → asset eşlemesi. MP4 anahtarları preview; production native/Lottie fallback.
+/// Tier / tür → asset eşlemesi. MP4 anahtarları preview; production Lottie/native fallback.
 abstract final class SiteAnimationAssetRegistry {
-  static const _previewBase = 'site_animation_preview';
-
   static SiteAnimationAsset resolve({
     required SiteAnimationType type,
     required SiteAnimationTier tier,
     SiteAnimationAsset? backendAsset,
   }) {
-    if (backendAsset != null && backendAsset.isPlayable) {
-      return backendAsset;
+    final normalized = _normalizeBackendAsset(backendAsset);
+    if (normalized != null && normalized.isPlayable) {
+      return normalized;
     }
 
     final previewKey = _previewKey(type, tier);
     final bundle = _bundlePath(type, tier);
 
     return SiteAnimationAsset(
-      url: backendAsset?.url,
+      url: normalized?.url,
       bundlePath: bundle,
       kind: bundle != null
           ? SiteAnimationMediaKind.lottie
           : SiteAnimationMediaKind.native,
-      previewMp4Key: previewKey,
+      previewMp4Key: previewKey ?? normalized?.previewMp4Key,
     );
+  }
+
+  static SiteAnimationAsset? _normalizeBackendAsset(SiteAnimationAsset? asset) {
+    if (asset == null) return null;
+    final raw = asset.url?.trim();
+    if (raw == null || raw.isEmpty) {
+      return asset.hasBundle ? asset : null;
+    }
+    if (raw.startsWith('assets/')) {
+      return SiteAnimationAsset(
+        bundlePath: raw,
+        kind: SiteAnimationMediaKind.lottie,
+        previewMp4Key: asset.previewMp4Key,
+      );
+    }
+    return asset;
   }
 
   static String? _previewKey(SiteAnimationType type, SiteAnimationTier tier) {
@@ -51,20 +66,41 @@ abstract final class SiteAnimationAssetRegistry {
     if (type == SiteAnimationType.memberJoined ||
         type == SiteAnimationType.hostSeat) {
       return switch (tier) {
-        SiteAnimationTier.diamond ||
-        SiteAnimationTier.svip =>
+        SiteAnimationTier.diamond || SiteAnimationTier.svip =>
           'assets/gifts/lottie/crown.json',
         SiteAnimationTier.premium => 'assets/gifts/lottie/star.json',
         SiteAnimationTier.gold => 'assets/gifts/lottie/heart.json',
+        SiteAnimationTier.vip => 'assets/gifts/lottie/rose.json',
         SiteAnimationTier.admin => 'assets/gifts/lottie/car.json',
+        SiteAnimationTier.host => 'assets/gifts/lottie/crown.json',
+        _ => null,
+      };
+    }
+    if (type == SiteAnimationType.memberLeft) {
+      return switch (tier) {
+        SiteAnimationTier.gold => 'assets/gifts/lottie/heart.json',
+        SiteAnimationTier.premium => 'assets/gifts/lottie/star.json',
+        SiteAnimationTier.diamond || SiteAnimationTier.svip =>
+          'assets/gifts/lottie/crown.json',
+        SiteAnimationTier.vip => 'assets/gifts/lottie/rose.json',
         _ => null,
       };
     }
     if (type == SiteAnimationType.micEnabled) {
       return 'assets/gifts/lottie/star.json';
     }
-    if (type == SiteAnimationType.micDisabled) {
-      return null;
+    if (type == SiteAnimationType.seatRankGlow ||
+        type == SiteAnimationType.seatChanged) {
+      return switch (tier) {
+        SiteAnimationTier.gold => 'assets/gifts/lottie/heart.json',
+        SiteAnimationTier.premium => 'assets/gifts/lottie/star.json',
+        SiteAnimationTier.diamond || SiteAnimationTier.svip =>
+          'assets/gifts/lottie/crown.json',
+        SiteAnimationTier.vip => 'assets/gifts/lottie/rose.json',
+        SiteAnimationTier.admin || SiteAnimationTier.host =>
+          'assets/gifts/lottie/crown.json',
+        _ => null,
+      };
     }
     return null;
   }

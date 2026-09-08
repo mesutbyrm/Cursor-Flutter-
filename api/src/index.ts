@@ -42,6 +42,7 @@ import { siteAnimationsRouter } from "./routes/site_animations";
 import { referralRouter } from "./routes/referral";
 import { initGiftSocket } from "./socket/giftHub";
 import { runAdminPaymentBootstrap } from "./lib/adminPaymentBootstrap";
+import { bootstrapSiteAnimations } from "./lib/siteAnimationBootstrap";
 import { bootstrapRedisStack, isRedisReady } from "./lib/redis/bootstrap";
 import { rateLimitMiddleware } from "./lib/redis/rateLimit";
 import path from "node:path";
@@ -134,6 +135,7 @@ server.listen(port, () => {
   console.log(`Gift Socket.IO path /socket.io`);
   void bootstrapRedisStack();
   void runAdminPaymentBootstrap();
+  void bootstrapSiteAnimations();
 });
 
 process.on("SIGTERM", () => {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../domain/site_animation_tier.dart';
 import '../../domain/site_animation_type.dart';
+import '../../domain/site_animation_copy.dart';
 
 /// Network / asset hatasında native premium kart fallback.
 class SiteAnimationFallbackCard extends StatelessWidget {
@@ -23,7 +24,12 @@ class SiteAnimationFallbackCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = _gradient(tier);
-    final label = subtitle ?? _label(type, tier);
+    final label = subtitle ??
+        SiteAnimationCopy.subtitle(
+          userName: userName,
+          type: type,
+          tier: tier,
+        );
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -114,19 +120,6 @@ class SiteAnimationFallbackCard extends StatelessWidget {
             const Color(0xFF546E7A),
           ],
       };
-
-  static String _label(SiteAnimationType type, SiteAnimationTier tier) {
-    return switch (type) {
-      SiteAnimationType.memberJoined ||
-      SiteAnimationType.hostSeat =>
-        '${tier.name.toUpperCase()} üye odaya katıldı',
-      SiteAnimationType.memberLeft => 'Odadan ayrıldı',
-      SiteAnimationType.seatChanged => 'Koltuk değiştirdi',
-      SiteAnimationType.micEnabled => 'Mikrofon açıldı',
-      SiteAnimationType.micDisabled => 'Mikrofon kapatıldı',
-      SiteAnimationType.seatRankGlow => 'Koltuk efekti',
-    };
-  }
 }
 
 class _Avatar extends StatelessWidget {

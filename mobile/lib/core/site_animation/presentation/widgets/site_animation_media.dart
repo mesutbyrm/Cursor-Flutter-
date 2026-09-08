@@ -30,7 +30,6 @@ class _SiteAnimationMediaState extends State<SiteAnimationMedia> {
       tier: widget.command.tier,
       type: widget.command.type,
       avatarUrl: widget.command.avatarUrl,
-      subtitle: widget.command.catalogLabel,
     );
   }
 

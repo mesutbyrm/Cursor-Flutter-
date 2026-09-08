@@ -769,3 +769,60 @@ model FortuneTeller {
   updatedAt      DateTime @updatedAt
 
 }
+
+/// Site animasyon kütüphanesi — sesli oda giriş/çıkış/koltuk efektleri.
+model SiteAnimation {
+  id            String   @id
+  name          String
+  category      String
+  membership    String   @default("normal")
+  animationType String   @default("native") @map("animation_type")
+  assetUrl      String?  @map("asset_url")
+  previewUrl    String?  @map("preview_url")
+  soundUrl      String?  @map("sound_url")
+  durationMs    Int      @default(3000) @map("duration_ms")
+  priority      Int      @default(50)
+  rarity        String   @default("common")
+  context       String   @default("voice_room")
+  anchor        String   @default("TOP_LEFT")
+  scale         Float    @default(1)
+  cooldownMs    Int      @default(0) @map("cooldown_ms")
+  isActive      Boolean  @default(true) @map("is_active")
+  description   String?
+  previewMp4Key String?  @map("preview_mp4_key")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  defaults    SiteAnimationDefault[]
+  assignments SiteAnimationUserAssignment[]
+
+  @@index([category, membership, isActive])
+  @@map("site_animations")
+}
+
+/// Üyelik seviyesine göre varsayılan giriş animasyonu.
+model SiteAnimationDefault {
+  id          String        @id @default(cuid())
+  membership  String        @unique
+  animationId String        @map("animation_id")
+  animation   SiteAnimation @relation(fields: [animationId], references: [id], onDelete: Restrict)
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  @@map("site_animation_defaults")
+}
+
+/// Kullanıcıya özel animasyon slot ataması.
+model SiteAnimationUserAssignment {
+  id          String         @id @default(cuid())
+  userId      String         @map("user_id")
+  slot        String
+  animationId String?        @map("animation_id")
+  animation   SiteAnimation? @relation(fields: [animationId], references: [id], onDelete: SetNull)
+  expiresAt   DateTime?      @map("expires_at")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  @@unique([userId, slot])
+  @@index([userId])
+  @@map("site_animation_user_assignments")
+}
