@@ -13,6 +13,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support/fake_live_psychics_repository.dart';
+import '../../helpers/economy_test_scope.dart';
 
 void main() {
   setUp(() {
@@ -58,12 +59,14 @@ void main() {
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
       await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            livePsychicsRepositoryProvider.overrideWithValue(repo),
-            goRouterProvider.overrideWithValue(router),
-          ],
-          child: MaterialApp.router(routerConfig: router),
+        wrapEconomyScope(
+          ProviderScope(
+            overrides: [
+              livePsychicsRepositoryProvider.overrideWithValue(repo),
+              goRouterProvider.overrideWithValue(router),
+            ],
+            child: MaterialApp.router(routerConfig: router),
+          ),
         ),
       );
       await tester.pump();
@@ -109,12 +112,14 @@ void main() {
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
       await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            livePsychicsRepositoryProvider.overrideWithValue(repo),
-            goRouterProvider.overrideWithValue(router),
-          ],
-          child: MaterialApp.router(routerConfig: router),
+        wrapEconomyScope(
+          ProviderScope(
+            overrides: [
+              livePsychicsRepositoryProvider.overrideWithValue(repo),
+              goRouterProvider.overrideWithValue(router),
+            ],
+            child: MaterialApp.router(routerConfig: router),
+          ),
         ),
       );
       await tester.pump();
