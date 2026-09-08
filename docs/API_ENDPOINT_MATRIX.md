@@ -859,7 +859,6 @@ Summary: backend handlers `690`, unique backend paths `438`, Flutter normalized 
 | `/api/short-videos/{param}/stream` | `shortVideoStream` | WRONG |
 | `/api/short-videos/{param}/subtitles/generate` | `shortVideoSubtitlesGenerate` | WRONG |
 | `/api/social/announcements` | `socialAnnouncements` | WRONG |
-| `/api/social/fortune-tellers` | `socialFortuneTellers` | WRONG |
 | `/api/social/posts/auto-fortune` | `socialPostsAutoFortune` | WRONG |
 | `/api/social/public-stats` | `socialPublicStats` | WRONG |
 | `/api/social/stories` | `socialStories` | WRONG |

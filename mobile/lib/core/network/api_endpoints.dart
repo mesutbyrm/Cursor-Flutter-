@@ -278,7 +278,6 @@ abstract final class ApiEndpoints {
 
   /// Geriye dönük (self-hosted seed).
   static const socialAnnouncements = '/api/social/announcements';
-  static const socialFortuneTellers = '/api/social/fortune-tellers';
 
   /// Sosyal akış (ana sayfa feed bölümü).
   static const feedPosts = '/api/social/posts';

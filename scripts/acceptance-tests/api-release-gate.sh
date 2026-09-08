@@ -361,7 +361,7 @@ gate_03_psychic_video() {
     return
   fi
 
-  local respond_code
+  local respond_code room_code
   respond_code=$(http_code -X POST "$BASE/api/fortune-tellers/session/$PSYCHIC_SESSION_ID/respond" \
     -H "Authorization: Bearer $TELLER_TOKEN" \
     -H "Content-Type: application/json" \
@@ -372,6 +372,9 @@ gate_03_psychic_video() {
       -H "Content-Type: application/json" \
       -d '{"status":"accepted","action":"accept"}')
   fi
+
+  room_code=$(http_code "$BASE/api/room/$PSYCHIC_SESSION_ID" \
+    -H "Authorization: Bearer $USER_TOKEN")
 
   local uid trtc_body trtc_ok=0
   uid=$(curl_json "$BASE/api/me" -H "Authorization: Bearer $TELLER_TOKEN" | json_field "['id']")
@@ -384,8 +387,10 @@ gate_03_psychic_video() {
     trtc_ok=1
   fi
 
-  if [[ "$respond_code" == "200" || "$respond_code" == "201" ]] && [[ "$trtc_ok" -eq 1 ]]; then
-    record 3 "Canlı falcı görüntülü görüşme" PASS "session=$PSYCHIC_SESSION_ID TRTC OK"
+  if [[ "$respond_code" == "200" || "$respond_code" == "201" ]] && [[ "$trtc_ok" -eq 1 ]] && [[ "$room_code" == "200" ]]; then
+    record 3 "Canlı falcı görüntülü görüşme" PASS "session=$PSYCHIC_SESSION_ID TRTC+room OK"
+  elif [[ "$respond_code" == "200" || "$respond_code" == "201" ]] && [[ "$trtc_ok" -eq 1 ]]; then
+    record 3 "Canlı falcı görüntülü görüşme" PASS "session=$PSYCHIC_SESSION_ID TRTC OK (room HTTP $room_code)"
   elif [[ "$trtc_ok" -eq 1 ]]; then
     record 3 "Canlı falcı görüntülü görüşme" PASS "TRTC token OK (respond HTTP $respond_code)"
   elif [[ "$respond_code" == "403" || "$respond_code" == "401" ]]; then
