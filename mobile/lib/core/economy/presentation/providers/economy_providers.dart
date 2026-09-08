@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../network/dio_provider.dart';
-import '../data/currency_branding_remote_datasource.dart';
-import '../data/economy_wallet_remote_datasource.dart';
-import '../data/referral_economy_remote_datasource.dart';
-import '../domain/agency_invite_earnings_snapshot.dart';
-import '../domain/currency_brand.dart';
-import '../domain/currency_branding_snapshot.dart';
-import '../domain/economy_wallet_snapshot.dart';
-import '../domain/referral_economy_snapshot.dart';
-import '../domain/topup_bonus_tier.dart';
-import '../services/currency_branding_cache.dart';
-import '../services/economy_wallet_adapter.dart';
+import '../../../network/dio_provider.dart';
+import '../../data/currency_branding_remote_datasource.dart';
+import '../../data/economy_wallet_remote_datasource.dart';
+import '../../data/referral_economy_remote_datasource.dart';
+import '../../domain/agency_invite_earnings_snapshot.dart';
+import '../../domain/currency_brand.dart';
+import '../../domain/currency_branding_snapshot.dart';
+import '../../domain/economy_wallet_snapshot.dart';
+import '../../domain/referral_economy_snapshot.dart';
+import '../../domain/topup_bonus_tier.dart';
+import '../../services/currency_branding_cache.dart';
+import '../../services/economy_wallet_adapter.dart';
 import '../../../features/profile/presentation/providers/profile_providers.dart';
 
 final currencyBrandingRemoteProvider =
@@ -80,7 +80,7 @@ final topupBonusTiersProvider = Provider<List<TopupBonusTier>>((ref) {
 });
 
 CurrencyBrand resolveEconomyBrand(
-  WidgetRef ref, {
+  Ref ref, {
   required String key,
 }) {
   final async = ref.watch(currencyBrandingProvider);
@@ -93,7 +93,7 @@ CurrencyBrand resolveEconomyBrand(
 }
 
 String economyCurrencyLabel(
-  WidgetRef ref, {
+  Ref ref, {
   required String key,
   Locale? locale,
 }) {
@@ -103,67 +103,67 @@ String economyCurrencyLabel(
 }
 
 /// Hızlı işlem karosu: «Jeton\nyükle».
-String economyJetonTopUpTileLabel(WidgetRef ref, {Locale? locale}) {
+String economyJetonTopUpTileLabel(Ref ref, {Locale? locale}) {
   final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
   return '$label\nyükle';
 }
 
 /// Tek satır: «Jeton Yükle» / «Jeton Al».
-String economyJetonTopUpShortLabel(WidgetRef ref, {Locale? locale}) {
+String economyJetonTopUpShortLabel(Ref ref, {Locale? locale}) {
   final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
   return '$label Yükle';
 }
 
-String economyJetonBuyActionLabel(WidgetRef ref, {Locale? locale}) {
+String economyJetonBuyActionLabel(Ref ref, {Locale? locale}) {
   final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
   return '$label Al';
 }
 
 /// Tek satır: «CFC Yükle» (markalı).
-String economyCfcTopUpShortLabel(WidgetRef ref, {Locale? locale}) {
+String economyCfcTopUpShortLabel(Ref ref, {Locale? locale}) {
   final label = economyCurrencyLabel(ref, key: 'cfc', locale: locale);
   return '$label Yükle';
 }
 
 /// Jeton mağazası sayfa başlığı.
-String economyJetonPurchasePageTitle(WidgetRef ref, {Locale? locale}) {
+String economyJetonPurchasePageTitle(Ref ref, {Locale? locale}) {
   final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
   return '$label Satın Al';
 }
 
 /// Jeton mağazası alt başlık.
-String economyJetonPurchasePageSubtitle(WidgetRef ref, {Locale? locale}) {
+String economyJetonPurchasePageSubtitle(Ref ref, {Locale? locale}) {
   final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
   return 'İstediğiniz tutarı girin — $label otomatik hesaplanır';
 }
 
 /// Bakiye kartı başlığı: «Jeton Bakiye».
-String economyJetonBalanceHeaderLabel(WidgetRef ref, {Locale? locale}) {
+String economyJetonBalanceHeaderLabel(Ref ref, {Locale? locale}) {
   final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
   return '$label Bakiye';
 }
 
 /// Profil hızlı menü: «Jeton Geçmişim».
-String economyJetonHistoryMenuLabel(WidgetRef ref, {Locale? locale}) {
+String economyJetonHistoryMenuLabel(Ref ref, {Locale? locale}) {
   final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
   return '$label Geçmişim';
 }
 
 /// Üyelik sayfası paket bölümü: «Jeton Paketleri».
-String economyJetonPackagesSectionTitle(WidgetRef ref, {Locale? locale}) {
+String economyJetonPackagesSectionTitle(Ref ref, {Locale? locale}) {
   final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
   return '$label Paketleri';
 }
 
 /// CFC bakiye kartı: «CFC Bakiyeniz».
-String economyCfcBalanceHeaderLabel(WidgetRef ref, {Locale? locale}) {
+String economyCfcBalanceHeaderLabel(Ref ref, {Locale? locale}) {
   final label = economyCurrencyLabel(ref, key: 'cfc', locale: locale);
   return '$label Bakiyeniz';
 }
 
 /// Yetersiz bakiye — genel (müzik isteği, fal vb.).
 String economyInsufficientJetonMessage(
-  WidgetRef ref, {
+  Ref ref, {
   required int required,
   Locale? locale,
 }) {
@@ -173,7 +173,7 @@ String economyInsufficientJetonMessage(
 
 /// Sesli oda duyuru — yetersiz bakiye.
 String economyInsufficientJetonForDuyuruMessage(
-  WidgetRef ref, {
+  Ref ref, {
   required int cost,
   Locale? locale,
 }) {
@@ -183,10 +183,26 @@ String economyInsufficientJetonForDuyuruMessage(
 
 /// Müzik / şarkı isteği — minimum bakiye.
 String economyMinimumJetonForMusicRequestMessage(
-  WidgetRef ref, {
+  Ref ref, {
   required int requiredCost,
   Locale? locale,
 }) {
   final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
   return 'Şarkı isteği için en az $requiredCost $label gerekir.';
+}
+
+/// Hediye toast: «120 Jeton gönderdi».
+String economyJetonGiftSentLine(
+  Ref ref, {
+  required int amount,
+  Locale? locale,
+}) {
+  final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
+  return '$amount $label gönderdi';
+}
+
+/// DM composer: «🪙 Jeton göndermek istiyor.» (markalı).
+String economyJetonSendIntentMessage(Ref ref, {Locale? locale}) {
+  final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
+  return '🪙 $label göndermek istiyor.';
 }

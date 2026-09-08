@@ -45,7 +45,7 @@ class TopupBonusInfoBanner extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 10),
-          ...tiers.map((tier) => _TierRow(tier: tier)),
+          ...tiers.map((TopupBonusTier tier) => _TierRow(tier: tier)),
         ],
       ),
     );

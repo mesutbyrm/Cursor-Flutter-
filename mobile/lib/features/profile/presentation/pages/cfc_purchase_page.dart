@@ -125,7 +125,7 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
                 const SizedBox(height: 16),
                 const CurrencyUsageCard.cfc(),
                 const MembershipPendingPaymentBanner(),
-                const MembershipStoreTeaserBanner(store: MembershipStoreKind.cfc),
+                MembershipStoreTeaserBanner(store: MembershipStoreKind.cfc),
                 if (pendingCfc.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   PendingPaymentBanner(

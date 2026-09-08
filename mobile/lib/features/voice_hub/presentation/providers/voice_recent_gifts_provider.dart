@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/economy/presentation/providers/economy_providers.dart';
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../gifts/domain/gift_system_message.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 

@@ -12,6 +12,7 @@ import '../../../voice_hub/domain/voice_official_join.dart';
 import '../../../voice_hub/presentation/providers/voice_room_session_registry.dart';
 import '../../../../core/room/room_event_scope.dart';
 import '../../domain/homepage_gift_ticker.dart';
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../providers/gift_display_settings_provider.dart';
 import 'global_gift_notification.dart';
 import 'global_gift_overlay_notifier.dart';
@@ -128,6 +129,7 @@ void handleNotificationGiftForGlobalOverlay(
           displayLabel: HomepageGiftTicker.composeAnnouncement(
             senderName: notification.title,
             giftName: notification.body ?? 'Hediye',
+            jetonLabel: economyCurrencyLabel(ref, key: 'jeton'),
           ),
         ),
       );

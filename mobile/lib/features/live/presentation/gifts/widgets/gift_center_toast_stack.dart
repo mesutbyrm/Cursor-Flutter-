@@ -1,24 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../domain/entities/live_gift_catalog.dart';
 import '../../../domain/entities/live_gift_event.dart';
 
 /// Ortada gösterilen hediye bildirimi.
-class GiftCenterToastStack extends StatelessWidget {
+class GiftCenterToastStack extends ConsumerWidget {
   const GiftCenterToastStack({super.key, required this.events});
 
   final List<LiveGiftEvent> events;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (events.isEmpty) return const SizedBox.shrink();
     final event = events.first;
     final emoji = LiveGiftCatalog.emojiById[event.giftId] ?? '🎁';
     final jeton = event.jetonAmount;
     final qtyLabel = event.quantity > 1 ? ' x${event.quantity}' : '';
     final imageUrl = event.displayImageUrl;
+    final jetonLine = jeton > 0
+        ? economyJetonGiftSentLine(ref, amount: jeton)
+        : 'Hediye gönderdi';
 
     return IgnorePointer(
       child: Center(
@@ -81,7 +86,7 @@ class GiftCenterToastStack extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          jeton > 0 ? '$jeton Jeton gönderdi' : 'Hediye gönderdi',
+                          jetonLine,
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,

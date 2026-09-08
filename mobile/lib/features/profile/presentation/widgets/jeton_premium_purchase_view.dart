@@ -423,7 +423,7 @@ class _JetonPremiumPurchaseViewState
               jetonLabel: jetonLabel,
             ),
             const MembershipPendingPaymentBanner(),
-            const MembershipStoreTeaserBanner(store: MembershipStoreKind.jeton),
+            MembershipStoreTeaserBanner(store: MembershipStoreKind.jeton),
             if (pendingJeton.isNotEmpty) ...[
               const SizedBox(height: 12),
               PendingPaymentBanner(

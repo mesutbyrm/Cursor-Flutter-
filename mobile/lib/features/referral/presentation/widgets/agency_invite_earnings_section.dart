@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glow_panel.dart';
-import '../providers/economy_providers.dart';
-import 'currency_amount_label.dart';
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
+import '../../../../core/economy/presentation/widgets/currency_amount_label.dart';
 
 /// Ajans davet komisyonu — yalnızca `/api/agency/invite-earnings` başarılıysa.
 class AgencyInviteEarningsSection extends ConsumerWidget {

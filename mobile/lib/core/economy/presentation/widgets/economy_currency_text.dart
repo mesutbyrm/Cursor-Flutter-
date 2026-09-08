@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../presentation/providers/economy_providers.dart';
+import '../providers/economy_providers.dart';
 
 /// Kullanıcıya gösterilen para birimi metni — branding + fallback.
 class EconomyCurrencyText extends ConsumerWidget {

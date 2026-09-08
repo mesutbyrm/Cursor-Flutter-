@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/token_storage.dart';
@@ -257,7 +258,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
       case DmComposerAction.gift:
         return _sendMessage('🎁 Hediye göndermek istiyor.');
       case DmComposerAction.jeton:
-        return _sendMessage('🪙 Jeton göndermek istiyor.');
+        return _sendMessage(economyJetonSendIntentMessage(ref));
       case DmComposerAction.fortune:
         return _sendMessage('🔮 Fal isteği gönderdi.');
       case DmComposerAction.voiceFortune:

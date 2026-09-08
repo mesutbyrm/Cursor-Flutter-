@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/config/env.dart';
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/canlifal_brand_logo.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 
-class ProfileAboutPage extends StatelessWidget {
+class ProfileAboutPage extends ConsumerWidget {
   const ProfileAboutPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+    final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
@@ -32,7 +36,7 @@ class ProfileAboutPage extends StatelessWidget {
                 '• Canlı yayın ve hediye ekonomisi\n'
                 '• Sosyal akış ve hikayeler\n'
                 '• Fal & tarot oturumları\n'
-                '• Jeton ve CFC cüzdanı',
+                '• $jetonLabel ve $cfcLabel cüzdanı',
                 style: TextStyle(height: 1.6, color: context.colors.onSurfaceVariant),
               ),
               SizedBox(height: 24),

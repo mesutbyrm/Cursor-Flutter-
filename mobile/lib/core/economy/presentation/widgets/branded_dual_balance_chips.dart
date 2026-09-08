@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../widgets/dual_balance_chips.dart';
-import '../presentation/providers/economy_providers.dart';
+import '../../../widgets/dual_balance_chips.dart';
+import '../providers/economy_providers.dart';
 
 /// Markalı jeton + CFC chip'leri — endpoint yoksa varsayılan etiketler.
 class BrandedDualBalanceChips extends ConsumerWidget {

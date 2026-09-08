@@ -19,12 +19,16 @@ class TickerGiftAnnouncement {
 
   String get eventId => 'ticker:${raw.trim().toLowerCase()}';
 
-  String get announcementLabel => HomepageGiftTicker.composeAnnouncement(
+  String announcementLabelFor({String jetonLabel = 'Jeton'}) =>
+      HomepageGiftTicker.composeAnnouncement(
         senderName: senderName,
         giftName: giftName,
         receiverName: receiverName,
         amount: amount,
+        jetonLabel: jetonLabel,
       );
+
+  String get announcementLabel => announcementLabelFor();
 }
 
 /// Homepage ticker hediye satırları — ana şeritte döndürülmez.
@@ -75,12 +79,13 @@ abstract final class HomepageGiftTicker {
     String? receiverName,
     int amount = 0,
     String? giftIcon,
+    String jetonLabel = 'Jeton',
   }) {
     final sender = senderName.trim().isEmpty ? 'Biri' : senderName.trim();
     final giftBits = <String>[
       if (giftIcon != null && giftIcon.trim().isNotEmpty) giftIcon.trim(),
       giftName.trim().isEmpty ? 'Hediye' : giftName.trim(),
-      if (amount > 0) '($amount Jeton)',
+      if (amount > 0) '($amount $jetonLabel)',
     ];
     final gift = giftBits.join(' ');
     final recv = receiverName?.trim() ?? '';

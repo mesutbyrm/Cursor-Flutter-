@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.373+411 (2026-09-08) — ZIP economy v2 CI düzeltmesi
+
+- **Derleme:** `core/economy/` import yolları, `Ref` tipi (Notifier içi etiketler), `MembershipStoreTeaserBanner` const kaldırma
+- **Faz 19:** DM jeton mesajı, hediye toast, ticker duyurusu, Hakkımızda sayfası markalı etiketler
+
 ## 1.0.372+410 (2026-09-08) — ZIP economy v2: markalı Jeton/CFC etiketleri
 
 - **Fallback mimarisi:** `GET /api/currency-branding` → başarısızsa legacy Jeton/CFC; endpoint/path değişmez

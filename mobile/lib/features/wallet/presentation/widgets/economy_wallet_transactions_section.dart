@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/economy/presentation/widgets/currency_amount_label.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
-import '../../domain/economy_wallet_snapshot.dart';
+import '../../../../core/economy/domain/economy_wallet_snapshot.dart';
 
 /// Birleşik cüzdan işlem geçmişi — yalnızca `/api/user/wallet` başarılıysa görünür.
 class EconomyWalletTransactionsSection extends ConsumerWidget {
