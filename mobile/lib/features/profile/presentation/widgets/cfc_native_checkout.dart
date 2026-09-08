@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/content/currency_usage_info.dart';
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glow_panel.dart';
@@ -58,12 +59,13 @@ class _CfcNativeCheckoutState extends ConsumerState<CfcNativeCheckout> {
     final rate = cfg.cfcRate > 0 ? cfg.cfcRate : CurrencyUsageInfo.cfcTlPerCoin;
     final amount = int.tryParse(_amountCtrl.text.trim()) ?? 0;
     final tl = CurrencyUsageInfo.tlForCfc(amount);
+    final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          '${CurrencyUsageInfo.cfcPriceHint} · 1 CFC = ${rate.toStringAsFixed(2)} TL · min $min CFC',
+          '${CurrencyUsageInfo.cfcPriceHintFor(cfcLabel)} · 1 $cfcLabel = ${rate.toStringAsFixed(2)} TL · min $min $cfcLabel',
           style: TextStyle(
             fontSize: 12,
             color: AppTheme.muted.withValues(alpha: 0.95),
@@ -86,7 +88,7 @@ class _CfcNativeCheckoutState extends ConsumerState<CfcNativeCheckout> {
           runSpacing: 8,
           children: [100, 200, 500].map((cfc) {
             return ActionChip(
-              label: Text('$cfc CFC (${CurrencyUsageInfo.tlForCfc(cfc).toStringAsFixed(0)} TL)'),
+              label: Text('$cfc $cfcLabel (${CurrencyUsageInfo.tlForCfc(cfc).toStringAsFixed(0)} TL)'),
               onPressed: () {
                 setState(() => _amountCtrl.text = '$cfc');
               },
@@ -99,7 +101,7 @@ class _CfcNativeCheckoutState extends ConsumerState<CfcNativeCheckout> {
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           decoration: InputDecoration(
-            labelText: 'CFC (CanlıFal Coin) miktarı',
+            labelText: '$cfcLabel (CanlıFal Coin) miktarı',
             hintText: 'Örn. 100',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
           ),
@@ -200,7 +202,7 @@ class _CfcNativeCheckoutState extends ConsumerState<CfcNativeCheckout> {
               : Text(
                   _method == CfcPaymentMethod.whatsapp
                       ? 'Ödemeyi yaptım — talep gönder'
-                      : 'CFC yükleme talebi gönder',
+                      : '$cfcLabel yükleme talebi gönder',
                   style: const TextStyle(fontWeight: FontWeight.w900),
                 ),
         ),
@@ -230,9 +232,10 @@ class _CfcNativeCheckoutState extends ConsumerState<CfcNativeCheckout> {
   }
 
   Future<void> _openWa(PaymentConfigEntity cfg) async {
+    final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
     final amount = _amountCtrl.text.trim();
     final msg = Uri.encodeComponent(
-      'Merhaba, $amount CFC yüklemek istiyorum.',
+      'Merhaba, $amount $cfcLabel yüklemek istiyorum.',
     );
     final phone = cfg.whatsappNumber.replaceAll(RegExp(r'\D'), '');
     final uri = Uri.parse('https://wa.me/$phone?text=$msg');
@@ -242,10 +245,11 @@ class _CfcNativeCheckoutState extends ConsumerState<CfcNativeCheckout> {
   }
 
   Future<void> _submit(PaymentConfigEntity cfg) async {
+    final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
     final amount = int.tryParse(_amountCtrl.text.trim()) ?? 0;
     if (amount < cfg.minCfcAmount) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('En az ${cfg.minCfcAmount} CFC girebilirsiniz')),
+        SnackBar(content: Text('En az ${cfg.minCfcAmount} $cfcLabel girebilirsiniz')),
       );
       return;
     }
@@ -258,7 +262,7 @@ class _CfcNativeCheckoutState extends ConsumerState<CfcNativeCheckout> {
         'method': _method.name,
         'senderInfo': _senderCtrl.text.trim().isEmpty ? null : _senderCtrl.text.trim(),
         'notes': _notesCtrl.text.trim().isEmpty
-            ? 'CFC yükleme · ${_method.name}'
+            ? '$cfcLabel yükleme · ${_method.name}'
             : _notesCtrl.text.trim(),
       });
       if (!mounted) return;
@@ -273,9 +277,9 @@ class _CfcNativeCheckoutState extends ConsumerState<CfcNativeCheckout> {
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Talep gönderildi. Yönetim paneline bildirim düştü; onay sonrası CFC yansır.',
+            'Talep gönderildi. Yönetim paneline bildirim düştü; onay sonrası $cfcLabel yansır.',
           ),
         ),
       );

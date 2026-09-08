@@ -142,3 +142,21 @@ String economyJetonBalanceHeaderLabel(WidgetRef ref, {Locale? locale}) {
   final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
   return '$label Bakiye';
 }
+
+/// Profil hızlı menü: «Jeton Geçmişim».
+String economyJetonHistoryMenuLabel(WidgetRef ref, {Locale? locale}) {
+  final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
+  return '$label Geçmişim';
+}
+
+/// Üyelik sayfası paket bölümü: «Jeton Paketleri».
+String economyJetonPackagesSectionTitle(WidgetRef ref, {Locale? locale}) {
+  final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
+  return '$label Paketleri';
+}
+
+/// CFC bakiye kartı: «CFC Bakiyeniz».
+String economyCfcBalanceHeaderLabel(WidgetRef ref, {Locale? locale}) {
+  final label = economyCurrencyLabel(ref, key: 'cfc', locale: locale);
+  return '$label Bakiyeniz';
+}

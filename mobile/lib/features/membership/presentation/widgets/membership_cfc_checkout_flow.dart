@@ -37,9 +37,12 @@ Future<bool> submitMembershipCfcInstant(
     await refreshMembershipAfterPurchase(ref);
     onDone();
     if (!context.mounted) return true;
+    final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('CFC ile üyelik talebi gönderildi. Onay sonrası plan aktifleşir.'),
+      SnackBar(
+        content: Text(
+          '$cfcLabel ile üyelik talebi gönderildi. Onay sonrası plan aktifleşir.',
+        ),
       ),
     );
     return true;
@@ -159,10 +162,11 @@ Future<void> _submitMembershipCfc(
     await refreshMembershipAfterPurchase(ref);
     onDone();
     if (!context.mounted) return;
+    final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text(
-          'CFC üyelik talebi gönderildi. Onay sonrası plan aktifleşir.',
+          '$cfcLabel üyelik talebi gönderildi. Onay sonrası plan aktifleşir.',
         ),
       ),
     );

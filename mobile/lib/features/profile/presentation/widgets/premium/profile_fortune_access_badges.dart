@@ -1,9 +1,12 @@
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../../core/economy/presentation/providers/economy_providers.dart';
 import 'profile_glass.dart';
 
 /// Profil — reklam fal hakkı ve jeton özeti.
-class ProfileFortuneAccessBadges extends StatelessWidget {
+class ProfileFortuneAccessBadges extends ConsumerWidget {
   const ProfileFortuneAccessBadges({
     super.key,
     required this.adCredits,
@@ -14,7 +17,8 @@ class ProfileFortuneAccessBadges extends StatelessWidget {
   final int jeton;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     return ProfileGlass(
       padding: const EdgeInsets.all(16),
       borderColor: AppThemeColors.accentPink.withValues(alpha: 0.3),
@@ -32,7 +36,7 @@ class ProfileFortuneAccessBadges extends StatelessWidget {
           const SizedBox(height: 10),
           _BadgeRow(
             emoji: '🪙',
-            label: 'Jeton Bakiyesi',
+            label: '$jetonLabel Bakiyesi',
             value: '$jeton',
             accent: AppThemeColors.coinGold,
           ),

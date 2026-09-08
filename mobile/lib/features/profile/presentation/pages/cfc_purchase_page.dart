@@ -80,7 +80,7 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
       body: DiscoverBackground(
         child: DiscoverSubPage(
           title: economyCfcTopUpShortLabel(ref, locale: locale),
-          subtitle: '$cfcLabel · ${CurrencyUsageInfo.cfcPriceHint}',
+          subtitle: '$cfcLabel · ${CurrencyUsageInfo.cfcPriceHintFor(cfcLabel)}',
           onRefresh: _refresh,
           body: config.when(
             loading: () => const Center(child: DiscoverAccentLoader()),

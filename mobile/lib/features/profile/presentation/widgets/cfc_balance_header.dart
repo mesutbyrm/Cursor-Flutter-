@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/content/currency_usage_info.dart';
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 
 /// CFC yükleme sayfası — yalnızca CFC bakiyesi.
-class CfcBalanceHeader extends StatelessWidget {
+class CfcBalanceHeader extends ConsumerWidget {
   const CfcBalanceHeader({super.key, required this.cfc});
 
   final int cfc;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -30,7 +33,7 @@ class CfcBalanceHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            CurrencyUsageInfo.cfcTitle,
+            CurrencyUsageInfo.cfcTitleFor(cfcLabel),
             style: TextStyle(
               fontSize: 12,
               color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
@@ -39,7 +42,7 @@ class CfcBalanceHeader extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            '$cfc CFC',
+            '$cfc $cfcLabel',
             style: const TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 28,
@@ -48,7 +51,7 @@ class CfcBalanceHeader extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Yalnızca CFC yüklenir · ${CurrencyUsageInfo.cfcPriceHint}',
+            'Yalnızca $cfcLabel yüklenir · ${CurrencyUsageInfo.cfcPriceHintFor(cfcLabel)}',
             style: TextStyle(fontSize: 11, color: context.colors.onSurfaceMuted),
           ),
         ],

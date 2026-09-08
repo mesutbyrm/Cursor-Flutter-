@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/content/currency_usage_info.dart';
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
 import '../../../profile/domain/entities/jeton_package_entity.dart';
@@ -180,7 +181,7 @@ class MembershipPage extends ConsumerWidget {
                             ),
                             const SizedBox(height: 22),
                             Text(
-                              buildMembershipPageTokenPackagesSectionTitle(),
+                              economyJetonPackagesSectionTitle(ref),
                               style: GoogleFonts.plusJakartaSans(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w900,
@@ -716,7 +717,7 @@ class _ActiveBanner extends StatelessWidget {
   }
 }
 
-class _UpgradeBanner extends StatelessWidget {
+class _UpgradeBanner extends ConsumerWidget {
   const _UpgradeBanner({
     required this.info,
     required this.onBuyTokens,
@@ -728,13 +729,14 @@ class _UpgradeBanner extends StatelessWidget {
   final VoidCallback onBuyTokens;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final title = buildMembershipPageUpgradeBannerTitle(info: info);
     final subtitle = buildMembershipPageUpgradeBannerSubtitle(
       info: info,
       catalogTier: catalogTier,
     );
-    final actionLabel = buildMembershipPageUpgradeBannerActionLabel();
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+    final actionLabel = '$jetonLabel\nSatın Al';
 
     return Container(
       padding: const EdgeInsets.all(16),

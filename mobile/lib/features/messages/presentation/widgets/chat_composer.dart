@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/performance/list_perf.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 
 enum DmComposerAction {
   photo,
@@ -19,7 +22,7 @@ enum DmComposerAction {
   sticker,
 }
 
-class ChatComposer extends StatelessWidget {
+class ChatComposer extends ConsumerWidget {
   const ChatComposer({
     super.key,
     required this.controller,
@@ -71,14 +74,15 @@ class ChatComposer extends StatelessWidget {
     );
   }
 
-  void _showActionSheet(BuildContext context) {
+  void _showActionSheet(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final actions = [
       (DmComposerAction.photo, Icons.photo_rounded, 'Fotoğraf', AppThemeColors.accentCyan),
       (DmComposerAction.video, Icons.videocam_rounded, 'Video', AppThemeColors.liveRed),
       (DmComposerAction.file, Icons.attach_file_rounded, 'Dosya', Colors.white70),
       (DmComposerAction.location, Icons.location_on_rounded, 'Konum', Colors.greenAccent),
       (DmComposerAction.gift, Icons.card_giftcard_rounded, 'Hediye', AppThemeColors.coinGold),
-      (DmComposerAction.jeton, Icons.toll_rounded, 'Jeton', AppThemeColors.coinGold),
+      (DmComposerAction.jeton, Icons.toll_rounded, jetonLabel, AppThemeColors.coinGold),
       (DmComposerAction.fortune, Icons.auto_awesome_rounded, 'Fal İste', AppThemeColors.accentPurple),
       (DmComposerAction.voiceFortune, Icons.mic_rounded, 'Sesli Fal', AppThemeColors.accentPink),
       (DmComposerAction.videoFortune, Icons.video_call_rounded, 'Görüntülü Fal', Colors.cyanAccent),
@@ -188,7 +192,7 @@ class ChatComposer extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return SafeArea(
       top: false,
       child: Padding(
@@ -196,7 +200,7 @@ class ChatComposer extends StatelessWidget {
         child: Row(
           children: [
             IconButton(
-              onPressed: () => _showActionSheet(context),
+              onPressed: () => _showActionSheet(context, ref),
               icon: Icon(
                 Icons.add_circle_outline_rounded,
                 color: AppThemeColors.accentPurple.withValues(alpha: 0.9),
