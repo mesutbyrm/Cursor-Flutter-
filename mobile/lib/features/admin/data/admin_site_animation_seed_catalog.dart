@@ -59,7 +59,8 @@ abstract final class AdminSiteAnimationSeedCatalog {
           durationMs: 3000,
           priority: 70,
           cooldownMs: 8000,
-          soundUrl: SiteAnimationAssetPaths.sound('anim_entrance_gold_crown'),
+          soundUrl:
+              '${SiteAnimationAssetPaths.cdnBase}/sounds/anim_entrance_gold_crown.mp3',
           description: 'Altın taç + glow + VIP rozeti',
           previewMp4Key: 'gold_uye_girisi.mp4',
         ),
@@ -85,7 +86,8 @@ abstract final class AdminSiteAnimationSeedCatalog {
           durationMs: 4000,
           priority: 90,
           rarity: AdminSiteAnimationRarity.epic,
-          soundUrl: SiteAnimationAssetPaths.sound('anim_entrance_diamond_burst'),
+          soundUrl:
+              '${SiteAnimationAssetPaths.cdnBase}/sounds/anim_entrance_diamond_burst.mp3',
           description: 'Mavi kristal patlaması',
           previewMp4Key: 'diamond_uye_girisi.mp4',
         ),
@@ -111,7 +113,8 @@ abstract final class AdminSiteAnimationSeedCatalog {
           durationMs: 4000,
           priority: 85,
           rarity: AdminSiteAnimationRarity.legendary,
-          soundUrl: SiteAnimationAssetPaths.sound('anim_entrance_svip_emperor'),
+          soundUrl:
+              '${SiteAnimationAssetPaths.cdnBase}/sounds/anim_entrance_svip_emperor.mp3',
           description: 'EMPEROR rozeti + altın ışın',
         ),
         const AdminSiteAnimation(
@@ -328,7 +331,8 @@ abstract final class AdminSiteAnimationSeedCatalog {
           assetUrl: 'assets/gifts/lottie/heart.json',
           durationMs: 2000,
           priority: 35,
-          soundUrl: SiteAnimationAssetPaths.sound('anim_exit_gold'),
+          soundUrl:
+              '${SiteAnimationAssetPaths.cdnBase}/sounds/anim_exit_gold.mp3',
         ),
         const AdminSiteAnimation(
           id: 'anim_exit_premium',
@@ -349,7 +353,8 @@ abstract final class AdminSiteAnimationSeedCatalog {
           assetUrl: 'assets/gifts/lottie/crown.json',
           durationMs: 3000,
           priority: 37,
-          soundUrl: SiteAnimationAssetPaths.sound('anim_exit_diamond'),
+          soundUrl:
+              '${SiteAnimationAssetPaths.cdnBase}/sounds/anim_exit_diamond.mp3',
         ),
         const AdminSiteAnimation(
           id: 'anim_exit_vip',
@@ -360,7 +365,8 @@ abstract final class AdminSiteAnimationSeedCatalog {
           assetUrl: 'assets/gifts/lottie/rose.json',
           durationMs: 3000,
           priority: 38,
-          soundUrl: SiteAnimationAssetPaths.sound('anim_exit_vip'),
+          soundUrl:
+              '${SiteAnimationAssetPaths.cdnBase}/sounds/anim_exit_vip.mp3',
         ),
         const AdminSiteAnimation(
           id: 'anim_exit_svip',
