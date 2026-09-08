@@ -99,7 +99,7 @@ class AgencyDashboardScreen extends ConsumerWidget {
             if (dash.tasks.isEmpty)
               _emptyHint('Aktif görev yok.')
             else
-              ...dash.tasks.map(_TaskTile.new),
+              ...dash.tasks.map((t) => _TaskTile(t, jetonLabel: jetonLabel)),
           ],
         ),
       ),
@@ -369,9 +369,10 @@ class _EarningTile extends StatelessWidget {
 }
 
 class _TaskTile extends StatelessWidget {
-  const _TaskTile(this.task);
+  const _TaskTile(this.task, {required this.jetonLabel});
 
   final AgencyTaskEntity task;
+  final String jetonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -385,7 +386,7 @@ class _TaskTile extends StatelessWidget {
         ),
         title: Text(task.title, style: const TextStyle(color: Colors.white)),
         subtitle: Text(
-          '${task.reward} jeton${task.description != null ? " · ${task.description}" : ""}',
+          '${task.reward} $jetonLabel${task.description != null ? " · ${task.description}" : ""}',
           style: const TextStyle(color: Colors.white60),
         ),
       ),

@@ -172,12 +172,14 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-class _PaymentTile extends StatelessWidget {
+class _PaymentTile extends ConsumerWidget {
   const _PaymentTile({required this.row});
   final CfcPaymentRequestEntity row;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+    final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: ProGlassListTile(
@@ -188,7 +190,10 @@ class _PaymentTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    row.displayLine,
+                    row.brandedDisplayLine(
+                      jetonLabel: jetonLabel,
+                      cfcLabel: cfcLabel,
+                    ),
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                   if (row.notes?.isNotEmpty == true)

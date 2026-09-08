@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../domain/session_gift_summary.dart';
 
 /// Yayın / oda çıkışında hediye özeti — kimden ne kadar, misafir payı, kalan net.
@@ -19,13 +21,14 @@ Future<void> showSessionGiftSummarySheet(
   );
 }
 
-class _SessionGiftSummaryBody extends StatelessWidget {
+class _SessionGiftSummaryBody extends ConsumerWidget {
   const _SessionGiftSummaryBody({required this.summary});
 
   final SessionGiftSummary summary;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final bottom = MediaQuery.paddingOf(context).bottom;
     return SafeArea(
       child: Padding(
@@ -57,7 +60,7 @@ class _SessionGiftSummaryBody extends StatelessWidget {
             const SizedBox(height: 16),
             _metricTile(
               'Toplam atılan hediye',
-              summary.formatJetonWithTl(summary.totalGrossJeton),
+              summary.formatJetonWithTl(summary.totalGrossJeton, label: jetonLabel),
               Icons.card_giftcard_rounded,
               const Color(0xFFFF8EC7),
             ),
@@ -65,7 +68,7 @@ class _SessionGiftSummaryBody extends StatelessWidget {
               const SizedBox(height: 10),
               _metricTile(
                 'Misafirlere giden pay',
-                summary.formatJetonWithTl(summary.guestNetJeton),
+                summary.formatJetonWithTl(summary.guestNetJeton, label: jetonLabel),
                 Icons.people_rounded,
                 const Color(0xFF66E36F),
               ),
@@ -73,7 +76,7 @@ class _SessionGiftSummaryBody extends StatelessWidget {
             const SizedBox(height: 10),
             _metricTile(
               summary.recipientOnly ? 'Size kalan pay' : 'Size kalan net',
-              summary.formatJetonWithTl(summary.myNetJeton),
+              summary.formatJetonWithTl(summary.myNetJeton, label: jetonLabel),
               Icons.monetization_on_rounded,
               const Color(0xFFFFD54F),
             ),
@@ -111,7 +114,7 @@ class _SessionGiftSummaryBody extends StatelessWidget {
                         ),
                       ),
                       trailing: Text(
-                        summary.formatJetonWithTl(row.grossJeton),
+                        summary.formatJetonWithTl(row.grossJeton, label: jetonLabel),
                         style: const TextStyle(
                           color: Color(0xFFFFD54F),
                           fontWeight: FontWeight.w800,

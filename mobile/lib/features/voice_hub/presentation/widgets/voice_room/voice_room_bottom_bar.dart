@@ -135,7 +135,7 @@ class VoiceRoomBottomBar extends ConsumerWidget {
                       child: const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         child: Text(
-                          '🪙 Jeton Yükle',
+                          '🪙 ${economyJetonTopUpShortLabel(ref)}',
                           style: TextStyle(
                             fontWeight: FontWeight.w900,
                             fontSize: 11,

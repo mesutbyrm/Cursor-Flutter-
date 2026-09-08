@@ -97,7 +97,11 @@ class _JetonPaymentNotifySheetState
           ? me.display.trim()
           : me.username;
     }
-    _notesCtrl.text = 'Jeton alma';
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+      _notesCtrl.text = '$jetonLabel alma';
+    });
   }
 
   @override
@@ -154,7 +158,7 @@ class _JetonPaymentNotifySheetState
       final body = buildJetonPaymentRequest(
         package: pkg,
         method: _methodApi,
-        notes: notes.isEmpty ? 'Jeton yükleme · $_methodApi' : notes,
+        notes: notes.isEmpty ? '$jetonLabel yükleme · $_methodApi' : notes,
         senderLabel: _senderCtrl.text.trim().isEmpty
             ? null
             : _senderCtrl.text.trim(),
@@ -290,7 +294,10 @@ class _JetonPaymentNotifySheetState
             ),
           ),
         ),
-        _SheetHeader(onClose: () => Navigator.of(context).pop()),
+        _SheetHeader(
+          jetonLabel: jetonLabel,
+          onClose: () => Navigator.of(context).pop(),
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
@@ -407,7 +414,7 @@ class _JetonPaymentNotifySheetState
                     Expanded(
                       child: Text(
                         'Ödemenizi yaptıktan sonra bu formu doldurarak bildirim gönderin. '
-                        'Ekibimiz ödemenizi kontrol edip jetonlarınızı en kısa sürede yükleyecektir.',
+                        'Ekibimiz ödemenizi kontrol edip $jetonLabel bakiyenizi en kısa sürede yükleyecektir.',
                         style: TextStyle(
                           fontSize: 12,
                           height: 1.4,
@@ -505,8 +512,9 @@ class _JetonPaymentNotifySheetState
 }
 
 class _SheetHeader extends StatelessWidget {
-  const _SheetHeader({required this.onClose});
+  const _SheetHeader({required this.jetonLabel, required this.onClose});
 
+  final String jetonLabel;
   final VoidCallback onClose;
 
   @override
@@ -548,7 +556,7 @@ class _SheetHeader extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Jeton yükleme ödemesi bildirin',
+                  '$jetonLabel yükleme ödemesi bildirin',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.white.withValues(alpha: 0.85),

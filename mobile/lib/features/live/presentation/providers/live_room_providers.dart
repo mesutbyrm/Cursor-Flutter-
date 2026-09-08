@@ -509,6 +509,7 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
       viewerCount: viewerCount,
       duration: duration,
       endedLabel: endedLabel,
+      jetonLabel: economyCurrencyLabel(ref, key: 'jeton'),
     );
     for (final line in lines) {
       final trimmed = line.trim();

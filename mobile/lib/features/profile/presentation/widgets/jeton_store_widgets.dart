@@ -86,7 +86,7 @@ class _StarFieldPainter extends CustomPainter {
 }
 
 /// Mockup: Jeton / CFC bakiye çipleri.
-class JetonStoreBalanceRow extends StatelessWidget {
+class JetonStoreBalanceRow extends ConsumerWidget {
   const JetonStoreBalanceRow({
     super.key,
     required this.jeton,
@@ -97,13 +97,15 @@ class JetonStoreBalanceRow extends StatelessWidget {
   final int cfc;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+    final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
     return Row(
       children: [
         Expanded(
           child: _BalanceChip(
             icon: Icons.monetization_on_rounded,
-            label: 'Jeton:',
+            label: '$jetonLabel:',
             value: '$jeton',
             valueColor: AppThemeColors.coinGold,
             borderColor: AppThemeColors.coinGold.withValues(alpha: 0.45),
@@ -113,7 +115,7 @@ class JetonStoreBalanceRow extends StatelessWidget {
         Expanded(
           child: _BalanceChip(
             icon: Icons.auto_awesome_rounded,
-            label: 'CFC:',
+            label: '$cfcLabel:',
             value: '$cfc',
             valueColor: const Color(0xFFD8B4FE),
             borderColor: const Color(0xFF7C3AED).withValues(alpha: 0.5),
@@ -331,7 +333,7 @@ class JetonPackageTile extends ConsumerWidget {
 }
 
 /// Özel miktar — jeton veya TL girişi.
-class JetonCustomAmountSection extends StatefulWidget {
+class JetonCustomAmountSection extends ConsumerStatefulWidget {
   const JetonCustomAmountSection({
     super.key,
     required this.tlRate,
@@ -342,11 +344,12 @@ class JetonCustomAmountSection extends StatefulWidget {
   final void Function(JetonPackageEntity package, String priceText) onPurchase;
 
   @override
-  State<JetonCustomAmountSection> createState() =>
+  ConsumerState<JetonCustomAmountSection> createState() =>
       _JetonCustomAmountSectionState();
 }
 
-class _JetonCustomAmountSectionState extends State<JetonCustomAmountSection> {
+class _JetonCustomAmountSectionState
+    extends ConsumerState<JetonCustomAmountSection> {
   var _byJeton = true;
   final _controller = TextEditingController();
 
@@ -357,6 +360,7 @@ class _JetonCustomAmountSectionState extends State<JetonCustomAmountSection> {
   }
 
   void _submit() {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final raw = _controller.text.trim().replaceAll(',', '.');
     final n = double.tryParse(raw);
     if (n == null || n <= 0) {
@@ -374,7 +378,7 @@ class _JetonCustomAmountSectionState extends State<JetonCustomAmountSection> {
       coins = n.round();
       if (coins < 1) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('En az 1 jeton girin')),
+          SnackBar(content: Text('En az 1 $jetonLabel girin')),
         );
         return;
       }
@@ -384,7 +388,9 @@ class _JetonCustomAmountSectionState extends State<JetonCustomAmountSection> {
       coins = (priceTry / rate).round();
       if (coins < 1) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tutar en az 1 jeton karşılığı olmalı')),
+          SnackBar(
+            content: Text('Tutar en az 1 $jetonLabel karşılığı olmalı'),
+          ),
         );
         return;
       }
@@ -394,7 +400,7 @@ class _JetonCustomAmountSectionState extends State<JetonCustomAmountSection> {
     widget.onPurchase(
       JetonPackageEntity(
         id: 'custom_$coins',
-        title: '$coins Jeton (Özel)',
+        title: '$coins $jetonLabel (Özel)',
         coins: coins,
         priceTry: priceTry,
       ),
@@ -415,6 +421,7 @@ class _JetonCustomAmountSectionState extends State<JetonCustomAmountSection> {
 
   @override
   Widget build(BuildContext context) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final rate = widget.tlRate > 0 ? widget.tlRate : kDefaultJetonTlRate;
     final rateLabel = rate == rate.roundToDouble()
         ? rate.toInt().toString()
@@ -455,7 +462,7 @@ class _JetonCustomAmountSectionState extends State<JetonCustomAmountSection> {
               children: [
                 Expanded(
                   child: _ModeTab(
-                    label: 'Jeton Miktarı Gir',
+                    label: '$jetonLabel Miktarı Gir',
                     selected: _byJeton,
                     onTap: () => setState(() => _byJeton = true),
                   ),
@@ -477,7 +484,7 @@ class _JetonCustomAmountSectionState extends State<JetonCustomAmountSection> {
             style: TextStyle(color: context.colors.onSurface),
             decoration: InputDecoration(
               hintText: _byJeton
-                  ? 'Kaç jeton almak istiyorsun?'
+                  ? 'Kaç $jetonLabel almak istiyorsun?'
                   : 'Ödeyeceğiniz tutarı girin (₺)',
               hintStyle: TextStyle(
                 color: context.colors.onSurfaceMuted.withValues(alpha: 0.85),
@@ -537,7 +544,7 @@ class _JetonCustomAmountSectionState extends State<JetonCustomAmountSection> {
           ),
           SizedBox(height: 10),
           Text(
-            '1 Jeton = ₺$rateLabel',
+            '1 $jetonLabel = ₺$rateLabel',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),

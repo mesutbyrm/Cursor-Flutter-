@@ -207,6 +207,7 @@ class _HistoryTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final isPending = row.status.toLowerCase() == 'pending';
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -218,7 +219,10 @@ class _HistoryTile extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    row.displayLine,
+                    row.brandedDisplayLine(
+                      jetonLabel: jetonLabel,
+                      cfcLabel: cfcLabel,
+                    ),
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                   Text(

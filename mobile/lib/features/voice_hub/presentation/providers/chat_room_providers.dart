@@ -808,6 +808,7 @@ class VoiceRoomLiveController
         viewerCount: viewers > 0 ? viewers : null,
         duration: sessionDurationSinceJoin(),
         endedLabel: endedLabel,
+        jetonLabel: economyCurrencyLabel(ref, key: 'jeton'),
       );
       appendSessionSummaryMessages(lines);
     } catch (_) {}

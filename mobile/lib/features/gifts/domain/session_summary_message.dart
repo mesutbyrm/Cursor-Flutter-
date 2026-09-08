@@ -18,6 +18,7 @@ abstract final class SessionSummaryMessage {
     int? viewerCount,
     Duration? duration,
     String endedLabel = 'Oturum sona erdi',
+    String jetonLabel = 'jeton',
   }) {
     final out = <String>[endedLabel];
     final parts = <String>[];
@@ -25,7 +26,7 @@ abstract final class SessionSummaryMessage {
       parts.add('$viewerCount kişi girdi');
     }
     if (summary.totalGrossJeton > 0) {
-      parts.add('${summary.totalGrossJeton} jeton hediye');
+      parts.add('${summary.totalGrossJeton} $jetonLabel hediye');
     }
     final dur = formatDuration(duration);
     if (dur.isNotEmpty) parts.add('süre $dur');
@@ -33,9 +34,11 @@ abstract final class SessionSummaryMessage {
       out.add('Özet: ${parts.join(' · ')}');
     }
     if (summary.myNetJeton > 0) {
-      out.add(summary.formatJetonWithTl(summary.myNetJeton));
+      out.add(summary.formatJetonWithTl(summary.myNetJeton, label: jetonLabel));
     } else if (summary.isHostOrOwner && summary.totalGrossJeton > 0) {
-      out.add('Toplam hediye: ${summary.formatJeton(summary.totalGrossJeton)}');
+      out.add(
+        'Toplam hediye: ${summary.formatJeton(summary.totalGrossJeton, label: jetonLabel)}',
+      );
     }
     return out;
   }

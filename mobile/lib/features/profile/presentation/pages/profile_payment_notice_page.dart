@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../admin/presentation/providers/admin_providers.dart';
@@ -148,6 +149,8 @@ class _ProfilePaymentNoticePageState
 
   @override
   Widget build(BuildContext context) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+    final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
@@ -158,9 +161,9 @@ class _ProfilePaymentNoticePageState
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
             children: [
               SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment(value: 'cfc', label: Text('CFC')),
-                  ButtonSegment(value: 'jeton', label: Text('Jeton')),
+                segments: [
+                  ButtonSegment(value: 'cfc', label: Text(cfcLabel)),
+                  ButtonSegment(value: 'jeton', label: Text(jetonLabel)),
                 ],
                 selected: {_type},
                 onSelectionChanged: (s) => setState(() => _type = s.first),
@@ -171,7 +174,7 @@ class _ProfilePaymentNoticePageState
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 decoration: InputDecoration(
-                  labelText: _type == 'jeton' ? 'Jeton miktarı' : 'CFC miktarı',
+                  labelText: _type == 'jeton' ? '$jetonLabel miktarı' : '$cfcLabel miktarı',
                 ),
               ),
               const SizedBox(height: 12),

@@ -197,6 +197,7 @@ class _JetonPremiumPurchaseViewState
               tl: amounts.tl,
               username: username,
               cfg: cfg,
+              jetonLabel: economyCurrencyLabel(ref, key: 'jeton'),
             );
           }
         },
@@ -205,6 +206,7 @@ class _JetonPremiumPurchaseViewState
   }
 
   ({int jeton, double tl, bool valid, String? error}) _parseAmounts() {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final jetonRaw = int.tryParse(_jetonCtrl.text.trim().replaceAll(RegExp(r'[^\d]'), ''));
     final tlRaw = double.tryParse(_tlCtrl.text.trim().replaceAll(',', '.'));
     final jetonFromTl = tlRaw != null && tlRaw > 0
@@ -213,7 +215,7 @@ class _JetonPremiumPurchaseViewState
 
     final jeton = jetonRaw ?? jetonFromTl;
     if (jeton == null || jeton < 1) {
-      return (jeton: 0, tl: 0, valid: false, error: 'En az 1 jeton girin');
+      return (jeton: 0, tl: 0, valid: false, error: 'En az 1 $jetonLabel girin');
     }
 
     final tl = tlRaw ?? (jeton * kJetonPurchaseTlRate);
@@ -255,13 +257,14 @@ class _JetonPremiumPurchaseViewState
     required double tl,
     required String username,
     required PaymentConfigEntity cfg,
+    required String jetonLabel,
   }) async {
     final phone = PaymentDefaults.formatWhatsAppPhone(cfg.whatsappNumber);
     final msg = Uri.encodeComponent(
       'Merhaba.\n'
-      'Canlifal için jeton satın almak istiyorum.\n\n'
+      'Canlifal için $jetonLabel satın almak istiyorum.\n\n'
       'Kullanıcı:\n$username\n\n'
-      'Jeton:\n$jeton\n\n'
+      '$jetonLabel:\n$jeton\n\n'
       'Tutar:\n${_formatTryDisplay(tl)}',
     );
     final uri = Uri.parse('https://wa.me/$phone?text=$msg');
@@ -316,17 +319,19 @@ class _JetonPremiumPurchaseViewState
         JetonPayMethod.whatsapp => 'whatsapp',
       };
       final username = me.display;
+      final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
       final remotePackages =
           await ref.read(jetonPackagesProvider.future).catchError((_) => <JetonPackageEntity>[]);
       final package = resolveJetonPackageForPurchase(
         coins: amounts.jeton,
         priceTry: amounts.tl,
         remote: remotePackages,
+        jetonLabel: jetonLabel,
       );
       final body = buildJetonPaymentRequest(
         package: package,
         method: methodApi,
-        notes: 'Jeton yükleme · $methodApi · $username',
+        notes: '$jetonLabel yükleme · $methodApi · $username',
         senderLabel: username,
         receiptReference: receiptUrl,
       );
@@ -350,6 +355,7 @@ class _JetonPremiumPurchaseViewState
           tl: amounts.tl,
           username: username,
           cfg: _config(),
+          jetonLabel: jetonLabel,
         );
       }
 
@@ -360,9 +366,9 @@ class _JetonPremiumPurchaseViewState
           icon: const Icon(Icons.check_circle_outline_rounded,
               color: AppThemeColors.accentCyan, size: 36),
           title: const Text('Ödeme talebi oluşturuldu'),
-          content: const Text(
-            'Talebiniz admin ekibine iletildi. Onay sonrası jetonlar hesabınıza yansır.',
-            style: TextStyle(height: 1.4),
+          content: Text(
+            'Talebiniz admin ekibine iletildi. Onay sonrası $jetonLabel hesabınıza yansır.',
+            style: const TextStyle(height: 1.4),
           ),
           actions: [
             FilledButton(
