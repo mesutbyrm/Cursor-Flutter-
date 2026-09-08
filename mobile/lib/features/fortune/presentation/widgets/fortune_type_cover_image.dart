@@ -33,15 +33,32 @@ class FortuneTypeCoverImage extends StatelessWidget {
         ? override
         : FortuneTypeImages.urlFor(slug, width: imageWidth);
     final assetPath = FortuneTypeImages.assetPathFor(slug);
+    final hasLocalAsset = assetPath != null;
     final overlays = FortuneTypeImages.overlayColors(slug);
+    final glow = FortuneTypeImages.glowColor(slug);
 
     return Stack(
       fit: StackFit.expand,
       children: [
-        FortuneTypeCoverArt(slug: slug, accent: accent),
-        if (assetPath != null)
+        if (hasLocalAsset)
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  glow.withValues(alpha: 0.45),
+                  accent.withValues(alpha: 0.28),
+                  const Color(0xFF0A0118),
+                ],
+              ),
+            ),
+          )
+        else
+          FortuneTypeCoverArt(slug: slug, accent: accent),
+        if (hasLocalAsset)
           Image.asset(
-            assetPath,
+            assetPath!,
             fit: fit,
             errorBuilder: (_, _, _) => const SizedBox.shrink(),
           )

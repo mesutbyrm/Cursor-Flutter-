@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.409+447 (2026-09-08) — Premium görseller + Bana Özel yedek
+
+- Günlük fal özel mistik kapak (`gunluk-fal.webp`) — kehanet kartı ve enerji vitrin
+- Günlük enerji + hızlı erişim kartlarına premium kapak arka planı
+- Yerel asset varsa emoji procedural katman gizlenir (temiz premium görünüm)
+- Bana Özel: API boş/hata durumunda yerleşik vitrin kataloğu (8 içerik)
+- Fal türleri bölümü premium hata kartı
+
 ## 1.0.408+446 (2026-09-08) — Bana Özel hub + katalog tamamlama
 
 - Fal hub Bana Özel: premium kartlar, yükleme/hata/boş durum, seri özeti

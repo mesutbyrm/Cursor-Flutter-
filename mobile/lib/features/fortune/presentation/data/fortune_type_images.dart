@@ -22,12 +22,13 @@ abstract final class FortuneTypeImages {
   static String heroTagFor(String slug) => 'fortune-hero-$slug';
 
   static String _sceneSlug(String slug) => switch (slug) {
-        'gunluk-fal' => 'tarot',
+        'gunluk-fal' => 'gunluk-fal',
         'aura-analizi' => 'aura',
         'kursundokme' => 'kursun-dokme',
         'pendul-fali' => 'pendul',
         'runik-fali' => 'runik',
         'iskambil-fali' => 'iskambil',
+        'burc-yorumu' => 'yildiz-haritasi',
         _ => slug,
       };
 
@@ -44,6 +45,7 @@ abstract final class FortuneTypeImages {
 
   static const _cropFocus = <String, String>{
     'tarot': 'entropy',
+    'gunluk-fal': 'entropy',
     'kahve-fali': 'center',
     'ask-fali': 'entropy',
     'yildiz-haritasi': 'entropy',
@@ -76,7 +78,7 @@ abstract final class FortuneTypeImages {
     'istihare': 'istihare.webp',
     'aura': 'aura-analizi.webp',
     'evet-hayir': 'evet-hayir.webp',
-    'gunluk-fal': 'tarot.webp',
+    'gunluk-fal': 'gunluk-fal.webp',
     'dogum-haritasi': 'dogum-haritasi.webp',
     'kursun-dokme': 'kursundokme.webp',
   };
@@ -127,6 +129,7 @@ abstract final class FortuneTypeImages {
 
   static const _glowHex = <String, int>{
     'tarot': 0xFFB832FF,
+    'gunluk-fal': 0xFFE879F9,
     'kahve-fali': 0xFFD97706,
     'ask-fali': 0xFFE11D48,
     'yildiz-haritasi': 0xFF38BDF8,

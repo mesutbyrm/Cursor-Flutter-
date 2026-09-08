@@ -6,6 +6,7 @@ import '../../navigation/fortune_card_navigation.dart';
 import '../../providers/fortune_types_display_provider.dart';
 import '../premium_2026/fortune_premium_card.dart';
 import '../premium_2026/premium_section_header.dart';
+import 'ultra_fortune_liquid_surface.dart';
 import 'ultra_fortune_tokens.dart';
 
 /// FAL TÜRLERİ bölümü — gerçek API + V2 premium grid.
@@ -81,14 +82,31 @@ class _UltraFortuneTypesSectionState extends ConsumerState<UltraFortuneTypesSect
                 height: double.infinity,
               ),
             ),
-            error: (_, __) => Column(
-              children: [
-                const Text('Fal türleri yüklenemedi'),
-                TextButton(
-                  onPressed: () => invalidateFortuneTypesDisplay(ref),
-                  child: const Text('Tekrar Dene'),
-                ),
-              ],
+            error: (_, __) => UltraFortuneLiquidSurface(
+              borderRadius: BorderRadius.circular(18),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              child: Column(
+                children: [
+                  const Icon(Icons.refresh_rounded, size: 32, color: Colors.white54),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Fal türleri yüklenemedi',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.75),
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton(
+                    onPressed: () => invalidateFortuneTypesDisplay(ref),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: UltraFortuneTokens.metallicGold,
+                      foregroundColor: const Color(0xFF1A0A32),
+                    ),
+                    child: const Text('Tekrar Dene'),
+                  ),
+                ],
+              ),
             ),
             data: (list) {
               if (list.isEmpty) {

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Mistik fal kapak görselleri — dogum-haritasi, kursundokme, aura-analizi."""
+"""Mistik fal kapak görselleri — özel webp üretimi."""
 
 from __future__ import annotations
 
@@ -153,12 +153,46 @@ def build_aura_analizi() -> Image.Image:
     return base.filter(ImageFilter.GaussianBlur(radius=0.4))
 
 
+def _tarot_cards(draw: ImageDraw.ImageDraw, cx: float, cy: float, scale: float) -> None:
+    for i, ang in enumerate([-18, 0, 16]):
+        rad = math.radians(ang)
+        ox = cx + math.sin(rad) * 30 * scale
+        oy = cy + i * 8 * scale
+        w = 90 * scale
+        ht = 130 * scale
+        pts = [
+            (ox - w * 0.5, oy - ht * 0.5),
+            (ox + w * 0.5, oy - ht * 0.5),
+            (ox + w * 0.5, oy + ht * 0.5),
+            (ox - w * 0.5, oy + ht * 0.5),
+        ]
+        draw.polygon(pts, fill=(255, 240, 210, 55), outline=(255, 215, 120, 140))
+
+
+def build_gunluk_fal() -> Image.Image:
+    w, h = SIZE
+    base = _radial_gradient(w, h, (90, 30, 160), (12, 4, 28)).convert("RGBA")
+    _glow_orb(base, (w * 0.52, h * 0.45), 340, (184, 50, 255), 75)
+    _glow_orb(base, (w * 0.38, h * 0.55), 220, (255, 200, 80), 50)
+    draw = ImageDraw.Draw(base)
+    _stars(draw, w, h, 280, (255, 255, 255, 150))
+    _tarot_cards(draw, w * 0.58, h * 0.48, 1.0)
+    # altın parıltı halkası
+    draw.ellipse(
+        (w * 0.42, h * 0.28, w * 0.72, h * 0.68),
+        outline=(255, 215, 120, 90),
+        width=5,
+    )
+    return base.filter(ImageFilter.GaussianBlur(radius=0.5))
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     targets = {
         "dogum-haritasi.webp": build_dogum_haritasi(),
         "kursundokme.webp": build_kursundokme(),
         "aura-analizi.webp": build_aura_analizi(),
+        "gunluk-fal.webp": build_gunluk_fal(),
     }
     for name, img in targets.items():
         path = OUT / name

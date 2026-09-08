@@ -20,6 +20,7 @@ void main() {
         reason: 'missing asset for ${type.slug}',
       );
     }
+    expect(FortuneTypeImages.assetPathFor('gunluk-fal'), contains('gunluk-fal'));
     expect(FortuneTypeImages.assetPathFor('dogum-haritasi'), contains('dogum-haritasi'));
     expect(FortuneTypeImages.assetPathFor('kursundokme'), contains('kursundokme'));
     expect(FortuneTypeImages.assetPathFor('pendul'), contains('pendul'));

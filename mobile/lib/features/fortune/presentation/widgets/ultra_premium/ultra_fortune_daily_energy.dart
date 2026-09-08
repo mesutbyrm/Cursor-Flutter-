@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../data/fortune_catalog.dart';
+import '../data/fortune_type_images.dart';
 import '../premium_2026/premium_section_header.dart';
+import 'ultra_fortune_cover_backdrop.dart';
 import 'ultra_fortune_liquid_surface.dart';
 import 'ultra_fortune_tokens.dart';
 
@@ -16,30 +18,35 @@ class UltraFortuneDailyEnergy extends StatelessWidget {
       value: 'Yüksek',
       icon: Icons.bolt_rounded,
       color: Color(0xFFFBBF24),
+      coverSlug: 'gunluk-fal',
     ),
     _EnergyItem(
       label: 'Şanslı Renk',
       value: 'Mor',
       icon: Icons.diamond_rounded,
       color: UltraFortuneTokens.softLilac,
+      coverSlug: 'aura-analizi',
     ),
     _EnergyItem(
       label: 'Şanslı Sayı',
       value: '7',
       icon: Icons.eco_rounded,
       color: Color(0xFF4ADE80),
+      coverSlug: 'numeroloji',
     ),
     _EnergyItem(
       label: 'Ay Evresi',
       value: 'Şişkin Ay',
       icon: Icons.nightlight_round,
       color: UltraFortuneTokens.metallicGold,
+      coverSlug: 'yildiz-haritasi',
     ),
     _EnergyItem(
       label: 'Burç Mesajı',
       value: 'Bugün Işıldıyorsun',
       icon: Icons.star_rounded,
       color: UltraFortuneTokens.electricPurple,
+      coverSlug: 'yildiz-haritasi',
     ),
   ];
 
@@ -114,12 +121,14 @@ class _EnergyItem {
     required this.value,
     required this.icon,
     required this.color,
+    required this.coverSlug,
   });
 
   final String label;
   final String value;
   final IconData icon;
   final Color color;
+  final String coverSlug;
 }
 
 class _EnergyCrystalCard extends StatelessWidget {
@@ -130,61 +139,77 @@ class _EnergyCrystalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accent = FortuneTypeImages.glowColor(item.coverSlug);
     return SizedBox(
       width: 128,
       child: UltraFortuneLiquidSurface(
         onTap: onTap,
         elevated: true,
         borderRadius: BorderRadius.circular(22),
-        padding: const EdgeInsets.all(14),
+        padding: EdgeInsets.zero,
         blur: 42,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    item.color.withValues(alpha: 0.35),
-                    item.color.withValues(alpha: 0.08),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(22),
+          child: Stack(
+            children: [
+              UltraFortuneCoverBackdrop(
+                slug: item.coverSlug,
+                accent: accent,
+                opacity: 0.34,
+              ),
+              Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            item.color.withValues(alpha: 0.35),
+                            item.color.withValues(alpha: 0.08),
+                          ],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: item.color.withValues(alpha: 0.4),
+                            blurRadius: 14,
+                          ),
+                        ],
+                      ),
+                      child: Icon(item.icon, color: item.color, size: 22),
+                    ),
+                    const Spacer(),
+                    Text(
+                      item.label.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.8,
+                        color: UltraFortuneTokens.metallicGold.withValues(alpha: 0.9),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      item.value,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 14,
+                        color: Colors.white,
+                        height: 1.2,
+                      ),
+                    ),
                   ],
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: item.color.withValues(alpha: 0.4),
-                    blurRadius: 14,
-                  ),
-                ],
               ),
-              child: Icon(item.icon, color: item.color, size: 22),
-            ),
-            const Spacer(),
-            Text(
-              item.label.toUpperCase(),
-              style: TextStyle(
-                fontSize: 8,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.8,
-                color: UltraFortuneTokens.metallicGold.withValues(alpha: 0.9),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              item.value,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 14,
-                color: Colors.white,
-                height: 1.2,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

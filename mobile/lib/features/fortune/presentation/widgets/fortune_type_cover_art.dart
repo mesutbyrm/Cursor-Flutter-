@@ -95,6 +95,7 @@ class FortuneTypeCoverArt extends StatelessWidget {
         'istihare' => const _CoverArt('🕌', 'İSTİHARE'),
         'aura' => const _CoverArt('🌈', 'AURA'),
         'evet-hayir' => const _CoverArt('⚖️', 'EVET / HAYIR'),
+        'gunluk-fal' => const _CoverArt('🎁', 'GÜNLÜK FAL'),
         'dogum-haritasi' => const _CoverArt('🪐', 'DOĞUM HARİTASI'),
         'kursun-dokme' => const _CoverArt('🕯️', 'KURŞUN DÖKME'),
         'pendul' => const _CoverArt('🔮', 'PENDÜL'),
@@ -130,7 +131,7 @@ class _ScenePainter extends CustomPainter {
       );
     }
 
-    if (scene == 'tarot' || scene == 'iskambil' || scene == 'melek-kartlari') {
+    if (scene == 'tarot' || scene == 'iskambil' || scene == 'melek-kartlari' || scene == 'gunluk-fal') {
       final cardPaint = Paint()
         ..color = Colors.white.withValues(alpha: 0.08)
         ..style = PaintingStyle.stroke

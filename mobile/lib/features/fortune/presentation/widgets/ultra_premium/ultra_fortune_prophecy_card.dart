@@ -76,7 +76,7 @@ class _CinematicTarotThumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final glow = FortuneTypeImages.glowColor('tarot');
+    final glow = FortuneTypeImages.glowColor('gunluk-fal');
 
     return Container(
       width: 64,
@@ -98,7 +98,7 @@ class _CinematicTarotThumb extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             FortuneTypeCoverImage(
-              slug: 'tarot',
+              slug: 'gunluk-fal',
               accent: glow,
               imageWidth: 400,
               showOverlay: true,
