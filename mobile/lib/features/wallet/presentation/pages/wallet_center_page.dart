@@ -48,20 +48,27 @@ class WalletCenterPage extends ConsumerWidget {
       daysRemaining: balances.membershipDaysRemaining,
       expiresAt: balances.membershipExpiresAt,
     );
-    final pageSubtitle =
-        buildMembershipWalletCenterPageSubtitle(info: membershipInfo);
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+    final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
+    final pageSubtitle = buildMembershipWalletCenterPageSubtitle(
+      info: membershipInfo,
+      jetonLabel: jetonLabel,
+      cfcLabel: cfcLabel,
+    );
     final jetonHubSubtitle = buildMembershipWalletStoreHubCardSubtitle(
       info: membershipInfo,
       store: MembershipStoreKind.jeton,
       catalogTier: catalogTier,
+      jetonLabel: jetonLabel,
+      cfcLabel: cfcLabel,
     );
     final cfcHubSubtitle = buildMembershipWalletStoreHubCardSubtitle(
       info: membershipInfo,
       store: MembershipStoreKind.cfc,
       catalogTier: catalogTier,
+      jetonLabel: jetonLabel,
+      cfcLabel: cfcLabel,
     );
-    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
-    final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,

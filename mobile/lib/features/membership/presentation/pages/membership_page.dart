@@ -41,6 +41,7 @@ class MembershipPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ui = ref.watch(membershipControllerProvider);
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final catalogAsync = ref.watch(membershipCatalogProvider);
     final padding = ResponsiveLayout.pagePadding(context);
     final pendingRequests = ref.watch(paymentRequestsNotifierProvider);
@@ -192,6 +193,7 @@ class MembershipPage extends ConsumerWidget {
                             Text(
                               buildMembershipPageTokenPackagesSubtitle(
                                 info: ui.membershipInfo,
+                                jetonLabel: jetonLabel,
                               ),
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.5),
@@ -294,6 +296,7 @@ class MembershipPage extends ConsumerWidget {
             ? (tier.monthlyPriceTry / rate).round()
             : tier.monthlyPriceTry * 2);
     final priceCfc = CurrencyUsageInfo.cfcForTl(tier.monthlyPriceTry);
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     void onPurchaseDone() {
       ref.invalidate(paymentRequestsNotifierProvider);
     }
@@ -402,8 +405,11 @@ class MembershipPage extends ConsumerWidget {
       ref,
       package: jetonPkg,
       priceText:
-          '₺${tier.monthlyPriceTry} (${tier.monthlyTokens} jeton · ${tier.durationLabel})',
-      paymentNotes: buildMembershipCheckoutPaymentNotes(tier: tier),
+          '₺${tier.monthlyPriceTry} (${tier.monthlyTokens} $jetonLabel · ${tier.durationLabel})',
+      paymentNotes: buildMembershipCheckoutPaymentNotes(
+        tier: tier,
+        jetonLabel: jetonLabel,
+      ),
       onDone: onPurchaseDone,
     );
   }
@@ -730,13 +736,16 @@ class _UpgradeBanner extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final title = buildMembershipPageUpgradeBannerTitle(info: info);
     final subtitle = buildMembershipPageUpgradeBannerSubtitle(
       info: info,
       catalogTier: catalogTier,
+      jetonLabel: jetonLabel,
     );
-    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
-    final actionLabel = '$jetonLabel\nSatın Al';
+    final actionLabel = buildMembershipPageUpgradeBannerActionLabel(
+      jetonLabel: jetonLabel,
+    );
 
     return Container(
       padding: const EdgeInsets.all(16),

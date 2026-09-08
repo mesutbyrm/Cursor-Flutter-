@@ -35,6 +35,8 @@ class ProfileWalletSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final info = ref.watch(profileMembershipInfoProvider);
     final locale = Localizations.localeOf(context);
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
+    final cfcLabel = economyCurrencyLabel(ref, key: 'cfc', locale: locale);
     final subscriptionsLabel =
         buildMembershipWalletSubscriptionsTileLabel(info: info);
 
@@ -96,7 +98,11 @@ class ProfileWalletSection extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                buildMembershipWalletSectionBalanceHint(info: info),
+                buildMembershipWalletSectionBalanceHint(
+                  info: info,
+                  jetonLabel: jetonLabel,
+                  cfcLabel: cfcLabel,
+                ),
                 style: ProfileTypography.cardSubtitle(context),
               ),
             ],
