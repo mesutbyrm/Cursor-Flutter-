@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.413+451 (2026-09-08) — Profil/admin eksik tamamlama
+
+- Admin dashboard: canlı oda/yayın sayısı fallback, okunmamış bildirim sayacı
+- Oda finans denetimi sayfası (`/admin/voice-finance`) — `GET /api/admin/voice-room-finance-audit`
+- Profil: avatar üzerinde Lv rozeti, staff rol chip'i
+- Jeton/CFC bakiye AnimatedSwitcher + 60sn profil yenileme
+
 ## 1.0.412+450 (2026-09-08) — Profil + Admin/Yetkili sistem yenileme
 
 ### Normal profil

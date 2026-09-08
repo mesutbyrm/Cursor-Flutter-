@@ -106,6 +106,17 @@ class AdminDashboardPage extends ConsumerWidget {
                         ),
                       ),
                     _SectionLabel('Dashboard'),
+                    if (statsAsync.isLoading && !statsAsync.hasValue)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppThemeColors.accentPink,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      )
+                    else
                     _StatsGrid(
                       children: [
                         _StatTile(
