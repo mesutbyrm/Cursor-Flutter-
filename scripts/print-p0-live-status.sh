@@ -24,6 +24,11 @@ echo "║  P0 canlı durum (${VERSION})                                      ║
 echo "╚══════════════════════════════════════════════════════════════════╝"
 echo ""
 echo "APK: $APK_URL"
+if [[ -f "${ROOT}/docs/LATEST_APK_BUILD.md" ]] && grep -q 'FINAL PASS' "${ROOT}/docs/LATEST_APK_BUILD.md" 2>/dev/null; then
+  echo "APK CI: ✅ FINAL PASS (docs/LATEST_APK_BUILD.md)"
+else
+  echo "APK CI: docs/LATEST_APK_BUILD.md"
+fi
 echo "RELEASE READY: NO · Agent prep ✅ TAMAM · Cihaz bekliyor"
 echo "Kullanıcı: bash scripts/kullanici-sonraki.sh"
 echo ""
@@ -52,6 +57,10 @@ echo ""
 [[ -n "${HOST_TOKEN:-}" ]] && export HOST_TOKEN
 PROBE=$("$ROOT/scripts/probe-psychic-teller.sh" 2>&1 || true)
 echo "$PROBE" | grep -E '^(✅|⚠️|❌|──|Falcı probe)' || true
+
+if [[ -f "${ROOT}/docs/ACCEPTANCE_TEST_REPORT.md" ]] && grep -qE 'TRTC\+room OK' "${ROOT}/docs/ACCEPTANCE_TEST_REPORT.md" 2>/dev/null; then
+  echo "✅ Üretim API Gate 3 — TRTC + /api/room OK"
+fi
 
 echo ""
 echo "── Hesaplar ──"

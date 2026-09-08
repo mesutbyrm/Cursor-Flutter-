@@ -66,7 +66,9 @@ if [[ -f "${ROOT}/docs/M5_API_SMOKE_REPORT.md" ]] && grep -qE 'PASS=6|\| 6 \| 2 
 else
   echo "  M5: bash scripts/m5-api-smoke.sh"
 fi
-if [[ -f "${ROOT}/docs/ACCEPTANCE_TEST_REPORT.md" ]] && grep -qE '\| 3 \|.*PASS' "${ROOT}/docs/ACCEPTANCE_TEST_REPORT.md" 2>/dev/null; then
+if [[ -f "${ROOT}/docs/ACCEPTANCE_TEST_REPORT.md" ]] && grep -qE '\| 3 \|.*TRTC\+room OK' "${ROOT}/docs/ACCEPTANCE_TEST_REPORT.md" 2>/dev/null; then
+  echo "  API Gate 3 (Psychic): ✅ PASS (session + TRTC + room)"
+elif [[ -f "${ROOT}/docs/ACCEPTANCE_TEST_REPORT.md" ]] && grep -qE '\| 3 \|.*PASS' "${ROOT}/docs/ACCEPTANCE_TEST_REPORT.md" 2>/dev/null; then
   echo "  API Gate 3 (Psychic): ✅ PASS (session + TRTC)"
 else
   echo "  Gate 3: bash scripts/acceptance-tests/api-release-gate.sh"
