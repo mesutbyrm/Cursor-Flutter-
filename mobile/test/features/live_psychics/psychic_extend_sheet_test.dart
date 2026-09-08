@@ -69,10 +69,11 @@ void main() {
       );
 
       await tester.tap(find.text('Aç'));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
 
       expect(
-        find.text('Staff hesabı — uzatma için jeton düşülmez'),
+        find.text('Staff hesabı — uzatma için Jeton düşülmez'),
         findsOneWidget,
       );
 

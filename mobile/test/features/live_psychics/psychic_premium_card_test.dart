@@ -49,7 +49,7 @@ void main() {
       ),
     );
 
-    expect(find.textContaining('jeton/dk'), findsNothing);
+    expect(find.textContaining('Jeton/dk'), findsNothing);
     expect(find.text('ÇEVRİMDIŞI'), findsOneWidget);
   });
 }
