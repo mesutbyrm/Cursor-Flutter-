@@ -6,7 +6,7 @@ import 'site_animation_provider.dart';
 import 'widgets/site_animation_context_host.dart';
 
 /// Ana sayfa / global marquee giriş duyurusu → sosyal overlay kartı.
-void dispatchSiteAnimationSocialEntrance(Ref ref, String bannerLine) {
+void dispatchSiteAnimationSocialEntranceRef(Ref ref, String bannerLine) {
   final trimmed = bannerLine.trim();
   if (trimmed.isEmpty) return;
   if (VoiceOfficialJoin.isHomeBannerGiftAnnouncement(trimmed)) return;
@@ -19,7 +19,8 @@ void dispatchSiteAnimationSocialEntrance(Ref ref, String bannerLine) {
   final name = _parseDisplayName(trimmed);
   if (name == null || name.isEmpty) return;
 
-  final eventId = 'social:${trimmed.hashCode}:${DateTime.now().millisecondsSinceEpoch}';
+  final eventId =
+      'social:${trimmed.hashCode}:${DateTime.now().millisecondsSinceEpoch}';
   ref
       .read(siteAnimationProvider(SiteAnimationContext.social.overlayId).notifier)
       .handleRoomEvent('user_joined', {
@@ -29,6 +30,9 @@ void dispatchSiteAnimationSocialEntrance(Ref ref, String bannerLine) {
     'eventId': eventId,
   });
 }
+
+void dispatchSiteAnimationSocialEntrance(WidgetRef ref, String bannerLine) =>
+    dispatchSiteAnimationSocialEntranceRef(ref, bannerLine);
 
 bool _looksLikeSocialEntrance(String raw) {
   final lower = raw.toLowerCase();

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../domain/site_animation_tier.dart';
-import '../../../features/voice_hub/presentation/theme/voice_room_tokens.dart';
+import '../../../../features/voice_hub/presentation/theme/voice_room_tokens.dart';
 
 /// Lottie yoksa GPU-dostu gradient halka fallback.
 class SiteAnimationProfileFrameFallback extends StatelessWidget {
