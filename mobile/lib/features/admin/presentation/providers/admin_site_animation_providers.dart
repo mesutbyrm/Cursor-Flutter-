@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/site_animation/presentation/site_animation_catalog_provider.dart';
 import '../../data/admin_site_animation_remote_datasource.dart';
 import '../../domain/admin_site_animation.dart';
 import '../../../core/network/dio_provider.dart';
@@ -45,12 +46,16 @@ class AdminSiteAnimationListNotifier
     final saved = create
         ? await remote.create(item.toJson())
         : await remote.update(item.id, item.toJson());
+    await ref.read(siteAnimationCatalogDataSourceProvider).syncFromAdminLocal();
+    ref.invalidate(siteAnimationCatalogProvider);
     await refresh();
     return saved;
   }
 
   Future<void> toggleActive(String id, bool active) async {
     await ref.read(adminSiteAnimationRemoteProvider).setActive(id, active);
+    await ref.read(siteAnimationCatalogDataSourceProvider).syncFromAdminLocal();
+    ref.invalidate(siteAnimationCatalogProvider);
     await refresh();
   }
 }
@@ -63,6 +68,8 @@ class AdminSiteAnimationDefaultsNotifier
 
   Future<void> save(Map<AdminSiteAnimationMembership, String> next) async {
     await ref.read(adminSiteAnimationRemoteProvider).saveDefaults(next);
+    await ref.read(siteAnimationCatalogDataSourceProvider).syncFromAdminLocal();
+    ref.invalidate(siteAnimationCatalogProvider);
     state = AsyncData(next);
   }
 }

@@ -6,6 +6,7 @@ part of 'chat_room_providers.dart';
 extension VoiceRoomBackendSync on VoiceRoomLiveController {
   /// Odaya giriş sırası: GET /state → presence → SSE → GET /seats.
   Future<void> _loadBackendSnapshot() async {
+    unawaited(ref.read(siteAnimationCatalogProvider.notifier).refresh(forceRefresh: false));
     await _fetchAndApplyRoomState();
     await _fetchAndApplySeats();
     state = state.copyWith(backendSyncReady: true, loading: false);

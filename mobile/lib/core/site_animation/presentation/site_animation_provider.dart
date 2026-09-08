@@ -1,7 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/site_animation_parser.dart';
+import '../data/site_animation_resolver.dart';
+import '../domain/site_animation_catalog_entry.dart';
 import '../domain/site_animation_command.dart';
+import 'site_animation_catalog_provider.dart';
 import 'site_animation_manager.dart';
 import 'site_animation_state.dart';
 
@@ -11,6 +14,7 @@ class SiteAnimationNotifier
 
   @override
   SiteAnimationState build(String roomId) {
+    ref.watch(siteAnimationCatalogProvider);
     _manager = SiteAnimationManager(
       onStateChanged: (next) {
         if (!ref.mounted) return;
@@ -30,12 +34,18 @@ class SiteAnimationNotifier
       payload,
       roomId: arg,
       ownerId: ownerId,
-      parse: () => SiteAnimationParser.fromRoomEvent(
-        roomId: arg,
-        event: event,
-        payload: payload,
-        ownerId: ownerId,
-      ),
+      parse: () {
+        final base = SiteAnimationParser.fromRoomEvent(
+          roomId: arg,
+          event: event,
+          payload: payload,
+          ownerId: ownerId,
+        );
+        if (base == null) return null;
+        final catalog = ref.read(siteAnimationCatalogProvider).valueOrNull ??
+            const SiteAnimationCatalogSnapshot();
+        return SiteAnimationResolver.resolve(base: base, catalog: catalog);
+      },
     );
   }
 

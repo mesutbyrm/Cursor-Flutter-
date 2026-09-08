@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../domain/admin_site_animation.dart';
 import '../providers/admin_site_animation_providers.dart';
+import '../../../../core/site_animation/presentation/site_animation_catalog_provider.dart';
 import '../providers/staff_access_provider.dart';
 import '../widgets/admin_user_picker.dart';
 
@@ -83,6 +84,7 @@ class _AdminSiteAnimationsUserAssignPageState
           animationId: selected,
           expiresAt: expires,
         );
+    ref.invalidate(siteAnimationCatalogProvider);
     setState(() => _assignments[slot] = selected);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

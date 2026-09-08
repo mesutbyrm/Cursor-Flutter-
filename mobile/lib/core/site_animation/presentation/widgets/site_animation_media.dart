@@ -24,15 +24,20 @@ class SiteAnimationMedia extends StatefulWidget {
 class _SiteAnimationMediaState extends State<SiteAnimationMedia> {
   var _failed = false;
 
+  Widget _fallback({bool failed = false}) {
+    return SiteAnimationFallbackCard(
+      userName: widget.command.userName,
+      tier: widget.command.tier,
+      type: widget.command.type,
+      avatarUrl: widget.command.avatarUrl,
+      subtitle: widget.command.catalogLabel,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.useFallbackOnly || _failed) {
-      return SiteAnimationFallbackCard(
-        userName: widget.command.userName,
-        tier: widget.command.tier,
-        type: widget.command.type,
-        avatarUrl: widget.command.avatarUrl,
-      );
+      return _fallback();
     }
 
     final asset = widget.command.asset;
@@ -45,12 +50,7 @@ class _SiteAnimationMediaState extends State<SiteAnimationMedia> {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) setState(() => _failed = true);
           });
-          return SiteAnimationFallbackCard(
-            userName: widget.command.userName,
-            tier: widget.command.tier,
-            type: widget.command.type,
-            avatarUrl: widget.command.avatarUrl,
-          );
+          return _fallback();
         },
       );
     }
@@ -64,12 +64,7 @@ class _SiteAnimationMediaState extends State<SiteAnimationMedia> {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) setState(() => _failed = true);
           });
-          return SiteAnimationFallbackCard(
-            userName: widget.command.userName,
-            tier: widget.command.tier,
-            type: widget.command.type,
-            avatarUrl: widget.command.avatarUrl,
-          );
+          return _fallback();
         },
       );
     }
@@ -81,21 +76,11 @@ class _SiteAnimationMediaState extends State<SiteAnimationMedia> {
       return _CachedVideoThumb(
         url: asset.url!,
         onFailed: () => setState(() => _failed = true),
-        fallback: SiteAnimationFallbackCard(
-          userName: widget.command.userName,
-          tier: widget.command.tier,
-          type: widget.command.type,
-          avatarUrl: widget.command.avatarUrl,
-        ),
+        fallback: _fallback(),
       );
     }
 
-    return SiteAnimationFallbackCard(
-      userName: widget.command.userName,
-      tier: widget.command.tier,
-      type: widget.command.type,
-      avatarUrl: widget.command.avatarUrl,
-    );
+    return _fallback();
   }
 }
 

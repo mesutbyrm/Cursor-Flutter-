@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/network/api_endpoints.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/network/dio_provider.dart';
+import '../../../core/site_animation/data/site_animation_catalog_datasource.dart';
 import '../../../core/util/json_util.dart';
 import '../domain/admin_site_animation.dart';
 import 'admin_site_animation_seed_catalog.dart';
@@ -70,6 +71,7 @@ class AdminSiteAnimationRemoteDataSource {
     final items = await _loadLocalOrSeed();
     final next = [...items, item.copyWith(isActive: true)];
     await _saveLocal(next);
+    await _syncRuntimeCatalog();
     return item;
   }
 
@@ -93,6 +95,7 @@ class AdminSiteAnimationRemoteDataSource {
     });
     final next = [...items]..[idx] = merged;
     await _saveLocal(next);
+    await _syncRuntimeCatalog();
     return merged;
   }
 
@@ -135,6 +138,7 @@ class AdminSiteAnimationRemoteDataSource {
     }
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_defaultsKey, jsonEncode(body));
+    await _syncRuntimeCatalog();
   }
 
   Future<Map<AdminSiteAnimationSlot, String?>> fetchUserAssignments(
@@ -190,6 +194,7 @@ class AdminSiteAnimationRemoteDataSource {
     }
     root[userId] = user;
     await prefs.setString(_assignmentsKey, jsonEncode(root));
+    await _syncRuntimeCatalog();
   }
 
   Future<void> bulkAssign({
@@ -240,6 +245,10 @@ class AdminSiteAnimationRemoteDataSource {
       _prefsKey,
       jsonEncode(items.map((e) => e.toJson()).toList()),
     );
+  }
+
+  Future<void> _syncRuntimeCatalog() async {
+    await SiteAnimationCatalogDataSource(_dio).syncFromAdminLocal();
   }
 
   Map<AdminSiteAnimationMembership, String> _parseDefaults(

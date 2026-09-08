@@ -626,6 +626,9 @@ abstract final class ApiEndpoints {
 
   static String adminUser(String userId) => '/api/admin/users/$userId';
 
+  /// Site animasyonları — mobil runtime katalog (yalnızca aktif kayıtlar).
+  static const siteAnimationsActive = '/api/site-animations/active';
+
   /// Site animasyonları — admin kütüphanesi.
   static const adminSiteAnimations = '/api/admin/site-animations';
   static const adminSiteAnimationsStats = '/api/admin/site-animations/stats';

@@ -16,6 +16,8 @@ class SiteAnimationCommand {
     this.asset = const SiteAnimationAsset(),
     this.micOn,
     this.createdAtMs,
+    this.priorityOverride,
+    this.catalogLabel,
   });
 
   final String eventId;
@@ -29,8 +31,11 @@ class SiteAnimationCommand {
   final SiteAnimationAsset asset;
   final bool? micOn;
   final int? createdAtMs;
+  final int? priorityOverride;
+  final String? catalogLabel;
 
   int get priority {
+    if (priorityOverride != null) return priorityOverride!;
     final base = tier.queuePriority;
     return switch (type) {
       SiteAnimationType.memberJoined ||
@@ -64,6 +69,8 @@ class SiteAnimationCommand {
   SiteAnimationCommand copyWith({
     SiteAnimationLayout? layout,
     SiteAnimationAsset? asset,
+    int? priorityOverride,
+    String? catalogLabel,
   }) {
     return SiteAnimationCommand(
       eventId: eventId,
@@ -77,6 +84,8 @@ class SiteAnimationCommand {
       asset: asset ?? this.asset,
       micOn: micOn,
       createdAtMs: createdAtMs,
+      priorityOverride: priorityOverride ?? this.priorityOverride,
+      catalogLabel: catalogLabel ?? this.catalogLabel,
     );
   }
 }

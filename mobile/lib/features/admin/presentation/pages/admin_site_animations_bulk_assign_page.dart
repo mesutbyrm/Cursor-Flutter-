@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../domain/admin_site_animation.dart';
 import '../providers/admin_site_animation_providers.dart';
+import '../../../../core/site_animation/presentation/site_animation_catalog_provider.dart';
 import '../providers/staff_access_provider.dart';
 
 enum AdminBulkAssignTarget {
@@ -59,6 +60,7 @@ class _AdminSiteAnimationsBulkAssignPageState
         animationId: _animationId!,
         expiresAt: expires,
       );
+      ref.invalidate(siteAnimationCatalogProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('${userIds.length} kullanıcıya atandı')),

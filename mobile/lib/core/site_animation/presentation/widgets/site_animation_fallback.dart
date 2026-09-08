@@ -11,17 +11,19 @@ class SiteAnimationFallbackCard extends StatelessWidget {
     required this.tier,
     required this.type,
     this.avatarUrl,
+    this.subtitle,
   });
 
   final String userName;
   final SiteAnimationTier tier;
   final SiteAnimationType type;
   final String? avatarUrl;
+  final String? subtitle;
 
   @override
   Widget build(BuildContext context) {
     final colors = _gradient(tier);
-    final label = _label(type, tier);
+    final label = subtitle ?? _label(type, tier);
 
     return DecoratedBox(
       decoration: BoxDecoration(
