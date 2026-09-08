@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/site_animation/application/site_animation_sound_player.dart';
 import '../../../../core/site_animation/presentation/site_animation_provider.dart';
 import '../../../../core/site_animation/presentation/utils/site_animation_voice_room_layout.dart';
 import '../../../../core/site_animation/presentation/widgets/site_animation_overlay_host.dart';
@@ -60,6 +63,9 @@ class _AdminSiteAnimationPreviewStageState
         .read(siteAnimationProvider(AdminSiteAnimationPreviewStage.previewRoomId)
             .notifier)
         .play(cmd);
+    if (cmd.soundUrl?.trim().isNotEmpty == true) {
+      unawaited(SiteAnimationSoundPlayer.play(cmd.soundUrl));
+    }
   }
 
   @override
@@ -73,44 +79,44 @@ class _AdminSiteAnimationPreviewStageState
               ? 76
               : 0,
           child: SiteAnimationOverlayHost(
-          roomId: AdminSiteAnimationPreviewStage.previewRoomId,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              AdminSiteAnimationPreviewBackground(screen: widget.screen),
-              if (widget.screen == AdminSiteAnimationPreviewScreen.voice)
-                const SizedBox.shrink()
-              else
-                Positioned(
-                  top: MediaQuery.paddingOf(context).top + 8,
-                  left: 12,
-                  right: 12,
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black38,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          widget.screen.label,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white70,
+            roomId: AdminSiteAnimationPreviewStage.previewRoomId,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                AdminSiteAnimationPreviewBackground(screen: widget.screen),
+                if (widget.screen == AdminSiteAnimationPreviewScreen.voice)
+                  const SizedBox.shrink()
+                else
+                  Positioned(
+                    top: MediaQuery.paddingOf(context).top + 8,
+                    left: 12,
+                    right: 12,
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black38,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            widget.screen.label,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white70,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
-        ),
         ),
       ),
     );

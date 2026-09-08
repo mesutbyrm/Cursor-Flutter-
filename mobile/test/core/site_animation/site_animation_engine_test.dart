@@ -129,11 +129,15 @@ void main() {
             'assetType': 'lottie',
             'anchor': 'TOP_LEFT',
             'durationMs': 3000,
+            'soundUrl': 'https://cdn.canlifal.com/animations/sounds/test.mp3',
+            'cooldownMs': 5000,
           },
         },
       );
       expect(cmd?.asset?.bundlePath, 'assets/gifts/lottie/crown.json');
       expect(cmd?.layout.durationMs, 3000);
+      expect(cmd?.soundUrl, contains('sounds/test.mp3'));
+      expect(cmd?.cooldownMs, 5000);
     });
   });
 

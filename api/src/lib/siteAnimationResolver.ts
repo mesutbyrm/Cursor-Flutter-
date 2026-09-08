@@ -146,6 +146,8 @@ export async function buildSiteAnimationRoomEvent(
       durationMs: anim.durationMs,
       priority: anim.priority,
       previewMp4Key: anim.previewMp4Key,
+      soundUrl: anim.soundUrl ?? undefined,
+      cooldownMs: anim.cooldownMs ?? 0,
     },
   };
 

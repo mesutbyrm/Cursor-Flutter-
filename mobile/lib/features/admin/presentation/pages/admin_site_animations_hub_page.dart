@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/site_animation/data/site_animation_cache.dart';
+
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
@@ -136,11 +138,68 @@ class AdminSiteAnimationsHubPage extends ConsumerWidget {
                     subtitle: 'Sosyal, profil, sesli oda, Fal & Tarot mock',
                     onTap: () => context.push('/admin/site-animations/preview'),
                   ),
+                  _NavTile(
+                    icon: Icons.cloud_upload_outlined,
+                    title: 'CDN Yükleme Rehberi',
+                    subtitle: 'production / preview / sounds path örnekleri',
+                    onTap: () => _showCdnGuideDialog(context),
+                  ),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showCdnGuideDialog(BuildContext context) {
+    const sampleId = 'anim_entrance_gold_crown';
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF12082A),
+        title: const Text('CDN asset pipeline'),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Dosyaları cdn.canlifal.com/animations/ altına yükle. '
+                'Editördeki CDN doldur chip\'leri bu path\'leri otomatik yazır.',
+                style: TextStyle(fontSize: 12, height: 1.4),
+              ),
+              const SizedBox(height: 12),
+              _CdnPathRow(
+                label: 'Üretim (.lottie)',
+                path: SiteAnimationAssetPaths.production(sampleId),
+              ),
+              _CdnPathRow(
+                label: 'Önizleme (.mp4)',
+                path: SiteAnimationAssetPaths.preview(sampleId),
+              ),
+              _CdnPathRow(
+                label: 'Ses (.mp3)',
+                path: SiteAnimationAssetPaths.sound(sampleId),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Detay: docs/SITE_ANIMATION_CDN.md',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.white.withValues(alpha: 0.6),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Kapat'),
+          ),
+        ],
       ),
     );
   }
@@ -156,6 +215,36 @@ class AdminSiteAnimationsHubPage extends ConsumerWidget {
             action: () => Navigator.of(context).maybePop(),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _CdnPathRow extends StatelessWidget {
+  const _CdnPathRow({required this.label, required this.path});
+
+  final String label;
+  final String path;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+          ),
+          SelectableText(
+            path,
+            style: TextStyle(
+              fontSize: 10,
+              color: AppThemeColors.accentPurple,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -129,7 +129,22 @@ abstract final class SiteAnimationParser {
       micOn: _parseBool(payload['micOn']),
       createdAtMs: DateTime.now().millisecondsSinceEpoch,
       animationId: animationId,
+      soundUrl: _parseSoundUrl(payload),
+      cooldownMs: _parseCooldownMs(payload),
     );
+  }
+
+  static String? _parseSoundUrl(Map<String, dynamic> payload) {
+    final anim = payload['animation'] ?? payload['animationMetadata'];
+    final map = anim is Map ? Map<String, dynamic>.from(anim) : payload;
+    final raw = pick(map, ['soundUrl', 'sound'])?.toString().trim();
+    return raw != null && raw.isNotEmpty ? raw : null;
+  }
+
+  static int _parseCooldownMs(Map<String, dynamic> payload) {
+    final anim = payload['animation'] ?? payload['animationMetadata'];
+    final map = anim is Map ? Map<String, dynamic>.from(anim) : payload;
+    return _parseInt(map['cooldownMs'] ?? map['cooldown']) ?? 0;
   }
 
   static String? _parseAnimationId(Map<String, dynamic> payload) {

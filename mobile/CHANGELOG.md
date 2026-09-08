@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.398+436 (2026-09-08) — Site Animation: SSE ses/cooldown + CDN rehber
+
+- API SSE `animation`: `soundUrl` + `cooldownMs` zenginleştirme
+- Parser/resolver: SSE metadata + katalog birleştirme (ses, cooldown)
+- Admin önizleme sahnesi: ses otomatik oynatma
+- Admin hub: CDN yükleme rehberi diyalogu (production/preview/sounds)
+
 ## 1.0.397+435 (2026-09-08) — Site Animation: admin WYSIWYG parity
 
 - Admin önizleme mapper: gerçek asset/CDN/ses/cooldown (`SiteAnimationResolver`)

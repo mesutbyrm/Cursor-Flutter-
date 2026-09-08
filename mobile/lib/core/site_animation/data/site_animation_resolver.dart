@@ -180,8 +180,8 @@ abstract final class SiteAnimationResolver {
       priorityOverride: adminCustomPriority ?? entry.priority,
       catalogLabel: entry.description ?? entry.name,
       animationId: entry.id,
-      soundUrl: entry.soundUrl,
-      cooldownMs: entry.cooldownMs,
+      soundUrl: entry.soundUrl ?? base.soundUrl,
+      cooldownMs: entry.cooldownMs > 0 ? entry.cooldownMs : base.cooldownMs,
     );
   }
 
