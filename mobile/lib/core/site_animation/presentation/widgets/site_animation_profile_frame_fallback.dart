@@ -1,43 +1,60 @@
 import 'package:flutter/material.dart';
 
+import 'site_animation_profile_frame_painter.dart';
 import '../../domain/site_animation_tier.dart';
-import '../../../../features/voice_hub/presentation/theme/voice_room_tokens.dart';
 
-/// Lottie yoksa GPU-dostu gradient halka fallback.
-class SiteAnimationProfileFrameFallback extends StatelessWidget {
+/// Lottie yoksa animasyonlu gradient halka fallback.
+class SiteAnimationProfileFrameFallback extends StatefulWidget {
   const SiteAnimationProfileFrameFallback({
     super.key,
     required this.tier,
     required this.size,
+    this.animationId,
   });
 
   final SiteAnimationTier tier;
   final double size;
+  final String? animationId;
+
+  @override
+  State<SiteAnimationProfileFrameFallback> createState() =>
+      _SiteAnimationProfileFrameFallbackState();
+}
+
+class _SiteAnimationProfileFrameFallbackState
+    extends State<SiteAnimationProfileFrameFallback>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2400),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final color = switch (tier) {
-      SiteAnimationTier.gold => VoiceRoomTokens.gold,
-      SiteAnimationTier.diamond => const Color(0xFF00D9D9),
-      SiteAnimationTier.vip || SiteAnimationTier.svip => VoiceRoomTokens.neonPurple,
-      SiteAnimationTier.admin || SiteAnimationTier.host => const Color(0xFFFFD45A),
-      _ => VoiceRoomTokens.neonPurple.withValues(alpha: 0.65),
-    };
-
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: color.withValues(alpha: 0.85), width: 3),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.35),
-            blurRadius: 16,
-            spreadRadius: 1,
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (context, _) {
+        return CustomPaint(
+          size: Size.square(widget.size),
+          painter: SiteAnimationProfileFramePainter(
+            animationId: widget.animationId,
+            tier: widget.tier,
+            phase: _ctrl.value,
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

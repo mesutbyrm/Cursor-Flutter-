@@ -211,11 +211,11 @@ abstract final class SiteAnimationParser {
     final assetType =
         pick(map, ['assetType', 'mediaType', 'animationType'])?.toString();
     final kind = switch (assetType?.toLowerCase()) {
-      'lottie' || 'json' => SiteAnimationMediaKind.lottie,
+      'lottie' || 'json' || 'dotlottie' => SiteAnimationMediaKind.lottie,
       'video' || 'mp4' || 'webm' => SiteAnimationMediaKind.video,
       'svga' => SiteAnimationMediaKind.svga,
       'rive' => SiteAnimationMediaKind.rive,
-      _ => url != null && url.endsWith('.json')
+      _ => url != null && (url.endsWith('.json') || url.endsWith('.lottie'))
           ? SiteAnimationMediaKind.lottie
           : url != null &&
                   (url.endsWith('.mp4') || url.endsWith('.webm'))

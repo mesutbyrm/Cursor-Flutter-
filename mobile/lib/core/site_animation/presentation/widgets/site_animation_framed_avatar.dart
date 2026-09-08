@@ -54,10 +54,15 @@ class SiteAnimationFramedAvatar extends StatelessWidget {
         errorBuilder: (_, __, ___) => SiteAnimationProfileFrameFallback(
           tier: entry.tier,
           size: size,
+          animationId: entry.id,
         ),
       );
     } else {
-      frame = SiteAnimationProfileFrameFallback(tier: entry.tier, size: size);
+      frame = SiteAnimationProfileFrameFallback(
+        tier: entry.tier,
+        size: size,
+        animationId: entry.id,
+      );
     }
 
     return SizedBox(

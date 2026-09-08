@@ -6,6 +6,7 @@ import '../../domain/site_animation_asset.dart';
 import 'site_animation_fallback.dart';
 import '../../domain/site_animation_command.dart';
 import 'site_animation_entrance_card.dart';
+import 'site_animation_exit_card.dart';
 
 /// Lottie / video / native fallback oynatıcı.
 class SiteAnimationMedia extends StatefulWidget {
@@ -49,6 +50,13 @@ class _SiteAnimationMediaState extends State<SiteAnimationMedia> {
       );
     }
 
+    if (widget.command.type.isExit) {
+      return SiteAnimationExitCard(
+        command: widget.command,
+        phase: widget.animationPhase,
+      );
+    }
+
     final asset = widget.command.asset;
     if (asset.hasBundle) {
       return Lottie.asset(
@@ -65,6 +73,20 @@ class _SiteAnimationMediaState extends State<SiteAnimationMedia> {
     }
 
     if (asset.hasRemote && asset.kind == SiteAnimationMediaKind.lottie) {
+      final url = asset.url!;
+      if (url.endsWith('.lottie')) {
+        return Lottie.network(
+          url,
+          fit: BoxFit.contain,
+          repeat: !widget.command.type.isEntrance && !widget.command.type.isExit,
+          errorBuilder: (_, __, ___) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) setState(() => _failed = true);
+            });
+            return _fallback();
+          },
+        );
+      }
       return Lottie.network(
         asset.url!,
         fit: BoxFit.contain,

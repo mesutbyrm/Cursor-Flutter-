@@ -6,6 +6,7 @@ import '../../domain/site_animation_command.dart';
 import '../../domain/site_animation_layout.dart';
 import '../../domain/site_animation_tier.dart';
 import '../utils/site_animation_seat_anchor.dart';
+import '../utils/site_animation_voice_room_layout.dart';
 import 'site_animation_media.dart';
 
 /// Premium giriş/çıkış kartı — slide + fade + scale; tam ekran kaplamaz.
@@ -112,7 +113,8 @@ class _SiteAnimationCardState extends State<SiteAnimationCard>
     final height = (width * 0.28).clamp(70.0, 110.0);
     final scale = widget.command.layout.scale;
 
-    final top = mq.padding.top + 8;
+    final scope = SiteAnimationVoiceRoomLayoutScope.maybeOf(context);
+    final top = (scope?.stageTop ?? mq.padding.top) + 8;
     final left = widget.command.layout.anchor == SiteAnimationAnchor.topCenter
         ? (mq.size.width - width * scale) / 2
         : 12.0;
