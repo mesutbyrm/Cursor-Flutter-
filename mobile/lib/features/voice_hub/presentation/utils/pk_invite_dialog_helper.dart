@@ -19,6 +19,14 @@ import 'voice_room_session_utils.dart';
 /// Aynı PK daveti için çift popup önlenir (listener + oda banner).
 final pkSeenInviteIdsProvider = StateProvider<Set<String>>((ref) => {});
 
+void clearPkInviteDedup(WidgetRef ref, String inviteId) {
+  final id = inviteId.trim();
+  if (id.isEmpty) return;
+  ref.read(pkSeenInviteIdsProvider.notifier).update(
+        (seen) => seen.where((e) => e != id).toSet(),
+      );
+}
+
 /// Gelen PK daveti için oda eşlemesi.
 VoiceRoomEntity? resolvePkInviteTargetRoom(
   WidgetRef ref,
@@ -93,7 +101,10 @@ Future<void> showPkInviteDialog(
     onTimeout: () => null,
   );
 
-  if (!context.mounted) return;
+  if (!context.mounted) {
+    clearPkInviteDedup(ref, inviteId);
+    return;
+  }
 
   unawaited(
     Future<void>.microtask(() async {
@@ -102,6 +113,7 @@ Future<void> showPkInviteDialog(
           PkEventLog.reject(inviteId: inviteId);
           await remote.reject(inviteId, roomId: key, alternateRoomId: alt);
           remote.clear();
+          clearPkInviteDedup(ref, inviteId);
           return;
         }
         if (accept) {
@@ -124,6 +136,7 @@ Future<void> showPkInviteDialog(
           PkEventLog.reject(inviteId: inviteId);
           await remote.reject(inviteId, roomId: key, alternateRoomId: alt);
           remote.clear();
+          clearPkInviteDedup(ref, inviteId);
           final nav = rootNavigatorKey.currentContext;
           if (nav != null && nav.mounted) {
             ScaffoldMessenger.of(nav).showSnackBar(
@@ -132,6 +145,7 @@ Future<void> showPkInviteDialog(
           }
         }
       } catch (e) {
+        clearPkInviteDedup(ref, inviteId);
         final nav = rootNavigatorKey.currentContext;
         if (nav != null && nav.mounted) {
           ScaffoldMessenger.of(nav).showSnackBar(

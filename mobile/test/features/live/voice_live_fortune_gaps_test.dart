@@ -18,6 +18,13 @@ void main() {
         ChatRoomSseEventType.speakRequest);
   });
 
+  test('gift_ranking_updated is not classified as PK', () {
+    expect(
+      chatRoomSseEventTypeFrom('gift_ranking_updated'),
+      ChatRoomSseEventType.roomEvent,
+    );
+  });
+
   test('live invite dedup keys are namespaced', () {
     expect(livePkInviteDedupKey('abc'), 'pk:abc');
     expect(liveCoBroadcastInviteDedupKey('xyz'), 'co:xyz');

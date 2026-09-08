@@ -146,9 +146,10 @@ ChatRoomSseEventType chatRoomSseEventTypeFrom(String? raw) {
     case 'pkstarted':
     case 'pk_score_updated':
     case 'pkscoreupdated':
+      return ChatRoomSseEventType.pk;
     case 'gift_ranking_updated':
     case 'giftrankingupdated':
-      return ChatRoomSseEventType.pk;
+      return ChatRoomSseEventType.roomEvent;
     case 'room_event':
     case 'roomevent':
     case 'seat_update':

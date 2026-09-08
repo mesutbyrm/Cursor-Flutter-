@@ -42,6 +42,7 @@ import 'co_broadcast_provider.dart';
 import 'live_guest_grid_provider.dart';
 import 'pk_room_providers.dart';
 import 'live_pk_streams_provider.dart';
+import 'live_co_broadcast_invite_signal_provider.dart';
 import 'live_pk_invite_signal_provider.dart';
 
 class LiveRoomState {
@@ -356,6 +357,7 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
     LiveDebugLog.log('stream.sse.guest', payload);
     if (type.contains('invite')) {
       await ref.read(coBroadcastProvider.notifier).refresh();
+      ref.read(liveCoBroadcastInviteSignalProvider.notifier).bump();
     }
     await ref.read(coBroadcastProvider.notifier).refreshStream(streamId);
     final co = ref.read(coBroadcastProvider).coBroadcasters;

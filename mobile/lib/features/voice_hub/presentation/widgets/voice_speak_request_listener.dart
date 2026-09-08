@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
@@ -25,9 +26,11 @@ class VoiceSpeakRequestListener extends ConsumerStatefulWidget {
 
 class _VoiceSpeakRequestListenerState
     extends ConsumerState<VoiceSpeakRequestListener> {
-  final Set<String> _seenRequestIds = {};
+  final Set<String> _pendingDialogKeys = {};
   var _showing = false;
   Timer? _pollTimer;
+
+  static String _dedupKey(String roomKey, String userId) => '$roomKey:$userId';
 
   @override
   void initState() {
@@ -56,17 +59,11 @@ class _VoiceSpeakRequestListenerState
     return null;
   }
 
-  Future<void> _pollPending() async {
-    if (!mounted || _showing) return;
-    final activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
-    if (activeKey.isEmpty) return;
-
-    final user = ref.read(authControllerProvider).valueOrNull;
-    if (user == null) return;
-
-    final live = ref.read(voiceRoomLiveProvider(activeKey));
-    final room = ref.read(voiceRoomByIdProvider(activeKey)).valueOrNull ??
-        VoiceRoomEntity(id: activeKey, slug: activeKey, nameTr: 'Oda');
+  bool _canModerateSpeakRequests({
+    required UserEntity user,
+    required VoiceRoomEntity room,
+    required VoiceRoomLiveState live,
+  }) {
     ChatRoomPresence? self;
     for (final p in live.presence) {
       if (p.id == user.id) {
@@ -80,36 +77,94 @@ class _VoiceSpeakRequestListenerState
       selfPresence: self,
       server: live.serverPermissions,
     );
-    if (!perms.canAssignSeats && !perms.isRoomOwner && !perms.isSiteAdmin) {
-      return;
+    if (perms.canAssignSeats || perms.isRoomOwner || perms.isSiteAdmin) {
+      return true;
+    }
+    final oid = room.ownerId?.trim() ?? '';
+    final uname = user.username.trim().toLowerCase();
+    return (oid.isNotEmpty && oid == user.id) ||
+        (uname.isNotEmpty && room.slug.trim().toLowerCase() == uname);
+  }
+
+  Future<List<String>> _fetchSpeakRequestIds(
+    String liveKey,
+    VoiceRoomEntity room,
+    String activeKey,
+  ) async {
+    if (liveKey == activeKey) {
+      return ref.read(voiceRoomLiveProvider(liveKey).notifier).fetchSpeakRequests();
+    }
+    final alt = room.slug != liveKey ? room.slug : null;
+    return ref.read(chatRoomRemoteProvider).fetchSpeakRequests(
+          liveKey,
+          alternateKey: alt,
+        );
+  }
+
+  Future<void> _pollPending() async {
+    if (!mounted || _showing) return;
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null) return;
+
+    final activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
+    final roomsByKey = <String, VoiceRoomEntity>{};
+
+    if (activeKey.isNotEmpty) {
+      final room = ref.read(voiceRoomByIdProvider(activeKey)).valueOrNull ??
+          VoiceRoomEntity(id: activeKey, slug: activeKey, nameTr: 'Oda');
+      roomsByKey[activeKey] = room;
     }
 
-    final ctrl = ref.read(voiceRoomLiveProvider(activeKey).notifier);
-    final ids = await ctrl.fetchSpeakRequests();
-    if (!mounted) return;
-
-    for (final id in ids) {
-      if (id.isEmpty || _seenRequestIds.contains(id)) continue;
-      if (id == user.id) continue;
-      ChatRoomPresence? target;
-      for (final p in live.presence) {
-        if (p.id == id) {
-          target = p;
-          break;
-        }
-      }
-      final name = target?.displayName.trim().isNotEmpty == true
-          ? target!.displayName.trim()
-          : 'Bir kullanıcı';
-      _seenRequestIds.add(id);
-      await _showDialog(
-        activeKey,
-        live: live,
-        userId: id,
-        displayName: name,
+    for (final room in ref.read(myOwnedVoiceRoomsProvider)) {
+      final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+      if (key.isEmpty) continue;
+      roomsByKey.putIfAbsent(
+        key,
+        () => room,
       );
-      break;
     }
+
+    for (final entry in roomsByKey.entries) {
+      final liveKey = entry.key;
+      final room = entry.value;
+      final live = ref.read(voiceRoomLiveProvider(liveKey));
+      if (!_canModerateSpeakRequests(user: user, room: room, live: live)) {
+        continue;
+      }
+
+      final ids = await _fetchSpeakRequestIds(liveKey, room, activeKey);
+      if (!mounted) return;
+
+      for (final id in ids) {
+        if (id.isEmpty || id == user.id) continue;
+        final key = _dedupKey(liveKey, id);
+        if (_pendingDialogKeys.contains(key)) continue;
+
+        ChatRoomPresence? target;
+        for (final p in live.presence) {
+          if (p.id == id) {
+            target = p;
+            break;
+          }
+        }
+        final name = target?.displayName.trim().isNotEmpty == true
+            ? target!.displayName.trim()
+            : 'Bir kullanıcı';
+        _pendingDialogKeys.add(key);
+        await _showDialog(
+          liveKey,
+          live: live,
+          userId: id,
+          displayName: name,
+          dedupKey: key,
+        );
+        return;
+      }
+    }
+  }
+
+  void _releaseDedup(String dedupKey) {
+    _pendingDialogKeys.remove(dedupKey);
   }
 
   Future<void> _showDialog(
@@ -117,6 +172,7 @@ class _VoiceSpeakRequestListenerState
     required VoiceRoomLiveState live,
     required String userId,
     required String displayName,
+    required String dedupKey,
   }) async {
     if (!mounted || _showing) return;
     _showing = true;
@@ -151,7 +207,11 @@ class _VoiceSpeakRequestListenerState
           ],
         ),
       );
-      if (!mounted || action == null) return;
+      if (!mounted) return;
+      if (action == null) {
+        _releaseDedup(dedupKey);
+        return;
+      }
 
       switch (action) {
         case _SpeakAction.approve:
@@ -160,6 +220,7 @@ class _VoiceSpeakRequestListenerState
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(err)),
             );
+            _releaseDedup(dedupKey);
             break;
           }
           final seat = _firstFreeSeat(live);
@@ -169,6 +230,7 @@ class _VoiceSpeakRequestListenerState
                 const SnackBar(content: Text('Boş koltuk yok')),
               );
             }
+            _releaseDedup(dedupKey);
             break;
           }
           final seatErr = await ctrl.assignSeat(seatIndex: seat, userId: userId);
@@ -207,6 +269,11 @@ class _VoiceSpeakRequestListenerState
   Widget build(BuildContext context) {
     ref.listen(voiceSpeakRequestSignalProvider, (_, __) {
       unawaited(_pollPending());
+    });
+    ref.listen(authControllerProvider, (prev, next) {
+      if (prev?.valueOrNull == null && next.valueOrNull != null) {
+        unawaited(_pollPending());
+      }
     });
     return widget.child;
   }

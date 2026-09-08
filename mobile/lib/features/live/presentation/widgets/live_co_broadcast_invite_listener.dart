@@ -8,6 +8,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/live_stream_entity.dart';
 import '../providers/co_broadcast_provider.dart';
+import '../providers/live_co_broadcast_invite_signal_provider.dart';
 import '../providers/live_invite_dedup_provider.dart';
 import '../providers/live_providers.dart';
 import '../utils/open_live_stream.dart';
@@ -143,6 +144,7 @@ class _LiveCoBroadcastInviteListenerState
     try {
       if (accept) {
         await ref.read(coBroadcastProvider.notifier).acceptInvite(streamId);
+        await ref.read(coBroadcastProvider.notifier).refreshStream(streamId);
         final nav = rootNavigatorKey.currentContext;
         if (nav != null && nav.mounted) {
           final streams =
@@ -177,6 +179,9 @@ class _LiveCoBroadcastInviteListenerState
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(liveCoBroadcastInviteSignalProvider, (_, __) {
+      unawaited(_pollInvites());
+    });
     ref.listen(authControllerProvider, (prev, next) {
       if (prev?.valueOrNull == null && next.valueOrNull != null) {
         unawaited(_pollInvites());

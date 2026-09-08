@@ -203,7 +203,6 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             state = state.copyWith(typingUsers: users);
           },
           onFortuneRequest: (payload) {
-            if (VoiceRoomBasicMode.enabled) return;
             final session = parsePsychicSsePayload(payload);
             if (session == null) return;
             emitPsychicLiveRequest(ref, session);

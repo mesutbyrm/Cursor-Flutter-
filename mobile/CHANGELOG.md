@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.403+441 (2026-09-08) — Sesli/canlı P0 tamamlama
+
+- Sesli oda: fal SSE basic modda da `PsychicIncomingHost`'a düşer
+- Konuşma isteği: sahip odalar için poll (oda dışında moderatör popup)
+- Konuşma isteği dedup: reddet/iptal sonrası tekrar el kaldırma
+- Sesli PK dedup: red/timeout sonrası davet yeniden açılabilir
+- Ortak yayın: stream SSE sinyali + kabul sonrası `refreshStream` + swipe
+- SSE: `gift_ranking_updated` artık PK olarak işlenmez
+
 ## 1.0.402+440 (2026-09-08) — Sesli / canlı / Fal-Tarot eksik tamamlama
 
 - Canlı PK kabul: yayıncı otomatik yayın odasına yönlendirilir
