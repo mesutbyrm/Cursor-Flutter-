@@ -136,6 +136,7 @@ enum BanaOzelTodayTask {
   String? get routePath => switch (this) {
         BanaOzelTodayTask.login || BanaOzelTodayTask.watchAd =>
           '/profile/growth',
+        BanaOzelTodayTask.openContent => '/fortune/bana-ozel',
         BanaOzelTodayTask.share => '/social/create',
         _ => null,
       };

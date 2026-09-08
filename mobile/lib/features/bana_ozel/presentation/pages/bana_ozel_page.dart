@@ -13,6 +13,7 @@ import '../../../fortune/presentation/widgets/ultra_premium/ultra_fortune_cosmic
 import '../../../fortune/presentation/widgets/ultra_premium/ultra_fortune_tokens.dart';
 import '../../domain/entities/bana_ozel_entities.dart';
 import '../providers/bana_ozel_providers.dart';
+import '../widgets/bana_ozel_premium_card.dart';
 import '../../../shorts/presentation/widgets/shorts_hub_strip.dart';
 
 /// Bana Özel kataloğu — `GET /api/bana-ozel` + `POST /api/bana-ozel/open`.
@@ -363,14 +364,49 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
                                 (context, i) {
                                   final item = filtered[i];
                                   final opening = _openingSlug == item.slug;
-                                  final affordable = data.canAffordItem(item);
-                                  return _ItemCard(
-                                    item: item,
-                                    opening: opening,
-                                    affordable: affordable,
-                                    onTap: opening
-                                        ? null
-                                        : () => _openItem(item, data),
+                                  return LayoutBuilder(
+                                    builder: (context, constraints) {
+                                      final w = constraints.maxWidth;
+                                      final h = constraints.maxHeight;
+                                      return Stack(
+                                        fit: StackFit.expand,
+                                        children: [
+                                          BanaOzelPremiumCard(
+                                            item: item,
+                                            width: w,
+                                            height: h,
+                                            affordable: data.canAffordItem(item),
+                                            onTap: opening
+                                                ? () {}
+                                                : () => _openItem(item, data),
+                                          ),
+                                          if (opening)
+                                            Positioned.fill(
+                                              child: DecoratedBox(
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black
+                                                      .withValues(alpha: 0.45),
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                    BanaOzelPremiumCard.radius,
+                                                  ),
+                                                ),
+                                                child: const Center(
+                                                  child: SizedBox(
+                                                    width: 28,
+                                                    height: 28,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                      strokeWidth: 2.5,
+                                                      color: Color(0xFFFFD54F),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      );
+                                    },
                                   );
                                 },
                                 childCount: filtered.length,
@@ -536,100 +572,6 @@ class _CategoryChips extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-class _ItemCard extends StatelessWidget {
-  const _ItemCard({
-    required this.item,
-    required this.opening,
-    required this.affordable,
-    this.onTap,
-  });
-
-  final BanaOzelItemEntity item;
-  final bool opening;
-  final bool affordable;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white.withValues(alpha: affordable ? 0.08 : 0.04),
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(item.icon, style: const TextStyle(fontSize: 28)),
-              const Spacer(),
-              Text(
-                item.nameTr,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 13,
-                ),
-              ),
-              if (item.descTr != null && item.descTr!.trim().isNotEmpty) ...[
-                const SizedBox(height: 2),
-                Text(
-                  item.descTr!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.white.withValues(alpha: 0.5),
-                  ),
-                ),
-              ],
-              const SizedBox(height: 4),
-              Text(
-                item.categoryLabel,
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Colors.white.withValues(alpha: 0.55),
-                ),
-              ),
-              const SizedBox(height: 8),
-              if (opening)
-                const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              else
-                Row(
-                  children: [
-                    Text(
-                      '${item.jetonCost}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 12,
-                        color: affordable
-                            ? const Color(0xFFFFD54F)
-                            : Colors.white38,
-                      ),
-                    ),
-                    Icon(
-                      Icons.monetization_on_rounded,
-                      size: 14,
-                      color: affordable
-                          ? const Color(0xFFFFD54F)
-                          : Colors.white24,
-                    ),
-                  ],
-                ),
-            ],
-          ),
-        ),
       ),
     );
   }

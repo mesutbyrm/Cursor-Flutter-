@@ -105,6 +105,8 @@ void main() {
 
     test('maps task keys to native routes', () {
       expect(BanaOzelTodayTask.parse('login').routePath, '/profile/growth');
+      expect(BanaOzelTodayTask.parse('open_content').routePath,
+          '/fortune/bana-ozel');
       expect(BanaOzelTodayTask.parse('share_fortune').routePath,
           '/social/create');
     });

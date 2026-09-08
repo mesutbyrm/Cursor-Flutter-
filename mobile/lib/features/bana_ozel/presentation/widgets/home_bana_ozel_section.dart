@@ -65,7 +65,7 @@ class HomeBanaOzelSection extends ConsumerWidget {
                 final item = preview[i];
                 return BanaOzelPremiumCard(
                   item: item,
-                  affordable: data.jetonBalance >= item.jetonCost,
+                  affordable: data.canAffordItem(item),
                   width: cardW,
                   height: cardH,
                   onTap: () => openBanaOzelCatalog(context, slug: item.slug),

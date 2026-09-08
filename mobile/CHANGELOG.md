@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.408+446 (2026-09-08) — Bana Özel hub + katalog tamamlama
+
+- Fal hub Bana Özel: premium kartlar, yükleme/hata/boş durum, seri özeti
+- Bana Özel sayfa: premium kapak grid, CFC+jeton `canAffordItem`
+- Sonuç sayfası: mistik kapak görseli + seri bandı
+- Günlük görev «Bana Özel içerik aç» → `/fortune/bana-ozel`
+- Hub yenileme: bana özel + fal türleri kataloğu invalidate
+
 ## 1.0.407+445 (2026-09-08) — Fal hub butonları ve hızlı erişim
 
 - Hızlı erişim: Hazır Yorumlar, Fal Geçmişim, Canlı Falcılar, Bana Özel

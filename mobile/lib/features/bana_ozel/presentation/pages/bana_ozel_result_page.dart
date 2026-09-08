@@ -7,14 +7,27 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../fortune/presentation/widgets/fortune_mystic_background.dart';
 import '../../../fortune/presentation/widgets/fortune_mystic_title_bar.dart';
+import '../../../fortune/presentation/widgets/fortune_type_cover_image.dart';
 import '../../../fortune/presentation/widgets/ultra_premium/ultra_fortune_tokens.dart';
 import '../../domain/entities/bana_ozel_entities.dart';
+import '../data/bana_ozel_display_resolver.dart';
 
 /// Bana Özel sonuç — `POST /api/bana-ozel/open`.
 class BanaOzelResultPage extends ConsumerWidget {
   const BanaOzelResultPage({super.key, required this.result});
 
   final BanaOzelOpenResultEntity result;
+
+  BanaOzelItemEntity _itemFromResult() {
+    return BanaOzelItemEntity(
+      id: result.itemSlug,
+      slug: result.itemSlug,
+      nameTr: result.itemName,
+      icon: result.icon,
+      jetonCost: result.jetonSpent,
+      category: 'fortune',
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -27,6 +40,9 @@ class BanaOzelResultPage extends ConsumerWidget {
       jetonName: jetonName,
       cfcName: cfcName,
     );
+    final item = _itemFromResult();
+    final coverSlug = BanaOzelDisplayResolver.coverSlugFor(item);
+    final accent = BanaOzelDisplayResolver.accentFor(item);
 
     return Scaffold(
       backgroundColor: UltraFortuneTokens.deepNight,
@@ -41,6 +57,21 @@ class BanaOzelResultPage extends ConsumerWidget {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
                 children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(18),
+                    child: SizedBox(
+                      height: 140,
+                      width: double.infinity,
+                      child: FortuneTypeCoverImage(
+                        slug: coverSlug,
+                        accent: accent,
+                        imageWidth: 900,
+                        networkUrlOverride:
+                            BanaOzelDisplayResolver.imageUrlFor(item),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
                   if (paymentLine.isNotEmpty)
                     Text(
                       paymentLine,
@@ -51,6 +82,19 @@ class BanaOzelResultPage extends ConsumerWidget {
                         fontSize: 12,
                       ),
                     ),
+                  if (result.streak != null &&
+                      result.streak!.currentStreak > 0) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      '🔥 ${result.streak!.currentStreak} günlük seri',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: gold.withValues(alpha: 0.8),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   Container(
                     width: double.infinity,

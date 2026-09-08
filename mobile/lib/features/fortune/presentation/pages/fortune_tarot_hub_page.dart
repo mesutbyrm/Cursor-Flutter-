@@ -9,6 +9,8 @@ import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover_refresh.dart';
 import '../../../../core/site_animation/presentation/widgets/site_animation_context_host.dart';
 import '../providers/fortune_api_providers.dart';
+import '../providers/fortune_types_display_provider.dart';
+import '../../../bana_ozel/presentation/providers/bana_ozel_providers.dart';
 import '../../../live_psychics/presentation/widgets/psychics_home_section.dart';
 import '../widgets/ultra_premium/ultra_fortune_app_bar.dart';
 import '../widgets/ultra_premium/ultra_fortune_cosmic_background.dart';
@@ -54,6 +56,8 @@ class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
 
   Future<void> _onRefresh() async {
     ref.invalidate(fortuneHistoryProvider);
+    ref.invalidate(banaOzelCatalogProvider);
+    invalidateFortuneTypesDisplay(ref);
     await Future<void>.delayed(const Duration(milliseconds: 350));
   }
 

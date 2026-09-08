@@ -5,10 +5,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:canlifal_social/features/bana_ozel/domain/entities/bana_ozel_entities.dart';
 import 'package:canlifal_social/features/bana_ozel/presentation/providers/bana_ozel_providers.dart';
 import 'package:canlifal_social/features/bana_ozel/presentation/widgets/bana_ozel_hub_section.dart';
+import 'package:canlifal_social/features/bana_ozel/presentation/widgets/bana_ozel_premium_card.dart';
 
 void main() {
   group('BanaOzelHubSection', () {
-    testWidgets('renders hub band when catalog has items', (tester) async {
+    testWidgets('renders premium cards when catalog has items', (tester) async {
       tester.view.physicalSize = const Size(800, 900);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -26,8 +27,28 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('BANA ÖZEL'), findsOneWidget);
-      expect(find.textContaining('Sana özel fal ve tarot'), findsOneWidget);
-      expect(find.text('Günlük Tarot Kartı'), findsOneWidget);
+      expect(find.textContaining('Günlük Tarot Kartı'), findsOneWidget);
+      expect(find.byType(BanaOzelPremiumCard), findsOneWidget);
+    });
+
+    testWidgets('shows empty state when catalog is empty', (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            banaOzelCatalogProvider.overrideWith(_EmptyCatalogNotifier.new),
+          ],
+          child: const MaterialApp(
+            home: Scaffold(body: BanaOzelHubSection()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('BANA ÖZEL'), findsOneWidget);
+      expect(
+        find.text('Size özel yeni içerikler hazırlanıyor.'),
+        findsOneWidget,
+      );
     });
   });
 }
@@ -48,5 +69,12 @@ class _StubCatalogNotifier extends BanaOzelCatalogNotifier {
       ],
       jetonBalance: 20,
     );
+  }
+}
+
+class _EmptyCatalogNotifier extends BanaOzelCatalogNotifier {
+  @override
+  Future<BanaOzelCatalogEntity> build() async {
+    return const BanaOzelCatalogEntity(items: []);
   }
 }
