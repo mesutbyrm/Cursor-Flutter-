@@ -4,20 +4,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.397+435` |
-| Tarih (UTC) | 2026-09-08 19:18 |
-| Commit | [`ec4eae0d1892e318c7b2a5af45a73f5734011985`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/ec4eae0d1892e318c7b2a5af45a73f5734011985) |
-| İş akışı | [Run 34266039513](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34266039513) |
+| Sürüm | `1.0.398+436` |
+| Tarih (UTC) | 2026-09-08 19:37 |
+| Commit | [`dc9a80681c17b6cc6a66ccb699c6776dd50e9352`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/dc9a80681c17b6cc6a66ccb699c6776dd50e9352) |
+| İş akışı | [Run 34266937452](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34266937452) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.398+436 (2026-09-08) — Site Animation: SSE ses/cooldown + CDN rehber
+## 1.0.401+439 (2026-09-08) — PK davet + misafir ortak yayın düzeltmeleri
 
-- API SSE `animation`: `soundUrl` + `cooldownMs` zenginleştirme
-- Parser/resolver: SSE metadata + katalog birleştirme (ses, cooldown)
-- Admin önizleme sahnesi: ses otomatik oynatma
-- Admin hub: CDN yükleme rehberi diyalogu (production/preview/sounds)
+- Canlı yayın: `invited` PK durumu kabul ekranında tanınır (`isPkInvitePendingStatus`)
+- `LivePkInviteListener`: `/api/pk/me/invites` + birleşik davet poll; 4 sn yedek
+- Video SSE: `pk_invite` / `pk_request` ve misafir davet alias'ları
+- Sesli oda: bekleyen PK SSE kullanıcı ID eşleşmesi (`guestUserId` vb.)
+- Global `LiveCoBroadcastInviteListener` — ortak yayın daveti her ekranda
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
