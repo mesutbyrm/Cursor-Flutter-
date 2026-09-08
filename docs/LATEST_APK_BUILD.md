@@ -4,17 +4,18 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.379+417` |
-| Tarih (UTC) | 2026-09-08 03:11 |
-| Commit | [`39c6795e4c38929b4f37a5cce578c09191be8900`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/39c6795e4c38929b4f37a5cce578c09191be8900) |
-| İş akışı | [Run 34181703703](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34181703703) |
+| Sürüm | `1.0.380+418` |
+| Tarih (UTC) | 2026-09-08 03:36 |
+| Commit | [`1859491faa1fcd887eec122a5204085a695d0082`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/1859491faa1fcd887eec122a5204085a695d0082) |
+| İş akışı | [Run 34183137468](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34183137468) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.379+417 (2026-09-08) — economy Faz 22: müzik hub yetersiz bakiye mesajları
+## 1.0.380+418 (2026-09-08) — economy Faz 23: global hediye overlay etiketi
 
-- Şarkı isteği hata metinleri `economyInsufficientJetonMessage` / `economyMinimumJetonForMusicRequestMessage`
+- `GlobalGiftNotification.label()` gösterimde markalı `$jetonLabel` ile yeniden oluşturulur
+- Site geneli üst şerit hediye duyuruları branding API fallback'ine uyumlu
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
