@@ -95,7 +95,7 @@ echo ""
 if [[ "$BLOCKERS" -gt 0 ]]; then
   echo "── Sonraki adım ──"
   echo "  bash scripts/user-test-start.sh"
-  echo "  bash scripts/validate-pre-device-handoff.sh"
+  echo "  bash scripts/p0-ready.sh"
 else
   echo "── Sonraki adım ──"
   echo "  bash scripts/basla.sh"

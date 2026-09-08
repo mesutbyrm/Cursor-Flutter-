@@ -48,7 +48,7 @@ else
 fi
 echo "  bash scripts/p0-go.sh"
 echo "  bash scripts/user-test-start.sh p0"
-echo "  bash scripts/validate-pre-device-handoff.sh"
+echo "  bash scripts/p0-ready.sh"
 echo "  bash scripts/probe-psychic-teller.sh"
 echo "  docs/RELEASE_USER_NEXT_STEPS.md"
 echo "  Sonuç: bash scripts/on-p0-pass.sh | on-p0-fail.sh"

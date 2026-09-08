@@ -4,7 +4,7 @@
 
 > **Güncel (2026-09-08):** **`1.0.391+429`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
-**Son güncelleme:** 2026-09-08 — sürüm `1.0.391+429` · APK Run [`34237750479`](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34237750479) FINAL PASS · **Kullanıcı:** cihaz + keystore + Play  
+**Son güncelleme:** 2026-09-08 — sürüm `1.0.391+429` · APK Run [`34241450261`](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34241450261) FINAL PASS · **Kullanıcı:** cihaz + keystore + Play  
 **Agent paralel:** ✅ prep tamam (`agent-prep-tamam.sh`) · **Kullanıcı:** `kullanici-sonraki.sh` · **Cihaz:** `cihaz-sonra.sh`  
 **Tek komut:** `bash scripts/kalan-isler.sh` · P0: `p0-go.sh` · P1: `p1-go.sh` · P2 prep: `p2-prep-go.sh` · P2 yükleme: `p2-go.sh`  
 **Master:** `docs/PHASE_MASTER_TRACKER.md` | **Release:** `docs/RELEASE_CHECKLIST.md` | **Psychic P0:** `docs/LIVE_PSYCHICS_REMAINING.md` | **Tüm MD indeks:** [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
@@ -17,9 +17,9 @@
 |------|--------|-----|
 | Faz 1 SSE SoT | `[x]` | main — Socket.IO kapalı, presence replace |
 | Faz 2 Psychic TRTC | `[x]` kod | Token-only join; **P0 cihaz testi OPEN** |
-| Release gate CI | `[x]` | apk-latest + metadata PASS (Run `34237750479`) |
+| Release gate CI | `[x]` | apk-latest + metadata PASS (Run `34241450261`) |
 | Release 502 fix | `[x]` | `814f8758` |
-| docs/LATEST_APK_BUILD | `[x]` | Run `34237750479` |
+| docs/LATEST_APK_BUILD | `[x]` | Run `34241450261` |
 | **Jeton (danışan)** | `[x]` | ~98k (2026-09-07) |
 | **M7 API / M5 API smoke** | `[x]` | song-request 200 + smoke PASS=6 |
 | **m5-preflight** | `[x]` | Jeton + voice seat API OK |

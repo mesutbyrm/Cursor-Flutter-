@@ -25,6 +25,7 @@ Hesaplar:
   Şifre   → CursorTest!1786235468
 
 ── Sıra ──
+  0) bash scripts/p0-ready.sh              # otomasyon doğrulama
   1) bash scripts/basla.sh
   2) bash scripts/user-test-start.sh p0     # Psychic P0 (T+5s donma yok)
   3) bash scripts/on-p0-pass.sh             # veya on-p0-fail.sh

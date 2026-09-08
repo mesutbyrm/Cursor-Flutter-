@@ -41,7 +41,7 @@ Komutlar:
   3) bash scripts/p1-prep-now.sh               # P1 checklist ön
   4) bash scripts/basla.sh                     # canlı durum
   5) bash scripts/p0-go.sh
-  6) bash scripts/validate-pre-device-handoff.sh
+  6) bash scripts/p0-ready.sh
   7) bash scripts/user-test-start.sh p0
   8) bash scripts/on-p0-pass.sh | on-p0-fail.sh
   9) bash scripts/p1-go.sh
@@ -128,7 +128,7 @@ case "${1:-}" in
     exec bash "$ROOT/scripts/print-full-user-checklist.sh"
     ;;
   validate|check)
-    exec bash "$ROOT/scripts/validate-pre-device-handoff.sh"
+    exec bash "$ROOT/scripts/p0-ready.sh"
     ;;
   live|p0-status)
     exec bash "$ROOT/scripts/print-p0-live-status.sh"

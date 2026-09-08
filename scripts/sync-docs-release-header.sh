@@ -61,6 +61,7 @@ guncel_docs = [
     "docs/LIVE_PSYCHICS_REMAINING.md",
     "docs/RELEASE_GATE_CLOSURE.md",
     "docs/FAZ13_RELEASE_STATUS.md",
+    "docs/REMAINING_WORK.md",
 ]
 pat_guncel = re.compile(r"> \*\*Güncel \([^)]*\)[^\n]*")
 for rel in guncel_docs:
@@ -202,6 +203,54 @@ if live.is_file() and run and run_url:
         flags=re.M,
     )
     live.write_text(t, encoding="utf-8")
+
+# RELEASE_USER_NEXT_STEPS — özel üst satır + tablo
+user_next = root / "docs/RELEASE_USER_NEXT_STEPS.md"
+if user_next.is_file():
+    header_un = (
+        f"> **Güncel ({date}):** **`{version}`** · **RELEASE READY: NO** · "
+        f"Agent prep **✅ TAMAM** · Cihaz + keystore + Play **sizde**"
+    )
+    t = user_next.read_text(encoding="utf-8")
+    t = re.sub(r"> \*\*Güncel \([^)]*\)[^\n]*", header_un, t, count=1)
+    if run and run_url:
+        t = re.sub(
+            r"\| Release gate CI \| ✅ FINAL PASS \[[0-9]+\]\([^\)]*\) \|",
+            f"| Release gate CI | ✅ FINAL PASS [{run}]({run_url}) |",
+            t,
+            count=1,
+        )
+        t = re.sub(
+            r"\| ZIP economy v2 \(Faz 1–24\) \| ✅ `[0-9.]+\+[0-9]+`",
+            f"| ZIP economy v2 (Faz 1–24) | ✅ `{version}`",
+            t,
+            count=1,
+        )
+    user_next.write_text(t, encoding="utf-8")
+
+# REMAINING_WORK — Run ID satırları
+rw = root / "docs/REMAINING_WORK.md"
+if rw.is_file() and run and run_url:
+    t = rw.read_text(encoding="utf-8")
+    t = re.sub(
+        r"APK Run \[`[0-9]+`\]\([^\)]*\)",
+        f"APK Run [`{run}`]({run_url})",
+        t,
+        count=1,
+    )
+    t = re.sub(
+        r"apk-latest \+ metadata PASS \(Run `[0-9]+`\)",
+        f"apk-latest + metadata PASS (Run `{run}`)",
+        t,
+        count=1,
+    )
+    t = re.sub(
+        r"\| docs/LATEST_APK_BUILD \| `\[x\]` \| Run `[0-9]+` \|",
+        f"| docs/LATEST_APK_BUILD | `[x]` | Run `{run}` |",
+        t,
+        count=1,
+    )
+    rw.write_text(t, encoding="utf-8")
 
 suffix = f", run {run}" if run else ""
 print(f"✅ Doc headers → {version} ({date}){suffix}")
