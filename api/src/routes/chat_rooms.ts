@@ -755,6 +755,17 @@ async function handleAssignSeat(req: RoomRequest, res: Response) {
     req.params.roomId,
     result.presence as unknown as Record<string, unknown>[],
   );
+  if (result.target) {
+    void emitResolvedRoomAnimation(req.params.roomId, {
+      event: "seat_changed",
+      userId: result.target.id,
+      name: result.target.name,
+      membership: result.target.membership,
+      chatRole: result.target.chatRole,
+      seatIndex: result.target.seatIndex,
+      previousSeatIndex: result.previousSeatIndex,
+    });
+  }
   return res.status(200).json({ success: true, presence: result.presence });
 }
 
@@ -1044,6 +1055,18 @@ chatRoomsRouter.post(
       listPresence(roomId),
       approved ? { joined: approved } : undefined,
     );
+    if (approved) {
+      void emitResolvedRoomAnimation(roomId, {
+        event: "seat_changed",
+        userId: approved.id,
+        name: approved.name,
+        membership: approved.membership,
+        chatRole: approved.chatRole,
+        seatIndex: approved.seatIndex,
+        previousSeatIndex: null,
+        micOn: approved.isSpeaking ?? true,
+      });
+    }
     return ok(res, { approved: true });
   },
 );

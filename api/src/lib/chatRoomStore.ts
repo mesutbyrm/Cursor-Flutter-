@@ -993,10 +993,16 @@ export function assignSeat(
     }
   }
   if (!p) return { ok: false as const, error: "Kullanıcı odada değil" };
+  const previousSeatIndex = p.seatIndex ?? null;
   p.seatIndex = seat;
   p.isSpeaking = seat >= 1;
   roomMap(roomId).set(targetId, p);
-  return { ok: true as const, presence: listPresence(roomId) };
+  return {
+    ok: true as const,
+    presence: listPresence(roomId),
+    target: p,
+    previousSeatIndex,
+  };
 }
 
 export function getDjState(roomId: string, user: User | null) {

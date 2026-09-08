@@ -50,4 +50,19 @@ describe("siteAnimationResolver", () => {
     const animation = payload?.animation as Record<string, unknown>;
     assert.equal(animation.id, "anim_exit_gold");
   });
+
+  it("resolves seat_changed transition animation", async () => {
+    process.env.SITE_ANIMATION_STORE_JSON = "1";
+    delete process.env.DATABASE_URL;
+    await resetSiteAnimationStoreForTests();
+    const payload = await buildSiteAnimationRoomEvent({
+      event: "seat_changed",
+      userId: "u-seat",
+      membership: "gold",
+      seatIndex: 3,
+      previousSeatIndex: 1,
+    });
+    const animation = payload?.animation as Record<string, unknown>;
+    assert.equal(animation.id, "anim_transition_seat_change");
+  });
 });
