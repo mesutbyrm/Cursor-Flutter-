@@ -4,19 +4,17 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.378+416` |
-| Tarih (UTC) | 2026-09-08 02:45 |
-| Commit | [`cfc664643d485452f11702fbb35d07a0fea9b0eb`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/cfc664643d485452f11702fbb35d07a0fea9b0eb) |
-| İş akışı | [Run 34180307929](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34180307929) |
+| Sürüm | `1.0.379+417` |
+| Tarih (UTC) | 2026-09-08 03:11 |
+| Commit | [`39c6795e4c38929b4f37a5cce578c09191be8900`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/39c6795e4c38929b4f37a5cce578c09191be8900) |
+| İş akışı | [Run 34181703703](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34181703703) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.378+416 (2026-09-08) — economy Faz 21: yayın istatistik + büyüme görevleri
+## 1.0.379+417 (2026-09-08) — economy Faz 22: müzik hub yetersiz bakiye mesajları
 
-- Yayıncı istatistikleri «Hediye Jeton» satırı markalı
-- Canlı yayıncı kontrol merkezi gelir satırları `$jetonLabel`
-- Şanslı JACKPOT duyurusu ve günlük görev ödül etiketi markalı
+- Şarkı isteği hata metinleri `economyInsufficientJetonMessage` / `economyMinimumJetonForMusicRequestMessage`
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
