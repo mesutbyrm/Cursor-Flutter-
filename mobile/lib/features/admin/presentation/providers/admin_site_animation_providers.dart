@@ -28,6 +28,12 @@ final adminSiteAnimationDefaultsProvider =
   AdminSiteAnimationDefaultsNotifier.new,
 );
 
+final adminSiteAnimationExitDefaultsProvider =
+    AsyncNotifierProvider<AdminSiteAnimationExitDefaultsNotifier,
+        Map<AdminSiteAnimationMembership, String>>(
+  AdminSiteAnimationExitDefaultsNotifier.new,
+);
+
 class AdminSiteAnimationListNotifier
     extends AsyncNotifier<List<AdminSiteAnimation>> {
   @override
@@ -68,6 +74,20 @@ class AdminSiteAnimationDefaultsNotifier
 
   Future<void> save(Map<AdminSiteAnimationMembership, String> next) async {
     await ref.read(adminSiteAnimationRemoteProvider).saveDefaults(next);
+    await ref.read(siteAnimationCatalogDataSourceProvider).syncFromAdminLocal();
+    ref.invalidate(siteAnimationCatalogProvider);
+    state = AsyncData(next);
+  }
+}
+
+class AdminSiteAnimationExitDefaultsNotifier
+    extends AsyncNotifier<Map<AdminSiteAnimationMembership, String>> {
+  @override
+  Future<Map<AdminSiteAnimationMembership, String>> build() =>
+      ref.read(adminSiteAnimationRemoteProvider).fetchExitDefaults();
+
+  Future<void> save(Map<AdminSiteAnimationMembership, String> next) async {
+    await ref.read(adminSiteAnimationRemoteProvider).saveExitDefaults(next);
     await ref.read(siteAnimationCatalogDataSourceProvider).syncFromAdminLocal();
     ref.invalidate(siteAnimationCatalogProvider);
     state = AsyncData(next);

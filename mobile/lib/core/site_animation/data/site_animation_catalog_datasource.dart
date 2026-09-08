@@ -17,6 +17,7 @@ import '../domain/site_animation_tier.dart';
 const siteAnimationCatalogPrefsKey = 'site_animation_catalog_v1';
 const _adminCatalogKey = 'admin_site_animations_local_v1';
 const _adminDefaultsKey = 'admin_site_animation_defaults_v1';
+const _adminExitDefaultsKey = 'admin_site_animation_exit_defaults_v1';
 const _adminAssignmentsKey = 'admin_site_animation_assignments_v1';
 
 /// Aktif site animasyon kataloğu — API, admin prefs veya seed.
@@ -130,6 +131,11 @@ class SiteAnimationCatalogDataSource {
         ? _parseEntranceDefaults(jsonDecode(defaultsRaw))
         : _entranceDefaultsFromSeed();
 
+    final exitDefaultsRaw = prefs.getString(_adminExitDefaultsKey);
+    final exitDefaults = exitDefaultsRaw != null
+        ? _parseExitDefaults(jsonDecode(exitDefaultsRaw))
+        : _exitDefaultsFromSeed();
+
     final assignmentsRaw = prefs.getString(_adminAssignmentsKey);
     final userAssignments = assignmentsRaw != null
         ? _parseUserAssignments(jsonDecode(assignmentsRaw))
@@ -138,7 +144,7 @@ class SiteAnimationCatalogDataSource {
     return SiteAnimationCatalogSnapshot(
       animations: animations,
       entranceDefaults: entranceDefaults,
-      exitDefaults: _exitDefaultsFromSeed(),
+      exitDefaults: exitDefaults,
       userAssignments: userAssignments,
     );
   }

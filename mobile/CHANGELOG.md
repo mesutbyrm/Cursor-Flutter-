@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.383+421 (2026-09-08) — Site Animation: exit defaults + ownership transfer
+
+- Admin çıkış varsayılanları (GET/PUT `/api/admin/site-animations/exit-defaults`)
+- API mirror `transfer-ownership` route + `owner_changed` room_event SSE
+- `live/seats` koltuk atamasında `seat_changed` SSE zenginleştirmesi
+- Admin panelinde giriş + çıkış üyelik eşleştirme UI
+
 ## 1.0.382+420 (2026-09-08) — Site Animation Engine tamamlama
 
 - Koltuk atama (`seat_changed`) ve konuşma onayı SSE `room_event` zenginleştirmesi (API mirror)

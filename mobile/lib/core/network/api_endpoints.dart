@@ -633,6 +633,8 @@ abstract final class ApiEndpoints {
   static const adminSiteAnimations = '/api/admin/site-animations';
   static const adminSiteAnimationsStats = '/api/admin/site-animations/stats';
   static const adminSiteAnimationDefaults = '/api/admin/site-animations/defaults';
+  static const adminSiteAnimationExitDefaults =
+      '/api/admin/site-animations/exit-defaults';
   static const adminSiteAnimationAssign = '/api/admin/site-animations/assign';
   static const adminSiteAnimationBulkAssign =
       '/api/admin/site-animations/bulk-assign';

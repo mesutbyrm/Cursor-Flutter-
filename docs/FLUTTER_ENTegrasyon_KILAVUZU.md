@@ -2333,6 +2333,8 @@ Auth gerektiren endpoint'ler `Authorization: Bearer <accessToken>` header'ı bek
 | `getStats` | GET | `/api/admin/site-animations/stats` | Staff | Katalog istatistikleri |
 | `getDefaults` | GET | `/api/admin/site-animations/defaults` | Staff | Üyelik → giriş animasyonu eşlemesi |
 | `saveDefaults` | PUT | `/api/admin/site-animations/defaults` | Staff | `{normal: "anim_…", gold: "anim_…", …}` |
+| `getExitDefaults` | GET | `/api/admin/site-animations/exit-defaults` | Staff | Üyelik → çıkış animasyonu eşlemesi |
+| `saveExitDefaults` | PUT | `/api/admin/site-animations/exit-defaults` | Staff | `{normal: "anim_…", gold: "anim_…", …}` |
 | `assignAnimation` | POST | `/api/admin/site-animations/assign` | Staff | `{userId, slot, animationId}` |
 | `bulkAssign` | POST | `/api/admin/site-animations/bulk-assign` | Staff | Toplu atama |
 

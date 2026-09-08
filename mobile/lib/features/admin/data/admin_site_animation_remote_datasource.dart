@@ -13,6 +13,7 @@ import 'admin_site_animation_seed_catalog.dart';
 
 const _prefsKey = 'admin_site_animations_local_v1';
 const _defaultsKey = 'admin_site_animation_defaults_v1';
+const _exitDefaultsKey = 'admin_site_animation_exit_defaults_v1';
 const _assignmentsKey = 'admin_site_animation_assignments_v1';
 
 /// Site animasyon admin API — üretim uçları + yerel seed fallback.
@@ -138,6 +139,45 @@ class AdminSiteAnimationRemoteDataSource {
     }
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_defaultsKey, jsonEncode(body));
+    await _syncRuntimeCatalog();
+  }
+
+  Future<Map<AdminSiteAnimationMembership, String>> fetchExitDefaults() async {
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.adminSiteAnimationExitDefaults,
+        forceRefresh: true,
+      );
+      final map = asJsonMap(_unwrapMap(res.data));
+      if (map.isNotEmpty) return _parseDefaults(map);
+    } on ApiException catch (e) {
+      if (e.statusCode != 404 && e.statusCode != 403) rethrow;
+    }
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_exitDefaultsKey);
+    if (raw != null) {
+      return _parseDefaults(jsonDecode(raw) as Map<String, dynamic>);
+    }
+    return AdminSiteAnimationSeedCatalog.defaultExitIds();
+  }
+
+  Future<void> saveExitDefaults(
+    Map<AdminSiteAnimationMembership, String> defaults,
+  ) async {
+    final body = {
+      for (final e in defaults.entries) e.key.name: e.value,
+    };
+    try {
+      await _dio.safePut<dynamic>(
+        ApiEndpoints.adminSiteAnimationExitDefaults,
+        data: body,
+      );
+      return;
+    } on ApiException catch (e) {
+      if (e.statusCode != 404 && e.statusCode != 403) rethrow;
+    }
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_exitDefaultsKey, jsonEncode(body));
     await _syncRuntimeCatalog();
   }
 
