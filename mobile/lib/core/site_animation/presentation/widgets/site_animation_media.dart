@@ -59,6 +59,11 @@ class _SiteAnimationMediaState extends State<SiteAnimationMedia> {
     }
 
     final asset = widget.command.asset;
+    if (asset.kind == SiteAnimationMediaKind.rive ||
+        asset.kind == SiteAnimationMediaKind.svga) {
+      return _fallback();
+    }
+
     if (asset.hasBundle) {
       return Lottie.asset(
         asset.bundlePath!,

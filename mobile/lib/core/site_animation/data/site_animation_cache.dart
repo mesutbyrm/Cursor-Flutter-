@@ -11,6 +11,9 @@ abstract final class SiteAnimationAssetPaths {
 
   static String preview(String animationId) =>
       '$cdnBase/preview/$animationId.mp4';
+
+  static String sound(String animationId) =>
+      '$cdnBase/sounds/$animationId.mp3';
 }
 
 /// Site animation asset önbelleği — tekrar indirmeyi engeller.
@@ -30,7 +33,18 @@ abstract final class SiteAnimationCache {
         url.endsWith('.json') ||
         url.endsWith('.lottie')) {
       GiftCacheService.instance.prefetchUrls([url]);
+      return;
     }
+
+    if (asset.kind == SiteAnimationMediaKind.rive || url.endsWith('.riv')) {
+      GiftCacheService.instance.prefetchUrls([url]);
+    }
+  }
+
+  static Future<void> preloadSound(String? url) async {
+    final u = url?.trim();
+    if (u == null || u.isEmpty || !u.startsWith('http')) return;
+    GiftCacheService.instance.prefetchUrls([u]);
   }
 
   static Future<bool> isCached(SiteAnimationAsset asset) async {

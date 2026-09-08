@@ -5,6 +5,7 @@ import '../../domain/admin_site_animation.dart';
 import '../providers/admin_site_animation_providers.dart';
 import '../providers/staff_access_provider.dart';
 import '../../data/admin_site_animation_seed_catalog.dart';
+import '../../../../core/site_animation/application/site_animation_sound_player.dart';
 import '../widgets/admin_site_animation_preview_backgrounds.dart';
 import '../widgets/admin_site_animation_preview_stage.dart';
 
@@ -168,6 +169,17 @@ class _AdminSiteAnimationsPreviewPageState
                 fontSize: 12,
               ),
             ),
+            if (active!.soundUrl?.trim().isNotEmpty == true) ...[
+              const SizedBox(height: 8),
+              Center(
+                child: OutlinedButton.icon(
+                  onPressed: () =>
+                      SiteAnimationSoundPlayer.play(active!.soundUrl),
+                  icon: const Icon(Icons.volume_up_rounded, size: 18),
+                  label: const Text('Ses önizle'),
+                ),
+              ),
+            ],
           ],
         ],
       ),

@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.396+434 (2026-09-08) — Site Animation: CDN admin + Rive/SVGA fallback
+
+- Admin editör: CDN asset/önizleme/ses doldur chip'leri + ses önizle
+- Admin önizleme: ses test butonu
+- `SiteAnimationMedia`: Rive/SVGA → native kart fallback
+- CDN ses path + `.riv` prefetch; `docs/SITE_ANIMATION_CDN.md`
+
 ## 1.0.395+433 (2026-09-08) — Site Animation: ses + cooldown + CDN asset
 
 - Katalog `soundUrl` oynatma (`SiteAnimationSoundPlayer`)

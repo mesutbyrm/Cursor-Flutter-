@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/site_animation/application/site_animation_sound_player.dart';
+import '../../../../core/site_animation/data/site_animation_cache.dart';
 import '../../domain/admin_site_animation.dart';
 import '../providers/admin_site_animation_providers.dart';
 import '../providers/staff_access_provider.dart';
@@ -117,6 +119,60 @@ class _AdminSiteAnimationsEditorPageState
     }
   }
 
+  String? _cdnAnimationId() {
+    final id = widget.animation?.id?.trim();
+    if (id != null && id.isNotEmpty) return id;
+    final slug = _name.text
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_');
+    if (slug.isEmpty) return null;
+    return 'anim_$slug';
+  }
+
+  String _assetExt() => switch (_animationType) {
+        'rive' => 'riv',
+        'video' || 'mp4' => 'mp4',
+        'lottie' || 'json' => 'lottie',
+        _ => 'lottie',
+      };
+
+  void _fillCdnAsset() {
+    final id = _cdnAnimationId();
+    if (id == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('CDN için animasyon adı veya kayıt id gerekli')),
+      );
+      return;
+    }
+    setState(() {
+      _assetUrl.text = SiteAnimationAssetPaths.production(id, ext: _assetExt());
+    });
+  }
+
+  void _fillCdnPreview() {
+    final id = _cdnAnimationId();
+    if (id == null) return;
+    setState(() {
+      _previewUrl.text = SiteAnimationAssetPaths.preview(id);
+    });
+  }
+
+  void _fillCdnSound() {
+    final id = _cdnAnimationId();
+    if (id == null) return;
+    setState(() {
+      _soundUrl.text = SiteAnimationAssetPaths.sound(id);
+    });
+  }
+
+  Future<void> _previewSound() async {
+    final url = _soundUrl.text.trim();
+    if (url.isEmpty) return;
+    await SiteAnimationSoundPlayer.play(url);
+  }
+
   @override
   Widget build(BuildContext context) {
     final access = ref.watch(staffAccessProvider);
@@ -180,6 +236,19 @@ class _AdminSiteAnimationsEditorPageState
             controller: _assetUrl,
             decoration: const InputDecoration(labelText: 'Upload Asset (URL)'),
           ),
+          Wrap(
+            spacing: 8,
+            children: [
+              ActionChip(
+                label: const Text('CDN asset'),
+                onPressed: _fillCdnAsset,
+              ),
+              ActionChip(
+                label: const Text('CDN önizleme'),
+                onPressed: _fillCdnPreview,
+              ),
+            ],
+          ),
           TextField(
             controller: _previewUrl,
             decoration: const InputDecoration(labelText: 'Upload Preview (URL)'),
@@ -187,6 +256,19 @@ class _AdminSiteAnimationsEditorPageState
           TextField(
             controller: _soundUrl,
             decoration: const InputDecoration(labelText: 'Upload Sound (URL)'),
+          ),
+          Wrap(
+            spacing: 8,
+            children: [
+              ActionChip(
+                label: const Text('CDN ses'),
+                onPressed: _fillCdnSound,
+              ),
+              ActionChip(
+                label: const Text('Ses önizle'),
+                onPressed: _previewSound,
+              ),
+            ],
           ),
           TextField(
             controller: _duration,

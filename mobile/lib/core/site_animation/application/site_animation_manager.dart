@@ -131,6 +131,7 @@ class SiteAnimationManager {
     _activeTimer?.cancel();
     _markCooldown(command);
     unawaited(preload(command.asset));
+    unawaited(SiteAnimationCache.preloadSound(command.soundUrl));
     if (command.soundUrl?.trim().isNotEmpty == true) {
       unawaited(SiteAnimationSoundPlayer.play(command.soundUrl));
     }
