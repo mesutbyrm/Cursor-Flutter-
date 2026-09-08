@@ -44,7 +44,7 @@ RELEASE READY: NO
 ── Agent (tamam) ──
   [x] Kod + CI release gate FINAL PASS
   [x] API M5/M7 + Gate 3 TRTC
-  [x] Host falcı listede · jeton ~98k
+  [x] Host falcı listede · jeton yeterli
   [x] P2 prep betik paketi — bash scripts/agent-prep-tamam.sh
 
 Sonraki (kullanıcı): bash scripts/kullanici-sonraki.sh
