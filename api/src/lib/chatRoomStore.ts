@@ -1005,6 +1005,44 @@ export function assignSeat(
   };
 }
 
+export function transferRoomOwnership(
+  roomId: string,
+  actor: User,
+  newOwnerId: string,
+) {
+  const room = getChatRoom(roomId);
+  if (!room) return { ok: false as const, error: "Oda bulunamadı" };
+  const priv = roomPrivileges(actor, room);
+  if (!priv.owner && !priv.admin) {
+    return { ok: false as const, error: "Sahiplik devretme yetkisi yok" };
+  }
+  const targetId = newOwnerId.trim();
+  if (!targetId) {
+    return { ok: false as const, error: "Yeni sahip gerekli" };
+  }
+  const newOwner = roomMap(roomId).get(targetId);
+  if (!newOwner) {
+    return { ok: false as const, error: "Kullanıcı odada değil" };
+  }
+  const previousOwnerId = room.ownerId ?? "";
+  room.ownerId = targetId;
+  room.owner = {
+    id: targetId,
+    displayName: newOwner.name,
+    image: newOwner.image ?? null,
+  };
+  newOwner.chatRole = "owner";
+  newOwner.seatIndex = newOwner.seatIndex ?? 1;
+  newOwner.isSpeaking = true;
+  roomMap(roomId).set(targetId, newOwner);
+  return {
+    ok: true as const,
+    previousOwnerId,
+    newOwner,
+    presence: listPresence(roomId),
+  };
+}
+
 export function getDjState(roomId: string, user: User | null) {
   const room = getChatRoom(roomId);
   const key = resolveRoomId(roomId);

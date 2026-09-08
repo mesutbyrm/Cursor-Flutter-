@@ -1,12 +1,12 @@
 import type { SiteAnimationRecord } from "./siteAnimationStore";
 import {
   getSiteAnimationDefaults,
+  getSiteAnimationExitDefaults,
   getUserSiteAnimationAssignments,
   listActiveSiteAnimations,
 } from "./siteAnimationStore";
 import {
   SITE_ANIMATION_DEFAULTS,
-  SITE_ANIMATION_EXIT_DEFAULTS,
 } from "./siteAnimationSeed";
 
 type ResolveInput = {
@@ -95,7 +95,8 @@ async function pickAnimation(input: ResolveInput): Promise<SiteAnimationRecord |
   }
 
   if (EXIT_EVENTS.has(event)) {
-    const id = SITE_ANIMATION_EXIT_DEFAULTS[membership];
+    const exitDefaults = await getSiteAnimationExitDefaults();
+    const id = exitDefaults[membership];
     if (id) {
       const fromDefault = byId.get(id);
       if (fromDefault) return fromDefault;

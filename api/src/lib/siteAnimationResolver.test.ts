@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import { buildSiteAnimationRoomEvent } from "./siteAnimationResolver";
 import {
   resetSiteAnimationStoreForTests,
+  saveSiteAnimationExitDefaults,
   updateSiteAnimation,
 } from "./siteAnimationStore";
 
@@ -64,5 +65,21 @@ describe("siteAnimationResolver", () => {
     });
     const animation = payload?.animation as Record<string, unknown>;
     assert.equal(animation.id, "anim_transition_seat_change");
+  });
+
+  it("uses saved exit defaults", async () => {
+    process.env.SITE_ANIMATION_STORE_JSON = "1";
+    delete process.env.DATABASE_URL;
+    await resetSiteAnimationStoreForTests();
+    await saveSiteAnimationExitDefaults({
+      gold: "anim_exit_premium",
+    });
+    const payload = await buildSiteAnimationRoomEvent({
+      event: "user_left",
+      userId: "u-exit-custom",
+      membership: "gold",
+    });
+    const animation = payload?.animation as Record<string, unknown>;
+    assert.equal(animation.id, "anim_exit_premium");
   });
 });

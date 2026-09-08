@@ -5,6 +5,8 @@ import {
   getSiteAnimationStats,
   listActiveSiteAnimations,
   resetSiteAnimationStoreForTests,
+  saveSiteAnimationExitDefaults,
+  getSiteAnimationExitDefaults,
 } from "./siteAnimationStore";
 
 describe("siteAnimationStore json fallback", () => {
@@ -26,6 +28,11 @@ describe("siteAnimationStore json fallback", () => {
         membership: "normal",
       });
       assert.equal(created.id, "anim_test_temp");
+      const exitDefaults = await getSiteAnimationExitDefaults();
+      assert.ok(exitDefaults.gold);
+      await saveSiteAnimationExitDefaults({ gold: "anim_exit_gold" });
+      const updatedExit = await getSiteAnimationExitDefaults();
+      assert.equal(updatedExit.gold, "anim_exit_gold");
     } finally {
       if (prev) process.env.DATABASE_URL = prev;
       else delete process.env.DATABASE_URL;

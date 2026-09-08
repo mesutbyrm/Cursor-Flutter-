@@ -32,6 +32,7 @@ export type SiteAnimationRecord = {
 type StoreFile = {
   animations: SiteAnimationRecord[];
   defaults: Record<string, string>;
+  exitDefaults?: Record<string, string>;
   assignments: Record<string, Record<string, string | null>>;
 };
 
@@ -101,6 +102,7 @@ async function readJsonStore(): Promise<StoreFile> {
     memory = {
       animations: [...SITE_ANIMATION_SEED],
       defaults: { ...SITE_ANIMATION_DEFAULTS },
+      exitDefaults: { ...SITE_ANIMATION_EXIT_DEFAULTS },
       assignments: {},
     };
     await writeJsonStore(memory);
@@ -255,13 +257,32 @@ export async function updateSiteAnimation(
 
 export async function getSiteAnimationDefaults(): Promise<Record<string, string>> {
   if (await canUsePrisma()) {
-    const rows = await prisma.siteAnimationDefault.findMany();
+    const rows = await prisma.siteAnimationDefault.findMany({
+      where: { NOT: { membership: { startsWith: "exit:" } } },
+    });
     const out: Record<string, string> = {};
     for (const row of rows) out[row.membership] = row.animationId;
     return Object.keys(out).length ? out : { ...SITE_ANIMATION_DEFAULTS };
   }
   const store = await readJsonStore();
   return store.defaults;
+}
+
+export async function getSiteAnimationExitDefaults(): Promise<
+  Record<string, string>
+> {
+  if (await canUsePrisma()) {
+    const rows = await prisma.siteAnimationDefault.findMany({
+      where: { membership: { startsWith: "exit:" } },
+    });
+    const out: Record<string, string> = {};
+    for (const row of rows) {
+      out[row.membership.slice("exit:".length)] = row.animationId;
+    }
+    return Object.keys(out).length ? out : { ...SITE_ANIMATION_EXIT_DEFAULTS };
+  }
+  const store = await readJsonStore();
+  return store.exitDefaults ?? { ...SITE_ANIMATION_EXIT_DEFAULTS };
 }
 
 export async function saveSiteAnimationDefaults(
@@ -283,6 +304,30 @@ export async function saveSiteAnimationDefaults(
   store.defaults = { ...store.defaults, ...defaults };
   await writeJsonStore(store);
   return store.defaults;
+}
+
+export async function saveSiteAnimationExitDefaults(
+  defaults: Record<string, string>,
+): Promise<Record<string, string>> {
+  if (await canUsePrisma()) {
+    for (const [membership, animationId] of Object.entries(defaults)) {
+      if (!membership || !animationId) continue;
+      const key = membership.startsWith("exit:")
+        ? membership
+        : `exit:${membership}`;
+      await prisma.siteAnimationDefault.upsert({
+        where: { membership: key },
+        create: { membership: key, animationId },
+        update: { animationId },
+      });
+    }
+    return getSiteAnimationExitDefaults();
+  }
+
+  const store = await readJsonStore();
+  store.exitDefaults = { ...(store.exitDefaults ?? {}), ...defaults };
+  await writeJsonStore(store);
+  return store.exitDefaults;
 }
 
 export async function getUserSiteAnimationAssignments(userId: string) {
@@ -357,9 +402,10 @@ export async function bulkAssignSiteAnimation(input: {
 export async function activeCatalogPayload() {
   const animations = await listActiveSiteAnimations();
   const defaults = await getSiteAnimationDefaults();
+  const exitDefaults = await getSiteAnimationExitDefaults();
   return {
     animations,
     defaults,
-    exitDefaults: SITE_ANIMATION_EXIT_DEFAULTS,
+    exitDefaults,
   };
 }

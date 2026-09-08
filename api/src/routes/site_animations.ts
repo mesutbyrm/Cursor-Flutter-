@@ -9,10 +9,12 @@ import {
   bulkAssignSiteAnimation,
   createSiteAnimation,
   getSiteAnimationDefaults,
+  getSiteAnimationExitDefaults,
   getSiteAnimationStats,
   getUserSiteAnimationAssignments,
   listSiteAnimations,
   saveSiteAnimationDefaults,
+  saveSiteAnimationExitDefaults,
   updateSiteAnimation,
 } from "../lib/siteAnimationStore";
 
@@ -75,6 +77,26 @@ siteAnimationsRouter.put(
   requireStaff,
   async (req, res) =>
     ok(res, await saveSiteAnimationDefaults((req.body ?? {}) as Record<string, string>)),
+);
+
+/** GET /api/admin/site-animations/exit-defaults */
+siteAnimationsRouter.get(
+  "/admin/site-animations/exit-defaults",
+  requireAuth,
+  requireStaff,
+  async (_req, res) => ok(res, await getSiteAnimationExitDefaults()),
+);
+
+/** PUT /api/admin/site-animations/exit-defaults */
+siteAnimationsRouter.put(
+  "/admin/site-animations/exit-defaults",
+  requireAuth,
+  requireStaff,
+  async (req, res) =>
+    ok(
+      res,
+      await saveSiteAnimationExitDefaults((req.body ?? {}) as Record<string, string>),
+    ),
 );
 
 /** POST /api/admin/site-animations/assign */

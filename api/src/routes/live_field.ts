@@ -23,6 +23,7 @@ import {
   listPresence,
   resolveRoomId,
 } from "../lib/chatRoomStore";
+import { emitResolvedRoomAnimation } from "../lib/siteAnimationEmitter";
 import {
   emitChatRoomMessage,
   emitChatRoomPresence,
@@ -363,6 +364,17 @@ liveFieldRouter.post("/live/seats", requireAuth, async (req, res) => {
   const result = assignSeat(roomId, user, seatIndex, req.body?.targetUserId?.toString());
   if (!result.ok) return fail(res, 403, "FORBIDDEN", result.error ?? "Koltuk atanamadı");
   emitChatRoomPresence(roomId, result.presence as unknown as Record<string, unknown>[]);
+  if (result.target) {
+    void emitResolvedRoomAnimation(roomId, {
+      event: "seat_changed",
+      userId: result.target.id,
+      name: result.target.name,
+      membership: result.target.membership,
+      chatRole: result.target.chatRole,
+      seatIndex: result.target.seatIndex,
+      previousSeatIndex: result.previousSeatIndex,
+    });
+  }
   return ok(res, {
     roomId: resolveRoomId(roomId),
     seats: listPresence(roomId).filter((p) => typeof p.seatIndex === "number"),

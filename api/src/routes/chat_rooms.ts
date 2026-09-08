@@ -47,6 +47,7 @@ import {
   addRoomDj,
   removeRoomDj,
   assignSeat,
+  transferRoomOwnership,
   MUSIC_REQUEST_JETON,
   listRoomBannedWords,
   addRoomBannedWord,
@@ -74,9 +75,8 @@ import { subscribeSongSse, unsubscribeSongSse } from "../lib/songQueueSse";
 import {
   subscribeRoomEventSse,
   unsubscribeRoomEventSse,
-  emitRoomEventSse,
 } from "../lib/roomEventSse";
-import { buildSiteAnimationRoomEvent } from "../lib/siteAnimationResolver";
+import { emitResolvedRoomAnimation } from "../lib/siteAnimationEmitter";
 import { getActiveBattleForRoom } from "../lib/pkBattleService";
 import { listRoomGiftEvents, sendRoomGift } from "./gifts";
 import {
@@ -87,13 +87,38 @@ import { presenceHeartbeat } from "../lib/redis/presence";
 
 export const chatRoomsRouter = Router();
 
-async function emitResolvedRoomAnimation(
-  roomId: string,
-  input: Parameters<typeof buildSiteAnimationRoomEvent>[0],
-) {
-  const payload = await buildSiteAnimationRoomEvent(input);
-  if (payload) emitRoomEventSse(roomId, payload);
-}
+chatRoomsRouter.post("/rooms/:roomId/transfer-ownership", requireAuth, async (req, res) => {
+  const roomId = req.params.roomId;
+  const user = await loadUser(req.userId);
+  if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
+  const newOwnerId =
+    typeof req.body?.newOwnerId === "string"
+      ? req.body.newOwnerId.trim()
+      : typeof req.body?.userId === "string"
+        ? req.body.userId.trim()
+        : "";
+  if (!newOwnerId) {
+    return fail(res, 400, "BAD_REQUEST", "newOwnerId gerekli");
+  }
+  const result = transferRoomOwnership(roomId, user, newOwnerId);
+  if (!result.ok) {
+    return fail(res, 403, "FORBIDDEN", result.error ?? "Sahiplik devredilemedi");
+  }
+  emitChatRoomPresence(resolveRoomId(roomId), result.presence);
+  void emitResolvedRoomAnimation(roomId, {
+    event: "owner_changed",
+    userId: result.newOwner.id,
+    name: result.newOwner.name,
+    membership: result.newOwner.membership,
+    chatRole: result.newOwner.chatRole ?? "owner",
+    seatIndex: result.newOwner.seatIndex,
+  });
+  return ok(res, {
+    success: true,
+    ownerId: newOwnerId,
+    previousOwnerId: result.previousOwnerId,
+  });
+});
 
 function bodyYoutubeUrl(body: Record<string, unknown>): string {
   const videoId =
