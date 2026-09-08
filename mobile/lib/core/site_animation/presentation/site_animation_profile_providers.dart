@@ -9,7 +9,7 @@ import '../domain/site_animation_catalog_entry.dart';
 import '../domain/site_animation_tier.dart';
 import 'site_animation_catalog_provider.dart';
 
-SiteAnimationTier _profileTier(WidgetRef ref) {
+SiteAnimationTier _profileTier(Ref ref) {
   final user = ref.watch(authControllerProvider).valueOrNull;
   final tier = ref.watch(vipTierProvider);
   final membership = switch (tier) {

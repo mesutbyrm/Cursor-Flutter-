@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/site_animation/presentation/site_animation_catalog_provider.dart';
 import '../../data/admin_site_animation_remote_datasource.dart';
 import '../../domain/admin_site_animation.dart';
-import '../../../core/network/dio_provider.dart';
+import '../../../../core/network/dio_provider.dart';
 import 'admin_panel_providers.dart';
 
 final adminSiteAnimationRemoteProvider =

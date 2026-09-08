@@ -1,13 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../features/auth/presentation/providers/auth_controller_provider.dart';
+import '../../../features/auth/presentation/providers/auth_providers.dart';
+import '../application/site_animation_manager.dart';
+import '../application/site_animation_state.dart';
 import '../data/site_animation_parser.dart';
 import '../data/site_animation_resolver.dart';
 import '../domain/site_animation_catalog_entry.dart';
 import '../domain/site_animation_command.dart';
+import '../domain/site_animation_type.dart';
 import 'site_animation_catalog_provider.dart';
-import 'site_animation_manager.dart';
-import 'site_animation_state.dart';
 
 class SiteAnimationNotifier
     extends AutoDisposeFamilyNotifier<SiteAnimationState, String> {

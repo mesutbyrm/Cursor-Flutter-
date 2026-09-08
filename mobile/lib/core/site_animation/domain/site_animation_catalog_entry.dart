@@ -1,3 +1,4 @@
+import '../domain/site_animation_slot.dart';
 import 'site_animation_layout.dart';
 import 'site_animation_tier.dart';
 

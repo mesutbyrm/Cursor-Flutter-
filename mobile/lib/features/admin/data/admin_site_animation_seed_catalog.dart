@@ -1,4 +1,4 @@
-import 'admin_site_animation.dart';
+import '../domain/admin_site_animation.dart';
 
 /// Tasarım referanslarından seed katalog — API yoksa admin önizleme için.
 abstract final class AdminSiteAnimationSeedCatalog {
