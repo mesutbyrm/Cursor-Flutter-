@@ -243,6 +243,9 @@ export type FortuneSessionRow = {
   status: "pending" | "active" | "ended";
   tellerResponse: "pending" | "accepted" | "held" | "rejected";
   createdAt: string;
+  timerStarted?: boolean;
+  timerStartedAt?: string;
+  tipsTotal?: number;
 };
 
 const fortuneSessions = new Map<string, FortuneSessionRow>();
@@ -375,6 +378,128 @@ export function appendTellerChatMessage(
   list.push(row);
   tellerChatBySession.set(key, list);
   return row;
+}
+
+const tellerOnlineByUser = new Map<string, boolean>();
+
+export function getTellerOnlineStatus(userId: string) {
+  return tellerOnlineByUser.get(userId.trim()) ?? false;
+}
+
+export function setTellerOnlineStatus(userId: string, online: boolean) {
+  tellerOnlineByUser.set(userId.trim(), online);
+  return online;
+}
+
+export function listActiveFortuneSessionsForUser(userId: string) {
+  return listFortuneSessionsForUser(userId).filter(
+    (s) => s.status === "pending" || s.status === "active",
+  );
+}
+
+export function fortuneSessionRoomPayload(
+  session: FortuneSessionRow,
+  viewerUserId: string,
+) {
+  const role = fortuneSessionRoleForUser(session, viewerUserId);
+  const maxMinutes = session.durationMinutes ?? 10;
+  let elapsedSeconds = 0;
+  if (session.timerStarted && session.timerStartedAt) {
+    const started = Date.parse(session.timerStartedAt);
+    if (!Number.isNaN(started)) {
+      elapsedSeconds = Math.max(0, Math.floor((Date.now() - started) / 1000));
+    }
+  }
+  const remainingSeconds = Math.max(0, maxMinutes * 60 - elapsedSeconds);
+  return {
+    id: session.id,
+    sessionId: session.id,
+    roomId: session.trtcRoomId,
+    trtcRoomId: session.trtcRoomId,
+    status: session.status,
+    tellerResponse: session.tellerResponse,
+    tellerId: session.tellerId,
+    tellerUserId: session.tellerUserId,
+    clientId: session.clientId,
+    clientName: session.clientName,
+    durationMinutes: maxMinutes,
+    maxMinutes,
+    totalJeton: session.totalJeton ?? 0,
+    timerStarted: session.timerStarted === true,
+    timerStartedAt: session.timerStartedAt,
+    elapsedSeconds,
+    remainingSeconds,
+    role,
+    isClient: role === "client",
+    isTeller: role === "teller",
+    tipsTotal: session.tipsTotal ?? 0,
+  };
+}
+
+export function patchFortuneSessionRoom(
+  sessionId: string,
+  userId: string,
+  action: string,
+  input?: { minutes?: number },
+) {
+  const row = fortuneSessions.get(sessionId.trim());
+  if (!row) return { ok: false as const, error: "Oturum bulunamadı" };
+  const uid = userId.trim();
+  if (row.clientId !== uid && row.tellerUserId !== uid && row.tellerId !== uid) {
+    return { ok: false as const, error: "Yetki yok" };
+  }
+  const act = action.trim().toLowerCase();
+  if (act === "start_timer" || act === "start") {
+    row.status = "active";
+    row.timerStarted = true;
+    row.timerStartedAt = new Date().toISOString();
+  } else if (act === "extend" || act === "teller_add_time") {
+    const bump = Math.max(1, Number(input?.minutes ?? 5));
+    row.durationMinutes = (row.durationMinutes ?? 10) + bump;
+  } else if (act === "end" || act === "complete") {
+    row.status = "ended";
+  } else if (act === "ping") {
+    // no-op heartbeat
+  } else {
+    return { ok: false as const, error: "Geçersiz action" };
+  }
+  return { ok: true as const, session: row };
+}
+
+export function addFortuneSessionTip(sessionId: string, userId: string, amount: number) {
+  const row = fortuneSessions.get(sessionId.trim());
+  if (!row) return { ok: false as const, error: "Oturum bulunamadı" };
+  if (row.clientId !== userId.trim()) {
+    return { ok: false as const, error: "Yetki yok" };
+  }
+  const bump = Math.max(1, Math.floor(amount));
+  row.tipsTotal = (row.tipsTotal ?? 0) + bump;
+  return { ok: true as const, session: row, tipsTotal: row.tipsTotal };
+}
+
+const fortuneSessionReviews = new Map<
+  string,
+  { rating: number; comment?: string; createdAt: string }
+>();
+
+export function saveFortuneSessionReview(
+  sessionId: string,
+  userId: string,
+  rating: number,
+  comment?: string,
+) {
+  const row = fortuneSessions.get(sessionId.trim());
+  if (!row) return { ok: false as const, error: "Oturum bulunamadı" };
+  if (row.clientId !== userId.trim()) {
+    return { ok: false as const, error: "Yetki yok" };
+  }
+  const review = {
+    rating: Math.min(5, Math.max(1, Math.floor(rating))),
+    comment: comment?.trim() || undefined,
+    createdAt: new Date().toISOString(),
+  };
+  fortuneSessionReviews.set(sessionId.trim(), review);
+  return { ok: true as const, review };
 }
 
 export type StreamFortuneRequestRow = {

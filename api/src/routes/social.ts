@@ -5,11 +5,13 @@ import {
   createFortuneSession,
   fortuneSessionRoleForUser,
   getFortuneSession,
+  getTellerOnlineStatus,
   listIncomingFortuneSessionsForTeller,
   listFortuneSessionsForUser,
   listTellerChatMessages,
   appendTellerChatMessage,
   respondFortuneSession,
+  setTellerOnlineStatus,
 } from "../lib/liveStreamExtrasStore";
 import { prisma } from "../lib/prisma";
 import { fail, ok } from "../lib/response";
@@ -212,6 +214,82 @@ socialRouter.post("/fortune-tellers/session", requireAuth, async (req, res) => {
     tellerResponse: session.tellerResponse,
   });
 });
+
+/** POST /api/fortune-tellers/:tellerId/session — üretim path (tellerId URL'de) */
+socialRouter.post(
+  "/fortune-tellers/:tellerId/session",
+  requireAuth,
+  async (req, res) => {
+    const tellerId = req.params.tellerId?.trim();
+    if (!tellerId) {
+      return fail(res, 400, "BAD_REQUEST", "tellerId gerekli");
+    }
+    const clientId = req.userId!;
+    const tellerUserId = await resolveTellerUserId(
+      tellerId,
+      req.body as Record<string, unknown>,
+    );
+    const body = req.body as Record<string, unknown>;
+    const session = createFortuneSession(tellerId, clientId, tellerUserId, {
+      clientName: body?.clientName?.toString(),
+      durationMinutes:
+        Number(body?.maxMinutes) ||
+        Number(body?.durationMinutes) ||
+        Number(body?.duration) ||
+        undefined,
+      totalJeton: Number(body?.totalJeton) || undefined,
+    });
+    const role = fortuneSessionRoleForUser(session, clientId);
+    void createNotification({
+      userId: tellerUserId,
+      title: `Canlı fal isteği: ${session.clientName ?? "Bir danışan"}`,
+      body: `${session.durationMinutes ?? 10} dk · ${session.totalJeton ?? 0} jeton — kabul etmek için uygulama açın`,
+      type: "fortune_session_invite",
+      targetPath: `/canli-falcilar/dashboard`,
+      targetId: session.id,
+      urgent: true,
+      data: {
+        event: "fortune_session_invite",
+        sessionId: session.id,
+        tellerId: session.tellerId,
+        tellerUserId: session.tellerUserId,
+        clientId: session.clientId,
+        clientName: session.clientName ?? "",
+        durationMinutes: String(session.durationMinutes ?? 10),
+        totalJeton: String(session.totalJeton ?? 0),
+        trtcRoomId: session.trtcRoomId,
+        type: "fortune_session_invite",
+      },
+    });
+    return ok(res, {
+      session,
+      sessionId: session.id,
+      tellerId: session.tellerId,
+      tellerUserId: session.tellerUserId,
+      clientId: session.clientId,
+      clientName: session.clientName,
+      durationMinutes: session.durationMinutes,
+      maxMinutes: session.durationMinutes,
+      totalJeton: session.totalJeton,
+      trtcRoomId: session.trtcRoomId,
+      role,
+      isClient: role === "client",
+      status: session.status,
+      tellerResponse: session.tellerResponse,
+    });
+  },
+);
+
+/** GET /api/fortune-tellers/toggle-online — çevrimiçi durum */
+socialRouter.get(
+  "/fortune-tellers/toggle-online",
+  requireAuth,
+  async (req, res) => {
+    const online = getTellerOnlineStatus(req.userId!);
+    return ok(res, { online, isOnline: online });
+  },
+);
+
 /** POST /api/fortune-tellers/toggle-online — üretim: falcı çevrimiçi */
 socialRouter.post(
   "/fortune-tellers/toggle-online",
@@ -221,6 +299,7 @@ socialRouter.post(
       req.body?.online === true ||
       req.body?.isOnline === true ||
       req.body?.online === "true";
+    setTellerOnlineStatus(req.userId!, online);
     return ok(res, { online, isOnline: online });
   },
 );
@@ -366,7 +445,19 @@ socialRouter.get(
   "/fortune-tellers/sessions",
   requireAuth,
   async (req, res) => {
-    const sessions = listFortuneSessionsForUser(req.userId!);
+    const statusFilter = req.query.status?.toString()?.trim().toLowerCase();
+    let sessions = listFortuneSessionsForUser(req.userId!);
+    if (statusFilter === "pending") {
+      sessions = sessions.filter(
+        (s) =>
+          s.status === "pending" &&
+          s.tellerResponse !== "rejected",
+      );
+    } else if (statusFilter === "active") {
+      sessions = sessions.filter((s) => s.status === "active");
+    } else if (statusFilter === "ended") {
+      sessions = sessions.filter((s) => s.status === "ended");
+    }
     return ok(res, { sessions });
   },
 );
@@ -460,6 +551,31 @@ socialRouter.get(
     return ok(res, { sessions });
   },
 );
+
+/** GET /api/fortune-tellers/session?sessionId= — üretim query formu */
+socialRouter.get("/fortune-tellers/session", requireAuth, async (req, res) => {
+  const sessionId = req.query.sessionId?.toString()?.trim();
+  if (!sessionId) {
+    return fail(res, 400, "BAD_REQUEST", "sessionId gerekli");
+  }
+  const session = getFortuneSession(sessionId);
+  if (!session) {
+    return fail(res, 404, "NOT_FOUND", "Oturum bulunamadı");
+  }
+  const uid = req.userId!;
+  if (session.clientId !== uid && session.tellerUserId !== uid && session.tellerId !== uid) {
+    return fail(res, 403, "FORBIDDEN", "Yetki yok");
+  }
+  const role = fortuneSessionRoleForUser(session, uid);
+  return ok(res, {
+    session,
+    sessionId: session.id,
+    status: session.status,
+    tellerResponse: session.tellerResponse,
+    role,
+    isClient: role === "client",
+  });
+});
 
 /** GET /api/fortune-tellers/session/:sessionId — oturum durumu (danışan poll) */
 socialRouter.get(

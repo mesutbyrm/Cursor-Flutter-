@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { listCoBroadcastInvites } from "../lib/liveStreamExtrasStore";
+import { listCoBroadcastInvites, listActiveFortuneSessionsForUser } from "../lib/liveStreamExtrasStore";
 import { requireAuth } from "../middleware/requireAuth";
 import {
   getActivity,
@@ -25,6 +25,12 @@ userFlutterApiRouter.get("/broadcast-history", requireAuth, getBroadcastHistory)
 userFlutterApiRouter.get("/co-broadcast-invites", requireAuth, (req, res) => {
   const invites = listCoBroadcastInvites(req.userId!);
   return res.status(200).json({ invites, items: invites });
+});
+
+/** GET /api/user/active-sessions — aktif canlı fal oturumları */
+userFlutterApiRouter.get("/active-sessions", requireAuth, (req, res) => {
+  const sessions = listActiveFortuneSessionsForUser(req.userId!);
+  return res.status(200).json({ sessions, items: sessions });
 });
 userFlutterApiRouter.get("/activity", requireAuth, getActivity);
 userFlutterApiRouter.patch("/activity", requireAuth, patchActivityMarkAllRead);
