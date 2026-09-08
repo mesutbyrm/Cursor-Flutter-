@@ -128,6 +128,26 @@ void main() {
       expect(n.amount, 299);
       expect(n.label(const GiftDisplaySettings()), contains('Admin'));
       expect(n.label(const GiftDisplaySettings()), contains('ilhamperisi'));
+      expect(
+        n.label(const GiftDisplaySettings(), jetonLabel: 'Altın'),
+        '🎁 Admin → 🌸 Pembe çiçek (299 Altın) → ilhamperisi',
+      );
+    });
+
+    test('label recomposes with branded jeton at display time', () {
+      final n = GlobalGiftNotification.fromFeedItem(
+        const GiftFeedItem(
+          id: 'feed-branded',
+          senderName: 'Ali',
+          receiverName: 'Ayşe',
+          giftName: 'Gül',
+          amount: 50,
+        ),
+      );
+      expect(
+        n.label(const GiftDisplaySettings(), jetonLabel: 'Coin'),
+        '🎁 Ali → Gül (50 Coin) → Ayşe',
+      );
     });
 
     test('id gate seeds first poll', () {
