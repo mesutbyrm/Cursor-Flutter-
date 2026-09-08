@@ -208,6 +208,15 @@ String economyInsufficientJetonMessage(
   return 'Yetersiz $label. Gerekli: $required';
 }
 
+String economyInsufficientJetonMessageRead(
+  Ref ref, {
+  required int required,
+  Locale? locale,
+}) {
+  final label = economyCurrencyLabelRead(ref, key: 'jeton', locale: locale);
+  return 'Yetersiz $label. Gerekli: $required';
+}
+
 /// Sesli oda duyuru — yetersiz bakiye.
 String economyInsufficientJetonForDuyuruMessage(
   WidgetRef ref, {
@@ -218,6 +227,15 @@ String economyInsufficientJetonForDuyuruMessage(
   return 'Yetersiz $label. Duyuru için $cost $label gerekir.';
 }
 
+String economyInsufficientJetonForDuyuruMessageRead(
+  Ref ref, {
+  required int cost,
+  Locale? locale,
+}) {
+  final label = economyCurrencyLabelRead(ref, key: 'jeton', locale: locale);
+  return 'Yetersiz $label. Duyuru için $cost $label gerekir.';
+}
+
 /// Müzik / şarkı isteği — minimum bakiye.
 String economyMinimumJetonForMusicRequestMessage(
   WidgetRef ref, {
@@ -225,6 +243,15 @@ String economyMinimumJetonForMusicRequestMessage(
   Locale? locale,
 }) {
   final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
+  return 'Şarkı isteği için en az $requiredCost $label gerekir.';
+}
+
+String economyMinimumJetonForMusicRequestMessageRead(
+  Ref ref, {
+  required int requiredCost,
+  Locale? locale,
+}) {
+  final label = economyCurrencyLabelRead(ref, key: 'jeton', locale: locale);
   return 'Şarkı isteği için en az $requiredCost $label gerekir.';
 }
 

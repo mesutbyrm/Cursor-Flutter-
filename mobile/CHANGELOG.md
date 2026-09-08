@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.374+412 (2026-09-08) — economy CI düzeltmesi (2)
+
+- **Import:** profile_providers, economy_wallet_adapter data yolu, derin widget package import
+- **Tip:** WidgetRef (UI) + `economyCurrencyLabelRead` (Notifier); MembershipStoreKind import
+
 ## 1.0.373+411 (2026-09-08) — ZIP economy v2 CI düzeltmesi
 
 - **Derleme:** `core/economy/` import yolları, `Ref` tipi (Notifier içi etiketler), `MembershipStoreTeaserBanner` const kaldırma

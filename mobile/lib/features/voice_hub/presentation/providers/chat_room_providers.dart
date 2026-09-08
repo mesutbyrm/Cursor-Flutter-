@@ -2145,7 +2145,7 @@ class VoiceRoomLiveController
         final cost = withVideo
             ? VoiceMusicAccess.videoRequestCost(state.dj)
             : VoiceMusicAccess.audioRequestCost(state.dj);
-        return economyInsufficientJetonMessage(ref, required: cost);
+        return economyInsufficientJetonMessageRead(ref, required: cost);
       }
     }
 
