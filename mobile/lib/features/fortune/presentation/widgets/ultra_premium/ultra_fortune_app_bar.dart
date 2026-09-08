@@ -9,6 +9,7 @@ import '../../../../inbox/presentation/providers/inbox_unread_providers.dart';
 import '../../navigation/fortune_card_navigation.dart';
 import 'ultra_fortune_liquid_surface.dart';
 import 'ultra_fortune_tokens.dart';
+import 'ultra_fortune_wallet_chips.dart';
 
 /// Ultra premium header — Liquid Glass butonlar, altın başlık.
 class UltraFortuneAppBar extends StatelessWidget {
@@ -73,6 +74,8 @@ class UltraFortuneAppBar extends StatelessWidget {
             ),
           ),
           const _FortuneAppBarBadgesGate(),
+          const SizedBox(width: 4),
+          const UltraFortuneWalletChips(),
         ],
       ),
     );

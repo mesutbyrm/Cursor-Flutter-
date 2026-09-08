@@ -15,6 +15,7 @@ import '../../domain/entities/fortune_type_entity.dart';
 import '../../domain/repositories/fortune_repository.dart';
 import '../providers/fortune_api_providers.dart';
 import '../providers/fortune_access_providers.dart';
+import '../providers/fortune_hub_providers.dart';
 import '../providers/fortune_birth_profile_provider.dart';
 import '../widgets/fortune_image_capture_panel.dart';
 import '../widgets/premium_ai/premium_fortune_open_button.dart';
@@ -317,6 +318,7 @@ class FortuneReadingCoordinator {
           finalResult = finalResult.copyWith(recordId: saved.id);
         }
         ref.invalidate(fortuneHistoryProvider);
+        unawaited(_saveLastFortune(ref, type));
       } catch (_) {
         // Yerel sonuç yine gösterilir.
       }
@@ -338,6 +340,17 @@ class FortuneReadingCoordinator {
       context.push('/fortune/${type.slug}/result', extra: finalResult);
     }
     return finalResult;
+  }
+
+  static Future<void> _saveLastFortune(
+    WidgetRef ref,
+    FortuneTypeEntity type,
+  ) async {
+    try {
+      final store = await ref.read(fortuneHubPreferencesStoreProvider.future);
+      await store.saveLastFortune(slug: type.slug, title: type.title);
+      ref.invalidate(fortuneHubPreferencesStoreProvider);
+    } catch (_) {}
   }
 
   static Future<DateTime?> _resolveBirthDate(

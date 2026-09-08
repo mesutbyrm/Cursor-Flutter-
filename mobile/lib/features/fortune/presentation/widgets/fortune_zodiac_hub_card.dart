@@ -9,6 +9,7 @@ import '../../domain/fortune_zodiac.dart';
 import '../../data/fortune_birth_profile_store.dart';
 import '../../data/fortune_type_images.dart';
 import '../providers/fortune_birth_profile_provider.dart';
+import '../providers/fortune_hub_providers.dart';
 import '../widgets/premium_2026/premium_section_header.dart';
 import '../widgets/fortune_type_cover_image.dart';
 import '../widgets/premium_2026/fortune_premium_card.dart';
@@ -56,6 +57,10 @@ class FortuneZodiacHubCard extends ConsumerWidget {
               return _ZodiacCard(
                 zodiac: zodiac,
                 birthSummary: formatFortuneBirthSummary(profile),
+                horoscopePreview: ref
+                    .watch(fortuneDailyInsightsProvider)
+                    .valueOrNull
+                    ?.horoscopeText,
                 onReadFortune: () => context.push('/fortune/yildiz-haritasi'),
                 onEditBirth: () => showFortuneBirthProfileSheet(
                   context,
@@ -163,12 +168,14 @@ class _ZodiacCard extends StatelessWidget {
     required this.birthSummary,
     required this.onReadFortune,
     required this.onEditBirth,
+    this.horoscopePreview,
   });
 
   final FortuneZodiac zodiac;
   final String birthSummary;
   final VoidCallback onReadFortune;
   final VoidCallback onEditBirth;
+  final String? horoscopePreview;
 
   @override
   Widget build(BuildContext context) {
@@ -251,6 +258,20 @@ class _ZodiacCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                  if (horoscopePreview != null &&
+                      horoscopePreview!.trim().isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      horoscopePreview!.trim(),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.82),
+                        fontSize: 12,
+                        height: 1.45,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 14),
                   FilledButton.icon(
                     onPressed: onReadFortune,

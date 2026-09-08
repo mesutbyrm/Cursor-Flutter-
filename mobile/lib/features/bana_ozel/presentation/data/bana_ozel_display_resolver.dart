@@ -60,6 +60,8 @@ abstract final class BanaOzelDisplayResolver {
     return CanlifalImageUrls.resolve(raw);
   }
 
+  static String fortuneSlugFor(BanaOzelItemEntity item) => coverSlugFor(item);
+
   static String? subtitleFor(BanaOzelItemEntity item) {
     final desc = item.descTr?.trim();
     if (desc != null && desc.isNotEmpty) return desc;

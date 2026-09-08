@@ -1,54 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../data/fortune_catalog.dart';
+import '../../providers/fortune_hub_providers.dart';
 import '../data/fortune_type_images.dart';
 import '../premium_2026/premium_section_header.dart';
 import 'ultra_fortune_cover_backdrop.dart';
 import 'ultra_fortune_liquid_surface.dart';
 import 'ultra_fortune_tokens.dart';
 
-/// GÜNLÜK ENERJİN — yatay swipe kristal cam kartlar.
-class UltraFortuneDailyEnergy extends StatelessWidget {
+/// GÜNLÜK ENERJİN — API burç + türetilmiş enerji kartları.
+class UltraFortuneDailyEnergy extends ConsumerWidget {
   const UltraFortuneDailyEnergy({super.key});
 
-  static const _cards = [
-    _EnergyItem(
-      label: 'Enerji',
-      value: 'Yüksek',
-      icon: Icons.bolt_rounded,
-      color: Color(0xFFFBBF24),
-      coverSlug: 'gunluk-fal',
-    ),
-    _EnergyItem(
-      label: 'Şanslı Renk',
-      value: 'Mor',
-      icon: Icons.diamond_rounded,
-      color: UltraFortuneTokens.softLilac,
-      coverSlug: 'aura-analizi',
-    ),
-    _EnergyItem(
-      label: 'Şanslı Sayı',
-      value: '7',
-      icon: Icons.eco_rounded,
-      color: Color(0xFF4ADE80),
-      coverSlug: 'numeroloji',
-    ),
-    _EnergyItem(
-      label: 'Ay Evresi',
-      value: 'Şişkin Ay',
-      icon: Icons.nightlight_round,
-      color: UltraFortuneTokens.metallicGold,
-      coverSlug: 'yildiz-haritasi',
-    ),
-    _EnergyItem(
-      label: 'Burç Mesajı',
-      value: 'Bugün Işıldıyorsun',
-      icon: Icons.star_rounded,
-      color: UltraFortuneTokens.electricPurple,
-      coverSlug: 'yildiz-haritasi',
-    ),
-  ];
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final insights = ref.watch(fortuneDailyInsightsProvider);
+
+    return insights.when(
+      loading: () => const _DailyEnergyBody(
+        items: _EnergyItem.fallback(),
+      ),
+      error: (_, _) => const _DailyEnergyBody(
+        items: _EnergyItem.fallback(),
+      ),
+      data: (data) => _DailyEnergyBody(
+        items: _EnergyItem.fromInsights(data),
+      ),
+    );
+  }
+}
+
+class _DailyEnergyBody extends StatelessWidget {
+  const _DailyEnergyBody({required this.items});
+
+  final List<_EnergyItem> items;
 
   @override
   Widget build(BuildContext context) {
@@ -93,19 +80,13 @@ class UltraFortuneDailyEnergy extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
-            itemCount: _cards.length,
+            itemCount: items.length,
             separatorBuilder: (_, _) => const SizedBox(width: 12),
             itemBuilder: (context, index) {
-              final card = _cards[index];
+              final card = items[index];
               return _EnergyCrystalCard(
                 item: card,
-                onTap: () {
-                  final route = switch (index) {
-                    4 => '/fortune/yildiz-haritasi',
-                    _ => '/fortune/${FortuneCatalog.dailyFortune.slug}',
-                  };
-                  context.push(route);
-                },
+                onTap: () => context.push(card.route),
               );
             },
           ),
@@ -122,6 +103,7 @@ class _EnergyItem {
     required this.icon,
     required this.color,
     required this.coverSlug,
+    required this.route,
   });
 
   final String label;
@@ -129,6 +111,113 @@ class _EnergyItem {
   final IconData icon;
   final Color color;
   final String coverSlug;
+  final String route;
+
+  static List<_EnergyItem> fallback() => [
+        (
+          label: 'Enerji',
+          value: 'Yüksek',
+          icon: Icons.bolt_rounded,
+          color: Color(0xFFFBBF24),
+          coverSlug: 'gunluk-fal',
+          route: '/fortune/gunluk-fal',
+        ),
+        (
+          label: 'Şanslı Renk',
+          value: 'Mor',
+          icon: Icons.diamond_rounded,
+          color: UltraFortuneTokens.softLilac,
+          coverSlug: 'aura-analizi',
+          route: '/fortune/gunluk-fal',
+        ),
+        (
+          label: 'Şanslı Sayı',
+          value: '7',
+          icon: Icons.eco_rounded,
+          color: Color(0xFF4ADE80),
+          coverSlug: 'numeroloji',
+          route: '/fortune/gunluk-fal',
+        ),
+        (
+          label: 'Ay Evresi',
+          value: 'Şişkin Ay',
+          icon: Icons.nightlight_round,
+          color: UltraFortuneTokens.metallicGold,
+          coverSlug: 'yildiz-haritasi',
+          route: '/fortune/yildiz-haritasi',
+        ),
+        (
+          label: 'Burç Mesajı',
+          value: 'Bugün iç sesine kulak ver',
+          icon: Icons.star_rounded,
+          color: UltraFortuneTokens.electricPurple,
+          coverSlug: 'yildiz-haritasi',
+          route: '/fortune/yildiz-haritasi',
+        ),
+      ].map(_fromRecord).toList();
+
+  static List<_EnergyItem> fromInsights(FortuneDailyInsights data) => [
+        (
+          label: 'Enerji',
+          value: data.energyLabel,
+          icon: Icons.bolt_rounded,
+          color: const Color(0xFFFBBF24),
+          coverSlug: 'gunluk-fal',
+          route: '/fortune/gunluk-fal',
+        ),
+        (
+          label: 'Şanslı Renk',
+          value: data.luckyColor,
+          icon: Icons.diamond_rounded,
+          color: UltraFortuneTokens.softLilac,
+          coverSlug: 'aura-analizi',
+          route: '/fortune/gunluk-fal',
+        ),
+        (
+          label: 'Şanslı Sayı',
+          value: data.luckyNumber,
+          icon: Icons.eco_rounded,
+          color: const Color(0xFF4ADE80),
+          coverSlug: 'numeroloji',
+          route: '/fortune/gunluk-fal',
+        ),
+        (
+          label: 'Ay Evresi',
+          value: data.moonPhase,
+          icon: Icons.nightlight_round,
+          color: UltraFortuneTokens.metallicGold,
+          coverSlug: 'yildiz-haritasi',
+          route: '/fortune/yildiz-haritasi',
+        ),
+        (
+          label: 'Burç Mesajı',
+          value: data.burcMessage,
+          icon: Icons.star_rounded,
+          color: UltraFortuneTokens.electricPurple,
+          coverSlug: 'yildiz-haritasi',
+          route: '/fortune/yildiz-haritasi',
+        ),
+      ].map(_fromRecord).toList();
+
+  static _EnergyItem _fromRecord(
+    ({
+      String label,
+      String value,
+      IconData icon,
+      Color color,
+      String coverSlug,
+      String route,
+    }) r,
+  ) {
+    return _EnergyItem(
+      label: r.label,
+      value: r.value,
+      icon: r.icon,
+      color: r.color,
+      coverSlug: r.coverSlug,
+      route: r.route,
+    );
+  }
 }
 
 class _EnergyCrystalCard extends StatelessWidget {

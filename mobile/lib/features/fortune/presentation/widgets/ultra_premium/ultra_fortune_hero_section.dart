@@ -1,31 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../data/fortune_catalog.dart';
 import '../../data/fortune_type_images.dart';
+import '../../providers/fortune_hub_providers.dart';
 import 'ultra_fortune_cover_backdrop.dart';
 import 'ultra_fortune_crystal_ball.dart';
 import 'ultra_fortune_liquid_surface.dart';
 import 'ultra_fortune_ripple_button.dart';
 import 'ultra_fortune_tokens.dart';
 
-/// Hero — responsive kristal küre, taşma yok, SafeArea uyumlu.
-class UltraFortuneHeroSection extends StatelessWidget {
+/// Hero — responsive kristal küre, API enerji/ay evresi, dinamik sosyal kanıt.
+class UltraFortuneHeroSection extends ConsumerWidget {
   const UltraFortuneHeroSection({super.key});
 
   static double _ballSize(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     final w = size.width;
     final h = size.height;
-    // Küçük ekranlarda küreyi küçült; üst bölümün ~%28'ini geçmesin.
     final byWidth = w * 0.34;
     final byHeight = h * 0.22;
     return byWidth.clamp(120.0, 200.0).clamp(0, byHeight);
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final insights = ref.watch(fortuneDailyInsightsProvider);
+    final energy = insights.valueOrNull?.energyLabel ?? 'Yüksek';
+    final moon = insights.valueOrNull?.moonPhase ?? 'Şişkin Ay';
     final ballSize = _ballSize(context);
     final ballBoxHeight = ballSize * 1.02;
 
@@ -65,7 +69,7 @@ class UltraFortuneHeroSection extends StatelessWidget {
               Expanded(
                 child: _SideInfoCard(
                   label: 'Enerjin',
-                  value: 'Yüksek',
+                  value: energy,
                   icon: Icons.diamond_rounded,
                   iconColor: UltraFortuneTokens.softLilac,
                   coverSlug: 'gunluk-fal',
@@ -78,7 +82,7 @@ class UltraFortuneHeroSection extends StatelessWidget {
               Expanded(
                 child: _SideInfoCard(
                   label: 'Ay Evresi',
-                  value: 'Şişkin Ay',
+                  value: moon,
                   icon: Icons.nightlight_round,
                   iconColor: UltraFortuneTokens.metallicGold,
                   coverSlug: 'yildiz-haritasi',
@@ -88,7 +92,7 @@ class UltraFortuneHeroSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          _SocialProofStrip(),
+          const _SocialProofStrip(),
           const SizedBox(height: 8),
         ],
       ),
@@ -215,6 +219,8 @@ class _SideInfoCard extends StatelessWidget {
                         ),
                         Text(
                           value,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w900,
@@ -234,9 +240,13 @@ class _SideInfoCard extends StatelessWidget {
   }
 }
 
-class _SocialProofStrip extends StatelessWidget {
+class _SocialProofStrip extends ConsumerWidget {
+  const _SocialProofStrip();
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final message = ref.watch(fortuneHubSocialProofProvider);
+
     return UltraFortuneLiquidSurface(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       borderRadius: BorderRadius.circular(20),
@@ -276,7 +286,7 @@ class _SocialProofStrip extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              '23.8K kişi bugün falına baktı',
+              message,
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.82),
                 fontSize: 11,

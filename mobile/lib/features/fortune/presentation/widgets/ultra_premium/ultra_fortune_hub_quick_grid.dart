@@ -1,20 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../../core/performance/list_perf.dart';
 import '../../data/fortune_catalog.dart';
+import '../../providers/fortune_hub_providers.dart';
 import '../premium_2026/fortune_premium_card.dart';
 import '../premium_2026/premium_section_header.dart';
 import '../../navigation/fortune_card_navigation.dart';
 import 'ultra_fortune_tokens.dart';
 
 /// Popüler 8 fal türü — katalog `hubFortuneEntries` 2×4 grid.
-class UltraFortuneHubQuickGrid extends StatelessWidget {
+class UltraFortuneHubQuickGrid extends ConsumerWidget {
   const UltraFortuneHubQuickGrid({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final entries = FortuneCatalog.hubFortuneTypes;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final query = ref.watch(fortuneHubSearchQueryProvider);
+    final entries = FortuneCatalog.hubFortuneTypes.where((entry) {
+      return fortuneHubMatchesSearch(
+        query: query,
+        title: entry.type.title,
+        slug: entry.type.slug,
+        subtitle: entry.subtitle,
+      );
+    }).toList();
+
+    if (entries.isEmpty) return const SizedBox.shrink();
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),

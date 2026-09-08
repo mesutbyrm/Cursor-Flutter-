@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/performance/list_perf.dart';
 import '../../navigation/fortune_card_navigation.dart';
 import '../../providers/fortune_types_display_provider.dart';
+import '../../providers/fortune_hub_providers.dart';
 import '../premium_2026/fortune_premium_card.dart';
 import '../premium_2026/premium_section_header.dart';
 import 'ultra_fortune_liquid_surface.dart';
@@ -41,6 +42,7 @@ class _UltraFortuneTypesSectionState extends ConsumerState<UltraFortuneTypesSect
   @override
   Widget build(BuildContext context) {
     final entries = ref.watch(fortuneTypesDisplayProvider);
+    final query = ref.watch(fortuneHubSearchQueryProvider);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
@@ -110,16 +112,35 @@ class _UltraFortuneTypesSectionState extends ConsumerState<UltraFortuneTypesSect
               ),
             ),
             data: (list) {
-              if (list.isEmpty) {
+              final filtered = list
+                  .where(
+                    (e) => fortuneHubMatchesSearch(
+                      query: query,
+                      title: e.title,
+                      slug: e.slug,
+                      subtitle: e.subtitle,
+                    ),
+                  )
+                  .toList();
+              if (filtered.isEmpty) {
                 return UltraFortuneStatePanel(
-                  icon: Icons.auto_awesome_rounded,
-                  message: 'Henüz fal türü bulunamadı.',
-                  actionLabel: 'Yenile',
-                  onAction: () => invalidateFortuneTypesDisplay(ref),
+                  icon: Icons.search_off_rounded,
+                  message: query.trim().isEmpty
+                      ? 'Henüz fal türü bulunamadı.'
+                      : '“${query.trim()}” için sonuç yok.',
+                  actionLabel: query.trim().isEmpty ? 'Yenile' : 'Temizle',
+                  onAction: () {
+                    if (query.trim().isEmpty) {
+                      invalidateFortuneTypesDisplay(ref);
+                    } else {
+                      ref.read(fortuneHubSearchQueryProvider.notifier).state =
+                          '';
+                    }
+                  },
                   height: 120,
                 );
               }
-              final preview = list.take(10).toList();
+              final preview = filtered.take(10).toList();
               return _buildGrid(
                 context,
                 itemCount: preview.length,

@@ -400,7 +400,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 path: '/fortune',
                 pageBuilder: (context, state) => AppPageTransitions.none(
                   key: state.pageKey,
-                  child: const FortuneTarotHubPage(),
+                  child: FortuneTarotHubPage(
+                    initialTypeSlug: state.uri.queryParameters['type'],
+                  ),
                 ),
                 routes: [
                   GoRoute(

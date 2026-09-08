@@ -11,10 +11,15 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../fortune/data/services/rewarded_ad_service.dart';
 import '../../../fortune/presentation/widgets/ultra_premium/ultra_fortune_cosmic_background.dart';
 import '../../../fortune/presentation/widgets/ultra_premium/ultra_fortune_cover_backdrop.dart';
+import '../../../fortune/presentation/widgets/ultra_premium/ultra_fortune_liquid_surface.dart';
 import '../../../fortune/presentation/widgets/ultra_premium/ultra_fortune_state_panel.dart';
 import '../../../fortune/presentation/widgets/ultra_premium/ultra_fortune_tokens.dart';
 import '../../../fortune/presentation/data/fortune_type_images.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../data/bana_ozel_preferences_store.dart';
 import '../../domain/entities/bana_ozel_entities.dart';
+import '../data/bana_ozel_display_resolver.dart';
+import '../providers/bana_ozel_preferences_providers.dart';
 import '../providers/bana_ozel_providers.dart';
 import '../widgets/bana_ozel_premium_card.dart';
 import '../../../shorts/presentation/widgets/shorts_hub_strip.dart';
@@ -190,6 +195,11 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
         _pendingSlug = null;
         _pendingSlugAttempted = false;
       });
+      try {
+        final store = await ref.read(banaOzelPreferencesStoreProvider.future);
+        await store.recordOpen(slug: item.slug, title: item.nameTr);
+        ref.invalidate(banaOzelPreferencesStoreProvider);
+      } catch (_) {}
       await context.push('/fortune/bana-ozel/result', extra: result);
     } on BanaOzelInsufficientPayment catch (e) {
       if (!mounted) return;
@@ -237,6 +247,12 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
     });
     final catalog = ref.watch(banaOzelCatalogProvider);
     final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+    final searchQuery = ref.watch(banaOzelSearchQueryProvider);
+    final sortMode = ref.watch(banaOzelSortModeProvider);
+    final prefs = ref.watch(banaOzelPreferencesStoreProvider).valueOrNull;
+    final favorites = prefs?.favoriteSlugs ?? const <String>{};
+    final openHistory = prefs?.openHistory ?? const <BanaOzelOpenHistoryEntry>[];
+    final dailyTasks = ref.watch(userDailyTasksProvider);
 
     return Scaffold(
       backgroundColor: UltraFortuneTokens.deepNight,
@@ -320,9 +336,18 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     _tryOpenPendingSlug(data);
                   });
-                  final filtered = data.itemsForCategory(
-                    _category == 'all' ? null : _category,
+                  final filtered = filterAndSortBanaOzelItems(
+                    items: data.itemsForCategory(
+                      _category == 'all' ? null : _category,
+                    ),
+                    searchQuery: searchQuery,
+                    sortMode: sortMode,
+                    favoriteSlugs: favorites,
                   );
+                  final freeItems =
+                      data.items.where((i) => i.jetonCost <= 0).take(4).toList();
+                  final showAdBanner = data.parsedTodayTasks
+                      .contains(BanaOzelTodayTask.watchAd);
                   return Expanded(
                     child: RefreshIndicator(
                       onRefresh: () =>
@@ -330,6 +355,61 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
                       child: CustomScrollView(
                         slivers: [
                           SliverToBoxAdapter(child: _CatalogHeroBanner()),
+                          if (showAdBanner)
+                            SliverToBoxAdapter(
+                              child: _WatchAdPromoBanner(
+                                onTap: () => context.push('/profile/growth'),
+                              ),
+                            ),
+                          if (freeItems.isNotEmpty)
+                            SliverToBoxAdapter(
+                              child: _FreeContentBand(
+                                items: freeItems,
+                                onOpen: (item) => _openItem(item, data),
+                              ),
+                            ),
+                          if (openHistory.isNotEmpty)
+                            SliverToBoxAdapter(
+                              child: _OpenHistoryStrip(
+                                entries: openHistory.take(5).toList(),
+                                onTap: (slug) {
+                                  final item = data.itemBySlug(slug);
+                                  if (item != null) _openItem(item, data);
+                                },
+                              ),
+                            ),
+                          SliverToBoxAdapter(
+                            child: _BanaOzelSearchSortBar(
+                              sortMode: sortMode,
+                              onSortChanged: (mode) => ref
+                                  .read(banaOzelSortModeProvider.notifier)
+                                  .state = mode,
+                            ),
+                          ),
+                          dailyTasks.when(
+                            loading: () => const SliverToBoxAdapter(
+                              child: SizedBox.shrink(),
+                            ),
+                            error: (_, _) => const SliverToBoxAdapter(
+                              child: SizedBox.shrink(),
+                            ),
+                            data: (tasks) {
+                              if (tasks.isEmpty) {
+                                return const SliverToBoxAdapter(
+                                  child: SizedBox.shrink(),
+                                );
+                              }
+                              final done =
+                                  tasks.where((t) => t.completed).length;
+                              return SliverToBoxAdapter(
+                                child: _DailyTaskProgressBar(
+                                  done: done,
+                                  total: tasks.length,
+                                  onTap: () => context.push('/profile/growth'),
+                                ),
+                              );
+                            },
+                          ),
                           const SliverToBoxAdapter(
                             child: ShortsHubStrip(
                               title: 'Kısa Videolar',
@@ -358,7 +438,22 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
                                   ],
                                   if (data.todayTasks.isNotEmpty) ...[
                                     const SizedBox(height: 10),
-                                    _TodayTasksStrip(tasks: data.parsedTodayTasks),
+                                    _TodayTasksStrip(
+                                      tasks: data.parsedTodayTasks,
+                                      onTaskTap: (task) {
+                                        final route = task.routePath;
+                                        if (route == null) return;
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              '${task.labelTr} görevine yönlendiriliyorsun',
+                                            ),
+                                          ),
+                                        );
+                                        context.push(route);
+                                      },
+                                    ),
                                   ],
                                   const SizedBox(height: 12),
                                   _CategoryChips(
@@ -397,6 +492,20 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
                                             width: w,
                                             height: h,
                                             affordable: data.canAffordItem(item),
+                                            isFavorite:
+                                                favorites.contains(item.slug),
+                                            onFavoriteToggle: () async {
+                                              final store = await ref.read(
+                                                banaOzelPreferencesStoreProvider
+                                                    .future,
+                                              );
+                                              await store.toggleFavorite(
+                                                item.slug,
+                                              );
+                                              ref.invalidate(
+                                                banaOzelPreferencesStoreProvider,
+                                              );
+                                            },
                                             onTap: opening
                                                 ? () {}
                                                 : () => _openItem(item, data),
@@ -434,6 +543,32 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
                               ),
                             ),
                           ),
+                          if (filtered.isEmpty)
+                            SliverToBoxAdapter(
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: UltraFortuneStatePanel(
+                                  icon: Icons.search_off_rounded,
+                                  message: searchQuery.trim().isEmpty
+                                      ? 'Bu kategoride içerik yok.'
+                                      : '“${searchQuery.trim()}” için sonuç yok.',
+                                  actionLabel: searchQuery.trim().isEmpty
+                                      ? 'Tümü'
+                                      : 'Temizle',
+                                  onAction: () {
+                                    if (searchQuery.trim().isEmpty) {
+                                      setState(() => _category = 'all');
+                                    } else {
+                                      ref
+                                          .read(
+                                            banaOzelSearchQueryProvider.notifier,
+                                          )
+                                          .state = '';
+                                    }
+                                  },
+                                ),
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -545,6 +680,11 @@ class _StreakSummary extends StatelessWidget {
     final parts = <String>[];
     if (streak.currentStreak > 0) {
       parts.add('🔥 ${streak.currentStreak} günlük seri');
+      if (streak.currentStreak >= 7) {
+        parts.add('haftalık rozet');
+      } else if (streak.currentStreak >= 3) {
+        parts.add('3+ gün bonusu');
+      }
     }
     if (streak.totalFortunes > 0) {
       parts.add('${streak.totalFortunes} fal');
@@ -564,9 +704,13 @@ class _StreakSummary extends StatelessWidget {
 }
 
 class _TodayTasksStrip extends StatelessWidget {
-  const _TodayTasksStrip({required this.tasks});
+  const _TodayTasksStrip({
+    required this.tasks,
+    this.onTaskTap,
+  });
 
   final List<BanaOzelTodayTask> tasks;
+  final ValueChanged<BanaOzelTodayTask>? onTaskTap;
 
   @override
   Widget build(BuildContext context) {
@@ -601,7 +745,7 @@ class _TodayTasksStrip extends StatelessWidget {
                 ),
                 onPressed: task.routePath == null
                     ? null
-                    : () => context.push(task.routePath!),
+                    : () => onTaskTap?.call(task),
               ),
           ],
         ),
@@ -647,6 +791,267 @@ class _CategoryChips extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _BanaOzelSearchSortBar extends ConsumerWidget {
+  const _BanaOzelSearchSortBar({
+    required this.sortMode,
+    required this.onSortChanged,
+  });
+
+  final BanaOzelSortMode sortMode;
+  final ValueChanged<BanaOzelSortMode> onSortChanged;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final query = ref.watch(banaOzelSearchQueryProvider);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Column(
+        children: [
+          SearchBar(
+            hintText: 'İçerik ara…',
+            leading: const Icon(Icons.search_rounded, color: Colors.white70),
+            trailing: query.isNotEmpty
+                ? [
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 20),
+                      onPressed: () => ref
+                          .read(banaOzelSearchQueryProvider.notifier)
+                          .state = '',
+                    ),
+                  ]
+                : null,
+            onChanged: (v) =>
+                ref.read(banaOzelSearchQueryProvider.notifier).state = v,
+            backgroundColor: Colors.white.withValues(alpha: 0.06),
+            elevation: WidgetStateProperty.all(0),
+            textStyle: WidgetStateProperty.all(
+              const TextStyle(color: Colors.white),
+            ),
+            hintStyle: WidgetStateProperty.all(
+              TextStyle(color: Colors.white.withValues(alpha: 0.45)),
+            ),
+          ),
+          const SizedBox(height: 8),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (final mode in BanaOzelSortMode.values)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: FilterChip(
+                      selected: sortMode == mode,
+                      label: Text(_sortLabel(mode)),
+                      onSelected: (_) => onSortChanged(mode),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String _sortLabel(BanaOzelSortMode mode) => switch (mode) {
+        BanaOzelSortMode.catalog => 'Katalog',
+        BanaOzelSortMode.name => 'İsim',
+        BanaOzelSortMode.priceLow => 'Ucuz',
+        BanaOzelSortMode.priceHigh => 'Pahalı',
+      };
+}
+
+class _WatchAdPromoBanner extends StatelessWidget {
+  const _WatchAdPromoBanner({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: UltraFortuneLiquidSurface(
+        onTap: onTap,
+        goldAccent: true,
+        borderRadius: BorderRadius.circular(16),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            const Icon(Icons.play_circle_fill_rounded, color: Color(0xFFFFD54F)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Reklam izle — jeton kazan ve içerik aç',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded, color: Colors.white54),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FreeContentBand extends StatelessWidget {
+  const _FreeContentBand({
+    required this.items,
+    required this.onOpen,
+  });
+
+  final List<BanaOzelItemEntity> items;
+  final ValueChanged<BanaOzelItemEntity> onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Ücretsiz içerikler',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.85),
+              fontWeight: FontWeight.w800,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 40,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: items.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemBuilder: (_, i) {
+                final item = items[i];
+                return ActionChip(
+                  label: Text('${item.icon} ${item.nameTr}'),
+                  onPressed: () => onOpen(item),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OpenHistoryStrip extends StatelessWidget {
+  const _OpenHistoryStrip({
+    required this.entries,
+    required this.onTap,
+  });
+
+  final List<BanaOzelOpenHistoryEntry> entries;
+  final ValueChanged<String> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Son açılanlar',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.75),
+              fontWeight: FontWeight.w800,
+              fontSize: 11,
+            ),
+          ),
+          const SizedBox(height: 6),
+          SizedBox(
+            height: 36,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: entries.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemBuilder: (_, i) {
+                final e = entries[i];
+                return ActionChip(
+                  label: Text(e.title, style: const TextStyle(fontSize: 11)),
+                  onPressed: () => onTap(e.slug),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DailyTaskProgressBar extends StatelessWidget {
+  const _DailyTaskProgressBar({
+    required this.done,
+    required this.total,
+    required this.onTap,
+  });
+
+  final int done;
+  final int total;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = total == 0 ? 0.0 : done / total;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+      child: UltraFortuneLiquidSurface(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Günlük görev ilerlemesi',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+                Text(
+                  '$done / $total',
+                  style: const TextStyle(
+                    color: Color(0xFFFFD54F),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 5,
+                backgroundColor: Colors.white.withValues(alpha: 0.12),
+                color: const Color(0xFFFFD54F),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

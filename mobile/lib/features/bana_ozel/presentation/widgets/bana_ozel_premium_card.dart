@@ -40,6 +40,8 @@ class BanaOzelPremiumCard extends StatefulWidget {
     required this.item,
     required this.onTap,
     this.affordable = true,
+    this.isFavorite = false,
+    this.onFavoriteToggle,
     this.width = cardWidth,
     this.height = cardHeight,
   });
@@ -58,6 +60,8 @@ class BanaOzelPremiumCard extends StatefulWidget {
   final BanaOzelItemEntity item;
   final VoidCallback onTap;
   final bool affordable;
+  final bool isFavorite;
+  final VoidCallback? onFavoriteToggle;
   final double width;
   final double height;
 
@@ -141,6 +145,31 @@ class _BanaOzelPremiumCardState extends State<BanaOzelPremiumCard> {
                       child: _PriceBadge(
                         jetonCost: widget.item.jetonCost,
                         affordable: widget.affordable,
+                      ),
+                    ),
+                  if (widget.onFavoriteToggle != null)
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Material(
+                        color: Colors.black.withValues(alpha: 0.45),
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          customBorder: const CircleBorder(),
+                          onTap: widget.onFavoriteToggle,
+                          child: Padding(
+                            padding: const EdgeInsets.all(6),
+                            child: Icon(
+                              widget.isFavorite
+                                  ? Icons.bookmark_rounded
+                                  : Icons.bookmark_outline_rounded,
+                              size: 18,
+                              color: widget.isFavorite
+                                  ? HomeApprovedDesign.gold
+                                  : Colors.white70,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   Positioned(

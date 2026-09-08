@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../data/fortune_catalog.dart';
+import '../data/fortune_ready_readings_data.dart';
 import '../services/fortune_reading_coordinator.dart';
 import '../widgets/ultra_premium/fortune_ready_reading_premium_card.dart';
 import '../widgets/ultra_premium/ultra_fortune_cosmic_background.dart';
@@ -12,31 +13,7 @@ import '../widgets/ultra_premium/ultra_fortune_tokens.dart';
 class FortuneReadyReadingsPage extends ConsumerWidget {
   const FortuneReadyReadingsPage({super.key});
 
-  static const _items = [
-    (
-      title: 'Kahve Falı Hazır Yorumu',
-      slug: 'kahve-fali',
-      body:
-          'Fincanında yeni bir yol, kalabalık bir haber ve beklediğin bir görüşme görünüyor.',
-    ),
-    (
-      title: 'Tarot Hazır Yorumu',
-      slug: 'tarot',
-      body: 'Kartların değişim, karar ve yeni başlangıç temasını vurguluyor.',
-    ),
-    (
-      title: 'Yıldızname Hazır Yorumu',
-      slug: 'yildiz-haritasi',
-      body:
-          'Gökyüzü sana sabır, plan ve doğru zamanda atılacak adım mesajı veriyor.',
-    ),
-    (
-      title: 'Aşk Yorumu',
-      slug: 'ask-fali',
-      body:
-          'Kalbinde netleşmeyen bir konu yakın zamanda konuşma ile aydınlanabilir.',
-    ),
-  ];
+  static const _items = fortuneReadyReadingItems;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

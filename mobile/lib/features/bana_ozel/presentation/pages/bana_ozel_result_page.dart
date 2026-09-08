@@ -3,11 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
-import '../../../fortune/presentation/widgets/fortune_mystic_background.dart';
-import '../../../fortune/presentation/widgets/fortune_mystic_title_bar.dart';
 import '../../../fortune/presentation/widgets/fortune_type_cover_image.dart';
+import '../../../fortune/presentation/widgets/ultra_premium/ultra_fortune_cosmic_background.dart';
+import '../../../fortune/presentation/widgets/ultra_premium/ultra_fortune_liquid_surface.dart';
 import '../../../fortune/presentation/widgets/ultra_premium/ultra_fortune_tokens.dart';
 import '../../domain/entities/bana_ozel_entities.dart';
 import '../data/bana_ozel_display_resolver.dart';
@@ -32,7 +33,7 @@ class BanaOzelResultPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final serif = GoogleFonts.playfairDisplay;
-    const gold = Color(0xFFD4AF37);
+    const gold = UltraFortuneTokens.metallicGold;
     final locale = Localizations.localeOf(context);
     final jetonName = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
     final cfcName = economyCurrencyLabel(ref, key: 'cfc', locale: locale);
@@ -42,25 +43,54 @@ class BanaOzelResultPage extends ConsumerWidget {
     );
     final item = _itemFromResult();
     final coverSlug = BanaOzelDisplayResolver.coverSlugFor(item);
+    final fortuneSlug = BanaOzelDisplayResolver.fortuneSlugFor(item);
     final accent = BanaOzelDisplayResolver.accentFor(item);
+    final top = MediaQuery.paddingOf(context).top;
 
     return Scaffold(
       backgroundColor: UltraFortuneTokens.deepNight,
-      body: FortuneMysticBackground(
+      body: UltraFortuneCosmicBackground(
         child: Column(
           children: [
-            FortuneMysticTitleBar(
-              title: '${result.icon} ${result.itemName}',
-              onBack: () => context.pop(),
+            SizedBox(height: top + 4),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 16, 0),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () => context.pop(),
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                  ),
+                  Expanded(
+                    child: Text(
+                      '${result.icon} ${result.itemName}',
+                      textAlign: TextAlign.center,
+                      style: serif(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 18,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Share.share(
+                      '${result.itemName}\n\n${result.content}',
+                      subject: result.itemName,
+                    ),
+                    icon: const Icon(Icons.ios_share_rounded),
+                    tooltip: 'Paylaş',
+                  ),
+                ],
+              ),
             ),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(20),
                     child: SizedBox(
-                      height: 140,
+                      height: 148,
                       width: double.infinity,
                       child: FortuneTypeCoverImage(
                         slug: coverSlug,
@@ -96,21 +126,10 @@ class BanaOzelResultPage extends ConsumerWidget {
                     ),
                   ],
                   const SizedBox(height: 16),
-                  Container(
-                    width: double.infinity,
+                  UltraFortuneLiquidSurface(
+                    goldAccent: true,
+                    borderRadius: BorderRadius.circular(22),
                     padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: gold.withValues(alpha: 0.35)),
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.white.withValues(alpha: 0.08),
-                          Colors.white.withValues(alpha: 0.03),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                    ),
                     child: SelectableText(
                       result.content,
                       style: serif(
@@ -139,16 +158,36 @@ class BanaOzelResultPage extends ConsumerWidget {
                       ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: FilledButton(
-                          onPressed: () => context.go('/fortune/bana-ozel'),
+                        child: FilledButton.icon(
+                          onPressed: () => Share.share(
+                            '${result.itemName}\n\n${result.content}',
+                            subject: result.itemName,
+                          ),
+                          icon: const Icon(Icons.share_rounded, size: 18),
+                          label: const Text('Paylaş'),
                           style: FilledButton.styleFrom(
                             backgroundColor: gold,
-                            foregroundColor: Colors.black87,
+                            foregroundColor: const Color(0xFF1A0A32),
                           ),
-                          child: const Text('Başka içerik'),
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 10),
+                  OutlinedButton.icon(
+                    onPressed: () => context.push('/fortune/$fortuneSlug'),
+                    icon: const Icon(Icons.auto_awesome_rounded, size: 18),
+                    label: const Text('İlgili fal türüne git'),
+                  ),
+                  const SizedBox(height: 8),
+                  FilledButton(
+                    onPressed: () => context.go('/fortune/bana-ozel'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: gold,
+                      foregroundColor: const Color(0xFF1A0A32),
+                      minimumSize: const Size.fromHeight(48),
+                    ),
+                    child: const Text('Başka içerik'),
                   ),
                 ],
               ),

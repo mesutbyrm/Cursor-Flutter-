@@ -240,4 +240,37 @@ class PushNotificationService {
       payload: payload,
     );
   }
+
+  static const _dailyFortuneReminderId = 88001;
+
+  /// Günlük fal hatırlatıcısı — günde bir kez.
+  Future<void> setDailyFortuneReminderEnabled(bool enabled) async {
+    if (kIsWeb) return;
+    if (!_initialized) await init();
+    if (!enabled) {
+      await _local.cancel(_dailyFortuneReminderId);
+      return;
+    }
+    const android = AndroidNotificationDetails(
+      _channelId,
+      _channelName,
+      channelDescription: 'Günlük fal hatırlatıcısı',
+      importance: Importance.defaultImportance,
+      icon: '@mipmap/ic_launcher',
+    );
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentSound: true,
+    );
+    const details = NotificationDetails(android: android, iOS: iosDetails);
+    await _local.periodicallyShow(
+      _dailyFortuneReminderId,
+      'Günlük falın hazır ✨',
+      'Bugünün kehanetini ve enerjini keşfet.',
+      RepeatInterval.daily,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      notificationDetails: details,
+      payload: '/fortune/gunluk-fal',
+    );
+  }
 }

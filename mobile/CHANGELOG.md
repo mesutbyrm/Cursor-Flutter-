@@ -1,5 +1,19 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.411+449 (2026-09-08) — Fal hub + Bana Özel özellik paketi
+
+### Fal & Tarot
+- Gerçek günlük burç/enerji (`fortuneDailyInsightsProvider` + horoscope API)
+- Son 3 fal geçmişi şeridi, hub arama, CFC/jeton chip'leri
+- Öneri carousel, hazır yorum şeridi, günlük görev ilerleme
+- Son fal CTA, günlük hatırlatıcı bildirimi, `/fortune?type=` derin bağlantı
+- Dinamik sosyal kanıt (sahte sayı kaldırıldı), burç kartında API önizleme
+
+### Bana Özel
+- Paylaş butonu (sonuç), reklam CTA bandı, görev ilerleme çubuğu
+- Katalog arama/sıralama, ücretsiz içerik bandı, seri milestone metinleri
+- Favori sabitleme, son açılanlar geçmişi, ilgili fal türüne git
+
 ## 1.0.410+448 (2026-09-08) — Premium kart vitrin genişletme
 
 - Hazır Yorumlar: ultra premium kapak kartları + kozmik arka plan
