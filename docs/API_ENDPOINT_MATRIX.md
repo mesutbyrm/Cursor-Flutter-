@@ -1,6 +1,6 @@
 # API Endpoint Matrix
 
-> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+> **Güncel (2026-09-08):** **`1.0.391+429`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
 Date: 2026-08-08
 Source: uploaded `endpoints_index__1__8c3d.json`, `openapi__2__605a.json`, Flutter `api_endpoints.dart`.

@@ -1,7 +1,7 @@
 # Psychic P0 — hızlı başlangıç (2 telefon)
 
 
-> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+> **Güncel (2026-09-08):** **`1.0.391+429`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
 Tek manuel bloker: **Canlı falcı TRTC** — T+5 saniyede A/V donması olmamalı.
 
@@ -19,7 +19,7 @@ bash scripts/p0-go.sh          # jeton + falcı + hesaplar
 
 ## 1. Jeton (zorunlu)
 
-Probe (2026-09-07): danışan `cursor.test.*` hesabında **jeton≈98k** — P0-j kapandı.
+Probe (2026-09-08): danışan `cursor.test.*` hesabında **jeton≈93k** — P0-j kapandı.
 
 ```bash
 bash scripts/psychic-p0-prereqs.sh       # jeton + APK + giriş doğrulama

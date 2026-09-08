@@ -1,7 +1,7 @@
 # P1 — Genel platform cihaz testi (P0 sonrası)
 
 
-> **Güncel (2026-09-07):** **`1.0.371+409`** · **RELEASE READY: NO** · Önce [`PSYCHIC_P0_START.md`](PSYCHIC_P0_START.md) **PASS** · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+> **Güncel (2026-09-08):** **`1.0.391+429`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
 P0 (Psychic TRTC freeze) **PASS** olduktan sonra iki cihazla genel platform kabulü.
 

@@ -31,6 +31,8 @@ EOF
 echo "── Canlı API + falcı ──"
 bash "$ROOT/scripts/psychic-p0-prereqs.sh" 2>&1 | tail -8
 echo ""
+bash "$ROOT/scripts/print-p0-live-status.sh" 2>&1 | grep -E 'APK CI|Gate 3|jeton=' || true
+echo ""
 
 if [[ "$run_api" -eq 1 ]]; then
   echo "── API otomasyon (--api) ──"

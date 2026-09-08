@@ -1,7 +1,7 @@
-# Kalan işler — özet (2026-09-07)
+# Kalan işler — özet (2026-09-08)
 
 
-> **Sürüm:** `1.0.371+409` · **RELEASE READY: NO** · Canlı durum: `bash scripts/kalan-isler.sh`
+> **Sürüm:** `1.0.391+429` · **RELEASE READY: NO** · Canlı durum: `bash scripts/kalan-isler.sh`
 
 Agent tarafı **tamam** (kod, CI, API, falcı, P2 prep betikleri). **Cihaz + keystore + Play Console** sizde.
 

@@ -5,7 +5,7 @@
 
 Modül: `mobile/lib/features/live_psychics/`  
 Referans: `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9.6–9.7, `docs/prompts/FLUTTER_CANLI_FALCILAR_PROMPT.md`  
-**APK:** `1.0.371+409` — [Run 34146919509](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34146919509) FINAL PASS
+**APK:** `1.0.391+429` — [Run 34241450261](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34241450261) FINAL PASS
 
 ## Tamamlanan (bu oturum serisi)
 
@@ -96,7 +96,7 @@ Mevcut: `psychic_trtc_freeze_test`, `psychic_push_payload_test`, `psychic_model_
 
 ## Kalan — manuel / E2E (cihaz — genel akış)
 
-APK: `1.0.371+409` — iki cihaz veya iki hesap (danışan + falcı). İndir: [apk-latest](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk)
+APK: `1.0.391+429` — iki cihaz veya iki hesap (danışan + falcı). İndir: [apk-latest](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk)
 
 1. **Danışan happy path** — Liste → profil → randevu (10 dk) → bekleme → falcı kabul → reklam → TRTC görüşme → chat → uzat → bitir → yıldız/yorum  
 2. **Falcı happy path** — Dashboard çevrimiçi → gelen diyalog/SSE → kabul → timer başlat → süre ekle → bitir → bahşiş bildirimi  
