@@ -50,7 +50,17 @@ check "Kısa Videolar" "$MAIN" "/api/shorts" "not404"
 check "Falcılar" "$MAIN" "/api/fortune-tellers" "not404"
 check "Canlı fal oda" "$MAIN" "/api/room/smoke-test" "401or404ok"
 check "Aktif seanslar" "$MAIN" "/api/user/active-sessions" "401or404ok"
-check "TRTC token" "$MAIN" "/api/trtc/token" "401or404ok"
+code_trtc=$(curl -sS -o /dev/null -w "%{http_code}" -X POST "$MAIN/api/trtc/token" \
+  -H "Content-Type: application/json" \
+  -d '{"roomId":"smoke","userId":"u1"}' 2>/dev/null || echo "000")
+if [[ "$code_trtc" == "200" || "$code_trtc" == "401" || "$code_trtc" == "403" ]]; then
+  echo "✅ TRTC token — POST /api/trtc/token → $code_trtc ($MAIN)"
+  PASS=$((PASS + 1))
+else
+  echo "❌ TRTC token — POST /api/trtc/token → $code_trtc ($MAIN)"
+  FAIL=$((FAIL + 1))
+  FAILURES+=("TRTC token|POST /api/trtc/token|$code_trtc|$MAIN")
+fi
 check "Sesli Oda Listesi" "$MAIN" "/api/chat/rooms" "not404"
 check "Oyun Kataloğu" "$MAIN" "/api/games" "not404"
 check "Profil /api/me" "$MAIN" "/api/me" "401or404ok"
