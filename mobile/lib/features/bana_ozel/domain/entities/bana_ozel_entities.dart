@@ -214,9 +214,12 @@ int resolveJetonBalanceAfterOpen({
   required BanaOzelOpenResultEntity result,
 }) {
   if (result.jetonBalance > 0) return result.jetonBalance;
-  if (result.paymentMethod == BanaOzelPaymentMethod.jeton &&
-      result.amountSpent > 0) {
-    return (currentBalance - result.amountSpent).clamp(0, 1 << 30);
+  final spent =
+      result.amountSpent > 0 ? result.amountSpent : result.jetonSpent;
+  if (spent <= 0) return currentBalance;
+  if (result.paymentMethod == BanaOzelPaymentMethod.jeton ||
+      result.jetonSpent > 0) {
+    return (currentBalance - spent).clamp(0, 1 << 30);
   }
   return currentBalance;
 }
