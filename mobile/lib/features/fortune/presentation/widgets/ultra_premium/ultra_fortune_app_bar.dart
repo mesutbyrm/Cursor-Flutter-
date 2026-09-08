@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../../core/bootstrap/startup_perf.dart';
@@ -41,7 +40,11 @@ class UltraFortuneAppBar extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('✨', style: TextStyle(fontSize: 12)),
+                    Icon(
+                      Icons.auto_awesome_rounded,
+                      size: 14,
+                      color: UltraFortuneTokens.metallicGold.withValues(alpha: 0.9),
+                    ),
                     const SizedBox(width: 6),
                     ShaderMask(
                       shaderCallback: (bounds) =>
@@ -49,7 +52,11 @@ class UltraFortuneAppBar extends StatelessWidget {
                       child: Text('Fal & Tarot', style: titleStyle),
                     ),
                     const SizedBox(width: 6),
-                    const Text('✨', style: TextStyle(fontSize: 12)),
+                    Icon(
+                      Icons.auto_awesome_rounded,
+                      size: 14,
+                      color: UltraFortuneTokens.metallicGold.withValues(alpha: 0.9),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 2),

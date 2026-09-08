@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../core/theme/app_theme_extensions.dart';
-import '../../../../core/widgets/discover_tab_layout.dart';
 import '../data/fortune_catalog.dart';
 import '../services/fortune_reading_coordinator.dart';
-import '../widgets/fortune_glass_card.dart';
-import '../widgets/fortune_mystic_background.dart';
+import '../widgets/ultra_premium/fortune_ready_reading_premium_card.dart';
+import '../widgets/ultra_premium/ultra_fortune_cosmic_background.dart';
+import '../widgets/ultra_premium/ultra_fortune_tokens.dart';
 
 class FortuneReadyReadingsPage extends ConsumerWidget {
   const FortuneReadyReadingsPage({super.key});
@@ -17,54 +18,52 @@ class FortuneReadyReadingsPage extends ConsumerWidget {
       slug: 'kahve-fali',
       body:
           'Fincanında yeni bir yol, kalabalık bir haber ve beklediğin bir görüşme görünüyor.',
-      icon: '☕',
     ),
     (
       title: 'Tarot Hazır Yorumu',
       slug: 'tarot',
       body: 'Kartların değişim, karar ve yeni başlangıç temasını vurguluyor.',
-      icon: '🃏',
     ),
     (
       title: 'Yıldızname Hazır Yorumu',
       slug: 'yildiz-haritasi',
       body:
           'Gökyüzü sana sabır, plan ve doğru zamanda atılacak adım mesajı veriyor.',
-      icon: '✨',
     ),
     (
       title: 'Aşk Yorumu',
       slug: 'ask-fali',
       body:
           'Kalbinde netleşmeyen bir konu yakın zamanda konuşma ile aydınlanabilir.',
-      icon: '💜',
     ),
   ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final top = MediaQuery.paddingOf(context).top;
+
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: FortuneMysticBackground(
+      backgroundColor: UltraFortuneTokens.deepNight,
+      body: UltraFortuneCosmicBackground(
         child: Column(
           children: [
             SizedBox(height: top + 4),
             Padding(
-              padding: const EdgeInsets.only(left: 4),
+              padding: const EdgeInsets.fromLTRB(8, 0, 16, 0),
               child: Row(
                 children: [
-                  DiscoverIconButton(
-                    icon: Icons.arrow_back_ios_new_rounded,
-                    onPressed: () => Navigator.of(context).pop(),
+                  IconButton(
+                    onPressed: () => context.pop(),
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Hazır Yorumlar',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
+                      style: GoogleFonts.playfairDisplay(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 20,
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -72,52 +71,38 @@ class FortuneReadyReadingsPage extends ConsumerWidget {
                 ],
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+              child: Text(
+                'Anında okunabilir mistik yorumlar — tek dokunuşla falına başla.',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.72),
+                  fontSize: 13,
+                  height: 1.4,
+                ),
+              ),
+            ),
             Expanded(
               child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 120),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
                 itemCount: _items.length,
                 separatorBuilder: (_, _) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final item = _items[index];
                   final type = FortuneCatalog.bySlug(item.slug);
-                  return FortuneGlassCard(
+                  final accent = type?.accent ?? UltraFortuneTokens.electricPurple;
+                  return FortuneReadyReadingPremiumCard(
+                    slug: item.slug,
+                    title: item.title,
+                    body: item.body,
+                    accent: accent,
                     onTap: type == null
-                        ? null
+                        ? () {}
                         : () => FortuneReadingCoordinator.openReading(
                               context: context,
                               ref: ref,
                               type: type,
                             ),
-                    child: Row(
-                      children: [
-                        Text(item.icon, style: const TextStyle(fontSize: 34)),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item.title,
-                                style: TextStyle(
-                                  color: context.colors.onSurface,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                item.body,
-                                style: TextStyle(
-                                  color: context.colors.onSurfaceVariant,
-                                  height: 1.35,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Icon(Icons.chevron_right_rounded),
-                      ],
-                    ),
                   );
                 },
               ),

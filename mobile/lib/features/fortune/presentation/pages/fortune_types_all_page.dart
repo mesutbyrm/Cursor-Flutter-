@@ -3,11 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../core/theme/app_palette.dart';
 import '../navigation/fortune_card_navigation.dart';
 import '../providers/fortune_types_display_provider.dart';
-import '../widgets/fortune_mystic_background.dart';
 import '../widgets/premium_2026/fortune_premium_card.dart';
+import '../widgets/ultra_premium/ultra_fortune_cosmic_background.dart';
+import '../widgets/ultra_premium/ultra_fortune_state_panel.dart';
+import '../widgets/ultra_premium/ultra_fortune_tokens.dart';
 
 /// Tüm fal türleri — gerçek API + V2 premium grid.
 class FortuneTypesAllPage extends ConsumerWidget {
@@ -18,15 +19,16 @@ class FortuneTypesAllPage extends ConsumerWidget {
     final entries = ref.watch(fortuneTypesDisplayProvider);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: UltraFortuneTokens.deepNight,
       appBar: AppBar(
-        backgroundColor: context.palette.surface,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
           'Fal Türleri',
           style: GoogleFonts.playfairDisplay(
             fontWeight: FontWeight.w600,
             fontSize: 20,
+            color: Colors.white,
           ),
         ),
         leading: IconButton(
@@ -34,7 +36,7 @@ class FortuneTypesAllPage extends ConsumerWidget {
           onPressed: () => context.pop(),
         ),
       ),
-      body: FortuneMysticBackground(
+      body: UltraFortuneCosmicBackground(
         child: entries.when(
           loading: () => GridView.builder(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -47,22 +49,28 @@ class FortuneTypesAllPage extends ConsumerWidget {
             ),
           ),
           error: (_, __) => Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('Fal türleri yüklenemedi'),
-                const SizedBox(height: 12),
-                TextButton(
-                  onPressed: () => invalidateFortuneTypesDisplay(ref),
-                  child: const Text('Tekrar Dene'),
-                ),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: UltraFortuneStatePanel(
+                icon: Icons.refresh_rounded,
+                message: 'Fal türleri yüklenemedi',
+                actionLabel: 'Tekrar Dene',
+                onAction: () => invalidateFortuneTypesDisplay(ref),
+              ),
             ),
           ),
           data: (list) {
             if (list.isEmpty) {
-              return const Center(
-                child: Text('Şu anda fal türleri bulunamadı'),
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: UltraFortuneStatePanel(
+                    icon: Icons.auto_awesome_rounded,
+                    message: 'Şu anda fal türleri bulunamadı',
+                    actionLabel: 'Yenile',
+                    onAction: () => invalidateFortuneTypesDisplay(ref),
+                  ),
+                ),
               );
             }
             return GridView.builder(
@@ -85,6 +93,7 @@ class FortuneTypesAllPage extends ConsumerWidget {
                       width: constraints.maxWidth,
                       height: constraints.maxHeight,
                       compact: true,
+                      showEmojiInTitle: false,
                       onTap: () => openFortuneTypeDestination(context, e),
                     );
                   },

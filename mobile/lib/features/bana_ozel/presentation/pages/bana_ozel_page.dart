@@ -10,7 +10,10 @@ import '../../../../core/network/api_exception.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../fortune/data/services/rewarded_ad_service.dart';
 import '../../../fortune/presentation/widgets/ultra_premium/ultra_fortune_cosmic_background.dart';
+import '../../../fortune/presentation/widgets/ultra_premium/ultra_fortune_cover_backdrop.dart';
+import '../../../fortune/presentation/widgets/ultra_premium/ultra_fortune_state_panel.dart';
 import '../../../fortune/presentation/widgets/ultra_premium/ultra_fortune_tokens.dart';
+import '../../../fortune/presentation/data/fortune_type_images.dart';
 import '../../domain/entities/bana_ozel_entities.dart';
 import '../providers/bana_ozel_providers.dart';
 import '../widgets/bana_ozel_premium_card.dart';
@@ -254,10 +257,11 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
                     ),
                     Expanded(
                       child: Text(
-                        '✨ Bana Özel',
+                        'Bana Özel',
                         style: GoogleFonts.playfairDisplay(
                           fontWeight: FontWeight.w900,
                           fontSize: 22,
+                          color: Colors.white,
                         ),
                       ),
                     ),
@@ -272,29 +276,45 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
                 ),
               ),
               catalog.when(
-                loading: () => const Expanded(
-                  child: Center(child: CircularProgressIndicator()),
+                loading: () => Expanded(
+                  child: GridView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                      childAspectRatio: 0.92,
+                    ),
+                    itemCount: 6,
+                    itemBuilder: (_, _) => const BanaOzelPremiumCardSkeleton(
+                      width: double.infinity,
+                      height: double.infinity,
+                    ),
+                  ),
                 ),
                 error: (e, _) => Expanded(
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(ApiException.userMessage(e)),
-                        const SizedBox(height: 12),
-                        FilledButton(
-                          onPressed: () =>
-                              ref.invalidate(banaOzelCatalogProvider),
-                          child: const Text('Yenile'),
-                        ),
-                      ],
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: UltraFortuneStatePanel(
+                      icon: Icons.refresh_rounded,
+                      message: ApiException.userMessage(e),
+                      actionLabel: 'Yenile',
+                      onAction: () => ref.invalidate(banaOzelCatalogProvider),
                     ),
                   ),
                 ),
                 data: (data) {
                   if (data.items.isEmpty) {
-                    return const Expanded(
-                      child: Center(child: Text('Henüz içerik yok')),
+                    return Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: UltraFortuneStatePanel(
+                          icon: Icons.auto_awesome_rounded,
+                          message: 'Henüz içerik yok. Fal evrenini keşfetmeye başla.',
+                          actionLabel: 'Fal & Tarot',
+                          onAction: () => context.go('/fortune'),
+                        ),
+                      ),
                     );
                   }
                   WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -309,6 +329,7 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
                           ref.read(banaOzelCatalogProvider.notifier).refresh(),
                       child: CustomScrollView(
                         slivers: [
+                          SliverToBoxAdapter(child: _CatalogHeroBanner()),
                           const SliverToBoxAdapter(
                             child: ShortsHubStrip(
                               title: 'Kısa Videolar',
@@ -418,6 +439,60 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
                     ),
                   );
                 },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CatalogHeroBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    const slug = 'melek-kartlari';
+    final accent = FortuneTypeImages.glowColor(slug);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: SizedBox(
+          height: 96,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              UltraFortuneCoverBackdrop(
+                slug: slug,
+                accent: accent,
+                opacity: 0.42,
+                imageWidth: 900,
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Sana özel mistik içerikler',
+                      style: GoogleFonts.playfairDisplay(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 18,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Tarot, astroloji ve spiritüel yorumlar — vitrininden seç.',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.78),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

@@ -7,6 +7,7 @@ import '../../providers/fortune_types_display_provider.dart';
 import '../premium_2026/fortune_premium_card.dart';
 import '../premium_2026/premium_section_header.dart';
 import 'ultra_fortune_liquid_surface.dart';
+import 'ultra_fortune_state_panel.dart';
 import 'ultra_fortune_tokens.dart';
 
 /// FAL TÜRLERİ bölümü — gerçek API + V2 premium grid.
@@ -110,7 +111,13 @@ class _UltraFortuneTypesSectionState extends ConsumerState<UltraFortuneTypesSect
             ),
             data: (list) {
               if (list.isEmpty) {
-                return const Text('Henüz fal türü bulunamadı.');
+                return UltraFortuneStatePanel(
+                  icon: Icons.auto_awesome_rounded,
+                  message: 'Henüz fal türü bulunamadı.',
+                  actionLabel: 'Yenile',
+                  onAction: () => invalidateFortuneTypesDisplay(ref),
+                  height: 120,
+                );
               }
               final preview = list.take(10).toList();
               return _buildGrid(
@@ -146,6 +153,7 @@ class _UltraFortuneTypesSectionState extends ConsumerState<UltraFortuneTypesSect
                           width: constraints.maxWidth,
                           height: constraints.maxHeight,
                           compact: true,
+                          showEmojiInTitle: false,
                           onTap: () => openFortuneTypeDestination(context, e),
                         );
                       },

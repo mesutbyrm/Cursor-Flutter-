@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../../core/performance/list_perf.dart';
 import '../../data/fortune_catalog.dart';
-import '../fortune_hub_type_card.dart';
+import '../premium_2026/fortune_premium_card.dart';
 import '../premium_2026/premium_section_header.dart';
 import '../../navigation/fortune_card_navigation.dart';
 import 'ultra_fortune_tokens.dart';
@@ -75,10 +75,20 @@ class UltraFortuneHubQuickGrid extends StatelessWidget {
                   itemCount: entries.length,
                   itemBuilder: (context, index) {
                     final entry = entries[index];
-                    return FortuneHubTypeCard(
-                      type: entry.type,
-                      subtitle: entry.subtitle,
-                      onTap: () => context.push('/fortune/${entry.type.slug}'),
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        return FortunePremiumCard(
+                          slug: entry.type.slug,
+                          title: entry.type.title,
+                          subtitle: entry.subtitle,
+                          accent: entry.type.accent,
+                          width: constraints.maxWidth,
+                          height: constraints.maxHeight,
+                          compact: true,
+                          showEmojiInTitle: false,
+                          onTap: () => context.push('/fortune/${entry.type.slug}'),
+                        );
+                      },
                     );
                   },
                 ),

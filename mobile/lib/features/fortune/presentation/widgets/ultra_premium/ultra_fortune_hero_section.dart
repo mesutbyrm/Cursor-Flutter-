@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../data/fortune_catalog.dart';
+import '../../data/fortune_type_images.dart';
+import 'ultra_fortune_cover_backdrop.dart';
 import 'ultra_fortune_crystal_ball.dart';
 import 'ultra_fortune_liquid_surface.dart';
 import 'ultra_fortune_ripple_button.dart';
@@ -66,6 +68,7 @@ class UltraFortuneHeroSection extends StatelessWidget {
                   value: 'Yüksek',
                   icon: Icons.diamond_rounded,
                   iconColor: UltraFortuneTokens.softLilac,
+                  coverSlug: 'gunluk-fal',
                   onTap: () => context.push(
                     '/fortune/${FortuneCatalog.dailyFortune.slug}',
                   ),
@@ -78,6 +81,7 @@ class UltraFortuneHeroSection extends StatelessWidget {
                   value: 'Şişkin Ay',
                   icon: Icons.nightlight_round,
                   iconColor: UltraFortuneTokens.metallicGold,
+                  coverSlug: 'yildiz-haritasi',
                   onTap: () => context.push('/fortune/yildiz-haritasi'),
                 ),
               ),
@@ -151,6 +155,7 @@ class _SideInfoCard extends StatelessWidget {
     required this.value,
     required this.icon,
     required this.iconColor,
+    required this.coverSlug,
     this.onTap,
   });
 
@@ -158,53 +163,72 @@ class _SideInfoCard extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color iconColor;
+  final String coverSlug;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    final accent = FortuneTypeImages.glowColor(coverSlug);
     return UltraFortuneLiquidSurface(
       onTap: onTap,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: EdgeInsets.zero,
       borderRadius: BorderRadius.circular(18),
       blur: 40,
-      child: Row(
-        children: [
-          Container(
-            width: 28,
-            height: 28,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: iconColor.withValues(alpha: 0.18),
-              boxShadow: UltraFortuneTokens.purpleGlow(blur: 10),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Stack(
+          children: [
+            UltraFortuneCoverBackdrop(
+              slug: coverSlug,
+              accent: accent,
+              opacity: 0.28,
+              imageWidth: 480,
             ),
-            child: Icon(icon, size: 14, color: iconColor),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    color: UltraFortuneTokens.metallicGold.withValues(alpha: 0.85),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Row(
+                children: [
+                  Container(
+                    width: 28,
+                    height: 28,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: iconColor.withValues(alpha: 0.18),
+                      boxShadow: UltraFortuneTokens.purpleGlow(blur: 10),
+                    ),
+                    child: Icon(icon, size: 14, color: iconColor),
                   ),
-                ),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          label,
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: UltraFortuneTokens.metallicGold
+                                .withValues(alpha: 0.85),
+                          ),
+                        ),
+                        Text(
+                          value,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -46,6 +46,7 @@ class FortunePremiumCard extends StatefulWidget {
     this.width = cardWidth,
     this.height = cardHeight,
     this.compact = false,
+    this.showEmojiInTitle = true,
   });
 
   static const cardWidth = 160.0;
@@ -70,6 +71,7 @@ class FortunePremiumCard extends StatefulWidget {
   final double width;
   final double height;
   final bool compact;
+  final bool showEmojiInTitle;
 
   @override
   State<FortunePremiumCard> createState() => _FortunePremiumCardState();
@@ -195,6 +197,7 @@ class _FortunePremiumCardState extends State<FortunePremiumCard> {
   }
 
   String _titleWithEmoji() {
+    if (!widget.showEmojiInTitle) return widget.title;
     final emoji = widget.emoji?.trim();
     if (emoji != null && emoji.isNotEmpty && !emoji.startsWith('http')) {
       return '$emoji ${widget.title}';

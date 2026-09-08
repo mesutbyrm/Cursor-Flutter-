@@ -7,7 +7,12 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../auth/presentation/widgets/auth_date_pickers.dart';
 import '../../domain/fortune_zodiac.dart';
 import '../../data/fortune_birth_profile_store.dart';
+import '../../data/fortune_type_images.dart';
 import '../providers/fortune_birth_profile_provider.dart';
+import '../widgets/premium_2026/premium_section_header.dart';
+import '../widgets/fortune_type_cover_image.dart';
+import '../widgets/premium_2026/fortune_premium_card.dart';
+import '../widgets/ultra_premium/ultra_fortune_cover_backdrop.dart';
 import '../widgets/ultra_premium/ultra_fortune_liquid_surface.dart';
 import '../widgets/ultra_premium/ultra_fortune_tokens.dart';
 
@@ -21,32 +26,46 @@ class FortuneZodiacHubCard extends ConsumerWidget {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      child: profileAsync.when(
-        loading: () => const SizedBox(
-          height: 120,
-          child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-        ),
-        error: (_, _) => _PromptCard(
-          onTap: () => showFortuneBirthProfileSheet(context, ref),
-        ),
-        data: (profile) {
-          if (profile == null) {
-            return _PromptCard(
-              onTap: () => showFortuneBirthProfileSheet(context, ref),
-            );
-          }
-          final zodiac = FortuneZodiac.fromBirthDate(profile.birthDate);
-          return _ZodiacCard(
-            zodiac: zodiac,
-            birthSummary: formatFortuneBirthSummary(profile),
-            onReadFortune: () => context.push('/fortune/yildiz-haritasi'),
-            onEditBirth: () => showFortuneBirthProfileSheet(
-              context,
-              ref,
-              initial: profile,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const PremiumSectionHeader(
+            title: 'BURCUN',
+            icon: Icons.nightlight_round,
+            iconColor: UltraFortuneTokens.metallicGold,
+          ),
+          const SizedBox(height: 10),
+          profileAsync.when(
+            loading: () => const SizedBox(
+              height: 148,
+              child: FortunePremiumCardSkeleton(
+                width: double.infinity,
+                height: double.infinity,
+              ),
             ),
-          );
-        },
+            error: (_, _) => _PromptCard(
+              onTap: () => showFortuneBirthProfileSheet(context, ref),
+            ),
+            data: (profile) {
+              if (profile == null) {
+                return _PromptCard(
+                  onTap: () => showFortuneBirthProfileSheet(context, ref),
+                );
+              }
+              final zodiac = FortuneZodiac.fromBirthDate(profile.birthDate);
+              return _ZodiacCard(
+                zodiac: zodiac,
+                birthSummary: formatFortuneBirthSummary(profile),
+                onReadFortune: () => context.push('/fortune/yildiz-haritasi'),
+                onEditBirth: () => showFortuneBirthProfileSheet(
+                  context,
+                  ref,
+                  initial: profile,
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -59,61 +78,78 @@ class _PromptCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const slug = 'yildiz-haritasi';
+    final accent = FortuneTypeImages.glowColor(slug);
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(24),
         child: UltraFortuneLiquidSurface(
+          goldAccent: true,
           borderRadius: BorderRadius.circular(24),
-          padding: const EdgeInsets.all(18),
-          child: Row(
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      UltraFortuneTokens.metallicGold.withValues(alpha: 0.5),
-                      UltraFortuneTokens.spaceViolet.withValues(alpha: 0.3),
+          padding: EdgeInsets.zero,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: Stack(
+              children: [
+                UltraFortuneCoverBackdrop(
+                  slug: slug,
+                  accent: accent,
+                  opacity: 0.34,
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 52,
+                        height: 72,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: FortuneTypeCoverImage(
+                            slug: slug,
+                            accent: accent,
+                            imageWidth: 400,
+                            showOverlay: true,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Burcunu keşfet',
+                              style: GoogleFonts.playfairDisplay(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 18,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Doğum tarihi ve saatini gir; sana özel falını öğren.',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.75),
+                                fontSize: 12,
+                                height: 1.35,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: UltraFortuneTokens.metallicGold.withValues(alpha: 0.9),
+                      ),
                     ],
                   ),
                 ),
-                child: const Text('✨', style: TextStyle(fontSize: 24)),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Burcunu keşfet',
-                      style: GoogleFonts.playfairDisplay(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 18,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Doğum tarihi ve saatini gir; sana özel falını öğren.',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.75),
-                        fontSize: 12,
-                        height: 1.35,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: UltraFortuneTokens.metallicGold.withValues(alpha: 0.9),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -136,73 +172,104 @@ class _ZodiacCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const slug = 'yildiz-haritasi';
+    final accent = FortuneTypeImages.glowColor(slug);
+
     return UltraFortuneLiquidSurface(
       goldAccent: true,
       borderRadius: BorderRadius.circular(24),
-      padding: const EdgeInsets.all(18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Text(zodiac.emoji, style: const TextStyle(fontSize: 36)),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${zodiac.sign} Burcu',
-                      style: GoogleFonts.playfairDisplay(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 20,
+      padding: EdgeInsets.zero,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
+          children: [
+            UltraFortuneCoverBackdrop(
+              slug: slug,
+              accent: accent,
+              opacity: 0.3,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 56,
+                        height: 76,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(14),
+                          child: FortuneTypeCoverImage(
+                            slug: slug,
+                            accent: accent,
+                            imageWidth: 400,
+                            showOverlay: true,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${zodiac.sign} Burcu',
+                              style: GoogleFonts.playfairDisplay(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 20,
+                              ),
+                            ),
+                            Text(
+                              zodiac.dateRange,
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.7),
+                                fontSize: 11,
+                              ),
+                            ),
+                            Text(
+                              birthSummary,
+                              style: TextStyle(
+                                color: UltraFortuneTokens.metallicGold
+                                    .withValues(alpha: 0.85),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: onEditBirth,
+                        icon: Icon(
+                          Icons.edit_calendar_rounded,
+                          color: Colors.white.withValues(alpha: 0.7),
+                          size: 20,
+                        ),
+                        tooltip: 'Doğum bilgisini düzenle',
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  FilledButton.icon(
+                    onPressed: onReadFortune,
+                    icon: const Icon(Icons.auto_awesome_rounded),
+                    label: const Text('Falına bak'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: UltraFortuneTokens.metallicGold,
+                      foregroundColor: const Color(0xFF1A0A32),
+                      minimumSize: const Size.fromHeight(48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    Text(
-                      zodiac.dateRange,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.7),
-                        fontSize: 11,
-                      ),
-                    ),
-                    Text(
-                      birthSummary,
-                      style: TextStyle(
-                        color: UltraFortuneTokens.metallicGold.withValues(alpha: 0.85),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                onPressed: onEditBirth,
-                icon: Icon(
-                  Icons.edit_calendar_rounded,
-                  color: Colors.white.withValues(alpha: 0.7),
-                  size: 20,
-                ),
-                tooltip: 'Doğum bilgisini düzenle',
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          FilledButton.icon(
-            onPressed: onReadFortune,
-            icon: const Icon(Icons.auto_awesome_rounded),
-            label: const Text('Falına bak'),
-            style: FilledButton.styleFrom(
-              backgroundColor: UltraFortuneTokens.metallicGold,
-              foregroundColor: const Color(0xFF1A0A32),
-              minimumSize: const Size.fromHeight(48),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

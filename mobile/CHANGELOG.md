@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.410+448 (2026-09-08) — Premium kart vitrin genişletme
+
+- Hazır Yorumlar: ultra premium kapak kartları + kozmik arka plan
+- Hub popüler grid: `FortunePremiumCard` (sinematik kapak, emoji başlık yok)
+- Hero yan kartlar + burç bölümü: mistik kapak arka planları
+- Bana Özel sayfa: hero banner, iskelet grid, premium hata/boş durum
+- Tüm fal türleri sayfası: kozmik tema + premium durum panelleri
+- `FortunePremiumCard.showEmojiInTitle` — vitrinlerde temiz başlık
+
 ## 1.0.409+447 (2026-09-08) — Premium görseller + Bana Özel yedek
 
 - Günlük fal özel mistik kapak (`gunluk-fal.webp`) — kehanet kartı ve enerji vitrin
