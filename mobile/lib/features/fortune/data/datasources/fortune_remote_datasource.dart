@@ -5,6 +5,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/pagination/paged_result.dart';
 import '../../../../core/util/json_util.dart';
+import '../../domain/fortune_type_slug.dart';
 import '../../domain/entities/fortune_image_input.dart';
 import '../../domain/entities/fortune_type_entity.dart';
 import '../../domain/entities/user_fortune_entity.dart';
@@ -262,7 +263,8 @@ class FortuneRemoteDataSource {
   }
 
   String _apiSlugFor(String slug) {
-    return switch (slug) {
+    final key = FortuneTypeSlug.resolve(slug);
+    return switch (key) {
       'tarot' => 'tarot-fali',
       'kahve-fali' => 'kahve-fali',
       'yildiz-haritasi' => 'burc-yorumu',
@@ -274,7 +276,7 @@ class FortuneRemoteDataSource {
       'numeroloji' => 'numeroloji',
       'el-fali' => 'el-fali',
       'katina' => 'katina',
-      _ => slug,
+      _ => key,
     };
   }
 

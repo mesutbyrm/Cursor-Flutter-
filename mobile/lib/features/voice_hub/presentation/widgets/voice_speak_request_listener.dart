@@ -9,6 +9,7 @@ import '../../../live/presentation/providers/live_providers.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../providers/chat_room_providers.dart';
 import '../providers/voice_room_session_registry.dart';
+import '../providers/voice_speak_request_signal_provider.dart';
 import '../utils/voice_room_permissions.dart';
 
 /// Moderatör/oda sahibi — el kaldıran kullanıcı için anlık popup.
@@ -31,7 +32,7 @@ class _VoiceSpeakRequestListenerState
   @override
   void initState() {
     super.initState();
-    _pollTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+    _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
       if (!mounted || _showing) return;
       unawaited(_pollPending());
     });
@@ -203,7 +204,12 @@ class _VoiceSpeakRequestListenerState
   }
 
   @override
-  Widget build(BuildContext context) => widget.child;
+  Widget build(BuildContext context) {
+    ref.listen(voiceSpeakRequestSignalProvider, (_, __) {
+      unawaited(_pollPending());
+    });
+    return widget.child;
+  }
 }
 
 enum _SpeakAction { approve, reject, block }

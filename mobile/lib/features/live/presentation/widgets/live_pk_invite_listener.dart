@@ -12,11 +12,13 @@ import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/pk/live_pk_invite_helper.dart';
 import '../../domain/pk/pk_room_models.dart';
 import '../../domain/pk/pk_unified_bridge.dart';
+import '../providers/live_invite_dedup_provider.dart';
 import '../providers/live_pk_invite_signal_provider.dart';
 import '../providers/live_pk_owned_streams_socket_provider.dart';
 import '../providers/live_providers.dart';
 import '../providers/live_video_pk_provider.dart';
 import '../providers/pk_room_providers.dart';
+import '../utils/open_host_broadcast_room.dart';
 
 /// Canlı yayın PK davetleri — stream SSE + REST poll (`/api/pk/me/invites`).
 class LivePkInviteListener extends ConsumerStatefulWidget {
@@ -30,7 +32,6 @@ class LivePkInviteListener extends ConsumerStatefulWidget {
 }
 
 class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
-  final Set<String> _seen = {};
   var _showing = false;
   Timer? _pollTimer;
 
@@ -143,7 +144,12 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
         if (streamId == null || streamId.isEmpty) continue;
         if (!_isRecipient(battle, user.id, streamId)) continue;
         final inviteId = battle.effectiveId;
-        if (inviteId.isEmpty || !_seen.add(inviteId)) continue;
+        if (inviteId.isEmpty ||
+            !ref
+                .read(liveInviteDedupProvider.notifier)
+                .tryMark(livePkInviteDedupKey(inviteId))) {
+          continue;
+        }
         PkEventLog.incomingRequest(inviteId: inviteId);
         await _showDialog(battle, streamId);
         return;
@@ -155,7 +161,11 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
         if (!inv.isPending) continue;
         final streamId = _recipientStreamIdForMatch(inv, user.id, owned);
         if (streamId == null || streamId.isEmpty) continue;
-        if (!_seen.add(inv.id)) continue;
+        if (!ref
+            .read(liveInviteDedupProvider.notifier)
+            .tryMark(livePkInviteDedupKey(inv.id))) {
+          continue;
+        }
         final battleMap = pkRoomMatchToBattleMap(inv, myStreamId: streamId);
         final battle = PkBattleRemote.fromJson(battleMap);
         PkEventLog.incomingRequest(matchId: inv.id);
@@ -171,7 +181,12 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
         if (!_isRecipient(battle, user.id, stream.id)) continue;
         if (battle.challengerId == user.id) continue;
         final inviteId = battle.effectiveId;
-        if (inviteId.isEmpty || !_seen.add(inviteId)) continue;
+        if (inviteId.isEmpty ||
+            !ref
+                .read(liveInviteDedupProvider.notifier)
+                .tryMark(livePkInviteDedupKey(inviteId))) {
+          continue;
+        }
         PkEventLog.incomingRequest(inviteId: inviteId);
         await _showDialog(battle, stream.id);
         return;
@@ -253,6 +268,11 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
         await remote.accept(battle.effectiveId, streamId: myStreamId);
         await pkNotifier.refresh();
         PkEventLog.acceptSuccess(battleId: battle.effectiveId);
+        await openHostBroadcastRoomIfNeeded(
+          ref: ref,
+          context: context,
+          streamId: myStreamId,
+        );
       } else {
         PkEventLog.reject(inviteId: battle.effectiveId);
         await remote.reject(battle.effectiveId, streamId: myStreamId);

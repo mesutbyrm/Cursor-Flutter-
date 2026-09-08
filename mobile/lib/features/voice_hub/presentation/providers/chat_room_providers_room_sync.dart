@@ -165,6 +165,14 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       case 'owner_changed':
         _applyRoomEventOwnerChanged(payload);
         return;
+      case 'speak_request':
+      case 'speakrequest':
+      case 'speak_requested':
+      case 'hand_raise':
+      case 'handraise':
+      case 'raise_hand':
+        ref.read(voiceSpeakRequestSignalProvider.notifier).bump();
+        return;
       case 'room_closed':
         _applyRoomEventRoomClosed(payload);
         return;

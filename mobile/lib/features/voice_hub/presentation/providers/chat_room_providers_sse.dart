@@ -208,6 +208,9 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             if (session == null) return;
             emitPsychicLiveRequest(ref, session);
           },
+          onSpeakRequest: (_) {
+            ref.read(voiceSpeakRequestSignalProvider.notifier).bump();
+          },
           onPk: (battle, event) {
             if (VoiceRoomBasicMode.enabled && !VoiceRoomBasicMode.premiumEnabled) {
               return;

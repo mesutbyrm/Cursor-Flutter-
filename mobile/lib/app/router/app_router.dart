@@ -43,6 +43,7 @@ import '../../features/admin/presentation/pages/admin_sub_pages.dart';
 import '../../features/admin_web/presentation/pages/admin_web_panel_page.dart';
 import '../../features/fortune/presentation/pages/fortune_tarot_hub_page.dart';
 import '../../features/fortune/presentation/pages/fortune_types_all_page.dart';
+import '../../features/fortune/presentation/widgets/fortune_animation_route_shell.dart';
 import '../../features/bana_ozel/domain/entities/bana_ozel_entities.dart';
 import '../../features/bana_ozel/presentation/pages/bana_ozel_page.dart';
 import '../../features/bana_ozel/presentation/pages/bana_ozel_result_page.dart';
@@ -407,7 +408,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     pageBuilder: (context, state) =>
                         AppPageTransitions.fadeSlide(
                           key: state.pageKey,
-                          child: const FortuneTypesAllPage(),
+                          child: FortuneAnimationRouteShell(
+                            child: const FortuneTypesAllPage(),
+                          ),
                         ),
                   ),
                   GoRoute(
@@ -415,7 +418,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     pageBuilder: (context, state) =>
                         AppPageTransitions.fadeSlide(
                           key: state.pageKey,
-                          child: const FortuneReadyReadingsPage(),
+                          child: FortuneAnimationRouteShell(
+                            child: const FortuneReadyReadingsPage(),
+                          ),
                         ),
                   ),
                   GoRoute(
@@ -423,8 +428,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     pageBuilder: (context, state) =>
                         AppPageTransitions.fadeSlide(
                           key: state.pageKey,
-                          child: BanaOzelPage(
-                            initialSlug: state.uri.queryParameters['slug'],
+                          child: FortuneAnimationRouteShell(
+                            child: BanaOzelPage(
+                              initialSlug: state.uri.queryParameters['slug'],
+                            ),
                           ),
                         ),
                     routes: [
@@ -438,7 +445,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                               : BanaOzelResultPage(result: result);
                           return AppPageTransitions.fadeSlide(
                             key: state.pageKey,
-                            child: child,
+                            child: FortuneAnimationRouteShell(child: child),
                           );
                         },
                       ),
@@ -450,7 +457,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                       final id = state.pathParameters['id'] ?? '';
                       return AppPageTransitions.fadeSlide(
                         key: state.pageKey,
-                        child: FortuneDetailPage(fortuneId: id),
+                        child: FortuneAnimationRouteShell(
+                          child: FortuneDetailPage(fortuneId: id),
+                        ),
                       );
                     },
                   ),
@@ -466,7 +475,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                           : FortuneTypeIntroPage(type: type);
                       return AppPageTransitions.fadeSlide(
                         key: state.pageKey,
-                        child: child,
+                        child: FortuneAnimationRouteShell(child: child),
                       );
                     },
                     routes: [
@@ -480,7 +489,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                               : FortuneSessionPage(type: type);
                           return AppPageTransitions.fadeSlide(
                             key: state.pageKey,
-                            child: child,
+                            child: FortuneAnimationRouteShell(child: child),
                           );
                         },
                       ),
@@ -495,7 +504,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                               : FortuneResultPage(result: result);
                           return AppPageTransitions.fadeSlide(
                             key: state.pageKey,
-                            child: child,
+                            child: FortuneAnimationRouteShell(child: child),
                           );
                         },
                       ),

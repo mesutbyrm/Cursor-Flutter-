@@ -25,6 +25,7 @@ enum ChatRoomSseEventType {
   gift,
   presence,
   fortuneRequest,
+  speakRequest,
   pk,
   typing,
   roomEvent,
@@ -117,6 +118,13 @@ ChatRoomSseEventType chatRoomSseEventTypeFrom(String? raw) {
     case 'live_fal_request':
     case 'fortune_request':
       return ChatRoomSseEventType.fortuneRequest;
+    case 'speak_request':
+    case 'speakrequest':
+    case 'speak_requested':
+    case 'hand_raise':
+    case 'handraise':
+    case 'raise_hand':
+      return ChatRoomSseEventType.speakRequest;
     case 'pk':
     case 'pk_battle':
     case 'pkbattle':

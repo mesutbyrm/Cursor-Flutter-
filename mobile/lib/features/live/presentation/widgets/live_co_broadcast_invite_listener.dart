@@ -2,13 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/app_router.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../domain/entities/live_stream_entity.dart';
 import '../providers/co_broadcast_provider.dart';
+import '../providers/live_invite_dedup_provider.dart';
 import '../providers/live_providers.dart';
+import '../utils/open_live_stream.dart';
 
 /// Ortak yayın (misafir) davetleri — yayın sayfası dışında da kabul ekranı.
 class LiveCoBroadcastInviteListener extends ConsumerStatefulWidget {
@@ -23,7 +25,6 @@ class LiveCoBroadcastInviteListener extends ConsumerStatefulWidget {
 
 class _LiveCoBroadcastInviteListenerState
     extends ConsumerState<LiveCoBroadcastInviteListener> {
-  final Set<String> _seen = {};
   var _showing = false;
   Timer? _pollTimer;
 
@@ -83,7 +84,12 @@ class _LiveCoBroadcastInviteListenerState
                 invite['inviteId'] ??
                 '$streamId:${invite['createdAt']}')
             .toString();
-        if (id.isEmpty || !_seen.add(id)) continue;
+        if (id.isEmpty ||
+            !ref
+                .read(liveInviteDedupProvider.notifier)
+                .tryMark(liveCoBroadcastInviteDedupKey(id))) {
+          continue;
+        }
         await _showInviteDialog(streamId, invite);
         return;
       }
@@ -139,12 +145,17 @@ class _LiveCoBroadcastInviteListenerState
         await ref.read(coBroadcastProvider.notifier).acceptInvite(streamId);
         final nav = rootNavigatorKey.currentContext;
         if (nav != null && nav.mounted) {
-          final streams = ref.read(liveStreamsProvider).valueOrNull ?? const [];
-          for (final stream in streams) {
-            if (stream.id == streamId) {
-              GoRouter.of(nav).push('/live/swipe', extra: stream);
+          final streams =
+              ref.read(liveStreamsProvider).valueOrNull ?? const [];
+          LiveStreamEntity? stream;
+          for (final s in streams) {
+            if (s.id == streamId) {
+              stream = s;
               break;
             }
+          }
+          if (stream != null) {
+            await openLiveStreamSwipe(nav, ref, stream);
           }
         }
         if (mounted) {

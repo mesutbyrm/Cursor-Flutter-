@@ -35,6 +35,7 @@ class ChatRoomSseService extends BaseSseService {
   void Function(Map<String, dynamic> payload)? _onAnnouncement;
   void Function(Map<String, dynamic> payload)? _onSystem;
   void Function(Map<String, dynamic> payload)? _onFortuneRequest;
+  void Function(Map<String, dynamic> payload)? _onSpeakRequest;
   void Function(PkBattleRemote battle, String event)? _onPk;
   void Function(List<String> users)? _onTyping;
   void Function(Map<String, dynamic> payload)? _onRoomEvent;
@@ -79,6 +80,7 @@ class ChatRoomSseService extends BaseSseService {
     void Function(Map<String, dynamic> payload)? onAnnouncement,
     void Function(Map<String, dynamic> payload)? onSystem,
     void Function(Map<String, dynamic> payload)? onFortuneRequest,
+    void Function(Map<String, dynamic> payload)? onSpeakRequest,
     void Function(PkBattleRemote battle, String event)? onPk,
     void Function(List<String> users)? onTyping,
     void Function(Map<String, dynamic> payload)? onRoomEvent,
@@ -100,6 +102,7 @@ class ChatRoomSseService extends BaseSseService {
     _onAnnouncement = onAnnouncement;
     _onSystem = onSystem;
     _onFortuneRequest = onFortuneRequest;
+    _onSpeakRequest = onSpeakRequest;
     _onPk = onPk;
     _onTyping = onTyping;
     _onRoomEvent = onRoomEvent;
@@ -251,6 +254,9 @@ class ChatRoomSseService extends BaseSseService {
         return;
       case ChatRoomSseEventType.fortuneRequest:
         _onFortuneRequest?.call(map);
+        return;
+      case ChatRoomSseEventType.speakRequest:
+        _onSpeakRequest?.call(map);
         return;
       case ChatRoomSseEventType.pk:
         _emitPk(map);

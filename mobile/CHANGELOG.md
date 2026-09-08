@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.402+440 (2026-09-08) — Sesli / canlı / Fal-Tarot eksik tamamlama
+
+- Canlı PK kabul: yayıncı otomatik yayın odasına yönlendirilir
+- Ortak yayın daveti: `LiveSwipeFeedArgs` ile doğru swipe navigasyonu
+- PK / misafir davet çift dialog: paylaşımlı `liveInviteDedupProvider`
+- Sesli oda: konuşma isteği SSE (`speak_request`) + anlık moderatör uyandırma
+- Fal sekmesi: Canlı Falcılar bölümü + alt rotalarda `ctx_fal_tarot` animasyon bağlamı
+- Fal API slug: iskambil / pendul / runik üretim path eşlemesi
+
 ## 1.0.401+439 (2026-09-08) — PK davet + misafir ortak yayın düzeltmeleri
 
 - Canlı yayın: `invited` PK durumu kabul ekranında tanınır (`isPkInvitePendingStatus`)

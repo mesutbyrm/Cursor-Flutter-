@@ -74,6 +74,7 @@ import '../gifts/providers/live_seat_gift_flash_provider.dart';
 import '../providers/live_host_rank_provider.dart';
 import '../../../games/presentation/providers/game_providers.dart';
 import '../providers/pk_room_providers.dart';
+import '../providers/live_invite_dedup_provider.dart';
 import '../providers/live_pk_invite_signal_provider.dart';
 import '../providers/live_providers.dart';
 import '../providers/discover_live_streams.dart';
@@ -172,8 +173,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   Timer? _hostHeartbeat;
   Timer? _botAutoCloseTimer;
   final Set<String> _seenGuestJoinIds = {};
-  final Set<String> _seenCoBroadcastInviteIds = {};
-  final Set<String> _seenPkInviteIds = {};
   final Set<String> _seenVipEntrances = {};
   var _coHostUpgraded = false;
   var _joinRequestPending = false;
@@ -1397,7 +1396,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
             invite['streamId'] ??
             streamId)
         .toString();
-    if (id.isEmpty || !_seenCoBroadcastInviteIds.add(id)) return;
+    if (id.isEmpty ||
+        !ref
+            .read(liveInviteDedupProvider.notifier)
+            .tryMark(liveCoBroadcastInviteDedupKey(id))) {
+      return;
+    }
     final hostName = (invite['hostName'] ??
             invite['streamerName'] ??
             invite['fromName'] ??
@@ -1632,7 +1636,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       return;
     }
     final id = battle['id']?.toString() ?? '';
-    if (id.isEmpty || !_seenPkInviteIds.add(id)) return;
+    if (id.isEmpty ||
+        !ref
+            .read(liveInviteDedupProvider.notifier)
+            .tryMark(livePkInviteDedupKey(id))) {
+      return;
+    }
     PkEventLog.incomingRequest(matchId: id);
     final hostStream = battle['hostStreamId']?.toString();
     if (hostStream != null && hostStream.isNotEmpty && hostStream == streamId) {

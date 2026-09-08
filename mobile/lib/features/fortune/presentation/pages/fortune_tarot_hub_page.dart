@@ -9,6 +9,7 @@ import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover_refresh.dart';
 import '../../../../core/site_animation/presentation/widgets/site_animation_context_host.dart';
 import '../providers/fortune_api_providers.dart';
+import '../../../live_psychics/presentation/widgets/psychics_home_section.dart';
 import '../widgets/ultra_premium/ultra_fortune_app_bar.dart';
 import '../widgets/ultra_premium/ultra_fortune_cosmic_background.dart';
 import '../widgets/ultra_premium/ultra_fortune_daily_energy.dart';
@@ -75,6 +76,12 @@ class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
             slivers: [
               const SliverToBoxAdapter(child: UltraFortuneAppBar()),
               const SliverToBoxAdapter(child: UltraFortuneHeroSection()),
+              const SliverToBoxAdapter(
+                child: LazyScreenSection(
+                  delay: LazyLoadPerf.fortuneProphecy,
+                  child: PsychicsHomeSection(),
+                ),
+              ),
               const SliverToBoxAdapter(
                 child: ShortsHubStrip(
                   title: 'Kısa Videolar',

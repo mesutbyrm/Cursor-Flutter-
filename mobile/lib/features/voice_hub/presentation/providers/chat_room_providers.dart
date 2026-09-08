@@ -34,6 +34,7 @@ import '../../domain/pk/pk_battle_remote_models.dart';
 import '../../../../core/network/sse/sse_hub_provider.dart';
 import '../../data/youtube_music_search_cache.dart';
 import '../../../live/presentation/providers/live_pk_invite_signal_provider.dart';
+import 'voice_speak_request_signal_provider.dart';
 import '../../../live/presentation/gifts/providers/live_gift_providers.dart';
 import '../../music/domain/entities/room_playback_sync.dart';
 import '../../music/domain/song_playback_fields.dart';
