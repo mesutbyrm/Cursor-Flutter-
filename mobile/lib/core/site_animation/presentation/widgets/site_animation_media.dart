@@ -3,6 +3,7 @@ import 'package:lottie/lottie.dart';
 
 import '../../../../core/video/video_cache_service.dart';
 import '../../domain/site_animation_asset.dart';
+import '../../domain/site_animation_type.dart';
 import 'site_animation_fallback.dart';
 import '../../domain/site_animation_command.dart';
 import 'site_animation_entrance_card.dart';
