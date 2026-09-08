@@ -11,6 +11,7 @@ import '../providers/admin_dashboard_providers.dart';
 import '../providers/admin_panel_providers.dart';
 import '../providers/admin_providers.dart';
 import '../providers/staff_access_provider.dart';
+import '../widgets/admin_activity_ticker.dart';
 
 /// Tam admin dashboard — normal profilden görsel olarak ayrılmış.
 class AdminDashboardPage extends ConsumerWidget {
@@ -106,6 +107,7 @@ class AdminDashboardPage extends ConsumerWidget {
                         ),
                       ),
                     _SectionLabel('Dashboard'),
+                    const AdminActivityTicker(),
                     if (statsAsync.isLoading && !statsAsync.hasValue)
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 24),

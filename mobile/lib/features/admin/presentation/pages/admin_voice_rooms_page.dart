@@ -9,6 +9,7 @@ import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/voice_rooms_list_notifier.dart';
 import '../providers/staff_access_provider.dart';
+import '../widgets/admin_voice_room_mini_panel.dart';
 
 /// Admin — aktif sesli odalar (`GET /api/chat/rooms`).
 class AdminVoiceRoomsPage extends ConsumerWidget {
@@ -116,12 +117,12 @@ class AdminVoiceRoomsPage extends ConsumerWidget {
   }
 }
 
-class _RoomCard extends StatelessWidget {
+class _RoomCard extends ConsumerWidget {
   const _RoomCard({required this.room});
   final VoiceRoomEntity room;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final members = room.displayOnline;
     return DiscoverGlassCard(
       padding: const EdgeInsets.all(14),
@@ -174,8 +175,12 @@ class _RoomCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: FilledButton(
-                  onPressed: () => context.push('/admin'),
-                  child: const Text('Oda ayarları'),
+                  onPressed: () => showAdminVoiceRoomMiniPanel(
+                    context: context,
+                    ref: ref,
+                    room: room,
+                  ),
+                  child: const Text('Admin panel'),
                 ),
               ),
             ],

@@ -186,7 +186,7 @@ String? _routeFromTypeAndText(
   switch (type) {
     case 'cfc_payment':
     case 'cfc_payment_request':
-      if (staffCanManagePayments) return '/admin';
+      if (staffCanManagePayments) return _adminPaymentPath(n);
       return '/cfc-store';
     case 'cfc_payment_approved':
     case 'cfc_payment_rejected':
@@ -194,7 +194,7 @@ String? _routeFromTypeAndText(
     case 'jeton_payment_request':
     case 'payment_request':
     case 'payment_notification':
-      if (staffCanManagePayments) return '/admin';
+      if (staffCanManagePayments) return _adminPaymentPath(n);
       return '/jeton-store';
     case 'jeton_payment':
     case 'jeton_payment_approved':
@@ -203,7 +203,7 @@ String? _routeFromTypeAndText(
     case 'payment':
     case 'jeton':
       if (staffCanManagePayments && _isPendingPayment(text)) {
-        return '/admin';
+        return _adminPaymentPath(n);
       }
       return '/jeton-store';
     case 'gift':
@@ -300,13 +300,13 @@ String? _routeFromTypeAndText(
       return '/premium-membership';
     case 'admin_payment':
     case 'admin':
-      return '/admin';
+      return _adminPaymentPath(n);
   }
 
   if (text.contains('ödeme bildirim') ||
       text.contains('yeni ödeme') ||
       text.contains('payment request')) {
-    return staffCanManagePayments ? '/admin' : '/jeton-store';
+    return staffCanManagePayments ? _adminPaymentPath(n) : '/jeton-store';
   }
   if (text.contains('ödeme onay') ||
       (text.contains('jeton') && text.contains('eklendi')) ||
@@ -376,4 +376,12 @@ bool _isPendingPayment(String text) {
       text.contains('bildirim') ||
       text.contains('talep') ||
       text.contains('bekle');
+}
+
+String _adminPaymentPath(AppNotificationEntity n) {
+  final requestId = n.targetId?.trim();
+  if (requestId != null && requestId.isNotEmpty) {
+    return '/admin?focusRequest=$requestId';
+  }
+  return '/admin';
 }

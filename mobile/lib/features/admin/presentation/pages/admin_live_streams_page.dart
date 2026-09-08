@@ -6,9 +6,10 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
-import '../../../live/domain/entities/live_stream_entity.dart';
+import '../../../live/presentation/providers/live_providers.dart';
 import '../../../live/presentation/providers/live_streams_list_notifier.dart';
 import '../../../live/presentation/utils/open_live_stream.dart';
+import '../../../live/presentation/widgets/broadcast_room/live_moderation_sheet.dart';
 import '../providers/staff_access_provider.dart';
 
 /// Admin — aktif canlı yayınlar (`GET /api/video-streams`).
@@ -191,18 +192,112 @@ class _StreamCard extends ConsumerWidget {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppThemeColors.liveRed,
-                  ),
-                  onPressed: () => context.push('/pk/moderation'),
+                child: OutlinedButton(
+                  onPressed: () => _openModeration(context, ref, stream),
                   child: const Text('Moderasyon'),
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: AppThemeColors.liveRed,
+              ),
+              onPressed: () => _endStream(context, ref, stream),
+              child: const Text('Yayını sonlandır'),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _openModeration(
+    BuildContext context,
+    WidgetRef ref,
+    LiveStreamEntity stream,
+  ) async {
+    final ctrl = TextEditingController();
+    final userId = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Moderasyon'),
+        content: TextField(
+          controller: ctrl,
+          decoration: const InputDecoration(
+            labelText: 'Kullanıcı ID',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+            child: const Text('Devam'),
+          ),
+        ],
+      ),
+    );
+    ctrl.dispose();
+    if (userId == null || userId.isEmpty || !context.mounted) return;
+    final streamId = stream.id;
+    if (streamId.isEmpty) return;
+    await showLiveModerationSheet(
+      context: context,
+      ref: ref,
+      streamId: streamId,
+      targetUserId: userId,
+      targetDisplayName: userId,
+    );
+  }
+
+  Future<void> _endStream(
+    BuildContext context,
+    WidgetRef ref,
+    LiveStreamEntity stream,
+  ) async {
+    final streamId = stream.id;
+    if (streamId.isEmpty) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Yayını sonlandır'),
+        content: const Text(
+          'Bu canlı yayın sunucuda sonlandırılacak. Emin misiniz?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sonlandır'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    try {
+      await ref.read(liveRemoteProvider).endVideoStream(streamId);
+      ref.invalidate(liveStreamsListNotifierProvider);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Yayın sonlandırıldı')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
+        );
+      }
+    }
   }
 }

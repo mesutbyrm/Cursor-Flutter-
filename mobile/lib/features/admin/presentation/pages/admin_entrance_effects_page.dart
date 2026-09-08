@@ -9,6 +9,7 @@ import '../../../vip_gold/domain/vip_tier.dart';
 import '../../../vip_gold/presentation/providers/entrance_effect_settings_provider.dart';
 import '../../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
 import '../providers/staff_access_provider.dart';
+import '../widgets/admin_local_preview_banner.dart';
 
 /// Admin — giriş efekti hızı, süre ve üyelik kademesi ayarları.
 class AdminEntranceEffectsPage extends ConsumerStatefulWidget {
@@ -70,6 +71,7 @@ class _AdminEntranceEffectsPageState
                     ],
                   ),
                 ),
+                const AdminLocalPreviewBanner(),
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),

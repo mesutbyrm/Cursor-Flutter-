@@ -11,6 +11,7 @@ import '../../../cosmetics/presentation/providers/cosmetics_providers.dart';
 import '../../../membership/presentation/controllers/membership_controller.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';
 import '../../../shorts/presentation/providers/shorts_providers.dart';
+import '../../data/profile_hub_preferences_store.dart';
 import '../../domain/entities/profile_extended_entity.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../premium_2026/profile_membership_helpers.dart';
@@ -26,6 +27,11 @@ final profileMembershipInfoProvider =
     Provider.autoDispose<ProfileMembershipInfo>((ref) {
   final wallet = ref.watch(walletBalancesProvider).valueOrNull;
   return profileMembershipFromWallet(wallet);
+});
+
+final profileHubPreferencesStoreProvider =
+    FutureProvider<ProfileHubPreferencesStore>((ref) async {
+  return ProfileHubPreferencesStore.create();
 });
 
 /// Genişletilmiş profil — şehir, burç, doğum tarihi, seri.

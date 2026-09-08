@@ -72,6 +72,44 @@ final adminDashboardStatsProvider =
   );
 });
 
+/// Dashboard — son aktiviteler (kaydırıcı).
+final adminRecentActivitiesProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  final access = ref.watch(staffAccessProvider);
+  if (!access.hasFullAdminDashboard && !access.canManagePayments) {
+    return const [];
+  }
+  try {
+    return await ref.watch(adminRemoteProvider).fetchActivities(limit: 12);
+  } catch (_) {
+    return const [];
+  }
+});
+
+/// Staff — moderasyon/admin filtreli aktiviteler.
+final staffFilteredActivitiesProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  final access = ref.watch(staffAccessProvider);
+  if (!access.isStaffMember) return const [];
+
+  try {
+    final rows = await ref.watch(adminRemoteProvider).fetchActivities(limit: 40);
+    return rows.where((a) {
+      final type =
+          (a['activityType'] ?? a['type'] ?? '').toString().toLowerCase();
+      return type.contains('report') ||
+          type.contains('ban') ||
+          type.contains('kick') ||
+          type.contains('moderation') ||
+          type.contains('admin') ||
+          type.contains('payment') ||
+          type.contains('block');
+    }).take(8).toList(growable: false);
+  } catch (_) {
+    return const [];
+  }
+});
+
 /// Sesli oda finans denetim kayıtları.
 final adminVoiceRoomFinanceAuditProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {

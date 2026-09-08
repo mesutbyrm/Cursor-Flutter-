@@ -23,7 +23,10 @@ import '../widgets/admin_voice_room_settings_panel.dart';
 
 /// Admin / yönetici — site ödeme istekleri ve bildirimler.
 class AdminHubPage extends ConsumerStatefulWidget {
-  const AdminHubPage({super.key});
+  const AdminHubPage({super.key, this.focusRequestId});
+
+  /// Push deep link — belirli ödeme talebini vurgula.
+  final String? focusRequestId;
 
   @override
   ConsumerState<AdminHubPage> createState() => _AdminHubPageState();
@@ -46,6 +49,10 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       unawaited(_connectPaymentsSse());
+      final focus = widget.focusRequestId?.trim();
+      if (focus != null && focus.isNotEmpty) {
+        _tabs.animateTo(0);
+      }
     });
   }
 
@@ -230,6 +237,7 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
                     onReview: _review,
                     onRefresh: _refreshAll,
                     onDismissAll: () => _dismissAllPending(context),
+                    highlightRequestId: widget.focusRequestId,
                   ),
                   _PaymentNotificationsTab(
                     async: notifs,
@@ -398,12 +406,13 @@ class _CountChip extends StatelessWidget {
   }
 }
 
-class _PendingPaymentsTab extends StatelessWidget {
+class _PendingPaymentsTab extends StatefulWidget {
   const _PendingPaymentsTab({
     required this.async,
     required this.onReview,
     required this.onRefresh,
     required this.onDismissAll,
+    this.highlightRequestId,
   });
 
   final AsyncValue<List<Map<String, dynamic>>> async;
@@ -415,6 +424,38 @@ class _PendingPaymentsTab extends StatelessWidget {
   }) onReview;
   final VoidCallback onRefresh;
   final VoidCallback onDismissAll;
+  final String? highlightRequestId;
+
+  @override
+  State<_PendingPaymentsTab> createState() => _PendingPaymentsTabState();
+}
+
+class _PendingPaymentsTabState extends State<_PendingPaymentsTab> {
+  final _scrollController = ScrollController();
+  final Map<String, GlobalKey> _cardKeys = {};
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToHighlight(List<Map<String, dynamic>> rows) {
+    final focus = widget.highlightRequestId?.trim();
+    if (focus == null || focus.isEmpty) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final key = _cardKeys[focus];
+      final ctx = key?.currentContext;
+      if (ctx != null) {
+        Scrollable.ensureVisible(
+          ctx,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
 
   static Future<void> _showReceipt(BuildContext context, String url) async {
     final isPdf = url.toLowerCase().contains('.pdf');
@@ -449,8 +490,8 @@ class _PendingPaymentsTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return RefreshIndicator(
       color: AppThemeColors.accentPink,
-      onRefresh: () async => onRefresh(),
-      child: async.when(
+      onRefresh: () async => widget.onRefresh(),
+      child: widget.async.when(
         loading: () => ListView(
           children: const [
             SizedBox(height: 120),
@@ -464,11 +505,12 @@ class _PendingPaymentsTab extends StatelessWidget {
               icon: Icons.shield_outlined,
               message: ApiException.userMessage(e),
               actionLabel: 'Yenile',
-              action: onRefresh,
+              action: widget.onRefresh,
             ),
           ],
         ),
         data: (rows) {
+          _scrollToHighlight(rows);
           if (rows.isEmpty) {
             return ListView(
               children: [
@@ -482,19 +524,24 @@ class _PendingPaymentsTab extends StatelessWidget {
             );
           }
           return ListView.separated(
+            controller: _scrollController,
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
             itemCount: rows.length + 1,
             separatorBuilder: (_, index) => SizedBox(height: index == 0 ? 12 : 10),
             itemBuilder: (ctx, i) {
               if (i == 0) {
                 return OutlinedButton.icon(
-                  onPressed: onDismissAll,
+                  onPressed: widget.onDismissAll,
                   icon: const Icon(Icons.clear_all_rounded, size: 18),
                   label: Text('Tüm bekleyenleri kapat (${rows.length})'),
                 );
               }
               final r = rows[i - 1];
               final id = resolvePaymentRequestId(r);
+              _cardKeys.putIfAbsent(id, GlobalKey.new);
+              final highlighted =
+                  widget.highlightRequestId != null &&
+                  widget.highlightRequestId == id;
               final isJeton = resolvePaymentRequestType(r) == 'jeton';
               final user = r['user'] is Map
                   ? Map<String, dynamic>.from(r['user'] as Map)
@@ -505,8 +552,11 @@ class _PendingPaymentsTab extends StatelessWidget {
                   'Kullanıcı';
 
               return DiscoverGlassCard(
+                key: _cardKeys[id],
                 padding: const EdgeInsets.all(14),
-                borderColor: AppThemeColors.accentPink.withValues(alpha: 0.3),
+                borderColor: highlighted
+                    ? AppThemeColors.liveRed
+                    : AppThemeColors.accentPink.withValues(alpha: 0.3),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -582,7 +632,7 @@ class _PendingPaymentsTab extends StatelessWidget {
                           child: OutlinedButton(
                             onPressed: id.isEmpty
                                 ? null
-                                : () => onReview(
+                                : () => widget.onReview(
                                       context,
                                       id,
                                       'reject',
@@ -597,7 +647,7 @@ class _PendingPaymentsTab extends StatelessWidget {
                           child: FilledButton(
                             onPressed: id.isEmpty
                                 ? null
-                                : () => onReview(
+                                : () => widget.onReview(
                                       context,
                                       id,
                                       'approve',

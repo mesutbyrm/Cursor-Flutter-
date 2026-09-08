@@ -198,6 +198,7 @@ class _AdminPanelPageState extends ConsumerState<AdminPanelPage> {
                         _PanelItem(
                           icon: Icons.collections_rounded,
                           label: 'Hediye & koleksiyon',
+                          subtitle: 'Yerel önizleme',
                           onTap: () => context.push('/admin/collections'),
                         ),
                         _PanelItem(
@@ -208,11 +209,13 @@ class _AdminPanelPageState extends ConsumerState<AdminPanelPage> {
                         _PanelItem(
                           icon: Icons.auto_awesome_rounded,
                           label: 'Giriş efektleri',
+                          subtitle: 'Yerel ayar',
                           onTap: () => context.push('/admin/entrance-effects'),
                         ),
                         _PanelItem(
                           icon: Icons.celebration_rounded,
                           label: 'Görsel efektler',
+                          subtitle: 'Yerel önizleme',
                           onTap: () => context.push('/admin/visual-fx'),
                         ),
                         _PanelItem(
@@ -287,12 +290,14 @@ class _PanelItem {
     required this.label,
     required this.onTap,
     this.badge = 0,
+    this.subtitle,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
   final int badge;
+  final String? subtitle;
 }
 
 class _ActionGrid extends StatelessWidget {
@@ -353,6 +358,17 @@ class _ActionGrid extends StatelessWidget {
                         color: context.colors.onSurface,
                       ),
                     ),
+                    if (item.subtitle != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        item.subtitle!,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: AppThemeColors.coinGold.withValues(alpha: 0.9),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               );

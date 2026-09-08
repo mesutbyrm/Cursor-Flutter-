@@ -621,7 +621,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/admin',
-        builder: (context, state) => const AdminHubPage(),
+        builder: (context, state) {
+          final focus = state.uri.queryParameters['focusRequest'];
+          return AdminHubPage(focusRequestId: focus);
+        },
       ),
       GoRoute(
         path: '/admin/dashboard',

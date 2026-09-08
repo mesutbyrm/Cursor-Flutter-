@@ -318,6 +318,31 @@ class AdminRemoteDataSource {
     }
   }
 
+  /// Kullanıcı jeton/CFC geçmişi — `GET /api/admin/finance?userId=`.
+  Future<List<Map<String, dynamic>>> fetchUserFinanceHistory({
+    required String userId,
+    int limit = 50,
+  }) async {
+    try {
+      final res = await _adminTimeout(
+        _dio.safeGet<dynamic>(
+          ApiEndpoints.adminFinance,
+          query: {'userId': userId, 'limit': '$limit'},
+          forceRefresh: true,
+        ),
+      );
+      final items = _flattenList(
+        res.data,
+        listKey: 'transactions',
+      );
+      if (items.isNotEmpty) return items;
+      return _flattenList(res.data, listKey: 'history');
+    } on ApiException catch (e) {
+      if (e.statusCode == 403 || e.statusCode == 404) return const [];
+      rethrow;
+    }
+  }
+
   /// Sesli oda finans denetimi — `GET /api/admin/voice-room-finance-audit`.
   Future<List<Map<String, dynamic>>> fetchVoiceRoomFinanceAudit({
     int limit = 100,

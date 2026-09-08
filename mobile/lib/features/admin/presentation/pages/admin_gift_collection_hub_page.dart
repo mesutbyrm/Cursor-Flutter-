@@ -8,6 +8,7 @@ import '../../domain/admin_collection_sample_catalog.dart';
 import '../../domain/achievement_badge_sample.dart';
 import '../../../voice_hub/domain/voice_room_theme_catalog.dart';
 import '../../presentation/providers/staff_access_provider.dart';
+import '../widgets/admin_local_preview_banner.dart';
 
 /// Admin — hediye & koleksiyon örnek kataloğu (arkaplan, tema, kozmetik, rozet).
 class AdminGiftCollectionHubPage extends ConsumerStatefulWidget {
@@ -66,18 +67,35 @@ class _AdminGiftCollectionHubPageState
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabs,
+      body: Column(
         children: [
-          _BackgroundGrid(items: AdminCollectionSampleCatalog.backgroundEffects()),
-          _ThemeGrid(themes: AdminCollectionSampleCatalog.roomThemes()),
-          _CosmeticGrid(items: AdminCollectionSampleCatalog.avatarAccessories()),
-          _CosmeticGrid(items: AdminCollectionSampleCatalog.microphoneFrames()),
-          _CosmeticGrid(items: AdminCollectionSampleCatalog.chatBubbles()),
-          _CosmeticGrid(items: AdminCollectionSampleCatalog.nameEffects()),
-          _CosmeticGrid(items: AdminCollectionSampleCatalog.membershipBadges()),
-          _CosmeticGrid(items: AdminCollectionSampleCatalog.profileFrames()),
-          _BadgeGrid(badges: AdminCollectionSampleCatalog.achievementBadges()),
+          const AdminLocalPreviewBanner(),
+          Expanded(
+            child: TabBarView(
+              controller: _tabs,
+              children: [
+                _BackgroundGrid(
+                  items: AdminCollectionSampleCatalog.backgroundEffects(),
+                ),
+                _ThemeGrid(themes: AdminCollectionSampleCatalog.roomThemes()),
+                _CosmeticGrid(
+                  items: AdminCollectionSampleCatalog.avatarAccessories(),
+                ),
+                _CosmeticGrid(
+                  items: AdminCollectionSampleCatalog.microphoneFrames(),
+                ),
+                _CosmeticGrid(items: AdminCollectionSampleCatalog.chatBubbles()),
+                _CosmeticGrid(items: AdminCollectionSampleCatalog.nameEffects()),
+                _CosmeticGrid(
+                  items: AdminCollectionSampleCatalog.membershipBadges(),
+                ),
+                _CosmeticGrid(items: AdminCollectionSampleCatalog.profileFrames()),
+                _BadgeGrid(
+                  badges: AdminCollectionSampleCatalog.achievementBadges(),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(

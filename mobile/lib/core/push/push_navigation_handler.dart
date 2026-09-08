@@ -213,6 +213,8 @@ class PushNavigationHandler {
           ?.toString(),
       targetPath: targetPath,
       targetId: (data['targetId'] ??
+              data['requestId'] ??
+              data['paymentRequestId'] ??
               data['conversationId'] ??
               data['chatId'] ??
               data['threadId'] ??

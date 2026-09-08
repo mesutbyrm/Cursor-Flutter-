@@ -9,6 +9,7 @@ import '../providers/admin_panel_providers.dart';
 import '../providers/staff_access_provider.dart';
 import 'admin_credit_sheet.dart';
 import 'admin_membership_sheet.dart';
+import 'admin_user_finance_history_sheet.dart';
 
 class AdminUserManageSheet {
   AdminUserManageSheet._();
@@ -140,6 +141,21 @@ class AdminUserManageSheet {
                           );
                         },
                       ),
+                      if (access.canManagePayments)
+                        _QuickChip(
+                          icon: Icons.history_rounded,
+                          label: 'Geçmiş',
+                          onTap: () async {
+                            Navigator.pop(ctx);
+                            if (!context.mounted) return;
+                            await AdminUserFinanceHistorySheet.show(
+                              context,
+                              ref: ref,
+                              userId: userId,
+                              userLabel: label,
+                            );
+                          },
+                        ),
                     ],
                   ),
                   const SizedBox(height: 16),

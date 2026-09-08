@@ -1,5 +1,21 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.414+452 (2026-09-08) — Profil/admin tamamlama paketi
+
+### Admin
+- Dashboard canlı aktivite kaydırıcısı (`fetchActivities`)
+- Jeton ödeme push deep link: `/admin?focusRequest=<id>` + talep vurgusu
+- Kullanıcı jeton/CFC geçmişi sheet (`GET /api/admin/finance?userId=`)
+- Stub sayfalar: yerel önizleme banner (koleksiyon, giriş efekti, görsel FX)
+- Sesli oda admin mini panel (odaya gir + kick)
+- Yayın admin: moderasyon sheet + yayını sonlandır
+
+### Profil
+- Özet kartı (jeton, CFC, seviye, staff chip)
+- Son aktivite satırları (`profileActivityNotifier`)
+- Accordion açık bölüm tercihi (`SharedPreferences`)
+- Yetkili panel: KPI (bekleyen ödeme, aktif oda/yayın), rol önizleme, staff aktivite
+
 ## 1.0.413+451 (2026-09-08) — Profil/admin eksik tamamlama
 
 - Admin dashboard: canlı oda/yayın sayısı fallback, okunmamış bildirim sayacı

@@ -11,6 +11,7 @@ import '../../../vip_gold/presentation/providers/entrance_effect_settings_provid
 import '../../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
 import '../../../visual_fx/domain/fx_gift_tier.dart';
 import '../providers/staff_access_provider.dart';
+import '../widgets/admin_local_preview_banner.dart';
 
 /// Admin — merkezi görsel efekt yönetimi hub'ı.
 class AdminVisualFxPage extends ConsumerStatefulWidget {
@@ -71,6 +72,7 @@ class _AdminVisualFxPageState extends ConsumerState<AdminVisualFxPage> {
                     ],
                   ),
                 ),
+                const AdminLocalPreviewBanner(),
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +12,8 @@ import '../premium_2026/profile_screen_state.dart';
 import '../premium_2026/profile_theme.dart';
 import '../premium_2026/widgets/profile_settings_section.dart';
 import '../premium_2026/widgets/staff_profile_card.dart';
+import '../providers/profile_activity_notifier.dart';
+import '../providers/profile_hub_providers.dart';
 import 'profile_hub_about_stats_row.dart';
 import 'profile_hub_badges_section.dart';
 import 'profile_hub_currency_card.dart';
@@ -17,8 +21,10 @@ import 'profile_hub_membership_badges_section.dart';
 import 'profile_hub_membership_section.dart';
 import 'profile_hub_membership_shortcuts.dart';
 import 'profile_hub_quick_menu.dart';
+import 'profile_hub_recent_activity.dart';
 import 'profile_hub_services_row.dart';
 import 'profile_hub_share_card.dart';
+import 'profile_hub_summary_card.dart';
 import 'profile_hub_top_gifts_section.dart';
 import '../../../shorts/presentation/widgets/shorts_profile_content.dart';
 import '../premium_2026/profile_lazy_sections.dart';
@@ -52,14 +58,55 @@ class ProfileHubTabbedSections extends ConsumerStatefulWidget {
 class _ProfileHubTabbedSectionsState
     extends ConsumerState<ProfileHubTabbedSections> {
   int _openSection = 0;
+  var _prefsLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadSectionPref());
+  }
+
+  Future<void> _loadSectionPref() async {
+    try {
+      final store = await ref.read(profileHubPreferencesStoreProvider.future);
+      if (!mounted) return;
+      setState(() {
+        _openSection = store.openSectionIndex;
+        _prefsLoaded = true;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _prefsLoaded = true);
+    }
+  }
+
+  Future<void> _saveSectionPref(int index) async {
+    try {
+      final store = await ref.read(profileHubPreferencesStoreProvider.future);
+      await store.setOpenSectionIndex(index);
+    } catch (_) {}
+  }
+
+  void _toggleSection(int index) {
+    final next = _openSection == index ? -1 : index;
+    setState(() => _openSection = next);
+    unawaited(_saveSectionPref(next));
+  }
 
   @override
   Widget build(BuildContext context) {
     final unread = ref.watch(inboxUnreadCountProvider);
+    ref.watch(profileActivityNotifierProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        ProfileHubSummaryCard(state: widget.state)
+            .animate()
+            .fadeIn(duration: 280.ms)
+            .slideY(begin: 0.04, end: 0),
+        const SizedBox(height: 12),
+        const ProfileHubRecentActivity(),
+        const SizedBox(height: 12),
         ProfileHubCurrencyCard(state: widget.state)
             .animate()
             .fadeIn(duration: 280.ms)
@@ -71,7 +118,7 @@ class _ProfileHubTabbedSectionsState
           icon: Icons.account_balance_wallet_rounded,
           title: 'Bakiye & Üyelik',
           subtitle: 'Jeton ${widget.state.jeton} · CFC ${widget.state.cfc}',
-          onToggle: (i) => setState(() => _openSection = i),
+          onToggle: _toggleSection,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -91,7 +138,7 @@ class _ProfileHubTabbedSectionsState
           title: 'İstatistikler & Sosyal',
           subtitle:
               '${widget.state.followers} takipçi · Seviye ${widget.state.level.level}',
-          onToggle: (i) => setState(() => _openSection = i),
+          onToggle: _toggleSection,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -139,7 +186,7 @@ class _ProfileHubTabbedSectionsState
           subtitle: widget.state.liveStreams > 0
               ? '${widget.state.liveStreams} yayın kaydı'
               : 'Yayın ve oda bilgileri',
-          onToggle: (i) => setState(() => _openSection = i),
+          onToggle: _toggleSection,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -159,7 +206,7 @@ class _ProfileHubTabbedSectionsState
           title: 'Ayarlar & Güvenlik',
           subtitle: 'Hesap, bildirimler, destek',
           badge: unread > 0 ? unread : null,
-          onToggle: (i) => setState(() => _openSection = i),
+          onToggle: _toggleSection,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -207,6 +254,7 @@ class _ProfileHubTabbedSectionsState
           const SizedBox(height: 16),
           const ProfileLazyAdmin(),
         ],
+        if (!_prefsLoaded) const SizedBox.shrink(),
       ],
     );
   }
@@ -241,7 +289,7 @@ class _ProfileSectionCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(ProfilePremiumTheme.radiusLg),
       child: InkWell(
         borderRadius: BorderRadius.circular(ProfilePremiumTheme.radiusLg),
-        onTap: () => onToggle(open ? -1 : index),
+        onTap: () => onToggle(index),
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(ProfilePremiumTheme.radiusLg),
