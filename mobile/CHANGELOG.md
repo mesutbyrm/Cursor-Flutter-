@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.381+419 (2026-09-08) — economy Faz 24: global hediye label testleri
+
+- `GlobalGiftNotification.label(jetonLabel: …)` markalı etiket regresyon testleri
+- ZIP economy v2 kullanıcı UI entegrasyonu tamamlandı (Faz 1–24)
+
 ## 1.0.380+418 (2026-09-08) — economy Faz 23: global hediye overlay etiketi
 
 - `GlobalGiftNotification.label()` gösterimde markalı `$jetonLabel` ile yeniden oluşturulur
