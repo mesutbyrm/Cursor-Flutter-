@@ -5,17 +5,17 @@
 | Alan | Değer |
 |------|--------|
 | Sürüm | `1.0.380+418` |
-| Tarih (UTC) | 2026-09-08 03:36 |
-| Commit | [`1859491faa1fcd887eec122a5204085a695d0082`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/1859491faa1fcd887eec122a5204085a695d0082) |
-| İş akışı | [Run 34183137468](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34183137468) |
+| Tarih (UTC) | 2026-09-08 03:55 |
+| Commit | [`8e0df0feefc8c5cf3859188e2b52473aeb446619`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/8e0df0feefc8c5cf3859188e2b52473aeb446619) |
+| İş akışı | [Run 34184553751](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34184553751) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.380+418 (2026-09-08) — economy Faz 23: global hediye overlay etiketi
+## 1.0.381+419 (2026-09-08) — economy Faz 24: global hediye label testleri
 
-- `GlobalGiftNotification.label()` gösterimde markalı `$jetonLabel` ile yeniden oluşturulur
-- Site geneli üst şerit hediye duyuruları branding API fallback'ine uyumlu
+- `GlobalGiftNotification.label(jetonLabel: …)` markalı etiket regresyon testleri
+- ZIP economy v2 kullanıcı UI entegrasyonu tamamlandı (Faz 1–24)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
