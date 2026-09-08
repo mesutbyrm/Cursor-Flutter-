@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../inbox/presentation/inbox_routes.dart';
 import '../../../inbox/presentation/providers/inbox_unread_providers.dart';
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../premium_2026/profile_theme.dart';
 import '../premium_2026/profile_membership_helpers.dart';
 import '../premium_2026/widgets/profile_action_tile.dart';
@@ -18,6 +19,7 @@ class ProfileHubQuickMenu extends ConsumerWidget {
     final visitors = ref.watch(profileVisitorBadgeProvider);
     final membershipInfo = ref.watch(profileMembershipInfoProvider);
     final membershipLabel = buildMembershipQuickMenuLabel(info: membershipInfo);
+    final jetonHistoryLabel = economyJetonHistoryMenuLabel(ref);
 
     final items = <({IconData icon, String label, VoidCallback onTap, int? badge})>[
       (
@@ -34,7 +36,7 @@ class ProfileHubQuickMenu extends ConsumerWidget {
       ),
       (
         icon: Icons.history_rounded,
-        label: 'Jeton Geçmişim',
+        label: jetonHistoryLabel,
         onTap: () => context.push('/profile/transactions'),
         badge: null,
       ),

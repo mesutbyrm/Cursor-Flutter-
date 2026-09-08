@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../domain/entities/chat_room_message.dart';
 
-class VoiceRoomChatPanel extends StatelessWidget {
+class VoiceRoomChatPanel extends ConsumerWidget {
   const VoiceRoomChatPanel({
     super.key,
     required this.messages,
@@ -16,7 +18,8 @@ class VoiceRoomChatPanel extends StatelessWidget {
   final double maxHeight;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final visible = messages.length > 40
         ? messages.sublist(messages.length - 40)
         : messages;
@@ -42,16 +45,18 @@ class VoiceRoomChatPanel extends StatelessWidget {
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 4),
         itemCount: visible.length,
-        itemBuilder: (context, i) => _ChatRow(message: visible[i]),
+        itemBuilder: (context, i) =>
+            _ChatRow(message: visible[i], jetonLabel: jetonLabel),
       ),
     );
   }
 }
 
 class _ChatRow extends StatelessWidget {
-  const _ChatRow({required this.message});
+  const _ChatRow({required this.message, required this.jetonLabel});
 
   final ChatRoomMessage message;
+  final String jetonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +78,7 @@ class _ChatRow extends StatelessWidget {
       case ChatMessageKind.systemJoin:
         return const SizedBox.shrink();
       case ChatMessageKind.gift:
-        return _GiftRow(message: message);
+        return _GiftRow(message: message, jetonLabel: jetonLabel);
       case ChatMessageKind.text:
       case ChatMessageKind.unknown:
         return _TextRow(message: message);
@@ -147,9 +152,10 @@ class _TextRow extends StatelessWidget {
 }
 
 class _GiftRow extends StatelessWidget {
-  const _GiftRow({required this.message});
+  const _GiftRow({required this.message, required this.jetonLabel});
 
   final ChatRoomMessage message;
+  final String jetonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -175,7 +181,7 @@ class _GiftRow extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(left: 8),
               child: Text(
-                '$jeton jeton',
+                '$jeton $jetonLabel',
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w900,

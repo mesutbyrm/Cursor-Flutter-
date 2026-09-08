@@ -6,6 +6,7 @@ import '../../../membership/presentation/controllers/membership_controller.dart'
 import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../../profile/presentation/providers/profile_hub_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 
 /// Jeton / CFC mağazasında üyelik planı teaser — bekleyen ödeme yoksa gösterilir.
 class MembershipStoreTeaserBanner extends ConsumerWidget {
@@ -31,6 +32,8 @@ class MembershipStoreTeaserBanner extends ConsumerWidget {
       info: info,
       expiresAt: expiresAt,
     );
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+    final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
     final subtitle = buildMembershipStoreTeaserSubtitle(
       info: info,
       store: store,
@@ -38,6 +41,8 @@ class MembershipStoreTeaserBanner extends ConsumerWidget {
       packages: ui.apiPackages,
       catalogTier: catalogTier,
       expiresAt: expiresAt,
+      jetonLabel: jetonLabel,
+      cfcLabel: cfcLabel,
     );
     final actionLabel = buildMembershipStoreTeaserBannerActionLabel(info: info);
 

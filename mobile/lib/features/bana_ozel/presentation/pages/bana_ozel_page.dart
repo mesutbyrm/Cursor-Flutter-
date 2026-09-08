@@ -3,8 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../core/economy/domain/economy_payment_models.dart';
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
+import '../../../../core/economy/presentation/widgets/currency_amount_label.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../fortune/data/services/rewarded_ad_service.dart';
 import '../../../fortune/presentation/widgets/ultra_premium/ultra_fortune_cosmic_background.dart';
 import '../../../fortune/presentation/widgets/ultra_premium/ultra_fortune_tokens.dart';
 import '../../domain/entities/bana_ozel_entities.dart';
@@ -37,7 +41,7 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
     }
   }
 
-  Future<void> _openItem(BanaOzelItemEntity item, int balance) async {
+  Future<void> _openItem(BanaOzelItemEntity item, BanaOzelCatalogEntity data) async {
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) {
       if (!mounted) return;
@@ -48,28 +52,39 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
       context.push('/auth/login');
       return;
     }
-    if (balance < item.jetonCost) {
+
+    final cost = item.jetonCost;
+    final canPayDirectly = data.canAffordItem(item);
+
+    if (!canPayDirectly) {
+      final insufficient = await _tryOpenAndCatchInsufficient(item);
+      if (insufficient != null && insufficient.canWatchAd) {
+        final watched = await _confirmAndWatchAd(item, insufficient);
+        if (watched) return;
+      }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Yetersiz jeton (${item.jetonCost} gerekli, bakiye: $balance)',
+      if (insufficient != null && !insufficient.canWatchAd) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(insufficient.message),
+            action: SnackBarAction(
+              label: economyJetonBuyActionLabel(ref),
+              onPressed: () => context.push('/jeton-store'),
+            ),
           ),
-          action: SnackBarAction(
-            label: 'Jeton al',
-            onPressed: () => context.push('/jeton-store'),
-          ),
-        ),
-      );
+        );
+      }
       return;
     }
 
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+    final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text('${item.icon} ${item.nameTr}'),
         content: Text(
-          '${item.jetonCost} jeton harcanacak.\nDevam etmek istiyor musunuz?',
+          '$cost birim harcanacak ($cfcLabel veya $jetonLabel).\nDevam etmek istiyor musunuz?',
         ),
         actions: [
           TextButton(
@@ -90,11 +105,74 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
       return;
     }
 
+    await _performOpen(item);
+  }
+
+  Future<BanaOzelInsufficientPayment?> _tryOpenAndCatchInsufficient(
+    BanaOzelItemEntity item,
+  ) async {
+    setState(() => _openingSlug = item.slug);
+    try {
+      await ref.read(banaOzelRepositoryProvider).openItem(item: item);
+      return null;
+    } on BanaOzelInsufficientPayment catch (e) {
+      return e;
+    } catch (_) {
+      return null;
+    } finally {
+      if (mounted) setState(() => _openingSlug = null);
+    }
+  }
+
+  Future<bool> _confirmAndWatchAd(
+    BanaOzelItemEntity item,
+    BanaOzelInsufficientPayment insufficient,
+  ) async {
+    final adHint = insufficient.adUnlimited
+        ? 'Reklam izleyerek ücretsiz açabilirsiniz.'
+        : 'Kalan reklam hakkı: ${insufficient.adRemaining}';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('${item.icon} ${item.nameTr}'),
+        content: Text('${insufficient.message}\n\n$adHint'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Reklam izle'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) {
+      setState(() => _pendingSlugAttempted = false);
+      return false;
+    }
+
+    final rewarded = await RewardedAdService.instance.show();
+    if (!rewarded) {
+      if (!mounted) return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Reklam tamamlanamadı. Tekrar deneyin.')),
+      );
+      setState(() => _pendingSlugAttempted = false);
+      return false;
+    }
+
+    await _performOpen(item, useAd: true);
+    return true;
+  }
+
+  Future<void> _performOpen(BanaOzelItemEntity item, {bool useAd = false}) async {
     setState(() => _openingSlug = item.slug);
     try {
       final result = await ref
           .read(banaOzelRepositoryProvider)
-          .openItem(item: item);
+          .openItem(item: item, useAd: useAd);
       ref.read(banaOzelCatalogProvider.notifier).applyOpenResult(result);
       if (!mounted) return;
       if (!result.hasContent) {
@@ -109,6 +187,16 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
         _pendingSlugAttempted = false;
       });
       await context.push('/fortune/bana-ozel/result', extra: result);
+    } on BanaOzelInsufficientPayment catch (e) {
+      if (!mounted) return;
+      setState(() => _pendingSlugAttempted = false);
+      if (e.canWatchAd && !useAd) {
+        await _confirmAndWatchAd(item, e);
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
     } catch (e) {
       if (!mounted) return;
       setState(() => _pendingSlugAttempted = false);
@@ -131,7 +219,7 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
       return;
     }
     setState(() => _pendingSlugAttempted = true);
-    _openItem(item, data.jetonBalance);
+    _openItem(item, data);
   }
 
   @override
@@ -144,6 +232,7 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
       }
     });
     final catalog = ref.watch(banaOzelCatalogProvider);
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     return Scaffold(
       backgroundColor: UltraFortuneTokens.deepNight,
@@ -172,7 +261,10 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
                       ),
                     ),
                     catalog.maybeWhen(
-                      data: (c) => _JetonBadge(balance: c.jetonBalance),
+                      data: (c) => _BalanceBadges(
+                        jetonBalance: c.jetonBalance,
+                        cfcBalance: c.cfcBalance,
+                      ),
                       orElse: () => const SizedBox.shrink(),
                     ),
                   ],
@@ -230,7 +322,7 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Kişisel fal ve tarot içerikleri — jeton ile açın.',
+                                    'Kişisel fal ve tarot içerikleri — $jetonLabel ile açın.',
                                     style: TextStyle(
                                       color: Colors.white.withValues(alpha: 0.72),
                                       fontSize: 13,
@@ -271,18 +363,14 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
                                 (context, i) {
                                   final item = filtered[i];
                                   final opening = _openingSlug == item.slug;
-                                  final affordable =
-                                      data.jetonBalance >= item.jetonCost;
+                                  final affordable = data.canAffordItem(item);
                                   return _ItemCard(
                                     item: item,
                                     opening: opening,
                                     affordable: affordable,
                                     onTap: opening
                                         ? null
-                                        : () => _openItem(
-                                              item,
-                                              data.jetonBalance,
-                                            ),
+                                        : () => _openItem(item, data),
                                   );
                                 },
                                 childCount: filtered.length,
@@ -303,35 +391,34 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
   }
 }
 
-class _JetonBadge extends StatelessWidget {
-  const _JetonBadge({required this.balance});
+class _BalanceBadges extends ConsumerWidget {
+  const _BalanceBadges({
+    required this.jetonBalance,
+    required this.cfcBalance,
+  });
 
-  final int balance;
+  final int jetonBalance;
+  final int cfcBalance;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFD54F).withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFFFD54F).withValues(alpha: 0.45)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.monetization_on_rounded,
-              size: 16, color: Color(0xFFFFD54F)),
-          const SizedBox(width: 4),
-          Text(
-            '$balance',
-            style: const TextStyle(
-              fontWeight: FontWeight.w900,
-              color: Color(0xFFFFD54F),
-            ),
-          ),
-        ],
-      ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CurrencyAmountLabel(
+          amount: cfcBalance,
+          currencyKey: 'cfc',
+          compact: true,
+          showName: false,
+        ),
+        const SizedBox(width: 8),
+        CurrencyAmountLabel(
+          amount: jetonBalance,
+          currencyKey: 'jeton',
+          compact: true,
+          showName: false,
+        ),
+      ],
     );
   }
 }

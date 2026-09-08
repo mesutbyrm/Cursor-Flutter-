@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glow_panel.dart';
@@ -14,6 +15,7 @@ class ReferralUsersPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final users = ref.watch(referralUsersProvider);
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     return Scaffold(
       appBar: AppBar(
@@ -77,11 +79,11 @@ class ReferralUsersPage extends ConsumerWidget {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Uygun hacim: ${u.eligibleJetonVolume} Jeton',
+                        'Uygun hacim: ${u.eligibleJetonVolume} $jetonLabel',
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                       Text(
-                        'Oluşan kazanç: ${u.referralEarnings} Jeton',
+                        'Oluşan kazanç: ${u.referralEarnings} $jetonLabel',
                         style: TextStyle(
                           color: AppTheme.accent.withValues(alpha: 0.95),
                           fontWeight: FontWeight.w700,

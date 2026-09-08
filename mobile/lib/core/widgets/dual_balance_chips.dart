@@ -11,6 +11,8 @@ class DualBalanceChips extends StatelessWidget {
     required this.jeton,
     required this.cfc,
     this.compact = false,
+    this.jetonLabel = 'Jeton',
+    this.cfcLabel = 'CFC',
     this.onJetonTap,
     this.onCfcTap,
     this.onTap,
@@ -19,6 +21,8 @@ class DualBalanceChips extends StatelessWidget {
   final int jeton;
   final int cfc;
   final bool compact;
+  final String jetonLabel;
+  final String cfcLabel;
   final VoidCallback? onJetonTap;
   final VoidCallback? onCfcTap;
   /// Geriye dönük: her iki chip jeton mağazasına gider.
@@ -30,7 +34,7 @@ class DualBalanceChips extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         _Chip(
-          label: 'Jeton',
+          label: jetonLabel,
           value: jeton,
           icon: Icons.monetization_on_rounded,
           color: AppThemeColors.coinGold,
@@ -39,7 +43,7 @@ class DualBalanceChips extends StatelessWidget {
         ),
         SizedBox(width: compact ? 4 : 6),
         _Chip(
-          label: 'CFC',
+          label: cfcLabel,
           value: cfc,
           icon: Icons.diamond_rounded,
           color: AppThemeColors.diamondBlue,

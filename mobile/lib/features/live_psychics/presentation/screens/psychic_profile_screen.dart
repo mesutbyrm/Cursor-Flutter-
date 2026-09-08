@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:canlifal_social/core/navigation/wallet_navigation.dart';
+import 'package:canlifal_social/core/economy/presentation/providers/economy_providers.dart';
 import 'package:canlifal_social/core/network/api_exception.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/ui/premium/live_badge.dart';
@@ -132,9 +133,11 @@ class PsychicProfileScreen extends ConsumerWidget {
     if (!context.mounted || result == null) return;
 
     if (!isStaff && balance < result.jeton) {
+      final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
       await showInsufficientJetonDialog(
         context,
-        message: 'Yetersiz jeton. Gerekli: ${result.jeton}, bakiye: $balance',
+        message:
+            'Yetersiz $jetonLabel. Gerekli: ${result.jeton}, bakiye: $balance',
         ref: ref,
       );
       return;
@@ -185,9 +188,10 @@ class PsychicProfileScreen extends ConsumerWidget {
     if (!context.mounted || amount == null) return;
 
     if (balance < amount) {
+      final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
       await showInsufficientJetonDialog(
         context,
-        message: 'Yetersiz jeton. Gerekli: $amount, bakiye: $balance',
+        message: 'Yetersiz $jetonLabel. Gerekli: $amount, bakiye: $balance',
         ref: ref,
       );
       return;
@@ -203,9 +207,10 @@ class PsychicProfileScreen extends ConsumerWidget {
     if (ok) {
       await ref.refreshWalletCache();
       if (!context.mounted) return;
+      final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('$amount jeton bahşiş gönderildi — teşekkürler!'),
+          content: Text('$amount $jetonLabel bahşiş gönderildi — teşekkürler!'),
         ),
       );
     } else {
@@ -239,6 +244,7 @@ class _ProfileBody extends ConsumerWidget {
     final awardsAsync = ref.watch(psychicAwardsProvider(psychic.id));
     final giftsAsync = ref.watch(psychicGiftsProvider(psychic.id));
     final fortuneTypes = psychicFortuneTypesForPsychic(psychic.specialties);
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
@@ -350,8 +356,8 @@ class _ProfileBody extends ConsumerWidget {
         if (psychic.pricePerMinute > 0)
           Text(
             isStaff
-                ? 'Staff hesabı — jeton düşülmez'
-                : '${psychic.pricePerMinute} jeton/dk · Bakiye: $balance jeton',
+                ? 'Staff hesabı — $jetonLabel düşülmez'
+                : '${psychic.pricePerMinute} $jetonLabel/dk · Bakiye: $balance $jetonLabel',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 12,

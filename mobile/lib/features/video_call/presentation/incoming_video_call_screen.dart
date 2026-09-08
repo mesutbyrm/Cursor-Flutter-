@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/widgets/user_avatar.dart';
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../live_psychics/presentation/widgets/psychic_fortune_types.dart';
 import '../../messages/presentation/services/dm_voice_call_service.dart';
 import '../data/video_call_invitation_service.dart';
@@ -60,6 +61,7 @@ class _IncomingVideoCallScreenState extends ConsumerState<IncomingVideoCallScree
   @override
   Widget build(BuildContext context) {
     final invite = widget.invitation;
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final scale = Tween<double>(begin: 1.0, end: 1.08).animate(
       CurvedAnimation(parent: _pulse, curve: Curves.easeInOut),
     );
@@ -130,7 +132,7 @@ class _IncomingVideoCallScreenState extends ConsumerState<IncomingVideoCallScree
             if (invite.durationMinutes > 0) ...[
               const SizedBox(height: 12),
               Text(
-                '${invite.durationMinutes} dk · ${invite.totalJeton} jeton',
+                '${invite.durationMinutes} dk · ${invite.totalJeton} $jetonLabel',
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.7),
                   fontSize: 14,
@@ -140,7 +142,7 @@ class _IncomingVideoCallScreenState extends ConsumerState<IncomingVideoCallScree
             if (invite.pricePerMinute != null) ...[
               const SizedBox(height: 4),
               Text(
-                'Dakika ücreti: ${invite.pricePerMinute!.toStringAsFixed(0)} jeton',
+                'Dakika ücreti: ${invite.pricePerMinute!.toStringAsFixed(0)} $jetonLabel',
                 style: TextStyle(
                   color: Colors.amber.shade200,
                   fontSize: 13,

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
@@ -47,11 +48,11 @@ class _VoiceRoomToolsSheet extends ConsumerWidget {
   final VoiceRoomPermissions perms;
   final bool isOwner;
 
-  static const _roomCommands = [
-    ('!duyuru', 'Duyuru yayınla (yetkili ücretsiz / 5 jeton)'),
-    ('!temizle', 'Sohbeti temizle'),
-    ('!muzik', 'Müzik / DJ bilgisi'),
-  ];
+  List<(String, String)> _roomCommands(String jetonLabel) => [
+        ('!duyuru', 'Duyuru yayınla (yetkili ücretsiz / 5 $jetonLabel)'),
+        ('!temizle', 'Sohbeti temizle'),
+        ('!muzik', 'Müzik / DJ bilgisi'),
+      ];
 
   static const _staffCommands = [
     ('!kick @kullanıcı', 'Odadan çıkar (REST ban önerilir)'),
@@ -64,6 +65,8 @@ class _VoiceRoomToolsSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final coins = ref.watch(coinBalanceProvider) ?? 0;
     final coinLabel = NumberFormat.decimalPattern('tr').format(coins);
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+    final jetonTopUpLabel = economyJetonTopUpShortLabel(ref);
     final rules = (room.rulesTr ?? room.descTr ?? '').trim();
     final canModerate = perms.canModerate || isOwner;
 
@@ -102,22 +105,22 @@ class _VoiceRoomToolsSheet extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             _SectionTitle('Oda komutları'),
-            ..._roomCommands.map((c) => _CommandTile(command: c.$1, hint: c.$2)),
+            ..._roomCommands(jetonLabel).map((c) => _CommandTile(command: c.$1, hint: c.$2)),
             const SizedBox(height: 12),
             _SectionTitle('Yetkili komutları'),
             ..._staffCommands.map((c) => _CommandTile(command: c.$1, hint: c.$2)),
             const SizedBox(height: 16),
-            _SectionTitle('Jeton'),
+            _SectionTitle(jetonLabel),
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.monetization_on_rounded, color: VoiceRoomTokens.gold),
-              title: Text('Bakiye: $coinLabel jeton'),
+              title: Text('Bakiye: $coinLabel $jetonLabel'),
               trailing: FilledButton(
                 onPressed: () {
                   Navigator.pop(context);
                   openJetonStore(context, ref: ref);
                 },
-                child: const Text('Jeton yükle'),
+                child: Text(jetonTopUpLabel),
               ),
             ),
             const SizedBox(height: 8),

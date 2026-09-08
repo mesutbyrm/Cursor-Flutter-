@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/token_storage.dart';
@@ -515,51 +516,66 @@ class FortuneReadingCoordinator {
     BuildContext context,
     String message,
   ) async {
+    final container = ProviderScope.containerOf(context);
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'Fal için bakiye gerekiyor',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
-              ),
-              const SizedBox(height: 8),
-              Text(message),
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  context.push('/jeton-store');
-                },
-                icon: const Icon(Icons.toll_rounded),
-                label: const Text('Jeton yükle'),
-              ),
-              const SizedBox(height: 10),
-              OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  context.push('/profile/growth');
-                },
-                icon: const Icon(Icons.task_alt_rounded),
-                label: const Text('Görevler'),
-              ),
-              const SizedBox(height: 8),
-              OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  context.push('/premium-membership');
-                },
-                icon: const Icon(Icons.workspace_premium_rounded),
-                label: const Text('Üyelik avantajlarını gör'),
-              ),
-            ],
-          ),
+      builder: (ctx) => UncontrolledProviderScope(
+        container: container,
+        child: _FortunePurchasePromptSheet(message: message),
+      ),
+    );
+  }
+}
+
+class _FortunePurchasePromptSheet extends ConsumerWidget {
+  const _FortunePurchasePromptSheet({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Fal için bakiye gerekiyor',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 8),
+            Text(message),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                context.push('/jeton-store');
+              },
+              icon: const Icon(Icons.toll_rounded),
+              label: Text(economyJetonTopUpShortLabel(ref)),
+            ),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                context.push('/profile/growth');
+              },
+              icon: const Icon(Icons.task_alt_rounded),
+              label: const Text('Görevler'),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                context.push('/premium-membership');
+              },
+              icon: const Icon(Icons.workspace_premium_rounded),
+              label: const Text('Üyelik avantajlarını gör'),
+            ),
+          ],
         ),
       ),
     );

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/ui/premium_2026/cosmic_galaxy_background.dart';
+import 'package:canlifal_social/core/economy/presentation/providers/economy_providers.dart';
 import 'package:canlifal_social/features/auth/presentation/providers/auth_providers.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychics_list_controller.dart';
 
@@ -94,11 +95,11 @@ class _PsychicBecomeTellerPageState extends ConsumerState<PsychicBecomeTellerPag
               return ListView(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
                 children: [
-                  const _HeroSection(),
+                  _HeroSection(),
                   const SizedBox(height: 28),
                   const _StepsSection(),
                   const SizedBox(height: 24),
-                  const _BenefitsSection(),
+                  _BenefitsSection(),
                   const SizedBox(height: 28),
                   FilledButton(
                     onPressed: () => context.push('/canli-falcilar/apply'),
@@ -137,11 +138,12 @@ class _PsychicBecomeTellerPageState extends ConsumerState<PsychicBecomeTellerPag
   }
 }
 
-class _HeroSection extends StatelessWidget {
+class _HeroSection extends ConsumerWidget {
   const _HeroSection();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     return Column(
       children: [
         Container(
@@ -173,7 +175,7 @@ class _HeroSection extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         Text(
-          'Tarot, kahve falı ve daha fazlası — danışanlarla canlı görüntülü seans yapın, jeton kazanın.',
+          'Tarot, kahve falı ve daha fazlası — danışanlarla canlı görüntülü seans yapın, $jetonLabel kazanın.',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 15,
@@ -254,14 +256,15 @@ class _StepsSection extends StatelessWidget {
   }
 }
 
-class _BenefitsSection extends StatelessWidget {
+class _BenefitsSection extends ConsumerWidget {
   const _BenefitsSection();
 
   @override
-  Widget build(BuildContext context) {
-    const benefits = [
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+    final benefits = [
       (Icons.videocam_rounded, 'Canlı görüntülü seans'),
-      (Icons.monetization_on_rounded, 'Jeton ile kazanç'),
+      (Icons.monetization_on_rounded, '$jetonLabel ile kazanç'),
       (Icons.dashboard_outlined, 'Falcı paneli ve çevrimiçi anahtarı'),
       (Icons.notifications_active_outlined, 'Anlık randevu bildirimleri'),
     ];

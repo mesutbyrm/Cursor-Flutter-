@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../fortune/presentation/widgets/premium_2026/premium_section_header.dart';
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../fortune/presentation/widgets/ultra_premium/ultra_fortune_tokens.dart';
 import '../../domain/entities/bana_ozel_entities.dart';
 import '../navigation/bana_ozel_navigation.dart';
@@ -20,6 +21,7 @@ class BanaOzelHubSection extends ConsumerWidget {
       data: (data) {
         if (data.items.isEmpty) return const SizedBox.shrink();
         final preview = data.items.take(6).toList();
+        final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
         return Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
           child: Column(
@@ -82,7 +84,7 @@ class BanaOzelHubSection extends ConsumerWidget {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                '💰 ${data.jetonBalance} jeton · ${data.items.length} içerik',
+                                '💰 ${data.jetonBalance} $jetonLabel · ${data.items.length} içerik',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.white.withValues(alpha: 0.65),
@@ -106,6 +108,7 @@ class BanaOzelHubSection extends ConsumerWidget {
                   separatorBuilder: (_, _) => const SizedBox(width: 8),
                   itemBuilder: (_, i) => _PreviewChip(
                     item: preview[i],
+                    jetonLabel: jetonLabel,
                     onTap: () => openBanaOzelCatalog(
                       context,
                       slug: preview[i].slug,
@@ -122,9 +125,14 @@ class BanaOzelHubSection extends ConsumerWidget {
 }
 
 class _PreviewChip extends StatelessWidget {
-  const _PreviewChip({required this.item, required this.onTap});
+  const _PreviewChip({
+    required this.item,
+    required this.jetonLabel,
+    required this.onTap,
+  });
 
   final BanaOzelItemEntity item;
+  final String jetonLabel;
   final VoidCallback onTap;
 
   @override
@@ -154,7 +162,7 @@ class _PreviewChip extends StatelessWidget {
                 ),
               ),
               Text(
-                '${item.jetonCost} jeton',
+                '${item.jetonCost} $jetonLabel',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(

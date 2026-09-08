@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../../core/theme/app_theme_extensions.dart';
 import '../../../../../core/widgets/discover_tab_layout.dart';
 import '../../../domain/game_center_models.dart';
@@ -35,7 +36,7 @@ class GameCenterPage extends ConsumerWidget {
         const SizedBox(width: 8),
         IconButton(
           tooltip: 'Yardım',
-          onPressed: () => _showHelp(context),
+          onPressed: () => _showHelp(context, ref),
           icon: const Icon(Icons.help_outline_rounded),
         ),
       ],
@@ -187,13 +188,14 @@ class GameCenterPage extends ConsumerWidget {
     }
   }
 
-  void _showHelp(BuildContext context) {
+  void _showHelp(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Oyun Merkezi'),
-        content: const Text(
-          'Jeton harcayan oyunlarda bakiyeniz otomatik kontrol edilir. '
+        content: Text(
+          '$jetonLabel harcayan oyunlarda bakiyeniz otomatik kontrol edilir. '
           'Skorlarınız canlifal.com veritabanına kaydedilir ve liderlik '
           'tablosunda görünür.',
         ),

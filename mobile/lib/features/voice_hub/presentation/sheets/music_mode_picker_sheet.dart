@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../theme/voice_room_tokens.dart';
 
 /// Şarkı seçiminden sonra — Sadece Ses / Videolu jeton seçimi (web ile aynı).
@@ -9,14 +11,42 @@ Future<bool?> showMusicModePickerSheet(
   required int videoCost,
   String? songTitle,
 }) {
+  final container = ProviderScope.containerOf(context);
   return showModalBottomSheet<bool>(
     context: context,
     backgroundColor: const Color(0xFF12082A),
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
     ),
-    builder: (ctx) => Padding(
-      padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.paddingOf(ctx).bottom + 20),
+    builder: (ctx) => UncontrolledProviderScope(
+      container: container,
+      child: _MusicModePickerSheet(
+        audioCost: audioCost,
+        videoCost: videoCost,
+        songTitle: songTitle,
+      ),
+    ),
+  );
+}
+
+class _MusicModePickerSheet extends ConsumerWidget {
+  const _MusicModePickerSheet({
+    required this.audioCost,
+    required this.videoCost,
+    this.songTitle,
+  });
+
+  final int audioCost;
+  final int videoCost;
+  final String? songTitle;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+    final bottom = MediaQuery.paddingOf(context).bottom;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(20, 16, 20, bottom + 20),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -41,10 +71,10 @@ Future<bool?> showMusicModePickerSheet(
               color: Colors.white,
             ),
           ),
-          if (songTitle != null && songTitle.isNotEmpty) ...[
+          if (songTitle != null && songTitle!.isNotEmpty) ...[
             const SizedBox(height: 6),
             Text(
-              songTitle,
+              songTitle!,
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -57,7 +87,7 @@ Future<bool?> showMusicModePickerSheet(
           ],
           const SizedBox(height: 6),
           Text(
-            'Jeton ücreti seçiminize göre kesilir',
+            '$jetonLabel ücreti seçiminize göre kesilir',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 12,
@@ -67,22 +97,22 @@ Future<bool?> showMusicModePickerSheet(
           const SizedBox(height: 20),
           _ModeTile(
             icon: Icons.music_note_rounded,
-            title: '🎵 Sadece Ses ($audioCost Jeton)',
+            title: '🎵 Sadece Ses ($audioCost $jetonLabel)',
             subtitle: 'Yalnızca ses çalar',
             gradient: const [Color(0xFF4A00E0), Color(0xFF8B5CF6)],
-            onTap: () => Navigator.pop(ctx, false),
+            onTap: () => Navigator.pop(context, false),
           ),
           const SizedBox(height: 10),
           _ModeTile(
             icon: Icons.music_video_rounded,
-            title: '🎬 Videolu ($videoCost Jeton)',
+            title: '🎬 Videolu ($videoCost $jetonLabel)',
             subtitle: 'Oda arka planında video',
             gradient: const [Color(0xFFFF0080), Color(0xFF7B2FF7)],
-            onTap: () => Navigator.pop(ctx, true),
+            onTap: () => Navigator.pop(context, true),
           ),
           const SizedBox(height: 10),
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
+            onPressed: () => Navigator.pop(context),
             style: TextButton.styleFrom(
               foregroundColor: Colors.white54,
               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -91,8 +121,8 @@ Future<bool?> showMusicModePickerSheet(
           ),
         ],
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _ModeTile extends StatelessWidget {

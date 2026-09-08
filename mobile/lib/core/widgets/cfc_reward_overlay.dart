@@ -12,7 +12,7 @@ class CfcRewardOverlay {
   static Future<void> show(
     BuildContext context, {
     int amount = 10,
-    String label = 'CFC jeton',
+    String label = 'CFC',
     Duration displayFor = const Duration(seconds: 2),
   }) async {
     if (!context.mounted) return;

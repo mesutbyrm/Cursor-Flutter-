@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../../core/navigation/wallet_navigation.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../widgets/premium/profile_glass.dart';
@@ -13,6 +14,7 @@ class ProfileQuickActions extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final jetonTopUpLabel = economyJetonTopUpShortLabel(ref);
     final items = <({IconData icon, String label, VoidCallback onTap, List<Color>? g, Color? ic})>[
       (
         icon: Icons.videocam_rounded,
@@ -51,7 +53,7 @@ class ProfileQuickActions extends ConsumerWidget {
       ),
       (
         icon: Icons.monetization_on_rounded,
-        label: 'Jeton Yükle',
+        label: jetonTopUpLabel,
         onTap: () => openJetonStore(context, ref: ref),
         g: [const Color(0xFF5C4020), const Color(0xFF2A1C10)],
         ic: const Color(0xFFFFD54F),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../../core/images/canlifal_image_prefetch.dart';
 import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/ui/premium/premium_skeleton.dart';
@@ -132,6 +133,7 @@ class _VoiceRoomSectionState extends ConsumerState<VoiceRoomSection> {
     String? message,
     bool empty = false,
   }) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     return Column(
       children: [
         Row(
@@ -189,7 +191,7 @@ class _VoiceRoomSectionState extends ConsumerState<VoiceRoomSection> {
                     icon: Icon(empty ? Icons.mic_rounded : Icons.refresh_rounded),
                     label: Text(
                       empty
-                          ? 'Sesli Oda Aç · ${LiveRemoteDataSource.openRoomJetonCost(vip: false)} Jeton'
+                          ? 'Sesli Oda Aç · ${LiveRemoteDataSource.openRoomJetonCost(vip: false)} $jetonLabel'
                           : 'Yenile',
                     ),
                     style: FilledButton.styleFrom(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../sync/gift_session_controller.dart';
 import '../sync/gift_session_state.dart';
 
@@ -21,6 +22,11 @@ class UnifiedRecentGiftersBox extends ConsumerWidget {
       giftSessionProvider(sessionKey).select((s) => s.recentGifts),
     );
     if (items.isEmpty) return const SizedBox.shrink();
+    final jetonLabel = economyCurrencyLabel(
+      ref,
+      key: 'jeton',
+      locale: Localizations.localeOf(context),
+    );
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(14),
@@ -52,7 +58,7 @@ class UnifiedRecentGiftersBox extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 4),
-              ...items.map((g) => _Row(item: g, accent: accentColor)),
+              ...items.map((g) => _Row(item: g, accent: accentColor, jetonLabel: jetonLabel)),
             ],
           ),
       ),
@@ -61,10 +67,15 @@ class UnifiedRecentGiftersBox extends ConsumerWidget {
 }
 
 class _Row extends StatelessWidget {
-  const _Row({required this.item, required this.accent});
+  const _Row({
+    required this.item,
+    required this.accent,
+    required this.jetonLabel,
+  });
 
   final GiftRecentItem item;
   final Color accent;
+  final String jetonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -101,7 +112,7 @@ class _Row extends StatelessWidget {
               ),
             ),
             TextSpan(
-              text: ' · ${item.jetonAmount} jeton',
+              text: ' · ${item.jetonAmount} $jetonLabel',
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 color: Colors.white.withValues(alpha: 0.8),

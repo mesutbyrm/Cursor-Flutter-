@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/images/canlifal_network_image.dart';
 import '../../../../core/performance/list_perf.dart';
 import '../../domain/gift_collection.dart';
@@ -54,7 +55,7 @@ class GiftCollectionPage extends ConsumerWidget {
             badge.when(
               data: (b) => b == null
                   ? const SizedBox.shrink()
-                  : _BadgeHeader(badge: b),
+                  : _BadgeHeader(badge: b, jetonLabel: economyCurrencyLabel(ref, key: 'jeton')),
               loading: () => const _Loading(),
               error: (_, __) => const SizedBox.shrink(),
             ),
@@ -82,8 +83,9 @@ class GiftCollectionPage extends ConsumerWidget {
 }
 
 class _BadgeHeader extends StatelessWidget {
-  const _BadgeHeader({required this.badge});
+  const _BadgeHeader({required this.badge, required this.jetonLabel});
   final SupporterBadge badge;
+  final String jetonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -109,7 +111,7 @@ class _BadgeHeader extends StatelessWidget {
                 SupporterBadgePill(code: current.code, label: current.label),
               const Spacer(),
               Text(
-                '${badge.totalSentDisplay} jeton',
+                '${badge.totalSentDisplay} $jetonLabel',
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w900,
@@ -138,7 +140,7 @@ class _BadgeHeader extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              '${next.label} rozetine ${next.remaining} jeton kaldı',
+              '${next.label} rozetine ${next.remaining} $jetonLabel kaldı',
               style: const TextStyle(color: Color(0xCCFFFFFF), fontSize: 11.5),
             ),
           ],

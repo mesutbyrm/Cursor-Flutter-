@@ -7,6 +7,7 @@ import 'package:canlifal_social/core/network/psychic_event_log.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/widgets/user_avatar.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import 'package:canlifal_social/features/live_psychics/domain/repositories/live_psychics_repository.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_cancel_signal.dart';
@@ -317,7 +318,7 @@ class _PsychicIncomingCallDialogState
                         child: Column(
                           children: [
                             Text(
-                              '${widget.totalJeton} jeton',
+                              '${widget.totalJeton} ${economyCurrencyLabel(ref, key: 'jeton')}',
                               style: const TextStyle(
                                 color: Color(0xFF00E676),
                                 fontWeight: FontWeight.w900,

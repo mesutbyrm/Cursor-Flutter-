@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../domain/pk/pk_battle_state.dart';
 import '../../../theme/voice_room_tokens.dart';
 import 'pk_vs_emblem.dart';
 
 /// TikTok PK — çift renkli animasyonlu skor çubuğu + timer + win streak.
-class PkAnimatedScoreBar extends StatelessWidget {
+class PkAnimatedScoreBar extends ConsumerWidget {
   const PkAnimatedScoreBar({
     super.key,
     required this.state,
@@ -23,7 +25,8 @@ class PkAnimatedScoreBar extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final ratio = state.leftRatio;
     final h = compact ? 52.0 : 64.0;
 
@@ -69,7 +72,7 @@ class PkAnimatedScoreBar extends StatelessWidget {
                                 align: TextAlign.left,
                               ),
                               Text(
-                                'Jeton',
+                                jetonLabel,
                                 style: TextStyle(
                                   fontSize: 9,
                                   fontWeight: FontWeight.w700,
@@ -103,7 +106,7 @@ class PkAnimatedScoreBar extends StatelessWidget {
                                   align: TextAlign.right,
                                 ),
                                 Text(
-                                  'Jeton',
+                                  jetonLabel,
                                   style: TextStyle(
                                     fontSize: 9,
                                     fontWeight: FontWeight.w700,

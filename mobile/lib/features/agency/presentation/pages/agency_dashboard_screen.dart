@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:canlifal_social/core/performance/list_perf.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../domain/entities/agency_entity.dart';
 import '../providers/agency_providers.dart';
@@ -17,6 +18,7 @@ class AgencyDashboardScreen extends ConsumerWidget {
     final approved = ref.watch(approvedAgencyProvider);
     final dash = ref.watch(agencyDashboardProvider);
     final agency = dash.agency ?? approved.agency;
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     if (approved.loading || dash.loading) {
       return const Scaffold(
@@ -68,6 +70,7 @@ class AgencyDashboardScreen extends ConsumerWidget {
               totalEarnings: agency.totalEarnings,
               pendingEarnings: agency.pendingEarnings,
               taskCount: dash.tasks.where((t) => !t.completed).length,
+              jetonLabel: jetonLabel,
             ),
             if (dash.lastApiLog != null) ...[
               const SizedBox(height: 8),
@@ -84,19 +87,19 @@ class AgencyDashboardScreen extends ConsumerWidget {
             if (dash.members.isEmpty)
               _emptyHint('Henüz üye yok.')
             else
-              ...dash.members.take(10).map(_MemberTile.new),
+              ...dash.members.take(10).map((m) => _MemberTile(m, jetonLabel: jetonLabel)),
             const SizedBox(height: 20),
             _SectionTitle('Son Kazançlar'),
             if (dash.earnings.isEmpty)
               _emptyHint('Kazanç kaydı yok.')
             else
-              ...dash.earnings.take(8).map(_EarningTile.new),
+              ...dash.earnings.take(8).map((e) => _EarningTile(e, jetonLabel: jetonLabel)),
             const SizedBox(height: 20),
             _SectionTitle('Görevler'),
             if (dash.tasks.isEmpty)
               _emptyHint('Aktif görev yok.')
             else
-              ...dash.tasks.map(_TaskTile.new),
+              ...dash.tasks.map((t) => _TaskTile(t, jetonLabel: jetonLabel)),
           ],
         ),
       ),
@@ -199,12 +202,14 @@ class _StatGrid extends StatelessWidget {
     required this.totalEarnings,
     required this.pendingEarnings,
     required this.taskCount,
+    required this.jetonLabel,
   });
 
   final int memberCount;
   final int totalEarnings;
   final int pendingEarnings;
   final int taskCount;
+  final String jetonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -232,8 +237,8 @@ class _StatGrid extends StatelessWidget {
             childAspectRatio: aspect,
             children: [
               _statCard('Üye', '$memberCount'),
-              _statCard('Toplam Kazanç', '$totalEarnings jeton'),
-              _statCard('Bekleyen', '$pendingEarnings jeton'),
+              _statCard('Toplam Kazanç', '$totalEarnings $jetonLabel'),
+              _statCard('Bekleyen', '$pendingEarnings $jetonLabel'),
               _statCard('Açık Görev', '$taskCount'),
             ],
           ),
@@ -299,9 +304,10 @@ Widget _emptyHint(String text) {
 }
 
 class _MemberTile extends StatelessWidget {
-  const _MemberTile(this.member);
+  const _MemberTile(this.member, {required this.jetonLabel});
 
   final AgencyMemberEntity member;
+  final String jetonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -318,7 +324,7 @@ class _MemberTile extends StatelessWidget {
         ),
         title: Text(member.name, style: const TextStyle(color: Colors.white)),
         subtitle: Text(
-          '${member.role ?? "Üye"} · ${member.earnings} jeton',
+          '${member.role ?? "Üye"} · ${member.earnings} $jetonLabel',
           style: const TextStyle(color: Colors.white60),
         ),
         trailing: Icon(
@@ -332,9 +338,10 @@ class _MemberTile extends StatelessWidget {
 }
 
 class _EarningTile extends StatelessWidget {
-  const _EarningTile(this.earning);
+  const _EarningTile(this.earning, {required this.jetonLabel});
 
   final AgencyEarningEntity earning;
+  final String jetonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -343,7 +350,7 @@ class _EarningTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         title: Text(
-          '+${earning.amount} jeton',
+          '+${earning.amount} $jetonLabel',
           style: const TextStyle(
             color: Color(0xFF00E676),
             fontWeight: FontWeight.w700,
@@ -362,9 +369,10 @@ class _EarningTile extends StatelessWidget {
 }
 
 class _TaskTile extends StatelessWidget {
-  const _TaskTile(this.task);
+  const _TaskTile(this.task, {required this.jetonLabel});
 
   final AgencyTaskEntity task;
+  final String jetonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -378,7 +386,7 @@ class _TaskTile extends StatelessWidget {
         ),
         title: Text(task.title, style: const TextStyle(color: Colors.white)),
         subtitle: Text(
-          '${task.reward} jeton${task.description != null ? " · ${task.description}" : ""}',
+          '${task.reward} $jetonLabel${task.description != null ? " · ${task.description}" : ""}',
           style: const TextStyle(color: Colors.white60),
         ),
       ),

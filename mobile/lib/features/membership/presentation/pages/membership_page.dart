@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/content/currency_usage_info.dart';
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
 import '../../../profile/domain/entities/jeton_package_entity.dart';
@@ -40,6 +41,7 @@ class MembershipPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ui = ref.watch(membershipControllerProvider);
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final catalogAsync = ref.watch(membershipCatalogProvider);
     final padding = ResponsiveLayout.pagePadding(context);
     final pendingRequests = ref.watch(paymentRequestsNotifierProvider);
@@ -180,7 +182,7 @@ class MembershipPage extends ConsumerWidget {
                             ),
                             const SizedBox(height: 22),
                             Text(
-                              buildMembershipPageTokenPackagesSectionTitle(),
+                              economyJetonPackagesSectionTitle(ref),
                               style: GoogleFonts.plusJakartaSans(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w900,
@@ -191,6 +193,7 @@ class MembershipPage extends ConsumerWidget {
                             Text(
                               buildMembershipPageTokenPackagesSubtitle(
                                 info: ui.membershipInfo,
+                                jetonLabel: jetonLabel,
                               ),
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.5),
@@ -293,6 +296,7 @@ class MembershipPage extends ConsumerWidget {
             ? (tier.monthlyPriceTry / rate).round()
             : tier.monthlyPriceTry * 2);
     final priceCfc = CurrencyUsageInfo.cfcForTl(tier.monthlyPriceTry);
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     void onPurchaseDone() {
       ref.invalidate(paymentRequestsNotifierProvider);
     }
@@ -401,8 +405,11 @@ class MembershipPage extends ConsumerWidget {
       ref,
       package: jetonPkg,
       priceText:
-          '₺${tier.monthlyPriceTry} (${tier.monthlyTokens} jeton · ${tier.durationLabel})',
-      paymentNotes: buildMembershipCheckoutPaymentNotes(tier: tier),
+          '₺${tier.monthlyPriceTry} (${tier.monthlyTokens} $jetonLabel · ${tier.durationLabel})',
+      paymentNotes: buildMembershipCheckoutPaymentNotes(
+        tier: tier,
+        jetonLabel: jetonLabel,
+      ),
       onDone: onPurchaseDone,
     );
   }
@@ -716,7 +723,7 @@ class _ActiveBanner extends StatelessWidget {
   }
 }
 
-class _UpgradeBanner extends StatelessWidget {
+class _UpgradeBanner extends ConsumerWidget {
   const _UpgradeBanner({
     required this.info,
     required this.onBuyTokens,
@@ -728,13 +735,17 @@ class _UpgradeBanner extends StatelessWidget {
   final VoidCallback onBuyTokens;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final title = buildMembershipPageUpgradeBannerTitle(info: info);
     final subtitle = buildMembershipPageUpgradeBannerSubtitle(
       info: info,
       catalogTier: catalogTier,
+      jetonLabel: jetonLabel,
     );
-    final actionLabel = buildMembershipPageUpgradeBannerActionLabel();
+    final actionLabel = buildMembershipPageUpgradeBannerActionLabel(
+      jetonLabel: jetonLabel,
+    );
 
     return Container(
       padding: const EdgeInsets.all(16),

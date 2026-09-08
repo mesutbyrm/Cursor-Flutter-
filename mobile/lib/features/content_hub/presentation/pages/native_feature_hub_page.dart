@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/navigation/native_site_routes.dart';
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../domain/native_feature_item.dart';
@@ -16,7 +17,7 @@ class NativeFeatureHubPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final spec = _spec(kind);
+    final spec = _spec(kind, ref);
     final remoteItems = ref.watch(nativeFeatureItemsProvider(kind));
     return DiscoverSubPage(
       title: spec.title,
@@ -63,7 +64,8 @@ class NativeFeatureHubPage extends ConsumerWidget {
     );
   }
 
-  static _HubSpec _spec(NativeFeatureHubKind kind) {
+  static _HubSpec _spec(NativeFeatureHubKind kind, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     return switch (kind) {
       NativeFeatureHubKind.games => _HubSpec(
         title: 'Oyunlar',
@@ -233,7 +235,7 @@ class NativeFeatureHubPage extends ConsumerWidget {
               '/profile/growth',
             ),
             _HubItem(
-              'Jeton mağazası',
+              '$jetonLabel mağazası',
               'Ödül sonrası bakiyeni ve paketleri kontrol et.',
               Icons.toll_rounded,
               '/jeton-store',

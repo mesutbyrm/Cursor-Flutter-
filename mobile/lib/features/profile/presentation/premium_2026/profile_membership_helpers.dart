@@ -442,8 +442,10 @@ String buildMembershipStoreTeaserSubtitle({
   List<MembershipPackageEntity> packages = const [],
   MembershipTierModel? catalogTier,
   String? expiresAt,
+  String jetonLabel = 'Jeton',
+  String cfcLabel = 'CFC',
 }) {
-  final storeLabel = store == MembershipStoreKind.jeton ? 'jeton' : 'CFC';
+  final storeLabel = store == MembershipStoreKind.jeton ? jetonLabel : cfcLabel;
   if (info.isExpired) {
     final expiry = formatMembershipExpiryLabel(expiresAt);
     if (expiry != null) {
@@ -760,12 +762,15 @@ String buildMembershipStoreTeaserBannerTitle({
 /// Cüzdan merkezi sayfa alt başlığı.
 String buildMembershipWalletCenterPageSubtitle({
   required ProfileMembershipInfo info,
+  String jetonLabel = 'Jeton',
+  String cfcLabel = 'CFC',
 }) {
-  if (info.isExpired) return 'Jeton · CFC · Planı yenile';
+  final pair = '$jetonLabel · $cfcLabel';
+  if (info.isExpired) return '$pair · Planı yenile';
   if (info.hasActiveSubscription) {
-    return 'Jeton · CFC · ${info.tierLabel} üyelik';
+    return '$pair · ${info.tierLabel} üyelik';
   }
-  return 'Jeton · CFC · Premium üyelik';
+  return '$pair · Premium üyelik';
 }
 
 /// Premium kart ikincil yönet CTA etiketi.
@@ -813,8 +818,10 @@ String buildMembershipWalletStoreHubCardSubtitle({
   required ProfileMembershipInfo info,
   required MembershipStoreKind store,
   MembershipTierModel? catalogTier,
+  String jetonLabel = 'Jeton',
+  String cfcLabel = 'CFC',
 }) {
-  final storeLabel = store == MembershipStoreKind.jeton ? 'jeton' : 'CFC';
+  final storeLabel = store == MembershipStoreKind.jeton ? jetonLabel : cfcLabel;
   if (info.isExpired) return 'Paketler · planı yenileyin';
   if (info.hasActiveSubscription) {
     final discount = catalogTier?.falDiscountPercent ?? 0;
@@ -866,14 +873,16 @@ MembershipManageTileLeadingAccent resolveMembershipManageTileLeadingAccent({
 /// Profil cüzdan bölümü bakiye açıklaması.
 String buildMembershipWalletSectionBalanceHint({
   required ProfileMembershipInfo info,
+  String jetonLabel = 'Jeton',
+  String cfcLabel = 'CFC',
 }) {
   if (info.isExpired) {
-    return 'Jeton · CFC bakiyeleri · planı yenileyin';
+    return '$jetonLabel · $cfcLabel bakiyeleri · planı yenileyin';
   }
   if (info.hasActiveSubscription) {
-    return 'Jeton: yayın ve hediye · CFC: oyun ve fal · ${info.tierLabel} avantajları';
+    return '$jetonLabel: yayın ve hediye · $cfcLabel: oyun ve fal · ${info.tierLabel} avantajları';
   }
-  return 'Jeton: canlı yayın, sohbet ve hediye · CFC: oyun ve fal';
+  return '$jetonLabel: canlı yayın, sohbet ve hediye · $cfcLabel: oyun ve fal';
 }
 
 /// Üyelik sayfası yükseltme banner başlığı.
@@ -890,22 +899,26 @@ String buildMembershipPageUpgradeBannerTitle({
 String buildMembershipPageUpgradeBannerSubtitle({
   required ProfileMembershipInfo info,
   MembershipTierModel? catalogTier,
+  String jetonLabel = 'Jeton',
 }) {
   if (info.isExpired) {
-    return 'Planı yenileyin; jeton, fal indirimi ve VIP ayrıcalıkları geri gelsin.';
+    return 'Planı yenileyin; $jetonLabel, fal indirimi ve VIP ayrıcalıkları geri gelsin.';
   }
   if (info.hasActiveSubscription) {
     final discount = catalogTier?.falDiscountPercent ?? 0;
     if (discount > 0) {
-      return 'Üst planlarda ek jeton, %$discount+ fal indirimi ve VIP odalar.';
+      return 'Üst planlarda ek $jetonLabel, %$discount+ fal indirimi ve VIP odalar.';
     }
-    return 'Daha üst planlarda ek jeton, fal indirimi ve VIP ayrıcalıkları.';
+    return 'Daha üst planlarda ek $jetonLabel, fal indirimi ve VIP ayrıcalıkları.';
   }
-  return 'Daha fazla jeton, daha fazla ayrıcalık ve özel içerikler seni bekliyor.';
+  return 'Daha fazla $jetonLabel, daha fazla ayrıcalık ve özel içerikler seni bekliyor.';
 }
 
 /// Üyelik sayfası yükseltme banner CTA etiketi.
-String buildMembershipPageUpgradeBannerActionLabel() => 'Jeton\nSatın Al';
+String buildMembershipPageUpgradeBannerActionLabel({
+  String jetonLabel = 'Jeton',
+}) =>
+    '$jetonLabel\nSatın Al';
 
 /// Hizmetler şeridi üyelik merkezi kart başlığı.
 String buildMembershipHubMembershipServiceCardTitle({
@@ -984,11 +997,12 @@ String buildMembershipPageFeaturesSectionTitle() => 'Tüm Üyelik Özellikleri';
 /// Üyelik sayfası jeton paketleri alt başlığı.
 String buildMembershipPageTokenPackagesSubtitle({
   required ProfileMembershipInfo info,
+  String jetonLabel = 'Jeton',
 }) {
   if (info.hasActiveSubscription) {
-    return 'Üyelik paketleri · jeton alımında indirim yok · ${info.tierLabel} aktif';
+    return 'Üyelik paketleri · $jetonLabel alımında indirim yok · ${info.tierLabel} aktif';
   }
-  return 'Üyelik paketleri · jeton alımında indirim yok';
+  return 'Üyelik paketleri · $jetonLabel alımında indirim yok';
 }
 
 /// Cüzdan kartı premium mini stat satır etiketi.
@@ -1009,7 +1023,10 @@ String buildMembershipWalletSubscriptionStatRowLabel({
 }
 
 /// Üyelik sayfası jeton paketleri bölüm başlığı.
-String buildMembershipPageTokenPackagesSectionTitle() => 'Jeton Paketleri';
+String buildMembershipPageTokenPackagesSectionTitle({
+  String jetonLabel = 'Jeton',
+}) =>
+    '$jetonLabel Paketleri';
 
 /// Üyelik checkout jeton paket başlığı.
 String buildMembershipCheckoutPackageTitle({
@@ -1021,8 +1038,9 @@ String buildMembershipCheckoutPackageTitle({
 /// Üyelik checkout ödeme notu.
 String buildMembershipCheckoutPaymentNotes({
   required MembershipTierModel tier,
+  String jetonLabel = 'Jeton',
 }) {
-  return 'Üyelik · ${tier.title} · ${tier.durationLabel} · ${tier.monthlyTokens} jeton';
+  return 'Üyelik · ${tier.title} · ${tier.durationLabel} · ${tier.monthlyTokens} $jetonLabel';
 }
 
 /// Üyelik checkout paket rozeti (uzatma).
@@ -1112,8 +1130,9 @@ String buildMembershipPaymentRequestDefaultNotes({
 String buildMembershipCfcPaymentRequestDefaultNotes({
   required String tierTitle,
   required String method,
+  String cfcLabel = 'CFC',
 }) {
-  return 'Üyelik · $tierTitle · CFC · $method';
+  return 'Üyelik · $tierTitle · $cfcLabel · $method';
 }
 
 /// Görevler merkezi seviye VIP pill etiketi.
@@ -1180,28 +1199,34 @@ String buildMembershipProfileHeaderVipBadgeLabel({
 String buildMembershipWalletCenterWithdrawalTitle() => 'Para Çek';
 
 /// Cüzdan merkezi CFC mağaza kart başlığı.
-String buildMembershipWalletCenterCfcStoreTitle() => 'CFC Yükle';
+String buildMembershipWalletCenterCfcStoreTitle({String cfcLabel = 'CFC'}) =>
+    '$cfcLabel Yükle';
 
 /// Cüzdan merkezi jeton mağaza kart başlığı.
-String buildMembershipWalletCenterJetonStoreTitle() => 'Jeton Mağazası';
+String buildMembershipWalletCenterJetonStoreTitle({String jetonLabel = 'Jeton'}) =>
+    '$jetonLabel Mağazası';
 
 /// Cüzdan jeton bakiye etiketi.
-String buildMembershipCurrencyJetonLabel() => 'Jeton';
+String buildMembershipCurrencyJetonLabel({String jetonLabel = 'Jeton'}) =>
+    jetonLabel;
 
 /// Cüzdan CFC bakiye etiketi.
-String buildMembershipCurrencyCfcLabel() => 'CFC';
+String buildMembershipCurrencyCfcLabel({String cfcLabel = 'CFC'}) => cfcLabel;
 
 /// Profil hub para birimi kartı elmas (CFC) etiketi.
 String buildMembershipHubCurrencyElmasLabel() => 'Elmas';
 
 /// Profil cüzdan jeton yükle aksiyon etiketi.
-String buildMembershipWalletJetonTopUpActionLabel() => 'Jeton Yükle';
+String buildMembershipWalletJetonTopUpActionLabel({String jetonLabel = 'Jeton'}) =>
+    '$jetonLabel Yükle';
 
 /// Cüzdan başlığı jeton bakiye satır etiketi.
-String buildMembershipWalletJetonBalanceHeaderLabel() => 'Jeton Bakiyeniz';
+String buildMembershipWalletJetonBalanceHeaderLabel({String jetonLabel = 'Jeton'}) =>
+    '$jetonLabel Bakiyeniz';
 
 /// Cüzdan başlığı CFC bakiye satır etiketi.
-String buildMembershipWalletCfcBalanceHeaderLabel() => 'CFC Bakiyeniz';
+String buildMembershipWalletCfcBalanceHeaderLabel({String cfcLabel = 'CFC'}) =>
+    '$cfcLabel Bakiyeniz';
 
 /// Jeton mağazası satın al CTA etiketi.
 String buildMembershipJetonStoreBuyActionLabel() =>
@@ -1227,11 +1252,12 @@ String buildMembershipGrowthHubRoadmapHintText() {
 }
 
 /// Jeton satın alma sayfası başlığı.
-String buildMembershipJetonPurchasePageTitle() => 'Jeton Satın Al';
+String buildMembershipJetonPurchasePageTitle({String jetonLabel = 'Jeton'}) =>
+    '$jetonLabel Satın Al';
 
 /// Jeton satın alma sayfası alt başlığı.
-String buildMembershipJetonPurchasePageSubtitle() {
-  return 'İstediğiniz tutarı girin — jeton otomatik hesaplanır';
+String buildMembershipJetonPurchasePageSubtitle({String jetonLabel = 'Jeton'}) {
+  return 'İstediğiniz tutarı girin — $jetonLabel otomatik hesaplanır';
 }
 
 /// Jeton satın alma WhatsApp ödeme ipucu.

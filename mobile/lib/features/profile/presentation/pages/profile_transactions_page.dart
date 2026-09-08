@@ -4,6 +4,7 @@ import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/widgets/lazy_list_views.dart';
 import '../../../../core/performance/list_perf.dart';
@@ -171,12 +172,14 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-class _PaymentTile extends StatelessWidget {
+class _PaymentTile extends ConsumerWidget {
   const _PaymentTile({required this.row});
   final CfcPaymentRequestEntity row;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+    final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: ProGlassListTile(
@@ -187,7 +190,10 @@ class _PaymentTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    row.displayLine,
+                    row.brandedDisplayLine(
+                      jetonLabel: jetonLabel,
+                      cfcLabel: cfcLabel,
+                    ),
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                   if (row.notes?.isNotEmpty == true)
@@ -218,12 +224,13 @@ class _PaymentTile extends StatelessWidget {
   }
 }
 
-class _ActivityTile extends StatelessWidget {
+class _ActivityTile extends ConsumerWidget {
   const _ActivityTile({required this.row});
   final ProfileActivityItemEntity row;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final when = row.createdAt != null
         ? DateFormat('d MMM HH:mm', 'tr')
             .format(DateTime.tryParse(row.createdAt!) ?? DateTime.now())
@@ -248,7 +255,7 @@ class _ActivityTile extends StatelessWidget {
               ),
             const SizedBox(height: 4),
             Text(
-              '$when · ${row.amount > 0 ? "${row.amount} jeton" : row.status}',
+              '$when · ${row.amount > 0 ? "${row.amount} $jetonLabel" : row.status}',
               style: TextStyle(fontSize: 11, color: context.colors.onSurfaceMuted),
             ),
           ],

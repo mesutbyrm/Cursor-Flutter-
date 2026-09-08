@@ -4,6 +4,7 @@ import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/network/api_exception.dart';
@@ -29,6 +30,11 @@ class RoomGiftPanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final gifts = ref.watch(voiceRoomGiftTypesProvider);
+    final jetonLabel = economyCurrencyLabel(
+      ref,
+      key: 'jeton',
+      locale: Localizations.localeOf(context),
+    );
 
     return gifts.when(
       loading: () => Center(child: CircularProgressIndicator()),
@@ -59,7 +65,7 @@ class RoomGiftPanel extends ConsumerWidget {
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 20),
               child: Text(
-                'Jeton bakiyenizden düşülür. Oda sohbetinde herkese görünür.',
+                '$jetonLabel bakiyenizden düşülür. Oda sohbetinde herkese görünür.',
                 style: TextStyle(color: context.colors.onSurfaceMuted, fontSize: 12),
               ),
             ),
@@ -78,6 +84,7 @@ class RoomGiftPanel extends ConsumerWidget {
                   final g = list[i];
                   return _RoomGiftTile(
                     gift: g,
+                    jetonLabel: jetonLabel,
                     onTap: () => _send(context, ref, g),
                   );
                 },
@@ -115,9 +122,14 @@ class RoomGiftPanel extends ConsumerWidget {
 }
 
 class _RoomGiftTile extends StatelessWidget {
-  const _RoomGiftTile({required this.gift, required this.onTap});
+  const _RoomGiftTile({
+    required this.gift,
+    required this.jetonLabel,
+    required this.onTap,
+  });
 
   final LiveVideoGiftType gift;
+  final String jetonLabel;
   final VoidCallback onTap;
 
   @override
@@ -146,7 +158,7 @@ class _RoomGiftTile extends StatelessWidget {
                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
               ),
               Text(
-                '${gift.price} jeton',
+                '${gift.price} $jetonLabel',
                 style: TextStyle(
                   fontSize: 10,
                   color: AppThemeColors.accentPink.withValues(alpha: 0.9),

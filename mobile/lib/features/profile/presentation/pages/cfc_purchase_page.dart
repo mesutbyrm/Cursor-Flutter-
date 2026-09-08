@@ -3,6 +3,7 @@ import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/config/payment_defaults.dart';
 import '../../../../core/content/currency_usage_info.dart';
 import '../../../../core/network/api_exception.dart';
@@ -11,12 +12,10 @@ import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../wallet/domain/cfc_payment_request_entity.dart';
-import '../premium_2026/profile_membership_helpers.dart';
 import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_providers.dart';
 import '../../../membership/presentation/widgets/membership_pending_payment_banner.dart';
 import '../../../membership/presentation/widgets/membership_store_teaser_banner.dart';
-import '../premium_2026/profile_membership_helpers.dart';
 import '../widgets/cfc_balance_header.dart';
 import '../widgets/cfc_native_checkout.dart';
 import '../widgets/pending_payment_banner.dart';
@@ -66,6 +65,8 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
 
   @override
   Widget build(BuildContext context) {
+    final locale = Localizations.localeOf(context);
+    final cfcLabel = economyCurrencyLabel(ref, key: 'cfc', locale: locale);
     final config = ref.watch(paymentConfigProvider);
     final wallet = ref.watch(walletBalancesProvider);
     final history = ref.watch(paymentRequestsNotifierProvider);
@@ -78,8 +79,8 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: DiscoverSubPage(
-          title: buildMembershipWalletCenterCfcStoreTitle(),
-          subtitle: 'CFC (CanlıFal Coin) · ${CurrencyUsageInfo.cfcPriceHint}',
+          title: economyCfcTopUpShortLabel(ref, locale: locale),
+          subtitle: '$cfcLabel · ${CurrencyUsageInfo.cfcPriceHintFor(cfcLabel)}',
           onRefresh: _refresh,
           body: config.when(
             loading: () => const Center(child: DiscoverAccentLoader()),
@@ -147,9 +148,9 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
                   ),
                 ),
                 const SizedBox(height: 28),
-                const Text(
-                  'CFC yükleme talepleriniz',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                Text(
+                  '$cfcLabel yükleme talepleriniz',
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
                 ),
                 const SizedBox(height: 10),
                 history.when(
@@ -162,7 +163,7 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
                     final cfcRows = rows.where((r) => r.isCfc).toList();
                     if (cfcRows.isEmpty) {
                       return Text(
-                        'Henüz CFC talebi yok.',
+                        'Henüz $cfcLabel talebi yok.',
                         style: TextStyle(
                           color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
                         ),
@@ -172,7 +173,9 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
                         ref.read(paymentRequestsNotifierProvider.notifier).hasMore;
                     return Column(
                       children: [
-                        ...cfcRows.map((r) => _HistoryTile(row: r)),
+                        ...cfcRows.map(
+                          (r) => _HistoryTile(row: r, cfcLabel: cfcLabel),
+                        ),
                         if (hasMore)
                           const Padding(
                             padding: EdgeInsets.symmetric(vertical: 12),
@@ -197,12 +200,14 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
 }
 
 class _HistoryTile extends ConsumerWidget {
-  const _HistoryTile({required this.row});
+  const _HistoryTile({required this.row, required this.cfcLabel});
 
   final CfcPaymentRequestEntity row;
+  final String cfcLabel;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final isPending = row.status.toLowerCase() == 'pending';
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -214,11 +219,14 @@ class _HistoryTile extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    row.displayLine,
+                    row.brandedDisplayLine(
+                      jetonLabel: jetonLabel,
+                      cfcLabel: cfcLabel,
+                    ),
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                   Text(
-                    _statusTr(row.status),
+                    _statusTr(row.status, cfcLabel: cfcLabel),
                     style: TextStyle(
                       fontSize: 12,
                       color: AppThemeColors.diamondBlue.withValues(alpha: 0.9),
@@ -261,8 +269,8 @@ class _HistoryTile extends ConsumerWidget {
   }
 }
 
-String _statusTr(String s) => switch (s) {
-      'approved' => 'Onaylandı — CFC yansıdı',
+String _statusTr(String s, {required String cfcLabel}) => switch (s) {
+      'approved' => 'Onaylandı — $cfcLabel yansıdı',
       'rejected' => 'Reddedildi',
       _ => 'Onay bekliyor',
     };

@@ -3,7 +3,8 @@ import 'package:canlifal_social/core/performance/list_perf.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../../core/widgets/dual_balance_chips.dart';
+import '../../../../../core/economy/presentation/providers/economy_providers.dart';
+import '../../../../../core/economy/presentation/widgets/branded_dual_balance_chips.dart';
 import '../../premium_2026/profile_membership_helpers.dart';
 import '../../providers/profile_hub_providers.dart';
 import 'profile_glass.dart';
@@ -33,19 +34,22 @@ class ProfileWalletSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final info = ref.watch(profileMembershipInfoProvider);
+    final locale = Localizations.localeOf(context);
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
+    final cfcLabel = economyCurrencyLabel(ref, key: 'cfc', locale: locale);
     final subscriptionsLabel =
         buildMembershipWalletSubscriptionsTileLabel(info: info);
 
     final actions = [
       (
         icon: Icons.add_card_rounded,
-        label: buildMembershipWalletJetonTopUpActionLabel(),
+        label: economyJetonTopUpShortLabel(ref, locale: locale),
         onTap: onTopUp,
         accent: AppThemeColors.coinGold,
       ),
       (
         icon: Icons.diamond_rounded,
-        label: buildMembershipWalletCenterCfcStoreTitle(),
+        label: economyCfcTopUpShortLabel(ref, locale: locale),
         onTap: onCfcTopUp,
         accent: AppThemeColors.diamondBlue,
       ),
@@ -87,14 +91,18 @@ class ProfileWalletSection extends ConsumerWidget {
             children: [
               Text('Bakiyeler', style: ProfileTypography.cardTitle(context)),
               const SizedBox(height: 14),
-              DualBalanceChips(
+              BrandedDualBalanceChips(
                 jeton: jeton,
                 cfc: cfc,
                 onTap: onTopUp,
               ),
               const SizedBox(height: 12),
               Text(
-                buildMembershipWalletSectionBalanceHint(info: info),
+                buildMembershipWalletSectionBalanceHint(
+                  info: info,
+                  jetonLabel: jetonLabel,
+                  cfcLabel: cfcLabel,
+                ),
                 style: ProfileTypography.cardSubtitle(context),
               ),
             ],

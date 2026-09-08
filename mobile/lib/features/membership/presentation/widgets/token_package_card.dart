@@ -2,10 +2,12 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../domain/membership_model.dart';
 
-class TokenPackageCard extends StatelessWidget {
+class TokenPackageCard extends ConsumerWidget {
   const TokenPackageCard({
     super.key,
     required this.package,
@@ -20,7 +22,8 @@ class TokenPackageCard extends StatelessWidget {
   final int animationIndex;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final tier = MembershipCatalogData.tierById(package.tierId);
 
     final card = GestureDetector(
@@ -113,7 +116,7 @@ class TokenPackageCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'Jeton',
+                    jetonLabel,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.55),
                       fontWeight: FontWeight.w700,

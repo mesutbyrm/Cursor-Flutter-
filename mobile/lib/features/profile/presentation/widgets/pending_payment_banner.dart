@@ -4,6 +4,7 @@ import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
@@ -26,10 +27,12 @@ class PendingPaymentBanner extends ConsumerWidget {
   final PendingPaymentKind kind;
   final int totalPending;
 
-  String get _currencyLabel => kind == PendingPaymentKind.jeton ? 'jeton' : 'CFC';
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+    final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
+    final currencyLabel =
+        kind == PendingPaymentKind.jeton ? jetonLabel : cfcLabel;
     final staff = ref.watch(staffAccessProvider);
     final timeLeft = request.timeLeft;
     final expiryLine = timeLeft == null
@@ -70,8 +73,8 @@ class PendingPaymentBanner extends ConsumerWidget {
                 const SizedBox(height: 4),
                 Text(
                   totalPending > 1
-                      ? '${request.displayLine}\nYeni alım için bekleyen taleplerin tümünü temizleyin.\n$expiryLine'
-                      : '${request.displayLine}\nOnay sonrası $_currencyLabel hesabınıza yansır.\n$expiryLine',
+                      ? '${request.brandedDisplayLine(jetonLabel: jetonLabel, cfcLabel: cfcLabel)}\nYeni alım için bekleyen taleplerin tümünü temizleyin.\n$expiryLine'
+                      : '${request.brandedDisplayLine(jetonLabel: jetonLabel, cfcLabel: cfcLabel)}\nOnay sonrası $currencyLabel hesabınıza yansır.\n$expiryLine',
                   style: TextStyle(
                     fontSize: 12.5,
                     height: 1.4,
@@ -116,6 +119,10 @@ class PendingPaymentBanner extends ConsumerWidget {
   }
 
   Future<void> _cancel(BuildContext context, WidgetRef ref) async {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+    final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
+    final currencyLabel =
+        kind == PendingPaymentKind.jeton ? jetonLabel : cfcLabel;
     final cancelAll = totalPending > 1;
     final ok = await showDialog<bool>(
       context: context,
@@ -123,9 +130,9 @@ class PendingPaymentBanner extends ConsumerWidget {
         title: Text(cancelAll ? 'Talepleri iptal et' : 'Talebi iptal et'),
         content: Text(
           cancelAll
-              ? 'Bekleyen $totalPending $_currencyLabel ödeme talebinizin '
+              ? 'Bekleyen $totalPending $currencyLabel ödeme talebinizin '
                   'tümü silinecek. Yeni bir ödeme bildirimi gönderebilirsiniz.'
-              : 'Bekleyen $_currencyLabel ödeme talebiniz silinecek. '
+              : 'Bekleyen $currencyLabel ödeme talebiniz silinecek. '
                   'Yeni bir ödeme bildirimi gönderebilirsiniz.',
         ),
         actions: [

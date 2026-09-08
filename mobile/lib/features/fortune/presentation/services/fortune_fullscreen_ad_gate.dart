@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/widgets/cfc_reward_overlay.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/services/rewarded_ad_service.dart';
@@ -52,7 +53,8 @@ class FortuneFullscreenAdGate {
     } catch (_) {}
 
     if (context.mounted) {
-      await CfcRewardOverlay.show(context, amount: amount);
+      final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
+      await CfcRewardOverlay.show(context, amount: amount, label: cfcLabel);
     }
   }
 }

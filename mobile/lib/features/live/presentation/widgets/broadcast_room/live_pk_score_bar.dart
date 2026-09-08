@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../profile/presentation/widgets/premium/profile_glass.dart';
 
 /// Canlı yayın PK skor çubuğu — web ile aynı sol/sağ puan gösterimi.
-class LivePkScoreBar extends StatelessWidget {
+class LivePkScoreBar extends ConsumerWidget {
   const LivePkScoreBar({
     super.key,
     required this.leftScore,
@@ -25,7 +27,8 @@ class LivePkScoreBar extends StatelessWidget {
   final bool isHost;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final total = (leftScore + rightScore).clamp(1, 999999999);
     final leftFlex = (leftScore / total * 100).round().clamp(10, 90);
     final rightFlex = 100 - leftFlex;
@@ -50,9 +53,9 @@ class LivePkScoreBar extends StatelessWidget {
                       fontSize: 16,
                     ),
                   ),
-                  const Text(
-                    'Jeton',
-                    style: TextStyle(
+                  Text(
+                    jetonLabel,
+                    style: const TextStyle(
                       color: Colors.white54,
                       fontSize: 9,
                       fontWeight: FontWeight.w600,
@@ -82,9 +85,9 @@ class LivePkScoreBar extends StatelessWidget {
                       fontSize: 16,
                     ),
                   ),
-                  const Text(
-                    'Jeton',
-                    style: TextStyle(
+                  Text(
+                    jetonLabel,
+                    style: const TextStyle(
                       color: Colors.white54,
                       fontSize: 9,
                       fontWeight: FontWeight.w600,

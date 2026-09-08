@@ -11,6 +11,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/auth/bot_account_provider.dart';
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/live_event_log.dart';
@@ -817,7 +818,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       unawaited(
         showInsufficientJetonDialog(
           context,
-          message: 'Yetersiz jeton. Gerekli: ${opt.totalJeton}',
+          message: economyInsufficientJetonMessage(
+            ref,
+            required: opt.totalJeton,
+          ),
           ref: ref,
         ),
       );

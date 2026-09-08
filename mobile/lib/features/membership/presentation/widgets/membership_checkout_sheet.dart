@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../profile/presentation/widgets/payment_methods_summary_line.dart';
 import '../../domain/membership_model.dart';
 
@@ -26,6 +27,8 @@ Future<MembershipCheckoutChoice?> showMembershipCheckoutSheet(
     builder: (ctx) {
       return Consumer(
         builder: (context, ref, _) {
+          final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+          final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
           return SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
@@ -54,7 +57,7 @@ Future<MembershipCheckoutChoice?> showMembershipCheckoutSheet(
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    '₺${tier.monthlyPriceTry} · ${tier.monthlyTokens} jeton · ${tier.durationLabel}',
+                    '₺${tier.monthlyPriceTry} · ${tier.monthlyTokens} $jetonLabel · ${tier.durationLabel}',
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.6),
                       fontWeight: FontWeight.w600,
@@ -66,7 +69,7 @@ Future<MembershipCheckoutChoice?> showMembershipCheckoutSheet(
                     color: MembershipCatalogData.gold,
                     title: externalMethodsLabel,
                     subtitle:
-                        'Jeton yükleme talebi ile üyelik ($priceJeton jeton)',
+                        '$jetonLabel yükleme talebi ile üyelik ($priceJeton $jetonLabel)',
                     onTap: () => Navigator.pop(
                       ctx,
                       MembershipCheckoutChoice.externalPayment,
@@ -76,10 +79,10 @@ Future<MembershipCheckoutChoice?> showMembershipCheckoutSheet(
                   _OptionTile(
                     icon: Icons.auto_awesome_rounded,
                     color: AppThemeColors.diamondBlue,
-                    title: 'CFC ile öde',
+                    title: '$cfcLabel ile öde',
                     subtitle: hasCfc
-                        ? 'Bakiyeniz: $cfcBalance CFC · gerekli: $priceCfc CFC'
-                        : 'Bakiye yetersiz ($cfcBalance / $priceCfc CFC) — yükleme talebi',
+                        ? 'Bakiyeniz: $cfcBalance $cfcLabel · gerekli: $priceCfc $cfcLabel'
+                        : 'Bakiye yetersiz ($cfcBalance / $priceCfc $cfcLabel) — yükleme talebi',
                     enabled: priceCfc > 0,
                     onTap: priceCfc > 0
                         ? () => Navigator.pop(

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/auth/voice_staff_rank.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
@@ -807,6 +808,7 @@ class VoiceRoomLiveController
         viewerCount: viewers > 0 ? viewers : null,
         duration: sessionDurationSinceJoin(),
         endedLabel: endedLabel,
+        jetonLabel: economyCurrencyLabel(ref, key: 'jeton'),
       );
       appendSessionSummaryMessages(lines);
     } catch (_) {}
@@ -2143,7 +2145,7 @@ class VoiceRoomLiveController
         final cost = withVideo
             ? VoiceMusicAccess.videoRequestCost(state.dj)
             : VoiceMusicAccess.audioRequestCost(state.dj);
-        return 'Yetersiz jeton. Gerekli: $cost';
+        return economyInsufficientJetonMessage(ref, required: cost);
       }
     }
 
@@ -2838,7 +2840,10 @@ class VoiceRoomLiveController
         ref.read(walletBalancesProvider).valueOrNull,
       );
       if (!VoiceRoomDuyuruAccess.canAfford(perms: perms, jetonBalance: jeton)) {
-        return 'Yetersiz jeton. Duyuru için ${VoiceRoomDuyuruAccess.jetonCost} jeton gerekir.';
+        return economyInsufficientJetonForDuyuruMessage(
+          ref,
+          cost: VoiceRoomDuyuruAccess.jetonCost,
+        );
       }
     }
 
@@ -3102,7 +3107,10 @@ class VoiceRoomLiveController
             jetonBalance: jeton,
           ) ||
           jeton < requiredCost) {
-        return 'Şarkı isteği için en az $requiredCost jetona sahip olmalısınız.';
+        return economyMinimumJetonForMusicRequestMessage(
+          ref,
+          requiredCost: requiredCost,
+        );
       }
       final result = await ref.read(chatRoomRemoteProvider).requestMusicByQuery(
             roomKey: _roomKey,
@@ -3255,7 +3263,10 @@ class VoiceRoomLiveController
               jetonBalance: jeton,
             ) ||
             jeton < requiredCost) {
-          return 'Şarkı isteği için en az $requiredCost jetona sahip olmalısınız.';
+          return economyMinimumJetonForMusicRequestMessage(
+          ref,
+          requiredCost: requiredCost,
+        );
         }
       }
       VoiceRoomDebugLog.log('music.request', {

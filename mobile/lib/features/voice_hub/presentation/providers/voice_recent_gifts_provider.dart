@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../gifts/domain/gift_system_message.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 
@@ -100,7 +101,8 @@ class VoiceRecentGiftsController extends Notifier<VoiceRecentGiftsState> {
       _gifters.remove(removed);
     }
 
-    final line = '${GiftSystemMessage.format(event)} 🎉';
+    final line =
+        '${GiftSystemMessage.format(event, jetonLabel: economyCurrencyLabel(ref, key: 'jeton'))} 🎉';
     final announcements = [
       VoiceGiftAnnouncement(
         id: 'gift-${event.id}-${now.microsecondsSinceEpoch}',

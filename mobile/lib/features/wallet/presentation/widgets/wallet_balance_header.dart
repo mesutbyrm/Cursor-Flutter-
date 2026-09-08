@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../membership/presentation/controllers/membership_controller.dart';
 import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
+import '../../../../core/economy/presentation/widgets/branded_dual_balance_chips.dart';
 import '../../../../core/widgets/dual_balance_chips.dart';
 
 /// CFC + Jeton + kısa yönlendirme — CFC yükle / Premium üyelik.
@@ -47,6 +49,9 @@ class WalletBalanceHeader extends ConsumerWidget {
       expiresAt: membershipExpiresAt,
     );
     final showExpiredBanner = info.isExpired;
+    final locale = Localizations.localeOf(context);
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
+    final cfcLabel = economyCurrencyLabel(ref, key: 'cfc', locale: locale);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -55,7 +60,7 @@ class WalletBalanceHeader extends ConsumerWidget {
           children: [
             Expanded(
               child: _BalanceLine(
-                label: buildMembershipWalletJetonBalanceHeaderLabel(),
+                label: '$jetonLabel Bakiyeniz',
                 value: '$jeton',
                 color: AppThemeColors.coinGold,
               ),
@@ -63,7 +68,7 @@ class WalletBalanceHeader extends ConsumerWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _BalanceLine(
-                label: buildMembershipWalletCfcBalanceHeaderLabel(),
+                label: '$cfcLabel Bakiyeniz',
                 value: '$cfc',
                 color: AppThemeColors.diamondBlue,
               ),
@@ -71,7 +76,7 @@ class WalletBalanceHeader extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 12),
-        DualBalanceChips(jeton: jeton, cfc: cfc),
+        BrandedDualBalanceChips(jeton: jeton, cfc: cfc),
         if (showMembershipBanner) ...[
           const SizedBox(height: 12),
           Material(
@@ -165,7 +170,7 @@ class WalletBalanceHeader extends ConsumerWidget {
               Expanded(
                 child: _QuickLink(
                   icon: Icons.diamond_rounded,
-                  label: buildMembershipWalletCenterCfcStoreTitle(),
+                  label: '$cfcLabel Yükle',
                   color: AppThemeColors.diamondBlue,
                   onTap: () => context.push('/cfc-store'),
                 ),
@@ -174,7 +179,7 @@ class WalletBalanceHeader extends ConsumerWidget {
               Expanded(
                 child: _QuickLink(
                   icon: Icons.monetization_on_rounded,
-                  label: buildMembershipCurrencyJetonLabel(),
+                  label: jetonLabel,
                   color: AppThemeColors.coinGold,
                   onTap: () => context.push('/jeton-store'),
                 ),

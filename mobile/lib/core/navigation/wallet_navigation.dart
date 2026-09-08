@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../economy/presentation/providers/economy_providers.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 
 /// Jeton / CFC / cüzdan sayfalarına güvenilir yönlendirme (sesli oda dahil).
@@ -57,10 +58,17 @@ Future<void> showInsufficientJetonDialog(
   required String message,
   WidgetRef? ref,
 }) {
+  final jetonLabel = ref != null
+      ? economyCurrencyLabel(
+          ref,
+          key: 'jeton',
+          locale: Localizations.localeOf(context),
+        )
+      : 'Jeton';
   return showDialog<void>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('Yetersiz jeton'),
+      title: Text('Yetersiz $jetonLabel'),
       content: Text(message),
       actions: [
         TextButton(
@@ -79,7 +87,7 @@ Future<void> showInsufficientJetonDialog(
             Navigator.pop(ctx);
             openJetonStore(context, ref: ref);
           },
-          child: const Text('Jeton Yükle'),
+          child: Text('$jetonLabel Yükle'),
         ),
       ],
     ),
@@ -95,9 +103,11 @@ void _pushWalletRoute(
     final authed = ref.read(authControllerProvider).valueOrNull != null;
     final guest = ref.read(guestModeProvider);
     if (!authed && guest) {
+      final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+      final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Jeton ve CFC yüklemek için giriş yapın.'),
+        SnackBar(
+          content: Text('$jetonLabel ve $cfcLabel yüklemek için giriş yapın.'),
         ),
       );
       context.push('/login');

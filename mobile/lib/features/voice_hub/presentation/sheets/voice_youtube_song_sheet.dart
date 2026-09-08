@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/widgets/lazy_list_views.dart';
@@ -179,6 +180,7 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
     final notifier = ref.read(voiceRoomLiveProvider(liveKey).notifier);
     final cost = withVideo ? videoCost : audioCost;
     final songTitle = hit.title;
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     // Sheet kapanmadan provider güncellemesi tüm odayı yeniden çizer → ANR riski.
     if (mounted) Navigator.of(context).pop();
@@ -190,7 +192,7 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
       ),
       onComplete: (err) {
         _showMusicResultSnack(
-          err ?? '«$songTitle» sıraya eklendi · $cost jeton',
+          err ?? '«$songTitle» sıraya eklendi · $cost $jetonLabel',
           isError: err != null,
         );
       },
@@ -217,6 +219,7 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
     final bottom = MediaQuery.viewInsetsOf(context).bottom;
     final coins = ref.watch(coinBalanceProvider) ?? 0;
     final balanceLabel = NumberFormat.decimalPattern('tr').format(coins);
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     return Padding(
       padding: EdgeInsets.only(bottom: bottom),
@@ -274,7 +277,7 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
                           "YouTube'dan şarkı arayın ve isteğinizi gönderin. Her istek ",
                     ),
                     TextSpan(
-                      text: '$_cost 💎 Jeton',
+                      text: '$_cost 💎 $jetonLabel',
                       style: const TextStyle(
                         color: VoiceRoomTokens.gold,
                         fontWeight: FontWeight.w800,
@@ -417,7 +420,7 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
             Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: Text(
-                'Bakiye: $balanceLabel Jeton',
+                'Bakiye: $balanceLabel $jetonLabel',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 12,

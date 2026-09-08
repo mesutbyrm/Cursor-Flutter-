@@ -58,6 +58,7 @@ JetonPackageEntity resolveJetonPackageForPurchase({
   required int coins,
   required double priceTry,
   List<JetonPackageEntity> remote = const [],
+  String jetonLabel = 'Jeton',
 }) {
   final merged = mergeJetonPackagesWithPresets(remote);
   JetonPackageEntity? byCoins;
@@ -80,7 +81,7 @@ JetonPackageEntity resolveJetonPackageForPurchase({
   }
   return JetonPackageEntity(
     id: 'p$coins',
-    title: '$coins Jeton',
+    title: '$coins $jetonLabel',
     coins: coins,
     priceTry: priceTry,
   );

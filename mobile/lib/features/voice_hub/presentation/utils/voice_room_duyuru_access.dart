@@ -38,6 +38,11 @@ abstract final class VoiceRoomDuyuruAccess {
     return null;
   }
 
-  static String costLabel(VoiceRoomPermissions perms) =>
-      isAdminFree(perms) ? 'Ücretsiz (yetkili)' : '$jetonCost jeton';
+  static String costLabel(
+    VoiceRoomPermissions perms, {
+    String jetonLabel = 'jeton',
+  }) =>
+      isAdminFree(perms)
+          ? 'Ücretsiz (yetkili)'
+          : '$jetonCost $jetonLabel';
 }

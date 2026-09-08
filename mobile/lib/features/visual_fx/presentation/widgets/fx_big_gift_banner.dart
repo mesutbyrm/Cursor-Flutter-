@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../voice_hub/presentation/theme/voice_room_tokens.dart';
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../domain/fx_gift_display_item.dart';
 import '../../domain/fx_gift_tier.dart';
 import '../providers/voice_room_gift_display_provider.dart';
@@ -20,6 +21,7 @@ class FxBigGiftBanner extends ConsumerWidget {
     }
     final gift = fx.bigGift!;
     final tier = FxGiftTier.fromJeton(gift.jeton);
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     return IgnorePointer(
       child: Padding(
@@ -29,17 +31,22 @@ class FxBigGiftBanner extends ConsumerWidget {
           12,
           0,
         ),
-        child: _BannerCard(gift: gift, tier: tier),
+        child: _BannerCard(gift: gift, tier: tier, jetonLabel: jetonLabel),
       ),
     );
   }
 }
 
 class _BannerCard extends StatelessWidget {
-  const _BannerCard({required this.gift, required this.tier});
+  const _BannerCard({
+    required this.gift,
+    required this.tier,
+    required this.jetonLabel,
+  });
 
   final FxGiftDisplayItem gift;
   final FxGiftTier tier;
+  final String jetonLabel;
 
   Color get _accent => switch (tier) {
         FxGiftTier.legendary => const Color(0xFFFFD700),
@@ -117,7 +124,7 @@ class _BannerCard extends StatelessWidget {
                           ),
                           const TextSpan(text: "'e "),
                           TextSpan(
-                            text: '${gift.jeton} jeton',
+                            text: '${gift.jeton} $jetonLabel',
                             style: TextStyle(
                               fontWeight: FontWeight.w900,
                               color: _accent,

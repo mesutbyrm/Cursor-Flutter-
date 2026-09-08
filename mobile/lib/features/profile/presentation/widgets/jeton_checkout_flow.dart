@@ -11,6 +11,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/config/payment_defaults.dart';
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../data/jeton_payment_request.dart';
@@ -248,13 +249,14 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
   }
 
   Future<void> _openWhatsAppChat() async {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final phone = PaymentDefaults.formatWhatsAppPhone(
       widget.config.whatsappNumber,
     );
     final receiptPart =
         _receiptImagePath != null ? ' · Dekont eklendi' : '';
     final msg = Uri.encodeComponent(
-      'Merhaba, ${widget.package.title} (${widget.package.coins} jeton) '
+      'Merhaba, ${widget.package.title} (${widget.package.coins} $jetonLabel) '
       'satın almak istiyorum.\n'
       'Ödeme türü: WhatsApp\n'
       'Kullanıcı: $_userLabel\n'
@@ -276,6 +278,7 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
   @override
   Widget build(BuildContext context) {
     final cfg = widget.config;
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final title = switch (widget.method) {
       _JetonPayMethod.whatsapp => 'WhatsApp ile Ödeme',
       _JetonPayMethod.papara => 'Papara ile Ödeme',
@@ -308,7 +311,7 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
               _InfoCard(
                 child: Column(
                   children: [
-                    _RowLabel('Jeton Miktarı:', '${widget.package.coins}',
+                    _RowLabel('$jetonLabel Miktarı:', '${widget.package.coins}',
                         valueColor: const Color(0xFFFFD54F)),
                     const Divider(height: 20, color: Colors.white12),
                     _RowLabel('Toplam:', widget.priceText,
@@ -355,7 +358,7 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
                     _RowLabel('Paket:', widget.package.title,
                         valueColor: const Color(0xFFFFD54F)),
                     const Divider(height: 16, color: Colors.white12),
-                    _RowLabel('Jeton:', '${widget.package.coins}',
+                    _RowLabel('$jetonLabel:', '${widget.package.coins}',
                         valueColor: const Color(0xFFFFD54F)),
                     const Divider(height: 16, color: Colors.white12),
                     _RowLabel('Tutar:', widget.priceText,
@@ -484,8 +487,9 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
         'Dekont görseli eklendi (yüklenemedi — admin ile paylaşın)',
     ];
     final receipt = receiptParts.join(' · ');
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final autoNotes =
-        'Açıklama: $_userLabel · ${widget.package.coins} jeton · ${widget.priceText}';
+        'Açıklama: $_userLabel · ${widget.package.coins} $jetonLabel · ${widget.priceText}';
     final isMembership = widget.package.id.startsWith('membership_');
     final body = isMembership
         ? buildMembershipPaymentRequest(
@@ -501,6 +505,7 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
             notes: '$autoNotes\n${widget.paymentNotes ?? ''}'.trim(),
             senderLabel: _userLabel,
             receiptReference: receipt.isEmpty ? null : receipt,
+            jetonLabel: jetonLabel,
           );
     await ref.read(walletRepositoryProvider).submitPaymentRequest(body).timeout(
           const Duration(seconds: 35),

@@ -76,14 +76,19 @@ class CfcPaymentRequestEntity {
       packageId?.startsWith('membership_') == true ||
       (notes?.toLowerCase().contains('üyelik') ?? false);
 
-  String get displayLine {
+  String brandedDisplayLine({
+    String jetonLabel = 'Jeton',
+    String cfcLabel = 'CFC',
+  }) {
     if (isJeton) {
       final c = coins ?? amount;
-      final title = packageTitle ?? '$c Jeton';
+      final title = packageTitle ?? '$c $jetonLabel';
       return '$title · ${_methodTr(method)}';
     }
-    return '$amount CFC · ${_methodTr(method)}';
+    return '$amount $cfcLabel · ${_methodTr(method)}';
   }
+
+  String get displayLine => brandedDisplayLine();
 
   static String _methodTr(String m) => switch (m) {
         'whatsapp' => 'WhatsApp',

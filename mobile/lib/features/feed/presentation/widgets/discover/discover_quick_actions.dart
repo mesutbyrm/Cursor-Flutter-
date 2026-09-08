@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/ui/premium/neon_quick_action_card.dart';
 import 'discover_section_header.dart';
 
 /// Ana sayfa — 5 neon cam hızlı işlem (yatay kaydırma).
-class DiscoverQuickActions extends StatelessWidget {
+class DiscoverQuickActions extends ConsumerWidget {
   const DiscoverQuickActions({super.key});
 
   static const _cardSize = AppSpacing.quickActionSize + 4;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+    final jetonTopUpLabel = '$jetonLabel\nYükle';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -86,7 +90,7 @@ class DiscoverQuickActions extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               NeonQuickActionCard(
-                label: 'Jeton\nYükle',
+                label: jetonTopUpLabel,
                 gradient: const [Color(0xFF2DD4BF), Color(0xFF0F766E)],
                 glowColor: const Color(0xFF14B8A6),
                 size: _cardSize,

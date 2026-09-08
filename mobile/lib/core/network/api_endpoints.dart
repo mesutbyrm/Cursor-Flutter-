@@ -908,6 +908,16 @@ abstract final class ApiEndpoints {
   static const registerUserDeviceToken = '/api/user/device-token';
 
   static const wallet = '/api/wallet';
+
+  /// ZIP ekonomi v2 — production doğrulanana kadar mevcut uçlar korunur; adapter fallback kullanır.
+  static const currencyBranding = '/api/currency-branding';
+  static const userWallet = '/api/user/wallet';
+  static const userReferralEarnings = '/api/user/referral-earnings';
+  static const agencyInviteEarnings = '/api/agency/invite-earnings';
+
+  /// Oyun SOS — ZIP referans yolu (mevcut `gameSosCreate` korunur).
+  static const gameSosEconomy = '/api/games/sos';
+
   static const withdrawals = '/api/withdrawals';
   static const platformCommissionRate = '/api/platform/commission-rate';
 

@@ -3,10 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/providers/auth_providers.dart';
+import '../economy/presentation/providers/economy_providers.dart';
+import '../economy/presentation/widgets/branded_dual_balance_chips.dart';
 import '../../features/inbox/presentation/inbox_routes.dart';
 import '../../features/inbox/presentation/providers/inbox_unread_providers.dart';
 import '../../features/profile/presentation/providers/profile_providers.dart';
-import 'dual_balance_chips.dart';
 import 'user_avatar.dart';
 
 /// Profil sekmesi gibi yerlerde: ana akışa (`/feed`) döner.
@@ -100,10 +101,11 @@ class ShellCoinBalanceAction extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final wallet = ref.watch(walletBalancesProvider);
+    final jetonTopUpHint = economyJetonTopUpShortLabel(ref);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 2),
       child: wallet.when(
-        data: (b) => DualBalanceChips(
+        data: (b) => BrandedDualBalanceChips(
           jeton: b.jeton,
           cfc: b.cfc,
           compact: true,
@@ -114,7 +116,7 @@ class ShellCoinBalanceAction extends ConsumerWidget {
           child: CircularProgressIndicator(strokeWidth: 2),
         ),
         error: (_, _) => Tooltip(
-          message: 'Jeton yükle',
+          message: jetonTopUpHint,
           child: InkWell(
             onTap: () => context.push('/jeton-store'),
             child: const Icon(Icons.monetization_on_rounded, size: 22),

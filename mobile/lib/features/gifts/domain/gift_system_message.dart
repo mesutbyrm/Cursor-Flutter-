@@ -3,7 +3,7 @@ import '../../live/domain/entities/live_gift_event.dart';
 /// Hediye sistem mesajı — sohbet ve kayan duyuru metni.
 abstract final class GiftSystemMessage {
   /// Örnek: «Mesut, Ayşe'ye 100 Jeton değerinde Rose gönderdi.»
-  static String format(LiveGiftEvent event) {
+  static String format(LiveGiftEvent event, {String jetonLabel = 'Jeton'}) {
     final sender =
         event.senderName.trim().isNotEmpty ? event.senderName.trim() : 'Biri';
     final receiver = event.receiverName.trim().isNotEmpty
@@ -13,6 +13,6 @@ abstract final class GiftSystemMessage {
         ? event.giftName.trim()
         : 'hediye';
     final jeton = event.jetonAmount;
-    return "$sender, $receiver'ye $jeton Jeton değerinde $gift gönderdi.";
+    return "$sender, $receiver'ye $jeton $jetonLabel değerinde $gift gönderdi.";
   }
 }

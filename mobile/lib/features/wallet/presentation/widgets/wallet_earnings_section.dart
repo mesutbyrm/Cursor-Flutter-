@@ -3,6 +3,7 @@ import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../membership/presentation/controllers/membership_controller.dart';
 import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../domain/wallet_balances.dart';
@@ -32,6 +33,11 @@ class WalletEarningsSection extends ConsumerWidget {
         (balances.withdrawalLimit > 0 ? balances.withdrawalLimit.toDouble() : null);
     final rate = rates?.jetonTlRate ?? balances.jetonTlRate;
     final earnedTl = balances.jetonToTl(balances.totalEarnedJeton ?? 0);
+    final jetonLabel = economyCurrencyLabel(
+      ref,
+      key: 'jeton',
+      locale: Localizations.localeOf(context),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -57,7 +63,7 @@ class WalletEarningsSection extends ConsumerWidget {
           items: [
             _StatItem(
               label: 'Toplam Kazanılan',
-              value: '${balances.totalEarnedJeton ?? 0} Jeton',
+              value: '${balances.totalEarnedJeton ?? 0} $jetonLabel',
               hint: earnedTl != null ? balances.formatTl(earnedTl) : null,
             ),
             _StatItem(
@@ -82,18 +88,18 @@ class WalletEarningsSection extends ConsumerWidget {
             ),
             _StatItem(
               label: 'Toplam Gönderilen',
-              value: '${balances.totalSentJeton ?? 0} Jeton',
+              value: '${balances.totalSentJeton ?? 0} $jetonLabel',
             ),
             _StatItem(
               label: 'Toplam Alınan',
-              value: '${balances.totalReceivedJeton ?? 0} Jeton',
+              value: '${balances.totalReceivedJeton ?? 0} $jetonLabel',
             ),
           ],
         ),
         if (rate != null) ...[
           const SizedBox(height: 8),
           Text(
-            '1 Jeton ≈ ${rate.toStringAsFixed(2)} TL (sunucu oranı)',
+            '1 $jetonLabel ≈ ${rate.toStringAsFixed(2)} TL (sunucu oranı)',
             style: TextStyle(
               fontSize: 11,
               color: context.colors.onSurfaceMuted,

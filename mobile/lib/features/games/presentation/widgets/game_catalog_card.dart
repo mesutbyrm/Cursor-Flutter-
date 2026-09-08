@@ -1,12 +1,14 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../domain/game_models.dart';
 import 'game_catalog_assets.dart';
 
 /// Premium oyun kartı — dark glass + violet accent.
-class GameCatalogCard extends StatelessWidget {
+class GameCatalogCard extends ConsumerWidget {
   const GameCatalogCard({
     super.key,
     required this.game,
@@ -19,7 +21,12 @@ class GameCatalogCard extends StatelessWidget {
   final int? activeRooms;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(
+      ref,
+      key: 'jeton',
+      locale: Localizations.localeOf(context),
+    );
     final gradient = GameCatalogAssets.gradientFor(game);
     final imageUrl = GameCatalogAssets.imageUrl(game);
     final roomCount = activeRooms ?? game.activeRoomCount;
@@ -168,7 +175,7 @@ class GameCatalogCard extends StatelessWidget {
                         const Spacer(),
                         if (game.jetonCost > 0)
                           Text(
-                            '${game.jetonCost} Jeton',
+                            '${game.jetonCost} $jetonLabel',
                             style: TextStyle(
                               color: context.coinGold,
                               fontSize: 11,

@@ -16,12 +16,19 @@ abstract final class CurrencyUsageInfo {
     'Fal & Tarot',
   ];
 
-  static const jetonUsageItems = [
+  static String cfcTitleFor(String cfcLabel) => '$cfcLabel (CanlıFal Coin)';
+
+  static String cfcPriceHintFor(String cfcLabel) => '100 $cfcLabel = 25 TL';
+
+  static String cfcNotConvertibleFor(String cfcLabel) =>
+      '$cfcLabel paraya dönüşmez. Yalnızca aşağıdaki alanlarda harcanır.';
+
+  static List<String> jetonUsageItemsFor(String jetonLabel) => [
     'Canlı yayınlar',
     'Sesli sohbet odaları',
     'Fal & Tarot',
     'Hediye yolla — gönderilen hediyeler paraya çevrilebilir',
-    'Hediye yolla — başkasına jeton hediye gönderebilirsiniz',
+    'Hediye yolla — başkasına $jetonLabel hediye gönderebilirsiniz',
     'Canlı falcılarda kullanılabilir',
   ];
 

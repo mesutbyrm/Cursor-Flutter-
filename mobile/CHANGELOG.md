@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.372+410 (2026-09-08) — ZIP economy v2: markalı Jeton/CFC etiketleri
+
+- **Fallback mimarisi:** `GET /api/currency-branding` → başarısızsa legacy Jeton/CFC; endpoint/path değişmez
+- **Merkez modül:** `core/economy/` — `economyCurrencyLabel`, cüzdan adapter, referral/agency snapshot
+- **UI:** Canlı, sesli oda, fal, hediye, mağaza, ödeme, üyelik, profil, DM ve shell chip'lerinde markalı etiketler
+- **Korunan:** Admin panelleri, backend `yetersiz jeton` hata eşleştirmesi, route `/jeton-store`
+
 ## 1.0.371+409 (2026-08-27) — Faz 2: Psychic TRTC 5 sn freeze kök nedeni
 
 - **Yanlış canlı-yayın stack kaldırıldı:** Psychic artık `POST /api/live/join-room` + 10 sn live heartbeat kullanmaz

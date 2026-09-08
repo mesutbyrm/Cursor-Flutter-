@@ -31,7 +31,10 @@ extension VoiceRoomGiftControls on VoiceRoomLiveController {
     final sender = ev.senderName.trim().isNotEmpty
         ? ev.senderName.trim()
         : 'Biri';
-    final line = GiftSystemMessage.format(ev);
+    final line = GiftSystemMessage.format(
+      ev,
+      jetonLabel: economyCurrencyLabel(ref, key: 'jeton'),
+    );
     state = state.copyWith(
       messages: [
         ...state.messages,

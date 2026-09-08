@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/performance/list_perf.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
 import '../../../profile/presentation/widgets/jeton_store_widgets.dart';
@@ -93,25 +95,30 @@ class PremiumMembershipHeader extends StatelessWidget {
   }
 }
 
-class PremiumFeatureGrid extends StatelessWidget {
+class PremiumFeatureGrid extends ConsumerWidget {
   const PremiumFeatureGrid({super.key});
 
   static const _items = [
-    (Icons.auto_awesome_rounded, 'Bonus Jeton'),
+    (Icons.auto_awesome_rounded, 'bonus'),
     (Icons.diamond_rounded, 'Özel Rozet'),
     (Icons.headset_mic_rounded, 'Öncelikli Destek'),
     (Icons.flare_rounded, 'İndirimli Fal'),
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+    final labels = _items.map((e) {
+      if (e.$2 == 'bonus') return (e.$1, 'Bonus $jetonLabel');
+      return e;
+    }).toList();
     return LayoutBuilder(
       builder: (context, constraints) {
         final cols = constraints.maxWidth >= 400 ? 2 : 1;
         const spacing = 10.0;
         final aspect = cols == 1 ? 4.5 : 2.8;
         final gridHeight = ListPerf.nestedGridHeight(
-          itemCount: _items.length,
+          itemCount: labels.length,
           crossAxisCount: cols,
           mainAxisSpacing: spacing,
           crossAxisSpacing: spacing,
@@ -126,7 +133,7 @@ class PremiumFeatureGrid extends StatelessWidget {
             mainAxisSpacing: spacing,
             crossAxisSpacing: spacing,
             childAspectRatio: aspect,
-            children: _items
+            children: labels
                 .map(
                   (e) => _FeatureBadge(icon: e.$1, label: e.$2),
                 )
@@ -255,7 +262,7 @@ class PremiumActiveMembershipCard extends StatelessWidget {
   }
 }
 
-class PremiumBalanceLines extends StatelessWidget {
+class PremiumBalanceLines extends ConsumerWidget {
   const PremiumBalanceLines({
     super.key,
     required this.jeton,
@@ -266,12 +273,14 @@ class PremiumBalanceLines extends StatelessWidget {
   final int cfc;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+    final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
     return Column(
       children: [
-        _line(context, Icons.monetization_on_rounded, 'Jeton Bakiyeniz:', '$jeton', AppThemeColors.coinGold),
+        _line(context, Icons.monetization_on_rounded, '$jetonLabel Bakiyeniz:', '$jeton', AppThemeColors.coinGold),
         SizedBox(height: 8),
-        _line(context, Icons.auto_awesome_rounded, 'CFC Bakiyeniz:', '$cfc', const Color(0xFFD8B4FE)),
+        _line(context, Icons.auto_awesome_rounded, '$cfcLabel Bakiyeniz:', '$cfc', const Color(0xFFD8B4FE)),
       ],
     );
   }
@@ -302,7 +311,7 @@ class PremiumBalanceLines extends StatelessWidget {
   }
 }
 
-class PremiumTierCard extends StatelessWidget {
+class PremiumTierCard extends ConsumerWidget {
   const PremiumTierCard({
     super.key,
     required this.package,
@@ -322,7 +331,8 @@ class PremiumTierCard extends StatelessWidget {
       };
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final accent = accentFor(package.id);
     final active = package.isActive && (package.daysRemaining ?? 0) > 0;
     final btnLabel = active
@@ -377,7 +387,7 @@ class PremiumTierCard extends StatelessWidget {
             ),
             SizedBox(height: 10),
             Text(
-              '${package.priceJeton} Jeton',
+              '${package.priceJeton} $jetonLabel',
               style: TextStyle(
                 color: AppThemeColors.coinGold,
                 fontWeight: FontWeight.w900,
@@ -577,11 +587,12 @@ class PremiumMembershipBody extends StatelessWidget {
 }
 
 /// Üyelik satın alma adımları — kısa ve anlaşılır.
-class PremiumHowToBuyCard extends StatelessWidget {
+class PremiumHowToBuyCard extends ConsumerWidget {
   const PremiumHowToBuyCard({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -605,9 +616,9 @@ class PremiumHowToBuyCard extends StatelessWidget {
             number: '1',
             text: 'Aşağıdan paket seçin (Premium, Gold veya Diamond).',
           ),
-          const _HowToStep(
+          _HowToStep(
             number: '2',
-            text: 'Jeton bakiyeniz yeterliyse anında aktif olur.',
+            text: '$jetonLabel bakiyeniz yeterliyse anında aktif olur.',
           ),
           const _HowToStep(
             number: '3',

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/voice_recent_gifts_provider.dart';
+import '../../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../theme/voice_room_tokens.dart';
 
 /// Koltukların altı sağ — son 3 hediye atan (jeton miktarı ile).
@@ -14,6 +15,7 @@ class VoiceRecentGiftersBox extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final gifters = ref.watch(voiceRecentGiftersListProvider).take(3).toList();
     if (gifters.isEmpty) return const SizedBox.shrink();
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(14),
@@ -52,7 +54,7 @@ class VoiceRecentGiftersBox extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 4),
-              ...gifters.map((g) => _GifterRow(gifter: g)),
+              ...gifters.map((g) => _GifterRow(gifter: g, jetonLabel: jetonLabel)),
             ],
           ),
         ),
@@ -62,9 +64,10 @@ class VoiceRecentGiftersBox extends ConsumerWidget {
 }
 
 class _GifterRow extends StatelessWidget {
-  const _GifterRow({required this.gifter});
+  const _GifterRow({required this.gifter, required this.jetonLabel});
 
   final VoiceRecentGifter gifter;
+  final String jetonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +96,7 @@ class _GifterRow extends StatelessWidget {
                 ),
               ),
             TextSpan(
-              text: ' — ${gifter.lastJeton} jeton'
+              text: ' — ${gifter.lastJeton} $jetonLabel'
                   '${(gifter.giftName ?? '').isNotEmpty ? ' (${gifter.giftName})' : ''}',
               style: TextStyle(
                 fontWeight: FontWeight.w600,

@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../domain/entities/message_entities.dart';
 import 'chat_quick_replies_bar.dart';
 
 /// WhatsApp tarzı mesaj balonu — büyük yazı, alıntı, hızlı yanıtlar.
-class ChatMessageBubble extends StatelessWidget {
+class ChatMessageBubble extends ConsumerWidget {
   const ChatMessageBubble({
     super.key,
     required this.message,
@@ -28,9 +30,12 @@ class ChatMessageBubble extends StatelessWidget {
   static const _theirsColor = Color(0xFF1A1A22);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final m = message;
-    final action = _actionMeta(m.text);
+    final action = _actionMeta(
+      m.text,
+      jetonLabel: economyCurrencyLabel(ref, key: 'jeton'),
+    );
     return Column(
       crossAxisAlignment:
           m.isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
@@ -149,11 +154,11 @@ class ChatMessageBubble extends StatelessWidget {
     );
   }
 
-  _ActionMeta? _actionMeta(String text) {
+  _ActionMeta? _actionMeta(String text, {required String jetonLabel}) {
     final t = text.trim();
     final table = <({String starts, IconData icon, String title, String subtitle, Color color})>[
       (starts: '🎁', icon: Icons.card_giftcard_rounded, title: 'Hediye', subtitle: 'Canlifal hediyesi', color: AppThemeColors.coinGold),
-      (starts: '🪙', icon: Icons.toll_rounded, title: 'Jeton', subtitle: 'Jeton transfer isteği', color: AppThemeColors.coinGold),
+      (starts: '🪙', icon: Icons.toll_rounded, title: jetonLabel, subtitle: '$jetonLabel transfer isteği', color: AppThemeColors.coinGold),
       (starts: '🔮', icon: Icons.auto_awesome_rounded, title: 'Fal İsteği', subtitle: 'Canlifal fal isteği', color: AppThemeColors.accentPurple),
       (starts: '🎙️', icon: Icons.mic_rounded, title: 'Sesli Fal', subtitle: 'Sesli fal isteği', color: AppThemeColors.accentPink),
       (starts: '📹', icon: Icons.video_call_rounded, title: 'Görüntülü Fal', subtitle: 'Görüntülü fal isteği', color: Colors.cyanAccent),

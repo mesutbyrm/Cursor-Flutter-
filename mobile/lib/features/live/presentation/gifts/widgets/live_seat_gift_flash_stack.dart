@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../domain/entities/live_gift_catalog.dart';
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../providers/live_seat_gift_flash_provider.dart';
 
 /// Koltuk altı hediye flaşı — 3 sn sıralı liste.
@@ -32,6 +33,7 @@ class LiveSeatGiftFlashStack extends ConsumerWidget {
     final flashes = ref
         .read(liveSeatGiftFlashProvider.notifier)
         .forReceiver(userId: userId, displayName: displayName);
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -40,7 +42,7 @@ class LiveSeatGiftFlashStack extends ConsumerWidget {
         for (final f in flashes)
           Padding(
             padding: const EdgeInsets.only(top: 4),
-            child: _FlashRow(flash: f),
+            child: _FlashRow(flash: f, jetonLabel: jetonLabel),
           ),
       ],
     );
@@ -48,9 +50,10 @@ class LiveSeatGiftFlashStack extends ConsumerWidget {
 }
 
 class _FlashRow extends StatelessWidget {
-  const _FlashRow({required this.flash});
+  const _FlashRow({required this.flash, required this.jetonLabel});
 
   final LiveSeatGiftFlash flash;
+  final String jetonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -95,7 +98,7 @@ class _FlashRow extends StatelessWidget {
             ),
             if (jeton > 0)
               Text(
-                '$jeton Jeton',
+                '$jeton $jetonLabel',
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,

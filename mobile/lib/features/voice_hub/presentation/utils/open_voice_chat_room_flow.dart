@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/app_router.dart';
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/auth/bot_account_guard.dart';
 import '../../../../core/auth/bot_account_provider.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
@@ -35,6 +36,7 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
       );
   final normalCost = settings.normalOpenCost;
   final vipCost = settings.vipOpenCost;
+  final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
   var balance = ref.read(walletBalancesProvider).valueOrNull?.jeton ??
       ref.read(authControllerProvider).valueOrNull?.coinBalance ??
       0;
@@ -63,7 +65,7 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
             ),
             const SizedBox(height: 8),
             Text(
-              'Ücretsiz oda: 0 jeton\nSesli oda: $normalCost jeton\nVIP oda: $vipCost jeton',
+              'Ücretsiz oda: 0 $jetonLabel\nSesli oda: $normalCost $jetonLabel\nVIP oda: $vipCost $jetonLabel',
               style: TextStyle(
                 color: ctx.colors.onSurfaceMuted.withValues(alpha: 0.95),
                 fontSize: 13,
@@ -72,7 +74,7 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
             ),
             const SizedBox(height: 6),
             Text(
-              'Bakiyeniz: $balance jeton',
+              'Bakiyeniz: $balance $jetonLabel',
               style: TextStyle(
                 color: balance >= normalCost
                     ? AppThemeColors.accentCyan
@@ -86,7 +88,7 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
               onPressed: () =>
                   Navigator.of(ctx, rootNavigator: true).pop(_OpenRoomChoice.free),
               icon: const Icon(Icons.volunteer_activism_rounded),
-              label: const Text('Ücretsiz oda aç · 0 jeton'),
+              label: Text('Ücretsiz oda aç · 0 $jetonLabel'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppThemeColors.accentCyan,
                 side: BorderSide(
@@ -100,7 +102,7 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
               onPressed: () => Navigator.of(ctx, rootNavigator: true)
                   .pop(_OpenRoomChoice.standard),
               icon: const Icon(Icons.mic_rounded),
-              label: Text('Sesli oda aç · $normalCost jeton'),
+              label: Text('Sesli oda aç · $normalCost $jetonLabel'),
               style: FilledButton.styleFrom(
                 backgroundColor: AppThemeColors.accentPurple,
                 minimumSize: const Size.fromHeight(48),
@@ -111,7 +113,7 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
               onPressed: () =>
                   Navigator.of(ctx, rootNavigator: true).pop(_OpenRoomChoice.vip),
               icon: const Icon(Icons.workspace_premium_rounded),
-              label: Text('VIP oda aç · $vipCost jeton'),
+              label: Text('VIP oda aç · $vipCost $jetonLabel'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppThemeColors.coinGold,
                 side: const BorderSide(color: AppThemeColors.coinGold),
@@ -176,7 +178,7 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
     unawaited(
       showInsufficientJetonDialog(
         context,
-        message: 'Yetersiz jeton ($cost gerekli, $balance mevcut).',
+        message: 'Yetersiz $jetonLabel ($cost gerekli, $balance mevcut).',
         ref: ref,
       ),
     );

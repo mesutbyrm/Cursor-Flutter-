@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:canlifal_social/core/economy/domain/economy_payment_models.dart';
 import 'package:canlifal_social/core/network/api_endpoints.dart';
 import 'package:canlifal_social/features/bana_ozel/data/datasources/bana_ozel_remote_datasource.dart';
 import 'package:canlifal_social/features/bana_ozel/domain/entities/bana_ozel_entities.dart';
@@ -60,6 +61,75 @@ void main() {
       expect(captured?.data, {'slug': 'sansli-sayilar'});
       expect(result.content, contains('7'));
       expect(result.jetonBalance, 8);
+    });
+
+    test('openItem with useAd sends useAd flag', () async {
+      RequestOptions? captured;
+      const item = BanaOzelItemEntity(
+        id: '1',
+        slug: 'sansli-sayilar',
+        nameTr: 'Şanslı Sayılar',
+        icon: '🍀',
+        jetonCost: 2,
+        category: 'fortune',
+      );
+      final dio = Dio()
+        ..httpClientAdapter = _FakeAdapter((options, _, cancelFuture) async {
+          captured = options;
+          await cancelFuture;
+          return ResponseBody.fromString(
+            '{"content":"ok","paymentMethod":"ad","jetonBalance":8}',
+            200,
+            headers: {
+              Headers.contentTypeHeader: ['application/json'],
+            },
+          );
+        });
+
+      final result = await BanaOzelRemoteDataSource(dio).openItem(
+        item: item,
+        useAd: true,
+      );
+
+      expect(captured?.data, {'slug': 'sansli-sayilar', 'useAd': true});
+      expect(result.openedWithAd, isTrue);
+    });
+
+    test('openItem maps HTTP 402 to insufficient payment', () async {
+      const item = BanaOzelItemEntity(
+        id: '1',
+        slug: 'sansli-sayilar',
+        nameTr: 'Şanslı Sayılar',
+        icon: '🍀',
+        jetonCost: 2,
+        category: 'fortune',
+      );
+      final dio = Dio()
+        ..httpClientAdapter = _FakeAdapter((options, _, cancelFuture) async {
+          await cancelFuture;
+          return ResponseBody.fromString(
+            '{"error":"Yetersiz","required":2,"canWatchAd":true,"adUnlimited":true}',
+            402,
+            headers: {
+              Headers.contentTypeHeader: ['application/json'],
+            },
+          );
+        });
+
+      expect(
+        () => BanaOzelRemoteDataSource(dio).openItem(item: item),
+        throwsA(isA<BanaOzelInsufficientPayment>()),
+      );
+    });
+
+    test('paymentSummary reflects payment method', () {
+      const adResult = BanaOzelOpenResultEntity(
+        content: 'ok',
+        itemSlug: 'x',
+        itemName: 'Test',
+        paymentMethod: BanaOzelPaymentMethod.ad,
+      );
+      expect(adResult.paymentSummary(), contains('Reklam'));
     });
   });
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../notifications/domain/entities/app_notification_entity.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 
 /// Jeton ödeme onay / red bildirimlerini popup olarak gösterir.
@@ -46,6 +47,7 @@ class _JetonPaymentStatusListenerState
   }
 
   void _showDialog(AppNotificationEntity n, bool approved) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -54,14 +56,14 @@ class _JetonPaymentStatusListenerState
           color: approved ? AppThemeColors.accentCyan : AppThemeColors.coinGold,
           size: 36,
         ),
-        title: Text(approved ? 'Jeton yüklendi' : 'Ödeme reddedildi'),
+        title: Text(approved ? '$jetonLabel yüklendi' : 'Ödeme reddedildi'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               approved
-                  ? 'Jetonlarınız hesabınıza yüklendi.'
+                  ? '$jetonLabel bakiyeniz hesabınıza yüklendi.'
                   : 'Ödeme talebiniz reddedildi.',
               style: const TextStyle(fontWeight: FontWeight.w800, height: 1.35),
             ),

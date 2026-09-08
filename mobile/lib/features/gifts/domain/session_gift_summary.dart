@@ -29,12 +29,12 @@ class SessionGiftSummary {
   double tlForJeton(int jeton) =>
       jeton <= 0 ? 0 : (jeton * jetonTlRate);
 
-  String formatJeton(int jeton) => '$jeton jeton';
+  String formatJeton(int jeton, {String label = 'jeton'}) => '$jeton $label';
 
-  String formatJetonWithTl(int jeton) {
-    if (jeton <= 0) return '0 jeton';
+  String formatJetonWithTl(int jeton, {String label = 'jeton'}) {
+    if (jeton <= 0) return '0 $label';
     final tl = tlForJeton(jeton);
-    return '$jeton jeton (${tl.toStringAsFixed(2)} ₺)';
+    return '$jeton $label (${tl.toStringAsFixed(2)} ₺)';
   }
 
   bool get hasData =>

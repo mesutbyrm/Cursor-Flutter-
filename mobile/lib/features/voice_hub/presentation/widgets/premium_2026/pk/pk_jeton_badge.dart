@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../theme/voice_room_tokens.dart';
 import 'pk_animated_score_bar.dart';
 
 /// Tek tarafın PK jeton skoru — TikTok tarzı rozet.
-class PkJetonBadge extends StatelessWidget {
+class PkJetonBadge extends ConsumerWidget {
   const PkJetonBadge({
     super.key,
     required this.jeton,
@@ -17,7 +19,8 @@ class PkJetonBadge extends StatelessWidget {
   final bool compact;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: compact ? 8 : 10,
@@ -48,7 +51,7 @@ class PkJetonBadge extends StatelessWidget {
           if (!compact) ...[
             const SizedBox(width: 3),
             Text(
-              'Jeton',
+              jetonLabel,
               style: TextStyle(
                 fontSize: 9,
                 fontWeight: FontWeight.w700,

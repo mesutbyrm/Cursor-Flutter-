@@ -2409,5 +2409,22 @@ await apiClient.patch('/api/user/profile', data: {
 
 ---
 
+## 10. Para birimi ekonomisi v2 (ZIP referans — opsiyonel uçlar)
+
+Mobil istemci aşağıdaki **yeni** uçları destekler; production'da yoksa mevcut uçlara **fallback** yapılır (mevcut davranış korunur):
+
+| Yeni uç | Fallback |
+|---------|----------|
+| `GET /api/currency-branding` | Varsayılan Jeton/CFC markası |
+| `GET /api/user/wallet` | `GET /api/user/credits` / `GET /api/wallet` |
+| `GET /api/user/referral-earnings` | `GET /api/referral/earnings` |
+| `GET /api/agency/invite-earnings` | Gizlenir (ajans yok) |
+
+**Bana Özel ödeme sırası (backend):** CFC → Jeton → Reklam (`402` + `useAd: true`).
+
+**Korunan mevcut sabitler:** `/api/wallet`, `/api/referral/earnings`, `/api/games/sos/create`, `/api/bana-ozel/open`.
+
+---
+
 > **Bu doküman yalnızca mevcut backend API'lerinin Flutter entegrasyon referansıdır.**  
 > **Hiçbir backend kodu değiştirilmemiştir. Yeni endpoint oluşturulmamıştır.**

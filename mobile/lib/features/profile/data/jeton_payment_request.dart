@@ -10,6 +10,7 @@ Map<String, dynamic> buildCustomJetonPaymentRequest({
   String? username,
   String? packageId,
   String? receiptReference,
+  String jetonLabel = 'Jeton',
 }) {
   final safeCoins = coins > 0 ? coins : 1;
   final pkgId = (packageId ?? 'p$safeCoins').trim();
@@ -19,8 +20,8 @@ Map<String, dynamic> buildCustomJetonPaymentRequest({
       ? priceTry.toInt().toString()
       : priceTry.toStringAsFixed(2);
   final notes = StringBuffer()
-    ..writeln('Jeton yükleme · $method')
-    ..writeln('$safeCoins jeton · ₺$priceLabel');
+    ..writeln('$jetonLabel yükleme · $method')
+    ..writeln('$safeCoins $jetonLabel · ₺$priceLabel');
   if (sender != null && sender.isNotEmpty) {
     notes.writeln('Gönderen: $sender');
   }
@@ -29,7 +30,7 @@ Map<String, dynamic> buildCustomJetonPaymentRequest({
     'type': 'jeton',
     'method': method,
     'packageId': pkgId,
-    'packageTitle': '$safeCoins Jeton',
+    'packageTitle': '$safeCoins $jetonLabel',
     'coins': safeCoins,
     'amount': safeCoins,
     'priceTry': priceTry,
@@ -53,10 +54,11 @@ Map<String, dynamic> buildJetonPaymentRequest({
   String? notes,
   String? senderLabel,
   String? receiptReference,
+  String jetonLabel = 'Jeton',
 }) {
   final coins = package.coins > 0 ? package.coins : 1;
   final receipt = receiptReference?.trim();
-  final baseNotes = notes ?? 'Jeton yükleme · $method';
+  final baseNotes = notes ?? '$jetonLabel yükleme · $method';
   return {
     'requestType': 'jeton',
     'type': 'jeton',

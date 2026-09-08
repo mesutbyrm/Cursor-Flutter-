@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_entity.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_fortune_types.dart';
 
@@ -36,14 +37,18 @@ Future<PsychicBookingResult?> showPsychicBookingSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (ctx) => ProviderScope(
-      overrides: [
-        _bookingMinutesProvider.overrideWith((ref) => initialMinutes),
-        _bookingFortuneTypeProvider.overrideWith(
-          (ref) => initialFortuneType ?? psychicFortuneTypesForPsychic(psychic.specialties).first.key,
-        ),
-      ],
-      child: _PsychicBookingSheet(psychic: psychic, isStaff: isStaff),
+    builder: (ctx) => UncontrolledProviderScope(
+      container: ProviderScope.containerOf(context),
+      child: ProviderScope(
+        overrides: [
+          _bookingMinutesProvider.overrideWith((ref) => initialMinutes),
+          _bookingFortuneTypeProvider.overrideWith(
+            (ref) => initialFortuneType ??
+                psychicFortuneTypesForPsychic(psychic.specialties).first.key,
+          ),
+        ],
+        child: _PsychicBookingSheet(psychic: psychic, isStaff: isStaff),
+      ),
     ),
   );
 }
@@ -67,6 +72,7 @@ class _PsychicBookingSheet extends ConsumerWidget {
       (o) => o.minutes == selectedMinutes,
       orElse: () => options[1],
     );
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -145,10 +151,10 @@ class _PsychicBookingSheet extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: const Color(0xFF64B5F6)),
                       ),
-                      child: const Text(
-                        'Staff hesabı — seans için jeton düşülmez',
+                      child: Text(
+                        'Staff hesabı — seans için $jetonLabel düşülmez',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF80D8FF),
@@ -264,7 +270,9 @@ class _PsychicBookingSheet extends ConsumerWidget {
                           child: Column(
                             children: [
                               Text(
-                                isStaff ? 'Ücretsiz' : '${selected.totalJeton} jeton',
+                                isStaff
+                                    ? 'Ücretsiz'
+                                    : '${selected.totalJeton} $jetonLabel',
                                 style: const TextStyle(
                                   color: AppThemeColors.accentCyan,
                                   fontWeight: FontWeight.w900,

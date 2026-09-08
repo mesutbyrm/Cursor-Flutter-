@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../domain/entities/live_fortune_request_entity.dart';
 import '../../../../live_psychics/presentation/widgets/psychic_fortune_types.dart';
 import '../../providers/live_fortune_type_options_provider.dart';
@@ -68,12 +69,13 @@ class _LiveFortuneRequestFormState extends ConsumerState<LiveFortuneRequestForm>
     }
 
     final cost = _jetonAmount.round();
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Jeton onayı'),
+        title: Text('$jetonLabel onayı'),
         content: Text(
-          '$cost Jeton düşülecek. Onaylıyor musunuz?\n\n'
+          '$cost $jetonLabel düşülecek. Onaylıyor musunuz?\n\n'
           'Gerçek kullanıcı adınız yayıncıya gösterilmez.',
         ),
         actions: [
@@ -121,6 +123,7 @@ class _LiveFortuneRequestFormState extends ConsumerState<LiveFortuneRequestForm>
     final typesAsync = ref.watch(liveFortuneTypeOptionsProvider);
     final types = typesAsync.valueOrNull ?? psychicFortuneTypes;
     final balance = widget.balance;
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(18),
@@ -190,7 +193,7 @@ class _LiveFortuneRequestFormState extends ConsumerState<LiveFortuneRequestForm>
               Row(
                 children: [
                   Text(
-                    'İstek Jetonu',
+                    'İstek $jetonLabel',
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.8),
                       fontSize: 12,
@@ -199,7 +202,7 @@ class _LiveFortuneRequestFormState extends ConsumerState<LiveFortuneRequestForm>
                   ),
                   const Spacer(),
                   Text(
-                    '${_jetonAmount.round()} Jeton',
+                    '${_jetonAmount.round()} $jetonLabel',
                     style: const TextStyle(
                       color: Color(0xFFFFD54F),
                       fontSize: 14,
@@ -214,11 +217,11 @@ class _LiveFortuneRequestFormState extends ConsumerState<LiveFortuneRequestForm>
                 max: 1000,
                 divisions: 98, // 20'şer adım (20,30,...1000 ≈ 10'luk)
                 activeColor: const Color(0xFF7C3AED),
-                label: '${_jetonAmount.round()} Jeton',
+                label: '${_jetonAmount.round()} $jetonLabel',
                 onChanged: (v) => setState(() => _jetonAmount = v),
               ),
               Text(
-                'Daha yüksek jeton, falının yayıncı sırasında öne çıkmasını sağlar (20-1000).',
+                'Daha yüksek $jetonLabel, falının yayıncı sırasında öne çıkmasını sağlar (20-1000).',
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.5),
                   fontSize: 10,
@@ -227,7 +230,7 @@ class _LiveFortuneRequestFormState extends ConsumerState<LiveFortuneRequestForm>
               if (balance != null) ...[
                 const SizedBox(height: 6),
                 Text(
-                  'Bakiyeniz: $balance Jeton',
+                  'Bakiyeniz: $balance $jetonLabel',
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.65),
                     fontSize: 11,

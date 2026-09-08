@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/performance/list_perf.dart';
 import '../../../../core/theme/app_theme_colors.dart';
@@ -108,14 +109,7 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
     ),
   ];
 
-  static const _modGrid = [
-    _PromoCard(
-      title: 'Duyuru Yayınla',
-      subtitle: 'Üst bant · yetkili ücretsiz / 5 jeton',
-      icon: Icons.campaign_rounded,
-      color: Color(0xFF3B82F6),
-      kind: _PromoKind.duyuru,
-    ),
+  static const _modGridRest = [
     _PromoCard(
       title: 'Sohbet Temizle',
       subtitle: 'Tüm mesajları sil',
@@ -131,6 +125,17 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
       kind: _PromoKind.userMgmt,
     ),
   ];
+
+  List<_PromoCard> _modGridCards(String jetonLabel) => [
+        _PromoCard(
+          title: 'Duyuru Yayınla',
+          subtitle: 'Üst bant · yetkili ücretsiz / 5 $jetonLabel',
+          icon: Icons.campaign_rounded,
+          color: const Color(0xFF3B82F6),
+          kind: _PromoKind.duyuru,
+        ),
+        ..._modGridRest,
+      ];
 
   @override
   void initState() {
@@ -325,7 +330,10 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
 
   Future<String?> _promptDuyuru() async {
     final ctrl = TextEditingController();
-    final cost = VoiceRoomDuyuruAccess.costLabel(widget.perms);
+    final cost = VoiceRoomDuyuruAccess.costLabel(
+      widget.perms,
+      jetonLabel: economyCurrencyLabel(ref, key: 'jeton'),
+    );
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -417,6 +425,10 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
   Widget build(BuildContext context) {
     final coins = ref.watch(coinBalanceProvider) ?? 0;
     final coinLabel = NumberFormat.decimalPattern('tr').format(coins);
+    final jetonTopUpLabel = economyJetonTopUpShortLabel(ref);
+    final jetonBalanceHeader = economyJetonBalanceHeaderLabel(ref);
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+    final modGrid = _modGridCards(jetonLabel);
     final canModerate = widget.perms.canModerate || widget.isOwner;
     final top = MediaQuery.paddingOf(context).top;
 
@@ -472,7 +484,7 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
                       const spacing = 8.0;
                       const aspect = 1.55;
                       final gridHeight = ListPerf.nestedGridHeight(
-                        itemCount: _modGrid.length,
+                        itemCount: modGrid.length,
                         crossAxisCount: crossAxisCount,
                         mainAxisSpacing: spacing,
                         crossAxisSpacing: spacing,
@@ -490,9 +502,9 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
                             crossAxisSpacing: spacing,
                             childAspectRatio: aspect,
                           ),
-                          itemCount: _modGrid.length,
+                          itemCount: modGrid.length,
                           itemBuilder: (context, index) {
-                            final c = _modGrid[index];
+                            final c = modGrid[index];
                             return _PromoActionCard(
                               card: c,
                               compact: true,
@@ -514,6 +526,8 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
                 const SizedBox(height: 20),
                 _JetonCard(
                   balance: coinLabel,
+                  balanceHeader: jetonBalanceHeader,
+                  topUpLabel: jetonTopUpLabel,
                   onTopUp: () {
                     final ctx = context;
                     Navigator.pop(ctx);
@@ -777,11 +791,15 @@ class _SectionHeader extends StatelessWidget {
 class _JetonCard extends StatelessWidget {
   const _JetonCard({
     required this.balance,
+    required this.balanceHeader,
+    required this.topUpLabel,
     required this.onTopUp,
     this.onGrowthHub,
   });
 
   final String balance;
+  final String balanceHeader;
+  final String topUpLabel;
   final VoidCallback onTopUp;
   final VoidCallback? onGrowthHub;
 
@@ -801,9 +819,9 @@ class _JetonCard extends StatelessWidget {
             children: [
               Icon(Icons.link_rounded, color: VoiceRoomTokens.gold.withValues(alpha: 0.8)),
               const SizedBox(width: 8),
-              const Text(
-                'Jeton Bakiye',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+              Text(
+                balanceHeader,
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
               ),
             ],
           ),
@@ -827,7 +845,7 @@ class _JetonCard extends StatelessWidget {
           FilledButton.icon(
             onPressed: onTopUp,
             icon: const Icon(Icons.link_rounded),
-            label: const Text('Jeton Yükle'),
+            label: Text(topUpLabel),
             style: FilledButton.styleFrom(
               backgroundColor: VoiceRoomTokens.gold,
               foregroundColor: Colors.black,
