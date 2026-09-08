@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../../core/bootstrap/startup_perf.dart';
 import '../../../../inbox/presentation/inbox_routes.dart';
 import '../../../../inbox/presentation/providers/inbox_unread_providers.dart';
+import '../../navigation/fortune_card_navigation.dart';
 import 'ultra_fortune_liquid_surface.dart';
 import 'ultra_fortune_tokens.dart';
 
@@ -81,6 +83,46 @@ class UltraFortuneAppBar extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
+              leading: const Icon(Icons.grid_view_rounded, color: Colors.white70),
+              title: const Text('Tüm Fal Türleri', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(ctx);
+                openFortuneTypesCatalog(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.menu_book_rounded, color: Colors.white70),
+              title: const Text('Hazır Yorumlar', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(ctx);
+                context.push('/fortune/ready');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.history_rounded, color: Colors.white70),
+              title: const Text('Fal Geçmişim', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(ctx);
+                context.push('/favorites');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.psychology_rounded, color: Colors.white70),
+              title: const Text('Canlı Falcılar', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(ctx);
+                context.push('/canli-falcilar');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.auto_fix_high_rounded, color: Colors.white70),
+              title: const Text('Bana Özel', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(ctx);
+                context.push('/fortune/bana-ozel');
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.home_rounded, color: Colors.white70),
               title: const Text('Ana Sayfa', style: TextStyle(color: Colors.white)),
               onTap: () {
@@ -128,6 +170,11 @@ class _FortuneAppBarBadgesGateState extends State<_FortuneAppBarBadgesGate> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _GlassIconButton(
+            icon: Icons.history_rounded,
+            onTap: () => context.push('/favorites'),
+          ),
+          const SizedBox(width: 6),
+          _GlassIconButton(
             icon: Icons.inbox_rounded,
             onTap: () => InboxRoutes.open(context),
           ),
@@ -148,6 +195,11 @@ class _FortuneAppBarBadges extends ConsumerWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        _GlassIconButton(
+          icon: Icons.history_rounded,
+          onTap: () => context.push('/favorites'),
+        ),
+        const SizedBox(width: 6),
         _GlassIconButton(
           icon: Icons.inbox_rounded,
           badgeCount: unreadInbox,

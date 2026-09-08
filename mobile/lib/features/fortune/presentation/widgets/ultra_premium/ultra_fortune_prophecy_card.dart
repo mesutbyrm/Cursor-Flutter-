@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../data/fortune_catalog.dart';
 import '../../data/fortune_type_images.dart';
-import '../premium_ai/fortune_image_shimmer.dart';
+import '../fortune_type_cover_image.dart';
 import 'ultra_fortune_liquid_surface.dart';
 import 'ultra_fortune_ripple_button.dart';
 import 'ultra_fortune_tokens.dart';
@@ -77,7 +76,6 @@ class _CinematicTarotThumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final url = FortuneTypeImages.urlFor('tarot', width: 400);
     final glow = FortuneTypeImages.glowColor('tarot');
 
     return Container(
@@ -99,22 +97,11 @@ class _CinematicTarotThumb extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            CanlifalNetworkImage(
-              url: url,
-              fit: BoxFit.cover,
-              placeholder: const FortuneImageShimmer(accent: Color(0xFFB832FF)),
-            ),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withValues(alpha: 0.55),
-                  ],
-                ),
-              ),
+            FortuneTypeCoverImage(
+              slug: 'tarot',
+              accent: glow,
+              imageWidth: 400,
+              showOverlay: true,
             ),
             Positioned(
               left: 0,

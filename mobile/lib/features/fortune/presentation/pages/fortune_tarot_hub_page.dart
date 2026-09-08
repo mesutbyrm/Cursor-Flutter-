@@ -17,6 +17,8 @@ import '../widgets/ultra_premium/ultra_fortune_hero_section.dart';
 import '../widgets/ultra_premium/ultra_fortune_prophecy_card.dart';
 import '../widgets/fortune_zodiac_hub_card.dart';
 import '../widgets/ultra_premium/ultra_fortune_tokens.dart';
+import '../widgets/ultra_premium/ultra_fortune_quick_actions.dart';
+import '../widgets/ultra_premium/ultra_fortune_hub_quick_grid.dart';
 import '../widgets/ultra_premium/ultra_fortune_types_section.dart';
 import '../../../bana_ozel/presentation/widgets/bana_ozel_hub_section.dart';
 import '../../../shorts/presentation/widgets/shorts_hub_strip.dart';
@@ -76,6 +78,8 @@ class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
             slivers: [
               const SliverToBoxAdapter(child: UltraFortuneAppBar()),
               const SliverToBoxAdapter(child: UltraFortuneHeroSection()),
+              const SliverToBoxAdapter(child: UltraFortuneQuickActions()),
+              const SliverToBoxAdapter(child: UltraFortuneHubQuickGrid()),
               const SliverToBoxAdapter(
                 child: LazyScreenSection(
                   delay: LazyLoadPerf.fortuneProphecy,

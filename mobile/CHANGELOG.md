@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.407+445 (2026-09-08) — Fal hub butonları ve hızlı erişim
+
+- Hızlı erişim: Hazır Yorumlar, Fal Geçmişim, Canlı Falcılar, Bana Özel
+- Popüler 8 fal türü 2×4 grid (tarot, kahve, aşk, yıldızname…)
+- Menü + üst bar: fal geçmişi, tüm türler, canlı falcılar
+- Enerji kartları ve hero bilgi kartları tıklanabilir
+- Kehanet kartı yerel tarot kapak görseli
+
 ## 1.0.406+444 (2026-09-08) — Fal&Tarot tamamlama + mistik görseller
 
 - Fal vitrin: istihare, aura, kurşun, doğum haritası intro çöküşü giderildi

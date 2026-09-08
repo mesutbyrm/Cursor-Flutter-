@@ -90,7 +90,16 @@ class UltraFortuneDailyEnergy extends StatelessWidget {
             separatorBuilder: (_, _) => const SizedBox(width: 12),
             itemBuilder: (context, index) {
               final card = _cards[index];
-              return _EnergyCrystalCard(item: card);
+              return _EnergyCrystalCard(
+                item: card,
+                onTap: () {
+                  final route = switch (index) {
+                    4 => '/fortune/yildiz-haritasi',
+                    _ => '/fortune/${FortuneCatalog.dailyFortune.slug}',
+                  };
+                  context.push(route);
+                },
+              );
             },
           ),
         ),
@@ -114,15 +123,17 @@ class _EnergyItem {
 }
 
 class _EnergyCrystalCard extends StatelessWidget {
-  const _EnergyCrystalCard({required this.item});
+  const _EnergyCrystalCard({required this.item, this.onTap});
 
   final _EnergyItem item;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: 128,
       child: UltraFortuneLiquidSurface(
+        onTap: onTap,
         elevated: true,
         borderRadius: BorderRadius.circular(22),
         padding: const EdgeInsets.all(14),

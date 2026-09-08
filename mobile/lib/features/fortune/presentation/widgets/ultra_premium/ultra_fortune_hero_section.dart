@@ -59,22 +59,26 @@ class UltraFortuneHeroSection extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           Row(
-            children: const [
+            children: [
               Expanded(
                 child: _SideInfoCard(
                   label: 'Enerjin',
                   value: 'Yüksek',
                   icon: Icons.diamond_rounded,
                   iconColor: UltraFortuneTokens.softLilac,
+                  onTap: () => context.push(
+                    '/fortune/${FortuneCatalog.dailyFortune.slug}',
+                  ),
                 ),
               ),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               Expanded(
                 child: _SideInfoCard(
                   label: 'Ay Evresi',
                   value: 'Şişkin Ay',
                   icon: Icons.nightlight_round,
                   iconColor: UltraFortuneTokens.metallicGold,
+                  onTap: () => context.push('/fortune/yildiz-haritasi'),
                 ),
               ),
             ],
@@ -147,16 +151,19 @@ class _SideInfoCard extends StatelessWidget {
     required this.value,
     required this.icon,
     required this.iconColor,
+    this.onTap,
   });
 
   final String label;
   final String value;
   final IconData icon;
   final Color iconColor;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return UltraFortuneLiquidSurface(
+      onTap: onTap,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       borderRadius: BorderRadius.circular(18),
       blur: 40,
