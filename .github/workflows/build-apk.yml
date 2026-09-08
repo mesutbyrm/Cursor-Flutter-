@@ -436,18 +436,15 @@ jobs:
             async function replaceReleaseAsset(releaseId, assetName, apkData, assets) {
               let currentAssets = assets || [];
               let existing = currentAssets.find((asset) => asset.name === assetName);
-              if (existing && existing.size === apkData.length) {
-                core.info(`Asset boyutu aynı, yükleme atlandı: ${assetName}`);
-                return currentAssets;
-              }
               if (existing) {
                 await deleteReleaseAssetSafe(existing);
                 currentAssets = await refreshReleaseAssets(releaseId);
                 existing = currentAssets.find((asset) => asset.name === assetName);
               }
-              if (existing && existing.size === apkData.length) {
-                core.info(`Silme başarısız olsa da asset güncel: ${assetName}`);
-                return currentAssets;
+              if (existing) {
+                core.warning(`Asset silindikten sonra hâlâ mevcut: ${assetName} — yeniden siliniyor`);
+                await deleteReleaseAssetSafe(existing);
+                currentAssets = await refreshReleaseAssets(releaseId);
               }
               try {
                 await github.rest.repos.uploadReleaseAsset({
@@ -627,18 +624,15 @@ jobs:
             async function replaceReleaseAsset(releaseId, assetName, apkData, assets) {
               let currentAssets = assets || [];
               let existing = currentAssets.find((asset) => asset.name === assetName);
-              if (existing && existing.size === apkData.length) {
-                core.info(`Asset boyutu aynı, yükleme atlandı: ${assetName}`);
-                return currentAssets;
-              }
               if (existing) {
                 await deleteReleaseAssetSafe(existing);
                 currentAssets = await refreshReleaseAssets(releaseId);
                 existing = currentAssets.find((asset) => asset.name === assetName);
               }
-              if (existing && existing.size === apkData.length) {
-                core.info(`Silme başarısız olsa da asset güncel: ${assetName}`);
-                return currentAssets;
+              if (existing) {
+                core.warning(`Asset silindikten sonra hâlâ mevcut: ${assetName} — yeniden siliniyor`);
+                await deleteReleaseAssetSafe(existing);
+                currentAssets = await refreshReleaseAssets(releaseId);
               }
               try {
                 await github.rest.repos.uploadReleaseAsset({
