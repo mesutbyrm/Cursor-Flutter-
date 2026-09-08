@@ -132,7 +132,7 @@ void main() {
           },
         },
       );
-      expect(cmd?.asset?.url, 'assets/gifts/lottie/crown.json');
+      expect(cmd?.asset?.bundlePath, 'assets/gifts/lottie/crown.json');
       expect(cmd?.layout.durationMs, 3000);
     });
   });
