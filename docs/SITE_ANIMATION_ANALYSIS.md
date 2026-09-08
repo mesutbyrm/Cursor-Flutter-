@@ -152,7 +152,7 @@ Admin özel atama (`ADMIN_CUSTOM` priority 110) resolver'da `priorityOverride` i
 | Live / Fal / Gift overlay | ✅ ctx_live, ctx_fal_tarot, ctx_gift |
 | Oyun overlay host | ✅ ctx_game (hub + oda) |
 | Hediye katalog seed | ✅ gift kategorisi (4 tier) |
-| Sosyal entrance SSE hook | ⏳ Üretim SSE sözleşmesi bekliyor |
+| Sosyal entrance marquee hook | ✅ Global ticker → ctx_social (SocialPage) |
 | Production deploy | ⏳ canlifal.com ayrı |
 
 ---
@@ -178,7 +178,7 @@ Admin özel atama (`ADMIN_CUSTOM` priority 110) resolver'da `priorityOverride` i
 └────────┬────────┘
          ▼
 ┌─────────────────┐
-│ Overlay Host    │  voice / (future: live, social, profile)
+│ Overlay Host    │  voice / live / social / profile / gift / game / fal
 └─────────────────┘
 ```
 
@@ -227,7 +227,7 @@ Sunucu: `buildSiteAnimationRoomEvent` → membership default veya user assignmen
 4. ✅ Admin hub + preview
 5. ✅ Profil frame + avatar efekt renderer
 6. ✅ Live / Gift / Fal / Game overlay host
-7. ⏳ Sosyal feed entrance SSE (üretim sözleşmesi)
+7. ✅ Sosyal feed entrance (marquee → ctx_social)
 8. ⏳ Production deploy + PR merge
 
 ---

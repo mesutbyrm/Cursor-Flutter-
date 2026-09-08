@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.390+428 (2026-09-08) — Site Animation: sosyal giriş köprüsü
+
+- `site_animation_social_bridge.dart` — global marquee VIP giriş → `ctx_social` kart
+- `SocialPage` staff entrance listener entegrasyonu
+- Analiz dokümanı sosyal hook tamamlandı olarak güncellendi
+
 ## 1.0.389+427 (2026-09-08) — Site Animation: oyun host + hediye katalog seed
 
 - Oyun hub ve oda sayfaları `SiteAnimationContextHost(game)` overlay
