@@ -15,6 +15,8 @@ abstract final class FortuneTypeSlug {
     'istihare': 'istihare',
     'katina': 'katina',
     'iskambil': 'iskambil-fali',
+    'gunluk-fal': 'burc-yorumu',
+    'gunluk': 'burc-yorumu',
     'cin-fali': 'cin-fali',
     'pendul': 'pendul-fali',
     'runik': 'runik-fali',

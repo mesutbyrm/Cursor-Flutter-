@@ -10,6 +10,7 @@ import '../../domain/entities/live_stream_entity.dart';
 import '../providers/co_broadcast_provider.dart';
 import '../providers/live_co_broadcast_invite_signal_provider.dart';
 import '../providers/live_invite_dedup_provider.dart';
+import '../providers/pending_co_broadcast_join_provider.dart';
 import '../providers/live_providers.dart';
 import '../utils/open_live_stream.dart';
 
@@ -145,6 +146,7 @@ class _LiveCoBroadcastInviteListenerState
       if (accept) {
         await ref.read(coBroadcastProvider.notifier).acceptInvite(streamId);
         await ref.read(coBroadcastProvider.notifier).refreshStream(streamId);
+        ref.read(pendingCoBroadcastJoinProvider.notifier).setPending(streamId);
         final nav = rootNavigatorKey.currentContext;
         if (nav != null && nav.mounted) {
           final streams =

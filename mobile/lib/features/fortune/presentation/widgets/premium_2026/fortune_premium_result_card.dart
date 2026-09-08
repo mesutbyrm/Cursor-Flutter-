@@ -74,6 +74,27 @@ class FortunePremiumResultCard extends StatelessWidget {
               ),
             ],
           ),
+          if (result.isLocalFallback) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFB020).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: const Color(0xFFFFB020).withValues(alpha: 0.45),
+                ),
+              ),
+              child: Text(
+                'Canlı API geçici yanıt vermedi — bu hazır yorum gösteriliyor.',
+                style: TextStyle(
+                  color: const Color(0xFFFFD580),
+                  fontSize: 12,
+                  height: 1.35,
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 14),
           Text(
             result.summary,

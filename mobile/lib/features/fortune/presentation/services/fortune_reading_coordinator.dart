@@ -277,7 +277,7 @@ class FortuneReadingCoordinator {
         userInput: userInput,
         yesNoChoice: resolvedYesNo,
         imageHint: imageHint,
-      );
+      ).copyWith(isLocalFallback: true);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

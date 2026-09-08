@@ -79,6 +79,7 @@ import '../providers/live_pk_invite_signal_provider.dart';
 import '../providers/live_providers.dart';
 import '../providers/discover_live_streams.dart';
 import '../providers/co_broadcast_provider.dart';
+import '../providers/pending_co_broadcast_join_provider.dart';
 import '../providers/live_beauty_provider.dart';
 import '../providers/live_guest_grid_provider.dart';
 import '../providers/live_gift_leaderboard_provider.dart';
@@ -1136,7 +1137,14 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       _startHostFortunePoll(streamId);
     } else {
       _startViewerCoBroadcastPoll(streamId);
-      unawaited(_syncCoBroadcastGuest(streamId));
+      final pending = ref
+          .read(pendingCoBroadcastJoinProvider.notifier)
+          .consumeFor(streamId);
+      if (pending != null) {
+        unawaited(_syncCoBroadcastGuestWithRetry(streamId));
+      } else {
+        unawaited(_syncCoBroadcastGuest(streamId));
+      }
       unawaited(_applyGuestPresenceFromApi(streamId));
     }
 
@@ -1450,6 +1458,17 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           SnackBar(content: Text(ApiException.userMessage(e))),
         );
       }
+    }
+  }
+
+  Future<void> _syncCoBroadcastGuestWithRetry(String streamId) async {
+    for (var attempt = 0; attempt < 6; attempt++) {
+      if (!mounted || _leaving || _coHostUpgraded || widget.session.isHost) {
+        return;
+      }
+      await _syncCoBroadcastGuest(streamId);
+      if (_coHostUpgraded) return;
+      await Future<void>.delayed(const Duration(milliseconds: 700));
     }
   }
 
@@ -2541,6 +2560,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
 
     // Misafir ortak yayın daveti (co-broadcast invite) — izleyici tarafı.
     if (hasStream && !s.isHost) {
+      ref.listen(pendingCoBroadcastJoinProvider, (prev, next) {
+        if (next != null && next == streamId && prev != next) {
+          unawaited(_syncCoBroadcastGuestWithRetry(streamId));
+        }
+      });
       ref.listen(coBroadcastProvider, (prev, next) {
         _checkCoHostDowngrade(streamId);
         for (final inv in next.invites) {

@@ -57,6 +57,7 @@ class FortuneReadingResult {
     this.imageUrl,
     this.visualAnalysis,
     this.sections = const [],
+    this.isLocalFallback = false,
   });
 
   final FortuneTypeEntity type;
@@ -77,6 +78,9 @@ class FortuneReadingResult {
   /// Yapılandırılmış bölümler (boşsa [detail] kullanılır).
   final List<FortuneReadingSection> sections;
 
+  /// Canlı API yanıt vermediğinde yerel hazır yorum.
+  final bool isLocalFallback;
+
   bool get hasStructuredSections => sections.length >= 3;
 
   String get fullText {
@@ -94,6 +98,7 @@ class FortuneReadingResult {
     String? imageUrl,
     String? visualAnalysis,
     List<FortuneReadingSection>? sections,
+    bool? isLocalFallback,
   }) {
     return FortuneReadingResult(
       type: type ?? this.type,
@@ -105,6 +110,7 @@ class FortuneReadingResult {
       imageUrl: imageUrl ?? this.imageUrl,
       visualAnalysis: visualAnalysis ?? this.visualAnalysis,
       sections: sections ?? this.sections,
+      isLocalFallback: isLocalFallback ?? this.isLocalFallback,
     );
   }
 }
