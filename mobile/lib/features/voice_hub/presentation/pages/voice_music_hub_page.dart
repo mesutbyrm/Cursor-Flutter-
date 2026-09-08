@@ -230,13 +230,16 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
       perms: widget.perms,
       jetonBalance: jeton,
     )) {
-      const msg = 'Bu şarkıyı istemek için yeterli jeton gerekli.';
+      final msg = economyInsufficientJetonMessage(ref, required: _cost);
       setState(() => _error = msg);
       unawaited(showInsufficientJetonDialog(context, message: msg, ref: ref));
       return;
     }
     if (jeton < _cost && !widget.perms.canManageDj && !djState.canPlayMusic) {
-      final msg = 'Bu şarkıyı istemek için en az $_cost jeton gerekli.';
+      final msg = economyMinimumJetonForMusicRequestMessage(
+        ref,
+        requiredCost: _cost,
+      );
       setState(() => _error = msg);
       unawaited(showInsufficientJetonDialog(context, message: msg, ref: ref));
       return;

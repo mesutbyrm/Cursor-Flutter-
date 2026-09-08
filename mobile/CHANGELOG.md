@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.379+417 (2026-09-08) — economy Faz 22: müzik hub yetersiz bakiye mesajları
+
+- Şarkı isteği hata metinleri `economyInsufficientJetonMessage` / `economyMinimumJetonForMusicRequestMessage`
+
 ## 1.0.378+416 (2026-09-08) — economy Faz 21: yayın istatistik + büyüme görevleri
 
 - Yayıncı istatistikleri «Hediye Jeton» satırı markalı
