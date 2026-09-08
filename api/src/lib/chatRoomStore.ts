@@ -509,7 +509,7 @@ export function leavePresence(roomId: string, userId: string) {
       createdAt: new Date().toISOString(),
     });
   }
-  return { presence: [...m.values()], systemMsg };
+  return { presence: [...m.values()], systemMsg, leftUser: prev ?? null };
 }
 
 export function listPresence(roomId: string) {

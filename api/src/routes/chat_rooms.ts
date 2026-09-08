@@ -71,6 +71,12 @@ import {
   finishCurrentSong,
 } from "../lib/songQueueService";
 import { subscribeSongSse, unsubscribeSongSse } from "../lib/songQueueSse";
+import {
+  subscribeRoomEventSse,
+  unsubscribeRoomEventSse,
+  emitRoomEventSse,
+} from "../lib/roomEventSse";
+import { buildSiteAnimationRoomEvent } from "../lib/siteAnimationResolver";
 import { getActiveBattleForRoom } from "../lib/pkBattleService";
 import { listRoomGiftEvents, sendRoomGift } from "./gifts";
 import {
@@ -80,6 +86,14 @@ import {
 import { presenceHeartbeat } from "../lib/redis/presence";
 
 export const chatRoomsRouter = Router();
+
+async function emitResolvedRoomAnimation(
+  roomId: string,
+  input: Parameters<typeof buildSiteAnimationRoomEvent>[0],
+) {
+  const payload = await buildSiteAnimationRoomEvent(input);
+  if (payload) emitRoomEventSse(roomId, payload);
+}
 
 function bodyYoutubeUrl(body: Record<string, unknown>): string {
   const videoId =
@@ -768,6 +782,7 @@ chatRoomsRouter.get("/rooms/:roomId/stream", optionalAuth, async (req, res) => {
 
   send({ type: "connected", roomId });
   subscribeSongSse(roomId, res);
+  subscribeRoomEventSse(roomId, res);
 
   const msgs = listMessages(roomId);
   let lastId = msgs.length > 0 ? msgs[msgs.length - 1]!.id : "";
@@ -825,6 +840,7 @@ chatRoomsRouter.get("/rooms/:roomId/stream", optionalAuth, async (req, res) => {
   req.on("close", () => {
     clearInterval(timer);
     unsubscribeSongSse(roomId, res);
+    unsubscribeRoomEventSse(roomId, res);
   });
 });
 
@@ -927,6 +943,16 @@ chatRoomsRouter.post("/rooms/:roomId/presence", requireAuth, async (req, res) =>
   emitChatRoomPresence(resolveRoomId(roomId), result.presence, {
     joined: joinedRow,
   });
+  if (joinedRow) {
+    void emitResolvedRoomAnimation(roomId, {
+      event: "user_joined",
+      userId: joinedRow.id,
+      name: joinedRow.name,
+      membership: joinedRow.membership,
+      chatRole: joinedRow.chatRole,
+      seatIndex: joinedRow.seatIndex,
+    });
+  }
   return res.status(200).json({ users: result.presence });
 });
 
@@ -944,6 +970,13 @@ chatRoomsRouter.delete("/rooms/:roomId/presence", requireAuth, async (req, res) 
   if (result.systemMsg) emitChatRoomMessage(resolveRoomId(roomId), result.systemMsg);
   emitChatRoomPresence(resolveRoomId(roomId), result.presence, {
     leftUserId: userId,
+  });
+  void emitResolvedRoomAnimation(roomId, {
+    event: "user_left",
+    userId,
+    name: result.leftUser?.name ?? "Kullanıcı",
+    membership: result.leftUser?.membership,
+    chatRole: result.leftUser?.chatRole,
   });
   return res.status(200).json({ users: result.presence });
 });

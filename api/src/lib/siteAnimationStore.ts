@@ -2,7 +2,11 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import type { SiteAnimation } from "@prisma/client";
 import { prisma } from "./prisma";
-import { SITE_ANIMATION_DEFAULTS, SITE_ANIMATION_SEED } from "./siteAnimationSeed";
+import {
+  SITE_ANIMATION_DEFAULTS,
+  SITE_ANIMATION_EXIT_DEFAULTS,
+  SITE_ANIMATION_SEED,
+} from "./siteAnimationSeed";
 
 export type SiteAnimationRecord = {
   id: string;
@@ -36,11 +40,23 @@ const STORE_PATH = path.join(process.cwd(), "data", "site_animations.json");
 let memory: StoreFile | null = null;
 let usePrisma: boolean | null = null;
 
+/** Test helper — JSON store sıfırlama. */
+export async function resetSiteAnimationStoreForTests() {
+  memory = null;
+  usePrisma = null;
+  try {
+    await fs.unlink(STORE_PATH);
+  } catch {
+    /* yoksa sorun değil */
+  }
+}
+
 function dbEnabled() {
   return Boolean(process.env.DATABASE_URL);
 }
 
 async function canUsePrisma(): Promise<boolean> {
+  if (process.env.SITE_ANIMATION_STORE_JSON === "1") return false;
   if (!dbEnabled()) return false;
   if (usePrisma != null) return usePrisma;
   try {
@@ -341,5 +357,9 @@ export async function bulkAssignSiteAnimation(input: {
 export async function activeCatalogPayload() {
   const animations = await listActiveSiteAnimations();
   const defaults = await getSiteAnimationDefaults();
-  return { animations, defaults };
+  return {
+    animations,
+    defaults,
+    exitDefaults: SITE_ANIMATION_EXIT_DEFAULTS,
+  };
 }
