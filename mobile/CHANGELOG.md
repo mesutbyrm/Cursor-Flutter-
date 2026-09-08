@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.389+427 (2026-09-08) — Site Animation: oyun host + hediye katalog seed
+
+- Oyun hub ve oda sayfaları `SiteAnimationContextHost(game)` overlay
+- Gift kategorisi seed (Gold/Diamond/VIP/SVIP) — mobile + API mirror
+- `live_field` stream join/leave → video SSE sinyalleri
+- Analiz dokümanı + entegrasyon kılavuzu §9.14 güncellendi
+
 ## 1.0.388+426 (2026-09-08) — Site Animation: canlı yayın + hediye + Fal entegrasyonu
 
 - Canlı yayın sayfası `SiteAnimationContextHost(liveStream)` — izleyici giriş/çıkış kartları

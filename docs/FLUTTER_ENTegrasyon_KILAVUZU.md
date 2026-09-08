@@ -2334,7 +2334,7 @@ Auth gerektiren endpoint'ler `Authorization: Bearer <accessToken>` header'ı bek
 
 | Metot | HTTP | Endpoint | Auth | Body / Query |
 |-------|------|----------|------|--------------|
-| `getActiveCatalog` | GET | `/api/site-animations/active` | Opsiyonel | Aktif animasyon kataloğu + `defaults` + `exitDefaults` |
+| `getActiveCatalog` | GET | `/api/site-animations/active` | Opsiyonel | Aktif katalog + `defaults` + `exitDefaults`; Bearer ile `userAssignments` |
 | `listAnimations` | GET | `/api/admin/site-animations` | Staff | Tüm animasyon kayıtları |
 | `createAnimation` | POST | `/api/admin/site-animations` | Staff | `{id, name, category, membership, animationType?, assetUrl?, …}` |
 | `updateAnimation` | PATCH | `/api/admin/site-animations/{id}` | Staff | Kısmi güncelleme |
@@ -2371,7 +2371,25 @@ Auth gerektiren endpoint'ler `Authorization: Bearer <accessToken>` header'ı bek
 
 Desteklenen `event` değerleri: `user_joined`, `user_left`, `seat_changed`, `mic_changed`, `owner_changed`. Pasif (`isActive: false`) animasyonlar sunucuda filtrelenir; istemci yine de katalogdan doğrular.
 
-**Mobil runtime:** `SiteAnimationCatalogDataSource` → `GET /api/site-animations/active`; 404/403’te admin SharedPreferences + seed fallback. Oda SSE’sinde `room_event` alındığında `SiteAnimationResolver` katalog ile birleştirir.
+**`GET /api/site-animations/active` yanıtı (auth ile):**
+
+```json
+{
+  "animations": [{ "id": "anim_entrance_gold_crown", "category": "entrance", "membership": "gold", "isActive": true }],
+  "defaults": { "gold": "anim_entrance_gold_crown" },
+  "exitDefaults": { "normal": "anim_exit_normal" },
+  "userAssignments": {
+    "userId123": {
+      "entrance": { "animationId": "anim_entrance_royal_gate", "expiresAt": "2026-12-01T00:00:00.000Z" },
+      "gift": { "animationId": "anim_gift_vip_royal" }
+    }
+  }
+}
+```
+
+**Canlı yayın SSE (`GET /api/video-streams/{id}/stream`):** `userJoined` / `userLeft` tipleri izleyici giriş/çıkışında `ctx_live` site animasyon dispatch için kullanılır.
+
+**Mobil runtime:** `SiteAnimationCatalogDataSource` → `GET /api/site-animations/active`; 404/403’te admin SharedPreferences + seed fallback. Oda SSE’sinde `room_event` alındığında `SiteAnimationResolver` katalog ile birleştirir. Büyük hediye (1000+ jeton) → `SiteAnimationResolver.resolveGiftHighlight` → `ctx_gift`.
 
 ---
 

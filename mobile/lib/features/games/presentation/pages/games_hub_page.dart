@@ -6,6 +6,7 @@ import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/network_perf.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
+import '../../../../core/site_animation/presentation/widgets/site_animation_context_host.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../domain/game_models.dart';
 import '../providers/game_providers.dart';
@@ -22,7 +23,9 @@ class GamesHubPage extends ConsumerWidget {
     final miniScores = ref.watch(gameMiniScoresProvider);
     final tournaments = ref.watch(gameTournamentsProvider);
 
-    return DiscoverSubPage(
+    return SiteAnimationContextHost(
+      context: SiteAnimationContext.game,
+      child: DiscoverSubPage(
       title: 'Oyunlar',
       subtitle: 'Canlifal.com oyun lobisi, odalar ve skor tabloları',
       onRefresh: () => _refresh(ref),
@@ -79,6 +82,7 @@ class GamesHubPage extends ConsumerWidget {
           ],
         ),
       ),
+    ),
     );
   }
 

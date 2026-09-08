@@ -6,6 +6,7 @@ void main() {
   test('SiteAnimationContext overlay ids are stable', () {
     expect(SiteAnimationContext.liveStream.overlayId, 'ctx_live');
     expect(SiteAnimationContext.gift.overlayId, 'ctx_gift');
+    expect(SiteAnimationContext.game.overlayId, 'ctx_game');
     expect(SiteAnimationContext.falTarot.overlayId, 'ctx_fal_tarot');
   });
 }

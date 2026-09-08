@@ -8,6 +8,7 @@ abstract final class AdminSiteAnimationSeedCatalog {
         ..._transition(),
         ..._profileFrames(),
         ..._avatarEffects(),
+        ..._gifts(),
         ..._seat(),
         ..._roomWide(),
         ..._mic(),
@@ -272,6 +273,33 @@ abstract final class AdminSiteAnimationSeedCatalog {
         durationMs: 0,
         priority: 50,
         context: 'profile',
+      );
+
+  static List<AdminSiteAnimation> _gifts() => [
+        _gift('anim_gift_gold_burst', 'Gold Gift Burst', AdminSiteAnimationMembership.gold, 65),
+        _gift('anim_gift_diamond_storm', 'Diamond Gift Storm', AdminSiteAnimationMembership.diamond, 80),
+        _gift('anim_gift_vip_royal', 'VIP Royal Gift', AdminSiteAnimationMembership.vip, 85),
+        _gift('anim_gift_svip_galaxy', 'SVIP Galaxy Gift', AdminSiteAnimationMembership.svip, 95),
+      ];
+
+  static AdminSiteAnimation _gift(
+    String id,
+    String name,
+    AdminSiteAnimationMembership tier,
+    int priority,
+  ) =>
+      AdminSiteAnimation(
+        id: id,
+        name: name,
+        category: AdminSiteAnimationCategory.gift,
+        membership: tier,
+        animationType: 'lottie',
+        assetUrl: 'assets/gifts/lottie/crown.json',
+        durationMs: 2800,
+        priority: priority,
+        anchor: AdminSiteAnimationAnchor.topCenter,
+        context: 'gift',
+        description: 'Büyük hediye vurgusu — site animasyon overlay',
       );
 
   static List<AdminSiteAnimation> _exit() => [

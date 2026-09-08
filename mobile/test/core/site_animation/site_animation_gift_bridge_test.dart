@@ -19,8 +19,8 @@ void main() {
           durationMs: 2500,
         ),
         'gift_vip': SiteAnimationCatalogEntry(
-          id: 'gift_vip',
-          name: 'VIP Gift Burst',
+          id: 'anim_gift_vip_royal',
+          name: 'VIP Royal Gift',
           category: 'gift',
           tier: SiteAnimationTier.vip,
           isActive: true,
@@ -40,7 +40,7 @@ void main() {
 
     expect(cmd, isNotNull);
     expect(cmd!.userName, 'Ayşe');
-    expect(cmd.catalogLabel, 'VIP Gift Burst');
+    expect(cmd.catalogLabel, 'VIP Royal Gift');
     expect(cmd.layout.anchor, SiteAnimationAnchor.topCenter);
   });
 

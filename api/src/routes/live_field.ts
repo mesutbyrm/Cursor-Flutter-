@@ -40,6 +40,7 @@ import {
   getActiveBattleForStream,
   rejectPkBattle,
 } from "../lib/pkBattleService";
+import { pushStreamSignal } from "../lib/liveStreamExtrasStore";
 
 export const liveFieldRouter = Router();
 
@@ -234,6 +235,14 @@ liveFieldRouter.post("/live/join-room", requireAuth, async (req, res) => {
   }
   const viewerCount = joinLiveStream(stream.id, user.id);
   emitStreamViewerCount(stream.id, viewerCount);
+  pushStreamSignal(stream.id, user.id, "userJoined", {
+    id: user.id,
+    userId: user.id,
+    name: displayName(user),
+    displayName: displayName(user),
+    image: avatar(user),
+    viewerCount,
+  });
   return ok(res, {
     room: streamRoomPayload(stream.id),
     trtc: trtcPayload(user.id, stream.id, "audience"),
@@ -264,6 +273,11 @@ liveFieldRouter.post("/live/leave-room", requireAuth, async (req, res) => {
   }
   const count = leaveLiveStream(roomId, req.userId!);
   emitStreamViewerCount(roomId, count);
+  const leftUser = await loadUser(req.userId);
+  pushStreamSignal(roomId, req.userId!, "userLeft", {
+    userId: req.userId,
+    name: leftUser ? displayName(leftUser) : "Kullanıcı",
+  });
   return ok(res, { message: "Odadan ayrıldınız", roomId, viewerCount: count });
 });
 

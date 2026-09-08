@@ -5,6 +5,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/providers/auth_selectors.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
+import '../../../../core/site_animation/presentation/widgets/site_animation_context_host.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../domain/game_models.dart';
 import '../../domain/game_state_parser.dart';
@@ -63,7 +64,9 @@ class _GameRoomPageState extends ConsumerState<GameRoomPage>
   Widget build(BuildContext context) {
     final userId = ref.watch(currentUserIdProvider);
     final state = ref.watch(gameRoomControllerProvider(widget.roomId));
-    return DiscoverSubPage(
+    return SiteAnimationContextHost(
+      context: SiteAnimationContext.game,
+      child: DiscoverSubPage(
       title: widget.title ?? 'Oyun odası',
       subtitle: 'Sunucu state canonical — 5 sn polling',
       onRefresh: () => ref
@@ -99,6 +102,7 @@ class _GameRoomPageState extends ConsumerState<GameRoomPage>
           _ChatPanel(roomId: widget.roomId, controller: _chat),
         ],
       ),
+    ),
     );
   }
 }

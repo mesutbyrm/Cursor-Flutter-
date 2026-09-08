@@ -115,17 +115,16 @@ Admin özel atama (`ADMIN_CUSTOM` priority 110) resolver'da `priorityOverride` i
 ## 8. Live Sistemi
 
 - PK battle SSE: `_tryApplyPkRoomEvent`
-- `live_field.ts` site animation emitter bağlı
-- **Eksik:** Canlı yayın overlay host, VIP join / big gift cinematic
-- Context: `LIVE_STREAM` metadata seed'de hazırlanabilir
+- `live_field.ts` + `video_streams.ts` join/leave → SSE `userJoined` / `userLeft`
+- `LiveBroadcastRoomPage` → `SiteAnimationContextHost(liveStream)`
+- Büyük hediye → `ctx_gift` site animasyon köprüsü
 
 ---
 
 ## 9. Social Sistemi
 
-- Feed / discover: `DiscoverBackground`, hikaye şeritleri
-- **Eksik:** Sosyal entrance hook, post kart overlay
-- Admin preview: çoklu ekran mock (Sosyal/Profil/Fal/Voice) bu oturumda eklendi
+- `SocialPage` → `SiteAnimationContextHost(social)` overlay host
+- Admin preview: çoklu ekran mock (Sosyal/Profil/Fal/Voice)
 
 ---
 
@@ -149,9 +148,11 @@ Admin özel atama (`ADMIN_CUSTOM` priority 110) resolver'da `priorityOverride` i
 | Çoklu ekran preview | ✅ Sosyal/Profil/Fal/Voice |
 | Kendi girişini görmeme | ✅ Provider filtresi |
 | Priority spec (110 admin) | ✅ Tier güncellendi |
-| Profil/Live/Social runtime | ⏳ Faz 2 |
-| Hediye cinematic | ⏳ Faz 2 |
-| Ödül admin UI | ⏳ Kısmi (assign API var) |
+| Profil frame + avatar efekt | ✅ Runtime entegrasyon |
+| Live / Fal / Gift overlay | ✅ ctx_live, ctx_fal_tarot, ctx_gift |
+| Oyun overlay host | ✅ ctx_game (hub + oda) |
+| Hediye katalog seed | ✅ gift kategorisi (4 tier) |
+| Sosyal entrance SSE hook | ⏳ Üretim SSE sözleşmesi bekliyor |
 | Production deploy | ⏳ canlifal.com ayrı |
 
 ---
@@ -224,9 +225,9 @@ Sunucu: `buildSiteAnimationRoomEvent` → membership default veya user assignmen
 2. ✅ Seed genişletme
 3. ✅ Self-filter + priority
 4. ✅ Admin hub + preview
-5. ⏳ Profil frame renderer
-6. ⏳ Live/Social/Gift overlay host
-7. ⏳ Acceptance test otomasyonu
+5. ✅ Profil frame + avatar efekt renderer
+6. ✅ Live / Gift / Fal / Game overlay host
+7. ⏳ Sosyal feed entrance SSE (üretim sözleşmesi)
 8. ⏳ Production deploy + PR merge
 
 ---
