@@ -4,6 +4,7 @@ import '../../../features/visual_fx/data/fx_dedupe_store.dart';
 import '../data/site_animation_cache.dart';
 import '../domain/site_animation_asset.dart';
 import '../domain/site_animation_command.dart';
+import '../domain/site_animation_type.dart';
 import 'site_animation_state.dart';
 
 typedef SiteAnimationStateListener = void Function(SiteAnimationState state);
@@ -30,6 +31,7 @@ class SiteAnimationManager {
 
   void _emit(SiteAnimationState next) {
     _state = next;
+    if (_disposed) return;
     _onStateChanged?.call(next);
   }
 
@@ -162,6 +164,6 @@ class SiteAnimationManager {
     _cancelled.clear();
     _preloaded.clear();
     _dedupe.clear();
-    _emit(const SiteAnimationState());
+    _state = const SiteAnimationState();
   }
 }

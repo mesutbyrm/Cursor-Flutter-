@@ -19,7 +19,6 @@ class SiteAnimationNotifier
     ref.watch(siteAnimationCatalogProvider);
     _manager = SiteAnimationManager(
       onStateChanged: (next) {
-        if (!ref.mounted) return;
         state = next;
       },
     );
