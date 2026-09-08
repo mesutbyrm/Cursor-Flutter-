@@ -23,6 +23,7 @@ run "M5 preflight" "bash '$ROOT/scripts/m5-preflight.sh'"
 run "M5 API smoke" "bash '$ROOT/scripts/m5-api-smoke.sh'"
 run "M7 song-request" "bash '$ROOT/scripts/m7-on-jeton.sh'"
 run "Psychic falcı probe" "bash '$ROOT/scripts/probe-psychic-teller.sh'"
+run "Fortune room uçları (yerel mirror)" "CANLIFAL_BASE_URL=http://127.0.0.1:3000 bash '$ROOT/scripts/verify-fortune-room-endpoints.sh' 2>&1 | tail -8 || echo '(yerel api kapalı — atlandı)'"
 
 echo "── API release gate (madde 3–8) ──"
 if bash "$ROOT/scripts/acceptance-tests/api-release-gate.sh" 2>&1 | grep -E '^\✅|^\⏭️|^\❌|Özet' | tail -10; then

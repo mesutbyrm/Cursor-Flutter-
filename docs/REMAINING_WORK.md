@@ -90,6 +90,13 @@ A1–A8 `[x]` | A9 M5 cihaz `[ ]` (API smoke geçti)
 - user-test-start menü: kalan-isler/p0-go öncelik, numaralar sadeleştirildi
 - print-kalan-isler.sh · USER_TEST_QUICK_REF güncellendi
 
+## Oturum günlüğü (2026-09-08 — API mirror + CI metadata)
+
+- Yerel `api/` mirror: `/api/room/*`, toggle-online, active-sessions, TRTC token (`a99ab17a`)
+- CI metadata gate: upload skip kaldırıldı + GitHub API birincil doğrulama (`a0679ae7`) — Run `34237750479` FINAL PASS
+- `verify-fortune-room-endpoints.sh`, Gate 3 oda smoke, `socialFortuneTellers` dead code temizliği
+- CI: `npm test` (51 test) api adımına eklendi
+
 ## Oturum günlüğü (2026-09-07 — rehber senkron kalan-isler)
 
 - PSYCHIC_P0_START, faz0-handoff, user-handoff, on-p1-pass

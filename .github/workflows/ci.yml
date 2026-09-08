@@ -63,6 +63,7 @@ jobs:
           npm ci
           npx prisma generate
           npm run build
+          npm test
 
       - uses: subosito/flutter-action@v2
         with:
