@@ -77,6 +77,7 @@ class SiteAnimationCatalogDataSource {
     return SiteAnimationCatalogSnapshot(
       animations: animations,
       entranceDefaults: _parseEntranceDefaults(payload['defaults'] ?? payload),
+      exitDefaults: _parseExitDefaults(payload['exitDefaults']),
       userAssignments: const {},
     );
   }
@@ -101,6 +102,7 @@ class SiteAnimationCatalogDataSource {
     return SiteAnimationCatalogSnapshot(
       animations: animations,
       entranceDefaults: _parseEntranceDefaults(json['entranceDefaults']),
+      exitDefaults: _parseExitDefaults(json['exitDefaults']),
       userAssignments: _parseUserAssignments(json['userAssignments']),
     );
   }
@@ -136,6 +138,7 @@ class SiteAnimationCatalogDataSource {
     return SiteAnimationCatalogSnapshot(
       animations: animations,
       entranceDefaults: entranceDefaults,
+      exitDefaults: _exitDefaultsFromSeed(),
       userAssignments: userAssignments,
     );
   }
@@ -144,6 +147,9 @@ class SiteAnimationCatalogDataSource {
         'animations': s.animations.values.map(_entryToJson).toList(),
         'entranceDefaults': {
           for (final e in s.entranceDefaults.entries) e.key.name: e.value,
+        },
+        'exitDefaults': {
+          for (final e in s.exitDefaults.entries) e.key.name: e.value,
         },
         'userAssignments': _assignmentsToJson(s.userAssignments),
       };
@@ -222,6 +228,26 @@ class SiteAnimationCatalogDataSource {
     return {
       for (final e in seed.entries) _tierFromMembership(e.key): e.value,
     };
+  }
+
+  Map<SiteAnimationTier, String> _exitDefaultsFromSeed() {
+    final seed = AdminSiteAnimationSeedCatalog.defaultExitIds();
+    return {
+      for (final e in seed.entries) _tierFromMembership(e.key): e.value,
+    };
+  }
+
+  Map<SiteAnimationTier, String> _parseExitDefaults(dynamic raw) {
+    if (raw is! Map) return _exitDefaultsFromSeed();
+    final out = <SiteAnimationTier, String>{};
+    for (final e in raw.entries) {
+      final tier = _tierFromMembership(
+        AdminSiteAnimationMembership.parse(e.key.toString()),
+      );
+      final id = e.value?.toString();
+      if (id != null && id.isNotEmpty) out[tier] = id;
+    }
+    return out.isEmpty ? _exitDefaultsFromSeed() : out;
   }
 
   Map<String, Map<SiteAnimationSlot, SiteAnimationUserAssignment>>

@@ -41,6 +41,12 @@ abstract final class SiteAnimationResolver {
       if (fromDefault != null) return fromDefault;
     }
 
+    if (base.type.isExit) {
+      final defaultId = catalog.exitDefaults[base.tier];
+      final fromDefault = catalog.byId(defaultId);
+      if (fromDefault != null) return fromDefault;
+    }
+
     final category = _categoryForType(base.type);
     SiteAnimationCatalogEntry? tierMatch;
     SiteAnimationCatalogEntry? categoryMatch;

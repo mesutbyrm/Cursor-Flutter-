@@ -134,5 +134,35 @@ void main() {
       expect(resolved.layout.durationMs, 4000);
       expect(resolved.catalogLabel, 'Diamond custom');
     });
+
+    test('applies exit defaults by tier', () {
+      final catalog = SiteAnimationCatalogSnapshot(
+        animations: {
+          'anim_exit_gold': _entry(
+            'anim_exit_gold',
+            'Gold exit',
+            'exit',
+            SiteAnimationTier.gold,
+            durationMs: 2000,
+            priority: 35,
+          ),
+        },
+        exitDefaults: {
+          SiteAnimationTier.gold: 'anim_exit_gold',
+        },
+      );
+      final base = SiteAnimationParser.fromRoomEvent(
+        roomId: 'room-1',
+        event: 'user_left',
+        payload: {
+          'eventId': 'evt-exit',
+          'userId': 'u1',
+          'membership': 'gold',
+        },
+      )!;
+      final resolved = SiteAnimationResolver.resolve(base: base, catalog: catalog)!;
+      expect(resolved.layout.durationMs, 2000);
+      expect(resolved.priorityOverride, 35);
+    });
   });
 }

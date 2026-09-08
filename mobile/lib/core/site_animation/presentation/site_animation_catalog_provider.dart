@@ -18,6 +18,7 @@ class SiteAnimationCatalogNotifier
     extends AsyncNotifier<SiteAnimationCatalogSnapshot> {
   @override
   Future<SiteAnimationCatalogSnapshot> build() async {
+    ref.keepAlive();
     return ref.read(siteAnimationCatalogDataSourceProvider).load();
   }
 

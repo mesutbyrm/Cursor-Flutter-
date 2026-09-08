@@ -23,6 +23,16 @@ abstract final class AdminSiteAnimationSeedCatalog {
         AdminSiteAnimationMembership.host: 'anim_host_seat_crown',
       };
 
+  static Map<AdminSiteAnimationMembership, String> defaultExitIds() => {
+        AdminSiteAnimationMembership.normal: 'anim_exit_normal',
+        AdminSiteAnimationMembership.gold: 'anim_exit_gold',
+        AdminSiteAnimationMembership.premium: 'anim_exit_premium',
+        AdminSiteAnimationMembership.diamond: 'anim_exit_diamond',
+        AdminSiteAnimationMembership.vip: 'anim_exit_vip',
+        AdminSiteAnimationMembership.admin: 'anim_exit_admin',
+        AdminSiteAnimationMembership.host: 'anim_exit_admin',
+      };
+
   static List<AdminSiteAnimation> _entrance() => [
         const AdminSiteAnimation(
           id: 'anim_entrance_normal',
@@ -125,6 +135,8 @@ abstract final class AdminSiteAnimationSeedCatalog {
           name: 'Gold Çıkış — Tekrar bekleriz',
           category: AdminSiteAnimationCategory.exit,
           membership: AdminSiteAnimationMembership.gold,
+          animationType: 'lottie',
+          assetUrl: 'assets/gifts/lottie/heart.json',
           durationMs: 2000,
           priority: 35,
         ),
@@ -133,6 +145,8 @@ abstract final class AdminSiteAnimationSeedCatalog {
           name: 'Premium Çıkış — Yine bekleriz',
           category: AdminSiteAnimationCategory.exit,
           membership: AdminSiteAnimationMembership.premium,
+          animationType: 'lottie',
+          assetUrl: 'assets/gifts/lottie/star.json',
           durationMs: 3000,
           priority: 36,
         ),
@@ -141,6 +155,8 @@ abstract final class AdminSiteAnimationSeedCatalog {
           name: 'Diamond Çıkış — Işıkla kal',
           category: AdminSiteAnimationCategory.exit,
           membership: AdminSiteAnimationMembership.diamond,
+          animationType: 'lottie',
+          assetUrl: 'assets/gifts/lottie/crown.json',
           durationMs: 3000,
           priority: 37,
         ),
@@ -149,6 +165,8 @@ abstract final class AdminSiteAnimationSeedCatalog {
           name: 'VIP Çıkış — Kral geri dönecek',
           category: AdminSiteAnimationCategory.exit,
           membership: AdminSiteAnimationMembership.vip,
+          animationType: 'lottie',
+          assetUrl: 'assets/gifts/lottie/rose.json',
           durationMs: 3000,
           priority: 38,
         ),

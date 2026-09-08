@@ -52,11 +52,13 @@ class SiteAnimationCatalogSnapshot {
   const SiteAnimationCatalogSnapshot({
     this.animations = const {},
     this.entranceDefaults = const {},
+    this.exitDefaults = const {},
     this.userAssignments = const {},
   });
 
   final Map<String, SiteAnimationCatalogEntry> animations;
   final Map<SiteAnimationTier, String> entranceDefaults;
+  final Map<SiteAnimationTier, String> exitDefaults;
   final Map<String, Map<SiteAnimationSlot, SiteAnimationUserAssignment>>
       userAssignments;
 
@@ -68,12 +70,14 @@ class SiteAnimationCatalogSnapshot {
   SiteAnimationCatalogSnapshot copyWith({
     Map<String, SiteAnimationCatalogEntry>? animations,
     Map<SiteAnimationTier, String>? entranceDefaults,
+    Map<SiteAnimationTier, String>? exitDefaults,
     Map<String, Map<SiteAnimationSlot, SiteAnimationUserAssignment>>?
         userAssignments,
   }) {
     return SiteAnimationCatalogSnapshot(
       animations: animations ?? this.animations,
       entranceDefaults: entranceDefaults ?? this.entranceDefaults,
+      exitDefaults: exitDefaults ?? this.exitDefaults,
       userAssignments: userAssignments ?? this.userAssignments,
     );
   }

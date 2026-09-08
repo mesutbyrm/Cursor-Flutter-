@@ -29,22 +29,61 @@ class _SiteAnimationCardState extends State<SiteAnimationCard>
   late final Animation<double> _fade;
   late final Animation<Offset> _slide;
   late final Animation<double> _scale;
+  late final Animation<double> _pulse;
 
   @override
   void initState() {
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 380),
+      duration: const Duration(milliseconds: 520),
     );
-    _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+    _fade = CurvedAnimation(
+      parent: _ctrl,
+      curve: const Interval(0, 0.35, curve: Curves.easeOut),
+      reverseCurve: const Interval(0.65, 1, curve: Curves.easeIn),
+    );
     _slide = Tween<Offset>(
-      begin: const Offset(-0.35, 0),
+      begin: const Offset(-0.42, 0),
       end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
-    _scale = Tween<double>(begin: 0.92, end: 1).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeOutBack),
-    );
+    ).animate(CurvedAnimation(
+      parent: _ctrl,
+      curve: const Interval(0, 0.35, curve: Curves.easeOutCubic),
+      reverseCurve: const Interval(0.65, 1, curve: Curves.easeInCubic),
+    ));
+    _scale = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(begin: 0.9, end: 1.04)
+            .chain(CurveTween(curve: Curves.easeOutBack)),
+        weight: 35,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: 1.04, end: 1.0)
+            .chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 30,
+      ),
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 20),
+      TweenSequenceItem(
+        tween: Tween(begin: 1.0, end: 0.92)
+            .chain(CurveTween(curve: Curves.easeIn)),
+        weight: 15,
+      ),
+    ]).animate(_ctrl);
+    _pulse = TweenSequence<double>([
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 35),
+      TweenSequenceItem(
+        tween: Tween(begin: 1.0, end: 1.03)
+            .chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 15,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: 1.03, end: 1.0)
+            .chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 15,
+      ),
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 20),
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 15),
+    ]).animate(_ctrl);
 
     _ctrl.forward();
     _scheduleExit();
@@ -52,7 +91,7 @@ class _SiteAnimationCardState extends State<SiteAnimationCard>
 
   void _scheduleExit() {
     final hold = widget.command.displayDuration -
-        const Duration(milliseconds: 760);
+        const Duration(milliseconds: 1040);
     Future<void>.delayed(hold, () async {
       if (!mounted) return;
       await _ctrl.reverse();
@@ -90,7 +129,10 @@ class _SiteAnimationCardState extends State<SiteAnimationCard>
           position: _slide,
           child: ScaleTransition(
             scale: _scale,
-            child: SiteAnimationMedia(command: widget.command),
+            child: ScaleTransition(
+              scale: _pulse,
+              child: SiteAnimationMedia(command: widget.command),
+            ),
           ),
         ),
       ),
