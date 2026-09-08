@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.401+439 (2026-09-08) — PK davet + misafir ortak yayın düzeltmeleri
+
+- Canlı yayın: `invited` PK durumu kabul ekranında tanınır (`isPkInvitePendingStatus`)
+- `LivePkInviteListener`: `/api/pk/me/invites` + birleşik davet poll; 4 sn yedek
+- Video SSE: `pk_invite` / `pk_request` ve misafir davet alias'ları
+- Sesli oda: bekleyen PK SSE kullanıcı ID eşleşmesi (`guestUserId` vb.)
+- Global `LiveCoBroadcastInviteListener` — ortak yayın daveti her ekranda
+
 ## 1.0.400+438 (2026-09-08) — Site Animation: çıkış SFX + CDN asset preload
 
 - Gold/Diamond/VIP çıkış seed: CDN `soundUrl` path'leri (API + mobil)

@@ -8,13 +8,17 @@ import '../../../../core/network/pk_event_log.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../voice_hub/domain/pk/pk_battle_remote_models.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
+import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/pk/live_pk_invite_helper.dart';
+import '../../domain/pk/pk_room_models.dart';
+import '../../domain/pk/pk_unified_bridge.dart';
 import '../providers/live_pk_invite_signal_provider.dart';
 import '../providers/live_pk_owned_streams_socket_provider.dart';
 import '../providers/live_providers.dart';
 import '../providers/live_video_pk_provider.dart';
+import '../providers/pk_room_providers.dart';
 
-/// Canlı yayın PK davetleri — ana backend (`/api/video-streams/*/pk-battle`).
+/// Canlı yayın PK davetleri — stream SSE + REST poll (`/api/pk/me/invites`).
 class LivePkInviteListener extends ConsumerStatefulWidget {
   const LivePkInviteListener({super.key, required this.child});
 
@@ -35,7 +39,7 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
   @override
   void initState() {
     super.initState();
-    _pollTimer = Timer.periodic(const Duration(seconds: 8), (_) {
+    _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) {
       if (!mounted || _showing) return;
       unawaited(_processPendingInvites());
     });
@@ -46,6 +50,70 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
   void dispose() {
     _pollTimer?.cancel();
     super.dispose();
+  }
+
+  List<LiveStreamEntity> _ownedLiveStreams(String userId) {
+    final streams = ref.read(liveStreamsProvider).valueOrNull ?? const [];
+    return streams
+        .where((s) {
+          if (!s.isLive) return false;
+          final host = s.hostUserId?.trim() ?? '';
+          return host.isNotEmpty && host == userId;
+        })
+        .toList(growable: false);
+  }
+
+  String? _recipientStreamId(
+    PkBattleRemote battle,
+    String userId,
+    List<LiveStreamEntity> owned,
+  ) {
+    for (final stream in owned) {
+      if (isLivePkInviteRecipientBattle(
+        battle,
+        myUserId: userId,
+        myStreamId: stream.id,
+      )) {
+        return stream.id;
+      }
+    }
+    final opp = battle.opponentLiveStreamId?.trim();
+    if (opp != null &&
+        opp.isNotEmpty &&
+        isLivePkInviteRecipientBattle(
+          battle,
+          myUserId: userId,
+          myStreamId: opp,
+        )) {
+      return opp;
+    }
+    return owned.isNotEmpty ? owned.first.id : null;
+  }
+
+  String? _recipientStreamIdForMatch(
+    PkRoomMatch match,
+    String userId,
+    List<LiveStreamEntity> owned,
+  ) {
+    for (final stream in owned) {
+      if (isLivePkInviteRecipient(
+        match,
+        myStreamId: stream.id,
+        myUserId: userId,
+      )) {
+        return stream.id;
+      }
+    }
+    final opp = match.opponentStreamId?.trim() ?? '';
+    if (opp.isNotEmpty &&
+        isLivePkInviteRecipient(
+          match,
+          myStreamId: opp,
+          myUserId: userId,
+        )) {
+      return opp;
+    }
+    return owned.isNotEmpty ? owned.first.id : null;
   }
 
   bool _isRecipient(PkBattleRemote battle, String userId, String myStreamId) {
@@ -64,15 +132,38 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
 
     try {
       final api = ref.read(pkBattleRemoteDataSourceProvider);
-      final streams = ref.read(liveStreamsProvider).valueOrNull ?? const [];
-      final owned = streams
-          .where((s) {
-            if (!s.isLive) return false;
-            final host = s.hostUserId?.trim() ?? '';
-            return host.isNotEmpty && host == user.id;
-          })
-          .toList(growable: false);
+      final owned = _ownedLiveStreams(user.id);
 
+      // 1) Birleşik REST — GET /api/pk/me/invites (SSE kaçırdığında).
+      final myInvites = await api.fetchMyInvites();
+      for (final battle in myInvites) {
+        if (!battle.isPending || battle.isEnded) continue;
+        if (battle.challengerId == user.id) continue;
+        final streamId = _recipientStreamId(battle, user.id, owned);
+        if (streamId == null || streamId.isEmpty) continue;
+        if (!_isRecipient(battle, user.id, streamId)) continue;
+        final inviteId = battle.effectiveId;
+        if (inviteId.isEmpty || !_seen.add(inviteId)) continue;
+        PkEventLog.incomingRequest(inviteId: inviteId);
+        await _showDialog(battle, streamId);
+        return;
+      }
+
+      // 2) PkRoomMatch davetleri — pkPendingInvitesProvider yedek.
+      final unified = await ref.read(pkRoomRemoteProvider).myInvites();
+      for (final inv in unified) {
+        if (!inv.isPending) continue;
+        final streamId = _recipientStreamIdForMatch(inv, user.id, owned);
+        if (streamId == null || streamId.isEmpty) continue;
+        if (!_seen.add(inv.id)) continue;
+        final battleMap = pkRoomMatchToBattleMap(inv, myStreamId: streamId);
+        final battle = PkBattleRemote.fromJson(battleMap);
+        PkEventLog.incomingRequest(matchId: inv.id);
+        await _showDialog(battle, streamId);
+        return;
+      }
+
+      // 3) Sahip olunan her yayın — GET …/pk-battle.
       for (final stream in owned) {
         final battle = await api.fetchStreamBattle(stream.id);
         if (battle == null || battle.isEnded) continue;
@@ -155,17 +246,17 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
     }
 
     final remote = ref.read(pkBattleRemoteProvider.notifier);
+    final pkNotifier = ref.read(liveVideoPkProvider(myStreamId).notifier);
     try {
       if (accept) {
         PkEventLog.acceptStart(inviteId: battle.effectiveId);
         await remote.accept(battle.effectiveId, streamId: myStreamId);
+        await pkNotifier.refresh();
         PkEventLog.acceptSuccess(battleId: battle.effectiveId);
-        await ref
-            .read(liveVideoPkProvider(myStreamId).notifier)
-            .ingestRemoteBattle(battle.effectiveId);
       } else {
         PkEventLog.reject(inviteId: battle.effectiveId);
         await remote.reject(battle.effectiveId, streamId: myStreamId);
+        await pkNotifier.refresh();
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -195,6 +286,9 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
       if (prev?.valueOrNull == null && next.valueOrNull != null) {
         unawaited(_processPendingInvites());
       }
+    });
+    ref.listen(pkPendingInvitesProvider, (_, __) {
+      unawaited(_processPendingInvites());
     });
     return widget.child;
   }

@@ -248,6 +248,19 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
 
     if (activeKey.isEmpty) return true;
     if (!battle.isPending) return false;
+
+    if (user != null) {
+      final uid = user.id.trim();
+      final directIds = <String?>{
+        battle.guestUserId,
+        battle.opponentId,
+        battle.targetUserId,
+        battle.opponent?.userId,
+      };
+      for (final id in directIds) {
+        if (id != null && id.trim() == uid) return true;
+      }
+    }
     return false;
   }
 

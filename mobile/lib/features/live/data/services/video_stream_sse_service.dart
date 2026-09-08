@@ -291,6 +291,14 @@ class VideoStreamSseService {
       case 'pk':
       case 'pkbattle':
       case 'pk_battle':
+      case 'pk_invite':
+      case 'pkinvite':
+      case 'pk_request':
+      case 'pkrequest':
+      case 'pk_invited':
+      case 'pkinvited':
+      case 'pk_updated':
+      case 'pkupdated':
         final data = map['data'] ?? map['battle'] ?? map['pk'] ?? map;
         if (data is Map) {
           _onPkBattle?.call(Map<String, dynamic>.from(data));
@@ -329,6 +337,10 @@ class VideoStreamSseService {
       case 'guestLeft':
       case 'GUEST_LEFT':
       case 'guest_update':
+      case 'co_broadcast_invite':
+      case 'cobroadcast_invite':
+      case 'guest_invite':
+      case 'guestinvite':
         _onGuest?.call(map);
         return;
       default:

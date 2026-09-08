@@ -354,6 +354,9 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
         .toString()
         .toLowerCase();
     LiveDebugLog.log('stream.sse.guest', payload);
+    if (type.contains('invite')) {
+      await ref.read(coBroadcastProvider.notifier).refresh();
+    }
     await ref.read(coBroadcastProvider.notifier).refreshStream(streamId);
     final co = ref.read(coBroadcastProvider).coBroadcasters;
     if (type.contains('left')) {

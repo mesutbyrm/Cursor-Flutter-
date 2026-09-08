@@ -63,6 +63,7 @@ import '../../domain/entities/live_gift_catalog.dart';
 import '../../domain/entities/live_gift_event.dart';
 import '../../domain/entities/live_guest_layout.dart';
 import '../../domain/pk/live_pk_invite_helper.dart';
+import '../../domain/pk/pk_status_helper.dart';
 import '../../domain/pk/pk_unified_bridge.dart';
 import '../../domain/live_guest_layout_resolver.dart';
 import '../providers/live_namespace_providers.dart';
@@ -1622,7 +1623,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     if (!widget.session.isHost) return;
     final userId = ref.read(authControllerProvider).valueOrNull?.id;
     final status = battle['status']?.toString() ?? '';
-    if (status != 'pending') return;
+    if (!isPkInvitePendingStatus(status)) return;
     if (!isLivePkInviteRecipientMap(
       battle,
       myStreamId: streamId,
