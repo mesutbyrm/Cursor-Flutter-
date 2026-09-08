@@ -44,14 +44,15 @@ class FortuneTypeCoverImage extends StatelessWidget {
             assetPath,
             fit: fit,
             errorBuilder: (_, _, _) => const SizedBox.shrink(),
+          )
+        else
+          CanlifalNetworkImage(
+            url: url,
+            fit: fit,
+            thumbnailWidth: imageWidth > 1080 ? 1080 : imageWidth,
+            placeholder: FortuneImageShimmer(accent: accent),
+            errorWidget: const SizedBox.shrink(),
           ),
-        CanlifalNetworkImage(
-          url: url,
-          fit: fit,
-          thumbnailWidth: imageWidth > 1080 ? 1080 : imageWidth,
-          placeholder: FortuneImageShimmer(accent: accent),
-          errorWidget: const SizedBox.shrink(),
-        ),
         if (showOverlay)
           DecoratedBox(
             decoration: BoxDecoration(

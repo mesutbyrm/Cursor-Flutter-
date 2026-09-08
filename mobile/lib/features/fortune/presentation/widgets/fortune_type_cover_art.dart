@@ -97,6 +97,8 @@ class FortuneTypeCoverArt extends StatelessWidget {
         'evet-hayir' => const _CoverArt('⚖️', 'EVET / HAYIR'),
         'dogum-haritasi' => const _CoverArt('🪐', 'DOĞUM HARİTASI'),
         'kursun-dokme' => const _CoverArt('🕯️', 'KURŞUN DÖKME'),
+        'pendul' => const _CoverArt('🔮', 'PENDÜL'),
+        'runik' => const _CoverArt('ᚠ', 'RUNİK'),
         _ => const _CoverArt('✨', 'FAL'),
       };
 }
@@ -163,6 +165,58 @@ class _ScenePainter extends CustomPainter {
       ]) {
         canvas.drawCircle(Offset(w * p.dx, h * p.dy), 2.5, star);
       }
+      if (scene == 'dogum-haritasi') {
+        final ring = Paint()
+          ..color = Colors.white.withValues(alpha: 0.12)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2;
+        canvas.drawCircle(Offset(w * 0.58, h * 0.46), w * 0.14, ring);
+        canvas.drawCircle(Offset(w * 0.58, h * 0.46), w * 0.2, ring);
+      }
+    } else if (scene == 'pendul' || scene == 'istihare') {
+      final chain = Paint()
+        ..color = Colors.white.withValues(alpha: 0.2)
+        ..strokeWidth = 2;
+      canvas.drawLine(Offset(w * 0.62, h * 0.2), Offset(w * 0.68, h * 0.52), chain);
+      canvas.drawOval(
+        Rect.fromLTWH(w * 0.64, h * 0.5, w * 0.08, h * 0.1),
+        Paint()..color = glow.withValues(alpha: 0.35),
+      );
+    } else if (scene == 'runik') {
+      final rune = Paint()
+        ..color = Colors.white.withValues(alpha: 0.15)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5;
+      for (var i = 0; i < 3; i++) {
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(w * (0.55 + i * 0.08), h * 0.38, w * 0.06, h * 0.14),
+            const Radius.circular(4),
+          ),
+          rune,
+        );
+      }
+    } else if (scene == 'aura') {
+      for (var i = 1; i <= 4; i++) {
+        canvas.drawCircle(
+          Offset(w * 0.58, h * 0.46),
+          w * (0.06 + i * 0.04),
+          Paint()
+            ..color = glow.withValues(alpha: 0.06 + i * 0.02)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2,
+        );
+      }
+    } else if (scene == 'kursun-dokme') {
+      final melt = Paint()..color = Colors.white.withValues(alpha: 0.1);
+      canvas.drawOval(Rect.fromLTWH(w * 0.52, h * 0.55, w * 0.2, h * 0.08), melt);
+      canvas.drawLine(
+        Offset(w * 0.56, h * 0.28),
+        Offset(w * 0.56, h * 0.55),
+        Paint()
+          ..color = Colors.amber.withValues(alpha: 0.25)
+          ..strokeWidth = 3,
+      );
     }
   }
 

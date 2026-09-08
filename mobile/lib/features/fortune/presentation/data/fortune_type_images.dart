@@ -25,6 +25,9 @@ abstract final class FortuneTypeImages {
         'gunluk-fal' => 'tarot',
         'aura-analizi' => 'aura',
         'kursundokme' => 'kursun-dokme',
+        'pendul-fali' => 'pendul',
+        'runik-fali' => 'runik',
+        'iskambil-fali' => 'iskambil',
         _ => slug,
       };
 
@@ -50,6 +53,10 @@ abstract final class FortuneTypeImages {
     'aura': 'center',
     'el-fali': 'center',
     'ruya-tabiri': 'top',
+    'pendul': 'center',
+    'runik': 'entropy',
+    'dogum-haritasi': 'entropy',
+    'kursun-dokme': 'center',
   };
 
   static const _assetFiles = <String, String>{
@@ -64,10 +71,14 @@ abstract final class FortuneTypeImages {
     'numeroloji': 'numeroloji.webp',
     'ruya-tabiri': 'ruya-tabiri.webp',
     'cin-fali': 'cin-fali.webp',
-    'istihare': 'pendul.webp',
-    'aura': 'runik.webp',
+    'pendul': 'pendul.webp',
+    'runik': 'runik.webp',
+    'istihare': 'istihare.webp',
+    'aura': 'aura-analizi.webp',
     'evet-hayir': 'evet-hayir.webp',
     'gunluk-fal': 'tarot.webp',
+    'dogum-haritasi': 'dogum-haritasi.webp',
+    'kursun-dokme': 'kursundokme.webp',
   };
 
   static const _photoIds = <String, String>{
@@ -88,6 +99,8 @@ abstract final class FortuneTypeImages {
     'gunluk-fal': '1559491867-1ebf5cbf7ab7', // günlük fal
     'dogum-haritasi': '1464800860016-b2f083179a1f', // doğum haritası
     'kursun-dokme': '1518131353823-3909e8946c78', // kurşun dökme
+    'pendul': '1519681393784-d120267933ba', // pendül
+    'runik': '1506905925346-21bda4d32df4', // runik / ay
   };
 
   static const _overlayHex = <String, List<int>>{
@@ -106,6 +119,10 @@ abstract final class FortuneTypeImages {
     'gunluk-fal': [0x44B832FF, 0x770A0118, 0xCC0A0118],
     'cin-fali': [0x33DC2626, 0x66180808, 0xCC0A0118],
     'iskambil': [0x33EF4444, 0x66100808, 0xCC0A0118],
+    'pendul': [0x3314B8A6, 0x66081020, 0xCC0A0118],
+    'runik': [0x3394A3B8, 0x66101828, 0xCC0A0118],
+    'dogum-haritasi': [0x336366F1, 0x66050818, 0xCC0A0118],
+    'kursun-dokme': [0x3378716C, 0x66121010, 0xCC0A0118],
   };
 
   static const _glowHex = <String, int>{
@@ -117,5 +134,9 @@ abstract final class FortuneTypeImages {
     'melek-kartlari': 0xFFFDE68A,
     'istihare': 0xFF14B8A6,
     'aura': 0xFF8B5CF6,
+    'pendul': 0xFF14B8A6,
+    'runik': 0xFF94A3B8,
+    'dogum-haritasi': 0xFF6366F1,
+    'kursun-dokme': 0xFFD97706,
   };
 }

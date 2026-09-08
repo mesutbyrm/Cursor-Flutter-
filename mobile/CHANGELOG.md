@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.406+444 (2026-09-08) — Fal&Tarot tamamlama + mistik görseller
+
+- Fal vitrin: istihare, aura, kurşun, doğum haritası intro çöküşü giderildi
+- Yerel kapak görselleri: doğum haritası, kurşun dökme, aura analizi (yeni webp)
+- Tüm türler için asset eşlemesi (pendul, runik, istihare düzeltildi)
+- API yok slug'lar → katina / burç / istihare / tarot yedek uçları
+- Yerel asset varsa Unsplash üstüne binmez (özel kapak öncelikli)
+
 ## 1.0.403+441 (2026-09-08) — Sesli/canlı P0 tamamlama
 
 - Sesli oda: fal SSE basic modda da `PsychicIncomingHost`'a düşer

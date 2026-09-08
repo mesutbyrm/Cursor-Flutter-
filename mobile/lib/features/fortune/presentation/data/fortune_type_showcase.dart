@@ -27,7 +27,49 @@ class FortuneTypeShowcase {
     if (type == null || type.isDaily) return null;
     final idx = FortuneCatalog.types.indexWhere((t) => t.slug == slug);
     if (idx < 0) return null;
-    return _all[idx];
+    if (idx < _all.length) return _all[idx];
+    return _dynamicShowcase(type, idx + 1);
+  }
+
+  static FortuneTypeShowcase _dynamicShowcase(
+    FortuneTypeEntity type,
+    int index,
+  ) =>
+      FortuneTypeShowcase(
+        index: index,
+        type: type,
+        imageAsset: imageAssetForSlug(type.slug),
+        features: _defaultFeatures(type),
+      );
+
+  static List<FortuneTypeFeature> _defaultFeatures(FortuneTypeEntity type) {
+    return switch (type.kind) {
+      FortuneSessionKind.zodiacWheel => [
+          _f(Icons.star_half_rounded, 'Burç Yorumu'),
+          _f(Icons.public_rounded, 'Gezegen Etkileri'),
+          _f(Icons.insights_rounded, 'Kişisel Analiz'),
+        ],
+      FortuneSessionKind.pendulum => [
+          _f(Icons.lightbulb_outline_rounded, 'Netlik Kazan'),
+          _f(Icons.speed_rounded, 'Enerji Ölçümü'),
+          _f(Icons.schedule_rounded, 'Doğru Zaman'),
+        ],
+      FortuneSessionKind.runeStone => [
+          _f(Icons.font_download_rounded, 'Rune Çek'),
+          _f(Icons.explore_rounded, 'Rehberlik'),
+          _f(Icons.self_improvement_rounded, 'Spiritüel Kılavuz'),
+        ],
+      FortuneSessionKind.generic => [
+          _f(Icons.auto_awesome_rounded, 'Geleneksel Yorum'),
+          _f(Icons.spa_rounded, 'Enerji Temizliği'),
+          _f(Icons.visibility_rounded, 'İçgörü'),
+        ],
+      _ => [
+          _f(Icons.auto_stories_rounded, 'Derin Anlamlar'),
+          _f(Icons.psychology_rounded, 'Kişisel Rehberlik'),
+          _f(Icons.visibility_rounded, 'İçsel Farkındalık'),
+        ],
+    };
   }
 
   static List<FortuneTypeShowcase> get hubShowcases {
@@ -162,6 +204,42 @@ class FortuneTypeShowcase {
         _f(Icons.done_all_rounded, 'Net Cevap'),
         _f(Icons.support_rounded, 'Karar Desteği'),
         _f(Icons.flash_on_rounded, 'Hızlı Fal'),
+      ],
+    ),
+    _s(
+      15,
+      FortuneCatalog.types[14],
+      [
+        _f(Icons.mosque_rounded, 'Manevi Rehberlik'),
+        _f(Icons.favorite_rounded, 'Kalp Huzuru'),
+        _f(Icons.nightlight_round_rounded, 'İç Ses'),
+      ],
+    ),
+    _s(
+      16,
+      FortuneCatalog.types[15],
+      [
+        _f(Icons.brightness_7_rounded, 'Aura Rengi'),
+        _f(Icons.energy_savings_leaf_rounded, 'Enerji Alanı'),
+        _f(Icons.color_lens_rounded, 'Çakra Dengesi'),
+      ],
+    ),
+    _s(
+      17,
+      FortuneCatalog.types[16],
+      [
+        _f(Icons.local_fire_department_rounded, 'Enerji Temizliği'),
+        _f(Icons.shield_rounded, 'Koruma'),
+        _f(Icons.spa_rounded, 'Arınma'),
+      ],
+    ),
+    _s(
+      18,
+      FortuneCatalog.types[17],
+      [
+        _f(Icons.public_rounded, 'Gezegen Konumları'),
+        _f(Icons.timeline_rounded, 'Yaşam Döngüsü'),
+        _f(Icons.auto_awesome_rounded, 'Kozmik Harita'),
       ],
     ),
   ];

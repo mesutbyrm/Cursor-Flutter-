@@ -1,4 +1,5 @@
 import 'package:canlifal_social/features/fortune/domain/fortune_type_slug.dart';
+import 'package:canlifal_social/features/fortune/domain/entities/fortune_type_entity.dart';
 import 'package:canlifal_social/features/fortune/presentation/data/fortune_catalog.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -14,6 +15,7 @@ void main() {
     expect(FortuneCatalog.bySlug('istihare')?.slug, 'istihare');
     expect(FortuneCatalog.bySlug('kursundokme')?.slug, 'kursundokme');
     expect(FortuneCatalog.bySlug('dogum-haritasi')?.slug, 'dogum-haritasi');
+    expect(FortuneCatalog.bySlug('aura')?.kind, FortuneSessionKind.zodiacWheel);
     expect(FortuneCatalog.bySlug('aura')?.slug, isNot('runik'));
     expect(FortuneCatalog.bySlug('istihare')?.slug, isNot('pendul'));
   });

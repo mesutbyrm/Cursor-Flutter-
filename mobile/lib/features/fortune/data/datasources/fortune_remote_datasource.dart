@@ -264,6 +264,16 @@ class FortuneRemoteDataSource {
 
   String _apiSlugFor(String slug) {
     final key = FortuneTypeSlug.resolve(slug);
+    // Üretimde olmayan slug'lar — kılavuz §9.5 en yakın uç (404 yerine canlı yorum).
+    const noProdEndpoint = <String, String>{
+      'iskambil-fali': 'katina',
+      'cin-fali': 'burc-yorumu',
+      'pendul-fali': 'istihare',
+      'runik-fali': 'tarot-fali',
+    };
+    if (noProdEndpoint.containsKey(key)) {
+      return noProdEndpoint[key]!;
+    }
     return switch (key) {
       'tarot' => 'tarot-fali',
       'kahve-fali' => 'kahve-fali',

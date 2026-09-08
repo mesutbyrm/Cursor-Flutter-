@@ -190,7 +190,7 @@ abstract final class FortuneCatalog {
       description: 'Enerji alanını ve aura rengini keşfet',
       emoji: '🌈',
       accent: Color(0xFFA78BFA),
-      kind: FortuneSessionKind.runeStone,
+      kind: FortuneSessionKind.zodiacWheel,
       ctaLabel: 'Falını Aç',
     ),
     FortuneTypeEntity(
