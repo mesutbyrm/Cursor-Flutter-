@@ -52,13 +52,17 @@ void main() {
     expect(stats.entrance, greaterThan(0));
   });
 
-  test('preview mapper maps gold entrance', () {
+  test('preview mapper maps gold entrance with lottie asset', () {
     final gold = AdminSiteAnimationSeedCatalog.all().firstWhere(
       (a) => a.id == 'anim_entrance_gold_crown',
     );
     final cmd = adminAnimationToPreviewCommand(gold);
     expect(cmd.type, SiteAnimationType.memberJoined);
     expect(cmd.displayDuration.inMilliseconds, 3000);
+    expect(cmd.asset.hasBundle, isTrue);
+    expect(cmd.asset.bundlePath, contains('crown.json'));
+    expect(cmd.soundUrl, isNull);
+    expect(cmd.cooldownMs, 8000);
   });
 
   test('default entrance ids map tiers per spec', () {

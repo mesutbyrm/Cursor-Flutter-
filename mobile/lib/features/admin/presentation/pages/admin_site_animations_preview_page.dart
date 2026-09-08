@@ -121,6 +121,40 @@ class _AdminSiteAnimationsPreviewPageState
             ),
             const SizedBox(height: 16),
           ],
+          if (_screen == AdminSiteAnimationPreviewScreen.voice) ...[
+            const Text(
+              'Tier çıkış testi',
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final tier in AdminSiteAnimationMembership.values)
+                  if (tier != AdminSiteAnimationMembership.all)
+                    ActionChip(
+                      label: Text(tier.label, style: const TextStyle(fontSize: 11)),
+                      onPressed: () {
+                        final id = AdminSiteAnimationSeedCatalog
+                            .defaultExitIds()[tier];
+                        if (id == null) return;
+                        final match = animations.cast<AdminSiteAnimation?>().firstWhere(
+                          (a) => a?.id == id,
+                          orElse: () => null,
+                        );
+                        if (match != null) {
+                          setState(() {
+                            _selected = match;
+                            _replayTick++;
+                          });
+                        }
+                      },
+                    ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
           DropdownButtonFormField<String>(
             value: active?.id,
             decoration: const InputDecoration(labelText: 'Animasyon seç'),

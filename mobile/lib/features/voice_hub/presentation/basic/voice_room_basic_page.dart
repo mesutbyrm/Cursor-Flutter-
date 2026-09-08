@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/performance/voice_room_entry_perf.dart';
 import '../../../../core/site_animation/presentation/widgets/site_animation_overlay_host.dart';
+import '../../../../core/site_animation/presentation/utils/site_animation_voice_room_layout.dart';
 import '../../../../core/site_animation/presentation/site_animation_catalog_provider.dart';
 import '../../../../core/site_animation/presentation/site_animation_entrance_policy.dart';
 import '../utils/kick_strike_ui.dart';
@@ -838,7 +839,9 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       child: Scaffold(
         resizeToAvoidBottomInset: true,
         backgroundColor: VoiceRoomTokens.bgDeep,
-        body: SiteAnimationOverlayHost(
+        body: SiteAnimationVoiceRoomLayoutScope(
+          stageTop: 0,
+          child: SiteAnimationOverlayHost(
           roomId: sessionKey,
           child: Stack(
           fit: StackFit.expand,
@@ -1084,6 +1087,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                 },
               ),
           ],
+        ),
         ),
         ),
       ),

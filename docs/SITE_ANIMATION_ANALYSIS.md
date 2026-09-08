@@ -1,5 +1,7 @@
 # Site Animasyonları — Sistem Analizi ve Mimari Plan
 
+> **Güncel (2026-09-08):** Uygulama **tamamlandı** (`1.0.397+435`) — WYSIWYG önizleme, CDN pipeline, ses/cooldown, VIP overlay öncelik. CDN dosya yükleme: [`SITE_ANIMATION_CDN.md`](SITE_ANIMATION_CDN.md).
+
 > Tarih: 8 Eylül 2026 · Dal: `cursor/site-animation-engine-5ac6` · PR #365
 
 Bu belge, kullanıcı spesifikasyonu §34 sırasına göre mevcut CanlıFal mimarisinin analizini, boşluk matrisini ve uygulama planını içerir. Tasarım referansı olarak belirtilen 7 uygulama ekran görüntüsü repoda dosya olarak bulunmuyor; mevcut Flutter tema token'ları (`VoiceRoomTokens`, `DiscoverBackground`, `0xFF0E0524` zemin) ve admin seed katalogu bu referansların yerine geçer.

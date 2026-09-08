@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/site_animation/presentation/site_animation_provider.dart';
+import '../../../../core/site_animation/presentation/utils/site_animation_voice_room_layout.dart';
 import '../../../../core/site_animation/presentation/widgets/site_animation_overlay_host.dart';
 import '../../domain/admin_site_animation.dart';
 import '../../domain/admin_site_animation_preview_mapper.dart';
@@ -67,7 +68,11 @@ class _AdminSiteAnimationPreviewStageState
       aspectRatio: 9 / 16,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
-        child: SiteAnimationOverlayHost(
+        child: SiteAnimationVoiceRoomLayoutScope(
+          stageTop: widget.screen == AdminSiteAnimationPreviewScreen.voice
+              ? 76
+              : 0,
+          child: SiteAnimationOverlayHost(
           roomId: AdminSiteAnimationPreviewStage.previewRoomId,
           child: Stack(
             fit: StackFit.expand,
@@ -105,6 +110,7 @@ class _AdminSiteAnimationPreviewStageState
                 ),
             ],
           ),
+        ),
         ),
       ),
     );
