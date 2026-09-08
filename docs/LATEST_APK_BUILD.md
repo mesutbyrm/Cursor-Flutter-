@@ -4,18 +4,18 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.376+414` |
-| Tarih (UTC) | 2026-09-08 01:43 |
-| Commit | [`adae8bf7dbcc63063405e1179e731bdca4eadcfa`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/adae8bf7dbcc63063405e1179e731bdca4eadcfa) |
-| İş akışı | [Run 34176702156](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34176702156) |
+| Sürüm | `1.0.377+415` |
+| Tarih (UTC) | 2026-09-08 02:23 |
+| Commit | [`641d7794df38488f17ac924fcf02b7ffb6387d0c`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/641d7794df38488f17ac924fcf02b7ffb6387d0c) |
+| İş akışı | [Run 34178935580](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34178935580) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.376+414 (2026-09-08) — economy widget testleri ProviderScope
+## 1.0.377+415 (2026-09-08) — economy Faz 20: psychic + müzik hub etiketleri
 
-- `test/helpers/economy_test_scope.dart` — varsayılan branding override
-- Psychic, fal, üyelik widget testleri economy scope ile sarıldı
+- `economyJetonBalanceLine` / `economyJetonBalanceRefundNotice` yardımcıları
+- Bahşiş sheet, bekleme ekranı iade metinleri, müzik hub bakiye satırı markalı
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
