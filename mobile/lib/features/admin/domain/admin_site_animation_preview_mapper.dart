@@ -48,18 +48,13 @@ SiteAnimationCommand adminAnimationToPreviewCommand(
     tier: tier,
     userId: 'preview-user',
     userName: userName,
+    animationId: anim.id,
     layout: SiteAnimationLayout(
       anchor: anchor,
       scale: anim.scale,
       durationMs: anim.durationMs,
       seatIndex: anim.anchor == AdminSiteAnimationAnchor.seat ? 2 : null,
     ),
-    asset: SiteAnimationAsset(
-      url: anim.assetUrl,
-      kind: anim.animationType == 'lottie'
-          ? SiteAnimationMediaKind.lottie
-          : SiteAnimationMediaKind.native,
-      previewMp4Key: anim.previewMp4Key,
-    ),
+    asset: const SiteAnimationAsset(kind: SiteAnimationMediaKind.native),
   );
 }

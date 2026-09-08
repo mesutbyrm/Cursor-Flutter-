@@ -131,7 +131,13 @@ class _SiteAnimationCardState extends State<SiteAnimationCard>
             scale: _scale,
             child: ScaleTransition(
               scale: _pulse,
-              child: SiteAnimationMedia(command: widget.command),
+              child: AnimatedBuilder(
+                animation: _ctrl,
+                builder: (context, child) => SiteAnimationMedia(
+                  command: widget.command,
+                  animationPhase: _ctrl.value,
+                ),
+              ),
             ),
           ),
         ),

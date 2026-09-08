@@ -152,6 +152,7 @@ Admin özel atama (`ADMIN_CUSTOM` priority 110) resolver'da `priorityOverride` i
 | Oyun overlay host | ✅ ctx_game (hub + oda) |
 | Hediye katalog seed | ✅ gift kategorisi (4 tier) |
 | Sosyal entrance marquee hook | ✅ Global app shell → ctx_social (tüm sekmeler) |
+| Giriş kartı tasarım §34 | ✅ Native `SiteAnimationEntranceCard` (15+1 ID) |
 | CI / APK (merge sonrası) | ✅ `main` yeşil · apk-latest `1.0.390+428`+ |
 | Production deploy | ⏳ canlifal.com Next.js ayrı repo |
 

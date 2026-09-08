@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/site_animation/domain/site_animation_command.dart';
+import '../../../../core/site_animation/domain/site_animation_tier.dart';
+import '../../../../core/site_animation/domain/site_animation_type.dart';
+import '../../../../core/site_animation/presentation/widgets/site_animation_entrance_card.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../domain/admin_site_animation.dart';
 
@@ -57,38 +61,60 @@ class AdminSiteAnimationCard extends StatelessWidget {
                   ],
                 ),
               ),
-              child: Stack(
-                children: [
-                  Center(
-                    child: Icon(
-                      _categoryIcon(animation.category),
-                      size: 42,
-                      color: _accent.withValues(alpha: 0.85),
-                    ),
-                  ),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: animation.isActive
-                            ? Colors.green.withValues(alpha: 0.25)
-                            : Colors.grey.withValues(alpha: 0.25),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        animation.isActive ? 'Aktif' : 'Pasif',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w800,
-                          color: animation.isActive ? Colors.greenAccent : Colors.white54,
+              child: animation.category == AdminSiteAnimationCategory.entrance
+                  ? Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: SiteAnimationEntranceCard(
+                        compact: true,
+                        command: SiteAnimationCommand(
+                          eventId: 'lib:${animation.id}',
+                          roomId: 'library',
+                          type: SiteAnimationType.memberJoined,
+                          tier: _siteTier(animation.membership),
+                          userId: 'preview',
+                          userName: 'Önizleme',
+                          animationId: animation.id,
+                          catalogLabel: animation.description ?? animation.name,
                         ),
                       ),
+                    )
+                  : Stack(
+                      children: [
+                        Center(
+                          child: Icon(
+                            _categoryIcon(animation.category),
+                            size: 42,
+                            color: _accent.withValues(alpha: 0.85),
+                          ),
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: animation.isActive
+                                  ? Colors.green.withValues(alpha: 0.25)
+                                  : Colors.grey.withValues(alpha: 0.25),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              animation.isActive ? 'Aktif' : 'Pasif',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                                color: animation.isActive
+                                    ? Colors.greenAccent
+                                    : Colors.white54,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
             ),
           ),
           Padding(
@@ -140,6 +166,17 @@ class AdminSiteAnimationCard extends StatelessWidget {
       ),
     );
   }
+
+  SiteAnimationTier _siteTier(AdminSiteAnimationMembership m) => switch (m) {
+        AdminSiteAnimationMembership.gold => SiteAnimationTier.gold,
+        AdminSiteAnimationMembership.premium => SiteAnimationTier.premium,
+        AdminSiteAnimationMembership.diamond => SiteAnimationTier.diamond,
+        AdminSiteAnimationMembership.vip => SiteAnimationTier.vip,
+        AdminSiteAnimationMembership.svip => SiteAnimationTier.svip,
+        AdminSiteAnimationMembership.admin => SiteAnimationTier.admin,
+        AdminSiteAnimationMembership.host => SiteAnimationTier.host,
+        _ => SiteAnimationTier.normal,
+      };
 
   IconData _categoryIcon(AdminSiteAnimationCategory c) => switch (c) {
         AdminSiteAnimationCategory.entrance => Icons.login_rounded,

@@ -131,8 +131,9 @@ void main() {
       )!;
       final resolved = SiteAnimationResolver.resolve(base: base, catalog: catalog)!;
       expect(resolved.priorityOverride, 110);
-      expect(resolved.layout.durationMs, 4000);
+      expect(resolved!.layout.durationMs, 4000);
       expect(resolved.catalogLabel, 'Diamond custom');
+      expect(resolved.animationId, 'anim_entrance_diamond_burst');
     });
 
     test('applies exit defaults by tier', () {

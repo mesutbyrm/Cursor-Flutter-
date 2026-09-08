@@ -18,11 +18,13 @@ void main() {
     expect(asset.kind, SiteAnimationMediaKind.lottie);
   });
 
-  test('tier fallback bundle without backend asset', () {
+  test('entrance resolves to native card media (not placeholder lottie)', () {
     final asset = SiteAnimationAssetRegistry.resolve(
       type: SiteAnimationType.memberJoined,
       tier: SiteAnimationTier.premium,
     );
-    expect(asset.bundlePath, 'assets/gifts/lottie/star.json');
+    expect(asset.kind, SiteAnimationMediaKind.native);
+    expect(asset.bundlePath, isNull);
+    expect(asset.previewMp4Key, 'premium_uye_girisi.mp4');
   });
 }

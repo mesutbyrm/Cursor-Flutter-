@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/admin_site_animation.dart';
 import '../providers/admin_site_animation_providers.dart';
 import '../providers/staff_access_provider.dart';
+import '../widgets/admin_site_animation_entrance_picker.dart';
 
 class AdminSiteAnimationsDefaultsPage extends ConsumerWidget {
   const AdminSiteAnimationsDefaultsPage({super.key});
@@ -55,29 +56,44 @@ class AdminSiteAnimationsDefaultsPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                   for (final tier in tiers)
-                    _TierDefaultTile(
-                      tier: tier,
-                      animationId: entranceDefaults[tier],
-                      animations: animations
-                          .where((a) =>
-                              a.category ==
-                                  AdminSiteAnimationCategory.entrance &&
-                              a.isActive)
-                          .toList(),
-                      onChanged: (id) async {
-                        final next =
-                            Map<AdminSiteAnimationMembership, String>.from(
-                          entranceDefaults,
-                        );
-                        if (id == null) {
-                          next.remove(tier);
-                        } else {
-                          next[tier] = id;
-                        }
-                        await ref
-                            .read(adminSiteAnimationDefaultsProvider.notifier)
-                            .save(next);
-                      },
+                    Card(
+                      color: const Color(0xFF12082A),
+                      margin: const EdgeInsets.only(bottom: 14),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              tier.label,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            AdminSiteAnimationEntrancePicker(
+                              tier: tier,
+                              animations: animations,
+                              selectedId: entranceDefaults[tier],
+                              onSelected: (id) async {
+                                final next =
+                                    Map<AdminSiteAnimationMembership, String>.from(
+                                  entranceDefaults,
+                                );
+                                if (id == null) {
+                                  next.remove(tier);
+                                } else {
+                                  next[tier] = id;
+                                }
+                                await ref
+                                    .read(adminSiteAnimationDefaultsProvider.notifier)
+                                    .save(next);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   const SizedBox(height: 24),
                   const Text(

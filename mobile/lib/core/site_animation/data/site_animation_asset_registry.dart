@@ -15,6 +15,13 @@ abstract final class SiteAnimationAssetRegistry {
     }
 
     final previewKey = _previewKey(type, tier);
+    if (type.isEntrance || type == SiteAnimationType.hostSeat) {
+      return SiteAnimationAsset(
+        kind: SiteAnimationMediaKind.native,
+        previewMp4Key: previewKey ?? normalized?.previewMp4Key,
+      );
+    }
+
     final bundle = _bundlePath(type, tier);
 
     return SiteAnimationAsset(

@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.392+430 (2026-09-08) — Site Animation: tasarım referansı giriş kartları
+
+- `SiteAnimationEntranceCard` — 15 giriş + host taç; §34 paleti (mor/altın/cyan) birebir kart düzeni
+- Admin üyelik eşleştirme: görsel giriş seçici (önizlemeli grid, dropdown yerine)
+- Kütüphane kartları giriş kategorisinde canlı mini önizleme
+- `animationId` SSE → runtime; Lottie placeholder yerine native FX
+
 ## 1.0.391+429 (2026-09-08) — Site Animation: global sosyal giriş + CI stabilizasyon
 
 - `SiteAnimationSocialEntranceListener` — marquee VIP giriş kartı tüm sekmelerde (`ctx_social` app shell)

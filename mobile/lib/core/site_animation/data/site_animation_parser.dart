@@ -66,6 +66,7 @@ abstract final class SiteAnimationParser {
 
     final layout = _parseLayout(payload);
     final backendAsset = _parseAsset(payload);
+    final animationId = _parseAnimationId(payload);
     final eventId = _eventId(roomId, normalized, payload, userId);
 
     SiteAnimationType? type;
@@ -127,7 +128,27 @@ abstract final class SiteAnimationParser {
       asset: asset,
       micOn: _parseBool(payload['micOn']),
       createdAtMs: DateTime.now().millisecondsSinceEpoch,
+      animationId: animationId,
     );
+  }
+
+  static String? _parseAnimationId(Map<String, dynamic> payload) {
+    final direct = pick(payload, [
+      'entranceAnimationId',
+      'animationId',
+      'siteAnimationId',
+    ])?.toString();
+    if (direct != null && direct.trim().isNotEmpty) return direct.trim();
+    final anim = payload['animation'] ?? payload['animationMetadata'];
+    if (anim is Map) {
+      final nested = pick(Map<String, dynamic>.from(anim), [
+        'id',
+        'animationId',
+        'entranceAnimationId',
+      ])?.toString();
+      if (nested != null && nested.trim().isNotEmpty) return nested.trim();
+    }
+    return null;
   }
 
   static String _eventId(

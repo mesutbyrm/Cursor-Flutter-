@@ -18,6 +18,7 @@ class SiteAnimationCommand {
     this.createdAtMs,
     this.priorityOverride,
     this.catalogLabel,
+    this.animationId,
   });
 
   final String eventId;
@@ -33,6 +34,7 @@ class SiteAnimationCommand {
   final int? createdAtMs;
   final int? priorityOverride;
   final String? catalogLabel;
+  final String? animationId;
 
   int get priority {
     if (priorityOverride != null) return priorityOverride!;
@@ -71,6 +73,7 @@ class SiteAnimationCommand {
     SiteAnimationAsset? asset,
     int? priorityOverride,
     String? catalogLabel,
+    String? animationId,
   }) {
     return SiteAnimationCommand(
       eventId: eventId,
@@ -86,6 +89,7 @@ class SiteAnimationCommand {
       createdAtMs: createdAtMs,
       priorityOverride: priorityOverride ?? this.priorityOverride,
       catalogLabel: catalogLabel ?? this.catalogLabel,
+      animationId: animationId ?? this.animationId,
     );
   }
 }

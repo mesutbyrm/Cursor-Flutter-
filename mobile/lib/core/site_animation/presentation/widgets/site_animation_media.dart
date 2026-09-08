@@ -5,6 +5,7 @@ import '../../../../core/video/video_cache_service.dart';
 import '../../domain/site_animation_asset.dart';
 import 'site_animation_fallback.dart';
 import '../../domain/site_animation_command.dart';
+import 'site_animation_entrance_card.dart';
 
 /// Lottie / video / native fallback oynatıcı.
 class SiteAnimationMedia extends StatefulWidget {
@@ -12,10 +13,12 @@ class SiteAnimationMedia extends StatefulWidget {
     super.key,
     required this.command,
     this.useFallbackOnly = false,
+    this.animationPhase = 0,
   });
 
   final SiteAnimationCommand command;
   final bool useFallbackOnly;
+  final double animationPhase;
 
   @override
   State<SiteAnimationMedia> createState() => _SiteAnimationMediaState();
@@ -37,6 +40,13 @@ class _SiteAnimationMediaState extends State<SiteAnimationMedia> {
   Widget build(BuildContext context) {
     if (widget.useFallbackOnly || _failed) {
       return _fallback();
+    }
+
+    if (widget.command.type.isEntrance) {
+      return SiteAnimationEntranceCard(
+        command: widget.command,
+        phase: widget.animationPhase,
+      );
     }
 
     final asset = widget.command.asset;

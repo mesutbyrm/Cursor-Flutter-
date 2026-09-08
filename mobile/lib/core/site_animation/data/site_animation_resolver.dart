@@ -176,6 +176,7 @@ abstract final class SiteAnimationResolver {
       asset: asset,
       priorityOverride: adminCustomPriority ?? entry.priority,
       catalogLabel: entry.description ?? entry.name,
+      animationId: entry.id,
     );
   }
 
