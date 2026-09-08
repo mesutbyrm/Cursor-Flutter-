@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.395+433 (2026-09-08) — Site Animation: ses + cooldown + CDN asset
+
+- Katalog `soundUrl` oynatma (`SiteAnimationSoundPlayer`)
+- `cooldownMs` — aynı kullanıcı/animasyon spam koruması
+- CDN production asset fallback (`SiteAnimationCdnAssets`)
+- Gold giriş seed: 8s cooldown
+
 ## 1.0.394+432 (2026-09-08) — Site Animation: VIP overlay öncelik + koltuk izi
 
 - Site animation giriş kataloğu aktifken tam ekran `VipEntranceOverlay` atlanır (kozmetik giriş hariç)

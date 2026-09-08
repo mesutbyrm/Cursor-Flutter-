@@ -19,6 +19,8 @@ class SiteAnimationCommand {
     this.priorityOverride,
     this.catalogLabel,
     this.animationId,
+    this.soundUrl,
+    this.cooldownMs = 0,
   });
 
   final String eventId;
@@ -35,6 +37,11 @@ class SiteAnimationCommand {
   final int? priorityOverride;
   final String? catalogLabel;
   final String? animationId;
+  final String? soundUrl;
+  final int cooldownMs;
+
+  String get cooldownKey =>
+      '${userId.trim()}:${animationId ?? type.name}';
 
   int get priority {
     if (priorityOverride != null) return priorityOverride!;
@@ -74,6 +81,8 @@ class SiteAnimationCommand {
     int? priorityOverride,
     String? catalogLabel,
     String? animationId,
+    String? soundUrl,
+    int? cooldownMs,
   }) {
     return SiteAnimationCommand(
       eventId: eventId,
@@ -90,6 +99,8 @@ class SiteAnimationCommand {
       priorityOverride: priorityOverride ?? this.priorityOverride,
       catalogLabel: catalogLabel ?? this.catalogLabel,
       animationId: animationId ?? this.animationId,
+      soundUrl: soundUrl ?? this.soundUrl,
+      cooldownMs: cooldownMs ?? this.cooldownMs,
     );
   }
 }

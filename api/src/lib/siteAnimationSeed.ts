@@ -35,6 +35,7 @@ export const SITE_ANIMATION_SEED: SiteAnimationRecord[] = [
     assetUrl: "assets/gifts/lottie/crown.json",
     durationMs: 3000,
     priority: 70,
+    cooldownMs: 8000,
     previewMp4Key: "gold_uye_girisi.mp4",
     description: "Altın taç + glow + VIP rozeti",
   }),

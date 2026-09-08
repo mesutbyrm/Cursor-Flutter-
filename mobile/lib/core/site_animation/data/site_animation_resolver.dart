@@ -6,6 +6,7 @@ import '../domain/site_animation_slot.dart';
 import '../domain/site_animation_tier.dart';
 import '../domain/site_animation_type.dart';
 import 'site_animation_asset_registry.dart';
+import 'site_animation_cdn_assets.dart';
 
 /// Site animasyon overlay kimlikleri — [SiteAnimationContext] ile hizalı.
 abstract final class SiteAnimationOverlayIds {
@@ -151,10 +152,12 @@ abstract final class SiteAnimationResolver {
     SiteAnimationCatalogEntry entry, {
     int? adminCustomPriority,
   }) {
-    final backendAsset = entry.assetUrl != null && entry.assetUrl!.isNotEmpty
+    final resolvedUrl = SiteAnimationCdnAssets.resolveAssetUrl(entry);
+    final backendAsset = resolvedUrl != null && resolvedUrl.isNotEmpty
         ? SiteAnimationAsset(
-            url: entry.assetUrl,
-            kind: _mediaKind(entry.animationType, entry.assetUrl!),
+            url: resolvedUrl.startsWith('assets/') ? null : resolvedUrl,
+            bundlePath: resolvedUrl.startsWith('assets/') ? resolvedUrl : null,
+            kind: _mediaKind(entry.animationType, resolvedUrl),
             previewMp4Key: entry.previewMp4Key,
           )
         : null;
@@ -177,6 +180,8 @@ abstract final class SiteAnimationResolver {
       priorityOverride: adminCustomPriority ?? entry.priority,
       catalogLabel: entry.description ?? entry.name,
       animationId: entry.id,
+      soundUrl: entry.soundUrl,
+      cooldownMs: entry.cooldownMs,
     );
   }
 

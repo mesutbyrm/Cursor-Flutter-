@@ -213,5 +213,26 @@ void main() {
 
       manager.dispose();
     });
+
+    test('respects cooldownMs per user animation key', () {
+      final manager = SiteAnimationManager();
+      final first = SiteAnimationParser.fromRoomEvent(
+        roomId: 'r',
+        event: 'user_joined',
+        payload: {'eventId': 'c1', 'userId': 'u1', 'membership': 'gold'},
+      )!.copyWith(cooldownMs: 60000, animationId: 'anim_entrance_gold_crown');
+      final second = SiteAnimationParser.fromRoomEvent(
+        roomId: 'r',
+        event: 'user_joined',
+        payload: {'eventId': 'c2', 'userId': 'u1', 'membership': 'gold'},
+      )!.copyWith(cooldownMs: 60000, animationId: 'anim_entrance_gold_crown');
+
+      manager.play(first);
+      manager.play(second);
+      expect(manager.state.active?.eventId, 'c1');
+      expect(manager.state.queueLength, 0);
+
+      manager.dispose();
+    });
   });
 }

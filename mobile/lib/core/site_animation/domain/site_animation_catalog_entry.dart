@@ -18,6 +18,8 @@ class SiteAnimationCatalogEntry {
     this.scale = 1,
     this.isActive = true,
     this.description,
+    this.soundUrl,
+    this.cooldownMs = 0,
   });
 
   final String id;
@@ -33,6 +35,8 @@ class SiteAnimationCatalogEntry {
   final double scale;
   final bool isActive;
   final String? description;
+  final String? soundUrl;
+  final int cooldownMs;
 }
 
 class SiteAnimationUserAssignment {

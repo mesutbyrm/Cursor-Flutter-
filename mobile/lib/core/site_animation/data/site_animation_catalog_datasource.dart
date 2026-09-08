@@ -175,6 +175,8 @@ class SiteAnimationCatalogDataSource {
       scale: anim.scale,
       isActive: anim.isActive,
       description: anim.description,
+      soundUrl: anim.soundUrl,
+      cooldownMs: anim.cooldownMs,
     );
   }
 
@@ -197,6 +199,8 @@ class SiteAnimationCatalogDataSource {
       scale: _double(json['scale'], 1),
       isActive: json['isActive'] != false && json['active'] != false,
       description: json['description']?.toString(),
+      soundUrl: json['soundUrl']?.toString(),
+      cooldownMs: _int(json['cooldownMs'] ?? json['cooldown'], 0),
     );
   }
 
@@ -214,6 +218,8 @@ class SiteAnimationCatalogDataSource {
         'scale': e.scale,
         'isActive': e.isActive,
         if (e.description != null) 'description': e.description,
+        if (e.soundUrl != null) 'soundUrl': e.soundUrl,
+        'cooldownMs': e.cooldownMs,
       };
 
   Map<SiteAnimationTier, String> _parseEntranceDefaults(dynamic raw) {

@@ -5,6 +5,7 @@ import '../data/site_animation_cache.dart';
 import '../domain/site_animation_asset.dart';
 import '../domain/site_animation_command.dart';
 import '../domain/site_animation_type.dart';
+import 'site_animation_sound_player.dart';
 import 'site_animation_state.dart';
 
 typedef SiteAnimationStateListener = void Function(SiteAnimationState state);
@@ -22,6 +23,7 @@ class SiteAnimationManager {
   final _queue = <SiteAnimationCommand>[];
   final _cancelled = <String>{};
   final _preloaded = <String>{};
+  final _cooldownUntil = <String, int>{};
 
   SiteAnimationState _state = const SiteAnimationState();
   Timer? _activeTimer;
@@ -38,6 +40,7 @@ class SiteAnimationManager {
   /// Anında oynat — aktif yoksa başlat, varsa kuyruğa al.
   void play(SiteAnimationCommand command) {
     if (_disposed) return;
+    if (_isOnCooldown(command)) return;
     if (!_dedupe.markIfNew(command.eventId)) return;
     if (_cancelled.remove(command.eventId)) {}
 
@@ -51,6 +54,7 @@ class SiteAnimationManager {
   /// Öncelik sırasına göre kuyruğa ekle.
   void queue(SiteAnimationCommand command) {
     if (_disposed) return;
+    if (_isOnCooldown(command)) return;
     if (!_dedupe.markIfNew(command.eventId)) return;
     if (_cancelled.contains(command.eventId)) return;
     _enqueue(command);
@@ -125,7 +129,11 @@ class SiteAnimationManager {
 
   void _start(SiteAnimationCommand command) {
     _activeTimer?.cancel();
+    _markCooldown(command);
     unawaited(preload(command.asset));
+    if (command.soundUrl?.trim().isNotEmpty == true) {
+      unawaited(SiteAnimationSoundPlayer.play(command.soundUrl));
+    }
     _emit(
       _state.copyWith(
         active: command,
@@ -163,7 +171,23 @@ class SiteAnimationManager {
     _queue.clear();
     _cancelled.clear();
     _preloaded.clear();
+    _cooldownUntil.clear();
     _dedupe.clear();
     _state = const SiteAnimationState();
+  }
+
+  bool _isOnCooldown(SiteAnimationCommand command) {
+    final ms = command.cooldownMs;
+    if (ms <= 0) return false;
+    final until = _cooldownUntil[command.cooldownKey];
+    if (until == null) return false;
+    return DateTime.now().millisecondsSinceEpoch < until;
+  }
+
+  void _markCooldown(SiteAnimationCommand command) {
+    final ms = command.cooldownMs;
+    if (ms <= 0) return;
+    _cooldownUntil[command.cooldownKey] =
+        DateTime.now().millisecondsSinceEpoch + ms;
   }
 }
