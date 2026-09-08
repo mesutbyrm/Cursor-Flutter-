@@ -1043,6 +1043,22 @@ export function transferRoomOwnership(
   };
 }
 
+export function setVoiceMicState(
+  roomId: string,
+  userId: string,
+  micOn: boolean,
+): ChatPresenceRow | null {
+  const p = roomMap(roomId).get(userId);
+  if (!p) return null;
+  p.isSpeaking = micOn;
+  roomMap(roomId).set(userId, p);
+  return p;
+}
+
+export function listVoiceUsers(roomId: string): ChatPresenceRow[] {
+  return listPresence(roomId).filter((p) => p.isSpeaking === true);
+}
+
 export function getDjState(roomId: string, user: User | null) {
   const room = getChatRoom(roomId);
   const key = resolveRoomId(roomId);

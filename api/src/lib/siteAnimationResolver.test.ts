@@ -82,4 +82,26 @@ describe("siteAnimationResolver", () => {
     const animation = payload?.animation as Record<string, unknown>;
     assert.equal(animation.id, "anim_exit_premium");
   });
+
+  it("resolves mic_changed mic on/off animations", async () => {
+    process.env.SITE_ANIMATION_STORE_JSON = "1";
+    delete process.env.DATABASE_URL;
+    await resetSiteAnimationStoreForTests();
+    const on = await buildSiteAnimationRoomEvent({
+      event: "mic_changed",
+      userId: "u-mic",
+      membership: "gold",
+      micOn: true,
+      seatIndex: 2,
+    });
+    const off = await buildSiteAnimationRoomEvent({
+      event: "mic_changed",
+      userId: "u-mic",
+      membership: "gold",
+      micOn: false,
+      seatIndex: 2,
+    });
+    assert.equal((on?.animation as Record<string, unknown>).id, "anim_mic_on");
+    assert.equal((off?.animation as Record<string, unknown>).id, "anim_mic_off");
+  });
 });

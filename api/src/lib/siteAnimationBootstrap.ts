@@ -1,5 +1,9 @@
 import { prisma } from "./prisma";
-import { SITE_ANIMATION_DEFAULTS, SITE_ANIMATION_SEED } from "./siteAnimationSeed";
+import {
+  SITE_ANIMATION_DEFAULTS,
+  SITE_ANIMATION_EXIT_DEFAULTS,
+  SITE_ANIMATION_SEED,
+} from "./siteAnimationSeed";
 
 /** İlk açılışta site animasyon tablolarını seed eder (idempotent). */
 export async function bootstrapSiteAnimations(): Promise<void> {
@@ -38,6 +42,17 @@ export async function bootstrapSiteAnimations(): Promise<void> {
       await prisma.siteAnimationDefault.upsert({
         where: { membership },
         create: { membership, animationId },
+        update: { animationId },
+      });
+    }
+
+    for (const [membership, animationId] of Object.entries(
+      SITE_ANIMATION_EXIT_DEFAULTS,
+    )) {
+      const key = `exit:${membership}`;
+      await prisma.siteAnimationDefault.upsert({
+        where: { membership: key },
+        create: { membership: key, animationId },
         update: { animationId },
       });
     }

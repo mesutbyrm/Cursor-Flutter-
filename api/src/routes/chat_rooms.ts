@@ -48,6 +48,8 @@ import {
   removeRoomDj,
   assignSeat,
   transferRoomOwnership,
+  setVoiceMicState,
+  listVoiceUsers,
   MUSIC_REQUEST_JETON,
   listRoomBannedWords,
   addRoomBannedWord,
@@ -1015,6 +1017,61 @@ chatRoomsRouter.delete("/rooms/:roomId/presence", requireAuth, async (req, res) 
     chatRole: result.leftUser?.chatRole,
   });
   return res.status(200).json({ users: result.presence });
+});
+
+/** GET /api/chat/rooms/:roomId/voice — seste olanlar */
+chatRoomsRouter.get("/rooms/:roomId/voice", optionalAuth, async (req, res) => {
+  const roomId = req.params.roomId;
+  if (!getChatRoom(roomId)) {
+    return fail(res, 404, "NOT_FOUND", "Oda bulunamadı");
+  }
+  const voiceUsers = listVoiceUsers(roomId);
+  return ok(res, { voiceUsers, users: voiceUsers });
+});
+
+/** POST /api/chat/rooms/:roomId/voice — mikrofon join/leave (kılavuz §9.3) */
+chatRoomsRouter.post("/rooms/:roomId/voice", requireAuth, async (req, res) => {
+  const roomId = req.params.roomId;
+  const user = await loadUser(req.userId);
+  if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
+  if (!getChatRoom(roomId)) {
+    return fail(res, 404, "NOT_FOUND", "Oda bulunamadı");
+  }
+
+  const actionRaw =
+    typeof req.body?.action === "string"
+      ? req.body.action
+      : typeof req.body?.type === "string"
+        ? req.body.type
+        : "join";
+  const action = actionRaw.toLowerCase().trim();
+  const micOffActions = new Set([
+    "leave",
+    "mic_off",
+    "mic-off",
+    "mic_disabled",
+    "mic-disabled",
+  ]);
+  const micOn = !micOffActions.has(action);
+
+  const row = setVoiceMicState(roomId, user.id, micOn);
+  if (row) {
+    void emitResolvedRoomAnimation(roomId, {
+      event: "mic_changed",
+      userId: row.id,
+      name: row.name,
+      membership: row.membership,
+      chatRole: row.chatRole,
+      seatIndex: row.seatIndex,
+      micOn,
+    });
+  }
+  return ok(res, {
+    ok: true,
+    micOn,
+    action: micOn ? "join" : "leave",
+    voiceUsers: listVoiceUsers(roomId),
+  });
 });
 
 chatRoomsRouter.get("/rooms/:roomId/dj", optionalAuth, async (req, res) => {
