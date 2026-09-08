@@ -46,6 +46,8 @@ class StaffAccess {
   final bool canViewReports;
   /// Admin ödeme bildirimleri.
   final bool canManageNotifications;
+  /// Destek / yardım rolü.
+  final bool isSupportStaff;
   final String? siteRole;
   final String? username;
   /// Kurucu (yonetici) — admin atama/çıkarma dahil tam yetki.
@@ -88,6 +90,7 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
       canManageUsers: false,
       canViewReports: false,
       canManageNotifications: false,
+      isSupportStaff: false,
     );
   }
 
@@ -125,6 +128,7 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
       canManageUsers: true,
       canViewReports: true,
       canManageNotifications: true,
+      isSupportStaff: false,
       siteRole: siteRole?.trim().isNotEmpty == true ? siteRole : 'admin',
       username: username,
       isFounder: usernameIsFounder,
@@ -224,6 +228,7 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
     canManageUsers: canManageUsers,
     canViewReports: canViewReports,
     canManageNotifications: canManageNotifications,
+    isSupportStaff: isSupportStaff,
     siteRole: effectiveRole,
     username: username,
     isFounder: isFounder,

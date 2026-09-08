@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_theme_colors.dart';
-import '../../../admin/presentation/providers/staff_access_provider.dart';
+import '../../../../../core/theme/app_theme_colors.dart';
+import '../../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../widgets/premium/profile_glass.dart';
-import '../premium_2026/profile_theme.dart';
-import '../premium_2026/widgets/profile_action_tile.dart';
+import '../profile_theme.dart';
+import 'profile_action_tile.dart';
 
 /// Yetkili kullanıcı girişi — rol bazlı menü (admin panelinden ayrı).
 class StaffProfileCard extends ConsumerWidget {

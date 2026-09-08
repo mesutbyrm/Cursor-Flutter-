@@ -249,7 +249,7 @@ class _ProfileSectionCard extends StatelessWidget {
               color: Colors.white.withValues(alpha: open ? 0.18 : 0.08),
             ),
           ),
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, open ? 14 : 12),
+          padding: EdgeInsets.fromLTRB(14, 12, 14, open ? 14 : 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
