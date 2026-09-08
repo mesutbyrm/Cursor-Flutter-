@@ -1,10 +1,13 @@
-import 'package:canlifal_social/features/fortune/presentation/widgets/premium_2026/fortune_premium_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:canlifal_social/features/fortune/presentation/widgets/premium_2026/fortune_premium_card.dart';
+import '../../helpers/economy_test_scope.dart';
+
 void main() {
   testWidgets('FortunePremiumCard shows title and price from props', (tester) async {
-    await tester.pumpWidget(
+    await pumpEconomyWidget(
+      tester,
       MaterialApp(
         home: Scaffold(
           body: FortunePremiumCard(
@@ -24,7 +27,8 @@ void main() {
   });
 
   testWidgets('FortunePremiumCard hides price when null', (tester) async {
-    await tester.pumpWidget(
+    await pumpEconomyWidget(
+      tester,
       MaterialApp(
         home: Scaffold(
           body: FortunePremiumCard(

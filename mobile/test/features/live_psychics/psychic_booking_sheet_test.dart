@@ -3,6 +3,8 @@ import 'package:canlifal_social/features/live_psychics/presentation/widgets/psyc
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../helpers/economy_test_scope.dart';
+
 void main() {
   group('showPsychicBookingSheet', () {
     testWidgets('returns selected duration, jeton and fortune type', (tester) async {
@@ -15,7 +17,8 @@ void main() {
       );
       PsychicBookingResult? result;
 
-      await tester.pumpWidget(
+      await pumpEconomyWidget(
+        tester,
         MaterialApp(
           home: Builder(
             builder: (context) => Scaffold(
@@ -61,7 +64,8 @@ void main() {
         pricePerMinute: 20,
       );
 
-      await tester.pumpWidget(
+      await pumpEconomyWidget(
+        tester,
         MaterialApp(
           home: Builder(
             builder: (context) => Scaffold(

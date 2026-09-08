@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_premium_card.dart';
+import '../../helpers/economy_test_scope.dart';
 
 void main() {
   testWidgets('PsychicPremiumCard shows name rating and price from props', (tester) async {
-    await tester.pumpWidget(
+    await pumpEconomyWidget(
+      tester,
       MaterialApp(
         home: Scaffold(
           body: PsychicPremiumCard(
@@ -29,7 +31,8 @@ void main() {
   });
 
   testWidgets('PsychicPremiumCard hides price when zero', (tester) async {
-    await tester.pumpWidget(
+    await pumpEconomyWidget(
+      tester,
       MaterialApp(
         home: Scaffold(
           body: PsychicPremiumCard(

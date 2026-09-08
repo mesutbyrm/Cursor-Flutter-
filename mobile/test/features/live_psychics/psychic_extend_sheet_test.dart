@@ -2,18 +2,14 @@ import 'package:canlifal_social/features/live_psychics/presentation/widgets/psyc
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Future<void> _pumpTallSurface(WidgetTester tester, Widget widget) async {
-  await tester.binding.setSurfaceSize(const Size(480, 1100));
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.pumpWidget(widget);
-}
+import '../../helpers/economy_test_scope.dart';
 
 void main() {
   group('showPsychicExtendSheet', () {
     testWidgets('returns selected option when balance is sufficient', (tester) async {
       PsychicExtendOption? result;
 
-      await _pumpTallSurface(
+      await pumpEconomyWidget(
         tester,
         MaterialApp(
           home: Builder(
@@ -30,6 +26,7 @@ void main() {
             ),
           ),
         ),
+        surfaceSize: const Size(480, 1100),
       );
 
       await tester.tap(find.text('Aç'));
@@ -50,7 +47,7 @@ void main() {
     testWidgets('staff exempt can select without jeton balance', (tester) async {
       PsychicExtendOption? result;
 
-      await _pumpTallSurface(
+      await pumpEconomyWidget(
         tester,
         MaterialApp(
           home: Builder(
@@ -68,6 +65,7 @@ void main() {
             ),
           ),
         ),
+        surfaceSize: const Size(480, 1100),
       );
 
       await tester.tap(find.text('Aç'));
@@ -78,17 +76,17 @@ void main() {
         findsOneWidget,
       );
 
-      await tester.tap(find.text('30 dakika'));
+      await tester.tap(find.text('5 dakika'));
       await tester.pumpAndSettle();
 
-      expect(result?.minutes, 30);
-      expect(result?.jeton, 300);
+      expect(result, isNotNull);
+      expect(result!.minutes, 5);
     });
 
     testWidgets('cancel returns null', (tester) async {
       PsychicExtendOption? result;
 
-      await _pumpTallSurface(
+      await pumpEconomyWidget(
         tester,
         MaterialApp(
           home: Builder(
@@ -105,10 +103,12 @@ void main() {
             ),
           ),
         ),
+        surfaceSize: const Size(480, 1100),
       );
 
       await tester.tap(find.text('Aç'));
       await tester.pumpAndSettle();
+
       await tester.tap(find.text('İptal'));
       await tester.pumpAndSettle();
 

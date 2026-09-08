@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:canlifal_social/features/membership/domain/membership_model.dart';
 import 'package:canlifal_social/features/membership/domain/membership_package_entity.dart';
 import 'package:canlifal_social/features/membership/presentation/widgets/feature_table.dart';
+import '../../helpers/economy_test_scope.dart';
 
 void main() {
   group('MembershipFeatureTable', () {
@@ -24,7 +25,8 @@ void main() {
           ),
       ];
 
-      await tester.pumpWidget(
+      await pumpEconomyWidget(
+        tester,
         MaterialApp(
           home: Scaffold(
             body: SingleChildScrollView(
@@ -69,7 +71,8 @@ void main() {
           ),
       ];
 
-      await tester.pumpWidget(
+      await pumpEconomyWidget(
+        tester,
         MaterialApp(
           home: Scaffold(
             body: SingleChildScrollView(
@@ -113,7 +116,8 @@ void main() {
           ),
       ];
 
-      await tester.pumpWidget(
+      await pumpEconomyWidget(
+        tester,
         MaterialApp(
           home: Scaffold(
             body: SingleChildScrollView(

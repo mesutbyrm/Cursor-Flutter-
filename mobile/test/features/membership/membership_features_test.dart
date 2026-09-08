@@ -609,7 +609,7 @@ void main() {
         store: MembershipStoreKind.jeton,
         tiers: const [],
       );
-      expect(subtitle, contains('jeton yüklerken'));
+      expect(subtitle, contains('Jeton yüklerken'));
     });
 
     test('cfc mağaza aktif üyelik', () {
@@ -1480,7 +1480,7 @@ void main() {
       );
       expect(
         buildMembershipCheckoutPaymentNotes(tier: tier),
-        contains('1500 jeton'),
+        contains('1500 Jeton'),
       );
     });
   });

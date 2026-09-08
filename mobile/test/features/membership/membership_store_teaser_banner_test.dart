@@ -10,66 +10,62 @@ import 'package:canlifal_social/features/profile/presentation/providers/profile_
 import 'package:canlifal_social/features/profile/presentation/providers/profile_providers.dart';
 import 'package:canlifal_social/features/vip_gold/domain/vip_tier.dart';
 import 'package:canlifal_social/features/wallet/domain/wallet_balances.dart';
+import '../../helpers/economy_test_scope.dart';
 
 void main() {
   group('MembershipStoreTeaserBanner', () {
     testWidgets('ücretsiz kullanıcı teaser görür', (tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            walletBalancesProvider.overrideWith(
-              () => _FixedWalletNotifier(WalletBalances.empty),
-            ),
-            profileMembershipInfoProvider.overrideWith(
-              (ref) => const ProfileMembershipInfo(
-                raw: 'basic',
-                tier: VipTier.basic,
-              ),
-            ),
-            membershipControllerProvider.overrideWith(_StubMembershipController.new),
-          ],
-          child: const MaterialApp(
-            home: Scaffold(
-              body: MembershipStoreTeaserBanner(
-                store: MembershipStoreKind.jeton,
-              ),
+      await pumpEconomyWidget(
+        tester,
+        MaterialApp(
+          home: Scaffold(
+            body: MembershipStoreTeaserBanner(
+              store: MembershipStoreKind.jeton,
             ),
           ),
         ),
+        overrides: [
+          walletBalancesProvider.overrideWith(
+            () => _FixedWalletNotifier(WalletBalances.empty),
+          ),
+          profileMembershipInfoProvider.overrideWith(
+            (ref) => const ProfileMembershipInfo(
+              raw: 'basic',
+              tier: VipTier.basic,
+            ),
+          ),
+          membershipControllerProvider.overrideWith(_StubMembershipController.new),
+        ],
       );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
 
       expect(find.text('Üyelik Planları'), findsOneWidget);
-      expect(find.textContaining('jeton yüklerken'), findsOneWidget);
+      expect(find.textContaining('Jeton yüklerken'), findsOneWidget);
     });
 
     testWidgets('aktif ücretli kullanıcıda gizlenir', (tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            walletBalancesProvider.overrideWith(
-              () => _FixedWalletNotifier(WalletBalances.empty),
-            ),
-            profileMembershipInfoProvider.overrideWith(
-              (ref) => const ProfileMembershipInfo(
-                raw: 'gold',
-                tier: VipTier.gold,
-                daysRemaining: 10,
-              ),
-            ),
-            membershipControllerProvider.overrideWith(_StubMembershipController.new),
-          ],
-          child: const MaterialApp(
-            home: Scaffold(
-              body: MembershipStoreTeaserBanner(
-                store: MembershipStoreKind.cfc,
-              ),
+      await pumpEconomyWidget(
+        tester,
+        MaterialApp(
+          home: Scaffold(
+            body: MembershipStoreTeaserBanner(
+              store: MembershipStoreKind.cfc,
             ),
           ),
         ),
+        overrides: [
+          walletBalancesProvider.overrideWith(
+            () => _FixedWalletNotifier(WalletBalances.empty),
+          ),
+          profileMembershipInfoProvider.overrideWith(
+            (ref) => const ProfileMembershipInfo(
+              raw: 'gold',
+              tier: VipTier.gold,
+              daysRemaining: 10,
+            ),
+          ),
+          membershipControllerProvider.overrideWith(_StubMembershipController.new),
+        ],
       );
-      await tester.pump();
 
       expect(find.byType(MembershipStoreTeaserBanner), findsOneWidget);
       expect(find.text('Premium Üyelik'), findsNothing);
