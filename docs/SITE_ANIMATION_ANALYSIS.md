@@ -1,6 +1,6 @@
 # Site Animasyonları — Sistem Analizi ve Mimari Plan
 
-> **Güncel (2026-09-08):** Uygulama **tamamlandı** (`1.0.399+437`) — WYSIWYG önizleme, CDN pipeline, ses/cooldown, katalog ses preload, VIP overlay öncelik. CDN dosya yükleme: [`SITE_ANIMATION_CDN.md`](SITE_ANIMATION_CDN.md).
+> **Güncel (2026-09-08):** Uygulama **tamamlandı** (`1.0.400+438`) — WYSIWYG önizleme, CDN pipeline, giriş/çıkış ses, katalog ses+asset preload, VIP overlay öncelik. CDN dosya yükleme: [`SITE_ANIMATION_CDN.md`](SITE_ANIMATION_CDN.md).
 
 > Tarih: 8 Eylül 2026 · Dal: `cursor/site-animation-engine-5ac6` · PR #365
 

@@ -55,6 +55,10 @@ describe("siteAnimationResolver", () => {
     });
     const animation = payload?.animation as Record<string, unknown>;
     assert.equal(animation.id, "anim_exit_gold");
+    assert.equal(
+      animation.soundUrl,
+      "https://cdn.canlifal.com/animations/sounds/anim_exit_gold.mp3",
+    );
   });
 
   it("resolves seat_changed transition animation", async () => {

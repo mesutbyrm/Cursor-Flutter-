@@ -328,6 +328,7 @@ abstract final class AdminSiteAnimationSeedCatalog {
           assetUrl: 'assets/gifts/lottie/heart.json',
           durationMs: 2000,
           priority: 35,
+          soundUrl: SiteAnimationAssetPaths.sound('anim_exit_gold'),
         ),
         const AdminSiteAnimation(
           id: 'anim_exit_premium',
@@ -348,6 +349,7 @@ abstract final class AdminSiteAnimationSeedCatalog {
           assetUrl: 'assets/gifts/lottie/crown.json',
           durationMs: 3000,
           priority: 37,
+          soundUrl: SiteAnimationAssetPaths.sound('anim_exit_diamond'),
         ),
         const AdminSiteAnimation(
           id: 'anim_exit_vip',
@@ -358,6 +360,7 @@ abstract final class AdminSiteAnimationSeedCatalog {
           assetUrl: 'assets/gifts/lottie/rose.json',
           durationMs: 3000,
           priority: 38,
+          soundUrl: SiteAnimationAssetPaths.sound('anim_exit_vip'),
         ),
         const AdminSiteAnimation(
           id: 'anim_exit_svip',

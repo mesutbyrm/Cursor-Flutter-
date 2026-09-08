@@ -152,15 +152,7 @@ abstract final class SiteAnimationResolver {
     SiteAnimationCatalogEntry entry, {
     int? adminCustomPriority,
   }) {
-    final resolvedUrl = SiteAnimationCdnAssets.resolveAssetUrl(entry);
-    final backendAsset = resolvedUrl != null && resolvedUrl.isNotEmpty
-        ? SiteAnimationAsset(
-            url: resolvedUrl.startsWith('assets/') ? null : resolvedUrl,
-            bundlePath: resolvedUrl.startsWith('assets/') ? resolvedUrl : null,
-            kind: _mediaKind(entry.animationType, resolvedUrl),
-            previewMp4Key: entry.previewMp4Key,
-          )
-        : null;
+    final backendAsset = SiteAnimationCdnAssets.runtimeAsset(entry);
 
     final asset = SiteAnimationAssetRegistry.resolve(
       type: base.type,
@@ -183,20 +175,6 @@ abstract final class SiteAnimationResolver {
       soundUrl: entry.soundUrl ?? base.soundUrl,
       cooldownMs: entry.cooldownMs > 0 ? entry.cooldownMs : base.cooldownMs,
     );
-  }
-
-  static SiteAnimationMediaKind _mediaKind(String type, String url) {
-    return switch (type.toLowerCase()) {
-      'lottie' || 'json' => SiteAnimationMediaKind.lottie,
-      'video' || 'mp4' || 'webm' => SiteAnimationMediaKind.video,
-      'svga' => SiteAnimationMediaKind.svga,
-      'rive' => SiteAnimationMediaKind.rive,
-      _ => url.endsWith('.json')
-          ? SiteAnimationMediaKind.lottie
-          : url.endsWith('.mp4') || url.endsWith('.webm')
-              ? SiteAnimationMediaKind.video
-              : SiteAnimationMediaKind.native,
-    };
   }
 
   static SiteAnimationSlot? _slotForType(SiteAnimationType type) {

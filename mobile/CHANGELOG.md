@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.400+438 (2026-09-08) — Site Animation: çıkış SFX + CDN asset preload
+
+- Gold/Diamond/VIP çıkış seed: CDN `soundUrl` path'leri (API + mobil)
+- `SiteAnimationCatalogPreload`: giriş/çıkış/geçiş CDN asset ön belleği
+- `SiteAnimationCdnAssets.runtimeAsset` — resolver ile paylaşılan asset builder
+- API exit resolver testi: gold çıkış `soundUrl`
+
 ## 1.0.399+437 (2026-09-08) — Site Animation: seed SFX + katalog preload
 
 - Gold/Diamond/SVIP giriş seed: CDN `soundUrl` path'leri

@@ -32,4 +32,31 @@ void main() {
       'https://cdn.canlifal.com/animations/production/anim_entrance_diamond_burst.lottie',
     );
   });
+
+  test('runtimeAsset uses bundle path for packaged lottie', () {
+    const entry = SiteAnimationCatalogEntry(
+      id: 'anim_entrance_gold_crown',
+      name: 'Gold',
+      category: 'entrance',
+      tier: SiteAnimationTier.gold,
+      animationType: 'lottie',
+      assetUrl: 'assets/gifts/lottie/crown.json',
+    );
+    final asset = SiteAnimationCdnAssets.runtimeAsset(entry)!;
+    expect(asset.bundlePath, contains('crown.json'));
+    expect(asset.hasRemote, isFalse);
+  });
+
+  test('runtimeAsset uses CDN url when assetUrl empty', () {
+    const entry = SiteAnimationCatalogEntry(
+      id: 'anim_exit_gold',
+      name: 'Exit',
+      category: 'exit',
+      tier: SiteAnimationTier.gold,
+      animationType: 'lottie',
+    );
+    final asset = SiteAnimationCdnAssets.runtimeAsset(entry)!;
+    expect(asset.url, contains('production/anim_exit_gold.lottie'));
+    expect(asset.hasRemote, isTrue);
+  });
 }
