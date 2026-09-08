@@ -22,7 +22,9 @@ class ProfileAdminCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final access = ref.watch(staffAccessProvider);
-    if (!access.showAdminPanel) return const SizedBox.shrink();
+    if (!access.hasFullAdminDashboard && !access.showAdminPanel) {
+      return const SizedBox.shrink();
+    }
 
     final webAdmin = ref.watch(adminWebAccessProvider);
 
@@ -39,8 +41,14 @@ class ProfileAdminCard extends ConsumerWidget {
     final items = <({IconData icon, String label, VoidCallback onTap, int badge})>[
       (
         icon: Icons.dashboard_customize_rounded,
-        label: webAdmin ? 'Yönetim Paneli' : 'Admin Paneli',
+        label: 'Admin Kontrol Merkezi',
         badge: pending,
+        onTap: () => context.push('/admin/dashboard'),
+      ),
+      (
+        icon: Icons.admin_panel_settings_rounded,
+        label: webAdmin ? 'Yönetim Paneli' : 'Klasik Panel',
+        badge: 0,
         onTap: () => context.push(webAdmin ? '/admin/web' : '/admin/panel'),
       ),
       (
@@ -49,36 +57,47 @@ class ProfileAdminCard extends ConsumerWidget {
         badge: pending,
         onTap: () => context.push('/admin'),
       ),
-      (
-        icon: Icons.people_alt_rounded,
-        label: 'Kullanıcı Yönetimi',
-        badge: 0,
-        onTap: () => context.push('/admin/users'),
-      ),
-      (
-        icon: Icons.live_tv_rounded,
-        label: 'Yayın Yönetimi',
-        badge: 0,
-        onTap: () => context.go('/live'),
-      ),
+      if (access.canManageUsers)
+        (
+          icon: Icons.people_alt_rounded,
+          label: 'Kullanıcı Yönetimi',
+          badge: 0,
+          onTap: () => context.push('/admin/users'),
+        ),
+      if (access.canManageLiveStreams)
+        (
+          icon: Icons.live_tv_rounded,
+          label: 'Yayın Yönetimi',
+          badge: 0,
+          onTap: () => context.push('/admin/live-streams'),
+        ),
+      if (access.canManageVoiceRooms)
+        (
+          icon: Icons.meeting_room_rounded,
+          label: 'Sesli Odalar',
+          badge: 0,
+          onTap: () => context.push('/admin/voice-rooms'),
+        ),
       (
         icon: Icons.business_rounded,
         label: 'Ajans Yönetimi',
         badge: 0,
         onTap: () => context.push('/ajans/dashboard'),
       ),
-      (
-        icon: Icons.analytics_rounded,
-        label: 'Raporlar',
-        badge: 0,
-        onTap: () => context.push('/admin/reports'),
-      ),
-      (
-        icon: Icons.gavel_rounded,
-        label: 'Moderasyon',
-        badge: 0,
-        onTap: () => context.push('/admin/moderation'),
-      ),
+      if (access.canViewReports)
+        (
+          icon: Icons.analytics_rounded,
+          label: 'Raporlar',
+          badge: 0,
+          onTap: () => context.push('/admin/reports'),
+        ),
+      if (access.canModerate)
+        (
+          icon: Icons.gavel_rounded,
+          label: 'Moderasyon',
+          badge: 0,
+          onTap: () => context.push('/admin/moderation'),
+        ),
       if (access.canManageGifts)
         (
           icon: Icons.card_giftcard_rounded,
@@ -92,7 +111,7 @@ class ProfileAdminCard extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ProfileSectionTitle(
-          title: 'Admin Paneli',
+          title: 'Admin Kontrol Merkezi',
             trailing: pending > 0
                 ? Container(
                     padding:

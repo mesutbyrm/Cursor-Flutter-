@@ -39,6 +39,9 @@ import '../../features/admin/domain/admin_site_animation.dart';
 import '../../features/admin/presentation/pages/admin_voice_room_backgrounds_page.dart';
 import '../../features/admin/presentation/pages/admin_gift_collection_hub_page.dart';
 import '../../features/admin/presentation/pages/admin_hub_page.dart';
+import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
+import '../../features/admin/presentation/pages/admin_live_streams_page.dart';
+import '../../features/admin/presentation/pages/admin_voice_rooms_page.dart';
 import '../../features/admin/presentation/pages/admin_sub_pages.dart';
 import '../../features/admin_web/presentation/pages/admin_web_panel_page.dart';
 import '../../features/fortune/presentation/pages/fortune_tarot_hub_page.dart';
@@ -618,6 +621,18 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin',
         builder: (context, state) => const AdminHubPage(),
+      ),
+      GoRoute(
+        path: '/admin/dashboard',
+        builder: (context, state) => const AdminDashboardPage(),
+      ),
+      GoRoute(
+        path: '/admin/live-streams',
+        builder: (context, state) => const AdminLiveStreamsPage(),
+      ),
+      GoRoute(
+        path: '/admin/voice-rooms',
+        builder: (context, state) => const AdminVoiceRoomsPage(),
       ),
       GoRoute(
         path: '/admin/panel',

@@ -4,7 +4,7 @@ import '../../../../core/auth/staff_roles.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 
-/// Site + oturumdan admin/yönetici yetkisi (`/api/user/credits` role veya kullanıcı adı).
+/// Site + oturumdan staff yetkileri (`/api/user/credits` + `/api/me`).
 class StaffAccess {
   const StaffAccess({
     required this.canManagePayments,
@@ -12,6 +12,14 @@ class StaffAccess {
     required this.showAdminPanel,
     required this.canManageGifts,
     required this.canManageSiteAnimations,
+    required this.isStaffMember,
+    required this.canModerate,
+    required this.canManageVoiceRooms,
+    required this.canManageLiveStreams,
+    required this.canManageUsers,
+    required this.canViewReports,
+    required this.canManageNotifications,
+    required this.isSupportStaff,
     this.siteRole,
     this.username,
     this.isFounder = false,
@@ -24,10 +32,31 @@ class StaffAccess {
   final bool canManageGifts;
   /// Site animasyon kütüphanesi — admin / kurucu.
   final bool canManageSiteAnimations;
+  /// Herhangi bir staff rolü (moderatör, destek, admin…).
+  final bool isStaffMember;
+  /// İçerik moderasyonu (raporlar, PK moderasyon).
+  final bool canModerate;
+  /// Site sesli oda ayarları ve oda listesi.
+  final bool canManageVoiceRooms;
+  /// Aktif yayın listesi ve moderasyon.
+  final bool canManageLiveStreams;
+  /// Kullanıcı arama / düzenleme.
+  final bool canManageUsers;
+  /// Aktivite raporları.
+  final bool canViewReports;
+  /// Admin ödeme bildirimleri.
+  final bool canManageNotifications;
   final String? siteRole;
   final String? username;
   /// Kurucu (yonetici) — admin atama/çıkarma dahil tam yetki.
   final bool isFounder;
+
+  /// Tam admin paneli (finans + dashboard) — yalnızca finans yetkisi olanlar.
+  bool get hasFullAdminDashboard => canManagePayments && showAdminPanel;
+
+  /// Yetkili profil girişi — staff ama tam admin değil.
+  bool get showStaffProfileEntry =>
+      isStaffMember && !hasFullAdminDashboard && (canModerate || isSupportStaff);
 
   /// Profil / panel başlığı — kullanıcı adı öncelikli (`admin` → Site Admin, `yonetici` → Kurucu).
   String get roleLabel {
@@ -52,6 +81,13 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
       showAdminPanel: false,
       canManageGifts: false,
       canManageSiteAnimations: false,
+      isStaffMember: false,
+      canModerate: false,
+      canManageVoiceRooms: false,
+      canManageLiveStreams: false,
+      canManageUsers: false,
+      canViewReports: false,
+      canManageNotifications: false,
     );
   }
 
@@ -63,7 +99,6 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
   final username = user.username.trim();
   final usernameLower = username.toLowerCase();
 
-  // Kurucu / siteadmin nick — rol beklemeden tam yetki.
   final usernameIsFounder =
       StaffRoles.founderUsernames.contains(usernameLower);
   final usernameIsSiteAdmin =
@@ -83,16 +118,25 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
       showAdminPanel: true,
       canManageGifts: true,
       canManageSiteAnimations: true,
+      isStaffMember: true,
+      canModerate: true,
+      canManageVoiceRooms: true,
+      canManageLiveStreams: true,
+      canManageUsers: true,
+      canViewReports: true,
+      canManageNotifications: true,
       siteRole: siteRole?.trim().isNotEmpty == true ? siteRole : 'admin',
       username: username,
       isFounder: usernameIsFounder,
     );
   }
 
-  final canManagePayments = wallet?.canManagePayments == true ||
-      wallet?.isAdmin == true ||
-      usernameIsSiteAdmin ||
-      StaffRoles.isAdminOrManager(role: siteRole, username: username);
+  final canManagePayments = StaffRoles.canManageFinance(
+    role: siteRole,
+    username: username,
+    walletCanManagePayments: wallet?.canManagePayments,
+    walletIsAdmin: wallet?.isAdmin,
+  );
 
   final isSiteAdmin = usernameIsSiteAdmin ||
       StaffRoles.hasFullStaffAccess(
@@ -130,12 +174,56 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
       usernameLower == 'yonetici' ||
       usernameLower == 'yonetim';
 
+  final isStaffMember = StaffRoles.isAnyStaff(
+    role: effectiveRole,
+    username: username,
+    walletIsStaff: wallet?.isStaff,
+    walletIsAdmin: wallet?.isAdmin,
+  );
+
+  final canModerate = StaffRoles.canModerateContent(
+    role: effectiveRole,
+    username: username,
+    walletIsAdmin: wallet?.isAdmin,
+    walletIsStaff: wallet?.isStaff,
+  );
+
+  final canManageVoiceRooms = StaffRoles.canManageVoiceRooms(
+    role: effectiveRole,
+    username: username,
+    walletIsAdmin: wallet?.isAdmin,
+  );
+
+  final canManageLiveStreams = StaffRoles.canManageLiveStreams(
+    role: effectiveRole,
+    username: username,
+    walletIsAdmin: wallet?.isAdmin,
+  );
+
+  final canManageUsers = StaffRoles.canManageUsers(
+    role: effectiveRole,
+    username: username,
+    walletCanManagePayments: wallet?.canManagePayments,
+    walletIsAdmin: wallet?.isAdmin,
+  );
+
+  final canViewReports = canManagePayments || canModerate;
+  final canManageNotifications = canManagePayments;
+  final isSupportStaff = StaffRoles.isSupportRole(effectiveRole);
+
   return StaffAccess(
     canManagePayments: canManagePayments,
     isSiteAdmin: isSiteAdmin,
     showAdminPanel: showAdminPanel,
     canManageGifts: canManageGifts,
     canManageSiteAnimations: canManageSiteAnimations,
+    isStaffMember: isStaffMember,
+    canModerate: canModerate,
+    canManageVoiceRooms: canManageVoiceRooms,
+    canManageLiveStreams: canManageLiveStreams,
+    canManageUsers: canManageUsers,
+    canViewReports: canViewReports,
+    canManageNotifications: canManageNotifications,
     siteRole: effectiveRole,
     username: username,
     isFounder: isFounder,

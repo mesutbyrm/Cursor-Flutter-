@@ -108,4 +108,90 @@ abstract final class StaffRoles {
       _ => role,
     };
   }
+
+  static bool isModeratorRole(String? role) {
+    final r = role?.toLowerCase().trim() ?? '';
+    return r == 'moderator' || r == 'mod';
+  }
+
+  static bool isSupportRole(String? role) {
+    final r = role?.toLowerCase().trim() ?? '';
+    return r == 'destek' || r == 'yardim' || r == 'support';
+  }
+
+  /// Finans / jeton / CFC — sunucu `canManagePayments` veya admin/yönetici rolü.
+  static bool canManageFinance({
+    String? role,
+    String? username,
+    bool? walletCanManagePayments,
+    bool? walletIsAdmin,
+  }) {
+    if (walletCanManagePayments == true || walletIsAdmin == true) return true;
+    return isAdminOrManager(role: role, username: username);
+  }
+
+  /// Moderasyon — moderatör veya üstü.
+  static bool canModerateContent({
+    String? role,
+    String? username,
+    bool? walletIsAdmin,
+    bool? walletIsStaff,
+  }) {
+    if (walletIsAdmin == true) return true;
+    if (isSiteAdminUser(role: role, username: username)) return true;
+    if (isModeratorRole(role)) return true;
+    if (walletIsStaff == true && isModeratorRole(role)) return true;
+    return false;
+  }
+
+  /// Sesli oda site ayarları — admin/yönetici veya moderatör.
+  static bool canManageVoiceRooms({
+    String? role,
+    String? username,
+    bool? walletIsAdmin,
+  }) {
+    if (walletIsAdmin == true) return true;
+    if (isSiteAdminUser(role: role, username: username)) return true;
+    return isModeratorRole(role);
+  }
+
+  /// Canlı yayın moderasyonu — admin/yönetici veya moderatör.
+  static bool canManageLiveStreams({
+    String? role,
+    String? username,
+    bool? walletIsAdmin,
+  }) {
+    return canManageVoiceRooms(
+      role: role,
+      username: username,
+      walletIsAdmin: walletIsAdmin,
+    );
+  }
+
+  /// Kullanıcı yönetimi — finans yetkisi veya admin.
+  static bool canManageUsers({
+    String? role,
+    String? username,
+    bool? walletCanManagePayments,
+    bool? walletIsAdmin,
+  }) {
+    return canManageFinance(
+      role: role,
+      username: username,
+      walletCanManagePayments: walletCanManagePayments,
+      walletIsAdmin: walletIsAdmin,
+    );
+  }
+
+  /// Herhangi bir staff rolü (moderatör, destek, admin…).
+  static bool isAnyStaff({
+    String? role,
+    String? username,
+    bool? walletIsStaff,
+    bool? walletIsAdmin,
+  }) {
+    if (walletIsStaff == true || walletIsAdmin == true) return true;
+    if (isStaff(role)) return true;
+    return siteAdminUsernames.contains(username?.toLowerCase().trim() ?? '');
+  }
 }

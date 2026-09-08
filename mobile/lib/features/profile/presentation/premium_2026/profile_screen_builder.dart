@@ -56,8 +56,8 @@ ProfileScreenState buildProfileScreenState(WidgetRef ref, UserEntity user) {
 
   return state.copyWith(
     adCredits: access?.adCredits ?? wallet?.fortuneAdCredits ?? 0,
-    isStaff: staff.canManagePayments,
-    isAdmin: staff.canManagePayments,
+    isStaff: staff.isStaffMember,
+    isAdmin: staff.isSiteAdmin || staff.canManagePayments,
     isApprovedTeller: approved.isApprovedTeller,
   );
 }

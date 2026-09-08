@@ -18,7 +18,7 @@ class AdminUsersPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final access = ref.watch(staffAccessProvider);
-    if (!access.canManagePayments) {
+    if (!access.canManageUsers && !access.canManagePayments) {
       return _locked(context);
     }
 
@@ -116,7 +116,7 @@ class _AdminReportsPageState extends ConsumerState<AdminReportsPage> {
   @override
   Widget build(BuildContext context) {
     final access = ref.watch(staffAccessProvider);
-    if (!access.canManagePayments) {
+    if (!access.canViewReports && !access.canManagePayments) {
       return Scaffold(
         body: DiscoverBackground(
           child: Center(
@@ -257,13 +257,13 @@ class _AdminModerationPageState extends ConsumerState<AdminModerationPage> {
   @override
   Widget build(BuildContext context) {
     final access = ref.watch(staffAccessProvider);
-    if (!access.canManagePayments) {
+    if (!access.canModerate && !access.canManagePayments) {
       return Scaffold(
         body: DiscoverBackground(
           child: Center(
             child: DiscoverEmptyState(
               icon: Icons.lock_outline_rounded,
-              message: 'Bu alan yalnızca admin veya yönetici hesapları içindir.',
+              message: 'Bu alan yalnızca moderatör veya yönetici hesapları içindir.',
               actionLabel: 'Geri',
               action: () => Navigator.of(context).maybePop(),
             ),

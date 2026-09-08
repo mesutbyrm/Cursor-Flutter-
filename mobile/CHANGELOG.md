@@ -1,5 +1,23 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.412+450 (2026-09-08) — Profil + Admin/Yetkili sistem yenileme
+
+### Normal profil
+- Accordion kart düzeni: Bakiye & Üyelik, İstatistikler & Sosyal, Yayın & Sesli Oda, Ayarlar & Güvenlik
+- Gereksiz tekrarlar azaltıldı; mobilde katman çakışması önlenir
+- Hızlı erişim: güvenlik, bildirimler, profil düzenleme chip'leri
+
+### Admin kontrol merkezi
+- Yeni `/admin/dashboard` — site istatistikleri, jeton/CFC, bildirim, oda/yayın yönetimi
+- `/admin/live-streams` — aktif yayın listesi (`GET /api/video-streams`)
+- `/admin/voice-rooms` — aktif sesli odalar (`GET /api/chat/rooms`)
+
+### Yetki sistemi
+- `StaffAccess` granüler yetkiler: moderasyon, finans, oda, yayın, kullanıcı, rapor
+- Yetkili profil kartı — moderatör/destek için rol bazlı menü (admin panelinden ayrı)
+- `profile_screen_builder` `isStaff`/`isAdmin` düzeltmesi
+- Moderasyon sayfası moderatör rolüne açıldı (backend 403 ile korunur)
+
 ## 1.0.411+449 (2026-09-08) — Fal hub + Bana Özel özellik paketi
 
 ### Fal & Tarot

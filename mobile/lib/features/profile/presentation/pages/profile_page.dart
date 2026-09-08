@@ -162,7 +162,9 @@ class _ProfileScrollBody extends ConsumerWidget {
     final onLogout = () => ref.read(authControllerProvider.notifier).logout();
     final staff = ref.watch(staffAccessProvider);
     final showPublisher =
-        staff.showAdminPanel || staff.canManagePayments;
+        staff.showAdminPanel || staff.canManagePayments || staff.isStaffMember;
+    final showAdmin = staff.hasFullAdminDashboard;
+    final showStaff = staff.showStaffProfileEntry;
 
     return ProfileRealtimeSync(
       child: SiteAnimationContextHost(
@@ -184,7 +186,8 @@ class _ProfileScrollBody extends ConsumerWidget {
                   state: base,
                   userId: profileUser.id,
                   onRefresh: () => refreshProfileHub(ref, userId: profileUser.id),
-                  showAdmin: staff.showAdminPanel,
+                  showAdmin: showAdmin,
+                  showStaff: showStaff,
                   showPublisher: showPublisher,
                   onLogout: onLogout,
                 ),
