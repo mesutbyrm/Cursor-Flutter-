@@ -172,6 +172,15 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     }
   }
 
+  void _dispatchSiteAnimation(String event, Map<String, dynamic> payload) {
+    if (_roomKey.isEmpty) return;
+    ref.read(siteAnimationProvider(_roomKey).notifier).handleRoomEvent(
+          event,
+          payload,
+          ownerId: state.ownerId,
+        );
+  }
+
   void _applyRoomEventUserJoined(Map<String, dynamic> payload) {
     final userId = payload['userId']?.toString() ?? payload['id']?.toString();
     if (userId == null || userId.isEmpty) return;
@@ -191,6 +200,7 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     state = state.copyWith(presence: next, sseConnected: true);
     _patchHubOnlineCountFromPayload(payload, fallback: next.length);
     _notifyRealtimeIfBasic(VoiceRoomRealtimeKind.join, '$name odaya katıldı');
+    _dispatchSiteAnimation('user_joined', payload);
   }
 
   void _applyRoomEventUserLeft(Map<String, dynamic> payload) {
@@ -213,6 +223,7 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       user: ChatRoomUserRef(id: userId, name: name),
     );
     _clearSeatForUser(userId);
+    _dispatchSiteAnimation('user_left', payload);
   }
 
   void _applyRoomEventMicChanged(Map<String, dynamic> payload) {
@@ -237,6 +248,7 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     }).toList();
     state = state.copyWith(presence: next);
     _syncSeatMic(userId, micOn);
+    _dispatchSiteAnimation('mic_changed', payload);
   }
 
   void _applyRoomEventSeatChanged(Map<String, dynamic> payload) {
@@ -270,6 +282,7 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     );
     state = state.copyWith(presence: nextPresence, seatSlots: nextSeats);
     unawaited(_tryAutoPrivilegedSeat());
+    _dispatchSiteAnimation('seat_changed', payload);
   }
 
   void _applyRoomEventOwnerChanged(Map<String, dynamic> payload) {
@@ -282,6 +295,7 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       VoiceRoomRealtimeKind.roomUpdate,
       'Oda sahibi: $name',
     );
+    _dispatchSiteAnimation('owner_changed', payload);
   }
 
   void _applyRoomEventRoomClosed(Map<String, dynamic> payload) {

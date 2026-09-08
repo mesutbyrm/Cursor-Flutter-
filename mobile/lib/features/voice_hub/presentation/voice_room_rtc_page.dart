@@ -1561,6 +1561,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             children: [
                         Expanded(
                           child: FxVoiceRoomOverlayHost(
+                          roomId: sessionKey,
                           child: Stack(
                             fit: StackFit.expand,
                             children: [

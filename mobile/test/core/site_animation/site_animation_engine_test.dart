@@ -1,0 +1,168 @@
+import 'package:canlifal_social/core/site_animation/application/site_animation_manager.dart';
+import 'package:canlifal_social/core/site_animation/data/site_animation_parser.dart';
+import 'package:canlifal_social/core/site_animation/domain/site_animation_tier.dart';
+import 'package:canlifal_social/core/site_animation/domain/site_animation_type.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  group('SiteAnimationParser', () {
+    test('maps user_joined gold membership', () {
+      final cmd = SiteAnimationParser.fromRoomEvent(
+        roomId: 'room-1',
+        event: 'user_joined',
+        payload: {
+          'eventId': 'evt-gold-1',
+          'userId': 'u1',
+          'name': 'Altın Üye',
+          'membership': 'gold',
+        },
+      );
+      expect(cmd, isNotNull);
+      expect(cmd!.type, SiteAnimationType.memberJoined);
+      expect(cmd.tier, SiteAnimationTier.gold);
+      expect(cmd.eventId, 'evt-gold-1');
+    });
+
+    test('maps ROOM_MEMBER_LEFT alias', () {
+      final cmd = SiteAnimationParser.fromRoomEvent(
+        roomId: 'room-1',
+        event: 'ROOM_MEMBER_LEFT',
+        payload: {
+          'eventId': 'evt-left',
+          'userId': 'u2',
+          'name': 'Ayrılan',
+        },
+      );
+      expect(cmd?.type, SiteAnimationType.memberLeft);
+    });
+
+    test('maps seat_changed with previous seat', () {
+      final cmd = SiteAnimationParser.fromRoomEvent(
+        roomId: 'room-1',
+        event: 'seat_changed',
+        payload: {
+          'eventId': 'evt-seat',
+          'userId': 'u3',
+          'seatIndex': 4,
+          'previousSeatIndex': 2,
+        },
+      );
+      expect(cmd?.type, SiteAnimationType.seatChanged);
+      expect(cmd?.layout.fromSeatIndex, 2);
+      expect(cmd?.layout.seatIndex, 4);
+    });
+
+    test('respects admin animation position override', () {
+      final cmd = SiteAnimationParser.fromRoomEvent(
+        roomId: 'room-1',
+        event: 'user_joined',
+        payload: {
+          'eventId': 'evt-admin',
+          'userId': 'admin1',
+          'chatRole': 'admin',
+          'animation': {
+            'anchor': 'TOP_CENTER',
+            'scale': 1.2,
+            'durationMs': 3000,
+          },
+        },
+      );
+      expect(cmd?.tier, SiteAnimationTier.admin);
+      expect(cmd?.layout.scale, 1.2);
+      expect(cmd?.layout.durationMs, 3000);
+    });
+
+    test('mic_changed maps to mic on/off', () {
+      final on = SiteAnimationParser.fromRoomEvent(
+        roomId: 'r',
+        event: 'mic_changed',
+        payload: {'userId': 'u', 'micOn': true},
+      );
+      final off = SiteAnimationParser.fromRoomEvent(
+        roomId: 'r',
+        event: 'mic_changed',
+        payload: {'userId': 'u', 'micOn': false},
+      );
+      expect(on?.type, SiteAnimationType.micEnabled);
+      expect(off?.type, SiteAnimationType.micDisabled);
+    });
+  });
+
+  group('SiteAnimationManager', () {
+    test('dedupes duplicate eventId', () {
+      final managerWithListener = SiteAnimationManager(
+        onStateChanged: (_) {},
+      );
+
+      final cmd = SiteAnimationParser.fromRoomEvent(
+        roomId: 'room-1',
+        event: 'user_joined',
+        payload: {
+          'eventId': 'dup-1',
+          'userId': 'u1',
+          'membership': 'gold',
+        },
+      )!;
+
+      managerWithListener.play(cmd);
+      managerWithListener.play(cmd);
+      expect(managerWithListener.state.active?.eventId, 'dup-1');
+      expect(managerWithListener.state.queueLength, 0);
+
+      managerWithListener.dispose();
+    });
+
+    test('queues by priority — admin before normal', () {
+      final manager = SiteAnimationManager();
+      final normal = SiteAnimationParser.fromRoomEvent(
+        roomId: 'room-1',
+        event: 'user_joined',
+        payload: {'eventId': 'n1', 'userId': 'n', 'membership': 'basic'},
+      )!;
+      final admin = SiteAnimationParser.fromRoomEvent(
+        roomId: 'room-1',
+        event: 'user_joined',
+        payload: {
+          'eventId': 'a1',
+          'userId': 'a',
+          'chatRole': 'admin',
+        },
+      )!;
+
+      manager.play(normal);
+      manager.play(admin);
+      expect(manager.state.active?.eventId, 'n1');
+      expect(manager.state.queueLength, 1);
+      expect(manager.state.queueLength, 1);
+      manager.onActiveFinished('n1');
+      expect(manager.state.active?.tier, SiteAnimationTier.admin);
+
+      manager.dispose();
+    });
+
+    test('clearQueue and cancel work', () {
+      final manager = SiteAnimationManager();
+      final first = SiteAnimationParser.fromRoomEvent(
+        roomId: 'r',
+        event: 'user_joined',
+        payload: {'eventId': 'f', 'userId': '1'},
+      )!;
+      final second = SiteAnimationParser.fromRoomEvent(
+        roomId: 'r',
+        event: 'user_joined',
+        payload: {'eventId': 's', 'userId': '2', 'membership': 'gold'},
+      )!;
+
+      manager.play(first);
+      manager.play(second);
+      manager.cancel('s');
+      expect(manager.state.queueLength, 0);
+
+      manager.play(second);
+      manager.clearQueue();
+      expect(manager.state.queueLength, 0);
+
+      manager.dispose();
+    });
+  });
+}

@@ -98,6 +98,7 @@ import '../../../gifts/domain/session_summary_message.dart';
 import '../../../gifts/domain/gift_payload_util.dart';
 import '../../../gifts/presentation/sync/gift_sse_dispatch.dart';
 import '../../../gifts/presentation/sync/gift_sync_log.dart';
+import '../../../../core/site_animation/presentation/site_animation_provider.dart';
 import 'voice_gift_leaderboard_provider.dart';
 import 'voice_recent_gifts_provider.dart';
 import 'voice_seat_gift_flash_provider.dart';

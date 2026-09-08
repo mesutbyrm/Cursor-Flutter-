@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/performance/voice_room_entry_perf.dart';
+import '../../../../core/site_animation/presentation/widgets/site_animation_overlay_host.dart';
 import '../utils/kick_strike_ui.dart';
 import '../widgets/voice_room_error_boundary.dart';
 import '../../../../core/network/api_exception.dart';
@@ -833,7 +834,9 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       child: Scaffold(
         resizeToAvoidBottomInset: true,
         backgroundColor: VoiceRoomTokens.bgDeep,
-        body: Stack(
+        body: SiteAnimationOverlayHost(
+          roomId: sessionKey,
+          child: Stack(
           fit: StackFit.expand,
           children: [
             VoiceCosmicBackground(imageUrl: bgUrl),
@@ -1077,6 +1080,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                 },
               ),
           ],
+        ),
         ),
       ),
     ),
