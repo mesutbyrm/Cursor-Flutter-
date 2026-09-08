@@ -791,7 +791,7 @@ jobs:
           URL="https://github.com/${{ github.repository }}/releases/download/apk-latest/canlifal-mobile-release.apk"
           echo "Downloading apk-latest: $URL"
           HTTP="000"
-          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+          for attempt in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
             HTTP=$(curl -sS -L -o /tmp/canlifal-apk-verify.apk -w '%{http_code}' "$URL" || echo "000")
             echo "Attempt $attempt HTTP=$HTTP"
             if [[ "$HTTP" == "200" && -s /tmp/canlifal-apk-verify.apk ]]; then
@@ -800,7 +800,7 @@ jobs:
               fi
               echo "apk-latest metadata henüz güncellenmedi, tekrar denenecek..."
             fi
-            sleep 20
+            sleep 30
           done
           test "$HTTP" = "200"
           test -s /tmp/canlifal-apk-verify.apk
