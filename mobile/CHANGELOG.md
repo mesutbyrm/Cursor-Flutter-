@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.394+432 (2026-09-08) — Site Animation: VIP overlay öncelik + koltuk izi
+
+- Site animation giriş kataloğu aktifken tam ekran `VipEntranceOverlay` atlanır (kozmetik giriş hariç)
+- Sesli oda girişinde site animation katalog ön yükleme
+- Koltuk geçişi: enerji izi + tek geçiş animasyonu (repeat kaldırıldı)
+
 ## 1.0.393+431 (2026-09-08) — Site Animation: WYSIWYG sesli oda + profil stagger
 
 - `SiteAnimationVoiceRoomLayoutScope` — giriş/çıkış paneli sesli oda koltuk grid’i ile hizalı (WYSIWYG)

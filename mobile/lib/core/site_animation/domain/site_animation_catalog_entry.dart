@@ -83,3 +83,16 @@ class SiteAnimationCatalogSnapshot {
     );
   }
 }
+
+extension SiteAnimationCatalogSnapshotX on SiteAnimationCatalogSnapshot {
+  /// Aktif giriş kataloğu varsa tam ekran VIP overlay yerine site animation kullanılır.
+  bool get hasActiveEntranceCatalog {
+    if (entranceDefaults.isNotEmpty) return true;
+    for (final entry in animations.values) {
+      if (!entry.isActive) continue;
+      final cat = entry.category.toLowerCase().trim();
+      if (cat == 'entrance' || cat.contains('entrance')) return true;
+    }
+    return false;
+  }
+}

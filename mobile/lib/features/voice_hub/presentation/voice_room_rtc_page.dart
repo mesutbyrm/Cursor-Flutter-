@@ -33,6 +33,8 @@ import '../../vip_gold/domain/vip_tier.dart';
 import '../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../../cosmetics/presentation/providers/cosmetics_providers.dart';
 import '../../cosmetics/presentation/widgets/cosmetic_entrance_overlay.dart';
+import '../../../core/site_animation/presentation/site_animation_catalog_provider.dart';
+import '../../../core/site_animation/presentation/site_animation_entrance_policy.dart';
 import '../../vip_gold/domain/entrance_theme.dart';
 import '../../vip_gold/presentation/providers/entrance_effect_settings_provider.dart';
 import '../../vip_gold/presentation/providers/user_room_profile_provider.dart';
@@ -174,6 +176,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       }
       ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).ensureActiveSession();
       _startGiftRealtimePoll();
+      unawaited(ref.read(siteAnimationCatalogProvider.future));
       final user = ref.read(authControllerProvider).valueOrNull;
       if (user != null) _maybeShowEntrance(user);
       unawaited(_joinAudioBackground());
@@ -465,6 +468,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
   void _maybeShowEntrance(UserEntity user) {
     if (_vipEntrancePlayed || !mounted) return;
+    if (shouldSkipFullscreenVipEntranceRef(ref)) return;
     final cosmetic = ref.read(resolvedEntranceEffectProvider);
     final tier = ref.read(vipTierProvider);
     if (cosmetic == null && !tier.hasEntranceFx) return;

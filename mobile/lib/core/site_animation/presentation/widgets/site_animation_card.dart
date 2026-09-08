@@ -172,7 +172,7 @@ class _SiteAnimationSeatTransitionState extends State<SiteAnimationSeatTransitio
     _ctrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
-    )..repeat();
+    )..forward();
   }
 
   @override
@@ -187,38 +187,57 @@ class _SiteAnimationSeatTransitionState extends State<SiteAnimationSeatTransitio
     final to = widget.command.layout.seatIndex;
     if (from == null || to == null) return const SizedBox.shrink();
 
+    final color = _tierColor(widget.command.tier);
+
     return AnimatedBuilder(
       animation: _ctrl,
       builder: (context, child) {
-        final t = Curves.easeInOut.transform(_ctrl.value);
-        final fromCenter =
-            SiteAnimationSeatAnchor.seatCenter(context, from);
+        final t = Curves.easeInOutCubic.transform(_ctrl.value);
+        final fromCenter = SiteAnimationSeatAnchor.seatCenter(context, from);
         final toCenter = SiteAnimationSeatAnchor.seatCenter(context, to);
         final pos = Offset.lerp(fromCenter, toCenter, t)!;
-        final pulse = 1 + math.sin(_ctrl.value * math.pi * 2) * 0.08;
+        final pulse = 1 + math.sin(t * math.pi) * 0.12;
 
-        return Positioned(
-          left: pos.dx - 28,
-          top: pos.dy - 28,
-          width: 56 * pulse,
-          height: 56 * pulse,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [
-                  _tierColor(widget.command.tier).withValues(alpha: 0.55),
-                  Colors.transparent,
-                ],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: _tierColor(widget.command.tier).withValues(alpha: 0.45),
-                  blurRadius: 14,
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _SeatEnergyTrailPainter(
+                  from: fromCenter,
+                  to: toCenter,
+                  progress: t,
+                  color: color,
                 ),
-              ],
+              ),
             ),
-          ),
+            Positioned(
+              left: pos.dx - 28,
+              top: pos.dy - 28,
+              width: 56 * pulse,
+              height: 56 * pulse,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      color.withValues(alpha: 0.75),
+                      color.withValues(alpha: 0.15),
+                      Colors.transparent,
+                    ],
+                    stops: const [0.2, 0.55, 1],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.55),
+                      blurRadius: 18,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         );
       },
     );
@@ -232,4 +251,54 @@ class _SiteAnimationSeatTransitionState extends State<SiteAnimationSeatTransitio
         SiteAnimationTier.premium => const Color(0xFFB388FF),
         _ => const Color(0xFF80CBC4),
       };
+}
+
+class _SeatEnergyTrailPainter extends CustomPainter {
+  _SeatEnergyTrailPainter({
+    required this.from,
+    required this.to,
+    required this.progress,
+    required this.color,
+  });
+
+  final Offset from;
+  final Offset to;
+  final double progress;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const trailCount = 7;
+    for (var i = 0; i < trailCount; i++) {
+      final lag = i / trailCount;
+      final t = (progress - lag * 0.35).clamp(0.0, 1.0);
+      if (t <= 0) continue;
+      final eased = Curves.easeOut.transform(t);
+      final point = Offset.lerp(from, to, eased)!;
+      final radius = (10 - i * 0.9) * (0.6 + eased * 0.5);
+      final paint = Paint()
+        ..color = color.withValues(alpha: (0.45 - i * 0.05) * eased)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+      canvas.drawCircle(point, radius, paint);
+    }
+
+    final pathPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.2
+      ..shader = LinearGradient(
+        colors: [
+          color.withValues(alpha: 0.05),
+          color.withValues(alpha: 0.35 * progress),
+          color.withValues(alpha: 0.65 * progress),
+        ],
+        stops: const [0, 0.5, 1],
+      ).createShader(Rect.fromPoints(from, to));
+    canvas.drawLine(from, Offset.lerp(from, to, progress)!, pathPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _SeatEnergyTrailPainter oldDelegate) =>
+      oldDelegate.progress != progress ||
+      oldDelegate.from != from ||
+      oldDelegate.to != to;
 }

@@ -6,6 +6,8 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/performance/voice_room_entry_perf.dart';
 import '../../../../core/site_animation/presentation/widgets/site_animation_overlay_host.dart';
+import '../../../../core/site_animation/presentation/site_animation_catalog_provider.dart';
+import '../../../../core/site_animation/presentation/site_animation_entrance_policy.dart';
 import '../utils/kick_strike_ui.dart';
 import '../widgets/voice_room_error_boundary.dart';
 import '../../../../core/network/api_exception.dart';
@@ -138,6 +140,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
         unawaited(ref.read(voiceRoomsProvider.future));
       }
       ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).ensureActiveSession();
+      unawaited(ref.read(siteAnimationCatalogProvider.future));
       _startPremiumRealtime(ref.read(authControllerProvider).valueOrNull);
       unawaited(_joinAudioBackground());
     });
@@ -433,6 +436,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
 
   void _maybeShowVipEntrance(UserEntity user) {
     if (_vipEntrancePlayed || !mounted) return;
+    if (shouldSkipFullscreenVipEntranceRef(ref)) return;
     final cosmetic = ref.read(resolvedEntranceEffectProvider);
     final tier = ref.read(vipTierProvider);
     final allowed = ref.read(entranceEffectAllowedProvider);
