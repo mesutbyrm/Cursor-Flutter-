@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/admin_site_animation.dart';
 import '../providers/admin_site_animation_providers.dart';
 import '../providers/staff_access_provider.dart';
+import '../../data/admin_site_animation_seed_catalog.dart';
 import '../widgets/admin_site_animation_preview_backgrounds.dart';
 import '../widgets/admin_site_animation_preview_stage.dart';
 
@@ -85,6 +86,40 @@ class _AdminSiteAnimationsPreviewPageState
             },
           ),
           const SizedBox(height: 12),
+          if (_screen == AdminSiteAnimationPreviewScreen.voice) ...[
+            const Text(
+              'Tier giriş testi',
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final tier in AdminSiteAnimationMembership.values)
+                  if (tier != AdminSiteAnimationMembership.all)
+                    ActionChip(
+                      label: Text(tier.label, style: const TextStyle(fontSize: 11)),
+                      onPressed: () {
+                        final id = AdminSiteAnimationSeedCatalog
+                            .defaultEntranceIds()[tier];
+                        if (id == null) return;
+                        final match = animations.cast<AdminSiteAnimation?>().firstWhere(
+                          (a) => a?.id == id,
+                          orElse: () => null,
+                        );
+                        if (match != null) {
+                          setState(() {
+                            _selected = match;
+                            _replayTick++;
+                          });
+                        }
+                      },
+                    ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
           DropdownButtonFormField<String>(
             value: active?.id,
             decoration: const InputDecoration(labelText: 'Animasyon seç'),

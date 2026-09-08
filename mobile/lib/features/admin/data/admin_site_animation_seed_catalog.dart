@@ -32,6 +32,7 @@ abstract final class AdminSiteAnimationSeedCatalog {
         AdminSiteAnimationMembership.premium: 'anim_exit_premium',
         AdminSiteAnimationMembership.diamond: 'anim_exit_diamond',
         AdminSiteAnimationMembership.vip: 'anim_exit_vip',
+        AdminSiteAnimationMembership.svip: 'anim_exit_svip',
         AdminSiteAnimationMembership.admin: 'anim_exit_admin',
         AdminSiteAnimationMembership.host: 'anim_exit_admin',
       };
@@ -230,6 +231,8 @@ abstract final class AdminSiteAnimationSeedCatalog {
         _frame('anim_frame_dragon', 'Dragon Frame', AdminSiteAnimationMembership.svip, 92, rarity: AdminSiteAnimationRarity.legendary),
         _frame('anim_frame_star', 'Star Frame', AdminSiteAnimationMembership.premium, 41),
         _frame('anim_frame_emperor', 'Emperor Frame', AdminSiteAnimationMembership.svip, 100, rarity: AdminSiteAnimationRarity.legendary),
+        _frame('anim_frame_crystal', 'Crystal Frame', AdminSiteAnimationMembership.diamond, 64, rarity: AdminSiteAnimationRarity.epic),
+        _frame('anim_frame_admin', 'Admin Frame', AdminSiteAnimationMembership.admin, 105, rarity: AdminSiteAnimationRarity.legendary),
       ];
 
   static AdminSiteAnimation _frame(
@@ -350,6 +353,14 @@ abstract final class AdminSiteAnimationSeedCatalog {
           assetUrl: 'assets/gifts/lottie/rose.json',
           durationMs: 3000,
           priority: 38,
+        ),
+        const AdminSiteAnimation(
+          id: 'anim_exit_svip',
+          name: 'SVIP Çıkış — İmparator yakında',
+          category: AdminSiteAnimationCategory.exit,
+          membership: AdminSiteAnimationMembership.svip,
+          durationMs: 3000,
+          priority: 39,
         ),
         const AdminSiteAnimation(
           id: 'anim_exit_admin',

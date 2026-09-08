@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/site_animation/presentation/utils/site_animation_voice_room_layout.dart';
+import '../../../../core/site_animation/presentation/widgets/site_animation_profile_entrance_stagger.dart';
 import '../../../voice_hub/presentation/theme/voice_room_tokens.dart';
 
 /// Admin animasyon önizlemesi — CanlıFal ekran mock arka planları.
@@ -59,30 +61,225 @@ class _VoiceRoomMock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Container(decoration: const BoxDecoration(gradient: VoiceRoomTokens.roomGradient)),
-        Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+    const stageTop = SiteAnimationVoiceRoomLayout.headerHeight;
+    final width = MediaQuery.sizeOf(context).width;
+    final m = SiteAnimationVoiceRoomLayout.metrics(width);
+
+    return SiteAnimationVoiceRoomLayoutScope(
+      stageTop: stageTop,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          const DecoratedBox(
+            decoration: BoxDecoration(gradient: VoiceRoomTokens.roomGradient),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _MockSeat(label: 'HOST', highlight: true),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  _MockSeat(label: '2'),
-                  SizedBox(width: 12),
-                  _MockSeat(label: '3', occupied: true),
-                  SizedBox(width: 12),
-                  _MockSeat(label: '4'),
-                ],
+              const _VoicePreviewHeader(),
+              SizedBox(
+                height: m.totalH,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: SiteAnimationVoiceRoomLayout.hPad,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      _PreviewSeat(
+                        label: 'HOST',
+                        highlight: true,
+                        size: m.hostSize,
+                        occupied: true,
+                      ),
+                      const SizedBox(width: SiteAnimationVoiceRoomLayout.gap),
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _PreviewSeatRow(
+                              seats: m.topSeats,
+                              cell: m.cell,
+                              occupiedSeat: 3,
+                            ),
+                            const SizedBox(
+                              height: SiteAnimationVoiceRoomLayout.gap,
+                            ),
+                            _PreviewSeatRow(
+                              seats: m.bottomSeats,
+                              cell: m.cell,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+                child: Container(
+                  height: 34,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    gradient: LinearGradient(
+                      colors: [
+                        VoiceRoomTokens.gold.withValues(alpha: 0.35),
+                        Colors.black.withValues(alpha: 0.75),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const Spacer(),
+              const _BottomNavMock(activeIndex: 2),
             ],
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VoicePreviewHeader extends StatelessWidget {
+  const _VoicePreviewHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: SiteAnimationVoiceRoomLayout.headerHeight,
+      padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.black.withValues(alpha: 0.72),
+            Colors.black.withValues(alpha: 0.28),
+          ],
         ),
-        const _BottomNavMock(activeIndex: 2),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white70, size: 18),
+          const SizedBox(width: 8),
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: VoiceRoomTokens.neonPurple.withValues(alpha: 0.35),
+            child: const Text('🎤', style: TextStyle(fontSize: 16)),
+          ),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'CanlıFal Sohbet',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  'ID: preview-room',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.white54,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.black26,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Text(
+              '968.240',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PreviewSeatRow extends StatelessWidget {
+  const _PreviewSeatRow({
+    required this.seats,
+    required this.cell,
+    this.occupiedSeat,
+  });
+
+  final List<int> seats;
+  final double cell;
+  final int? occupiedSeat;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        for (var i = 0; i < seats.length; i++) ...[
+          if (i > 0) const SizedBox(width: SiteAnimationVoiceRoomLayout.gap),
+          _PreviewSeat(
+            label: '${seats[i]}',
+            size: cell,
+            occupied: seats[i] == occupiedSeat,
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _PreviewSeat extends StatelessWidget {
+  const _PreviewSeat({
+    required this.label,
+    required this.size,
+    this.highlight = false,
+    this.occupied = false,
+  });
+
+  final String label;
+  final double size;
+  final bool highlight;
+  final bool occupied;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = highlight ? VoiceRoomTokens.gold : VoiceRoomTokens.neonPurple;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: color.withValues(alpha: 0.7), width: 2),
+            color: Colors.white.withValues(alpha: occupied ? 0.12 : 0.05),
+          ),
+          child: occupied
+              ? Icon(Icons.person, color: color.withValues(alpha: 0.85), size: size * 0.45)
+              : Icon(Icons.add, color: Colors.white38, size: size * 0.38),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 9,
+            fontWeight: FontWeight.w700,
+            color: color.withValues(alpha: 0.9),
+          ),
+        ),
       ],
     );
   }
@@ -220,69 +417,71 @@ class _ProfileMock extends StatelessWidget {
       child: Column(
         children: [
           const SizedBox(height: 56),
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              Container(
-                width: 96,
-                height: 96,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: CanlifalPreviewPalette.gold, width: 3),
-                  boxShadow: [
-                    BoxShadow(
-                      color: CanlifalPreviewPalette.gold.withValues(alpha: 0.35),
-                      blurRadius: 16,
-                    ),
-                  ],
-                ),
-                child: CircleAvatar(
-                  radius: 44,
-                  backgroundColor: CanlifalPreviewPalette.bgCard,
-                  child: Icon(
-                    Icons.person,
-                    size: 44,
-                    color: CanlifalPreviewPalette.purpleLight,
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: 0,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+          SiteAnimationProfileEntranceStagger(
+            avatar: Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: 96,
+                  height: 96,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFFFD45A), Color(0xFFFFA726)],
-                    ),
-                    borderRadius: BorderRadius.circular(10),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: CanlifalPreviewPalette.gold, width: 3),
+                    boxShadow: [
+                      BoxShadow(
+                        color: CanlifalPreviewPalette.gold.withValues(alpha: 0.35),
+                        blurRadius: 16,
+                      ),
+                    ],
                   ),
-                  child: const Text(
-                    'GOLD',
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF3D2A00),
+                  child: CircleAvatar(
+                    radius: 44,
+                    backgroundColor: CanlifalPreviewPalette.bgCard,
+                    child: Icon(
+                      Icons.person,
+                      size: 44,
+                      color: CanlifalPreviewPalette.purpleLight,
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'Mesut Bayram',
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 18,
-              color: Colors.white,
+                Positioned(
+                  bottom: 0,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFFD45A), Color(0xFFFFA726)],
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Text(
+                      'GOLD',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF3D2A00),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Gold Member · Seviye 42',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.6),
-              fontSize: 12,
+            nameRow: const Text(
+              'Mesut Bayram',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 18,
+                color: Colors.white,
+              ),
+            ),
+            membershipRow: Text(
+              'Gold Member · Seviye 42',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.6),
+                fontSize: 12,
+              ),
             ),
           ),
           const SizedBox(height: 20),

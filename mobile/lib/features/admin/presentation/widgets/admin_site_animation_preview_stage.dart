@@ -73,52 +73,36 @@ class _AdminSiteAnimationPreviewStageState
             fit: StackFit.expand,
             children: [
               AdminSiteAnimationPreviewBackground(screen: widget.screen),
-              Positioned(
-                top: MediaQuery.paddingOf(context).top + 8,
-                left: 12,
-                right: 12,
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.black38,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        widget.screen.label,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white70,
-                        ),
-                      ),
-                    ),
-                    const Spacer(),
-                    if (widget.screen == AdminSiteAnimationPreviewScreen.voice)
+              if (widget.screen == AdminSiteAnimationPreviewScreen.voice)
+                const SizedBox.shrink()
+              else
+                Positioned(
+                  top: MediaQuery.paddingOf(context).top + 8,
+                  left: 12,
+                  right: 12,
+                  child: Row(
+                    children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.black26,
-                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.black38,
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Text(
-                          '968.240',
-                          style: TextStyle(
-                            fontSize: 11,
+                        child: Text(
+                          widget.screen.label,
+                          style: const TextStyle(
+                            fontSize: 10,
                             fontWeight: FontWeight.w700,
+                            color: Colors.white70,
                           ),
                         ),
                       ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
             ],
           ),
         ),
