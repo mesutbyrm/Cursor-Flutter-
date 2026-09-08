@@ -17,7 +17,9 @@ class EconomyWalletTransactionsSection extends ConsumerWidget {
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
       data: (snapshot) {
-        if (snapshot.transactions.isEmpty) return const SizedBox.shrink();
+        if (snapshot == null || snapshot.transactions.isEmpty) {
+          return const SizedBox.shrink();
+        }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

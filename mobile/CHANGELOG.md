@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.375+413 (2026-09-08) — economy Notifier Read yardımcıları
+
+- `economyInsufficient*` / `economyMinimum*` Read varyantları (chat_room_providers)
+- `EconomyWalletTransactionsSection` null snapshot koruması
+
 ## 1.0.374+412 (2026-09-08) — economy CI düzeltmesi (2)
 
 - **Import:** profile_providers, economy_wallet_adapter data yolu, derin widget package import
