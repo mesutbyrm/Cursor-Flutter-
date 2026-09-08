@@ -26,7 +26,7 @@ void main() {
 
     expect(find.text('Ayşe Falcı'), findsOneWidget);
     expect(find.text('Kahve • Tarot'), findsOneWidget);
-    expect(find.text('100 jeton/dk'), findsOneWidget);
+    expect(find.text('100 Jeton/dk'), findsOneWidget);
     expect(find.text('MÜSAİT'), findsOneWidget);
   });
 

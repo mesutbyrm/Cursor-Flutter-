@@ -86,7 +86,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text('Staff hesabı — seans için jeton düşülmez'),
+        find.text('Staff hesabı — seans için Jeton düşülmez'),
         findsOneWidget,
       );
       expect(find.text('Ücretsiz'), findsOneWidget);

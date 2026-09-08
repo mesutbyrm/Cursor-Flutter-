@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.376+414 (2026-09-08) — economy widget testleri ProviderScope
+
+- `test/helpers/economy_test_scope.dart` — varsayılan branding override
+- Psychic, fal, üyelik widget testleri economy scope ile sarıldı
+
 ## 1.0.375+413 (2026-09-08) — economy Notifier Read yardımcıları
 
 - `economyInsufficient*` / `economyMinimum*` Read varyantları (chat_room_providers)

@@ -34,7 +34,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
 
       expect(find.text('Süre Ekle'), findsOneWidget);
-      expect(find.textContaining('Jetonunuz: 200'), findsOneWidget);
+      expect(find.textContaining('Jeton bakiyeniz: 200'), findsOneWidget);
 
       await tester.tap(find.text('10 dakika'));
       await tester.pumpAndSettle();
