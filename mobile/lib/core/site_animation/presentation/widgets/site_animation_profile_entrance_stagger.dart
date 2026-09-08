@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+enum SiteAnimationProfileStaggerLayout { vertical, horizontal }
+
 /// Profil açılışında avatar → isim → rozet sıralı fade/slide.
 class SiteAnimationProfileEntranceStagger extends StatefulWidget {
   const SiteAnimationProfileEntranceStagger({
@@ -8,12 +10,18 @@ class SiteAnimationProfileEntranceStagger extends StatefulWidget {
     required this.nameRow,
     this.membershipRow,
     this.badgeRow,
+    this.layout = SiteAnimationProfileStaggerLayout.vertical,
+    this.avatarSpacing = 8,
+    this.badgeSpacing = 6,
   });
 
   final Widget avatar;
   final Widget nameRow;
   final Widget? membershipRow;
   final Widget? badgeRow;
+  final SiteAnimationProfileStaggerLayout layout;
+  final double avatarSpacing;
+  final double badgeSpacing;
 
   @override
   State<SiteAnimationProfileEntranceStagger> createState() =>
@@ -59,18 +67,45 @@ class _SiteAnimationProfileEntranceStaggerState
 
   @override
   Widget build(BuildContext context) {
+    if (widget.layout == SiteAnimationProfileStaggerLayout.horizontal) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          _stagger(widget.avatar, 0, 0.35),
+          SizedBox(width: widget.avatarSpacing),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _stagger(widget.nameRow, 0.2, 0.55),
+                if (widget.badgeRow != null) ...[
+                  SizedBox(height: widget.badgeSpacing),
+                  _stagger(widget.badgeRow!, 0.35, 0.7),
+                ],
+                if (widget.membershipRow != null) ...[
+                  SizedBox(height: widget.badgeSpacing),
+                  _stagger(widget.membershipRow!, 0.5, 0.85),
+                ],
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _stagger(widget.avatar, 0, 0.35),
-        const SizedBox(height: 8),
+        SizedBox(height: widget.avatarSpacing),
         _stagger(widget.nameRow, 0.2, 0.55),
         if (widget.badgeRow != null) ...[
-          const SizedBox(height: 6),
+          SizedBox(height: widget.badgeSpacing),
           _stagger(widget.badgeRow!, 0.35, 0.7),
         ],
         if (widget.membershipRow != null) ...[
-          const SizedBox(height: 6),
+          SizedBox(height: widget.badgeSpacing),
           _stagger(widget.membershipRow!, 0.5, 0.85),
         ],
       ],

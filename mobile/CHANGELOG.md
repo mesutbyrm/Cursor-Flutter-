@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.393+431 (2026-09-08) — Site Animation: WYSIWYG sesli oda + profil stagger
+
+- `SiteAnimationVoiceRoomLayoutScope` — giriş/çıkış paneli sesli oda koltuk grid’i ile hizalı (WYSIWYG)
+- `SiteAnimationExitCard` — tier-native çıkış kartı; media router exit yolu
+- Admin önizleme: gerçek sesli oda header + koltuk düzeni; tier hızlı test chip’leri
+- Profil hub: site animasyon çerçevesi/avatar FX aktifse `SiteAnimationProfileEntranceStagger`
+- Seed: SVIP çıkış, Crystal/Admin profil çerçevesi; CDN asset path yardımcıları
+
 ## 1.0.392+430 (2026-09-08) — Site Animation: tasarım referansı giriş kartları
 
 - `SiteAnimationEntranceCard` — 15 giriş + host taç; §34 paleti (mor/altın/cyan) birebir kart düzeni

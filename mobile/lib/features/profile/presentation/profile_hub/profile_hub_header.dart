@@ -22,6 +22,7 @@ import '../../../cosmetics/presentation/widgets/cosmetic_particle_overlay.dart';
 import '../../../../core/site_animation/presentation/widgets/site_animation_avatar_effect.dart';
 import '../../../../core/site_animation/presentation/site_animation_profile_providers.dart';
 import '../../../../core/site_animation/presentation/widgets/site_animation_framed_avatar.dart';
+import '../../../../core/site_animation/presentation/widgets/site_animation_profile_entrance_stagger.dart';
 
 /// Referans profil başlığı
 class ProfileHubHeader extends ConsumerWidget {
@@ -49,6 +50,76 @@ class ProfileHubHeader extends ConsumerWidget {
     );
 
     final topInset = MediaQuery.paddingOf(context).top;
+    final siteFrame = ref.watch(resolvedSiteAnimationProfileFrameProvider);
+    final siteAvatarFx = ref.watch(resolvedSiteAnimationAvatarEffectProvider);
+    final useProfileStagger = siteFrame != null || siteAvatarFx != null;
+
+    final avatarBlock = _AvatarBlock(
+      user: user,
+      level: level.level,
+      isVip: state.isVip,
+      isOnline: ext.isOnline,
+      isVerified: user.isVerified,
+      onTap: () => showProfileAvatarSheet(
+        context,
+        ref,
+        avatarUrl: user.avatarUrl,
+        onUpdated: onRefresh ?? () {},
+      ),
+    );
+
+    final nameRow = Row(
+      children: [
+        Expanded(
+          child: CosmeticNameLabel(
+            text: user.display,
+            item: ref.watch(resolvedNameEffectProvider),
+            maxLines: 1,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              shadows: [
+                Shadow(
+                  color: Colors.black54,
+                  blurRadius: 8,
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (vipLabel != null) ...[
+          const SizedBox(width: 6),
+          _VipPill(label: vipLabel),
+        ],
+        _MembershipBadgeChip(
+          badge: ref.watch(resolvedMembershipBadgeProvider),
+        ),
+      ],
+    );
+
+    final membershipRow = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '@${user.username}',
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.85),
+            fontWeight: FontWeight.w700,
+            fontSize: 13,
+            shadows: const [
+              Shadow(color: Colors.black54, blurRadius: 6),
+            ],
+          ),
+        ),
+        _ProfileMetaChips(
+          zodiac: ext.zodiacSign,
+          team: ext.favoriteTeam ?? state.wallet?.favoriteTeam,
+        ),
+      ],
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -65,77 +136,34 @@ class ProfileHubHeader extends ConsumerWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    _AvatarBlock(
-                      user: user,
-                      level: level.level,
-                      isVip: state.isVip,
-                      isOnline: ext.isOnline,
-                      isVerified: user.isVerified,
-                      onTap: () => showProfileAvatarSheet(
-                        context,
-                        ref,
-                        avatarUrl: user.avatarUrl,
-                        onUpdated: onRefresh ?? () {},
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: CosmeticNameLabel(
-                                    text: user.display,
-                                    item: ref.watch(resolvedNameEffectProvider),
-                                    maxLines: 1,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w900,
-                                      shadows: [
-                                        Shadow(
-                                          color: Colors.black54,
-                                          blurRadius: 8,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                if (vipLabel != null) ...[
-                                  const SizedBox(width: 6),
-                                  _VipPill(label: vipLabel),
-                                ],
-                                _MembershipBadgeChip(
-                                  badge: ref.watch(resolvedMembershipBadgeProvider),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '@${user.username}',
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.85),
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13,
-                                shadows: const [
-                                  Shadow(color: Colors.black54, blurRadius: 6),
-                                ],
-                              ),
-                            ),
-                            _ProfileMetaChips(
-                              zodiac: ext.zodiacSign,
-                              team: ext.favoriteTeam ??
-                                  state.wallet?.favoriteTeam,
-                            ),
-                          ],
+                    if (useProfileStagger)
+                      Expanded(
+                        child: SiteAnimationProfileEntranceStagger(
+                          layout: SiteAnimationProfileStaggerLayout.horizontal,
+                          avatarSpacing: 14,
+                          avatar: avatarBlock,
+                          nameRow: nameRow,
+                          membershipRow: membershipRow,
+                        ),
+                      )
+                    else ...[
+                      avatarBlock,
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              nameRow,
+                              const SizedBox(height: 2),
+                              membershipRow,
+                            ],
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                     Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
