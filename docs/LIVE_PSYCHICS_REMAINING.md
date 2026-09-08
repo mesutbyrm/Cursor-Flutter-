@@ -50,6 +50,7 @@ Referans: `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9.6–9.7, `docs/prompts/FLUT
 | **Faz 2 TRTC freeze (1.0.371)** | `POST /api/trtc/token` + `TrtcRoomManager`; live join-room/heartbeat yok |
 | **trtcRoomId drift** | SSE/`GET /room` alias rejoin engeli; `psychic_trtc_freeze_test` (15 test) |
 | **Tek engine / gate** | `TrtcOperationGate`, connection state machine, session dispose |
+| **Yerel API mirror (2026-09-08)** | `api/` — `/api/room/*`, toggle-online GET, active-sessions, TRTC token; `scripts/verify-fortune-room-endpoints.sh` |
 
 ---
 

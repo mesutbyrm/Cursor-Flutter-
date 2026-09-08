@@ -2216,7 +2216,8 @@ Auth gerektiren endpoint'ler `Authorization: Bearer <accessToken>` header'ı bek
 | `createSession` | POST | `/api/fortune-tellers/{tellerId}/session` | ✅ | `{fortuneType, maxMinutes}` |
 | `applyAsTeller` | POST | `/api/fortune-tellers/apply` | ✅ | `{displayName, bio, specialties}` |
 | `getMyProfile` | GET | `/api/fortune-tellers/my-profile` | ✅ | - |
-| `toggleOnline` | POST | `/api/fortune-tellers/toggle-online` | ✅ | - |
+| `toggleOnline` | POST | `/api/fortune-tellers/toggle-online` | ✅ | `{isOnline?: bool}` |
+| `getOnlineStatus` | GET | `/api/fortune-tellers/toggle-online` | ✅ | Mevcut çevrimiçi durum |
 | `getFavoriteTellers` | GET | `/api/favorite-tellers` | ✅ | - |
 | `toggleFavoriteTeller` | POST | `/api/favorite-tellers` | ✅ | `{tellerId}` |
 | `getTellerAwards` | GET | `/api/fortune-tellers/awards` | ✅ | - |
@@ -2234,6 +2235,7 @@ Auth gerektiren endpoint'ler `Authorization: Bearer <accessToken>` header'ı bek
 | `getMessages` | GET | `/api/room/{sessionId}/messages` | ✅ | `?after=timestamp` |
 | `sendMessage` | POST | `/api/room/{sessionId}/messages` | ✅ | `{content}` |
 | `sendTip` | POST | `/api/room/{sessionId}/tip` | ✅ | `{amount}` |
+| `submitReview` | POST | `/api/room/{sessionId}/review` | ✅ | `{rating, comment?}` |
 | `getSignal` | GET | `/api/room/signal` | ✅ | `?sessionId=xxx` |
 | `sendSignal` | POST | `/api/room/signal` | ✅ | `{sessionId, type, data, receiverId}` |
 | `deleteSignals` | DELETE | `/api/room/signal` | ✅ | `?sessionId=xxx` |

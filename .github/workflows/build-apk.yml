@@ -774,39 +774,10 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           set -eux
-          EXPECT_NAME="${{ steps.meta.outputs.version_name }}"
-          EXPECT_BUILD="${{ steps.meta.outputs.version_code }}"
-          AAPT=$(find "${ANDROID_HOME:-/usr/local/lib/android/sdk}/build-tools" -name aapt -type f 2>/dev/null | sort -V | tail -1)
-          test -n "$AAPT"
-          verify_apk() {
-            local apk="$1"
-            test -s "$apk"
-            local BADGING
-            BADGING=$("$AAPT" dump badging "$apk")
-            echo "$BADGING" | grep -F "versionName='${EXPECT_NAME}'"
-            echo "$BADGING" | grep -F "versionCode='${EXPECT_BUILD}'"
-          }
-          echo "Local APK metadata doğrulama..."
-          verify_apk "canlifal-mobile-release.apk"
-          URL="https://github.com/${{ github.repository }}/releases/download/apk-latest/canlifal-mobile-release.apk"
-          echo "Downloading apk-latest: $URL"
-          HTTP="000"
-          for attempt in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
-            HTTP=$(curl -sS -L -o /tmp/canlifal-apk-verify.apk -w '%{http_code}' "$URL" || echo "000")
-            echo "Attempt $attempt HTTP=$HTTP"
-            if [[ "$HTTP" == "200" && -s /tmp/canlifal-apk-verify.apk ]]; then
-              if verify_apk /tmp/canlifal-apk-verify.apk; then
-                break
-              fi
-              echo "apk-latest metadata henüz güncellenmedi, tekrar denenecek..."
-            fi
-            sleep 30
-          done
-          test "$HTTP" = "200"
-          test -s /tmp/canlifal-apk-verify.apk
-          verify_apk /tmp/canlifal-apk-verify.apk
-          echo "http_code=$HTTP" >> "$GITHUB_OUTPUT"
-          echo "metadata=PASS" >> "$GITHUB_OUTPUT"
+          bash scripts/verify-apk-latest-release.sh \
+            "${{ steps.meta.outputs.version_name }}" \
+            "${{ steps.meta.outputs.version_code }}" \
+            "canlifal-mobile-release.apk"
 
       - name: CANLIFAL RELEASE GATE özeti
         if: always()
