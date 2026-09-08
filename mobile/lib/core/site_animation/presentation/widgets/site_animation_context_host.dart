@@ -10,7 +10,8 @@ enum SiteAnimationContext {
   liveStream('ctx_live'),
   profile('ctx_profile'),
   gift('ctx_gift'),
-  game('ctx_game');
+  game('ctx_game'),
+  falTarot('ctx_fal_tarot');
 
   const SiteAnimationContext(this.overlayId);
 

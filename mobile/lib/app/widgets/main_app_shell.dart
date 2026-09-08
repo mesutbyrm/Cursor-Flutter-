@@ -19,6 +19,7 @@ import '../../features/messages/presentation/widgets/dm_realtime_listener.dart';
 import '../../features/messages/presentation/widgets/dm_voice_call_host.dart';
 import '../../features/video_call/presentation/incoming_video_call_screen.dart';
 import '../../features/voice_hub/presentation/widgets/voice_room/voice_room_global_music_bar.dart';
+import '../../core/site_animation/presentation/widgets/site_animation_context_host.dart';
 import '../../features/gifts/presentation/global/global_gift_event_bridge.dart';
 import '../../features/gifts/presentation/global/global_gift_overlay.dart';
 import '../../features/voice_hub/presentation/widgets/staff_entrance_marquee_host.dart';
@@ -151,7 +152,9 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
 
     return OfflineStatusBanner(
       child: GlobalGiftEventBridge(
-        child: GlobalGiftOverlay(
+        child: SiteAnimationContextHost(
+          context: SiteAnimationContext.gift,
+          child: GlobalGiftOverlay(
           child: GlobalSiteMarqueeListener(
             child: StaffEntranceMarqueeHost(
               routePath: location,
@@ -170,6 +173,7 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
           ),
         ),
       ),
+    ),
     );
   }
 }

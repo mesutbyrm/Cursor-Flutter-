@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.388+426 (2026-09-08) — Site Animation: canlı yayın + hediye + Fal entegrasyonu
+
+- Canlı yayın sayfası `SiteAnimationContextHost(liveStream)` — izleyici giriş/çıkış kartları
+- Fal & Tarot hub `SiteAnimationContextHost(falTarot)` overlay host
+- Büyük hediye (1000+ jeton) → `ctx_gift` site animasyon köprüsü (global + canlı yayın)
+- Profil avatar site animasyon efekti (`SiteAnimationAvatarEffectOverlay`)
+- API mirror: video stream join/leave SSE `userJoined` / `userLeft` sinyalleri
+
 ## 1.0.385+423 (2026-09-08) — Site Animation Repository katmanı
 
 - `SiteAnimationRepository` — kılavuz §9.14 facade (`getActiveCatalog`, admin sync)

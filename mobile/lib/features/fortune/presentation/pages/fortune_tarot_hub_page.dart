@@ -7,6 +7,7 @@ import '../../../../core/performance/lazy_screen_section.dart';
 import '../../../../core/ui/premium_2026/premium_2026.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover_refresh.dart';
+import '../../../../core/site_animation/presentation/widgets/site_animation_context_host.dart';
 import '../providers/fortune_api_providers.dart';
 import '../widgets/ultra_premium/ultra_fortune_app_bar.dart';
 import '../widgets/ultra_premium/ultra_fortune_cosmic_background.dart';
@@ -60,7 +61,9 @@ class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
         ? UltraFortuneTokens.deepNight
         : context.colors.scaffoldBackground;
 
-    return Scaffold(
+    return SiteAnimationContextHost(
+      context: SiteAnimationContext.falTarot,
+      child: Scaffold(
       backgroundColor: bg,
       body: UltraFortuneCosmicBackground(
         scrollParallax: _scrollParallax,
@@ -109,6 +112,7 @@ class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
           ),
         ),
       ),
+    ),
     );
   }
 }

@@ -13,6 +13,7 @@ import '../../../voice_hub/presentation/providers/voice_room_session_registry.da
 import '../../../../core/room/room_event_scope.dart';
 import '../../domain/homepage_gift_ticker.dart';
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
+import '../../../../core/site_animation/presentation/site_animation_gift_bridge.dart';
 import '../providers/gift_display_settings_provider.dart';
 import 'global_gift_notification.dart';
 import 'global_gift_overlay_notifier.dart';
@@ -77,6 +78,7 @@ class _GlobalGiftEventBridgeState extends ConsumerState<GlobalGiftEventBridge> {
       if (!mounted) return;
       for (final item in fresh.reversed) {
         ref.read(globalGiftOverlayProvider.notifier).enqueue(item);
+        dispatchSiteAnimationGiftFromNotification(ref, item);
       }
     } catch (_) {}
   }
@@ -116,23 +118,23 @@ void handleNotificationGiftForGlobalOverlay(
   if (!isGift) return;
   final parsed = HomepageGiftTicker.tryParse(blob.trim());
   if (parsed != null && parsed.senderName != 'Biri') {
-    ref
-        .read(globalGiftOverlayProvider.notifier)
-        .enqueue(GlobalGiftNotification.fromTicker(parsed));
+    final notif = GlobalGiftNotification.fromTicker(parsed);
+    ref.read(globalGiftOverlayProvider.notifier).enqueue(notif);
+    dispatchSiteAnimationGiftFromNotification(ref, notif);
     return;
   }
-  ref.read(globalGiftOverlayProvider.notifier).enqueue(
-        GlobalGiftNotification(
-          eventId: notification.id,
-          senderName: notification.title,
-          giftName: notification.body ?? 'Hediye',
-          displayLabel: HomepageGiftTicker.composeAnnouncement(
-            senderName: notification.title,
-            giftName: notification.body ?? 'Hediye',
-            jetonLabel: economyCurrencyLabel(ref, key: 'jeton'),
-          ),
-        ),
-      );
+  final notif = GlobalGiftNotification(
+    eventId: notification.id,
+    senderName: notification.title,
+    giftName: notification.body ?? 'Hediye',
+    displayLabel: HomepageGiftTicker.composeAnnouncement(
+      senderName: notification.title,
+      giftName: notification.body ?? 'Hediye',
+      jetonLabel: economyCurrencyLabel(ref, key: 'jeton'),
+    ),
+  );
+  ref.read(globalGiftOverlayProvider.notifier).enqueue(notif);
+  dispatchSiteAnimationGiftFromNotification(ref, notif);
 }
 
 /// Oda/yayın hediye SSE'sinden global overlay'e — yalnızca 1000+ jeton.
@@ -159,4 +161,5 @@ void enqueueGlobalGiftFromLiveEvent(
   ref
       .read(globalGiftOverlayProvider.notifier)
       .enqueue(GlobalGiftNotification.fromLiveGift(event));
+  dispatchSiteAnimationGiftFromLiveEvent(ref, event);
 }

@@ -39,6 +39,8 @@ import '../gifts/providers/live_seat_gift_totals_provider.dart';
 import '../../../gifts/domain/session_gift_summary_builder.dart';
 import '../../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../../../core/site_animation/presentation/site_animation_gift_bridge.dart';
+import '../../../../core/site_animation/presentation/widgets/site_animation_context_host.dart';
 import '../../../gifts/presentation/sync/gift_event_listener.dart';
 import '../../../gifts/presentation/sync/gift_session_controller.dart';
 import '../../../gifts/presentation/sync/gift_session_state.dart';
@@ -2600,6 +2602,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 jeton: ev.jetonAmount,
                 giftName: ev.giftName,
               );
+          dispatchSiteAnimationGiftFromLiveEvent(ref, ev);
         }
         if (hasStream) {
           final battle = ref.read(liveVideoPkProvider(streamId)).battle;
@@ -2651,7 +2654,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         ? (tournamentsAsync.valueOrNull!.first.rank ?? 3)
         : null;
 
-    return GiftEventListener(
+    return SiteAnimationContextHost(
+      context: SiteAnimationContext.liveStream,
+      child: GiftEventListener(
       sessionKey: streamId ?? '',
       isHost: s.isHost,
       useVoiceRealtime: false,
@@ -3244,6 +3249,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               ),
           ],
         ),
+      ),
       ),
       ),
     );

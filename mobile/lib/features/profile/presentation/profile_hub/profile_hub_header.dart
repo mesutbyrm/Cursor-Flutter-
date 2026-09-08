@@ -19,6 +19,7 @@ import '../../../cosmetics/presentation/providers/cosmetics_providers.dart';
 import '../../../cosmetics/presentation/widgets/cosmetic_avatar_frame.dart';
 import '../../../cosmetics/presentation/widgets/cosmetic_name_label.dart';
 import '../../../cosmetics/presentation/widgets/cosmetic_particle_overlay.dart';
+import '../../../../core/site_animation/presentation/widgets/site_animation_avatar_effect.dart';
 import '../../../../core/site_animation/presentation/site_animation_profile_providers.dart';
 import '../../../../core/site_animation/presentation/widgets/site_animation_framed_avatar.dart';
 
@@ -302,6 +303,7 @@ class _AvatarBlock extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final frame = ref.watch(resolvedProfileFrameProvider);
     final siteFrame = ref.watch(resolvedSiteAnimationProfileFrameProvider);
+    final siteAvatarFx = ref.watch(resolvedSiteAnimationAvatarEffectProvider);
     final profileFx = ref.watch(resolvedProfileEffectProvider);
 
     return GestureDetector(
@@ -329,6 +331,13 @@ class _AvatarBlock extends ConsumerWidget {
             Positioned.fill(
               child: IgnorePointer(
                 child: _ProfileFxHost(effect: profileFx),
+              ),
+            ),
+          if (siteAvatarFx != null)
+            Positioned.fill(
+              child: SiteAnimationAvatarEffectOverlay(
+                entry: siteAvatarFx,
+                size: 92,
               ),
             ),
           if (isOnline)

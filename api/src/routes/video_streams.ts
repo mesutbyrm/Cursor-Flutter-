@@ -280,16 +280,32 @@ videoStreamsRouter.post("/:id/join", requireAuth, async (req, res) => {
   if (!row || row.status !== "live") {
     return fail(res, 404, "NOT_FOUND", "Yayın aktif değil");
   }
+  const user = await loadUser(req.userId);
   const count = joinLiveStream(streamId, req.userId!);
   emitStreamViewerCount(streamId, count);
+  if (user) {
+    pushStreamSignal(streamId, req.userId!, "userJoined", {
+      id: user.id,
+      userId: user.id,
+      name: user.displayName ?? user.username ?? "Kullanıcı",
+      displayName: user.displayName ?? user.username ?? "Kullanıcı",
+      image: user.avatarUrl,
+      viewerCount: count,
+    });
+  }
   return ok(res, { viewerCount: count, stream: mapStream(getLiveStream(streamId)!) });
 });
 
 /** POST /api/video-streams/:id/leave — izleyici ayrılışı */
 videoStreamsRouter.post("/:id/leave", requireAuth, async (req, res) => {
   const streamId = req.params.id;
+  const user = await loadUser(req.userId);
   const count = leaveLiveStream(streamId, req.userId!);
   emitStreamViewerCount(streamId, count);
+  pushStreamSignal(streamId, req.userId!, "userLeft", {
+    userId: req.userId,
+    name: user?.displayName ?? user?.username ?? "Kullanıcı",
+  });
   return ok(res, { viewerCount: count });
 });
 
@@ -910,6 +926,7 @@ videoStreamsRouter.get("/:id/stream", optionalAuth, async (req, res) => {
   let lastViewer = stream.viewerCount;
   let lastFortuneSig = "";
   let lastPkSig = "";
+  let lastSignalAt = "";
   let ended = stream.status !== "live";
 
   const timer = setInterval(() => {
@@ -945,6 +962,27 @@ videoStreamsRouter.get("/:id/stream", optionalAuth, async (req, res) => {
       if (pkSig !== lastPkSig) {
         lastPkSig = pkSig;
         if (pk) send({ type: "pk", streamId, data: pk, battle: pk });
+      }
+      const signals = listStreamSignals(streamId);
+      for (const sig of signals) {
+        if (lastSignalAt && sig.createdAt <= lastSignalAt) continue;
+        lastSignalAt = sig.createdAt;
+        const payload = sig.payload ?? {};
+        if (sig.type === "userJoined") {
+          send({
+            type: "userJoined",
+            streamId,
+            user: payload,
+            viewerCount: payload.viewerCount ?? row.viewerCount,
+          });
+        } else if (sig.type === "userLeft") {
+          send({
+            type: "userLeft",
+            streamId,
+            userId: payload.userId ?? sig.fromUserId,
+            name: payload.name,
+          });
+        }
       }
       if (!ended && row.status !== "live") {
         ended = true;

@@ -22,6 +22,8 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../gifts/domain/gift_system_message.dart';
 import '../../../gifts/domain/session_summary_message.dart';
 import '../../../gifts/domain/session_gift_summary.dart';
+import '../../../../core/site_animation/presentation/site_animation_provider.dart';
+import '../../../../core/site_animation/presentation/widgets/site_animation_context_host.dart';
 import '../../../gifts/presentation/sync/gift_sse_dispatch.dart';
 import '../../../gifts/presentation/sync/gift_sync_log.dart';
 import '../../../gifts/presentation/sync/gift_session_controller.dart';
@@ -242,6 +244,12 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
             .toString()
             .trim();
         final joinId = (user['id'] ?? user['userId'] ?? name).toString();
+        _dispatchLiveSiteAnimation('user_joined', {
+          ...user,
+          'userId': joinId,
+          'name': name,
+          if (count is num) 'viewerCount': count.round(),
+        });
         var next = state;
         if (count is num) {
           next = next.copyWith(viewerCount: count.round());
@@ -294,6 +302,7 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
       },
       onUserLeft: (userId) {
         LiveEventLog.viewerLeft(streamId: streamId, userId: userId);
+        _dispatchLiveSiteAnimation('user_left', {'userId': userId});
       },
       onModeratorUpdated: (userId, isModerator) {
         _applyModeratorFlag(userId: userId, isModerator: isModerator);
@@ -475,6 +484,13 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
     if (state.fortuneAnsweredNotice != null) {
       state = state.copyWith(clearFortuneNotice: true);
     }
+  }
+
+  void _dispatchLiveSiteAnimation(String event, Map<String, dynamic> payload) {
+    ref
+        .read(siteAnimationProvider(SiteAnimationContext.liveStream.overlayId)
+            .notifier)
+        .handleRoomEvent(event, payload);
   }
 
   /// Hediye olayı — sohbet alanına sistem mesajı.
