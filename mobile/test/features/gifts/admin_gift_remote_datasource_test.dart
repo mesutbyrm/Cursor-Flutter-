@@ -221,6 +221,7 @@ void main() {
               isSiteAdmin: true,
               showAdminPanel: true,
               canManageGifts: true,
+              canManageSiteAnimations: true,
               siteRole: 'admin',
             ),
           ),

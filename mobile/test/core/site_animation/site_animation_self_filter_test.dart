@@ -1,4 +1,5 @@
 import 'package:canlifal_social/core/site_animation/data/site_animation_parser.dart';
+import 'package:canlifal_social/core/site_animation/domain/site_animation_command.dart';
 import 'package:canlifal_social/core/site_animation/domain/site_animation_type.dart';
 import 'package:canlifal_social/core/site_animation/presentation/site_animation_provider.dart';
 import 'package:flutter_test/flutter_test.dart';
