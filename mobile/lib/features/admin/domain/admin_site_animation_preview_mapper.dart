@@ -3,7 +3,7 @@ import '../../../../core/site_animation/domain/site_animation_command.dart';
 import '../../../../core/site_animation/domain/site_animation_layout.dart';
 import '../../../../core/site_animation/domain/site_animation_tier.dart';
 import '../../../../core/site_animation/domain/site_animation_type.dart';
-import '../../domain/admin_site_animation.dart';
+import 'admin_site_animation.dart';
 
 /// Admin katalog kaydı → client preview komutu.
 SiteAnimationCommand adminAnimationToPreviewCommand(

@@ -5,8 +5,9 @@ import '../domain/site_animation_tier.dart';
 import 'site_animation_provider.dart';
 import 'widgets/site_animation_context_host.dart';
 
-/// Ana sayfa / global marquee giriş duyurusu → sosyal overlay kartı.
-void dispatchSiteAnimationSocialEntranceRef(Ref ref, String bannerLine) {
+typedef _SiteAnimationRead = T Function<T>(ProviderListenable<T> provider);
+
+void _dispatchSiteAnimationSocialEntrance(_SiteAnimationRead read, String bannerLine) {
   final trimmed = bannerLine.trim();
   if (trimmed.isEmpty) return;
   if (VoiceOfficialJoin.isHomeBannerGiftAnnouncement(trimmed)) return;
@@ -21,8 +22,7 @@ void dispatchSiteAnimationSocialEntranceRef(Ref ref, String bannerLine) {
 
   final eventId =
       'social:${trimmed.hashCode}:${DateTime.now().millisecondsSinceEpoch}';
-  ref
-      .read(siteAnimationProvider(SiteAnimationContext.social.overlayId).notifier)
+  read(siteAnimationProvider(SiteAnimationContext.social.overlayId).notifier)
       .handleRoomEvent('user_joined', {
     'userId': 'social:$name',
     'name': name,
@@ -31,8 +31,12 @@ void dispatchSiteAnimationSocialEntranceRef(Ref ref, String bannerLine) {
   });
 }
 
+/// Ana sayfa / global marquee giriş duyurusu → sosyal overlay kartı.
+void dispatchSiteAnimationSocialEntranceRef(Ref ref, String bannerLine) =>
+    _dispatchSiteAnimationSocialEntrance(ref.read, bannerLine);
+
 void dispatchSiteAnimationSocialEntrance(WidgetRef ref, String bannerLine) =>
-    dispatchSiteAnimationSocialEntranceRef(ref, bannerLine);
+    _dispatchSiteAnimationSocialEntrance(ref.read, bannerLine);
 
 bool _looksLikeSocialEntrance(String raw) {
   final lower = raw.toLowerCase();
