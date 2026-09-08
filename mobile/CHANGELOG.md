@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.380+418 (2026-09-08) — economy Faz 23: global hediye overlay etiketi
+
+- `GlobalGiftNotification.label()` gösterimde markalı `$jetonLabel` ile yeniden oluşturulur
+- Site geneli üst şerit hediye duyuruları branding API fallback'ine uyumlu
+
 ## 1.0.379+417 (2026-09-08) — economy Faz 22: müzik hub yetersiz bakiye mesajları
 
 - Şarkı isteği hata metinleri `economyInsufficientJetonMessage` / `economyMinimumJetonForMusicRequestMessage`

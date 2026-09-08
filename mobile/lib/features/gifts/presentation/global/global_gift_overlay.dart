@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../domain/gift_display_settings.dart';
 import 'global_gift_overlay_notifier.dart';
 
@@ -15,6 +16,7 @@ class GlobalGiftOverlay extends ConsumerWidget {
     final overlay = ref.watch(globalGiftOverlayProvider);
     final active = overlay.active;
     final settings = overlay.settings;
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     return Stack(
       fit: StackFit.expand,
@@ -23,7 +25,7 @@ class GlobalGiftOverlay extends ConsumerWidget {
         if (active != null && settings.enabled)
           _GiftPassBar(
             key: ValueKey(active.eventId),
-            label: active.label(settings),
+            label: active.label(settings, jetonLabel: jetonLabel),
             settings: settings,
           ),
       ],

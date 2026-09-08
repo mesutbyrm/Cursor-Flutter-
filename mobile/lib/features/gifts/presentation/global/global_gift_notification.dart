@@ -157,15 +157,14 @@ class GlobalGiftNotification {
     return '$sender|$recv|$gift|$amount';
   }
 
-  String label(GiftDisplaySettings settings) {
-    final custom = displayLabel?.trim() ?? '';
-    if (custom.isNotEmpty) return custom;
+  String label(GiftDisplaySettings settings, {String jetonLabel = 'Jeton'}) {
     return HomepageGiftTicker.composeAnnouncement(
       senderName: settings.showSender ? senderName : '',
       giftName: settings.showGiftName ? giftName : 'Hediye',
       receiverName: receiverName,
       amount: settings.showAmount ? amount : 0,
       giftIcon: settings.showGiftIcon ? giftIcon : null,
+      jetonLabel: jetonLabel,
     );
   }
 
