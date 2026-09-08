@@ -61,7 +61,7 @@ void main() {
     expect(cmd.displayDuration.inMilliseconds, 3000);
     expect(cmd.asset.hasBundle, isTrue);
     expect(cmd.asset.bundlePath, contains('crown.json'));
-    expect(cmd.soundUrl, isNull);
+    expect(cmd.soundUrl, contains('anim_entrance_gold_crown.mp3'));
     expect(cmd.cooldownMs, 8000);
   });
 

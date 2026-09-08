@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/dio_provider.dart';
 import '../data/site_animation_catalog_datasource.dart';
+import '../data/site_animation_catalog_preload.dart';
 import '../data/site_animation_repository.dart';
 import '../domain/site_animation_catalog_entry.dart';
 
@@ -24,16 +27,21 @@ class SiteAnimationCatalogNotifier
   @override
   Future<SiteAnimationCatalogSnapshot> build() async {
     ref.keepAlive();
-    return ref.read(siteAnimationRepositoryProvider).getActiveCatalog();
+    final snapshot =
+        await ref.read(siteAnimationRepositoryProvider).getActiveCatalog();
+    unawaited(SiteAnimationCatalogPreload.warm(snapshot));
+    return snapshot;
   }
 
   Future<void> refresh({bool forceRefresh = true}) async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(
-      () => ref
+    state = await AsyncValue.guard(() async {
+      final snapshot = await ref
           .read(siteAnimationRepositoryProvider)
-          .getActiveCatalog(forceRefresh: forceRefresh),
-    );
+          .getActiveCatalog(forceRefresh: forceRefresh);
+      unawaited(SiteAnimationCatalogPreload.warm(snapshot));
+      return snapshot;
+    });
   }
 
   Future<void> syncFromAdminLocal() async {

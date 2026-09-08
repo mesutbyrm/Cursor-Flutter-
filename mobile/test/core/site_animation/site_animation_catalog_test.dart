@@ -26,6 +26,8 @@ SiteAnimationCatalogEntry _entry(
   bool isActive = true,
   int priority = 70,
   int durationMs = 3000,
+  String? soundUrl,
+  int cooldownMs = 0,
 }) {
   return SiteAnimationCatalogEntry(
     id: id,
@@ -35,6 +37,8 @@ SiteAnimationCatalogEntry _entry(
     durationMs: durationMs,
     priority: priority,
     isActive: isActive,
+    soundUrl: soundUrl,
+    cooldownMs: cooldownMs,
   );
 }
 
@@ -164,6 +168,72 @@ void main() {
       final resolved = SiteAnimationResolver.resolve(base: base, catalog: catalog)!;
       expect(resolved.layout.durationMs, 2000);
       expect(resolved.priorityOverride, 35);
+    });
+
+    test('merges catalog soundUrl and cooldown over SSE metadata', () {
+      final catalog = SiteAnimationCatalogSnapshot(
+        animations: {
+          'anim_entrance_gold_crown': _entry(
+            'anim_entrance_gold_crown',
+            'Gold',
+            'entrance',
+            SiteAnimationTier.gold,
+            soundUrl: 'https://cdn.canlifal.com/animations/sounds/gold.mp3',
+            cooldownMs: 12000,
+          ),
+        },
+        entranceDefaults: {
+          SiteAnimationTier.gold: 'anim_entrance_gold_crown',
+        },
+      );
+      final base = SiteAnimationParser.fromRoomEvent(
+        roomId: 'room-1',
+        event: 'user_joined',
+        payload: {
+          'eventId': 'evt-sound',
+          'userId': 'u1',
+          'membership': 'gold',
+          'animation': {
+            'soundUrl': 'https://cdn.canlifal.com/animations/sounds/sse.mp3',
+            'cooldownMs': 5000,
+          },
+        },
+      )!;
+      final resolved = SiteAnimationResolver.resolve(base: base, catalog: catalog)!;
+      expect(resolved.soundUrl, contains('sounds/gold.mp3'));
+      expect(resolved.cooldownMs, 12000);
+    });
+
+    test('keeps SSE sound when catalog entry has none', () {
+      final catalog = SiteAnimationCatalogSnapshot(
+        animations: {
+          'anim_entrance_gold_crown': _entry(
+            'anim_entrance_gold_crown',
+            'Gold',
+            'entrance',
+            SiteAnimationTier.gold,
+          ),
+        },
+        entranceDefaults: {
+          SiteAnimationTier.gold: 'anim_entrance_gold_crown',
+        },
+      );
+      final base = SiteAnimationParser.fromRoomEvent(
+        roomId: 'room-1',
+        event: 'user_joined',
+        payload: {
+          'eventId': 'evt-sse-sound',
+          'userId': 'u1',
+          'membership': 'gold',
+          'animation': {
+            'soundUrl': 'https://cdn.canlifal.com/animations/sounds/sse-only.mp3',
+            'cooldownMs': 3000,
+          },
+        },
+      )!;
+      final resolved = SiteAnimationResolver.resolve(base: base, catalog: catalog)!;
+      expect(resolved.soundUrl, contains('sse-only.mp3'));
+      expect(resolved.cooldownMs, 3000);
     });
   });
 }

@@ -1,6 +1,6 @@
 # Site Animasyonları — Sistem Analizi ve Mimari Plan
 
-> **Güncel (2026-09-08):** Uygulama **tamamlandı** (`1.0.397+435`) — WYSIWYG önizleme, CDN pipeline, ses/cooldown, VIP overlay öncelik. CDN dosya yükleme: [`SITE_ANIMATION_CDN.md`](SITE_ANIMATION_CDN.md).
+> **Güncel (2026-09-08):** Uygulama **tamamlandı** (`1.0.399+437`) — WYSIWYG önizleme, CDN pipeline, ses/cooldown, katalog ses preload, VIP overlay öncelik. CDN dosya yükleme: [`SITE_ANIMATION_CDN.md`](SITE_ANIMATION_CDN.md).
 
 > Tarih: 8 Eylül 2026 · Dal: `cursor/site-animation-engine-5ac6` · PR #365
 
@@ -212,7 +212,7 @@ Mevcut Prisma modelleri spec alanlarının çoğunu karşılar:
   "avatarUrl": "...",
   "membershipLevel": "gold",
   "entranceAnimationId": "anim_entrance_gold_crown",
-  "animation": { "anchor": "TOP_LEFT", "durationMs": 3000, "priority": 110 },
+  "animation": { "anchor": "TOP_LEFT", "durationMs": 3000, "priority": 110, "soundUrl": "https://cdn.canlifal.com/animations/sounds/anim_entrance_gold_crown.mp3", "cooldownMs": 8000 },
   "eventId": "room:user:ts",
   "timestamp": 1690000000
 }

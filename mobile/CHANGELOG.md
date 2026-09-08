@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.399+437 (2026-09-08) — Site Animation: seed SFX + katalog preload
+
+- Gold/Diamond/SVIP giriş seed: CDN `soundUrl` path'leri
+- Katalog yüklendiğinde aktif animasyon sesleri ön belleğe alınır
+- Resolver testleri: katalog vs SSE ses/cooldown birleştirme
+- API seed + test: gold giriş `soundUrl` doğrulaması
+
 ## 1.0.398+436 (2026-09-08) — Site Animation: SSE ses/cooldown + CDN rehber
 
 - API SSE `animation`: `soundUrl` + `cooldownMs` zenginleştirme

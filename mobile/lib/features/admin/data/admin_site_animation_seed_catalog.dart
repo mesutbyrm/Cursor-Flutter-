@@ -1,4 +1,5 @@
 import '../domain/admin_site_animation.dart';
+import '../../../core/site_animation/data/site_animation_cache.dart';
 
 /// Tasarım referanslarından seed katalog — API yoksa admin önizleme için.
 abstract final class AdminSiteAnimationSeedCatalog {
@@ -58,6 +59,7 @@ abstract final class AdminSiteAnimationSeedCatalog {
           durationMs: 3000,
           priority: 70,
           cooldownMs: 8000,
+          soundUrl: SiteAnimationAssetPaths.sound('anim_entrance_gold_crown'),
           description: 'Altın taç + glow + VIP rozeti',
           previewMp4Key: 'gold_uye_girisi.mp4',
         ),
@@ -83,6 +85,7 @@ abstract final class AdminSiteAnimationSeedCatalog {
           durationMs: 4000,
           priority: 90,
           rarity: AdminSiteAnimationRarity.epic,
+          soundUrl: SiteAnimationAssetPaths.sound('anim_entrance_diamond_burst'),
           description: 'Mavi kristal patlaması',
           previewMp4Key: 'diamond_uye_girisi.mp4',
         ),
@@ -108,6 +111,7 @@ abstract final class AdminSiteAnimationSeedCatalog {
           durationMs: 4000,
           priority: 85,
           rarity: AdminSiteAnimationRarity.legendary,
+          soundUrl: SiteAnimationAssetPaths.sound('anim_entrance_svip_emperor'),
           description: 'EMPEROR rozeti + altın ışın',
         ),
         const AdminSiteAnimation(

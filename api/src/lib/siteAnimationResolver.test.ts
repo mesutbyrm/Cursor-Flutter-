@@ -24,6 +24,10 @@ describe("siteAnimationResolver", () => {
     assert.equal(animation.id, "anim_entrance_gold_crown");
     assert.equal(animation.assetUrl, "assets/gifts/lottie/crown.json");
     assert.equal(animation.cooldownMs, 8000);
+    assert.equal(
+      animation.soundUrl,
+      "https://cdn.canlifal.com/animations/sounds/anim_entrance_gold_crown.mp3",
+    );
   });
 
   it("returns null when resolved animation is passive", async () => {

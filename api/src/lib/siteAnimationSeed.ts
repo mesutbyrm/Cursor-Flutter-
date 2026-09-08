@@ -36,6 +36,7 @@ export const SITE_ANIMATION_SEED: SiteAnimationRecord[] = [
     durationMs: 3000,
     priority: 70,
     cooldownMs: 8000,
+    soundUrl: "https://cdn.canlifal.com/animations/sounds/anim_entrance_gold_crown.mp3",
     previewMp4Key: "gold_uye_girisi.mp4",
     description: "Altın taç + glow + VIP rozeti",
   }),
