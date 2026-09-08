@@ -626,6 +626,17 @@ abstract final class ApiEndpoints {
 
   static String adminUser(String userId) => '/api/admin/users/$userId';
 
+  /// Site animasyonları — admin kütüphanesi.
+  static const adminSiteAnimations = '/api/admin/site-animations';
+  static const adminSiteAnimationsStats = '/api/admin/site-animations/stats';
+  static const adminSiteAnimationDefaults = '/api/admin/site-animations/defaults';
+  static const adminSiteAnimationAssign = '/api/admin/site-animations/assign';
+  static const adminSiteAnimationBulkAssign =
+      '/api/admin/site-animations/bulk-assign';
+  static String adminSiteAnimation(String id) => '/api/admin/site-animations/$id';
+  static String adminSiteAnimationUser(String userId) =>
+      '/api/admin/site-animations/user/$userId';
+
   static String adminUsersSearch(String query) =>
       '/api/admin/users/search?q=${Uri.encodeComponent(query.trim())}';
 

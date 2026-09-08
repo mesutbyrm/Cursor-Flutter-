@@ -27,6 +27,14 @@ import '../../features/fortune/presentation/pages/fortune_ready_readings_page.da
 import '../../features/admin/presentation/pages/admin_panel_page.dart';
 import '../../features/admin/presentation/pages/admin_entrance_effects_page.dart';
 import '../../features/admin/presentation/pages/admin_visual_fx_page.dart';
+import '../../features/admin/presentation/pages/admin_site_animations_hub_page.dart';
+import '../../features/admin/presentation/pages/admin_site_animations_library_page.dart';
+import '../../features/admin/presentation/pages/admin_site_animations_editor_page.dart';
+import '../../features/admin/presentation/pages/admin_site_animations_defaults_page.dart';
+import '../../features/admin/presentation/pages/admin_site_animations_user_assign_page.dart';
+import '../../features/admin/presentation/pages/admin_site_animations_bulk_assign_page.dart';
+import '../../features/admin/presentation/pages/admin_site_animations_preview_page.dart';
+import '../../features/admin/domain/admin_site_animation.dart';
 import '../../features/admin/presentation/pages/admin_voice_room_backgrounds_page.dart';
 import '../../features/admin/presentation/pages/admin_gift_collection_hub_page.dart';
 import '../../features/admin/presentation/pages/admin_hub_page.dart';
@@ -890,6 +898,80 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           key: state.pageKey,
           child: const AdminVisualFxPage(),
         ),
+      ),
+      GoRoute(
+        path: '/admin/site-animations',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const AdminSiteAnimationsHubPage(),
+        ),
+        routes: [
+          GoRoute(
+            path: 'library',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const AdminSiteAnimationsLibraryPage(),
+            ),
+          ),
+          GoRoute(
+            path: 'new',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const AdminSiteAnimationsEditorPage(),
+            ),
+          ),
+          GoRoute(
+            path: ':animationId/edit',
+            pageBuilder: (context, state) {
+              final anim = state.extra;
+              return AppPageTransitions.fadeSlide(
+                key: state.pageKey,
+                child: AdminSiteAnimationsEditorPage(
+                  animation: anim is AdminSiteAnimation ? anim : null,
+                ),
+              );
+            },
+          ),
+          GoRoute(
+            path: 'defaults',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const AdminSiteAnimationsDefaultsPage(),
+            ),
+          ),
+          GoRoute(
+            path: 'user-assign',
+            pageBuilder: (context, state) {
+              final anim = state.extra;
+              return AppPageTransitions.fadeSlide(
+                key: state.pageKey,
+                child: AdminSiteAnimationsUserAssignPage(
+                  preselectedAnimation:
+                      anim is AdminSiteAnimation ? anim : null,
+                ),
+              );
+            },
+          ),
+          GoRoute(
+            path: 'bulk-assign',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const AdminSiteAnimationsBulkAssignPage(),
+            ),
+          ),
+          GoRoute(
+            path: 'preview',
+            pageBuilder: (context, state) {
+              final anim = state.extra;
+              return AppPageTransitions.fadeSlide(
+                key: state.pageKey,
+                child: AdminSiteAnimationsPreviewPage(
+                  animation: anim is AdminSiteAnimation ? anim : null,
+                ),
+              );
+            },
+          ),
+        ],
       ),
       GoRoute(
         path: '/pk/leaderboard',

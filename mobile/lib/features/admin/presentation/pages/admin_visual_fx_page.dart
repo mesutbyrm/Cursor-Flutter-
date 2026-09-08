@@ -88,6 +88,12 @@ class _AdminVisualFxPageState extends ConsumerState<AdminVisualFxPage> {
                         subtitle: 'Türler, görseller, değer aralıkları',
                         onTap: () => context.push('/admin/gifts'),
                       ),
+                      _NavTile(
+                        icon: Icons.animation_rounded,
+                        title: 'Site Animasyonları',
+                        subtitle: 'Giriş, çıkış, koltuk, önizleme',
+                        onTap: () => context.push('/admin/site-animations'),
+                      ),
                       const SizedBox(height: 20),
                       _SectionTitle('Önizleme'),
                       _PreviewChip(

@@ -11,6 +11,7 @@ class StaffAccess {
     required this.isSiteAdmin,
     required this.showAdminPanel,
     required this.canManageGifts,
+    required this.canManageSiteAnimations,
     this.siteRole,
     this.username,
     this.isFounder = false,
@@ -21,6 +22,8 @@ class StaffAccess {
   final bool showAdminPanel;
   /// Hediye kataloğu CRUD — admin ve kurucu (yonetici).
   final bool canManageGifts;
+  /// Site animasyon kütüphanesi — admin / kurucu.
+  final bool canManageSiteAnimations;
   final String? siteRole;
   final String? username;
   /// Kurucu (yonetici) — admin atama/çıkarma dahil tam yetki.
@@ -48,6 +51,7 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
       isSiteAdmin: false,
       showAdminPanel: false,
       canManageGifts: false,
+      canManageSiteAnimations: false,
     );
   }
 
@@ -78,6 +82,7 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
       isSiteAdmin: true,
       showAdminPanel: true,
       canManageGifts: true,
+      canManageSiteAnimations: true,
       siteRole: siteRole?.trim().isNotEmpty == true ? siteRole : 'admin',
       username: username,
       isFounder: usernameIsFounder,
@@ -118,6 +123,7 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
   }
 
   final canManageGifts = isSiteAdmin || canManagePayments;
+  final canManageSiteAnimations = isSiteAdmin || usernameIsFounder;
   final isFounder =
       effectiveRole == 'yonetici' ||
       effectiveRole == 'yonetim' ||
@@ -129,6 +135,7 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
     isSiteAdmin: isSiteAdmin,
     showAdminPanel: showAdminPanel,
     canManageGifts: canManageGifts,
+    canManageSiteAnimations: canManageSiteAnimations,
     siteRole: effectiveRole,
     username: username,
     isFounder: isFounder,
