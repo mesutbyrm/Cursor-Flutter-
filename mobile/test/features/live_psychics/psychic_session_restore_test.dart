@@ -60,13 +60,11 @@ void main() {
 
       await tester.pumpWidget(
         wrapEconomyScope(
-          ProviderScope(
-            overrides: [
-              livePsychicsRepositoryProvider.overrideWithValue(repo),
-              goRouterProvider.overrideWithValue(router),
-            ],
-            child: MaterialApp.router(routerConfig: router),
-          ),
+          MaterialApp.router(routerConfig: router),
+          overrides: [
+            livePsychicsRepositoryProvider.overrideWithValue(repo),
+            goRouterProvider.overrideWithValue(router),
+          ],
         ),
       );
       await tester.pump();
@@ -113,13 +111,11 @@ void main() {
 
       await tester.pumpWidget(
         wrapEconomyScope(
-          ProviderScope(
-            overrides: [
-              livePsychicsRepositoryProvider.overrideWithValue(repo),
-              goRouterProvider.overrideWithValue(router),
-            ],
-            child: MaterialApp.router(routerConfig: router),
-          ),
+          MaterialApp.router(routerConfig: router),
+          overrides: [
+            livePsychicsRepositoryProvider.overrideWithValue(repo),
+            goRouterProvider.overrideWithValue(router),
+          ],
         ),
       );
       await tester.pump();

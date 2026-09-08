@@ -2,10 +2,9 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/economy/presentation/providers/economy_providers.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
-
-import '../../../../core/economy/presentation/providers/economy_providers.dart';
 
 class VoiceRoomBottomBar extends ConsumerWidget {
   const VoiceRoomBottomBar({
@@ -132,8 +131,8 @@ class VoiceRoomBottomBar extends ConsumerWidget {
                     child: InkWell(
                       onTap: onTopUp,
                       borderRadius: BorderRadius.circular(20),
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         child: Text(
                           '🪙 ${economyJetonTopUpShortLabel(ref)}',
                           style: TextStyle(
