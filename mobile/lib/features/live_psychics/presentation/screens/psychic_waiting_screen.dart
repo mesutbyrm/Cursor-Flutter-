@@ -9,6 +9,7 @@ import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/ui/premium/live_badge.dart';
 import 'package:canlifal_social/core/ui/premium_2026/cosmic_galaxy_background.dart';
 import 'package:canlifal_social/core/widgets/user_avatar.dart';
+import 'package:canlifal_social/core/economy/presentation/providers/economy_providers.dart';
 import 'package:canlifal_social/core/network/psychic_event_log.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_booking_feedback_provider.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_close_dialog.dart';
@@ -170,7 +171,7 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     await PsychicSessionStore.clear();
     invalidateWalletCacheFromRef(ref);
     ref.read(psychicBookingFeedbackProvider.notifier).state =
-        'Falcı görüşmeyi iptal etti — jetonlar iade edilir';
+        'Falcı görüşmeyi iptal etti — ${economyJetonBalanceRefundNoticeRead(ref)}';
     _navigateExit();
   }
 
@@ -190,7 +191,7 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     await PsychicSessionStore.clear();
     invalidateWalletCacheFromRef(ref);
     ref.read(psychicBookingFeedbackProvider.notifier).state =
-        'Falcı yanıt vermedi — süre doldu, jetonlar iade edildi';
+        'Falcı yanıt vermedi — süre doldu, ${economyJetonBalanceRefundNoticeRead(ref)}';
     _navigateExit();
   }
 
@@ -282,6 +283,7 @@ class _PsychicWaitingScreenState extends ConsumerState<PsychicWaitingScreen>
     final session = widget.session;
     final waiting = ref.watch(psychicWaitingControllerProvider(session));
     final psychic = session.psychic;
+    final jetonRefundNotice = economyJetonBalanceRefundNotice(ref);
 
     ref.listen<PsychicSessionEntity?>(psychicWaitingNavProvider, (prev, next) {
       if (next == null) return;
@@ -401,9 +403,9 @@ class _PsychicWaitingScreenState extends ConsumerState<PsychicWaitingScreen>
                               PsychicWaitingPhase.waiting =>
                                 '${psychic.name} randevunuzu onayladığında otomatik olarak odaya bağlanacaksınız.',
                               PsychicWaitingPhase.expired =>
-                                'Falcı belirlenen sürede yanıt vermedi. Jetonlarınız iade edilir.',
+                                'Falcı belirlenen sürede yanıt vermedi. $jetonRefundNotice.',
                               PsychicWaitingPhase.rejected =>
-                                'Falcı randevunuzu kabul etmedi. Jetonlarınız iade edilir.',
+                                'Falcı randevunuzu kabul etmedi. $jetonRefundNotice.',
                               PsychicWaitingPhase.accepted =>
                                 'Falcı kabul etti, odaya bağlanılıyor…',
                             },

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/widgets/lazy_list_views.dart';
 import '../../../../core/network/api_exception.dart';
@@ -378,6 +379,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
   }
 
   Widget _buildSearchTab(int jeton, ChatRoomDjState dj) {
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -472,7 +474,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
                   ),
                 ),
               Text(
-                'Bakiye: $jeton Jeton · İstek: $_cost 💎 · Kuyruk: ${_queue.length}/$_maxQueue',
+                'Bakiye: $jeton $jetonLabel · İstek: $_cost 💎 · Kuyruk: ${_queue.length}/$_maxQueue',
                 style: TextStyle(
                   fontSize: 11,
                   color: Colors.white.withValues(alpha: 0.55),

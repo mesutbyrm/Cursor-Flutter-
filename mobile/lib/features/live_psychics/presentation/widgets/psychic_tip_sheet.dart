@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/economy/presentation/providers/economy_providers.dart';
 import 'package:canlifal_social/core/performance/list_perf.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
@@ -15,18 +17,24 @@ Future<int?> showPsychicTipSheet(
     barrierLabel: 'Bahşiş ver',
     barrierColor: Colors.black.withValues(alpha: 0.72),
     transitionDuration: const Duration(milliseconds: 200),
-    pageBuilder: (ctx, _, _) => Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Material(
-          color: Colors.transparent,
-          child: _PsychicTipSheet(
-            psychicName: psychicName,
-            jetonBalance: jetonBalance,
+    pageBuilder: (ctx, _, _) {
+      final container = ProviderScope.containerOf(context);
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Material(
+            color: Colors.transparent,
+            child: UncontrolledProviderScope(
+              container: container,
+              child: _PsychicTipSheet(
+                psychicName: psychicName,
+                jetonBalance: jetonBalance,
+              ),
+            ),
           ),
         ),
-      ),
-    ),
+      );
+    },
     transitionBuilder: (ctx, anim, _, child) => FadeTransition(
       opacity: anim,
       child: ScaleTransition(scale: anim, child: child),
@@ -34,7 +42,7 @@ Future<int?> showPsychicTipSheet(
   );
 }
 
-class _PsychicTipSheet extends StatelessWidget {
+class _PsychicTipSheet extends ConsumerWidget {
   const _PsychicTipSheet({
     required this.psychicName,
     required this.jetonBalance,
@@ -44,7 +52,7 @@ class _PsychicTipSheet extends StatelessWidget {
   final int jetonBalance;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
       decoration: BoxDecoration(
@@ -88,7 +96,7 @@ class _PsychicTipSheet extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            '💰 Jetonunuz: $jetonBalance',
+            economyJetonBalanceLine(ref, balance: jetonBalance),
             style: const TextStyle(
               color: Color(0xFFFFD54F),
               fontWeight: FontWeight.w800,

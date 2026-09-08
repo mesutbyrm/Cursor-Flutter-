@@ -1,6 +1,9 @@
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_tip_sheet.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../../helpers/economy_test_scope.dart';
 
 Future<void> _pumpTallSurface(WidgetTester tester, Widget widget) async {
   await tester.binding.setSurfaceSize(const Size(480, 900));
@@ -15,18 +18,20 @@ void main() {
 
       await _pumpTallSurface(
         tester,
-        MaterialApp(
-          home: Builder(
-            builder: (context) => Scaffold(
-              body: ElevatedButton(
-                onPressed: () async {
-                  result = await showPsychicTipSheet(
-                    context,
-                    psychicName: 'Ayşe',
-                    jetonBalance: 200,
-                  );
-                },
-                child: const Text('Aç'),
+        wrapEconomyScope(
+          MaterialApp(
+            home: Builder(
+              builder: (context) => Scaffold(
+                body: ElevatedButton(
+                  onPressed: () async {
+                    result = await showPsychicTipSheet(
+                      context,
+                      psychicName: 'Ayşe',
+                      jetonBalance: 200,
+                    );
+                  },
+                  child: const Text('Aç'),
+                ),
               ),
             ),
           ),
@@ -38,7 +43,7 @@ void main() {
 
       expect(find.text('💝 Bahşiş Ver'), findsOneWidget);
       expect(find.textContaining('Ayşe falcıya'), findsOneWidget);
-      expect(find.textContaining('Jetonunuz: 200'), findsOneWidget);
+      expect(find.textContaining('Jeton bakiyeniz: 200'), findsOneWidget);
 
       await tester.tap(find.text('100'));
       await tester.pumpAndSettle();
@@ -51,18 +56,20 @@ void main() {
 
       await _pumpTallSurface(
         tester,
-        MaterialApp(
-          home: Builder(
-            builder: (context) => Scaffold(
-              body: ElevatedButton(
-                onPressed: () async {
-                  result = await showPsychicTipSheet(
-                    context,
-                    psychicName: 'Mehmet',
-                    jetonBalance: 500,
-                  );
-                },
-                child: const Text('Aç'),
+        wrapEconomyScope(
+          MaterialApp(
+            home: Builder(
+              builder: (context) => Scaffold(
+                body: ElevatedButton(
+                  onPressed: () async {
+                    result = await showPsychicTipSheet(
+                      context,
+                      psychicName: 'Mehmet',
+                      jetonBalance: 500,
+                    );
+                  },
+                  child: const Text('Aç'),
+                ),
               ),
             ),
           ),

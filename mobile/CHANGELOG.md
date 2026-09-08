@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.377+415 (2026-09-08) — economy Faz 20: psychic + müzik hub etiketleri
+
+- `economyJetonBalanceLine` / `economyJetonBalanceRefundNotice` yardımcıları
+- Bahşiş sheet, bekleme ekranı iade metinleri, müzik hub bakiye satırı markalı
+
 ## 1.0.376+414 (2026-09-08) — economy widget testleri ProviderScope
 
 - `test/helpers/economy_test_scope.dart` — varsayılan branding override

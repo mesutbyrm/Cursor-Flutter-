@@ -270,3 +270,33 @@ String economyJetonSendIntentMessage(WidgetRef ref, {Locale? locale}) {
   final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
   return '🪙 $label göndermek istiyor.';
 }
+
+/// Bahşiş / bakiye satırı: «💰 Jeton bakiyeniz: 200».
+String economyJetonBalanceLine(
+  WidgetRef ref, {
+  required int balance,
+  Locale? locale,
+}) {
+  final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
+  return '💰 $label bakiyeniz: $balance';
+}
+
+String economyJetonBalanceLineRead(
+  Ref ref, {
+  required int balance,
+  Locale? locale,
+}) {
+  final label = economyCurrencyLabelRead(ref, key: 'jeton', locale: locale);
+  return '💰 $label bakiyeniz: $balance';
+}
+
+/// İade bildirimi: «Jeton bakiyeniz iade edilir».
+String economyJetonBalanceRefundNotice(WidgetRef ref, {Locale? locale}) {
+  final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
+  return '$label bakiyeniz iade edilir';
+}
+
+String economyJetonBalanceRefundNoticeRead(Ref ref, {Locale? locale}) {
+  final label = economyCurrencyLabelRead(ref, key: 'jeton', locale: locale);
+  return '$label bakiyeniz iade edilir';
+}
