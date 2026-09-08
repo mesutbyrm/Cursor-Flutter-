@@ -9,6 +9,7 @@ void main() {
     expect(FortuneTypeSlug.resolve('pendul'), 'pendul-fali');
     expect(FortuneTypeSlug.resolve('runik'), 'runik-fali');
     expect(FortuneTypeSlug.resolve('cin-fali'), 'cin-fali');
+    expect(FortuneTypeSlug.resolve('gunluk-fal'), 'burc-yorumu');
   });
 
   test('chatRoomSseEventTypeFrom recognizes speak request aliases', () {

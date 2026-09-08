@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.405+443 (2026-09-08) — Sahip yayın PK SSE
+
+- `livePkOwnedStreamsSocketProvider`: yayıncı odada değilken sahip olunan yayınlara arka plan SSE (`pk_battle` → anlık davet)
+- 1.0.404 sürüm/changelog/test senkronu (gunluk-fal slug testi)
+
+## 1.0.404+442 (2026-09-08) — Ortak yayın co-host + fal fallback
+
+- Ortak yayın: global kabul → `pendingCoBroadcastJoinProvider` + TRTC retry sync
+- Canlı PK poll 3 sn; günlük fal slug → `burc-yorumu`
+- Fal offline fallback: `isLocalFallback` + sonuç kartında uyarı bandı
+
 ## 1.0.403+441 (2026-09-08) — Sesli/canlı P0 tamamlama
 
 - Sesli oda: fal SSE basic modda da `PsychicIncomingHost`'a düşer
