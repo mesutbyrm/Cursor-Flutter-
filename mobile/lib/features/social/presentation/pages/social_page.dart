@@ -11,9 +11,6 @@ import '../widgets/instagram/social_instagram_app_bar.dart';
 import '../widgets/instagram/social_feed_composer.dart';
 import '../widgets/social_discover_shortcuts.dart';
 import '../widgets/social_feed_scroll_view.dart';
-import '../../../../core/site_animation/presentation/site_animation_social_bridge.dart';
-import '../../../../core/site_animation/presentation/widgets/site_animation_context_host.dart';
-import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
 
 /// CanlıFal Sosyal — premium mistik akış.
 class SocialPage extends ConsumerStatefulWidget {
@@ -74,18 +71,10 @@ class _SocialPageState extends ConsumerState<SocialPage>
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom + 88;
 
-    ref.listen(staffEntranceMarqueeProvider, (prev, next) {
-      final msg = next.message;
-      if (msg == null || msg.isEmpty || msg == prev?.message) return;
-      dispatchSiteAnimationSocialEntrance(ref, msg);
-    });
-
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SiteAnimationContextHost(
-        context: SiteAnimationContext.social,
-        child: DiscoverBackground(
-          child: Column(
+      body: DiscoverBackground(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             RepaintBoundary(
@@ -106,7 +95,6 @@ class _SocialPageState extends ConsumerState<SocialPage>
             ),
           ],
         ),
-      ),
       ),
     );
   }

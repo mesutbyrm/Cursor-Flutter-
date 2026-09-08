@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.391+429 (2026-09-08) — Site Animation: global sosyal giriş + CI stabilizasyon
+
+- `SiteAnimationSocialEntranceListener` — marquee VIP giriş kartı tüm sekmelerde (`ctx_social` app shell)
+- Site Animation merge sonrası CI derleme düzeltmeleri (import yolları, Ref/WidgetRef köprüsü, testler)
+- Analiz dokümanı: PR #365 birleşti, APK `1.0.390+428` yeşil
+
 ## 1.0.390+428 (2026-09-08) — Site Animation: sosyal giriş köprüsü
 
 - `site_animation_social_bridge.dart` — global marquee VIP giriş → `ctx_social` kart

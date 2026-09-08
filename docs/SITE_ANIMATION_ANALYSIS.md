@@ -49,7 +49,7 @@ Bu belge, kullanıcı spesifikasyonu §34 sırasına göre mevcut CanlıFal mima
 - **Oda izolasyonu:** `roomEventMatchesActiveRoom` — farklı oda görmez
 - **Dedupe:** `FxDedupeStore` + `eventId`
 - **Kuyruk:** `SiteAnimationManager` priority sıralı
-- **Eksik:** Kendi giriş animasyonunu görmeme filtresi (bu oturumda eklendi)
+- **Eksik:** Kendi giriş animasyonunu görmeme filtresi ✅ eklendi
 
 ---
 
@@ -96,8 +96,7 @@ Admin özel atama (`ADMIN_CUSTOM` priority 110) resolver'da `priorityOverride` i
 
 - Profil ekranı mevcut avatar boyutu/konumu korunmalı
 - `AdminSiteAnimationSlot.profileFrame`, `.profile`, `.avatar` tanımlı
-- **Eksik (Faz 2+):** Profil açılış animasyonu renderer, frame widget entegrasyonu
-- **Bu oturum:** 12 profil çerçevesi seed kataloga eklendi
+- **Bu oturum:** 12 profil çerçevesi seed + `SiteAnimationFramedAvatar` / `SiteAnimationAvatarEffectOverlay` profil hub entegrasyonu
 
 ---
 
@@ -123,8 +122,8 @@ Admin özel atama (`ADMIN_CUSTOM` priority 110) resolver'da `priorityOverride` i
 
 ## 9. Social Sistemi
 
-- `SocialPage` → `SiteAnimationContextHost(social)` overlay host
-- Admin preview: çoklu ekran mock (Sosyal/Profil/Fal/Voice)
+- `SocialPage` — overlay host app shell'e taşındı
+- `MainAppShell` → global `ctx_social` + `SiteAnimationSocialEntranceListener` (tüm sekmeler)
 
 ---
 
@@ -152,8 +151,9 @@ Admin özel atama (`ADMIN_CUSTOM` priority 110) resolver'da `priorityOverride` i
 | Live / Fal / Gift overlay | ✅ ctx_live, ctx_fal_tarot, ctx_gift |
 | Oyun overlay host | ✅ ctx_game (hub + oda) |
 | Hediye katalog seed | ✅ gift kategorisi (4 tier) |
-| Sosyal entrance marquee hook | ✅ Global ticker → ctx_social (SocialPage) |
-| Production deploy | ⏳ canlifal.com ayrı |
+| Sosyal entrance marquee hook | ✅ Global app shell → ctx_social (tüm sekmeler) |
+| CI / APK (merge sonrası) | ✅ `main` yeşil · apk-latest `1.0.390+428`+ |
+| Production deploy | ⏳ canlifal.com Next.js ayrı repo |
 
 ---
 
@@ -227,8 +227,9 @@ Sunucu: `buildSiteAnimationRoomEvent` → membership default veya user assignmen
 4. ✅ Admin hub + preview
 5. ✅ Profil frame + avatar efekt renderer
 6. ✅ Live / Gift / Fal / Game overlay host
-7. ✅ Sosyal feed entrance (marquee → ctx_social)
-8. ⏳ Production deploy + PR merge
+7. ✅ Sosyal feed entrance (global app shell marquee → ctx_social)
+8. ✅ PR #365 merge + CI/APK (`main`)
+9. ⏳ Production deploy (canlifal.com)
 
 ---
 
