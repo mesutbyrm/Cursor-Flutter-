@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../domain/entities/live_gift_catalog.dart';
-import '../../../../core/economy/presentation/providers/economy_providers.dart';
+import 'package:canlifal_social/core/economy/presentation/providers/economy_providers.dart';
 import '../providers/live_seat_gift_flash_provider.dart';
 
 /// Koltuk altı hediye flaşı — 3 sn sıralı liste.

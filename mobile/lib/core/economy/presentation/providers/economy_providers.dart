@@ -13,7 +13,7 @@ import '../../domain/referral_economy_snapshot.dart';
 import '../../domain/topup_bonus_tier.dart';
 import '../../services/currency_branding_cache.dart';
 import '../../services/economy_wallet_adapter.dart';
-import '../../../features/profile/presentation/providers/profile_providers.dart';
+import '../../../../features/profile/presentation/providers/profile_providers.dart';
 
 final currencyBrandingRemoteProvider =
     Provider<CurrencyBrandingRemoteDataSource>((ref) {
@@ -79,91 +79,128 @@ final topupBonusTiersProvider = Provider<List<TopupBonusTier>>((ref) {
   return TopupBonusTier.defaultTiers;
 });
 
-CurrencyBrand resolveEconomyBrand(
-  Ref ref, {
+CurrencyBrand resolveEconomyBrandFromSnapshot(
+  CurrencyBrandingSnapshot? snapshot, {
   required String key,
 }) {
-  final async = ref.watch(currencyBrandingProvider);
-  return async.maybeWhen(
-    data: (snapshot) => snapshot.brandForKey(key),
-    orElse: () => key.toLowerCase() == 'jeton'
-        ? CurrencyBrand.jetonFallback
-        : CurrencyBrand.cfcFallback,
+  if (snapshot != null) {
+    return snapshot.brandForKey(key);
+  }
+  return key.toLowerCase() == 'jeton'
+      ? CurrencyBrand.jetonFallback
+      : CurrencyBrand.cfcFallback;
+}
+
+CurrencyBrand resolveEconomyBrand(
+  WidgetRef ref, {
+  required String key,
+}) {
+  return resolveEconomyBrandFromSnapshot(
+    ref.watch(currencyBrandingProvider).valueOrNull,
+    key: key,
   );
 }
 
-String economyCurrencyLabel(
+/// Notifier / provider bağlamında — `read` ile tek seferlik etiket.
+CurrencyBrand resolveEconomyBrandRead(
   Ref ref, {
   required String key,
+}) {
+  return resolveEconomyBrandFromSnapshot(
+    ref.read(currencyBrandingProvider).valueOrNull,
+    key: key,
+  );
+}
+
+String economyCurrencyLabelFromBrand(
+  CurrencyBrand brand, {
   Locale? locale,
 }) {
-  final brand = resolveEconomyBrand(ref, key: key);
   final loc = locale ?? const Locale('tr');
   return brand.labelForLocale(loc);
 }
 
+String economyCurrencyLabel(
+  WidgetRef ref, {
+  required String key,
+  Locale? locale,
+}) {
+  final brand = resolveEconomyBrand(ref, key: key);
+  return economyCurrencyLabelFromBrand(brand, locale: locale);
+}
+
+/// Notifier içinde markalı etiket — WidgetRef gerekmez.
+String economyCurrencyLabelRead(
+  Ref ref, {
+  required String key,
+  Locale? locale,
+}) {
+  final brand = resolveEconomyBrandRead(ref, key: key);
+  return economyCurrencyLabelFromBrand(brand, locale: locale);
+}
+
 /// Hızlı işlem karosu: «Jeton\nyükle».
-String economyJetonTopUpTileLabel(Ref ref, {Locale? locale}) {
+String economyJetonTopUpTileLabel(WidgetRef ref, {Locale? locale}) {
   final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
   return '$label\nyükle';
 }
 
 /// Tek satır: «Jeton Yükle» / «Jeton Al».
-String economyJetonTopUpShortLabel(Ref ref, {Locale? locale}) {
+String economyJetonTopUpShortLabel(WidgetRef ref, {Locale? locale}) {
   final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
   return '$label Yükle';
 }
 
-String economyJetonBuyActionLabel(Ref ref, {Locale? locale}) {
+String economyJetonBuyActionLabel(WidgetRef ref, {Locale? locale}) {
   final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
   return '$label Al';
 }
 
 /// Tek satır: «CFC Yükle» (markalı).
-String economyCfcTopUpShortLabel(Ref ref, {Locale? locale}) {
+String economyCfcTopUpShortLabel(WidgetRef ref, {Locale? locale}) {
   final label = economyCurrencyLabel(ref, key: 'cfc', locale: locale);
   return '$label Yükle';
 }
 
 /// Jeton mağazası sayfa başlığı.
-String economyJetonPurchasePageTitle(Ref ref, {Locale? locale}) {
+String economyJetonPurchasePageTitle(WidgetRef ref, {Locale? locale}) {
   final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
   return '$label Satın Al';
 }
 
 /// Jeton mağazası alt başlık.
-String economyJetonPurchasePageSubtitle(Ref ref, {Locale? locale}) {
+String economyJetonPurchasePageSubtitle(WidgetRef ref, {Locale? locale}) {
   final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
   return 'İstediğiniz tutarı girin — $label otomatik hesaplanır';
 }
 
 /// Bakiye kartı başlığı: «Jeton Bakiye».
-String economyJetonBalanceHeaderLabel(Ref ref, {Locale? locale}) {
+String economyJetonBalanceHeaderLabel(WidgetRef ref, {Locale? locale}) {
   final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
   return '$label Bakiye';
 }
 
 /// Profil hızlı menü: «Jeton Geçmişim».
-String economyJetonHistoryMenuLabel(Ref ref, {Locale? locale}) {
+String economyJetonHistoryMenuLabel(WidgetRef ref, {Locale? locale}) {
   final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
   return '$label Geçmişim';
 }
 
 /// Üyelik sayfası paket bölümü: «Jeton Paketleri».
-String economyJetonPackagesSectionTitle(Ref ref, {Locale? locale}) {
+String economyJetonPackagesSectionTitle(WidgetRef ref, {Locale? locale}) {
   final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
   return '$label Paketleri';
 }
 
 /// CFC bakiye kartı: «CFC Bakiyeniz».
-String economyCfcBalanceHeaderLabel(Ref ref, {Locale? locale}) {
+String economyCfcBalanceHeaderLabel(WidgetRef ref, {Locale? locale}) {
   final label = economyCurrencyLabel(ref, key: 'cfc', locale: locale);
   return '$label Bakiyeniz';
 }
 
 /// Yetersiz bakiye — genel (müzik isteği, fal vb.).
 String economyInsufficientJetonMessage(
-  Ref ref, {
+  WidgetRef ref, {
   required int required,
   Locale? locale,
 }) {
@@ -173,7 +210,7 @@ String economyInsufficientJetonMessage(
 
 /// Sesli oda duyuru — yetersiz bakiye.
 String economyInsufficientJetonForDuyuruMessage(
-  Ref ref, {
+  WidgetRef ref, {
   required int cost,
   Locale? locale,
 }) {
@@ -183,7 +220,7 @@ String economyInsufficientJetonForDuyuruMessage(
 
 /// Müzik / şarkı isteği — minimum bakiye.
 String economyMinimumJetonForMusicRequestMessage(
-  Ref ref, {
+  WidgetRef ref, {
   required int requiredCost,
   Locale? locale,
 }) {
@@ -193,7 +230,7 @@ String economyMinimumJetonForMusicRequestMessage(
 
 /// Hediye toast: «120 Jeton gönderdi».
 String economyJetonGiftSentLine(
-  Ref ref, {
+  WidgetRef ref, {
   required int amount,
   Locale? locale,
 }) {
@@ -202,7 +239,7 @@ String economyJetonGiftSentLine(
 }
 
 /// DM composer: «🪙 Jeton göndermek istiyor.» (markalı).
-String economyJetonSendIntentMessage(Ref ref, {Locale? locale}) {
+String economyJetonSendIntentMessage(WidgetRef ref, {Locale? locale}) {
   final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
   return '🪙 $label göndermek istiyor.';
 }

@@ -3,7 +3,7 @@ import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/economy/presentation/providers/economy_providers.dart';
+import 'package:canlifal_social/core/economy/presentation/providers/economy_providers.dart';
 import '../../../domain/entities/live_gift_catalog.dart';
 import '../../../domain/entities/live_gift_event.dart';
 

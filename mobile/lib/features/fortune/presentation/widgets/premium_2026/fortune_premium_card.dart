@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:canlifal_social/core/ui/premium/premium_skeleton.dart';
-import '../../../../core/economy/presentation/providers/economy_providers.dart';
+import 'package:canlifal_social/core/economy/presentation/providers/economy_providers.dart';
 import '../../../../home/presentation/theme/home_approved_design.dart';
 import '../../../../home/presentation/theme/home_premium_design.dart';
 import '../fortune_type_cover_image.dart';

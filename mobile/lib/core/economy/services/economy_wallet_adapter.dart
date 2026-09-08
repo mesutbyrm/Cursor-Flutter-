@@ -1,7 +1,7 @@
 import '../../../features/wallet/domain/wallet_balances.dart';
 import '../domain/currency_branding_snapshot.dart';
 import '../domain/economy_wallet_snapshot.dart';
-import 'economy_wallet_remote_datasource.dart';
+import '../data/economy_wallet_remote_datasource.dart';
 
 /// Birleşik cüzdan ucu başarısız olursa mevcut `WalletBalances` ile devam eder.
 class EconomyWalletAdapter {

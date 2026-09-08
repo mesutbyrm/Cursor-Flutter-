@@ -490,7 +490,7 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
           user: 'Sistem',
           text: GiftSystemMessage.format(
             ev,
-            jetonLabel: economyCurrencyLabel(ref, key: 'jeton'),
+            jetonLabel: economyCurrencyLabelRead(ref, key: 'jeton'),
           ),
           isSystem: true,
         ),
@@ -509,7 +509,7 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
       viewerCount: viewerCount,
       duration: duration,
       endedLabel: endedLabel,
-      jetonLabel: economyCurrencyLabel(ref, key: 'jeton'),
+      jetonLabel: economyCurrencyLabelRead(ref, key: 'jeton'),
     );
     for (final line in lines) {
       final trimmed = line.trim();

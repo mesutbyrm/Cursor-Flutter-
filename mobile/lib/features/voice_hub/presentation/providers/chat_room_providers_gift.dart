@@ -33,7 +33,7 @@ extension VoiceRoomGiftControls on VoiceRoomLiveController {
         : 'Biri';
     final line = GiftSystemMessage.format(
       ev,
-      jetonLabel: economyCurrencyLabel(ref, key: 'jeton'),
+      jetonLabel: economyCurrencyLabelRead(ref, key: 'jeton'),
     );
     state = state.copyWith(
       messages: [

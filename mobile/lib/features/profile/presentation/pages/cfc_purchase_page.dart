@@ -14,6 +14,7 @@ import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../wallet/domain/cfc_payment_request_entity.dart';
 import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_providers.dart';
+import '../premium_2026/profile_membership_helpers.dart';
 import '../../../membership/presentation/widgets/membership_pending_payment_banner.dart';
 import '../../../membership/presentation/widgets/membership_store_teaser_banner.dart';
 import '../widgets/cfc_balance_header.dart';

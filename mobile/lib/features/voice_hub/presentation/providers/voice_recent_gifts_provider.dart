@@ -102,7 +102,7 @@ class VoiceRecentGiftsController extends Notifier<VoiceRecentGiftsState> {
     }
 
     final line =
-        '${GiftSystemMessage.format(event, jetonLabel: economyCurrencyLabel(ref, key: 'jeton'))} 🎉';
+        '${GiftSystemMessage.format(event, jetonLabel: economyCurrencyLabelRead(ref, key: 'jeton'))} 🎉';
     final announcements = [
       VoiceGiftAnnouncement(
         id: 'gift-${event.id}-${now.microsecondsSinceEpoch}',
