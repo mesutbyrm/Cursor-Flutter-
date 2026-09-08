@@ -119,6 +119,12 @@ class AdminSiteAnimationsHubPage extends ConsumerWidget {
                     onTap: () => context.push('/admin/site-animations/user-assign'),
                   ),
                   _NavTile(
+                    icon: Icons.card_giftcard_outlined,
+                    title: 'Ödül Animasyonu',
+                    subtitle: 'Etkinlik / günlük giriş — süreli atama',
+                    onTap: () => context.push('/admin/site-animations/reward'),
+                  ),
+                  _NavTile(
                     icon: Icons.group_add_outlined,
                     title: 'Toplu Atama',
                     subtitle: 'Gold üyeler, oda, etkinlik',

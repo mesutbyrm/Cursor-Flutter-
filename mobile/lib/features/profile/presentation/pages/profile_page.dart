@@ -16,6 +16,7 @@ import '../../../fortune/presentation/providers/fortune_access_providers.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../premium_2026/profile_screen_builder.dart';
 import '../profile_hub/profile_hub_layout.dart';
+import '../../../../core/site_animation/presentation/widgets/site_animation_context_host.dart';
 import '../providers/profile_hub_providers.dart';
 import '../widgets/profile_guest_sign_in_card.dart';
 
@@ -164,7 +165,10 @@ class _ProfileScrollBody extends ConsumerWidget {
         staff.showAdminPanel || staff.canManagePayments;
 
     return ProfileRealtimeSync(
-      child: _profileScroll(
+      child: SiteAnimationContextHost(
+        context: SiteAnimationContext.profile,
+        child: SiteAnimationProfileReveal(
+          child: _profileScroll(
         context,
         [
           // Kapak durum çubuğunun altına kadar uzanır; ekstra üst boşluk yok.
@@ -188,6 +192,8 @@ class _ProfileScrollBody extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+        ),
       ),
     );
   }

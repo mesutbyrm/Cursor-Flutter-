@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/requireAuth";
+import { optionalAuth } from "../middleware/optionalAuth";
 import { requireStaff } from "../middleware/requireStaff";
 import { ok } from "../lib/response";
 import { jsonError } from "../lib/jsonError";
@@ -20,9 +21,9 @@ import {
 
 export const siteAnimationsRouter = Router();
 
-/** GET /api/site-animations/active — mobil runtime katalog */
-siteAnimationsRouter.get("/site-animations/active", async (_req, res) => {
-  const payload = await activeCatalogPayload();
+/** GET /api/site-animations/active — mobil runtime katalog (+ oturum atamaları) */
+siteAnimationsRouter.get("/site-animations/active", optionalAuth, async (req, res) => {
+  const payload = await activeCatalogPayload(req.userId);
   return ok(res, payload);
 });
 

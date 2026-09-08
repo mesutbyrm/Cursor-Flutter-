@@ -33,6 +33,7 @@ import '../../features/admin/presentation/pages/admin_site_animations_editor_pag
 import '../../features/admin/presentation/pages/admin_site_animations_defaults_page.dart';
 import '../../features/admin/presentation/pages/admin_site_animations_user_assign_page.dart';
 import '../../features/admin/presentation/pages/admin_site_animations_bulk_assign_page.dart';
+import '../../features/admin/presentation/pages/admin_site_animations_reward_page.dart';
 import '../../features/admin/presentation/pages/admin_site_animations_preview_page.dart';
 import '../../features/admin/domain/admin_site_animation.dart';
 import '../../features/admin/presentation/pages/admin_voice_room_backgrounds_page.dart';
@@ -957,6 +958,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
               key: state.pageKey,
               child: const AdminSiteAnimationsBulkAssignPage(),
+            ),
+          ),
+          GoRoute(
+            path: 'reward',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const AdminSiteAnimationsRewardPage(),
             ),
           ),
           GoRoute(

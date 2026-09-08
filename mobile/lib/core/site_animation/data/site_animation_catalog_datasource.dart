@@ -79,7 +79,7 @@ class SiteAnimationCatalogDataSource {
       animations: animations,
       entranceDefaults: _parseEntranceDefaults(payload['defaults'] ?? payload),
       exitDefaults: _parseExitDefaults(payload['exitDefaults']),
-      userAssignments: const {},
+      userAssignments: _parseUserAssignments(payload['userAssignments']),
     );
   }
 

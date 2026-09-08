@@ -399,13 +399,21 @@ export async function bulkAssignSiteAnimation(input: {
   }
 }
 
-export async function activeCatalogPayload() {
+export async function activeCatalogPayload(userId?: string) {
   const animations = await listActiveSiteAnimations();
   const defaults = await getSiteAnimationDefaults();
   const exitDefaults = await getSiteAnimationExitDefaults();
+  const userAssignments: Record<string, Record<string, string | null>> = {};
+  if (userId) {
+    const slots = await getUserSiteAnimationAssignments(userId);
+    if (Object.keys(slots).length > 0) {
+      userAssignments[userId] = slots;
+    }
+  }
   return {
     animations,
     defaults,
     exitDefaults,
+    userAssignments,
   };
 }

@@ -19,6 +19,8 @@ import '../../../cosmetics/presentation/providers/cosmetics_providers.dart';
 import '../../../cosmetics/presentation/widgets/cosmetic_avatar_frame.dart';
 import '../../../cosmetics/presentation/widgets/cosmetic_name_label.dart';
 import '../../../cosmetics/presentation/widgets/cosmetic_particle_overlay.dart';
+import '../../../../core/site_animation/presentation/site_animation_profile_providers.dart';
+import '../../../../core/site_animation/presentation/widgets/site_animation_framed_avatar.dart';
 
 /// Referans profil başlığı
 class ProfileHubHeader extends ConsumerWidget {
@@ -299,6 +301,7 @@ class _AvatarBlock extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final frame = ref.watch(resolvedProfileFrameProvider);
+    final siteFrame = ref.watch(resolvedSiteAnimationProfileFrameProvider);
     final profileFx = ref.watch(resolvedProfileEffectProvider);
 
     return GestureDetector(
@@ -306,15 +309,22 @@ class _AvatarBlock extends ConsumerWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          CosmeticAvatarFrame(
-            item: frame,
-            size: 92,
-            showParticles: false,
-            child: UserAvatar(
-              url: user.avatarUrl,
-              radius: 40,
+          if (siteFrame != null)
+            SiteAnimationFramedAvatar(
+              entry: siteFrame,
+              size: 92,
+              child: UserAvatar(url: user.avatarUrl, radius: 40),
+            )
+          else
+            CosmeticAvatarFrame(
+              item: frame,
+              size: 92,
+              showParticles: false,
+              child: UserAvatar(
+                url: user.avatarUrl,
+                radius: 40,
+              ),
             ),
-          ),
           if (profileFx != null)
             Positioned.fill(
               child: IgnorePointer(
