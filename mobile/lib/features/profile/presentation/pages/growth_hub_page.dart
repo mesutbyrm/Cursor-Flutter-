@@ -74,7 +74,9 @@ class GrowthHubPage extends ConsumerWidget {
         : progress.xp;
     final serverTasks = serverTasksAsync.valueOrNull ?? const <DailyTaskEntity>[];
     final taskCards = serverTasks.isNotEmpty
-        ? serverTasks.map(_growthTaskFromDaily).toList()
+        ? serverTasks
+            .map((t) => _growthTaskFromDaily(t, jetonLabel: jetonLabel))
+            .toList()
         : progress.tasks;
     final loading = auth.isLoading ||
         statsAsync.isLoading ||
@@ -203,7 +205,10 @@ class GrowthHubPage extends ConsumerWidget {
     );
   }
 
-  static GrowthTaskEntity _growthTaskFromDaily(DailyTaskEntity t) {
+  static GrowthTaskEntity _growthTaskFromDaily(
+    DailyTaskEntity t, {
+    required String jetonLabel,
+  }) {
     return GrowthTaskEntity(
       id: t.id,
       title: t.title,
@@ -211,7 +216,7 @@ class GrowthHubPage extends ConsumerWidget {
       current: t.current,
       target: t.target,
       rewardLabel: t.rewardJeton > 0
-          ? '+${t.rewardJeton} ödül'
+          ? '+${t.rewardJeton} $jetonLabel'
           : (t.rewardXp > 0 ? '+${t.rewardXp} XP' : '+XP'),
       route: t.resolvedRoute,
       icon: t.icon ?? '✅',

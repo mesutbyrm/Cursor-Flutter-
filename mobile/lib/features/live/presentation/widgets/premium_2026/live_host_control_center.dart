@@ -771,12 +771,13 @@ class _StatsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dash = ref.watch(liveHostDashboardProvider(streamId));
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        _statRow('💎', '${dash.totalJeton}'),
-        _statRow('Dakikalık', '${dash.perMinuteJeton}'),
-        _statRow('Saatlik', '${dash.perHourJeton}'),
+        _statRow('💎 Toplam', '${dash.totalJeton} $jetonLabel'),
+        _statRow('Dakikalık', '${dash.perMinuteJeton} $jetonLabel/dk'),
+        _statRow('Saatlik', '${dash.perHourJeton} $jetonLabel/sa'),
         _statRow('Hediye', '${dash.giftCount}'),
         _statRow('İzleyici', '${dash.viewerCount}'),
         _statRow('Beğeni', '${dash.likeCount}'),

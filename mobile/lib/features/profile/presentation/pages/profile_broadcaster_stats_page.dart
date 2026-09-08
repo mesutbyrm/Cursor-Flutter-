@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/providers/platform_stats_providers.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
@@ -15,6 +16,7 @@ class ProfileBroadcasterStatsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final mine = ref.watch(profileStatsProvider);
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -48,7 +50,7 @@ class ProfileBroadcasterStatsPage extends ConsumerWidget {
                       _row(context, 'Canlı yayın', '${s.liveStreams}'),
                       _row(context, 'Beğeni', '${s.likes}'),
                       _row(context, 'Takipçi', '${s.followers}'),
-                      _row(context, 'Hediye jetonu', '${s.earningsJeton}'),
+                      _row(context, 'Hediye $jetonLabel', '${s.earningsJeton}'),
                     ],
                   ),
                 ),

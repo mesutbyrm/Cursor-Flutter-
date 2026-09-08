@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../domain/voice_official_join.dart';
 
 /// Yetkili giriş duyurusu — sayfa üstünde geçici kayan şerit (kalıcı banner değil).
@@ -65,8 +66,9 @@ class StaffEntranceMarqueeNotifier extends Notifier<StaffEntranceMarqueeState> {
   }) {
     final user = userName.trim().isEmpty ? 'Biri' : userName.trim();
     final gift = giftName.trim().isEmpty ? 'Talih Kutusu' : giftName.trim();
+    final jetonLabel = economyCurrencyLabelRead(ref, key: 'jeton');
     enqueue(
-      '👑 JACKPOT! $user $gift ile ×$multiplier kazandı — $wonJetons jeton!',
+      '👑 JACKPOT! $user $gift ile ×$multiplier kazandı — $wonJetons $jetonLabel!',
     );
   }
 

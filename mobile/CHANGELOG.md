@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.378+416 (2026-09-08) — economy Faz 21: yayın istatistik + büyüme görevleri
+
+- Yayıncı istatistikleri «Hediye Jeton» satırı markalı
+- Canlı yayıncı kontrol merkezi gelir satırları `$jetonLabel`
+- Şanslı JACKPOT duyurusu ve günlük görev ödül etiketi markalı
+
 ## 1.0.377+415 (2026-09-08) — economy Faz 20: psychic + müzik hub etiketleri
 
 - `economyJetonBalanceLine` / `economyJetonBalanceRefundNotice` yardımcıları
