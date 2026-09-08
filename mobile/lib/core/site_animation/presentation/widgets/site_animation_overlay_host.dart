@@ -39,7 +39,7 @@ class SiteAnimationOverlayHost extends ConsumerWidget {
                 active.type == SiteAnimationType.seatRankGlow ||
                 active.type == SiteAnimationType.hostSeat))
           SiteAnimationSeatRankGlow(command: active),
-        if (active != null)
+        if (active != null && active.type != SiteAnimationType.seatRankGlow)
           SiteAnimationCard(
             key: ValueKey(active.eventId),
             command: active,

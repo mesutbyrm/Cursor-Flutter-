@@ -86,6 +86,23 @@ void main() {
       expect(on?.type, SiteAnimationType.micEnabled);
       expect(off?.type, SiteAnimationType.micDisabled);
     });
+
+    test('seat_rank_glow maps to seat glow with seat anchor', () {
+      final cmd = SiteAnimationParser.fromRoomEvent(
+        roomId: 'room-1',
+        event: 'seat_rank_glow',
+        payload: {
+          'eventId': 'evt-glow',
+          'userId': 'u1',
+          'name': 'Gold Koltuk',
+          'membership': 'gold',
+          'seatIndex': 3,
+        },
+      );
+      expect(cmd?.type, SiteAnimationType.seatRankGlow);
+      expect(cmd?.layout.seatIndex, 3);
+      expect(cmd?.tier, SiteAnimationTier.gold);
+    });
   });
 
   group('SiteAnimationManager', () {

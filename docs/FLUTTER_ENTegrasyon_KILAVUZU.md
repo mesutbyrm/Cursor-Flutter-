@@ -1161,6 +1161,7 @@ class SseEvent {
 
   // Notification SSE event types
   bool get isNotification => type == 'notification';
+  bool get isRoomEvent => type == 'room_event';
 }
 ```
 
@@ -2133,7 +2134,7 @@ Auth gerektiren endpoint'ler `Authorization: Bearer <accessToken>` header'ı bek
 | `invitePk` | POST | `/api/chat/rooms/{roomId}/pk` | ✅ | `{ guestUserId, durationSec }` |
 | `respondPk` | POST | `/api/chat/rooms/{roomId}/pk/{inviteId}/respond` | ✅ | `{ action: "accept" \| "reject" }` |
 | `endPk` | POST | `/api/chat/rooms/{roomId}/pk/{battleId}/end` | ✅ | — |
-| **SSE** | GET | `/api/chat/rooms/{roomId}/stream` | ✅ | Event `pk` — skor, davet, bitiş |
+| **SSE** | GET | `/api/chat/rooms/{roomId}/stream` | ✅ | Event `pk` — skor, davet, bitiş; `room_event` — giriş/çıkış/koltuk/mic animasyon meta |
 
 ### 9.4 LiveStreamRepository
 
@@ -2320,6 +2321,47 @@ Auth gerektiren endpoint'ler `Authorization: Bearer <accessToken>` header'ı bek
 | `getMembershipBadges` | GET | `/api/membership-badges` | ❌ | Üyelik rozetleri |
 | `getAds` | GET | `/api/ads/active` | ❌ | Aktif reklamlar |
 | `claimAdReward` | POST | `/api/ads/reward` | ✅ | Reklam ödülü al |
+
+### 9.14 SiteAnimationRepository
+
+| Metot | HTTP | Endpoint | Auth | Body / Query |
+|-------|------|----------|------|--------------|
+| `getActiveCatalog` | GET | `/api/site-animations/active` | Opsiyonel | Aktif animasyon kataloğu + `defaults` + `exitDefaults` |
+| `listAnimations` | GET | `/api/admin/site-animations` | Staff | Tüm animasyon kayıtları |
+| `createAnimation` | POST | `/api/admin/site-animations` | Staff | `{id, name, category, membership, animationType?, assetUrl?, …}` |
+| `updateAnimation` | PATCH | `/api/admin/site-animations/{id}` | Staff | Kısmi güncelleme |
+| `getStats` | GET | `/api/admin/site-animations/stats` | Staff | Katalog istatistikleri |
+| `getDefaults` | GET | `/api/admin/site-animations/defaults` | Staff | Üyelik → giriş animasyonu eşlemesi |
+| `saveDefaults` | PUT | `/api/admin/site-animations/defaults` | Staff | `{normal: "anim_…", gold: "anim_…", …}` |
+| `assignAnimation` | POST | `/api/admin/site-animations/assign` | Staff | `{userId, slot, animationId}` |
+| `bulkAssign` | POST | `/api/admin/site-animations/bulk-assign` | Staff | Toplu atama |
+
+**SSE `room_event` payload (sesli oda):**
+
+```json
+{
+  "type": "room_event",
+  "event": "user_joined",
+  "roomId": "room-slug",
+  "userId": "u1",
+  "name": "Ayşe Yıldız",
+  "membership": "gold",
+  "seatIndex": 2,
+  "animation": {
+    "id": "anim_entrance_gold_crown",
+    "assetUrl": "assets/gifts/lottie/crown.json",
+    "assetType": "lottie",
+    "anchor": "TOP_LEFT",
+    "scale": 1,
+    "durationMs": 3000,
+    "priority": 70
+  }
+}
+```
+
+Desteklenen `event` değerleri: `user_joined`, `user_left`, `seat_changed`, `mic_changed`, `owner_changed`. Pasif (`isActive: false`) animasyonlar sunucuda filtrelenir; istemci yine de katalogdan doğrular.
+
+**Mobil runtime:** `SiteAnimationCatalogDataSource` → `GET /api/site-animations/active`; 404/403’te admin SharedPreferences + seed fallback. Oda SSE’sinde `room_event` alındığında `SiteAnimationResolver` katalog ile birleştirir.
 
 ---
 

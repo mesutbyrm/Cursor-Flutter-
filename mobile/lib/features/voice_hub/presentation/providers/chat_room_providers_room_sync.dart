@@ -202,6 +202,16 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     _patchHubOnlineCountFromPayload(payload, fallback: next.length);
     _notifyRealtimeIfBasic(VoiceRoomRealtimeKind.join, '$name odaya katıldı');
     _dispatchSiteAnimation('user_joined', payload);
+    final seatIndex = user.seatIndex ?? _parseEventInt(payload['seatIndex']);
+    if (seatIndex != null && seatIndex > 0) {
+      _dispatchSiteAnimation('seat_rank_glow', {
+        ...payload,
+        'userId': userId,
+        'name': name,
+        'seatIndex': seatIndex,
+        'eventId': '${payload['eventId'] ?? userId}:seat_glow',
+      });
+    }
   }
 
   void _applyRoomEventUserLeft(Map<String, dynamic> payload) {

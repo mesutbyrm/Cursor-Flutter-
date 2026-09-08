@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.382+420 (2026-09-08) — Site Animation Engine tamamlama
+
+- Koltuk atama (`seat_changed`) ve konuşma onayı SSE `room_event` zenginleştirmesi (API mirror)
+- Girişte koltuk varsa `seat_rank_glow` overlay (tier bazlı koltuk parıltısı)
+- Entegrasyon kılavuzu §9.14 SiteAnimationRepository + `room_event` payload
+- Parser/resolver testleri genişletildi
+
 ## 1.0.381+419 (2026-09-08) — economy Faz 24: global hediye label testleri
 
 - `GlobalGiftNotification.label(jetonLabel: …)` markalı etiket regresyon testleri

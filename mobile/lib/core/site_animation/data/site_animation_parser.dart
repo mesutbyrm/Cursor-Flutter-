@@ -86,6 +86,10 @@ abstract final class SiteAnimationParser {
       type = SiteAnimationType.micEnabled;
     } else if (_micDisabled.contains(normalized)) {
       type = SiteAnimationType.micDisabled;
+    } else if (normalized == 'seat_rank_glow' ||
+        normalized == 'seat_rank' ||
+        normalized == 'seat_glow') {
+      type = SiteAnimationType.seatRankGlow;
     }
 
     if (type == null) return null;
