@@ -4,19 +4,19 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.390+428` |
-| Tarih (UTC) | 2026-09-08 12:34 |
-| Commit | [`1d97c5edd4a8cd116903e188909cd358cc9bce0f`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/1d97c5edd4a8cd116903e188909cd358cc9bce0f) |
-| İş akışı | [Run 34225407041](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34225407041) |
+| Sürüm | `1.0.391+429` |
+| Tarih (UTC) | 2026-09-08 12:59 |
+| Commit | [`9bd46bcb238ed2c069fdaadc1fbca9dbc33cba85`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/9bd46bcb238ed2c069fdaadc1fbca9dbc33cba85) |
+| İş akışı | [Run 34227638719](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34227638719) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.390+428 (2026-09-08) — Site Animation: sosyal giriş köprüsü
+## 1.0.391+429 (2026-09-08) — Site Animation: global sosyal giriş + CI stabilizasyon
 
-- `site_animation_social_bridge.dart` — global marquee VIP giriş → `ctx_social` kart
-- `SocialPage` staff entrance listener entegrasyonu
-- Analiz dokümanı sosyal hook tamamlandı olarak güncellendi
+- `SiteAnimationSocialEntranceListener` — marquee VIP giriş kartı tüm sekmelerde (`ctx_social` app shell)
+- Site Animation merge sonrası CI derleme düzeltmeleri (import yolları, Ref/WidgetRef köprüsü, testler)
+- Analiz dokümanı: PR #365 birleşti, APK `1.0.390+428` yeşil
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
