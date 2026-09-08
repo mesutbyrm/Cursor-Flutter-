@@ -4,16 +4,16 @@
 
 > **Güncel (2026-09-08):** **`1.0.391+429`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
-**Son güncelleme:** 2026-09-07
+**Son güncelleme:** 2026-09-08
 
 ## Güncel durum
 
 | İş akışı | Durum | Not |
 |----------|--------|-----|
 | `ci.yml` | ✅ PASS | Analyze + flutter test (1081+) |
-| `build-apk.yml` | ✅ **FINAL PASS** | [Run 34146919509](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34146919509) |
+| `build-apk.yml` | ✅ **FINAL PASS** | [Run 34241450261](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34241450261) |
 | `build-aab.yml` | ⏸ manuel | Play Store AAB — `workflow_dispatch` · `ANDROID_KEYSTORE_*` · adımlar: `bash scripts/print-ci-aab-steps.sh` |
-| `apk-latest` | ✅ | `1.0.371+409` |
+| `apk-latest` | ✅ | `1.0.391+429` |
 | `[skip ci]` push | ✅ | CI/CodeQL/APK/cleanup atlanır — docs/CI-only commit |
 
 ## İş akışları

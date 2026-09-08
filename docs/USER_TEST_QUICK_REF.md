@@ -1,7 +1,7 @@
 # Cihaz testi — hızlı referans (1 sayfa)
 
 
-> **Sürüm:** `1.0.371+409` · **RELEASE READY: NO** · Agent prep **✅ TAMAM** · Cihaz + keystore sizde
+> **Sürüm:** `1.0.391+429` · **RELEASE READY: NO** · Agent prep **✅ TAMAM** · Cihaz + keystore sizde
 
 ## APK
 

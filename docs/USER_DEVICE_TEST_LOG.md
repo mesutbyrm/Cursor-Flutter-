@@ -1,7 +1,7 @@
 # Kullanıcı cihaz test günlüğü
 
 
-> **Sürüm:** `1.0.371+409` · **RELEASE READY: NO** · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+> **Sürüm:** `1.0.391+429` · **RELEASE READY: NO** · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
 Psychic P0 ve P1 sonuçlarını buraya kaydedin. Agent'a tek satır bildirim yeterlidir.
 

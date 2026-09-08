@@ -1,7 +1,7 @@
 # Play Store — agent hazırlık checklist (1 sayfa)
 
 
-> **Sürüm:** `1.0.371+409` · Cihaz P0/P1 **sonra** · Agent prep **✅ TAMAM**
+> **Sürüm:** `1.0.391+429` · Cihaz P0/P1 **sonra** · Agent prep **✅ TAMAM**
 
 ## Komutlar
 

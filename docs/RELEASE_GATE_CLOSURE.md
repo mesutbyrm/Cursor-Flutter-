@@ -1,4 +1,4 @@
-# Release Gate Closure — 1.0.371+409
+# Release Gate Closure — 1.0.391+429
 
 
 > **Güncel (2026-09-08):** **`1.0.391+429`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
@@ -15,7 +15,7 @@
 | `flutter test` | ✅ PASS | 1081 geçti, 2 skip (CI run `34144153254`) |
 | Release gate 1–9 | ✅ PASS | Build + signing + artifact |
 | apk-latest upload | ✅ PASS | 502 dayanıklılığı (`814f8758`) |
-| apk-latest metadata | ✅ PASS | Ayrı adım; title `Canlifal APK 1.0.371+409` |
+| apk-latest metadata | ✅ PASS | Ayrı adım; title `Canlifal APK 1.0.391+429` |
 | APK HTTP | ✅ 200 | İndirme + aapt metadata doğrulama |
 | APK versionName | ✅ 1.0.371 | universal APK |
 | APK versionCode | ✅ 409 | pubspec build number |

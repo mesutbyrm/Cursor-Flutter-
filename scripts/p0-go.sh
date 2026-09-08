@@ -20,7 +20,7 @@ Hesaplar (aynı şifre):
 Kritik: T+5 saniyede video/ses DONMAMALI.
 
 Doğrulama (isteğe bağlı):
-  bash scripts/validate-pre-device-handoff.sh
+  bash scripts/p0-ready.sh
 
 Başlat:
   bash scripts/user-test-start.sh p0      # checklist yazdır

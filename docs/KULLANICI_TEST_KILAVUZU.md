@@ -3,7 +3,7 @@
 
 > **Güncel (2026-09-08):** **`1.0.391+429`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
-**Sürüm:** `1.0.371+409` · **Son release gate:** [FINAL PASS](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34146919509)
+**Sürüm:** `1.0.391+429` · **Son release gate:** [FINAL PASS](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34241450261)
 
 **Teknik bilgi gerekmez.** Özet: [`USER_TEST_QUICK_REF.md`](USER_TEST_QUICK_REF.md) · **`bash scripts/kalan-isler.sh`**
 

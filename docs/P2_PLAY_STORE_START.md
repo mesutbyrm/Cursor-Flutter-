@@ -43,7 +43,7 @@ bash scripts/print-play-console-prep-index.sh
 
 ## Durum (2026-09-07)
 
-- Mobil release gate CI: **FINAL PASS** (`1.0.371+409`)
+- Mobil release gate CI: **FINAL PASS** (`1.0.391+429`)
 - Play Store paketi: tarihsel doc — **release keystore + güncel AAB** gerekir
 - Agent: doc/backlog; Console işlemleri **kullanıcı**
 

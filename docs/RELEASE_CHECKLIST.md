@@ -3,7 +3,7 @@
 
 > **Güncel (2026-09-08):** **`1.0.391+429`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
-Sürüm: **1.0.371+409**  
+Sürüm: **1.0.391+429**  
 Tarih: **2026-09-07**  
 Dal: `main`  
 Son release gate: [Run 34146919509](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34146919509) — **FINAL: PASS**

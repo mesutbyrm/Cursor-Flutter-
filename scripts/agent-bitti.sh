@@ -51,4 +51,5 @@ cat <<'EOF'
 
 Tam agent yenileme (yavaş, ~1 dk): bash scripts/devam-et.sh --full
 API rapor yenile:                  bash scripts/devam-et.sh --api
+Doc sürüm hizala:                  bash scripts/sync-docs-release-header.sh
 EOF

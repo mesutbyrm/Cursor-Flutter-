@@ -134,7 +134,7 @@ case "${1:-}" in
     exec bash "$ROOT/scripts/print-p0-live-status.sh"
     ;;
   ready|p0-ready|device-ready)
-    exec bash "$ROOT/scripts/validate-pre-device-handoff.sh"
+    exec bash "$ROOT/scripts/p0-ready.sh"
     ;;
   go|p0-go|start)
     exec bash "$ROOT/scripts/p0-go.sh"

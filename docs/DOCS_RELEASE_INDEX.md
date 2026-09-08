@@ -1,8 +1,8 @@
 # Dokümantasyon — release durumu indeksi
 
-**Son güncelleme:** 2026-09-08  
-**Sürüm:** `1.0.381+419`  
-**Release gate:** **FINAL PASS** — [Run 34146919509](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34146919509)  
+**Son güncelleme:** 2026-09-08
+**Sürüm:** `1.0.391+429`  
+**Release gate:** **FINAL PASS** — [Run 34241450261](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34241450261)  
 **RELEASE READY:** `NO` — Psychic P0 cihaz testi bekleniyor
 
 > Tüm `docs/**/*.md`, kök `*.md` parity raporları ve `mobile/docs/*.md` dosyalarına **2026-09-07** güncel durum banner'ı eklendi. Gövde metni tarihsel olabilir; karar için **birincil** tabloya bakın.
