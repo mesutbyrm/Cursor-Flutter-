@@ -160,3 +160,33 @@ String economyCfcBalanceHeaderLabel(WidgetRef ref, {Locale? locale}) {
   final label = economyCurrencyLabel(ref, key: 'cfc', locale: locale);
   return '$label Bakiyeniz';
 }
+
+/// Yetersiz bakiye — genel (müzik isteği, fal vb.).
+String economyInsufficientJetonMessage(
+  WidgetRef ref, {
+  required int required,
+  Locale? locale,
+}) {
+  final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
+  return 'Yetersiz $label. Gerekli: $required';
+}
+
+/// Sesli oda duyuru — yetersiz bakiye.
+String economyInsufficientJetonForDuyuruMessage(
+  WidgetRef ref, {
+  required int cost,
+  Locale? locale,
+}) {
+  final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
+  return 'Yetersiz $label. Duyuru için $cost $label gerekir.';
+}
+
+/// Müzik / şarkı isteği — minimum bakiye.
+String economyMinimumJetonForMusicRequestMessage(
+  WidgetRef ref, {
+  required int requiredCost,
+  Locale? locale,
+}) {
+  final label = economyCurrencyLabel(ref, key: 'jeton', locale: locale);
+  return 'Şarkı isteği için en az $requiredCost $label gerekir.';
+}

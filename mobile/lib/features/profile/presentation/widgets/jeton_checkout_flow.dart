@@ -487,8 +487,9 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
         'Dekont görseli eklendi (yüklenemedi — admin ile paylaşın)',
     ];
     final receipt = receiptParts.join(' · ');
+    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final autoNotes =
-        'Açıklama: $_userLabel · ${widget.package.coins} jeton · ${widget.priceText}';
+        'Açıklama: $_userLabel · ${widget.package.coins} $jetonLabel · ${widget.priceText}';
     final isMembership = widget.package.id.startsWith('membership_');
     final body = isMembership
         ? buildMembershipPaymentRequest(
@@ -504,6 +505,7 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
             notes: '$autoNotes\n${widget.paymentNotes ?? ''}'.trim(),
             senderLabel: _userLabel,
             receiptReference: receipt.isEmpty ? null : receipt,
+            jetonLabel: jetonLabel,
           );
     await ref.read(walletRepositoryProvider).submitPaymentRequest(body).timeout(
           const Duration(seconds: 35),

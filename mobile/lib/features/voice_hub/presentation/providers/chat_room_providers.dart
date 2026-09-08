@@ -2145,7 +2145,7 @@ class VoiceRoomLiveController
         final cost = withVideo
             ? VoiceMusicAccess.videoRequestCost(state.dj)
             : VoiceMusicAccess.audioRequestCost(state.dj);
-        return 'Yetersiz jeton. Gerekli: $cost';
+        return economyInsufficientJetonMessage(ref, required: cost);
       }
     }
 
@@ -2840,7 +2840,10 @@ class VoiceRoomLiveController
         ref.read(walletBalancesProvider).valueOrNull,
       );
       if (!VoiceRoomDuyuruAccess.canAfford(perms: perms, jetonBalance: jeton)) {
-        return 'Yetersiz jeton. Duyuru için ${VoiceRoomDuyuruAccess.jetonCost} jeton gerekir.';
+        return economyInsufficientJetonForDuyuruMessage(
+          ref,
+          cost: VoiceRoomDuyuruAccess.jetonCost,
+        );
       }
     }
 
@@ -3104,7 +3107,10 @@ class VoiceRoomLiveController
             jetonBalance: jeton,
           ) ||
           jeton < requiredCost) {
-        return 'Şarkı isteği için en az $requiredCost jetona sahip olmalısınız.';
+        return economyMinimumJetonForMusicRequestMessage(
+          ref,
+          requiredCost: requiredCost,
+        );
       }
       final result = await ref.read(chatRoomRemoteProvider).requestMusicByQuery(
             roomKey: _roomKey,
@@ -3257,7 +3263,10 @@ class VoiceRoomLiveController
               jetonBalance: jeton,
             ) ||
             jeton < requiredCost) {
-          return 'Şarkı isteği için en az $requiredCost jetona sahip olmalısınız.';
+          return economyMinimumJetonForMusicRequestMessage(
+          ref,
+          requiredCost: requiredCost,
+        );
         }
       }
       VoiceRoomDebugLog.log('music.request', {

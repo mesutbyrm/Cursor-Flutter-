@@ -4,10 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../economy/presentation/providers/economy_providers.dart';
+import '../economy/presentation/widgets/branded_dual_balance_chips.dart';
 import '../../features/inbox/presentation/inbox_routes.dart';
 import '../../features/inbox/presentation/providers/inbox_unread_providers.dart';
 import '../../features/profile/presentation/providers/profile_providers.dart';
-import 'dual_balance_chips.dart';
 import 'user_avatar.dart';
 
 /// Profil sekmesi gibi yerlerde: ana akışa (`/feed`) döner.
@@ -105,7 +105,7 @@ class ShellCoinBalanceAction extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 2),
       child: wallet.when(
-        data: (b) => DualBalanceChips(
+        data: (b) => BrandedDualBalanceChips(
           jeton: b.jeton,
           cfc: b.cfc,
           compact: true,

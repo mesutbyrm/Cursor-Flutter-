@@ -3,7 +3,7 @@ import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../../core/widgets/dual_balance_chips.dart';
+import '../../../../../core/economy/presentation/widgets/branded_dual_balance_chips.dart';
 import '../../../../../core/widgets/messages_notifications_actions.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import 'profile_glass.dart';
@@ -60,7 +60,7 @@ class ProfileNeonHeader extends ConsumerWidget {
               child: Text('Profilim', style: ProfileTypography.pageTitle(context)),
             ),
             if (diamondBalance != null)
-              DualBalanceChips(
+              BrandedDualBalanceChips(
                 jeton: diamondBalance!,
                 cfc: cfcBalance,
                 compact: true,

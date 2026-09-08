@@ -142,11 +142,13 @@ class LiveGiftEvent extends Equatable {
     return img;
   }
 
-  String get notificationText {
+  String brandedNotificationText({String jetonLabel = 'Jeton'}) {
     final q = quantity > 1 ? 'x$quantity' : '';
     final jeton = jetonAmount;
-    return '$senderName → $receiverName $giftName$q ($jeton jeton) gönderdi';
+    return '$senderName → $receiverName $giftName$q ($jeton $jetonLabel) gönderdi';
   }
+
+  String get notificationText => brandedNotificationText();
 
   @override
   List<Object?> get props => [
