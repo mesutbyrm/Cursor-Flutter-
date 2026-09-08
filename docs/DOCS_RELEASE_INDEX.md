@@ -1,7 +1,7 @@
 # Dokümantasyon — release durumu indeksi
 
-**Son güncelleme:** 2026-09-07  
-**Sürüm:** `1.0.371+409`  
+**Son güncelleme:** 2026-09-08  
+**Sürüm:** `1.0.381+419`  
 **Release gate:** **FINAL PASS** — [Run 34146919509](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34146919509)  
 **RELEASE READY:** `NO` — Psychic P0 cihaz testi bekleniyor
 

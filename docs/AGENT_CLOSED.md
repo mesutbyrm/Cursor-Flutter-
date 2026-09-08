@@ -1,7 +1,7 @@
-# Agent durumu — paralel mod (2026-09-07)
+# Agent durumu — paralel mod (2026-09-08)
 
 
-> **Sürüm:** `1.0.371+409` · Release gate **FINAL PASS** · **RELEASE READY: NO**
+> **Sürüm:** `1.0.381+419` · Release gate **FINAL PASS** · **RELEASE READY: NO**
 
 Mobil kod, CI, API otomasyon ve **P2 prep betik paketi tamam**. **Cihaz testi sonucu sonra** — hotfix yalnızca **Psychic P0 FAIL** ile.
 
@@ -31,6 +31,7 @@ Mobil kod, CI, API otomasyon ve **P2 prep betik paketi tamam**. **Cihaz testi so
 | Agent prep paketi | ✅ `agent-prep-tamam.sh` · upload day checklist · tüm print betikleri |
 | Hızlı durum | ✅ `agent-bitti.sh` · `devam-et.sh` (--full · --api) |
 | Kalan işler doc | ✅ `docs/KALAN_ISLER.md` |
+| ZIP economy v2 (Faz 1–24) | ✅ markalı Jeton/CFC UI · `core/economy/` |
 
 ---
 

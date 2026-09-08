@@ -1,7 +1,7 @@
 # Release — kullanıcı sonraki adımlar
 
 
-> **Güncel (2026-09-07):** **`1.0.371+409`** · **RELEASE READY: NO** · Agent P2 prep **✅ TAMAM** · Cihaz + keystore + Play **sizde**
+> **Güncel (2026-09-08):** **`1.0.381+419`** · **RELEASE READY: NO** · Agent P2 prep **✅ TAMAM** · ZIP economy v2 **✅ TAMAM** · Cihaz + keystore + Play **sizde**
 
 **İki hat:** Agent prep bitti (`agent-prep-tamam.sh`). Cihaz testi + Play yükleme sizde.
 
@@ -45,7 +45,8 @@ bash scripts/kalan-isler.sh                # durum tablosu
 | M5 API smoke | ✅ 6 geçti / 2 atlandı |
 | M7 song-request | ✅ HTTP 200 |
 | m5-preflight | ✅ |
-| Flutter unit (1081) | ✅ CI |
+| Flutter unit (1081+) | ✅ CI |
+| ZIP economy v2 (Faz 1–24) | ✅ `1.0.381+419` · markalı Jeton/CFC UI |
 
 Özet: `bash scripts/run-api-automation-summary.sh`
 
