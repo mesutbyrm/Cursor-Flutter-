@@ -103,6 +103,27 @@ void main() {
       expect(cmd?.layout.seatIndex, 3);
       expect(cmd?.tier, SiteAnimationTier.gold);
     });
+
+    test('uses server animation metadata from enriched room_event', () {
+      final cmd = SiteAnimationParser.fromRoomEvent(
+        roomId: 'room-1',
+        event: 'user_joined',
+        payload: {
+          'eventId': 'evt-server',
+          'userId': 'u1',
+          'membership': 'gold',
+          'animation': {
+            'id': 'anim_entrance_gold_crown',
+            'assetUrl': 'assets/gifts/lottie/crown.json',
+            'assetType': 'lottie',
+            'anchor': 'TOP_LEFT',
+            'durationMs': 3000,
+          },
+        },
+      );
+      expect(cmd?.asset?.url, 'assets/gifts/lottie/crown.json');
+      expect(cmd?.layout.durationMs, 3000);
+    });
   });
 
   group('SiteAnimationManager', () {

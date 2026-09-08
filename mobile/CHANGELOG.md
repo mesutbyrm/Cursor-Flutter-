@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.385+423 (2026-09-08) — Site Animation Repository katmanı
+
+- `SiteAnimationRepository` — kılavuz §9.14 facade (`getActiveCatalog`, admin sync)
+- Runtime katalog provider repository üzerinden yüklenir
+- SSE zenginleştirilmiş `animation` metadata parser testi
+
 ## 1.0.384+422 (2026-09-08) — Site Animation: voice mic SSE
 
 - API mirror `GET/POST /api/chat/rooms/{roomId}/voice` — join/leave + `mic_changed` room_event SSE
