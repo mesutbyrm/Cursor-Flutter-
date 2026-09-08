@@ -13,13 +13,18 @@ abstract final class SiteAnimationResolver {
     required SiteAnimationCommand base,
     required SiteAnimationCatalogSnapshot catalog,
   }) {
-    final entry = _pickEntry(base: base, catalog: catalog);
+    final picked = _pickEntry(base: base, catalog: catalog);
+    final entry = picked.entry;
     if (entry == null) return base;
     if (!entry.isActive) return null;
-    return _applyEntry(base, entry);
+    return _applyEntry(
+      base,
+      entry,
+      adminCustomPriority: picked.adminAssigned ? 110 : null,
+    );
   }
 
-  static SiteAnimationCatalogEntry? _pickEntry({
+  static ({SiteAnimationCatalogEntry? entry, bool adminAssigned}) _pickEntry({
     required SiteAnimationCommand base,
     required SiteAnimationCatalogSnapshot catalog,
   }) {
@@ -31,20 +36,26 @@ abstract final class SiteAnimationResolver {
           !assignment.isExpired &&
           assignment.animationId.isNotEmpty) {
         final assigned = catalog.byId(assignment.animationId);
-        if (assigned != null) return assigned;
+        if (assigned != null) {
+          return (entry: assigned, adminAssigned: true);
+        }
       }
     }
 
     if (base.type.isEntrance) {
       final defaultId = catalog.entranceDefaults[base.tier];
       final fromDefault = catalog.byId(defaultId);
-      if (fromDefault != null) return fromDefault;
+      if (fromDefault != null) {
+        return (entry: fromDefault, adminAssigned: false);
+      }
     }
 
     if (base.type.isExit) {
       final defaultId = catalog.exitDefaults[base.tier];
       final fromDefault = catalog.byId(defaultId);
-      if (fromDefault != null) return fromDefault;
+      if (fromDefault != null) {
+        return (entry: fromDefault, adminAssigned: false);
+      }
     }
 
     final category = _categoryForType(base.type);
@@ -59,13 +70,14 @@ abstract final class SiteAnimationResolver {
         break;
       }
     }
-    return tierMatch ?? categoryMatch;
+    return (entry: tierMatch ?? categoryMatch, adminAssigned: false);
   }
 
   static SiteAnimationCommand _applyEntry(
     SiteAnimationCommand base,
-    SiteAnimationCatalogEntry entry,
-  ) {
+    SiteAnimationCatalogEntry entry, {
+    int? adminCustomPriority,
+  }) {
     final backendAsset = entry.assetUrl != null && entry.assetUrl!.isNotEmpty
         ? SiteAnimationAsset(
             url: entry.assetUrl,
@@ -89,7 +101,7 @@ abstract final class SiteAnimationResolver {
     return base.copyWith(
       layout: layout,
       asset: asset,
-      priorityOverride: entry.priority,
+      priorityOverride: adminCustomPriority ?? entry.priority,
       catalogLabel: entry.description ?? entry.name,
     );
   }

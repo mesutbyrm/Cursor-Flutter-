@@ -64,6 +64,35 @@ class AdminSiteAnimationsHubPage extends ConsumerWidget {
                     ),
                     data: (stats) => AdminSiteAnimationStatsGrid(stats: stats),
                   ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Kategoriler',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: AdminSiteAnimationCategory.hubCategories
+                        .map(
+                          (cat) => ActionChip(
+                            label: Text(cat.label),
+                            backgroundColor: const Color(0xFF1A0F33),
+                            labelStyle: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            onPressed: () => context.push(
+                              '/admin/site-animations/library?category=${cat.name}',
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
                   const SizedBox(height: 20),
                   _NavTile(
                     icon: Icons.collections_rounded,
@@ -97,8 +126,8 @@ class AdminSiteAnimationsHubPage extends ConsumerWidget {
                   ),
                   _NavTile(
                     icon: Icons.play_circle_outline_rounded,
-                    title: 'Oda Önizleme',
-                    subtitle: 'Gerçek sesli oda mock üzerinde test',
+                    title: 'Ekran Önizleme',
+                    subtitle: 'Sosyal, profil, sesli oda, Fal & Tarot mock',
                     onTap: () => context.push('/admin/site-animations/preview'),
                   ),
                 ],

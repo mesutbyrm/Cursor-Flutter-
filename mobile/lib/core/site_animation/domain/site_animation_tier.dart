@@ -12,15 +12,16 @@ enum SiteAnimationTier {
   admin,
   host;
 
+  /// Spec priority: NORMAL=10 … EMPEROR=100, ADMIN_CUSTOM=110 (catalog override).
   int get queuePriority => switch (this) {
-        SiteAnimationTier.admin => 100,
+        SiteAnimationTier.normal => 10,
+        SiteAnimationTier.gold => 30,
+        SiteAnimationTier.premium => 40,
+        SiteAnimationTier.diamond => 60,
+        SiteAnimationTier.vip => 80,
+        SiteAnimationTier.svip => 90,
         SiteAnimationTier.host => 95,
-        SiteAnimationTier.diamond => 90,
-        SiteAnimationTier.svip => 85,
-        SiteAnimationTier.premium => 80,
-        SiteAnimationTier.gold => 70,
-        SiteAnimationTier.vip => 65,
-        SiteAnimationTier.normal => 50,
+        SiteAnimationTier.admin => 100,
       };
 
   static SiteAnimationTier resolve({

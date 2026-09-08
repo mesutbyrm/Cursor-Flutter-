@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../features/auth/presentation/providers/auth_controller_provider.dart';
 import '../data/site_animation_parser.dart';
 import '../data/site_animation_resolver.dart';
 import '../domain/site_animation_catalog_entry.dart';
@@ -42,6 +43,7 @@ class SiteAnimationNotifier
           ownerId: ownerId,
         );
         if (base == null) return null;
+        if (_shouldSuppressSelfEntrance(base)) return null;
         final catalog = ref.read(siteAnimationCatalogProvider).valueOrNull ??
             const SiteAnimationCatalogSnapshot();
         return SiteAnimationResolver.resolve(base: base, catalog: catalog);
@@ -61,6 +63,24 @@ class SiteAnimationNotifier
       _manager.preload(command.asset);
 
   void onActiveFinished(String eventId) => _manager.onActiveFinished(eventId);
+
+  /// Kullanıcı kendi giriş kartını görmez — spec §22.
+  bool _shouldSuppressSelfEntrance(SiteAnimationCommand base) {
+    return shouldSuppressSelfEntranceAnimation(
+      command: base,
+      currentUserId: ref.read(authControllerProvider).valueOrNull?.id,
+    );
+  }
+}
+
+/// Test edilebilir self-entrance filtresi.
+bool shouldSuppressSelfEntranceAnimation({
+  required SiteAnimationCommand command,
+  required String? currentUserId,
+}) {
+  if (!command.type.isEntrance) return false;
+  if (currentUserId == null || currentUserId.isEmpty) return false;
+  return command.userId == currentUserId;
 }
 
 final siteAnimationProvider = NotifierProvider.autoDispose

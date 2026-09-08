@@ -12,7 +12,9 @@ import '../providers/staff_access_provider.dart';
 import '../widgets/admin_site_animation_card.dart';
 
 class AdminSiteAnimationsLibraryPage extends ConsumerWidget {
-  const AdminSiteAnimationsLibraryPage({super.key});
+  const AdminSiteAnimationsLibraryPage({super.key, this.categoryFilter});
+
+  final AdminSiteAnimationCategory? categoryFilter;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -20,12 +22,20 @@ class AdminSiteAnimationsLibraryPage extends ConsumerWidget {
     if (!access.canManageSiteAnimations) return _locked(context);
 
     final listAsync = ref.watch(adminSiteAnimationListProvider);
+    final filter = categoryFilter ??
+        AdminSiteAnimationCategory.parse(
+          GoRouterState.of(context).uri.queryParameters['category'],
+        );
 
     return Scaffold(
       backgroundColor: const Color(0xFF0E0524),
       appBar: AppBar(
         backgroundColor: const Color(0xFF12082A),
-        title: const Text('Animasyon Kütüphanesi'),
+        title: Text(
+          filter == null
+              ? 'Animasyon Kütüphanesi'
+              : '${filter.label} Animasyonları',
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: AppThemeColors.accentPurple,
@@ -37,8 +47,17 @@ class AdminSiteAnimationsLibraryPage extends ConsumerWidget {
         loading: () => const Center(child: DiscoverAccentLoader()),
         error: (e, _) => Center(child: Text(ApiException.userMessage(e))),
         data: (items) {
-          if (items.isEmpty) {
-            return const Center(child: Text('Henüz animasyon yok.'));
+          final filtered = filter == null
+              ? items
+              : items.where((a) => a.category == filter).toList();
+          if (filtered.isEmpty) {
+            return Center(
+              child: Text(
+                filter == null
+                    ? 'Henüz animasyon yok.'
+                    : '${filter.label} kategorisinde animasyon yok.',
+              ),
+            );
           }
           return RefreshIndicator(
             onRefresh: () =>
@@ -51,9 +70,9 @@ class AdminSiteAnimationsLibraryPage extends ConsumerWidget {
                 mainAxisSpacing: 10,
                 childAspectRatio: 0.72,
               ),
-              itemCount: items.length,
+              itemCount: filtered.length,
               itemBuilder: (context, i) {
-                final anim = items[i];
+                final anim = filtered[i];
                 return AdminSiteAnimationCard(
                   animation: anim,
                   onPreview: () => context.push(

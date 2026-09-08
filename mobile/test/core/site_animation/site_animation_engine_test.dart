@@ -5,6 +5,17 @@ import 'package:canlifal_social/core/site_animation/domain/site_animation_type.d
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  group('SiteAnimationTier', () {
+    test('queue priority matches spec scale', () {
+      expect(SiteAnimationTier.normal.queuePriority, 10);
+      expect(SiteAnimationTier.gold.queuePriority, 30);
+      expect(SiteAnimationTier.diamond.queuePriority, 60);
+      expect(SiteAnimationTier.vip.queuePriority, 80);
+      expect(SiteAnimationTier.svip.queuePriority, 90);
+      expect(SiteAnimationTier.admin.queuePriority, 100);
+    });
+  });
+
   group('SiteAnimationParser', () {
     test('maps user_joined gold membership', () {
       final cmd = SiteAnimationParser.fromRoomEvent(

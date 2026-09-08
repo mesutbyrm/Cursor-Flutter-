@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/admin_site_animation.dart';
 import '../providers/admin_site_animation_providers.dart';
 import '../providers/staff_access_provider.dart';
+import '../widgets/admin_site_animation_preview_backgrounds.dart';
 import '../widgets/admin_site_animation_preview_stage.dart';
 
 class AdminSiteAnimationsPreviewPage extends ConsumerStatefulWidget {
@@ -20,6 +21,8 @@ class _AdminSiteAnimationsPreviewPageState
     extends ConsumerState<AdminSiteAnimationsPreviewPage> {
   AdminSiteAnimation? _selected;
   var _replayTick = 0;
+  AdminSiteAnimationPreviewScreen _screen =
+      AdminSiteAnimationPreviewScreen.voice;
 
   @override
   void initState() {
@@ -53,7 +56,7 @@ class _AdminSiteAnimationsPreviewPageState
       backgroundColor: const Color(0xFF0E0524),
       appBar: AppBar(
         backgroundColor: const Color(0xFF12082A),
-        title: const Text('Oda Önizleme'),
+        title: const Text('Ekran Önizleme'),
         actions: [
           if (active != null)
             TextButton(
@@ -65,6 +68,23 @@ class _AdminSiteAnimationsPreviewPageState
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          DropdownButtonFormField<AdminSiteAnimationPreviewScreen>(
+            value: _screen,
+            decoration: const InputDecoration(labelText: 'Referans ekranı'),
+            items: AdminSiteAnimationPreviewScreen.values
+                .map(
+                  (s) => DropdownMenuItem(
+                    value: s,
+                    child: Text(s.label),
+                  ),
+                )
+                .toList(),
+            onChanged: (s) {
+              if (s == null) return;
+              setState(() => _screen = s);
+            },
+          ),
+          const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             value: active?.id,
             decoration: const InputDecoration(labelText: 'Animasyon seç'),
@@ -94,8 +114,9 @@ class _AdminSiteAnimationsPreviewPageState
               ),
             Center(
               child: AdminSiteAnimationPreviewStage(
-                key: ValueKey('${active!.id}:$_replayTick'),
+                key: ValueKey('${active!.id}:$_screen:$_replayTick'),
                 animation: active!,
+                screen: _screen,
               ),
             ),
             const SizedBox(height: 12),

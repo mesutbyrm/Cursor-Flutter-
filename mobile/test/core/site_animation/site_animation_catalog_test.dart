@@ -130,7 +130,7 @@ void main() {
         },
       )!;
       final resolved = SiteAnimationResolver.resolve(base: base, catalog: catalog)!;
-      expect(resolved.priorityOverride, 95);
+      expect(resolved.priorityOverride, 110);
       expect(resolved.layout.durationMs, 4000);
       expect(resolved.catalogLabel, 'Diamond custom');
     });

@@ -1,14 +1,25 @@
 import 'package:equatable/equatable.dart';
 
-/// Site animasyon kategorisi — admin kütüphanesi.
+/// Site animasyon kategorisi — admin kütüphanesi (16 ana bölüm).
 enum AdminSiteAnimationCategory {
   entrance,
   exit,
   transition,
+  profile,
+  profileFrame,
+  avatarEffect,
+  vipEffect,
+  goldEffect,
+  diamondEffect,
+  badge,
+  gift,
+  voiceRoom,
+  liveStream,
+  game,
+  reward,
+  system,
   seat,
   roomWide,
-  profileFrame,
-  gift,
   mic,
   host;
 
@@ -16,13 +27,44 @@ enum AdminSiteAnimationCategory {
         AdminSiteAnimationCategory.entrance => 'Giriş',
         AdminSiteAnimationCategory.exit => 'Çıkış',
         AdminSiteAnimationCategory.transition => 'Geçiş',
+        AdminSiteAnimationCategory.profile => 'Profil',
+        AdminSiteAnimationCategory.profileFrame => 'Profil çerçevesi',
+        AdminSiteAnimationCategory.avatarEffect => 'Avatar efekti',
+        AdminSiteAnimationCategory.vipEffect => 'VIP efekti',
+        AdminSiteAnimationCategory.goldEffect => 'Gold efekti',
+        AdminSiteAnimationCategory.diamondEffect => 'Diamond efekti',
+        AdminSiteAnimationCategory.badge => 'Rozet',
+        AdminSiteAnimationCategory.gift => 'Hediye',
+        AdminSiteAnimationCategory.voiceRoom => 'Sesli oda',
+        AdminSiteAnimationCategory.liveStream => 'Canlı yayın',
+        AdminSiteAnimationCategory.game => 'Oyun',
+        AdminSiteAnimationCategory.reward => 'Ödül',
+        AdminSiteAnimationCategory.system => 'Sistem',
         AdminSiteAnimationCategory.seat => 'Koltuk',
         AdminSiteAnimationCategory.roomWide => 'Oda geneli',
-        AdminSiteAnimationCategory.profileFrame => 'Profil çerçevesi',
-        AdminSiteAnimationCategory.gift => 'Hediye',
         AdminSiteAnimationCategory.mic => 'Mikrofon',
         AdminSiteAnimationCategory.host => 'Host',
       };
+
+  /// Hub'da gösterilen 16 ana kategori.
+  static const hubCategories = [
+    AdminSiteAnimationCategory.entrance,
+    AdminSiteAnimationCategory.exit,
+    AdminSiteAnimationCategory.transition,
+    AdminSiteAnimationCategory.profile,
+    AdminSiteAnimationCategory.profileFrame,
+    AdminSiteAnimationCategory.avatarEffect,
+    AdminSiteAnimationCategory.vipEffect,
+    AdminSiteAnimationCategory.goldEffect,
+    AdminSiteAnimationCategory.diamondEffect,
+    AdminSiteAnimationCategory.badge,
+    AdminSiteAnimationCategory.gift,
+    AdminSiteAnimationCategory.voiceRoom,
+    AdminSiteAnimationCategory.liveStream,
+    AdminSiteAnimationCategory.game,
+    AdminSiteAnimationCategory.reward,
+    AdminSiteAnimationCategory.system,
+  ];
 
   static AdminSiteAnimationCategory? parse(String? raw) {
     final k = raw?.toLowerCase().trim().replaceAll(' ', '_') ?? '';
@@ -36,18 +78,45 @@ enum AdminSiteAnimationCategory {
         AdminSiteAnimationCategory.exit,
       'transition' || 'gecis' || 'geçiş' || 'seat_change' =>
         AdminSiteAnimationCategory.transition,
+      'profile' || 'profil' || 'profile_animation' =>
+        AdminSiteAnimationCategory.profile,
+      'profile_frame' ||
+      'profileframe' ||
+      'frame' =>
+        AdminSiteAnimationCategory.profileFrame,
+      'avatar' ||
+      'avatar_effect' ||
+      'avatareffect' =>
+        AdminSiteAnimationCategory.avatarEffect,
+      'vip' || 'vip_effect' || 'vipeffect' =>
+        AdminSiteAnimationCategory.vipEffect,
+      'gold' || 'gold_effect' || 'goldeffect' =>
+        AdminSiteAnimationCategory.goldEffect,
+      'diamond' ||
+      'diamond_effect' ||
+      'diamondeffect' =>
+        AdminSiteAnimationCategory.diamondEffect,
+      'badge' || 'rozet' => AdminSiteAnimationCategory.badge,
+      'gift' || 'hediye' => AdminSiteAnimationCategory.gift,
+      'voice_room' ||
+      'voiceroom' ||
+      'sesli_oda' ||
+      'voice' =>
+        AdminSiteAnimationCategory.voiceRoom,
+      'live' ||
+      'live_stream' ||
+      'livestream' ||
+      'canli' =>
+        AdminSiteAnimationCategory.liveStream,
+      'game' || 'oyun' => AdminSiteAnimationCategory.game,
+      'reward' || 'odul' || 'ödül' => AdminSiteAnimationCategory.reward,
+      'system' || 'sistem' => AdminSiteAnimationCategory.system,
       'seat' || 'koltuk' => AdminSiteAnimationCategory.seat,
       'room_wide' ||
       'roomwide' ||
       'oda_geneli' ||
       'room' =>
         AdminSiteAnimationCategory.roomWide,
-      'profile_frame' ||
-      'profileframe' ||
-      'profil' ||
-      'profile' =>
-        AdminSiteAnimationCategory.profileFrame,
-      'gift' || 'hediye' => AdminSiteAnimationCategory.gift,
       'mic' || 'mikrofon' => AdminSiteAnimationCategory.mic,
       'host' => AdminSiteAnimationCategory.host,
       _ => null,
