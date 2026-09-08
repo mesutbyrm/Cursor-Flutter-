@@ -1377,7 +1377,7 @@ Platform 5 farklı SSE endpoint'i sunar:
 
 | Endpoint | Amaç | Event Tipleri |
 |----------|-------|---------------|
-| `GET /api/chat/rooms/{roomId}/stream` | Chat room gerçek zamanlı | `connected`, `message`, `presence`, `typing`, `gift`, `system`, `dj_update`, `pk` |
+| `GET /api/chat/rooms/{roomId}/stream` | Chat room gerçek zamanlı | `connected`, `message`, `presence`, `typing`, `gift`, `system`, `dj_update`, `pk`, **`room_event`** |
 | `GET /api/video-streams/{streamId}/stream` | Canlı yayın gerçek zamanlı | `connected`, `streamMessage`, `viewerCount`, `streamEnded`, `gift` |
 | `GET /api/room/{sessionId}/stream` | Falcı seansı gerçek zamanlı | `connected`, `message`, `timer_started`, `time_extended`, `session_ended` |
 | `GET /api/fortune-tellers/sessions/stream` | Falcıya gelen talepler | `connected`, `session_request`, `session_cancelled` |
@@ -1603,6 +1603,14 @@ void _listenToSse(String roomId) {
 
         case 'system':
           _handleSystemMessage(event.data);
+          break;
+
+        case 'pk':
+          _handlePkEvent(event.data);
+          break;
+
+        case 'room_event':
+          _handleRoomAnimationEvent(event.data);
           break;
 
         case 'reconnecting':

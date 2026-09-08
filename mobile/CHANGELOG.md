@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.384+422 (2026-09-08) — Site Animation: voice mic SSE
+
+- API mirror `GET/POST /api/chat/rooms/{roomId}/voice` — join/leave + `mic_changed` room_event SSE
+- Prisma bootstrap exit defaults (`exit:*` keys)
+- SSE kılavuzu: `room_event` event tipi
+
 ## 1.0.383+421 (2026-09-08) — Site Animation: exit defaults + ownership transfer
 
 - Admin çıkış varsayılanları (GET/PUT `/api/admin/site-animations/exit-defaults`)

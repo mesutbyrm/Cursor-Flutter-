@@ -80,7 +80,7 @@ class AdminSiteAnimationsHubPage extends ConsumerWidget {
                   _NavTile(
                     icon: Icons.workspace_premium_outlined,
                     title: 'Üyelik Eşleştirme',
-                    subtitle: 'Gold → Golden Crown, Diamond → Burst',
+                    subtitle: 'Giriş + çıkış varsayılan animasyonları',
                     onTap: () => context.push('/admin/site-animations/defaults'),
                   ),
                   _NavTile(
