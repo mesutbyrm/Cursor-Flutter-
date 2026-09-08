@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../data/fortune_catalog.dart';
 import '../../providers/fortune_hub_providers.dart';
-import '../data/fortune_type_images.dart';
+import '../../data/fortune_type_images.dart';
 import '../premium_2026/premium_section_header.dart';
 import 'ultra_fortune_cover_backdrop.dart';
 import 'ultra_fortune_liquid_surface.dart';
@@ -19,10 +19,10 @@ class UltraFortuneDailyEnergy extends ConsumerWidget {
     final insights = ref.watch(fortuneDailyInsightsProvider);
 
     return insights.when(
-      loading: () => const _DailyEnergyBody(
+      loading: () => _DailyEnergyBody(
         items: _EnergyItem.fallback(),
       ),
-      error: (_, _) => const _DailyEnergyBody(
+      error: (_, _) => _DailyEnergyBody(
         items: _EnergyItem.fallback(),
       ),
       data: (data) => _DailyEnergyBody(

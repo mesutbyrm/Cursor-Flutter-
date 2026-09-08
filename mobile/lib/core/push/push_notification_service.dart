@@ -268,8 +268,8 @@ class PushNotificationService {
       'Günlük falın hazır ✨',
       'Bugünün kehanetini ve enerjini keşfet.',
       RepeatInterval.daily,
+      details,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-      notificationDetails: details,
       payload: '/fortune/gunluk-fal',
     );
   }

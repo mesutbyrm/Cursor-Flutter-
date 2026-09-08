@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/economy/presentation/providers/economy_providers.dart';
-import '../../../../core/economy/presentation/widgets/currency_amount_label.dart';
+import '../../../../../core/economy/presentation/providers/economy_providers.dart';
+import '../../../../../core/economy/presentation/widgets/currency_amount_label.dart';
 import 'ultra_fortune_liquid_surface.dart';
 
 /// Üst bar jeton / CFC chip'leri.

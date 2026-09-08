@@ -31,7 +31,9 @@ class UltraFortuneHubSearchBar extends ConsumerWidget {
             : null,
         onChanged: (v) =>
             ref.read(fortuneHubSearchQueryProvider.notifier).state = v,
-        backgroundColor: Colors.white.withValues(alpha: 0.06),
+        backgroundColor: WidgetStateProperty.all(
+          Colors.white.withValues(alpha: 0.06),
+        ),
         elevation: WidgetStateProperty.all(0),
         shape: WidgetStateProperty.all(
           RoundedRectangleBorder(

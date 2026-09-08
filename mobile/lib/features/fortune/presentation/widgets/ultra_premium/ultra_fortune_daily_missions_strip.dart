@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../../../profile/presentation/providers/profile_providers.dart';
 import '../premium_2026/premium_section_header.dart';
 import 'ultra_fortune_liquid_surface.dart';
 import 'ultra_fortune_tokens.dart';

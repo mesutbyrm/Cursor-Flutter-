@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../data/fortune_type_images.dart';
+import '../../data/fortune_type_images.dart';
 import 'ultra_fortune_cover_backdrop.dart';
 import 'ultra_fortune_liquid_surface.dart';
 import 'ultra_fortune_tokens.dart';

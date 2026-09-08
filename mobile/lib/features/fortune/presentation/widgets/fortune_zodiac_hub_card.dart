@@ -7,7 +7,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../auth/presentation/widgets/auth_date_pickers.dart';
 import '../../domain/fortune_zodiac.dart';
 import '../../data/fortune_birth_profile_store.dart';
-import '../../data/fortune_type_images.dart';
+import '../data/fortune_type_images.dart';
 import '../providers/fortune_birth_profile_provider.dart';
 import '../providers/fortune_hub_providers.dart';
 import '../widgets/premium_2026/premium_section_header.dart';
