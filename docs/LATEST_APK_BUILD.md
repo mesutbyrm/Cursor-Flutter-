@@ -5,18 +5,19 @@
 | Alan | Değer |
 |------|--------|
 | Sürüm | `1.0.391+429` |
-| Tarih (UTC) | 2026-09-08 15:28 |
-| Commit | [`eb59daedcf6eb3dc67562b953457736b33c609f9`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/eb59daedcf6eb3dc67562b953457736b33c609f9) |
-| İş akışı | [Run 34243747023](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34243747023) |
+| Tarih (UTC) | 2026-09-08 15:42 |
+| Commit | [`702c8f18e9b45ce7eba8fd18ed4ac8843a24d71c`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/702c8f18e9b45ce7eba8fd18ed4ac8843a24d71c) |
+| İş akışı | [Run 34244822274](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34244822274) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.391+429 (2026-09-08) — Site Animation: global sosyal giriş + CI stabilizasyon
+## 1.0.392+430 (2026-09-08) — Site Animation: tasarım referansı giriş kartları
 
-- `SiteAnimationSocialEntranceListener` — marquee VIP giriş kartı tüm sekmelerde (`ctx_social` app shell)
-- Site Animation merge sonrası CI derleme düzeltmeleri (import yolları, Ref/WidgetRef köprüsü, testler)
-- Analiz dokümanı: PR #365 birleşti, APK `1.0.390+428` yeşil
+- `SiteAnimationEntranceCard` — 15 giriş + host taç; §34 paleti (mor/altın/cyan) birebir kart düzeni
+- Admin üyelik eşleştirme: görsel giriş seçici (önizlemeli grid, dropdown yerine)
+- Kütüphane kartları giriş kategorisinde canlı mini önizleme
+- `animationId` SSE → runtime; Lottie placeholder yerine native FX
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
