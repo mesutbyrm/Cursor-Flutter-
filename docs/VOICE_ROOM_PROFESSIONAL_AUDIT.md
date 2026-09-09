@@ -1,7 +1,7 @@
 # Canlifal Sesli Sohbet Odaları — Profesyonel Denetim Raporu
 
 **Tarih:** 2026-09-09  
-**Sürüm (bu oturum):** `1.0.428+466`  
+**Sürüm (bu oturum):** `1.0.429+467`  
 **Mimari:** Flutter mobil → `https://canlifal.com` REST + SSE (Socket.IO mobilde kullanılmıyor)
 
 ---
@@ -31,7 +31,9 @@ Sesli oda sistemi **çalışan temel akışları koruyarak** premium UX, mention
 | Müzik pro sheet | **ÇALIŞIYOR** (yeni) | 3 sekme bottom sheet |
 | Hediye / jeton | **ÇALIŞIYOR** | Gift transaction API |
 | Oda beğeni | **EKSİK** | Üretim endpoint yok |
-| Chat / mesaj | **ÇALIŞIYOR** | SSE + poll |
+| Chat / mesaj | **ÇALIŞIYOR** | SSE + poll + flood koruması (yeni) |
+| Oda önizleme (katılmadan) | **ÇALIŞIYOR** (yeni) | `voice_room_preview_sheet` |
+| Oda içi sıralama rozeti | **ÇALIŞIYOR** (yeni) | `VoiceLiveHeader2026` hourly rank |
 | Mention gönderme | **ÇALIŞIYOR** | `mentionedUserIds` body |
 | Mention bildirimi (oda içi) | **ÇALIŞIYOR** (yeni) | `voice_room_mention_notice` + banner |
 | Profil popup → Mesaj → @mention | **ÇALIŞIYOR** (yeni) | Deduped, DM yerine oda input |
@@ -43,7 +45,7 @@ Sesli oda sistemi **çalışan temel akışları koruyarak** premium UX, mention
 | SSE realtime | **ÇALIŞIYOR** | 5 endpoint kılavuz uyumlu |
 | RTC / Agora ses | **ÇALIŞIYOR** | TRTC sesli oda |
 | Socket.IO (mobil) | **MOCK/DEAD** | `voice_room_socket_helper` kullanılmıyor |
-| Heartbeat (15s PATCH presence) | **KISMEN** | İstemci gönderir; ghost cleanup sunucuda |
+| Heartbeat (15s PATCH presence) | **KISMEN** | İstemci gönderir; `api/` mirror ghost sweep (45 sn) |
 | Boş oda otomatik kapanma | **KISMEN** | `api/` mirror: 45 sn grace → `room_closed` |
 | Reconnect banner | **ÇALIŞIYOR** (yeni) | SSE kopması UI |
 | Loading skeleton | **ÇALIŞIYOR** (yeni) | Gated entry |

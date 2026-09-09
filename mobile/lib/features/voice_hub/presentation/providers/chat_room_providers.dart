@@ -61,6 +61,7 @@ import '../utils/voice_music_access.dart';
 import '../utils/voice_room_duyuru_access.dart';
 import '../utils/voice_room_mention.dart';
 import '../utils/voice_room_sse_event_dedupe.dart';
+import '../utils/voice_room_chat_flood_guard.dart';
 import '../utils/voice_room_seat_priority.dart';
 import '../utils/voice_room_seat_capacity.dart';
 import '../utils/voice_staff_chat_style.dart';
@@ -439,6 +440,7 @@ class VoiceRoomLiveController
   DateTime? _sessionJoinedAt;
   int _peakViewerCount = 0;
   final VoiceRoomSseEventDedupe _sseEventDedupe = VoiceRoomSseEventDedupe();
+  final VoiceRoomChatFloodGuard _chatFloodGuard = VoiceRoomChatFloodGuard();
 
   /// Aynı SSE eventId iki kez işlenmesin (hediye, koltuk, PK vb.).
   bool _acceptSseEvent(Map<String, dynamic> payload) {
@@ -2576,6 +2578,30 @@ class VoiceRoomLiveController
     final user = ref.read(authControllerProvider).valueOrNull;
     final isClear = VoiceOfficialJoin.isClearChatCommand(trimmed);
     final perms = _permissions();
+    if (!isClear && !trimmed.startsWith('!')) {
+      final floodErr = _chatFloodGuard.tryAcquire();
+      if (floodErr != null) {
+        state = state.copyWith(error: floodErr);
+        return;
+      }
+      final recent = state.messages
+          .map(
+            (m) => (
+              content: m.content,
+              userId: m.user?.id,
+              createdAt: m.createdAt,
+            ),
+          )
+          .toList();
+      if (_chatFloodGuard.isDuplicateContent(
+        content: trimmed,
+        userId: user?.id,
+        recent: recent,
+      )) {
+        state = state.copyWith(error: 'Aynı mesajı tekrar gönderemezsiniz.');
+        return;
+      }
+    }
     if (!perms.canModerate &&
         !perms.isRoomOwner &&
         !perms.isSiteAdmin &&

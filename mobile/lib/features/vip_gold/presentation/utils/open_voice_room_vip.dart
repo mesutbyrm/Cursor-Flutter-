@@ -16,6 +16,7 @@ import '../../../voice_hub/presentation/utils/voice_room_session_utils.dart';
 import '../../domain/voice_room_access.dart';
 import '../providers/vip_membership_provider.dart';
 import '../widgets/vip_locked_room_sheet.dart';
+import '../../../voice_hub/presentation/sheets/voice_room_preview_sheet.dart';
 
 /// VIP / şifreli oda kapısı — tek giriş noktası.
 Future<void> openVoiceRoomWithVipGate(
@@ -23,6 +24,7 @@ Future<void> openVoiceRoomWithVipGate(
   WidgetRef ref,
   VoiceRoomEntity room, {
   bool skipVipGateForOwner = false,
+  bool skipPreview = false,
 }) async {
   if (room.isPasswordLockedRoom) {
     final isStaff = ref.read(staffAccessProvider).isSiteAdmin;
@@ -37,11 +39,11 @@ Future<void> openVoiceRoomWithVipGate(
   }
 
   final me = ref.read(currentUserIdProvider);
-  final isOwner = skipVipGateForOwner &&
-      me != null &&
+  final isRoomOwner = me != null &&
       me.isNotEmpty &&
       room.ownerId != null &&
       room.ownerId == me;
+  final isOwner = skipVipGateForOwner && isRoomOwner;
 
   final tier = ref.read(vipTierProvider);
   if (!isOwner && room.isVipGoldRoom && !canEnterVipRoom(tier)) {
@@ -58,6 +60,12 @@ Future<void> openVoiceRoomWithVipGate(
   }
 
   if (!context.mounted) return;
+
+  if (!skipPreview && !isRoomOwner) {
+    final join = await showVoiceRoomPreviewSheet(context, ref, room: room);
+    if (!join || !context.mounted) return;
+  }
+
   await _enterVoiceRoom(context, ref, room);
 }
 

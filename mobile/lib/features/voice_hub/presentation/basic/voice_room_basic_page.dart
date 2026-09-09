@@ -42,6 +42,8 @@ import '../widgets/voice_room/voice_room_reconnect_banner.dart';
 import '../widgets/voice_room/voice_room_loading_skeleton.dart';
 import '../utils/voice_room_mention.dart';
 import '../sheets/voice_room_commands_panel.dart';
+import '../sheets/voice_room_ranking_sheet.dart';
+import '../providers/voice_room_ranking_provider.dart';
 import '../utils/voice_room_permissions.dart';
 import '../utils/voice_room_error_display.dart';
 import '../utils/voice_room_speak_access.dart';
@@ -648,6 +650,10 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final jeton = ref.watch(
       walletBalancesProvider.select((a) => a.valueOrNull?.jeton ?? 0),
     );
+    ref.watch(voiceRoomRankingProvider);
+    final hourlyRank = ref
+        .read(voiceRoomRankingProvider.notifier)
+        .rankForRoom(room.apiRoomKey);
     String? hostAvatar;
     final ownerId = room.ownerId;
     if (ownerId != null) {
@@ -888,6 +894,8 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                   onlineCount: online,
                   coinBalance: jeton,
                   hostAvatarUrl: hostAvatar,
+                  hourlyRank: hourlyRank,
+                  onRankTap: () => showVoiceRoomRankingSheet(context, ref),
                   onBack: () => unawaited(_confirmLeave()),
                   onExit: () => unawaited(_confirmLeave()),
                   onAudience: () => showVoiceSpeakerListSheet(

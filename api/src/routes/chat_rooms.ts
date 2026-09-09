@@ -55,6 +55,8 @@ import {
   addRoomBannedWord,
   removeRoomBannedWord,
   notifyVoiceRoomMentions,
+  touchPresenceHeartbeat,
+  sweepStaleRoomPresence,
 } from "../lib/chatRoomStore";
 import {
   emitChatRoomDjUpdate,
@@ -997,8 +999,37 @@ chatRoomsRouter.post("/rooms/:roomId/presence", requireAuth, async (req, res) =>
 /** PATCH — presence heartbeat (20 sn önerilir) */
 chatRoomsRouter.patch("/rooms/:roomId/presence", requireAuth, async (req, res) => {
   const roomId = resolveRoomId(req.params.roomId);
-  await presenceHeartbeat(req.userId!, roomId);
-  return res.status(200).json({ ok: true, roomId });
+  const userId = req.userId!;
+  touchPresenceHeartbeat(roomId, userId);
+  await presenceHeartbeat(userId, roomId);
+  const stale = sweepStaleRoomPresence(roomId);
+  if (stale.length > 0) {
+    const presence = listPresence(roomId);
+    emitChatRoomPresence(roomId, presence);
+    for (const r of stale) {
+      void emitResolvedRoomAnimation(roomId, {
+        event: "user_left",
+        userId: r.userId,
+        name: r.leftUser.name ?? "Kullanıcı",
+        membership: r.leftUser.membership,
+        chatRole: r.leftUser.chatRole,
+      });
+      if (r.previousSeatIndex != null) {
+        void emitResolvedRoomAnimation(roomId, {
+          event: "seat_changed",
+          userId: r.userId,
+          name: r.leftUser.name ?? "Kullanıcı",
+          seatIndex: null,
+          previousSeatIndex: r.previousSeatIndex,
+        });
+      }
+    }
+  }
+  return res.status(200).json({
+    ok: true,
+    roomId,
+    staleRemoved: stale.length,
+  });
 });
 
 chatRoomsRouter.delete("/rooms/:roomId/presence", requireAuth, async (req, res) => {

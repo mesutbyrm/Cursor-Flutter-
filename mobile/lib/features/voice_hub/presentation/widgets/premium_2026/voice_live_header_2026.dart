@@ -28,6 +28,8 @@ class VoiceLiveHeader2026 extends StatelessWidget {
     this.onCoinsTap,
     this.hostAvatarUrl,
     this.following = false,
+    this.hourlyRank,
+    this.onRankTap,
   });
 
   final VoiceRoomEntity room;
@@ -42,6 +44,9 @@ class VoiceLiveHeader2026 extends StatelessWidget {
   final VoidCallback? onCoinsTap;
   final String? hostAvatarUrl;
   final bool following;
+  /// Saatlik sıralama (1–100); null = listede değil.
+  final int? hourlyRank;
+  final VoidCallback? onRankTap;
 
   bool get _roomIsVip => room.resolvedRoomType == 'VIP';
 
@@ -110,6 +115,13 @@ class VoiceLiveHeader2026 extends StatelessWidget {
                             const SizedBox(width: 6),
                             const VoiceRoomTypeBadge(roomType: 'FREE', compact: true),
                           ],
+                          if (hourlyRank != null && hourlyRank! > 0 && hourlyRank! <= 100) ...[
+                            const SizedBox(width: 6),
+                            GestureDetector(
+                              onTap: onRankTap,
+                              child: _rankChip(hourlyRank!),
+                            ),
+                          ],
                         ],
                       ),
                       Text(
@@ -165,6 +177,25 @@ class VoiceLiveHeader2026 extends StatelessWidget {
           fontSize: 8,
           fontWeight: FontWeight.w900,
           color: Color(0xFF3E2723),
+        ),
+      ),
+    );
+  }
+
+  Widget _rankChip(int rank) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppThemeColors.coinGold.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppThemeColors.coinGold.withValues(alpha: 0.55)),
+      ),
+      child: Text(
+        '🏆 #$rank',
+        style: const TextStyle(
+          fontSize: 8,
+          fontWeight: FontWeight.w900,
+          color: AppThemeColors.coinGold,
         ),
       ),
     );

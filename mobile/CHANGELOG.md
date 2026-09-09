@@ -1,5 +1,18 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.429+467 (2026-09-09) — Sesli oda Faz 3
+
+### Giriş ve UX
+- **Oda önizleme** — katılmadan önce PK, müzik, sıralama ve çevrimiçi bilgisi
+- **Sıralama rozeti** — oda içi üst bar'da saatlik Top 100 (#rank)
+
+### Sohbet
+- **Flood koruması** — min aralık, pencere limiti, tekrarlayan mesaj engeli
+
+### Yerel API mirror (`api/`)
+- **Ghost kullanıcı** — heartbeat süresi dolan presence temizliği + koltuk/SSE
+- **getChatRoom** — `listChatRooms` özyineleme düzeltmesi
+
 ## 1.0.428+466 (2026-09-09) — Sesli oda Faz 2
 
 ### Realtime ve yaşam döngüsü

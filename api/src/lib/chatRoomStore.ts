@@ -67,6 +67,8 @@ export type ChatPresenceRow = ChatRoomUser & {
   seatIndex?: number | null;
   isSpeaking?: boolean;
   joinedAt: number;
+  /** Son presence heartbeat (ms) — ghost kullanıcı temizliği */
+  lastHeartbeatAt?: number;
 };
 
 export type ChatRoomRow = {
@@ -281,7 +283,7 @@ export function listChatRooms(): ChatRoomRow[] {
 }
 
 export function getChatRoom(roomId: string) {
-  return listChatRooms().find((r) => r.id === roomId || r.slug === roomId);
+  return rooms.find((r) => r.id === roomId || r.slug === roomId);
 }
 
 /** slug ve id karışıklığını önler — tüm haritalar canonical id ile çalışır */
@@ -456,6 +458,7 @@ export async function joinPresence(
     seatIndex: priv.owner || priv.admin ? 1 : null,
     isSpeaking: priv.owner || priv.admin,
     joinedAt: Date.now(),
+    lastHeartbeatAt: Date.now(),
   };
   const wasIn = roomMap(roomId).has(user.id);
   roomMap(roomId).set(user.id, row);
@@ -498,6 +501,8 @@ export async function joinPresence(
 import { emitRoomEventSse } from "./roomEventSse";
 
 const EMPTY_ROOM_GRACE_MS = 45_000;
+/** 3× önerilen heartbeat (15 sn) — süresi dolan kullanıcı ghost sayılır */
+const PRESENCE_STALE_MS = 45_000;
 const emptyRoomCloseTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 function cancelEmptyRoomClose(roomId: string) {
@@ -568,6 +573,55 @@ export function leavePresence(roomId: string, userId: string) {
     leftUser: prev ?? null,
     previousSeatIndex,
   };
+}
+
+export function touchPresenceHeartbeat(roomId: string, userId: string): void {
+  const p = roomMap(roomId).get(userId);
+  if (!p) return;
+  p.lastHeartbeatAt = Date.now();
+  roomMap(roomId).set(userId, p);
+}
+
+export type StalePresenceRemoval = {
+  userId: string;
+  previousSeatIndex: number | null;
+  leftUser: ChatPresenceRow;
+};
+
+/** Heartbeat almayan kullanıcıları odadan çıkar (ghost cleanup). */
+export function sweepStaleRoomPresence(
+  roomId: string,
+  nowMs = Date.now(),
+): StalePresenceRemoval[] {
+  const removed: StalePresenceRemoval[] = [];
+  for (const [uid, row] of roomMap(roomId)) {
+    const last = row.lastHeartbeatAt ?? row.joinedAt;
+    if (nowMs - last <= PRESENCE_STALE_MS) continue;
+    const previousSeatIndex = releaseUserSeat(roomId, uid);
+    roomMap(roomId).delete(uid);
+    const canonicalId = resolveRoomId(roomId);
+    void presenceLeaveRoom(canonicalId, uid);
+    void voiceRoomRemoveUser(canonicalId, uid);
+    removed.push({
+      userId: uid,
+      previousSeatIndex,
+      leftUser: row,
+    });
+  }
+  if (roomMap(roomId).size === 0 && removed.length > 0) {
+    scheduleEmptyRoomClose(roomId);
+  } else if (removed.length > 0) {
+    cancelEmptyRoomClose(roomId);
+  }
+  return removed;
+}
+
+/** Test / internal — presence satırı doğrudan ekle (DB gerektirmez). */
+export function seedPresenceRow(
+  roomId: string,
+  row: ChatPresenceRow,
+): void {
+  roomMap(roomId).set(row.id, row);
 }
 
 export function listPresence(roomId: string) {
