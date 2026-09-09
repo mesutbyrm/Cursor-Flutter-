@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
 import '../premium_2026/premium_section_header.dart';
 import 'ultra_fortune_liquid_surface.dart';
+import 'ultra_fortune_state_panel.dart';
 import 'ultra_fortune_tokens.dart';
 
 /// Günlük görev ilerleme — `GET /api/daily-missions`.
@@ -16,10 +17,40 @@ class UltraFortuneDailyMissionsStrip extends ConsumerWidget {
     final tasks = ref.watch(userDailyTasksProvider);
 
     return tasks.when(
-      loading: () => const SizedBox.shrink(),
-      error: (_, _) => const SizedBox.shrink(),
+      loading: () => const Padding(
+        padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
+        child: SizedBox(
+          height: 72,
+          child: Center(
+            child: SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+        ),
+      ),
+      error: (_, __) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        child: UltraFortuneStatePanel(
+          icon: Icons.error_outline_rounded,
+          message: 'Günlük görevler yüklenemedi',
+          actionLabel: 'Tekrar dene',
+          onAction: () => ref.invalidate(userDailyTasksProvider),
+          height: 88,
+        ),
+      ),
       data: (list) {
-        if (list.isEmpty) return const SizedBox.shrink();
+        if (list.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: UltraFortuneStatePanel(
+              icon: Icons.task_alt_rounded,
+              message: 'Bugün için görev bulunamadı',
+              height: 72,
+            ),
+          );
+        }
         final done = list.where((t) => t.completed).length;
         final total = list.length;
         final progress = total == 0 ? 0.0 : done / total;

@@ -1,5 +1,30 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.454+492 (2026-09-09) — Kritik realtime tamamlama
+
+### PK
+- Sesli oda: unified `/api/pk/me/invites` kaldırıldı; `GET /api/chat/rooms/{id}/pk` + SSE
+- Canlı: yalnızca `GET /api/video-streams/{id}/pk-battle` (fallback zinciri kaldırıldı)
+- `liveVideoPkProvider`: tek kaynak pk-battle REST
+
+### Sesli oda koltuk "+"
+- Progressive slot: dolu koltuklar + tek trailing "+"
+- `seatCount` 1–15; backend `seatSlots` kilidi saygı
+- Stage grid `roomSeatCount` + `seatSlots` ile senkron
+
+### Arkadaş online
+- `GET /api/users/online` + `POST /api/presence` heartbeat (60s)
+- Takip/takipçi listesinde yeşil nokta
+- Lifecycle: foreground/background leave + logout temizlik
+
+### Canlı misafir video
+- TRTC çoklu uzak view binding (`Map<userId, viewId>`)
+- `TrtcRemoteVideoView` dispose → `stopRemoteView`
+- `syncCoBroadcasters`: slot temizleme + `slotIndex` + `rtcUserId`
+
+### Fal & Tarot
+- History/missions/wallet/reminder: loading/error/empty panel (shrink kaldırıldı)
+
 ## 1.0.453+491 (2026-09-09) — Release gate düzeltmesi
 
 ### CI / release gate

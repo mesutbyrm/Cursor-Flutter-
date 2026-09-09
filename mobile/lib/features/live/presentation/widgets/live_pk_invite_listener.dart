@@ -10,17 +10,13 @@ import '../../../voice_hub/domain/pk/pk_battle_remote_models.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
 import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/pk/live_pk_invite_helper.dart';
-import '../../domain/pk/pk_room_models.dart';
-import '../../domain/pk/pk_unified_bridge.dart';
 import '../providers/live_invite_dedup_provider.dart';
 import '../providers/live_pk_invite_signal_provider.dart';
-import '../providers/live_pk_owned_streams_socket_provider.dart';
 import '../providers/live_providers.dart';
 import '../providers/live_video_pk_provider.dart';
-import '../providers/pk_room_providers.dart';
 import '../utils/open_host_broadcast_room.dart';
 
-/// Canlı yayın PK davetleri — stream SSE + REST poll (`/api/pk/me/invites`).
+/// Canlı yayın PK davetleri — stream SSE + `GET /api/video-streams/{id}/pk-battle`.
 class LivePkInviteListener extends ConsumerStatefulWidget {
   const LivePkInviteListener({super.key, required this.child});
 
@@ -78,43 +74,7 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
         return stream.id;
       }
     }
-    final opp = battle.opponentLiveStreamId?.trim();
-    if (opp != null &&
-        opp.isNotEmpty &&
-        isLivePkInviteRecipientBattle(
-          battle,
-          myUserId: userId,
-          myStreamId: opp,
-        )) {
-      return opp;
-    }
-    return owned.isNotEmpty ? owned.first.id : null;
-  }
-
-  String? _recipientStreamIdForMatch(
-    PkRoomMatch match,
-    String userId,
-    List<LiveStreamEntity> owned,
-  ) {
-    for (final stream in owned) {
-      if (isLivePkInviteRecipient(
-        match,
-        myStreamId: stream.id,
-        myUserId: userId,
-      )) {
-        return stream.id;
-      }
-    }
-    final opp = match.opponentStreamId?.trim() ?? '';
-    if (opp.isNotEmpty &&
-        isLivePkInviteRecipient(
-          match,
-          myStreamId: opp,
-          myUserId: userId,
-        )) {
-      return opp;
-    }
-    return owned.isNotEmpty ? owned.first.id : null;
+    return null;
   }
 
   bool _isRecipient(PkBattleRemote battle, String userId, String myStreamId) {
@@ -134,52 +94,15 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
     try {
       final api = ref.read(pkBattleRemoteDataSourceProvider);
       final owned = _ownedLiveStreams(user.id);
+      if (owned.isEmpty) return;
 
-      // 1) Birleşik REST — GET /api/pk/me/invites (SSE kaçırdığında).
-      final myInvites = await api.fetchMyInvites();
-      for (final battle in myInvites) {
-        if (!battle.isPending || battle.isEnded) continue;
-        if (battle.challengerId == user.id) continue;
-        final streamId = _recipientStreamId(battle, user.id, owned);
-        if (streamId == null || streamId.isEmpty) continue;
-        if (!_isRecipient(battle, user.id, streamId)) continue;
-        final inviteId = battle.effectiveId;
-        if (inviteId.isEmpty ||
-            !ref
-                .read(liveInviteDedupProvider.notifier)
-                .tryMark(livePkInviteDedupKey(inviteId))) {
-          continue;
-        }
-        PkEventLog.incomingRequest(inviteId: inviteId);
-        await _showDialog(battle, streamId);
-        return;
-      }
-
-      // 2) PkRoomMatch davetleri — pkPendingInvitesProvider yedek.
-      final unified = await ref.read(pkRoomRemoteProvider).myInvites();
-      for (final inv in unified) {
-        if (!inv.isPending) continue;
-        final streamId = _recipientStreamIdForMatch(inv, user.id, owned);
-        if (streamId == null || streamId.isEmpty) continue;
-        if (!ref
-            .read(liveInviteDedupProvider.notifier)
-            .tryMark(livePkInviteDedupKey(inv.id))) {
-          continue;
-        }
-        final battleMap = pkRoomMatchToBattleMap(inv, myStreamId: streamId);
-        final battle = PkBattleRemote.fromJson(battleMap);
-        PkEventLog.incomingRequest(matchId: inv.id);
-        await _showDialog(battle, streamId);
-        return;
-      }
-
-      // 3) Sahip olunan her yayın — GET …/pk-battle.
+      // Canlı 1v1 PK — ana backend `GET /api/video-streams/{id}/pk-battle` (tek kaynak).
       for (final stream in owned) {
         final battle = await api.fetchStreamBattle(stream.id);
         if (battle == null || battle.isEnded) continue;
         if (!battle.isPending) continue;
-        if (!_isRecipient(battle, user.id, stream.id)) continue;
         if (battle.challengerId == user.id) continue;
+        if (!_isRecipient(battle, user.id, stream.id)) continue;
         final inviteId = battle.effectiveId;
         if (inviteId.isEmpty ||
             !ref
@@ -191,7 +114,12 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
         await _showDialog(battle, stream.id);
         return;
       }
-    } catch (_) {}
+    } catch (e, st) {
+      assert(() {
+        debugPrint('[LivePK] invite poll error: $e\n$st');
+        return true;
+      }());
+    }
   }
 
   Future<void> _showDialog(PkBattleRemote battle, String myStreamId) async {
@@ -298,7 +226,6 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(livePkOwnedStreamsSocketProvider);
     ref.listen(livePkInviteSignalProvider, (_, __) {
       unawaited(_processPendingInvites());
     });
@@ -306,9 +233,6 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
       if (prev?.valueOrNull == null && next.valueOrNull != null) {
         unawaited(_processPendingInvites());
       }
-    });
-    ref.listen(pkPendingInvitesProvider, (_, __) {
-      unawaited(_processPendingInvites());
     });
     return widget.child;
   }

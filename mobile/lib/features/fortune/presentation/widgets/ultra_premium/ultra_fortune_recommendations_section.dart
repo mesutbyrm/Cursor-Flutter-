@@ -9,6 +9,7 @@ import '../premium_2026/fortune_browse_carousel.dart';
 import '../premium_2026/fortune_similar_section.dart';
 import '../premium_2026/premium_section_header.dart';
 import 'ultra_fortune_liquid_surface.dart';
+import 'ultra_fortune_state_panel.dart';
 import 'ultra_fortune_tokens.dart';
 
 /// Hub öneri carousel — son fal veya günlük fal slug'ına göre.
@@ -101,8 +102,29 @@ class UltraFortuneDailyReminderTile extends ConsumerWidget {
     final storeAsync = ref.watch(fortuneHubPreferencesStoreProvider);
 
     return storeAsync.when(
-      loading: () => const SizedBox.shrink(),
-      error: (_, _) => const SizedBox.shrink(),
+      loading: () => const Padding(
+        padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
+        child: SizedBox(
+          height: 52,
+          child: Center(
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+        ),
+      ),
+      error: (_, __) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+        child: UltraFortuneStatePanel(
+          icon: Icons.notifications_none_rounded,
+          message: 'Hatırlatıcı ayarı yüklenemedi',
+          actionLabel: 'Tekrar dene',
+          onAction: () => ref.invalidate(fortuneHubPreferencesStoreProvider),
+          height: 72,
+        ),
+      ),
       data: (store) {
         return Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),

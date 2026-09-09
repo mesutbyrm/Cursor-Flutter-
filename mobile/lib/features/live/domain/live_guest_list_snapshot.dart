@@ -61,8 +61,10 @@ class LiveGuestListSnapshot {
                   pick(g, ['displayName', 'name', 'userName', 'username'])
                       ?.toString(),
               'agoraUid': g['agoraUid'] ?? g['uid'],
+              'rtcUserId': pick(g, ['rtcUserId', 'trtcUserId', 'rtc_user_id']),
+              'trtcUserId': pick(g, ['trtcUserId', 'rtcUserId', 'rtc_user_id']),
               'slotIndex': g['slotIndex'] ?? g['seatIndex'],
-              'status': g['status'] ?? 'live',
+              'status': g['status'] ?? g['state'] ?? 'live',
               'jeton': parseGuestJeton(g),
               'jetonEarned': parseGuestJeton(g),
             })

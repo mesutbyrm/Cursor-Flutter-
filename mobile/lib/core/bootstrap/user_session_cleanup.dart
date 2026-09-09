@@ -12,6 +12,7 @@ import '../../features/notifications/presentation/providers/notifications_list_n
 import '../../features/notifications/presentation/providers/notifications_providers.dart';
 import '../../features/social/presentation/providers/social_providers.dart';
 import '../network/sse/sse_hub_provider.dart';
+import '../network/user_online_presence_provider.dart';
 import 'session_data_refresh.dart';
 
 /// Logout / kullanıcı değişiminde SSE + oturum provider temizliği.
@@ -44,5 +45,6 @@ Future<void> invalidateUserSessionCaches(Ref ref, {String? userId}) async {
 
 /// Auth logout — SSE hub + TRTC singleton state temizliği.
 Future<void> teardownRealtimeOnLogout(Ref ref, {String? userId}) async {
+  await ref.read(userOnlinePresenceProvider.notifier).leave();
   await invalidateUserSessionCaches(ref, userId: userId);
 }

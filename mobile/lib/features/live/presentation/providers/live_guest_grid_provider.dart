@@ -111,26 +111,53 @@ class LiveGuestGridNotifier extends Notifier<LiveGuestGridState> {
 
   void syncCoBroadcasters(List<Map<String, dynamic>> guests) {
     final approved = guests.where(_isApprovedCoGuest).toList();
-    if (approved.isEmpty) return;
-    if (state.layout == LiveGuestLayout.solo) {
-      setLayout(resolveGuestLayout(guestCount: approved.length));
+    if (approved.isEmpty) {
+      final cleared = [...state.slots];
+      for (var i = 1; i < cleared.length; i++) {
+        cleared[i] = LiveGuestSlot(index: i);
+      }
+      state = state.copyWith(slots: cleared);
+      if (state.layout != LiveGuestLayout.solo) {
+        setLayout(LiveGuestLayout.solo);
+      }
+      return;
     }
+
+    final layout = resolveGuestLayout(guestCount: approved.length);
+    if (state.layout != layout) {
+      setLayout(layout);
+    }
+
     final list = [...state.slots];
-    var slot = 1;
+    for (var i = 1; i < list.length; i++) {
+      list[i] = LiveGuestSlot(index: i);
+    }
+
+    final usedSlots = <int>{};
     for (final g in approved) {
-      if (slot >= list.length) break;
       final userId = g['userId']?.toString() ?? '';
+      if (userId.isEmpty) continue;
       final name = g['userName']?.toString() ??
           g['displayName']?.toString() ??
-          'Konuk $slot';
-      if (userId.isEmpty) continue;
+          'Konuk';
+      final rawSlot = g['slotIndex'] ?? g['seatIndex'];
+      var slot = rawSlot is num
+          ? rawSlot.toInt()
+          : int.tryParse(rawSlot?.toString() ?? '') ?? 0;
+      if (slot <= 0 || slot >= list.length || usedSlots.contains(slot)) {
+        slot = 1;
+        while (slot < list.length && usedSlots.contains(slot)) {
+          slot++;
+        }
+      }
+      if (slot >= list.length) continue;
+      usedSlots.add(slot);
       list[slot] = list[slot].copyWith(
         userId: userId,
         displayName: name,
         rtcUserId: _guestRtcUserId(g),
         jetonEarned: parseGuestJeton(g),
       );
-      slot++;
     }
     state = state.copyWith(slots: list);
   }
