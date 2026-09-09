@@ -12,6 +12,8 @@ class GiftGoal {
     this.contextId,
     this.status = 'active',
     this.percent,
+    this.endsAt,
+    this.durationMinutes,
   });
 
   factory GiftGoal.fromJson(Map<String, dynamic> json) {
@@ -26,7 +28,15 @@ class GiftGoal {
       contextId: pick(json, ['contextId'])?.toString(),
       status: (pick(json, ['status']) ?? 'active').toString(),
       percent: _parsePercent(pick(json, ['percent'])),
+      endsAt: _parseDate(pick(json, ['endsAt', 'endAt', 'expiresAt', 'deadline'])),
+      durationMinutes: asInt(pick(json, ['durationMinutes', 'durationMin'])),
     );
+  }
+
+  static DateTime? _parseDate(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is DateTime) return raw;
+    return DateTime.tryParse(raw.toString());
   }
 
   static double? _parsePercent(dynamic raw) {
@@ -43,6 +53,8 @@ class GiftGoal {
   final String? contextId;
   final String status; // active | completed
   final double? percent;
+  final DateTime? endsAt;
+  final int? durationMinutes;
 
   /// 0..1 arası ilerleme oranı.
   double get progress {
@@ -58,6 +70,13 @@ class GiftGoal {
       status.toLowerCase() == 'completed' || currentAmount >= targetAmount;
 
   bool get isActive => !isCompleted && status.toLowerCase() != 'ended';
+
+  Duration? get remainingTime {
+    if (endsAt == null) return null;
+    final left = endsAt!.difference(DateTime.now());
+    if (left.isNegative) return Duration.zero;
+    return left;
+  }
 
   int get remaining {
     final r = targetAmount - currentAmount;

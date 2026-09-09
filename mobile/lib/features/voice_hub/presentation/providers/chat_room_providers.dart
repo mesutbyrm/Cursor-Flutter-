@@ -60,6 +60,7 @@ import '../utils/voice_room_key_resolver.dart';
 import '../utils/voice_music_access.dart';
 import '../utils/voice_room_duyuru_access.dart';
 import '../utils/voice_room_mention.dart';
+import '../utils/voice_room_sse_event_dedupe.dart';
 import '../utils/voice_room_seat_priority.dart';
 import '../utils/voice_room_seat_capacity.dart';
 import '../utils/voice_staff_chat_style.dart';
@@ -107,6 +108,7 @@ import 'voice_seat_gift_flash_provider.dart';
 import 'voice_seat_gift_totals_provider.dart';
 import 'voice_room_diagnostic_provider.dart';
 import 'voice_room_ui_provider.dart';
+import 'voice_room_mention_notice_provider.dart';
 part 'chat_room_providers_music.dart';
 part 'chat_room_providers_playback.dart';
 part 'chat_room_providers_moderation.dart';
@@ -436,6 +438,15 @@ class VoiceRoomLiveController
   DateTime? _lastSseEventAt;
   DateTime? _sessionJoinedAt;
   int _peakViewerCount = 0;
+  final VoiceRoomSseEventDedupe _sseEventDedupe = VoiceRoomSseEventDedupe();
+
+  /// Aynı SSE eventId iki kez işlenmesin (hediye, koltuk, PK vb.).
+  bool _acceptSseEvent(Map<String, dynamic> payload) {
+    final id = payload['eventId']?.toString() ??
+        payload['id']?.toString() ??
+        payload['messageId']?.toString();
+    return _sseEventDedupe.shouldProcess(id);
+  }
 
   String? _effectiveNickname(UserEntity? user) {
     final server = state.myNickname?.trim();
@@ -683,6 +694,7 @@ class VoiceRoomLiveController
     });
     _roomKeepAliveLink = ref.keepAlive();
     ref.onDispose(() {
+      _sseEventDedupe.clear();
       if (_sessionActive) {
         VoiceRoomDebugLog.roomLeave(roomId: _roomKey, source: 'dispose');
       }
@@ -842,6 +854,25 @@ class VoiceRoomLiveController
       case ChatMessageKind.unknown:
         break;
     }
+  }
+
+  void _maybeNotifyMention(ChatRoomMessage msg) {
+    final selfId = ref.read(authControllerProvider).valueOrNull?.id;
+    if (selfId == null || selfId.isEmpty) return;
+    final mentioned = VoiceRoomMention.resolveMentionedUserIds(
+      msg.content,
+      state.presence,
+    );
+    if (!mentioned.contains(selfId)) return;
+    final from = msg.user?.displayName.trim().isNotEmpty == true
+        ? msg.user!.displayName.trim()
+        : (msg.user?.name.trim().isNotEmpty == true
+            ? msg.user!.name.trim()
+            : 'Biri');
+    ref.read(voiceRoomMentionNoticeProvider.notifier).notifyMention(
+          fromName: from,
+          messagePreview: msg.content.trim(),
+        );
   }
 
   void _handleSseRoomUpdate(Map<String, dynamic> payload) {

@@ -534,6 +534,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
   Future<void> _leavePresenceWithSeatClear({bool force = false}) async {
     final userId = ref.read(authControllerProvider).valueOrNull?.id;
     if (userId != null && userId.isNotEmpty) {
+      _clearSeatForUser(userId);
       try {
         await ref.read(chatRoomRemoteProvider).clearSeat(
               roomKey: _roomKey,

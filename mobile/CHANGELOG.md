@@ -1,5 +1,21 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.427+465 (2026-09-09) — Sesli oda profesyonel UX
+
+### Sesli oda
+- **PK istek modalı** — merkez premium popup (Kabul / Reddet)
+- **Müzik pro sheet** — Şimdi Çalıyor / Sıradaki / İstek Gönder sekmeleri
+- **Mention bildirimi** — «Senden bahsetti» banner + dedupe `@kullanıcı`
+- **Profil → Mesaj** — oda chat inputuna tek mention (DM yerine)
+- **Hediye hedefi** — 5/10 dk modal, geri sayım, süre dolumu kapanış
+- **Giriş UX** — loading skeleton, reconnect banner
+- **Koltuk animasyonu** — `AnimatedSwitcher` otur/kalk
+- **SSE dedupe** — `eventId` ile çift event engeli
+- **Koltuk çıkış** — optimistic seat clear iyileştirmesi
+
+### Dokümantasyon
+- `docs/VOICE_ROOM_PROFESSIONAL_AUDIT.md` — tam denetim matrisi
+
 ## 1.0.426+464 (2026-09-09) — FPS seçici + oyun–yayın bağlamı
 
 ### Video kalitesi

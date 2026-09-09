@@ -101,4 +101,22 @@ abstract final class VoiceRoomMention {
       selection: TextSelection.collapsed(offset: offset),
     );
   }
+
+  /// Profil / chat'ten tek seferlik @ekleme — tekrarlı @Mesut engellenir.
+  static void appendMentionDeduped({
+    required TextEditingController controller,
+    required String handle,
+  }) {
+    final h = handle.trim();
+    if (h.isEmpty) return;
+    final existing = controller.text;
+    final pattern = RegExp(r'@' + RegExp.escape(h) + r'(\s|$)', caseSensitive: false);
+    if (pattern.hasMatch(existing)) return;
+    final needsSpace = existing.isNotEmpty && !existing.endsWith(' ');
+    final mention = '@$h ';
+    controller.text = '$existing${needsSpace ? ' ' : ''}$mention';
+    controller.selection = TextSelection.fromPosition(
+      TextPosition(offset: controller.text.length),
+    );
+  }
 }

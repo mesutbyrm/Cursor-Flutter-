@@ -165,6 +165,7 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             state = state.copyWith(messages: [...state.messages, msg]);
             _sse._onMusicRelatedChatMessage(msg);
             _sse._pushBasicChatEvent(msg);
+            _sse._maybeNotifyMention(msg);
             if (msg.kind == ChatMessageKind.systemJoin &&
                 VoiceOfficialJoin.isEntranceWorthy(
                   content: msg.content,

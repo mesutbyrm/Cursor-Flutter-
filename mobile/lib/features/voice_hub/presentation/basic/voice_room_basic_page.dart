@@ -36,6 +36,11 @@ import '../utils/voice_room_key_resolver.dart';
 import '../providers/voice_session_phase_provider.dart';
 import '../../domain/voice/voice_session_phase.dart';
 import '../providers/voice_room_ui_provider.dart';
+import '../providers/voice_room_mention_notice_provider.dart';
+import '../widgets/voice_room/voice_room_mention_notice_banner.dart';
+import '../widgets/voice_room/voice_room_reconnect_banner.dart';
+import '../widgets/voice_room/voice_room_loading_skeleton.dart';
+import '../utils/voice_room_mention.dart';
 import '../sheets/voice_room_commands_panel.dart';
 import '../utils/voice_room_permissions.dart';
 import '../utils/voice_room_error_display.dart';
@@ -534,19 +539,15 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       liveKey: _liveRoomKey,
       user: user,
       perms: perms,
+      onMessageMention: (u) => _insertMention(VoiceRoomMention.handleFor(u)),
     );
   }
 
   /// Chat'te isme tek dokunuş → "@kullanıcı adı " mesaj kutusuna eklenir.
   void _insertMention(String name) {
-    final n = name.trim();
-    if (n.isEmpty) return;
-    final existing = _messageCtrl.text;
-    final needsSpace = existing.isNotEmpty && !existing.endsWith(' ');
-    final mention = '@$n ';
-    _messageCtrl.text = '$existing${needsSpace ? ' ' : ''}$mention';
-    _messageCtrl.selection = TextSelection.fromPosition(
-      TextPosition(offset: _messageCtrl.text.length),
+    VoiceRoomMention.appendMentionDeduped(
+      controller: _messageCtrl,
+      handle: name,
     );
   }
 
@@ -921,7 +922,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                 if (_audioJoining)
                   const LinearProgressIndicator(minHeight: 2),
                 if (live.loading && live.presence.isEmpty)
-                  const Expanded(child: Center(child: CircularProgressIndicator()))
+                  const Expanded(child: VoiceRoomLoadingSkeleton())
                 else ...[
                   VoiceRoomBasicModerationSection(
                     room: room,
@@ -961,6 +962,31 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                           onMention: (userId, name) => _insertMention(name),
                           onUserPerms: (userId, name) =>
                               _openUserById(userId, live, room, perms),
+                        ),
+                        if (!live.sseConnected && live.selfInRoom)
+                          const VoiceRoomReconnectBanner(
+                            message:
+                                'Ses bağlantısı yeniden kuruluyor…',
+                          ),
+                        Builder(
+                          builder: (context) {
+                            final mention =
+                                ref.watch(voiceRoomMentionNoticeProvider);
+                            if (mention == null) return const SizedBox.shrink();
+                            return Positioned(
+                              top: 8,
+                              left: 0,
+                              right: 0,
+                              child: VoiceRoomMentionNoticeBanner(
+                                fromName: mention.fromName,
+                                preview: mention.messagePreview,
+                                onDismiss: () => ref
+                                    .read(voiceRoomMentionNoticeProvider
+                                        .notifier)
+                                    .clear(),
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),

@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../providers/chat_room_providers.dart';
 import '../../providers/room_fragment_providers.dart';
+import '../../../music/presentation/widgets/voice_room_music_pro_sheet.dart';
 import '../../../music/presentation/widgets/room_music_queue_sheet.dart';
+import '../sheets/voice_youtube_song_sheet.dart';
 import '../voice_room/voice_room_music_request_flash.dart';
 import '../../../domain/entities/chat_room_dj_state.dart';
 import '../../../domain/entities/music_queue_item.dart';
@@ -61,13 +63,18 @@ class VoiceRoomCenterMusicPanel extends ConsumerWidget {
             child: _AudioMusicSummary(
               dj: dj,
               listenerCount: listenerCount,
-              onQueueTap: () => showRoomMusicQueueSheet(
+              onQueueTap: () => showVoiceRoomMusicProSheet(
                 context,
                 ref,
                 liveKey: sessionKey,
                 dj: dj,
                 canControlMusic: canControlMusic,
                 canStopMusic: canCloseMusic,
+                onRequestSong: () => showVoiceYoutubeSongSheet(
+                  context,
+                  ref,
+                  room: room,
+                ),
               ),
             ),
           ),

@@ -97,6 +97,7 @@ Future<void> showVoiceUserProfileSheet(
   BuildContext context, {
   required ChatRoomPresence user,
   VoidCallback? onGift,
+  VoidCallback? onMessageInRoom,
 }) {
   return showModalBottomSheet(
     context: context,
@@ -104,6 +105,7 @@ Future<void> showVoiceUserProfileSheet(
     builder: (ctx) => _UserProfileSheet(
       user: user,
       onGift: onGift,
+      onMessageInRoom: onMessageInRoom,
     ),
   );
 }
@@ -928,10 +930,12 @@ class _UserProfileSheet extends StatelessWidget {
   const _UserProfileSheet({
     required this.user,
     this.onGift,
+    this.onMessageInRoom,
   });
 
   final ChatRoomPresence user;
   final VoidCallback? onGift;
+  final VoidCallback? onMessageInRoom;
 
   @override
   Widget build(BuildContext context) {
@@ -977,7 +981,14 @@ class _UserProfileSheet extends StatelessWidget {
                   tooltip: 'Profil',
                 ),
                 IconButton(
-                  onPressed: () => context.push('/chat/${user.id}'),
+                  onPressed: () {
+                    if (onMessageInRoom != null) {
+                      Navigator.pop(context);
+                      onMessageInRoom();
+                      return;
+                    }
+                    context.push('/chat/${user.id}');
+                  },
                   icon: const Icon(Icons.message_rounded),
                   tooltip: 'Mesaj',
                 ),

@@ -119,6 +119,7 @@ void openVoiceRoomBasicUser(
   required String liveKey,
   required ChatRoomPresence user,
   VoiceRoomPermissions? perms,
+  void Function(ChatRoomPresence user)? onMessageMention,
 }) {
   final auth = ref.read(authControllerProvider).valueOrNull;
   final liveState = ref.read(voiceRoomLiveProvider(liveKey));
@@ -158,6 +159,9 @@ void openVoiceRoomBasicUser(
     isOwner: isOwner,
     selfId: auth?.id,
     onGift: openGift,
+    onMessageInRoom: onMessageMention == null
+        ? null
+        : () => onMessageMention(user),
   );
 }
 

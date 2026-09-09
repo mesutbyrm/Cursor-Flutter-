@@ -37,12 +37,22 @@ void main() {
       expect(controller.text, 'Selam @Mesut ');
     });
 
-    test('resolveMentionedUserIds matches presence', () {
-      final ids = VoiceRoomMention.resolveMentionedUserIds(
-        'Selam @Mesut nasılsın?',
-        const [mesut, ali],
+    test('appendMentionDeduped skips duplicate @handle', () {
+      final controller = TextEditingController(text: 'Selam @Mesut ');
+      VoiceRoomMention.appendMentionDeduped(
+        controller: controller,
+        handle: 'Mesut',
       );
-      expect(ids, ['u1']);
+      expect(controller.text, 'Selam @Mesut ');
+    });
+
+    test('appendMentionDeduped adds once when absent', () {
+      final controller = TextEditingController(text: 'Selam');
+      VoiceRoomMention.appendMentionDeduped(
+        controller: controller,
+        handle: 'Mesut',
+      );
+      expect(controller.text, 'Selam @Mesut ');
     });
   });
 }

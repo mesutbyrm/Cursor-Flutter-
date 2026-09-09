@@ -35,13 +35,19 @@ abstract final class VoiceRoomUserActions {
     required bool isOwner,
     required String? selfId,
     required VoidCallback onGift,
+    VoidCallback? onMessageInRoom,
   }) {
     if (shouldOpenSelfProfile(
       perms: permissions,
       selfId: selfId,
       target: user,
     )) {
-      showVoiceUserProfileSheet(context, user: user, onGift: onGift);
+      showVoiceUserProfileSheet(
+        context,
+        user: user,
+        onGift: onGift,
+        onMessageInRoom: onMessageInRoom,
+      );
       return;
     }
 
@@ -61,6 +67,11 @@ abstract final class VoiceRoomUserActions {
       return;
     }
 
-    showVoiceUserProfileSheet(context, user: user, onGift: onGift);
+    showVoiceUserProfileSheet(
+      context,
+      user: user,
+      onGift: onGift,
+      onMessageInRoom: onMessageInRoom,
+    );
   }
 }

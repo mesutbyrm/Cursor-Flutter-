@@ -17,7 +17,11 @@ class GiftGoalRemoteDataSource {
     required String contextId,
     required String title,
     required int targetAmount,
+    int? durationMinutes,
   }) async {
+    final endsAt = durationMinutes != null && durationMinutes > 0
+        ? DateTime.now().toUtc().add(Duration(minutes: durationMinutes))
+        : null;
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.giftsGoals,
       data: {
@@ -26,6 +30,8 @@ class GiftGoalRemoteDataSource {
         'roomId': contextId,
         'title': title,
         'targetAmount': targetAmount,
+        if (durationMinutes != null) 'durationMinutes': durationMinutes,
+        if (endsAt != null) 'endsAt': endsAt.toIso8601String(),
       },
     );
     return _parseSingle(res.data);

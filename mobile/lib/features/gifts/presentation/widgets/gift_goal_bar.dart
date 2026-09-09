@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -21,13 +23,31 @@ class GiftGoalBar extends ConsumerStatefulWidget {
 
 class _GiftGoalBarState extends ConsumerState<GiftGoalBar> {
   bool _celebrating = false;
+  Timer? _countdownTimer;
+
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    super.dispose();
+  }
+
+  void _armCountdownIfNeeded(GiftGoal? goal) {
+    if (goal?.endsAt == null) {
+      _countdownTimer?.cancel();
+      _countdownTimer = null;
+      return;
+    }
+    if (_countdownTimer != null) return;
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final key = (context: widget.context, contextId: widget.contextId);
     final st = ref.watch(giftGoalProvider(key));
 
-    // Tamamlanma anını yakala → kısa kutlama efekti.
     ref.listen<GiftGoalState>(giftGoalProvider(key), (prev, next) {
       if (next.justCompleted && !_celebrating) {
         setState(() => _celebrating = true);
@@ -36,9 +56,19 @@ class _GiftGoalBarState extends ConsumerState<GiftGoalBar> {
           if (mounted) setState(() => _celebrating = false);
         });
       }
+      if (next.justExpired) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('🎯 Hedef süresi doldu'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+      _armCountdownIfNeeded(next.goal);
     });
 
     final goal = st.goal;
+    _armCountdownIfNeeded(goal);
     if (goal == null || st.dismissed) return const SizedBox.shrink();
 
     return _GoalStrip(
@@ -112,6 +142,17 @@ class _GoalStrip extends StatelessWidget {
                   fontSize: 10,
                 ),
               ),
+              if (!done && goal.endsAt != null) ...[
+                const SizedBox(width: 6),
+                Text(
+                  _formatRemaining(goal.remainingTime),
+                  style: const TextStyle(
+                    color: Color(0xFFFFB74D),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 10,
+                  ),
+                ),
+              ],
               if (done && onDismiss != null) ...[
                 const SizedBox(width: 4),
                 InkWell(
@@ -164,6 +205,15 @@ class _GoalStrip extends StatelessWidget {
     if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)}M';
     if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}K';
     return '$v';
+  }
+
+  static String _formatRemaining(Duration? remaining) {
+    if (remaining == null) return '';
+    final total = remaining.inSeconds;
+    if (total <= 0) return '00:00';
+    final m = (total ~/ 60).toString().padLeft(2, '0');
+    final s = (total % 60).toString().padLeft(2, '0');
+    return '$m:$s';
   }
 }
 

@@ -13,7 +13,7 @@ import '../../../live/presentation/providers/live_providers.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
 import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../providers/pk_battle_remote_provider.dart';
-import '../providers/voice_room_session_registry.dart';
+import '../widgets/premium_2026/voice_pk_invite_center_modal.dart';
 import 'voice_room_session_utils.dart';
 
 /// Aynı PK daveti için çift popup önlenir (listener + oda banner).
@@ -69,33 +69,14 @@ Future<void> showPkInviteDialog(
   ref.read(pkSeenInviteIdsProvider.notifier).state = {...seen, inviteId};
 
   final challengerLabel = pkChallengerRoomLabel(ref, battle);
-  final minutes = (battle.durationSeconds / 60).round();
-  final durationHint = minutes > 0 ? '\nSüre: $minutes dk' : '';
   final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
   final alt = room.slug != key ? room.slug : null;
   final remote = ref.read(pkBattleRemoteProvider.notifier);
 
-  final accept = await showDialog<bool>(
+  final accept = await showVoicePkInviteCenterModal(
     context: context,
-    barrierDismissible: false,
-    builder: (ctx) => AlertDialog(
-      backgroundColor: const Color(0xFF1A0F2E),
-      title: const Text('PK Daveti', style: TextStyle(color: Colors.white)),
-      content: Text(
-        '$challengerLabel odası size PK isteği attı.$durationHint\nKabul ediyor musunuz?',
-        style: const TextStyle(color: Colors.white70),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Reddet'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.pop(ctx, true),
-          child: const Text('Kabul Et'),
-        ),
-      ],
-    ),
+    challengerLabel: challengerLabel,
+    battle: battle,
   ).timeout(
     const Duration(seconds: 30),
     onTimeout: () => null,

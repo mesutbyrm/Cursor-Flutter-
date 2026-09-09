@@ -6,6 +6,7 @@ import '../../vip_gold/presentation/widgets/vip_locked_room_sheet.dart';
 import '../../vip_gold/domain/voice_room_access.dart';
 import 'utils/voice_room_session_utils.dart';
 import 'basic/voice_room_page.dart';
+import 'widgets/voice_room/voice_room_loading_skeleton.dart';
 import 'widgets/voice_room_error_boundary.dart';
 
 /// Derin bağlantı ile gelen odalar — şifre kapısı sonra oda.
@@ -61,12 +62,7 @@ class _VoiceRoomGatedEntryState extends ConsumerState<VoiceRoomGatedEntry> {
       );
     }
     if (!_ready) {
-      return const Scaffold(
-        backgroundColor: Color(0xFF0B0B12),
-        body: Center(
-          child: CircularProgressIndicator(color: Color(0xFFB388FF)),
-        ),
-      );
+      return const VoiceRoomLoadingSkeleton();
     }
     final key = widget.room.apiRoomKey.isNotEmpty
         ? widget.room.apiRoomKey

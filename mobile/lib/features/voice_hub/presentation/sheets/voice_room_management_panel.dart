@@ -40,7 +40,7 @@ import 'voice_room_voice_users_sheet.dart';
 import 'voice_youtube_song_sheet.dart';
 import 'voice_room_speak_queue_sheet.dart';
 import 'voice_room_tools_sheet.dart';
-import 'voice_room_music_settings_sheet.dart';
+import '../widgets/voice_room/voice_gift_goal_start_modal.dart';
 
 enum VoiceMgmtInitial { home, userMgmt, users, chatMgmt, roomMgmt, userSettings }
 
@@ -962,41 +962,8 @@ class _VoiceRoomManagementPanelState
 
   Future<void> _startGiftGoal() async {
     final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
-    final target = await showModalBottomSheet<int>(
-      context: context,
-      backgroundColor: const Color(0xFF12082A),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                'Hedef $jetonLabel miktarı',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-            for (final opt in [
-              (10000, '10K $jetonLabel'),
-              (50000, '50K $jetonLabel'),
-              (100000, '100K $jetonLabel'),
-              (500000, '500K $jetonLabel'),
-            ])
-              ListTile(
-                leading:
-                    const Icon(Icons.flag_rounded, color: Color(0xFF66E36F)),
-                title: Text(opt.$2, style: const TextStyle(color: Colors.white)),
-                onTap: () => Navigator.pop(ctx, opt.$1),
-              ),
-          ],
-        ),
-      ),
-    );
-    if (target == null || !mounted) return;
+    final picked = await showVoiceGiftGoalStartModal(context, ref);
+    if (picked == null || !mounted) return;
     try {
       final contextId = widget.room.apiRoomKey.isNotEmpty
           ? widget.room.apiRoomKey
@@ -1004,8 +971,9 @@ class _VoiceRoomManagementPanelState
       final goal = await ref.read(giftGoalRemoteProvider).createGoal(
             context: 'voice_room',
             contextId: contextId,
-            title: 'Hedef: ${_fmtCoins(target)} $jetonLabel',
-            targetAmount: target,
+            title: 'Hedef: ${_fmtCoins(picked.targetAmount)} $jetonLabel',
+            targetAmount: picked.targetAmount,
+            durationMinutes: picked.durationMinutes,
           );
       if (goal != null) {
         ref
@@ -1014,7 +982,7 @@ class _VoiceRoomManagementPanelState
                 .notifier)
             .adopt(goal);
       }
-      await _snack('Hediye hedefi belirlendi!');
+      await _snack('Hediye hedefi belirlendi (${picked.durationMinutes} dk)!');
     } catch (e) {
       await _snack(ApiException.userMessage(e));
     }

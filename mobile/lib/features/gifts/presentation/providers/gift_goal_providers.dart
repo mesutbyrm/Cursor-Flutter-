@@ -13,11 +13,12 @@ final giftGoalRemoteProvider = Provider<GiftGoalRemoteDataSource>((ref) {
 /// (context, contextId) anahtarı.
 typedef GiftGoalKey = ({String context, String contextId});
 
-/// Bir hedefin canlı durumu + tamamlanma sinyali.
+/// Bir hedefin canlı durumu + tamamlanma / süre dolumu sinyali.
 class GiftGoalState {
   const GiftGoalState({
     this.goal,
     this.justCompleted = false,
+    this.justExpired = false,
     this.dismissed = false,
   });
 
@@ -26,17 +27,22 @@ class GiftGoalState {
   /// Bu tick'te hedef ilk kez doldu — kutlama tetiklenmeli.
   final bool justCompleted;
 
+  /// Süre doldu, hedef tamamlanmadı.
+  final bool justExpired;
+
   /// Kullanıcı tamamlanan hedef şeridini kapattı.
   final bool dismissed;
 
   GiftGoalState copyWith({
     GiftGoal? goal,
     bool? justCompleted,
+    bool? justExpired,
     bool? dismissed,
   }) =>
       GiftGoalState(
         goal: goal ?? this.goal,
         justCompleted: justCompleted ?? this.justCompleted,
+        justExpired: justExpired ?? this.justExpired,
         dismissed: dismissed ?? this.dismissed,
       );
 }
@@ -68,7 +74,6 @@ class GiftGoalController
         context: arg.context,
         contextId: arg.contextId,
       );
-      // Aktif hedefi (yoksa en son hedefi) seç.
       GiftGoal? goal;
       for (final g in goals) {
         if (g.isActive) {
@@ -77,6 +82,21 @@ class GiftGoalController
         }
       }
       goal ??= goals.isNotEmpty ? goals.first : null;
+
+      if (goal != null && goal.endsAt != null) {
+        final expired = DateTime.now().isAfter(goal.endsAt!);
+        if (expired && !goal.isCompleted) {
+          final wasActive = state.goal?.id == goal.id && !state.justExpired;
+          state = GiftGoalState(
+            goal: goal,
+            justExpired: wasActive,
+            dismissed: true,
+          );
+          _timer?.cancel();
+          unawaited(remote.closeGoal(goal.id));
+          return;
+        }
+      }
 
       final completedNow = goal?.isCompleted ?? false;
       final justCompleted = completedNow && !_wasCompleted;

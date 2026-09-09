@@ -109,6 +109,7 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
   }
 
   void _handleRoomEvent(Map<String, dynamic> payload) {
+    if (!_acceptSseEvent(payload)) return;
     _markSseActivity();
     if (!roomEventMatchesActiveRoom(
       payload,

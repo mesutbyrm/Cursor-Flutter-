@@ -108,10 +108,15 @@ class VoiceMicSeat extends ConsumerWidget {
       );
     }
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Stack(
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 280),
+      switchInCurve: Curves.easeOutBack,
+      switchOutCurve: Curves.easeIn,
+      child: Column(
+        key: ValueKey(user!.id),
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Stack(
           clipBehavior: Clip.none,
           alignment: Alignment.center,
           children: [
@@ -226,6 +231,7 @@ class VoiceMicSeat extends ConsumerWidget {
             displayName: user!.displayName,
           ),
       ],
+    ),
     );
   }
 
