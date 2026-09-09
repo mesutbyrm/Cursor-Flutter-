@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.452+490 (2026-09-09) — Sesli oda Faz 26
+
+### Mention banner — dokununca duraklat
+- Basılı tutarken otomatik kapanma durur; `⏸` göstergesi
+- Parmak kalkınca kalan süreyle devam
+
+### Keşfet sıralama SSE hazırlığı
+- `isVoiceRoomRankChangedSseEvent` — `room_rank_changed`, `ranking_updated` vb.
+- Keşfet hub SSE → debounced sıralama yenileme (`voiceRoomRankingProvider.refresh`)
+
 ## 1.0.451+489 (2026-09-09) — Sesli oda Faz 25
 
 ### Mention banner haptic

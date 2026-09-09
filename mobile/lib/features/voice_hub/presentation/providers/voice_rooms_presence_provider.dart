@@ -7,6 +7,7 @@ import '../../../../core/network/token_storage.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/voice_rooms_list_notifier.dart';
 import '../../domain/entities/chat_room_sse_event.dart';
+import '../utils/voice_room_ranking_sse.dart';
 import 'voice_room_ranking_provider.dart';
 
 /// Keşfet listesinde anlık çevrimiçi sayıları — merkezi SSE hub (oda başına tek bağlantı).
@@ -142,6 +143,10 @@ class VoiceRoomsPresenceNotifier extends Notifier<VoiceRoomsPresenceState> {
       if (ev == 'room_closed') {
         _patchRoomClosedOnDiscover(roomId);
         _disconnectRoom(roomId);
+        return;
+      }
+      if (isVoiceRoomRankChangedSseEvent(ev)) {
+        _scheduleRankingRefreshFromDiscover();
         return;
       }
       if (ev.contains('pk_')) {

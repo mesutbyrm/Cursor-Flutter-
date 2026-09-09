@@ -1,7 +1,7 @@
 # Canlifal Sesli Sohbet Odaları — Profesyonel Denetim Raporu
 
 **Tarih:** 2026-09-09  
-**Sürüm (bu oturum):** `1.0.451+489`  
+**Sürüm (bu oturum):** `1.0.452+490`  
 **Mimari:** Flutter mobil → `https://canlifal.com` REST + SSE (Socket.IO mobilde kullanılmıyor)
 
 ---
@@ -32,7 +32,7 @@ Sesli oda sistemi **çalışan temel akışları koruyarak** premium UX, mention
 | Hediye / jeton | **ÇALIŞIYOR** | Gift transaction API |
 | Oda beğeni | **EKSİK** | Üretim endpoint yok |
 | Chat / mesaj | **ÇALIŞIYOR** | Flood banner + gönder kilidi + typing indicator (Faz 20) |
-| Mention bildirimi (oda içi) | **ÇALIŞIYOR** (Faz 25) | Haptic + countdown; dokun/swipe |
+| Mention bildirimi (oda içi) | **ÇALIŞIYOR** (Faz 26) | Haptic + countdown; basılı tut → duraklat; swipe |
 | Sohbet uzun bas (kopyala/yanıtla/rapor) | **ÇALIŞIYOR** (Faz 25) | Mesaj + kullanıcı raporu |
 | Sıralama sheet güncelleme etiketi | **ÇALIŞIYOR** (Faz 25) | Göreli «X dk önce» + refresh haptic |
 | Sohbet yeni mesaj chip | **ÇALIŞIYOR** (Faz 22) | Basic + RTC overlay; akıllı auto-scroll |
@@ -49,6 +49,7 @@ Sesli oda sistemi **çalışan temel akışları koruyarak** premium UX, mention
 | Saatlik / günlük oda sıralaması Top 100 | **KISMEN** | Proxy skor; keşfet popüler sekme + kart rozetleri (Faz 16) |
 | Global Top-3 bildirim | **KISMEN** | `VoiceRoomGlobalRankBanner` — otomatik kapanma + sıralama sheet (Faz 16) |
 | Keşfet sıralama UX | **ÇALIŞIYOR** (Faz 16–17) | Proxy sıralama, Top-3 rozet, «Tümü» → sheet |
+| Keşfet sıralama SSE yenileme | **ÇALIŞIYOR** (Faz 26) | `ROOM_RANK_CHANGED` alias → debounced refresh |
 | Sıralama sheet | **ÇALIŞIYOR** (Faz 17–18) | Podium Top-3, önizleme, refresh, SSE sayaç |
 | Keşfet header izolasyonu | **ÇALIŞIYOR** (Faz 18) | `VoiceDiscoverHeaderBand` |
 | Odalar arası turnuva | **EKSİK** | Modüler altyapı planlandı, backend yok |

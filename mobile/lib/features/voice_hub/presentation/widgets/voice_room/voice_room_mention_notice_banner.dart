@@ -34,6 +34,8 @@ class _VoiceRoomMentionNoticeBannerState extends State<VoiceRoomMentionNoticeBan
   Timer? _countdownTick;
   late DateTime _endsAt;
   Object? _trackedDismissKey;
+  var _isPaused = false;
+  Duration _pausedRemaining = VoiceRoomMentionNoticeBanner.autoDismissDuration;
 
   @override
   void initState() {
@@ -57,20 +59,59 @@ class _VoiceRoomMentionNoticeBannerState extends State<VoiceRoomMentionNoticeBan
     final key = widget.dismissKey;
     if (key == _trackedDismissKey) return;
     _trackedDismissKey = key;
+    _isPaused = false;
+    _pausedRemaining = VoiceRoomMentionNoticeBanner.autoDismissDuration;
     _autoDismiss?.cancel();
     _countdownTick?.cancel();
     _endsAt = DateTime.now().add(VoiceRoomMentionNoticeBanner.autoDismissDuration);
     HapticFeedback.mediumImpact();
     if (widget.onDismiss == null) return;
-    _autoDismiss = Timer(VoiceRoomMentionNoticeBanner.autoDismissDuration, () {
+    _scheduleDismiss(_pausedRemaining);
+    _startCountdownTick();
+  }
+
+  void _scheduleDismiss(Duration duration) {
+    _autoDismiss?.cancel();
+    if (duration <= Duration.zero) {
+      widget.onDismiss?.call();
+      return;
+    }
+    _autoDismiss = Timer(duration, () {
       if (!mounted) return;
       widget.onDismiss?.call();
     });
+  }
+
+  void _startCountdownTick() {
+    _countdownTick?.cancel();
     _countdownTick = Timer.periodic(const Duration(milliseconds: 200), (_) {
-      if (!mounted) return;
+      if (!mounted || _isPaused) return;
       if (DateTime.now().isAfter(_endsAt)) return;
       setState(() {});
     });
+  }
+
+  void _pauseDismiss() {
+    if (_isPaused || widget.onDismiss == null) return;
+    _isPaused = true;
+    _autoDismiss?.cancel();
+    _pausedRemaining = _endsAt.difference(DateTime.now());
+    if (_pausedRemaining.isNegative) {
+      _pausedRemaining = Duration.zero;
+    }
+    setState(() {});
+  }
+
+  void _resumeDismiss() {
+    if (!_isPaused || widget.onDismiss == null) return;
+    _isPaused = false;
+    if (_pausedRemaining <= Duration.zero) {
+      widget.onDismiss?.call();
+      return;
+    }
+    _endsAt = DateTime.now().add(_pausedRemaining);
+    _scheduleDismiss(_pausedRemaining);
+    setState(() {});
   }
 
   @override
@@ -91,14 +132,19 @@ class _VoiceRoomMentionNoticeBannerState extends State<VoiceRoomMentionNoticeBan
 
   Widget _buildCard(double pulse) {
     final glow = 0.35 + pulse * 0.25;
-    final remaining = _endsAt.difference(DateTime.now());
+    final remaining =
+        _isPaused ? _pausedRemaining : _endsAt.difference(DateTime.now());
     final secs = remaining.inSeconds.clamp(0, 999);
     final progress = remaining.inMilliseconds <= 0
         ? 0.0
         : (remaining.inMilliseconds /
                 VoiceRoomMentionNoticeBanner.autoDismissDuration.inMilliseconds)
             .clamp(0.0, 1.0);
-    final card = Material(
+    final card = Listener(
+      onPointerDown: (_) => _pauseDismiss(),
+      onPointerUp: (_) => _resumeDismiss(),
+      onPointerCancel: (_) => _resumeDismiss(),
+      child: Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: widget.onTap == null
@@ -163,7 +209,7 @@ class _VoiceRoomMentionNoticeBannerState extends State<VoiceRoomMentionNoticeBan
                 ),
                 if (widget.onDismiss != null)
                   Text(
-                    '${secs}s',
+                    _isPaused ? '⏸' : '${secs}s',
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
@@ -198,6 +244,7 @@ class _VoiceRoomMentionNoticeBannerState extends State<VoiceRoomMentionNoticeBan
           ],
         ),
         ),
+      ),
       ),
     );
 
