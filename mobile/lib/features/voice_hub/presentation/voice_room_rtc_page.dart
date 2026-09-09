@@ -77,6 +77,7 @@ import 'utils/voice_room_user_actions.dart';
 import 'utils/voice_room_chat_flood_guard.dart';
 import 'utils/voice_room_error_display.dart';
 import 'widgets/voice_room/voice_room_chat_flood_banner.dart';
+import 'widgets/voice_room/voice_room_typing_indicator.dart';
 import 'utils/voice_room_speak_access.dart';
 import 'utils/voice_room_session_exit.dart';
 import 'utils/voice_room_leave_flow.dart';
@@ -1773,25 +1774,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                       ),
                                     ),
                                     if (chat.typing)
-                                      Padding(
-                                        padding: const EdgeInsets.fromLTRB(
-                                          12,
-                                          0,
-                                          12,
-                                          4,
-                                        ),
-                                        child: Text(
-                                          '${chat.typingUsers.join(', ')} yazıyor…',
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: Colors.white.withValues(
-                                              alpha: 0.65,
-                                            ),
-                                            fontStyle: FontStyle.italic,
-                                          ),
-                                        ),
+                                      VoiceRoomTypingIndicator(
+                                        userNames: chat.typingUsers,
                                       ),
                                   ],
                                 );

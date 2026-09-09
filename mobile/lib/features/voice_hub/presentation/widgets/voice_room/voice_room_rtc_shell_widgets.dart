@@ -12,6 +12,7 @@ import '../premium_2026/voice_live_header_2026.dart';
 import '../premium_2026/voice_online_gift_box.dart';
 import '../premium_2026/voice_live_action_bar_2026.dart';
 import '../premium_2026/voice_web_room_header.dart';
+import '../../utils/voice_room_chat_flood_guard.dart';
 import 'voice_room_spec_footer.dart';
 
 /// SSE/foreground + müzik slice abonelikleri — yan etki; rebuild üretmez.
@@ -291,12 +292,18 @@ class VoiceRoomRtcFooterBand extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ui = ref.watch(voiceRoomUiProvider.select(voiceRoomUiFooterSlice));
+    final sendEnabled = !ref.watch(
+      voiceRoomLiveProvider(liveRoomKey).select(
+        (s) => VoiceRoomChatFloodGuard.isFloodMessage(s.error),
+      ),
+    );
 
     return VoiceRoomSpecFooter(
       liveRoomKey: liveRoomKey,
       controller: controller,
       focusNode: focusNode,
       onSend: onSend,
+      sendEnabled: sendEnabled,
       onToggleAudioOutput: onToggleAudioOutput,
       headphonesOn: ui.headphonesOn,
       onMicToggle: onMicToggle,

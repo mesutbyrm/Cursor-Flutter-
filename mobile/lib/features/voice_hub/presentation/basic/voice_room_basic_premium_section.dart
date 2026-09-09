@@ -205,6 +205,9 @@ class VoiceRoomBasicChatFeed extends ConsumerWidget {
     final presence = ref.watch(
       voiceRoomLiveProvider(liveKey).select((s) => s.presence),
     );
+    final typingUsers = ref.watch(
+      voiceRoomLiveProvider(liveKey).select((s) => s.typingUsers),
+    );
     // Presence'tan id→profil resmi — mesajda görsel yoksa buradan çözülür.
     final avatarById = <String, String>{};
     for (final p in presence) {
@@ -257,12 +260,13 @@ class VoiceRoomBasicChatFeed extends ConsumerWidget {
               );
             },
           ),
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 4,
-          child: const SizedBox.shrink(),
-        ),
+        if (typingUsers.isNotEmpty)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 4,
+            child: VoiceRoomTypingIndicator(userNames: typingUsers),
+          ),
       ],
     );
   }
@@ -278,6 +282,7 @@ class VoiceRoomBasicMessageBar extends StatefulWidget {
     this.onChanged,
     this.presence = const [],
     this.selfUserId,
+    this.sendEnabled = true,
   });
 
   final TextEditingController controller;
@@ -286,6 +291,7 @@ class VoiceRoomBasicMessageBar extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final List<ChatRoomPresence> presence;
   final String? selfUserId;
+  final bool sendEnabled;
 
   @override
   State<VoiceRoomBasicMessageBar> createState() => _VoiceRoomBasicMessageBarState();
@@ -320,7 +326,7 @@ class _VoiceRoomBasicMessageBarState extends State<VoiceRoomBasicMessageBar> {
               presence: widget.presence,
               excludeUserId: widget.selfUserId,
               onChanged: widget.onChanged,
-              onSubmitted: (_) => widget.onSend(),
+              onSubmitted: widget.sendEnabled ? (_) => widget.onSend() : null,
               hintText: 'Mesaj yaz… (!istek)',
               minLines: 1,
               maxLines: 3,
@@ -340,8 +346,12 @@ class _VoiceRoomBasicMessageBarState extends State<VoiceRoomBasicMessageBar> {
             visualDensity: VisualDensity.compact,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-            onPressed: widget.onSend,
-            icon: const Icon(Icons.send_rounded, size: 26),
+            onPressed: widget.sendEnabled ? widget.onSend : null,
+            icon: Icon(
+              Icons.send_rounded,
+              size: 26,
+              color: widget.sendEnabled ? null : Colors.white38,
+            ),
           ),
         ],
       ),

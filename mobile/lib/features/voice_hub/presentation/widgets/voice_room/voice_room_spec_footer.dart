@@ -43,11 +43,13 @@ class VoiceRoomSpecFooter extends ConsumerWidget {
     this.onSpeakRequest,
     this.speakRequestPending = false,
     this.showSpeakRequest = false,
+    this.sendEnabled = true,
   });
 
   final TextEditingController controller;
   final FocusNode focusNode;
   final VoidCallback onSend;
+  final bool sendEnabled;
   final VoidCallback onToggleAudioOutput;
   final bool headphonesOn;
   final VoidCallback onMicToggle;
@@ -117,7 +119,7 @@ class VoiceRoomSpecFooter extends ConsumerWidget {
                               presence: mentionPresence,
                               excludeUserId: selfUserId,
                               onChanged: onChanged,
-                              onSubmitted: (_) => onSend(),
+                              onSubmitted: sendEnabled ? (_) => onSend() : null,
                               hintText: 'Mesajınızı yazın...',
                               decoration: _inputDecoration(context),
                             );
@@ -129,7 +131,7 @@ class VoiceRoomSpecFooter extends ConsumerWidget {
                           presence: presence,
                           excludeUserId: selfUserId,
                           onChanged: onChanged,
-                          onSubmitted: (_) => onSend(),
+                          onSubmitted: sendEnabled ? (_) => onSend() : null,
                           hintText: 'Mesajınızı yazın...',
                           decoration: _inputDecoration(context),
                         ),
@@ -156,17 +158,21 @@ class VoiceRoomSpecFooter extends ConsumerWidget {
                 ],
                 const SizedBox(width: 4),
                 Material(
-                  color: VoiceRoomTokens.neonPurple,
+                  color: sendEnabled
+                      ? VoiceRoomTokens.neonPurple
+                      : VoiceRoomTokens.neonPurple.withValues(alpha: 0.35),
                   shape: const CircleBorder(),
                   child: InkWell(
                     customBorder: const CircleBorder(),
-                    onTap: onSend,
-                    child: const SizedBox(
+                    onTap: sendEnabled ? onSend : null,
+                    child: SizedBox(
                       width: 40,
                       height: 40,
                       child: Icon(
                         Icons.send_rounded,
-                        color: Colors.white,
+                        color: Colors.white.withValues(
+                          alpha: sendEnabled ? 1 : 0.45,
+                        ),
                         size: 19,
                       ),
                     ),

@@ -936,6 +936,9 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     onChanged: _onChatChanged,
                     presence: live.presence,
                     selfUserId: user?.id,
+                    sendEnabled: !VoiceRoomChatFloodGuard.isFloodMessage(
+                      live.error,
+                    ),
                     onEmoji: () =>
                         showVoiceRoomBasicEmojiPicker(context, _messageCtrl),
                   ),

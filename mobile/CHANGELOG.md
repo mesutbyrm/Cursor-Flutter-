@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.446+484 (2026-09-09) — Sesli oda Faz 20
+
+### Chat flood + typing
+- Gönder butonu flood süresinde devre dışı (Basic + RTC `VoiceRoomSpecFooter`)
+- **`VoiceRoomTypingIndicator`** — animasyonlu noktalar; Basic sohbet + RTC
+- Mention banner reconnect üstünde doğru konum (`mentionOffset`)
+
 ## 1.0.445+483 (2026-09-09) — Sesli oda Faz 19
 
 ### Chat flood UX

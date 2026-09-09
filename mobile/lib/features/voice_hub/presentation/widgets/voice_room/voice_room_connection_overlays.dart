@@ -24,6 +24,7 @@ class VoiceRoomConnectionOverlays extends ConsumerWidget {
     final mention = ref.watch(voiceRoomMentionNoticeProvider);
     final showReconnect = !conn.sseConnected && conn.selfInRoom;
     if (!showReconnect && mention == null) return const SizedBox.shrink();
+    final mentionOffset = showReconnect ? mentionTop + 44 : mentionTop;
 
     return Positioned.fill(
       child: Stack(
@@ -45,7 +46,7 @@ class VoiceRoomConnectionOverlays extends ConsumerWidget {
             ),
           if (mention != null)
             Positioned(
-              top: mentionTop,
+              top: mentionOffset,
               left: 0,
               right: 0,
               child: VoiceRoomMentionNoticeBanner(
