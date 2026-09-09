@@ -1,5 +1,24 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.457+495 (2026-09-09) — PK ingest, sesli davet, sıralama, falcı bahşiş, bot
+
+### PK (canlı + sesli)
+- Canlı PK SSE ingest: sahip yayınlar için `liveVideoPkProvider` senkronu; yabancı battle yazılmaz
+- Davet sonrası `liveVideoPkProvider.applyRemoteBattle` — karşı taraf anında davet görür
+- Sesli PK: `guestUserId` zorunlu değil; `opponentRoomId` ile davet gönderilir (0 çevrimiçi oda)
+- PK daveti: bot hesapları engellendi
+
+### Sıralama bildirimi
+- Saatlik/günlük top 3 yalnızca saat/gün başında uygulamada olanlara gösterilir
+- Sonradan giren kullanıcılar geçmiş kutlamayı görmez (oturum bazlı pencere anahtarı)
+
+### Canlı falcı
+- Bahşiş SSE `eventId` dedupe; falcıya anında «X size bahşiş attı» popup
+- `timerStarted` SSE ile mikrofon/kamera yayın senkronu
+
+### Bot kısıtları
+- Müzik isteği (`!istek`, hub, API) bot hesaplarda engellendi
+
 ## 1.0.456+494 (2026-09-09) — Live/sesli oda realtime kök düzeltmeler
 
 ### PK
