@@ -217,7 +217,6 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
               return;
             }
             ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(battle);
-            ref.read(livePkInviteSignalProvider.notifier).bump();
             VoiceRoomDebugLog.log('sse.pk', {
               'roomId': roomKey,
               'battleId': battle.id,

@@ -137,10 +137,9 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
 
       // Sesli oda PK — games backend `GET /api/chat/rooms/{id}/pk` (unified /api/pk/* yok).
       final activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
-      final inRoomSse = activeKey.isNotEmpty &&
-          ref.read(voiceRoomLiveProvider(activeKey)).sseConnected;
 
-      if (activeKey.isNotEmpty && !inRoomSse) {
+      // Aktif oda — SSE bağlı görünse bile REST yedek (handler wipe / kaçırılan event).
+      if (activeKey.isNotEmpty) {
         final roomBattle = await api.fetchRoomBattle(activeKey);
         if (roomBattle != null && !roomBattle.isEnded) {
           ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(roomBattle);

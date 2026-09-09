@@ -64,7 +64,7 @@ class LiveGuestListSnapshot {
               'rtcUserId': pick(g, ['rtcUserId', 'trtcUserId', 'rtc_user_id']),
               'trtcUserId': pick(g, ['trtcUserId', 'rtcUserId', 'rtc_user_id']),
               'slotIndex': g['slotIndex'] ?? g['seatIndex'],
-              'status': g['status'] ?? g['state'] ?? 'live',
+              'status': g['status'] ?? g['state'],
               'jeton': parseGuestJeton(g),
               'jetonEarned': parseGuestJeton(g),
             })

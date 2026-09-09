@@ -249,6 +249,13 @@ class TrtcRoomManager {
       onRemoteUserLeaveRoom: (userId, _) {
         _trtcLog('remote_leave', {'userId': userId});
         _trackRemoteUser(userId, joined: false);
+        stopRemoteView(userId);
+        final videoMap = Map<String, bool>.from(remoteVideoByUser.value);
+        videoMap.remove(userId);
+        remoteVideoByUser.value = videoMap;
+        final audioMap = Map<String, bool>.from(remoteAudioByUser.value);
+        audioMap.remove(userId);
+        remoteAudioByUser.value = audioMap;
         if (remoteAnchorUserId == userId) {
           _clearRemoteAnchor();
         }

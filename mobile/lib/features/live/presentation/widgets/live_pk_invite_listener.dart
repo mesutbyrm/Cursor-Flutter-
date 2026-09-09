@@ -176,17 +176,8 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
       _showing = false;
     }
 
-    if (!mounted || accept == null) {
-      if (accept == null && mounted) {
-        try {
-          await ref.read(pkBattleRemoteProvider.notifier).reject(
-                battle.effectiveId,
-                streamId: myStreamId,
-              );
-        } catch (_) {}
-      }
-      return;
-    }
+    // Dialog timeout / dismiss — backend pending state korunur; otomatik reject yok.
+    if (!mounted || accept == null) return;
 
     final remote = ref.read(pkBattleRemoteProvider.notifier);
     final pkNotifier = ref.read(liveVideoPkProvider(myStreamId).notifier);

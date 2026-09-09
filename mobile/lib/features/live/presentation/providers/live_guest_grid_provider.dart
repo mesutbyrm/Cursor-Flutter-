@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/live_guest_layout.dart';
 import '../../domain/entities/live_guest_slot.dart';
+import '../../domain/live_co_guest_status.dart';
 import '../../domain/live_guest_layout_resolver.dart';
 
 class LiveGuestGridState {
@@ -110,7 +111,7 @@ class LiveGuestGridNotifier extends Notifier<LiveGuestGridState> {
   }
 
   void syncCoBroadcasters(List<Map<String, dynamic>> guests) {
-    final approved = guests.where(_isApprovedCoGuest).toList();
+    final approved = filterApprovedCoGuests(guests);
     if (approved.isEmpty) {
       final cleared = [...state.slots];
       for (var i = 1; i < cleared.length; i++) {
@@ -193,15 +194,6 @@ class LiveGuestGridNotifier extends Notifier<LiveGuestGridState> {
     );
     state = state.copyWith(slots: list);
   }
-}
-
-bool _isApprovedCoGuest(Map<String, dynamic> g) {
-  final status =
-      (g['status'] ?? g['state'] ?? 'approved').toString().toLowerCase();
-  return status == 'approved' ||
-      status == 'active' ||
-      status == 'joined' ||
-      status == 'live';
 }
 
 String? _guestRtcUserId(Map<String, dynamic> guest) {

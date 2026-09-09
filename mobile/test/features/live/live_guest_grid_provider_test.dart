@@ -56,5 +56,16 @@ void main() {
       expect(notifier.state.slots[0].isHost, isTrue);
       container.dispose();
     });
+
+    test('rejects guests with missing status', () {
+      final container = ProviderContainer();
+      final notifier = container.read(liveGuestGridProvider.notifier);
+      notifier.syncCoBroadcasters([
+        {'userId': 'no-status'},
+      ]);
+      expect(notifier.state.slots.length, 1);
+      expect(notifier.state.slots[0].isHost, isTrue);
+      container.dispose();
+    });
   });
 }

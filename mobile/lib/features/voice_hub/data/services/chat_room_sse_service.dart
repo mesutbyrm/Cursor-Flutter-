@@ -88,24 +88,24 @@ class ChatRoomSseService extends BaseSseService {
     final id = roomId.trim();
     if (id.isEmpty) return;
     _roomId = id;
-    _onConnected = onConnected;
-    _onMessage = onMessage;
-    _onPresence = onPresence;
-    _onUserJoin = onUserJoin;
-    _onUserLeave = onUserLeave;
-    _onDjUpdate = onDjUpdate;
-    _onSong = onSong;
-    _onSongQueue = onSongQueue;
-    _onGift = onGift;
-    _onRoomUpdate = onRoomUpdate;
-    _onModeration = onModeration;
-    _onAnnouncement = onAnnouncement;
-    _onSystem = onSystem;
-    _onFortuneRequest = onFortuneRequest;
-    _onSpeakRequest = onSpeakRequest;
-    _onPk = onPk;
-    _onTyping = onTyping;
-    _onRoomEvent = onRoomEvent;
+    if (onConnected != null) _onConnected = onConnected;
+    if (onMessage != null) _onMessage = onMessage;
+    if (onPresence != null) _onPresence = onPresence;
+    if (onUserJoin != null) _onUserJoin = onUserJoin;
+    if (onUserLeave != null) _onUserLeave = onUserLeave;
+    if (onDjUpdate != null) _onDjUpdate = onDjUpdate;
+    if (onSong != null) _onSong = onSong;
+    if (onSongQueue != null) _onSongQueue = onSongQueue;
+    if (onGift != null) _onGift = onGift;
+    if (onRoomUpdate != null) _onRoomUpdate = onRoomUpdate;
+    if (onModeration != null) _onModeration = onModeration;
+    if (onAnnouncement != null) _onAnnouncement = onAnnouncement;
+    if (onSystem != null) _onSystem = onSystem;
+    if (onFortuneRequest != null) _onFortuneRequest = onFortuneRequest;
+    if (onSpeakRequest != null) _onSpeakRequest = onSpeakRequest;
+    if (onPk != null) _onPk = onPk;
+    if (onTyping != null) _onTyping = onTyping;
+    if (onRoomEvent != null) _onRoomEvent = onRoomEvent;
     if (isLiveForRoom(id)) {
       VoiceRoomDebugLog.log('sse.connect.skip', {
         'roomId': id,

@@ -1,5 +1,29 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.455+493 (2026-09-09) — Final release hardening (kod denetimi)
+
+### PK
+- Canlı PK: dialog timeout sonrası otomatik reject kaldırıldı (backend pending korunur)
+- Canlı oda: `pkPendingInvitesProvider` / unified invites kaldırıldı; yalnızca `liveVideoPkProvider` + SSE
+- Sesli PK: SSE bağlı olsa bile REST poll devam eder; SSE callback null ile handler silme engellendi
+
+### Misafir / TRTC
+- Ortak `isApprovedCoGuestStatus` — boş status artık onaylı sayılmaz
+- Host approve: tam approved list sync; boş coBroadcast grid temizliği
+- TRTC `onRemoteUserLeaveRoom`: viewId/video map temizliği
+
+### Presence / oturum
+- Background: heartbeat durur + leave; foreground yeniden bootstrap
+- Logout: presence heartbeat atlanır; fortune prefs temizlenir; hesap değişiminde realtime teardown
+
+### Bildirim / push
+- OneSignal init Firebase'den önce (race azaltma)
+- Bildirim SSE kullanıcı değişiminde yeniden bağlanır
+
+### Gold/VIP
+- RTC oda giriş efekti: `entranceEffectAllowedProvider` gate (basic ile hizalı)
+- Staff marquee canlı yayın odasında gizlenir
+
 ## 1.0.454+492 (2026-09-09) — Kritik realtime tamamlama
 
 ### PK

@@ -35,6 +35,7 @@ import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart
 import '../../../voice_hub/presentation/providers/voice_recent_gifts_provider.dart';
 import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
 import '../../../voice_hub/presentation/providers/voice_room_session_registry.dart';
+import '../../domain/live_co_guest_status.dart';
 import '../gifts/providers/live_seat_gift_totals_provider.dart';
 import '../../../gifts/domain/session_gift_summary.dart';
 import '../../../gifts/domain/session_gift_summary_builder.dart';
@@ -1444,7 +1445,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   }
 
   int _activeCoGuestCount() {
-    return ref.read(coBroadcastProvider).coBroadcasters.length;
+    return filterApprovedCoGuests(ref.read(coBroadcastProvider).coBroadcasters)
+        .length;
   }
 
   bool _canAddCoGuest() => _activeCoGuestCount() < kMaxLiveCoGuests;
@@ -1471,16 +1473,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           streamId: streamId,
           userId: userId,
         );
-    final guestCount = _activeCoGuestCount() + 1;
-    final layout = resolveGuestLayout(guestCount: guestCount);
-    ref.read(liveGuestGridProvider.notifier).addGuest(
-          slotIndex: _nextEmptyGuestSlot(),
-          userId: userId,
-          displayName: name,
-        );
-    _enableMultiGuestLayout(layout, [
-      {'userId': userId, 'displayName': name, 'userName': name},
-    ]);
+    await ref.read(coBroadcastProvider.notifier).refreshStream(streamId);
+    final approved = filterApprovedCoGuests(
+      ref.read(coBroadcastProvider).coBroadcasters,
+    );
+    final layout = resolveGuestLayout(guestCount: approved.length);
+    _enableMultiGuestLayout(layout, approved);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('$name misafir olarak yayına eklendi')),
@@ -1639,7 +1637,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       final approved = ref.read(coBroadcastProvider).coBroadcasters.any((c) {
         final uid = c['userId']?.toString() ?? c['id']?.toString();
         if (uid != user.id) return false;
-        return _isApprovedCoGuestStatus(c['status'] ?? c['state']);
+        return isApprovedCoGuestStatus(c['status'] ?? c['state']);
       });
       if (approved) {
         await _upgradeToCoHost(streamId, user);
@@ -1692,14 +1690,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     }
   }
 
-  bool _isApprovedCoGuestStatus(dynamic raw) {
-    final status = raw?.toString().toLowerCase().trim() ?? '';
-    return status == 'approved' ||
-        status == 'active' ||
-        status == 'joined' ||
-        status == 'accepted';
-  }
-
   bool _isSelfApprovedCoGuest(
     List<Map<String, dynamic>> guests,
     String userId,
@@ -1707,7 +1697,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     return guests.any((c) {
       final uid = c['userId']?.toString() ?? c['id']?.toString();
       if (uid != userId) return false;
-      return _isApprovedCoGuestStatus(c['status'] ?? c['state']);
+      return isApprovedCoGuestStatus(c['status'] ?? c['state']);
     });
   }
 
@@ -1781,7 +1771,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   Future<void> _bootstrapPkInvites(String streamId) async {
     if (_leaving) return;
     try {
-      ref.invalidate(pkPendingInvitesProvider);
       await ref.read(liveVideoPkProvider(streamId).notifier).refresh();
       if (mounted) _applyPkInvites(streamId);
     } catch (_) {}
@@ -1792,13 +1781,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final battle = ref.read(liveVideoPkProvider(streamId)).battle;
     if (battle != null) {
       _maybeShowPkInvite(streamId, battle);
-    }
-    final invites = ref.read(pkPendingInvitesProvider).valueOrNull ?? const [];
-    for (final inv in invites) {
-      if (!inv.isPending) continue;
-      if (inv.hostStreamId == streamId) continue;
-      final map = pkRoomMatchToBattleMap(inv, myStreamId: streamId);
-      _maybeShowPkInvite(streamId, map);
     }
   }
 
@@ -2692,21 +2674,23 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         user?.coinBalance;
     final broadcastSettings = ref.watch(liveBroadcastSettingsProvider);
     final coBroadcast = ref.watch(coBroadcastProvider);
-    final hasCoGuests = coBroadcast.coBroadcasters.isNotEmpty;
+    final approvedGuests = filterApprovedCoGuests(coBroadcast.coBroadcasters);
+    final hasCoGuests = approvedGuests.isNotEmpty;
 
     if (hasStream && s.isHost) {
       ref.listen(coBroadcastProvider, (prev, next) {
-        if (next.coBroadcasters.isNotEmpty) {
-          final layout = resolveGuestLayout(
-            guestCount: next.coBroadcasters.length,
-          );
+        final approved = filterApprovedCoGuests(next.coBroadcasters);
+        if (approved.isNotEmpty) {
+          final layout = resolveGuestLayout(guestCount: approved.length);
           if (_resolveGuestLayout() == LiveGuestLayout.solo) {
-            _enableMultiGuestLayout(layout, next.coBroadcasters);
+            _enableMultiGuestLayout(layout, approved);
           } else {
             ref
                 .read(liveGuestGridProvider.notifier)
-                .syncCoBroadcasters(next.coBroadcasters);
+                .syncCoBroadcasters(approved);
           }
+        } else {
+          ref.read(liveGuestGridProvider.notifier).syncCoBroadcasters([]);
         }
         for (final req in next.joinRequests) {
           if ((req['status']?.toString() ?? 'pending') == 'pending') {
@@ -2719,18 +2703,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         if (battle != null) {
           _maybeShowPkInvite(streamId, battle);
         }
-      });
-      ref.listen(pkPendingInvitesProvider, (_, next) {
-        next.whenData((invites) {
-          for (final inv in invites) {
-            if (!inv.isPending) continue;
-            if (inv.hostStreamId == streamId) continue;
-            _maybeShowPkInvite(
-              streamId,
-              pkRoomMatchToBattleMap(inv, myStreamId: streamId),
-            );
-          }
-        });
       });
       ref.listen(livePkInviteSignalProvider, (_, __) {
         _applyPkInvites(streamId);

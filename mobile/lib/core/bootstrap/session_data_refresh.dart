@@ -21,13 +21,18 @@ final userPresenceServiceProvider = Provider<UserPresenceService>((ref) {
 });
 
 /// Oturum açıldığında veya yenilendiğinde ana veri provider'larını tazeler.
-void invalidateAuthenticatedShellData(Ref ref) {
+void invalidateAuthenticatedShellData(
+  Ref ref, {
+  bool skipPresenceHeartbeat = false,
+}) {
   invalidateDiscoverVoiceRooms(ref);
   invalidateDiscoverLiveStreams(ref);
   ref.invalidate(homeVoiceRoomsProvider);
   clearSocialSessionCache(ref);
   clearAuthenticatedUserCache(ref);
-  unawaited(ref.read(userPresenceServiceProvider).heartbeat());
+  if (!skipPresenceHeartbeat) {
+    unawaited(ref.read(userPresenceServiceProvider).heartbeat());
+  }
 }
 
 /// Kullanıcıya özel cache — logout veya hesap değişiminde temizlenir.

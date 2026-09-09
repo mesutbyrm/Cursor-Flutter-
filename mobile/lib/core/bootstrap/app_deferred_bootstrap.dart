@@ -33,15 +33,13 @@ Future<void> _run() async {
 
 /// OneSignal + Firebase + Sentry — paralel; soğuk açılışta runApp öncesi beklenmez.
 Future<void> _initPushAndCrashReporting() async {
+  try {
+    await OneSignalBootstrap.init();
+    AppStartupLog.log('OneSignal init done (deferred)');
+  } catch (e) {
+    debugPrint('OneSignal deferred init failed: $e');
+  }
   await Future.wait<void>([
-    () async {
-      try {
-        await OneSignalBootstrap.init();
-        AppStartupLog.log('OneSignal init done (deferred)');
-      } catch (e) {
-        debugPrint('OneSignal deferred init failed: $e');
-      }
-    }(),
     () async {
       try {
         await FirebaseBootstrap.init();

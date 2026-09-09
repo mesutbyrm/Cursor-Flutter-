@@ -31,4 +31,10 @@ class FortuneHubPreferencesStore {
   Future<void> setDailyReminderEnabled(bool value) async {
     await _prefs.setBool(_reminderKey, value);
   }
+
+  Future<void> clear() async {
+    await _prefs.remove(_lastSlugKey);
+    await _prefs.remove(_lastTitleKey);
+    await _prefs.remove(_reminderKey);
+  }
 }

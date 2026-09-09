@@ -240,8 +240,17 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     }
   }
 
-  Future<void> _afterAuthSuccess(UserEntity? user) async {
+  Future<void> _afterAuthSuccess(
+    UserEntity? user, {
+    String? previousUserId,
+  }) async {
     if (user == null || user.id.isEmpty) return;
+    final prevId = previousUserId?.trim();
+    if (prevId != null &&
+        prevId.isNotEmpty &&
+        prevId != user.id) {
+      await teardownRealtimeOnLogout(ref, userId: prevId);
+    }
     _sessionEpoch++;
     AuthTokenRefreshCoordinator.instance.markSessionFresh();
     await ref.read(sessionUserCacheProvider).write(user);
@@ -291,6 +300,7 @@ class AuthController extends AsyncNotifier<UserEntity?> {
 
   Future<void> login(String identifier, String password) async {
     await _runUserAction(() async {
+      final previousUserId = ref.read(authControllerProvider).valueOrNull?.id;
       state = await AsyncValue.guard(() async {
         final u = await LoadingTimeout.run(
           ref.read(authRepositoryProvider).login(
@@ -301,7 +311,10 @@ class AuthController extends AsyncNotifier<UserEntity?> {
           message: 'Giriş zaman aşımına uğradı',
         );
         final resolved = await _withSiteProfile(u);
-        await _afterAuthSuccess(resolved);
+        await _afterAuthSuccess(
+          resolved,
+          previousUserId: previousUserId,
+        );
         return resolved;
       });
       _clearGuestModeOnSuccess();

@@ -36,6 +36,7 @@ import '../../cosmetics/presentation/widgets/cosmetic_entrance_overlay.dart';
 import '../../../core/site_animation/presentation/site_animation_catalog_provider.dart';
 import '../../../core/site_animation/presentation/site_animation_entrance_policy.dart';
 import '../../vip_gold/domain/entrance_theme.dart';
+import '../../vip_gold/presentation/providers/entrance_effect_gate_provider.dart';
 import '../../vip_gold/presentation/providers/entrance_effect_settings_provider.dart';
 import '../../vip_gold/presentation/providers/user_room_profile_provider.dart';
 import '../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
@@ -490,7 +491,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     if (shouldSkipFullscreenVipEntranceRef(ref)) return;
     final cosmetic = ref.read(resolvedEntranceEffectProvider);
     final tier = ref.read(vipTierProvider);
-    if (cosmetic == null && !tier.hasEntranceFx) return;
+    final allowed = ref.read(entranceEffectAllowedProvider);
+    if (cosmetic == null && !allowed) return;
+    if (cosmetic == null && !tier.hasEntranceFx && !tier.hasPremiumFrame) {
+      return;
+    }
     _vipEntrancePlayed = true;
     if (mounted) setState(() => _showVipEntrance = true);
   }
@@ -1982,6 +1987,11 @@ class _VoiceRoomRtcVipEntrance extends ConsumerWidget {
         : user.username;
     final cosmetic = ref.watch(resolvedEntranceEffectProvider);
     final settings = ref.watch(entranceEffectSettingsProvider);
+    final allowed = ref.watch(entranceEffectAllowedProvider);
+    if (cosmetic == null && !allowed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => onFinished());
+      return const SizedBox.shrink();
+    }
     final theme = settings.teamColorsEnabled
         ? ref.watch(myEntranceThemeProvider)
         : EntranceTheme.turkey;

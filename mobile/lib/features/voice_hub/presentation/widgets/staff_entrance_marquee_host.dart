@@ -19,7 +19,7 @@ class StaffEntranceMarqueeHost extends ConsumerWidget {
   static bool hideForRoute(String? location) {
     final path = Uri.tryParse(location ?? '')?.path ?? location ?? '';
     // Sesli odada koltuk altı banner kullanılır; üst şerit çakışmasın.
-    return path.startsWith('/voice-room/');
+    return path.startsWith('/voice-room/') || path.startsWith('/live/room');
   }
 
   @override

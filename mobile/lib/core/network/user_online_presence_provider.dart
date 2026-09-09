@@ -62,6 +62,15 @@ class UserOnlinePresenceNotifier extends Notifier<Set<String>> {
     state = const {};
   }
 
+  Future<void> onBackground() async {
+    _stopTimers();
+    await ref.read(userPresenceServiceProvider).leave();
+  }
+
+  Future<void> onForeground() async {
+    await _bootstrap();
+  }
+
   bool isUserOnline(String userId) {
     final id = userId.trim();
     if (id.isEmpty) return false;
@@ -150,12 +159,11 @@ class _UserOnlinePresenceLifecycleHostState
     final notifier = ref.read(userOnlinePresenceProvider.notifier);
     switch (state) {
       case AppLifecycleState.resumed:
-        unawaited(notifier.refresh());
-        unawaited(ref.read(userPresenceServiceProvider).heartbeat());
+        unawaited(notifier.onForeground());
       case AppLifecycleState.paused:
       case AppLifecycleState.hidden:
       case AppLifecycleState.detached:
-        unawaited(ref.read(userPresenceServiceProvider).leave());
+        unawaited(notifier.onBackground());
       case AppLifecycleState.inactive:
         break;
     }

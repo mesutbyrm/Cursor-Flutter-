@@ -112,12 +112,19 @@ class _NotificationsRealtimeListenerState
   @override
   Widget build(BuildContext context) {
     ref.listen(authControllerProvider, (prev, next) {
-      final wasIn = prev?.valueOrNull != null;
-      final isIn = next.valueOrNull != null;
+      final prevUser = prev?.valueOrNull;
+      final nextUser = next.valueOrNull;
+      final wasIn = prevUser != null;
+      final isIn = nextUser != null;
       if (!wasIn && isIn) {
         unawaited(_connect());
       } else if (wasIn && !isIn) {
         unawaited(_disconnect());
+      } else if (wasIn &&
+          isIn &&
+          prevUser!.id != nextUser!.id) {
+        unawaited(_disconnect());
+        unawaited(_connect());
       }
     });
 
