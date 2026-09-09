@@ -44,7 +44,9 @@ import '../utils/voice_room_mention.dart';
 import '../sheets/voice_room_commands_panel.dart';
 import '../sheets/voice_room_ranking_sheet.dart';
 import '../utils/voice_room_permissions.dart';
+import '../utils/voice_room_chat_flood_guard.dart';
 import '../utils/voice_room_error_display.dart';
+import '../widgets/voice_room/voice_room_chat_flood_banner.dart';
 import '../utils/voice_room_speak_access.dart';
 import '../utils/voice_room_session_exit.dart';
 import '../utils/voice_room_leave_flow.dart';
@@ -910,7 +912,13 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                       ],
                     ),
                   ),
-                  if (roomErrorBanner != null)
+                  if (roomErrorBanner != null &&
+                      VoiceRoomChatFloodGuard.isFloodMessage(roomErrorBanner))
+                    VoiceRoomChatFloodBanner(
+                      liveKey: _liveRoomKey,
+                      message: roomErrorBanner,
+                    )
+                  else if (roomErrorBanner != null)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(

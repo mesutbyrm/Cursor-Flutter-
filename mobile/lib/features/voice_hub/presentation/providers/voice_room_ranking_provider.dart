@@ -137,6 +137,19 @@ class VoiceRoomRankingNotifier extends Notifier<VoiceRoomRankingState> {
 
   Future<void> refresh({VoiceRoomRankingPeriod? period}) async {
     try {
+      if (period != null) {
+        final remote = await _tryFetchRemoteRanking(period);
+        if (remote != null) {
+          final now = DateTime.now();
+          if (period == VoiceRoomRankingPeriod.hourly) {
+            state = state.copyWith(hourly: remote, lastUpdated: now);
+          } else {
+            state = state.copyWith(daily: remote, lastUpdated: now);
+          }
+          ref.read(voiceRoomRankCelebrationProvider.notifier).evaluate(state);
+          return;
+        }
+      }
       final list = await _refreshProxyRanking();
       final now = DateTime.now();
       if (period == VoiceRoomRankingPeriod.hourly) {
@@ -150,7 +163,15 @@ class VoiceRoomRankingNotifier extends Notifier<VoiceRoomRankingState> {
     } catch (_) {}
   }
 
-  /// Üretim `GET /api/.../room-rank` geldiğinde burada remote + proxy fallback.
+  /// Üretim `ROOM_RANK` API kılavuzda tanımlandığında burada bağlanır.
+  Future<List<VoiceRoomRankEntry>?> _tryFetchRemoteRanking(
+    VoiceRoomRankingPeriod period,
+  ) async {
+    // Kılavuz §9'da henüz yok — yalnızca proxy kullan.
+    return null;
+  }
+
+  /// Proxy sıralama — SSE keşfet sayacı + PK/müzik skoru.
   Future<List<VoiceRoomRankEntry>> _refreshProxyRanking() async {
     final rooms = await ref.read(voiceRoomsProvider.future);
     final liveCounts = ref.read(voiceRoomsPresenceProvider).counts;

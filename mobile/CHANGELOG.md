@@ -1,5 +1,19 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.445+483 (2026-09-09) — Sesli oda Faz 19
+
+### Chat flood UX
+- **`VoiceRoomChatFloodBanner`** — geri sayım, progress bar, otomatik hata temizleme
+- Basic + RTC mod flood mesajları premium banner (hızlı gönderim / limit / duplicate)
+
+### Keşfet stories
+- Sıcak sesli odalar şeridi (proxy sıralama Top-4, SSE çevrimiçi sayısı)
+- PK / müzik rozeti hikâye balonunda
+
+### Altyapı
+- `VoiceRoomChatFloodGuard.isFloodMessage` + `cooldownForMessage`
+- `VoiceRoomRankingNotifier._tryFetchRemoteRanking` — ROOM_RANK API hazırlığı
+
 ## 1.0.444+482 (2026-09-09) — Sesli oda Faz 18
 
 ### Keşfet rebuild izolasyonu

@@ -15,19 +15,39 @@ class VoiceRoomChatFloodGuard {
   DateTime? _lastSendAt;
   final List<DateTime> _recentSends = [];
 
+  static const floodFastMessage = 'Çok hızlı gönderiyorsunuz. Biraz bekleyin.';
+  static const floodWindowMessage =
+      'Mesaj limiti aşıldı. Lütfen biraz bekleyin.';
+  static const duplicateMessage = 'Aynı mesajı tekrar gönderemezsiniz.';
+
+  static bool isFloodMessage(String? message) {
+    if (message == null || message.trim().isEmpty) return false;
+    return message == floodFastMessage ||
+        message == floodWindowMessage ||
+        message == duplicateMessage;
+  }
+
+  /// Flood banner geri sayım süresi.
+  Duration cooldownForMessage(String message) {
+    if (message == floodWindowMessage) {
+      return Duration(seconds: windowSeconds);
+    }
+    return Duration(milliseconds: minIntervalMs);
+  }
+
   /// `null` = gönderime izin ver; aksi halde kullanıcıya gösterilecek hata metni.
   String? tryAcquire() {
     final now = DateTime.now();
     if (_lastSendAt != null) {
       final gap = now.difference(_lastSendAt!).inMilliseconds;
       if (gap < minIntervalMs) {
-        return 'Çok hızlı gönderiyorsunuz. Biraz bekleyin.';
+        return floodFastMessage;
       }
     }
     final window = Duration(seconds: windowSeconds);
     _recentSends.removeWhere((t) => now.difference(t) > window);
     if (_recentSends.length >= maxMessagesInWindow) {
-      return 'Mesaj limiti aşıldı. Lütfen biraz bekleyin.';
+      return floodWindowMessage;
     }
     _lastSendAt = now;
     _recentSends.add(now);

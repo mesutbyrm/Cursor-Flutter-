@@ -2602,7 +2602,9 @@ class VoiceRoomLiveController
         userId: user?.id,
         recent: recent,
       )) {
-        state = state.copyWith(error: 'Aynı mesajı tekrar gönderemezsiniz.');
+        state = state.copyWith(
+          error: VoiceRoomChatFloodGuard.duplicateMessage,
+        );
         return;
       }
     }

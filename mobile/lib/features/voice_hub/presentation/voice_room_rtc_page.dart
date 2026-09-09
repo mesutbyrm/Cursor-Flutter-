@@ -74,7 +74,9 @@ import '../providers/voice_room_live_side_effect_slices.dart';
 import 'theme/voice_room_tokens.dart';
 import 'utils/voice_room_permissions.dart';
 import 'utils/voice_room_user_actions.dart';
+import 'utils/voice_room_chat_flood_guard.dart';
 import 'utils/voice_room_error_display.dart';
+import 'widgets/voice_room/voice_room_chat_flood_banner.dart';
 import 'utils/voice_room_speak_access.dart';
 import 'utils/voice_room_session_exit.dart';
 import 'utils/voice_room_leave_flow.dart';
@@ -1581,7 +1583,15 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                               ],
                             ),
                           ),
-                        if (roomErrorBanner != null)
+                        if (roomErrorBanner != null &&
+                            VoiceRoomChatFloodGuard.isFloodMessage(
+                              roomErrorBanner,
+                            ))
+                          VoiceRoomChatFloodBanner(
+                            liveKey: _liveRoomKey,
+                            message: roomErrorBanner,
+                          )
+                        else if (roomErrorBanner != null)
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             child: Text(

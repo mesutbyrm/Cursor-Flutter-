@@ -288,10 +288,15 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
         RepaintBoundary(
           child: _LiveStoriesRow(
             live: live,
+            hotRooms: popular
+                .where((r) => r.displayOnline > 0 || r.isPkLive || r.hasMusicActivity)
+                .take(4)
+                .toList(growable: false),
             height: metrics.storiesHeight,
             horizontalPad: metrics.horizontalPad,
             onOpenRoom: () => showOpenVoiceChatRoomFlow(context, ref),
             onStreamTap: (s) => openLiveFromDiscover(context, ref, s),
+            onRoomTap: widget.onRoomTap,
           ),
         ),
         Expanded(
@@ -663,36 +668,141 @@ class _TabChip extends StatelessWidget {
 class _LiveStoriesRow extends StatelessWidget {
   const _LiveStoriesRow({
     required this.live,
+    required this.hotRooms,
     required this.height,
     required this.horizontalPad,
     required this.onOpenRoom,
     required this.onStreamTap,
+    required this.onRoomTap,
   });
 
   final List<LiveStreamEntity> live;
+  final List<VoiceRoomEntity> hotRooms;
   final double height;
   final double horizontalPad;
   final VoidCallback onOpenRoom;
   final ValueChanged<LiveStreamEntity> onStreamTap;
+  final ValueChanged<VoiceRoomEntity> onRoomTap;
 
   @override
   Widget build(BuildContext context) {
-    final streams = live.take(8).toList(growable: false);
+    final streams = live.take(6).toList(growable: false);
+    final rooms = hotRooms.take(4).toList(growable: false);
+    final itemCount = 1 + rooms.length + streams.length;
     return SizedBox(
       height: height,
       child: LazyHorizontalListView(
         padding: EdgeInsets.symmetric(horizontal: horizontalPad),
-        itemCount: 1 + streams.length,
+        itemCount: itemCount,
         itemBuilder: (context, index) {
           if (index == 0) {
             return _StoryOpenRoom(onTap: onOpenRoom);
           }
-          final stream = streams[index - 1];
+          var i = index - 1;
+          if (i < rooms.length) {
+            final room = rooms[i];
+            return Padding(
+              padding: const EdgeInsets.only(left: 12),
+              child: _StoryVoiceRoomItem(
+                room: room,
+                onTap: () => onRoomTap(room),
+              ),
+            );
+          }
+          i -= rooms.length;
+          final stream = streams[i];
           return Padding(
             padding: const EdgeInsets.only(left: 12),
             child: _StoryLiveItem(stream: stream, onTap: () => onStreamTap(stream)),
           );
         },
+      ),
+    );
+  }
+}
+
+class _StoryVoiceRoomItem extends ConsumerWidget {
+  const _StoryVoiceRoomItem({required this.room, required this.onTap});
+
+  final VoiceRoomEntity room;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final showPk = room.isPkLive;
+    final showMusic = room.hasMusicActivity;
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: showPk
+                        ? [const Color(0xFFFF5252), VoiceRoomTokens.neonPink]
+                        : [VoiceRoomTokens.neonPurple, VoiceRoomTokens.neonBlue],
+                  ),
+                ),
+                child: CircleAvatar(
+                  radius: 28,
+                  backgroundColor: Colors.white12,
+                  child: Text(
+                    room.icon ?? '🎤',
+                    style: const TextStyle(fontSize: 22),
+                  ),
+                ),
+              ),
+              if (showPk || showMusic)
+                Positioned(
+                  right: -2,
+                  bottom: -2,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: showPk
+                          ? AppThemeColors.liveRed
+                          : const Color(0xFFFFD54F),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      showPk ? 'PK' : '♪',
+                      style: const TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          SizedBox(
+            width: 72,
+            child: Text(
+              room.displayTitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700),
+            ),
+          ),
+          VoiceRoomOnlineCount(
+            room: room,
+            builder: (context, count) => Text(
+              VoiceLiveHeader2026Format.count(count),
+              style: TextStyle(
+                fontSize: 9,
+                color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

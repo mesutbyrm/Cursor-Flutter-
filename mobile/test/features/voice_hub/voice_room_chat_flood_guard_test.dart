@@ -21,6 +21,34 @@ void main() {
     expect(guard.tryAcquire(), isNotNull);
   });
 
+  test('isFloodMessage detects guard messages', () {
+    expect(
+      VoiceRoomChatFloodGuard.isFloodMessage(
+        VoiceRoomChatFloodGuard.floodFastMessage,
+      ),
+      isTrue,
+    );
+    expect(
+      VoiceRoomChatFloodGuard.isFloodMessage('Sunucu hatası'),
+      isFalse,
+    );
+  });
+
+  test('cooldownForMessage returns interval or window', () {
+    final guard = VoiceRoomChatFloodGuard(
+      minIntervalMs: 1200,
+      windowSeconds: 10,
+    );
+    expect(
+      guard.cooldownForMessage(VoiceRoomChatFloodGuard.floodFastMessage),
+      const Duration(milliseconds: 1200),
+    );
+    expect(
+      guard.cooldownForMessage(VoiceRoomChatFloodGuard.floodWindowMessage),
+      const Duration(seconds: 10),
+    );
+  });
+
   test('isDuplicateContent detects repeated text', () {
     final guard = VoiceRoomChatFloodGuard();
     final now = DateTime.now();
