@@ -109,6 +109,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   var _forcedExitHandled = false;
   var _musicSearchOpen = false;
   final _messageCtrl = TextEditingController();
+  final _messageFocus = FocusNode();
   var _showVipEntrance = false;
   var _vipEntrancePlayed = false;
   String get _liveRoomKey {
@@ -155,6 +156,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   @override
   void dispose() {
     _messageCtrl.dispose();
+    _messageFocus.dispose();
     ref.read(voiceRoomGiftRealtimeProvider).stop();
     ref.read(pkBattleRemoteProvider.notifier).clear();
     final liveKey = _pinnedLiveRoomKey;
@@ -549,6 +551,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       controller: _messageCtrl,
       handle: name,
     );
+    _messageFocus.requestFocus();
   }
 
   /// Chat'te isme çift dokunuş → kullanıcı yetkileri (moderasyon) açılır.
@@ -908,7 +911,10 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                           onUserPerms: (userId, name) =>
                               _openUserById(userId, live, room, perms),
                         ),
-                        VoiceRoomConnectionOverlays(roomKey: _liveRoomKey),
+                        VoiceRoomConnectionOverlays(
+                          roomKey: _liveRoomKey,
+                          onMentionTap: _insertMention,
+                        ),
                       ],
                     ),
                   ),
@@ -932,6 +938,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     ),
                   VoiceRoomBasicMessageBar(
                     controller: _messageCtrl,
+                    focusNode: _messageFocus,
                     onSend: _sendChatMessage,
                     onChanged: _onChatChanged,
                     presence: live.presence,

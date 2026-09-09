@@ -7,6 +7,27 @@ import '../../../domain/entities/voice_room_realtime_event.dart';
 import '../../../domain/voice_official_join.dart';
 import '../../utils/voice_staff_chat_style.dart';
 
+/// Yalnızca giriş/çıkış aktivitesi değiştiğinde footer toast katmanını yeniden çiz.
+int voiceRoomJoinToastSignature({
+  required List<ChatRoomMessage> messages,
+  required List<VoiceRoomRealtimeEvent> events,
+}) {
+  var sig = 0;
+  for (final m in messages) {
+    if (m.kind == ChatMessageKind.systemJoin ||
+        m.kind == ChatMessageKind.systemLeave) {
+      sig = Object.hash(sig, m.id, m.kind);
+    }
+  }
+  for (final e in events) {
+    if (e.kind == VoiceRoomRealtimeKind.join ||
+        e.kind == VoiceRoomRealtimeKind.leave) {
+      sig = Object.hash(sig, e.kind, e.message);
+    }
+  }
+  return sig;
+}
+
 /// Faz 7 — altta yığılan giriş bildirimleri: «Ali giriş yaptı.» (10 sn).
 class VoiceRoomJoinToastStack extends StatefulWidget {
   const VoiceRoomJoinToastStack({

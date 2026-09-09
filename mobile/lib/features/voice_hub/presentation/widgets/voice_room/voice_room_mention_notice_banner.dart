@@ -7,11 +7,13 @@ class VoiceRoomMentionNoticeBanner extends StatefulWidget {
     required this.fromName,
     required this.preview,
     this.onDismiss,
+    this.onTap,
   });
 
   final String fromName;
   final String preview;
   final VoidCallback? onDismiss;
+  final VoidCallback? onTap;
 
   @override
   State<VoiceRoomMentionNoticeBanner> createState() =>
@@ -42,7 +44,10 @@ class _VoiceRoomMentionNoticeBannerState extends State<VoiceRoomMentionNoticeBan
     final glow = 0.35 + _pulse.value * 0.25;
     return Material(
       color: Colors.transparent,
-      child: Container(
+      child: InkWell(
+        onTap: widget.onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
         margin: const EdgeInsets.fromLTRB(12, 6, 12, 0),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
@@ -98,6 +103,7 @@ class _VoiceRoomMentionNoticeBannerState extends State<VoiceRoomMentionNoticeBan
               color: Colors.white54,
             ),
           ],
+        ),
         ),
       ),
     );

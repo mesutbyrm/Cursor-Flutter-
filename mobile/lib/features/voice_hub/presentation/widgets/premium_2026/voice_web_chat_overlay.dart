@@ -156,6 +156,8 @@ class _VoiceWebChatOverlayState extends State<VoiceWebChatOverlay> {
     final list = ListView.builder(
       controller: _scroll,
       reverse: true,
+      cacheExtent: 280,
+      addAutomaticKeepAlives: false,
       shrinkWrap: widget.embedded,
       physics: widget.embedded
           ? const AlwaysScrollableScrollPhysics(

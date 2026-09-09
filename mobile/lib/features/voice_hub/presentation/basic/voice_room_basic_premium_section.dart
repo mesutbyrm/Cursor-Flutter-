@@ -244,6 +244,8 @@ class VoiceRoomBasicChatFeed extends ConsumerWidget {
           ListView.builder(
             reverse: true,
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            cacheExtent: 320,
+            addAutomaticKeepAlives: false,
             itemCount: visible.length,
             itemBuilder: (context, index) {
               final msg = visible[visible.length - 1 - index];
@@ -284,6 +286,7 @@ class VoiceRoomBasicMessageBar extends StatefulWidget {
     this.presence = const [],
     this.selfUserId,
     this.sendEnabled = true,
+    this.focusNode,
   });
 
   final TextEditingController controller;
@@ -293,17 +296,20 @@ class VoiceRoomBasicMessageBar extends StatefulWidget {
   final List<ChatRoomPresence> presence;
   final String? selfUserId;
   final bool sendEnabled;
+  final FocusNode? focusNode;
 
   @override
   State<VoiceRoomBasicMessageBar> createState() => _VoiceRoomBasicMessageBarState();
 }
 
 class _VoiceRoomBasicMessageBarState extends State<VoiceRoomBasicMessageBar> {
-  late final FocusNode _focusNode = FocusNode();
+  FocusNode? _ownedFocus;
+
+  FocusNode get _focusNode => widget.focusNode ?? (_ownedFocus ??= FocusNode());
 
   @override
   void dispose() {
-    _focusNode.dispose();
+    _ownedFocus?.dispose();
     super.dispose();
   }
 

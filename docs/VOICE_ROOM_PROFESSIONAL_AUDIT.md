@@ -1,7 +1,7 @@
 # Canlifal Sesli Sohbet Odaları — Profesyonel Denetim Raporu
 
 **Tarih:** 2026-09-09  
-**Sürüm (bu oturum):** `1.0.446+484`  
+**Sürüm (bu oturum):** `1.0.447+485`  
 **Mimari:** Flutter mobil → `https://canlifal.com` REST + SSE (Socket.IO mobilde kullanılmıyor)
 
 ---
@@ -32,7 +32,9 @@ Sesli oda sistemi **çalışan temel akışları koruyarak** premium UX, mention
 | Hediye / jeton | **ÇALIŞIYOR** | Gift transaction API |
 | Oda beğeni | **EKSİK** | Üretim endpoint yok |
 | Chat / mesaj | **ÇALIŞIYOR** | Flood banner + gönder kilidi + typing indicator (Faz 20) |
-| Mention bildirimi (oda içi) | **ÇALIŞIYOR** (Faz 20) | RTC/Basic overlay; reconnect ile çakışma düzeltildi |
+| Mention bildirimi (oda içi) | **ÇALIŞIYOR** (Faz 21) | Banner dokun → odak + @mention; reconnect offset |
+| Sohbet scroll perf | **ÇALIŞIYOR** (Faz 21) | ListView cacheExtent + keepAlive kapalı |
+| Giriş toast rebuild | **ÇALIŞIYOR** (Faz 21) | `voiceRoomJoinToastSignature` selective watch |
 | Keşfet stories (sıcak oda) | **ÇALIŞIYOR** (Faz 19) | Proxy sıralama + SSE sayaç + PK/müzik chip |
 | Oda önizleme (katılmadan) | **ÇALIŞIYOR** | PK + hedef + canlı SSE çevrimiçi sayısı |
 | Oda içi sıralama rozeti | **ÇALIŞIYOR** (yeni) | `VoiceLiveHeader2026` hourly rank |

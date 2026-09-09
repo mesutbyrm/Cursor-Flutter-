@@ -75,6 +75,7 @@ import 'theme/voice_room_tokens.dart';
 import 'utils/voice_room_permissions.dart';
 import 'utils/voice_room_user_actions.dart';
 import 'utils/voice_room_chat_flood_guard.dart';
+import 'utils/voice_room_mention.dart';
 import 'utils/voice_room_error_display.dart';
 import 'widgets/voice_room/voice_room_chat_flood_banner.dart';
 import 'widgets/voice_room/voice_room_typing_indicator.dart';
@@ -300,6 +301,14 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         ),
       ),
     );
+  }
+
+  void _insertMentionFromNotice(String name) {
+    VoiceRoomMention.appendMentionDeduped(
+      controller: _messageCtrl,
+      handle: name,
+    );
+    _messageFocus.requestFocus();
   }
 
   void _sendChatMessage(VoiceRoomEntity room) {
@@ -1781,7 +1790,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                 );
                               },
                             ),
-                                VoiceRoomConnectionOverlays(roomKey: _liveRoomKey),
+                                VoiceRoomConnectionOverlays(
+                                  roomKey: _liveRoomKey,
+                                  onMentionTap: _insertMentionFromNotice,
+                                ),
                               ],
                             ),
                           ),

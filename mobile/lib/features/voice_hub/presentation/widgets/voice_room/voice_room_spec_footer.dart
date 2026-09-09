@@ -183,14 +183,18 @@ class VoiceRoomSpecFooter extends ConsumerWidget {
             useLiveSlices
                 ? Consumer(
                     builder: (context, ref, _) {
-                      final toast = ref.watch(
+                      ref.watch(
                         voiceRoomLiveProvider(key).select(
-                          (s) => (s.messages, s.realtimeEvents),
+                          (s) => voiceRoomJoinToastSignature(
+                            messages: s.messages,
+                            events: s.realtimeEvents,
+                          ),
                         ),
                       );
+                      final live = ref.read(voiceRoomLiveProvider(key));
                       return VoiceRoomJoinToastStack(
-                        events: toast.$2,
-                        messages: toast.$1,
+                        events: live.realtimeEvents,
+                        messages: live.messages,
                         enabled: joinNotificationsEnabled,
                       );
                     },

@@ -13,10 +13,13 @@ class VoiceRoomConnectionOverlays extends ConsumerWidget {
     super.key,
     required this.roomKey,
     this.mentionTop = 8,
+    this.onMentionTap,
   });
 
   final String roomKey;
   final double mentionTop;
+  /// Mention banner dokunuldu — mesaj kutusuna odaklan + @etiket.
+  final void Function(String fromName)? onMentionTap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -54,6 +57,14 @@ class VoiceRoomConnectionOverlays extends ConsumerWidget {
                 preview: mention.messagePreview,
                 onDismiss: () =>
                     ref.read(voiceRoomMentionNoticeProvider.notifier).clear(),
+                onTap: onMentionTap == null
+                    ? null
+                    : () {
+                        onMentionTap!(mention.fromName);
+                        ref
+                            .read(voiceRoomMentionNoticeProvider.notifier)
+                            .clear();
+                      },
               ),
             ),
         ],

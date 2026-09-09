@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.447+485 (2026-09-09) — Sesli oda Faz 21
+
+### Mention banner etkileşim
+- Mention banner **dokun** → mesaj kutusuna odak + `@kullanıcı` eklenir (Basic + RTC)
+- `VoiceRoomBasicMessageBar` harici `focusNode` desteği
+
+### Sohbet performans
+- `VoiceRoomBasicChatFeed` + `VoiceWebChatOverlay` ListView: `cacheExtent`, `addAutomaticKeepAlives: false`
+
+### Footer rebuild izolasyonu
+- `voiceRoomJoinToastSignature` — giriş toast katmanı yalnızca join/leave değişiminde yeniden çizilir
+
 ## 1.0.446+484 (2026-09-09) — Sesli oda Faz 20
 
 ### Chat flood + typing
