@@ -5,27 +5,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../../core/ui/premium_2026/liquid_glass.dart';
-import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../feed/presentation/widgets/discover_premium_2026/discover_premium_room_card.dart';
 import '../../../../feed/presentation/widgets/discover_premium_2026/discover_premium_visual.dart';
-import '../../../../../core/navigation/wallet_navigation.dart';
 import '../../../../../core/performance/list_perf.dart';
 import '../../../../../core/performance/scroll_perf.dart';
 import '../../../../../core/widgets/lazy_list_views.dart';
-import '../../../../../core/providers/auth_selectors.dart';
 import '../../../../live/domain/entities/live_stream_entity.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../domain/pk/pk_opponent_room_filter.dart';
-import '../../../../profile/presentation/providers/profile_providers.dart';
-import '../../../../inbox/presentation/inbox_routes.dart';
-import '../../../../inbox/presentation/providers/inbox_unread_providers.dart';
 import 'package:canlifal_social/features/vip_gold/domain/voice_room_access.dart';
 import 'package:canlifal_social/features/vip_gold/presentation/theme/vip_gold_tokens.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import '../../providers/voice_room_ranking_provider.dart';
 import '../../providers/voice_rooms_presence_provider.dart';
+import '../../sheets/voice_room_preview_sheet.dart';
 import '../../sheets/voice_room_ranking_sheet.dart';
 import '../../utils/open_voice_chat_room_flow.dart';
+import 'voice_discover_header_band.dart';
 import '../../utils/voice_discover_ranking.dart';
 import '../voice_room_online_count.dart';
 import '../../theme/voice_room_tokens.dart';
@@ -227,15 +223,6 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
   @override
   Widget build(BuildContext context) {
     final metrics = _metrics(context);
-    final coinBalance = ref.watch(coinBalanceProvider.select((v) => v)) ??
-        ref.watch(currentUserCoinBalanceProvider.select((v) => v));
-    final name = ref.watch(
-      authControllerProvider.select((a) => a.valueOrNull?.display ?? 'Misafir'),
-    );
-    final avatar = ref.watch(
-      authControllerProvider.select((a) => a.valueOrNull?.avatarUrl),
-    );
-    final inboxUnread = ref.watch(inboxUnreadCountProvider);
     final hourlyRanking =
         ref.watch(voiceRoomRankingProvider.select((s) => s.hourly));
     final rankMap = _hourlyRankMap(hourlyRanking);
@@ -259,18 +246,7 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SizedBox(height: widget.topPadding),
-        RepaintBoundary(
-          child: _DiscoverHeader(
-            userName: name,
-            avatarUrl: avatar,
-            coins: coinBalance ?? 0,
-            horizontalPad: metrics.horizontalPad,
-            inboxUnread: inboxUnread,
-            onInbox: () => InboxRoutes.open(context),
-            onCoins: () => openJetonStore(context, ref: ref),
-            onRanking: () => showVoiceRoomRankingSheet(context, ref),
-          ),
-        ),
+        VoiceDiscoverHeaderBand(horizontalPad: metrics.horizontalPad),
         Padding(
           padding: EdgeInsets.fromLTRB(metrics.horizontalPad, 12, metrics.horizontalPad, 0),
           child: _SearchBar(
@@ -515,6 +491,7 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
             room: r,
             hourlyRank: rank,
             onTap: () => widget.onRoomTap(r),
+            onLongPress: () => showVoiceRoomPreviewSheet(context, ref, room: r),
           ),
         ),
       );
@@ -594,144 +571,6 @@ class _GridCat {
   final String label;
   final IconData icon;
   final Color color;
-}
-
-class _DiscoverHeader extends StatelessWidget {
-  const _DiscoverHeader({
-    required this.userName,
-    required this.avatarUrl,
-    required this.coins,
-    required this.horizontalPad,
-    required this.inboxUnread,
-    required this.onInbox,
-    required this.onCoins,
-    required this.onRanking,
-  });
-
-  final String userName;
-  final String? avatarUrl;
-  final int coins;
-  final double horizontalPad;
-  final int inboxUnread;
-  final VoidCallback onInbox;
-  final VoidCallback onCoins;
-  final VoidCallback onRanking;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-          padding: EdgeInsets.fromLTRB(horizontalPad, 8, horizontalPad - 4, 10),
-          decoration: BoxDecoration(
-            color: DiscoverPremiumVisual.glassFill,
-            border: Border(
-              bottom: BorderSide(color: DiscoverPremiumVisual.glassBorder),
-            ),
-          ),
-          child: Row(
-        children: [
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              CircleAvatar(
-                radius: 26,
-                backgroundImage: avatarUrl != null && avatarUrl!.isNotEmpty
-                    ? canlifalImageProvider(avatarUrl!)
-                    : null,
-                child: avatarUrl == null || avatarUrl!.isEmpty
-                    ? Text(
-                        userName.isNotEmpty ? userName[0].toUpperCase() : '?',
-                        style: const TextStyle(fontWeight: FontWeight.w900),
-                      )
-                    : null,
-              ),
-              Positioned(
-                bottom: -4,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      gradient: VipGoldTokens.goldLuxury,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Text(
-                      'VIP',
-                      style: TextStyle(
-                        fontSize: 8,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Merhaba, $userName 👋',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 17,
-                  ),
-                ),
-                Text(
-                  'Sesli sohbet keşfet',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          GestureDetector(
-            onTap: onCoins,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.45),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: VipGoldTokens.goldMid.withValues(alpha: 0.5)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.monetization_on_rounded,
-                      size: 16, color: VipGoldTokens.goldMid),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${VoiceLiveHeader2026Format.count(coins)} +',
-                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          IconButton(
-            onPressed: onRanking,
-            tooltip: 'Oda sıralaması',
-            icon: const Icon(Icons.emoji_events_rounded, color: Color(0xFFFFD54F)),
-          ),
-          IconButton(
-            onPressed: onInbox,
-            icon: Badge(
-              isLabelVisible: inboxUnread > 0,
-              label: Text('$inboxUnread'),
-              child: const Icon(Icons.inbox_rounded),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _SearchBar extends StatelessWidget {
@@ -1418,11 +1257,13 @@ class _CompactRoomRow extends StatelessWidget {
   const _CompactRoomRow({
     required this.room,
     required this.onTap,
+    this.onLongPress,
     this.hourlyRank,
   });
 
   final VoiceRoomEntity room;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
   final int? hourlyRank;
 
   @override
@@ -1431,6 +1272,7 @@ class _CompactRoomRow extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
+        onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
         child: Container(
           padding: const EdgeInsets.all(12),

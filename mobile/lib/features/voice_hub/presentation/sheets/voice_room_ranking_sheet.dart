@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
+import 'voice_room_preview_sheet.dart';
 import '../providers/voice_room_ranking_provider.dart';
 import '../providers/voice_rooms_presence_provider.dart';
 import '../utils/voice_room_ranking_labels.dart';
@@ -198,29 +199,192 @@ class _RankList extends ConsumerWidget {
         controller: scroll,
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
-        itemCount: entries.length + 1,
-        itemBuilder: (_, i) {
-          if (i == 0) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Text(
-                resetLabel,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.5),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                ),
+        itemCount: _listItemCount(entries),
+        itemBuilder: (_, i) => _buildListItem(
+          context,
+          index: i,
+          entries: entries,
+          liveCounts: liveCounts,
+          resetLabel: resetLabel,
+          onRoomTap: onRoomTap,
+          onPreview: (room) => showVoiceRoomPreviewSheet(context, ref, room: room),
+        ),
+      ),
+    );
+  }
+}
+
+int _listItemCount(List<VoiceRoomRankEntry> entries) {
+  final podium = entries.length >= 3 ? 1 : 0;
+  final rest = entries.length >= 3 ? entries.length - 3 : entries.length;
+  return 1 + podium + rest;
+}
+
+Widget _buildListItem(
+  BuildContext context, {
+  required int index,
+  required List<VoiceRoomRankEntry> entries,
+  required Map<String, int> liveCounts,
+  required String resetLabel,
+  required ValueChanged<VoiceRoomEntity> onRoomTap,
+  required ValueChanged<VoiceRoomEntity> onPreview,
+}) {
+  if (index == 0) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Text(
+        resetLabel,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: Colors.white.withValues(alpha: 0.5),
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+  if (entries.length >= 3 && index == 1) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: _RankPodium(
+        topThree: entries.take(3).toList(growable: false),
+        liveCounts: liveCounts,
+        onTap: onRoomTap,
+      ),
+    );
+  }
+  final offset = entries.length >= 3 ? index - 2 : index - 1;
+  final entryIndex = entries.length >= 3 ? offset + 3 : offset;
+  final entry = entries[entryIndex];
+  return _RankRow(
+    entry: entry,
+    liveOnline: resolveLiveOnlineCount(entry.room, liveCounts),
+    onTap: () => onRoomTap(entry.room),
+    onPreview: () => onPreview(entry.room),
+  );
+}
+
+class _RankPodium extends StatelessWidget {
+  const _RankPodium({
+    required this.topThree,
+    required this.liveCounts,
+    required this.onTap,
+  });
+
+  final List<VoiceRoomRankEntry> topThree;
+  final Map<String, int> liveCounts;
+  final ValueChanged<VoiceRoomEntity> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final first = topThree[0];
+    final second = topThree.length > 1 ? topThree[1] : null;
+    final third = topThree.length > 2 ? topThree[2] : null;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        if (second != null)
+          Expanded(
+            child: _PodiumTile(
+              entry: second,
+              liveOnline: resolveLiveOnlineCount(second.room, liveCounts),
+              height: 72,
+              onTap: () => onTap(second.room),
+            ),
+          ),
+        Expanded(
+          child: _PodiumTile(
+            entry: first,
+            liveOnline: resolveLiveOnlineCount(first.room, liveCounts),
+            height: 92,
+            highlight: true,
+            onTap: () => onTap(first.room),
+          ),
+        ),
+        if (third != null)
+          Expanded(
+            child: _PodiumTile(
+              entry: third,
+              liveOnline: resolveLiveOnlineCount(third.room, liveCounts),
+              height: 64,
+              onTap: () => onTap(third.room),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _PodiumTile extends StatelessWidget {
+  const _PodiumTile({
+    required this.entry,
+    required this.liveOnline,
+    required this.height,
+    required this.onTap,
+    this.highlight = false,
+  });
+
+  final VoiceRoomRankEntry entry;
+  final int liveOnline;
+  final double height;
+  final VoidCallback onTap;
+  final bool highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    final medal = switch (entry.rank) {
+      1 => '🥇',
+      2 => '🥈',
+      3 => '🥉',
+      _ => '${entry.rank}',
+    };
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Text(medal, style: TextStyle(fontSize: highlight ? 26 : 20)),
+          const SizedBox(height: 4),
+          Text(
+            entry.room.displayTitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              fontSize: highlight ? 12 : 10,
+            ),
+          ),
+          Text(
+            '$liveOnline · ${entry.score}p',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.55),
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Container(
+            height: height,
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: highlight
+                    ? [const Color(0xFFFFD54F), const Color(0xFFB832FF)]
+                    : [const Color(0xFF3D2066), const Color(0xFF1A0D33)],
               ),
-            );
-          }
-          final entry = entries[i - 1];
-          return _RankRow(
-            entry: entry,
-            liveOnline: resolveLiveOnlineCount(entry.room, liveCounts),
-            onTap: () => onRoomTap(entry.room),
-          );
-        },
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+              border: Border.all(
+                color: highlight
+                    ? const Color(0xFFFFD54F).withValues(alpha: 0.5)
+                    : Colors.white12,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -231,11 +395,13 @@ class _RankRow extends StatelessWidget {
     required this.entry,
     required this.liveOnline,
     required this.onTap,
+    required this.onPreview,
   });
 
   final VoiceRoomRankEntry entry;
   final int liveOnline;
   final VoidCallback onTap;
+  final VoidCallback onPreview;
 
   @override
   Widget build(BuildContext context) {
@@ -251,6 +417,7 @@ class _RankRow extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
+        onLongPress: onPreview,
         borderRadius: BorderRadius.circular(12),
         child: Container(
           margin: const EdgeInsets.only(bottom: 8),
@@ -330,7 +497,17 @@ class _RankRow extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(width: 4),
+              IconButton(
+                onPressed: onPreview,
+                icon: Icon(
+                  Icons.info_outline_rounded,
+                  size: 18,
+                  color: Colors.white.withValues(alpha: 0.45),
+                ),
+                tooltip: 'Önizleme',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+              ),
               Icon(
                 Icons.chevron_right_rounded,
                 size: 18,

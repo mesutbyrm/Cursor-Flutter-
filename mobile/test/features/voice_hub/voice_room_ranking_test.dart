@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:canlifal_social/features/live/domain/entities/voice_room_entity.dart';
@@ -48,6 +49,28 @@ void main() {
     );
     expect(ranked.single.room.displayOnline, 25);
     expect(ranked.single.score, voiceRoomRankingScore(room, liveOnline: 25));
+  });
+
+  test('scoreForRoom returns proxy score from notifier state', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    const room = VoiceRoomEntity(
+      id: 'room-score',
+      slug: 'room-score',
+      nameTr: 'Score',
+      onlineCount: 12,
+      isPkLive: true,
+    );
+    container.read(voiceRoomRankingProvider.notifier).state =
+        VoiceRoomRankingState(
+      hourly: [VoiceRoomRankEntry(rank: 1, room: room, score: 170)],
+      daily: const [],
+      lastUpdated: DateTime.now(),
+    );
+    expect(
+      container.read(voiceRoomRankingProvider.notifier).scoreForRoom('room-score'),
+      170,
+    );
   });
 
   test('voiceRoomRankingScore adds PK and music bonus', () {

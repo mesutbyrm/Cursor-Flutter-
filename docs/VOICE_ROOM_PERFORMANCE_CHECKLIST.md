@@ -23,7 +23,8 @@
 
 - [x] `_RtcLiveShell` tam-sayfa watch kaldırıldı (`voice_room_rtc_page.dart`)
 - [x] `_VoiceRoomRtcSeatStage` — speaking + seat slice ile izole stage
-- [x] `VoiceRoomBasicHeaderBand` — jeton/sıralama/çevrimiçi (Faz 13)
+- [x] `VoiceRoomBasicHeaderBand` — jeton/sıralama/çevrimiçi (Faz 13); tam ranking watch kaldırıldı (Faz 18)
+- [x] `VoiceDiscoverHeaderBand` — keşfet jeton/inbox izole (Faz 18)
 - [x] `VoiceRoomLifecycleHost` — basic + RTC ortak (Faz 13)
 - [x] Selective `ref.listen` side-effect dilimleri (Faz 15)
 

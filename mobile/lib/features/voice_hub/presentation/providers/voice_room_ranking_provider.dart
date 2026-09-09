@@ -170,6 +170,19 @@ class VoiceRoomRankingNotifier extends Notifier<VoiceRoomRankingState> {
     }
     return null;
   }
+
+  int? scoreForRoom(
+    String roomId, {
+    VoiceRoomRankingPeriod period = VoiceRoomRankingPeriod.hourly,
+  }) {
+    final id = roomId.trim();
+    if (id.isEmpty) return null;
+    final list = period == VoiceRoomRankingPeriod.hourly ? state.hourly : state.daily;
+    for (final e in list) {
+      if (e.room.apiRoomKey == id || e.room.id == id) return e.score;
+    }
+    return null;
+  }
 }
 
 final voiceRoomRankingProvider =

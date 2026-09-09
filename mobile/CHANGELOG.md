@@ -1,5 +1,19 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.444+482 (2026-09-09) — Sesli oda Faz 18
+
+### Keşfet rebuild izolasyonu
+- **`VoiceDiscoverHeaderBand`** — jeton/inbox/auth güncellemeleri liste gövdesini rebuild etmez
+- Kompakt oda satırı **uzun bas** → önizleme sheet
+
+### Sıralama sheet podium
+- Top 3 podium görünümü (🥇🥈🥉)
+- Satır **uzun bas** veya ℹ️ → önizleme; dokun → odaya giriş
+
+### Performans
+- `VoiceRoomBasicHeaderBand` gereksiz tam `voiceRoomRankingProvider` watch kaldırıldı
+- `scoreForRoom` notifier API + unit test
+
 ## 1.0.443+481 (2026-09-09) — Sesli oda Faz 17
 
 ### Sıralama sheet premium

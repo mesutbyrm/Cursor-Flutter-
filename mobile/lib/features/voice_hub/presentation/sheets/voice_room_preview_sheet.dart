@@ -55,7 +55,9 @@ class _VoiceRoomPreviewSheet extends ConsumerWidget {
     final daily = ref
         .read(voiceRoomRankingProvider.notifier)
         .rankForRoom(room.apiRoomKey, period: VoiceRoomRankingPeriod.daily);
-    final hourlyScore = _scoreForRoom(ranking.hourly, room);
+    final hourlyScore = ref
+        .read(voiceRoomRankingProvider.notifier)
+        .scoreForRoom(room.apiRoomKey, period: VoiceRoomRankingPeriod.hourly);
     final goalAsync = ref.watch(voiceRoomPreviewGoalProvider(room.apiRoomKey));
     final pkAsync = ref.watch(voiceRoomPreviewPkProvider(room.apiRoomKey));
     final activeGoal = goalAsync.valueOrNull;
@@ -237,20 +239,6 @@ class _VoiceRoomPreviewSheet extends ConsumerWidget {
         ],
       ),
     );
-  }
-
-  static int? _scoreForRoom(
-    List<VoiceRoomRankEntry> entries,
-    VoiceRoomEntity room,
-  ) {
-    final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
-    for (final entry in entries) {
-      final entryKey = entry.room.apiRoomKey.isNotEmpty
-          ? entry.room.apiRoomKey
-          : entry.room.id;
-      if (entryKey == key || entry.room.id == room.id) return entry.score;
-    }
-    return null;
   }
 
   static String _formatRemaining(Duration? remaining) {

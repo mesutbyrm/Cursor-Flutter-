@@ -144,7 +144,6 @@ class VoiceRoomBasicHeaderBand extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(voiceRoomRankingProvider);
     final room = _displayRoom(
       ref.watch(voiceRoomByIdProvider(
         liveRoomKey.isNotEmpty ? liveRoomKey : fallbackRoom.id,
