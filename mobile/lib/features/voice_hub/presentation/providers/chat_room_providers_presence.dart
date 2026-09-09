@@ -142,6 +142,14 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       }
       return;
     }
+    final isGoldOrVip = VoiceOfficialJoin.isEntranceWorthy(
+      content: name,
+      membership: user.membership,
+      chatRole: user.chatRole,
+    );
+    // Normal üyeler: oda içi popup/banner yok — yalnızca Gold/VIP/staff görünür giriş.
+    if (!isGoldOrVip) return;
+
     final line = '$name giriş yaptı';
     _pushRealtimeEvent(VoiceRoomRealtimeKind.join, line);
     _appendSyntheticSystemMessage(
@@ -151,7 +159,6 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     );
     final banner = '👋 $name → $_roomLabelForBanner odasına giriş yaptı';
     _pushEnterExitBanner(banner);
-    // Gold / VIP → ek site geneli marquee (mevcut davranış).
     if (VoiceOfficialJoin.isEntranceWorthy(
       content: line,
       membership: user.membership,

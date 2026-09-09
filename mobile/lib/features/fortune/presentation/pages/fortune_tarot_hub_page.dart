@@ -29,6 +29,7 @@ import '../widgets/fortune_zodiac_hub_card.dart';
 import '../widgets/ultra_premium/ultra_fortune_tokens.dart';
 import '../widgets/ultra_premium/ultra_fortune_quick_actions.dart';
 import '../widgets/ultra_premium/ultra_fortune_hub_quick_grid.dart';
+import '../widgets/ultra_premium/ultra_fortune_section_placeholder.dart';
 import '../widgets/ultra_premium/ultra_fortune_types_section.dart';
 import '../../../bana_ozel/presentation/widgets/bana_ozel_hub_section.dart';
 import '../../../shorts/presentation/widgets/shorts_hub_strip.dart';
@@ -126,12 +127,14 @@ class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
               const SliverToBoxAdapter(
                 child: LazyScreenSection(
                   delay: LazyLoadPerf.fortuneProphecy,
+                  placeholder: const UltraFortuneSectionPlaceholder(height: 140),
                   child: UltraFortuneRecommendationsSection(),
                 ),
               ),
               const SliverToBoxAdapter(
                 child: LazyScreenSection(
                   delay: LazyLoadPerf.fortuneProphecy,
+                  placeholder: const UltraFortuneSectionPlaceholder(height: 160),
                   child: PsychicsHomeSection(),
                 ),
               ),
@@ -145,6 +148,7 @@ class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
               const SliverToBoxAdapter(
                 child: LazyScreenSection(
                   delay: LazyLoadPerf.fortuneProphecy,
+                  placeholder: const UltraFortuneSectionPlaceholder(height: 120),
                   child: BanaOzelHubSection(),
                 ),
               ),
@@ -152,18 +156,21 @@ class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
               const SliverToBoxAdapter(
                 child: LazyScreenSection(
                   delay: LazyLoadPerf.fortuneProphecy,
+                  placeholder: const UltraFortuneSectionPlaceholder(height: 100),
                   child: UltraFortuneProphecyCard(),
                 ),
               ),
               const SliverToBoxAdapter(
                 child: LazyScreenSection(
                   delay: LazyLoadPerf.fortuneTypes,
+                  placeholder: const UltraFortuneSectionPlaceholder(height: 200),
                   child: UltraFortuneTypesSection(),
                 ),
               ),
               const SliverToBoxAdapter(
                 child: LazyScreenSection(
                   delay: LazyLoadPerf.fortuneDaily,
+                  placeholder: const UltraFortuneSectionPlaceholder(height: 100),
                   child: UltraFortuneDailyEnergy(),
                 ),
               ),

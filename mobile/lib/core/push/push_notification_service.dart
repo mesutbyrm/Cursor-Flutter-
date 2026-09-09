@@ -133,6 +133,7 @@ class PushNotificationService {
   }
 
   Future<void> bindForegroundFcm(FirebaseMessaging messaging) async {
+    if (OneSignalBootstrap.isReady) return;
     FirebaseMessaging.onMessage.listen((msg) async {
       await showRemoteMessage(msg);
     });
@@ -140,6 +141,7 @@ class PushNotificationService {
   }
 
   Future<void> bindOpenedAppHandlers(FirebaseMessaging messaging) async {
+    if (OneSignalBootstrap.isReady) return;
     FirebaseMessaging.onMessageOpenedApp.listen((msg) {
       PushNavigationHandler.handleNotificationTap(msg.data);
     });

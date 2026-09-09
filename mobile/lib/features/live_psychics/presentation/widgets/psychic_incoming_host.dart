@@ -19,6 +19,7 @@ import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_s
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychic_flow.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychic_incoming_controller.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychic_invite_coordinator.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychic_invite_poll_gate.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychics_list_controller.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_live_event_bus.dart';
@@ -48,6 +49,7 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
   var _isFortuneTeller = false;
   String? _tellerProfileId;
   String? _activePresentingSessionId;
+  final _pollGate = PsychicInvitePollGate();
   PsychicIncomingSseService? _sseService;
   GoRouter? _router;
   String _routePath = '/feed';
@@ -271,8 +273,15 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
           tellerProfileId: _tellerProfileId,
         );
     if (!mounted) return;
+    final freshIds = _pollGate.takeNewPendingSessionIds(
+      incoming.where((r) => r.isPending).map((r) => r.sessionId),
+    );
     for (final req in incoming) {
       if (!req.isPending) continue;
+      if (!freshIds.contains(req.sessionId)) {
+        _pollGate.noteSeen(req.sessionId);
+        continue;
+      }
       final uid = ref.read(authControllerProvider).valueOrNull?.id;
       if (!shouldPresentPsychicIncomingInvite(
         authUserId: uid,

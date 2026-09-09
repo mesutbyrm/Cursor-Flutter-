@@ -44,20 +44,18 @@ class FirebaseBootstrap {
       analytics = FirebaseAnalytics.instance;
       messaging = FirebaseMessaging.instance;
 
-      await PushNotificationService.instance.init();
-
-      if (messaging != null) {
-        messaging!.onTokenRefresh.listen((token) {
-          if (kDebugMode) {
-            debugPrint('FCM token refreshed: ${token.substring(0, 12)}…');
-          }
-          OneSignalBootstrap.onPushTokenChanged?.call();
-        });
-      }
-
-      // OneSignal aktifse FCM dinleyicileri kapalı — çift bildirim / çift tıklama önlenir
-      if (!OneSignalBootstrap.isReady && messaging != null) {
-        await PushNotificationService.instance.bindForegroundFcm(messaging!);
+      // Push teslimatı yalnızca OneSignal — FCM bildirim dinleyicileri bağlanmaz.
+      if (!OneSignalBootstrap.isReady) {
+        await PushNotificationService.instance.init();
+        if (messaging != null) {
+          messaging!.onTokenRefresh.listen((token) {
+            if (kDebugMode) {
+              debugPrint('FCM token refreshed: ${token.substring(0, 12)}…');
+            }
+            OneSignalBootstrap.onPushTokenChanged?.call();
+          });
+          await PushNotificationService.instance.bindForegroundFcm(messaging!);
+        }
       }
 
       _ready = true;
@@ -68,9 +66,11 @@ class FirebaseBootstrap {
 
   /// İlk kare sonrası — token, analytics (açılışı bloklamaz).
   static Future<void> runDeferredTasks() async {
-    if (!_ready || messaging == null) return;
+    if (!_ready) return;
     try {
-      if (!kIsWeb && !OneSignalBootstrap.isReady) {
+      if (!kIsWeb &&
+          !OneSignalBootstrap.isReady &&
+          messaging != null) {
         final token = await messaging!.getToken();
         if (token != null && kDebugMode) {
           debugPrint('FCM token: ${token.substring(0, 12)}…');

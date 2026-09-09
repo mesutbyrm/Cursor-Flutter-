@@ -1,12 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../notifications/domain/entities/app_notification_entity.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';
+import '../../../notifications/presentation/providers/notification_event_gate_provider.dart';
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 
 /// Jeton ödeme onay / red bildirimlerini popup olarak gösterir.
+/// Geçmiş bildirimler uygulama açılışında tekrar gösterilmez.
 class JetonPaymentStatusListener extends ConsumerStatefulWidget {
   const JetonPaymentStatusListener({super.key, required this.child});
 
@@ -19,30 +24,52 @@ class JetonPaymentStatusListener extends ConsumerStatefulWidget {
 
 class _JetonPaymentStatusListenerState
     extends ConsumerState<JetonPaymentStatusListener> {
-  final _shown = <String>{};
+  var _historySeeded = false;
 
   @override
   Widget build(BuildContext context) {
     ref.listen(notificationsListProvider, (prev, next) {
       final list = next.valueOrNull;
       if (list == null) return;
+      final gate = ref.read(notificationEventGateProvider);
+      if (!_historySeeded) {
+        gate.seedFromHistory(list.map((n) => n.id));
+        _historySeeded = true;
+      }
       for (final n in list) {
-        _maybeShow(n);
+        unawaited(_maybeShow(n));
       }
     });
     return widget.child;
   }
 
-  void _maybeShow(AppNotificationEntity n) {
-    if (_shown.contains(n.id)) return;
+  Future<void> _maybeShow(AppNotificationEntity n) async {
     final type = n.type?.toLowerCase() ?? '';
     if (type != 'jeton_payment_approved' && type != 'jeton_payment_rejected') {
       return;
     }
-    _shown.add(n.id);
+    final userId = ref.read(authControllerProvider).valueOrNull?.id ?? '';
+    final gate = ref.read(notificationEventGateProvider);
+    if (userId.isNotEmpty &&
+        await gate.wasDialogShownPersisted(userId: userId, eventId: n.id)) {
+      return;
+    }
+    if (!gate.shouldShowHistoricalPopup(
+      eventId: n.id,
+      isRead: n.read,
+      createdAt: n.createdAt,
+    )) {
+      return;
+    }
+    if (!mounted) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _showDialog(n, type == 'jeton_payment_approved');
+      if (userId.isNotEmpty) {
+        unawaited(
+          gate.markDialogShownPersisted(userId: userId, eventId: n.id),
+        );
+      }
     });
   }
 

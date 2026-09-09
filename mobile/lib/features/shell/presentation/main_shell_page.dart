@@ -8,7 +8,7 @@ import '../../../core/widgets/exit_confirm_dialog.dart';
 import 'shell_ui.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../messages/presentation/providers/messages_providers.dart';
-import '../../notifications/presentation/providers/notifications_providers.dart';
+import '../../notifications/presentation/providers/notification_event_gate_provider.dart';
 import '../../home/presentation/widgets/approved/bottom_navigation_widget.dart';
 
 class MainShellPage extends ConsumerStatefulWidget {
@@ -71,8 +71,8 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
     ref.listen<AsyncValue<dynamic>>(authControllerProvider, (prev, next) {
       if (next.valueOrNull != null) {
         if (prev?.valueOrNull == null) {
+          ref.read(notificationEventGateProvider).markSessionStart();
           ref.invalidate(conversationsProvider);
-          ref.invalidate(notificationsListProvider);
         }
         if (!_prefetched) {
           _prefetched = true;

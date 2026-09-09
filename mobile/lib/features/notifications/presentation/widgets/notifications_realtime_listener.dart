@@ -17,6 +17,7 @@ import '../../../messages/presentation/providers/conversations_list_notifier.dar
 import '../../../messages/presentation/providers/messages_providers.dart';
 import '../../../messages/presentation/widgets/dm_realtime_listener.dart';
 import '../../../social/presentation/services/social_fortune_feed_sync.dart';
+import '../providers/notification_event_gate_provider.dart';
 import '../providers/notifications_list_notifier.dart';
 import '../providers/notifications_providers.dart';
 
@@ -69,8 +70,10 @@ class _NotificationsRealtimeListenerState
   }
 
   void _onNotification(AppNotificationEntity notification) {
+    final gate = ref.read(notificationEventGateProvider);
+    if (!gate.shouldProcessRealtime(notification.id)) return;
+
     ref.read(notificationsListNotifierProvider.notifier).prepend(notification);
-    ref.invalidate(notificationsListProvider);
     ref.invalidate(notificationsUnreadApiProvider);
     handleNotificationGiftForGlobalOverlay(ref, notification);
     final type = notification.type?.toLowerCase() ?? '';

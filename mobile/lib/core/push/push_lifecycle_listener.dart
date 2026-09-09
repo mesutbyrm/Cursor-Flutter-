@@ -271,8 +271,8 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener>
 
   void _onPushReceived() {
     if (!mounted) return;
-    ref.invalidate(notificationsListProvider);
-    ref.invalidate(notificationsListNotifierProvider);
+    unawaited(ref.read(notificationsListNotifierProvider.notifier).refresh());
+    ref.invalidate(notificationsUnreadApiProvider);
     ref.invalidate(conversationsProvider);
     unawaited(
       ref.read(conversationsListNotifierProvider.notifier).refresh(
@@ -306,7 +306,7 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener>
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) return;
     ref.invalidate(notificationsUnreadApiProvider);
-    ref.invalidate(notificationsListProvider);
+    unawaited(ref.read(notificationsListNotifierProvider.notifier).refresh());
     unawaited(
       ref.read(conversationsListNotifierProvider.notifier).refresh(
             silent: true,

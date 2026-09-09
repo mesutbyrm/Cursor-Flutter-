@@ -1638,11 +1638,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       await ref.read(coBroadcastProvider.notifier).refreshStream(streamId);
       final approved = ref.read(coBroadcastProvider).coBroadcasters.any((c) {
         final uid = c['userId']?.toString() ?? c['id']?.toString();
-        final status = (c['status'] ?? c['state'] ?? 'approved').toString();
-        return uid == user.id &&
-            (status == 'approved' ||
-                status == 'active' ||
-                status == 'joined');
+        if (uid != user.id) return false;
+        return _isApprovedCoGuestStatus(c['status'] ?? c['state']);
       });
       if (approved) {
         await _upgradeToCoHost(streamId, user);
@@ -1695,17 +1692,22 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     }
   }
 
+  bool _isApprovedCoGuestStatus(dynamic raw) {
+    final status = raw?.toString().toLowerCase().trim() ?? '';
+    return status == 'approved' ||
+        status == 'active' ||
+        status == 'joined' ||
+        status == 'accepted';
+  }
+
   bool _isSelfApprovedCoGuest(
     List<Map<String, dynamic>> guests,
     String userId,
   ) {
     return guests.any((c) {
       final uid = c['userId']?.toString() ?? c['id']?.toString();
-      final status = (c['status'] ?? c['state'] ?? 'approved').toString();
-      return uid == userId &&
-          (status == 'approved' ||
-              status == 'active' ||
-              status == 'joined');
+      if (uid != userId) return false;
+      return _isApprovedCoGuestStatus(c['status'] ?? c['state']);
     });
   }
 

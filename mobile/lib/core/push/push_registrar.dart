@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../firebase/firebase_bootstrap.dart';
 import '../onesignal/onesignal_bootstrap.dart';
+import '../onesignal/onesignal_config.dart';
 import '../network/api_endpoints.dart';
 import '../network/api_exception.dart';
 import '../network/dio_provider.dart';
@@ -105,9 +106,11 @@ class PushRegistrar {
   }
 
   Future<String?> _resolvePushTokenOnce() async {
-    if (OneSignalBootstrap.isReady) {
+    if (OneSignalConfig.enabled) {
+      if (!OneSignalBootstrap.isReady) return null;
       final osToken = OneSignalBootstrap.pushToken;
       if (osToken != null && osToken.isNotEmpty) return osToken;
+      return null;
     }
     if (!FirebaseBootstrap.isReady) return null;
     return PushNotificationService.instance.currentFcmToken();

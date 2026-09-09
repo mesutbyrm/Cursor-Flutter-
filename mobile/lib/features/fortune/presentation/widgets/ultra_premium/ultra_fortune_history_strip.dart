@@ -17,7 +17,19 @@ class UltraFortuneHistoryStrip extends ConsumerWidget {
     final history = ref.watch(fortuneHistoryProvider);
 
     return history.when(
-      loading: () => const SizedBox.shrink(),
+      loading: () => const Padding(
+        padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
+        child: SizedBox(
+          height: 132,
+          child: Center(
+            child: SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+        ),
+      ),
       error: (_, _) => const SizedBox.shrink(),
       data: (items) {
         if (items.isEmpty) return const SizedBox.shrink();
