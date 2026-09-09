@@ -23,6 +23,7 @@ import '../../domain/entities/live_guest_layout.dart';
 import '../../domain/utils/live_stream_category.dart';
 import '../providers/live_providers.dart';
 import '../providers/live_beauty_provider.dart';
+import '../providers/live_broadcast_settings_provider.dart';
 import '../widgets/live_tiktok/live_background_picker_sheet.dart';
 import '../widgets/premium_2026/live_beauty_filter_sheet.dart';
 
@@ -415,7 +416,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
                       ),
                       const Expanded(
                         child: Text(
-                          'Yayın Hazırlığı',
+                          'Canlı Yayınını Hazırla',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontWeight: FontWeight.w900,
@@ -516,6 +517,8 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
                           );
                         }).toList(),
                       ),
+                      const SizedBox(height: 16),
+                      _PrepPrivacySettings(),
                       const SizedBox(height: 16),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -693,6 +696,73 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
           end: Alignment.bottomRight,
           colors: [Color(0xFF2A1548), Color(0xFF0A0614)],
         ),
+      ),
+    );
+  }
+}
+
+class _PrepPrivacySettings extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(liveBroadcastSettingsProvider);
+    final notifier = ref.read(liveBroadcastSettingsProvider.notifier);
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.38),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Gizlilik ve etkileşim',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: Colors.white.withValues(alpha: 0.8),
+            ),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+            title: const Text(
+              'Yorumlar açık',
+              style: TextStyle(color: Colors.white, fontSize: 13),
+            ),
+            value: settings.commentsEnabled,
+            onChanged: notifier.toggleComments,
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+            title: const Text(
+              'Hediye kabul et',
+              style: TextStyle(color: Colors.white, fontSize: 13),
+            ),
+            value: settings.giftsEnabled,
+            onChanged: notifier.toggleGifts,
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+            title: const Text(
+              'Fal isteği kabul et',
+              style: TextStyle(color: Colors.white, fontSize: 13),
+            ),
+            subtitle: Text(
+              'Fal yayınlarında izleyici «Fal İste» görebilir',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.55),
+                fontSize: 11,
+              ),
+            ),
+            value: settings.fortuneRequestsEnabled,
+            onChanged: notifier.toggleFortuneRequests,
+          ),
+        ],
       ),
     );
   }

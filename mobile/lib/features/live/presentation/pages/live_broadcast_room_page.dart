@@ -68,6 +68,7 @@ import '../../domain/pk/pk_unified_bridge.dart';
 import '../../domain/live_guest_layout_resolver.dart';
 import '../providers/live_namespace_providers.dart';
 import '../../domain/utils/live_fortune_type_slug.dart';
+import '../../domain/utils/live_fortune_display_label.dart';
 import '../gifts/live_gift_controller.dart';
 import '../gifts/providers/live_gift_providers.dart';
 import '../gifts/providers/live_seat_gift_flash_provider.dart';
@@ -93,7 +94,7 @@ import '../widgets/broadcast_room/live_pk_score_bar.dart';
 import '../widgets/pk/pk_room_live_section.dart';
 import '../providers/live_fortune_request_provider.dart';
 import '../providers/live_stream_quality_provider.dart';
-import '../widgets/broadcast_room/live_host_fortune_request_stack.dart';
+import '../widgets/broadcast_room/live_host_fortune_request_center_overlay.dart';
 import '../widgets/broadcast_room/live_fortune_request_form.dart';
 import '../widgets/broadcast_room/live_like_realtime.dart';
 import '../widgets/broadcast_room/live_moderation_sheet.dart';
@@ -689,6 +690,25 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     });
   }
 
+  bool _fortuneRequestsOpen(LiveBroadcastSession s) {
+    if (!_isFortuneBroadcast(s)) return false;
+    return ref.read(liveBroadcastSettingsProvider).fortuneRequestsEnabled;
+  }
+
+  String? _streamFortuneTypeSlug(LiveBroadcastSession s) {
+    if (s.tags.isEmpty) return null;
+    final first = s.tags.first;
+    return isLiveFortuneTypeKey(first)
+        ? first
+        : liveFortuneCategoryToSlug(first);
+  }
+
+  String _fortuneCtaLabel(LiveBroadcastSession s) {
+    final slug = _streamFortuneTypeSlug(s);
+    if (slug == null || slug.isEmpty) return '🔮 Fal İste';
+    return liveFortuneRequestCtaLabel(slug);
+  }
+
   Future<bool> _submitStreamFortuneRequest({
     required String streamId,
     required String displayName,
@@ -746,7 +766,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     }
 
     final streamId = s.streamId?.trim();
-    if (streamId != null && streamId.isNotEmpty && _isFortuneBroadcast(s)) {
+    if (streamId != null && streamId.isNotEmpty && _fortuneRequestsOpen(s)) {
       final balance =
           ref.read(coinBalanceProvider) ?? user.coinBalance;
       final ok = await showModalBottomSheet<bool>(
@@ -761,11 +781,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           ),
           child: LiveFortuneRequestForm(
             balance: balance,
-            initialFortuneType: s.tags.isNotEmpty
-                ? (isLiveFortuneTypeKey(s.tags.first)
-                    ? s.tags.first
-                    : liveFortuneCategoryToSlug(s.tags.first))
-                : 'tarot',
+            initialFortuneType: _streamFortuneTypeSlug(s) ?? 'tarot',
             onSubmit: ({
               required displayName,
               required question,
@@ -2168,8 +2184,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     return LiveMockupSideRail(
       likeLabel: _likeRailLabel(interaction),
       onLike: _onDoubleTapHeart,
-      showFortune: !s.isHost && _isFortuneBroadcast(s),
-      onFortune: !s.isHost && _isFortuneBroadcast(s)
+      showFortune: !s.isHost && _fortuneRequestsOpen(s),
+      fortuneLabel: _fortuneCtaLabel(s),
+      onFortune: !s.isHost && _fortuneRequestsOpen(s)
           ? () => unawaited(_onFortuneRequest(s))
           : null,
     );
@@ -2506,35 +2523,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           }
         }
       });
-      ref.listen(liveFortuneRequestsProvider(streamId), (prev, next) {
-        final pulse = next.newRequestPulse;
-        if (pulse <= (prev?.newRequestPulse ?? 0)) return;
-        final pending = next.requests
-            .where(
-              (r) =>
-                  r.status == LiveFortuneRequestStatus.pending ||
-                  r.status == LiveFortuneRequestStatus.held,
-            )
-            .toList();
-        if (pending.isEmpty) return;
-        final latest = pending.last;
-        final queueNo = pending.indexWhere((r) => r.id == latest.id) + 1;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Fal bildirimi #$queueNo: ${latest.displayName} — ${latest.fortuneType}',
-              ),
-              action: SnackBarAction(
-                label: 'Gör',
-                onPressed: _openControlCenter,
-              ),
-              duration: const Duration(seconds: 6),
-            ),
-          );
-        });
-      });
       ref.listen(liveVideoPkProvider(streamId), (prev, next) {
         final battle = next.battle;
         if (battle != null) {
@@ -2761,22 +2749,15 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
             ),
             if (hasStream) GiftFeedPanel(sessionKey: streamId),
             if (hasStream && s.isHost)
-              LiveHostFortuneRequestStack(
-                streamId: streamId,
-                topInset: top + 52,
-              ),
-            if (hasStream && !s.isHost && _isFortuneBroadcast(s))
+              LiveHostFortuneRequestCenterOverlay(streamId: streamId),
+            if (hasStream && !s.isHost && _fortuneRequestsOpen(s))
               Positioned(
                 right: 8,
                 bottom: 300,
                 child: LiveFortuneViewerRail(
                   streamId: streamId,
                   balance: balance,
-                  initialFortuneType: s.tags.isNotEmpty
-                      ? (isLiveFortuneTypeKey(s.tags.first)
-                          ? s.tags.first
-                          : liveFortuneCategoryToSlug(s.tags.first))
-                      : 'tarot',
+                  initialFortuneType: _streamFortuneTypeSlug(s) ?? 'tarot',
                   onSubmit: ({
                     required displayName,
                     required question,
@@ -3055,19 +3036,13 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                                         ]
                                       : roomState.messages,
                                   showFortuneTab:
-                                      !s.isHost && _isFortuneBroadcast(s),
+                                      !s.isHost && _fortuneRequestsOpen(s),
                                   canModerate: s.isHost,
                                   onMessageLongPress: s.isHost
                                       ? (m) => unawaited(_onChatModeration(m))
                                       : null,
                                   balance: balance,
-                                  initialFortuneType: s.tags.isNotEmpty
-                                      ? (isLiveFortuneTypeKey(s.tags.first)
-                                          ? s.tags.first
-                                          : liveFortuneCategoryToSlug(
-                                              s.tags.first,
-                                            ))
-                                      : null,
+                                  initialFortuneType: _streamFortuneTypeSlug(s),
                                   onSubmitFortuneRequest: hasStream
                                       ? ({
                                           required displayName,

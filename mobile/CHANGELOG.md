@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.419+457 (2026-09-09) — Canlı yayın Fal İste UX
+
+### Fal İste (yayıncı)
+- Ekran ortasında premium modal: ONAYLA / REDDET + kuyruk rozeti («🔮 N Fal İsteği»)
+- Beklet → kontrol merkezine alınır; sıradaki pending istek gösterilir
+- Sağ üst küçük kart kaldırıldı (merkez modal öncelikli)
+
+### Fal İste (izleyici)
+- Fal türüne göre CTA: «☕ Kahve Falı İste» vb.
+- Yayın hazırlığı: «Canlı Yayınını Hazırla» + gizlilik/etkileşim ayarları
+- Fal isteği aç/kapat toggle (yayın ayarları + prep ekranı)
+
 ## 1.0.418+456 (2026-09-09) — CI hotfix
 
 - `admin_live_streams_page`: eksik `LiveStreamEntity` import (CI derleme)

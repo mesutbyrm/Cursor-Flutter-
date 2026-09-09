@@ -156,6 +156,18 @@ class LiveFortuneRequestsNotifier
     }
   }
 
+  /// Yayıncı ONAYLA — istek kabul (inceleme / seçim).
+  Future<void> acceptRequest(String requestId) =>
+      setStatus(requestId, LiveFortuneRequestStatus.reviewing);
+
+  /// Yayıncı REDDET — istek iptal / iade.
+  Future<void> rejectRequest(String requestId) =>
+      setStatus(requestId, LiveFortuneRequestStatus.cancelled);
+
+  /// İsteği kuyrukta beklet.
+  Future<void> holdRequest(String requestId) =>
+      setStatus(requestId, LiveFortuneRequestStatus.held);
+
   void pushFromSse(Map<String, dynamic> map) {
     final row = _parseFortuneRequestFromSse(map);
     if (row.id.isEmpty) return;

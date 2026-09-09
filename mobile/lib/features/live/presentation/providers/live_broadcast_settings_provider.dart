@@ -7,6 +7,7 @@ class LiveBroadcastSettings {
   const LiveBroadcastSettings({
     this.commentsEnabled = true,
     this.giftsEnabled = true,
+    this.fortuneRequestsEnabled = true,
     this.pkEnabled = true,
     this.guestsEnabled = true,
     this.coBroadcastEnabled = false,
@@ -15,6 +16,7 @@ class LiveBroadcastSettings {
 
   final bool commentsEnabled;
   final bool giftsEnabled;
+  final bool fortuneRequestsEnabled;
   final bool pkEnabled;
   final bool guestsEnabled;
   final bool coBroadcastEnabled;
@@ -23,6 +25,7 @@ class LiveBroadcastSettings {
   LiveBroadcastSettings copyWith({
     bool? commentsEnabled,
     bool? giftsEnabled,
+    bool? fortuneRequestsEnabled,
     bool? pkEnabled,
     bool? guestsEnabled,
     bool? coBroadcastEnabled,
@@ -31,6 +34,8 @@ class LiveBroadcastSettings {
     return LiveBroadcastSettings(
       commentsEnabled: commentsEnabled ?? this.commentsEnabled,
       giftsEnabled: giftsEnabled ?? this.giftsEnabled,
+      fortuneRequestsEnabled:
+          fortuneRequestsEnabled ?? this.fortuneRequestsEnabled,
       pkEnabled: pkEnabled ?? this.pkEnabled,
       guestsEnabled: guestsEnabled ?? this.guestsEnabled,
       coBroadcastEnabled: coBroadcastEnabled ?? this.coBroadcastEnabled,
@@ -47,6 +52,9 @@ class LiveBroadcastSettingsNotifier extends Notifier<LiveBroadcastSettings> {
       state = state.copyWith(commentsEnabled: value);
 
   void toggleGifts(bool value) => state = state.copyWith(giftsEnabled: value);
+
+  void toggleFortuneRequests(bool value) =>
+      state = state.copyWith(fortuneRequestsEnabled: value);
 
   void togglePk(bool value) => state = state.copyWith(pkEnabled: value);
 

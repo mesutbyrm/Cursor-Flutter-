@@ -45,6 +45,14 @@ Future<void> showLiveBroadcastSettingsSheet({
                     onChanged: notifier.toggleGifts,
                   ),
                   SwitchListTile(
+                    title: const Text('Fal isteği kabul et'),
+                    subtitle: const Text(
+                      'İzleyiciler canlı yayında fal isteyebilir',
+                    ),
+                    value: settings.fortuneRequestsEnabled,
+                    onChanged: notifier.toggleFortuneRequests,
+                  ),
+                  SwitchListTile(
                     title: const Text('PK Battle'),
                     value: settings.pkEnabled,
                     onChanged: notifier.togglePk,

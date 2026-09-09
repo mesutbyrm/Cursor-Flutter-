@@ -98,6 +98,7 @@ class LiveMockupSideRail extends StatelessWidget {
     required this.onLike,
     this.onFortune,
     this.showFortune = false,
+    this.fortuneLabel = 'Fal İste',
     this.onGiftPackages,
   });
 
@@ -105,6 +106,7 @@ class LiveMockupSideRail extends StatelessWidget {
   final VoidCallback onLike;
   final VoidCallback? onFortune;
   final bool showFortune;
+  final String fortuneLabel;
   final VoidCallback? onGiftPackages;
 
   @override
@@ -123,7 +125,7 @@ class LiveMockupSideRail extends StatelessWidget {
         if (showFortune && onFortune != null) ...[
           _PurpleCta(
             icon: Icons.auto_awesome_rounded,
-            label: 'Fal İste',
+            label: fortuneLabel,
             onTap: onFortune!,
           ),
           const SizedBox(height: 12),

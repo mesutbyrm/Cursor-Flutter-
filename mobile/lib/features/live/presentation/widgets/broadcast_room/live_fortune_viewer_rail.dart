@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/entities/live_fortune_request_entity.dart';
+import '../../../domain/utils/live_fortune_display_label.dart';
 import '../../providers/live_fortune_type_options_provider.dart';
 import 'live_fortune_request_form.dart';
 
@@ -32,6 +33,9 @@ class LiveFortuneViewerRail extends ConsumerWidget {
     final statusLabel = statusAsync.whenOrNull(
       data: (data) => _statusLabel(data),
     );
+    final ctaLabel = initialFortuneType != null && initialFortuneType!.isNotEmpty
+        ? liveFortuneRequestCtaLabel(initialFortuneType!)
+        : '🔮 Fal İste';
 
     return Container(
       width: 108,
@@ -45,13 +49,16 @@ class LiveFortuneViewerRail extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Fal İste',
+          Text(
+            ctaLabel,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
               fontWeight: FontWeight.w900,
-              fontSize: 12,
+              fontSize: 11,
               color: Colors.white,
+              height: 1.15,
             ),
           ),
           if (statusLabel != null) ...[
