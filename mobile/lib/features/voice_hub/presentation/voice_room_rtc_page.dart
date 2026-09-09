@@ -1392,7 +1392,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         body: Stack(
           fit: StackFit.expand,
           children: [
-            VoiceRoomRtcLifecycleHost(
+            VoiceRoomLifecycleHost(
               roomKey: _liveRoomKey.isNotEmpty ? _liveRoomKey : widget.room.id,
             ),
             VoiceCosmicBackground(imageUrl: bgUrl),

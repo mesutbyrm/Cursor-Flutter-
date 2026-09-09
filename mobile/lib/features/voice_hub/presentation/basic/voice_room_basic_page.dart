@@ -36,12 +36,12 @@ import '../utils/voice_room_key_resolver.dart';
 import '../providers/voice_session_phase_provider.dart';
 import '../../domain/voice/voice_session_phase.dart';
 import '../providers/voice_room_ui_provider.dart';
+import '../widgets/voice_room/voice_room_rtc_shell_widgets.dart';
 import '../widgets/voice_room/voice_room_connection_overlays.dart';
 import '../widgets/voice_room/voice_room_loading_skeleton.dart';
 import '../utils/voice_room_mention.dart';
 import '../sheets/voice_room_commands_panel.dart';
 import '../sheets/voice_room_ranking_sheet.dart';
-import '../providers/voice_room_ranking_provider.dart';
 import '../utils/voice_room_permissions.dart';
 import '../utils/voice_room_error_display.dart';
 import '../utils/voice_room_speak_access.dart';
@@ -74,8 +74,6 @@ import '../../music/presentation/widgets/room_song_mini_player.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../sheets/voice_room_management_panel.dart';
 import '../widgets/premium_2026/voice_live_action_bar_2026.dart';
-import '../widgets/premium_2026/voice_live_header_2026.dart';
-import '../widgets/premium_2026/voice_online_gift_box.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../widgets/voice_room/voice_room_center_music_panel.dart';
 import '../widgets/voice_room/voice_room_music_background_layer.dart';
@@ -614,7 +612,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   @override
   Widget build(BuildContext context) {
     final roomKey = _liveRoomKey.isNotEmpty ? _liveRoomKey : widget.room.id;
-    ref.watch(voiceRoomForegroundLifecycleProvider(roomKey));
     ref.watch(
       voiceRoomLiveProvider(_liveRoomKey).select(_BasicLiveShell.fromState),
     );
@@ -623,8 +620,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
         VoiceRoomErrorDisplay.bannerMessage(live.error, live: live);
     final ui = ref.watch(voiceRoomUiProvider);
     final room = _effectiveRoom();
-    final online = live.onlineCountFor(room);
-    final user = ref.watch(authControllerProvider).valueOrNull;
+    final user = ref.read(authControllerProvider).valueOrNull;
     final perms = _permissions(user, live, room);
     final canControlMusic = _canControlMusic(live, room, user, perms);
     final canCloseMusic = VoiceMusicAccess.canStopMusic(
@@ -645,24 +641,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final sessionKey =
         room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
     final bgUrl = live.backgroundUrl ?? room.backgroundImageUrl;
-    final jeton = ref.watch(
-      walletBalancesProvider.select((a) => a.valueOrNull?.jeton ?? 0),
-    );
-    ref.watch(voiceRoomRankingProvider);
-    final hourlyRank = ref
-        .read(voiceRoomRankingProvider.notifier)
-        .rankForRoom(room.apiRoomKey);
-    String? hostAvatar;
-    final ownerId = room.ownerId;
-    if (ownerId != null) {
-      for (final p in live.presence) {
-        if (p.id == ownerId) {
-          hostAvatar = p.image;
-          break;
-        }
-      }
-    }
-
     ref.listen<VoiceRoomLiveState>(voiceRoomLiveProvider(_liveRoomKey), (prev, next) {
       if (!mounted) return;
 
@@ -851,6 +829,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
           child: Stack(
           fit: StackFit.expand,
           children: [
+            VoiceRoomLifecycleHost(roomKey: roomKey),
             VoiceCosmicBackground(imageUrl: bgUrl),
             if (_liveRoomKey.isNotEmpty) ...[
               VoiceRoomMusicBackgroundLayer(roomKey: _liveRoomKey),
@@ -887,37 +866,19 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
               child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                VoiceLiveHeader2026(
-                  room: room,
-                  onlineCount: online,
-                  coinBalance: jeton,
-                  hostAvatarUrl: hostAvatar,
-                  hourlyRank: hourlyRank,
-                  onRankTap: () => showVoiceRoomRankingSheet(context, ref),
+                VoiceRoomBasicHeaderBand(
+                  liveRoomKey: _liveRoomKey,
+                  fallbackRoom: widget.room,
                   onBack: () => unawaited(_confirmLeave()),
                   onExit: () => unawaited(_confirmLeave()),
                   onAudience: () => showVoiceSpeakerListSheet(
                     context,
-                    presence: live.presence,
+                    presence: ref.read(voiceRoomLiveProvider(_liveRoomKey)).presence,
                     room: room,
                     onUserTap: (u) => _openUser(u, room, perms),
                   ),
                   onCoinsTap: () => openJetonStore(context, ref: ref),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: VoiceOnlineGiftBox(
-                      onlineCount: online,
-                      onTap: () => showVoiceSpeakerListSheet(
-                        context,
-                        presence: live.presence,
-                        room: room,
-                        onUserTap: (u) => _openUser(u, room, perms),
-                      ),
-                    ),
-                  ),
+                  onRankTap: () => showVoiceRoomRankingSheet(context, ref),
                 ),
                 if (live.roomMuted)
                   _Banner(message: 'Oda susturulmuş (yalnızca yetkililer konuşabilir)'),

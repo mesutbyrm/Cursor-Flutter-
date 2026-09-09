@@ -101,12 +101,24 @@ class VoiceRoomBasicModerationSection extends ConsumerWidget {
           child: const VoiceGiftAnnouncementTicker(),
         ),
         if (live.moderatorAnnouncement?.trim().isNotEmpty == true)
-          VoiceRoomDuyuruTicker(
-            key: ValueKey(live.moderatorAnnouncement),
-            text: live.moderatorAnnouncement!,
-            onScrollComplete: () => ref
-                .read(voiceRoomLiveProvider(liveKey).notifier)
-                .clearModeratorAnnouncement(),
+          Consumer(
+            builder: (context, ref, _) {
+              final ann = ref.watch(
+                voiceRoomLiveProvider(liveKey).select(
+                  (s) => s.moderatorAnnouncement,
+                ),
+              );
+              if (ann?.trim().isNotEmpty != true) {
+                return const SizedBox.shrink();
+              }
+              return VoiceRoomDuyuruTicker(
+                key: ValueKey(ann),
+                text: ann!,
+                onScrollComplete: () => ref
+                    .read(voiceRoomLiveProvider(liveKey).notifier)
+                    .clearModeratorAnnouncement(),
+              );
+            },
           ),
       ],
     );

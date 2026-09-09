@@ -23,11 +23,8 @@
 
 - [x] `_RtcLiveShell` tam-sayfa watch kaldırıldı (`voice_room_rtc_page.dart`)
 - [x] `_VoiceRoomRtcSeatStage` — speaking + seat slice ile izole stage
-- [x] `VoiceRoomRtcHeaderBand` — jeton/çevrimiçi/oda meta (Faz 12)
-- [x] `VoiceRoomRtcLifecycleHost` — foreground + müzik slice yan etki (Faz 12)
-- [x] `voiceSeatGiftFlashForReceiverProvider` — koltuk başına hediye flaşı (Faz 12)
-- [x] Chat / gift / banner — ayrı `Consumer` + `select`
-- [ ] `VoiceRoomBasicPage` — tam header band paritesi (sonraki faz)
+- [x] `VoiceRoomBasicHeaderBand` — jeton/sıralama/çevrimiçi (Faz 13)
+- [x] `VoiceRoomLifecycleHost` — basic + RTC ortak (Faz 13)
 - [ ] `ref.listen` tam `VoiceRoomLiveState` → selective slices (sonraki faz)
 
 ## Speaking / RTC
@@ -48,7 +45,7 @@
 
 - [x] Android alt bar: solid panel (blur kapalı)
 - [x] iOS alt bar: BackdropFilter blur korundu
-- [ ] Duyuru ticker 100ms `setState` → `AnimationController` (sonraki faz)
+- [ ] Duyuru ticker — `AnimationController` (tamamlandı Faz 10+)
 
 ## Memory / lifecycle
 

@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.439+477 (2026-09-09) — Sesli oda Faz 13
+
+### Basic mod — rebuild izolasyonu
+- **`VoiceRoomBasicHeaderBand`** — jeton, saatlik sıra, çevrimiçi, host avatar yalnızca üst bölümde
+- **`VoiceRoomLifecycleHost`** — basic + RTC ortak lifecycle aboneliği
+- Moderasyon duyuru ticker `select` ile izole
+
 ## 1.0.438+476 (2026-09-09) — Sesli oda Faz 12
 
 ### Performans — rebuild izolasyonu

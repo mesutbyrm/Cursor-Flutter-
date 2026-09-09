@@ -1,7 +1,7 @@
 # Canlifal Sesli Sohbet Odaları — Profesyonel Denetim Raporu
 
 **Tarih:** 2026-09-09  
-**Sürüm (bu oturum):** `1.0.438+476`  
+**Sürüm (bu oturum):** `1.0.439+477`  
 **Mimari:** Flutter mobil → `https://canlifal.com` REST + SSE (Socket.IO mobilde kullanılmıyor)
 
 ---
@@ -48,7 +48,8 @@ Sesli oda sistemi **çalışan temel akışları koruyarak** premium UX, mention
 | Heartbeat (15s PATCH presence) | **KISMEN** | İstemci gönderir; `api/` mirror ghost sweep (45 sn) |
 | Boş oda otomatik kapanma | **KISMEN** | `api/` mirror + mobil `room_closed` liste patch |
 | Reconnect banner | **ÇALIŞIYOR** | Basic + RTC mod; SSE kopması + manuel resync |
-| RTC rebuild izolasyonu | **ÇALIŞIYOR** (Faz 12) | Lifecycle host + header band + koltuk stage |
+| RTC rebuild izolasyonu | **ÇALIŞIYOR** (Faz 12–13) | Lifecycle host + header band + koltuk stage |
+| Basic header rebuild izolasyonu | **ÇALIŞIYOR** (Faz 13) | `VoiceRoomBasicHeaderBand` |
 | Hediye flaşı selective rebuild | **ÇALIŞIYOR** (Faz 12) | Koltuk başına provider + RepaintBoundary |
 | Loading skeleton | **ÇALIŞIYOR** (yeni) | Gated entry |
 | SSE event dedupe | **ÇALIŞIYOR** (yeni) | `VoiceRoomSseEventDedupe` |
