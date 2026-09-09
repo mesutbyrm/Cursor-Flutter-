@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.440+478 (2026-09-09) — Sesli oda Faz 14
+
+### Footer rebuild izolasyonu
+- **`VoiceRoomUiFooterSlice`** — hoparlör, konuşma isteği, müzik mute, bildirim sesi
+- **`VoiceRoomBasicFooterBand`** + **`VoiceRoomRtcFooterBand`** — alt bar yalnızca UI slice değişince rebuild
+- Basic mini player `effectiveMusicMuted` select izole
+
 ## 1.0.439+477 (2026-09-09) — Sesli oda Faz 13
 
 ### Basic mod — rebuild izolasyonu

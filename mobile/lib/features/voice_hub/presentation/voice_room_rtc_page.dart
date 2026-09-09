@@ -87,7 +87,6 @@ import '../../gifts/presentation/sync/gift_session_controller.dart';
 import 'widgets/premium/voice_gift_stage_overlays.dart';
 import 'widgets/premium/voice_glass.dart';
 import 'widgets/premium_2026/voice_cosmic_background.dart';
-import 'widgets/voice_room/voice_room_spec_footer.dart';
 import 'widgets/voice_room/voice_room_music_background_layer.dart';
 import 'sheets/voice_room_commands_panel.dart';
 import 'widgets/premium_2026/voice_room_persistent_duyuru.dart';
@@ -1104,9 +1103,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       room: room,
       presence: live.presence,
     );
-    final speakPending = ref.watch(
-      voiceRoomUiProvider.select((s) => s.requestSpeakPending),
-    );
     final canRequestMusic = VoiceMusicAccess.canRequestSongs(
       dj: live.dj,
       perms: perms,
@@ -1812,50 +1808,34 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                     ),
                   ),
                 ),
-                Consumer(
-                  builder: (context, ref, _) {
-                    final headphonesOn = ref.watch(
-                      voiceRoomUiProvider.select((s) => s.headphonesOn),
-                    );
-                    final joinNotificationsEnabled = ref.watch(
-                      voiceRoomUiProvider
-                          .select((s) => s.chatNotificationSoundEnabled),
-                    );
-                    return VoiceRoomSpecFooter(
-                      liveRoomKey: _liveRoomKey,
-                      controller: _messageCtrl,
-                      focusNode: _messageFocus,
-                      onSend: () => _sendChatMessage(room),
-                      onToggleAudioOutput: _toggleHeadphones,
-                      headphonesOn: headphonesOn,
-                      onMicToggle: _toggleMic,
-                      micOn: !_isMicMuted,
-                      micEnabled: _audioReady,
-                      onSettings: () {},
-                      showSettings: false,
-                      onGift: () => _openGiftShop(
-                        context,
-                        room: room,
-                        presence: ref.read(voiceRoomLiveProvider(_liveRoomKey)).presence,
-                      ),
-                      onInvite: () => unawaited(_shareRoom()),
-                      selfUserId: user?.id,
-                      onEmojiTap: () => _showEmojiPicker(context, _messageCtrl),
-                      onChanged: _onChatChanged,
-                      joinNotificationsEnabled: joinNotificationsEnabled,
-                      showMusicRequest: false,
-                      showSpeakRequest: user != null && !canSpeak,
-                      speakRequestPending: speakPending,
-                      onSpeakRequest: () => unawaited(
-                        requestVoiceRoomBasicSpeak(
-                          context: context,
-                          ref: ref,
-                          liveKey: _liveRoomKey,
-                          pending: speakPending,
-                        ),
-                      ),
-                    );
-                  },
+                VoiceRoomRtcFooterBand(
+                  liveRoomKey: _liveRoomKey,
+                  room: room,
+                  canSpeak: canSpeak,
+                  userId: user?.id,
+                  controller: _messageCtrl,
+                  focusNode: _messageFocus,
+                  micOn: !_isMicMuted,
+                  micEnabled: _audioReady,
+                  onSend: () => _sendChatMessage(room),
+                  onToggleAudioOutput: _toggleHeadphones,
+                  onMicToggle: _toggleMic,
+                  onGift: () => _openGiftShop(
+                    context,
+                    room: room,
+                    presence: ref.read(voiceRoomLiveProvider(_liveRoomKey)).presence,
+                  ),
+                  onInvite: () => unawaited(_shareRoom()),
+                  onEmojiTap: () => _showEmojiPicker(context, _messageCtrl),
+                  onChanged: _onChatChanged,
+                  onSpeakRequest: () => unawaited(
+                    requestVoiceRoomBasicSpeak(
+                      context: context,
+                      ref: ref,
+                      liveKey: _liveRoomKey,
+                      pending: ref.read(voiceRoomUiProvider).requestSpeakPending,
+                    ),
+                  ),
                 ),
               ],
             ),

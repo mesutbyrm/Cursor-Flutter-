@@ -10,7 +10,9 @@ import '../../providers/voice_room_ui_provider.dart';
 import '../../providers/voice_room_ranking_provider.dart';
 import '../premium_2026/voice_live_header_2026.dart';
 import '../premium_2026/voice_online_gift_box.dart';
+import '../premium_2026/voice_live_action_bar_2026.dart';
 import '../premium_2026/voice_web_room_header.dart';
+import 'voice_room_spec_footer.dart';
 
 /// SSE/foreground + müzik slice abonelikleri — yan etki; rebuild üretmez.
 class VoiceRoomLifecycleHost extends ConsumerWidget {
@@ -199,3 +201,121 @@ class VoiceRoomBasicHeaderBand extends ConsumerWidget {
     );
   }
 }
+
+/// Basic mod alt aksiyon çubuğu — hoparlör / konuşma isteği UI slice izole.
+class VoiceRoomBasicFooterBand extends ConsumerWidget {
+  const VoiceRoomBasicFooterBand({
+    super.key,
+    required this.micOn,
+    required this.micEnabled,
+    required this.showSpeakRequest,
+    required this.onMic,
+    required this.onGift,
+    required this.onSettings,
+    required this.onToggleAudioOutput,
+    required this.onInvite,
+    required this.onSpeakRequest,
+    this.showSettings = false,
+  });
+
+  final bool micOn;
+  final bool micEnabled;
+  final bool showSpeakRequest;
+  final VoidCallback onMic;
+  final VoidCallback onGift;
+  final VoidCallback onSettings;
+  final VoidCallback onToggleAudioOutput;
+  final VoidCallback onInvite;
+  final VoidCallback onSpeakRequest;
+  final bool showSettings;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ui = ref.watch(voiceRoomUiProvider.select(voiceRoomUiFooterSlice));
+
+    return VoiceLiveActionBar2026(
+      micOn: micOn,
+      micEnabled: micEnabled,
+      onMic: onMic,
+      onGift: onGift,
+      onSettings: onSettings,
+      showSettings: showSettings,
+      headphonesOn: ui.headphonesOn,
+      onToggleAudioOutput: onToggleAudioOutput,
+      onInvite: onInvite,
+      showSpeakRequest: showSpeakRequest,
+      speakRequestPending: ui.requestSpeakPending,
+      onSpeakRequest: onSpeakRequest,
+    );
+  }
+}
+
+/// RTC alt bar — mesaj girişi + hoparlör / konuşma isteği slice izole.
+class VoiceRoomRtcFooterBand extends ConsumerWidget {
+  const VoiceRoomRtcFooterBand({
+    super.key,
+    required this.liveRoomKey,
+    required this.room,
+    required this.canSpeak,
+    required this.userId,
+    required this.controller,
+    required this.focusNode,
+    required this.micOn,
+    required this.micEnabled,
+    required this.onSend,
+    required this.onToggleAudioOutput,
+    required this.onMicToggle,
+    required this.onGift,
+    required this.onInvite,
+    required this.onEmojiTap,
+    required this.onChanged,
+    required this.onSpeakRequest,
+  });
+
+  final String liveRoomKey;
+  final VoiceRoomEntity room;
+  final bool canSpeak;
+  final String? userId;
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final bool micOn;
+  final bool micEnabled;
+  final VoidCallback onSend;
+  final VoidCallback onToggleAudioOutput;
+  final VoidCallback onMicToggle;
+  final VoidCallback onGift;
+  final VoidCallback onInvite;
+  final VoidCallback onEmojiTap;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onSpeakRequest;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ui = ref.watch(voiceRoomUiProvider.select(voiceRoomUiFooterSlice));
+
+    return VoiceRoomSpecFooter(
+      liveRoomKey: liveRoomKey,
+      controller: controller,
+      focusNode: focusNode,
+      onSend: onSend,
+      onToggleAudioOutput: onToggleAudioOutput,
+      headphonesOn: ui.headphonesOn,
+      onMicToggle: onMicToggle,
+      micOn: micOn,
+      micEnabled: micEnabled,
+      onSettings: () {},
+      showSettings: false,
+      onGift: onGift,
+      onInvite: onInvite,
+      selfUserId: userId,
+      onEmojiTap: onEmojiTap,
+      onChanged: onChanged,
+      joinNotificationsEnabled: ui.chatNotificationSoundEnabled,
+      showMusicRequest: false,
+      showSpeakRequest: userId != null && !canSpeak,
+      speakRequestPending: ui.requestSpeakPending,
+      onSpeakRequest: onSpeakRequest,
+    );
+  }
+}
+

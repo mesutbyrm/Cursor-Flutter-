@@ -69,6 +69,21 @@ class VoiceRoomUiState {
   }
 }
 
+/// Alt bar / mini player için izole UI dilimi — tam `VoiceRoomUiState` watch gerektirmez.
+typedef VoiceRoomUiFooterSlice = ({
+  bool headphonesOn,
+  bool requestSpeakPending,
+  bool effectiveMusicMuted,
+  bool chatNotificationSoundEnabled,
+});
+
+VoiceRoomUiFooterSlice voiceRoomUiFooterSlice(VoiceRoomUiState state) => (
+      headphonesOn: state.headphonesOn,
+      requestSpeakPending: state.requestSpeakPending,
+      effectiveMusicMuted: state.effectiveMusicMuted,
+      chatNotificationSoundEnabled: state.chatNotificationSoundEnabled,
+    );
+
 class VoiceRoomUiNotifier extends Notifier<VoiceRoomUiState> {
   @override
   VoiceRoomUiState build() => const VoiceRoomUiState();

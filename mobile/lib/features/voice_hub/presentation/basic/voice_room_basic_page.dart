@@ -73,7 +73,6 @@ import '../../music/presentation/providers/room_music_providers.dart';
 import '../../music/presentation/widgets/room_song_mini_player.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../sheets/voice_room_management_panel.dart';
-import '../widgets/premium_2026/voice_live_action_bar_2026.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../widgets/voice_room/voice_room_center_music_panel.dart';
 import '../widgets/voice_room/voice_room_music_background_layer.dart';
@@ -618,7 +617,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final live = ref.read(voiceRoomLiveProvider(_liveRoomKey));
     final roomErrorBanner =
         VoiceRoomErrorDisplay.bannerMessage(live.error, live: live);
-    final ui = ref.watch(voiceRoomUiProvider);
     final room = _effectiveRoom();
     final user = ref.read(authControllerProvider).valueOrNull;
     final perms = _permissions(user, live, room);
@@ -634,7 +632,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       room: room,
       presence: live.presence,
     );
-    final speakPending = ui.requestSpeakPending;
     final isOwner = perms.isRoomOwner || perms.isSiteAdmin;
     final showMusicRequestFab = live.dj.musicEnabled;
     final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
@@ -955,7 +952,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     onEmoji: () =>
                         showVoiceRoomBasicEmojiPicker(context, _messageCtrl),
                   ),
-                  VoiceLiveActionBar2026(
+                  VoiceRoomBasicFooterBand(
                     micOn: !_isMicMuted,
                     micEnabled: _audioReady && !_audioJoining,
                     onMic: _toggleMic,
@@ -967,17 +964,15 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                       isOwner,
                     ),
                     showSettings: false,
-                    headphonesOn: ui.headphonesOn,
                     onToggleAudioOutput: _toggleSpeaker,
                     onInvite: () => unawaited(_shareRoom(room)),
                     showSpeakRequest: user != null && !canSpeak,
-                    speakRequestPending: speakPending,
                     onSpeakRequest: () => unawaited(
                       requestVoiceRoomBasicSpeak(
                         context: context,
                         ref: ref,
                         liveKey: _liveRoomKey,
-                        pending: speakPending,
+                        pending: ref.read(voiceRoomUiProvider).requestSpeakPending,
                       ),
                     ),
                   ),
@@ -989,15 +984,22 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
             if (_liveRoomKey.isNotEmpty)
               VoiceRoomVideoCloseBar(roomKey: _liveRoomKey),
             if (_liveRoomKey.isNotEmpty)
-              BlocProvider.value(
-                value: ref.read(roomSongBlocProvider(_liveRoomKey)),
-                child: RoomSongMiniPlayer(
-                  roomId: _liveRoomKey,
-                  canControl: canControlMusic,
-                  bottomInset: 88,
-                  muted: ui.effectiveMusicMuted,
-                  hidden: true,
-                ),
+              Consumer(
+                builder: (context, ref, _) {
+                  final muted = ref.watch(
+                    voiceRoomUiProvider.select((s) => s.effectiveMusicMuted),
+                  );
+                  return BlocProvider.value(
+                    value: ref.read(roomSongBlocProvider(_liveRoomKey)),
+                    child: RoomSongMiniPlayer(
+                      roomId: _liveRoomKey,
+                      canControl: canControlMusic,
+                      bottomInset: 88,
+                      muted: muted,
+                      hidden: true,
+                    ),
+                  );
+                },
               ),
             VoiceRoomSideActionRail(
               onSettings: () => _openManagementPanel(
