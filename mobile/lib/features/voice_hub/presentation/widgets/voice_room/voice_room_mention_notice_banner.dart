@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// @mention bildirimi — hafif pulse, rahatsız etmeyen.
 class VoiceRoomMentionNoticeBanner extends StatefulWidget {
@@ -59,6 +60,7 @@ class _VoiceRoomMentionNoticeBannerState extends State<VoiceRoomMentionNoticeBan
     _autoDismiss?.cancel();
     _countdownTick?.cancel();
     _endsAt = DateTime.now().add(VoiceRoomMentionNoticeBanner.autoDismissDuration);
+    HapticFeedback.mediumImpact();
     if (widget.onDismiss == null) return;
     _autoDismiss = Timer(VoiceRoomMentionNoticeBanner.autoDismissDuration, () {
       if (!mounted) return;
@@ -99,7 +101,12 @@ class _VoiceRoomMentionNoticeBannerState extends State<VoiceRoomMentionNoticeBan
     final card = Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: widget.onTap,
+        onTap: widget.onTap == null
+            ? null
+            : () {
+                HapticFeedback.lightImpact();
+                widget.onTap!();
+              },
         borderRadius: BorderRadius.circular(14),
         child: Container(
         margin: const EdgeInsets.fromLTRB(12, 6, 12, 0),

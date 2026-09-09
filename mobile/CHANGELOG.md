@@ -1,5 +1,18 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.451+489 (2026-09-09) — Sesli oda Faz 25
+
+### Mention banner haptic
+- Yeni mention → `HapticFeedback.mediumImpact`
+- Banner dokun → `HapticFeedback.lightImpact`
+
+### Sohbet raporla (genişletme)
+- Uzun bas menüsü: **Kullanıcıyı raporla** + **Mesajı raporla** (ayrı `ReportTarget`)
+
+### Sıralama sheet UX
+- `voiceRoomRankingUpdatedLabel` — göreli güncelleme («5 dk önce»)
+- Pull-to-refresh sonrası hafif haptic
+
 ## 1.0.450+488 (2026-09-09) — Sesli oda Faz 24
 
 ### Mention banner

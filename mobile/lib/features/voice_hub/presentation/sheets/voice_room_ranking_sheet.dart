@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
@@ -59,16 +59,16 @@ class _VoiceRoomRankingSheetState extends ConsumerState<_VoiceRoomRankingSheet>
     super.dispose();
   }
 
-  Future<void> _refresh() =>
-      ref.read(voiceRoomRankingProvider.notifier).refresh();
+  Future<void> _refresh() async {
+    await ref.read(voiceRoomRankingProvider.notifier).refresh();
+    HapticFeedback.lightImpact();
+  }
 
   @override
   Widget build(BuildContext context) {
     final ranking = ref.watch(voiceRoomRankingProvider);
     final bottom = MediaQuery.paddingOf(context).bottom;
-    final updatedLabel = ranking.lastUpdated == null
-        ? null
-        : 'Güncellendi · ${DateFormat('HH:mm').format(ranking.lastUpdated!)}';
+    final updatedLabel = voiceRoomRankingUpdatedLabel(ranking.lastUpdated);
 
     return DraggableScrollableSheet(
       expand: false,

@@ -20,4 +20,22 @@ void main() {
     );
     expect(label, contains('Günlük sıfırlama'));
   });
+
+  test('voiceRoomRankingUpdatedLabel relative minutes', () {
+    final now = DateTime(2026, 9, 9, 15, 0);
+    final label = voiceRoomRankingUpdatedLabel(
+      now.subtract(const Duration(minutes: 5)),
+      now,
+    );
+    expect(label, 'Güncellendi · 5 dk önce');
+  });
+
+  test('voiceRoomRankingUpdatedLabel az önce', () {
+    final now = DateTime(2026, 9, 9, 15, 0);
+    final label = voiceRoomRankingUpdatedLabel(
+      now.subtract(const Duration(seconds: 20)),
+      now,
+    );
+    expect(label, 'Güncellendi · az önce');
+  });
 }

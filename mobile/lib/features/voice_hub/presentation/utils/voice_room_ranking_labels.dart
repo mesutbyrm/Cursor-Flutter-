@@ -26,3 +26,14 @@ String _dailyLabel(DateTime now) {
   }
   return 'Günlük sıfırlama · ${mins} dk';
 }
+
+/// Sıralama sheet üst etiketi — göreli güncelleme zamanı.
+String? voiceRoomRankingUpdatedLabel(DateTime? updated, [DateTime? now]) {
+  if (updated == null) return null;
+  final clock = now ?? DateTime.now();
+  final diff = clock.difference(updated);
+  if (diff.inSeconds < 45) return 'Güncellendi · az önce';
+  if (diff.inMinutes < 60) return 'Güncellendi · ${diff.inMinutes} dk önce';
+  if (diff.inHours < 24) return 'Güncellendi · ${diff.inHours} sa önce';
+  return 'Güncellendi · ${updated.day}.${updated.month} ${updated.hour.toString().padLeft(2, '0')}:${updated.minute.toString().padLeft(2, '0')}';
+}

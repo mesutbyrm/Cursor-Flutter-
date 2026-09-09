@@ -48,10 +48,37 @@ Future<void> showVoiceRoomChatMessageActions({
               );
             },
           ),
+          if (message.user?.id.isNotEmpty == true)
+            ListTile(
+              leading: const Icon(Icons.person_off_outlined, color: Colors.orangeAccent),
+              title: const Text(
+                'Kullanıcıyı raporla',
+                style: TextStyle(color: Colors.white),
+              ),
+              onTap: () {
+                Navigator.pop(ctx);
+                final user = message.user!;
+                final name = user.displayName.trim().isNotEmpty
+                    ? user.displayName.trim()
+                    : user.name.trim();
+                openReportFlow(
+                  context,
+                  ReportTarget(
+                    type: ReportTargetType.user,
+                    targetId: user.id,
+                    displayTitle: name.isNotEmpty ? name : 'Kullanıcı',
+                    contextLabel: reportContextLabel,
+                  ),
+                );
+              },
+            ),
           if (message.id.isNotEmpty)
             ListTile(
               leading: const Icon(Icons.flag_outlined, color: Colors.orangeAccent),
-              title: const Text('Raporla', style: TextStyle(color: Colors.white)),
+              title: const Text(
+                'Mesajı raporla',
+                style: TextStyle(color: Colors.white),
+              ),
               onTap: () {
                 Navigator.pop(ctx);
                 openReportFlow(

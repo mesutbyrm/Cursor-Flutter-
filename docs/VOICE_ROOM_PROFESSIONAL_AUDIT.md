@@ -1,7 +1,7 @@
 # Canlifal Sesli Sohbet Odaları — Profesyonel Denetim Raporu
 
 **Tarih:** 2026-09-09  
-**Sürüm (bu oturum):** `1.0.450+488`  
+**Sürüm (bu oturum):** `1.0.451+489`  
 **Mimari:** Flutter mobil → `https://canlifal.com` REST + SSE (Socket.IO mobilde kullanılmıyor)
 
 ---
@@ -32,8 +32,9 @@ Sesli oda sistemi **çalışan temel akışları koruyarak** premium UX, mention
 | Hediye / jeton | **ÇALIŞIYOR** | Gift transaction API |
 | Oda beğeni | **EKSİK** | Üretim endpoint yok |
 | Chat / mesaj | **ÇALIŞIYOR** | Flood banner + gönder kilidi + typing indicator (Faz 20) |
-| Mention bildirimi (oda içi) | **ÇALIŞIYOR** (Faz 24) | Dokun/swipe; 8 sn countdown + progress |
-| Sohbet uzun bas (kopyala/yanıtla/rapor) | **ÇALIŞIYOR** (Faz 24) | Basic + RTC; `/report` akışı |
+| Mention bildirimi (oda içi) | **ÇALIŞIYOR** (Faz 25) | Haptic + countdown; dokun/swipe |
+| Sohbet uzun bas (kopyala/yanıtla/rapor) | **ÇALIŞIYOR** (Faz 25) | Mesaj + kullanıcı raporu |
+| Sıralama sheet güncelleme etiketi | **ÇALIŞIYOR** (Faz 25) | Göreli «X dk önce» + refresh haptic |
 | Sohbet yeni mesaj chip | **ÇALIŞIYOR** (Faz 22) | Basic + RTC overlay; akıllı auto-scroll |
 | Sohbet scroll perf | **ÇALIŞIYOR** (Faz 21) | ListView cacheExtent + keepAlive kapalı |
 | Giriş toast rebuild | **ÇALIŞIYOR** (Faz 21) | `voiceRoomJoinToastSignature` selective watch |
