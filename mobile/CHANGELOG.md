@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.415+453 (2026-09-09) — Admin kullanıcı komuta merkezi (Faz 1)
+
+- `/admin/users/{userId}` — tam kullanıcı yönetim paneli (6 sekme)
+- Özet: jeton, CFC, yayın/oda, üyelik süresi, son online, reklam sayısı
+- Finans, hediye koleksiyonu, yetki/ban, aktivite — mevcut API ile
+- Yetki matrisi: `admin_user_permissions.dart` + `docs/ADMIN_USER_FULL_CONTROL.md`
+- Kullanıcı aramada tıklama → komuta merkezi; sheet’te “Tam yönetim paneli”
+
 ## 1.0.414+452 (2026-09-08) — Profil/admin tamamlama paketi
 
 ### Admin

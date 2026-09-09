@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:go_router/go_router.dart';
+
 import '../../../../core/network/api_exception.dart';
 import '../../domain/admin_user_util.dart';
 import '../pages/admin_panel_page.dart';
@@ -232,6 +234,15 @@ class AdminUserManageSheet {
                     onChanged: (v) {
                       if (v != null) setState(() => membership = v);
                     },
+                  ),
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      context.push('/admin/users/$userId');
+                    },
+                    icon: const Icon(Icons.dashboard_customize_outlined),
+                    label: const Text('Tam yönetim paneli'),
                   ),
                   const SizedBox(height: 16),
                   FilledButton(

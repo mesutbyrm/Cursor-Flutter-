@@ -6,9 +6,9 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
+import '../../domain/admin_user_util.dart';
 import '../providers/admin_panel_providers.dart';
 import '../providers/staff_access_provider.dart';
-import '../widgets/admin_user_manage_sheet.dart';
 import '../widgets/admin_user_search_list.dart';
 
 /// Admin — kullanıcı arama ve yönetim (anında arama + jeton/CFC/üyelik).
@@ -39,7 +39,7 @@ class AdminUsersPage extends ConsumerWidget {
                   const Expanded(
                     child: DiscoverTabHeader(
                       title: 'Kullanıcı Yönetimi',
-                      subtitle: 'Ara, düzenle, jeton/CFC, üyelik',
+                      subtitle: 'Ara → tam komuta merkezi',
                     ),
                   ),
                 ],
@@ -62,7 +62,9 @@ class AdminUsersPage extends ConsumerWidget {
     WidgetRef ref,
     Map<String, dynamic> user,
   ) async {
-    await AdminUserManageSheet.show(context, ref: ref, user: user);
+    final userId = resolveAdminUserId(user);
+    if (userId.isEmpty) return;
+    await context.push('/admin/users/$userId');
     ref.invalidate(adminUserSearchProvider);
   }
 

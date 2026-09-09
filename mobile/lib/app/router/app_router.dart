@@ -44,6 +44,7 @@ import '../../features/admin/presentation/pages/admin_live_streams_page.dart';
 import '../../features/admin/presentation/pages/admin_voice_rooms_page.dart';
 import '../../features/admin/presentation/pages/admin_voice_room_finance_page.dart';
 import '../../features/admin/presentation/pages/admin_sub_pages.dart';
+import '../../features/admin/presentation/pages/admin_user_command_center_page.dart';
 import '../../features/admin_web/presentation/pages/admin_web_panel_page.dart';
 import '../../features/fortune/presentation/pages/fortune_tarot_hub_page.dart';
 import '../../features/fortune/presentation/pages/fortune_types_all_page.dart';
@@ -656,6 +657,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin/users',
         builder: (context, state) => const AdminUsersPage(),
+        routes: [
+          GoRoute(
+            path: ':userId',
+            builder: (context, state) => AdminUserCommandCenterPage(
+              userId: state.pathParameters['userId']!,
+            ),
+          ),
+        ],
       ),
       GoRoute(
         path: '/admin/reports',
