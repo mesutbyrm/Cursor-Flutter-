@@ -1,6 +1,6 @@
 # Admin — Tam Kullanıcı Yönetimi (Komuta Merkezi)
 
-> **Mobil sürüm:** `1.0.416+454` · **API:** `https://canlifal.com` · **Kılavuz:** `docs/FLUTTER_ENTegrasyon_KILAVUZU.md`
+> **Mobil sürüm:** `1.0.417+455` · **API:** `https://canlifal.com` · **Kılavuz:** `docs/FLUTTER_ENTegrasyon_KILAVUZU.md`
 
 ## Amaç
 

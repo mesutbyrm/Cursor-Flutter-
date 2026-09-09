@@ -20,13 +20,13 @@ class ProfileHubSummaryCard extends ConsumerWidget {
       _Chip(
         icon: Icons.monetization_on_rounded,
         label: 'Jeton',
-        value: state.jeton,
+        value: '${state.jeton}',
         color: AppThemeColors.coinGold,
       ),
       _Chip(
         icon: Icons.diamond_rounded,
         label: 'CFC',
-        value: state.cfc,
+        value: '${state.cfc}',
         color: AppThemeColors.accentCyan,
       ),
       _Chip(

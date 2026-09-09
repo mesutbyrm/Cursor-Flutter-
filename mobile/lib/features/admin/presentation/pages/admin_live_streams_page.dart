@@ -6,6 +6,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
+import '../../../live/domain/entities/live_stream_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../../live/presentation/providers/live_streams_list_notifier.dart';
 import '../../../live/presentation/utils/open_live_stream.dart';
