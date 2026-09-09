@@ -920,6 +920,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                           onUserPerms: (userId, name) =>
                               _openUserById(userId, live, room, perms),
                           onReplyToMessage: _replyToMessage,
+                          reportContextLabel: room.displayTitle,
                         ),
                         VoiceRoomConnectionOverlays(
                           roomKey: _liveRoomKey,

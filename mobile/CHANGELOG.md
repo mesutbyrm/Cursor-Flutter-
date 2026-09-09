@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.450+488 (2026-09-09) — Sesli oda Faz 24
+
+### Mention banner
+- **8 sn geri sayım** + `LinearProgressIndicator` (flood banner ile uyumlu UX)
+- Kalan süre etiketi (`7s`, `6s`…)
+
+### Sohbet raporla
+- Uzun bas menüsüne **Raporla** — `ReportTargetType.message` + oda bağlamı
+- Basic + RTC (`reportContextLabel: room.displayTitle`)
+
 ## 1.0.449+487 (2026-09-09) — Sesli oda Faz 23
 
 ### Mention banner

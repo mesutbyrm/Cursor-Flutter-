@@ -30,6 +30,8 @@ class _VoiceRoomMentionNoticeBannerState extends State<VoiceRoomMentionNoticeBan
     with SingleTickerProviderStateMixin {
   late final AnimationController _pulse;
   Timer? _autoDismiss;
+  Timer? _countdownTick;
+  late DateTime _endsAt;
   Object? _trackedDismissKey;
 
   @override
@@ -55,16 +57,24 @@ class _VoiceRoomMentionNoticeBannerState extends State<VoiceRoomMentionNoticeBan
     if (key == _trackedDismissKey) return;
     _trackedDismissKey = key;
     _autoDismiss?.cancel();
+    _countdownTick?.cancel();
+    _endsAt = DateTime.now().add(VoiceRoomMentionNoticeBanner.autoDismissDuration);
     if (widget.onDismiss == null) return;
     _autoDismiss = Timer(VoiceRoomMentionNoticeBanner.autoDismissDuration, () {
       if (!mounted) return;
       widget.onDismiss?.call();
+    });
+    _countdownTick = Timer.periodic(const Duration(milliseconds: 200), (_) {
+      if (!mounted) return;
+      if (DateTime.now().isAfter(_endsAt)) return;
+      setState(() {});
     });
   }
 
   @override
   void dispose() {
     _autoDismiss?.cancel();
+    _countdownTick?.cancel();
     _pulse.dispose();
     super.dispose();
   }
@@ -79,6 +89,13 @@ class _VoiceRoomMentionNoticeBannerState extends State<VoiceRoomMentionNoticeBan
 
   Widget _buildCard(double pulse) {
     final glow = 0.35 + pulse * 0.25;
+    final remaining = _endsAt.difference(DateTime.now());
+    final secs = remaining.inSeconds.clamp(0, 999);
+    final progress = remaining.inMilliseconds <= 0
+        ? 0.0
+        : (remaining.inMilliseconds /
+                VoiceRoomMentionNoticeBanner.autoDismissDuration.inMilliseconds)
+            .clamp(0.0, 1.0);
     final card = Material(
       color: Colors.transparent,
       child: InkWell(
@@ -106,39 +123,71 @@ class _VoiceRoomMentionNoticeBannerState extends State<VoiceRoomMentionNoticeBan
             ),
           ],
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('🔔', style: TextStyle(fontSize: 18)),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Senden bahsetti',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 12,
-                      color: Colors.white,
-                    ),
+            Row(
+              children: [
+                const Text('🔔', style: TextStyle(fontSize: 18)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Senden bahsetti',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 12,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        '@${widget.fromName}: ${widget.preview}',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.white.withValues(alpha: 0.75),
+                        ),
+                      ),
+                    ],
                   ),
+                ),
+                if (widget.onDismiss != null)
                   Text(
-                    '@${widget.fromName}: ${widget.preview}',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                    '${secs}s',
                     style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.white.withValues(alpha: 0.75),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white.withValues(alpha: 0.55),
                     ),
                   ),
-                ],
+                IconButton(
+                  onPressed: widget.onDismiss,
+                  icon: const Icon(Icons.close_rounded, size: 18),
+                  color: Colors.white54,
+                ),
+              ],
+            ),
+            if (widget.onDismiss != null) ...[
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 3,
+                  backgroundColor: Colors.white12,
+                  valueColor: AlwaysStoppedAnimation(
+                    Color.lerp(
+                      const Color(0xFFB832FF),
+                      const Color(0xFFFFD54F),
+                      pulse,
+                    )!,
+                  ),
+                ),
               ),
-            ),
-            IconButton(
-              onPressed: widget.onDismiss,
-              icon: const Icon(Icons.close_rounded, size: 18),
-              color: Colors.white54,
-            ),
+            ],
           ],
         ),
         ),

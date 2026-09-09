@@ -193,6 +193,7 @@ class VoiceRoomBasicChatFeed extends ConsumerStatefulWidget {
     this.onMention,
     this.onUserPerms,
     this.onReplyToMessage,
+    this.reportContextLabel,
   });
 
   final String liveKey;
@@ -202,6 +203,8 @@ class VoiceRoomBasicChatFeed extends ConsumerStatefulWidget {
   final void Function(String userId, String name)? onUserPerms;
   /// Uzun bas → yanıtla.
   final void Function(ChatRoomMessage message)? onReplyToMessage;
+  /// Rapor formu bağlamı (oda adı).
+  final String? reportContextLabel;
 
   @override
   ConsumerState<VoiceRoomBasicChatFeed> createState() =>
@@ -349,6 +352,7 @@ class _VoiceRoomBasicChatFeedState extends ConsumerState<VoiceRoomBasicChatFeed>
                   onUserTap: widget.onMention,
                   onUserDoubleTap: widget.onUserPerms,
                   onReplyToMessage: widget.onReplyToMessage,
+                  reportContextLabel: widget.reportContextLabel,
                 ),
               );
             },

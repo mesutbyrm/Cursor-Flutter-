@@ -1789,6 +1789,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                           isOwner: isOwner,
                                         ),
                                         onReplyToMessage: _replyToMessage,
+                                        reportContextLabel: room.displayTitle,
                                       ),
                                     ),
                                     if (chat.typing)

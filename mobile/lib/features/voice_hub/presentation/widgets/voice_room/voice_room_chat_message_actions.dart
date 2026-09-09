@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../moderation/domain/entities/report_target.dart';
+import '../../../../moderation/presentation/utils/open_report_flow.dart';
 import '../../../domain/entities/chat_room_message.dart';
 
-/// Sesli oda sohbet — uzun bas: kopyala / yanıtla.
+/// Sesli oda sohbet — uzun bas: yanıtla / kopyala / raporla.
 Future<void> showVoiceRoomChatMessageActions({
   required BuildContext context,
   required ChatRoomMessage message,
   VoidCallback? onReply,
+  String? reportContextLabel,
 }) {
   if (message.kind != ChatMessageKind.text) {
     return Future.value();
@@ -45,6 +48,25 @@ Future<void> showVoiceRoomChatMessageActions({
               );
             },
           ),
+          if (message.id.isNotEmpty)
+            ListTile(
+              leading: const Icon(Icons.flag_outlined, color: Colors.orangeAccent),
+              title: const Text('Raporla', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(ctx);
+                openReportFlow(
+                  context,
+                  ReportTarget(
+                    type: ReportTargetType.message,
+                    targetId: message.id,
+                    displayTitle: text.length > 48
+                        ? '${text.substring(0, 48)}…'
+                        : text,
+                    contextLabel: reportContextLabel,
+                  ),
+                );
+              },
+            ),
         ],
       ),
     ),
