@@ -14,6 +14,7 @@ Future<void> showLiveViewersSheet(
   WidgetRef ref, {
   required String streamId,
   bool isHost = false,
+  void Function(String userId, String displayName)? onInviteGuest,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -70,6 +71,7 @@ Future<void> showLiveViewersSheet(
                           viewer: viewers[i],
                           streamId: streamId,
                           isHost: isHost,
+                          onInviteGuest: onInviteGuest,
                         ),
                       ),
                     );
@@ -89,11 +91,13 @@ class _ViewerTile extends ConsumerWidget {
     required this.viewer,
     required this.streamId,
     this.isHost = false,
+    this.onInviteGuest,
   });
 
   final LiveStreamViewer viewer;
   final String streamId;
   final bool isHost;
+  final void Function(String userId, String displayName)? onInviteGuest;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -116,12 +120,27 @@ class _ViewerTile extends ConsumerWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      trailing: Wrap(
-        spacing: 4,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          if (viewer.isBroadcaster) _Badge('Yayıncı', AppThemeColors.liveRed),
-          if (viewer.isModerator) _Badge('Mod', AppThemeColors.accentCyan),
-          if (viewer.isVip) _Badge('VIP', AppThemeColors.coinGold),
+          if (isHost &&
+              onInviteGuest != null &&
+              viewer.id.isNotEmpty &&
+              !viewer.isBroadcaster)
+            IconButton(
+              tooltip: 'Misafir davet',
+              icon: const Icon(Icons.person_add_alt_1_rounded, size: 20),
+              color: const Color(0xFF7C4DFF),
+              onPressed: () => onInviteGuest!(viewer.id, viewer.displayName),
+            ),
+          Wrap(
+            spacing: 4,
+            children: [
+              if (viewer.isBroadcaster) _Badge('Yayıncı', AppThemeColors.liveRed),
+              if (viewer.isModerator) _Badge('Mod', AppThemeColors.accentCyan),
+              if (viewer.isVip) _Badge('VIP', AppThemeColors.coinGold),
+            ],
+          ),
         ],
       ),
       onLongPress: isHost && viewer.id.isNotEmpty

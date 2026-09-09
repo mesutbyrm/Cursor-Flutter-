@@ -1,5 +1,18 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.420+458 (2026-09-09) — Yayın sonu özet + misafir yayın UX
+
+### Yayın sonu istatistikleri
+- Süre, tepe izleyici, beğeni, hediye sayısı, fal istekleri
+- Kim ne kadar jeton hediye attı (₺ karşılığı)
+- Yayıncı «Yayını Bitir» onay modalı; özet her zaman gösterilir
+
+### Misafir yayın (TikTok/BIGO)
+- Yayıncı izleyiciyi misafir davet edebilir (izleyici listesi)
+- İzleyici premium orta popup: KABUL ET / REDDET
+- Yayıncı orta popup: misafir isteği ONAYLA / REDDET / Bu kişiye kapat
+- En fazla 8 misafir (`kMaxLiveCoGuests`)
+
 ## 1.0.419+457 (2026-09-09) — Canlı yayın Fal İste UX
 
 ### Fal İste (yayıncı)

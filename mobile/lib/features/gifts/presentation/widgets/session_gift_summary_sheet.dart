@@ -58,6 +58,47 @@ class _SessionGiftSummaryBody extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 16),
+            if (summary.duration != null ||
+                summary.peakViewerCount > 0 ||
+                summary.likeCount > 0) ...[
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (summary.duration != null)
+                    _chip(
+                      Icons.timer_outlined,
+                      'Süre',
+                      summary.formatDuration(summary.duration),
+                    ),
+                  if (summary.peakViewerCount > 0)
+                    _chip(
+                      Icons.visibility_rounded,
+                      'İzleyici',
+                      '${summary.peakViewerCount}',
+                    ),
+                  if (summary.likeCount > 0)
+                    _chip(
+                      Icons.favorite_rounded,
+                      'Beğeni',
+                      '${summary.likeCount}',
+                    ),
+                  if (summary.giftEventCount > 0)
+                    _chip(
+                      Icons.redeem_rounded,
+                      'Hediye',
+                      '${summary.giftEventCount}',
+                    ),
+                  if (summary.fortuneRequestCount > 0)
+                    _chip(
+                      Icons.auto_awesome_rounded,
+                      'Fal isteği',
+                      '${summary.fortuneAcceptedCount}/${summary.fortuneRequestCount}',
+                    ),
+                ],
+              ),
+              const SizedBox(height: 14),
+            ],
             _metricTile(
               'Toplam atılan hediye',
               summary.formatJetonWithTl(summary.totalGrossJeton, label: jetonLabel),
@@ -83,7 +124,7 @@ class _SessionGiftSummaryBody extends ConsumerWidget {
             if (summary.senders.isNotEmpty) ...[
               const SizedBox(height: 18),
               const Text(
-                'Kimden ne kadar atıldı',
+                'Kim ne kadar hediye attı',
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
                   color: Color(0xCCFFFFFF),
@@ -113,6 +154,15 @@ class _SessionGiftSummaryBody extends ConsumerWidget {
                           fontSize: 13,
                         ),
                       ),
+                      subtitle: row.giftCount > 0
+                          ? Text(
+                              '${row.giftCount} hediye',
+                              style: const TextStyle(
+                                color: Color(0x99FFFFFF),
+                                fontSize: 11,
+                              ),
+                            )
+                          : null,
                       trailing: Text(
                         summary.formatJetonWithTl(row.grossJeton, label: jetonLabel),
                         style: const TextStyle(
@@ -137,6 +187,41 @@ class _SessionGiftSummaryBody extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _chip(IconData icon, String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: Colors.white70),
+          const SizedBox(width: 6),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(fontSize: 9, color: Color(0x99FFFFFF)),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

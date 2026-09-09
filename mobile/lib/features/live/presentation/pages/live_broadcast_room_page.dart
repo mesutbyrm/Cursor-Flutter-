@@ -65,6 +65,7 @@ import '../../domain/entities/live_guest_layout.dart';
 import '../../domain/pk/live_pk_invite_helper.dart';
 import '../../domain/pk/pk_status_helper.dart';
 import '../../domain/pk/pk_unified_bridge.dart';
+import '../../domain/live_co_broadcast_constants.dart';
 import '../../domain/live_guest_layout_resolver.dart';
 import '../providers/live_namespace_providers.dart';
 import '../../domain/utils/live_fortune_type_slug.dart';
@@ -95,6 +96,9 @@ import '../widgets/pk/pk_room_live_section.dart';
 import '../providers/live_fortune_request_provider.dart';
 import '../providers/live_stream_quality_provider.dart';
 import '../widgets/broadcast_room/live_host_fortune_request_center_overlay.dart';
+import '../widgets/broadcast_room/live_guest_broadcast_modals.dart';
+import '../widgets/broadcast_room/live_host_guest_request_center_overlay.dart';
+import '../providers/live_guest_request_blocklist_provider.dart';
 import '../widgets/broadcast_room/live_fortune_request_form.dart';
 import '../widgets/broadcast_room/live_like_realtime.dart';
 import '../widgets/broadcast_room/live_moderation_sheet.dart';
@@ -189,6 +193,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   var _liveSseConnected = false;
   String? _streamExtrasStreamId;
   DateTime? _sessionJoinedAt;
+  var _peakViewerCount = 0;
 
   @override
   void initState() {
@@ -864,9 +869,13 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
 
   Future<void> _exitBroadcast(
     BuildContext context, {
-    bool skipHostConfirm = true,
+    bool skipHostConfirm = false,
   }) async {
     if (_leaving) return;
+    if (widget.session.isHost && !skipHostConfirm) {
+      final confirmed = await showLiveEndConfirmDialog(context);
+      if (confirmed != true) return;
+    }
     _leaving = true;
     ref.read(liveGiftControllerProvider).detach();
     final streamId = widget.session.streamId?.trim() ?? '';
@@ -909,6 +918,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           hostUserId: hostId.isNotEmpty ? hostId : user.id,
           hostDisplayName: widget.session.streamerName ?? user.display,
           myUserId: user.id,
+          duration: _sessionJoinedAt != null
+              ? DateTime.now().difference(_sessionJoinedAt!)
+              : null,
+          peakViewerCount: _peakViewerCount,
         );
         final roomSnap = ref.read(liveRoomProvider(streamId));
         ref
@@ -926,7 +939,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         await SessionGiftSummaryBuilder.refreshWalletIfRecipient(ref, summary);
         invalidateDiscoverLiveStreams(ref);
 
-        if (summary.hasData) {
+        if (summary.hasData || widget.session.isHost) {
           final rootCtx = rootNavigatorKey.currentContext;
           if (rootCtx != null && rootCtx.mounted) {
             unawaited(showSessionGiftSummarySheet(rootCtx, summary: summary));
@@ -1313,18 +1326,116 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     );
   }
 
+  int _activeCoGuestCount() {
+    return ref.read(coBroadcastProvider).coBroadcasters.length;
+  }
+
+  bool _canAddCoGuest() => _activeCoGuestCount() < kMaxLiveCoGuests;
+
+  Future<void> _approveGuestRequest(Map<String, dynamic> request) async {
+    final streamId = widget.session.streamId?.trim();
+    if (streamId == null || streamId.isEmpty || !widget.session.isHost) return;
+    if (!_canAddCoGuest()) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Misafir kotası dolu (en fazla $kMaxLiveCoGuests kişi)'),
+          ),
+        );
+      }
+      return;
+    }
+    final userId = request['userId']?.toString() ?? '';
+    final name = request['userName']?.toString() ??
+        request['displayName']?.toString() ??
+        'İzleyici';
+    if (userId.isEmpty) return;
+    await ref.read(coBroadcastProvider.notifier).approveRequest(
+          streamId: streamId,
+          userId: userId,
+        );
+    final guestCount = _activeCoGuestCount() + 1;
+    final layout = resolveGuestLayout(guestCount: guestCount);
+    ref.read(liveGuestGridProvider.notifier).addGuest(
+          slotIndex: _nextEmptyGuestSlot(),
+          userId: userId,
+          displayName: name,
+        );
+    _enableMultiGuestLayout(layout, [
+      {'userId': userId, 'displayName': name, 'userName': name},
+    ]);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$name misafir olarak yayına eklendi')),
+      );
+    }
+  }
+
+  Future<void> _rejectGuestRequest(Map<String, dynamic> request) async {
+    final streamId = widget.session.streamId?.trim();
+    if (streamId == null || streamId.isEmpty) return;
+    final userId = request['userId']?.toString() ?? '';
+    if (userId.isEmpty) return;
+    await ref.read(coBroadcastProvider.notifier).rejectRequest(
+          streamId: streamId,
+          userId: userId,
+        );
+  }
+
+  Future<void> _blockGuestRequest(Map<String, dynamic> request) async {
+    final streamId = widget.session.streamId?.trim();
+    if (streamId == null || streamId.isEmpty) return;
+    final userId = request['userId']?.toString() ?? '';
+    if (userId.isEmpty) return;
+    ref.read(liveGuestRequestBlocklistProvider(streamId).notifier).block(userId);
+    await _rejectGuestRequest(request);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bu kullanıcıdan misafir isteği alınmayacak')),
+      );
+    }
+  }
+
+  Future<void> _inviteViewerAsGuest({
+    required String userId,
+    required String displayName,
+  }) async {
+    final streamId = widget.session.streamId?.trim();
+    if (streamId == null || streamId.isEmpty || !widget.session.isHost) return;
+    if (!_canAddCoGuest()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Misafir kotası dolu (8/8)')),
+      );
+      return;
+    }
+    try {
+      await ref.read(coBroadcastProvider.notifier).invite(
+            streamId: streamId,
+            inviteeId: userId,
+          );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$displayName misafir daveti gönderildi')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
+        );
+      }
+    }
+  }
+
   Future<void> _requestGuestJoin() async {
     final streamId = widget.session.streamId?.trim();
     if (streamId == null || streamId.isEmpty || widget.session.isHost) return;
     final settings = ref.read(liveBroadcastSettingsProvider);
     if (!settings.guestsEnabled && !settings.coBroadcastEnabled) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Yayıncı konuk almayı kapattı — yine de istek gönderiliyor…',
-          ),
-        ),
+        const SnackBar(content: Text('Yayıncı misafir isteğini kapattı')),
       );
+      return;
     }
     try {
       await ref.read(coBroadcastProvider.notifier).requestJoin(streamId);
@@ -1342,72 +1453,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   }
 
   Future<void> _promptGuestJoinRequest(Map<String, dynamic> request) async {
-    final streamId = widget.session.streamId?.trim();
-    if (streamId == null || streamId.isEmpty || !widget.session.isHost) return;
-    final id = request['id']?.toString() ?? '';
-    if (id.isEmpty || !_seenGuestJoinIds.add(id)) return;
-
-    final name = request['userName']?.toString() ??
-        request['displayName']?.toString() ??
-        'İzleyici';
-    final userId = request['userId']?.toString() ?? '';
-
-    if (!mounted) return;
-    final accept = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A2E),
-        title: const Text('Yayına katılma isteği'),
-        content: Text('$name yayına katılmak istiyor.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Reddet'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Kabul Et'),
-          ),
-        ],
-      ),
-    );
-    if (accept == null) return;
-    try {
-      if (accept && userId.isNotEmpty) {
-        await ref.read(coBroadcastProvider.notifier).approveRequest(
-              streamId: streamId,
-              userId: userId,
-            );
-        ref.read(liveGuestGridProvider.notifier).addGuest(
-              slotIndex: _nextEmptyGuestSlot(),
-              userId: userId,
-              displayName: name,
-            );
-        _enableMultiGuestLayout(
-          LiveGuestLayout.duo,
-          [
-            {'userId': userId, 'displayName': name},
-          ],
-        );
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('$name yayına eklendi')),
-          );
-        }
-      } else if (userId.isNotEmpty) {
-        await ref.read(liveStreamExtrasProvider).coBroadcastAction(
-              streamId: streamId,
-              action: 'reject',
-              userId: userId,
-            );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
-        );
-      }
-    }
+    // Merkez overlay (`LiveHostGuestRequestCenterOverlay`) kuyruğu yönetir.
   }
 
   Future<void> _promptCoBroadcastInvite(
@@ -1432,30 +1478,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
             'Yayıncı')
         .toString();
     if (!mounted) return;
-    final accept = await showDialog<bool>(
+    final accept = await showViewerGuestInviteModal(
       context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A2E),
-        title: const Text(
-          'Ortak yayın daveti',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: Text(
-          '$hostName sizi ortak yayına davet etti.',
-          style: const TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Reddet'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Kabul Et'),
-          ),
-        ],
-      ),
+      hostName: hostName,
     );
     if (!mounted || accept == null) return;
     try {
@@ -2080,7 +2105,18 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                   tile(
                     icon: Icons.people_alt_rounded,
                     label: 'Misafir ol',
-                    onTap: () => unawaited(_requestGuestJoin()),
+                    onTap: () {
+                      final settings = ref.read(liveBroadcastSettingsProvider);
+                      if (!settings.guestsEnabled && !settings.coBroadcastEnabled) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Yayıncı misafir isteğini kapattı'),
+                          ),
+                        );
+                        return;
+                      }
+                      unawaited(_requestGuestJoin());
+                    },
                   ),
                 if (s.isHost && streamId != null)
                   tile(
@@ -2571,6 +2607,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
 
     if (hasStream) {
       ref.listen(liveRoomProvider(streamId), (prev, next) {
+        if (next.viewerCount > _peakViewerCount) {
+          _peakViewerCount = next.viewerCount;
+        }
         if (next.sseConnected != (prev?.sseConnected ?? false)) {
           _onLiveSseConnectionChanged(next.sseConnected);
         }
@@ -2749,6 +2788,14 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
             ),
             if (hasStream) GiftFeedPanel(sessionKey: streamId),
             if (hasStream && s.isHost)
+              LiveHostGuestRequestCenterOverlay(
+                streamId: streamId,
+                currentGuestCount: coBroadcast.coBroadcasters.length,
+                onApproved: _approveGuestRequest,
+                onRejected: _rejectGuestRequest,
+                onBlocked: _blockGuestRequest,
+              ),
+            if (hasStream && s.isHost)
               LiveHostFortuneRequestCenterOverlay(streamId: streamId),
             if (hasStream && !s.isHost && _fortuneRequestsOpen(s))
               Positioned(
@@ -2911,6 +2958,14 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                                 ref,
                                 streamId: streamId,
                                 isHost: s.isHost,
+                                onInviteGuest: s.isHost
+                                    ? (userId, name) => unawaited(
+                                          _inviteViewerAsGuest(
+                                            userId: userId,
+                                            displayName: name,
+                                          ),
+                                        )
+                                    : null,
                               )
                           : null,
                       onProfileTap: s.hostUserId != null || s.streamerHandle != null

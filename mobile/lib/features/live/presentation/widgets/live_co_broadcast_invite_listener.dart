@@ -12,6 +12,7 @@ import '../providers/live_co_broadcast_invite_signal_provider.dart';
 import '../providers/live_invite_dedup_provider.dart';
 import '../providers/pending_co_broadcast_join_provider.dart';
 import '../providers/live_providers.dart';
+import '../widgets/broadcast_room/live_guest_broadcast_modals.dart';
 import '../utils/open_live_stream.dart';
 
 /// Ortak yayın (misafir) davetleri — yayın sayfası dışında da kabul ekranı.
@@ -112,30 +113,9 @@ class _LiveCoBroadcastInviteListenerState
 
     bool? accept;
     try {
-      accept = await showDialog<bool>(
+      accept = await showViewerGuestInviteModal(
         context: context,
-        barrierDismissible: false,
-        builder: (ctx) => AlertDialog(
-          backgroundColor: const Color(0xFF1A1A2E),
-          title: const Text(
-            'Ortak yayın daveti',
-            style: TextStyle(color: Colors.white),
-          ),
-          content: Text(
-            '$hostName sizi ortak yayına davet etti.',
-            style: const TextStyle(color: Colors.white70),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Reddet'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Kabul Et'),
-            ),
-          ],
-        ),
+        hostName: hostName,
       );
     } finally {
       _showing = false;

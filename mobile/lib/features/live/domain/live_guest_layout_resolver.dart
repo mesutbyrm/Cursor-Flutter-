@@ -9,8 +9,8 @@ LiveGuestLayout resolveGuestLayout({
   if (gridSlots == 2 || guestCount == 1) return LiveGuestLayout.duo;
   if (gridSlots == 3 || guestCount == 2) return LiveGuestLayout.trio;
   if (gridSlots == 4 || guestCount <= 3) return LiveGuestLayout.quad;
+  if (gridSlots >= 8 || guestCount >= 8) return LiveGuestLayout.nonet;
   if (gridSlots == 6 || guestCount <= 5) return LiveGuestLayout.sextet;
-  if (gridSlots >= 9 || guestCount > 5) return LiveGuestLayout.nonet;
   return LiveGuestLayout.duo;
 }
 

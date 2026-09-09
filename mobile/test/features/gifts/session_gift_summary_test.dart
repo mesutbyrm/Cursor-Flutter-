@@ -19,6 +19,20 @@ void main() {
     expect(s.hasData, isTrue);
   });
 
+  test('formatDuration formats minutes', () {
+    const s = SessionGiftSummary(
+      title: 'Test',
+      totalGrossJeton: 0,
+      myNetJeton: 0,
+      guestNetJeton: 0,
+      senders: const [],
+      duration: Duration(minutes: 5, seconds: 30),
+      isHostOrOwner: true,
+    );
+    expect(s.formatDuration(s.duration), '5dk 30sn');
+    expect(s.hasData, isTrue);
+  });
+
   test('voice guest split — alıcı net yayıncı payından ayrı', () {
     final r = GiftRevenueDisplay.estimateVoiceGift(
       gross: 100,

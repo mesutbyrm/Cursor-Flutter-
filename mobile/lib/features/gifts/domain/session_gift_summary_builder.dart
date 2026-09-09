@@ -5,6 +5,10 @@ import '../../profile/presentation/providers/profile_providers.dart';
 import '../../live/presentation/gifts/providers/live_gift_providers.dart';
 import '../../live/presentation/providers/live_gift_leaderboard_provider.dart';
 import '../../live/presentation/providers/live_guest_grid_provider.dart';
+import '../../live/presentation/providers/live_fortune_request_provider.dart';
+import '../../live/presentation/providers/live_room_interaction_provider.dart';
+import '../../live/presentation/providers/live_room_providers.dart';
+import '../../live/domain/entities/live_fortune_request_entity.dart';
 import '../../voice_hub/presentation/providers/voice_gift_leaderboard_provider.dart';
 import '../../voice_hub/presentation/providers/voice_seat_gift_totals_provider.dart';
 import 'gift_revenue_display.dart';
@@ -18,12 +22,26 @@ abstract final class SessionGiftSummaryBuilder {
     required String hostUserId,
     required String hostDisplayName,
     required String? myUserId,
+    Duration? duration,
+    int peakViewerCount = 0,
   }) {
     final senders = ref.read(liveGiftLeaderboardProvider(streamId));
     final totalGross =
         senders.fold<int>(0, (s, e) => s + e.totalCoins);
     final hostNet =
         ref.read(liveGiftControllerProvider).streamerEarnings ?? 0;
+    final giftCtrl = ref.read(liveGiftControllerProvider);
+    final room = ref.read(liveRoomProvider(streamId));
+    final interaction = ref.read(liveRoomInteractionProvider(streamId));
+    final fortuneState = ref.read(liveFortuneRequestsProvider(streamId));
+    final fortuneTotal = fortuneState.requests.length;
+    final fortuneAccepted = fortuneState.requests
+        .where(
+          (r) =>
+              r.status == LiveFortuneRequestStatus.reviewing ||
+              r.status == LiveFortuneRequestStatus.answered,
+        )
+        .length;
 
     var guestNet = 0;
     final grid = ref.read(liveGuestGridProvider);
@@ -66,6 +84,13 @@ abstract final class SessionGiftSummaryBuilder {
       jetonTlRate: rate ?? kDefaultJetonTlRate,
       isHostOrOwner: isHost,
       recipientOnly: !isHost && myNet > 0,
+      duration: duration,
+      viewerCount: room.viewerCount,
+      peakViewerCount: peakViewerCount > 0 ? peakViewerCount : room.viewerCount,
+      likeCount: interaction.likeCount,
+      giftEventCount: giftCtrl.notifications.length,
+      fortuneRequestCount: fortuneTotal,
+      fortuneAcceptedCount: fortuneAccepted,
     );
   }
 

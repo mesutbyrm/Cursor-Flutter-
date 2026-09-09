@@ -11,6 +11,13 @@ class SessionGiftSummary {
     this.jetonTlRate = kDefaultJetonTlRate,
     this.isHostOrOwner = false,
     this.recipientOnly = false,
+    this.duration,
+    this.viewerCount = 0,
+    this.peakViewerCount = 0,
+    this.likeCount = 0,
+    this.giftEventCount = 0,
+    this.fortuneRequestCount = 0,
+    this.fortuneAcceptedCount = 0,
   });
 
   final String title;
@@ -25,6 +32,13 @@ class SessionGiftSummary {
   final bool isHostOrOwner;
   /// Yalnızca hediye alan kullanıcı — cüzdan yenilemesi için.
   final bool recipientOnly;
+  final Duration? duration;
+  final int viewerCount;
+  final int peakViewerCount;
+  final int likeCount;
+  final int giftEventCount;
+  final int fortuneRequestCount;
+  final int fortuneAcceptedCount;
 
   double tlForJeton(int jeton) =>
       jeton <= 0 ? 0 : (jeton * jetonTlRate);
@@ -37,8 +51,23 @@ class SessionGiftSummary {
     return '$jeton $label (${tl.toStringAsFixed(2)} ₺)';
   }
 
+  String formatDuration(Duration? d) {
+    if (d == null) return '—';
+    final h = d.inHours;
+    final m = d.inMinutes.remainder(60);
+    final s = d.inSeconds.remainder(60);
+    if (h > 0) return '${h}s ${m}dk';
+    if (m > 0) return '${m}dk ${s}sn';
+    return '${s}sn';
+  }
+
   bool get hasData =>
-      totalGrossJeton > 0 || senders.isNotEmpty || myNetJeton > 0;
+      totalGrossJeton > 0 ||
+      senders.isNotEmpty ||
+      myNetJeton > 0 ||
+      likeCount > 0 ||
+      fortuneRequestCount > 0 ||
+      (isHostOrOwner && duration != null);
 }
 
 class SessionGiftSenderRow {
