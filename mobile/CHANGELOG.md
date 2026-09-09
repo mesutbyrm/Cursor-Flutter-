@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.441+479 (2026-09-09) — Sesli oda Faz 15
+
+### Selective ref.listen (side effects)
+- `voiceRoomExitSignalsSlice`, `voiceRoomModerationSignalsSlice`, `voiceRoomMusicSearchRequestSlice`, `voiceRoomDjPlaybackSignalsSlice`
+- Basic + RTC: monolitik `VoiceRoomLiveState` listener → dilim bazlı `ref.listen(select)`
+- Paylaşılan `runVoiceRoomPendingMusicSearchFlow` + `buildVoiceRoomMicGateSlice`
+- `VoiceRoomSessionExit.detectExitFromSignals`
+
 ## 1.0.440+478 (2026-09-09) — Sesli oda Faz 14
 
 ### Footer rebuild izolasyonu

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../domain/entities/voice_room_realtime_event.dart';
 import '../providers/chat_room_providers.dart';
+import '../providers/voice_room_live_side_effect_slices.dart';
 import 'voice_room_leave_flow.dart';
 
 /// Oda kapatma / yasak gibi zorunlu oturum sonları — liste ekranına yönlendirme.
@@ -28,9 +29,21 @@ abstract final class VoiceRoomSessionExit {
     VoiceRoomLiveState? prev,
     required VoiceRoomLiveState next,
   }) {
-    if (next.realtimeEvents.length > (prev?.realtimeEvents.length ?? 0)) {
-      final latest = next.realtimeEvents.first;
-      if (isBanEvent(latest)) return latest.message;
+    return detectExitFromSignals(
+      prev: prev == null ? null : voiceRoomExitSignalsSlice(prev),
+      next: voiceRoomExitSignalsSlice(next),
+    );
+  }
+
+  static String? detectExitFromSignals({
+    VoiceRoomExitSignalsSlice? prev,
+    required VoiceRoomExitSignalsSlice next,
+  }) {
+    if (next.realtimeEventCount > (prev?.realtimeEventCount ?? 0) &&
+        next.headEventMessage != null &&
+        next.headEventKind == VoiceRoomRealtimeKind.moderation &&
+        next.headEventMessage!.toLowerCase().contains('yasaklandınız')) {
+      return next.headEventMessage;
     }
     if (next.error != null &&
         next.error != prev?.error &&
@@ -39,7 +52,7 @@ abstract final class VoiceRoomSessionExit {
     }
     if ((prev?.selfInRoom ?? false) &&
         !next.selfInRoom &&
-        next.presence.isEmpty &&
+        next.presenceCount == 0 &&
         next.error != null) {
       return next.error;
     }

@@ -25,7 +25,7 @@
 - [x] `_VoiceRoomRtcSeatStage` — speaking + seat slice ile izole stage
 - [x] `VoiceRoomBasicHeaderBand` — jeton/sıralama/çevrimiçi (Faz 13)
 - [x] `VoiceRoomLifecycleHost` — basic + RTC ortak (Faz 13)
-- [x] `VoiceRoomBasicFooterBand` / `VoiceRoomRtcFooterBand` — alt bar UI slice (Faz 14)
+- [x] Selective `ref.listen` side-effect dilimleri (Faz 15)
 
 ## Speaking / RTC
 
