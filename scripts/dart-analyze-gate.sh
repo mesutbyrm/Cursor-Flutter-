@@ -22,12 +22,16 @@ ec=$?
 set -e
 
 # Çıktı formatı: "  error - path:line:col - message"
-error_count=$(rg -c '^\s*error\s+-' "$OUT" 2>/dev/null || echo 0)
-warning_count=$(rg -c '^\s*warning\s+-' "$OUT" 2>/dev/null || echo 0)
-info_count=$(rg -c '^\s*info\s+-' "$OUT" 2>/dev/null || echo 0)
+# grep kullan (CI runner'da rg yok — rg eksikliği ERROR sayımını 0 yapıp yanlış PASS üretiyordu).
+error_count=$(grep -cE '^\s*error\s+-' "$OUT" 2>/dev/null || true)
+warning_count=$(grep -cE '^\s*warning\s+-' "$OUT" 2>/dev/null || true)
+info_count=$(grep -cE '^\s*info\s+-' "$OUT" 2>/dev/null || true)
+error_count=${error_count:-0}
+warning_count=${warning_count:-0}
+info_count=${info_count:-0}
 
 # Özet satırı: "N issues found."
-total_line=$(rg -o '[0-9]+ issues found\.' "$OUT" | tail -1 || true)
+total_line=$(grep -oE '[0-9]+ issues found\.' "$OUT" 2>/dev/null | tail -1 || true)
 
 echo ""
 echo "── analyze özeti ──"
@@ -40,7 +44,7 @@ echo "  dart exit code: $ec"
 if [[ "${error_count:-0}" -gt 0 ]]; then
   echo ""
   echo "❌ Analyze ERROR — APK engellendi ($error_count hata)"
-  rg '^\s*error\s+-' "$OUT" | head -20 || true
+  grep -E '^\s*error\s+-' "$OUT" | head -20 || true
   exit 1
 fi
 

@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../providers/voice_room_ranking_provider.dart';
-import '../providers/voice_room_session_registry.dart';
+import '../../providers/voice_room_ranking_provider.dart';
+import '../../providers/voice_room_session_registry.dart';
 
 /// Aktif sesli oda oturumunda sıralama listesini periyodik yeniler.
 class VoiceRoomRankingRefreshHost extends ConsumerStatefulWidget {

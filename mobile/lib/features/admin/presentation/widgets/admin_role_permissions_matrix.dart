@@ -8,7 +8,7 @@ import '../providers/staff_access_provider.dart';
 class AdminRolePermissionsMatrix extends StatelessWidget {
   const AdminRolePermissionsMatrix({super.key});
 
-  static const _roles = [
+  static final _roles = [
     ('Kurucu', _founder),
     ('Site admin', _siteAdmin),
     ('Ödeme yön.', _payment),

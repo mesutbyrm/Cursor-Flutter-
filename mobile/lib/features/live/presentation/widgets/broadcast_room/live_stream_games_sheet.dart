@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/network/api_exception.dart';
-import '../../../games/presentation/game_center/providers/game_center_providers.dart';
+import '../../../../../core/network/api_exception.dart';
+import '../../../../games/presentation/game_center/providers/game_center_providers.dart';
 
 /// Canlı yayın içinden oyun lobisi — yayın `streamId` bağlamı korunur.
 Future<void> showLiveStreamGamesSheet({

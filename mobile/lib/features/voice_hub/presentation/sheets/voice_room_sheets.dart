@@ -984,7 +984,7 @@ class _UserProfileSheet extends StatelessWidget {
                   onPressed: () {
                     if (onMessageInRoom != null) {
                       Navigator.pop(context);
-                      onMessageInRoom();
+                      onMessageInRoom!();
                       return;
                     }
                     context.push('/chat/${user.id}');

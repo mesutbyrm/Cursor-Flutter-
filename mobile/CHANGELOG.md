@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.453+491 (2026-09-09) — Release gate düzeltmesi
+
+### CI / release gate
+- `dart-analyze-gate.sh`: `rg` → `grep` (CI'da yanlış PASS engellendi)
+- Derleme hataları: `admin_hub_page` sınıf kapanışı, import path düzeltmeleri (voice/live)
+- `acceptance-preflight.sh`: API erişim kontrolü + secret özeti; curl timeout (10s/60s)
+- `run-release-gate.sh`: Gate 1/2 hata mesajları logda görünür
+
 ## 1.0.452+490 (2026-09-09) — Sesli oda Faz 26
 
 ### Mention banner — dokununca duraklat

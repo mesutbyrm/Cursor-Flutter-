@@ -36,8 +36,10 @@ import '../../../voice_hub/presentation/providers/voice_recent_gifts_provider.da
 import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
 import '../../../voice_hub/presentation/providers/voice_room_session_registry.dart';
 import '../gifts/providers/live_seat_gift_totals_provider.dart';
+import '../../../gifts/domain/session_gift_summary.dart';
 import '../../../gifts/domain/session_gift_summary_builder.dart';
 import '../../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
+import '../widgets/broadcast_room/live_guest_broadcast_modals.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../../core/site_animation/presentation/site_animation_gift_bridge.dart';
 import '../../../../core/site_animation/presentation/widgets/site_animation_context_host.dart';

@@ -71,7 +71,7 @@ class _VoiceRoomPreviewSheet extends ConsumerWidget {
         : 'Oda sahibi';
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 0, 12, 12 + bottom),
+      margin: EdgeInsets.fromLTRB(12, 0, 12, 12 + bottom),
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
       decoration: BoxDecoration(
         color: const Color(0xFF14082E),

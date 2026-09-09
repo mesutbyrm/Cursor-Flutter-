@@ -126,6 +126,9 @@ if command -v flutter >/dev/null 2>&1; then
     ANALYZE_OK=1
   else
     gate_record 1 "flutter analyze sıfır hata" FAIL "ERROR var — /tmp/canlifal-analyze.txt"
+    echo ""
+    echo "❌ Gate 1 başarısız — ilk analyze hataları:"
+    grep -E '^\s*error\s+-' /tmp/canlifal-analyze.txt 2>/dev/null | head -15 || true
   fi
 else
   gate_record 1 "flutter analyze sıfır hata" FAIL "flutter SDK yok"
@@ -141,6 +144,8 @@ if [[ "$ANALYZE_OK" -eq 1 ]]; then
     TEST_OK=1
   else
     gate_record 2 "flutter test tamamı" FAIL "başarısız test var"
+    echo ""
+    echo "❌ Gate 2 başarısız — son test çıktısına bakın (compile error veya assertion)."
   fi
 else
   gate_record 2 "flutter test tamamı" FAIL "Gate 1 başarısız"

@@ -11,6 +11,7 @@ import '../../../../../core/performance/list_perf.dart';
 import '../../../../../core/performance/scroll_perf.dart';
 import '../../../../../core/widgets/lazy_list_views.dart';
 import '../../../../live/domain/entities/live_stream_entity.dart';
+import '../../../../live/presentation/utils/open_live_stream.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../domain/pk/pk_opponent_room_filter.dart';
 import 'package:canlifal_social/features/vip_gold/domain/voice_room_access.dart';

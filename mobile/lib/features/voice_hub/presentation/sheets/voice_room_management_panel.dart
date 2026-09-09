@@ -28,6 +28,7 @@ import '../utils/voice_room_permissions.dart';
 import '../utils/voice_room_user_actions.dart';
 import '../utils/voice_room_category_catalog.dart';
 import '../utils/voice_room_seat_capacity.dart';
+import 'voice_room_music_settings_sheet.dart';
 import '../widgets/premium/voice_glass.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
 import 'voice_room_commands_panel.dart';

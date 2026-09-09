@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../gifts/domain/session_gift_summary.dart';
 import '../../../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
-import '../../../../core/economy/presentation/providers/economy_providers.dart';
+import '../../../../../core/economy/presentation/providers/economy_providers.dart';
 
 /// Yayın sona erdi — izleyici/yayıncı için kapanış ekranı + istatistik özeti.
 Future<void> showLiveBroadcastEndedFlow({

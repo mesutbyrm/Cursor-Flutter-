@@ -39,17 +39,20 @@ json_field() {
   python3 -c "import json,sys; d=json.load(sys.stdin); print(d$expr)" 2>/dev/null || true
 }
 
+# CI/release gate — bağlantı takılmasını önle (connect 10s, toplam 60s).
+CURL_ACCEPTANCE_OPTS=(--connect-timeout 10 --max-time 60 -sS)
+
 http_code() {
-  curl -sS -o /dev/null -w "%{http_code}" "$@"
+  curl "${CURL_ACCEPTANCE_OPTS[@]}" -o /dev/null -w "%{http_code}" "$@"
 }
 
 curl_json() {
-  curl -sS "$@"
+  curl "${CURL_ACCEPTANCE_OPTS[@]}" "$@"
 }
 
 mobile_login() {
   local body="$1"
-  curl -sS -X POST "$BASE/api/auth/mobile-login" \
+  curl "${CURL_ACCEPTANCE_OPTS[@]}" -X POST "$BASE/api/auth/mobile-login" \
     -H "Content-Type: application/json" \
     -d "$body"
 }

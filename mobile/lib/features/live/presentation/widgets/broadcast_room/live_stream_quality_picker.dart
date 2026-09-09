@@ -32,7 +32,7 @@ class LiveStreamQualityPicker extends ConsumerWidget {
               children: [
                 const Icon(Icons.hd_rounded, size: 16, color: Color(0xFFB832FF)),
                 const SizedBox(width: 6),
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Video kalitesi',
                     style: TextStyle(

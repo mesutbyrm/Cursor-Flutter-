@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/economy/presentation/providers/economy_providers.dart';
+import '../../../../../core/economy/presentation/providers/economy_providers.dart';
 
 /// Oda hediye hedefi başlatma — miktar + süre (5/10 dk).
 class VoiceGiftGoalStartResult {

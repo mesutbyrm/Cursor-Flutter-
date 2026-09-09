@@ -13,6 +13,7 @@ import '../../../live/presentation/providers/live_providers.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
 import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../providers/pk_battle_remote_provider.dart';
+import '../providers/voice_room_session_registry.dart';
 import '../widgets/premium_2026/voice_pk_invite_center_modal.dart';
 import 'voice_room_session_utils.dart';
 

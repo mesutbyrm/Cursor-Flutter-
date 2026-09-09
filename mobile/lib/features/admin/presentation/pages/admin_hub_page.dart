@@ -352,6 +352,7 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
 
   Future<String?> _askRejectReason(BuildContext context) =>
       showAdminPaymentRejectSheet(context);
+}
 
 class _CountChip extends StatelessWidget {
   const _CountChip({required this.count});
