@@ -24,14 +24,21 @@ class GameRemoteDataSource {
     return _parseRooms(res.data);
   }
 
-  Future<GameRoomItem?> createRoom(GameCatalogItem game) async {
+  Future<GameRoomItem?> createRoom(
+    GameCatalogItem game, {
+    String? videoStreamId,
+  }) async {
     final gameType = _gameType(game);
+    final streamFields = _videoStreamFields(videoStreamId);
     final attempts = <({String path, Map<String, dynamic> data})>[
-      (path: ApiEndpoints.gameRooms, data: {'gameType': gameType}),
-      ..._legacyCreatePayloads(game).map(
+      (
+        path: ApiEndpoints.gameRooms,
+        data: {'gameType': gameType, ...streamFields},
+      ),
+      ..._legacyCreatePayloads(game, videoStreamId: videoStreamId).map(
         (data) => (path: ApiEndpoints.gameRooms, data: data),
       ),
-      ..._legacyCreatePayloads(game).map(
+      ..._legacyCreatePayloads(game, videoStreamId: videoStreamId).map(
         (data) => (path: ApiEndpoints.gameRoomCreate, data: data),
       ),
     ];
@@ -277,8 +284,23 @@ class GameRemoteDataSource {
     return id;
   }
 
-  List<Map<String, dynamic>> _legacyCreatePayloads(GameCatalogItem game) {
+  Map<String, dynamic> _videoStreamFields(String? videoStreamId) {
+    final id = videoStreamId?.trim() ?? '';
+    if (id.isEmpty) return const {};
+    return {
+      'streamId': id,
+      'videoStreamId': id,
+      'liveStreamId': id,
+      'metadata': {'videoStreamId': id, 'streamId': id},
+    };
+  }
+
+  List<Map<String, dynamic>> _legacyCreatePayloads(
+    GameCatalogItem game, {
+    String? videoStreamId,
+  }) {
     final slug = _gameType(game);
+    final streamFields = _videoStreamFields(videoStreamId);
     return [
       {
         'gameId': slug,
@@ -287,6 +309,7 @@ class GameRemoteDataSource {
         'gameSlug': slug,
         'title': game.title,
         if (game.jetonCost > 0) 'jetonCost': game.jetonCost,
+        ...streamFields,
       },
     ];
   }

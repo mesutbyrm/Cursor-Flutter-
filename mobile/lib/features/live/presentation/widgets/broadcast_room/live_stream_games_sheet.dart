@@ -23,7 +23,7 @@ Future<void> showLiveStreamGamesSheet({
         try {
           final room = await ref
               .read(gameCenterRepositoryProvider)
-              .createLiveRoom(gameId);
+              .createLiveRoom(gameId, videoStreamId: streamId);
           if (!context.mounted) return;
           if (room != null) {
             ScaffoldMessenger.of(context).showSnackBar(

@@ -1148,10 +1148,22 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(
             path: 'lobby',
-            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
-              key: state.pageKey,
-              child: const GameCenterPage(),
-            ),
+            pageBuilder: (context, state) {
+              String? liveStreamId;
+              String? openedGameRoomId;
+              final extra = state.extra;
+              if (extra is Map) {
+                liveStreamId = extra['streamId']?.toString();
+                openedGameRoomId = extra['roomId']?.toString();
+              }
+              return AppPageTransitions.fadeSlide(
+                key: state.pageKey,
+                child: GameCenterPage(
+                  liveStreamId: liveStreamId,
+                  openedGameRoomId: openedGameRoomId,
+                ),
+              );
+            },
           ),
           GoRoute(
             path: 'leaderboard',

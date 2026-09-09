@@ -1184,18 +1184,19 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
 
   Future<void> _applyStreamEncoderQuality(int networkQuality) async {
     if (!widget.session.isHost) return;
-    final preset = ref.read(liveStreamQualityProvider);
-    if (!preset.isAuto) {
+    final settings = ref.read(liveStreamQualityProvider);
+    if (!settings.preset.isAuto) {
       ref.read(liveStreamQualityProvider.notifier).applyNetworkQuality(networkQuality);
     }
-    final effective = preset.isAuto
-        ? preset.downgradeFromNetwork(networkQuality)
-        : ref.read(liveStreamQualityProvider);
+    final current = ref.read(liveStreamQualityProvider);
+    final resolvedPreset = current.preset.isAuto
+        ? current.preset.downgradeFromNetwork(networkQuality)
+        : current.preset;
     await _trtc.setEncoderParams(
-      width: effective.width,
-      height: effective.height,
-      bitrateKbps: effective.bitrateKbps,
-      fps: effective.fps,
+      width: resolvedPreset.width,
+      height: resolvedPreset.height,
+      bitrateKbps: resolvedPreset.bitrateKbps,
+      fps: current.effectiveFps(resolvedPreset),
     );
   }
 

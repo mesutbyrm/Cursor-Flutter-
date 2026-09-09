@@ -11,10 +11,18 @@ import '../../providers/game_providers.dart';
 import '../providers/game_center_providers.dart';
 import '../widgets/game_center_widgets.dart';
 import '../../widgets/game_catalog_card.dart';
+import 'package:canlifal_social/features/live/presentation/widgets/broadcast_room/live_stream_game_return_banner.dart';
 
 /// Profesyonel Oyun Merkezi — canlifal.com jeton ve skor API'leriyle entegre.
 class GameCenterPage extends ConsumerWidget {
-  const GameCenterPage({super.key});
+  const GameCenterPage({
+    super.key,
+    this.liveStreamId,
+    this.openedGameRoomId,
+  });
+
+  final String? liveStreamId;
+  final String? openedGameRoomId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -50,6 +58,11 @@ class GameCenterPage extends ConsumerWidget {
           ),
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
           children: [
+            if (liveStreamId != null && liveStreamId!.trim().isNotEmpty)
+              LiveStreamGameReturnBanner(
+                streamId: liveStreamId!,
+                gameRoomId: openedGameRoomId,
+              ),
             GameCenterHeroBanner(
               onSpin: () => context.push('/games-hub/wheel'),
             ),

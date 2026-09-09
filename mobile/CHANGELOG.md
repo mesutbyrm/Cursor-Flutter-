@@ -1,5 +1,18 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.426+464 (2026-09-09) — FPS seçici + oyun–yayın bağlamı
+
+### Video kalitesi
+- Bağımsız **FPS seçici** (Otomatik / 15 / 24 / 30) — prep ve yayın ayarları
+- `LiveStreamEncoderSettings`: çözünürlük + FPS birlikte TRTC encoder’a gider
+
+### Oyunlar ↔ canlı yayın
+- Oyun oda oluşturma: `videoStreamId` metadata (`streamId`, `liveStreamId`)
+- Oyun lobisinde **«Canlı yayına dön»** banner (router `extra` ile)
+
+### Temizlik
+- Kullanılmayan `live_room_top_bar` / `live_room_bottom_bar` kaldırıldı
+
 ## 1.0.425+463 (2026-09-09) — Konuk kamera SSE
 
 ### Konuk kamera (gerçek zamanlı)

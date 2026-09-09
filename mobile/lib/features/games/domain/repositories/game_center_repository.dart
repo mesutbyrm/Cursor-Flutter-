@@ -11,7 +11,10 @@ abstract interface class GameCenterRepository {
 
   Future<void> saveGameResult(GameResultPayload result);
 
-  Future<GameRoomItem?> createLiveRoom(String gameId);
+  Future<GameRoomItem?> createLiveRoom(
+    String gameId, {
+    String? videoStreamId,
+  });
 
   Future<GameRoomItem?> joinLiveRoom(String roomId);
 

@@ -59,7 +59,10 @@ class GameCenterRepositoryImpl implements GameCenterRepository {
   }
 
   @override
-  Future<GameRoomItem?> createLiveRoom(String gameId) async {
+  Future<GameRoomItem?> createLiveRoom(
+    String gameId, {
+    String? videoStreamId,
+  }) async {
     final catalog = await _games.fetchCatalog();
     final game = catalog.firstWhere(
       (g) => g.id == gameId,
@@ -69,7 +72,10 @@ class GameCenterRepositoryImpl implements GameCenterRepository {
         kind: GameKind.multiplayer,
       ),
     );
-    return _games.createRoom(game);
+    return _games.createRoom(
+      game,
+      videoStreamId: videoStreamId,
+    );
   }
 
   @override
