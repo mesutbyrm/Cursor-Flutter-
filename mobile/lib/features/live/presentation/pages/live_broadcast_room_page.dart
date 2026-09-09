@@ -96,7 +96,8 @@ import '../widgets/pk/pk_room_live_section.dart';
 import '../providers/live_fortune_request_provider.dart';
 import '../providers/live_stream_quality_provider.dart';
 import '../widgets/broadcast_room/live_host_fortune_request_center_overlay.dart';
-import '../widgets/broadcast_room/live_guest_broadcast_modals.dart';
+import '../widgets/broadcast_room/live_broadcast_ended_flow.dart';
+import '../widgets/broadcast_room/live_network_quality_pill.dart';
 import '../widgets/broadcast_room/live_host_guest_request_center_overlay.dart';
 import '../providers/live_guest_request_blocklist_provider.dart';
 import '../widgets/broadcast_room/live_fortune_request_form.dart';
@@ -162,6 +163,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   final _heartsKey = GlobalKey<LiveFloatingHeartsOverlayState>();
   Key _localPreviewKey = UniqueKey();
   var _leaving = false;
+  var _streamEndUiHandled = false;
   final _leaveCoordinator = RoomLeaveCoordinator();
   var _liveMusicSseAttached = false;
   var _swipeSuspended = false;
@@ -867,6 +869,59 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     );
   }
 
+  SessionGiftSummary? _buildSessionSummary() {
+    final streamId = widget.session.streamId?.trim() ?? '';
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (streamId.isEmpty || user == null) return null;
+    final hostId = widget.session.hostUserId?.trim().isNotEmpty == true
+        ? widget.session.hostUserId!.trim()
+        : (widget.session.isHost ? user.id : '');
+    return SessionGiftSummaryBuilder.forLiveBroadcast(
+      ref: ref,
+      streamId: streamId,
+      hostUserId: hostId.isNotEmpty ? hostId : user.id,
+      hostDisplayName: widget.session.streamerName ?? user.display,
+      myUserId: user.id,
+      duration: _sessionJoinedAt != null
+          ? DateTime.now().difference(_sessionJoinedAt!)
+          : null,
+      peakViewerCount: _peakViewerCount,
+    );
+  }
+
+  Future<void> _finalizeStreamEndedUi({
+    required String streamId,
+    required String endReason,
+    bool showEndedDialog = true,
+  }) async {
+    if (_streamEndUiHandled) return;
+    _streamEndUiHandled = true;
+    if (_leaving) return;
+    _leaving = true;
+    final summary = _buildSessionSummary();
+    await _leaveLiveSession(endReason: endReason);
+    invalidateDiscoverLiveStreams(ref);
+    if (!mounted) return;
+    if (showEndedDialog) {
+      final rootCtx = rootNavigatorKey.currentContext;
+      if (rootCtx != null && rootCtx.mounted) {
+        await showLiveBroadcastEndedFlow(
+          context: rootCtx,
+          isHost: widget.session.isHost,
+          streamerName: widget.session.streamerName,
+          summary: summary,
+        );
+      }
+    }
+    if (!mounted) return;
+    if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
+      widget.onSwipeClose!();
+    } else {
+      context.go('/feed');
+    }
+    _leaving = false;
+  }
+
   Future<void> _exitBroadcast(
     BuildContext context, {
     bool skipHostConfirm = false,
@@ -876,6 +931,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       final confirmed = await showLiveEndConfirmDialog(context);
       if (confirmed != true) return;
     }
+    _streamEndUiHandled = true;
     _leaving = true;
     ref.read(liveGiftControllerProvider).detach();
     final streamId = widget.session.streamId?.trim() ?? '';
@@ -912,17 +968,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         final hostId = widget.session.hostUserId?.trim().isNotEmpty == true
             ? widget.session.hostUserId!.trim()
             : (widget.session.isHost ? user.id : '');
-        final summary = SessionGiftSummaryBuilder.forLiveBroadcast(
-          ref: ref,
-          streamId: streamId,
-          hostUserId: hostId.isNotEmpty ? hostId : user.id,
-          hostDisplayName: widget.session.streamerName ?? user.display,
-          myUserId: user.id,
-          duration: _sessionJoinedAt != null
-              ? DateTime.now().difference(_sessionJoinedAt!)
-              : null,
-          peakViewerCount: _peakViewerCount,
-        );
+        final summary = _buildSessionSummary();
         final roomSnap = ref.read(liveRoomProvider(streamId));
         ref
             .read(liveRoomProvider(streamId).notifier)
@@ -955,27 +1001,18 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   }
 
   Future<void> _showViewerStreamEndedSummary(String streamId) async {
-    if (_leaving || !mounted) return;
-    _leaving = true;
-    await _leaveLiveSession(endReason: 'stream_ended');
-    invalidateDiscoverLiveStreams(ref);
-    if (!mounted) return;
-    if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
-      widget.onSwipeClose!();
-      return;
-    }
-    context.go('/feed');
+    await _finalizeStreamEndedUi(
+      streamId: streamId,
+      endReason: 'stream_ended',
+    );
   }
 
   /// Sunucu SSE `streamEnded` — sessizlik / moderasyon ile otomatik kapanma.
   Future<void> _showHostStreamEndedByServer(String streamId) async {
-    if (!mounted) return;
-    invalidateDiscoverLiveStreams(ref);
-    if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
-      widget.onSwipeClose!();
-    } else {
-      context.go('/feed');
-    }
+    await _finalizeStreamEndedUi(
+      streamId: streamId,
+      endReason: 'server_ended',
+    );
   }
 
   Future<void> _enterHostGracePeriod({required bool notifyViewers}) async {
@@ -2628,16 +2665,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         }
         if (next.streamEnded && !(prev?.streamEnded ?? false)) {
           WidgetsBinding.instance.addPostFrameCallback((_) async {
-            if (!mounted || _leaving) return;
-            _leaving = true;
-            await _leaveLiveSession(endReason: 'server_ended');
-            invalidateDiscoverLiveStreams(ref);
-            if (!mounted) return;
-            if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
-              widget.onSwipeClose!();
-            } else {
-              context.go('/feed');
-            }
+            if (!mounted || _leaving || _streamEndUiHandled) return;
+            await _finalizeStreamEndedUi(
+              streamId: streamId,
+              endReason: 'server_ended',
+            );
           });
         }
         final joined = next.lastJoinedDisplayName;
@@ -2903,13 +2935,14 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                   ),
                 ),
               ),
-            if (hasStream)
+            if (hasStream && tournamentsAsync.valueOrNull?.isNotEmpty == true)
               Positioned(
                 right: 12,
                 top: top + 108,
                 child: LiveStarTournamentCard(
                   rank: tournamentRank ?? hostRank?.popularRank ?? 3,
-                  onTap: () => unawaited(showLiveStarTournamentSheet(context, ref)),
+                  onTap: () =>
+                      unawaited(showLiveStarTournamentSheet(context, ref)),
                 ),
               ),
             if (hasStream && interaction.userLikeCounts.isNotEmpty)
@@ -2941,6 +2974,17 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                     child: LivePremiumTopBar(
                       session: s,
                       elapsedBadge: const LiveElapsedTimePill(),
+                      streamTitle: s.title.trim().isNotEmpty ? s.title : null,
+                      fortuneTypeBadge: _fortuneRequestsOpen(s)
+                          ? liveFortuneTypeBadge(
+                              _streamFortuneTypeSlug(s) ?? 'tarot',
+                            )
+                          : null,
+                      networkQualityBadge: s.isHost
+                          ? LiveNetworkQualityPill(
+                              qualityListenable: _trtc.networkQuality,
+                            )
+                          : null,
                       following: interaction.following,
                       followLoading: interaction.followLoading,
                       onFollow: _onFollow,
@@ -3201,6 +3245,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                               .read(liveGiftControllerProvider)
                               .setPanelOpen(true)
                           : null,
+                      onFortune: !s.isHost && _fortuneRequestsOpen(s)
+                          ? () => unawaited(_onFortuneRequest(s))
+                          : null,
+                      fortuneLabel: _fortuneCtaLabel(s),
                       onTip: !s.isHost && streamId != null
                           ? () {
                               ref.read(liveGiftControllerProvider).setPanelOpen(true);

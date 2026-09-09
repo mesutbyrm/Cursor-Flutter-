@@ -28,6 +28,9 @@ class LivePremiumTopBar extends StatelessWidget {
     this.leagueLabel,
     this.onPopularTap,
     this.onLeagueTap,
+    this.streamTitle,
+    this.fortuneTypeBadge,
+    this.networkQualityBadge,
   });
 
   final LiveBroadcastSession session;
@@ -45,6 +48,9 @@ class LivePremiumTopBar extends StatelessWidget {
   final String? leagueLabel;
   final VoidCallback? onPopularTap;
   final VoidCallback? onLeagueTap;
+  final String? streamTitle;
+  final String? fortuneTypeBadge;
+  final Widget? networkQualityBadge;
 
   @override
   Widget build(BuildContext context) {
@@ -156,8 +162,43 @@ class LivePremiumTopBar extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 6),
+        if ((streamTitle ?? '').trim().isNotEmpty ||
+            (fortuneTypeBadge ?? '').trim().isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Row(
+              children: [
+                if ((fortuneTypeBadge ?? '').trim().isNotEmpty)
+                  _BadgeChip(
+                    emoji: '',
+                    label: fortuneTypeBadge!.trim(),
+                    color: const Color(0xFF9C27FF),
+                  ),
+                if ((fortuneTypeBadge ?? '').trim().isNotEmpty &&
+                    (streamTitle ?? '').trim().isNotEmpty)
+                  const SizedBox(width: 6),
+                if ((streamTitle ?? '').trim().isNotEmpty)
+                  Expanded(
+                    child: Text(
+                      streamTitle!.trim(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.88),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
         Row(
           children: [
+            if (networkQualityBadge != null) ...[
+              networkQualityBadge!,
+              const SizedBox(width: 6),
+            ],
             if (popularRank != null)
               _BadgeChip(
                 emoji: '🔥',

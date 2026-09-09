@@ -1,5 +1,23 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.421+459 (2026-09-09) — Canlı yayın UX polish
+
+### Yayın sonu akışı
+- SSE `streamEnded` → «Yayın bitti» orta dialog + istatistik önizleme
+- Yayıncı «Detaylı özet» veya otomatik tam özet sayfası
+- Manuel çıkış ile SSE sonu çift özet engeli (`_streamEndUiHandled`)
+
+### Üst/alt bar
+- Yayın başlığı + fal türü rozeti (üst bar)
+- TRTC ağ kalitesi pill (🟢 İyi / 🟡 Orta / 🔴 Zayıf) — yayıncı
+- İzleyici alt bar: Fal İste CTA butonu (fal türüne göre etiket)
+
+### Hazırlık ekranı
+- Kamera önizlemede ağ kalitesi göstergesi
+
+### Diğer
+- Turnuva kartı yalnızca gerçek turnuva verisi varsa gösterilir
+
 ## 1.0.420+458 (2026-09-09) — Yayın sonu özet + misafir yayın UX
 
 ### Yayın sonu istatistikleri

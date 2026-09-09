@@ -24,6 +24,7 @@ import '../../domain/utils/live_stream_category.dart';
 import '../providers/live_providers.dart';
 import '../providers/live_beauty_provider.dart';
 import '../providers/live_broadcast_settings_provider.dart';
+import '../widgets/broadcast_room/live_network_quality_pill.dart';
 import '../widgets/live_tiktok/live_background_picker_sheet.dart';
 import '../widgets/premium_2026/live_beauty_filter_sheet.dart';
 
@@ -432,6 +433,16 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
                     ],
                   ),
                 ),
+                if (_previewReady)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: LiveNetworkQualityPill(
+                        qualityListenable: _trtc.networkQuality,
+                      ),
+                    ),
+                  ),
                 const Spacer(),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),

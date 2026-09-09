@@ -24,6 +24,8 @@ class LivePremiumBottomBar extends StatelessWidget {
     this.onToggleChat,
     this.chatVisible = true,
     this.commentsEnabled = true,
+    this.onFortune,
+    this.fortuneLabel,
   });
 
   final TextEditingController chatController;
@@ -40,6 +42,8 @@ class LivePremiumBottomBar extends StatelessWidget {
   final VoidCallback? onToggleChat;
   final bool chatVisible;
   final bool commentsEnabled;
+  final VoidCallback? onFortune;
+  final String? fortuneLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -115,6 +119,14 @@ class LivePremiumBottomBar extends StatelessWidget {
                       padding: const EdgeInsets.only(left: 2),
                       child: _GiftBoxButton(onTap: onGift!),
                     ),
+                  if (onFortune != null)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 2),
+                      child: _FortuneCtaButton(
+                        label: fortuneLabel ?? 'Fal İste',
+                        onTap: onFortune!,
+                      ),
+                    ),
                   if (onTip != null)
                     _ActionIcon(
                       icon: Icons.volunteer_activism_rounded,
@@ -185,7 +197,6 @@ class LivePremiumBottomBar extends StatelessWidget {
   }
 }
 
-/// Büyük mor hediye kutusu — panel yalnızca buradan açılır.
 class _GiftBoxButton extends StatelessWidget {
   const _GiftBoxButton({required this.onTap});
 
@@ -231,6 +242,57 @@ class _GiftBoxButton extends StatelessWidget {
             'Hediye',
             style: TextStyle(
               fontSize: 9,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FortuneCtaButton extends StatelessWidget {
+  const _FortuneCtaButton({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              gradient: const LinearGradient(
+                colors: [Color(0xFFCE93D8), Color(0xFF9C27FF), Color(0xFF6A1B9A)],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF9C27FF).withValues(alpha: 0.45),
+                  blurRadius: 10,
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.auto_awesome_rounded,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label.length > 12 ? 'Fal İste' : label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 8,
               fontWeight: FontWeight.w800,
               color: Colors.white,
             ),
