@@ -4,33 +4,32 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.456+494` |
-| Tarih (UTC) | 2026-09-09 15:40 |
-| Commit | [`174bc470d4763a018be89115f833ee10a9262747`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/174bc470d4763a018be89115f833ee10a9262747) |
-| İş akışı | [Run 34369899553](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34369899553) |
+| Sürüm | `1.0.457+495` |
+| Tarih (UTC) | 2026-09-09 16:42 |
+| Commit | [`2925322640ef6c65acdea15c61771de45b0a3303`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/2925322640ef6c65acdea15c61771de45b0a3303) |
+| İş akışı | [Run 34376452733](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34376452733) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.456+494 (2026-09-09) — Live/sesli oda realtime kök düzeltmeler
+## 1.0.457+495 (2026-09-09) — PK ingest, sesli davet, sıralama, falcı bahşiş, bot
 
-### PK
-- Canlı PK `accept/reject/cancel/end` switch fallthrough düzeltildi (UI donma/kilitlenme)
-- PK faz makinesi: `syncFromServer` — SSE authoritative phase
-- Global PK ingest: odada değilken yabancı battle yazılmaz; duplicate snapshot atlanır
-- Oda çıkışında `pkBattleProvider` + invite dedupe temizliği
+### PK (canlı + sesli)
+- Canlı PK SSE ingest: sahip yayınlar için `liveVideoPkProvider` senkronu; yabancı battle yazılmaz
+- Davet sonrası `liveVideoPkProvider.applyRemoteBattle` — karşı taraf anında davet görür
+- Sesli PK: `guestUserId` zorunlu değil; `opponentRoomId` ile davet gönderilir (0 çevrimiçi oda)
+- PK daveti: bot hesapları engellendi
 
-### SSE / giriş / sıralama
-- `onPk` SSE dedupe; `user_joined` tek `_announcePresenceJoin` yolu
-- Oturum bazlı join userId dedupe; leave'de SSE dedupe sıfırlama
-- Sıralama kutlaması: bootstrap'ta eski 1./2./3. spam engellendi
+### Sıralama bildirimi
+- Saatlik/günlük top 3 yalnızca saat/gün başında uygulamada olanlara gösterilir
+- Sonradan giren kullanıcılar geçmiş kutlamayı görmez (oturum bazlı pencere anahtarı)
 
-### Müzik
-- `music-queue` endpoint önceliği; SSE/merge canonical boş kuyruk
-- Kuyruk sheet duplicate `ValueKey` crash düzeltildi
+### Canlı falcı
+- Bahşiş SSE `eventId` dedupe; falcıya anında «X size bahşiş attı» popup
+- `timerStarted` SSE ile mikrofon/kamera yayın senkronu
 
-### Canlı liste
-- `patchStreamEnded` — biten yayın listeden anında çıkar
+### Bot kısıtları
+- Müzik isteği (`!istek`, hub, API) bot hesaplarda engellendi
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
