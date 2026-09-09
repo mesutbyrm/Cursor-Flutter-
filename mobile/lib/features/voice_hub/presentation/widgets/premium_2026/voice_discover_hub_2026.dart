@@ -372,6 +372,7 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
           title: 'Popüler Odalar',
           action: 'Tümü',
           fontSize: metrics.sectionTitleSize,
+          onActionTap: () => showVoiceRoomRankingSheet(context, ref),
         ),
       );
     }
@@ -1037,11 +1038,13 @@ class _SectionTitle extends StatelessWidget {
     required this.title,
     this.action,
     this.fontSize = 18,
+    this.onActionTap,
   });
 
   final String title;
   final String? action;
   final double fontSize;
+  final VoidCallback? onActionTap;
 
   @override
   Widget build(BuildContext context) {
@@ -1053,12 +1056,19 @@ class _SectionTitle extends StatelessWidget {
         ),
         const Spacer(),
         if (action != null)
-          Text(
-            action!,
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 12,
-              color: DiscoverPremiumVisual.secondary.withValues(alpha: 0.95),
+          GestureDetector(
+            onTap: onActionTap,
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              child: Text(
+                action!,
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                  color: DiscoverPremiumVisual.secondary.withValues(alpha: 0.95),
+                ),
+              ),
             ),
           ),
       ],

@@ -55,6 +55,7 @@ class _VoiceRoomPreviewSheet extends ConsumerWidget {
     final daily = ref
         .read(voiceRoomRankingProvider.notifier)
         .rankForRoom(room.apiRoomKey, period: VoiceRoomRankingPeriod.daily);
+    final hourlyScore = _scoreForRoom(ranking.hourly, room);
     final goalAsync = ref.watch(voiceRoomPreviewGoalProvider(room.apiRoomKey));
     final pkAsync = ref.watch(voiceRoomPreviewPkProvider(room.apiRoomKey));
     final activeGoal = goalAsync.valueOrNull;
@@ -155,6 +156,12 @@ class _VoiceRoomPreviewSheet extends ConsumerWidget {
                 _chip(Icons.music_note_rounded, 'Müzik', const Color(0xFFFF2D7A)),
               if (liveRoom.isVip == true)
                 _chip(Icons.diamond_rounded, 'VIP', const Color(0xFFFFD54F)),
+              if (hourlyScore != null)
+                _chip(
+                  Icons.bolt_rounded,
+                  '$hourlyScore puan',
+                  const Color(0xFF7C4DFF),
+                ),
               if (hourly != null && hourly <= 100)
                 _chip(Icons.emoji_events_rounded, 'Saatlik #$hourly', const Color(0xFFFFB300)),
               if (daily != null && daily <= 100 && daily != hourly)
@@ -230,6 +237,20 @@ class _VoiceRoomPreviewSheet extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  static int? _scoreForRoom(
+    List<VoiceRoomRankEntry> entries,
+    VoiceRoomEntity room,
+  ) {
+    final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+    for (final entry in entries) {
+      final entryKey = entry.room.apiRoomKey.isNotEmpty
+          ? entry.room.apiRoomKey
+          : entry.room.id;
+      if (entryKey == key || entry.room.id == room.id) return entry.score;
+    }
+    return null;
   }
 
   static String _formatRemaining(Duration? remaining) {

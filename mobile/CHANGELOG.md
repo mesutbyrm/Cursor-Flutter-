@@ -1,5 +1,21 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.443+481 (2026-09-09) — Sesli oda Faz 17
+
+### Sıralama sheet premium
+- Pull-to-refresh, SSE canlı çevrimiçi sayısı, PK/müzik rozetleri
+- Satıra dokun → odaya giriş (`openVoiceRoomWithVipGate`)
+- Saatlik/günlük sıfırlama geri sayım etiketi
+- Son güncelleme saati (HH:mm)
+
+### Keşfet + önizleme
+- Popüler Odalar «Tümü» → sıralama sheet
+- Önizleme sheet: proxy skor chip (`X puan`)
+
+### Altyapı
+- `voice_room_ranking_labels.dart` — sıfırlama etiketleri
+- `VoiceRoomRankingNotifier._refreshProxyRanking` — ROOM_RANK API hazırlığı
+
 ## 1.0.442+480 (2026-09-09) — Sesli oda Faz 16
 
 ### Keşfet sıralama entegrasyonu

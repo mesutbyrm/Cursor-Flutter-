@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../live/domain/entities/voice_room_entity.dart';
+import '../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
 import '../providers/voice_room_ranking_provider.dart';
+import '../providers/voice_rooms_presence_provider.dart';
+import '../utils/voice_room_ranking_labels.dart';
 
 /// Saatlik / günlük oda sıralaması — Top 100.
 Future<void> showVoiceRoomRankingSheet(
@@ -54,10 +58,16 @@ class _VoiceRoomRankingSheetState extends ConsumerState<_VoiceRoomRankingSheet>
     super.dispose();
   }
 
+  Future<void> _refresh() =>
+      ref.read(voiceRoomRankingProvider.notifier).refresh();
+
   @override
   Widget build(BuildContext context) {
     final ranking = ref.watch(voiceRoomRankingProvider);
     final bottom = MediaQuery.paddingOf(context).bottom;
+    final updatedLabel = ranking.lastUpdated == null
+        ? null
+        : 'Güncellendi · ${DateFormat('HH:mm').format(ranking.lastUpdated!)}';
 
     return DraggableScrollableSheet(
       expand: false,
@@ -75,6 +85,17 @@ class _VoiceRoomRankingSheetState extends ConsumerState<_VoiceRoomRankingSheet>
               fontSize: 17,
             ),
           ),
+          if (updatedLabel != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              updatedLabel,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.45),
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
           TabBar(
             controller: _tabs,
             labelColor: const Color(0xFFB832FF),
@@ -89,8 +110,20 @@ class _VoiceRoomRankingSheetState extends ConsumerState<_VoiceRoomRankingSheet>
             child: TabBarView(
               controller: _tabs,
               children: [
-                _RankList(entries: ranking.hourly, scroll: scroll),
-                _RankList(entries: ranking.daily, scroll: scroll),
+                _RankList(
+                  entries: ranking.hourly,
+                  scroll: scroll,
+                  period: VoiceRoomRankingPeriod.hourly,
+                  onRefresh: _refresh,
+                  onRoomTap: (room) => _openRoom(context, room),
+                ),
+                _RankList(
+                  entries: ranking.daily,
+                  scroll: scroll,
+                  period: VoiceRoomRankingPeriod.daily,
+                  onRefresh: _refresh,
+                  onRoomTap: (room) => _openRoom(context, room),
+                ),
               ],
             ),
           ),
@@ -99,41 +132,110 @@ class _VoiceRoomRankingSheetState extends ConsumerState<_VoiceRoomRankingSheet>
             child: Text(
               'Skor proxy: çevrimiçi (SSE keşfet) + PK + müzik. Üretim ROOM_RANK API ile güncellenecek.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.45), fontSize: 10),
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.45),
+                fontSize: 10,
+              ),
             ),
           ),
         ],
       ),
     );
   }
+
+  Future<void> _openRoom(BuildContext context, VoiceRoomEntity room) async {
+    Navigator.of(context).pop();
+    if (!context.mounted) return;
+    await openVoiceRoomWithVipGate(context, ref, room);
+  }
 }
 
-class _RankList extends StatelessWidget {
-  const _RankList({required this.entries, required this.scroll});
+class _RankList extends ConsumerWidget {
+  const _RankList({
+    required this.entries,
+    required this.scroll,
+    required this.period,
+    required this.onRefresh,
+    required this.onRoomTap,
+  });
 
   final List<VoiceRoomRankEntry> entries;
   final ScrollController scroll;
+  final VoiceRoomRankingPeriod period;
+  final Future<void> Function() onRefresh;
+  final ValueChanged<VoiceRoomEntity> onRoomTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final liveCounts = ref.watch(
+      voiceRoomsPresenceProvider.select((s) => s.counts),
+    );
+    final resetLabel = voiceRoomRankingResetLabel(period);
+
     if (entries.isEmpty) {
-      return const Center(
-        child: Text('Sıralama yükleniyor…', style: TextStyle(color: Colors.white54)),
+      return RefreshIndicator(
+        color: const Color(0xFFB832FF),
+        onRefresh: onRefresh,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: const [
+            SizedBox(height: 120),
+            Center(
+              child: Text(
+                'Sıralama yükleniyor…',
+                style: TextStyle(color: Colors.white54),
+              ),
+            ),
+          ],
+        ),
       );
     }
-    return ListView.builder(
-      controller: scroll,
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
-      itemCount: entries.length,
-      itemBuilder: (_, i) => _RankRow(entry: entries[i]),
+
+    return RefreshIndicator(
+      color: const Color(0xFFB832FF),
+      onRefresh: onRefresh,
+      child: ListView.builder(
+        controller: scroll,
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+        itemCount: entries.length + 1,
+        itemBuilder: (_, i) {
+          if (i == 0) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Text(
+                resetLabel,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.5),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            );
+          }
+          final entry = entries[i - 1];
+          return _RankRow(
+            entry: entry,
+            liveOnline: resolveLiveOnlineCount(entry.room, liveCounts),
+            onTap: () => onRoomTap(entry.room),
+          );
+        },
+      ),
     );
   }
 }
 
 class _RankRow extends StatelessWidget {
-  const _RankRow({required this.entry});
+  const _RankRow({
+    required this.entry,
+    required this.liveOnline,
+    required this.onTap,
+  });
 
   final VoiceRoomRankEntry entry;
+  final int liveOnline;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -143,71 +245,126 @@ class _RankRow extends StatelessWidget {
       3 => '🥉',
       _ => '${entry.rank}.',
     };
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: entry.rank <= 3 ? 0.08 : 0.04),
+    final room = entry.room;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: entry.rank <= 3
-              ? const Color(0xFFFFD54F).withValues(alpha: 0.35)
-              : Colors.white12,
-        ),
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 36,
-            child: Text(
-              medal,
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                color: entry.rank <= 3 ? const Color(0xFFFFD54F) : Colors.white70,
-                fontSize: entry.rank <= 3 ? 18 : 13,
-              ),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: entry.rank <= 3 ? 0.08 : 0.04),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: entry.rank <= 3
+                  ? const Color(0xFFFFD54F).withValues(alpha: 0.35)
+                  : Colors.white12,
             ),
           ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  entry.room.displayTitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
-                  ),
-                ),
-                if (entry.room.ownerName?.trim().isNotEmpty == true)
-                  Text(
-                    entry.room.ownerName!,
-                    style: const TextStyle(color: Colors.white54, fontSize: 11),
-                  ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          child: Row(
             children: [
-              Text(
-                '${entry.room.displayOnline}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 12,
+              SizedBox(
+                width: 36,
+                child: Text(
+                  medal,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: entry.rank <= 3
+                        ? const Color(0xFFFFD54F)
+                        : Colors.white70,
+                    fontSize: entry.rank <= 3 ? 18 : 13,
+                  ),
                 ),
               ),
-              Text(
-                '${entry.score} puan',
-                style: const TextStyle(color: Colors.white38, fontSize: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      room.displayTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                      ),
+                    ),
+                    if (room.ownerName?.trim().isNotEmpty == true)
+                      Text(
+                        room.ownerName!,
+                        style: const TextStyle(color: Colors.white54, fontSize: 11),
+                      ),
+                    if (room.isPkLive || room.hasMusicActivity)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Wrap(
+                          spacing: 4,
+                          children: [
+                            if (room.isPkLive) const _RankMiniBadge(label: 'PK'),
+                            if (room.hasMusicActivity)
+                              const _RankMiniBadge(label: 'Müzik'),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '$liveOnline',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 12,
+                    ),
+                  ),
+                  Text(
+                    '${entry.score} puan',
+                    style: const TextStyle(color: Colors.white38, fontSize: 10),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+                color: Colors.white.withValues(alpha: 0.35),
               ),
             ],
           ),
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RankMiniBadge extends StatelessWidget {
+  const _RankMiniBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: const Color(0xFFB832FF).withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: const Color(0xFFB832FF).withValues(alpha: 0.45)),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Color(0xFFE1BEE7),
+          fontSize: 9,
+          fontWeight: FontWeight.w900,
+        ),
       ),
     );
   }

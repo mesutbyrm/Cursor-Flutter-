@@ -137,13 +137,7 @@ class VoiceRoomRankingNotifier extends Notifier<VoiceRoomRankingState> {
 
   Future<void> refresh({VoiceRoomRankingPeriod? period}) async {
     try {
-      final rooms = await ref.read(voiceRoomsProvider.future);
-      final liveCounts = ref.read(voiceRoomsPresenceProvider).counts;
-      final list = buildVoiceRoomRanking(
-        rooms,
-        limit: 100,
-        livePresenceCounts: liveCounts,
-      );
+      final list = await _refreshProxyRanking();
       final now = DateTime.now();
       if (period == VoiceRoomRankingPeriod.hourly) {
         state = state.copyWith(hourly: list, lastUpdated: now);
@@ -154,6 +148,17 @@ class VoiceRoomRankingNotifier extends Notifier<VoiceRoomRankingState> {
       }
       ref.read(voiceRoomRankCelebrationProvider.notifier).evaluate(state);
     } catch (_) {}
+  }
+
+  /// Üretim `GET /api/.../room-rank` geldiğinde burada remote + proxy fallback.
+  Future<List<VoiceRoomRankEntry>> _refreshProxyRanking() async {
+    final rooms = await ref.read(voiceRoomsProvider.future);
+    final liveCounts = ref.read(voiceRoomsPresenceProvider).counts;
+    return buildVoiceRoomRanking(
+      rooms,
+      limit: 100,
+      livePresenceCounts: liveCounts,
+    );
   }
 
   int? rankForRoom(String roomId, {VoiceRoomRankingPeriod period = VoiceRoomRankingPeriod.hourly}) {
