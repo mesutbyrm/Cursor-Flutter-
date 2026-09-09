@@ -234,14 +234,14 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
                 controller: _tabs,
                 children: [
                   _PendingPaymentsTab(
-                    async: pending,
+                    requestsAsync: pending,
                     onReview: _review,
                     onRefresh: _refreshAll,
                     onDismissAll: () => _dismissAllPending(context),
                     highlightRequestId: widget.focusRequestId,
                   ),
                   _PaymentNotificationsTab(
-                    async: notifs,
+                    requestsAsync: notifs,
                     onRefresh: _refreshAll,
                     onOpenPending: () => _tabs.animateTo(0),
                     onReview: _review,
@@ -380,14 +380,14 @@ class _CountChip extends StatelessWidget {
 
 class _PendingPaymentsTab extends StatefulWidget {
   const _PendingPaymentsTab({
-    required this.async,
+    required this.requestsAsync,
     required this.onReview,
     required this.onRefresh,
     required this.onDismissAll,
     this.highlightRequestId,
   });
 
-  final AsyncValue<List<Map<String, dynamic>>> async;
+  final AsyncValue<List<Map<String, dynamic>>> requestsAsync;
   final void Function(
     BuildContext context,
     String requestId,
@@ -463,7 +463,7 @@ class _PendingPaymentsTabState extends State<_PendingPaymentsTab> {
     return RefreshIndicator(
       color: AppThemeColors.accentPink,
       onRefresh: () async => widget.onRefresh(),
-      child: widget.async.when(
+      child: widget.requestsAsync.when(
         loading: () => ListView(
           children: const [
             SizedBox(height: 120),
@@ -700,13 +700,13 @@ class _PendingPaymentsTabState extends State<_PendingPaymentsTab> {
 
 class _PaymentNotificationsTab extends StatelessWidget {
   const _PaymentNotificationsTab({
-    required this.async,
+    required this.requestsAsync,
     required this.onRefresh,
     required this.onOpenPending,
     required this.onReview,
   });
 
-  final AsyncValue<List<Map<String, dynamic>>> async;
+  final AsyncValue<List<Map<String, dynamic>>> requestsAsync;
   final VoidCallback onRefresh;
   final VoidCallback onOpenPending;
   final void Function(
@@ -723,7 +723,7 @@ class _PaymentNotificationsTab extends StatelessWidget {
     return RefreshIndicator(
       color: AppThemeColors.accentPink,
       onRefresh: () async => onRefresh(),
-      child: async.when(
+      child: requestsAsync.when(
         loading: () => ListView(
           children: const [
             SizedBox(height: 120),

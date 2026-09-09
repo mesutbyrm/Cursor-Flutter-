@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.423+461 (2026-09-09) — CI düzeltme + canlı yayın polish
+
+### CI (APK engeli)
+- `admin_hub_page`: `async` alan adı → `requestsAsync` (Dart anahtar kelime çakışması)
+- `admin_dashboard_page`: `AdminActivityTicker` import
+- `admin_user_command_center_page`: `AdminCreditKind` import
+
+### Canlı yayın
+- Otomatik video kalitesi: ağ değişiminde TRTC encoder güncellenir
+- İzleyici: yayıncı bağlantı koptuğunda kalıcı banner (5 dk grace)
+
 ## 1.0.422+460 (2026-09-09) — Canlı yayın kalite, reconnect, konuk kamera
 
 ### Video kalitesi

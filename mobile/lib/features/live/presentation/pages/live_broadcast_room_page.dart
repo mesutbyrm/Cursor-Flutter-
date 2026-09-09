@@ -98,6 +98,7 @@ import '../providers/live_stream_quality_provider.dart';
 import '../widgets/broadcast_room/live_host_fortune_request_center_overlay.dart';
 import '../widgets/broadcast_room/live_broadcast_ended_flow.dart';
 import '../widgets/broadcast_room/live_network_quality_pill.dart';
+import '../widgets/broadcast_room/live_host_away_viewer_banner.dart';
 import '../widgets/broadcast_room/live_reconnect_banner.dart';
 import '../widgets/broadcast_room/live_host_guest_request_center_overlay.dart';
 import '../providers/live_guest_request_blocklist_provider.dart';
@@ -189,6 +190,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   EntranceTheme? _vipBannerTheme;
   VoidCallback? _remoteUidsListener;
   VoidCallback? _remoteVideoListener;
+  VoidCallback? _networkQualityListener;
+  int? _lastEncoderNetworkBucket;
+  var _viewerHostAwayBannerVisible = false;
   var _hostAway = false;
   DateTime? _graceEndsAt;
   var _hostAwayViewerNotified = false;
@@ -344,20 +348,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       _onHostVideoAvailabilityChanged();
     } else {
       _startHostHeartbeat();
+      _networkQualityListener ??= _onNetworkQualityForEncoder;
+      _trtc.networkQuality.addListener(_networkQualityListener!);
     }
     _startBotAutoCloseIfNeeded();
-      final quality = ref.read(liveStreamQualityProvider);
-      final effective = quality.isAuto
-          ? quality.downgradeFromNetwork(_trtc.networkQuality.value ?? 3)
-          : quality;
-      unawaited(
-        _trtc.setEncoderParams(
-          width: effective.width,
-          height: effective.height,
-          bitrateKbps: effective.bitrateKbps,
-          fps: effective.fps,
-        ),
-      );
+    unawaited(_applyStreamEncoderQuality(_trtc.networkQuality.value ?? 3));
     _applyActiveAudio();
     if (streamId.isNotEmpty) {
       _startLiveMusicSse(streamId);
@@ -636,6 +631,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     }
     if (_remoteVideoListener != null) {
       _trtc.remoteVideoAvailable.removeListener(_remoteVideoListener!);
+    }
+    if (_networkQualityListener != null) {
+      _trtc.networkQuality.removeListener(_networkQualityListener!);
     }
     _chat.dispose();
     if (!_leaving) {
@@ -1144,18 +1142,43 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final available = _trtc.remoteVideoAvailable.value;
     if (available) {
       _hadHostVideo = true;
+      if (_viewerHostAwayBannerVisible && mounted) {
+        setState(() {
+          _viewerHostAwayBannerVisible = false;
+          _hostAwayViewerNotified = false;
+        });
+      }
       return;
     }
     if (!_hadHostVideo || _hostAwayViewerNotified) return;
     _hostAwayViewerNotified = true;
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Yayıncının internet bağlantısı koptu. Yayın 5 dakika daha açık kalacak.',
-        ),
-        duration: Duration(seconds: 8),
-      ),
+    setState(() => _viewerHostAwayBannerVisible = true);
+  }
+
+  void _onNetworkQualityForEncoder() {
+    if (!widget.session.isHost || _leaving) return;
+    final q = _trtc.networkQuality.value ?? 3;
+    final bucket = q <= 1 ? 0 : (q <= 3 ? 1 : 2);
+    if (_lastEncoderNetworkBucket == bucket) return;
+    _lastEncoderNetworkBucket = bucket;
+    unawaited(_applyStreamEncoderQuality(q));
+  }
+
+  Future<void> _applyStreamEncoderQuality(int networkQuality) async {
+    if (!widget.session.isHost) return;
+    final preset = ref.read(liveStreamQualityProvider);
+    if (!preset.isAuto) {
+      ref.read(liveStreamQualityProvider.notifier).applyNetworkQuality(networkQuality);
+    }
+    final effective = preset.isAuto
+        ? preset.downgradeFromNetwork(networkQuality)
+        : ref.read(liveStreamQualityProvider);
+    await _trtc.setEncoderParams(
+      width: effective.width,
+      height: effective.height,
+      bitrateKbps: effective.bitrateKbps,
+      fps: effective.fps,
     );
   }
 
@@ -2853,6 +2876,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               ),
             if (hasStream && s.isHost)
               LiveHostFortuneRequestCenterOverlay(streamId: streamId),
+            if (hasStream &&
+                _viewerHostAwayBannerVisible &&
+                !s.isHost &&
+                !_hostAway)
+              const LiveHostAwayViewerBanner(),
             if (hasStream &&
                 _phase == LiveSessionPhase.reconnecting &&
                 !_hostAway)
