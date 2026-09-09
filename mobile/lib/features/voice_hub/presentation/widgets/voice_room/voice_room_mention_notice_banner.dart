@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 /// @mention bildirimi — hafif pulse, rahatsız etmeyen.
@@ -17,6 +19,8 @@ class VoiceRoomMentionNoticeBanner extends StatefulWidget {
   final VoidCallback? onDismiss;
   final VoidCallback? onTap;
 
+  static const autoDismissDuration = Duration(seconds: 8);
+
   @override
   State<VoiceRoomMentionNoticeBanner> createState() =>
       _VoiceRoomMentionNoticeBannerState();
@@ -25,6 +29,8 @@ class VoiceRoomMentionNoticeBanner extends StatefulWidget {
 class _VoiceRoomMentionNoticeBannerState extends State<VoiceRoomMentionNoticeBanner>
     with SingleTickerProviderStateMixin {
   late final AnimationController _pulse;
+  Timer? _autoDismiss;
+  Object? _trackedDismissKey;
 
   @override
   void initState() {
@@ -33,17 +39,46 @@ class _VoiceRoomMentionNoticeBannerState extends State<VoiceRoomMentionNoticeBan
       vsync: this,
       duration: const Duration(milliseconds: 900),
     )..repeat(reverse: true);
+    _armAutoDismiss();
+  }
+
+  @override
+  void didUpdateWidget(covariant VoiceRoomMentionNoticeBanner oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.dismissKey != oldWidget.dismissKey) {
+      _armAutoDismiss();
+    }
+  }
+
+  void _armAutoDismiss() {
+    final key = widget.dismissKey;
+    if (key == _trackedDismissKey) return;
+    _trackedDismissKey = key;
+    _autoDismiss?.cancel();
+    if (widget.onDismiss == null) return;
+    _autoDismiss = Timer(VoiceRoomMentionNoticeBanner.autoDismissDuration, () {
+      if (!mounted) return;
+      widget.onDismiss?.call();
+    });
   }
 
   @override
   void dispose() {
+    _autoDismiss?.cancel();
     _pulse.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final glow = 0.35 + _pulse.value * 0.25;
+    return AnimatedBuilder(
+      animation: _pulse,
+      builder: (context, _) => _buildCard(_pulse.value),
+    );
+  }
+
+  Widget _buildCard(double pulse) {
+    final glow = 0.35 + pulse * 0.25;
     final card = Material(
       color: Colors.transparent,
       child: InkWell(
@@ -59,7 +94,7 @@ class _VoiceRoomMentionNoticeBannerState extends State<VoiceRoomMentionNoticeBan
             color: Color.lerp(
               const Color(0xFFB832FF),
               const Color(0xFFFFD54F),
-              _pulse.value,
+              pulse,
             )!
                 .withValues(alpha: glow),
             width: 1.5,

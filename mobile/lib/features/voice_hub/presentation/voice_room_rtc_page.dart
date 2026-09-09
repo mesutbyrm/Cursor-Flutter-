@@ -311,6 +311,14 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     _messageFocus.requestFocus();
   }
 
+  void _replyToMessage(ChatRoomMessage message) {
+    VoiceRoomMention.replyToMessage(
+      controller: _messageCtrl,
+      message: message,
+    );
+    _messageFocus.requestFocus();
+  }
+
   void _sendChatMessage(VoiceRoomEntity room) {
     final text = VoiceOfficialJoin.normalizeCommandInput(
       _messageCtrl.text.trim(),
@@ -1780,6 +1788,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                           perms: perms,
                                           isOwner: isOwner,
                                         ),
+                                        onReplyToMessage: _replyToMessage,
                                       ),
                                     ),
                                     if (chat.typing)

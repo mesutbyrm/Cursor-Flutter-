@@ -20,6 +20,7 @@ import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../domain/entities/chat_room_dj_state.dart';
+import '../../domain/entities/chat_room_message.dart';
 import '../../domain/entities/chat_room_my_permissions.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/voice_room_realtime_event.dart';
@@ -554,6 +555,14 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     _messageFocus.requestFocus();
   }
 
+  void _replyToMessage(ChatRoomMessage message) {
+    VoiceRoomMention.replyToMessage(
+      controller: _messageCtrl,
+      message: message,
+    );
+    _messageFocus.requestFocus();
+  }
+
   /// Chat'te isme çift dokunuş → kullanıcı yetkileri (moderasyon) açılır.
   void _openUserById(
     String userId,
@@ -910,6 +919,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                           onMention: (userId, name) => _insertMention(name),
                           onUserPerms: (userId, name) =>
                               _openUserById(userId, live, room, perms),
+                          onReplyToMessage: _replyToMessage,
                         ),
                         VoiceRoomConnectionOverlays(
                           roomKey: _liveRoomKey,

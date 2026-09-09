@@ -192,6 +192,7 @@ class VoiceRoomBasicChatFeed extends ConsumerStatefulWidget {
     required this.liveKey,
     this.onMention,
     this.onUserPerms,
+    this.onReplyToMessage,
   });
 
   final String liveKey;
@@ -199,6 +200,8 @@ class VoiceRoomBasicChatFeed extends ConsumerStatefulWidget {
   final void Function(String userId, String name)? onMention;
   /// Çift dokunuş — kullanıcı yetkileri (moderasyon) açılır.
   final void Function(String userId, String name)? onUserPerms;
+  /// Uzun bas → yanıtla.
+  final void Function(ChatRoomMessage message)? onReplyToMessage;
 
   @override
   ConsumerState<VoiceRoomBasicChatFeed> createState() =>
@@ -345,6 +348,7 @@ class _VoiceRoomBasicChatFeedState extends ConsumerState<VoiceRoomBasicChatFeed>
                       : null,
                   onUserTap: widget.onMention,
                   onUserDoubleTap: widget.onUserPerms,
+                  onReplyToMessage: widget.onReplyToMessage,
                 ),
               );
             },

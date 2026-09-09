@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../domain/entities/chat_room_message.dart';
 import '../../domain/entities/chat_room_presence.dart';
 
 /// Faz 11 — @ etiket algılama ve oda kullanıcılarına eşleme.
@@ -118,5 +119,27 @@ abstract final class VoiceRoomMention {
     controller.selection = TextSelection.fromPosition(
       TextPosition(offset: controller.text.length),
     );
+  }
+
+  /// Yanıtla — @etiket + kısa alıntı öneki.
+  static void replyToMessage({
+    required TextEditingController controller,
+    required ChatRoomMessage message,
+  }) {
+    final user = message.user;
+    final handle = user?.displayName.trim().isNotEmpty == true
+        ? user!.displayName.trim()
+        : user?.name.trim() ?? '';
+    if (handle.isNotEmpty) {
+      appendMentionDeduped(controller: controller, handle: handle);
+    }
+    final snippet = message.content.trim();
+    if (snippet.isEmpty) return;
+    final short =
+        snippet.length > 60 ? '${snippet.substring(0, 60)}…' : snippet;
+    final quote = '「$short」 ';
+    final existing = controller.text;
+    controller.text = existing.isEmpty ? quote : '$existing$quote';
+    controller.selection = TextSelection.collapsed(offset: controller.text.length);
   }
 }

@@ -24,6 +24,7 @@ class VoiceWebChatOverlay extends StatefulWidget {
     this.scrollController,
     this.scrollToLatest = false,
     this.showAvatar = true,
+    this.onReplyToMessage,
   });
 
   final List<ChatRoomMessage> messages;
@@ -38,6 +39,7 @@ class VoiceWebChatOverlay extends StatefulWidget {
   final ScrollController? scrollController;
   final bool scrollToLatest;
   final bool showAvatar;
+  final void Function(ChatRoomMessage message)? onReplyToMessage;
 
   @override
   State<VoiceWebChatOverlay> createState() => _VoiceWebChatOverlayState();
@@ -277,6 +279,7 @@ class _VoiceWebChatOverlayState extends State<VoiceWebChatOverlay> {
           onUserTap: widget.onUserTap == null
               ? null
               : (id, name) => widget.onUserTap!(id, name, msg),
+          onReplyToMessage: widget.onReplyToMessage,
         );
       },
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:canlifal_social/features/voice_hub/domain/entities/chat_room_message.dart';
 import 'package:canlifal_social/features/voice_hub/domain/entities/chat_room_presence.dart';
 import 'package:canlifal_social/features/voice_hub/presentation/utils/voice_room_mention.dart';
 
@@ -53,6 +54,20 @@ void main() {
         handle: 'Mesut',
       );
       expect(controller.text, 'Selam @Mesut ');
+    });
+
+    test('replyToMessage adds mention and quote prefix', () {
+      final controller = TextEditingController();
+      VoiceRoomMention.replyToMessage(
+        controller: controller,
+        message: ChatRoomMessage(
+          id: 'm1',
+          content: 'Nasılsın?',
+          createdAt: DateTime.utc(2026, 1, 1),
+          user: const ChatRoomUserRef(id: 'u2', name: 'Ali'),
+        ),
+      );
+      expect(controller.text, '@Ali 「Nasılsın?」 ');
     });
   });
 }

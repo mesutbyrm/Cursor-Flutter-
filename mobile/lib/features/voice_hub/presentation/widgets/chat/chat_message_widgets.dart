@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -12,6 +14,7 @@ import '../../../../visual_fx/presentation/widgets/fx_authority_badge.dart';
 import '../../../domain/entities/chat_room_message.dart';
 import '../../theme/voice_room_tokens.dart';
 import '../../utils/voice_staff_chat_style.dart';
+import '../voice_room/voice_room_chat_message_actions.dart';
 import 'voice_staff_chat_avatar.dart';
 
 /// Sohbet satırı — RepaintBoundary ile izole çizim.
@@ -21,6 +24,7 @@ class ChatMessageWidget extends StatelessWidget {
     required this.message,
     this.onUserTap,
     this.onUserDoubleTap,
+    this.onReplyToMessage,
     this.showAvatar = false,
     this.avatarUrl,
   });
@@ -28,6 +32,7 @@ class ChatMessageWidget extends StatelessWidget {
   final ChatRoomMessage message;
   final void Function(String userId, String name)? onUserTap;
   final void Function(String userId, String name)? onUserDoubleTap;
+  final void Function(ChatRoomMessage message)? onReplyToMessage;
   final bool showAvatar;
   /// Presence'tan çözülen profil resmi — mesajda görsel yoksa kullanılır.
   final String? avatarUrl;
@@ -41,6 +46,7 @@ class ChatMessageWidget extends StatelessWidget {
           message: message,
           onUserTap: onUserTap,
           onUserDoubleTap: onUserDoubleTap,
+          onReplyToMessage: onReplyToMessage,
           showAvatar: showAvatar,
           avatarUrl: avatarUrl,
         ),
@@ -54,6 +60,7 @@ class _ChatMessageBody extends ConsumerWidget {
     required this.message,
     this.onUserTap,
     this.onUserDoubleTap,
+    this.onReplyToMessage,
     this.showAvatar = false,
     this.avatarUrl,
   });
@@ -61,8 +68,22 @@ class _ChatMessageBody extends ConsumerWidget {
   final ChatRoomMessage message;
   final void Function(String userId, String name)? onUserTap;
   final void Function(String userId, String name)? onUserDoubleTap;
+  final void Function(ChatRoomMessage message)? onReplyToMessage;
   final bool showAvatar;
   final String? avatarUrl;
+
+  void _showMessageActions(BuildContext context) {
+    if (message.kind != ChatMessageKind.text) return;
+    unawaited(
+      showVoiceRoomChatMessageActions(
+        context: context,
+        message: message,
+        onReply: onReplyToMessage == null
+            ? null
+            : () => onReplyToMessage!(message),
+      ),
+    );
+  }
 
   String? get _effectiveImage {
     final a = avatarUrl?.trim();
@@ -103,6 +124,7 @@ class _ChatMessageBody extends ConsumerWidget {
         onTap: user != null ? () => onUserTap?.call(user.id, name) : null,
         onDoubleTap:
             user != null ? () => onUserDoubleTap?.call(user.id, name) : null,
+        onLongPress: () => _showMessageActions(context),
         imageUrl: _effectiveImage,
       );
     }
@@ -117,6 +139,7 @@ class _ChatMessageBody extends ConsumerWidget {
       onTap: user != null ? () => onUserTap?.call(user.id, name) : null,
       onDoubleTap:
           user != null ? () => onUserDoubleTap?.call(user.id, name) : null,
+      onLongPress: () => _showMessageActions(context),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: bubbleDecoration,
@@ -174,6 +197,7 @@ class _StaffChatLine extends StatelessWidget {
     required this.showIstek,
     this.onTap,
     this.onDoubleTap,
+    this.onLongPress,
     this.imageUrl,
   });
 
@@ -186,6 +210,7 @@ class _StaffChatLine extends StatelessWidget {
   final bool showIstek;
   final VoidCallback? onTap;
   final VoidCallback? onDoubleTap;
+  final VoidCallback? onLongPress;
 
   Color get _accent {
     if (VoiceStaffChatStyle.isGoldOrAdminChatUser(user) &&
@@ -201,6 +226,7 @@ class _StaffChatLine extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       onDoubleTap: onDoubleTap,
+      onLongPress: onLongPress,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.449+487 (2026-09-09) — Sesli oda Faz 23
+
+### Mention banner
+- **8 sn otomatik kapanma** (`autoDismissDuration`) — seq değişiminde timer yenilenir
+- Pulse animasyonu `AnimatedBuilder` ile düzeltildi
+
+### Sohbet uzun bas
+- `showVoiceRoomChatMessageActions` — **Kopyala** + **Yanıtla** (Basic + RTC)
+- `VoiceRoomMention.replyToMessage` — @etiket + `「alıntı」` öneki
+- `ChatMessageWidget.onReplyToMessage` + `onLongPress`
+
 ## 1.0.448+486 (2026-09-09) — Sesli oda Faz 22
 
 ### Mention banner
