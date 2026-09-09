@@ -459,6 +459,7 @@ export async function joinPresence(
   };
   const wasIn = roomMap(roomId).has(user.id);
   roomMap(roomId).set(user.id, row);
+  cancelEmptyRoomClose(roomId);
 
   const canonicalId = resolveRoomId(roomId);
   const voiceRole: VoiceRole =
@@ -494,9 +495,56 @@ export async function joinPresence(
   return { presence: [...roomMap(roomId).values()], systemMsg, banned: false as const };
 }
 
+import { emitRoomEventSse } from "./roomEventSse";
+
+const EMPTY_ROOM_GRACE_MS = 45_000;
+const emptyRoomCloseTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+function cancelEmptyRoomClose(roomId: string) {
+  const key = resolveRoomId(roomId);
+  const t = emptyRoomCloseTimers.get(key);
+  if (t) {
+    clearTimeout(t);
+    emptyRoomCloseTimers.delete(key);
+  }
+}
+
+function scheduleEmptyRoomClose(roomId: string) {
+  const key = resolveRoomId(roomId);
+  cancelEmptyRoomClose(roomId);
+  emptyRoomCloseTimers.set(
+    key,
+    setTimeout(() => {
+      emptyRoomCloseTimers.delete(key);
+      if (roomMap(roomId).size > 0) return;
+      const djKey = resolveRoomId(roomId);
+      djByRoom.set(djKey, emptyDjState());
+      void clearRoomQueue(roomId);
+      emitRoomEventSse(key, {
+        event: "room_closed",
+        roomId: key,
+        message: "Oda boşaldı ve kapatıldı",
+      });
+    }, EMPTY_ROOM_GRACE_MS),
+  );
+}
+
+function releaseUserSeat(roomId: string, userId: string): number | null {
+  const p = roomMap(roomId).get(userId);
+  if (!p) return null;
+  const prev = p.seatIndex ?? null;
+  if (prev != null) {
+    p.seatIndex = null;
+    p.isSpeaking = false;
+    roomMap(roomId).set(userId, p);
+  }
+  return prev;
+}
+
 export function leavePresence(roomId: string, userId: string) {
   const m = roomMap(roomId);
   const prev = m.get(userId);
+  const previousSeatIndex = releaseUserSeat(roomId, userId);
   m.delete(userId);
   const canonicalId = resolveRoomId(roomId);
   void presenceLeaveRoom(canonicalId, userId);
@@ -509,7 +557,17 @@ export function leavePresence(roomId: string, userId: string) {
       createdAt: new Date().toISOString(),
     });
   }
-  return { presence: [...m.values()], systemMsg, leftUser: prev ?? null };
+  if (m.size === 0) {
+    scheduleEmptyRoomClose(roomId);
+  } else {
+    cancelEmptyRoomClose(roomId);
+  }
+  return {
+    presence: [...m.values()],
+    systemMsg,
+    leftUser: prev ?? null,
+    previousSeatIndex,
+  };
 }
 
 export function listPresence(roomId: string) {

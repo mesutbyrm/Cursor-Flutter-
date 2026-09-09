@@ -1016,6 +1016,15 @@ chatRoomsRouter.delete("/rooms/:roomId/presence", requireAuth, async (req, res) 
     membership: result.leftUser?.membership,
     chatRole: result.leftUser?.chatRole,
   });
+  if (result.previousSeatIndex != null) {
+    void emitResolvedRoomAnimation(roomId, {
+      event: "seat_changed",
+      userId,
+      name: result.leftUser?.name ?? "Kullanıcı",
+      seatIndex: null,
+      previousSeatIndex: result.previousSeatIndex,
+    });
+  }
   return res.status(200).json({ users: result.presence });
 });
 

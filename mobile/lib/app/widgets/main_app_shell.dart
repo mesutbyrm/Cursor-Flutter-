@@ -20,6 +20,8 @@ import '../../features/messages/presentation/widgets/dm_realtime_listener.dart';
 import '../../features/messages/presentation/widgets/dm_voice_call_host.dart';
 import '../../features/video_call/presentation/incoming_video_call_screen.dart';
 import '../../features/voice_hub/presentation/widgets/voice_room/voice_room_global_music_bar.dart';
+import '../../features/voice_hub/presentation/widgets/voice_room/voice_room_global_rank_banner.dart';
+import '../../features/voice_hub/presentation/providers/voice_room_ranking_provider.dart';
 import '../../core/site_animation/presentation/widgets/site_animation_context_host.dart';
 import '../../core/site_animation/presentation/widgets/site_animation_social_entrance_listener.dart';
 import '../../features/gifts/presentation/global/global_gift_event_bridge.dart';
@@ -122,6 +124,7 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
   Widget build(BuildContext context) {
     ref.watch(connectivitySseReconnectProvider);
     watchGiftCatalogVersion(ref);
+    ref.watch(voiceRoomRankingProvider);
 
     final router = ref.read(goRouterProvider);
     if (!identical(router, _router)) {
@@ -168,6 +171,7 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
                       fit: StackFit.expand,
                       children: [
                         body,
+                        if (!isAuthRoute) const VoiceRoomGlobalRankBanner(),
                         if (showGlobalMusic)
                           Align(
                             alignment: Alignment.bottomCenter,

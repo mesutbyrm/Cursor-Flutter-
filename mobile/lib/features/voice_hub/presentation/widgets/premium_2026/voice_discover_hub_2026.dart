@@ -22,7 +22,7 @@ import '../../../../inbox/presentation/providers/inbox_unread_providers.dart';
 import 'package:canlifal_social/features/vip_gold/domain/voice_room_access.dart';
 import 'package:canlifal_social/features/vip_gold/presentation/theme/vip_gold_tokens.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
-import '../../../../live/presentation/utils/open_live_stream.dart';
+import '../../sheets/voice_room_ranking_sheet.dart';
 import '../../utils/open_voice_chat_room_flow.dart';
 import '../voice_room_online_count.dart';
 import '../../theme/voice_room_tokens.dart';
@@ -202,6 +202,7 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
             inboxUnread: inboxUnread,
             onInbox: () => InboxRoutes.open(context),
             onCoins: () => openJetonStore(context, ref: ref),
+            onRanking: () => showVoiceRoomRankingSheet(context, ref),
           ),
         ),
         Padding(
@@ -529,6 +530,7 @@ class _DiscoverHeader extends StatelessWidget {
     required this.inboxUnread,
     required this.onInbox,
     required this.onCoins,
+    required this.onRanking,
   });
 
   final String userName;
@@ -538,6 +540,7 @@ class _DiscoverHeader extends StatelessWidget {
   final int inboxUnread;
   final VoidCallback onInbox;
   final VoidCallback onCoins;
+  final VoidCallback onRanking;
 
   @override
   Widget build(BuildContext context) {
@@ -636,6 +639,11 @@ class _DiscoverHeader extends StatelessWidget {
                 ],
               ),
             ),
+          ),
+          IconButton(
+            onPressed: onRanking,
+            tooltip: 'Oda sıralaması',
+            icon: const Icon(Icons.emoji_events_rounded, color: Color(0xFFFFD54F)),
           ),
           IconButton(
             onPressed: onInbox,

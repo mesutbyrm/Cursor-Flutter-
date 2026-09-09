@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
@@ -22,18 +24,39 @@ final pkBattleRemoteDataSourceProvider = Provider<PkBattleRemoteDataSource>((ref
 /// Sunucu PK senkronu — REST + SSE; odadayken SSE birincil.
 class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
   PkBattleRemoteDataSource get _api => ref.read(pkBattleRemoteDataSourceProvider);
+  Timer? _activePoll;
+  String? _pollRoomId;
+  String? _pollAltRoomId;
 
   @override
   PkBattleRemote? build() {
+    ref.onDispose(() => _activePoll?.cancel());
     return null;
   }
 
+  void _scheduleActivePoll() {
+    _activePoll?.cancel();
+    final battle = state;
+    if (battle == null || !battle.isActive) return;
+    final roomId = _pollRoomId?.trim() ?? '';
+    if (roomId.isEmpty) return;
+    _activePoll = Timer.periodic(const Duration(seconds: 4), (_) {
+      unawaited(loadRoomBattle(roomId, alternateRoomId: _pollAltRoomId));
+    });
+  }
+
   Future<PkBattleRemote?> loadRoomBattle(String roomId, {String? alternateRoomId}) async {
+    _pollRoomId = roomId;
+    _pollAltRoomId = alternateRoomId;
     final battle = await _api.fetchRoomBattle(
       roomId,
       alternateRoomId: alternateRoomId,
     );
-    if (battle != null) _apply(battle, 'load');
+    if (battle != null) {
+      _apply(battle, 'load');
+    } else {
+      _activePoll?.cancel();
+    }
     return battle;
   }
 
@@ -270,6 +293,11 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     if (battle.isActive || battle.isEnded) {
       _syncPkBattleState(battle);
     }
+    if (battle.isActive) {
+      _scheduleActivePoll();
+    } else {
+      _activePoll?.cancel();
+    }
   }
 
   void _syncPkBattleState(PkBattleRemote battle) {
@@ -312,6 +340,9 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
   }
 
   void clear() {
+    _activePoll?.cancel();
+    _pollRoomId = null;
+    _pollAltRoomId = null;
     state = null;
     ref.read(pkSessionPhaseProvider.notifier).reset();
   }

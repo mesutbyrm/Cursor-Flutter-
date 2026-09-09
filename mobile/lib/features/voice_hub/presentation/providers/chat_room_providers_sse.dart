@@ -91,7 +91,8 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
               unawaited(_sse._joinPresence());
             }
             unawaited(_sse._refreshSeatsFromBackend());
-            if (wasConnected) {
+            // İlk giriş snapshot'ı zaten yüklendi; yeniden bağlantıda tam resync.
+            if (state.backendSyncReady) {
               unawaited(_sse.resyncAfterSseReconnect());
             }
             ref.read(voiceRoomDiagnosticProvider.notifier).setSse(true);

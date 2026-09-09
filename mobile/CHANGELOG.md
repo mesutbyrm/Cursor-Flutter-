@@ -1,5 +1,19 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.428+466 (2026-09-09) — Sesli oda Faz 2
+
+### Realtime ve yaşam döngüsü
+- **SSE reconnect** — `backendSyncReady` sonrası tam state resync düzeltmesi
+- **Arka plan** — 45 sn sonra otomatik oda çıkışı + koltuk temizliği
+- **PK süre** — sunucu poll (4 sn) + yerel geri sayım
+
+### Sıralama
+- **Saatlik / günlük Top 100** sheet (proxy skor — üretim API hazır olunca bağlanır)
+- **Global Top 3 bildirim** banner (🏆 oda başarısı)
+
+### Yerel API mirror (`api/`)
+- `leavePresence` → koltuk boşaltma + boş oda 45 sn grace → `room_closed`
+
 ## 1.0.427+465 (2026-09-09) — Sesli oda profesyonel UX
 
 ### Sesli oda

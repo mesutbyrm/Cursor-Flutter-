@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,7 +11,7 @@ import '../../providers/pk_battle_remote_provider.dart';
 
 /// Oda içi PK durumu — aktif skor şeridi veya bekleyen davet metni.
 /// Davet popup'ı uygulama geneli `VoicePkInviteListener` ile gösterilir.
-class VoicePkRoomStrip extends ConsumerWidget {
+class VoicePkRoomStrip extends ConsumerStatefulWidget {
   const VoicePkRoomStrip({
     super.key,
     required this.room,
@@ -22,12 +24,51 @@ class VoicePkRoomStrip extends ConsumerWidget {
   final Future<void> Function(PkBattleRemote remote)? onEndPk;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final remote = ref.watch(pkBattleForRoomProvider(room));
+  ConsumerState<VoicePkRoomStrip> createState() => _VoicePkRoomStripState();
+}
+
+class _VoicePkRoomStripState extends ConsumerState<VoicePkRoomStrip> {
+  Timer? _tick;
+  int? _displaySeconds;
+  String? _battleId;
+
+  @override
+  void dispose() {
+    _tick?.cancel();
+    super.dispose();
+  }
+
+  void _syncTimer(PkBattleRemote? remote) {
+    if (remote == null || !remote.isActive) {
+      _tick?.cancel();
+      _tick = null;
+      _displaySeconds = null;
+      _battleId = null;
+      return;
+    }
+    if (_battleId != remote.id || _displaySeconds == null) {
+      _battleId = remote.id;
+      _displaySeconds = remote.secondsLeft;
+    } else if ((_displaySeconds! - remote.secondsLeft).abs() > 4) {
+      _displaySeconds = remote.secondsLeft;
+    }
+    _tick?.cancel();
+    _tick = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      final next = (_displaySeconds ?? 0) - 1;
+      setState(() => _displaySeconds = next < 0 ? 0 : next);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final remote = ref.watch(pkBattleForRoomProvider(widget.room));
+    _syncTimer(remote);
+
     if (remote == null || remote.isEnded) return const SizedBox.shrink();
 
     if (remote.isPending) {
-      final isChallenger = isPkChallengerRoom(remote, room);
+      final isChallenger = isPkChallengerRoom(remote, widget.room);
       if (!isChallenger) return const SizedBox.shrink();
       return Padding(
         padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
@@ -47,7 +88,7 @@ class VoicePkRoomStrip extends ConsumerWidget {
                   ),
                 ),
                 TextButton(
-                  onPressed: onOpenPk,
+                  onPressed: widget.onOpenPk,
                   child: const Text('Detay'),
                 ),
               ],
@@ -59,19 +100,20 @@ class VoicePkRoomStrip extends ConsumerWidget {
 
     if (!remote.isActive) return const SizedBox.shrink();
 
-    final isChallengerSide = isPkChallengerRoom(remote, room);
+    final isChallengerSide = isPkChallengerRoom(remote, widget.room);
     final leftScore =
         isChallengerSide ? remote.challengerScore : remote.opponentScore;
     final rightScore =
         isChallengerSide ? remote.opponentScore : remote.challengerScore;
     final leftName = remote.challenger?.displayName ?? 'Biz';
     final rightName = remote.opponent?.displayName ?? 'Rakip';
-    final timerLabel = _formatPkSeconds(remote.secondsLeft);
+    final seconds = _displaySeconds ?? remote.secondsLeft;
+    final timerLabel = _formatPkSeconds(seconds);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
       child: GestureDetector(
-        onTap: onOpenPk,
+        onTap: widget.onOpenPk,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -106,8 +148,8 @@ class VoicePkRoomStrip extends ConsumerWidget {
               leftScore: leftScore,
               rightScore: rightScore,
               status: 'active',
-              isHost: onEndPk != null,
-              onEnd: onEndPk == null ? null : () => onEndPk!(remote),
+              isHost: widget.onEndPk != null,
+              onEnd: widget.onEndPk == null ? null : () => widget.onEndPk!(remote),
             ),
           ],
         ),
