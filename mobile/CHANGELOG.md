@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.417+455 (2026-09-09) — Profil/admin P1 eksikleri
+
+### Admin
+- Ödeme talebi: kaydırarak onay/red + red sebebi şablonları (`admin_payment_reject_sheet`)
+- Sesli oda mini panel: katılımcı listesi (`fetchPresencePage`) + tek tık kick
+- Canlı yayın admin: izleyici listesi seçici → moderasyon (ID yazmadan)
+- Dashboard: günlük moderasyon görev checklist (ödeme, rapor, oda, yayın)
+- Komuta merkezi finans: jeton/CFC filtre chip’leri
+
 ## 1.0.416+454 (2026-09-09) — Admin komuta merkezi Faz 2–4
 
 ### Faz 2

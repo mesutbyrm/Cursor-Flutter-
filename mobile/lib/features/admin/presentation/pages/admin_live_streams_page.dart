@@ -10,6 +10,7 @@ import '../../../live/presentation/providers/live_providers.dart';
 import '../../../live/presentation/providers/live_streams_list_notifier.dart';
 import '../../../live/presentation/utils/open_live_stream.dart';
 import '../../../live/presentation/widgets/broadcast_room/live_moderation_sheet.dart';
+import '../widgets/admin_live_viewer_picker_sheet.dart';
 import '../providers/staff_access_provider.dart';
 
 /// Admin — aktif canlı yayınlar (`GET /api/video-streams`).
@@ -220,40 +221,23 @@ class _StreamCard extends ConsumerWidget {
     WidgetRef ref,
     LiveStreamEntity stream,
   ) async {
-    final ctrl = TextEditingController();
-    final userId = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Moderasyon'),
-        content: TextField(
-          controller: ctrl,
-          decoration: const InputDecoration(
-            labelText: 'Kullanıcı ID',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Vazgeç'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
-            child: const Text('Devam'),
-          ),
-        ],
-      ),
-    );
-    ctrl.dispose();
-    if (userId == null || userId.isEmpty || !context.mounted) return;
     final streamId = stream.id;
     if (streamId.isEmpty) return;
+
+    final viewer = await showAdminLiveViewerPicker(
+      context: context,
+      ref: ref,
+      streamId: streamId,
+    );
+    if (viewer == null || !context.mounted) return;
+
     await showLiveModerationSheet(
       context: context,
       ref: ref,
       streamId: streamId,
-      targetUserId: userId,
-      targetDisplayName: userId,
+      targetUserId: viewer.userId,
+      targetDisplayName:
+          viewer.userName ?? viewer.nickname ?? viewer.userId,
     );
   }
 

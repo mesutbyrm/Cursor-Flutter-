@@ -19,6 +19,7 @@ import '../../data/services/admin_payments_sse_service.dart';
 import '../../domain/admin_payment_review.dart';
 import '../providers/admin_providers.dart';
 import '../providers/staff_access_provider.dart';
+import '../widgets/admin_payment_reject_sheet.dart';
 import '../widgets/admin_voice_room_settings_panel.dart';
 
 /// Admin / yönetici — site ödeme istekleri ve bildirimler.
@@ -349,37 +350,8 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
     }
   }
 
-  Future<String?> _askRejectReason(BuildContext context) async {
-    final ctrl = TextEditingController();
-    final result = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Ödemeyi reddet'),
-        content: TextField(
-          controller: ctrl,
-          maxLines: 3,
-          decoration: const InputDecoration(
-            labelText: 'Red sebebi (kullanıcıya bildirilir)',
-            hintText: 'Örn. Dekont tutarı eşleşmiyor',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Vazgeç'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
-            child: const Text('Reddet'),
-          ),
-        ],
-      ),
-    );
-    ctrl.dispose();
-    return result;
-  }
-}
+  Future<String?> _askRejectReason(BuildContext context) =>
+      showAdminPaymentRejectSheet(context);
 
 class _CountChip extends StatelessWidget {
   const _CountChip({required this.count});
@@ -551,7 +523,51 @@ class _PendingPaymentsTabState extends State<_PendingPaymentsTab> {
                   r['senderInfo']?.toString() ??
                   'Kullanıcı';
 
-              return DiscoverGlassCard(
+              return Dismissible(
+                key: ValueKey('payment-$id'),
+                direction: DismissDirection.horizontal,
+                confirmDismiss: (dir) async {
+                  if (id.isEmpty) return false;
+                  widget.onReview(
+                    context,
+                    id,
+                    dir == DismissDirection.startToEnd ? 'approve' : 'reject',
+                    requestType: isJeton ? 'jeton' : 'cfc',
+                  );
+                  return false;
+                },
+                background: Container(
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.only(left: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.25),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.check_circle, color: Colors.green),
+                      SizedBox(width: 8),
+                      Text('Onayla', style: TextStyle(fontWeight: FontWeight.w700)),
+                    ],
+                  ),
+                ),
+                secondaryBackground: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 20),
+                  decoration: BoxDecoration(
+                    color: AppThemeColors.liveRed.withValues(alpha: 0.25),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text('Reddet', style: TextStyle(fontWeight: FontWeight.w700)),
+                      SizedBox(width: 8),
+                      Icon(Icons.cancel, color: AppThemeColors.liveRed),
+                    ],
+                  ),
+                ),
+                child: DiscoverGlassCard(
                 key: _cardKeys[id],
                 padding: const EdgeInsets.all(14),
                 borderColor: highlighted
@@ -598,6 +614,14 @@ class _PendingPaymentsTabState extends State<_PendingPaymentsTab> {
                           ),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Kaydır: sağ onay · sol red',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: context.colors.onSurfaceMuted,
+                      ),
                     ),
                     SizedBox(height: 6),
                     Text(
@@ -664,6 +688,7 @@ class _PendingPaymentsTabState extends State<_PendingPaymentsTab> {
                     ),
                   ],
                 ),
+              ),
               );
             },
           );

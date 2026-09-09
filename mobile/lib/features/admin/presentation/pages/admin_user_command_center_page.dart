@@ -372,7 +372,9 @@ class _OverviewTab extends StatelessWidget {
   }
 }
 
-class _FinanceTab extends ConsumerWidget {
+enum _FinanceFilter { all, jeton, cfc }
+
+class _FinanceTab extends ConsumerStatefulWidget {
   const _FinanceTab({
     required this.detail,
     required this.history,
@@ -388,10 +390,33 @@ class _FinanceTab extends ConsumerWidget {
   final VoidCallback onRefresh;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_FinanceTab> createState() => _FinanceTabState();
+}
+
+class _FinanceTabState extends ConsumerState<_FinanceTab> {
+  _FinanceFilter _filter = _FinanceFilter.all;
+
+  List<Map<String, dynamic>> _filteredHistory() {
+    if (_filter == _FinanceFilter.all) return widget.history;
+    return widget.history.where((r) {
+      final kind = (r['type'] ?? r['currency'] ?? '').toString().toLowerCase();
+      if (_filter == _FinanceFilter.jeton) {
+        return kind.contains('jeton') ||
+            kind.contains('coin') ||
+            r['coins'] != null;
+      }
+      return kind.contains('cfc');
+    }).toList(growable: false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final access = widget.access;
     if (!AdminUserPermissions.canViewFinance(access)) {
       return const Center(child: Text('Finans görüntüleme yetkiniz yok.'));
     }
+
+    final filtered = _filteredHistory();
 
     return ListView(
       padding: const EdgeInsets.all(20),
@@ -406,10 +431,10 @@ class _FinanceTab extends ConsumerWidget {
                   await AdminCreditSheet.show(
                     context,
                     ref: ref,
-                    user: detail.raw,
+                    user: widget.detail.raw,
                     kind: AdminCreditKind.jeton,
                   );
-                  onRefresh();
+                  widget.onRefresh();
                 },
                 icon: const Icon(Icons.monetization_on_outlined, size: 18),
                 label: const Text('Jeton +/-'),
@@ -419,10 +444,10 @@ class _FinanceTab extends ConsumerWidget {
                   await AdminCreditSheet.show(
                     context,
                     ref: ref,
-                    user: detail.raw,
+                    user: widget.detail.raw,
                     kind: AdminCreditKind.cfc,
                   );
-                  onRefresh();
+                  widget.onRefresh();
                 },
                 icon: const Icon(Icons.toll_outlined, size: 18),
                 label: const Text('CFC +/-'),
@@ -432,9 +457,9 @@ class _FinanceTab extends ConsumerWidget {
                   await AdminMembershipSheet.show(
                     context,
                     ref: ref,
-                    user: detail.raw,
+                    user: widget.detail.raw,
                   );
-                  onRefresh();
+                  widget.onRefresh();
                 },
                 icon: const Icon(Icons.workspace_premium_outlined, size: 18),
                 label: const Text('Gold / üyelik'),
@@ -443,13 +468,13 @@ class _FinanceTab extends ConsumerWidget {
           ),
         const SizedBox(height: 16),
         if (AdminUserPermissions.canReviewUserPayments(access) &&
-            pendingPayments.isNotEmpty) ...[
+            widget.pendingPayments.isNotEmpty) ...[
           const Text(
             'Bekleyen ödeme talepleri',
             style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
           ),
           const SizedBox(height: 8),
-          ...pendingPayments.map(
+          ...widget.pendingPayments.map(
             (r) => Card(
               child: ListTile(
                 title: Text(resolvePaymentRequestType(r)),
@@ -466,7 +491,7 @@ class _FinanceTab extends ConsumerWidget {
                         ref,
                         request: r,
                         action: 'approve',
-                        onDone: onRefresh,
+                        onDone: widget.onRefresh,
                       ),
                     ),
                     IconButton(
@@ -476,7 +501,7 @@ class _FinanceTab extends ConsumerWidget {
                         ref,
                         request: r,
                         action: 'reject',
-                        onDone: onRefresh,
+                        onDone: widget.onRefresh,
                       ),
                     ),
                   ],
@@ -491,13 +516,34 @@ class _FinanceTab extends ConsumerWidget {
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
         ),
         const SizedBox(height: 8),
-        if (history.isEmpty)
+        Wrap(
+          spacing: 6,
+          children: [
+            ChoiceChip(
+              label: const Text('Tümü'),
+              selected: _filter == _FinanceFilter.all,
+              onSelected: (_) => setState(() => _filter = _FinanceFilter.all),
+            ),
+            ChoiceChip(
+              label: const Text('Jeton'),
+              selected: _filter == _FinanceFilter.jeton,
+              onSelected: (_) => setState(() => _filter = _FinanceFilter.jeton),
+            ),
+            ChoiceChip(
+              label: const Text('CFC'),
+              selected: _filter == _FinanceFilter.cfc,
+              onSelected: (_) => setState(() => _filter = _FinanceFilter.cfc),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (filtered.isEmpty)
           const Text(
-            'Kayıt yok veya API henüz veri döndürmedi.',
+            'Kayıt yok veya filtre sonucu boş.',
             style: TextStyle(fontSize: 12),
           )
         else
-          ...history.map((r) => _FinanceRow(row: r)),
+          ...filtered.map((r) => _FinanceRow(row: r)),
       ],
     );
   }

@@ -6,7 +6,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../live/data/pk/pk_room_remote_datasource.dart';
-import '../../domain/admin_payment_review.dart';
+import '../widgets/admin_payment_reject_sheet.dart';
 import '../../domain/admin_site_animation.dart';
 import '../../domain/admin_user_extended_data.dart';
 import '../providers/admin_panel_providers.dart';
@@ -278,12 +278,18 @@ abstract final class AdminUserCommandActions {
   }) async {
     final id = resolvePaymentRequestId(request);
     if (id.isEmpty) return;
+    String? note;
+    if (action == 'reject') {
+      note = await showAdminPaymentRejectSheet(context);
+      if (note == null) return;
+    }
     try {
       await reviewAdminPaymentRequest(
         ref.read(dioProvider),
         requestId: id,
         action: action,
         requestType: resolvePaymentRequestType(request),
+        reviewNote: note,
       );
       onDone();
       if (context.mounted) {

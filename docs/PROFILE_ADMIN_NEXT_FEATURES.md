@@ -1,16 +1,16 @@
 # Profil & Admin — Sonraki özellik önerileri
 
-> **Sürüm:** 1.0.414+452 · Üretim API: `https://canlifal.com`
+> **Sürüm:** 1.0.417+455 · Üretim API: `https://canlifal.com`
 
 ## P1 — Kısa vadede (backend hazır veya küçük mobil iş)
 
 1. **Admin dashboard widget (Android)** — Bekleyen ödeme sayısı + son aktivite; staff ana ekranından tek dokunuşla `/admin`.
-2. **Ödeme talebi inline onay** — Push deep link ile açılan talep kartında swipe-to-approve / red sebebi şablonları.
-3. **Kullanıcı finans geçmişi filtreleri** — Jeton / CFC / tarih aralığı; `admin/finance` yanıt şeması netleşince client filtre.
-4. **Sesli oda admin: katılımcı listesi** — Odaya girmeden `GET /api/chat/rooms/{id}/moderation` ile kick/mute (mevcut datasource).
-5. **Yayın admin: izleyici listesi** — Aktif izleyiciden moderasyon sheet (user picker, ID yazmadan).
+2. ~~**Ödeme talebi inline onay**~~ — ✅ `1.0.417+455` swipe + red şablonları
+3. ~~**Kullanıcı finans geçmişi filtreleri**~~ — ✅ `1.0.417+455` jeton/CFC chip
+4. ~~**Sesli oda admin: katılımcı listesi**~~ — ✅ `1.0.417+455` presence + kick
+5. ~~**Yayın admin: izleyici listesi**~~ — ✅ `1.0.417+455` online-users picker
 6. **Profil özet: haftalık grafik** — Jeton harcama / kazanç mini sparkline (`/api/me` activity veya wallet history).
-7. **Staff görev checklist** — Günlük moderasyon KPI (açık rapor, bekleyen PK, sesli oda şikayeti) sabit görev listesi.
+7. ~~**Staff görev checklist**~~ — ✅ `1.0.417+455` dashboard günlük görevler
 8. **Rol önizleme: canlı test** — “Bu rolle görünüm” toggle (salt UI, backend değişmez).
 
 ## P2 — Orta vade (koordinasyon gerekir)
