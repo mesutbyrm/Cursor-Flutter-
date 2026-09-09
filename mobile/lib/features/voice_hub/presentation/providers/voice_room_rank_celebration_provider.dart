@@ -20,11 +20,14 @@ class VoiceRoomRankCelebration {
 class VoiceRoomRankCelebrationNotifier
     extends Notifier<VoiceRoomRankCelebration?> {
   final Map<String, int> _lastTopRanks = {};
+  final Map<String, DateTime> _cooldownUntil = {};
+  static const _cooldown = Duration(seconds: 90);
 
   @override
   VoiceRoomRankCelebration? build() => null;
 
   void evaluate(VoiceRoomRankingState ranking) {
+    final now = DateTime.now();
     for (final period in VoiceRoomRankingPeriod.values) {
       final list = period == VoiceRoomRankingPeriod.hourly
           ? ranking.hourly
@@ -33,8 +36,12 @@ class VoiceRoomRankCelebrationNotifier
         final key = '${period.name}:${entry.room.apiRoomKey}';
         final prev = _lastTopRanks[key];
         _lastTopRanks[key] = entry.rank;
-        if (prev != null && prev == entry.rank) continue;
         if (entry.rank > 3) continue;
+        final improved = prev == null || entry.rank < prev;
+        if (!improved) continue;
+        final until = _cooldownUntil[key];
+        if (until != null && now.isBefore(until)) continue;
+        _cooldownUntil[key] = now.add(_cooldown);
         state = VoiceRoomRankCelebration(
           rank: entry.rank,
           roomName: entry.room.displayTitle,

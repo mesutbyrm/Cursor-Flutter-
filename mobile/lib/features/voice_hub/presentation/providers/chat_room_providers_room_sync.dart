@@ -157,12 +157,14 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       case 'pk_invite':
       case 'pkinvite':
         if (_tryApplyPkRoomEvent(payload)) return;
+        _scheduleRankingRefreshFromSse();
         return;
       case 'gift_sent':
       case 'giftsent':
       case 'gift_ranking_updated':
       case 'giftrankingupdated':
         _refreshGiftGoalFromRoomSse();
+        _scheduleRankingRefreshFromSse();
         return;
       case 'gift_goal':
       case 'giftgoal':
@@ -201,6 +203,14 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
           )
           .refresh(),
     );
+  }
+
+  /// Hediye/PK SSE sonrası proxy sıralamayı gecikmeli yenile (mevcut API yok).
+  void _scheduleRankingRefreshFromSse() {
+    _rankingRefreshDebounce?.cancel();
+    _rankingRefreshDebounce = Timer(const Duration(seconds: 2), () {
+      unawaited(ref.read(voiceRoomRankingProvider.notifier).refresh());
+    });
   }
 
   void _dispatchSiteAnimation(String event, Map<String, dynamic> payload) {

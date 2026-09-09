@@ -111,6 +111,7 @@ import 'voice_seat_gift_totals_provider.dart';
 import 'voice_room_diagnostic_provider.dart';
 import 'voice_room_ui_provider.dart';
 import 'voice_room_mention_notice_provider.dart';
+import 'voice_room_ranking_provider.dart';
 part 'chat_room_providers_music.dart';
 part 'chat_room_providers_playback.dart';
 part 'chat_room_providers_moderation.dart';
@@ -402,6 +403,7 @@ class VoiceRoomLiveController
   Timer? _kickWarningTimer;
   Timer? _seatRefreshDebounce;
   Timer? _sseRoomRefreshDebounce;
+  Timer? _rankingRefreshDebounce;
   final _pollPaused = false;
   var _pollTick = 0;
   String? _lastDjPlaybackSignature;
@@ -943,6 +945,7 @@ class VoiceRoomLiveController
     _kickWarningTimer?.cancel();
     _seatRefreshDebounce?.cancel();
     _sseRoomRefreshDebounce?.cancel();
+    _rankingRefreshDebounce?.cancel();
     _roomSongBlocSyncTimer?.cancel();
   }
 

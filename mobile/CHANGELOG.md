@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.433+471 (2026-09-09) — Sesli oda Faz 7
+
+### RTC parite
+- **Reconnect banner** + manuel `resyncAfterSseReconnect()` — `voice_room_rtc_page`
+- **Mention banner** — RTC modunda «Senden bahsetti» gösterimi
+
+### Sıralama (proxy)
+- Hediye/PK SSE → 2 sn debounce ile `voiceRoomRankingProvider.refresh()`
+- Top-3 kutlama: yalnızca sıra iyileşince + 90 sn oda cooldown
+
 ## 1.0.432+470 (2026-09-09) — Sesli oda Faz 6
 
 ### PK süre otoritesi
