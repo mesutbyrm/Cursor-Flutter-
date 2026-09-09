@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.431+469 (2026-09-09) — Sesli oda Faz 5
+
+### Hediye hedefi
+- **`endsAt` fallback** — sunucu göndermezse `createdAt` + `durationMinutes` ile geri sayım
+- Önizleme sheet: aktif hedef chip + ilerleme çubuğu
+- SSE `gift_sent` / `gift_goal` → hedef anında yenileme
+
+### Sıralama
+- **VoiceRoomRankingRefreshHost** — aktif oturumda 5 dk'da bir proxy sıralama yenileme
+
 ## 1.0.430+468 (2026-09-09) — Sesli oda Faz 4
 
 ### Müzik kuyruğu

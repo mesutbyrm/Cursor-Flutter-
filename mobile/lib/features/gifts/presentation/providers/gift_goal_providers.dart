@@ -82,6 +82,7 @@ class GiftGoalController
         }
       }
       goal ??= goals.isNotEmpty ? goals.first : null;
+      goal = goal?.withResolvedDeadline();
 
       if (goal != null && goal.endsAt != null) {
         final expired = DateTime.now().isAfter(goal.endsAt!);
@@ -126,9 +127,12 @@ class GiftGoalController
   }
 
   /// Yeni hedef oluşturulduktan sonra anında takibe al.
-  void adopt(GiftGoal goal) {
-    _wasCompleted = goal.isCompleted;
-    state = GiftGoalState(goal: goal, dismissed: false);
+  void adopt(GiftGoal goal, {int? fallbackDurationMinutes}) {
+    final resolved = goal.withResolvedDeadline(
+      fallbackDurationMinutes: fallbackDurationMinutes,
+    );
+    _wasCompleted = resolved.isCompleted;
+    state = GiftGoalState(goal: resolved, dismissed: false);
     _start();
   }
 

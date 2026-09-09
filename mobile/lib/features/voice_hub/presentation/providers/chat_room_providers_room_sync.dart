@@ -162,6 +162,13 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       case 'giftsent':
       case 'gift_ranking_updated':
       case 'giftrankingupdated':
+        _refreshGiftGoalFromRoomSse();
+        return;
+      case 'gift_goal':
+      case 'giftgoal':
+      case 'goal_updated':
+      case 'goalupdated':
+        _refreshGiftGoalFromRoomSse();
         return;
       case 'owner_changed':
         _applyRoomEventOwnerChanged(payload);
@@ -180,6 +187,20 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       default:
         return;
     }
+  }
+
+  void _refreshGiftGoalFromRoomSse() {
+    if (_roomKey.isEmpty) return;
+    unawaited(
+      ref
+          .read(
+            giftGoalProvider((
+              context: 'voice_room',
+              contextId: _roomKey,
+            )).notifier,
+          )
+          .refresh(),
+    );
   }
 
   void _dispatchSiteAnimation(String event, Map<String, dynamic> payload) {

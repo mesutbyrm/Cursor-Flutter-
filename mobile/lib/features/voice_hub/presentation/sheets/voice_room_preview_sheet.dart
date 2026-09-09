@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../providers/voice_room_ranking_provider.dart';
+import '../providers/voice_room_preview_goal_provider.dart';
 import '../../../../core/images/canlifal_network_image.dart';
 
 /// Odaya girmeden önce önizleme — PK, sıralama, çevrimiçi sayısı.
@@ -12,6 +13,7 @@ Future<bool> showVoiceRoomPreviewSheet(
   required VoiceRoomEntity room,
 }) async {
   await ref.read(voiceRoomRankingProvider.notifier).refresh();
+  ref.invalidate(voiceRoomPreviewGoalProvider(room.apiRoomKey));
   if (!context.mounted) return false;
 
   final result = await showModalBottomSheet<bool>(
@@ -37,6 +39,8 @@ class _VoiceRoomPreviewSheet extends ConsumerWidget {
     final daily = ref
         .read(voiceRoomRankingProvider.notifier)
         .rankForRoom(room.apiRoomKey, period: VoiceRoomRankingPeriod.daily);
+    final goalAsync = ref.watch(voiceRoomPreviewGoalProvider(room.apiRoomKey));
+    final activeGoal = goalAsync.valueOrNull;
     final bottom = MediaQuery.paddingOf(context).bottom;
     final owner = room.ownerName?.trim().isNotEmpty == true
         ? room.ownerName!.trim()
@@ -126,8 +130,36 @@ class _VoiceRoomPreviewSheet extends ConsumerWidget {
                 _chip(Icons.emoji_events_rounded, 'Saatlik #$hourly', const Color(0xFFFFB300)),
               if (daily != null && daily <= 100 && daily != hourly)
                 _chip(Icons.calendar_today_rounded, 'Günlük #$daily', const Color(0xFF00E5C3)),
+              if (activeGoal != null)
+                _chip(
+                  Icons.card_giftcard_rounded,
+                  'Hedef %${(activeGoal.progress * 100).round()}',
+                  const Color(0xFF9C27FF),
+                ),
             ],
           ),
+          if (activeGoal != null) ...[
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: activeGoal.progress,
+                minHeight: 5,
+                backgroundColor: Colors.white12,
+                valueColor: const AlwaysStoppedAnimation(Color(0xFF9C27FF)),
+              ),
+            ),
+            if (activeGoal.endsAt != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Hedef süresi: ${_formatRemaining(activeGoal.remainingTime)}',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.55),
+                  fontSize: 10,
+                ),
+              ),
+            ],
+          ],
           if (ranking.lastUpdated != null) ...[
             const SizedBox(height: 10),
             Text(
@@ -169,6 +201,15 @@ class _VoiceRoomPreviewSheet extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  static String _formatRemaining(Duration? remaining) {
+    if (remaining == null) return '';
+    final total = remaining.inSeconds;
+    if (total <= 0) return '00:00';
+    final m = (total ~/ 60).toString().padLeft(2, '0');
+    final s = (total % 60).toString().padLeft(2, '0');
+    return '$m:$s';
   }
 
   Widget _chip(IconData icon, String label, Color color) {

@@ -93,6 +93,7 @@ import '../services/voice_room_music_control_delegate.dart';
 import '../../video/domain/youtube_video_id.dart';
 import '../../video/presentation/room_video_controller.dart';
 import '../../../gifts/presentation/providers/gift_providers.dart';
+import '../../../gifts/presentation/providers/gift_goal_providers.dart';
 import '../../../gifts/presentation/providers/gift_catalog_index_provider.dart';
 import '../../../gifts/presentation/sync/gift_session_controller.dart';
 import '../../../gifts/domain/gift_system_message.dart';

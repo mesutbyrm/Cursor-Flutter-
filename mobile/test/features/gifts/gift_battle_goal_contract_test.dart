@@ -62,5 +62,17 @@ void main() {
       expect(goal.percent, 25);
       expect(goal.progress, 0.25);
     });
+
+    test('resolves endsAt from createdAt and durationMinutes', () {
+      final created = DateTime.utc(2026, 9, 9, 12, 0);
+      final goal = GiftGoal(
+        id: 'g2',
+        title: 'Süreli',
+        targetAmount: 5000,
+        durationMinutes: 10,
+        createdAt: created,
+      ).withResolvedDeadline(now: created);
+      expect(goal.endsAt, created.add(const Duration(minutes: 10)));
+    });
   });
 }

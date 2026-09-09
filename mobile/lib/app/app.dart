@@ -19,6 +19,7 @@ import '../features/auth/presentation/auth_flow_app.dart';
 import '../features/auth/presentation/providers/auth_providers.dart';
 import '../features/voice_hub/presentation/widgets/voice_room_music_lifecycle_host.dart';
 import '../features/voice_hub/presentation/widgets/voice_room/voice_room_session_lifecycle_host.dart';
+import '../features/voice_hub/presentation/widgets/voice_room/voice_room_ranking_refresh_host.dart';
 import '../core/site_animation/presentation/site_animation_catalog_provider.dart';
 import 'router/app_router.dart';
 import 'widgets/main_app_shell.dart';
@@ -133,7 +134,8 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
     final router = ref.watch(goRouterProvider);
 
     return MobileConfigGate(
-      child: VoiceRoomSessionLifecycleHost(
+      child: VoiceRoomRankingRefreshHost(
+        child: VoiceRoomSessionLifecycleHost(
         child: VoiceRoomMusicLifecycleHost(
         child: PushLifecycleListener(
           child: MaterialApp.router(
@@ -167,6 +169,7 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
             routerConfig: router,
           ),
         ),
+      ),
       ),
       ),
     );

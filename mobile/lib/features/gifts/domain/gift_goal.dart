@@ -14,6 +14,7 @@ class GiftGoal {
     this.percent,
     this.endsAt,
     this.durationMinutes,
+    this.createdAt,
   });
 
   factory GiftGoal.fromJson(Map<String, dynamic> json) {
@@ -30,7 +31,10 @@ class GiftGoal {
       percent: _parsePercent(pick(json, ['percent'])),
       endsAt: _parseDate(pick(json, ['endsAt', 'endAt', 'expiresAt', 'deadline'])),
       durationMinutes: asInt(pick(json, ['durationMinutes', 'durationMin'])),
-    );
+      createdAt: _parseDate(
+        pick(json, ['createdAt', 'startedAt', 'created_at', 'startAt']),
+      ),
+    ).withResolvedDeadline();
   }
 
   static DateTime? _parseDate(dynamic raw) {
@@ -55,6 +59,28 @@ class GiftGoal {
   final double? percent;
   final DateTime? endsAt;
   final int? durationMinutes;
+  final DateTime? createdAt;
+
+  /// Sunucu `endsAt` göndermezse `createdAt` + `durationMinutes` ile hesapla.
+  GiftGoal withResolvedDeadline({DateTime? now, int? fallbackDurationMinutes}) {
+    if (endsAt != null) return this;
+    final mins = durationMinutes ?? fallbackDurationMinutes;
+    if (mins == null || mins <= 0) return this;
+    final base = createdAt ?? now ?? DateTime.now().toUtc();
+    return GiftGoal(
+      id: id,
+      title: title,
+      targetAmount: targetAmount,
+      currentAmount: currentAmount,
+      context: context,
+      contextId: contextId,
+      status: status,
+      percent: percent,
+      endsAt: base.add(Duration(minutes: mins)),
+      durationMinutes: mins,
+      createdAt: createdAt ?? base,
+    );
+  }
 
   /// 0..1 arası ilerleme oranı.
   double get progress {

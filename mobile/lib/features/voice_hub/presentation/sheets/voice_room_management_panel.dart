@@ -980,7 +980,7 @@ class _VoiceRoomManagementPanelState
             .read(giftGoalProvider(
                     (context: 'voice_room', contextId: contextId))
                 .notifier)
-            .adopt(goal);
+            .adopt(goal, fallbackDurationMinutes: picked.durationMinutes);
       }
       await _snack('Hediye hedefi belirlendi (${picked.durationMinutes} dk)!');
     } catch (e) {
