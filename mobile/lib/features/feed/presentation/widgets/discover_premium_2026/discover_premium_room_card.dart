@@ -20,6 +20,7 @@ class DiscoverPremiumRoomCard extends StatefulWidget {
     this.width = 168,
     this.compact = false,
     this.enableMotion = true,
+    this.hourlyRank,
   });
 
   final VoiceRoomEntity room;
@@ -27,6 +28,7 @@ class DiscoverPremiumRoomCard extends StatefulWidget {
   final double width;
   final bool compact;
   final bool enableMotion;
+  final int? hourlyRank;
 
   @override
   State<DiscoverPremiumRoomCard> createState() =>
@@ -141,6 +143,10 @@ class _DiscoverPremiumRoomCardState extends State<DiscoverPremiumRoomCard>
                     child: Row(
                       children: [
                         _GlowingOnlinePill(count: online),
+                        if (widget.hourlyRank != null && widget.hourlyRank! <= 3) ...[
+                          const SizedBox(width: 6),
+                          _HourlyRankMedal(rank: widget.hourlyRank!),
+                        ],
                         const Spacer(),
                         if (showPk)
                           Container(
@@ -569,6 +575,34 @@ class _SpeakingAvatarStrip extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _HourlyRankMedal extends StatelessWidget {
+  const _HourlyRankMedal({required this.rank});
+
+  final int rank;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = switch (rank) {
+      1 => '🥇',
+      2 => '🥈',
+      3 => '🥉',
+      _ => '#$rank',
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFFFD54F).withValues(alpha: 0.7)),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
       ),
     );
   }

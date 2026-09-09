@@ -22,8 +22,11 @@ import '../../../../inbox/presentation/providers/inbox_unread_providers.dart';
 import 'package:canlifal_social/features/vip_gold/domain/voice_room_access.dart';
 import 'package:canlifal_social/features/vip_gold/presentation/theme/vip_gold_tokens.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
+import '../../providers/voice_room_ranking_provider.dart';
+import '../../providers/voice_rooms_presence_provider.dart';
 import '../../sheets/voice_room_ranking_sheet.dart';
 import '../../utils/open_voice_chat_room_flow.dart';
+import '../../utils/voice_discover_ranking.dart';
 import '../voice_room_online_count.dart';
 import '../../theme/voice_room_tokens.dart';
 import 'voice_discover_2026.dart';
@@ -62,6 +65,8 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
   String _cachedTab = '';
   String _cachedSearch = '';
   Map<String, int>? _cachedCatCounts;
+  Map<String, int>? _cachedHourlyRanks;
+  List<VoiceRoomRankEntry>? _cachedHourlyRankingRef;
 
   static const _tabs = [
     _DiscoverTab(id: 'discover', label: 'Keşfet', icon: Icons.explore_rounded),
@@ -87,6 +92,7 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
   void initState() {
     super.initState();
     _scroll.addListener(_onScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _syncVisiblePresence());
   }
 
   @override
@@ -107,10 +113,24 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
           _visibleRooms = (_visibleRooms + ListPerf.defaultPageSize)
               .clamp(0, total);
         });
+        _syncVisiblePresence();
       } else {
         widget.onLoadMore?.call();
       }
     }
+  }
+
+  void _syncVisiblePresence() {
+    final spotlight = _popularRooms.take(3).toList(growable: false);
+    final visible = _filtered
+        .take(_visibleRooms.clamp(0, _filtered.length))
+        .toList(growable: false);
+    final track = pickDiscoverPresenceTrackRooms(
+      spotlight: spotlight,
+      visible: visible,
+    );
+    if (track.isEmpty) return;
+    ref.read(voiceRoomsPresenceProvider.notifier).mergeTrackRooms(track);
   }
 
   void _resetVisibleRooms() {
@@ -136,8 +156,12 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
           )
           .toList();
     }
+    final liveCounts = ref.read(voiceRoomsPresenceProvider).counts;
     final result = switch (_tab) {
-      'popular' => list..sort((a, b) => b.displayOnline.compareTo(a.displayOnline)),
+      'popular' => orderDiscoverRoomsByProxyRanking(
+          list,
+          livePresenceCounts: liveCounts,
+        ),
       'pk' => filterPkEligibleOpponentRooms(list),
       'game' => list.where((r) {
         final t = '${r.nameTr} ${r.descTr ?? ''}'.toLowerCase();
@@ -156,6 +180,33 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
     _cachedFiltered = result;
     _cachedCatCounts = null;
     return result;
+  }
+
+  List<VoiceRoomEntity> get _popularRooms {
+    final liveCounts = ref.read(voiceRoomsPresenceProvider).counts;
+    return orderDiscoverRoomsByProxyRanking(
+      widget.rooms,
+      livePresenceCounts: liveCounts,
+    );
+  }
+
+  Map<String, int> _hourlyRankMap(List<VoiceRoomRankEntry> hourly) {
+    if (_cachedHourlyRankingRef == hourly && _cachedHourlyRanks != null) {
+      return _cachedHourlyRanks!;
+    }
+    final map = <String, int>{};
+    for (final entry in hourly) {
+      if (entry.rank > 10) break;
+      final key = entry.room.apiRoomKey.isNotEmpty
+          ? entry.room.apiRoomKey
+          : entry.room.id;
+      if (key.isEmpty) continue;
+      map[key] = entry.rank;
+      map[entry.room.id] = entry.rank;
+    }
+    _cachedHourlyRankingRef = hourly;
+    _cachedHourlyRanks = map;
+    return map;
   }
 
   _DiscoverMetrics _metrics(BuildContext context) {
@@ -185,9 +236,21 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
       authControllerProvider.select((a) => a.valueOrNull?.avatarUrl),
     );
     final inboxUnread = ref.watch(inboxUnreadCountProvider);
-    final popular = [...widget.rooms]
-      ..sort((a, b) => b.displayOnline.compareTo(a.displayOnline));
+    final hourlyRanking =
+        ref.watch(voiceRoomRankingProvider.select((s) => s.hourly));
+    final rankMap = _hourlyRankMap(hourlyRanking);
+    final popular = _popularRooms;
     final live = widget.liveStreams.where((s) => s.isLive).toList();
+
+    ref.listen(voiceRoomRankingProvider.select((s) => s.lastUpdated), (
+      prev,
+      next,
+    ) {
+      if (prev != next) {
+        _cachedFiltered = null;
+        _cachedHourlyRanks = null;
+      }
+    });
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -235,6 +298,7 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
                       _tab = t.id;
                       _resetVisibleRooms();
                     });
+                    _syncVisiblePresence();
                   },
                 );
               },
@@ -268,6 +332,7 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
               metrics: metrics,
               popular: popular,
               live: live,
+              rankMap: rankMap,
             ),
           ),
         ),
@@ -287,14 +352,13 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
     required _DiscoverMetrics metrics,
     required List<VoiceRoomEntity> popular,
     required List<LiveStreamEntity> live,
+    required Map<String, int> rankMap,
   }) {
     var i = index;
     if (i == 0) {
       return _NightBanner(
         height: metrics.bannerHeight,
-        onJoin: widget.rooms.isNotEmpty
-            ? () => widget.onRoomTap(widget.rooms.first)
-            : null,
+        onJoin: popular.isNotEmpty ? () => widget.onRoomTap(popular.first) : null,
       );
     }
     i--;
@@ -317,11 +381,16 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
             scrollDirection: Axis.horizontal,
             itemCount: popular.take(10).length,
             separatorBuilder: (_, _) => const SizedBox(width: 12),
-            itemBuilder: (context, j) => DiscoverPremiumRoomCard(
-              room: popular[j],
-              width: metrics.popularCardWidth,
-              onTap: () => widget.onRoomTap(popular[j]),
-            ),
+            itemBuilder: (context, j) {
+              final room = popular[j];
+              final rank = rankMap[room.apiRoomKey] ?? rankMap[room.id];
+              return DiscoverPremiumRoomCard(
+                room: room,
+                width: metrics.popularCardWidth,
+                hourlyRank: rank,
+                onTap: () => widget.onRoomTap(room),
+              );
+            },
           ),
         ),
       );
@@ -434,11 +503,13 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
     final visible = _visibleRooms.clamp(0, _filtered.length);
     if (roomIndex < visible) {
       final r = _filtered[roomIndex];
+      final rank = rankMap[r.apiRoomKey] ?? rankMap[r.id];
       return ListPerf.repaint(
         Padding(
           padding: const EdgeInsets.only(bottom: 10),
           child: _CompactRoomRow(
             room: r,
+            hourlyRank: rank,
             onTap: () => widget.onRoomTap(r),
           ),
         ),
@@ -1331,10 +1402,15 @@ class _CategoryIconTile extends StatelessWidget {
 }
 
 class _CompactRoomRow extends StatelessWidget {
-  const _CompactRoomRow({required this.room, required this.onTap});
+  const _CompactRoomRow({
+    required this.room,
+    required this.onTap,
+    this.hourlyRank,
+  });
 
   final VoiceRoomEntity room;
   final VoidCallback onTap;
+  final int? hourlyRank;
 
   @override
   Widget build(BuildContext context) {
@@ -1360,9 +1436,21 @@ class _CompactRoomRow extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      room.displayTitle,
-                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    Row(
+                      children: [
+                        if (hourlyRank != null && hourlyRank! <= 3) ...[
+                          _DiscoverRankChip(rank: hourlyRank!),
+                          const SizedBox(width: 6),
+                        ],
+                        Expanded(
+                          child: Text(
+                            room.displayTitle,
+                            style: const TextStyle(fontWeight: FontWeight.w800),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                     VoiceRoomOnlineCount(
                       room: room,
@@ -1381,6 +1469,34 @@ class _CompactRoomRow extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _DiscoverRankChip extends StatelessWidget {
+  const _DiscoverRankChip({required this.rank});
+
+  final int rank;
+
+  @override
+  Widget build(BuildContext context) {
+    final medal = switch (rank) {
+      1 => '🥇',
+      2 => '🥈',
+      3 => '🥉',
+      _ => '#$rank',
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFD54F).withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFFFD54F).withValues(alpha: 0.55)),
+      ),
+      child: Text(
+        medal,
+        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
       ),
     );
   }

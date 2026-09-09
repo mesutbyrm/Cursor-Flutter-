@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.442+480 (2026-09-09) — Sesli oda Faz 16
+
+### Keşfet sıralama entegrasyonu
+- `orderDiscoverRoomsByProxyRanking` — popüler sekme + yatay şerit proxy skor (SSE sayaç + PK/müzik)
+- Gece banner “Hemen Katıl” → sıralama lideri oda
+- Top 3 saatlik rozet: popüler kart + kompakt liste satırı
+- Kaydırma/sekme değişiminde görünür odalar için `mergeTrackRooms` (SSE izleme)
+
+### Global sıralama bildirimi
+- `VoiceRoomGlobalRankBanner` — 8 sn otomatik kapanma, dokun → sıralama sheet
+
 ## 1.0.441+479 (2026-09-09) — Sesli oda Faz 15
 
 ### Selective ref.listen (side effects)
