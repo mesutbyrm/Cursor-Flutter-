@@ -4,31 +4,29 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.412+450` |
-| Tarih (UTC) | 2026-09-08 23:39 |
-| Commit | [`b71d013759c4b46f47eb407a913641982619367d`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/b71d013759c4b46f47eb407a913641982619367d) |
-| İş akışı | [Run 34290413041](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34290413041) |
+| Sürüm | `1.0.413+451` |
+| Tarih (UTC) | 2026-09-09 00:19 |
+| Commit | [`47086933fecb88e3f4aadd2d684e705ff27f360a`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/47086933fecb88e3f4aadd2d684e705ff27f360a) |
+| İş akışı | [Run 34292926908](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34292926908) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.412+450 (2026-09-08) — Profil + Admin/Yetkili sistem yenileme
+## 1.0.414+452 (2026-09-08) — Profil/admin tamamlama paketi
 
-### Normal profil
-- Accordion kart düzeni: Bakiye & Üyelik, İstatistikler & Sosyal, Yayın & Sesli Oda, Ayarlar & Güvenlik
-- Gereksiz tekrarlar azaltıldı; mobilde katman çakışması önlenir
-- Hızlı erişim: güvenlik, bildirimler, profil düzenleme chip'leri
+### Admin
+- Dashboard canlı aktivite kaydırıcısı (`fetchActivities`)
+- Jeton ödeme push deep link: `/admin?focusRequest=<id>` + talep vurgusu
+- Kullanıcı jeton/CFC geçmişi sheet (`GET /api/admin/finance?userId=`)
+- Stub sayfalar: yerel önizleme banner (koleksiyon, giriş efekti, görsel FX)
+- Sesli oda admin mini panel (odaya gir + kick)
+- Yayın admin: moderasyon sheet + yayını sonlandır
 
-### Admin kontrol merkezi
-- Yeni `/admin/dashboard` — site istatistikleri, jeton/CFC, bildirim, oda/yayın yönetimi
-- `/admin/live-streams` — aktif yayın listesi (`GET /api/video-streams`)
-- `/admin/voice-rooms` — aktif sesli odalar (`GET /api/chat/rooms`)
-
-### Yetki sistemi
-- `StaffAccess` granüler yetkiler: moderasyon, finans, oda, yayın, kullanıcı, rapor
-- Yetkili profil kartı — moderatör/destek için rol bazlı menü (admin panelinden ayrı)
-- `profile_screen_builder` `isStaff`/`isAdmin` düzeltmesi
-- Moderasyon sayfası moderatör rolüne açıldı (backend 403 ile korunur)
+### Profil
+- Özet kartı (jeton, CFC, seviye, staff chip)
+- Son aktivite satırları (`profileActivityNotifier`)
+- Accordion açık bölüm tercihi (`SharedPreferences`)
+- Yetkili panel: KPI (bekleyen ödeme, aktif oda/yayın), rol önizleme, staff aktivite
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
