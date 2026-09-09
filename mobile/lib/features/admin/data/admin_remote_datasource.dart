@@ -4,6 +4,7 @@ import '../../../core/network/api_endpoints.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../../core/util/json_util.dart';
+import '../domain/admin_user_extended_data.dart';
 import '../domain/admin_user_util.dart';
 
 const _adminCallTimeout = Duration(seconds: 12);
@@ -346,16 +347,289 @@ class AdminRemoteDataSource {
   /// Sesli oda finans denetimi — `GET /api/admin/voice-room-finance-audit`.
   Future<List<Map<String, dynamic>>> fetchVoiceRoomFinanceAudit({
     int limit = 100,
+    String? userId,
   }) async {
     try {
       final res = await _adminTimeout(
         _dio.safeGet<dynamic>(
           ApiEndpoints.adminVoiceRoomFinanceAudit,
-          query: {'limit': '$limit'},
+          query: {
+            'limit': '$limit',
+            if (userId != null && userId.isNotEmpty) 'userId': userId,
+          },
           forceRefresh: true,
         ),
       );
-      return _flattenList(res.data, listKey: 'audits');
+      final items = _flattenList(res.data, listKey: 'audits');
+      if (userId == null || userId.isEmpty) return items;
+      return items.where((row) {
+        final uid = pick(row, ['userId', 'senderId', 'receiverId'])?.toString();
+        if (uid == userId) return true;
+        final sender = row['sender'];
+        if (sender is Map) {
+          final id = pick(asJsonMap(sender), ['id', 'userId'])?.toString();
+          if (id == userId) return true;
+        }
+        final receiver = row['receiver'];
+        if (receiver is Map) {
+          final id = pick(asJsonMap(receiver), ['id', 'userId'])?.toString();
+          if (id == userId) return true;
+        }
+        return false;
+      }).toList(growable: false);
+    } on ApiException catch (e) {
+      if (e.statusCode == 403 || e.statusCode == 404) return const [];
+      rethrow;
+    }
+  }
+
+  /// Faz 2 — opsiyonel tam kullanıcı kaydı (404 → null).
+  Future<Map<String, dynamic>?> tryFetchUserFull(String userId) async {
+    return _tryGetMap(ApiEndpoints.adminUserFull(userId));
+  }
+
+  Future<List<AdminGiftLedgerRow>> fetchUserGiftLedger(String userId) async {
+    final direct = await _tryGetList(ApiEndpoints.adminUserGiftsLedger(userId));
+    if (direct.isNotEmpty) return parseGiftLedgerRows(direct);
+
+    final audit = await fetchVoiceRoomFinanceAudit(userId: userId, limit: 80);
+    final giftRows = audit
+        .where((r) {
+          final t = (r['type'] ?? r['eventType'] ?? '').toString().toLowerCase();
+          return t.contains('gift') || r['giftId'] != null || r['giftName'] != null;
+        })
+        .map(AdminGiftLedgerRow.fromMap)
+        .toList(growable: false);
+    return giftRows;
+  }
+
+  Future<List<AdminBroadcastHistoryRow>> fetchUserStreamHistory(
+    String userId,
+  ) async {
+    final direct = await _tryGetList(ApiEndpoints.adminUserStreams(userId));
+    if (direct.isNotEmpty) {
+      return parseBroadcastHistoryRows(direct, defaultKind: 'stream');
+    }
+    return const [];
+  }
+
+  Future<List<AdminBroadcastHistoryRow>> fetchUserRoomHistory(
+    String userId,
+  ) async {
+    final direct = await _tryGetList(ApiEndpoints.adminUserRooms(userId));
+    if (direct.isNotEmpty) {
+      return parseBroadcastHistoryRows(direct, defaultKind: 'voice');
+    }
+    return const [];
+  }
+
+  Future<int?> tryFetchUserAdsWatched(String userId) async {
+    final data = await _tryGetMap(ApiEndpoints.adminUserAds(userId));
+    if (data == null) return null;
+    for (final k in ['adsWatched', 'count', 'total', 'watchCount']) {
+      final v = data[k];
+      if (v is num) return v.toInt();
+      if (v is String) {
+        final n = int.tryParse(v);
+        if (n != null) return n;
+      }
+    }
+    return null;
+  }
+
+  Future<List<AdminLiveTellerSummary>> fetchLiveTellers() async {
+    try {
+      final res = await _adminTimeout(
+        _dio.safeGet<dynamic>(
+          ApiEndpoints.adminLiveTellers,
+          forceRefresh: true,
+        ),
+      );
+      return parseLiveTellerList(res.data);
+    } on ApiException catch (e) {
+      if (e.statusCode == 403 || e.statusCode == 404) return const [];
+      rethrow;
+    }
+  }
+
+  Future<AdminLiveTellerSummary?> findLiveTellerForUser(String userId) async {
+    final list = await fetchLiveTellers();
+    for (final t in list) {
+      if (t.userId == userId) return t;
+      final nested = t.raw['user'];
+      if (nested is Map) {
+        final id = pick(asJsonMap(nested), ['id', 'userId'])?.toString();
+        if (id == userId) return t;
+      }
+    }
+    return null;
+  }
+
+  Future<AdminLiveTellerSummary> createLiveTeller({
+    required String userId,
+    String? displayName,
+    String? bio,
+    bool isVerified = true,
+  }) async {
+    final res = await _adminTimeout(
+      _dio.safePost<dynamic>(
+        ApiEndpoints.adminLiveTellers,
+        data: {
+          'userId': userId,
+          if (displayName != null && displayName.isNotEmpty)
+            'displayName': displayName,
+          if (bio != null && bio.isNotEmpty) 'bio': bio,
+          'isVerified': isVerified ? 'true' : 'false',
+        },
+      ),
+    );
+    final map = _unwrapMap(res.data);
+    final teller = AdminLiveTellerSummary.fromMap(map);
+    if (teller != null) return teller;
+    return AdminLiveTellerSummary(
+      tellerId: pick(map, ['id', 'tellerId'])?.toString() ?? userId,
+      userId: userId,
+      displayName: displayName,
+      status: 'pending',
+      raw: map,
+    );
+  }
+
+  Future<void> approveLiveTeller(
+    String tellerId, {
+    String action = 'approve',
+    String? note,
+  }) async {
+    await _adminTimeout(
+      _dio.safePost<dynamic>(
+        ApiEndpoints.adminLiveTellerApprove(tellerId),
+        data: {
+          'action': action,
+          if (note != null && note.isNotEmpty) 'note': note,
+        },
+      ),
+    );
+  }
+
+  Future<void> setWithdrawalLimit({
+    required String userId,
+    required int limit,
+  }) async {
+    await _adminTimeout(
+      _dio.safePost<dynamic>(
+        ApiEndpoints.adminUsersWithdrawalLimit,
+        data: {
+          'userId': userId,
+          'limit': limit.toString(),
+        },
+      ),
+    );
+  }
+
+  /// Kurucu — kullanıcı adına sesli oda (404 → ApiException).
+  Future<Map<String, dynamic>> createVoiceRoomForUser({
+    required String userId,
+    required String title,
+    String? description,
+  }) async {
+    final bodies = <Map<String, dynamic>>[
+      {
+        'userId': userId,
+        'title': title,
+        if (description != null && description.isNotEmpty)
+          'description': description,
+      },
+      {
+        'ownerUserId': userId,
+        'name': title,
+        if (description != null && description.isNotEmpty)
+          'description': description,
+      },
+    ];
+
+    ApiException? last;
+    for (final body in bodies) {
+      try {
+        final res = await _adminTimeout(
+          _dio.safePost<dynamic>(
+            ApiEndpoints.adminChatRoomsCreateForUser,
+            data: body,
+          ),
+        );
+        return _unwrapMap(res.data);
+      } on ApiException catch (e) {
+        last = e;
+        if (e.statusCode == 400 || e.statusCode == 422) continue;
+        if (e.statusCode == 404 || e.statusCode == 405) break;
+        rethrow;
+      }
+    }
+    throw last ??
+        const ApiException(
+          'Adına oda açma uç noktası henüz üretimde yok.',
+          statusCode: 404,
+        );
+  }
+
+  Future<List<Map<String, dynamic>>> fetchPendingPaymentsForUser(
+    String userId,
+  ) async {
+    final merged = <String, Map<String, dynamic>>{};
+
+    Future<void> ingest(String path) async {
+      try {
+        final res = await _adminTimeout(
+          _dio.safeGet<dynamic>(
+            path,
+            query: {'status': 'pending', 'limit': '50', 'userId': userId},
+            forceRefresh: true,
+          ),
+        );
+        for (final row in _flattenList(res.data, listKey: 'requests')) {
+          final id = row['id']?.toString();
+          if (id != null) merged[id] = row;
+        }
+      } on ApiException catch (e) {
+        if (e.statusCode != 403 && e.statusCode != 404) rethrow;
+      }
+    }
+
+    await Future.wait([
+      ingest(ApiEndpoints.adminPaymentRequests),
+      ingest(ApiEndpoints.adminCfcPaymentRequests),
+    ]);
+
+    return merged.values.where((row) {
+      final uid = pick(row, ['userId', 'uid', 'targetUserId'])?.toString();
+      if (uid == userId) return true;
+      final user = row['user'];
+      if (user is Map) {
+        final id = pick(asJsonMap(user), ['id', 'userId'])?.toString();
+        if (id == userId) return true;
+      }
+      return false;
+    }).toList(growable: false);
+  }
+
+  Future<Map<String, dynamic>?> _tryGetMap(String path) async {
+    try {
+      final res = await _adminTimeout(
+        _dio.safeGet<dynamic>(path, forceRefresh: true),
+      );
+      final map = _unwrapMap(res.data);
+      return map.isEmpty ? null : map;
+    } on ApiException catch (e) {
+      if (e.statusCode == 403 || e.statusCode == 404) return null;
+      rethrow;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _tryGetList(String path) async {
+    try {
+      final res = await _adminTimeout(
+        _dio.safeGet<dynamic>(path, forceRefresh: true),
+      );
+      return _flattenList(res.data);
     } on ApiException catch (e) {
       if (e.statusCode == 403 || e.statusCode == 404) return const [];
       rethrow;

@@ -9,6 +9,7 @@ import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../gifts/domain/gift_collection.dart';
+import '../../domain/admin_payment_review.dart';
 import '../../domain/admin_user_detail.dart';
 import '../../domain/admin_user_permissions.dart';
 import '../providers/admin_panel_providers.dart';
@@ -17,7 +18,9 @@ import '../providers/staff_access_provider.dart';
 import '../widgets/admin_credit_sheet.dart';
 import '../widgets/admin_membership_sheet.dart';
 import '../widgets/admin_user_manage_sheet.dart';
-import '../pages/admin_panel_page.dart';
+import '../../domain/admin_user_extended_data.dart';
+import '../widgets/admin_role_permissions_matrix.dart';
+import '../widgets/admin_user_command_actions.dart';
 
 /// Tam kullanıcı komuta merkezi — özet, finans, hediye, yetki, aktivite.
 class AdminUserCommandCenterPage extends ConsumerStatefulWidget {
@@ -222,6 +225,7 @@ class _TabBody extends StatelessWidget {
         _FinanceTab(
           detail: d,
           history: bundle.financeHistory,
+          pendingPayments: bundle.pendingPayments,
           access: access,
           onRefresh: onRefresh,
         ),
@@ -229,10 +233,24 @@ class _TabBody extends StatelessWidget {
           detail: d,
           collection: bundle.giftCollection,
           album: bundle.giftAlbum,
+          ledger: bundle.giftLedger,
           access: access,
         ),
-        _BroadcastTab(detail: d, access: access),
-        _PermissionsTab(detail: d, access: access, onSaved: onRefresh),
+        _BroadcastTab(
+          detail: d,
+          streamHistory: bundle.streamHistory,
+          roomHistory: bundle.roomHistory,
+          access: access,
+          onRefresh: onRefresh,
+        ),
+        _PermissionsTab(
+          detail: d,
+          access: access,
+          liveTeller: bundle.liveTeller,
+          pkBanned: bundle.pkBanned,
+          animationSlots: bundle.siteAnimationSlots,
+          onSaved: onRefresh,
+        ),
         _ActivityTab(activities: bundle.activities, access: access),
       ],
     );
@@ -358,12 +376,14 @@ class _FinanceTab extends ConsumerWidget {
   const _FinanceTab({
     required this.detail,
     required this.history,
+    required this.pendingPayments,
     required this.access,
     required this.onRefresh,
   });
 
   final AdminUserDetail detail;
   final List<Map<String, dynamic>> history;
+  final List<Map<String, dynamic>> pendingPayments;
   final StaffAccess access;
   final VoidCallback onRefresh;
 
@@ -422,6 +442,50 @@ class _FinanceTab extends ConsumerWidget {
             ],
           ),
         const SizedBox(height: 16),
+        if (AdminUserPermissions.canReviewUserPayments(access) &&
+            pendingPayments.isNotEmpty) ...[
+          const Text(
+            'Bekleyen ödeme talepleri',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+          ),
+          const SizedBox(height: 8),
+          ...pendingPayments.map(
+            (r) => Card(
+              child: ListTile(
+                title: Text(resolvePaymentRequestType(r)),
+                subtitle: Text(
+                  '${r['amount'] ?? r['coins'] ?? r['cfc'] ?? '—'} · ${r['id'] ?? ''}',
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.check, color: Colors.green),
+                      onPressed: () => AdminUserCommandActions.reviewPayment(
+                        context,
+                        ref,
+                        request: r,
+                        action: 'approve',
+                        onDone: onRefresh,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: AppThemeColors.liveRed),
+                      onPressed: () => AdminUserCommandActions.reviewPayment(
+                        context,
+                        ref,
+                        request: r,
+                        action: 'reject',
+                        onDone: onRefresh,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
         const Text(
           'İşlem geçmişi',
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
@@ -444,12 +508,14 @@ class _GiftsTab extends StatelessWidget {
     required this.detail,
     required this.collection,
     required this.album,
+    required this.ledger,
     required this.access,
   });
 
   final AdminUserDetail detail;
   final GiftCollection? collection;
   final GiftAlbum? album;
+  final List<AdminGiftLedgerRow> ledger;
   final StaffAccess access;
 
   @override
@@ -471,9 +537,37 @@ class _GiftsTab extends StatelessWidget {
           style: const TextStyle(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 12),
-        if (items.isEmpty)
+        if (ledger.isNotEmpty) ...[
+          const Text(
+            'Hediye defteri',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+          ),
+          const SizedBox(height: 8),
+          ...ledger.take(40).map(
+                (g) => ListTile(
+                  dense: true,
+                  leading: const Text('🎁'),
+                  title: Text(g.giftName ?? g.giftId ?? 'Hediye'),
+                  subtitle: Text(
+                    [
+                      if (g.senderName != null) 'Gönderen: ${g.senderName}',
+                      if (g.receiverName != null) 'Alan: ${g.receiverName}',
+                      if (g.context != null) g.context!,
+                    ].join(' · '),
+                  ),
+                  trailing: g.at != null
+                      ? Text(
+                          DateFormat('dd.MM HH:mm').format(g.at!),
+                          style: const TextStyle(fontSize: 10),
+                        )
+                      : Text('x${g.amount}', style: const TextStyle(fontSize: 11)),
+                ),
+              ),
+          const SizedBox(height: 16),
+        ],
+        if (items.isEmpty && ledger.isEmpty)
           const Text('Hediye kaydı bulunamadı.')
-        else
+        else if (items.isNotEmpty)
           ...items.take(50).map(
                 (g) => ListTile(
                   leading: Text(
@@ -483,24 +577,36 @@ class _GiftsTab extends StatelessWidget {
                   subtitle: Text('x${g.count}'),
                 ),
               ),
-        const SizedBox(height: 12),
-        const Text(
-          'Detaylı gönderen/alıcı zaman damgası için üretim admin API genişletmesi (Faz 2) gerekir.',
-          style: TextStyle(fontSize: 11, color: Colors.grey),
-        ),
+        if (ledger.isEmpty)
+          const Padding(
+            padding: EdgeInsets.only(top: 12),
+            child: Text(
+              'Zaman damgalı ledger için üretim `GET /api/admin/users/{id}/gifts` veya sesli oda denetimi kullanılır.',
+              style: TextStyle(fontSize: 11, color: Colors.grey),
+            ),
+          ),
       ],
     );
   }
 }
 
-class _BroadcastTab extends StatelessWidget {
-  const _BroadcastTab({required this.detail, required this.access});
+class _BroadcastTab extends ConsumerWidget {
+  const _BroadcastTab({
+    required this.detail,
+    required this.streamHistory,
+    required this.roomHistory,
+    required this.access,
+    required this.onRefresh,
+  });
 
   final AdminUserDetail detail;
+  final List<AdminBroadcastHistoryRow> streamHistory;
+  final List<AdminBroadcastHistoryRow> roomHistory;
   final StaffAccess access;
+  final VoidCallback onRefresh;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (!AdminUserPermissions.canViewBroadcasts(access)) {
       return const Center(child: Text('Yayın/oda görüntüleme yetkiniz yok.'));
     }
@@ -526,6 +632,22 @@ class _BroadcastTab extends StatelessWidget {
               : (detail.canOpenVoiceRoom! ? 'İzinli' : 'Kapalı'),
         ),
         const SizedBox(height: 16),
+        if (streamHistory.isNotEmpty) ...[
+          const Text(
+            'Yayın geçmişi',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+          ),
+          ...streamHistory.take(20).map(_historyTile),
+          const SizedBox(height: 12),
+        ],
+        if (roomHistory.isNotEmpty) ...[
+          const Text(
+            'Oda geçmişi',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+          ),
+          ...roomHistory.take(20).map(_historyTile),
+          const SizedBox(height: 12),
+        ],
         OutlinedButton.icon(
           onPressed: () => context.push('/admin/live-streams'),
           icon: const Icon(Icons.live_tv_outlined),
@@ -539,13 +661,48 @@ class _BroadcastTab extends StatelessWidget {
         ),
         if (AdminUserPermissions.canImpersonateRoomCreate(access))
           Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: const Text(
-              'Kullanıcı adına oda açma — backend `POST /api/admin/...` (Faz 2).',
+            padding: const EdgeInsets.only(top: 8),
+            child: FilledButton.icon(
+              onPressed: () => AdminUserCommandActions.showCreateRoomSheet(
+                context,
+                ref,
+                userId: detail.userId,
+                onDone: onRefresh,
+              ),
+              icon: const Icon(Icons.add_circle_outline),
+              label: const Text('Kullanıcı adına oda aç'),
+            ),
+          ),
+        if (streamHistory.isEmpty && roomHistory.isEmpty)
+          const Padding(
+            padding: EdgeInsets.only(top: 12),
+            child: Text(
+              'Liste için `GET /api/admin/users/{id}/streams|rooms` (yoksa boş).',
               style: TextStyle(fontSize: 11, color: Colors.grey),
             ),
           ),
       ],
+    );
+  }
+
+  Widget _historyTile(AdminBroadcastHistoryRow row) {
+    final when = row.startedAt != null
+        ? DateFormat('dd.MM.yyyy HH:mm').format(row.startedAt!)
+        : '—';
+    return ListTile(
+      dense: true,
+      leading: Icon(
+        row.kind.contains('voice') ? Icons.meeting_room_outlined : Icons.live_tv,
+        size: 20,
+      ),
+      title: Text(row.title ?? row.id ?? 'Kayıt'),
+      subtitle: Text(
+        [
+          when,
+          if (row.viewers != null) '${row.viewers} izleyici',
+          if (row.durationSec != null) '${row.durationSec}s',
+        ].join(' · '),
+      ),
     );
   }
 }
@@ -554,11 +711,17 @@ class _PermissionsTab extends ConsumerWidget {
   const _PermissionsTab({
     required this.detail,
     required this.access,
+    required this.liveTeller,
+    required this.pkBanned,
+    required this.animationSlots,
     required this.onSaved,
   });
 
   final AdminUserDetail detail;
   final StaffAccess access;
+  final AdminLiveTellerSummary? liveTeller;
+  final bool pkBanned;
+  final Map<String, String?> animationSlots;
   final VoidCallback onSaved;
 
   @override
@@ -591,17 +754,75 @@ class _PermissionsTab extends ConsumerWidget {
           ListTile(
             leading: const Icon(Icons.auto_awesome),
             title: const Text('Canlı falcı durumu'),
-            subtitle: Text(detail.psychicStatus ?? '—'),
+            subtitle: Text(
+              liveTeller?.status ??
+                  detail.psychicStatus ??
+                  (detail.isPsychic ? 'Onaylı' : '—'),
+            ),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Falcı onayı: web admin veya POST /api/admin/live-tellers (Faz 2)',
-                  ),
-                ),
-              );
-            },
+            onTap: () => AdminUserCommandActions.showPsychicSheet(
+              context,
+              ref,
+              userId: detail.userId,
+              displayName: detail.displayName ?? detail.label,
+              teller: liveTeller,
+              onDone: onSaved,
+            ),
+          ),
+        if (AdminUserPermissions.canSetWithdrawalLimit(access))
+          ListTile(
+            leading: const Icon(Icons.account_balance_wallet_outlined),
+            title: const Text('Çekim limiti'),
+            subtitle: const Text('POST /api/admin/users/withdrawal-limit'),
+            onTap: () => AdminUserCommandActions.showWithdrawalLimitSheet(
+              context,
+              ref,
+              userId: detail.userId,
+              onDone: onSaved,
+            ),
+          ),
+        if (AdminUserPermissions.canAssignSiteAnimation(access)) ...[
+          ListTile(
+            leading: const Icon(Icons.animation_outlined),
+            title: const Text('Site animasyon / çerçeve'),
+            subtitle: Text(
+              animationSlots.isEmpty
+                  ? 'Atama yok'
+                  : animationSlots.entries
+                      .where((e) => e.value != null)
+                      .map((e) => e.key)
+                      .join(', '),
+            ),
+            onTap: () => AdminUserCommandActions.showAnimationAssignSheet(
+              context,
+              ref,
+              userId: detail.userId,
+              onDone: onSaved,
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.open_in_new),
+            title: const Text('Tam animasyon atama sayfası'),
+            onTap: () => AdminUserCommandActions.openFullAnimationPage(
+              context,
+              detail.userId,
+            ),
+          ),
+        ],
+        if (AdminUserPermissions.canManagePkBan(access))
+          ListTile(
+            leading: Icon(
+              Icons.sports_martial_arts_outlined,
+              color: pkBanned ? AppThemeColors.liveRed : null,
+            ),
+            title: Text(pkBanned ? 'PK ban kaldır' : 'PK ban'),
+            onTap: () => AdminUserCommandActions.togglePkBan(
+              context,
+              ref,
+              userId: detail.userId,
+              currentlyBanned: pkBanned,
+              onDone: onSaved,
+            ),
           ),
         if (AdminUserPermissions.canManageFeatureFlags(access)) ...[
           const Divider(),
@@ -637,6 +858,8 @@ class _PermissionsTab extends ConsumerWidget {
             title: Text(detail.isBanned ? 'Ban kaldır' : 'Kullanıcıyı banla'),
             onTap: () => _toggleBan(ref, context),
           ),
+        const Divider(height: 24),
+        const AdminRolePermissionsMatrix(),
       ],
     );
   }

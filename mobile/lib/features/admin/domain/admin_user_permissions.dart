@@ -49,4 +49,19 @@ abstract final class AdminUserPermissions {
       a.canModerate || a.canManageUsers;
 
   static bool canDeleteUser(StaffAccess a) => a.isFounder;
+
+  /// Çekim limiti — finans veya kurucu.
+  static bool canSetWithdrawalLimit(StaffAccess a) =>
+      a.canManagePayments || a.isFounder;
+
+  /// PK ban — moderasyon veya kullanıcı yönetimi.
+  static bool canManagePkBan(StaffAccess a) =>
+      a.canModerate || a.canManageUsers || a.isFounder;
+
+  /// Site animasyon atama — animasyon kütüphanesi yetkisi.
+  static bool canAssignSiteAnimation(StaffAccess a) =>
+      a.canManageSiteAnimations;
+
+  /// Bekleyen ödeme onayı — finans yetkisi.
+  static bool canReviewUserPayments(StaffAccess a) => a.canManagePayments;
 }

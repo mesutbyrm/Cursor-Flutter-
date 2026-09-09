@@ -625,6 +625,28 @@ abstract final class ApiEndpoints {
 
   static String adminUser(String userId) => '/api/admin/users/$userId';
 
+  /// Admin — canlı falcı yönetimi (OpenAPI admin/live-tellers).
+  static const adminLiveTellers = '/api/admin/live-tellers';
+  static String adminLiveTeller(String tellerId) =>
+      '/api/admin/live-tellers/$tellerId';
+  static String adminLiveTellerApprove(String tellerId) =>
+      '/api/admin/live-tellers/$tellerId/approve';
+
+  /// Admin — çekim limiti (`POST` body: `userId`, `limit`).
+  static const adminUsersWithdrawalLimit = '/api/admin/users/withdrawal-limit';
+
+  /// Faz 2 — üretimde yoksa 404 ile yumuşak düşer (mobil probe).
+  static String adminUserFull(String userId) => '/api/admin/users/$userId/full';
+  static String adminUserGiftsLedger(String userId) =>
+      '/api/admin/users/$userId/gifts';
+  static String adminUserStreams(String userId) =>
+      '/api/admin/users/$userId/streams';
+  static String adminUserRooms(String userId) =>
+      '/api/admin/users/$userId/rooms';
+  static String adminUserAds(String userId) => '/api/admin/users/$userId/ads';
+  static const adminChatRoomsCreateForUser =
+      '/api/admin/chat/rooms/create-for-user';
+
   /// Site animasyonları — mobil runtime katalog (yalnızca aktif kayıtlar).
   static const siteAnimationsActive = '/api/site-animations/active';
 

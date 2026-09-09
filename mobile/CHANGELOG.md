@@ -1,5 +1,22 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.416+454 (2026-09-09) — Admin komuta merkezi Faz 2–4
+
+### Faz 2
+- Canlı falcı: oluştur + onay/red (`POST /api/admin/live-tellers`, `/{id}/approve`)
+- Hediye defteri: admin gifts probe + voice-room-finance-audit yedek
+- Yayın/oda geçmişi probe (`/streams`, `/rooms`)
+- Reklam sayısı probe (`/ads`) + tam profil (`/full`)
+- Kurucu: kullanıcı adına oda açma (`create-for-user`)
+
+### Faz 3
+- Finans sekmesi: kullanıcıya özel bekleyen ödeme onay/red
+- Çekim limiti, PK ban/unban, site animasyon atama
+- PK ban durumu komuta merkezinde
+
+### Faz 4
+- Yetkiler sekmesi: salt okunur rol × eylem matrisi
+
 ## 1.0.415+453 (2026-09-09) — Admin kullanıcı komuta merkezi (Faz 1)
 
 - `/admin/users/{userId}` — tam kullanıcı yönetim paneli (6 sekme)

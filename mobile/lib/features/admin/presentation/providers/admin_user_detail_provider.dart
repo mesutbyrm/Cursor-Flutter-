@@ -6,7 +6,9 @@ import '../../../../core/util/json_util.dart';
 import '../../../gifts/data/gift_insights_remote_datasource.dart';
 import '../../../gifts/domain/gift_collection.dart';
 import '../../domain/admin_user_detail.dart';
-import 'admin_panel_providers.dart';
+import '../../domain/admin_user_extended_data.dart';
+import '../providers/admin_panel_providers.dart';
+import '../providers/admin_site_animation_providers.dart';
 import 'staff_access_provider.dart';
 
 class AdminUserBundle {
@@ -16,6 +18,13 @@ class AdminUserBundle {
     this.activities = const [],
     this.giftCollection,
     this.giftAlbum,
+    this.giftLedger = const [],
+    this.streamHistory = const [],
+    this.roomHistory = const [],
+    this.liveTeller,
+    this.pendingPayments = const [],
+    this.pkBanned = false,
+    this.siteAnimationSlots = const {},
     this.loadWarnings = const [],
   });
 
@@ -24,6 +33,13 @@ class AdminUserBundle {
   final List<Map<String, dynamic>> activities;
   final GiftCollection? giftCollection;
   final GiftAlbum? giftAlbum;
+  final List<AdminGiftLedgerRow> giftLedger;
+  final List<AdminBroadcastHistoryRow> streamHistory;
+  final List<AdminBroadcastHistoryRow> roomHistory;
+  final AdminLiveTellerSummary? liveTeller;
+  final List<Map<String, dynamic>> pendingPayments;
+  final bool pkBanned;
+  final Map<String, String?> siteAnimationSlots;
   final List<String> loadWarnings;
 }
 
@@ -46,9 +62,19 @@ final adminUserDetailProvider = FutureProvider.autoDispose
 
   Map<String, dynamic> admin = {};
   Map<String, dynamic> public = {};
+  Map<String, dynamic>? fullProfile;
 
   try {
-    admin = await remote.fetchUser(userId);
+    fullProfile = await remote.tryFetchUserFull(userId);
+    if (fullProfile != null) {
+      admin = {...admin, ...fullProfile};
+    }
+  } catch (_) {
+    warnings.add('Tam profil API yüklenemedi');
+  }
+
+  try {
+    admin = {...admin, ...await remote.fetchUser(userId)};
   } catch (_) {
     warnings.add('Admin kullanıcı kaydı yüklenemedi');
   }
@@ -71,6 +97,24 @@ final adminUserDetailProvider = FutureProvider.autoDispose
     userId: userId,
     admin: admin,
     publicProfile: public,
+    stats: fullProfile,
+  );
+
+  var adsWatched = detail.adsWatched;
+  if (adsWatched == 0) {
+    try {
+      final ads = await remote.tryFetchUserAdsWatched(userId);
+      if (ads != null && ads > 0) {
+        adsWatched = ads;
+      }
+    } catch (_) {}
+  }
+
+  final enrichedDetail = AdminUserDetail.fromMaps(
+    userId: userId,
+    admin: {...detail.raw, if (adsWatched > 0) 'adsWatched': adsWatched},
+    publicProfile: public,
+    stats: fullProfile,
   );
 
   var finance = const <Map<String, dynamic>>[];
@@ -108,12 +152,84 @@ final adminUserDetailProvider = FutureProvider.autoDispose
     warnings.add('Hediye koleksiyonu yüklenemedi');
   }
 
+  var giftLedger = const <AdminGiftLedgerRow>[];
+  if (access.canManagePayments || access.canModerate || access.canManageGifts) {
+    try {
+      giftLedger = await remote.fetchUserGiftLedger(userId);
+    } catch (_) {
+      warnings.add('Hediye defteri yüklenemedi');
+    }
+  }
+
+  var streamHistory = const <AdminBroadcastHistoryRow>[];
+  var roomHistory = const <AdminBroadcastHistoryRow>[];
+  if (access.canManageLiveStreams ||
+      access.canManageVoiceRooms ||
+      access.canModerate) {
+    try {
+      streamHistory = await remote.fetchUserStreamHistory(userId);
+      roomHistory = await remote.fetchUserRoomHistory(userId);
+    } catch (_) {
+      warnings.add('Yayın/oda geçmişi yüklenemedi');
+    }
+  }
+
+  AdminLiveTellerSummary? teller;
+  if (access.canManagePayments || access.isFounder) {
+    try {
+      teller = await remote.findLiveTellerForUser(userId);
+    } catch (_) {}
+  }
+
+  var pendingPayments = const <Map<String, dynamic>>[];
+  if (access.canManagePayments) {
+    try {
+      pendingPayments = await remote.fetchPendingPaymentsForUser(userId);
+    } catch (_) {}
+  }
+
+  var pkBanned = false;
+  if (access.canModerate || access.canManageUsers) {
+    try {
+      final dio = ref.watch(dioProvider);
+      final res = await dio.safeGet<dynamic>(ApiEndpoints.pkAdminBans);
+      dynamic raw = res.data;
+      if (raw is Map) {
+        raw = asJsonMap(raw)['bans'] ?? asJsonMap(raw)['items'];
+      }
+      if (raw is List) {
+        pkBanned = raw.any((e) {
+          if (e is! Map) return false;
+          final m = asJsonMap(e);
+          final uid = pick(m, ['userId', 'uid'])?.toString();
+          return uid == userId;
+        });
+      }
+    } catch (_) {}
+  }
+
+  Map<String, String?> animationSlots = {};
+  if (access.canManageSiteAnimations) {
+    try {
+      final animDs = ref.read(adminSiteAnimationRemoteProvider);
+      final map = await animDs.fetchUserAssignments(userId);
+      animationSlots = map.map((k, v) => MapEntry(k.name, v));
+    } catch (_) {}
+  }
+
   return AdminUserBundle(
-    detail: detail,
+    detail: enrichedDetail,
     financeHistory: finance,
     activities: activities,
     giftCollection: collection,
     giftAlbum: album,
+    giftLedger: giftLedger,
+    streamHistory: streamHistory,
+    roomHistory: roomHistory,
+    liveTeller: teller,
+    pendingPayments: pendingPayments,
+    pkBanned: pkBanned,
+    siteAnimationSlots: animationSlots,
     loadWarnings: warnings,
   );
 });
