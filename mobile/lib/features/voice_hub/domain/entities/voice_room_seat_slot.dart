@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-const int _kMinVoiceSeatMapSize = 8;
+const int _kMinVoiceSeatMapSize = 1;
 const int _kMaxVoiceSeatMapSize = 15;
 const int _kDefaultVoiceSeatMapSize = 12;
 

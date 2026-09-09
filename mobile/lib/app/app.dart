@@ -12,6 +12,7 @@ import '../core/l10n/app_localizations_config.dart';
 import '../core/economy/presentation/providers/economy_providers.dart';
 import '../core/providers/theme_mode_provider.dart';
 import '../core/providers/amoled_dark_provider.dart';
+import '../core/network/user_online_presence_provider.dart';
 import '../core/push/push_lifecycle_listener.dart';
 import '../core/scroll/modern_social_scroll_behavior.dart';
 import '../core/theme/app_theme.dart';
@@ -137,6 +138,7 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
       child: VoiceRoomRankingRefreshHost(
         child: VoiceRoomSessionLifecycleHost(
         child: VoiceRoomMusicLifecycleHost(
+        child: UserOnlinePresenceLifecycleHost(
         child: PushLifecycleListener(
           child: MaterialApp.router(
             key: ValueKey('main-$shellSession'),
@@ -168,6 +170,7 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
             },
             routerConfig: router,
           ),
+        ),
         ),
       ),
       ),

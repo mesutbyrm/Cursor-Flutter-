@@ -6,6 +6,7 @@ import '../../providers/fortune_api_providers.dart';
 import '../../data/fortune_catalog.dart';
 import '../premium_2026/premium_section_header.dart';
 import '../premium_2026/fortune_premium_card.dart';
+import 'ultra_fortune_state_panel.dart';
 import 'ultra_fortune_tokens.dart';
 
 /// Son 3 fal geçmişi — yatay premium şerit.
@@ -30,9 +31,29 @@ class UltraFortuneHistoryStrip extends ConsumerWidget {
           ),
         ),
       ),
-      error: (_, _) => const SizedBox.shrink(),
+      error: (_, __) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        child: UltraFortuneStatePanel(
+          icon: Icons.cloud_off_rounded,
+          message: 'Son fallar yüklenemedi',
+          actionLabel: 'Tekrar dene',
+          onAction: () => ref.invalidate(fortuneHistoryProvider),
+          height: 100,
+        ),
+      ),
       data: (items) {
-        if (items.isEmpty) return const SizedBox.shrink();
+        if (items.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: UltraFortuneStatePanel(
+              icon: Icons.history_rounded,
+              message: 'Henüz fal geçmişi yok',
+              actionLabel: 'Fal baktır',
+              onAction: () => context.push('/fortune/tarot'),
+              height: 100,
+            ),
+          );
+        }
         final preview = items.take(3).toList();
         final cardH = 132.0;
 

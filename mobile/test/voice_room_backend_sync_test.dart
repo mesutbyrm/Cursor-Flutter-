@@ -70,7 +70,7 @@ void main() {
     expect(snap.rulesTr, 'Kurallara uyun');
   });
 
-  test('voiceWebOwnerSeatRows adapts to 8-seat room', () {
+  test('voiceWebOwnerSeatRows progressive plus for 8-seat room', () {
     const room = VoiceRoomEntity(
       id: 'r1',
       slug: 'r1',
@@ -78,7 +78,7 @@ void main() {
       seatCount: 8,
     );
     final rows = voiceWebOwnerSeatRows(room: room);
-    expect(rows.top, [2, 3, 4, 5]);
-    expect(rows.bottom, [6, 7, 8]);
+    expect(rows.top, [2]);
+    expect(rows.bottom, isEmpty);
   });
 }

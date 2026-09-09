@@ -49,8 +49,7 @@ class TrtcRoomManager {
   final ValueNotifier<Map<String, bool>> remoteAudioByUser =
       ValueNotifier<Map<String, bool>>({});
 
-  int? _boundRemoteViewId;
-  String? _boundRemoteUserId;
+  final Map<String, int> _remoteViewBindings = {};
   String? _expectedAnchorUserId;
 
   /// Bağlantı koptuğunda çağrılır (yeniden bağlanma koordinatörde).
@@ -481,13 +480,11 @@ class TrtcRoomManager {
     remoteAnchorUserId = null;
     remoteAnchorUserIdNotifier.value = null;
     remoteVideoAvailable.value = false;
-    _boundRemoteViewId = null;
-    _boundRemoteUserId = null;
   }
 
   void _tryBindPendingRemoteView(String userId) {
-    final viewId = _boundRemoteViewId;
-    if (viewId != null && _boundRemoteUserId == userId && _cloud != null) {
+    final viewId = _remoteViewBindings[userId];
+    if (viewId != null && _cloud != null) {
       _cloud!.startRemoteView(userId, TRTCVideoStreamType.big, viewId);
     }
   }
@@ -512,8 +509,7 @@ class TrtcRoomManager {
   void startRemoteView(String userId, int viewId) {
     if (_audioOnly) return;
     if (_cloud == null || !_inRoom) return;
-    _boundRemoteUserId = userId;
-    _boundRemoteViewId = viewId;
+    _remoteViewBindings[userId] = viewId;
     _cloud!.startRemoteView(userId, TRTCVideoStreamType.big, viewId);
     _cloud!.muteRemoteAudio(userId, false);
     _trtcLog('remote_video', {'userId': userId, 'viewId': viewId, 'enabled': true});
@@ -523,10 +519,7 @@ class TrtcRoomManager {
   void stopRemoteView(String userId) {
     _cloud?.stopRemoteView(userId, TRTCVideoStreamType.big);
     _trtcLog('remote_video', {'userId': userId, 'enabled': false});
-    if (_boundRemoteUserId == userId) {
-      _boundRemoteViewId = null;
-      _boundRemoteUserId = null;
-    }
+    _remoteViewBindings.remove(userId);
   }
 
   void setMicEnabled(bool enabled) {
@@ -578,6 +571,7 @@ class TrtcRoomManager {
     remoteVideoAvailable.value = false;
     _expectedAnchorUserId = null;
     _clearRemoteAnchor();
+    _remoteViewBindings.clear();
     _remoteUserIds.clear();
     remoteUserIdsNotifier.value = const [];
     remoteVideoByUser.value = const {};
@@ -713,8 +707,8 @@ class TrtcLocalVideoView extends StatelessWidget {
   }
 }
 
-/// Uzak yayıncı videosu.
-class TrtcRemoteVideoView extends StatelessWidget {
+/// Uzak yayıncı videosu — view dispose'da binding temizlenir.
+class TrtcRemoteVideoView extends StatefulWidget {
   const TrtcRemoteVideoView({
     super.key,
     required this.manager,
@@ -725,10 +719,22 @@ class TrtcRemoteVideoView extends StatelessWidget {
   final String userId;
 
   @override
+  State<TrtcRemoteVideoView> createState() => _TrtcRemoteVideoViewState();
+}
+
+class _TrtcRemoteVideoViewState extends State<TrtcRemoteVideoView> {
+  @override
+  void dispose() {
+    widget.manager.stopRemoteView(widget.userId);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return TRTCCloudVideoView(
-      key: ValueKey('remote-$userId'),
-      onViewCreated: (viewId) => manager.startRemoteView(userId, viewId),
+      key: ValueKey('remote-${widget.userId}'),
+      onViewCreated: (viewId) =>
+          widget.manager.startRemoteView(widget.userId, viewId),
     );
   }
 }

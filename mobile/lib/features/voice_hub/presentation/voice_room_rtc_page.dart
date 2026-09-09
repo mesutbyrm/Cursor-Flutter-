@@ -2038,9 +2038,13 @@ class _VoiceRoomRtcSeatStage extends ConsumerWidget {
       for (final p in seatSlice.presence)
         if (p.isSpeaking) p.id,
     };
+    final live = ref.watch(voiceRoomLiveProvider(liveRoomKey));
     return VoiceWebOwnerStage(
       roomKey: liveRoomKey,
       room: room,
+      seatSlots: seatSlice.seatSlots,
+      presence: seatSlice.presence,
+      configuredSeatCount: live.roomSeatCount ?? room.seatCount,
       djUserIds: mergedDjIds,
       speakingUserIds: speakingIds,
       onUserTap: onUserTap,

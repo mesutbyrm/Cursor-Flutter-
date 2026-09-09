@@ -31,14 +31,12 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
   final Set<String> _seenRejections = {};
   var _showing = false;
   Timer? _pollTimer;
-  var _pollTick = 0;
 
   @override
   void initState() {
     super.initState();
     _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) {
       if (!mounted || _showing) return;
-      _pollTick++;
       unawaited(_pollPendingInvites());
     });
     Future.microtask(() async {
@@ -137,17 +135,7 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
     try {
       final api = ref.read(pkBattleRemoteDataSourceProvider);
 
-      // REST yedek — `GET /api/pk/me/invites` (SSE kaçırdığında).
-      final myInvites = await api.fetchMyInvites();
-      for (final battle in myInvites) {
-        if (!battle.isPending || battle.isEnded) continue;
-        final room = resolvePkInviteTargetRoom(ref, battle, user.id);
-        if (room == null) continue;
-        ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(battle);
-        _onBattleUpdate(battle);
-        return;
-      }
-
+      // Sesli oda PK — games backend `GET /api/chat/rooms/{id}/pk` (unified /api/pk/* yok).
       final activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
       final inRoomSse = activeKey.isNotEmpty &&
           ref.read(voiceRoomLiveProvider(activeKey)).sseConnected;

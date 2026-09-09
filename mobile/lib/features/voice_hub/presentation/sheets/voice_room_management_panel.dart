@@ -1108,7 +1108,7 @@ class _VoiceRoomManagementPanelState
   Future<void> _pickSeatCount() async {
     final current =
         _live.roomSeatCount ?? room.seatCount ?? kDefaultVoiceSeatCount;
-    final options = const [8, 10, 12, 15];
+    final options = List<int>.generate(15, (i) => i + 1);
     final picked = await showDialog<int>(
       context: context,
       builder: (ctx) => SimpleDialog(

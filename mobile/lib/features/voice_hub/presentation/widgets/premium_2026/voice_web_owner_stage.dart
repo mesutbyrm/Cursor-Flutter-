@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../trtc/presentation/trtc_room_manager.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../domain/entities/chat_room_presence.dart';
+import '../../../domain/entities/voice_room_seat_slot.dart';
 import '../../utils/voice_room_seat_layout.dart';
 import '../../utils/voice_room_seat_capacity.dart';
 import '../../utils/voice_room_speak_access.dart';
@@ -15,6 +16,9 @@ class VoiceWebOwnerStage extends StatelessWidget {
     super.key,
     required this.roomKey,
     required this.room,
+    this.seatSlots = const [],
+    this.presence = const [],
+    this.configuredSeatCount,
     this.djUserIds,
     this.speakingUserId,
     this.speakingUserIds = const {},
@@ -29,6 +33,9 @@ class VoiceWebOwnerStage extends StatelessWidget {
 
   final String roomKey;
   final VoiceRoomEntity room;
+  final List<VoiceRoomSeatSlot> seatSlots;
+  final List<ChatRoomPresence> presence;
+  final int? configuredSeatCount;
   final List<String>? djUserIds;
   final String? speakingUserId;
   final Set<String> speakingUserIds;
@@ -65,7 +72,12 @@ class VoiceWebOwnerStage extends StatelessWidget {
         final gridH = rowH * 2 + gap;
         final totalH = gridH.clamp(112.0, 176.0);
 
-        final rows = voiceWebOwnerSeatRows(room: room);
+        final rows = voiceWebOwnerSeatRows(
+          room: room,
+          seatSlots: seatSlots,
+          presence: presence,
+          configuredSeatCount: configuredSeatCount,
+        );
         final topInternal = rows.top;
         final bottomInternal = rows.bottom;
         final speaking = _effectiveSpeakingIds;
