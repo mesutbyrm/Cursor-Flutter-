@@ -17,6 +17,21 @@ void main() {
       expect(state.connectedRooms, isEmpty);
     });
 
+    test('patchRoomCount updates local counts map', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      container.read(voiceRoomsPresenceProvider.notifier).patchRoomCount(
+            'room-a',
+            12,
+          );
+
+      expect(
+        container.read(voiceRoomsPresenceProvider).counts['room-a'],
+        12,
+      );
+    });
+
     test('homeTrackedRooms is lower than maxTrackedRooms', () {
       expect(
         VoiceRoomsPresenceNotifier.homeTrackedRooms,

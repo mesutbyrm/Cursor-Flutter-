@@ -5,6 +5,7 @@ import '../../../live/domain/entities/voice_room_entity.dart';
 import '../providers/voice_room_ranking_provider.dart';
 import '../providers/voice_room_preview_goal_provider.dart';
 import '../providers/voice_room_preview_pk_provider.dart';
+import '../providers/voice_rooms_presence_provider.dart';
 import '../../../../core/images/canlifal_network_image.dart';
 
 /// Odaya girmeden önce önizleme — PK, sıralama, çevrimiçi sayısı.
@@ -16,6 +17,7 @@ Future<bool> showVoiceRoomPreviewSheet(
   await ref.read(voiceRoomRankingProvider.notifier).refresh();
   ref.invalidate(voiceRoomPreviewGoalProvider(room.apiRoomKey));
   ref.invalidate(voiceRoomPreviewPkProvider(room.apiRoomKey));
+  ref.read(voiceRoomsPresenceProvider.notifier).mergeTrackRooms([room]);
   if (!context.mounted) return false;
 
   final result = await showModalBottomSheet<bool>(
@@ -45,6 +47,9 @@ class _VoiceRoomPreviewSheet extends ConsumerWidget {
     final pkAsync = ref.watch(voiceRoomPreviewPkProvider(room.apiRoomKey));
     final activeGoal = goalAsync.valueOrNull;
     final activePk = pkAsync.valueOrNull;
+    final onlineCount = ref.watch(
+      voiceRoomsPresenceProvider.select((p) => p.countFor(room)),
+    );
     final bottom = MediaQuery.paddingOf(context).bottom;
     final owner = room.ownerName?.trim().isNotEmpty == true
         ? room.ownerName!.trim()
@@ -121,7 +126,7 @@ class _VoiceRoomPreviewSheet extends ConsumerWidget {
             children: [
               _chip(
                 Icons.people_rounded,
-                '${room.displayOnline} çevrimiçi',
+                '$onlineCount çevrimiçi',
                 const Color(0xFF5B8CFF),
               ),
               if (room.isPkLive)

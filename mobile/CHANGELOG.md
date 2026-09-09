@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.436+474 (2026-09-09) — Sesli oda Faz 10
+
+### Keşfet SSE → hub senkronu
+- Discover presence SSE: çevrimiçi sayı → `voiceRoomsListNotifier` patch
+- Discover: `room_closed`, PK, müzik SSE → liste `isPkLive` / `isMusicPlaying` patch
+
+### Önizleme
+- Önizleme sheet: canlı SSE çevrimiçi sayısı (`mergeTrackRooms`)
+
+### Temizlik
+- Kullanılmayan `voice_room_socket_helper.dart` kaldırıldı
+
 ## 1.0.435+473 (2026-09-09) — Sesli oda Faz 9
 
 ### Keşfet / sıralama proxy

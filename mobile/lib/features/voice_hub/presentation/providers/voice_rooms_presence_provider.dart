@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/sse/sse_hub_provider.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
+import '../../../live/presentation/providers/voice_rooms_list_notifier.dart';
 import '../../domain/entities/chat_room_sse_event.dart';
 
 /// Keşfet listesinde anlık çevrimiçi sayıları — merkezi SSE hub (oda başına tek bağlantı).
@@ -118,12 +119,88 @@ class VoiceRoomsPresenceNotifier extends Notifier<VoiceRoomsPresenceState> {
     }
     _subs[roomId]?.cancel();
     _subs[roomId] = service.events.listen((event) {
+      _handleDiscoverHubEvent(event, roomId);
       final update = _presenceFromEvent(event, fallbackRoomId: roomId);
       if (update == null) return;
-      final counts = Map<String, int>.from(state.counts);
-      counts[update.roomId] = update.onlineUsers;
-      state = state.copyWith(counts: counts);
+      patchRoomCount(update.roomId, update.onlineUsers);
     });
+  }
+
+  void _handleDiscoverHubEvent(ChatRoomSseEvent event, String fallbackRoomId) {
+    final map = event.data;
+    final roomId =
+        (map['roomId'] ?? map['roomKey'] ?? fallbackRoomId).toString().trim();
+    if (roomId.isEmpty) return;
+
+    if (event.type == ChatRoomSseEventType.roomEvent) {
+      final ev = (map['event'] ?? map['type'] ?? '').toString().toLowerCase();
+      if (ev == 'room_closed') {
+        _patchRoomClosedOnDiscover(roomId);
+        _disconnectRoom(roomId);
+        return;
+      }
+      if (ev.contains('pk_')) {
+        final ended = ev.contains('ended') ||
+            ev.contains('rejected') ||
+            ev.contains('cancelled') ||
+            ev.contains('canceled');
+        _patchPkLiveOnDiscover(roomId, active: !ended);
+      }
+    }
+
+    switch (event.type) {
+      case ChatRoomSseEventType.dj:
+      case ChatRoomSseEventType.music:
+      case ChatRoomSseEventType.musicStarted:
+        _patchMusicOnDiscover(roomId, active: true);
+        return;
+      case ChatRoomSseEventType.musicStopped:
+        _patchMusicOnDiscover(roomId, active: false);
+        return;
+      case ChatRoomSseEventType.pk:
+        _patchPkLiveOnDiscover(roomId, active: true);
+        return;
+      default:
+        return;
+    }
+  }
+
+  void _patchHubListFields(
+    String roomId,
+    VoiceRoomEntity Function(VoiceRoomEntity room) transform,
+  ) {
+    ref.read(voiceRoomsListNotifierProvider.notifier).patchRoomFields(
+          roomId,
+          transform,
+        );
+  }
+
+  void _patchHubListOnlineCount(String roomId, int count) {
+    _patchHubListFields(
+      roomId,
+      (r) => r.copyWith(onlineCount: count, userCount: count),
+    );
+  }
+
+  void _patchRoomClosedOnDiscover(String roomId) {
+    _patchHubListFields(
+      roomId,
+      (r) => r.copyWith(
+        onlineCount: 0,
+        userCount: 0,
+        isPkLive: false,
+        isMusicPlaying: false,
+      ),
+    );
+    patchRoomCount(roomId, 0);
+  }
+
+  void _patchPkLiveOnDiscover(String roomId, {required bool active}) {
+    _patchHubListFields(roomId, (r) => r.copyWith(isPkLive: active));
+  }
+
+  void _patchMusicOnDiscover(String roomId, {required bool active}) {
+    _patchHubListFields(roomId, (r) => r.copyWith(isMusicPlaying: active));
   }
 
   ({String roomId, int onlineUsers})? _presenceFromEvent(
@@ -161,6 +238,7 @@ class VoiceRoomsPresenceNotifier extends Notifier<VoiceRoomsPresenceState> {
     final counts = Map<String, int>.from(state.counts);
     counts[roomId] = count;
     state = state.copyWith(counts: counts);
+    _patchHubListOnlineCount(roomId, count);
   }
 
   void _disconnectRoom(String roomId, {bool releaseHub = true}) {

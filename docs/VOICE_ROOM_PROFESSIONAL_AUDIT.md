@@ -1,7 +1,7 @@
 # Canlifal Sesli Sohbet Odaları — Profesyonel Denetim Raporu
 
 **Tarih:** 2026-09-09  
-**Sürüm (bu oturum):** `1.0.435+473`  
+**Sürüm (bu oturum):** `1.0.436+474`  
 **Mimari:** Flutter mobil → `https://canlifal.com` REST + SSE (Socket.IO mobilde kullanılmıyor)
 
 ---
@@ -44,7 +44,7 @@ Sesli oda sistemi **çalışan temel akışları koruyarak** premium UX, mention
 | Odalar arası turnuva | **EKSİK** | Modüler altyapı planlandı, backend yok |
 | SSE realtime | **ÇALIŞIYOR** | 5 endpoint kılavuz uyumlu |
 | RTC / Agora ses | **ÇALIŞIYOR** | TRTC sesli oda |
-| Socket.IO (mobil) | **MOCK/DEAD** | `voice_room_socket_helper` `@Deprecated`, kullanılmıyor |
+| Socket.IO (mobil) | **KALDIRILDI** | `voice_room_socket_helper` silindi; üretim SSE |
 | Heartbeat (15s PATCH presence) | **KISMEN** | İstemci gönderir; `api/` mirror ghost sweep (45 sn) |
 | Boş oda otomatik kapanma | **KISMEN** | `api/` mirror + mobil `room_closed` liste patch |
 | Reconnect banner | **ÇALIŞIYOR** | Basic + RTC mod; SSE kopması + manuel resync |
