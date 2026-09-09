@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.425+463 (2026-09-09) — Konuk kamera SSE
+
+### Konuk kamera (gerçek zamanlı)
+- `co_guest_camera` artık video yayın SSE üzerinden de gelir (poll yedek kalır)
+- Ortak sinyal ayrıştırma util + `liveCoGuestCameraSignalProvider`
+- Misafir cihaz anında kamera aç/kapat + bildirim
+
 ## 1.0.424+462 (2026-09-09) — Canlı yayın eksikleri
 
 ### Oyunlar

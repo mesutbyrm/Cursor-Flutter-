@@ -62,6 +62,7 @@ class VideoStreamSseService {
   void Function(String userId)? _onUserLeft;
   void Function(String userId, bool isModerator)? _onModeratorUpdated;
   void Function(Map<String, dynamic> payload)? _onGuest;
+  void Function(Map<String, dynamic> payload)? _onCoGuestCamera;
   static const _fortuneEventTypes = {
     'fal_request',
     'live_fal_request',
@@ -93,6 +94,7 @@ class VideoStreamSseService {
     void Function(String userId)? onUserLeft,
     void Function(String userId, bool isModerator)? onModeratorUpdated,
     void Function(Map<String, dynamic> payload)? onGuest,
+    void Function(Map<String, dynamic> payload)? onCoGuestCamera,
   }) async {
     final id = streamId.trim();
     final same = !_stopped && !_paused && _streamId == id && _bytesSub != null;
@@ -113,6 +115,7 @@ class VideoStreamSseService {
     _onUserLeft = onUserLeft;
     _onModeratorUpdated = onModeratorUpdated;
     _onGuest = onGuest;
+    _onCoGuestCamera = onCoGuestCamera;
     if (same) return;
     LiveDebugLog.log('stream.sse.connect', {'streamId': id});
     await _openStream();
@@ -343,8 +346,41 @@ class VideoStreamSseService {
       case 'guestinvite':
         _onGuest?.call(map);
         return;
+      case 'co_guest_camera':
+      case 'coguestcamera':
+        _onCoGuestCamera?.call(map);
+        return;
+      case 'signal':
+      case 'stream_signal':
+      case 'streamSignal': {
+        final inner = map['signal'] ?? map['payload'] ?? map['data'];
+        if (inner is Map) {
+          final innerMap = Map<String, dynamic>.from(inner);
+          final innerType =
+              (innerMap['type'] ?? innerMap['event'] ?? map['signalType'] ?? '')
+                  .toString()
+                  .toLowerCase();
+          if (innerType == 'co_guest_camera') {
+            _onCoGuestCamera?.call({
+              ...innerMap,
+              if (!innerMap.containsKey('type')) 'type': 'co_guest_camera',
+            });
+            return;
+          }
+        }
+        final signalType = (map['signalType'] ?? '').toString().toLowerCase();
+        if (signalType == 'co_guest_camera') {
+          _onCoGuestCamera?.call(map);
+          return;
+        }
+        break;
+      }
       default:
         final typeLower = type.toLowerCase();
+        if (typeLower == 'co_guest_camera' || typeLower == 'coguestcamera') {
+          _onCoGuestCamera?.call(map);
+          return;
+        }
         if (_fortuneEventTypes.contains(typeLower)) {
           _onStreamFortuneRequest?.call(map);
           final session = parsePsychicSsePayload(map);
@@ -381,6 +417,7 @@ class VideoStreamSseService {
     _onUserLeft = null;
     _onModeratorUpdated = null;
     _onGuest = null;
+    _onCoGuestCamera = null;
     await _closeStreamOnly();
     LiveDebugLog.log('stream.sse.disconnect');
   }

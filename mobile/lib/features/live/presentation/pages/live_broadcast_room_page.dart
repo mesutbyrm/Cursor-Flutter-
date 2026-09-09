@@ -69,6 +69,7 @@ import '../../domain/live_co_broadcast_constants.dart';
 import '../../domain/live_guest_layout_resolver.dart';
 import '../providers/live_namespace_providers.dart';
 import '../../domain/utils/live_fortune_type_slug.dart';
+import '../../domain/utils/co_guest_camera_signal_util.dart';
 import '../../domain/utils/live_fortune_display_label.dart';
 import '../gifts/live_gift_controller.dart';
 import '../gifts/providers/live_gift_providers.dart';
@@ -77,6 +78,7 @@ import '../providers/live_host_rank_provider.dart';
 import '../../../games/presentation/providers/game_providers.dart';
 import '../providers/pk_room_providers.dart';
 import '../providers/live_invite_dedup_provider.dart';
+import '../providers/live_co_guest_camera_signal_provider.dart';
 import '../providers/live_pk_invite_signal_provider.dart';
 import '../providers/live_providers.dart';
 import '../providers/discover_live_streams.dart';
@@ -1393,33 +1395,23 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     }
   }
 
-  /// Yayıncı → misafir kamera sinyali (`POST …/signal` type: co_guest_camera).
+  /// Yayıncı → misafir kamera sinyali (`POST …/signal` veya SSE `co_guest_camera`).
   void _handleCoGuestSignal(Map<String, dynamic> sig) {
     if (widget.session.isHost || _leaving) return;
-    final type = (sig['type'] ?? sig['event'] ?? '').toString().toLowerCase();
-    if (type != 'co_guest_camera') return;
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) return;
-    final receiver =
-        (sig['receiverId'] ?? sig['targetUserId'] ?? '').toString();
-    if (receiver.isNotEmpty && receiver != user.id) return;
-    final data = sig['data'] is Map
-        ? Map<String, dynamic>.from(sig['data'] as Map)
-        : (sig['payload'] is Map
-            ? Map<String, dynamic>.from(sig['payload'] as Map)
-            : <String, dynamic>{});
-    final enabled = data['enabled'];
-    final on = enabled == true ||
-        enabled == 1 ||
-        enabled == 'true' ||
-        enabled == 'on';
-    _trtc.setCameraEnabled(on);
+    final enabled = resolveCoGuestCameraForUser(
+      sig: sig,
+      selfUserId: user.id,
+    );
+    if (enabled == null) return;
+    _trtc.setCameraEnabled(enabled);
     if (!mounted) return;
     setState(() => _localPreviewKey = UniqueKey());
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          on ? 'Yayıncı kameranızı açtı' : 'Yayıncı kameranızı kapattı',
+          enabled ? 'Yayıncı kameranızı açtı' : 'Yayıncı kameranızı kapattı',
         ),
       ),
     );
@@ -2760,6 +2752,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     }
 
     if (hasStream) {
+      ref.listen(liveCoGuestCameraSignalProvider, (prev, next) {
+        if (next == null) return;
+        _handleCoGuestSignal(next.payload);
+      });
       ref.listen(liveRoomProvider(streamId), (prev, next) {
         if (next.viewerCount > _peakViewerCount) {
           _peakViewerCount = next.viewerCount;

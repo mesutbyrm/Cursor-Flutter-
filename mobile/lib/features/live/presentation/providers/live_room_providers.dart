@@ -43,6 +43,7 @@ import 'live_guest_grid_provider.dart';
 import 'pk_room_providers.dart';
 import 'live_pk_streams_provider.dart';
 import 'live_co_broadcast_invite_signal_provider.dart';
+import 'live_co_guest_camera_signal_provider.dart';
 import 'live_pk_invite_signal_provider.dart';
 
 class LiveRoomState {
@@ -344,6 +345,9 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
         }
       },
       onGuest: (payload) => unawaited(_applyGuestSse(streamId, payload)),
+      onCoGuestCamera: (payload) {
+        ref.read(liveCoGuestCameraSignalProvider.notifier).push(payload);
+      },
     );
   }
 
