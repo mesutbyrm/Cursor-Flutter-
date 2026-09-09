@@ -8,6 +8,12 @@ void invalidateDiscoverLiveStreams(dynamic ref) {
   ref.invalidate(liveStreamsListNotifierProvider);
 }
 
+/// Yayın bitti — stale kartı hemen kaldır, ardından liste yenile.
+void markLiveStreamEnded(dynamic ref, String streamId) {
+  ref.read(liveStreamsListNotifierProvider.notifier).patchStreamEnded(streamId);
+  invalidateDiscoverLiveStreams(ref);
+}
+
 /// Geriye dönük: keşif listesinin ilk sayfası (çift fetch önlenir).
 final liveStreamsProvider = FutureProvider<List<LiveStreamEntity>>((ref) async {
   final cached = ref.watch(liveStreamsListNotifierProvider).valueOrNull;

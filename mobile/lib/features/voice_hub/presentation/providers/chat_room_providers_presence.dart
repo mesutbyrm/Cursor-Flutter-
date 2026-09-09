@@ -110,10 +110,16 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
   }
 
   void _announcePresenceJoin(ChatRoomPresence user) {
+    if (user.id.isNotEmpty && _sessionAnnouncedJoinUserIds.contains(user.id)) {
+      return;
+    }
     final name = user.displayName.trim().isNotEmpty
         ? user.displayName.trim()
         : user.name.trim();
     if (name.isEmpty) return;
+    if (user.id.isNotEmpty) {
+      _sessionAnnouncedJoinUserIds.add(user.id);
+    }
     final userRef = ChatRoomUserRef(
       id: user.id,
       name: user.name,

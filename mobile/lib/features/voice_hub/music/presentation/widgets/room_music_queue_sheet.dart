@@ -194,7 +194,7 @@ class _RoomMusicQueueSheetState extends ConsumerState<_RoomMusicQueueSheet> {
                           itemBuilder: (context, i) {
                             final item = _queue[i];
                             return _QueueTile(
-                              key: ValueKey(item.id),
+                              key: ValueKey(item.id.isNotEmpty ? item.id : 'q-$i'),
                               index: i + 1,
                               item: item,
                               isNowPlaying: item.id == nowId,
@@ -217,7 +217,7 @@ class _RoomMusicQueueSheetState extends ConsumerState<_RoomMusicQueueSheet> {
                           itemBuilder: (context, i) {
                             final item = _queue[i];
                             return _QueueTile(
-                              key: ValueKey(item.id),
+                              key: ValueKey(item.id.isNotEmpty ? item.id : 'q-$i'),
                               index: i + 1,
                               item: item,
                               isNowPlaying: item.id == nowId,

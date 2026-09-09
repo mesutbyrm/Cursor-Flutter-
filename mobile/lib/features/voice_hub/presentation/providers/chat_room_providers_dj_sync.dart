@@ -112,14 +112,8 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
           .whereType<Map>()
           .map((e) => MusicQueueItem.fromJson(Map<String, dynamic>.from(e)))
           .toList();
-      final songActive =
-          key.isNotEmpty && ref.read(roomSongBlocProvider(key)).state.hasTrack;
-      final musicActive = dj.playing || state.dj.playing || songActive;
-      if (queue.isNotEmpty || !musicActive) {
-        dj = dj.copyWith(musicQueue: queue);
-      } else if (state.dj.musicQueue.isNotEmpty) {
-        dj = dj.copyWith(musicQueue: state.dj.musicQueue);
-      }
+      // Backend canonical queue — boş liste de geçerli (sıra bitti).
+      dj = dj.copyWith(musicQueue: queue);
     }
     if (map['djUserIds'] is List) {
       final ids = (map['djUserIds'] as List)

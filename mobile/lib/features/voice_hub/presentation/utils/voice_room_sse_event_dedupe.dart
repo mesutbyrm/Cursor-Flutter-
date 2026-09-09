@@ -17,4 +17,6 @@ class VoiceRoomSseEventDedupe {
   }
 
   void clear() => _seen.clear();
+
+  void reset() => clear();
 }

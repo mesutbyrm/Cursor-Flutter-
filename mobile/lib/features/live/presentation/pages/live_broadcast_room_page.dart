@@ -916,7 +916,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     _leaving = true;
     final summary = _buildSessionSummary();
     await _leaveLiveSession(endReason: endReason);
-    invalidateDiscoverLiveStreams(ref);
+    markLiveStreamEnded(ref, streamId);
     if (!mounted) return;
     if (showEndedDialog) {
       final rootCtx = rootNavigatorKey.currentContext;

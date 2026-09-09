@@ -216,6 +216,9 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             if (VoiceRoomBasicMode.enabled && !VoiceRoomBasicMode.premiumEnabled) {
               return;
             }
+            final dedupeId =
+                '${battle.effectiveId}:${battle.status}:${battle.challengerScore}:${battle.opponentScore}';
+            if (!_sse._acceptSseEvent({'eventId': dedupeId})) return;
             ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(battle);
             VoiceRoomDebugLog.log('sse.pk', {
               'roomId': roomKey,

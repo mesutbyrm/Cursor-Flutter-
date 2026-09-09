@@ -1837,9 +1837,9 @@ class ChatRoomRemoteDataSource {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       Response<dynamic>? res;
       for (final path in [
-        musicPath(key),
-        songRequestPath(key),
         ApiEndpoints.chatRoomMusicQueue(key),
+        songRequestPath(key),
+        musicPath(key),
         djPath(key),
       ]) {
         try {

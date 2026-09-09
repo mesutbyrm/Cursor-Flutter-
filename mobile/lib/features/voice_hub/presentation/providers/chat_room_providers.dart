@@ -30,6 +30,7 @@ import 'voice_gift_providers.dart';
 import 'voice_room_audio_providers.dart';
 import 'pk_battle_provider.dart';
 import 'pk_battle_remote_provider.dart';
+import '../utils/pk_invite_dialog_helper.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
 import '../../../../core/network/sse/sse_hub_provider.dart';
 import '../../data/youtube_music_search_cache.dart';
@@ -112,6 +113,7 @@ import 'voice_room_diagnostic_provider.dart';
 import 'voice_room_ui_provider.dart';
 import 'voice_room_mention_notice_provider.dart';
 import 'voice_room_ranking_provider.dart';
+import 'voice_room_rank_celebration_provider.dart';
 part 'chat_room_providers_music.dart';
 part 'chat_room_providers_playback.dart';
 part 'chat_room_providers_moderation.dart';
@@ -421,6 +423,8 @@ class VoiceRoomLiveController
   DateTime? _chatClearedWatermark;
   final Set<String> _shownEntranceKeys = {};
   final Set<String> _knownPresenceIds = {};
+  /// Oturumda duyurulan girişler — aynı kullanıcı iki kez gösterilmez.
+  final Set<String> _sessionAnnouncedJoinUserIds = {};
   /// Ayrılış duyurusu için son bilinen isimler (id → ad).
   final Map<String, String> _lastKnownPresenceNames = {};
   final Set<String> _shownMusicRequestFlashKeys = {};
@@ -1028,6 +1032,9 @@ class VoiceRoomLiveController
           clearVoiceRoomLiveSession(ref, roomKey);
           _removeSelfFromPresenceOptimistic();
           _knownPresenceIds.clear();
+          _sessionAnnouncedJoinUserIds.clear();
+          _shownEntranceKeys.clear();
+          _sseEventDedupe.clear();
           _sseStarted = false;
           _sseAttachedRoomKey = null;
           _presenceJoined = false;
@@ -1051,6 +1058,10 @@ class VoiceRoomLiveController
           ref.read(voiceRoomGiftRealtimeProvider).setSseActive(false);
           ref.read(voiceRoomGiftRealtimeProvider).resetDedupeState();
           ref.read(pkBattleRemoteProvider.notifier).clear();
+          ref.read(pkBattleProvider.notifier).reset();
+          ref.read(staffEntranceMarqueeProvider.notifier).clear();
+          ref.read(pkSeenInviteIdsProvider.notifier).state = {};
+          ref.read(voiceRoomRankCelebrationProvider.notifier).resetSession();
           ref.read(voiceRoomDiagnosticProvider.notifier).resetForRoom(roomKey);
           ref.read(voiceRoomUiProvider.notifier).setRequestSpeakPending(false);
           unawaited(_stopTyping());
@@ -2000,10 +2011,8 @@ class VoiceRoomLiveController
         fetchQueuePlaying: mq.playing,
       );
     }
-    final effectiveQueue = mq.queue.isNotEmpty ||
-            !((mq.playing ?? dj.playing) || dj.musicQueue.isNotEmpty)
-        ? mq.queue
-        : dj.musicQueue;
+    // music-queue canonical — sunucu boş döndürdüyse yerel kuyruk korunmaz.
+    final effectiveQueue = mq.queue;
     final merged = dj.mergeMusicQueue(
       queue: effectiveQueue,
       nowPlaying: mq.nowPlaying,

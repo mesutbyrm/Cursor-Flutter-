@@ -269,7 +269,8 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
       }
     }
 
-    if (activeKey.isEmpty) return true;
+    // Odada değilken yalnızca kullanıcıya yönelik pending davetler (yukarıda).
+    if (activeKey.isEmpty) return false;
     if (!battle.isPending) return false;
 
     if (user != null) {
@@ -288,6 +289,15 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
   }
 
   void _apply(PkBattleRemote battle, String event) {
+    final cur = state;
+    if (cur != null &&
+        cur.effectiveId == battle.effectiveId &&
+        cur.status == battle.status &&
+        cur.challengerScore == battle.challengerScore &&
+        cur.opponentScore == battle.opponentScore &&
+        cur.secondsLeft == battle.secondsLeft) {
+      return;
+    }
     state = battle;
     _syncPhase(battle, event);
     if (battle.isActive || battle.isEnded) {
@@ -317,26 +327,15 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
 
   void _syncPhase(PkBattleRemote battle, String event) {
     final phase = ref.read(pkSessionPhaseProvider.notifier);
-    if (battle.isEnded) {
-      if (battle.status == 'rejected') {
-        phase.transitionTo(PkSessionPhase.rejected);
-      } else {
-        phase.transitionTo(PkSessionPhase.ended);
-      }
-      return;
+    if (event.contains('invite') && battle.isPending) {
+      phase.transitionTo(PkSessionPhase.requesting);
     }
-    if (battle.isActive) {
-      phase.transitionTo(PkSessionPhase.connecting);
-      phase.transitionTo(PkSessionPhase.active);
-      return;
-    }
-    if (battle.isPending) {
-      if (event.contains('invite')) {
-        phase.transitionTo(PkSessionPhase.requesting);
-      } else {
-        phase.transitionTo(PkSessionPhase.incoming);
-      }
-    }
+    phase.syncFromServer(
+      isEnded: battle.isEnded,
+      isActive: battle.isActive,
+      isPending: battle.isPending,
+      status: battle.status,
+    );
   }
 
   void clear() {

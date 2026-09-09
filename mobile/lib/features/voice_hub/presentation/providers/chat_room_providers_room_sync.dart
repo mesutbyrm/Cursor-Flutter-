@@ -279,10 +279,13 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       seatIndex: _parseEventInt(payload['seatIndex']),
     );
     final next = [...state.presence, user];
+    final wasKnown = _knownPresenceIds.contains(userId);
     _knownPresenceIds.add(userId);
     state = state.copyWith(presence: next, sseConnected: true);
     _patchHubOnlineCountFromPayload(payload, fallback: next.length);
-    _notifyRealtimeIfBasic(VoiceRoomRealtimeKind.join, '$name odaya katıldı');
+    if (!wasKnown) {
+      _announcePresenceJoin(user);
+    }
     _dispatchSiteAnimation('user_joined', payload);
     final seatIndex = user.seatIndex ?? _parseEventInt(payload['seatIndex']);
     if (seatIndex != null && seatIndex > 0) {

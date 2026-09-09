@@ -190,24 +190,28 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
             action: 'accept',
             battleId: battleId,
           );
+          break;
         case 'reject':
           remote = await api.streamPkAction(
             streamId: arg,
             action: 'reject',
             battleId: battleId,
           );
+          break;
         case 'cancel':
           remote = await api.streamPkAction(
             streamId: arg,
             action: 'cancel',
             battleId: battleId,
           );
+          break;
         case 'end':
           remote = await api.streamPkAction(
             streamId: arg,
             action: 'end',
             battleId: battleId,
           );
+          break;
       }
       if (remote != null) {
         state = state.copyWith(

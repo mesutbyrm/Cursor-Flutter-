@@ -37,7 +37,9 @@ class VoiceRoomRankCelebrationNotifier
         final prev = _lastTopRanks[key];
         _lastTopRanks[key] = entry.rank;
         if (entry.rank > 3) continue;
-        final improved = prev == null || entry.rank < prev;
+        // İlk yükleme: mevcut sırayı kaydet, kutlama gösterme (eski state spam'i).
+        if (prev == null) continue;
+        final improved = entry.rank < prev;
         if (!improved) continue;
         final until = _cooldownUntil[key];
         if (until != null && now.isBefore(until)) continue;
@@ -54,6 +56,13 @@ class VoiceRoomRankCelebrationNotifier
   }
 
   void dismiss() => state = null;
+
+  /// Oturum sıfırlama — eski sıralama state'i taşınmaz.
+  void resetSession() {
+    _lastTopRanks.clear();
+    _cooldownUntil.clear();
+    state = null;
+  }
 }
 
 final voiceRoomRankCelebrationProvider =

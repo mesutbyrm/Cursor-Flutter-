@@ -31,12 +31,25 @@ class LiveStreamsListNotifier extends AsyncNotifier<List<LiveStreamEntity>> {
           page: page,
           category: filter.apiCategory,
         );
-    _end = items.length < _pageSize;
+    final liveOnly = items.where((s) => s.isLive).toList(growable: false);
+    _end = liveOnly.length < _pageSize;
     return rankLiveStreamsForDiscover(
-      streams: items,
+      streams: liveOnly,
       filter: filter,
       userAffinity: filter.isFortuneFamily ? filter : null,
     );
+  }
+
+  /// Yayın bitti — listeden anında çıkar (stale cache önleme).
+  void patchStreamEnded(String streamId) {
+    final id = streamId.trim();
+    if (id.isEmpty) return;
+    final cur = state.valueOrNull;
+    if (cur == null) return;
+    final next = cur.where((s) => s.id != id).toList(growable: false);
+    if (next.length != cur.length) {
+      state = AsyncValue.data(next);
+    }
   }
 
   Future<void> refresh() async {

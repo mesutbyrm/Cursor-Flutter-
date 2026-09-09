@@ -329,6 +329,14 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
     );
   }
 
+  void reset() {
+    _tick?.cancel();
+    _tick = null;
+    _room = null;
+    _presence = const [];
+    state = const PkBattleState();
+  }
+
   void restart({int durationSeconds = 300}) {
     final winner = state.winner;
     var leftStreak = state.left.winStreak;
