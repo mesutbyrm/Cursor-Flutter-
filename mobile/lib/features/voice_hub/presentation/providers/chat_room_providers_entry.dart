@@ -206,6 +206,10 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
       _autoSeatAttempted = false;
       unawaited(_tryAutoPrivilegedSeat());
       unawaited(_syncSpeakRequestPending());
+      unawaited(_syncMusicFromServerIfNeeded(force: true));
+      if (_roomKey.isNotEmpty) {
+        ref.read(roomSongBlocProvider(_roomKey)).add(RoomSongJoinSync(_roomKey));
+      }
     } catch (e) {
       VoiceEventLog.error('sse_resync', e);
     }

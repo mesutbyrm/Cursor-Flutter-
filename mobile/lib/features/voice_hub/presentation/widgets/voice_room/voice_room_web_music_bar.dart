@@ -8,6 +8,7 @@ import '../../../../../core/theme/app_theme_colors.dart';
 import '../../../domain/entities/chat_room_dj_state.dart';
 import '../../../domain/entities/music_queue_item.dart';
 import '../../providers/chat_room_providers.dart';
+import '../../providers/voice_room_unified_music_provider.dart';
 import '../../../music/presentation/providers/room_music_providers.dart';
 import '../../services/voice_room_dj_player.dart';
 
@@ -53,7 +54,12 @@ class _VoiceRoomWebMusicBarState extends ConsumerState<VoiceRoomWebMusicBar> {
   @override
   Widget build(BuildContext context) {
     final dj = widget.dj;
-    final track = dj.nowPlaying ??
+    final liveKey = widget.roomLiveKey?.trim() ?? '';
+    final unified = liveKey.isNotEmpty
+        ? ref.watch(voiceRoomUnifiedMusicProvider(liveKey))
+        : null;
+    final track = unified?.nowPlaying ??
+        dj.nowPlaying ??
         (dj.musicQueue.isNotEmpty ? dj.musicQueue.first : null);
     final loading = track == null && dj.playing;
     if (track == null && !dj.playing && !loading) {
@@ -68,7 +74,7 @@ class _VoiceRoomWebMusicBarState extends ConsumerState<VoiceRoomWebMusicBar> {
           createdAt: DateTime.now(),
         );
 
-    final waitingCount = _waitingCount(dj);
+    final waitingCount = unified?.waiting.length ?? _waitingCount(dj);
     final requester = displayTrack.requestedBy?.displayName ?? '—';
     final artist = displayTrack.uploader?.trim().isNotEmpty == true
         ? displayTrack.uploader!
@@ -76,9 +82,9 @@ class _VoiceRoomWebMusicBarState extends ConsumerState<VoiceRoomWebMusicBar> {
             ? displayTrack.artistLine.split(' • ').first
             : '');
 
-    final liveKey = widget.roomLiveKey?.trim();
-    final songState = liveKey != null && liveKey.isNotEmpty
-        ? ref.watch(roomSongBlocProvider(liveKey)).state
+    final liveKeyTrim = widget.roomLiveKey?.trim();
+    final songState = liveKeyTrim != null && liveKeyTrim.isNotEmpty
+        ? ref.watch(roomSongBlocProvider(liveKeyTrim)).state
         : null;
     final iframeMode = songState?.hasTrack == true &&
         songState?.current?.isVideoRequest == true;

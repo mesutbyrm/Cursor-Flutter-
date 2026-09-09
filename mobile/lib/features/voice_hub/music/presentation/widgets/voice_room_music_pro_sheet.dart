@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/entities/chat_room_dj_state.dart';
 import '../../../domain/entities/music_queue_item.dart';
 import '../../../presentation/providers/chat_room_providers.dart';
+import '../../../presentation/providers/voice_room_unified_music_provider.dart';
+import '../../../presentation/utils/voice_room_unified_music.dart';
 import 'room_music_queue_sheet.dart';
 
 /// Profesyonel müzik bottom sheet — Şimdi Çalıyor / Sıradaki / İstek Gönder.
@@ -85,8 +87,8 @@ class _NowPlayingTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final liveDj = ref.watch(voiceRoomLiveProvider(liveKey)).dj;
-    final now = liveDj.nowPlaying ?? dj.nowPlaying;
+    final unified = ref.watch(voiceRoomUnifiedMusicProvider(liveKey));
+    final now = unified.nowPlaying ?? dj.nowPlaying;
     if (now == null) {
       return const Center(
         child: Text(
@@ -123,9 +125,13 @@ class _NowPlayingTab extends ConsumerWidget {
             backgroundColor: Colors.white12,
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Sunucu kuyruğu ile senkron',
-            style: TextStyle(fontSize: 11, color: Colors.white38),
+          Text(
+            unified.source == VoiceRoomMusicSource.songBloc
+                ? 'Sunucu kuyruğu (song API)'
+                : unified.source == VoiceRoomMusicSource.merged
+                    ? 'DJ + sunucu senkron'
+                    : 'Sunucu kuyruğu ile senkron',
+            style: const TextStyle(fontSize: 11, color: Colors.white38),
           ),
         ],
       ),
@@ -149,7 +155,10 @@ class _QueuePreviewTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final liveDj = ref.watch(voiceRoomLiveProvider(liveKey)).dj;
-    final queue = liveDj.musicQueue.isNotEmpty ? liveDj.musicQueue : dj.musicQueue;
+    final unified = ref.watch(voiceRoomUnifiedMusicProvider(liveKey));
+    final queue = unified.queue.isNotEmpty
+        ? unified.queue
+        : (liveDj.musicQueue.isNotEmpty ? liveDj.musicQueue : dj.musicQueue);
     return Column(
       children: [
         Expanded(

@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.430+468 (2026-09-09) — Sesli oda Faz 4
+
+### Müzik kuyruğu
+- **Birleşik görünüm** — DJ pipeline + `RoomSongBloc` tek `VoiceRoomUnifiedMusic` kaynağı
+- Pro sheet, mini kuyruk kartı, web müzik barı unified provider kullanır
+- **SSE reconnect** — müzik + song bloc yeniden senkron
+
 ## 1.0.429+467 (2026-09-09) — Sesli oda Faz 3
 
 ### Giriş ve UX

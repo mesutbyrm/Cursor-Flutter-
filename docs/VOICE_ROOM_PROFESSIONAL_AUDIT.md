@@ -1,7 +1,7 @@
 # Canlifal Sesli Sohbet Odaları — Profesyonel Denetim Raporu
 
 **Tarih:** 2026-09-09  
-**Sürüm (bu oturum):** `1.0.429+467`  
+**Sürüm (bu oturum):** `1.0.430+468`  
 **Mimari:** Flutter mobil → `https://canlifal.com` REST + SSE (Socket.IO mobilde kullanılmıyor)
 
 ---
@@ -27,7 +27,7 @@ Sesli oda sistemi **çalışan temel akışları koruyarak** premium UX, mention
 | Admin / moderasyon | **ÇALIŞIYOR** | `POST …/moderation` |
 | PK (istek, kabul, skor, süre) | **KISMEN** | REST+SSE var; süre üretimde server timestamp doğrulanmalı |
 | PK merkez modal | **ÇALIŞIYOR** (yeni) | `voice_pk_invite_center_modal` |
-| Müzik kuyruğu | **KISMEN** | DJ pipeline + `RoomSongBloc` dual stack |
+| Müzik kuyruğu | **KISMEN** → **ÇALIŞIYOR** (UI) | `VoiceRoomUnifiedMusic` — DJ + RoomSongBloc tek görünüm |
 | Müzik pro sheet | **ÇALIŞIYOR** (yeni) | 3 sekme bottom sheet |
 | Hediye / jeton | **ÇALIŞIYOR** | Gift transaction API |
 | Oda beğeni | **EKSİK** | Üretim endpoint yok |
