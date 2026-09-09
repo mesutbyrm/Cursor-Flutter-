@@ -404,8 +404,52 @@ class TrtcRoomManager {
     remoteUserIdsNotifier.value = _remoteUserIds.toList(growable: false);
   }
 
-  /// Yayın kalitesi — TRTC varsayılan encoder (no-op).
-  Future<void> setStreamQuality(dynamic preset) async {}
+  /// Yayın kalitesi — TRTC video encoder parametreleri.
+  Future<void> setEncoderParams({
+    required int width,
+    required int height,
+    required int bitrateKbps,
+    required int fps,
+  }) async {
+    if (_cloud == null) return;
+    final resolution = _resolveVideoResolution(width, height);
+    final bitrate = bitrateKbps > 0 ? bitrateKbps : _defaultBitrateFor(resolution);
+    final param = TRTCVideoEncParam(
+      videoResolution: resolution,
+      videoResolutionMode: TRTCVideoResolutionMode.portrait,
+      videoFps: fps.clamp(15, 30),
+      videoBitrate: bitrate,
+      minVideoBitrate: (bitrate * 0.6).round(),
+      enableAdjustRes: true,
+    );
+    _cloud!.setVideoEncoderParam(param);
+    _cloud!.setNetworkQosParam(
+      TRTCNetworkQosParam(preference: TRTCVideoQosPreference.smooth),
+    );
+    _trtcLog('encoder', {
+      'width': width,
+      'height': height,
+      'bitrateKbps': bitrate,
+      'fps': fps,
+    });
+  }
+
+  TRTCVideoResolution _resolveVideoResolution(int width, int height) {
+    final maxSide = width > height ? width : height;
+    if (maxSide >= 1920) return TRTCVideoResolution.res_1920_1080;
+    if (maxSide >= 1280) return TRTCVideoResolution.res_1280_720;
+    if (maxSide >= 960) return TRTCVideoResolution.res_960_540;
+    return TRTCVideoResolution.res_640_360;
+  }
+
+  int _defaultBitrateFor(TRTCVideoResolution resolution) {
+    return switch (resolution) {
+      TRTCVideoResolution.res_1920_1080 => 2500,
+      TRTCVideoResolution.res_1280_720 => 1500,
+      TRTCVideoResolution.res_960_540 => 1000,
+      _ => 600,
+    };
+  }
 
   void muteRemoteAudio(String userId, bool mute) {
     _cloud?.muteRemoteAudio(userId, mute);

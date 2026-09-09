@@ -98,6 +98,7 @@ import '../providers/live_stream_quality_provider.dart';
 import '../widgets/broadcast_room/live_host_fortune_request_center_overlay.dart';
 import '../widgets/broadcast_room/live_broadcast_ended_flow.dart';
 import '../widgets/broadcast_room/live_network_quality_pill.dart';
+import '../widgets/broadcast_room/live_reconnect_banner.dart';
 import '../widgets/broadcast_room/live_host_guest_request_center_overlay.dart';
 import '../providers/live_guest_request_blocklist_provider.dart';
 import '../widgets/broadcast_room/live_fortune_request_form.dart';
@@ -345,8 +346,18 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       _startHostHeartbeat();
     }
     _startBotAutoCloseIfNeeded();
-    final quality = ref.read(liveStreamQualityProvider);
-    unawaited(_trtc.setStreamQuality(quality));
+      final quality = ref.read(liveStreamQualityProvider);
+      final effective = quality.isAuto
+          ? quality.downgradeFromNetwork(_trtc.networkQuality.value ?? 3)
+          : quality;
+      unawaited(
+        _trtc.setEncoderParams(
+          width: effective.width,
+          height: effective.height,
+          bitrateKbps: effective.bitrateKbps,
+          fps: effective.fps,
+        ),
+      );
     _applyActiveAudio();
     if (streamId.isNotEmpty) {
       _startLiveMusicSse(streamId);
@@ -1887,9 +1898,24 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           }
         }
       case 'cam':
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Konuk kamera kontrolü yakında')),
-        );
+        grid.toggleGuestCamera(slotIndex);
+        final slots = ref.read(liveGuestGridProvider).slots;
+        if (slotIndex < slots.length) {
+          final userId = slots[slotIndex].rtcUserId ?? slots[slotIndex].userId;
+          if (userId != null && userId.isNotEmpty && !slots[slotIndex].cameraOn) {
+            _trtc.stopRemoteView(userId);
+          }
+        }
+        if (mounted) {
+          final on = slotIndex < slots.length && slots[slotIndex].cameraOn;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                on ? 'Konuk kamerası açıldı' : 'Konuk kamerası kapatıldı',
+              ),
+            ),
+          );
+        }
     }
   }
 
@@ -2055,9 +2081,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
 
   Future<void> _openGamesHub() async {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Oyunlar yakında canlı yayında açılacak')),
-    );
+    await context.push('/games-hub');
   }
 
   void _showLiveEmojiPicker() {
@@ -2330,7 +2354,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         );
       }
     }
-    if (_phase == LiveSessionPhase.reconnecting && !_rtcReady) {
+    if (_phase == LiveSessionPhase.reconnecting) {
       return Stack(
         fit: StackFit.expand,
         children: [
@@ -2829,6 +2853,22 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               ),
             if (hasStream && s.isHost)
               LiveHostFortuneRequestCenterOverlay(streamId: streamId),
+            if (hasStream &&
+                _phase == LiveSessionPhase.reconnecting &&
+                !_hostAway)
+              LiveReconnectBanner(
+                message: s.isHost
+                    ? 'Bağlantı koptu — yayın yeniden bağlanıyor…'
+                    : 'Yayın yeniden bağlanıyor — video birazdan devam edecek',
+              ),
+            if (hasStream &&
+                _phase == LiveSessionPhase.error &&
+                !s.isHost &&
+                !_hostAway)
+              LiveReconnectBanner(
+                message: 'Bağlantı hatası — yayına yeniden bağlanmayı deneyin',
+                onRetry: () => unawaited(_initTrtc()),
+              ),
             if (hasStream && !s.isHost && _fortuneRequestsOpen(s))
               Positioned(
                 right: 8,

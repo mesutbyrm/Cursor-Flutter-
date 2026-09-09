@@ -1,5 +1,24 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.422+460 (2026-09-09) — Canlı yayın kalite, reconnect, konuk kamera
+
+### Video kalitesi
+- Prep ekranında belirgin kalite seçici (360p / 720p / 1080p / Otomatik)
+- TRTC encoder gerçekten uygulanır (`setEncoderParams`)
+- Yayın ayarları sheet ortak picker widget kullanır
+
+### Reconnect UX
+- Kalıcı üst banner (`LiveReconnectBanner`) — izleyici ve yayıncı
+- Bağlantı hatasında izleyici «Tekrar dene»
+
+### Konuk yayın
+- Yayıncı konuk kamerayı aç/kapat (grid + `stopRemoteView`)
+- «Kamera kapalı» rozeti
+
+### Diğer
+- Oyunlar menüsü → `/games-hub`
+- Hediye combo rozeti: gerçek sayı (`x17`) + pulse animasyon
+
 ## 1.0.421+459 (2026-09-09) — Canlı yayın UX polish
 
 ### Yayın sonu akışı

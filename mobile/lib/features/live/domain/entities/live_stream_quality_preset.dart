@@ -57,6 +57,12 @@ enum LiveStreamQualityPreset {
 
   bool get isAuto => this == LiveStreamQualityPreset.auto;
 
+  /// Prep / ayarlar ekranında gösterilecek özet (ör. «720p HD · 30 FPS»).
+  String get detailLabel {
+    if (isAuto) return 'Otomatik · ağa göre ayarlanır';
+    return '$label · $fps FPS';
+  }
+
   /// Ağ kalitesi 0–5 (Agora); düşükse bir kademe düşür.
   LiveStreamQualityPreset downgradeFromNetwork(int quality) {
     if (isAuto) {

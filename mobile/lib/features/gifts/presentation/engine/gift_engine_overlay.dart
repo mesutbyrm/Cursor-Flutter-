@@ -247,7 +247,7 @@ class _GiftEngineAnimation extends StatelessWidget {
   }
 }
 
-class _ComboBadge extends StatelessWidget {
+class _ComboBadge extends StatefulWidget {
   const _ComboBadge({
     required this.combo,
     required this.displayArea,
@@ -257,40 +257,76 @@ class _ComboBadge extends StatelessWidget {
   final GiftEngineDisplayArea displayArea;
 
   @override
-  Widget build(BuildContext context) {
-    final label = switch (combo) {
-      >= 100 => 'x100',
-      >= 10 => 'x10',
-      >= 5 => 'x5',
-      >= 2 => 'x2',
-      _ => '',
-    };
-    if (label.isEmpty) return const SizedBox.shrink();
+  State<_ComboBadge> createState() => _ComboBadgeState();
+}
 
-    final top = displayArea == GiftEngineDisplayArea.fullScreen ? 80.0 : 48.0;
+class _ComboBadgeState extends State<_ComboBadge>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 420),
+    );
+    _scale = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.35), weight: 45),
+      TweenSequenceItem(tween: Tween(begin: 1.35, end: 1.0), weight: 55),
+    ]).animate(CurvedAnimation(parent: _pulse, curve: Curves.easeOutCubic));
+    if (widget.combo >= 2) {
+      unawaited(_pulse.forward(from: 0));
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _ComboBadge oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.combo != widget.combo && widget.combo >= 2) {
+      unawaited(_pulse.forward(from: 0));
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.combo < 2) return const SizedBox.shrink();
+    final label = 'x${widget.combo}';
+    final top =
+        widget.displayArea == GiftEngineDisplayArea.fullScreen ? 80.0 : 48.0;
     return Positioned(
       top: top,
       right: 24,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFFFD54F), Color(0xFFFF6E40)],
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.orange.withValues(alpha: 0.5),
-              blurRadius: 12,
+      child: ScaleTransition(
+        scale: _scale,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFFFD54F), Color(0xFFFF6E40)],
             ),
-          ],
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w900,
-            fontSize: 22,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.orange.withValues(alpha: 0.5),
+                blurRadius: 12,
+              ),
+            ],
+          ),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+              fontSize: 22,
+            ),
           ),
         ),
       ),

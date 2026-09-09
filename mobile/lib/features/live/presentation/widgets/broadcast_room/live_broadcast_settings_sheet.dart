@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/entities/live_guest_layout.dart';
-import '../../../domain/entities/live_stream_quality_preset.dart';
 import '../../providers/live_broadcast_settings_provider.dart';
-import '../../providers/live_stream_quality_provider.dart';
+import 'live_stream_quality_picker.dart';
 
 Future<void> showLiveBroadcastSettingsSheet({
   required BuildContext context,
@@ -19,7 +18,6 @@ Future<void> showLiveBroadcastSettingsSheet({
         builder: (context, ref, _) {
           final settings = ref.watch(liveBroadcastSettingsProvider);
           final notifier = ref.read(liveBroadcastSettingsProvider.notifier);
-          final quality = ref.watch(liveStreamQualityProvider);
 
           return SafeArea(
             child: Padding(
@@ -108,20 +106,7 @@ Future<void> showLiveBroadcastSettingsSheet({
                       ),
                     ),
                   ),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    alignment: WrapAlignment.center,
-                    children: LiveStreamQualityPreset.values.map((q) {
-                      return ChoiceChip(
-                        label: Text(q.label),
-                        selected: quality == q,
-                        onSelected: (_) => ref
-                            .read(liveStreamQualityProvider.notifier)
-                            .setPreset(q),
-                      );
-                    }).toList(),
-                  ),
+                  const LiveStreamQualityPicker(compact: true, showTitle: false),
                 ],
               ),
             ),

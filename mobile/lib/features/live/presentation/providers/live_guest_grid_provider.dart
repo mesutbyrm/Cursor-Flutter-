@@ -85,6 +85,14 @@ class LiveGuestGridNotifier extends Notifier<LiveGuestGridState> {
     state = state.copyWith(slots: list);
   }
 
+  void toggleGuestCamera(int index) {
+    final list = [...state.slots];
+    if (index >= list.length) return;
+    final s = list[index];
+    list[index] = s.copyWith(cameraOn: !s.cameraOn);
+    state = state.copyWith(slots: list);
+  }
+
   void syncRemoteUserIds(List<String> userIds) {
     if (state.layout == LiveGuestLayout.solo) return;
     final list = [...state.slots];

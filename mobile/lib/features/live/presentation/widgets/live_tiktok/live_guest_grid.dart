@@ -207,7 +207,9 @@ class _SlotCell extends ConsumerWidget {
     } else {
       final remoteId = slotUserId ??
           (slot.isHost || slot.index == 0 ? remoteUserId : null);
-      if (remoteId != null &&
+      if (!slot.cameraOn && slot.index > 0 && !slot.isHost) {
+        child = _placeholder(slot.displayName ?? hostName ?? 'Konuk', null);
+      } else if (remoteId != null &&
           remoteId != currentUserId &&
           trtc != null) {
         child = TrtcRemoteVideoView(
@@ -239,6 +241,12 @@ class _SlotCell extends ConsumerWidget {
               top: 6,
               right: 6,
               child: _badge(Icons.mic_off_rounded, 'Sessiz'),
+            ),
+          if (!slot.cameraOn && slot.index > 0)
+            Positioned(
+              top: 6,
+              right: slot.mutedByHost ? 56 : 6,
+              child: _badge(Icons.videocam_off_rounded, 'Kamera kapalı'),
             ),
           Positioned(
             left: 6,
@@ -295,7 +303,12 @@ class _SlotCell extends ConsumerWidget {
                 children: [
                   _miniBtn(Icons.push_pin_outlined, () => onAction!('pin')),
                   _miniBtn(Icons.mic_off_outlined, () => onAction!('mute')),
-                  _miniBtn(Icons.videocam_off_outlined, () => onAction!('cam')),
+                  _miniBtn(
+                    slot.cameraOn
+                        ? Icons.videocam_off_outlined
+                        : Icons.videocam_rounded,
+                    () => onAction!('cam'),
+                  ),
                 ],
               ),
             ),
