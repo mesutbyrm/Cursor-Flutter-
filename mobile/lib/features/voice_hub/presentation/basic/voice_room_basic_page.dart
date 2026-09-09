@@ -972,9 +972,13 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                               _openUserById(userId, live, room, perms),
                         ),
                         if (!live.sseConnected && live.selfInRoom)
-                          const VoiceRoomReconnectBanner(
-                            message:
-                                'Ses bağlantısı yeniden kuruluyor…',
+                          VoiceRoomReconnectBanner(
+                            message: 'Ses bağlantısı yeniden kuruluyor…',
+                            onRetry: () {
+                              ref
+                                  .read(chatRoomProvider.notifier)
+                                  .resyncAfterSseReconnect();
+                            },
                           ),
                         Builder(
                           builder: (context) {

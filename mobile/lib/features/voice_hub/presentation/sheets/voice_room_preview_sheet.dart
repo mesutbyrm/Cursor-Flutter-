@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../providers/voice_room_ranking_provider.dart';
 import '../providers/voice_room_preview_goal_provider.dart';
+import '../providers/voice_room_preview_pk_provider.dart';
 import '../../../../core/images/canlifal_network_image.dart';
 
 /// Odaya girmeden önce önizleme — PK, sıralama, çevrimiçi sayısı.
@@ -14,6 +15,7 @@ Future<bool> showVoiceRoomPreviewSheet(
 }) async {
   await ref.read(voiceRoomRankingProvider.notifier).refresh();
   ref.invalidate(voiceRoomPreviewGoalProvider(room.apiRoomKey));
+  ref.invalidate(voiceRoomPreviewPkProvider(room.apiRoomKey));
   if (!context.mounted) return false;
 
   final result = await showModalBottomSheet<bool>(
@@ -40,7 +42,9 @@ class _VoiceRoomPreviewSheet extends ConsumerWidget {
         .read(voiceRoomRankingProvider.notifier)
         .rankForRoom(room.apiRoomKey, period: VoiceRoomRankingPeriod.daily);
     final goalAsync = ref.watch(voiceRoomPreviewGoalProvider(room.apiRoomKey));
+    final pkAsync = ref.watch(voiceRoomPreviewPkProvider(room.apiRoomKey));
     final activeGoal = goalAsync.valueOrNull;
+    final activePk = pkAsync.valueOrNull;
     final bottom = MediaQuery.paddingOf(context).bottom;
     final owner = room.ownerName?.trim().isNotEmpty == true
         ? room.ownerName!.trim()
@@ -122,6 +126,14 @@ class _VoiceRoomPreviewSheet extends ConsumerWidget {
               ),
               if (room.isPkLive)
                 _chip(Icons.flash_on_rounded, 'PK canlı', const Color(0xFFB832FF)),
+              if (activePk != null && activePk.isActive)
+                _chip(
+                  Icons.timer_rounded,
+                  'PK ${_formatRemaining(Duration(seconds: activePk.resolvedSecondsLeft()))}',
+                  const Color(0xFFFF5252),
+                ),
+              if (activePk != null && activePk.isPending)
+                _chip(Icons.hourglass_top_rounded, 'PK daveti', const Color(0xFFFFB300)),
               if (room.hasMusicActivity)
                 _chip(Icons.music_note_rounded, 'Müzik', const Color(0xFFFF2D7A)),
               if (room.isVip == true)

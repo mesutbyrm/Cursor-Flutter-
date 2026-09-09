@@ -1,7 +1,7 @@
 # Canlifal Sesli Sohbet Odaları — Profesyonel Denetim Raporu
 
 **Tarih:** 2026-09-09  
-**Sürüm (bu oturum):** `1.0.431+469`  
+**Sürüm (bu oturum):** `1.0.432+470`  
 **Mimari:** Flutter mobil → `https://canlifal.com` REST + SSE (Socket.IO mobilde kullanılmıyor)
 
 ---
@@ -25,14 +25,14 @@ Sesli oda sistemi **çalışan temel akışları koruyarak** premium UX, mention
 | Konuşmacı / dinleyici | **ÇALIŞIYOR** | Presence + mic state |
 | Host / owner | **ÇALIŞIYOR** | `ownerId` state snapshot |
 | Admin / moderasyon | **ÇALIŞIYOR** | `POST …/moderation` |
-| PK (istek, kabul, skor, süre) | **KISMEN** | REST+SSE var; süre üretimde server timestamp doğrulanmalı |
+| PK (istek, kabul, skor, süre) | **KISMEN** → **ÇALIŞIYOR** (timer) | `endsAt`/`startedAt` + `resolvedSecondsLeft` |
 | PK merkez modal | **ÇALIŞIYOR** (yeni) | `voice_pk_invite_center_modal` |
 | Müzik kuyruğu | **KISMEN** → **ÇALIŞIYOR** (UI) | `VoiceRoomUnifiedMusic` — DJ + RoomSongBloc tek görünüm |
 | Müzik pro sheet | **ÇALIŞIYOR** (yeni) | 3 sekme bottom sheet |
 | Hediye / jeton | **ÇALIŞIYOR** | Gift transaction API |
 | Oda beğeni | **EKSİK** | Üretim endpoint yok |
 | Chat / mesaj | **ÇALIŞIYOR** | SSE + poll + flood koruması (yeni) |
-| Oda önizleme (katılmadan) | **ÇALIŞIYOR** (yeni) | `voice_room_preview_sheet` |
+| Oda önizleme (katılmadan) | **ÇALIŞIYOR** (yeni) | PK + hedef + sıralama chip |
 | Oda içi sıralama rozeti | **ÇALIŞIYOR** (yeni) | `VoiceLiveHeader2026` hourly rank |
 | Mention gönderme | **ÇALIŞIYOR** | `mentionedUserIds` body |
 | Mention bildirimi (oda içi) | **ÇALIŞIYOR** (yeni) | `voice_room_mention_notice` + banner |
@@ -44,10 +44,10 @@ Sesli oda sistemi **çalışan temel akışları koruyarak** premium UX, mention
 | Odalar arası turnuva | **EKSİK** | Modüler altyapı planlandı, backend yok |
 | SSE realtime | **ÇALIŞIYOR** | 5 endpoint kılavuz uyumlu |
 | RTC / Agora ses | **ÇALIŞIYOR** | TRTC sesli oda |
-| Socket.IO (mobil) | **MOCK/DEAD** | `voice_room_socket_helper` kullanılmıyor |
+| Socket.IO (mobil) | **MOCK/DEAD** | `voice_room_socket_helper` `@Deprecated`, kullanılmıyor |
 | Heartbeat (15s PATCH presence) | **KISMEN** | İstemci gönderir; `api/` mirror ghost sweep (45 sn) |
 | Boş oda otomatik kapanma | **KISMEN** | `api/` mirror: 45 sn grace → `room_closed` |
-| Reconnect banner | **ÇALIŞIYOR** (yeni) | SSE kopması UI |
+| Reconnect banner | **ÇALIŞIYOR** (yeni) | SSE kopması UI + manuel resync |
 | Loading skeleton | **ÇALIŞIYOR** (yeni) | Gated entry |
 | SSE event dedupe | **ÇALIŞIYOR** (yeni) | `VoiceRoomSseEventDedupe` |
 

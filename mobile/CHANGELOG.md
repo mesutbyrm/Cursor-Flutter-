@@ -1,5 +1,18 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.432+470 (2026-09-09) — Sesli oda Faz 6
+
+### PK süre otoritesi
+- **`endsAt` / `startedAt`** — sunucu zaman damgası öncelikli geri sayım (`resolvedSecondsLeft`)
+- PK şeridi ve önizleme sheet sunucu süresini kullanır
+
+### Önizleme ve reconnect
+- Önizleme: aktif PK chip + kalan süre (`voiceRoomPreviewPkProvider`)
+- **Reconnect banner** — «Yeniden dene» → `resyncAfterSseReconnect()`
+
+### Temizlik
+- `VoiceRoomSocketHelper` `@Deprecated` (üretim SSE)
+
 ## 1.0.431+469 (2026-09-09) — Sesli oda Faz 5
 
 ### Hediye hedefi

@@ -48,9 +48,9 @@ class _VoicePkRoomStripState extends ConsumerState<VoicePkRoomStrip> {
     }
     if (_battleId != remote.id || _displaySeconds == null) {
       _battleId = remote.id;
-      _displaySeconds = remote.secondsLeft;
-    } else if ((_displaySeconds! - remote.secondsLeft).abs() > 4) {
-      _displaySeconds = remote.secondsLeft;
+      _displaySeconds = remote.resolvedSecondsLeft();
+    } else if ((_displaySeconds! - remote.resolvedSecondsLeft()).abs() > 4) {
+      _displaySeconds = remote.resolvedSecondsLeft();
     }
     _tick?.cancel();
     _tick = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -107,7 +107,7 @@ class _VoicePkRoomStripState extends ConsumerState<VoicePkRoomStrip> {
         isChallengerSide ? remote.opponentScore : remote.challengerScore;
     final leftName = remote.challenger?.displayName ?? 'Biz';
     final rightName = remote.opponent?.displayName ?? 'Rakip';
-    final seconds = _displaySeconds ?? remote.secondsLeft;
+    final seconds = _displaySeconds ?? remote.resolvedSecondsLeft();
     final timerLabel = _formatPkSeconds(seconds);
 
     return Padding(

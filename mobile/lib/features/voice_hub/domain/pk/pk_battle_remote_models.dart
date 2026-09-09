@@ -27,6 +27,8 @@ class PkBattleRemote extends Equatable {
     this.opponent,
     this.result,
     this.recentGifts = const [],
+    this.endsAt,
+    this.startedAt,
   });
 
   final String id;
@@ -51,6 +53,21 @@ class PkBattleRemote extends Equatable {
   final PkParticipantRemote? opponent;
   final PkResultRemote? result;
   final List<PkGiftRemote> recentGifts;
+  final DateTime? endsAt;
+  final DateTime? startedAt;
+
+  /// Sunucu `endsAt` / `startedAt` varsa öncelikli geri sayım.
+  int resolvedSecondsLeft({DateTime? now}) {
+    final t = (now ?? DateTime.now()).toUtc();
+    if (endsAt != null) {
+      return endsAt!.toUtc().difference(t).inSeconds.clamp(0, 86400);
+    }
+    if (startedAt != null && durationSeconds > 0) {
+      final elapsed = t.difference(startedAt!.toUtc()).inSeconds;
+      return (durationSeconds - elapsed).clamp(0, durationSeconds);
+    }
+    return secondsLeft.clamp(0, 86400);
+  }
 
   bool get isPending => isPkInvitePendingStatus(status);
   bool get isActive => status == 'active';
@@ -85,6 +102,20 @@ class PkBattleRemote extends Equatable {
     if (status == 'accepted' || status == 'accepted_invite') {
       status = 'active';
     }
+    final endsAt = _parseDate(json['endsAt'] ?? json['endAt']);
+    final startedAt = _parseDate(
+      json['startedAt'] ?? json['startAt'] ?? json['started_at'],
+    );
+    var secondsLeft = _int(json['secondsLeft'], fallback: 300);
+    if (endsAt != null) {
+      final left = endsAt.toUtc().difference(DateTime.now().toUtc()).inSeconds;
+      if (left >= 0) secondsLeft = left;
+    } else if (startedAt != null) {
+      final duration = _int(json['durationSeconds'] ?? json['duration'], fallback: 180);
+      final elapsed =
+          DateTime.now().toUtc().difference(startedAt.toUtc()).inSeconds;
+      secondsLeft = (duration - elapsed).clamp(0, duration);
+    }
     return PkBattleRemote(
       id: id,
       inviteId: invite?.isNotEmpty == true ? invite : null,
@@ -92,7 +123,7 @@ class PkBattleRemote extends Equatable {
       status: status,
       challengerScore: _int(json['challengerScore'] ?? json['leftScore']),
       opponentScore: _int(json['opponentScore'] ?? json['rightScore']),
-      secondsLeft: _int(json['secondsLeft'], fallback: 300),
+      secondsLeft: secondsLeft,
       durationSeconds: _int(
         json['durationSeconds'] ?? json['duration'],
         fallback: 180,
@@ -135,7 +166,15 @@ class PkBattleRemote extends Equatable {
               .map((e) => PkGiftRemote.fromJson(Map<String, dynamic>.from(e)))
               .toList()
           : const [],
+      endsAt: endsAt,
+      startedAt: startedAt,
     );
+  }
+
+  static DateTime? _parseDate(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is DateTime) return raw;
+    return DateTime.tryParse(raw.toString());
   }
 
   static int _int(dynamic v, {int fallback = 0}) {

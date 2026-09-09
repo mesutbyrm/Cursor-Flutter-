@@ -1,6 +1,11 @@
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
 /// Socket.IO — JWT + web/ mobil aynı oda kanalları.
+///
+/// Üretim SSE kullanır; bu sınıf yalnızca yerel `api/` mirror veya legacy test için.
+@Deprecated(
+  'Üretim SSE kullanır (chat_room_sse_service). Socket.IO kullanılmıyor.',
+)
 abstract final class VoiceRoomSocketHelper {
   static io.OptionBuilder baseOptions({String? bearerToken}) {
     final builder = io.OptionBuilder()
