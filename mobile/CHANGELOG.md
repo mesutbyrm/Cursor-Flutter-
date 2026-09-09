@@ -1,5 +1,25 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.456+494 (2026-09-09) — Live/sesli oda realtime kök düzeltmeler
+
+### PK
+- Canlı PK `accept/reject/cancel/end` switch fallthrough düzeltildi (UI donma/kilitlenme)
+- PK faz makinesi: `syncFromServer` — SSE authoritative phase
+- Global PK ingest: odada değilken yabancı battle yazılmaz; duplicate snapshot atlanır
+- Oda çıkışında `pkBattleProvider` + invite dedupe temizliği
+
+### SSE / giriş / sıralama
+- `onPk` SSE dedupe; `user_joined` tek `_announcePresenceJoin` yolu
+- Oturum bazlı join userId dedupe; leave'de SSE dedupe sıfırlama
+- Sıralama kutlaması: bootstrap'ta eski 1./2./3. spam engellendi
+
+### Müzik
+- `music-queue` endpoint önceliği; SSE/merge canonical boş kuyruk
+- Kuyruk sheet duplicate `ValueKey` crash düzeltildi
+
+### Canlı liste
+- `patchStreamEnded` — biten yayın listeden anında çıkar
+
 ## 1.0.455+493 (2026-09-09) — Final release hardening (kod denetimi)
 
 ### PK
