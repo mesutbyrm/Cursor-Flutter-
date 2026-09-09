@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/network/api_exception.dart';
 import '../../domain/entities/chat_room_dj_state.dart';
 import '../../music/presentation/widgets/music_search_picker_sheet.dart';
 import '../providers/chat_room_providers.dart';
