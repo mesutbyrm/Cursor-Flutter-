@@ -54,7 +54,7 @@ void main() {
   });
 
   test('waiting excludes now playing', () {
-    const dj = ChatRoomDjState(
+    final dj = ChatRoomDjState(
       musicQueue: [
         MusicQueueItem(
           id: '1',
