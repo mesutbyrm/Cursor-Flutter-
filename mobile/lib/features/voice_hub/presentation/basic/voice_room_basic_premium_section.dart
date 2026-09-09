@@ -26,6 +26,7 @@ import '../utils/voice_room_permissions.dart';
 import '../utils/voice_chat_message_filters.dart';
 import '../widgets/chat/chat_message_widgets.dart';
 import '../widgets/voice_room/voice_room_mention_text_field.dart';
+import '../widgets/voice_room/voice_room_typing_indicator.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
 import '../widgets/voice_room/voice_room_premium_music_card.dart';
 
