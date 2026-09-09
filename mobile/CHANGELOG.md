@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.418+456 (2026-09-09) — CI hotfix
+
+- `admin_live_streams_page`: eksik `LiveStreamEntity` import (CI derleme)
+- `profile_hub_summary_card`: jeton/CFC `int` → `String` tip düzeltmesi
+
 ## 1.0.417+455 (2026-09-09) — Profil/admin P1 eksikleri
 
 ### Admin
