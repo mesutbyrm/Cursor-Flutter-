@@ -1,7 +1,7 @@
 # Canlifal Sesli Sohbet Odaları — Profesyonel Denetim Raporu
 
 **Tarih:** 2026-09-09  
-**Sürüm (bu oturum):** `1.0.427+465`  
+**Sürüm (bu oturum):** `1.0.428+466`  
 **Mimari:** Flutter mobil → `https://canlifal.com` REST + SSE (Socket.IO mobilde kullanılmıyor)
 
 ---
@@ -37,14 +37,14 @@ Sesli oda sistemi **çalışan temel akışları koruyarak** premium UX, mention
 | Profil popup → Mesaj → @mention | **ÇALIŞIYOR** (yeni) | Deduped, DM yerine oda input |
 | Oda efektleri / giriş animasyonları | **KISMEN** | `siteAnimationProvider` + staff marquee |
 | Hediye hedefi | **KISMEN** | 5/10 dk modal + client countdown; sunucu `endsAt` desteği API'ye bağlı |
-| Saatlik / günlük oda sıralaması Top 100 | **EKSİK** | Üretim API gerekli |
-| Global Top-3 bildirim | **EKSİK** | `ROOM_RANK_CHANGED` üretimde yok |
+| Saatlik / günlük oda sıralaması Top 100 | **KISMEN** | Client proxy skor + Top 100 sheet; üretim API bekleniyor |
+| Global Top-3 bildirim | **KISMEN** | `VoiceRoomGlobalRankBanner` (proxy sıralama ile) |
 | Odalar arası turnuva | **EKSİK** | Modüler altyapı planlandı, backend yok |
 | SSE realtime | **ÇALIŞIYOR** | 5 endpoint kılavuz uyumlu |
 | RTC / Agora ses | **ÇALIŞIYOR** | TRTC sesli oda |
 | Socket.IO (mobil) | **MOCK/DEAD** | `voice_room_socket_helper` kullanılmıyor |
 | Heartbeat (15s PATCH presence) | **KISMEN** | İstemci gönderir; ghost cleanup sunucuda |
-| Boş oda otomatik kapanma | **EKSİK** | ACTIVE→EMPTY→CLOSED üretimde |
+| Boş oda otomatik kapanma | **KISMEN** | `api/` mirror: 45 sn grace → `room_closed` |
 | Reconnect banner | **ÇALIŞIYOR** (yeni) | SSE kopması UI |
 | Loading skeleton | **ÇALIŞIYOR** (yeni) | Gated entry |
 | SSE event dedupe | **ÇALIŞIYOR** (yeni) | `VoiceRoomSseEventDedupe` |
