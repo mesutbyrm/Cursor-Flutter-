@@ -20,34 +20,34 @@ class VoiceSeatGiftFlashStack extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final signature = ref.watch(
-      voiceSeatGiftFlashProvider(roomKey).select(
-        (list) => VoiceSeatGiftFlashNotifier.flashSignature(
-          list,
-          userId: userId,
-          displayName: displayName,
-        ),
-      ),
-    );
-    if (signature.isEmpty) return const SizedBox.shrink();
-
-    final flashes = VoiceSeatGiftFlashNotifier.flashesForReceiver(
-      ref.read(voiceSeatGiftFlashProvider(roomKey)),
+    final target = VoiceSeatGiftFlashTarget(
+      roomKey: roomKey,
       userId: userId,
       displayName: displayName,
     );
-    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+    final flashes = ref.watch(voiceSeatGiftFlashForReceiverProvider(target));
+    if (flashes.isEmpty) return const SizedBox.shrink();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (final f in flashes)
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: _FlashRow(flash: f, jetonLabel: jetonLabel),
-          ),
-      ],
+    final jetonLabel = ref.watch(
+      currencyBrandingProvider.select(
+        (async) => economyCurrencyLabelFromBrand(
+          resolveEconomyBrandFromSnapshot(async.valueOrNull, key: 'jeton'),
+        ),
+      ),
+    );
+
+    return RepaintBoundary(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final f in flashes)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: _FlashRow(flash: f, jetonLabel: jetonLabel),
+            ),
+        ],
+      ),
     );
   }
 }

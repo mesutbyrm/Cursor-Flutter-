@@ -27,27 +27,35 @@ void main() {
       expect(sig, '');
     });
 
-    test('flashSignature stable for unrelated receiver', () {
-      final state = [
-        VoiceSeatGiftFlash(
-          id: 'g1:ida',
-          senderName: 'A',
-          receiverKey: 'id:a',
-          giftName: 'Rose',
-          quantity: 1,
-          jeton: 5,
-          expiresAt: DateTime.now().add(const Duration(seconds: 3)),
-        ),
-      ];
-      expect(
-        VoiceSeatGiftFlashNotifier.flashSignature(state, userId: 'b'),
-        '',
-      );
-      expect(
-        VoiceSeatGiftFlashNotifier.flashSignature(state, userId: 'a'),
-        isNotEmpty,
-      );
-    });
+  test('flashSignature stable for unrelated receiver', () {
+    final state = [
+      VoiceSeatGiftFlash(
+        id: 'g1:ida',
+        senderName: 'A',
+        receiverKey: 'id:a',
+        giftName: 'Rose',
+        quantity: 1,
+        jeton: 5,
+        expiresAt: DateTime.now().add(const Duration(seconds: 3)),
+      ),
+    ];
+    expect(
+      VoiceSeatGiftFlashNotifier.flashSignature(state, userId: 'b'),
+      '',
+    );
+    expect(
+      VoiceSeatGiftFlashNotifier.flashSignature(state, userId: 'a'),
+      isNotEmpty,
+    );
+  });
+
+  test('VoiceSeatGiftFlashTarget equality for provider family', () {
+    const a = VoiceSeatGiftFlashTarget(roomKey: 'r1', userId: 'u1');
+    const b = VoiceSeatGiftFlashTarget(roomKey: 'r1', userId: 'u1');
+    const c = VoiceSeatGiftFlashTarget(roomKey: 'r1', userId: 'u2');
+    expect(a, b);
+    expect(a == c, isFalse);
+  });
   });
 
   test('VoiceSeatGiftFlash expires after ttl', () {

@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.438+476 (2026-09-09) — Sesli oda Faz 12
+
+### Performans — rebuild izolasyonu
+- **RTC:** `VoiceRoomRtcLifecycleHost` + `VoiceRoomRtcHeaderBand` — jeton/çevrimiçi/oda meta güncellemeleri sayfa gövdesini rebuild etmez
+- **Hediye flaşı:** `voiceSeatGiftFlashForReceiverProvider` + `RepaintBoundary` — yalnızca ilgili koltuk
+- **Basic:** staff giriş banner `select` ile izole
+
 ## 1.0.437+475 (2026-09-09) — Sesli oda Faz 11
 
 ### Sıralama proxy (SSE keşfet)

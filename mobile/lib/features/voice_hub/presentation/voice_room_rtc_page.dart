@@ -98,8 +98,8 @@ import 'utils/kick_strike_ui.dart';
 import 'audio/voice_trtc_engine.dart';
 import 'widgets/voice_room/voice_room_connection_overlays.dart';
 import 'widgets/premium_2026/voice_web_chat_overlay.dart';
+import 'widgets/voice_room/voice_room_rtc_shell_widgets.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
-import 'widgets/premium_2026/voice_web_room_header.dart';
 import 'widgets/voice_room/voice_room_center_music_panel.dart';
 import 'widgets/voice_room/voice_room_music_queue_mini_card.dart';
 import 'widgets/voice_room/voice_room_side_action_rail.dart';
@@ -1089,24 +1089,14 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         ? _liveRoomKey
         : (widget.room.apiRoomKey.isNotEmpty ? widget.room.apiRoomKey : widget.room.id);
     final room = _displayRoomFromSingle(
-      ref.watch(voiceRoomByIdProvider(roomLookupKey)).valueOrNull,
+      ref.read(voiceRoomByIdProvider(roomLookupKey)).valueOrNull,
     );
-    ref.watch(
-      voiceRoomForegroundLifecycleProvider(
-        _liveRoomKey.isNotEmpty ? _liveRoomKey : widget.room.id,
-      ),
-    );
-    ref.watch(voiceRoomMusicSliceProvider(_liveRoomKey));
     final live = ref.read(voiceRoomLiveProvider(_liveRoomKey));
     final roomErrorBanner =
         VoiceRoomErrorDisplay.bannerMessage(live.error, live: live);
     final sessionKey =
         room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
-    final online = live.onlineCountFor(room);
-    final jeton = ref.watch(
-      walletBalancesProvider.select((a) => a.valueOrNull?.jeton ?? 0),
-    );
-    final user = ref.watch(authControllerProvider).valueOrNull;
+    final user = ref.read(authControllerProvider).valueOrNull;
     final perms = _perms(user, live.presence, server: live.serverPermissions);
     final canSpeak = VoiceRoomSpeakAccess.canSpeak(
       user: user,
@@ -1120,7 +1110,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final canRequestMusic = VoiceMusicAccess.canRequestSongs(
       dj: live.dj,
       perms: perms,
-      jetonBalance: jeton,
+      jetonBalance: ref.read(
+        walletBalancesProvider.select((a) => a.valueOrNull?.jeton ?? 0),
+      ),
     );
     final showMusicRequestFab = live.dj.musicEnabled;
     final audioRequestCost = VoiceMusicAccess.audioRequestCost(live.dj);
@@ -1144,32 +1136,13 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final metrics = VoiceRoomResponsiveMetrics.of(context);
     final keyboardOpen = metrics.keyboardOpen;
     final chatMaxH = metrics.chatBlockH;
-    final musicDismissed = ref.watch(
-      voiceRoomMusicSessionProvider.select(
-        (s) => s.dismissed || s.userDismissedPlayer,
-      ),
-    );
-    final hasActiveMusicPlayer = (live.dj.playing ||
-            live.dj.nowPlaying != null ||
-            live.dj.musicQueue.isNotEmpty) &&
-        !musicDismissed;
     final duyuru = ((room.descTr ?? room.rulesTr)?.trim().isNotEmpty == true)
         ? (room.descTr ?? room.rulesTr)!.trim()
         : 'Sohbet odasına hoş geldiniz. Saygılı olun, keyifli sohbetler!';
-    ChatRoomPresence? ownerPresence;
-    if (room.ownerId != null) {
-      for (final p in live.presence) {
-        if (p.id == room.ownerId) {
-          ownerPresence = p;
-          break;
-        }
-      }
-    }
     final mergedDjIds = <String>{
       ...room.djUserIds,
       ...live.dj.djUsers.map((u) => u.id),
     }.toList();
-    final headerAvatar = ownerPresence?.image;
     ref.listen<VoiceRoomLiveState>(voiceRoomLiveProvider(_liveRoomKey), (prev, next) {
       if (!mounted) return;
 
@@ -1419,6 +1392,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         body: Stack(
           fit: StackFit.expand,
           children: [
+            VoiceRoomRtcLifecycleHost(
+              roomKey: _liveRoomKey.isNotEmpty ? _liveRoomKey : widget.room.id,
+            ),
             VoiceCosmicBackground(imageUrl: bgUrl),
             if (_liveRoomKey.isNotEmpty) ...[
               VoiceRoomMusicBackgroundLayer(roomKey: _liveRoomKey),
@@ -1534,27 +1510,28 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                               ),
                             ),
                           ),
-                        VoiceWebRoomHeader(
-                          room: room,
-                          onlineCount: online,
-                          coinBalance: jeton,
+                        VoiceRoomRtcHeaderBand(
+                          roomLookupKey: roomLookupKey,
+                          liveRoomKey: _liveRoomKey,
+                          fallbackRoom: widget.room,
+                          galleryEnabled: perms.canChangeBackground,
                           onCoinsTap: () => openJetonStore(context, ref: ref),
-                          roomAvatarUrl: headerAvatar,
                           onBack: _leave,
                           onExit: _leave,
                           onAudience: () => showVoiceSpeakerListSheet(
                             context,
-                            presence: live.presence,
+                            presence: ref
+                                .read(voiceRoomLiveProvider(_liveRoomKey))
+                                .presence,
                             room: room,
                             onUserTap: _openUser,
                           ),
-                          onGallery: perms.canChangeBackground
-                              ? () => _pickBackground(context, room)
-                              : null,
-                          onSettings: null,
+                          onGallery: () => _pickBackground(context, room),
                           onRoomPanel: () => showVoiceSpeakerListSheet(
                             context,
-                            presence: live.presence,
+                            presence: ref
+                                .read(voiceRoomLiveProvider(_liveRoomKey))
+                                .presence,
                             room: room,
                             onUserTap: _openUser,
                           ),
@@ -1707,23 +1684,38 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                 : room.id,
                           ),
                         ),
-                        if (!keyboardOpen && !hasActiveMusicPlayer)
-                          VoiceRoomPersistentDuyuru(
-                            roomKey: room.apiRoomKey.isNotEmpty
-                                ? room.apiRoomKey
-                                : room.id,
-                            text: duyuru,
-                            canEdit: perms.canModerate || isOwner,
-                            onEdit: (perms.canModerate || isOwner)
-                                ? () => _openHubSettings(
-                                      context,
-                                      room: room,
-                                      live: live,
-                                      perms: perms,
-                                      isOwner: isOwner,
-                                    )
-                                : null,
-                          ),
+                        Consumer(
+                          builder: (context, ref, _) {
+                            final musicDismissed = ref.watch(
+                              voiceRoomMusicSessionProvider.select(
+                                (s) => s.dismissed || s.userDismissedPlayer,
+                              ),
+                            );
+                            final hasActiveMusicPlayer = (live.dj.playing ||
+                                    live.dj.nowPlaying != null ||
+                                    live.dj.musicQueue.isNotEmpty) &&
+                                !musicDismissed;
+                            if (keyboardOpen || hasActiveMusicPlayer) {
+                              return const SizedBox.shrink();
+                            }
+                            return VoiceRoomPersistentDuyuru(
+                              roomKey: room.apiRoomKey.isNotEmpty
+                                  ? room.apiRoomKey
+                                  : room.id,
+                              text: duyuru,
+                              canEdit: perms.canModerate || isOwner,
+                              onEdit: (perms.canModerate || isOwner)
+                                  ? () => _openHubSettings(
+                                        context,
+                                        room: room,
+                                        live: live,
+                                        perms: perms,
+                                        isOwner: isOwner,
+                                      )
+                                  : null,
+                            );
+                          },
+                        ),
                         Expanded(
                           child: RepaintBoundary(
                             child: Stack(

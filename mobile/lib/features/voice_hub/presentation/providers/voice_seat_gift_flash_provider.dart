@@ -1,9 +1,34 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../live/domain/entities/live_gift_event.dart';
 import 'voice_gift_providers.dart';
+
+/// Koltuk başına hediye flaşı — provider family anahtarı.
+@immutable
+class VoiceSeatGiftFlashTarget {
+  const VoiceSeatGiftFlashTarget({
+    required this.roomKey,
+    this.userId,
+    this.displayName,
+  });
+
+  final String roomKey;
+  final String? userId;
+  final String? displayName;
+
+  @override
+  bool operator ==(Object other) =>
+      other is VoiceSeatGiftFlashTarget &&
+      roomKey == other.roomKey &&
+      userId == other.userId &&
+      displayName == other.displayName;
+
+  @override
+  int get hashCode => Object.hash(roomKey, userId, displayName);
+}
 
 /// Koltuk altında 3 sn gösterilen sesli oda hediye flaşı.
 class VoiceSeatGiftFlash {
@@ -203,3 +228,22 @@ final voiceSeatGiftFlashProvider = NotifierProvider.autoDispose
     .family<VoiceSeatGiftFlashNotifier, List<VoiceSeatGiftFlash>, String>(
   VoiceSeatGiftFlashNotifier.new,
 );
+
+/// Yalnızca ilgili alıcının flaşları değişince rebuild — diğer koltuklar etkilenmez.
+final voiceSeatGiftFlashForReceiverProvider = Provider.autoDispose
+    .family<List<VoiceSeatGiftFlash>, VoiceSeatGiftFlashTarget>((ref, target) {
+  ref.watch(
+    voiceSeatGiftFlashProvider(target.roomKey).select(
+      (list) => VoiceSeatGiftFlashNotifier.flashSignature(
+        list,
+        userId: target.userId,
+        displayName: target.displayName,
+      ),
+    ),
+  );
+  return VoiceSeatGiftFlashNotifier.flashesForReceiver(
+    ref.read(voiceSeatGiftFlashProvider(target.roomKey)),
+    userId: target.userId,
+    displayName: target.displayName,
+  );
+});

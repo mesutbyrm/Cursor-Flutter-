@@ -23,9 +23,11 @@
 
 - [x] `_RtcLiveShell` tam-sayfa watch kaldırıldı (`voice_room_rtc_page.dart`)
 - [x] `_VoiceRoomRtcSeatStage` — speaking + seat slice ile izole stage
-- [x] `VoiceWebOwnerStageSeat` — koltuk başına `VoiceSeatSnapshot` select
+- [x] `VoiceRoomRtcHeaderBand` — jeton/çevrimiçi/oda meta (Faz 12)
+- [x] `VoiceRoomRtcLifecycleHost` — foreground + müzik slice yan etki (Faz 12)
+- [x] `voiceSeatGiftFlashForReceiverProvider` — koltuk başına hediye flaşı (Faz 12)
 - [x] Chat / gift / banner — ayrı `Consumer` + `select`
-- [ ] `VoiceRoomBasicPage` — aynı stage izolasyonu (sonraki faz)
+- [ ] `VoiceRoomBasicPage` — tam header band paritesi (sonraki faz)
 - [ ] `ref.listen` tam `VoiceRoomLiveState` → selective slices (sonraki faz)
 
 ## Speaking / RTC

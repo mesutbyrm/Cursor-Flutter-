@@ -92,7 +92,9 @@ class VoiceRoomBasicModerationSection extends ConsumerWidget {
           ),
         ),
         VoiceRoomStaffJoinBanner(
-          enterBanner: live.enterBanner,
+          enterBanner: ref.watch(
+            voiceRoomLiveProvider(liveKey).select((s) => s.enterBanner),
+          ),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
