@@ -4,37 +4,33 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.455+493` |
-| Tarih (UTC) | 2026-09-09 14:36 |
-| Commit | [`69ded9956d727e94741a3c377f4bafb487f8e465`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/69ded9956d727e94741a3c377f4bafb487f8e465) |
-| İş akışı | [Run 34362555709](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34362555709) |
+| Sürüm | `1.0.456+494` |
+| Tarih (UTC) | 2026-09-09 15:40 |
+| Commit | [`174bc470d4763a018be89115f833ee10a9262747`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/174bc470d4763a018be89115f833ee10a9262747) |
+| İş akışı | [Run 34369899553](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34369899553) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.455+493 (2026-09-09) — Final release hardening (kod denetimi)
+## 1.0.456+494 (2026-09-09) — Live/sesli oda realtime kök düzeltmeler
 
 ### PK
-- Canlı PK: dialog timeout sonrası otomatik reject kaldırıldı (backend pending korunur)
-- Canlı oda: `pkPendingInvitesProvider` / unified invites kaldırıldı; yalnızca `liveVideoPkProvider` + SSE
-- Sesli PK: SSE bağlı olsa bile REST poll devam eder; SSE callback null ile handler silme engellendi
+- Canlı PK `accept/reject/cancel/end` switch fallthrough düzeltildi (UI donma/kilitlenme)
+- PK faz makinesi: `syncFromServer` — SSE authoritative phase
+- Global PK ingest: odada değilken yabancı battle yazılmaz; duplicate snapshot atlanır
+- Oda çıkışında `pkBattleProvider` + invite dedupe temizliği
 
-### Misafir / TRTC
-- Ortak `isApprovedCoGuestStatus` — boş status artık onaylı sayılmaz
-- Host approve: tam approved list sync; boş coBroadcast grid temizliği
-- TRTC `onRemoteUserLeaveRoom`: viewId/video map temizliği
+### SSE / giriş / sıralama
+- `onPk` SSE dedupe; `user_joined` tek `_announcePresenceJoin` yolu
+- Oturum bazlı join userId dedupe; leave'de SSE dedupe sıfırlama
+- Sıralama kutlaması: bootstrap'ta eski 1./2./3. spam engellendi
 
-### Presence / oturum
-- Background: heartbeat durur + leave; foreground yeniden bootstrap
-- Logout: presence heartbeat atlanır; fortune prefs temizlenir; hesap değişiminde realtime teardown
+### Müzik
+- `music-queue` endpoint önceliği; SSE/merge canonical boş kuyruk
+- Kuyruk sheet duplicate `ValueKey` crash düzeltildi
 
-### Bildirim / push
-- OneSignal init Firebase'den önce (race azaltma)
-- Bildirim SSE kullanıcı değişiminde yeniden bağlanır
-
-### Gold/VIP
-- RTC oda giriş efekti: `entranceEffectAllowedProvider` gate (basic ile hizalı)
-- Staff marquee canlı yayın odasında gizlenir
+### Canlı liste
+- `patchStreamEnded` — biten yayın listeden anında çıkar
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
