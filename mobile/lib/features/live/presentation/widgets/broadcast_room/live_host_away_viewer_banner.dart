@@ -1,13 +1,52 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
-/// İzleyici — yayıncı bağlantısı koptuğunda kalıcı bilgi bandı.
-class LiveHostAwayViewerBanner extends StatelessWidget {
+/// İzleyici — yayıncı bağlantısı koptuğunda kalıcı bilgi bandı + geri sayım.
+class LiveHostAwayViewerBanner extends StatefulWidget {
   const LiveHostAwayViewerBanner({
     super.key,
+    this.graceEndsAt,
     this.graceMinutes = 5,
   });
 
+  final DateTime? graceEndsAt;
   final int graceMinutes;
+
+  @override
+  State<LiveHostAwayViewerBanner> createState() =>
+      _LiveHostAwayViewerBannerState();
+}
+
+class _LiveHostAwayViewerBannerState extends State<LiveHostAwayViewerBanner> {
+  Timer? _timer;
+  Duration _remaining = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _tick();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
+  }
+
+  void _tick() {
+    final endsAt = widget.graceEndsAt ??
+        DateTime.now().add(Duration(minutes: widget.graceMinutes));
+    final left = endsAt.difference(DateTime.now());
+    setState(() => _remaining = left.isNegative ? Duration.zero : left);
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  String _format(Duration d) {
+    final m = d.inMinutes.remainder(60);
+    final s = d.inSeconds.remainder(60);
+    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +67,9 @@ class LiveHostAwayViewerBanner extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Yayıncının bağlantısı koptu. Yayın ~$graceMinutes dk daha açık — geri döndüğünde devam edecek.',
+                  _remaining > Duration.zero
+                      ? 'Yayıncının bağlantısı koptu. Yayın ${_format(_remaining)} içinde kapanabilir — geri döndüğünde devam edecek.'
+                      : 'Yayıncı bağlantısı bekleniyor…',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,

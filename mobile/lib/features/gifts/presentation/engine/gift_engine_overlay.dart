@@ -96,6 +96,9 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
     }
 
     final config = GiftEngineParser.fromEvent(ev);
+    final catalog = ref.watch(giftCatalogByIdProvider);
+    final giftMeta = lookupGiftCatalog(catalog, ev.giftId);
+    final comboAllowed = giftMeta?.comboEnabled ?? true;
     final size = MediaQuery.sizeOf(context);
     final shortest = size.shortestSide;
     final giftSize = config.priority.sizeFactor(shortest);
@@ -113,7 +116,7 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
               giftSize: giftSize,
               seatIndex: widget.seatIndex ?? ev.seatIndex,
             ),
-            if (config.showComboBadge)
+            if (config.showComboBadge && comboAllowed)
               _ComboBadge(
                 combo: config.combo,
                 displayArea: config.displayArea,

@@ -4,16 +4,16 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   testWidgets('shows host away message for viewers', (tester) async {
+    final endsAt = DateTime.now().add(const Duration(minutes: 5));
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
         home: Scaffold(
           body: Stack(
-            children: [LiveHostAwayViewerBanner(graceMinutes: 5)],
+            children: [LiveHostAwayViewerBanner(graceEndsAt: endsAt)],
           ),
         ),
       ),
     );
     expect(find.textContaining('Yayıncının bağlantısı koptu'), findsOneWidget);
-    expect(find.textContaining('5 dk'), findsOneWidget);
   });
 }

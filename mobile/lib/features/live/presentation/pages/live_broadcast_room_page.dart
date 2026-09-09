@@ -99,6 +99,7 @@ import '../widgets/broadcast_room/live_host_fortune_request_center_overlay.dart'
 import '../widgets/broadcast_room/live_broadcast_ended_flow.dart';
 import '../widgets/broadcast_room/live_network_quality_pill.dart';
 import '../widgets/broadcast_room/live_host_away_viewer_banner.dart';
+import '../widgets/broadcast_room/live_stream_games_sheet.dart';
 import '../widgets/broadcast_room/live_reconnect_banner.dart';
 import '../widgets/broadcast_room/live_host_guest_request_center_overlay.dart';
 import '../providers/live_guest_request_blocklist_provider.dart';
@@ -193,6 +194,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   VoidCallback? _networkQualityListener;
   int? _lastEncoderNetworkBucket;
   var _viewerHostAwayBannerVisible = false;
+  DateTime? _viewerGraceEndsAt;
   var _hostAway = false;
   DateTime? _graceEndsAt;
   var _hostAwayViewerNotified = false;
@@ -1146,6 +1148,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         setState(() {
           _viewerHostAwayBannerVisible = false;
           _hostAwayViewerNotified = false;
+          _viewerGraceEndsAt = null;
         });
       }
       return;
@@ -1153,7 +1156,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     if (!_hadHostVideo || _hostAwayViewerNotified) return;
     _hostAwayViewerNotified = true;
     if (!mounted) return;
-    setState(() => _viewerHostAwayBannerVisible = true);
+    setState(() {
+      _viewerHostAwayBannerVisible = true;
+      _viewerGraceEndsAt = DateTime.now().add(HostLiveStreamRecovery.gracePeriod);
+    });
   }
 
   void _onNetworkQualityForEncoder() {
@@ -1161,8 +1167,17 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final q = _trtc.networkQuality.value ?? 3;
     final bucket = q <= 1 ? 0 : (q <= 3 ? 1 : 2);
     if (_lastEncoderNetworkBucket == bucket) return;
+    final prev = _lastEncoderNetworkBucket;
     _lastEncoderNetworkBucket = bucket;
     unawaited(_applyStreamEncoderQuality(q));
+    if (prev != null && bucket > prev && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ağ zayıf — video kalitesi düşürüldü'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   Future<void> _applyStreamEncoderQuality(int networkQuality) async {
@@ -1347,6 +1362,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         if (!mounted) return;
         handleLiveLikeSignal(ref, streamId: streamId, signal: sig);
         _handlePkSignal(streamId, sig);
+        _handleCoGuestSignal(sig);
       }
     } catch (e) {
       if (!mounted) return;
@@ -1373,9 +1389,40 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           .read(liveVideoPkProvider(streamId).notifier)
           .applyRemoteBattle(Map<String, dynamic>.from(battle));
     } else {
-      // Payload battle taşımıyorsa provider'ı tazele.
       ref.read(liveVideoPkProvider(streamId).notifier).refresh();
     }
+  }
+
+  /// Yayıncı → misafir kamera sinyali (`POST …/signal` type: co_guest_camera).
+  void _handleCoGuestSignal(Map<String, dynamic> sig) {
+    if (widget.session.isHost || _leaving) return;
+    final type = (sig['type'] ?? sig['event'] ?? '').toString().toLowerCase();
+    if (type != 'co_guest_camera') return;
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null) return;
+    final receiver =
+        (sig['receiverId'] ?? sig['targetUserId'] ?? '').toString();
+    if (receiver.isNotEmpty && receiver != user.id) return;
+    final data = sig['data'] is Map
+        ? Map<String, dynamic>.from(sig['data'] as Map)
+        : (sig['payload'] is Map
+            ? Map<String, dynamic>.from(sig['payload'] as Map)
+            : <String, dynamic>{});
+    final enabled = data['enabled'];
+    final on = enabled == true ||
+        enabled == 1 ||
+        enabled == 'true' ||
+        enabled == 'on';
+    _trtc.setCameraEnabled(on);
+    if (!mounted) return;
+    setState(() => _localPreviewKey = UniqueKey());
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          on ? 'Yayıncı kameranızı açtı' : 'Yayıncı kameranızı kapattı',
+        ),
+      ),
+    );
   }
 
   Future<void> _onChatModeration(LiveRoomChatMessage message) async {
@@ -1925,8 +1972,19 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         final slots = ref.read(liveGuestGridProvider).slots;
         if (slotIndex < slots.length) {
           final userId = slots[slotIndex].rtcUserId ?? slots[slotIndex].userId;
+          final streamId = widget.session.streamId?.trim() ?? '';
           if (userId != null && userId.isNotEmpty && !slots[slotIndex].cameraOn) {
             _trtc.stopRemoteView(userId);
+          }
+          if (streamId.isNotEmpty && userId != null && userId.isNotEmpty) {
+            unawaited(
+              ref.read(liveStreamExtrasProvider).postSignal(
+                    streamId: streamId,
+                    type: 'co_guest_camera',
+                    receiverId: userId,
+                    data: {'enabled': slots[slotIndex].cameraOn},
+                  ),
+            );
           }
         }
         if (mounted) {
@@ -2104,7 +2162,16 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
 
   Future<void> _openGamesHub() async {
     if (!mounted) return;
-    await context.push('/games-hub');
+    final streamId = widget.session.streamId?.trim();
+    if (streamId == null || streamId.isEmpty) {
+      await context.push('/games-hub');
+      return;
+    }
+    await showLiveStreamGamesSheet(
+      context: context,
+      ref: ref,
+      streamId: streamId,
+    );
   }
 
   void _showLiveEmojiPicker() {
@@ -2145,6 +2212,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     required bool giftsEnabled,
     required bool pkEnabled,
     required int pendingFortune,
+    bool showTournament = false,
   }) async {
     final streamId = s.streamId?.trim();
     await showModalBottomSheet<void>(
@@ -2219,11 +2287,13 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                   label: 'Oyunlar',
                   onTap: () => unawaited(_openGamesHub()),
                 ),
-                tile(
-                  icon: Icons.emoji_events_rounded,
-                  label: 'Yıldız turnuvası',
-                  onTap: () => unawaited(showLiveStarTournamentSheet(context, ref)),
-                ),
+                if (showTournament)
+                  tile(
+                    icon: Icons.emoji_events_rounded,
+                    label: 'Yıldız turnuvası',
+                    onTap: () =>
+                        unawaited(showLiveStarTournamentSheet(context, ref)),
+                  ),
                 if (s.isHost) ...[
                   if (pkEnabled)
                     tile(
@@ -2880,7 +2950,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 _viewerHostAwayBannerVisible &&
                 !s.isHost &&
                 !_hostAway)
-              const LiveHostAwayViewerBanner(),
+              LiveHostAwayViewerBanner(graceEndsAt: _viewerGraceEndsAt),
             if (hasStream &&
                 _phase == LiveSessionPhase.reconnecting &&
                 !_hostAway)
@@ -3335,6 +3405,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                           giftsEnabled: broadcastSettings.giftsEnabled,
                           pkEnabled: broadcastSettings.pkEnabled,
                           pendingFortune: fortuneReqState?.pendingCount ?? 0,
+                          showTournament:
+                              tournamentsAsync.valueOrNull?.isNotEmpty == true,
                         ),
                       ),
                       onRtcStateChanged: s.isHost

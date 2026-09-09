@@ -1,5 +1,24 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.424+462 (2026-09-09) — Canlı yayın eksikleri
+
+### Oyunlar
+- Yayın içi oyun sheet: quiz, tombala, PK tahmin (`streamId` bağlamı)
+- Oyun merkezine geçiş snackbar ile yayın hatırlatması
+
+### Konuk kamera (sinyal)
+- Yayıncı `co_guest_camera` sinyali gönderir (`POST …/signal`)
+- Misafir cihazda kamera aç/kapat + bildirim
+
+### UX
+- Yayıncı kopması banner: geri sayım (`mm:ss`)
+- Ağ zayıflığında «video kalitesi düşürüldü» bildirimi
+- Turnuva menüsü yalnızca aktif turnuva varsa
+- Hediye combo: katalog `comboEnabled` kontrolü
+
+### Temizlik
+- Kullanılmayan `live_host_fortune_request_stack` ve `live_fortune_requests_panel` kaldırıldı
+
 ## 1.0.423+461 (2026-09-09) — CI düzeltme + canlı yayın polish
 
 ### CI (APK engeli)
