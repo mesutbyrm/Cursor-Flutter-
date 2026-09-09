@@ -284,7 +284,10 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                           const Text('🎁', style: TextStyle(fontSize: 40)),
                           const SizedBox(height: 10),
                           Text(
-                            'Danışan size bahşiş gönderdi',
+                            state.tipReceivedFrom != null &&
+                                    state.tipReceivedFrom!.trim().isNotEmpty
+                                ? '${state.tipReceivedFrom} size bahşiş attı'
+                                : 'Danışan size bahşiş attı',
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               color: Colors.white,

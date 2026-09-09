@@ -131,3 +131,21 @@ final myVoiceRoomProvider = Provider<VoiceRoomEntity?>((ref) {
   final owned = ref.watch(myOwnedVoiceRoomsProvider);
   return owned.isEmpty ? null : owned.first;
 });
+
+/// Giriş yapan kullanıcının sahip olduğu canlı yayınlar.
+final myOwnedLiveStreamsProvider = Provider<List<LiveStreamEntity>>((ref) {
+  final user = ref.watch(authControllerProvider).valueOrNull;
+  final streams = ref.watch(liveStreamsProvider).valueOrNull;
+  if (user == null || streams == null || streams.isEmpty) return const [];
+
+  final uid = user.id.trim();
+  if (uid.isEmpty) return const [];
+
+  return streams
+      .where((s) {
+        if (!s.isLive) return false;
+        final host = s.hostUserId?.trim() ?? '';
+        return host.isNotEmpty && host == uid;
+      })
+      .toList(growable: false);
+});

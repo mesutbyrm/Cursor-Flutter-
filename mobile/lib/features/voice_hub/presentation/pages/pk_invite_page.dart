@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/auth/bot_account_guard.dart';
+import '../../../../core/auth/bot_account_provider.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/pk_event_log.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
@@ -85,6 +87,14 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
 
   Future<void> _invite(VoiceRoomEntity opponent) async {
     if (_inviting) return;
+    if (BotAccountGuard.blockIfBot(
+      ref,
+      context,
+      'PK daveti gönderme',
+      readIsBot: () => ref.read(isBotAccountProvider),
+    )) {
+      return;
+    }
     _inviting = true;
     if (mounted) {
       setState(() {
@@ -124,16 +134,10 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
           guestUserId = resolvePkGuestUserId(presence: presence);
         } catch (_) {}
       }
-      if (guestUserId == null || guestUserId.isEmpty) {
-        setState(() => _error =
-            'Rakip oda sahibi bulunamadı. Rakip odada en az bir yönetici veya '
-            'sahip çevrimiçi olmalı.');
-        return;
-      }
       final battle = await remote.inviteRoom(
         roomId: _roomKey,
         alternateRoomId: _altRoomKey,
-        guestUserId: guestUserId,
+        guestUserId: guestUserId ?? '',
         opponentRoomId: oppKey,
         durationSeconds: _durationSeconds,
       );

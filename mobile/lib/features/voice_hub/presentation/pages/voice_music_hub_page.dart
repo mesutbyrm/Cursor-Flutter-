@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../core/auth/bot_account_guard.dart';
+import '../../../../core/auth/bot_account_provider.dart';
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/widgets/lazy_list_views.dart';
@@ -222,6 +224,14 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
   Future<void> _submit() async {
     final hit = _selected;
     if (hit == null || _submitting) return;
+    if (BotAccountGuard.blockIfBot(
+      ref,
+      context,
+      'müzik isteği',
+      readIsBot: () => ref.read(isBotAccountProvider),
+    )) {
+      return;
+    }
     final balances = ref.read(walletBalancesProvider).valueOrNull;
     final jeton = VoiceMusicAccess.jetonFromBalances(balances);
     final djState = ref.read(voiceRoomLiveProvider(widget.room.liveKey)).dj;

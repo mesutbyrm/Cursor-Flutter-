@@ -2,6 +2,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'voice_room_ranking_provider.dart';
 
+/// Sıralama kutlaması tetik kaynağı.
+enum RankCelebrationTrigger {
+  /// İlk yükleme — kutlama gösterme.
+  bootstrap,
+  /// Saat başı — yalnızca o anda uygulamada olanlara.
+  hourBoundary,
+  /// Gün başı — yalnızca o anda uygulamada olanlara.
+  dailyBoundary,
+}
+
 /// Top 3 oda sıralama değişimi — global bildirim tetikleyicisi.
 class VoiceRoomRankCelebration {
   const VoiceRoomRankCelebration({
@@ -19,48 +29,61 @@ class VoiceRoomRankCelebration {
 
 class VoiceRoomRankCelebrationNotifier
     extends Notifier<VoiceRoomRankCelebration?> {
-  final Map<String, int> _lastTopRanks = {};
-  final Map<String, DateTime> _cooldownUntil = {};
-  static const _cooldown = Duration(seconds: 90);
+  final Set<String> _shownPeriodKeys = {};
+  var _seq = 0;
 
   @override
   VoiceRoomRankCelebration? build() => null;
 
-  void evaluate(VoiceRoomRankingState ranking) {
+  void evaluate(
+    VoiceRoomRankingState ranking, {
+    RankCelebrationTrigger trigger = RankCelebrationTrigger.bootstrap,
+  }) {
+    if (trigger == RankCelebrationTrigger.bootstrap) return;
+
     final now = DateTime.now();
-    for (final period in VoiceRoomRankingPeriod.values) {
+    final periods = trigger == RankCelebrationTrigger.dailyBoundary
+        ? [VoiceRoomRankingPeriod.daily]
+        : trigger == RankCelebrationTrigger.hourBoundary
+            ? [VoiceRoomRankingPeriod.hourly]
+            : VoiceRoomRankingPeriod.values;
+
+    for (final period in periods) {
+      final periodKey = _periodWindowKey(period, now);
+      if (_shownPeriodKeys.contains(periodKey)) continue;
+
       final list = period == VoiceRoomRankingPeriod.hourly
           ? ranking.hourly
           : ranking.daily;
-      for (final entry in list.take(3)) {
-        final key = '${period.name}:${entry.room.apiRoomKey}';
-        final prev = _lastTopRanks[key];
-        _lastTopRanks[key] = entry.rank;
-        if (entry.rank > 3) continue;
-        // İlk yükleme: mevcut sırayı kaydet, kutlama gösterme (eski state spam'i).
-        if (prev == null) continue;
-        final improved = entry.rank < prev;
-        if (!improved) continue;
-        final until = _cooldownUntil[key];
-        if (until != null && now.isBefore(until)) continue;
-        _cooldownUntil[key] = now.add(_cooldown);
-        state = VoiceRoomRankCelebration(
-          rank: entry.rank,
-          roomName: entry.room.displayTitle,
-          period: period,
-          seq: (state?.seq ?? 0) + 1,
-        );
-        return;
-      }
+      final top = list.where((e) => e.rank >= 1 && e.rank <= 3).toList();
+      if (top.isEmpty) continue;
+
+      top.sort((a, b) => a.rank.compareTo(b.rank));
+      final best = top.first;
+      _shownPeriodKeys.add(periodKey);
+      _seq++;
+      state = VoiceRoomRankCelebration(
+        rank: best.rank,
+        roomName: best.room.displayTitle,
+        period: period,
+        seq: _seq,
+      );
+      return;
     }
+  }
+
+  String _periodWindowKey(VoiceRoomRankingPeriod period, DateTime now) {
+    if (period == VoiceRoomRankingPeriod.daily) {
+      return 'daily:${now.year}-${now.month}-${now.day}';
+    }
+    return 'hourly:${now.year}-${now.month}-${now.day}-${now.hour}';
   }
 
   void dismiss() => state = null;
 
   /// Oturum sıfırlama — eski sıralama state'i taşınmaz.
   void resetSession() {
-    _lastTopRanks.clear();
-    _cooldownUntil.clear();
+    _shownPeriodKeys.clear();
     state = null;
   }
 }

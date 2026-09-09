@@ -96,6 +96,27 @@ bool isLivePkInviteRecipientMap(
 }
 
 /// Canlı PK davet alıcısı — backend `opponentId` / `targetUserId` / stream ile eşleşir.
+/// Canlı yayın PK kaydı mı (sesli oda PK değil).
+bool isLiveStreamPkBattle(PkBattleRemote battle) {
+  final t = battle.battleType.toLowerCase();
+  if (t.contains('live') ||
+      t.contains('stream') ||
+      t.contains('video')) {
+    return true;
+  }
+  final host = battle.liveStreamId?.trim() ?? '';
+  final opp = battle.opponentLiveStreamId?.trim() ?? '';
+  return host.isNotEmpty || opp.isNotEmpty;
+}
+
+/// PK kaydı bu canlı yayına ait mi.
+bool pkBattleBelongsToLiveStream(PkBattleRemote battle, String streamId) {
+  final sid = streamId.trim();
+  if (sid.isEmpty) return false;
+  return battle.liveStreamId?.trim() == sid ||
+      battle.opponentLiveStreamId?.trim() == sid;
+}
+
 bool isLivePkInviteRecipientBattle(
   PkBattleRemote battle, {
   required String myUserId,

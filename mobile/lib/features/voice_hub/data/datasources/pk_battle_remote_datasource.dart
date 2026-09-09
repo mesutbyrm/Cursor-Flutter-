@@ -225,7 +225,7 @@ class PkBattleRemoteDataSource {
   Future<PkBattleRemote?> inviteVoiceRoom({
     required String roomId,
     String? alternateRoomId,
-    required String guestUserId,
+    String guestUserId = '',
     String? opponentRoomId,
     int durationSeconds = 180,
   }) async {

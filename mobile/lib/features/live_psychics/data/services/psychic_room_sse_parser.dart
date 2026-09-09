@@ -33,10 +33,15 @@ class PsychicRoomSseMessage extends PsychicRoomSseEvent {
 }
 
 class PsychicRoomSseTip extends PsychicRoomSseEvent {
-  const PsychicRoomSseTip({required this.amount, this.fromName});
+  const PsychicRoomSseTip({
+    required this.amount,
+    this.fromName,
+    this.eventId,
+  });
 
   final int amount;
   final String? fromName;
+  final String? eventId;
 }
 
 PsychicRoomSseEvent? parseSessionRoomSsePayload(
@@ -81,11 +86,16 @@ PsychicRoomSseEvent? parseSessionRoomSsePayload(
       (eventName?.toLowerCase().contains('tip') ?? false)) {
     final amount = _parseTipAmount(map);
     if (amount <= 0) return null;
+    final eventId = map['id']?.toString() ??
+        map['eventId']?.toString() ??
+        map['messageId']?.toString() ??
+        map['tipId']?.toString();
     return PsychicRoomSseTip(
       amount: amount,
       fromName: map['senderName']?.toString() ??
           map['clientName']?.toString() ??
           map['fromName']?.toString(),
+      eventId: eventId,
     );
   }
   if (type == 'timer_started' || type == 'time_extended') {

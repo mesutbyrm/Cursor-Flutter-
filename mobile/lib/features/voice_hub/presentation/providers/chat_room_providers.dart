@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/auth/bot_account_guard.dart';
+import '../../../../core/auth/bot_account_provider.dart';
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/auth/voice_staff_rank.dart';
 import '../../../../core/config/env.dart';
@@ -3168,6 +3170,9 @@ class VoiceRoomLiveController
   }
 
   Future<String?> requestMusicByQuery(String query) async {
+    if (ref.read(isBotAccountProvider)) {
+      return BotAccountGuard.blockedMessage('müzik isteği');
+    }
     final q = query.trim();
     if (q.length < 2) return 'Şarkı adı çok kısa.';
     _markLocalMusicRequestGrace();
@@ -3303,6 +3308,9 @@ class VoiceRoomLiveController
     bool djMusicControl = false,
     bool withVideo = false,
   }) async {
+    if (ref.read(isBotAccountProvider)) {
+      return BotAccountGuard.blockedMessage('müzik isteği');
+    }
     _markLocalMusicRequestGrace();
     try {
       var resolvedUrl = youtubeUrl.trim();

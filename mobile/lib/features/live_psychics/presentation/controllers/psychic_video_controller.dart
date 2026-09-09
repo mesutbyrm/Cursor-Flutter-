@@ -628,9 +628,13 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
             if (_disposed || state.leaving) return;
             unawaited(_handleRemoteSessionEnded(status));
           },
-          onTipReceived: (amount, fromName) {
+          onTipReceived: (amount, fromName, eventId) {
             if (_disposed || state.leaving) return;
-            _onTipReceived(amount, fromName, eventId: 'sse-$amount-$fromName');
+            _onTipReceived(
+              amount,
+              fromName,
+              eventId: eventId ?? 'sse-tip-$amount-${fromName ?? ''}',
+            );
           },
         );
   }
@@ -674,6 +678,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       unawaited(_handleRemoteSessionEnded(info.status));
       return;
     }
+    final wasTimerStarted = state.timerStarted;
     var remaining = state.remaining;
     if (info.timerStarted) {
       remaining = Duration(seconds: info.remainingSeconds);
@@ -692,11 +697,25 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
           ? false
           : state.lowTimeWarningPending,
     );
+    if (info.timerStarted && !wasTimerStarted) {
+      unawaited(_onTimerStartedFromServer());
+    }
     if (info.roomId != null &&
         info.roomId!.isNotEmpty &&
         _trtcConn.joinedTrtcRoomId != null) {
       _logSkipRejoin(info.roomId!);
     }
+  }
+
+  Future<void> _onTimerStartedFromServer() async {
+    if (_disposed || state.leaving) return;
+    if (!_trtc.micOn) {
+      _trtc.setMicEnabled(true);
+    }
+    if (!_trtc.cameraOn) {
+      _trtc.setCameraEnabled(true);
+    }
+    unawaited(_broadcastMediaState());
   }
 
   Future<void> _pollChat() async {

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../core/auth/bot_account_guard.dart';
+import '../../../../core/auth/bot_account_provider.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/pk_event_log.dart';
 
@@ -59,6 +61,14 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
       return;
     }
     if (_inviting) return;
+    if (BotAccountGuard.blockIfBot(
+      ref,
+      context,
+      'PK daveti gönderme',
+      readIsBot: () => ref.read(isBotAccountProvider),
+    )) {
+      return;
+    }
     _inviting = true;
     if (mounted) {
       setState(() {

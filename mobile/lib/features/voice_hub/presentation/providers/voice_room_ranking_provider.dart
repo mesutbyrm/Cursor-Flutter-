@@ -146,7 +146,12 @@ class VoiceRoomRankingNotifier extends Notifier<VoiceRoomRankingState> {
           } else {
             state = state.copyWith(daily: remote, lastUpdated: now);
           }
-          ref.read(voiceRoomRankCelebrationProvider.notifier).evaluate(state);
+          ref.read(voiceRoomRankCelebrationProvider.notifier).evaluate(
+                state,
+                trigger: period == VoiceRoomRankingPeriod.hourly
+                    ? RankCelebrationTrigger.hourBoundary
+                    : RankCelebrationTrigger.dailyBoundary,
+              );
           return;
         }
       }
@@ -154,12 +159,19 @@ class VoiceRoomRankingNotifier extends Notifier<VoiceRoomRankingState> {
       final now = DateTime.now();
       if (period == VoiceRoomRankingPeriod.hourly) {
         state = state.copyWith(hourly: list, lastUpdated: now);
+        ref.read(voiceRoomRankCelebrationProvider.notifier).evaluate(
+              state,
+              trigger: RankCelebrationTrigger.hourBoundary,
+            );
       } else if (period == VoiceRoomRankingPeriod.daily) {
         state = state.copyWith(daily: list, lastUpdated: now);
+        ref.read(voiceRoomRankCelebrationProvider.notifier).evaluate(
+              state,
+              trigger: RankCelebrationTrigger.dailyBoundary,
+            );
       } else {
         state = state.copyWith(hourly: list, daily: list, lastUpdated: now);
       }
-      ref.read(voiceRoomRankCelebrationProvider.notifier).evaluate(state);
     } catch (_) {}
   }
 

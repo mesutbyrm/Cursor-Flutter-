@@ -6,9 +6,12 @@ import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/pk_event_log.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
+import '../../../live/domain/pk/live_pk_invite_helper.dart';
 import '../../../live/domain/pk/pk_session_phase.dart';
+import '../../../live/domain/pk/pk_unified_bridge.dart';
 import '../../../live/presentation/providers/live_pk_invite_signal_provider.dart';
 import '../../../live/presentation/providers/live_providers.dart';
+import '../../../live/presentation/providers/live_video_pk_provider.dart';
 import '../../../live/presentation/providers/pk_session_phase_provider.dart';
 import '../../data/datasources/pk_battle_remote_datasource.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
@@ -104,7 +107,7 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
   Future<PkBattleRemote?> inviteRoom({
     required String roomId,
     String? alternateRoomId,
-    required String guestUserId,
+    String guestUserId = '',
     String? opponentRoomId,
     int durationSeconds = 180,
   }) async {
@@ -139,7 +142,10 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
       opponentStreamId: opponentStreamId,
       duration: durationSeconds,
     );
-    if (battle != null) _apply(battle, 'pk:invite');
+    if (battle != null) {
+      _apply(battle, 'pk:invite');
+      _syncLiveVideoPk(battle);
+    }
     return battle;
   }
 
@@ -249,6 +255,28 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
   bool _shouldIngestBattle(PkBattleRemote battle) {
     final user = ref.read(authControllerProvider).valueOrNull;
 
+    if (isLiveStreamPkBattle(battle)) {
+      final owned = ref.read(myOwnedLiveStreamsProvider);
+      for (final stream in owned) {
+        if (pkBattleBelongsToLiveStream(battle, stream.id)) return true;
+        if (battle.isPending &&
+            user != null &&
+            isLivePkInviteRecipientBattle(
+              battle,
+              myUserId: user.id,
+              myStreamId: stream.id,
+            )) {
+          return true;
+        }
+      }
+      if (battle.isPending && user != null) {
+        if (isLivePkInviteRecipientBattle(battle, myUserId: user.id)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     final activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
     if (activeKey.isNotEmpty) {
       final room = ref.read(voiceRoomByIdProvider(activeKey)).valueOrNull;
@@ -300,6 +328,7 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     }
     state = battle;
     _syncPhase(battle, event);
+    _syncLiveVideoPk(battle);
     if (battle.isActive || battle.isEnded) {
       _syncPkBattleState(battle);
     }
@@ -310,7 +339,32 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     }
   }
 
+  void _syncLiveVideoPk(PkBattleRemote battle) {
+    if (!isLiveStreamPkBattle(battle)) return;
+    final user = ref.read(authControllerProvider).valueOrNull;
+    final streamIds = <String>{
+      battle.liveStreamId?.trim() ?? '',
+      battle.opponentLiveStreamId?.trim() ?? '',
+    };
+    for (final owned in ref.read(myOwnedLiveStreamsProvider)) {
+      if (pkBattleBelongsToLiveStream(battle, owned.id)) {
+        streamIds.add(owned.id);
+      }
+    }
+    for (final sid in streamIds) {
+      if (sid.isEmpty) continue;
+      ref.read(liveVideoPkProvider(sid).notifier).applyRemoteBattle(
+            pkBattleRemoteToBattleMap(
+              battle,
+              myStreamId: sid,
+              myUserId: user?.id,
+            ),
+          );
+    }
+  }
+
   void _syncPkBattleState(PkBattleRemote battle) {
+    if (isLiveStreamPkBattle(battle)) return;
     final activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
     if (activeKey.isNotEmpty) {
       final room = ref.read(voiceRoomByIdProvider(activeKey)).valueOrNull;
