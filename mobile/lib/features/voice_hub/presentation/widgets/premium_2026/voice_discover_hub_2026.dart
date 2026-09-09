@@ -251,6 +251,9 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
         _cachedHourlyRanks = null;
       }
     });
+    ref.listen(voiceRoomsPresenceProvider.select((s) => s.counts), (_, __) {
+      _cachedFiltered = null;
+    });
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
