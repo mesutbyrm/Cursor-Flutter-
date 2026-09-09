@@ -32,7 +32,7 @@ Sesli oda sistemi **çalışan temel akışları koruyarak** premium UX, mention
 | Hediye / jeton | **ÇALIŞIYOR** | Gift transaction API |
 | Oda beğeni | **EKSİK** | Üretim endpoint yok |
 | Chat / mesaj | **ÇALIŞIYOR** | SSE + poll + flood koruması (yeni) |
-| Oda önizleme (katılmadan) | **ÇALIŞIYOR** (yeni) | PK + hedef + sıralama chip |
+| Oda önizleme (katılmadan) | **ÇALIŞIYOR** | PK + hedef + canlı SSE çevrimiçi sayısı |
 | Oda içi sıralama rozeti | **ÇALIŞIYOR** (yeni) | `VoiceLiveHeader2026` hourly rank |
 | Mention gönderme | **ÇALIŞIYOR** | `mentionedUserIds` body |
 | Mention bildirimi (oda içi) | **ÇALIŞIYOR** (yeni) | `voice_room_mention_notice` + banner |
