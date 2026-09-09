@@ -105,7 +105,24 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     if (battle.effectiveId.isEmpty) return false;
     ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(battle);
     ref.read(livePkInviteSignalProvider.notifier).bump();
+    _patchPkLiveFlagsFromSse(battle);
     return true;
+  }
+
+  void _patchPkLiveFlagsFromSse(PkBattleRemote battle) {
+    final pkLive = (battle.isActive || battle.isPending) && !battle.isEnded;
+    void patch(String? roomId) {
+      final k = roomId?.trim() ?? '';
+      if (k.isEmpty) return;
+      ref.read(voiceRoomsListNotifierProvider.notifier).patchRoomFields(
+            k,
+            (r) => r.copyWith(isPkLive: pkLive),
+          );
+    }
+    patch(battle.voiceRoomId);
+    patch(battle.opponentVoiceRoomId);
+    patch(_roomKey);
+    _scheduleRankingRefreshFromSse();
   }
 
   void _handleRoomEvent(Map<String, dynamic> payload) {
@@ -129,9 +146,11 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     switch (event) {
       case 'user_joined':
         _applyRoomEventUserJoined(payload);
+        _scheduleRankingRefreshFromSse();
         return;
       case 'user_left':
         _applyRoomEventUserLeft(payload);
+        _scheduleRankingRefreshFromSse();
         return;
       case 'mic_changed':
         _applyRoomEventMicChanged(payload);

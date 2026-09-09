@@ -36,9 +36,7 @@ import '../utils/voice_room_key_resolver.dart';
 import '../providers/voice_session_phase_provider.dart';
 import '../../domain/voice/voice_session_phase.dart';
 import '../providers/voice_room_ui_provider.dart';
-import '../providers/voice_room_mention_notice_provider.dart';
-import '../widgets/voice_room/voice_room_mention_notice_banner.dart';
-import '../widgets/voice_room/voice_room_reconnect_banner.dart';
+import '../widgets/voice_room/voice_room_connection_overlays.dart';
 import '../widgets/voice_room/voice_room_loading_skeleton.dart';
 import '../utils/voice_room_mention.dart';
 import '../sheets/voice_room_commands_panel.dart';
@@ -971,35 +969,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                           onUserPerms: (userId, name) =>
                               _openUserById(userId, live, room, perms),
                         ),
-                        if (!live.sseConnected && live.selfInRoom)
-                          VoiceRoomReconnectBanner(
-                            message: 'Ses bağlantısı yeniden kuruluyor…',
-                            onRetry: () {
-                              ref
-                                  .read(chatRoomProvider.notifier)
-                                  .resyncAfterSseReconnect();
-                            },
-                          ),
-                        Builder(
-                          builder: (context) {
-                            final mention =
-                                ref.watch(voiceRoomMentionNoticeProvider);
-                            if (mention == null) return const SizedBox.shrink();
-                            return Positioned(
-                              top: 8,
-                              left: 0,
-                              right: 0,
-                              child: VoiceRoomMentionNoticeBanner(
-                                fromName: mention.fromName,
-                                preview: mention.messagePreview,
-                                onDismiss: () => ref
-                                    .read(voiceRoomMentionNoticeProvider
-                                        .notifier)
-                                    .clear(),
-                              ),
-                            );
-                          },
-                        ),
+                        VoiceRoomConnectionOverlays(roomKey: _liveRoomKey),
                       ],
                     ),
                   ),

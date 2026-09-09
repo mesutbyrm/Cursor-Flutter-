@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.434+472 (2026-09-09) — Sesli oda Faz 8
+
+### Ortak overlay
+- **`VoiceRoomConnectionOverlays`** — reconnect + mention banner (basic + RTC)
+
+### Proxy sıralama
+- PK SSE → `isPkLive` yerel liste patch + sıralama yenileme
+- `user_joined` / `user_left` SSE → sıralama debounce yenileme
+
 ## 1.0.433+471 (2026-09-09) — Sesli oda Faz 7
 
 ### RTC parite

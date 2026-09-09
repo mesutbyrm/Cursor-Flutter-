@@ -25,4 +25,30 @@ void main() {
     expect(next.single.seatCount, 12);
     expect(next.single.maxUsers, 50);
   });
+
+  test('patchVoiceRoomsInList updates isPkLive for matching room', () {
+    const rooms = [
+      VoiceRoomEntity(id: 'room-a', slug: 'room-a', nameTr: 'A'),
+      VoiceRoomEntity(id: 'room-b', slug: 'room-b', nameTr: 'B', isPkLive: true),
+    ];
+    final next = patchVoiceRoomsInList(
+      rooms,
+      'room-a',
+      (r) => r.copyWith(isPkLive: true),
+    );
+    expect(next[0].isPkLive, isTrue);
+    expect(next[1].isPkLive, isTrue);
+  });
+
+  test('patchVoiceRoomsInList clears isPkLive on pk end', () {
+    const rooms = [
+      VoiceRoomEntity(id: 'room-a', slug: 'room-a', nameTr: 'A', isPkLive: true),
+    ];
+    final next = patchVoiceRoomsInList(
+      rooms,
+      'room-a',
+      (r) => r.copyWith(isPkLive: false),
+    );
+    expect(next.single.isPkLive, isFalse);
+  });
 }

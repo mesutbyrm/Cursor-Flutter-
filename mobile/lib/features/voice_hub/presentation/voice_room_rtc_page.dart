@@ -96,9 +96,7 @@ import '../../gifts/presentation/sync/gift_event_listener.dart';
 import 'widgets/voice_room/voice_room_duyuru_ticker.dart';
 import 'utils/kick_strike_ui.dart';
 import 'audio/voice_trtc_engine.dart';
-import 'widgets/voice_room/voice_room_reconnect_banner.dart';
-import 'widgets/voice_room/voice_room_mention_notice_banner.dart';
-import 'providers/voice_room_mention_notice_provider.dart';
+import 'widgets/voice_room/voice_room_connection_overlays.dart';
 import 'widgets/premium_2026/voice_web_chat_overlay.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/premium_2026/voice_web_room_header.dart';
@@ -1795,61 +1793,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                 );
                               },
                             ),
-                                Consumer(
-                                  builder: (context, ref, _) {
-                                    final conn = ref.watch(
-                                      voiceRoomConnectionSliceProvider(
-                                        _liveRoomKey,
-                                      ),
-                                    );
-                                    if (conn.sseConnected || !conn.selfInRoom) {
-                                      return const SizedBox.shrink();
-                                    }
-                                    return Positioned(
-                                      top: 0,
-                                      left: 0,
-                                      right: 0,
-                                      child: VoiceRoomReconnectBanner(
-                                        message:
-                                            'Ses bağlantısı yeniden kuruluyor…',
-                                        onRetry: () {
-                                          ref
-                                              .read(
-                                                voiceRoomLiveProvider(
-                                                  _liveRoomKey,
-                                                ).notifier,
-                                              )
-                                              .resyncAfterSseReconnect();
-                                        },
-                                      ),
-                                    );
-                                  },
-                                ),
-                                Consumer(
-                                  builder: (context, ref, _) {
-                                    final mention = ref.watch(
-                                      voiceRoomMentionNoticeProvider,
-                                    );
-                                    if (mention == null) {
-                                      return const SizedBox.shrink();
-                                    }
-                                    return Positioned(
-                                      top: 8,
-                                      left: 0,
-                                      right: 0,
-                                      child: VoiceRoomMentionNoticeBanner(
-                                        fromName: mention.fromName,
-                                        preview: mention.messagePreview,
-                                        onDismiss: () => ref
-                                            .read(
-                                              voiceRoomMentionNoticeProvider
-                                                  .notifier,
-                                            )
-                                            .clear(),
-                                      ),
-                                    );
-                                  },
-                                ),
+                                VoiceRoomConnectionOverlays(roomKey: _liveRoomKey),
                               ],
                             ),
                           ),
