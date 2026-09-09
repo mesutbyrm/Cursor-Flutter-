@@ -2,9 +2,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:canlifal_social/features/live/domain/entities/voice_room_entity.dart';
+import 'package:canlifal_social/features/live/presentation/providers/discover_voice_rooms.dart';
 import 'package:canlifal_social/features/voice_hub/presentation/providers/voice_room_ranking_provider.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   test('buildVoiceRoomRanking sorts by score and caps at 100', () {
     final rooms = List.generate(
       120,
@@ -51,9 +53,7 @@ void main() {
     expect(ranked.single.score, voiceRoomRankingScore(room, liveOnline: 25));
   });
 
-  test('scoreForRoom returns proxy score from notifier state', () {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+  test('scoreForRoom returns proxy score from notifier state', () async {
     const room = VoiceRoomEntity(
       id: 'room-score',
       slug: 'room-score',
@@ -61,12 +61,14 @@ void main() {
       onlineCount: 12,
       isPkLive: true,
     );
-    container.read(voiceRoomRankingProvider.notifier).state =
-        VoiceRoomRankingState(
-      hourly: [VoiceRoomRankEntry(rank: 1, room: room, score: 170)],
-      daily: const [],
-      lastUpdated: DateTime.now(),
+    final container = ProviderContainer(
+      overrides: [
+        voiceRoomsProvider.overrideWith((ref) async => [room]),
+      ],
     );
+    addTearDown(container.dispose);
+
+    await container.read(voiceRoomRankingProvider.notifier).refresh();
     expect(
       container.read(voiceRoomRankingProvider.notifier).scoreForRoom('room-score'),
       170,

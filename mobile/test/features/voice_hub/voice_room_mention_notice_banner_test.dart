@@ -40,7 +40,7 @@ void main() {
 
     final banner = find.byType(VoiceRoomMentionNoticeBanner);
     final center = tester.getCenter(banner);
-    await tester.startGesture(center);
+    final gesture = await tester.startGesture(center);
     await tester.pump();
 
     expect(find.text('⏸'), findsOneWidget);
@@ -48,7 +48,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.text('⏸'), findsOneWidget);
 
-    await tester.up();
+    await gesture.up();
     await tester.pump();
 
     expect(find.text('⏸'), findsNothing);

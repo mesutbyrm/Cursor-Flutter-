@@ -20,7 +20,8 @@ void main() {
     });
 
     test('uses startedAt + duration when endsAt missing', () {
-      final now = DateTime.utc(2026, 9, 9, 12, 1, 30);
+      final startedAt = DateTime.utc(2026, 9, 9, 12, 0, 0);
+      final now = startedAt.add(const Duration(seconds: 150));
       final battle = PkBattleRemote(
         id: 'pk-2',
         battleType: 'voice_room',
@@ -30,7 +31,7 @@ void main() {
         secondsLeft: 999,
         durationSeconds: 180,
         targetScore: 1000,
-        startedAt: DateTime.utc(2026, 9, 9, 12, 0, 0),
+        startedAt: startedAt,
       );
       expect(battle.resolvedSecondsLeft(now: now), 30);
     });

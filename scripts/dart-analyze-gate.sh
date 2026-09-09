@@ -21,14 +21,11 @@ dart analyze lib 2>&1 | tee "$OUT"
 ec=$?
 set -e
 
-# Çıktı formatı: "  error - path:line:col - message"
-# grep kullan (CI runner'da rg yok — rg eksikliği ERROR sayımını 0 yapıp yanlış PASS üretiyordu).
-error_count=$(grep -cE '^\s*error\s+-' "$OUT" 2>/dev/null || true)
-warning_count=$(grep -cE '^\s*warning\s+-' "$OUT" 2>/dev/null || true)
-info_count=$(grep -cE '^\s*info\s+-' "$OUT" 2>/dev/null || true)
-error_count=${error_count:-0}
-warning_count=${warning_count:-0}
-info_count=${info_count:-0}
+# Çıktı formatları: "  error - path:line:col - msg" veya "  error • path:line:col • msg"
+# Standart grep/awk — CI runner'da ek paket (rg) gerektirmez.
+error_count=$(awk '/error -|error •/ && $0 !~ /^Analyzing/ { c++ } END { print c + 0 }' "$OUT")
+warning_count=$(awk '/warning -|warning •/ && $0 !~ /^Analyzing/ { c++ } END { print c + 0 }' "$OUT")
+info_count=$(awk '/info -|info •/ && $0 !~ /^Analyzing/ { c++ } END { print c + 0 }' "$OUT")
 
 # Özet satırı: "N issues found."
 total_line=$(grep -oE '[0-9]+ issues found\.' "$OUT" 2>/dev/null | tail -1 || true)
@@ -43,8 +40,16 @@ echo "  dart exit code: $ec"
 
 if [[ "${error_count:-0}" -gt 0 ]]; then
   echo ""
-  echo "❌ Analyze ERROR — APK engellendi ($error_count hata)"
-  grep -E '^\s*error\s+-' "$OUT" | head -20 || true
+  echo "❌ Analyze ERROR — APK engellendi ($error_count hata, dart exit=$ec)"
+  awk '/error -|error •/ && $0 !~ /^Analyzing/ { print; if (++n >= 20) exit }' "$OUT"
+  exit 1
+fi
+
+# Exit 3+ = analyzer ERROR; 2 = warning only (Gate 1 geçer).
+if [[ "$ec" -ge 3 ]]; then
+  echo ""
+  echo "❌ dart analyze exit code $ec (ERROR — parse: $error_count satır)"
+  awk '/error -|error •/ && $0 !~ /^Analyzing/ { print; if (++n >= 20) exit }' "$OUT"
   exit 1
 fi
 

@@ -984,28 +984,32 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
             ? widget.session.hostUserId!.trim()
             : (widget.session.isHost ? user.id : '');
         final summary = _buildSessionSummary();
-        final roomSnap = ref.read(liveRoomProvider(streamId));
-        ref
-            .read(liveRoomProvider(streamId).notifier)
-            .appendSessionSummaryMessages(
-              summary,
-              viewerCount: roomSnap.viewerCount,
-              duration: _sessionJoinedAt != null
-                  ? DateTime.now().difference(_sessionJoinedAt!)
-                  : null,
-              endedLabel: widget.session.isHost
-                  ? 'Yayını kapattınız'
-                  : 'Yayından ayrıldınız',
-            );
-        await SessionGiftSummaryBuilder.refreshWalletIfRecipient(ref, summary);
-        invalidateDiscoverLiveStreams(ref);
-
-        if (summary.hasData || widget.session.isHost) {
-          final rootCtx = rootNavigatorKey.currentContext;
-          if (rootCtx != null && rootCtx.mounted) {
-            unawaited(showSessionGiftSummarySheet(rootCtx, summary: summary));
+        if (summary != null) {
+          final roomSnap = ref.read(liveRoomProvider(streamId));
+          ref
+              .read(liveRoomProvider(streamId).notifier)
+              .appendSessionSummaryMessages(
+                summary,
+                viewerCount: roomSnap.viewerCount,
+                duration: _sessionJoinedAt != null
+                    ? DateTime.now().difference(_sessionJoinedAt!)
+                    : null,
+                endedLabel: widget.session.isHost
+                    ? 'Yayını kapattınız'
+                    : 'Yayından ayrıldınız',
+              );
+          await SessionGiftSummaryBuilder.refreshWalletIfRecipient(
+            ref,
+            summary,
+          );
+          if (summary.hasData || widget.session.isHost) {
+            final rootCtx = rootNavigatorKey.currentContext;
+            if (rootCtx != null && rootCtx.mounted) {
+              unawaited(showSessionGiftSummarySheet(rootCtx, summary: summary));
+            }
           }
         }
+        invalidateDiscoverLiveStreams(ref);
       } else {
         await ref.refreshWalletCache(force: true);
         invalidateDiscoverLiveStreams(ref);

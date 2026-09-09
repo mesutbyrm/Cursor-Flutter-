@@ -21,7 +21,7 @@ void main() {
     final entry = VoiceRoomRankEntry(rank: 2, room: room, score: 520);
     final ranking = VoiceRoomRankingState(
       hourly: [entry],
-      daily: [entry],
+      daily: const [],
       lastUpdated: DateTime.now(),
     );
 
