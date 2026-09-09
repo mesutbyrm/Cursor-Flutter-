@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.435+473 (2026-09-09) — Sesli oda Faz 9
+
+### Keşfet / sıralama proxy
+- **Müzik SSE** → `isMusicPlaying` yerel liste patch + sıralama yenileme
+- **room_closed SSE** → liste sıfırlama (çevrimiçi 0, PK/müzik kapalı)
+- **Presence heartbeat** → çevrimiçi sayı patch sonrası sıralama debounce
+
 ## 1.0.434+472 (2026-09-09) — Sesli oda Faz 8
 
 ### Ortak overlay

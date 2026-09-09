@@ -266,6 +266,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       patched.add(k);
       ref.read(voiceRoomsPresenceProvider.notifier).patchRoomCount(k, count);
     }
+    _scheduleRankingRefreshFromSse();
   }
 
   Future<void> _refreshHubOnlineCountFromServer() async {

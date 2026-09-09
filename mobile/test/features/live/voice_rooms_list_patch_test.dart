@@ -51,4 +51,17 @@ void main() {
     );
     expect(next.single.isPkLive, isFalse);
   });
+
+  test('patchVoiceRoomsInList updates isMusicPlaying', () {
+    const rooms = [
+      VoiceRoomEntity(id: 'room-a', slug: 'room-a', nameTr: 'A'),
+    ];
+    final next = patchVoiceRoomsInList(
+      rooms,
+      'room-a',
+      (r) => r.copyWith(isMusicPlaying: true),
+    );
+    expect(next.single.isMusicPlaying, isTrue);
+    expect(next.single.hasMusicActivity, isTrue);
+  });
 }

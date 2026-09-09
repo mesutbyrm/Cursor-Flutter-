@@ -125,6 +125,29 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     _scheduleRankingRefreshFromSse();
   }
 
+  void _patchMusicActivityOnHub(bool active) {
+    if (_roomKey.isEmpty) return;
+    ref.read(voiceRoomsListNotifierProvider.notifier).patchRoomFields(
+          _roomKey,
+          (r) => r.copyWith(isMusicPlaying: active),
+        );
+    _scheduleRankingRefreshFromSse();
+  }
+
+  void _patchRoomClosedOnHub() {
+    if (_roomKey.isEmpty) return;
+    ref.read(voiceRoomsListNotifierProvider.notifier).patchRoomFields(
+          _roomKey,
+          (r) => r.copyWith(
+            onlineCount: 0,
+            userCount: 0,
+            isPkLive: false,
+            isMusicPlaying: false,
+          ),
+        );
+    _scheduleRankingRefreshFromSse();
+  }
+
   void _handleRoomEvent(Map<String, dynamic> payload) {
     if (!_acceptSseEvent(payload)) return;
     _markSseActivity();
@@ -370,6 +393,7 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
 
   void _applyRoomEventRoomClosed(Map<String, dynamic> payload) {
     final msg = payload['message']?.toString() ?? 'Oda kapatıldı';
+    _patchRoomClosedOnHub();
     _postVoiceSessionEndSummary(endedLabel: msg);
     state = state.copyWith(
       error: msg,

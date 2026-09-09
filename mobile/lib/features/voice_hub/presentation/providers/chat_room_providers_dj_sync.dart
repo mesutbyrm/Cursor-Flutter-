@@ -32,6 +32,7 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
       musicLikeCount: 0,
     );
     _live._lastDjPlaybackSignature = '';
+    _live._patchMusicActivityOnHub(false);
   }
 
   Future<void> _applyDjRealtimePayload(Map<String, dynamic> payload) async {
@@ -161,6 +162,11 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
       dj = dj.copyWith(djUsers: state.dj.djUsers);
     }
     _live._commitDjUi(dj);
+    _live._patchMusicActivityOnHub(
+      dj.playing ||
+          dj.nowPlaying != null ||
+          dj.musicQueue.isNotEmpty,
+    );
     if (likes != null) {
       state = state.copyWith(musicLikeCount: likes);
     }
