@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.448+486 (2026-09-09) — Sesli oda Faz 22
+
+### Mention banner
+- **Swipe-to-dismiss** — yatay kaydırarak kapat (seq tabanlı `Dismissible` key)
+
+### Sohbet «Yeni mesaj» chip
+- `VoiceRoomChatNewMessageChip` — yukarı kaydırıldığında yeni mesaj sayacı
+- Basic `VoiceRoomBasicChatFeed` + RTC `VoiceWebChatOverlay` akıllı scroll (altta kalınca otomatik, değilse chip)
+
+### Altyapı
+- `voice_room_chat_scroll.dart` — `voiceRoomChatIsAtLatest` + pending sayaç yardımcıları
+
 ## 1.0.447+485 (2026-09-09) — Sesli oda Faz 21
 
 ### Mention banner etkileşim

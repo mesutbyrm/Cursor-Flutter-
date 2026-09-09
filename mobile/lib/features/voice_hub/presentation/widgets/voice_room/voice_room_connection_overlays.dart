@@ -53,6 +53,7 @@ class VoiceRoomConnectionOverlays extends ConsumerWidget {
               left: 0,
               right: 0,
               child: VoiceRoomMentionNoticeBanner(
+                dismissKey: mention.seq,
                 fromName: mention.fromName,
                 preview: mention.messagePreview,
                 onDismiss: () =>

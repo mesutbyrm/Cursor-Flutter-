@@ -5,7 +5,9 @@ import '../../../domain/entities/chat_room_message.dart';
 import '../../../domain/voice_official_join.dart';
 import '../../theme/voice_room_tokens.dart';
 import '../../utils/voice_chat_message_filters.dart';
+import '../../utils/voice_room_chat_scroll.dart';
 import '../chat/chat_message_widgets.dart';
+import '../voice_room/voice_room_chat_new_message_chip.dart';
 
 /// Web tarzı şeffaf sohbet — arka plan üzerinde yüzen mesajlar.
 class VoiceWebChatOverlay extends StatefulWidget {
@@ -43,9 +45,13 @@ class VoiceWebChatOverlay extends StatefulWidget {
 
 class _VoiceWebChatOverlayState extends State<VoiceWebChatOverlay> {
   ScrollController? _ownedScroll;
+  ScrollController? _listenedScroll;
   List<ChatRoomMessage> _visibleCache = const [];
   int _sourceLen = -1;
   String? _lastMessageId;
+  var _lastSliceLen = 0;
+  var _pendingNewCount = 0;
+  var _showNewMessageChip = false;
 
   ScrollController get _scroll =>
       widget.scrollController ?? (_ownedScroll ??= ScrollController());
@@ -79,25 +85,111 @@ class _VoiceWebChatOverlayState extends State<VoiceWebChatOverlay> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _attachScrollListener();
+  }
+
+  @override
   void dispose() {
+    _listenedScroll?.removeListener(_onScroll);
     _ownedScroll?.dispose();
     super.dispose();
+  }
+
+  void _attachScrollListener() {
+    final ctrl = _scroll;
+    if (_listenedScroll == ctrl) return;
+    _listenedScroll?.removeListener(_onScroll);
+    _listenedScroll = ctrl;
+    ctrl.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (!mounted) return;
+    if (!voiceRoomChatIsAtLatest(_scroll)) return;
+    if (_pendingNewCount == 0 && !_showNewMessageChip) return;
+    setState(() {
+      _pendingNewCount = 0;
+      _showNewMessageChip = false;
+    });
   }
 
   @override
   void didUpdateWidget(covariant VoiceWebChatOverlay oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.scrollToLatest ||
-        widget.messages.length != oldWidget.messages.length) {
-      _jumpToLatest();
+    _attachScrollListener();
+
+    final visible = _visible;
+    final sliceLen = visible.length > 40 ? 40 : visible.length;
+
+    if (widget.scrollToLatest) {
+      _jumpToLatest(clearPending: true);
+      _lastSliceLen = sliceLen;
+      return;
+    }
+
+    if (sliceLen != _lastSliceLen) {
+      _handleSliceLengthChange(_lastSliceLen, sliceLen);
+      _lastSliceLen = sliceLen;
     }
   }
 
-  void _jumpToLatest() {
+  void _handleSliceLengthChange(int oldLen, int newLen) {
+    if (newLen <= oldLen) return;
+    if (oldLen == 0) {
+      _jumpToLatest(clearPending: true);
+      return;
+    }
+    final wasAtLatest = voiceRoomChatIsAtLatest(_scroll);
+    if (wasAtLatest) {
+      _jumpToLatest(clearPending: true);
+      return;
+    }
+    final delta = voiceRoomChatPendingOnNewMessages(
+      oldVisibleCount: oldLen,
+      newVisibleCount: newLen,
+      wasAtLatest: false,
+    );
+    if (delta <= 0) return;
+    setState(() {
+      _pendingNewCount += delta;
+      _showNewMessageChip = true;
+    });
+  }
+
+  void _jumpToLatest({bool clearPending = false}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !_scroll.hasClients) return;
       _scroll.jumpTo(0);
+      if (clearPending && (_pendingNewCount > 0 || _showNewMessageChip)) {
+        setState(() {
+          _pendingNewCount = 0;
+          _showNewMessageChip = false;
+        });
+      }
     });
+  }
+
+  Widget _wrapWithNewMessageChip(Widget list) {
+    if (!_showNewMessageChip) return list;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        list,
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 6,
+          child: Center(
+            child: VoiceRoomChatNewMessageChip(
+              pendingCount: _pendingNewCount,
+              onTap: () => _jumpToLatest(clearPending: true),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -189,12 +281,14 @@ class _VoiceWebChatOverlayState extends State<VoiceWebChatOverlay> {
       },
     );
 
+    final listWithChip = _wrapWithNewMessageChip(list);
+
     if (widget.embedded) {
       return RepaintBoundary(
         child: SizedBox(
           height: widget.maxHeight,
           width: double.infinity,
-          child: list,
+          child: listWithChip,
         ),
       );
     }
@@ -203,7 +297,7 @@ class _VoiceWebChatOverlayState extends State<VoiceWebChatOverlay> {
       height: widget.maxHeight,
       child: Stack(
         children: [
-          list,
+          listWithChip,
           Positioned(
             top: 0,
             left: 0,

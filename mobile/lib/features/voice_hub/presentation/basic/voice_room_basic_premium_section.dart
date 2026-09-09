@@ -24,7 +24,9 @@ import '../sheets/voice_room_sheets.dart';
 import '../theme/voice_room_tokens.dart';
 import '../utils/voice_room_permissions.dart';
 import '../utils/voice_chat_message_filters.dart';
+import '../utils/voice_room_chat_scroll.dart';
 import '../widgets/chat/chat_message_widgets.dart';
+import '../widgets/voice_room/voice_room_chat_new_message_chip.dart';
 import '../widgets/voice_room/voice_room_mention_text_field.dart';
 import '../widgets/voice_room/voice_room_typing_indicator.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
@@ -184,7 +186,7 @@ class _VoiceRoomBasicJoinTickerState extends State<VoiceRoomBasicJoinTicker>
 }
 
 /// Sohbet akışı — yalnızca mesaj/presence dilimini izler (oda gövdesi rebuild etmez).
-class VoiceRoomBasicChatFeed extends ConsumerWidget {
+class VoiceRoomBasicChatFeed extends ConsumerStatefulWidget {
   const VoiceRoomBasicChatFeed({
     super.key,
     required this.liveKey,
@@ -199,25 +201,78 @@ class VoiceRoomBasicChatFeed extends ConsumerWidget {
   final void Function(String userId, String name)? onUserPerms;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final messages = ref.watch(
-      voiceRoomLiveProvider(liveKey).select((s) => s.messages),
-    );
-    final presence = ref.watch(
-      voiceRoomLiveProvider(liveKey).select((s) => s.presence),
-    );
-    final typingUsers = ref.watch(
-      voiceRoomLiveProvider(liveKey).select((s) => s.typingUsers),
-    );
-    // Presence'tan id→profil resmi — mesajda görsel yoksa buradan çözülür.
-    final avatarById = <String, String>{};
-    for (final p in presence) {
-      final img = p.image?.trim();
-      if (p.id.isNotEmpty && img != null && img.isNotEmpty) {
-        avatarById[p.id] = img;
+  ConsumerState<VoiceRoomBasicChatFeed> createState() =>
+      _VoiceRoomBasicChatFeedState();
+}
+
+class _VoiceRoomBasicChatFeedState extends ConsumerState<VoiceRoomBasicChatFeed> {
+  final _scroll = ScrollController();
+  var _lastVisibleLen = 0;
+  var _pendingNewCount = 0;
+  var _showNewMessageChip = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scroll.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scroll.removeListener(_onScroll);
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!mounted) return;
+    if (!voiceRoomChatIsAtLatest(_scroll)) return;
+    if (_pendingNewCount == 0 && !_showNewMessageChip) return;
+    setState(() {
+      _pendingNewCount = 0;
+      _showNewMessageChip = false;
+    });
+  }
+
+  void _jumpToLatest({bool clearPending = false}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scroll.hasClients) return;
+      _scroll.jumpTo(0);
+      if (clearPending && (_pendingNewCount > 0 || _showNewMessageChip)) {
+        setState(() {
+          _pendingNewCount = 0;
+          _showNewMessageChip = false;
+        });
       }
+    });
+  }
+
+  void _handleVisibleLengthChange(int newLen, {required int oldLen}) {
+    if (newLen == oldLen) return;
+    _lastVisibleLen = newLen;
+    if (newLen <= oldLen) return;
+    if (oldLen == 0) {
+      _jumpToLatest(clearPending: true);
+      return;
     }
-    final visible = messages.where((m) {
+    if (voiceRoomChatIsAtLatest(_scroll)) {
+      _jumpToLatest(clearPending: true);
+      return;
+    }
+    final delta = voiceRoomChatPendingOnNewMessages(
+      oldVisibleCount: oldLen,
+      newVisibleCount: newLen,
+      wasAtLatest: false,
+    );
+    if (delta <= 0) return;
+    setState(() {
+      _pendingNewCount += delta;
+      _showNewMessageChip = true;
+    });
+  }
+
+  List<ChatRoomMessage> _filterVisible(List<ChatRoomMessage> messages) {
+    return messages.where((m) {
       if (m.kind == ChatMessageKind.systemJoin ||
           m.kind == ChatMessageKind.systemLeave) {
         return true;
@@ -226,6 +281,36 @@ class VoiceRoomBasicChatFeed extends ConsumerWidget {
       if (ChatRoomMessage.isSystemProtocol(m.content)) return false;
       return VoiceChatMessageFilters.shouldShow(m);
     }).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen(
+      voiceRoomLiveProvider(widget.liveKey).select((s) => s.messages),
+      (previous, next) {
+        final oldLen = _filterVisible(previous ?? const []).length;
+        final newLen = _filterVisible(next).length;
+        _handleVisibleLengthChange(newLen, oldLen: oldLen);
+      },
+    );
+
+    final messages = ref.watch(
+      voiceRoomLiveProvider(widget.liveKey).select((s) => s.messages),
+    );
+    final presence = ref.watch(
+      voiceRoomLiveProvider(widget.liveKey).select((s) => s.presence),
+    );
+    final typingUsers = ref.watch(
+      voiceRoomLiveProvider(widget.liveKey).select((s) => s.typingUsers),
+    );
+    final avatarById = <String, String>{};
+    for (final p in presence) {
+      final img = p.image?.trim();
+      if (p.id.isNotEmpty && img != null && img.isNotEmpty) {
+        avatarById[p.id] = img;
+      }
+    }
+    final visible = _filterVisible(messages);
 
     return Stack(
       children: [
@@ -242,6 +327,7 @@ class VoiceRoomBasicChatFeed extends ConsumerWidget {
           )
         else
           ListView.builder(
+            controller: _scroll,
             reverse: true,
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             cacheExtent: 320,
@@ -257,11 +343,23 @@ class VoiceRoomBasicChatFeed extends ConsumerWidget {
                   avatarUrl: msg.user?.id != null
                       ? avatarById[msg.user!.id]
                       : null,
-                  onUserTap: onMention,
-                  onUserDoubleTap: onUserPerms,
+                  onUserTap: widget.onMention,
+                  onUserDoubleTap: widget.onUserPerms,
                 ),
               );
             },
+          ),
+        if (_showNewMessageChip)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: typingUsers.isNotEmpty ? 28 : 8,
+            child: Center(
+              child: VoiceRoomChatNewMessageChip(
+                pendingCount: _pendingNewCount,
+                onTap: () => _jumpToLatest(clearPending: true),
+              ),
+            ),
           ),
         if (typingUsers.isNotEmpty)
           Positioned(

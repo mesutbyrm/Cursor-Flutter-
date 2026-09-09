@@ -6,12 +6,14 @@ class VoiceRoomMentionNoticeBanner extends StatefulWidget {
     super.key,
     required this.fromName,
     required this.preview,
+    this.dismissKey,
     this.onDismiss,
     this.onTap,
   });
 
   final String fromName;
   final String preview;
+  final Object? dismissKey;
   final VoidCallback? onDismiss;
   final VoidCallback? onTap;
 
@@ -42,7 +44,7 @@ class _VoiceRoomMentionNoticeBannerState extends State<VoiceRoomMentionNoticeBan
   @override
   Widget build(BuildContext context) {
     final glow = 0.35 + _pulse.value * 0.25;
-    return Material(
+    final card = Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: widget.onTap,
@@ -106,6 +108,15 @@ class _VoiceRoomMentionNoticeBannerState extends State<VoiceRoomMentionNoticeBan
         ),
         ),
       ),
+    );
+
+    if (widget.onDismiss == null) return card;
+
+    return Dismissible(
+      key: ValueKey(widget.dismissKey ?? widget.fromName),
+      direction: DismissDirection.horizontal,
+      onDismissed: (_) => widget.onDismiss?.call(),
+      child: card,
     );
   }
 }
