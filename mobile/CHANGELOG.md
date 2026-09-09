@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.437+475 (2026-09-09) — Sesli oda Faz 11
+
+### Sıralama proxy (SSE keşfet)
+- `resolveLiveOnlineCount` + `buildVoiceRoomRanking` — SSE sayaçları skor ve listede öncelikli
+- Discover SSE patch (PK/müzik/kapalı) → 2 sn debounce sıralama yenileme
+
+### Önizleme
+- Önizleme sheet: `voiceRoomsListNotifier` ile canlı PK/müzik chip’leri
+
+### Temizlik
+- Kullanılmayan `socket_io_client` bağımlılığı kaldırıldı
+
 ## 1.0.436+474 (2026-09-09) — Sesli oda Faz 10
 
 ### Keşfet SSE → hub senkronu

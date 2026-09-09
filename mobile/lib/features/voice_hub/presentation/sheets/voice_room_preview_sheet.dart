@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../live/domain/entities/voice_room_entity.dart';
+import '../../../live/presentation/providers/voice_rooms_list_notifier.dart';
 import '../providers/voice_room_ranking_provider.dart';
 import '../providers/voice_room_preview_goal_provider.dart';
 import '../providers/voice_room_preview_pk_provider.dart';
@@ -36,6 +37,17 @@ class _VoiceRoomPreviewSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final liveRoom = ref.watch(
+      voiceRoomsListNotifierProvider.select((async) {
+        final rooms = async.valueOrNull;
+        if (rooms == null) return room;
+        final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+        for (final r in rooms) {
+          if (r.apiRoomKey == key || r.id == key) return r;
+        }
+        return room;
+      }),
+    );
     final ranking = ref.watch(voiceRoomRankingProvider);
     final hourly = ref
         .read(voiceRoomRankingProvider.notifier)
@@ -48,7 +60,7 @@ class _VoiceRoomPreviewSheet extends ConsumerWidget {
     final activeGoal = goalAsync.valueOrNull;
     final activePk = pkAsync.valueOrNull;
     final onlineCount = ref.watch(
-      voiceRoomsPresenceProvider.select((p) => p.countFor(room)),
+      voiceRoomsPresenceProvider.select((p) => p.countFor(liveRoom)),
     );
     final bottom = MediaQuery.paddingOf(context).bottom;
     final owner = room.ownerName?.trim().isNotEmpty == true
@@ -129,7 +141,7 @@ class _VoiceRoomPreviewSheet extends ConsumerWidget {
                 '$onlineCount çevrimiçi',
                 const Color(0xFF5B8CFF),
               ),
-              if (room.isPkLive)
+              if (liveRoom.isPkLive)
                 _chip(Icons.flash_on_rounded, 'PK canlı', const Color(0xFFB832FF)),
               if (activePk != null && activePk.isActive)
                 _chip(
@@ -139,9 +151,9 @@ class _VoiceRoomPreviewSheet extends ConsumerWidget {
                 ),
               if (activePk != null && activePk.isPending)
                 _chip(Icons.hourglass_top_rounded, 'PK daveti', const Color(0xFFFFB300)),
-              if (room.hasMusicActivity)
+              if (liveRoom.hasMusicActivity)
                 _chip(Icons.music_note_rounded, 'Müzik', const Color(0xFFFF2D7A)),
-              if (room.isVip == true)
+              if (liveRoom.isVip == true)
                 _chip(Icons.diamond_rounded, 'VIP', const Color(0xFFFFD54F)),
               if (hourly != null && hourly <= 100)
                 _chip(Icons.emoji_events_rounded, 'Saatlik #$hourly', const Color(0xFFFFB300)),

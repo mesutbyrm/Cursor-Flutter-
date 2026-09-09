@@ -7,6 +7,7 @@ import '../../../../core/network/token_storage.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/voice_rooms_list_notifier.dart';
 import '../../domain/entities/chat_room_sse_event.dart';
+import 'voice_room_ranking_provider.dart';
 
 /// Keşfet listesinde anlık çevrimiçi sayıları — merkezi SSE hub (oda başına tek bağlantı).
 class VoiceRoomsPresenceState {
@@ -47,10 +48,14 @@ class VoiceRoomsPresenceNotifier extends Notifier<VoiceRoomsPresenceState> {
 
   final Map<String, StreamSubscription<ChatRoomSseEvent>> _subs = {};
   var _syncGeneration = 0;
+  Timer? _rankingRefreshDebounce;
 
   @override
   VoiceRoomsPresenceState build() {
-    ref.onDispose(_disposeAll);
+    ref.onDispose(() {
+      _rankingRefreshDebounce?.cancel();
+      _disposeAll();
+    });
     return const VoiceRoomsPresenceState();
   }
 
@@ -193,14 +198,24 @@ class VoiceRoomsPresenceNotifier extends Notifier<VoiceRoomsPresenceState> {
       ),
     );
     patchRoomCount(roomId, 0);
+    _scheduleRankingRefreshFromDiscover();
   }
 
   void _patchPkLiveOnDiscover(String roomId, {required bool active}) {
     _patchHubListFields(roomId, (r) => r.copyWith(isPkLive: active));
+    _scheduleRankingRefreshFromDiscover();
   }
 
   void _patchMusicOnDiscover(String roomId, {required bool active}) {
     _patchHubListFields(roomId, (r) => r.copyWith(isMusicPlaying: active));
+    _scheduleRankingRefreshFromDiscover();
+  }
+
+  void _scheduleRankingRefreshFromDiscover() {
+    _rankingRefreshDebounce?.cancel();
+    _rankingRefreshDebounce = Timer(const Duration(seconds: 2), () {
+      unawaited(ref.read(voiceRoomRankingProvider.notifier).refresh());
+    });
   }
 
   ({String roomId, int onlineUsers})? _presenceFromEvent(
@@ -239,6 +254,7 @@ class VoiceRoomsPresenceNotifier extends Notifier<VoiceRoomsPresenceState> {
     counts[roomId] = count;
     state = state.copyWith(counts: counts);
     _patchHubListOnlineCount(roomId, count);
+    _scheduleRankingRefreshFromDiscover();
   }
 
   void _disconnectRoom(String roomId, {bool releaseHub = true}) {

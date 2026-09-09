@@ -21,6 +21,35 @@ void main() {
     expect(ranked.first.score, greaterThan(ranked.last.score));
   });
 
+  test('resolveLiveOnlineCount prefers SSE discover counts', () {
+    const room = VoiceRoomEntity(
+      id: 'room-a',
+      slug: 'room-a',
+      nameTr: 'A',
+      onlineCount: 3,
+    );
+    expect(
+      resolveLiveOnlineCount(room, {'room-a': 42}),
+      42,
+    );
+    expect(resolveLiveOnlineCount(room, const {}), 3);
+  });
+
+  test('buildVoiceRoomRanking uses live presence for score and display', () {
+    const room = VoiceRoomEntity(
+      id: 'room-live',
+      slug: 'room-live',
+      nameTr: 'Live',
+      onlineCount: 2,
+    );
+    final ranked = buildVoiceRoomRanking(
+      [room],
+      livePresenceCounts: {'room-live': 25},
+    );
+    expect(ranked.single.room.displayOnline, 25);
+    expect(ranked.single.score, voiceRoomRankingScore(room, liveOnline: 25));
+  });
+
   test('voiceRoomRankingScore adds PK and music bonus', () {
     const base = VoiceRoomEntity(
       id: 'a',

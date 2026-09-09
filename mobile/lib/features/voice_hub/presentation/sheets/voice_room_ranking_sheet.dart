@@ -97,7 +97,7 @@ class _VoiceRoomRankingSheetState extends ConsumerState<_VoiceRoomRankingSheet>
           Padding(
             padding: EdgeInsets.fromLTRB(16, 0, 16, bottom + 12),
             child: Text(
-              'Skor proxy: çevrimiçi + PK + müzik. Üretim API ile güncellenecek.',
+              'Skor proxy: çevrimiçi (SSE keşfet) + PK + müzik. Üretim ROOM_RANK API ile güncellenecek.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white.withValues(alpha: 0.45), fontSize: 10),
             ),

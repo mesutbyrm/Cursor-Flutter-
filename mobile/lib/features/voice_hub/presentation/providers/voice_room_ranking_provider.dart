@@ -6,6 +6,7 @@ import '../../../gifts/presentation/sync/gift_hourly_reset.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import 'voice_room_rank_celebration_provider.dart';
+import 'voice_rooms_presence_provider.dart';
 
 /// Saatlik / günlük oda sıralama penceresi.
 enum VoiceRoomRankingPeriod { hourly, daily }
@@ -23,10 +24,25 @@ class VoiceRoomRankEntry {
   final int score;
 }
 
+/// SSE keşfet sayacı varsa öncelikli çevrimiçi sayı.
+int resolveLiveOnlineCount(
+  VoiceRoomEntity room,
+  Map<String, int> livePresenceCounts,
+) {
+  final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+  final live = livePresenceCounts[key] ?? livePresenceCounts[room.id];
+  if (live != null && live >= 0) return live;
+  return room.displayOnline;
+}
+
 /// Üretim `ROOM_RANK` API gelene kadar: canlı oda listesinden skor proxy.
 /// Skor: çevrimiçi × 10 + PK + müzik + VIP bonus (manipülasyon önleme: sunucu skoru yok).
-int voiceRoomRankingScore(VoiceRoomEntity room) {
-  var score = room.displayOnline * 10;
+int voiceRoomRankingScore(
+  VoiceRoomEntity room, {
+  int? liveOnline,
+}) {
+  final online = liveOnline ?? room.displayOnline;
+  var score = online * 10;
   if (room.isPkLive) score += 50;
   if (room.hasMusicActivity) score += 20;
   if (room.isVip == true) score += 5;
@@ -36,16 +52,21 @@ int voiceRoomRankingScore(VoiceRoomEntity room) {
 List<VoiceRoomRankEntry> buildVoiceRoomRanking(
   List<VoiceRoomEntity> rooms, {
   int limit = 100,
+  Map<String, int> livePresenceCounts = const {},
 }) {
   final scored = rooms
       .where((r) => r.apiRoomKey.isNotEmpty)
-      .map(
-        (r) => VoiceRoomRankEntry(
+      .map((r) {
+        final online = resolveLiveOnlineCount(r, livePresenceCounts);
+        final roomForRank = online != r.displayOnline
+            ? r.copyWith(onlineCount: online, userCount: online)
+            : r;
+        return VoiceRoomRankEntry(
           rank: 0,
-          room: r,
-          score: voiceRoomRankingScore(r),
-        ),
-      )
+          room: roomForRank,
+          score: voiceRoomRankingScore(roomForRank, liveOnline: online),
+        );
+      })
       .toList()
     ..sort((a, b) => b.score.compareTo(a.score));
   final out = <VoiceRoomRankEntry>[];
@@ -117,7 +138,12 @@ class VoiceRoomRankingNotifier extends Notifier<VoiceRoomRankingState> {
   Future<void> refresh({VoiceRoomRankingPeriod? period}) async {
     try {
       final rooms = await ref.read(voiceRoomsProvider.future);
-      final list = buildVoiceRoomRanking(rooms, limit: 100);
+      final liveCounts = ref.read(voiceRoomsPresenceProvider).counts;
+      final list = buildVoiceRoomRanking(
+        rooms,
+        limit: 100,
+        livePresenceCounts: liveCounts,
+      );
       final now = DateTime.now();
       if (period == VoiceRoomRankingPeriod.hourly) {
         state = state.copyWith(hourly: list, lastUpdated: now);
