@@ -12,8 +12,6 @@ import '../../../../../core/config/env.dart';
 import '../../../../../core/navigation/wallet_navigation.dart';
 import '../../../../../core/network/api_exception.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
-import '../../../../gifts/domain/gift_revenue_display.dart';
-import '../../../../gifts/presentation/providers/gift_providers.dart';
 import '../../../../gifts/presentation/sync/gift_sync_log.dart';
 import '../../../../gifts/domain/gift_rarity.dart';
 import '../../../../gifts/domain/premium_gift_catalog_2026.dart';
@@ -21,12 +19,10 @@ import '../../../../gifts/presentation/widgets/lucky_gift_badge.dart';
 import '../../../../gifts/presentation/widgets/lucky_gift_spin_overlay.dart';
 import '../../../../gifts/presentation/widgets/premium_2026/premium_gift_icon.dart';
 import '../../../../live/domain/entities/live_gift_catalog.dart';
-import '../../../../live/domain/entities/live_gift_event.dart';
 import '../../../../live/domain/entities/live_gift_type.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../domain/entities/chat_room_presence.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
-import '../../providers/chat_room_providers.dart';
 import '../../providers/pk_battle_remote_provider.dart';
 import '../../providers/staff_entrance_marquee_provider.dart';
 import '../../providers/voice_gift_providers.dart';
@@ -276,9 +272,6 @@ class _VoicePremiumGiftPanel2026State
       final roomKey = widget.room.apiRoomKey.isNotEmpty
           ? widget.room.apiRoomKey
           : widget.room.id;
-      final ownerId = widget.room.ownerId?.trim() ?? '';
-      final receiverIsOwner =
-          ownerId.isNotEmpty && receiver.id.trim() == ownerId;
       // PK aktifse: battleId ile gönder → alıcı katılımcının skoru otomatik artar.
       final activePk = ref.read(pkBattleForRoomProvider(widget.room));
       final pkBattleId =
@@ -323,10 +316,6 @@ class _VoicePremiumGiftPanel2026State
         }
         return;
       }
-      final gross = result.spentAmount ??
-          result.giftEvent?.jetonAmount ??
-          (g.price * _qty);
-      final revenue = result.revenue;
       GiftSyncLog.giftSent(
         roomId: roomKey,
         giftId: g.id,
@@ -345,27 +334,8 @@ class _VoicePremiumGiftPanel2026State
         ref.refreshWalletCache(force: true);
       }
       if (mounted) {
-        final messenger = ScaffoldMessenger.maybeOf(context);
         widget.onClose();
-        scheduleMicrotask(() {
-          widget.onSent();
-          final myId = user?.id.trim() ?? '';
-          final receiverNet = GiftRevenueDisplay.voiceReceiverNet(
-            gross: gross,
-            receiverIsOwner: receiverIsOwner,
-            revenue: revenue,
-          );
-          final giftLabel = PremiumGiftCatalog2026.displayName(
-            g.id,
-            fallback: LiveGiftCatalog.displayName(g),
-          );
-          var msg = '$giftLabel x$_qty gönderildi ($gross jeton)';
-          if (myId.isNotEmpty && myId == receiver.id.trim()) {
-            msg =
-                '$giftLabel aldınız — size $receiverNet jeton kaldı';
-          }
-          messenger?.showSnackBar(SnackBar(content: Text(msg)));
-        });
+        scheduleMicrotask(widget.onSent);
       }
     } catch (e) {
       if (mounted) {

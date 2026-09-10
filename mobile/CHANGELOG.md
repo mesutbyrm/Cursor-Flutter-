@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.466+504 (2026-09-10) — Hediye tek kanal + presence SSE
+
+### Hediye
+- SSE / gönder yanıtı: yalnızca `publishRemote` → `GiftEventListener` + orchestrator (çift koltuk flaşı ve feed paneli kaldırıldı)
+- Koltuk flaşı: realtime stream dinleyicisi kapatıldı; yalnızca orchestrator `enqueue`
+- Sesli oda HUD: sağ üst `GiftFeedPanel` kaldırıldı (`FxRecentGiftsStrip` + banner yeterli)
+- Başarılı hediye SnackBar kaldırıldı (hata mesajları duruyor)
+
+### Presence / admin oda
+- SSE boş presence snapshot önceki listeyi silmez
+- Join sonrası kendinizi presence listesine ekleme SSE merge’de de uygulanır
+
 ## 1.0.465+503 (2026-09-10) — Sesli oda koltuk + hediye realtime
 
 ### Koltuk

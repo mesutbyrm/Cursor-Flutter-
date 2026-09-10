@@ -161,13 +161,6 @@ Future<void> showVoiceRoomGiftPickerLegacy(
                                   if (context.mounted) {
                                     ref.refreshWalletCache(force: true);
                                     Navigator.pop(context);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          '${LiveGiftCatalog.displayName(g)} gönderildi',
-                                        ),
-                                      ),
-                                    );
                                   }
                                 } catch (e) {
                                   if (context.mounted) {

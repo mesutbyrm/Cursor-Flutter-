@@ -178,14 +178,18 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             }
           },
           onPresence: (users) {
-            final merged = _sse._mergePresenceStable(users, source: 'sse');
+            final merged = _sse._ensureSelfInPresenceList(
+              _sse._mergePresenceStable(users, source: 'sse'),
+            );
             _sse._detectMicChanges(merged);
             _sse._syncPresenceJoinAnnouncements(merged);
             final wasSse = state.sseConnected;
+            final listed = _sse._selfListedIn(merged);
             state = state.copyWith(
               presence: merged,
               sseConnected: true,
-              selfInRoom: _sse._selfListedIn(merged),
+              selfInRoom: listed ||
+                  (state.selfInRoom && _sse._presenceJoined && merged.isNotEmpty),
               hubOnlineCount: merged.length,
               clearError: true,
             );

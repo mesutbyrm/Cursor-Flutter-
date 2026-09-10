@@ -230,6 +230,17 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       return previous;
     }
 
+    if (source == 'sse' && incoming.isEmpty && previous.isNotEmpty) {
+      VoiceRoomDebugLog.presenceUpdate(
+        roomId: _roomKey,
+        previousCount: previous.length,
+        incomingCount: 0,
+        mergedCount: previous.length,
+        source: 'sse.keep_empty_snapshot',
+      );
+      return previous;
+    }
+
     final replaced = replacePresenceSnapshot(
       previous: previous,
       incoming: incoming,

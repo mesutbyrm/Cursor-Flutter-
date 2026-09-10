@@ -2,11 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../gifts/presentation/engine/gift_engine_seat_effects_overlay.dart';
-import '../../../../gifts/presentation/engine/gift_feed_panel.dart';
 import '../../../../gifts/presentation/sync/gift_session_controller.dart';
-import '../../utils/voice_room_seat_capacity.dart';
-
-/// Sesli oda HUD katmanı — feed + koltuk efektleri (UI üstünde).
+/// Sesli oda HUD katmanı — koltuk efektleri (UI üstünde).
 class VoiceGiftHudOverlays extends ConsumerWidget {
   const VoiceGiftHudOverlays({
     super.key,
@@ -31,7 +28,6 @@ class VoiceGiftHudOverlays extends ConsumerWidget {
           event: activeAnimation,
           seatCount: seatEffectBound,
         ),
-        GiftFeedPanel(sessionKey: sessionKey),
       ],
     );
   }

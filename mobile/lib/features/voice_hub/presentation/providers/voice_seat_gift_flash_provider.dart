@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../live/domain/entities/live_gift_event.dart';
-import 'voice_gift_providers.dart';
 
 /// Koltuk başına hediye flaşı — provider family anahtarı.
 @immutable
@@ -80,15 +79,10 @@ class VoiceSeatGiftFlashNotifier
   static const ttl = Duration(seconds: 3);
 
   final Map<String, Timer> _timers = {};
-  StreamSubscription<LiveGiftEvent>? _sub;
 
   @override
   List<VoiceSeatGiftFlash> build(String roomKey) {
-    final service = ref.read(voiceRoomGiftRealtimeProvider);
-    _sub?.cancel();
-    _sub = service.events.listen(_onGift);
     ref.onDispose(() {
-      _sub?.cancel();
       for (final t in _timers.values) {
         t.cancel();
       }
@@ -153,6 +147,7 @@ class VoiceSeatGiftFlashNotifier
   }
 
   void enqueue(LiveGiftEvent ev) {
+    if (state.any((f) => f.id.startsWith('${ev.id}:'))) return;
     final keys = <String>{
       if (ev.receiverId != null && ev.receiverId!.trim().isNotEmpty)
         receiverKey(userId: ev.receiverId),
@@ -197,8 +192,6 @@ class VoiceSeatGiftFlashNotifier
 
     state = next;
   }
-
-  void _onGift(LiveGiftEvent ev) => enqueue(ev);
 
   void _remove(String id) {
     _timers.remove(id)?.cancel();
