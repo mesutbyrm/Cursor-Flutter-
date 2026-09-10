@@ -1,5 +1,26 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.460+498 (2026-09-10) — Cihaz hotfix: PK, sesli oda, fal hub, falcı PiP
+
+### Canlı PK
+- Split video yalnızca gerçekten aktif PK + iki yayın kimliği varsa (erken TRTC çöküşü önlenir)
+- `pending` / `created` durumları split ekranı açmaz
+
+### Sesli oda
+- Keşfet çevrimiçi sayısı: SSE izlenen odalarda hayalet “1 kişi” düşürülür
+- Koltuk: SSE gecikmesinde koltuktan düşme azaltıldı
+- Giriş animasyonları: state snapshot sonrası entrance motoru erken devreye girer
+- PK daveti: sahip odalar için ek poll (slug = kullanıcı adı)
+
+### Fal & Tarot
+- Fal türleri grid hero altında hemen yüklenir (boş ekran riski)
+
+### Canlı falcı görüşme
+- Küçük PiP üst bar / kapat ile çakışmayacak şekilde aşağı alındı
+
+### Profil
+- Boş kullanıcı kimliğiyle profil açılışı engellenir; hata ekranında geri aksiyonu
+
 ## 1.0.459+497 (2026-09-10) — Canlı yayın heartbeat, falcı API alanları
 
 ### Canlı yayın

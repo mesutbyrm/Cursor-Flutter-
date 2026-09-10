@@ -111,8 +111,22 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
     PkBattleRemoteDataSource api,
   ) async {
     final owned = ref.read(myOwnedVoiceRoomsProvider);
+    final allRooms = ref.read(voiceRoomsProvider).valueOrNull ?? const [];
+    final ownedKeys = <String>{
+      for (final r in owned)
+        if (r.apiRoomKey.isNotEmpty) r.apiRoomKey else r.id,
+    };
+    final extraOwned = allRooms.where((r) {
+      final key = r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
+      if (key.isEmpty || ownedKeys.contains(key)) return false;
+      return isUserOwnedVoiceRoom(
+        r,
+        userId: userId,
+        username: username,
+      );
+    });
     final seen = <String>{};
-    for (final room in owned) {
+    for (final room in [...owned, ...extraOwned]) {
       final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
       if (key.isEmpty || !seen.add(key)) continue;
       if (key == activeKey) continue;

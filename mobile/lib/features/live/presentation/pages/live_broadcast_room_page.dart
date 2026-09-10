@@ -1907,7 +1907,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   /// PK aktif VEYA misafir modu → ekran üst/alt bölünür (pending davet split açmaz).
   bool _isSplitStage(LiveBroadcastSession s, String pkStatus,
       {bool hasCoGuests = false}) {
-    final pkOn = pkStatus == 'active';
+    final pkOn = isLivePkActiveStatus(pkStatus);
     final guestOn =
         _resolveGuestLayout() != LiveGuestLayout.solo || hasCoGuests;
     return pkOn || guestOn;
@@ -2419,8 +2419,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   Widget _mainVideo(LiveBroadcastSession s) {
     final streamId = s.streamId?.trim() ?? '';
     if (streamId.isNotEmpty) {
-      final pkStatus = ref.watch(liveVideoPkProvider(streamId)).status;
-      if (pkStatus == 'active') {
+      final pkState = ref.watch(liveVideoPkProvider(streamId));
+      if (isLivePkSplitReady(pkState.battle, pkState.status)) {
         return LivePkSplitVideoLayer(
           streamId: streamId,
           session: s,

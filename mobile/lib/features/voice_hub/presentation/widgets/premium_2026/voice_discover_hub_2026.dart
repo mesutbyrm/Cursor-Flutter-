@@ -134,6 +134,13 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
     _visibleRooms = ListPerf.defaultPageSize.clamp(0, _filtered.length);
   }
 
+  int _discoverOnlineCount(VoiceRoomEntity room, Map<String, int> liveCounts) {
+    final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+    final live = liveCounts[key] ?? liveCounts[room.id];
+    if (live != null) return live;
+    return room.displayOnline;
+  }
+
   List<VoiceRoomEntity> get _filtered {
     final q = _searchCtrl.text.trim().toLowerCase();
     if (_cachedFiltered != null &&
@@ -168,7 +175,9 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
         final t = '${r.nameTr} ${r.descTr ?? ''}'.toLowerCase();
         return t.contains('müzik') || t.contains('music');
       }).toList(),
-      'live' => list.where((r) => r.displayOnline > 0).toList(),
+      'live' => list
+          .where((r) => _discoverOnlineCount(r, liveCounts) > 0)
+          .toList(),
       _ => list,
     };
     _cachedRoomsRef = widget.rooms;
@@ -290,7 +299,16 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
           child: _LiveStoriesRow(
             live: live,
             hotRooms: popular
-                .where((r) => r.displayOnline > 0 || r.isPkLive || r.hasMusicActivity)
+                .where(
+                  (r) =>
+                      _discoverOnlineCount(
+                            r,
+                            ref.read(voiceRoomsPresenceProvider).counts,
+                          ) >
+                          0 ||
+                      r.isPkLive ||
+                      r.hasMusicActivity,
+                )
                 .take(4)
                 .toList(growable: false),
             height: metrics.storiesHeight,

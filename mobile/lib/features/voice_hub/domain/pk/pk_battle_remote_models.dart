@@ -70,7 +70,7 @@ class PkBattleRemote extends Equatable {
   }
 
   bool get isPending => isPkInvitePendingStatus(status);
-  bool get isActive => status == 'active';
+  bool get isActive => isLivePkActiveStatus(status);
   bool get isEnded =>
       status == 'ended' ||
       status == 'rejected' ||

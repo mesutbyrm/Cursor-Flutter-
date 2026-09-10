@@ -976,7 +976,18 @@ class _UserProfileSheet extends StatelessWidget {
                     color: AppThemeColors.coinGold,
                   ),
                 IconButton(
-                  onPressed: () => context.push('/user/${user.id}'),
+                  onPressed: () {
+                    final id = user.id.trim();
+                    if (id.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Bu kullanıcı için profil açılamıyor'),
+                        ),
+                      );
+                      return;
+                    }
+                    context.push('/user/$id');
+                  },
                   icon: const Icon(Icons.person_outline_rounded),
                   tooltip: 'Profil',
                 ),

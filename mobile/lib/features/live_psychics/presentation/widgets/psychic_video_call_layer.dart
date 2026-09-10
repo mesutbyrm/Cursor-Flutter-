@@ -80,7 +80,7 @@ class PsychicVideoCallLayer extends StatelessWidget {
             else
               const LiveRoomVideoBackground(),
             Positioned(
-              top: 12,
+              top: MediaQuery.paddingOf(context).top + 72,
               right: 12,
               width: 100,
               height: 140,

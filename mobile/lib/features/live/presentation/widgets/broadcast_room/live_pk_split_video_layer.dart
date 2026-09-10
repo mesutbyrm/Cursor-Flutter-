@@ -9,6 +9,7 @@ import '../../../domain/pk/live_pk_side_resolver.dart';
 import '../../providers/live_pk_ui_providers.dart';
 import '../../providers/live_providers.dart';
 import '../../providers/live_video_pk_provider.dart';
+import '../../../domain/pk/pk_status_helper.dart';
 import '../live_playback_bridge.dart';
 
 /// PK aktifken üst yarım: sol yerel/yayıncı, sağ rakip.
@@ -34,7 +35,7 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final pk = ref.watch(liveVideoPkProvider(streamId));
     final battle = pk.battle;
-    if (battle == null || pk.status != 'active') {
+    if (battle == null || !isLivePkSplitReady(battle, pk.status)) {
       return const ColoredBox(color: Color(0xFF120A1E));
     }
 

@@ -65,6 +65,7 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       ..addAll(participants.map((p) => p.id).where((id) => id.isNotEmpty));
     final mergedPresence =
         _mergePresenceStable(participants, source: 'state_snapshot');
+    _entrancesArmed = true;
     state = state.copyWith(
       presence: mergedPresence,
       seatSlots: snapshot.seats.isNotEmpty ? snapshot.seats : state.seatSlots,
@@ -565,25 +566,7 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     for (final p in presence) {
       final fromSlot = seatByUser[p.id];
       if (fromSlot == null) {
-        if (p.seatIndex != null) {
-          changed = true;
-          next.add(
-            ChatRoomPresence(
-              id: p.id,
-              name: p.name,
-              nickname: p.nickname,
-              image: p.image,
-              chatRole: p.chatRole,
-              roleSymbol: p.roleSymbol,
-              membership: p.membership,
-              seatIndex: null,
-              isSpeaking: false,
-              isMuted: p.isMuted,
-              micOn: false,
-            ),
-          );
-          continue;
-        }
+        // Koltuk haritası gecikirse presence koltuğunu düşürme (SSE yarışı).
         next.add(p);
         continue;
       }

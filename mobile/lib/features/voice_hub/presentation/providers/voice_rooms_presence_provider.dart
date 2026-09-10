@@ -22,9 +22,13 @@ class VoiceRoomsPresenceState {
 
   int countFor(VoiceRoomEntity room) {
     final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
-    return counts[key] ??
-        counts[room.id] ??
-        (room.displayOnline > 0 ? room.displayOnline : 0);
+    final live = counts[key] ?? counts[room.id];
+    if (live != null) return live;
+    // Keşfet: API'deki hayalet "1 kişi" göstermemek için yalnızca izlenen odalar.
+    if (connectedRooms.contains(key) || connectedRooms.contains(room.id)) {
+      return 0;
+    }
+    return room.displayOnline > 0 ? room.displayOnline : 0;
   }
 
   VoiceRoomsPresenceState copyWith({

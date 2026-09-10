@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/auth/bot_account_guard.dart';
 import '../../../../core/auth/bot_account_provider.dart';
+import '../../domain/pk/pk_status_helper.dart';
 import '../../domain/pk/pk_unified_bridge.dart';
 import '../../../voice_hub/domain/pk/pk_battle_remote_models.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
@@ -96,7 +97,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
           unifiedMatchId: remote.effectiveId,
           clearError: true,
         );
-        if (remote.isActive) {
+        if (isLivePkActiveStatus(remote.status)) {
           _startPolling();
         } else {
           _stopPolling();
@@ -119,8 +120,14 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
   void applyRemoteBattle(Map<String, dynamic> battle) {
     final status = battle['status']?.toString() ?? '';
     // Pending davet split ekranı açmaz; yalnızca kabul sonrası aktif senkron.
-    if (status == 'pending' || status == 'invited') {
+    if (isPkInvitePendingStatus(status)) {
       state = state.copyWith(battle: battle, clearError: true);
+      _stopPolling();
+      return;
+    }
+    if (!isLivePkActiveStatus(status)) {
+      state = state.copyWith(battle: battle, clearError: true);
+      _stopPolling();
       return;
     }
     final matchId = battle['id']?.toString() ?? battle['battleId']?.toString();

@@ -122,6 +122,12 @@ class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
               const SliverToBoxAdapter(child: UltraFortuneQuickActions()),
               const SliverToBoxAdapter(child: UltraFortuneHistoryStrip()),
               const SliverToBoxAdapter(child: UltraFortuneHubQuickGrid()),
+              const SliverToBoxAdapter(
+                child: LazyScreenSection(
+                  delay: Duration.zero,
+                  child: UltraFortuneTypesSection(),
+                ),
+              ),
               const SliverToBoxAdapter(child: UltraFortuneDailyMissionsStrip()),
               const SliverToBoxAdapter(child: UltraFortuneReadyReadingsStrip()),
               const SliverToBoxAdapter(
@@ -160,13 +166,7 @@ class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
                   child: UltraFortuneProphecyCard(),
                 ),
               ),
-              const SliverToBoxAdapter(
-                child: LazyScreenSection(
-                  delay: LazyLoadPerf.fortuneTypes,
-                  placeholder: const UltraFortuneSectionPlaceholder(height: 200),
-                  child: UltraFortuneTypesSection(),
-                ),
-              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 8)),
               const SliverToBoxAdapter(
                 child: LazyScreenSection(
                   delay: LazyLoadPerf.fortuneDaily,

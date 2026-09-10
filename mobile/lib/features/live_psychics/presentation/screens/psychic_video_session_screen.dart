@@ -205,7 +205,7 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
               ),
             if (state.rtcReady && session.isClient)
               Positioned(
-                top: MediaQuery.paddingOf(context).top + 56 + 140 - 28,
+                top: MediaQuery.paddingOf(context).top + 72 + 140 - 28,
                 right: 16,
                 child: Material(
                   color: Colors.black54,
