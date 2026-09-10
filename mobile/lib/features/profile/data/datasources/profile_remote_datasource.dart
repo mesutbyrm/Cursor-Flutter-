@@ -725,8 +725,13 @@ class WalletRemoteDataSource {
             'type': body['requestType'] == 'jeton'
                 ? 'jeton_payment_request'
                 : 'cfc_payment_request',
+            'requestType': body['requestType'] ?? body['type'],
             'coins': body['coins'],
+            'amount': body['amount'],
             'method': body['method'],
+            if (body['packageTitle'] != null)
+              'packageTitle': body['packageTitle'],
+            if (body['source'] != null) 'source': body['source'],
             if (body['senderInfo'] != null) 'senderInfo': body['senderInfo'],
           },
         )

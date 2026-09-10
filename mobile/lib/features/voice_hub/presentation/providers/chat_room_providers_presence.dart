@@ -73,16 +73,20 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         ..addAll(nextIds);
       return;
     }
+    final selfId = ref.read(authControllerProvider).valueOrNull?.id?.trim();
     for (final user in merged) {
       if (user.id.isEmpty || previous.contains(user.id)) continue;
+      if (selfId != null && selfId.isNotEmpty && user.id == selfId) continue;
       _announcePresenceJoin(user);
     }
     // Ayrılanlar — poll ile (SSE gelmese de) herkes çıkışı görsün.
-    final departedIds = previous.difference(nextIds);
+    var departedIds = previous.difference(nextIds);
+    if (selfId != null && selfId.isNotEmpty && state.selfInRoom) {
+      departedIds = departedIds.where((id) => id != selfId).toSet();
+    }
     if (departedIds.isNotEmpty) {
-      final self = ref.read(authControllerProvider).valueOrNull?.id;
       for (final id in departedIds) {
-        if (id.isEmpty || id == self) continue;
+        if (id.isEmpty) continue;
         final name = _lastKnownPresenceNames[id];
         if (name != null && name.isNotEmpty) {
           final line = '$name odadan çıkış yaptı.';
@@ -107,6 +111,9 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     _knownPresenceIds
       ..clear()
       ..addAll(nextIds);
+    if (selfId != null && selfId.isNotEmpty && state.selfInRoom) {
+      _knownPresenceIds.add(selfId);
+    }
   }
 
   void _announcePresenceJoin(ChatRoomPresence user) {

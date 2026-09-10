@@ -81,12 +81,53 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
       final meta = await ref.read(liveRemoteProvider).fetchStream(streamId);
       if (meta != null && meta.isLive) {
         setState(() => _resumableSession = saved);
+        if (mounted) await _promptResumeInterruptedBroadcast();
       } else {
         await HostLiveStreamRecovery.clear();
       }
     } finally {
       if (mounted) setState(() => _checkingResume = false);
     }
+  }
+
+  /// Kesintiden sonra (≤5 dk) yayına devam veya yayını kapat.
+  Future<void> _promptResumeInterruptedBroadcast() async {
+    final session = _resumableSession;
+    if (session == null || !mounted) return;
+    final choice = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Yayına devam'),
+        content: Text(
+          'Son yayınınız hâlâ açık görünüyor (${session.title}). '
+          'Kaldığınız yerden devam etmek istiyor musunuz?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Hayır, yayını kapat'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Evet, devam et'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    if (choice == true) {
+      await _resumeSavedStream();
+      return;
+    }
+    final streamId = session.streamId?.trim();
+    if (streamId != null && streamId.isNotEmpty) {
+      try {
+        await ref.read(liveRepositoryProvider).endVideoStream(streamId);
+      } catch (_) {}
+    }
+    await HostLiveStreamRecovery.clear();
+    if (mounted) setState(() => _resumableSession = null);
   }
 
   Future<void> _resumeSavedStream() async {
@@ -194,6 +235,10 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
 
   Future<void> _startLive() async {
     if (_starting) return;
+    if (_resumableSession != null) {
+      await _promptResumeInterruptedBroadcast();
+      if (!mounted || _resumableSession != null) return;
+    }
     if (BotAccountGuard.blockIfBot(
       ref,
       context,

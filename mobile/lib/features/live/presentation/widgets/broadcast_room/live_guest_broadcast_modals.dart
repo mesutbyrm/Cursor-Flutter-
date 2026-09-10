@@ -49,7 +49,8 @@ Future<bool?> showLiveEndConfirmDialog(BuildContext context) {
         style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900),
       ),
       content: const Text(
-        'Canlı yayını bitirmek istediğine emin misin?',
+        'Bu sayfadan çıkarsanız canlı yayınınız sonlanır. '
+        'Yayını bitirmek istiyor musunuz?',
         style: TextStyle(color: Colors.white70),
       ),
       actions: [

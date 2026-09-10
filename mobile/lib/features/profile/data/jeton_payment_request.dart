@@ -32,7 +32,6 @@ Map<String, dynamic> buildCustomJetonPaymentRequest({
     'packageId': pkgId,
     'packageTitle': '$safeCoins $jetonLabel',
     'coins': safeCoins,
-    'amount': safeCoins,
     'priceTry': priceTry,
     if (sender != null && sender.isNotEmpty) 'senderInfo': sender,
     if (receipt != null && receipt.isNotEmpty) ...{
@@ -66,7 +65,6 @@ Map<String, dynamic> buildJetonPaymentRequest({
     'packageId': package.id,
     'packageTitle': package.title,
     'coins': coins,
-    'amount': coins,
     if (package.priceTry != null) 'priceTry': package.priceTry,
     if (senderLabel != null && senderLabel.trim().isNotEmpty)
       'senderInfo': senderLabel.trim(),
@@ -110,7 +108,6 @@ Map<String, dynamic> buildMembershipPaymentRequest({
     'tierId': tierId,
     'membershipTier': tierId,
     'coins': coins,
-    'amount': coins,
     if (package.priceTry != null) 'priceTry': package.priceTry,
     if (senderLabel != null && senderLabel.trim().isNotEmpty)
       'senderInfo': senderLabel.trim(),

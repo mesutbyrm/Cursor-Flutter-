@@ -21,6 +21,7 @@ abstract final class ApiBackendRouter {
   static ApiBackendKind resolve(String path, {String method = 'GET'}) {
     final p = _normalizePath(path);
     if (_isVoiceRoomPkPath(p)) return ApiBackendKind.game;
+    if (_isGamesPkNamespacePath(p)) return ApiBackendKind.game;
     return ApiBackendKind.main;
   }
 
@@ -45,6 +46,13 @@ abstract final class ApiBackendRouter {
       return false;
     }
     return segments[4] == 'pk';
+  }
+
+  /// Games backend PK — `/api/pk/*`, `/api/live/pk/*` (sesli oda PK REST ayrı).
+  static bool _isGamesPkNamespacePath(String path) {
+    if (path.startsWith('/api/pk/') || path == '/api/pk') return true;
+    if (path.startsWith('/api/live/pk')) return true;
+    return false;
   }
 
   static bool get hasGatewayFallback => Env.gatewayApiBaseUrl.trim().isNotEmpty;

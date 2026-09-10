@@ -4,7 +4,7 @@ import 'package:canlifal_social/features/profile/data/jeton_packages_catalog.dar
 import 'package:canlifal_social/features/profile/domain/entities/jeton_package_entity.dart';
 
 void main() {
-  test('buildCustomJetonPaymentRequest sends jeton fields and amount', () {
+  test('buildCustomJetonPaymentRequest sends jeton fields without CFC amount', () {
     final body = buildCustomJetonPaymentRequest(
       coins: 500,
       priceTry: 250,
@@ -14,7 +14,7 @@ void main() {
       packageId: 'p500',
     );
     expect(body['coins'], 500);
-    expect(body['amount'], 500);
+    expect(body.containsKey('amount'), isFalse);
     expect(body['priceTry'], 250);
     expect(body['requestType'], 'jeton');
     expect(body['type'], 'jeton');
@@ -41,7 +41,7 @@ void main() {
     expect(pkg.coins, 500);
   });
 
-  test('buildJetonPaymentRequest includes amount for API compatibility', () {
+  test('buildJetonPaymentRequest omits amount to avoid CFC credit', () {
     final body = buildJetonPaymentRequest(
       package: const JetonPackageEntity(
         id: 'p100',
@@ -52,7 +52,7 @@ void main() {
       method: 'bank_transfer',
       senderLabel: 'Admin',
     );
-    expect(body['amount'], 100);
+    expect(body.containsKey('amount'), isFalse);
     expect(body['coins'], 100);
     expect(body['requestType'], 'jeton');
   });

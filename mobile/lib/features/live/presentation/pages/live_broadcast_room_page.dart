@@ -2857,7 +2857,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       canPop: widget.embeddedInSwipe,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
-        await _exitBroadcast(context, skipHostConfirm: true);
+        await _exitBroadcast(context);
       },
       child: Scaffold(
         backgroundColor: Colors.black,

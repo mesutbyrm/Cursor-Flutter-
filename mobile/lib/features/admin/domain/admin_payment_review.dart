@@ -22,9 +22,29 @@ String resolvePaymentRequestType(Map<String, dynamic> row) {
   final raw = (row['requestType'] ?? row['type'] ?? '').toString().toLowerCase();
   if (raw.contains('jeton')) return 'jeton';
   if (raw.contains('cfc')) return 'cfc';
-  if (row['coins'] != null || row['priceTry'] != null || row['jeton'] != null) {
+
+  final source = row['source']?.toString().toLowerCase() ?? '';
+  if (source.contains('jeton') || source.contains('membership_checkout')) {
     return 'jeton';
   }
+  if (source.contains('cfc')) return 'cfc';
+
+  final title = (row['packageTitle'] ?? row['title'] ?? '').toString().toLowerCase();
+  if (title.contains('jeton')) return 'jeton';
+  if (title.contains('cfc')) return 'cfc';
+
+  final notes = row['notes']?.toString().toLowerCase() ?? '';
+  if (notes.contains('jeton') && !notes.contains('cfc')) return 'jeton';
+  if (notes.contains('cfc') && !notes.contains('jeton')) return 'cfc';
+
+  final hasCoins = row['coins'] != null &&
+      int.tryParse(row['coins'].toString()) != null &&
+      int.parse(row['coins'].toString()) > 0;
+  if (hasCoins || row['jeton'] != null) return 'jeton';
+
+  if (row['amount'] != null && !hasCoins) return 'cfc';
+  if (row['priceTry'] != null && hasCoins) return 'jeton';
+
   return 'cfc';
 }
 
@@ -41,14 +61,19 @@ Future<void> reviewAdminPaymentRequest(
     throw const ApiException('Ödeme talebi kimliği bulunamadı.');
   }
 
-  final isJeton = (requestType ?? '').toLowerCase() == 'jeton';
+  final resolvedType =
+      (requestType ?? '').trim().isEmpty ? 'cfc' : requestType!.toLowerCase();
+  final isJeton = resolvedType == 'jeton';
   final paths = isJeton
-      ? [ApiEndpoints.adminPaymentRequests, ApiEndpoints.adminCfcPaymentPatch]
-      : [ApiEndpoints.adminCfcPaymentPatch, ApiEndpoints.adminPaymentRequests];
+      ? [ApiEndpoints.adminPaymentRequests]
+      : [ApiEndpoints.adminCfcPaymentPatch];
 
   final body = <String, dynamic>{
     'requestId': id,
     'action': action,
+    'requestType': isJeton ? 'jeton' : 'cfc',
+    'type': isJeton ? 'jeton' : 'cfc',
+    'creditType': isJeton ? 'jeton' : 'cfc',
     if (action == 'approve') 'reviewNote': reviewNote?.trim().isNotEmpty == true
         ? reviewNote!.trim()
         : 'Onaylandı',

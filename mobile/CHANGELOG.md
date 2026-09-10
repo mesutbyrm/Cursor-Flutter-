@@ -1,5 +1,26 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.468+506 (2026-09-10) — PK, jeton/CFC onay, oda presence, canlı yayın
+
+### PK
+- Games backend: `/api/pk/*` ve `/api/live/pk` yönlendirme
+- Canlı PK daveti: `POST /api/video-streams/pk` sonrası `POST /api/live/pk` yedek
+
+### Ödeme (admin onay)
+- Jeton talebinde `amount` gönderilmez (yanlış CFC kredisi önlenir)
+- `resolvePaymentRequestType` kaynak/başlık/not ile güçlendirildi
+- Onay PATCH: `requestType` / `creditType` + doğru admin uç (jeton vs CFC ayrı)
+
+### Ana sayfa müzik
+- Kırık global müzik şeridi kaldırıldı (oda içi müzik korunur)
+
+### Sesli oda
+- Kendi kullanıcı için giriş/çıkış duyurusu ve presence flicker azaltma
+
+### Canlı yayın
+- Geri tuşu: yayın bitir onayı (skipHostConfirm kapatıldı)
+- Hazırlık: 5 dk içinde “devam et / yayını kapat” diyalogu
+
 ## 1.0.467+505 (2026-09-10) — Giriş izinleri, müzik ANR, PK, mini player
 
 ### Giriş / izinler

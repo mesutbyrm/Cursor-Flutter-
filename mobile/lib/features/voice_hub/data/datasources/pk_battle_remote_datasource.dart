@@ -451,6 +451,33 @@ class PkBattleRemoteDataSource {
       }
       try {
         final res = await _dio.safePost<dynamic>(
+          ApiEndpoints.livePk,
+          data: {
+            'action': 'create',
+            'roomId': host,
+            'streamId': host,
+            'targetRoomId': target,
+            'targetStreamId': target,
+            'opponentStreamId': target,
+            'durationSeconds': durationSec,
+            'durationSec': durationSec,
+          },
+        );
+        final battle = _parseBattle(res.data);
+        if (battle != null) return battle;
+      } on ApiException catch (e) {
+        PkEventLog.apiFailure(
+          method: 'POST',
+          url: ApiEndpoints.livePk,
+          statusCode: e.statusCode,
+          roomId: host,
+          targetUserId: target,
+          responseBody: e.message,
+        );
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      }
+      try {
+        final res = await _dio.safePost<dynamic>(
           ApiEndpoints.videoStreamPkBattle(host),
           data: body,
         );
