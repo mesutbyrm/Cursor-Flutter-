@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../data/fortune_type_images.dart';
 import '../fortune_type_cover_image.dart';
 
 /// Ultra Premium kartlar için mistik kapak arka planı.
@@ -20,33 +19,17 @@ class UltraFortuneCoverBackdrop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final glow = FortuneTypeImages.glowColor(slug);
+    // StackFit.expand kullanılmaz — üst Stack sınırsız yükseklikte
+    // "infinite height" layout hatasına yol açar (Fal hub boş ekran).
     return IgnorePointer(
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Opacity(
-            opacity: opacity,
-            child: FortuneTypeCoverImage(
-              slug: slug,
-              accent: accent,
-              imageWidth: imageWidth,
-              showOverlay: true,
-            ),
-          ),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  glow.withValues(alpha: 0.12),
-                  Colors.black.withValues(alpha: 0.55),
-                ],
-              ),
-            ),
-          ),
-        ],
+      child: Opacity(
+        opacity: opacity,
+        child: FortuneTypeCoverImage(
+          slug: slug,
+          accent: accent,
+          imageWidth: imageWidth,
+          showOverlay: true,
+        ),
       ),
     );
   }

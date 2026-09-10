@@ -30,47 +30,54 @@ class SocialInstagramAppBar extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.auto_awesome_rounded,
-            size: 22,
-            color: AppThemeColors.accentPurple.withValues(alpha: 0.95),
-          ),
-          const SizedBox(width: 8),
-          ShaderMask(
-            shaderCallback: (b) => tokens.brandGradient.createShader(b),
-            child: Text(
-              'CanlıFal Sosyal',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.5,
-                    color: Colors.white,
+          Expanded(
+            child: Row(
+              children: [
+                Icon(
+                  Icons.auto_awesome_rounded,
+                  size: 22,
+                  color: AppThemeColors.accentPurple.withValues(alpha: 0.95),
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: ShaderMask(
+                    shaderCallback: (b) => tokens.brandGradient.createShader(b),
+                    child: Text(
+                      'CanlıFal Sosyal',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
+                            fontSize: 18,
+                            color: Colors.white,
+                          ),
+                    ),
                   ),
+                ),
+              ],
             ),
           ),
-          const Spacer(),
           PremiumIconButton(
             icon: Icons.search_rounded,
-            size: 40,
+            size: 36,
             onTap: () => context.push('/search'),
           ),
-          const SizedBox(width: 4),
           PremiumIconButton(
             icon: Icons.play_circle_outline,
-            size: 40,
+            size: 36,
             onTap: () => context.push('/shorts'),
           ),
-          const SizedBox(width: 4),
           PremiumIconButton(
             icon: Icons.add_box_outlined,
-            size: 40,
+            size: 36,
             onTap: () => openSocialCreatePost(
               context,
               ref,
               onPublished: onPostPublished,
             ),
           ),
-          const SizedBox(width: 4),
-          const MessagesNotificationsActions(spacing: 4),
+          const MessagesNotificationsActions(spacing: 2),
         ],
       ),
     );

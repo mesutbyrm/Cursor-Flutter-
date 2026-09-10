@@ -3694,17 +3694,79 @@ class VoiceRoomMusicSessionNotifier extends Notifier<VoiceRoomMusicSessionState>
     _ensureBackgroundSync(room);
   }
 
+  String? _musicAlternateKeyFor(VoiceRoomEntity room) {
+    final slug = room.slug.trim();
+    final key = room.liveKey.trim();
+    if (slug.isEmpty || slug == key) return null;
+    return slug;
+  }
+
+  Future<void> _pullDetachedDj(VoiceRoomEntity room) async {
+    final key = room.liveKey.trim();
+    if (key.isEmpty) return;
+    final dj = await ref.read(chatRoomRemoteProvider).fetchDj(
+          key,
+          alternateKey: _musicAlternateKeyFor(room),
+        );
+    if (state.room?.id == room.id && !state.dismissed) {
+      state = state.copyWith(dj: dj);
+    }
+  }
+
+  /// Ana sayfa mini player — tam oda controller başlatmadan oynat/duraklat.
+  Future<void> detachedTogglePlayPause() async {
+    final room = state.room;
+    if (room == null) return;
+    final player = ref.read(voiceRoomDjPlayerProvider);
+    final wasPlaying =
+        player.playback.value.playing || state.dj.playing;
+    if (wasPlaying) {
+      await player.pauseLocal();
+      if (state.canSyncServer) {
+        try {
+          final dj = await ref.read(chatRoomRemoteProvider).updateDj(
+                roomKey: room.liveKey,
+                alternateKey: _musicAlternateKeyFor(room),
+                musicUrl: state.dj.musicUrl,
+                playing: false,
+              );
+          state = state.copyWith(dj: dj);
+          return;
+        } catch (_) {}
+      }
+      state = state.copyWith(dj: state.dj.copyWith(playing: false));
+      return;
+    }
+
+    await player.resumeLocal();
+    if (state.canSyncServer) {
+      try {
+        final np = state.dj.nowPlaying;
+        final dj = await ref.read(chatRoomRemoteProvider).updateDj(
+              roomKey: room.liveKey,
+              alternateKey: _musicAlternateKeyFor(room),
+              musicUrl: state.dj.musicUrl ?? np?.youtubeUrl,
+              videoId: np?.videoIdField ??
+                  ChatRoomDjState.videoIdFromLoose(
+                    np?.youtubeUrl ?? state.dj.musicUrl ?? '',
+                  ),
+              title: np?.title,
+              playing: true,
+            );
+        state = state.copyWith(dj: dj);
+        return;
+      } catch (_) {}
+    }
+    state = state.copyWith(dj: state.dj.copyWith(playing: true));
+  }
+
   void _ensureBackgroundSync(VoiceRoomEntity room) {
     _syncTimer?.cancel();
     _syncTimer = Timer.periodic(const Duration(seconds: 18), (_) async {
       if (_syncing || state.dismissed || state.room?.id != room.id) return;
       _syncing = true;
       try {
-        await ref
-            .read(voiceRoomLiveProvider(room.liveKey).notifier)
-            .refresh(includeDj: true);
-        final live = ref.read(voiceRoomLiveProvider(room.liveKey));
-        state = state.copyWith(dj: live.dj);
+        await _pullDetachedDj(room);
       } catch (_) {} finally {
         _syncing = false;
       }

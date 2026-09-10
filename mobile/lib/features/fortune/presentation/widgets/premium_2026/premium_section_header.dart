@@ -34,16 +34,20 @@ class PremiumSectionHeader extends StatelessWidget {
           child: Icon(icon, size: 14, color: color),
         ),
         const SizedBox(width: 8),
-        ShaderMask(
-          shaderCallback: (bounds) =>
-              tokens.UltraFortuneTokens.goldTypography.createShader(bounds),
-          child: Text(
-            title,
-            style: const TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 14,
-              letterSpacing: 0.8,
-              color: Colors.white,
+        Expanded(
+          child: ShaderMask(
+            shaderCallback: (bounds) =>
+                tokens.UltraFortuneTokens.goldTypography.createShader(bounds),
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 14,
+                letterSpacing: 0.8,
+                color: Colors.white,
+              ),
             ),
           ),
         ),

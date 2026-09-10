@@ -35,7 +35,6 @@ class VoiceRoomGlobalMusicBar extends ConsumerWidget {
     final room = session.room!;
     final liveKey = room.liveKey;
     final ui = ref.watch(voiceRoomUiProvider);
-    final player = ref.read(voiceRoomDjPlayerProvider);
     final sessionNotifier = ref.read(voiceRoomMusicSessionProvider.notifier);
 
     return Material(
@@ -56,22 +55,7 @@ class VoiceRoomGlobalMusicBar extends ConsumerWidget {
             isVideoMode: false,
             musicMuted: !ui.backgroundMusicEnabled,
             canControlMusic: session.canSyncServer,
-            onPlayPause: () async {
-              final wasPlaying = player.playback.value.playing;
-              if (wasPlaying) {
-                await player.pauseLocal();
-              } else {
-                await player.resumeLocal();
-              }
-              if (session.canSyncServer && liveKey.isNotEmpty) {
-                final ctrl = ref.read(voiceRoomLiveProvider(liveKey).notifier);
-                if (wasPlaying) {
-                  await ctrl.pauseMusic();
-                } else {
-                  await ctrl.resumeMusic();
-                }
-              }
-            },
+            onPlayPause: () => sessionNotifier.detachedTogglePlayPause(),
             onStop: () async {
               await sessionNotifier.closePlayer();
             },

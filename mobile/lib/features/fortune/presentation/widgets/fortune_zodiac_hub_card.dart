@@ -98,11 +98,14 @@ class _PromptCard extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(24),
             child: Stack(
+              clipBehavior: Clip.hardEdge,
               children: [
-                UltraFortuneCoverBackdrop(
-                  slug: slug,
-                  accent: accent,
-                  opacity: 0.34,
+                Positioned.fill(
+                  child: UltraFortuneCoverBackdrop(
+                    slug: slug,
+                    accent: accent,
+                    opacity: 0.34,
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(18),
@@ -189,11 +192,14 @@ class _ZodiacCard extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
         child: Stack(
+          clipBehavior: Clip.hardEdge,
           children: [
-            UltraFortuneCoverBackdrop(
-              slug: slug,
-              accent: accent,
-              opacity: 0.3,
+            Positioned.fill(
+              child: UltraFortuneCoverBackdrop(
+                slug: slug,
+                accent: accent,
+                opacity: 0.3,
+              ),
             ),
             Padding(
               padding: const EdgeInsets.all(18),

@@ -31,45 +31,63 @@ class UltraFortuneAppBar extends StatelessWidget {
           ),
           Expanded(
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.auto_awesome_rounded,
-                      size: 14,
-                      color: UltraFortuneTokens.metallicGold.withValues(alpha: 0.9),
-                    ),
-                    const SizedBox(width: 6),
-                    ShaderMask(
-                      shaderCallback: (bounds) =>
-                          UltraFortuneTokens.goldTypography.createShader(bounds),
-                      child: Text('Fal & Tarot', style: titleStyle),
-                    ),
-                    const SizedBox(width: 6),
-                    Icon(
-                      Icons.auto_awesome_rounded,
-                      size: 14,
-                      color: UltraFortuneTokens.metallicGold.withValues(alpha: 0.9),
-                    ),
-                  ],
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.auto_awesome_rounded,
+                        size: 14,
+                        color: UltraFortuneTokens.metallicGold.withValues(alpha: 0.9),
+                      ),
+                      const SizedBox(width: 6),
+                      ShaderMask(
+                        shaderCallback: (bounds) =>
+                            UltraFortuneTokens.goldTypography.createShader(bounds),
+                        child: Text('Fal & Tarot', style: titleStyle),
+                      ),
+                      const SizedBox(width: 6),
+                      Icon(
+                        Icons.auto_awesome_rounded,
+                        size: 14,
+                        color: UltraFortuneTokens.metallicGold.withValues(alpha: 0.9),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'MİSTİK • KEŞFET • AYDINLAN',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 8,
                     fontWeight: FontWeight.w700,
-                    letterSpacing: 1.4,
+                    letterSpacing: 1.2,
                     color: UltraFortuneTokens.softLilac.withValues(alpha: 0.75),
                   ),
                 ),
               ],
             ),
           ),
-          const _FortuneAppBarBadgesGate(),
-          const SizedBox(width: 4),
-          const UltraFortuneWalletChips(),
+          Flexible(
+            fit: FlexFit.loose,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  _FortuneAppBarBadgesGate(),
+                  SizedBox(width: 2),
+                  UltraFortuneWalletChips(),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

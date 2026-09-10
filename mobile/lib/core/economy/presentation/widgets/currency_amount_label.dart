@@ -52,6 +52,9 @@ class CurrencyAmountLabel extends ConsumerWidget {
         Text(
           showName ? '$formatted $label' : formatted,
           style: style,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          softWrap: false,
         ),
       ],
     );

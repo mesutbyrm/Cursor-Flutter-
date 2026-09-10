@@ -38,45 +38,55 @@ class FortuneTypeCoverImage extends StatelessWidget {
     final glow = FortuneTypeImages.glowColor(slug);
 
     return Stack(
-      fit: StackFit.expand,
+      clipBehavior: Clip.hardEdge,
       children: [
         if (hasLocalAsset)
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  glow.withValues(alpha: 0.45),
-                  accent.withValues(alpha: 0.28),
-                  const Color(0xFF0A0118),
-                ],
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    glow.withValues(alpha: 0.45),
+                    accent.withValues(alpha: 0.28),
+                    const Color(0xFF0A0118),
+                  ],
+                ),
               ),
             ),
           )
         else
-          FortuneTypeCoverArt(slug: slug, accent: accent),
+          Positioned.fill(
+            child: FortuneTypeCoverArt(slug: slug, accent: accent),
+          ),
         if (hasLocalAsset)
-          Image.asset(
-            assetPath!,
-            fit: fit,
-            errorBuilder: (_, _, _) => const SizedBox.shrink(),
+          Positioned.fill(
+            child: Image.asset(
+              assetPath!,
+              fit: fit,
+              errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            ),
           )
         else
-          CanlifalNetworkImage(
-            url: url,
-            fit: fit,
-            thumbnailWidth: imageWidth > 1080 ? 1080 : imageWidth,
-            placeholder: FortuneImageShimmer(accent: accent),
-            errorWidget: const SizedBox.shrink(),
+          Positioned.fill(
+            child: CanlifalNetworkImage(
+              url: url,
+              fit: fit,
+              thumbnailWidth: imageWidth > 1080 ? 1080 : imageWidth,
+              placeholder: FortuneImageShimmer(accent: accent),
+              errorWidget: const SizedBox.shrink(),
+            ),
           ),
         if (showOverlay)
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: overlays,
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: overlays,
+                ),
               ),
             ),
           ),

@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/bootstrap/startup_perf.dart';
-import '../../../../core/performance/lazy_screen_section.dart';
 import '../../../../core/push/push_notification_service.dart';
 import '../../../../core/ui/premium_2026/premium_2026.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
@@ -29,7 +28,6 @@ import '../widgets/fortune_zodiac_hub_card.dart';
 import '../widgets/ultra_premium/ultra_fortune_tokens.dart';
 import '../widgets/ultra_premium/ultra_fortune_quick_actions.dart';
 import '../widgets/ultra_premium/ultra_fortune_hub_quick_grid.dart';
-import '../widgets/ultra_premium/ultra_fortune_section_placeholder.dart';
 import '../widgets/ultra_premium/ultra_fortune_types_section.dart';
 import '../../../bana_ozel/presentation/widgets/bana_ozel_hub_section.dart';
 import '../../../shorts/presentation/widgets/shorts_hub_strip.dart';
@@ -126,21 +124,9 @@ class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
               const SliverToBoxAdapter(child: UltraFortuneDailyMissionsStrip()),
               const SliverToBoxAdapter(child: UltraFortuneReadyReadingsStrip()),
               const SliverToBoxAdapter(
-                child: LazyScreenSection(
-                  delay: LazyLoadPerf.fortuneProphecy,
-                  repaintIsolate: false,
-                  placeholder: const UltraFortuneSectionPlaceholder(height: 140),
-                  child: UltraFortuneRecommendationsSection(),
-                ),
+                child: UltraFortuneRecommendationsSection(),
               ),
-              const SliverToBoxAdapter(
-                child: LazyScreenSection(
-                  delay: LazyLoadPerf.fortuneProphecy,
-                  repaintIsolate: false,
-                  placeholder: const UltraFortuneSectionPlaceholder(height: 160),
-                  child: PsychicsHomeSection(),
-                ),
-              ),
+              const SliverToBoxAdapter(child: PsychicsHomeSection()),
               const SliverToBoxAdapter(
                 child: ShortsHubStrip(
                   title: 'Kısa Videolar',
@@ -148,32 +134,11 @@ class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
                   padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
                 ),
               ),
-              const SliverToBoxAdapter(
-                child: LazyScreenSection(
-                  delay: LazyLoadPerf.fortuneProphecy,
-                  repaintIsolate: false,
-                  placeholder: const UltraFortuneSectionPlaceholder(height: 120),
-                  child: BanaOzelHubSection(),
-                ),
-              ),
+              const SliverToBoxAdapter(child: BanaOzelHubSection()),
               const SliverToBoxAdapter(child: FortuneZodiacHubCard()),
-              const SliverToBoxAdapter(
-                child: LazyScreenSection(
-                  delay: LazyLoadPerf.fortuneProphecy,
-                  repaintIsolate: false,
-                  placeholder: const UltraFortuneSectionPlaceholder(height: 100),
-                  child: UltraFortuneProphecyCard(),
-                ),
-              ),
+              const SliverToBoxAdapter(child: UltraFortuneProphecyCard()),
               const SliverToBoxAdapter(child: SizedBox(height: 8)),
-              const SliverToBoxAdapter(
-                child: LazyScreenSection(
-                  delay: LazyLoadPerf.fortuneDaily,
-                  repaintIsolate: false,
-                  placeholder: const UltraFortuneSectionPlaceholder(height: 100),
-                  child: UltraFortuneDailyEnergy(),
-                ),
-              ),
+              const SliverToBoxAdapter(child: UltraFortuneDailyEnergy()),
               const SliverToBoxAdapter(child: UltraFortuneDailyReminderTile()),
               SliverToBoxAdapter(child: SizedBox(height: bottom + 100)),
             ],

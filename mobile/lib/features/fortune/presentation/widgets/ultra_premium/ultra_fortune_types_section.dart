@@ -57,19 +57,23 @@ class _UltraFortuneTypesSectionState extends ConsumerState<UltraFortuneTypesSect
                   icon: Icons.grid_view_rounded,
                 ),
               ),
-              TextButton(
-                onPressed: () => openFortuneTypesCatalog(context),
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: Text(
-                  'Tüm Fal Türleri >',
-                  style: TextStyle(
-                    color: UltraFortuneTokens.softLilac.withValues(alpha: 0.95),
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
+              Flexible(
+                child: TextButton(
+                  onPressed: () => openFortuneTypesCatalog(context),
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    'Tümü >',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: UltraFortuneTokens.softLilac.withValues(alpha: 0.95),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
               ),
@@ -146,11 +150,11 @@ class _UltraFortuneTypesSectionState extends ConsumerState<UltraFortuneTypesSect
                 itemCount: preview.length,
                 itemBuilder: (context, index) {
                   final e = preview[index];
-                  final delay = index * 0.08;
+                  final start = (index * 0.08).clamp(0.0, 0.84);
                   final anim = CurvedAnimation(
                     parent: _stagger,
                     curve: Interval(
-                      delay.clamp(0.0, 0.85),
+                      start,
                       1.0,
                       curve: Curves.easeOutCubic,
                     ),

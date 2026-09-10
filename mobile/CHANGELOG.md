@@ -1,5 +1,22 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.463+501 (2026-09-10) — Fal hub layout, mini müzik sync
+
+### Fal & Tarot hub
+- `UltraFortuneCoverBackdrop` / kapak görselleri: sınırsız yükseklik (`StackFit.expand`) kaldırıldı — boş yıldız alanı ve `ErrorWidget` zinciri giderildi
+- App bar, cüzdan chip, bölüm başlıkları ve durum panellerinde dar ekran taşması düzeltildi
+- Fal türleri başlık satırı: `Flexible` + kısa “Tümü >” linki
+
+### Ana sayfa mini müzik
+- Odadan ayrıldıktan sonra arka plan senkronu artık `voiceRoomLiveProvider.refresh` yerine yalnızca `fetchDj` — ana sekmede oda oturumu açılmıyor
+- Global şerit oynat/duraklat: `detachedTogglePlayPause` (yerel player + isteğe bağlı sunucu)
+
+### Sosyal
+- (1.0.462) Hikaye şeridi kaldırıldı; Paylaş düğmesi tam görünür
+
+### Test
+- `fortune_tarot_hub_smoke_test`, `detached_music_bar_test`, `social_page_composer_test`
+
 ## 1.0.462+500 (2026-09-10) — Fal hub, mini müzik, Sosyal
 
 ### Ana sayfa / sesli mini player

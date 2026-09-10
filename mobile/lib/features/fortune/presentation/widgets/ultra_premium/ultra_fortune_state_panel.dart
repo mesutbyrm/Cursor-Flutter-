@@ -25,9 +25,10 @@ class UltraFortuneStatePanel extends StatelessWidget {
     return UltraFortuneLiquidSurface(
       borderRadius: BorderRadius.circular(18),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-      child: SizedBox(
-        height: height,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minHeight: height ?? 0),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, size: 32, color: Colors.white54),

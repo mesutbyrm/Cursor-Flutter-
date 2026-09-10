@@ -188,12 +188,15 @@ class _SideInfoCard extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(18),
         child: Stack(
+          clipBehavior: Clip.hardEdge,
           children: [
-            UltraFortuneCoverBackdrop(
-              slug: coverSlug,
-              accent: accent,
-              opacity: 0.28,
-              imageWidth: 480,
+            Positioned.fill(
+              child: UltraFortuneCoverBackdrop(
+                slug: coverSlug,
+                accent: accent,
+                opacity: 0.28,
+                imageWidth: 480,
+              ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),

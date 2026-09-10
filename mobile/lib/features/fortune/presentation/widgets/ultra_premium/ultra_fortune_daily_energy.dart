@@ -240,11 +240,14 @@ class _EnergyCrystalCard extends StatelessWidget {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(22),
           child: Stack(
+            clipBehavior: Clip.hardEdge,
             children: [
-              UltraFortuneCoverBackdrop(
-                slug: item.coverSlug,
-                accent: accent,
-                opacity: 0.34,
+              Positioned.fill(
+                child: UltraFortuneCoverBackdrop(
+                  slug: item.coverSlug,
+                  accent: accent,
+                  opacity: 0.34,
+                ),
               ),
               Padding(
                 padding: const EdgeInsets.all(14),

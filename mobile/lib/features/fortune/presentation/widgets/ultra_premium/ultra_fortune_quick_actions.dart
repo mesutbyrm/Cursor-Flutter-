@@ -89,12 +89,15 @@ class _QuickActionTile extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(18),
         child: Stack(
+          clipBehavior: Clip.hardEdge,
           children: [
-            UltraFortuneCoverBackdrop(
-              slug: item.coverSlug,
-              accent: accent,
-              opacity: 0.3,
-              imageWidth: 400,
+            Positioned.fill(
+              child: UltraFortuneCoverBackdrop(
+                slug: item.coverSlug,
+                accent: accent,
+                opacity: 0.3,
+                imageWidth: 400,
+              ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),

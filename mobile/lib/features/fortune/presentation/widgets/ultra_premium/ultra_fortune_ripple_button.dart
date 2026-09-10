@@ -85,7 +85,9 @@ class _UltraFortuneRippleButtonState extends State<UltraFortuneRippleButton>
                       ),
                     ),
                   ),
-                Row(
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -112,6 +114,7 @@ class _UltraFortuneRippleButtonState extends State<UltraFortuneRippleButton>
                       size: compact ? 16 : 20,
                     ),
                   ],
+                ),
                 ),
               ],
             ),

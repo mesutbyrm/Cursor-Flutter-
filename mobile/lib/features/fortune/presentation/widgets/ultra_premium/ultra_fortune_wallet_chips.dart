@@ -4,8 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../../core/economy/presentation/widgets/currency_amount_label.dart';
 import 'ultra_fortune_liquid_surface.dart';
-import 'ultra_fortune_state_panel.dart';
-
 /// Üst bar jeton / CFC chip'leri.
 class UltraFortuneWalletChips extends ConsumerWidget {
   const UltraFortuneWalletChips({super.key});
@@ -26,35 +24,40 @@ class UltraFortuneWalletChips extends ConsumerWidget {
           ),
         ),
       ),
-      error: (_, __) => UltraFortuneStatePanel(
-        icon: Icons.account_balance_wallet_outlined,
-        message: 'Cüzdan yüklenemedi',
-        actionLabel: 'Yenile',
-        onAction: () => ref.invalidate(economyWalletProvider),
-        height: 56,
+      error: (_, __) => IconButton(
+        tooltip: 'Cüzdan yüklenemedi — yenile',
+        onPressed: () => ref.invalidate(economyWalletProvider),
+        icon: const Icon(Icons.refresh_rounded, size: 20, color: Colors.white70),
+        visualDensity: VisualDensity.compact,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
       ),
       data: (snap) {
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _Chip(
-              child: CurrencyAmountLabel(
-                amount: snap.cfc,
-                currencyKey: 'cfc',
-                compact: true,
-                showName: false,
+        return FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerRight,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _Chip(
+                child: CurrencyAmountLabel(
+                  amount: snap.cfc,
+                  currencyKey: 'cfc',
+                  compact: true,
+                  showName: false,
+                ),
               ),
-            ),
-            const SizedBox(width: 4),
-            _Chip(
-              child: CurrencyAmountLabel(
-                amount: snap.jeton,
-                currencyKey: 'jeton',
-                compact: true,
-                showName: false,
+              const SizedBox(width: 4),
+              _Chip(
+                child: CurrencyAmountLabel(
+                  amount: snap.jeton,
+                  currencyKey: 'jeton',
+                  compact: true,
+                  showName: false,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );

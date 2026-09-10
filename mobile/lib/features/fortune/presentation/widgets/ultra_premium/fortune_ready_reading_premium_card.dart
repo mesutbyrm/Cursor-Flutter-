@@ -59,12 +59,15 @@ class _FortuneReadyReadingPremiumCardState
           child: ClipRRect(
             borderRadius: BorderRadius.circular(22),
             child: Stack(
+              clipBehavior: Clip.hardEdge,
               children: [
-                UltraFortuneCoverBackdrop(
-                  slug: widget.slug,
-                  accent: widget.accent,
-                  opacity: 0.32,
-                  imageWidth: 720,
+                Positioned.fill(
+                  child: UltraFortuneCoverBackdrop(
+                    slug: widget.slug,
+                    accent: widget.accent,
+                    opacity: 0.32,
+                    imageWidth: 720,
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(14),

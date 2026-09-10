@@ -137,7 +137,8 @@ class _VoiceRoomWebMusicBarState extends ConsumerState<VoiceRoomWebMusicBar> {
       );
     }
 
-    final player = ref.watch(voiceRoomDjPlayerProvider);
+    // Global mini player: watch provider rebuild döngüsüne girmesin.
+    final player = ref.read(voiceRoomDjPlayerProvider);
     final playback = player.playback;
     final diagnostics = player.diagnostics;
 
