@@ -456,6 +456,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       unawaited(_broadcastStaffEntryIfNeeded());
       unawaited(_fetchAndApplySeats());
       _autoSeatAttempted = false;
+      unawaited(_tryAutoPrivilegedSeat());
       schedulePrivilegedSeatAttempts();
   }
 

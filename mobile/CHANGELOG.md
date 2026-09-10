@@ -1,5 +1,26 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.467+505 (2026-09-10) — Giriş izinleri, müzik ANR, PK, mini player
+
+### Giriş / izinler
+- TRTC ön-ısıtma: girişten sonra mikrofon/kamera izni ve SDK başlatma kaldırıldı (Android activity restart → tekrar giriş)
+- Push/OneSignal: otomatik bildirim izni girişte istenmez (banner/ayarlar)
+
+### Müzik
+- !istek / sorgu: kuyrukta beklerken yerel oynatıcı/WebView yeniden başlatılmaz (ANR azaltma)
+- Oynatma gecikmesi 520 ms; ana sayfa mini player yalnızca `visible` detached oturumda
+- Oturum açılışında müzik session sıfırlanır
+
+### Site animasyon
+- Giriş kartında admin seed `description` metni yerine kullanıcı adı / `name` gösterilir
+
+### PK (sesli oda)
+- Davet gövdesi kılavuz §9.3: `guestUserId` + `durationSec` öncelikli
+- Rakip `ownerId` için `GET …/state` + presence yedek; eksikse anlamlı hata
+
+### Koltuk
+- Presence join sonrası anında `_tryAutoPrivilegedSeat` + zamanlanmış denemeler
+
 ## 1.0.466+504 (2026-09-10) — Hediye tek kanal + presence SSE
 
 ### Hediye

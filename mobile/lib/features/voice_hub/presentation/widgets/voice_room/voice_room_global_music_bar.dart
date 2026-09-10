@@ -29,7 +29,10 @@ class VoiceRoomGlobalMusicBar extends ConsumerWidget {
       return const SizedBox.shrink();
     }
     final session = ref.watch(voiceRoomMusicSessionProvider);
-    if (session.room == null || !session.hasActiveMusic) {
+    if (session.room == null ||
+        !session.visible ||
+        session.dismissed ||
+        !session.hasActiveMusic) {
       return const SizedBox.shrink();
     }
     final room = session.room!;

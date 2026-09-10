@@ -235,39 +235,38 @@ class PkBattleRemoteDataSource {
     }
     final duration = durationSeconds.clamp(60, 3600);
     final guest = guestUserId.trim();
+    if (guest.isEmpty) {
+      throw const ApiException(
+        'PK daveti için rakip oda sahibi (guestUserId) gerekli',
+      );
+    }
 
+    // Kılavuz §9.3 birincil gövde — games backend yedek alanları sonra.
     final guideBody = {
-      if (guest.isNotEmpty) 'guestUserId': guest,
-      if (guest.isNotEmpty) 'targetUserId': guest,
-      if (guest.isNotEmpty) 'opponentUserId': guest,
+      'guestUserId': guest,
       'durationSec': duration,
-      if (oppRoom.isNotEmpty) 'targetRoomId': oppRoom,
     };
 
     final unifiedBody = {
       'action': 'create',
+      'guestUserId': guest,
+      'durationSec': duration,
       'opponentRoomId': oppRoom,
       'targetRoomId': oppRoom,
       'opponentVoiceRoomId': oppRoom,
       'durationSeconds': duration,
       'duration': duration,
-      'durationSec': duration,
-      if (guest.isNotEmpty) 'guestUserId': guest,
-      if (guest.isNotEmpty) 'targetUserId': guest,
-      if (guest.isNotEmpty) 'opponentId': guest,
-      if (guest.isNotEmpty) 'opponentUserId': guest,
     };
 
-    final bodies = <Map<String, dynamic>>[];
-    if (guest.isNotEmpty) bodies.add(guideBody);
-    bodies.add(unifiedBody);
-    if (guest.isNotEmpty) {
-      bodies.add({
+    final bodies = <Map<String, dynamic>>[
+      guideBody,
+      unifiedBody,
+      {
         'guestUserId': guest,
         'durationSec': duration,
         'targetRoomId': oppRoom,
-      });
-    }
+      },
+    ];
 
     ApiException? lastError;
     for (final body in bodies) {

@@ -3235,22 +3235,30 @@ class VoiceRoomLiveController
         queuePosition: result.queuePosition,
         fallback: state.dj.nowPlaying,
       );
-      final shouldPlay = result.playing ||
-          result.queuePosition == 1 ||
-          (queue.isNotEmpty && nowPlaying != null);
-      var dj = state.dj.copyWith(
-        musicQueue: queue,
-        nowPlaying: nowPlaying,
-        playing: shouldPlay,
-        musicUrl: result.musicUrl ?? nowPlaying?.youtubeUrl,
-        clearMusicUrl:
-            result.musicUrl == null && nowPlaying?.id != state.dj.nowPlaying?.id,
-      );
-      dj = _djWithQueuePlaybackFallback(dj);
+      final queuePosition = result.queuePosition ?? 0;
+      final currentlyPlaying = _isLocalMusicOutputActive();
+      final isQueuedOnly = currentlyPlaying || queuePosition > 1;
+      final shouldPlay = !isQueuedOnly &&
+          (result.playing ||
+              queuePosition <= 1 ||
+              (queue.isNotEmpty && nowPlaying != null));
+      var dj = isQueuedOnly
+          ? state.dj.copyWith(musicQueue: queue)
+          : state.dj.copyWith(
+              musicQueue: queue,
+              nowPlaying: nowPlaying,
+              playing: shouldPlay,
+              musicUrl: result.musicUrl ?? nowPlaying?.youtubeUrl,
+              clearMusicUrl: result.musicUrl == null &&
+                  nowPlaying?.id != state.dj.nowPlaying?.id,
+            );
+      if (!isQueuedOnly) {
+        dj = _djWithQueuePlaybackFallback(dj);
+      }
       state = state.copyWith(clearError: true);
       _applyMusicRequestUi(
         dj: dj,
-        shouldPlay: shouldPlay,
+        shouldPlay: shouldPlay && !isQueuedOnly,
         withVideo: nowPlaying?.isVideoRequest == true,
       );
       pulseMusicRequestFlash('«$q» isteği gönderildi');
@@ -3666,6 +3674,14 @@ class VoiceRoomMusicSessionNotifier extends Notifier<VoiceRoomMusicSessionState>
   }
 
   /// Odaya giriş — farklı odadaysa önceki müziği durdur.
+  /// Yeni oturum / hesap değişimi — ana sayfada hatalı mini player açılmasın.
+  void resetForLogin() {
+    _syncTimer?.cancel();
+    _syncTimer = null;
+    _closeDetachedKeepAlive();
+    state = const VoiceRoomMusicSessionState();
+  }
+
   void prepareForRoomEntry(VoiceRoomEntity room) {
     final prev = state.room;
     if (prev != null &&

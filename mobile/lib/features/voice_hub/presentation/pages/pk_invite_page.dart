@@ -124,20 +124,35 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
       }
       // Yeni kontrat: davet bir odaya gider — rakip oda kimliği yeterli.
       var guestUserId = resolvePkGuestUserId(ownerId: opponent.ownerId);
+      final oppAlt =
+          opponent.slug != oppKey ? opponent.slug : null;
+      if (guestUserId == null || guestUserId.isEmpty) {
+        try {
+          final snap = await ref.read(chatRoomRemoteProvider).fetchRoomState(
+                oppKey,
+                alternateKey: oppAlt,
+              );
+          guestUserId = resolvePkGuestUserId(ownerId: snap.ownerId);
+        } catch (_) {}
+      }
       if (guestUserId == null || guestUserId.isEmpty) {
         try {
           final presence = await ref.read(chatRoomRemoteProvider).fetchPresence(
                 oppKey,
-                alternateKey:
-                    opponent.slug != oppKey ? opponent.slug : null,
+                alternateKey: oppAlt,
               );
           guestUserId = resolvePkGuestUserId(presence: presence);
         } catch (_) {}
       }
+      if (guestUserId == null || guestUserId.isEmpty) {
+        setState(() => _error =
+            'Rakip odanın sahibi bulunamadı — oda açık ve dolu olmalı.');
+        return;
+      }
       final battle = await remote.inviteRoom(
         roomId: _roomKey,
         alternateRoomId: _altRoomKey,
-        guestUserId: guestUserId ?? '',
+        guestUserId: guestUserId,
         opponentRoomId: oppKey,
         durationSeconds: _durationSeconds,
       );

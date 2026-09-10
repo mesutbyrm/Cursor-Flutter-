@@ -170,7 +170,7 @@ abstract final class SiteAnimationResolver {
       layout: layout,
       asset: asset,
       priorityOverride: adminCustomPriority ?? entry.priority,
-      catalogLabel: entry.description ?? entry.name,
+      catalogLabel: entry.name,
       animationId: entry.id,
       soundUrl: entry.soundUrl ?? base.soundUrl,
       cooldownMs: entry.cooldownMs > 0 ? entry.cooldownMs : base.cooldownMs,

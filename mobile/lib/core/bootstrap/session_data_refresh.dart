@@ -13,6 +13,7 @@ import '../../features/profile/presentation/providers/payment_requests_notifier.
 import '../../features/profile/presentation/providers/profile_hub_providers.dart';
 import '../../features/profile/presentation/providers/profile_providers.dart';
 import '../../features/social/presentation/utils/social_session_cache.dart';
+import '../../features/voice_hub/presentation/providers/chat_room_providers.dart';
 import '../network/dio_provider.dart';
 import '../network/user_presence_service.dart';
 
@@ -25,6 +26,7 @@ void invalidateAuthenticatedShellData(
   Ref ref, {
   bool skipPresenceHeartbeat = false,
 }) {
+  ref.read(voiceRoomMusicSessionProvider.notifier).resetForLogin();
   invalidateDiscoverVoiceRooms(ref);
   invalidateDiscoverLiveStreams(ref);
   ref.invalidate(homeVoiceRoomsProvider);

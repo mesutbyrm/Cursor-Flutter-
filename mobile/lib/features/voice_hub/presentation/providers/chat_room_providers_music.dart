@@ -71,7 +71,7 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
         _commitDjUi(dj);
         if (!shouldPlay) return;
         // Oda UI çizimi bitsin, sonra WebView soğuk başlatma (ANR önleme).
-        await Future<void>.delayed(const Duration(milliseconds: 280));
+        await Future<void>.delayed(const Duration(milliseconds: 520));
         if (!_sessionActive || _roomKey.isEmpty) return;
         unawaited(_startDjPlaybackNonBlocking(dj, preferVideo: withVideo));
       }),

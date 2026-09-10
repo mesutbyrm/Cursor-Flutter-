@@ -253,13 +253,8 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener>
       }
 
       await OneSignalBootstrap.login(user.id);
-      if (OneSignalBootstrap.isReady) {
-        if (!OneSignalBootstrap.permissionGranted) {
-          await OneSignalBootstrap.requestPermission();
-        }
-      } else if (!PushNotificationService.instance.permissionGranted) {
-        await PushNotificationService.instance.requestSystemPermission();
-      }
+      // Bildirim izni girişten hemen sonra istenmez — Android activity restart
+      // + tekrar giriş ekranı. Kullanıcı Ayarlar / bildirim banner ile açar.
 
       await ref
           .read(pushRegistrarProvider)
