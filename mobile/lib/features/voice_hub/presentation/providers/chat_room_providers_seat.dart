@@ -17,6 +17,17 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
       return VoiceRoomSeatPriority.tierFounder;
     }
 
+    if (StaffRoles.isSiteAdminUser(
+          role: user.role,
+          username: user.username,
+        ) ||
+        StaffRoles.isFounderUser(
+          role: user.role,
+          username: user.username,
+        )) {
+      return VoiceRoomSeatPriority.tierAdmin;
+    }
+
     final staff = ref.read(staffAccessProvider);
     if (staff.isFounder || staff.isSiteAdmin) {
       return VoiceRoomSeatPriority.tierAdmin;
@@ -178,6 +189,42 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     if (self?.seatIndex == null) {
       _autoSeatAttempted = false;
     }
+  }
+
+  /// Giriş / yetki gecikmesinde koltuğa oturmayı birkaç kez dene (Clubhouse tarzı).
+  void schedulePrivilegedSeatAttempts() {
+    unawaited(() async {
+      for (var attempt = 0; attempt < 6; attempt++) {
+        if (!state.selfInRoom || _roomKey.isEmpty) return;
+        final user = ref.read(authControllerProvider).valueOrNull;
+        if (user == null) return;
+        if (_isSelfSeated(user.id)) return;
+
+        _autoSeatAttempted = false;
+        await _tryAutoPrivilegedSeat();
+        if (_isSelfSeated(user.id)) return;
+
+        if (attempt == 1 || attempt == 3) {
+          await refreshServerPermissions();
+        }
+        if (attempt == 2 || attempt == 4) {
+          await _fetchAndApplySeats();
+        }
+        await Future<void>.delayed(Duration(milliseconds: 200 + attempt * 180));
+      }
+    }());
+  }
+
+  bool _isSelfSeated(String userId) {
+    for (final p in state.presence) {
+      if (p.id == userId && p.seatIndex != null && p.seatIndex! >= 1) {
+        return true;
+      }
+    }
+    for (final s in state.seatSlots) {
+      if (s.userId == userId) return true;
+    }
+    return false;
   }
 
   Future<String?> requestSpeak() async {

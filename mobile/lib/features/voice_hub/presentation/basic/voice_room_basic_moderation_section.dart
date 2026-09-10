@@ -218,6 +218,34 @@ Future<void> onVoiceRoomBasicSeatTap({
     }
     return;
   }
+  final selfId = ref.read(authControllerProvider).valueOrNull?.id;
+  var selfOnSeat = false;
+  if (selfId != null) {
+    for (final p in live.presence) {
+      if (p.id == selfId && p.seatIndex != null && p.seatIndex! >= 1) {
+        selfOnSeat = true;
+        break;
+      }
+    }
+    if (!selfOnSeat) {
+      for (final s in live.seatSlots) {
+        if (s.userId == selfId) {
+          selfOnSeat = true;
+          break;
+        }
+      }
+    }
+  }
+  if (perms.canAssignSeats && occupant == null && !selfOnSeat) {
+    final err = await ref
+        .read(voiceRoomLiveProvider(liveKey).notifier)
+        .assignSeat(seatIndex: internalSeatIndex);
+    if (!context.mounted) return;
+    if (err != null) {
+      showJetonAwareError(context, err, ref: ref);
+    }
+    return;
+  }
   if (perms.canAssignSeats) {
     await showVoiceRoomBasicAssignSeatSheet(
       context: context,

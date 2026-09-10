@@ -10,7 +10,7 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     await _fetchAndApplyRoomState();
     await _fetchAndApplySeats();
     state = state.copyWith(backendSyncReady: true, loading: false);
-    unawaited(_tryAutoPrivilegedSeat());
+    schedulePrivilegedSeatAttempts();
   }
 
   Future<void> _fetchAndApplyRoomState() async {

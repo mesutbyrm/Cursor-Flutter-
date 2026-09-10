@@ -167,9 +167,17 @@ abstract final class VoiceRoomSeatPriority {
     List<VoiceRoomSeatSlot> seatSlots = const [],
   }) {
     if (room.id.trim().isEmpty && room.slug.trim().isEmpty) return null;
-    final maxSeat = room.seatCount != null && room.seatCount! > 0
-        ? room.seatCount!.clamp(8, 15)
+    var maxSeat = room.seatCount != null && room.seatCount! > 0
+        ? room.seatCount!.clamp(1, 15)
         : 10;
+    if (seatSlots.isNotEmpty) {
+      final slotMax = seatSlots.map((s) => s.index).reduce(
+            (a, b) => a > b ? a : b,
+          );
+      if (slotMax > 0) {
+        maxSeat = slotMax.clamp(1, 15);
+      }
+    }
     final adminSeat = maxSeat > 10 ? 11 : null;
     final occupied = <int, ChatRoomPresence>{
       for (final p in presence)

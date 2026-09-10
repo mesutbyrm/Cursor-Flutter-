@@ -423,7 +423,9 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         'roomId': _roomKey,
       });
       _presenceJoined = true;
-      final merged = _mergePresenceStable(joined, source: 'join');
+      final merged = _ensureSelfInPresenceList(
+        _mergePresenceStable(joined, source: 'join'),
+      );
       state = state.copyWith(
         presence: merged,
         selfInRoom: true,
@@ -443,7 +445,25 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       unawaited(_broadcastStaffEntryIfNeeded());
       unawaited(_fetchAndApplySeats());
       _autoSeatAttempted = false;
-      unawaited(_tryAutoPrivilegedSeat());
+      schedulePrivilegedSeatAttempts();
+  }
+
+  List<ChatRoomPresence> _ensureSelfInPresenceList(
+    List<ChatRoomPresence> merged,
+  ) {
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null) return merged;
+    if (merged.any((p) => p.id == user.id)) return merged;
+    final nick = _effectiveNickname(user) ?? user.displayName ?? user.username;
+    return [
+      ...merged,
+      ChatRoomPresence(
+        id: user.id,
+        name: nick,
+        nickname: nick,
+        chatRole: user.role,
+      ),
+    ];
   }
 
   void _handlePresenceJoinFailure(Object e) {

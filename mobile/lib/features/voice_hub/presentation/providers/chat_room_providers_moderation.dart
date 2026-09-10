@@ -45,19 +45,45 @@ extension VoiceRoomModerationControls on VoiceRoomLiveController {
         return;
       }
       final staff = ref.read(staffAccessProvider);
-      if (_isClientRoomOwner() || staff.isSiteAdmin || staff.isFounder) {
+      final user = ref.read(authControllerProvider).valueOrNull;
+      final staffByProfile = user != null &&
+          (StaffRoles.isSiteAdminUser(
+                role: user.role,
+                username: user.username,
+              ) ||
+              StaffRoles.isFounderUser(
+                role: user.role,
+                username: user.username,
+              ));
+      if (_isClientRoomOwner() ||
+          staff.isSiteAdmin ||
+          staff.isFounder ||
+          staffByProfile) {
         state = state.copyWith(
           serverPermissions: perms ?? _ownerPermissionsFallback(),
         );
         _autoSeatAttempted = false;
-        unawaited(_tryAutoPrivilegedSeat());
+        schedulePrivilegedSeatAttempts();
       }
     } catch (_) {
       final staff = ref.read(staffAccessProvider);
-      if (_isClientRoomOwner() || staff.isSiteAdmin || staff.isFounder) {
+      final user = ref.read(authControllerProvider).valueOrNull;
+      final staffByProfile = user != null &&
+          (StaffRoles.isSiteAdminUser(
+                role: user.role,
+                username: user.username,
+              ) ||
+              StaffRoles.isFounderUser(
+                role: user.role,
+                username: user.username,
+              ));
+      if (_isClientRoomOwner() ||
+          staff.isSiteAdmin ||
+          staff.isFounder ||
+          staffByProfile) {
         state = state.copyWith(serverPermissions: _ownerPermissionsFallback());
         _autoSeatAttempted = false;
-        unawaited(_tryAutoPrivilegedSeat());
+        schedulePrivilegedSeatAttempts();
       }
     }
   }

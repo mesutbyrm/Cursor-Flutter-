@@ -1,6 +1,7 @@
 import 'package:canlifal_social/features/auth/domain/entities/user_entity.dart';
 import 'package:canlifal_social/features/live/domain/entities/voice_room_entity.dart';
 import 'package:canlifal_social/features/voice_hub/presentation/utils/voice_room_permissions.dart';
+import 'package:canlifal_social/features/voice_hub/domain/entities/voice_room_seat_slot.dart';
 import 'package:canlifal_social/features/voice_hub/presentation/utils/voice_room_seat_priority.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -28,6 +29,20 @@ void main() {
       );
       expect(tier, VoiceRoomSeatPriority.tierAdmin);
       expect(VoiceRoomSeatPriority.shouldAutoSit(tier), isTrue);
+    });
+
+    test('auto seat respects small room seat slots', () {
+      const slots = [
+        VoiceRoomSeatSlot(index: 1),
+        VoiceRoomSeatSlot(index: 2),
+      ];
+      final seat = VoiceRoomSeatPriority.pickAutoSeatIndex(
+        myTier: VoiceRoomSeatPriority.tierAdmin,
+        presence: const [],
+        room: room.copyWith(seatCount: 2),
+        seatSlots: slots,
+      );
+      expect(seat, 1);
     });
   });
 }

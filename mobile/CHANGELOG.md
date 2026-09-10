@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.464+502 (2026-09-10) — Sesli oda admin giriş / koltuk
+
+### Sesli oda
+- Admin / kurucu nick (`admin`, `yonetici` …) staff API yüklenmeden otomatik koltuk önceliği
+- Odaya girişte koltuk ataması yeniden denenir; küçük odalarda (2 koltuk) doğru indeks
+- Çevrimiçi sayaç: odadayken liste boşsa en az 1 gösterilir
+- Presence listesine kendinizi ekleme (join yanıtı eksikse)
+- Yetkili kullanıcı boş koltuğa dokununca önce kendisi oturur (atama paneli yerine)
+
 ## 1.0.463+501 (2026-09-10) — Fal hub layout, mini müzik sync
 
 ### Fal & Tarot hub

@@ -53,7 +53,7 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
       ], eagerError: false);
       await _fetchAndApplySeats();
       state = state.copyWith(backendSyncReady: true, loading: false);
-      unawaited(_tryAutoPrivilegedSeat());
+      schedulePrivilegedSeatAttempts();
       await _bootstrapRoomData();
       VoiceEventLog.joinSuccess(
         roomId: _roomKey,

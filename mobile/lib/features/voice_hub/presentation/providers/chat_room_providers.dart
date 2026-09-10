@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/auth/staff_roles.dart';
 import '../../../../core/auth/bot_account_guard.dart';
 import '../../../../core/auth/bot_account_provider.dart';
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
@@ -269,10 +270,12 @@ class VoiceRoomLiveState {
   /// Canonical üye sayısı — oda içinde katalog kartı kullanılmaz.
   int onlineCountFor(VoiceRoomEntity room) {
     if (backendSyncReady || selfInRoom) {
-      return resolveRoomOnlineCount(
+      final count = resolveRoomOnlineCount(
         backendCount: hubOnlineCount,
         participantCount: presence.length,
       );
+      if (count == 0 && selfInRoom) return 1;
+      return count;
     }
     if (hubOnlineCount != null) return hubOnlineCount!;
     if (presence.isNotEmpty) return presence.length;

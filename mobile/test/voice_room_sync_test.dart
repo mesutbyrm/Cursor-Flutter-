@@ -71,6 +71,15 @@ void main() {
       );
       expect(state.onlineCountFor(room), 1);
     });
+
+    test('in-room with empty presence list shows at least 1', () {
+      const state = VoiceRoomLiveState(
+        loading: false,
+        selfInRoom: true,
+        backendSyncReady: true,
+      );
+      expect(state.onlineCountFor(room), 1);
+    });
   });
 
   group('sessionKeyMatchesActiveRoom', () {
