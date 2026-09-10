@@ -1905,9 +1905,13 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   }
 
   /// PK aktif VEYA misafir modu → ekran üst/alt bölünür (pending davet split açmaz).
-  bool _isSplitStage(LiveBroadcastSession s, String pkStatus,
-      {bool hasCoGuests = false}) {
-    final pkOn = isLivePkActiveStatus(pkStatus);
+  bool _isSplitStage(
+    LiveBroadcastSession s,
+    String pkStatus, {
+    bool hasCoGuests = false,
+    Map<String, dynamic>? pkBattle,
+  }) {
+    final pkOn = isLivePkSplitReady(pkBattle, pkStatus);
     final guestOn =
         _resolveGuestLayout() != LiveGuestLayout.solo || hasCoGuests;
     return pkOn || guestOn;
@@ -2863,7 +2867,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           children: [
             // PK veya misafir modunda ekran üst/alt bölünür: üst yarı video/PK
             // alanı, alt yarı hediye + chat. Normal yayında tam ekran video.
-            if (_isSplitStage(s, pkStatus, hasCoGuests: hasCoGuests))
+            if (_isSplitStage(
+              s,
+              pkStatus,
+              hasCoGuests: hasCoGuests,
+              pkBattle: pkState?.battle,
+            ))
               Positioned(
                 top: 0,
                 left: 0,
@@ -2873,7 +2882,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               )
             else
               Positioned.fill(child: _videoLayer(s)),
-            if (_isSplitStage(s, pkStatus, hasCoGuests: hasCoGuests))
+            if (_isSplitStage(
+              s,
+              pkStatus,
+              hasCoGuests: hasCoGuests,
+              pkBattle: pkState?.battle,
+            ))
               Positioned(
                 top: MediaQuery.sizeOf(context).height * 0.5,
                 left: 0,

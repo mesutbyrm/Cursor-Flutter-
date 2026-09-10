@@ -441,6 +441,9 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       _startPresenceHeartbeat();
       unawaited(refreshServerPermissions());
       unawaited(_broadcastStaffEntryIfNeeded());
+      unawaited(_fetchAndApplySeats());
+      _autoSeatAttempted = false;
+      unawaited(_tryAutoPrivilegedSeat());
   }
 
   void _handlePresenceJoinFailure(Object e) {

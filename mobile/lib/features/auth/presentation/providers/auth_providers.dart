@@ -256,7 +256,11 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     await ref.read(sessionUserCacheProvider).write(user);
     invalidateAuthenticatedShellData(ref);
     unawaited(OneSignalBootstrap.login(user.id));
-    unawaited(TrtcBootstrapService.prewarmAfterAuth());
+    unawaited(
+      Future<void>.delayed(const Duration(seconds: 2), () {
+        unawaited(TrtcBootstrapService.prewarmAfterAuth());
+      }),
+    );
     unawaited(_seedFortuneBirthFromProfile(user.id));
 
     final pending = PostLoginNavigation.takePending();

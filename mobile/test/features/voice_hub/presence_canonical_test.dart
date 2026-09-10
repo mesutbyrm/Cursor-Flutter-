@@ -84,10 +84,24 @@ void main() {
   });
 
   group('resolveRoomOnlineCount', () {
-    test('prefers backend count', () {
+    test('prefers participant list when non-empty', () {
       expect(
         resolveRoomOnlineCount(backendCount: 2, participantCount: 5),
+        5,
+      );
+    });
+
+    test('uses backend when presence empty', () {
+      expect(
+        resolveRoomOnlineCount(backendCount: 2, participantCount: 0),
         2,
+      );
+    });
+
+    test('drops ghost single count when presence empty', () {
+      expect(
+        resolveRoomOnlineCount(backendCount: 1, participantCount: 0),
+        0,
       );
     });
 

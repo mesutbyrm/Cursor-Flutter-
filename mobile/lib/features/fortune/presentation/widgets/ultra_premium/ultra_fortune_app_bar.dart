@@ -19,13 +19,7 @@ class UltraFortuneAppBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final top = MediaQuery.paddingOf(context).top;
 
-    final titleStyle = GoogleFonts.playfairDisplay(
-      fontSize: 20,
-      fontWeight: FontWeight.w700,
-      letterSpacing: 0.4,
-      height: 1.15,
-      color: Colors.white,
-    );
+    final titleStyle = _fortuneTitleStyle();
 
     return Padding(
       padding: EdgeInsets.fromLTRB(8, top + 4, 12, 8),
@@ -273,5 +267,21 @@ class _GlassIconButton extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+TextStyle _fortuneTitleStyle() {
+  const base = TextStyle(
+    fontSize: 20,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 0.4,
+    height: 1.15,
+    color: Colors.white,
+    fontFamilyFallback: ['serif', 'Roboto'],
+  );
+  try {
+    return GoogleFonts.playfairDisplay(textStyle: base);
+  } catch (_) {
+    return base;
   }
 }

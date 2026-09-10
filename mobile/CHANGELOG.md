@@ -1,5 +1,24 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.461+499 (2026-09-10) — PK layout, oda sayımı, giriş, CI gate
+
+### Canlı PK
+- Yarım ekran PK layout yalnızca split video hazır olduğunda (`isLivePkSplitReady`)
+- Canlı PK `accepted` yanıtı iki yayın kimliği yoksa `pending` kalır
+
+### Sesli oda
+- Presence join sonrası anında koltuk senkronu + otomatik koltuk denemesi
+- Oda içi online: boş presence + API `1` → 0 (hayalet sayım)
+
+### Auth
+- Giriş sonrası TRTC prewarm 2 sn gecikmeli (ilk giriş çöküşü riski)
+
+### CI
+- Release gate özeti: HTTP/METADATA `SKIP` artık sahte FAIL üretmez
+
+### Fal hub
+- Başlık fontu Google Fonts hata durumunda sistem fallback
+
 ## 1.0.460+498 (2026-09-10) — Cihaz hotfix: PK, sesli oda, fal hub, falcı PiP
 
 ### Canlı PK

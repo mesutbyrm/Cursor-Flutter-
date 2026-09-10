@@ -127,7 +127,12 @@ int resolveRoomOnlineCount({
   int? backendCount,
   required int participantCount,
 }) {
-  if (backendCount != null && backendCount >= 0) return backendCount;
+  if (participantCount > 0) return participantCount;
+  if (backendCount != null && backendCount >= 0) {
+    // Oda içi liste boş ama API 1 diyorsa — hayalet sayımı gösterme.
+    if (backendCount == 1 && participantCount == 0) return 0;
+    return backendCount;
+  }
   return participantCount;
 }
 

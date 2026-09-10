@@ -97,10 +97,22 @@ class PkBattleRemote extends Equatable {
         .trim() ??
         '';
     final id = rawId.isNotEmpty ? rawId : (invite ?? '');
-    var status = json['status']?.toString() ?? 'pending';
-    // Sunucu accept sonrası "accepted" dönebilir — savaş aktif sayılır.
+    var status = (json['status']?.toString() ?? 'pending').toLowerCase();
+    final battleType = json['battleType']?.toString() ?? 'voice_room';
+    final liveStreamId = json['liveStreamId']?.toString().trim() ?? '';
+    final opponentLiveStreamId =
+        json['opponentLiveStreamId']?.toString().trim() ?? '';
+    final isLiveStreamPk = battleType.contains('live') ||
+        liveStreamId.isNotEmpty ||
+        opponentLiveStreamId.isNotEmpty;
+    // Sunucu accept sonrası "accepted" dönebilir — canlı PK'da iki yayın hazır değilse pending.
     if (status == 'accepted' || status == 'accepted_invite') {
-      status = 'active';
+      if (isLiveStreamPk &&
+          (liveStreamId.isEmpty || opponentLiveStreamId.isEmpty)) {
+        status = 'pending';
+      } else {
+        status = 'active';
+      }
     }
     final endsAt = _parseDate(json['endsAt'] ?? json['endAt']);
     final startedAt = _parseDate(
@@ -119,7 +131,7 @@ class PkBattleRemote extends Equatable {
     return PkBattleRemote(
       id: id,
       inviteId: invite?.isNotEmpty == true ? invite : null,
-      battleType: json['battleType']?.toString() ?? 'voice_room',
+      battleType: battleType,
       status: status,
       challengerScore: _int(json['challengerScore'] ?? json['leftScore']),
       opponentScore: _int(json['opponentScore'] ?? json['rightScore']),
