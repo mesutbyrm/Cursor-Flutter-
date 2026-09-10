@@ -5,31 +5,23 @@
 | Alan | Değer |
 |------|--------|
 | Sürüm | `1.0.457+495` |
-| Tarih (UTC) | 2026-09-09 16:42 |
-| Commit | [`2925322640ef6c65acdea15c61771de45b0a3303`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/2925322640ef6c65acdea15c61771de45b0a3303) |
-| İş akışı | [Run 34376452733](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34376452733) |
+| Tarih (UTC) | 2026-09-10 02:15 |
+| Commit | [`0fe7598279514c1924a1a2beae91cfd445309cdf`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/0fe7598279514c1924a1a2beae91cfd445309cdf) |
+| İş akışı | [Run 34428015324](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34428015324) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.457+495 (2026-09-09) — PK ingest, sesli davet, sıralama, falcı bahşiş, bot
+## 1.0.458+496 (2026-09-10) — Abacus backend entegrasyon, jeton katalog
 
-### PK (canlı + sesli)
-- Canlı PK SSE ingest: sahip yayınlar için `liveVideoPkProvider` senkronu; yabancı battle yazılmaz
-- Davet sonrası `liveVideoPkProvider.applyRemoteBattle` — karşı taraf anında davet görür
-- Sesli PK: `guestUserId` zorunlu değil; `opponentRoomId` ile davet gönderilir (0 çevrimiçi oda)
-- PK daveti: bot hesapları engellendi
+### Backend kaynak seti
+- `backend-docs/abacus-current/` + OpenAPI 502 path / 780 endpoint index materialize
+- `_zip_analysis/CURRENT_BACKEND_SOURCE_SET.md` — Sep 10 canlı kod envanteri (852 endpoint)
+- MCP `lib.mjs` schema fallback; parity betiği `scripts/abacus-openapi-parity.sh`
 
-### Sıralama bildirimi
-- Saatlik/günlük top 3 yalnızca saat/gün başında uygulamada olanlara gösterilir
-- Sonradan giren kullanıcılar geçmiş kutlamayı görmez (oturum bazlı pencere anahtarı)
-
-### Canlı falcı
-- Bahşiş SSE `eventId` dedupe; falcıya anında «X size bahşiş attı» popup
-- `timerStarted` SSE ile mikrofon/kamera yayın senkronu
-
-### Bot kısıtları
-- Müzik isteği (`!istek`, hub, API) bot hesaplarda engellendi
+### Jeton / ödeme
+- `GET /api/jeton` backend authoritative — API fail'de sahte preset katalog gösterilmez
+- Ödeme bildirimi preset chip'leri yalnızca API paketlerinden
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
