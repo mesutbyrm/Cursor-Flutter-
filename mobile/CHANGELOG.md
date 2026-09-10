@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.458+496 (2026-09-10) — Abacus backend entegrasyon, jeton katalog
+
+### Backend kaynak seti
+- `backend-docs/abacus-current/` + OpenAPI 502 path / 780 endpoint index materialize
+- `_zip_analysis/CURRENT_BACKEND_SOURCE_SET.md` — Sep 10 canlı kod envanteri (852 endpoint)
+- MCP `lib.mjs` schema fallback; parity betiği `scripts/abacus-openapi-parity.sh`
+
+### Jeton / ödeme
+- `GET /api/jeton` backend authoritative — API fail'de sahte preset katalog gösterilmez
+- Ödeme bildirimi preset chip'leri yalnızca API paketlerinden
+
 ## 1.0.457+495 (2026-09-09) — PK ingest, sesli davet, sıralama, falcı bahşiş, bot
 
 ### PK (canlı + sesli)

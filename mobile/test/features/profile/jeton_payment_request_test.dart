@@ -23,9 +23,21 @@ void main() {
     expect(body['notes'], isNot(contains('CANLIFAL')));
   });
 
-  test('resolveJetonPackageForPurchase maps preset coins to catalog id', () {
-    final pkg = resolveJetonPackageForPurchase(coins: 500, priceTry: 250);
-    expect(pkg.id, 'p500');
+  test('resolveJetonPackageForPurchase maps remote catalog id', () {
+    const remote = [
+      JetonPackageEntity(
+        id: 'api-p500',
+        title: '500 Jeton',
+        coins: 500,
+        priceTry: 250,
+      ),
+    ];
+    final pkg = resolveJetonPackageForPurchase(
+      coins: 500,
+      priceTry: 250,
+      remote: remote,
+    );
+    expect(pkg.id, 'api-p500');
     expect(pkg.coins, 500);
   });
 

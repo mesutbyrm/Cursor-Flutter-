@@ -334,24 +334,10 @@ class _JetonPaymentNotifySheetState
                 ],
               ),
               const SizedBox(height: 16),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final p in kFallbackJetonPackages)
-                    ActionChip(
-                      label: Text('${p.coins} $jetonLabel'),
-                      backgroundColor: _package?.coins == p.coins
-                          ? AppThemeColors.accentPurple.withValues(alpha: 0.35)
-                          : const Color(0xFF1A1030),
-                      side: BorderSide(
-                        color: _package?.coins == p.coins
-                            ? AppThemeColors.accentPink
-                            : AppThemeColors.accentPurple.withValues(alpha: 0.35),
-                      ),
-                      onPressed: () => _applyPreset(p),
-                    ),
-                ],
+              _JetonPackagePresetChips(
+                package: _package,
+                jetonLabel: jetonLabel,
+                onPreset: _applyPreset,
               ),
               const SizedBox(height: 14),
               _LabeledField(
@@ -651,6 +637,59 @@ class _LabeledField extends StatelessWidget {
         const SizedBox(height: 6),
         child,
       ],
+    );
+  }
+}
+
+/// Backend `/api/jeton` paketleri — API yoksa preset chip gösterme.
+class _JetonPackagePresetChips extends ConsumerWidget {
+  const _JetonPackagePresetChips({
+    required this.package,
+    required this.jetonLabel,
+    required this.onPreset,
+  });
+
+  final JetonPackageEntity? package;
+  final String jetonLabel;
+  final void Function(JetonPackageEntity preset) onPreset;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(jetonPackagesProvider);
+    return async.when(
+      loading: () => const SizedBox(
+        height: 36,
+        child: Center(
+          child: SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      ),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (packages) {
+        if (packages.isEmpty) return const SizedBox.shrink();
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final p in packages)
+              ActionChip(
+                label: Text('${p.coins} $jetonLabel'),
+                backgroundColor: package?.coins == p.coins
+                    ? AppThemeColors.accentPurple.withValues(alpha: 0.35)
+                    : const Color(0xFF1A1030),
+                side: BorderSide(
+                  color: package?.coins == p.coins
+                      ? AppThemeColors.accentPink
+                      : AppThemeColors.accentPurple.withValues(alpha: 0.35),
+                ),
+                onPressed: () => onPreset(p),
+              ),
+          ],
+        );
+      },
     );
   }
 }

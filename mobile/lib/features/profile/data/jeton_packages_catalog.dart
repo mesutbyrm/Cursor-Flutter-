@@ -38,19 +38,13 @@ const List<JetonPackageEntity> kFallbackJetonPackages = [
   ),
 ];
 
-/// API paketleri ile varsayılan 50–1000 jeton seçeneklerini birleştirir.
+/// Backend `/api/jeton` paketlerini sıralı döner — sahte preset birleştirme yok.
 List<JetonPackageEntity> mergeJetonPackagesWithPresets(
   List<JetonPackageEntity> remote,
 ) {
-  final byCoins = <int, JetonPackageEntity>{
-    for (final p in kFallbackJetonPackages) p.coins: p,
-  };
-  for (final p in remote) {
-    if (p.coins > 0) {
-      byCoins[p.coins] = p;
-    }
-  }
-  return byCoins.values.toList()..sort((a, b) => a.coins.compareTo(b.coins));
+  final out = remote.where((p) => p.coins > 0).toList();
+  out.sort((a, b) => a.coins.compareTo(b.coins));
+  return out;
 }
 
 /// Özel tutar → site/API ile uyumlu paket kimliği.

@@ -814,13 +814,13 @@ class WalletRemoteDataSource {
     try {
       final res = await _dio.safeGet<dynamic>(ApiEndpoints.jetonCatalog);
       final parsed = _parseJetonResponse(res.data);
-      if (parsed.isNotEmpty) return mergeJetonPackagesWithPresets(parsed);
+      return mergeJetonPackagesWithPresets(parsed);
     } on ApiException catch (_) {
-      // 401 / ağ / 404 / sunucu: varsayılan paketlerle devam et
+      // Backend authoritative — sahte katalog gösterme.
     } catch (_) {
       // Beklenmeyen yanıt
     }
-    return List<JetonPackageEntity>.from(kFallbackJetonPackages);
+    return const [];
   }
 
   List<JetonPackageEntity> _parseJetonResponse(dynamic data) {
