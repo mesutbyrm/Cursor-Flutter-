@@ -94,6 +94,14 @@ abstract final class PsychicModel {
       category: str(m, ['category', 'specialty']) ?? str(user, ['category']),
       applicationStatus: _applicationStatusFrom(m, user),
       liveStreamId: streamId,
+      isGoldUser: m['isGoldUser'] == true || user['isGoldUser'] == true,
+      favoriteCount: asInt(
+        pick(m, ['favoriteCount', 'favorites', 'favorite_count']) ??
+            pick(user, ['favoriteCount', 'favorites']),
+      ),
+      presenceLabel: str(m, ['presenceLabel', 'presence_label']) ??
+          str(user, ['presenceLabel', 'presence_label']),
+      isFavorited: m['isFavorited'] == true || user['isFavorited'] == true,
     );
   }
 

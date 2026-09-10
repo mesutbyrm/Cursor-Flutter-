@@ -16,6 +16,10 @@ class PsychicEntity extends Equatable {
     this.category,
     this.applicationStatus,
     this.liveStreamId,
+    this.isGoldUser = false,
+    this.favoriteCount = 0,
+    this.presenceLabel,
+    this.isFavorited = false,
   });
 
   final String id;
@@ -32,6 +36,12 @@ class PsychicEntity extends Equatable {
   final String? applicationStatus;
   /// Aktif video yayını — yalnızca API döndürürse dolu.
   final String? liveStreamId;
+  final bool isGoldUser;
+  final int favoriteCount;
+  /// Sunucu etiketi — örn. «Müsait», «Meşgul» (`GET /api/fortune-tellers`).
+  final String? presenceLabel;
+  /// Detay yanıtında — kullanıcının favori işaretlemesi.
+  final bool isFavorited;
 
   String get trtcUserId {
     final u = userId?.trim();
@@ -70,9 +80,12 @@ class PsychicEntity extends Equatable {
     return 'Canlı fal';
   }
 
-  /// Çevrimiçi falcı durum etiketi — yalnızca backend `isOnline` ile.
-  String get availabilityLabel =>
-      isOnline ? 'Müsait' : 'Çevrimdışı';
+  /// Çevrimiçi falcı durum etiketi — önce `presenceLabel`, sonra `isOnline`.
+  String get availabilityLabel {
+    final label = presenceLabel?.trim();
+    if (label != null && label.isNotEmpty) return label;
+    return isOnline ? 'Müsait' : 'Çevrimdışı';
+  }
   bool get isUsable {
     if (id.trim().isEmpty) return false;
     if (isApproved) return true;
@@ -98,5 +111,9 @@ class PsychicEntity extends Equatable {
         category,
         applicationStatus,
         liveStreamId,
+        isGoldUser,
+        favoriteCount,
+        presenceLabel,
+        isFavorited,
       ];
 }

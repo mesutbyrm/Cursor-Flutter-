@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.459+497 (2026-09-10) — Canlı yayın heartbeat, falcı API alanları
+
+### Canlı yayın
+- Yayıncı canlılık: `POST /api/video-streams/{id}/media-heartbeat` (signal ping yerine kanonik uç)
+
+### Canlı falcılar
+- `GET /api/fortune-tellers` — `isGoldUser`, `favoriteCount`, `presenceLabel`, `isFavorited` alanları parse
+
 ## 1.0.458+496 (2026-09-10) — Abacus backend entegrasyon, jeton katalog
 
 ### Backend kaynak seti

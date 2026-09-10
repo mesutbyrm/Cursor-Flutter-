@@ -786,15 +786,14 @@ class LiveRemoteDataSource {
     return false;
   }
 
-  /// Yayıncı bağlantı canlılığı — 15 sn aralıkla sinyal ping.
+  /// Yayıncı medya canlılığı — `POST /api/video-streams/{id}/media-heartbeat`.
   Future<void> sendStreamHeartbeat(String streamId) async {
+    final id = streamId.trim();
+    if (id.isEmpty) return;
     try {
       await _dio.safePost<dynamic>(
-        ApiEndpoints.videoStreamSignal(streamId),
-        data: {
-          'type': 'ping',
-          'data': {'ts': DateTime.now().toUtc().toIso8601String()},
-        },
+        ApiEndpoints.videoStreamMediaHeartbeat(id),
+        data: const {},
       );
     } catch (_) {}
   }

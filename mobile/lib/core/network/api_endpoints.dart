@@ -720,6 +720,10 @@ abstract final class ApiEndpoints {
   static String videoStreamLiveStarted(String streamId) =>
       '/api/video-streams/$streamId/live-started';
 
+  /// Yayın canlılık sinyali — gönderilmezse sunucu yayını kapatır (15–30 sn).
+  static String videoStreamMediaHeartbeat(String streamId) =>
+      '/api/video-streams/$streamId/media-heartbeat';
+
   /// SSE — izleyici, sohbet, hediye, yayın sonu.
   static String videoStreamSse(String streamId) =>
       '/api/video-streams/$streamId/stream';
