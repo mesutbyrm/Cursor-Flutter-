@@ -4,18 +4,17 @@
 
 > **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`../docs/DOCS_RELEASE_INDEX.md`](../docs/DOCS_RELEASE_INDEX.md)
 
-**Kaynak:** Backend MCP export — 11 Ağustos 2026 (B1.12 denetimi)  
-**Kullanım:** FAZ 0 parity audit, Cursor MCP, Flutter DTO doğrulama — **üretim API değildir**.
+**Kaynak:** Abacus.ai devir paketi — `backend-docs/abacus-current/` (2026-09-10 materialize)  
+**Kullanım:** Cursor MCP, OpenAPI parity, Flutter DTO doğrulama — **üretim API değildir**.
 
 | Dosya | Açıklama |
 |-------|----------|
-| `openapi.json` | OpenAPI 3.0.3 — ~690 endpoint |
-| `endpoints_index.json` | Method, auth, tag metadata |
+| `openapi.json` | OpenAPI 3.0.3 — **502** path |
+| `endpoints_index.json` | **780** handler kaydı |
 | `schema.prisma` | Üretim Prisma şeması |
-| `B1_12_API_MCP_FLUTTER_PARITY.md` | Tam parity denetim raporu |
-| `MCP_REGISTRY.md` | MCP araç listesi |
-| `MCP_INVENTORY.md` | MCP envanter |
-| `MCP_CLEANUP_REPORT.md` | MCP temizlik notları |
+| `ENDPOINTS.md` | İnsan okur API listesi |
+| `abacus-current/` | Tam Abacus export (priority1–3, flutter) |
+| `B1_12_*`, `MCP_INVENTORY.md` | **LEGACY** — kullanmayın |
 
 ## Canlı probe notları (18 Ağustos 2026)
 

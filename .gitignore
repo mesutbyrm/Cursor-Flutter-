@@ -1,5 +1,6 @@
 # Node API (yerel geliştirme)
 api/node_modules/
+mcp-server/node_modules/
 site/canlifal-jeton-web/node_modules/
 site/canlifal-jeton-web/.next/
 api/.env
