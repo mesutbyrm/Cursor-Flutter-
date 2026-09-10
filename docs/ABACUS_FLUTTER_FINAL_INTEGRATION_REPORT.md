@@ -1,7 +1,7 @@
 # ABACUS.AI → FLUTTER FINAL INTEGRATION REPORT
 
 > **Tarih:** 2026-09-10  
-> **Flutter sürüm:** `1.0.458+496`  
+> **Flutter sürüm:** `1.0.459+497`  
 > **Backend:** `https://canlifal.com` (Abacus.ai / Next.js 14)  
 > **Kaynak set:** `_zip_analysis/` (Sep 10, 852 endpoint) + `backend-docs/abacus-current/` + `openapi.json`
 
@@ -57,7 +57,8 @@ SSE kanalları: chat room, video stream, psychic session, notifications, PK matc
 ✓ SSE `video-streams/{id}/stream`  
 ✓ TRTC token  
 ✓ PK `video-streams/pk`, `pk-battle`  
-✓ Co-broadcast, fortune requests
+✓ Co-broadcast, fortune requests  
+✓ `POST /api/video-streams/{id}/media-heartbeat` — yayıncı canlılık (15 sn)
 
 ## 11. Voice Rooms
 
