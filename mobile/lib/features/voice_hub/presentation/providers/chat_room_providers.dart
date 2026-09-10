@@ -24,6 +24,7 @@ import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../../live/presentation/providers/voice_rooms_list_notifier.dart';
 import '../../../live_psychics/presentation/providers/psychic_live_event_bus.dart';
+import '../gifts/voice_room_gift_orchestrator.dart';
 import '../../data/datasources/chat_room_remote_datasource.dart';
 import '../../data/services/voice_room_debug_log.dart';
 import '../../data/services/voice_room_music_pipeline_log.dart';
@@ -395,6 +396,22 @@ class VoiceRoomLiveState {
   }
 }
 
+class _PendingSeatClaim {
+  const _PendingSeatClaim({
+    required this.userId,
+    required this.until,
+    this.name,
+    this.image,
+  });
+
+  final String userId;
+  final DateTime until;
+  final String? name;
+  final String? image;
+
+  bool get active => DateTime.now().isBefore(until);
+}
+
 class VoiceRoomLiveController
     extends AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
     with VoiceRoomDjSyncMixin, VoiceRoomSseMixin {
@@ -427,6 +444,8 @@ class VoiceRoomLiveController
   /// ("temizle sonrası yazılar geri geliyor" sorunu).
   DateTime? _chatClearedWatermark;
   final Set<String> _shownEntranceKeys = {};
+  /// Yerel koltuk oturma — backend gecikince kullanıcı koltuktan düşmesin.
+  final _pendingSeatClaims = <int, _PendingSeatClaim>{};
   final Set<String> _knownPresenceIds = {};
   /// Oturumda duyurulan girişler — aynı kullanıcı iki kez gösterilmez.
   final Set<String> _sessionAnnouncedJoinUserIds = {};

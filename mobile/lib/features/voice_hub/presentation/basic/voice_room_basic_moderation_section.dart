@@ -20,7 +20,7 @@ import '../utils/voice_room_user_actions.dart';
 import '../widgets/premium/voice_glass.dart';
 import '../widgets/premium_2026/voice_web_owner_stage.dart';
 import '../widgets/premium_2026/voice_pk_invite_banner.dart';
-import '../widgets/premium_2026/voice_gift_announcement_ticker.dart';
+import '../../../visual_fx/presentation/widgets/fx_recent_gifts_strip.dart';
 import '../widgets/voice_room/voice_room_duyuru_ticker.dart';
 import '../widgets/voice_room/voice_room_staff_join_banner.dart';
 import 'voice_room_basic_premium_section.dart';
@@ -100,8 +100,11 @@ class VoiceRoomBasicModerationSection extends ConsumerWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
-          child: const VoiceGiftAnnouncementTicker(),
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
+          child: const Align(
+            alignment: Alignment.centerLeft,
+            child: FxRecentGiftsStrip(),
+          ),
         ),
         if (live.moderatorAnnouncement?.trim().isNotEmpty == true)
           Consumer(

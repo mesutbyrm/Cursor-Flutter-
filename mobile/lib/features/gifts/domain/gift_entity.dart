@@ -31,6 +31,7 @@ class GiftEntity extends Equatable {
     this.animationDurationMs = 0,
     this.isFullscreen = false,
     this.isPremium = false,
+    this.isFeatured = false,
     this.comboEnabled = false,
     this.assetType = GiftAssetType.unknown,
     this.displayType = GiftDisplayType.standard,
@@ -137,6 +138,7 @@ class GiftEntity extends Equatable {
           asInt(pick(json, ['animationDurationMs', 'animationDuration'])),
       isFullscreen: json['isFullscreen'] == true,
       isPremium: json['isPremium'] == true || json['premium'] == true,
+      isFeatured: json['isFeatured'] == true || json['featuredGift'] == true,
       comboEnabled:
           json['comboEnabled'] == true || json['supportsCombo'] == true,
       assetType: assetType,
@@ -190,6 +192,7 @@ class GiftEntity extends Equatable {
   final int animationDurationMs;
   final bool isFullscreen;
   final bool isPremium;
+  final bool isFeatured;
   final bool comboEnabled;
   final GiftAssetType assetType;
   final GiftDisplayType displayType;
@@ -257,6 +260,7 @@ class GiftEntity extends Equatable {
         animationDurationMs,
         isFullscreen,
         isPremium,
+        isFeatured,
         comboEnabled,
         assetType,
         displayType,

@@ -1,5 +1,21 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.465+503 (2026-09-10) — Sesli oda koltuk + hediye realtime
+
+### Koltuk
+- Koltuğa oturma: optimistic UI (15 sn grace) + backend `GET /seats` ile birleştirme — gecikmede düşme azaltıldı
+- Mevcut SSE `seat_changed` / presence merge korunur; polling SSE bağlıyken presence için kapalı
+
+### Hediye (sesli oda)
+- `VoiceRoomGiftOrchestrator` — canonical `eventId` dedupe; tek pipeline
+- Normal hediye: koltuk altı `FxRecentGiftsStrip` (TikTok tarzı)
+- Featured / büyük hediye: üst `FxBigGiftBanner` (`isFeatured` katalog + jeton eşiği)
+- Kaldırıldı: çift kayan ticker + client chat satırı + global overlay (oda içi)
+- Gift Engine animasyon kuyruğu aynı SSE/realtime kaynaktan
+
+### Katalog
+- `GiftEntity.isFeatured` — admin panel `isFeatured` / `featuredGift` JSON
+
 ## 1.0.464+502 (2026-09-10) — Sesli oda admin giriş / koltuk
 
 ### Sesli oda

@@ -347,8 +347,90 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     return err == null;
   }
 
+  void _optimisticOccupySeat({
+    required int seatIndex,
+    required String userId,
+    String? name,
+    String? image,
+  }) {
+    _pendingSeatClaims[seatIndex] = _PendingSeatClaim(
+      userId: userId,
+      until: DateTime.now().add(const Duration(seconds: 15)),
+      name: name,
+      image: image,
+    );
+    final slots = _mergePendingSeatClaimsInto(state.seatSlots);
+    final nextPresence = state.presence.map((p) {
+      if (p.id != userId) return p;
+      return ChatRoomPresence(
+        id: p.id,
+        name: p.name,
+        nickname: p.nickname,
+        image: p.image,
+        chatRole: p.chatRole,
+        roleSymbol: p.roleSymbol,
+        membership: p.membership,
+        seatIndex: seatIndex,
+        isSpeaking: p.isSpeaking,
+        isMuted: p.isMuted,
+        micOn: p.micOn,
+      );
+    }).toList();
+    state = state.copyWith(seatSlots: slots, presence: nextPresence);
+  }
+
+  void _clearPendingSeatClaim(int seatIndex, String userId) {
+    final claim = _pendingSeatClaims[seatIndex];
+    if (claim?.userId == userId) {
+      _pendingSeatClaims.remove(seatIndex);
+    }
+  }
+
+  List<VoiceRoomSeatSlot> _mergePendingSeatClaimsInto(
+    List<VoiceRoomSeatSlot> seats,
+  ) {
+    if (_pendingSeatClaims.isEmpty) return seats;
+    _pendingSeatClaims.removeWhere((_, c) => !c.active);
+    if (_pendingSeatClaims.isEmpty) return seats;
+
+    final target = voiceRoomSeatMapTargetCount(
+      configuredSeatCount: state.roomSeatCount ?? _roomMeta.seatCount,
+      fromListLength: seats.isEmpty ? null : seats.length,
+    );
+    var slots = seats.isNotEmpty
+        ? List<VoiceRoomSeatSlot>.from(seats)
+        : List.generate(target, VoiceRoomSeatSlot.empty);
+    while (slots.length < target) {
+      slots.add(VoiceRoomSeatSlot.empty(slots.length));
+    }
+    for (final entry in _pendingSeatClaims.entries) {
+      final idx = entry.key;
+      final claim = entry.value;
+      if (idx < 0 || idx >= slots.length) continue;
+      final backendUid = slots[idx].userId?.trim() ?? '';
+      if (backendUid.isNotEmpty && backendUid != claim.userId) continue;
+      slots[idx] = VoiceRoomSeatSlot(
+        index: idx,
+        userId: claim.userId,
+        name: claim.name,
+        image: claim.image,
+      );
+    }
+    return slots;
+  }
+
   Future<String?> assignSeat({required int seatIndex, String? userId}) async {
     final selfId = userId ?? ref.read(authControllerProvider).valueOrNull?.id;
+    final isSelf = userId == null && selfId != null && selfId.isNotEmpty;
+    if (isSelf) {
+      final user = ref.read(authControllerProvider).valueOrNull;
+      _optimisticOccupySeat(
+        seatIndex: seatIndex,
+        userId: selfId!,
+        name: user?.displayName ?? user?.username,
+        image: user?.avatarUrl,
+      );
+    }
     try {
       if (userId == null && selfId != null && selfId.isNotEmpty) {
         ChatRoomPresence? self;
@@ -380,9 +462,16 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
             .read(voiceSeatRestServiceProvider)
             .takeSeat(_roomKey, seatIndex, userId: userId);
       }
+      if (isSelf) {
+        _clearPendingSeatClaim(seatIndex, selfId!);
+      }
       unawaited(_refreshSeatsFromBackend());
       return null;
     } catch (e) {
+      if (isSelf) {
+        _clearPendingSeatClaim(seatIndex, selfId!);
+        await _refreshSeatsFromBackend();
+      }
       return ApiException.userMessage(e);
     }
   }

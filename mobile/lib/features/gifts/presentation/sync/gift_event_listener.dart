@@ -7,11 +7,9 @@ import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/presentation/gifts/providers/live_gift_providers.dart';
 import '../../../live/presentation/providers/live_room_providers.dart';
 import '../../../voice_hub/presentation/providers/voice_gift_providers.dart';
-import '../../../voice_hub/presentation/providers/voice_recent_gifts_provider.dart';
-import '../../../voice_hub/presentation/providers/chat_room_providers.dart';
+import '../../../voice_hub/presentation/gifts/voice_room_gift_orchestrator.dart';
 import '../../../voice_hub/presentation/providers/voice_gift_combo_tracker.dart';
 import '../../../voice_hub/presentation/providers/voice_gift_leaderboard_provider.dart';
-import '../../../visual_fx/presentation/providers/voice_room_gift_display_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../voice_hub/presentation/providers/voice_room_session_registry.dart';
@@ -113,47 +111,32 @@ class _GiftEventListenerState extends ConsumerState<GiftEventListener> {
         ref
             .read(voiceSessionGiftLeaderboardProvider.notifier)
             .record(enriched);
-        enqueueGlobalGiftFromLiveEvent(
-          ref,
-          enriched,
+        dispatchVoiceRoomGiftEvent(
+          ref: ref,
           sessionKey: widget.sessionKey,
-        );
-      } else {
-        enqueueGlobalGiftFromLiveEvent(ref, event);
-      }
-      final notifier =
-          ref.read(giftSessionProvider(widget.sessionKey).notifier);
-      if (widget.useVoiceRealtime) {
-        notifier.onVoiceGiftSent(
-          enriched,
+          raw: enriched,
           source: 'voice_realtime',
           userRole: widget.userRole,
           isHost: widget.isHost,
         );
+        if (widget.sessionKey.isNotEmpty) {
+          ref
+              .read(
+                giftGoalProvider((
+                  context: 'voice_room',
+                  contextId: widget.sessionKey,
+                )).notifier,
+              )
+              .refresh();
+        }
       } else {
-        notifier.onGiftSent(
-          enriched,
-          source: 'live_realtime',
-          userRole: widget.userRole,
-          isHost: widget.isHost,
-        );
-      }
-      ref.read(voiceRecentGiftsProvider.notifier).record(enriched);
-      if (widget.useVoiceRealtime) {
-        ref.read(voiceRoomGiftDisplayProvider.notifier).onGiftEvent(enriched);
-      }
-      if (widget.useVoiceRealtime && widget.sessionKey.isNotEmpty) {
-        ref
-            .read(voiceRoomLiveProvider(widget.sessionKey).notifier)
-            .appendGiftChatMessage(enriched);
-        ref
-            .read(
-              giftGoalProvider((
-                context: 'voice_room',
-                contextId: widget.sessionKey,
-              )).notifier,
-            )
-            .refresh();
+        enqueueGlobalGiftFromLiveEvent(ref, event);
+        ref.read(giftSessionProvider(widget.sessionKey).notifier).onGiftSent(
+              enriched,
+              source: 'live_realtime',
+              userRole: widget.userRole,
+              isHost: widget.isHost,
+            );
       }
       if (widget.useLiveRealtime && widget.liveStreamId != null) {
         ref

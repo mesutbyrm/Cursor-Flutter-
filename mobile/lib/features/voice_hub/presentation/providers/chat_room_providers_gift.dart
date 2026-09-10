@@ -12,15 +12,12 @@ extension VoiceRoomGiftControls on VoiceRoomLiveController {
   /// Hediye olayı — merkezi gift session (host/guest aynı state).
   void announceGift(LiveGiftEvent ev) {
     if (_roomKey.isEmpty) return;
-    ref.read(giftSessionProvider(_roomKey).notifier).onVoiceGiftSent(
-          ev,
-          source: 'voice_announce',
-        );
-    ref.read(voiceRecentGiftsProvider.notifier).record(ev);
-    try {
-      ref.read(voiceSeatGiftFlashProvider(_roomKey).notifier).enqueue(ev);
-    } catch (_) {}
-    appendGiftChatMessage(ev);
+    dispatchVoiceRoomGiftEventRef(
+      ref: ref,
+      sessionKey: _roomKey,
+      raw: ev,
+      source: 'voice_announce',
+    );
   }
 
   /// Sohbet alanına hediye sistem mesajı ekler.

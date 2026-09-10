@@ -532,11 +532,12 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
         });
         return;
       }
+      final mergedSlots = _mergePendingSeatClaimsInto(seats);
       final nextPresence = _syncPresenceSeatIndexFromSlots(
         state.presence,
-        seats,
+        mergedSlots,
       );
-      state = state.copyWith(seatSlots: seats, presence: nextPresence);
+      state = state.copyWith(seatSlots: mergedSlots, presence: nextPresence);
       VoiceRoomDebugLog.log('sse.seat_update.refresh', {
         'room': _roomKey,
         'count': seats.length,

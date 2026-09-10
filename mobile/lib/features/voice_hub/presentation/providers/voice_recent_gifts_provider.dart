@@ -57,7 +57,16 @@ class VoiceRecentGiftsController extends Notifier<VoiceRecentGiftsState> {
   @override
   VoiceRecentGiftsState build() => const VoiceRecentGiftsState();
 
+  /// Koltuk altı gifter listesi — kayan duyuru üretmez.
+  void recordGifterOnly(LiveGiftEvent event) {
+    _recordGifterCore(event, includeAnnouncement: false);
+  }
+
   void record(LiveGiftEvent event) {
+    _recordGifterCore(event, includeAnnouncement: true);
+  }
+
+  void _recordGifterCore(LiveGiftEvent event, {required bool includeAnnouncement}) {
     final gross = event.jetonAmount;
     if (gross <= 0) return;
 
@@ -101,18 +110,21 @@ class VoiceRecentGiftsController extends Notifier<VoiceRecentGiftsState> {
       _gifters.remove(removed);
     }
 
-    final line =
-        '${GiftSystemMessage.format(event, jetonLabel: economyCurrencyLabelRead(ref, key: 'jeton'))} 🎉';
-    final announcements = [
-      VoiceGiftAnnouncement(
-        id: 'gift-${event.id}-${now.microsecondsSinceEpoch}',
-        line: line,
-        at: now,
-      ),
-      ...state.announcements,
-    ];
-    if (announcements.length > maxAnnouncements) {
-      announcements.removeRange(maxAnnouncements, announcements.length);
+    List<VoiceGiftAnnouncement> announcements = state.announcements;
+    if (includeAnnouncement) {
+      final line =
+          '${GiftSystemMessage.format(event, jetonLabel: economyCurrencyLabelRead(ref, key: 'jeton'))} 🎉';
+      announcements = [
+        VoiceGiftAnnouncement(
+          id: 'gift-${event.id}-${now.microsecondsSinceEpoch}',
+          line: line,
+          at: now,
+        ),
+        ...state.announcements,
+      ];
+      if (announcements.length > maxAnnouncements) {
+        announcements.removeRange(maxAnnouncements, announcements.length);
+      }
     }
 
     final ordered = <VoiceRecentGifter>[];
@@ -127,18 +139,21 @@ class VoiceRecentGiftsController extends Notifier<VoiceRecentGiftsState> {
       announcements: announcements,
     );
 
-    // Duyuru 5 sn sonra kaybolsun.
-    final annId = announcements.first.id;
-    Future<void>.delayed(const Duration(seconds: 5), () {
-      try {
-        final current = state.announcements;
-        if (current.isEmpty) return;
-        final next = current.where((a) => a.id != annId).toList();
-        if (next.length == current.length) return;
-        state =
-            VoiceRecentGiftsState(gifters: state.gifters, announcements: next);
-      } catch (_) {}
-    });
+    if (includeAnnouncement && announcements.isNotEmpty) {
+      final annId = announcements.first.id;
+      Future<void>.delayed(const Duration(seconds: 5), () {
+        try {
+          final current = state.announcements;
+          if (current.isEmpty) return;
+          final next = current.where((a) => a.id != annId).toList();
+          if (next.length == current.length) return;
+          state = VoiceRecentGiftsState(
+            gifters: state.gifters,
+            announcements: next,
+          );
+        } catch (_) {}
+      });
+    }
   }
 
   void clear() {

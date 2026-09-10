@@ -5,6 +5,7 @@ import '../../../live/presentation/gifts/providers/live_seat_gift_totals_provide
 import '../../../live/presentation/gifts/providers/live_gift_providers.dart';
 import '../providers/voice_gift_providers.dart';
 import '../utils/room_session_cache.dart';
+import '../gifts/voice_room_gift_orchestrator.dart';
 import '../providers/voice_seat_gift_flash_provider.dart';
 import 'voice_recent_gifts_provider.dart';
 import '../../../visual_fx/presentation/providers/voice_room_gift_display_provider.dart';
@@ -56,6 +57,9 @@ void clearVoiceRoomLiveSession(Ref ref, String liveKey) {
   } catch (_) {}
   ref.read(voiceRecentGiftsProvider.notifier).clear();
   ref.read(voiceRoomGiftDisplayProvider.notifier).resetForRoomChange();
+  try {
+    ref.read(voiceRoomGiftOrchestratorProvider(key)).clear();
+  } catch (_) {}
   ref.invalidate(giftSessionProvider(key));
 }
 

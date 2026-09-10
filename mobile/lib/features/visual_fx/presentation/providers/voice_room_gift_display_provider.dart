@@ -70,7 +70,11 @@ class VoiceRoomGiftDisplayController extends Notifier<VoiceRoomGiftDisplayState>
     );
   }
 
-  void onGiftEvent(LiveGiftEvent event, {bool fromReconnectBootstrap = false}) {
+  void onGiftEvent(
+    LiveGiftEvent event, {
+    bool fromReconnectBootstrap = false,
+    bool forceFeaturedBanner = false,
+  }) {
     final item = FxGiftDisplayItem.fromLiveGift(event);
     if (item.jeton <= 0) return;
 
@@ -81,7 +85,7 @@ class VoiceRoomGiftDisplayController extends Notifier<VoiceRoomGiftDisplayState>
 
     _enqueueRecent(item);
 
-    if (FxGiftTier.fromJeton(item.jeton).isBigGift) {
+    if (forceFeaturedBanner || FxGiftTier.fromJeton(item.jeton).isBigGift) {
       _showBigGift(item);
     }
   }
