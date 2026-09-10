@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-
 import '../../utils/navigate_to_voice_room.dart';
 import '../../providers/chat_room_providers.dart';
 import '../../providers/voice_room_ui_provider.dart';
-import '../../../video/presentation/room_video_controller.dart';
 import 'voice_room_web_music_bar.dart';
 
 /// Odadan çıkınca arka planda devam eden müzik şeridi.
@@ -37,10 +34,9 @@ class VoiceRoomGlobalMusicBar extends ConsumerWidget {
     }
     final room = session.room!;
     final liveKey = room.liveKey;
-    final ctrl = ref.read(voiceRoomLiveProvider(liveKey).notifier);
     final ui = ref.watch(voiceRoomUiProvider);
-    final isVideo =
-        ref.watch(roomVideoControllerProvider(room.liveKey)).showsVideo;
+    final player = ref.read(voiceRoomDjPlayerProvider);
+    final sessionNotifier = ref.read(voiceRoomMusicSessionProvider.notifier);
 
     return Material(
       color: Colors.transparent,
@@ -56,25 +52,34 @@ class VoiceRoomGlobalMusicBar extends ConsumerWidget {
           child: VoiceRoomWebMusicBar(
             dj: session.dj,
             roomLiveKey: liveKey,
-            isVideoMode: isVideo,
+            detachedMiniPlayer: true,
+            isVideoMode: false,
             musicMuted: !ui.backgroundMusicEnabled,
             canControlMusic: session.canSyncServer,
             onPlayPause: () async {
-              final dj = session.dj;
-              if (dj.playing) {
-                await ctrl.pauseMusic();
+              final wasPlaying = player.playback.value.playing;
+              if (wasPlaying) {
+                await player.pauseLocal();
               } else {
-                await ctrl.resumeMusic();
+                await player.resumeLocal();
+              }
+              if (session.canSyncServer && liveKey.isNotEmpty) {
+                final ctrl = ref.read(voiceRoomLiveProvider(liveKey).notifier);
+                if (wasPlaying) {
+                  await ctrl.pauseMusic();
+                } else {
+                  await ctrl.resumeMusic();
+                }
               }
             },
             onStop: () async {
-              await ctrl.closeMusicPlayer();
+              await sessionNotifier.closePlayer();
             },
             onMuteToggle: () {
               ref.read(voiceRoomUiProvider.notifier).toggleBackgroundMusic();
             },
             onClose: () async {
-              await ctrl.closeMusicPlayer();
+              await sessionNotifier.closePlayer();
             },
           ),
         ),

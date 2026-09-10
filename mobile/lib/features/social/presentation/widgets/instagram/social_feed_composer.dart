@@ -356,55 +356,65 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
               padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
               child: Row(
                 children: [
-                  _ComposerAction(
-                    icon: Icons.photo_library_rounded,
-                    label: 'Foto',
-                    color: AppThemeColors.accentPink,
-                    onTap: () => _pickImage(ImageSource.gallery),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _ComposerAction(
+                            icon: Icons.photo_library_rounded,
+                            label: 'Foto',
+                            color: AppThemeColors.accentPink,
+                            onTap: () => _pickImage(ImageSource.gallery),
+                          ),
+                          _ComposerAction(
+                            icon: Icons.videocam_rounded,
+                            label: 'Video',
+                            color: const Color(0xFFE85D4A),
+                            onTap: _pickVideo,
+                          ),
+                          _ComposerAction(
+                            icon: Icons.emoji_emotions_outlined,
+                            label: 'Duygu',
+                            color: const Color(0xFFF7B928),
+                            onTap: _showMoodPicker,
+                          ),
+                          IconButton(
+                            tooltip: 'Hashtag',
+                            onPressed: () => _insertText('#'),
+                            icon: const Icon(Icons.tag_rounded, size: 22),
+                            color: AppThemeColors.accentPurple,
+                          ),
+                          IconButton(
+                            tooltip: 'Etiketle',
+                            onPressed: _pickMention,
+                            icon: const Icon(Icons.alternate_email_rounded, size: 22),
+                            color: AppThemeColors.accentCyan,
+                          ),
+                          IconButton(
+                            tooltip: 'Konum',
+                            onPressed: _locationLoading ? null : _addLocation,
+                            icon: _locationLoading
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.location_on_outlined, size: 22),
+                            color: AppThemeColors.onlineGreen,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  _ComposerAction(
-                    icon: Icons.videocam_rounded,
-                    label: 'Video',
-                    color: const Color(0xFFE85D4A),
-                    onTap: _pickVideo,
-                  ),
-                  _ComposerAction(
-                    icon: Icons.emoji_emotions_outlined,
-                    label: 'Duygu',
-                    color: const Color(0xFFF7B928),
-                    onTap: _showMoodPicker,
-                  ),
-                  IconButton(
-                    tooltip: 'Hashtag',
-                    onPressed: () => _insertText('#'),
-                    icon: const Icon(Icons.tag_rounded, size: 22),
-                    color: AppThemeColors.accentPurple,
-                  ),
-                  IconButton(
-                    tooltip: 'Etiketle',
-                    onPressed: _pickMention,
-                    icon: const Icon(Icons.alternate_email_rounded, size: 22),
-                    color: AppThemeColors.accentCyan,
-                  ),
-                  IconButton(
-                    tooltip: 'Konum',
-                    onPressed: _locationLoading ? null : _addLocation,
-                    icon: _locationLoading
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.location_on_outlined, size: 22),
-                    color: AppThemeColors.onlineGreen,
-                  ),
-                  const Spacer(),
+                  const SizedBox(width: 6),
                   FilledButton(
                     onPressed: _canShare ? _submit : null,
                     style: FilledButton.styleFrom(
                       backgroundColor: AppThemeColors.accentPink,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      minimumSize: const Size(0, 36),
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      minimumSize: const Size(76, 36),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     child: _submitting
                         ? const SizedBox(
@@ -417,7 +427,10 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
                           )
                         : const Text(
                             'Paylaş',
-                            style: TextStyle(fontWeight: FontWeight.w800),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                            ),
                           ),
                   ),
                 ],

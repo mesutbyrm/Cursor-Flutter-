@@ -107,12 +107,19 @@ class _HeroCopy extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final titleStyle = GoogleFonts.playfairDisplay(
+    const baseTitle = TextStyle(
       fontSize: 21,
       fontWeight: FontWeight.w700,
       height: 1.22,
       color: Colors.white,
+      fontFamilyFallback: ['serif', 'Roboto'],
     );
+    TextStyle titleStyle;
+    try {
+      titleStyle = GoogleFonts.playfairDisplay(textStyle: baseTitle);
+    } catch (_) {
+      titleStyle = baseTitle;
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

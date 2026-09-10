@@ -1,5 +1,19 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.462+500 (2026-09-10) — Fal hub, mini müzik, Sosyal
+
+### Ana sayfa / sesli mini player
+- Global müzik şeridi artık odadan çıkınca `voiceRoomLiveProvider` başlatmıyor (`detachedMiniPlayer`) — “Bir bölüm yüklenemedi” build hatası giderildi
+- Durdur/kapat: müzik oturumu notifier; oynat/duraklat: yerel DJ player (+ yetkiliyse sunucu sync)
+
+### Fal & Tarot hub
+- Fal türleri grid anında mount; lazy bölümlerde RepaintBoundary raster hayaleti kapatıldı
+- Hero başlık fontu offline Google Fonts için fallback
+
+### Sosyal
+- Hikaye şeridi Sosyal sekmesinden kaldırıldı (Ana sayfa hikayeleri duruyor)
+- Paylaş düğmesi yatay kaydırmalı araç çubuğu + sabit genişlik — “Payla…” kırpması düzeltildi
+
 ## 1.0.461+499 (2026-09-10) — PK layout, oda sayımı, giriş, CI gate
 
 ### Canlı PK

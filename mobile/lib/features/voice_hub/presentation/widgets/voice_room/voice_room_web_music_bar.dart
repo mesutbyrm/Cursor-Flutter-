@@ -18,6 +18,8 @@ class VoiceRoomWebMusicBar extends ConsumerStatefulWidget {
     super.key,
     required this.dj,
     this.roomLiveKey,
+    /// Ana sayfa / sekme mini player — [voiceRoomLiveProvider] başlatmaz.
+    this.detachedMiniPlayer = false,
     this.onPlayPause,
     this.onStop,
     this.onMuteToggle,
@@ -32,6 +34,7 @@ class VoiceRoomWebMusicBar extends ConsumerStatefulWidget {
 
   final ChatRoomDjState dj;
   final String? roomLiveKey;
+  final bool detachedMiniPlayer;
   final VoidCallback? onPlayPause;
   final VoidCallback? onStop;
   final VoidCallback? onMuteToggle;
@@ -55,7 +58,8 @@ class _VoiceRoomWebMusicBarState extends ConsumerState<VoiceRoomWebMusicBar> {
   Widget build(BuildContext context) {
     final dj = widget.dj;
     final liveKey = widget.roomLiveKey?.trim() ?? '';
-    final unified = liveKey.isNotEmpty
+    final useDetached = widget.detachedMiniPlayer;
+    final unified = !useDetached && liveKey.isNotEmpty
         ? ref.watch(voiceRoomUnifiedMusicProvider(liveKey))
         : null;
     final track = unified?.nowPlaying ??
@@ -83,7 +87,9 @@ class _VoiceRoomWebMusicBarState extends ConsumerState<VoiceRoomWebMusicBar> {
             : '');
 
     final liveKeyTrim = widget.roomLiveKey?.trim();
-    final songState = liveKeyTrim != null && liveKeyTrim.isNotEmpty
+    final songState = !useDetached &&
+            liveKeyTrim != null &&
+            liveKeyTrim.isNotEmpty
         ? ref.watch(roomSongBlocProvider(liveKeyTrim)).state
         : null;
     final iframeMode = songState?.hasTrack == true &&
@@ -120,7 +126,9 @@ class _VoiceRoomWebMusicBarState extends ConsumerState<VoiceRoomWebMusicBar> {
             : (displayTrack.duration?.isNotEmpty == true
                 ? displayTrack.duration!
                 : '—:—'),
-        progress: iframeProgress > 0 ? iframeProgress : null,
+        progress: _safeUnitInterval(
+          iframeProgress > 0 ? iframeProgress : null,
+        ),
         effectiveVolume: widget.musicMuted ? 0.0 : _volume,
         loading: loading,
         showVolume: false,
@@ -150,11 +158,12 @@ class _VoiceRoomWebMusicBarState extends ConsumerState<VoiceRoomWebMusicBar> {
             final total = displayTrack.duration?.isNotEmpty == true
                 ? displayTrack.duration!
                 : (hasDuration ? _format(pb.duration) : '—:—');
-            final progress = iframeProgress > 0
+            final rawProgress = iframeProgress > 0
                 ? iframeProgress
                 : (hasDuration && pb.duration.inMilliseconds > 0
                     ? pb.progress
                     : (loading ? null : 0.0));
+            final progress = _safeUnitInterval(rawProgress);
 
             return _buildBarShell(
               context,
@@ -458,6 +467,14 @@ class _VoiceRoomWebMusicBarState extends ConsumerState<VoiceRoomWebMusicBar> {
         ),
       ),
     );
+  }
+
+  static double? _safeUnitInterval(double? value) {
+    if (value == null) return null;
+    if (value.isNaN || value.isInfinite) return null;
+    if (value <= 0) return 0;
+    if (value >= 1) return 1;
+    return value;
   }
 
   int _waitingCount(ChatRoomDjState dj) {

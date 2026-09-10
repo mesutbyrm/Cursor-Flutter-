@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../providers/social_providers.dart';
 import '../utils/social_feed_refresh.dart';
-import '../widgets/instagram/social_stories_rail.dart';
 import '../widgets/instagram/social_instagram_app_bar.dart';
 import '../widgets/instagram/social_feed_composer.dart';
 import '../widgets/social_discover_shortcuts.dart';
@@ -80,7 +79,6 @@ class _SocialPageState extends ConsumerState<SocialPage>
             RepaintBoundary(
               child: SocialInstagramAppBar(onPostPublished: _scrollFeedToTop),
             ),
-            const RepaintBoundary(child: SocialStoriesRail()),
             const RepaintBoundary(child: SocialDiscoverShortcuts()),
             RepaintBoundary(
               child: SocialFeedComposer(onPostPublished: _scrollFeedToTop),
