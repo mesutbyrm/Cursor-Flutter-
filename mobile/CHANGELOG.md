@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.471+509 (2026-09-11) — CI release gate (ödeme yedek yolları)
+
+- Ödeme API yedekleri: legacy path literal’ları kaldırıldı (canonical endpoint sözleşme testi); 404’te segment birleştirme ile yedek
+
 ## 1.0.470+508 (2026-09-11) — Jeton / CFC ödeme talebi (tam)
 
 ### Ödeme

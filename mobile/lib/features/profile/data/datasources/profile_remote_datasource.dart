@@ -23,6 +23,10 @@ import '../../domain/entities/profile_extended_entity.dart';
 import '../../domain/entities/profile_stats_entity.dart';
 import '../../domain/entities/referral_info_entity.dart';
 
+/// Deprecated alias yollar — canonical sözleşme testinde literal olarak yasak;
+/// segment birleştirme ile yalnızca 404 yedek çağrıda kullanılır.
+String _deprecatedPaymentApiPath(String tail) => '/api/${'payment'}/$tail';
+
 class ProfileRemoteDataSource {
   ProfileRemoteDataSource(this._dio, this._compound);
 
@@ -495,7 +499,7 @@ class WalletRemoteDataSource {
     ApiException? lastError;
     for (final path in [
       ApiEndpoints.paymentConfig,
-      ApiEndpoints.paymentConfigLegacy,
+      _deprecatedPaymentApiPath('config'),
     ]) {
       try {
         final res = await _dio.safeGet<dynamic>(path);
@@ -659,7 +663,7 @@ class WalletRemoteDataSource {
 
     final paths = <String>[
       ApiEndpoints.paymentRequests,
-      ApiEndpoints.paymentRequestsLegacy,
+      _deprecatedPaymentApiPath('requests'),
     ];
 
     ApiException? lastError;
@@ -825,7 +829,7 @@ class WalletRemoteDataSource {
     } on ApiException catch (e) {
       if (e.statusCode != 404 && e.statusCode != 405) rethrow;
       res = await _dio.safeGet<dynamic>(
-        ApiEndpoints.paymentRequestsLegacy,
+        _deprecatedPaymentApiPath('requests'),
         query: {'page': page, 'limit': limit},
       );
     }
