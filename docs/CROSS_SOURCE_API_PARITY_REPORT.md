@@ -1,6 +1,6 @@
 # Cross-source API / MCP / Flutter parity report
 
-> **Generated:** 2026-09-11 21:13 UTC (`scripts/generate_cross_source_parity_report.py`)
+> **Generated:** 2026-09-11 21:21 UTC (`scripts/generate_cross_source_parity_report.py`)
 
 ## 1. Kaynak önceliği (CURRENT)
 
@@ -27,11 +27,11 @@
 
 | Ölçüm | Adet |
 |-------|-----:|
-| `api_endpoints.dart` sabitleri | 290 |
-| Tüm `lib/` `/api/` literal | **310** |
-| OpenAPI ile normalize eşleşme | **196** |
+| `api_endpoints.dart` sabitleri | 291 |
+| Tüm `lib/` `/api/` literal | **311** |
+| OpenAPI ile normalize eşleşme | **197** |
 | Flutter-only (OpenAPI’de yok / farklı şablon) | **114** |
-| OpenAPI path Flutter’da hiç geçmiyor (yaklaşık) | **306** |
+| OpenAPI path Flutter’da hiç geçmiyor (yaklaşık) | **305** |
 | Kılavuzda geçen `/api/...` backtick | **206** |
 
 ### 3.1 Flutter-only gruplar (ilk 15)

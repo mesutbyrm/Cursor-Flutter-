@@ -875,7 +875,10 @@ abstract final class ApiEndpoints {
   /// AI fal erişim ayarları (admin panel — mobil salt okunur).
   static const fortuneAccessSettings = '/api/fortune-access/settings';
 
-  /// Fal erişim kontrolü — kılavuz §9.5 `?fortuneType=`.
+  /// Fal erişim / reklam limiti (OpenAPI kanonik; settings 404 olabilir).
+  static const fortuneAccessIpStatus = '/api/fortune-access/ip-status';
+
+  /// Fal erişim kontrolü — OpenAPI POST `{ fortuneType }`.
   static const fortuneAccessCheck = '/api/fortune-access/check';
 
   /// Jeton ile fal kilidi tüketimi (opsiyonel; yoksa fal POST'unda düşülür).

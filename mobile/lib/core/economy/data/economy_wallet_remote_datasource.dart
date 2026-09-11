@@ -15,15 +15,24 @@ class EconomyWalletRemoteDataSource {
     int offset = 0,
     String currency = 'all',
   }) async {
+    final query = {
+      'limit': limit,
+      'offset': offset,
+      'currency': currency,
+    };
+
+    final canonical = await _tryFetch(ApiEndpoints.wallet, query);
+    if (canonical != null) return canonical;
+
+    return _tryFetch(ApiEndpoints.userWallet, query);
+  }
+
+  Future<EconomyWalletSnapshot?> _tryFetch(
+    String path,
+    Map<String, dynamic> query,
+  ) async {
     try {
-      final res = await _dio.safeGet<dynamic>(
-        ApiEndpoints.userWallet,
-        query: {
-          'limit': limit,
-          'offset': offset,
-          'currency': currency,
-        },
-      );
+      final res = await _dio.safeGet<dynamic>(path, query: query);
       final body = res.data;
       if (body is! Map) return null;
       final map = asJsonMap(body);

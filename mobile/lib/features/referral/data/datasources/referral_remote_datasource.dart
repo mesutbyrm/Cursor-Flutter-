@@ -11,21 +11,131 @@ class ReferralRemoteDataSource {
   final Dio _dio;
 
   Future<ReferralStatsEntity> fetchStats() async {
-    final res = await _dio.safeGet<dynamic>(ApiEndpoints.referralStats);
-    return _parseStats(res.data);
+    final fromCanonical = await _tryGetMap(ApiEndpoints.referral);
+    if (fromCanonical != null) {
+      return _parseStats(fromCanonical);
+    }
+    for (final path in [ApiEndpoints.referralStats, ApiEndpoints.referralMe]) {
+      final map = await _tryGetMap(path);
+      if (map != null) return _parseStats(map);
+    }
+    return const ReferralStatsEntity(referralCode: '', shareUrl: '');
   }
 
   Future<List<ReferralUserEntity>> fetchUsers() async {
-    final res = await _dio.safeGet<dynamic>(ApiEndpoints.referralUsers);
-    final body = res.data;
-    dynamic list;
-    if (body is Map) {
-      final map = asJsonMap(body);
-      final data = map['data'] is Map ? asJsonMap(map['data']) : map;
-      list = data['referrals'] ?? data['items'] ?? [];
-    } else {
-      list = const [];
+    final root = await _tryGetMap(ApiEndpoints.referral);
+    if (root != null) {
+      final fromRoot = _parseUsersList(root);
+      if (fromRoot.isNotEmpty) return fromRoot;
     }
+    final legacy = await _tryGetMap(ApiEndpoints.referralUsers);
+    if (legacy != null) {
+      return _parseUsersList(legacy);
+    }
+    return const [];
+  }
+
+  Future<ReferralStatsEntity> fetchEarnings() async {
+    final economy = await _tryGetMap(
+      ApiEndpoints.userReferralEarnings,
+      query: {'limit': 25, 'offset': 0},
+    );
+    if (economy != null) {
+      final stats = await fetchStats();
+      final summary = economy['summary'] is Map
+          ? asJsonMap(economy['summary'])
+          : economy;
+      return ReferralStatsEntity(
+        referralCode: stats.referralCode,
+        shareUrl: stats.shareUrl,
+        headline: stats.headline,
+        rewardHint: stats.rewardHint,
+        invitedCount: stats.invitedCount,
+        activeReferralCount: stats.activeReferralCount,
+        totalEarnings: asInt(pick(summary, ['total', 'totalEarnings', 'totalCommission'])),
+        monthEarnings: asInt(pick(summary, ['thisMonth', 'monthEarnings', 'monthCommission'])),
+        pendingEarnings: asInt(pick(summary, ['pending', 'pendingEarnings'])),
+        availableEarnings: asInt(pick(summary, ['available', 'availableEarnings'])),
+        reversedEarnings: asInt(pick(summary, ['reversed', 'reversedEarnings'])),
+        cappedEarnings: asInt(pick(summary, ['capped', 'cappedEarnings'])),
+        lifetimeEarnings: asInt(pick(summary, ['lifetime', 'lifetimeEarnings'])),
+        monthlyLimit: asInt(pick(summary, ['monthlyLimit'])),
+        lifetimeLimit: asInt(pick(summary, ['lifetimeLimit'])),
+      );
+    }
+
+    final legacy = await _tryGetMap(ApiEndpoints.referralEarnings);
+    if (legacy != null) {
+      final stats = await fetchStats();
+      final data = legacy['data'] is Map ? asJsonMap(legacy['data']) : legacy;
+      return ReferralStatsEntity(
+        referralCode: stats.referralCode,
+        shareUrl: stats.shareUrl,
+        headline: stats.headline,
+        rewardHint: stats.rewardHint,
+        invitedCount: stats.invitedCount,
+        activeReferralCount: stats.activeReferralCount,
+        totalEarnings: asInt(pick(data, ['total', 'totalEarnings'])),
+        monthEarnings: asInt(pick(data, ['thisMonth', 'monthEarnings'])),
+        pendingEarnings: asInt(pick(data, ['pending', 'pendingEarnings'])),
+        availableEarnings: asInt(pick(data, ['available', 'availableEarnings'])),
+        reversedEarnings: asInt(pick(data, ['reversed', 'reversedEarnings'])),
+        cappedEarnings: asInt(pick(data, ['capped', 'cappedEarnings'])),
+        lifetimeEarnings: asInt(pick(data, ['lifetime', 'lifetimeEarnings'])),
+        monthlyLimit: asInt(pick(data, ['monthlyLimit'])),
+        lifetimeLimit: asInt(pick(data, ['lifetimeLimit'])),
+      );
+    }
+
+    return fetchStats();
+  }
+
+  Future<List<ReferralLedgerEntryEntity>> fetchLedger({int limit = 50}) async {
+    final economy = await _tryGetMap(
+      ApiEndpoints.userReferralEarnings,
+      query: {'limit': limit, 'offset': 0},
+    );
+    if (economy != null) {
+      final items = economy['items'];
+      if (items is List && items.isNotEmpty) {
+        return items
+            .whereType<Map>()
+            .map((m) => _parseLedgerFromCommission(asJsonMap(m)))
+            .toList();
+      }
+    }
+
+    final legacy = await _tryGetMap(
+      ApiEndpoints.referralLedger,
+      query: {'limit': limit},
+    );
+    if (legacy != null) {
+      return _parseLedgerList(legacy);
+    }
+    return const [];
+  }
+
+  Future<Map<String, dynamic>?> _tryGetMap(
+    String path, {
+    Map<String, dynamic>? query,
+  }) async {
+    try {
+      final res = await _dio.safeGet<dynamic>(path, query: query);
+      final body = res.data;
+      if (body is! Map) return null;
+      return asJsonMap(body);
+    } on DioException catch (e) {
+      final code = e.response?.statusCode;
+      if (code == 404 || code == 405) return null;
+      rethrow;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  List<ReferralUserEntity> _parseUsersList(Map<String, dynamic> map) {
+    final data = map['data'] is Map ? asJsonMap(map['data']) : map;
+    final list = data['referrals'] ?? data['users'] ?? data['items'] ?? [];
     if (list is! List) return const [];
     return list
         .whereType<Map>()
@@ -33,45 +143,9 @@ class ReferralRemoteDataSource {
         .toList();
   }
 
-  Future<ReferralStatsEntity> fetchEarnings() async {
-    final res = await _dio.safeGet<dynamic>(ApiEndpoints.referralEarnings);
-    final body = res.data;
-    final map = body is Map ? asJsonMap(body) : <String, dynamic>{};
+  List<ReferralLedgerEntryEntity> _parseLedgerList(Map<String, dynamic> map) {
     final data = map['data'] is Map ? asJsonMap(map['data']) : map;
-    final stats = await fetchStats();
-    return ReferralStatsEntity(
-      referralCode: stats.referralCode,
-      shareUrl: stats.shareUrl,
-      headline: stats.headline,
-      rewardHint: stats.rewardHint,
-      invitedCount: stats.invitedCount,
-      activeReferralCount: stats.activeReferralCount,
-      totalEarnings: asInt(pick(data, ['total', 'totalEarnings'])),
-      monthEarnings: asInt(pick(data, ['thisMonth', 'monthEarnings'])),
-      pendingEarnings: asInt(pick(data, ['pending', 'pendingEarnings'])),
-      availableEarnings: asInt(pick(data, ['available', 'availableEarnings'])),
-      reversedEarnings: asInt(pick(data, ['reversed', 'reversedEarnings'])),
-      cappedEarnings: asInt(pick(data, ['capped', 'cappedEarnings'])),
-      lifetimeEarnings: asInt(pick(data, ['lifetime', 'lifetimeEarnings'])),
-      monthlyLimit: asInt(pick(data, ['monthlyLimit'])),
-      lifetimeLimit: asInt(pick(data, ['lifetimeLimit'])),
-    );
-  }
-
-  Future<List<ReferralLedgerEntryEntity>> fetchLedger({int limit = 50}) async {
-    final res = await _dio.safeGet<dynamic>(
-      ApiEndpoints.referralLedger,
-      query: {'limit': limit},
-    );
-    final body = res.data;
-    dynamic list;
-    if (body is Map) {
-      final map = asJsonMap(body);
-      final data = map['data'] is Map ? asJsonMap(map['data']) : map;
-      list = data['items'] ?? [];
-    } else {
-      list = const [];
-    }
+    final list = data['items'] ?? data['ledger'] ?? [];
     if (list is! List) return const [];
     return list
         .whereType<Map>()
@@ -132,6 +206,20 @@ class ReferralRemoteDataSource {
       grossJeton: asInt(pick(m, ['grossJeton'])),
       beneficiaryShare: asInt(pick(m, ['beneficiaryShare'])),
       referralCommission: asInt(pick(m, ['referralCommission'])),
+      status: pick(m, ['status'])?.toString() ?? '',
+      cappedAmount: asInt(pick(m, ['cappedAmount'])),
+      createdAt: pick(m, ['createdAt'])?.toString() ?? '',
+    );
+  }
+
+  ReferralLedgerEntryEntity _parseLedgerFromCommission(Map<String, dynamic> m) {
+    return ReferralLedgerEntryEntity(
+      id: pick(m, ['id'])?.toString() ?? '',
+      referredUserId: pick(m, ['referredUserId', 'userId'])?.toString() ?? '',
+      sourceType: pick(m, ['sourceType', 'type'])?.toString() ?? '',
+      grossJeton: asInt(pick(m, ['grossJeton', 'amount'])),
+      beneficiaryShare: asInt(pick(m, ['beneficiaryShare'])),
+      referralCommission: asInt(pick(m, ['referralCommission', 'commission'])),
       status: pick(m, ['status'])?.toString() ?? '',
       cappedAmount: asInt(pick(m, ['cappedAmount'])),
       createdAt: pick(m, ['createdAt'])?.toString() ?? '',

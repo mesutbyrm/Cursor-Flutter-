@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.474+512 (2026-09-11) — Flutter-only API denetimi, backend hizalama
+
+- **Rapor:** `docs/FLUTTER_ONLY_ENDPOINT_AUDIT.md` — 114 OpenAPI-dışı literal için MATCH / YEDEK / KALDIR (`scripts/generate_flutter_only_endpoint_audit.py`)
+- **Cüzdan:** birincil `GET /api/wallet`, yedek `GET /api/user/wallet`
+- **Fal erişim:** `POST /api/fortune-access/check`; ayarlar `ip-status` → `settings` yedek
+- **Referral:** birincil `GET /api/referral` + `GET /api/user/referral-earnings`; eski `/api/referral/stats|users|earnings` yedek
+- **Kılavuz:** `getFortuneAccess` POST olarak güncellendi
+
 ## 1.0.473+511 (2026-09-11) — Canlı fal UI, admin hediye jeton modu
 
 - **Admin/kurucu hediye:** gönderimden önce **Staff jeton** / **Gerçek jeton** seçimi (`financeMode` API)

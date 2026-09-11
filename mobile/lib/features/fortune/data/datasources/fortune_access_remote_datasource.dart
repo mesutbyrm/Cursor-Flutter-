@@ -12,24 +12,30 @@ class FortuneAccessRemoteDataSource {
   final Dio _dio;
 
   Future<FortuneAccessConfig?> fetchSettings() async {
-    try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.fortuneAccessSettings);
-      final data = res.data;
-      if (data is! Map) return null;
-      final map = _unwrap(data);
-      return FortuneAccessConfig.fromJson(map);
-    } catch (_) {
-      return null;
+    for (final path in [
+      ApiEndpoints.fortuneAccessIpStatus,
+      ApiEndpoints.fortuneAccessSettings,
+    ]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(path);
+        final data = res.data;
+        if (data is! Map) continue;
+        final map = _unwrap(data);
+        if (map.isEmpty) continue;
+        return FortuneAccessConfig.fromJson(map);
+      } catch (_) {
+        continue;
+      }
     }
+    return null;
   }
 
-  /// Kılavuz §9.5 — fal açılmadan önce erişim kontrolü.
+  /// Kılavuz §9.5 / OpenAPI — POST `/api/fortune-access/check`.
   Future<Map<String, dynamic>?> checkAccess({required String fortuneType}) async {
     try {
-      final res = await _dio.safeGet<dynamic>(
+      final res = await _dio.safePost<dynamic>(
         ApiEndpoints.fortuneAccessCheck,
-        query: {'fortuneType': fortuneType},
-        forceRefresh: true,
+        data: {'fortuneType': fortuneType},
       );
       if (res.data is! Map) return null;
       return _unwrap(res.data);

@@ -2201,7 +2201,7 @@ Auth gerektiren endpoint'ler `Authorization: Bearer <accessToken>` header'ı bek
 | `getKursunDokme` | POST | `/api/fortunes/kursundokme` | ✅ | `{concern?}` |
 | `getDailyHoroscope` | POST | `/api/horoscope/daily` | ✅ | `{zodiacSign}` |
 | `getFortuneCards` | GET | `/api/homepage-fortune-cards` | ❌ | - |
-| `getFortuneAccess` | GET | `/api/fortune-access/check` | ✅ | `?fortuneType=kahve` |
+| `getFortuneAccess` | POST | `/api/fortune-access/check` | ✅ | `{ "fortuneType": "kahve" }` |
 | `getFortuneRequestTypes` | GET | `/api/fortune-request-types` | ❌ | - |
 
 > **Not:** Fal endpoint'leri SSE (streaming) yanıt döner. Response `text/event-stream` formatında gelir. Her `data:` satırı metin parçası içerir. Son event `[DONE]` ile biter.
