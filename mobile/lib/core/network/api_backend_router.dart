@@ -34,6 +34,8 @@ abstract final class ApiBackendRouter {
   }
 
   /// Sesli oda PK — `GET/POST /api/chat/rooms/{roomId}/pk[...]`.
+  /// Birleşik/canlı PK REST — `/api/pk/*`, `/api/live/pk/*` (games).
+  /// `POST /api/video-streams/pk` ana backend’de kalır.
   static bool _isVoiceRoomPkPath(String path) {
     if (!path.startsWith('/api/chat/rooms/')) return false;
     final segments =

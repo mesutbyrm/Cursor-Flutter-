@@ -12,7 +12,18 @@ mkdir -p "$REPORT_DIR"
 
 PASS=0
 FAIL=0
+GATE1_STATUS="UNKNOWN"
+GATE2_STATUS="UNKNOWN"
+TEST_LOG="${TEST_LOG:-/tmp/canlifal-flutter-test.log}"
 declare -a GATE_LINES=()
+
+write_ci_outcomes() {
+  {
+    echo "GATE_ANALYZE=$GATE1_STATUS"
+    echo "GATE_TESTS=$GATE2_STATUS"
+    echo "GATE_FAIL_COUNT=$FAIL"
+  } >"$REPORT_DIR/RELEASE_GATE_CI_OUTCOMES.env"
+}
 
 gate_record() {
   local id="$1" name="$2" status="$3" detail="${4:-}"
@@ -124,14 +135,18 @@ if command -v flutter >/dev/null 2>&1; then
   if bash "$ROOT/scripts/dart-analyze-gate.sh"; then
     gate_record 1 "flutter analyze sıfır hata" PASS "ERROR yok"
     ANALYZE_OK=1
+    GATE1_STATUS="PASS"
   else
     gate_record 1 "flutter analyze sıfır hata" FAIL "ERROR var — /tmp/canlifal-analyze.txt"
+    GATE1_STATUS="FAIL"
     echo ""
-    echo "❌ Gate 1 başarısız — ilk analyze hataları:"
-    grep -E '^\s*error\s+-' /tmp/canlifal-analyze.txt 2>/dev/null | head -15 || true
+    echo "❌ Gate 1 başarısız — komut: scripts/dart-analyze-gate.sh (exit $?)"
+    echo "   Log: /tmp/canlifal-analyze.txt"
+    grep -E '^\s*error\s+-|error •' /tmp/canlifal-analyze.txt 2>/dev/null | head -20 || true
   fi
 else
   gate_record 1 "flutter analyze sıfır hata" FAIL "flutter SDK yok"
+  GATE1_STATUS="FAIL"
 fi
 
 # Gate 2 — flutter test
@@ -139,16 +154,28 @@ echo ""
 echo "── Gate 2: flutter test ──"
 TEST_OK=0
 if [[ "$ANALYZE_OK" -eq 1 ]]; then
-  if (cd "$ROOT/mobile" && flutter test --reporter compact); then
+  set +e
+  (cd "$ROOT/mobile" && flutter test --reporter compact 2>&1 | tee "$TEST_LOG")
+  test_ec=${PIPESTATUS[0]}
+  set -e
+  if [[ "$test_ec" -eq 0 ]]; then
     gate_record 2 "flutter test tamamı" PASS "tüm testler geçti"
     TEST_OK=1
+    GATE2_STATUS="PASS"
   else
-    gate_record 2 "flutter test tamamı" FAIL "başarısız test var"
+    gate_record 2 "flutter test tamamı" FAIL "exit=$test_ec — $TEST_LOG"
+    GATE2_STATUS="FAIL"
     echo ""
-    echo "❌ Gate 2 başarısız — son test çıktısına bakın (compile error veya assertion)."
+    echo "❌ Gate 2 başarısız — komut: (cd mobile && flutter test) exit=$test_ec"
+    echo "   Başarısız test satırları ([E]):"
+    grep -E '\[E\]|Expected:|Actual:' "$TEST_LOG" 2>/dev/null | head -40 || true
+    echo ""
+    echo "   Özet:"
+    grep -E 'Some tests failed|\+[0-9]+ ~[0-9]+ -[0-9]+:' "$TEST_LOG" 2>/dev/null | tail -5 || true
   fi
 else
-  gate_record 2 "flutter test tamamı" FAIL "Gate 1 başarısız"
+  gate_record 2 "flutter test tamamı" FAIL "Gate 1 başarısız — atlandı"
+  GATE2_STATUS="FAIL"
 fi
 
 # Gate 3–8 — API
@@ -169,6 +196,7 @@ else
 fi
 
 write_final_report
+write_ci_outcomes
 
 if [[ "$FAIL" -gt 0 ]]; then
   echo ""

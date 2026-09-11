@@ -211,8 +211,11 @@ jobs:
           path: |
             docs/RELEASE_GATE_REPORT.md
             docs/RELEASE_GATE_REPORT.json
+            docs/RELEASE_GATE_CI_OUTCOMES.env
             docs/ACCEPTANCE_TEST_REPORT.md
             docs/ACCEPTANCE_TEST_REPORT.json
+            /tmp/canlifal-flutter-test.log
+            /tmp/canlifal-analyze.txt
           retention-days: 14
 
       - name: Firebase google-services.json
@@ -780,9 +783,22 @@ jobs:
           BUILD_SHA: ${{ steps.build_sha.outputs.sha }}
         run: |
           set +e
-          gate() { if [[ "$1" == "success" ]]; then echo PASS; else echo FAIL; fi; }
-          ANALYZE=$(gate "${{ steps.release_gate.outcome }}")
-          TESTS=$(gate "${{ steps.release_gate.outcome }}")
+          gate() {
+            case "$1" in
+              PASS|success) echo PASS ;;
+              FAIL|failure) echo FAIL ;;
+              *) echo FAIL ;;
+            esac
+          }
+          if [[ -f docs/RELEASE_GATE_CI_OUTCOMES.env ]]; then
+            # shellcheck source=/dev/null
+            source docs/RELEASE_GATE_CI_OUTCOMES.env
+            ANALYZE=$(gate "${GATE_ANALYZE:-FAIL}")
+            TESTS=$(gate "${GATE_TESTS:-FAIL}")
+          else
+            ANALYZE=$(gate "${{ steps.release_gate.outcome }}")
+            TESTS=$(gate "${{ steps.release_gate.outcome }}")
+          fi
           APK_BUILD=$(gate "${{ steps.gate9_build.outcome }}")
           SIGNING=$(gate "${{ steps.release_keystore.outcome }}")
           ARTIFACT=$(gate "${{ steps.artifact_upload.outcome }}")
