@@ -41,6 +41,47 @@ void main() {
     expect(pkg.coins, 500);
   });
 
+  test('normalizePaymentRequestBody keeps jeton coins and packageId', () {
+    final body = normalizePaymentRequestBody({
+      'requestType': 'jeton',
+      'type': 'jeton',
+      'method': 'papara',
+      'packageId': 'p100',
+      'coins': 100,
+      'amount': 100,
+    });
+    expect(body['requestType'], 'jeton');
+    expect(body['coins'], 100);
+    expect(body['amount'], 100);
+    expect(body['packageId'], 'p100');
+    expect(body.containsKey('priceTry'), isFalse);
+  });
+
+  test('normalizePaymentRequestBody CFC strips coins', () {
+    final body = normalizePaymentRequestBody({
+      'requestType': 'cfc',
+      'type': 'cfc',
+      'method': 'bank',
+      'amount': 200,
+      'coins': 999,
+    });
+    expect(body['requestType'], 'cfc');
+    expect(body['amount'], 200);
+    expect(body.containsKey('coins'), isFalse);
+    expect(body['method'], 'bank_transfer');
+  });
+
+  test('buildCfcPaymentRequest is CFC-only body', () {
+    final body = buildCfcPaymentRequest(
+      cfcAmount: 150,
+      method: 'papara',
+    );
+    expect(body['requestType'], 'cfc');
+    expect(body['amount'], 150);
+    expect(body.containsKey('coins'), isFalse);
+    expect(body.containsKey('packageId'), isFalse);
+  });
+
   test('buildJetonPaymentRequest sends amount for API validation', () {
     final body = buildJetonPaymentRequest(
       package: const JetonPackageEntity(

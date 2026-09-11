@@ -10,6 +10,7 @@ import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glow_panel.dart';
+import '../../data/jeton_payment_request.dart';
 import '../../domain/entities/payment_config_entity.dart';
 import '../../domain/entities/payment_method_entity.dart';
 import '../../../admin/presentation/providers/admin_providers.dart';
@@ -255,16 +256,18 @@ class _CfcNativeCheckoutState extends ConsumerState<CfcNativeCheckout> {
     }
     setState(() => _submitting = true);
     try {
-      await ref.read(walletRepositoryProvider).submitPaymentRequest({
-        'requestType': 'cfc',
-        'type': 'cfc',
-        'amount': amount,
-        'method': _method.name,
-        'senderInfo': _senderCtrl.text.trim().isEmpty ? null : _senderCtrl.text.trim(),
-        'notes': _notesCtrl.text.trim().isEmpty
-            ? '$cfcLabel yükleme · ${_method.name}'
-            : _notesCtrl.text.trim(),
-      });
+      await ref.read(walletRepositoryProvider).submitPaymentRequest(
+            buildCfcPaymentRequest(
+              cfcAmount: amount,
+              method: _method.name,
+              senderInfo: _senderCtrl.text.trim().isEmpty
+                  ? null
+                  : _senderCtrl.text.trim(),
+              notes: _notesCtrl.text.trim().isEmpty
+                  ? '$cfcLabel yükleme · ${_method.name}'
+                  : _notesCtrl.text.trim(),
+            ),
+          );
       if (!mounted) return;
       ref.refreshWalletCache(force: true);
       ref.invalidate(paymentRequestsNotifierProvider);

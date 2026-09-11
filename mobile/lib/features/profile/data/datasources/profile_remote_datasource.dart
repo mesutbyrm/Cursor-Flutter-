@@ -15,6 +15,7 @@ import '../../../auth/domain/entities/user_entity.dart';
 import '../../../wallet/domain/cfc_payment_request_entity.dart';
 import '../../../wallet/domain/wallet_balances.dart';
 import '../jeton_packages_catalog.dart';
+import '../jeton_payment_request.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
 import '../../domain/entities/payment_method_entity.dart';
@@ -491,19 +492,33 @@ class WalletRemoteDataSource {
 
   /// Site ödeme ayarları — API dolu alanları korur, yalnız boş alanları tamamlar.
   Future<PaymentConfigEntity> paymentConfig() async {
-    final res = await _dio.safeGet<dynamic>(ApiEndpoints.paymentConfig);
-    final data = res.data;
-    if (data is String &&
-        (data.contains('<!DOCTYPE') || data.contains('<html'))) {
-      throw const ApiException(
-        'Ödeme ayarları alınamadı (sunucu HTML döndürdü). Oturumu kontrol edin.',
-      );
+    ApiException? lastError;
+    for (final path in [
+      ApiEndpoints.paymentConfig,
+      ApiEndpoints.paymentConfigLegacy,
+    ]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(path);
+        final data = res.data;
+        if (data is String &&
+            (data.contains('<!DOCTYPE') || data.contains('<html'))) {
+          throw const ApiException(
+            'Ödeme ayarları alınamadı (sunucu HTML döndürdü). Oturumu kontrol edin.',
+          );
+        }
+        if (data is! Map) {
+          return PaymentDefaults.config;
+        }
+        final remote = PaymentConfigEntity.fromJson(_unwrap(data));
+        return PaymentDefaults.merge(remote);
+      } on ApiException catch (e) {
+        lastError = e;
+        if (e.statusCode == 404 || e.statusCode == 405) continue;
+        rethrow;
+      }
     }
-    if (data is! Map) {
-      return PaymentDefaults.config;
-    }
-    final remote = PaymentConfigEntity.fromJson(_unwrap(data));
-    return PaymentDefaults.merge(remote);
+    if (lastError != null) throw lastError;
+    return PaymentDefaults.config;
   }
 
   /// Ödeme kanalları — `GET /api/payments/methods`.
@@ -618,7 +633,8 @@ class WalletRemoteDataSource {
     }
   }
 
-  Future<void> submitPaymentRequest(Map<String, dynamic> body) async {
+  Future<void> submitPaymentRequest(Map<String, dynamic> rawBody) async {
+    final body = normalizePaymentRequestBody(rawBody);
     final access = await _tokens.readAccess();
     final hasJwt = access != null &&
         access.isNotEmpty &&
@@ -633,8 +649,17 @@ class WalletRemoteDataSource {
       );
     }
 
+    PaymentDebugLog.log('submitNormalized', {
+      'requestType': body['requestType'],
+      'amount': body['amount'],
+      'coins': body['coins'],
+      'packageId': body['packageId'],
+      'method': body['method'],
+    });
+
     final paths = <String>[
       ApiEndpoints.paymentRequests,
+      ApiEndpoints.paymentRequestsLegacy,
     ];
 
     ApiException? lastError;
@@ -659,6 +684,24 @@ class WalletRemoteDataSource {
             throw ApiException(
               'Zaten bekleyen bir ödeme talebiniz var. Jeton mağazasındaki '
               '"Talepleri iptal et" ile temizleyip yeniden deneyin.',
+              statusCode: code,
+            );
+          }
+          if (code == 400 && msg.toLowerCase().contains('geçersiz miktar')) {
+            final isJeton = body['requestType'] == 'jeton';
+            throw ApiException(
+              isJeton
+                  ? 'Jeton talebi reddedildi (geçersiz miktar). Paket/jeton sayısını '
+                      'kontrol edip tekrar deneyin veya destek ile iletişime geçin.'
+                  : 'CFC miktarı geçersiz. Minimum tutarı kontrol edip tekrar deneyin.',
+              statusCode: code,
+            );
+          }
+          if (code == 400 &&
+              msg.toLowerCase().contains('geçersiz') &&
+              msg.toLowerCase().contains('yöntem')) {
+            throw ApiException(
+              'Geçersiz ödeme yöntemi. Papara, WhatsApp veya havale seçin.',
               statusCode: code,
             );
           }
@@ -773,10 +816,19 @@ class WalletRemoteDataSource {
     int page = 1,
     int limit = 20,
   }) async {
-    final res = await _dio.safeGet<dynamic>(
-      ApiEndpoints.paymentRequests,
-      query: {'page': page, 'limit': limit},
-    );
+    Response<dynamic> res;
+    try {
+      res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.paymentRequests,
+        query: {'page': page, 'limit': limit},
+      );
+    } on ApiException catch (e) {
+      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.paymentRequestsLegacy,
+        query: {'page': page, 'limit': limit},
+      );
+    }
     dynamic data = res.data;
     if (data is Map && data['success'] == true) data = data['data'];
     List<dynamic> raw = const [];

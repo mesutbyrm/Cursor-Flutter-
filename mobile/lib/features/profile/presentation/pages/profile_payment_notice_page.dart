@@ -15,6 +15,7 @@ import '../../../notifications/presentation/providers/notifications_list_notifie
 import '../../../notifications/presentation/providers/notifications_providers.dart';
 import '../../../social/domain/entities/create_social_post_input.dart';
 import '../../../social/presentation/providers/social_providers.dart';
+import '../../data/jeton_payment_request.dart';
 import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_providers.dart';
 
@@ -109,18 +110,36 @@ class _ProfilePaymentNoticePageState
         if (_notesCtrl.text.trim().isNotEmpty) _notesCtrl.text.trim(),
       ].join('\n');
 
-      await ref.read(walletRepositoryProvider).submitPaymentRequest({
-        'requestType': _type,
-        'type': _type,
-        'amount': amount,
-        'method': 'bank_transfer',
-        'senderInfo': _senderCtrl.text.trim(),
-        'notes': notes,
-        if (receiptParts.isNotEmpty) 'receiptReference': receiptParts.join(' · '),
-        'notifyAdmins': true,
-        'notifyStaff': true,
-        'source': 'mobile_payment_notice',
-      });
+      final Map<String, dynamic> body;
+      if (_type == 'jeton') {
+        body = normalizePaymentRequestBody({
+          'requestType': 'jeton',
+          'type': 'jeton',
+          'method': 'bank_transfer',
+          'coins': amount,
+          'amount': amount,
+          'packageId': 'p$amount',
+          'packageTitle': '$amount Jeton',
+          'senderInfo': _senderCtrl.text.trim(),
+          'notes': notes,
+          if (receiptParts.isNotEmpty)
+            'receiptReference': receiptParts.join(' · '),
+          'notifyAdmins': true,
+          'notifyStaff': true,
+          'source': 'mobile_payment_notice',
+        });
+      } else {
+        body = buildCfcPaymentRequest(
+          cfcAmount: amount,
+          method: 'bank_transfer',
+          senderInfo: _senderCtrl.text.trim(),
+          notes: notes,
+          receiptReference:
+              receiptParts.isNotEmpty ? receiptParts.join(' · ') : null,
+          source: 'mobile_payment_notice',
+        );
+      }
+      await ref.read(walletRepositoryProvider).submitPaymentRequest(body);
 
       ref.invalidate(paymentRequestsNotifierProvider);
       ref.invalidate(adminPaymentRequestsProvider);

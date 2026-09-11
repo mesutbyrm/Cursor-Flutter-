@@ -1,5 +1,124 @@
 import '../domain/entities/jeton_package_entity.dart';
+import '../domain/entities/payment_method_entity.dart';
 import '../presentation/premium_2026/profile_membership_helpers.dart';
+
+/// Sunucu `POST /api/payments/requests` — jeton/CFC ayrımı (yerel mirror ile uyumlu).
+Map<String, dynamic> normalizePaymentRequestBody(Map<String, dynamic> raw) {
+  final reqType =
+      (raw['requestType'] ?? raw['type'] ?? '').toString().toLowerCase().trim();
+  final explicitCfc = reqType == 'cfc';
+  final explicitJeton = reqType == 'jeton' || reqType.contains('jeton');
+  final packageIdRaw = raw['packageId']?.toString().trim();
+  final hasPackageId = packageIdRaw != null && packageIdRaw.isNotEmpty;
+  final coinsParsed = int.tryParse('${raw['coins']}');
+  final hasCoins = coinsParsed != null && coinsParsed > 0;
+
+  final isJeton = explicitCfc
+      ? false
+      : (explicitJeton || (hasPackageId && !explicitCfc) || (hasCoins && !explicitCfc));
+
+  final method = PaymentMethodEntity.normalizeCheckoutMethodId(
+    (raw['method'] ?? 'whatsapp').toString(),
+  );
+
+  if (isJeton) {
+    final coins = hasCoins
+        ? coinsParsed!
+        : (int.tryParse('${raw['amount']}') ?? 0);
+    final safeCoins = coins > 0 ? coins : 1;
+    final packageId = (packageIdRaw != null && packageIdRaw.isNotEmpty)
+        ? packageIdRaw
+        : 'p$safeCoins';
+    final title = raw['packageTitle']?.toString().trim();
+    final out = <String, dynamic>{
+      'requestType': 'jeton',
+      'type': 'jeton',
+      'method': method,
+      'packageId': packageId,
+      'packageTitle':
+          (title != null && title.isNotEmpty) ? title : '$safeCoins Jeton',
+      'coins': safeCoins,
+      'amount': safeCoins,
+    };
+    final priceTry = raw['priceTry'];
+    if (priceTry is num && priceTry > 0) out['priceTry'] = priceTry;
+    for (final key in const [
+      'senderInfo',
+      'notes',
+      'receiptReference',
+      'receiptUrl',
+      'notifyAdmins',
+      'notifyStaff',
+      'source',
+      'tierId',
+      'membershipTier',
+    ]) {
+      if (raw.containsKey(key) && raw[key] != null) out[key] = raw[key];
+    }
+    return out;
+  }
+
+  final amount = int.tryParse('${raw['amount']}') ?? 0;
+  final safeAmount = amount > 0 ? amount : 1;
+  final out = <String, dynamic>{
+    'requestType': 'cfc',
+    'type': 'cfc',
+    'method': method,
+    'amount': safeAmount,
+  };
+  for (final key in const [
+    'senderInfo',
+    'notes',
+    'receiptReference',
+    'receiptUrl',
+    'notifyAdmins',
+    'notifyStaff',
+    'source',
+    'priceTry',
+    'tierId',
+    'membershipTier',
+    'packageId',
+    'packageTitle',
+  ]) {
+    if (!raw.containsKey(key) || raw[key] == null) continue;
+    if (key == 'packageId' || key == 'packageTitle') {
+      if (reqType == 'cfc' && raw[key] != null) out[key] = raw[key];
+      continue;
+    }
+    out[key] = raw[key];
+  }
+  return out;
+}
+
+/// CFC yükleme — `coins` gönderilmez (jeton dalına düşmeyi önler).
+Map<String, dynamic> buildCfcPaymentRequest({
+  required int cfcAmount,
+  required String method,
+  String? senderInfo,
+  String? notes,
+  String? receiptReference,
+  String source = 'mobile_cfc_checkout',
+}) {
+  final amount = cfcAmount > 0 ? cfcAmount : 1;
+  final methodApi = PaymentMethodEntity.normalizeCheckoutMethodId(method);
+  final receipt = receiptReference?.trim();
+  return normalizePaymentRequestBody({
+    'requestType': 'cfc',
+    'type': 'cfc',
+    'method': methodApi,
+    'amount': amount,
+    if (senderInfo != null && senderInfo.trim().isNotEmpty)
+      'senderInfo': senderInfo.trim(),
+    'notes': notes ?? 'CFC yükleme · $methodApi',
+    if (receipt != null && receipt.isNotEmpty) ...{
+      'receiptReference': receipt,
+      'receiptUrl': receipt,
+    },
+    'notifyAdmins': true,
+    'notifyStaff': true,
+    'source': source,
+  });
+}
 
 /// Özel TL/jeton tutarıyla jeton talebi — site `POST /api/payments/requests`.
 Map<String, dynamic> buildCustomJetonPaymentRequest({
@@ -25,14 +144,13 @@ Map<String, dynamic> buildCustomJetonPaymentRequest({
   if (sender != null && sender.isNotEmpty) {
     notes.writeln('Gönderen: $sender');
   }
-  return {
+  return normalizePaymentRequestBody({
     'requestType': 'jeton',
     'type': 'jeton',
-    'method': method,
+    'method': PaymentMethodEntity.normalizeCheckoutMethodId(method),
     'packageId': pkgId,
     'packageTitle': '$safeCoins $jetonLabel',
     'coins': safeCoins,
-    // Üretim doğrulama — jeton talebi için amount = coins (CFC ile karışmaz: requestType jeton).
     'amount': safeCoins,
     'priceTry': priceTry,
     if (sender != null && sender.isNotEmpty) 'senderInfo': sender,
@@ -44,7 +162,7 @@ Map<String, dynamic> buildCustomJetonPaymentRequest({
     'notifyAdmins': true,
     'notifyStaff': true,
     'source': 'mobile_jeton_premium',
-  };
+  });
 }
 
 /// canlifal.com `POST /api/payments/requests` — jeton talebi gövdesi.
@@ -60,10 +178,10 @@ Map<String, dynamic> buildJetonPaymentRequest({
   final coins = package.coins > 0 ? package.coins : 1;
   final receipt = receiptReference?.trim();
   final baseNotes = notes ?? '$jetonLabel yükleme · $method';
-  return {
+  return normalizePaymentRequestBody({
     'requestType': 'jeton',
     'type': 'jeton',
-    'method': method,
+    'method': PaymentMethodEntity.normalizeCheckoutMethodId(method),
     'packageId': package.id,
     'packageTitle': package.title,
     'coins': coins,
@@ -81,7 +199,7 @@ Map<String, dynamic> buildJetonPaymentRequest({
     'notifyAdmins': true,
     'notifyStaff': true,
     'source': 'mobile_jeton_checkout',
-  };
+  });
 }
 
 /// Gold üyelik — site `POST /api/payments/requests` (admin onayı sonrası üyelik).
@@ -102,10 +220,10 @@ Map<String, dynamic> buildMembershipPaymentRequest({
         method: method,
         tierId: tierId,
       );
-  return {
+  return normalizePaymentRequestBody({
     'requestType': 'jeton',
     'type': 'jeton',
-    'method': method,
+    'method': PaymentMethodEntity.normalizeCheckoutMethodId(method),
     'packageId': package.id,
     'packageTitle': package.title,
     'tierId': tierId,
@@ -125,7 +243,7 @@ Map<String, dynamic> buildMembershipPaymentRequest({
     'notifyAdmins': true,
     'notifyStaff': true,
     'source': 'mobile_membership_checkout',
-  };
+  });
 }
 
 /// Üyelik — CFC ödeme talebi (`POST /api/payments/requests`).
@@ -147,10 +265,10 @@ Map<String, dynamic> buildMembershipCfcPaymentRequest({
         tierTitle: tierTitle,
         method: method,
       );
-  return {
+  return normalizePaymentRequestBody({
     'requestType': 'cfc',
     'type': 'cfc',
-    'method': method,
+    'method': PaymentMethodEntity.normalizeCheckoutMethodId(method),
     'packageId': 'membership_$tierId',
     'packageTitle': '$tierTitle Üyelik · $durationLabel',
     'tierId': tierId,
@@ -169,5 +287,5 @@ Map<String, dynamic> buildMembershipCfcPaymentRequest({
     'notifyAdmins': true,
     'notifyStaff': true,
     'source': 'mobile_membership_cfc_checkout',
-  };
+  });
 }

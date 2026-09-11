@@ -596,7 +596,10 @@ abstract final class ApiEndpoints {
   static const paymentConfig = '/api/payments/config';
   static const paymentMethods = '/api/payments/methods';
   static const paymentRequests = '/api/payments/requests';
+  /// Eski alias (release gate yedek).
+  static const paymentRequestsLegacy = '/api/payment/requests';
   static const paymentRequestsCancel = '/api/payments/requests';
+  static const paymentConfigLegacy = '/api/payment/config';
   static const adminCfcPaymentRequests = '/api/admin/cfc-payment-requests';
   static const adminCfcPaymentPatch = '/api/admin/cfc-payment-requests';
   static const adminCfcSettings = '/api/admin/cfc-settings';

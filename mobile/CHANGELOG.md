@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.470+508 (2026-09-11) — Jeton / CFC ödeme talebi (tam)
+
+### Ödeme
+- `normalizePaymentRequestBody`: jeton → `coins`+`amount`+`packageId`; CFC → yalnız `amount` (jeton dalına düşme önlenir)
+- `POST` yedek: `/api/payments/requests` → `/api/payment/requests`
+- Ödeme ayarları GET: `/api/payments/config` → `/api/payment/config`
+- `buildCfcPaymentRequest` — CFC mağazası ve ödeme bildirimi
+- Geçersiz miktar / yöntem için anlaşılır hata metinleri
+
 ## 1.0.469+507 (2026-09-11) — Jeton, oda sayım, giriş, canlı yayın, VIP şifre
 
 ### Jeton / CFC
