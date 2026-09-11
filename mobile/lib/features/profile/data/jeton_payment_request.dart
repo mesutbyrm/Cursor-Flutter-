@@ -23,7 +23,7 @@ Map<String, dynamic> normalizePaymentRequestBody(Map<String, dynamic> raw) {
 
   if (isJeton) {
     final coins = hasCoins
-        ? coinsParsed!
+        ? coinsParsed
         : (int.tryParse('${raw['amount']}') ?? 0);
     final safeCoins = coins > 0 ? coins : 1;
     final packageId = (packageIdRaw != null && packageIdRaw.isNotEmpty)
