@@ -57,7 +57,12 @@ class VoiceRoomEntity extends Equatable {
   final bool isPkLive;
   final bool isMusicPlaying;
 
-  int get displayOnline => onlineCount > 0 ? onlineCount : userCount;
+  /// Liste kartları — API bazen boş odada `onlineCount: 1` döndürür (hayalet).
+  int get displayOnline {
+    final primary = onlineCount > 0 ? onlineCount : userCount;
+    if (primary == 1 && onlineCount == 1 && userCount <= 0) return 0;
+    return primary;
+  }
 
   bool get hasMusicActivity =>
       isMusicPlaying ||

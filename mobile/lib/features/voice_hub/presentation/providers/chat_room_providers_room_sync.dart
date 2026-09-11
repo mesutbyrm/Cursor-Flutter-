@@ -226,6 +226,18 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       case 'raise_hand':
         ref.read(voiceSpeakRequestSignalProvider.notifier).bump();
         return;
+      case 'password_request':
+      case 'passwordrequest':
+      case 'request_password':
+      case 'password_access_request':
+        _enqueuePasswordRequestFromSse(payload);
+        ref.read(voicePasswordRequestSignalProvider.notifier).bump();
+        return;
+      case 'password_granted':
+      case 'password_approved':
+      case 'passwordapproved':
+        _handlePasswordGrantedSse(payload);
+        return;
       case 'room_closed':
         _applyRoomEventRoomClosed(payload);
         return;
@@ -593,5 +605,77 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       );
     }
     return changed ? next : presence;
+  }
+
+  void _enqueuePasswordRequestFromSse(Map<String, dynamic> payload) {
+    final roomKey = _resolveRoomKeyFromEvent(payload) ?? _roomKey;
+    if (roomKey.isEmpty) return;
+    final nestedUser = payload['user'];
+    final userMap = nestedUser is Map
+        ? Map<String, dynamic>.from(nestedUser)
+        : null;
+    final requesterId = (payload['userId'] ??
+            payload['requesterId'] ??
+            payload['requesterUserId'] ??
+            userMap?['id'])
+        ?.toString()
+        .trim();
+    if (requesterId == null || requesterId.isEmpty) return;
+    final name = (payload['userName'] ??
+            payload['username'] ??
+            payload['displayName'] ??
+            userMap?['name'] ??
+            userMap?['username'])
+        ?.toString()
+        .trim();
+    final display = (name != null && name.isNotEmpty) ? name : 'Bir kullanıcı';
+    final message = payload['message']?.toString();
+    ref.read(voiceRoomPasswordRequestQueueProvider.notifier).enqueue(
+          VoiceRoomPasswordRequestEntry(
+            roomKey: roomKey,
+            requesterUserId: requesterId,
+            requesterName: display,
+            message: message,
+          ),
+        );
+  }
+
+  String? _resolveRoomKeyFromEvent(Map<String, dynamic> payload) {
+    for (final key in const ['roomId', 'roomKey', 'id']) {
+      final v = payload[key]?.toString().trim();
+      if (v != null && v.isNotEmpty) return v;
+    }
+    final room = payload['room'];
+    if (room is Map) {
+      final m = Map<String, dynamic>.from(room);
+      for (final key in const ['id', 'roomId']) {
+        final v = m[key]?.toString().trim();
+        if (v != null && v.isNotEmpty) return v;
+      }
+    }
+    return null;
+  }
+
+  void _handlePasswordGrantedSse(Map<String, dynamic> payload) {
+    final me = ref.read(authControllerProvider).valueOrNull?.id.trim();
+    if (me == null || me.isEmpty) return;
+    final target = (payload['userId'] ??
+            payload['targetUserId'] ??
+            payload['requesterId'])
+        ?.toString()
+        .trim();
+    if (target == null || target.isEmpty || target != me) return;
+    final roomKey = _resolveRoomKeyFromEvent(payload) ?? _roomKey;
+    if (roomKey.isEmpty) return;
+    ref.read(vipUnlockedRoomsProvider.notifier).unlock(roomKey);
+    final pass = (payload['password'] ?? payload['roomPassword'])
+        ?.toString()
+        .trim();
+    if (pass != null && pass.isNotEmpty) {
+      ref
+          .read(pendingRoomPasswordProvider.notifier)
+          .setPassword(roomKey, pass);
+    }
+    unawaited(RoomPasswordAccessCooldown.clear(roomKey, me));
   }
 }

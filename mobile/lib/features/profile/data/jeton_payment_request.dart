@@ -32,6 +32,8 @@ Map<String, dynamic> buildCustomJetonPaymentRequest({
     'packageId': pkgId,
     'packageTitle': '$safeCoins $jetonLabel',
     'coins': safeCoins,
+    // Üretim doğrulama — jeton talebi için amount = coins (CFC ile karışmaz: requestType jeton).
+    'amount': safeCoins,
     'priceTry': priceTry,
     if (sender != null && sender.isNotEmpty) 'senderInfo': sender,
     if (receipt != null && receipt.isNotEmpty) ...{
@@ -46,7 +48,7 @@ Map<String, dynamic> buildCustomJetonPaymentRequest({
 }
 
 /// canlifal.com `POST /api/payments/requests` — jeton talebi gövdesi.
-/// Yalnızca `coins` gönderilir; `amount` üretimde çift krediye yol açabiliyor.
+/// `amount` = `coins` (API doğrulama); `requestType: jeton` CFC ile karışmaz.
 Map<String, dynamic> buildJetonPaymentRequest({
   required JetonPackageEntity package,
   required String method,
@@ -65,6 +67,7 @@ Map<String, dynamic> buildJetonPaymentRequest({
     'packageId': package.id,
     'packageTitle': package.title,
     'coins': coins,
+    'amount': coins,
     if (package.priceTry != null) 'priceTry': package.priceTry,
     if (senderLabel != null && senderLabel.trim().isNotEmpty)
       'senderInfo': senderLabel.trim(),
@@ -108,6 +111,7 @@ Map<String, dynamic> buildMembershipPaymentRequest({
     'tierId': tierId,
     'membershipTier': tierId,
     'coins': coins,
+    'amount': coins,
     if (package.priceTry != null) 'priceTry': package.priceTry,
     if (senderLabel != null && senderLabel.trim().isNotEmpty)
       'senderInfo': senderLabel.trim(),

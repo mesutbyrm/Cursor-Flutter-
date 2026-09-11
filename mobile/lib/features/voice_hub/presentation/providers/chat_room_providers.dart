@@ -19,6 +19,9 @@ import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../../vip_gold/presentation/providers/pending_room_password_provider.dart';
+import '../../../vip_gold/presentation/providers/room_password_access_request_provider.dart';
+import '../../../vip_gold/presentation/providers/vip_membership_provider.dart';
+import '../../../vip_gold/presentation/providers/voice_room_password_request_provider.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
@@ -1022,6 +1025,7 @@ class VoiceRoomLiveController
         () async {
           _postVoiceSessionEndSummary(endedLabel: 'Odadan ayrıldınız');
           _cancelSessionTimers();
+          _announceSelfLeave();
           _removeSelfFromPresenceOptimistic();
           state = state.copyWith(selfInRoom: false, loading: false);
         },

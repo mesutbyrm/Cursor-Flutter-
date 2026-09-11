@@ -41,8 +41,16 @@ class AuthService {
     final trimmed = email.trim();
     // Kılavuz §9.1 — `{email}` veya `{username}` + `password`.
     final body = trimmed.contains('@')
-        ? {'email': trimmed, 'password': password}
-        : {'username': trimmed, 'password': password};
+        ? {
+            'email': trimmed,
+            'emailOrUsername': trimmed,
+            'password': password,
+          }
+        : {
+            'username': trimmed,
+            'emailOrUsername': trimmed,
+            'password': password,
+          };
     return _postAuth(ApiEndpoints.authMobileLogin, body);
   }
 

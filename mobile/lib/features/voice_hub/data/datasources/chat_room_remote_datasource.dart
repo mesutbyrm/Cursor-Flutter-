@@ -1237,6 +1237,24 @@ class ChatRoomRemoteDataSource {
     });
   }
 
+  /// Şifreli oda — sahip onayı / red (presence action; üretim SSE ile eşleşir).
+  Future<void> respondPasswordAccessRequest(
+    String roomKey,
+    String targetUserId, {
+    required bool approve,
+    String? alternateKey,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.chatRoomPresence(key),
+        data: {
+          'action': approve ? 'approve_password' : 'deny_password',
+          'userId': targetUserId,
+        },
+      );
+    });
+  }
+
   /// Konuşma isteğini reddet — DELETE speak-requests/{userId} (üretim yedek).
   Future<void> rejectSpeakRequest(
     String roomKey,

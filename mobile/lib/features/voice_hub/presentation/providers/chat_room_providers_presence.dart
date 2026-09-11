@@ -572,6 +572,29 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     );
   }
 
+  void _announceSelfLeave() {
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null || user.id.isEmpty) return;
+    final name = user.displayName.trim().isNotEmpty
+        ? user.displayName.trim()
+        : (user.display.trim().isNotEmpty ? user.display.trim() : user.username);
+    if (name.isEmpty) return;
+    final userRef = ChatRoomUserRef(
+      id: user.id,
+      name: name,
+      nickname: name,
+      image: user.avatarUrl,
+      chatRole: user.role,
+    );
+    final line = '$name çıkış yaptı';
+    _notifyRealtimeIfBasic(VoiceRoomRealtimeKind.leave, line);
+    _appendSyntheticSystemMessage(
+      '$name odadan çıkış yaptı.',
+      kind: ChatMessageKind.systemLeave,
+      user: userRef,
+    );
+  }
+
   void _removeSelfFromPresenceOptimistic() {
     final userId = ref.read(authControllerProvider).valueOrNull?.id;
     if (userId == null || userId.isEmpty) return;

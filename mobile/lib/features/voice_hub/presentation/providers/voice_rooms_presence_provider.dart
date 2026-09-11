@@ -28,7 +28,9 @@ class VoiceRoomsPresenceState {
     if (connectedRooms.contains(key) || connectedRooms.contains(room.id)) {
       return 0;
     }
-    return room.displayOnline > 0 ? room.displayOnline : 0;
+    final listed = room.displayOnline;
+    if (listed == 1 && room.onlineCount == 1 && room.userCount <= 0) return 0;
+    return listed > 0 ? listed : 0;
   }
 
   VoiceRoomsPresenceState copyWith({

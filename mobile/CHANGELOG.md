@@ -1,5 +1,23 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.469+507 (2026-09-11) — Jeton, oda sayım, giriş, canlı yayın, VIP şifre
+
+### Jeton / CFC
+- Jeton ödeme talebi: `amount` = `coins` (API **Geçersiz miktar** düzeltmesi); admin onayda `creditType` ayrımı korunur
+- CFC checkout: `requestType: cfc` + `amount` (değişmedi)
+
+### Sesli oda
+- Keşfet/liste: boş odada hayalet **1 çevrimiçi** gösterimi azaltıldı
+- Odadan çıkış: kendi **çıkış yaptı** mesajı; listeden anında düşme
+- VIP şifre sheet: **Şifreyi öğren** (sunucu `request_password`); gece 00:00 cooldown
+- Oda sahibi: şifre isteği popup (**İzin ver** / **Reddet**); red sonrası istekçi gece 00:00’a kadar bekler
+
+### Giriş
+- `emailOrUsername` + giriş sonrası 90 sn grace; heartbeat login anında atlanır
+
+### Canlı yayın
+- Uygulama içinde başka sayfada gezinirken **yayın açık** uyarısı (devam / sonlandır)
+
 ## 1.0.468+506 (2026-09-10) — PK, jeton/CFC onay, oda presence, canlı yayın
 
 ### PK

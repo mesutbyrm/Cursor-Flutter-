@@ -252,9 +252,11 @@ class AuthController extends AsyncNotifier<UserEntity?> {
       await teardownRealtimeOnLogout(ref, userId: prevId);
     }
     _sessionEpoch++;
-    AuthTokenRefreshCoordinator.instance.markSessionFresh();
+    AuthTokenRefreshCoordinator.instance.markSessionFresh(
+      grace: const Duration(seconds: 90),
+    );
     await ref.read(sessionUserCacheProvider).write(user);
-    invalidateAuthenticatedShellData(ref);
+    invalidateAuthenticatedShellData(ref, skipPresenceHeartbeat: true);
     unawaited(OneSignalBootstrap.login(user.id));
     unawaited(
       Future<void>.delayed(const Duration(seconds: 2), () {
