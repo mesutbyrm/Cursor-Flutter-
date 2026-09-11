@@ -64,9 +64,11 @@ Future<void> reviewAdminPaymentRequest(
   final resolvedType =
       (requestType ?? '').trim().isEmpty ? 'cfc' : requestType!.toLowerCase();
   final isJeton = resolvedType == 'jeton';
-  final paths = isJeton
-      ? [ApiEndpoints.adminPaymentRequests]
-      : [ApiEndpoints.adminCfcPaymentPatch];
+  // Üretim PATCH yalnızca `/api/admin/cfc-payment-requests` (jeton + CFC).
+  final paths = <String>[
+    ApiEndpoints.adminCfcPaymentPatch,
+    ApiEndpoints.adminPaymentRequests,
+  ];
 
   final body = <String, dynamic>{
     'requestId': id,

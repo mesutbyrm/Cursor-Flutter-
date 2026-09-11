@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.472+510 (2026-09-11) — Falcı davet, hediye, admin onay, sosyal banner
+
+- **Admin jeton onayı:** PATCH önce `/api/admin/cfc-payment-requests` (404 düzeltmesi)
+- **Canlı falcı davet:** ilk poll bekleyen çağrıyı hemen sunar; poll 3s / 10s
+- **Ana sayfa:** Gold/sosyal paylaşım duyuruları sabit mor kart yerine kayan şerit
+- **Video hediye:** MP4/WebM prefetch bitince animasyon başlar
+- **Koltuk altı hediye:** gönderen etiketi 3 sn sonra kalkar (`FxRecentGiftsStrip` + son hediyeler kutusu)
+
 ## 1.0.471+509 (2026-09-11) — CI release gate (ödeme yedek yolları)
 
 - Ödeme API yedekleri: legacy path literal’ları kaldırıldı (canonical endpoint sözleşme testi); 404’te segment birleştirme ile yedek

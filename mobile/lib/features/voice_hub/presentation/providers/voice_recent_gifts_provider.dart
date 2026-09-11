@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
@@ -50,12 +52,22 @@ class VoiceRecentGiftsState {
 class VoiceRecentGiftsController extends Notifier<VoiceRecentGiftsState> {
   static const maxGifters = 5;
   static const maxAnnouncements = 8;
+  static const gifterLabelTtl = Duration(seconds: 3);
 
   final _gifters = <String, VoiceRecentGifter>{};
   final _gifterOrder = <String>[];
+  final _gifterExpiryTimers = <String, Timer>{};
 
   @override
-  VoiceRecentGiftsState build() => const VoiceRecentGiftsState();
+  VoiceRecentGiftsState build() {
+    ref.onDispose(() {
+      for (final t in _gifterExpiryTimers.values) {
+        t.cancel();
+      }
+      _gifterExpiryTimers.clear();
+    });
+    return const VoiceRecentGiftsState();
+  }
 
   /// Koltuk altı gifter listesi — kayan duyuru üretmez.
   void recordGifterOnly(LiveGiftEvent event) {
@@ -139,6 +151,23 @@ class VoiceRecentGiftsController extends Notifier<VoiceRecentGiftsState> {
       announcements: announcements,
     );
 
+    _gifterExpiryTimers[senderId]?.cancel();
+    _gifterExpiryTimers[senderId] = Timer(gifterLabelTtl, () {
+      _gifters.remove(senderId);
+      _gifterOrder.remove(senderId);
+      _gifterExpiryTimers.remove(senderId);
+      final nextOrdered = <VoiceRecentGifter>[];
+      for (final id in _gifterOrder.reversed) {
+        final g = _gifters[id];
+        if (g != null) nextOrdered.add(g);
+        if (nextOrdered.length >= maxGifters) break;
+      }
+      state = VoiceRecentGiftsState(
+        gifters: nextOrdered,
+        announcements: state.announcements,
+      );
+    });
+
     if (includeAnnouncement && announcements.isNotEmpty) {
       final annId = announcements.first.id;
       Future<void>.delayed(const Duration(seconds: 5), () {
@@ -157,6 +186,10 @@ class VoiceRecentGiftsController extends Notifier<VoiceRecentGiftsState> {
   }
 
   void clear() {
+    for (final t in _gifterExpiryTimers.values) {
+      t.cancel();
+    }
+    _gifterExpiryTimers.clear();
     _gifters.clear();
     _gifterOrder.clear();
     state = const VoiceRecentGiftsState();

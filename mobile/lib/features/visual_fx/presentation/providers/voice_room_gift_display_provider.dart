@@ -110,7 +110,17 @@ class VoiceRoomGiftDisplayController extends Notifier<VoiceRoomGiftDisplayState>
     _recentRotateTimer = Timer(
       const Duration(milliseconds: recentDisplayMs),
       () {
-        if (state.recentQueue.isEmpty) return;
+        if (state.recentQueue.isEmpty) {
+          state = state.copyWith(clearActiveRecent: true);
+          return;
+        }
+        if (state.recentQueue.length == 1) {
+          state = state.copyWith(
+            recentQueue: const [],
+            clearActiveRecent: true,
+          );
+          return;
+        }
         _recentIndex = (_recentIndex + 1) % state.recentQueue.length;
         state = state.copyWith(activeRecent: state.recentQueue[_recentIndex]);
         _scheduleRecentRotation();

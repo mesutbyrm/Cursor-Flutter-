@@ -68,13 +68,32 @@ abstract final class VoiceOfficialJoin {
     return false;
   }
 
-  /// Ana sayfada sabit kart olmamalı — giriş veya büyük hediye.
+  /// Sosyal paylaşım / Gold duyurusu — sabit ana sayfa kartı olmamalı.
+  static bool isHomeBannerSocialPostAnnouncement(
+    String title, {
+    String? subtitle,
+  }) {
+    final combined = '$title ${subtitle ?? ''}'.trim();
+    if (combined.isEmpty) return false;
+    final lower = combined.toLowerCase();
+    return lower.contains('sosyal alanda paylaşımda') ||
+        lower.contains('sosyal alanda paylasimda') ||
+        lower.contains('sosyal paylaşımda bulundu') ||
+        lower.contains('sosyal paylasimda bulundu') ||
+        (lower.contains('sosyal') &&
+            lower.contains('paylaşım') &&
+            !lower.contains('giriş yaptı') &&
+            !lower.contains('giris yapti'));
+  }
+
+  /// Ana sayfada sabit kart olmamalı — giriş, hediye veya sosyal aktivite.
   static bool isHomeBannerMarqueeOnly(
     String title, {
     String? subtitle,
   }) {
     return isHomeBannerEntranceAnnouncement(title, subtitle: subtitle) ||
-        isHomeBannerGiftAnnouncement(title, subtitle: subtitle);
+        isHomeBannerGiftAnnouncement(title, subtitle: subtitle) ||
+        isHomeBannerSocialPostAnnouncement(title, subtitle: subtitle);
   }
 
   static bool isOfficialEntrance(String content) {

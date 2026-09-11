@@ -2,11 +2,11 @@ import 'package:canlifal_social/features/live_psychics/presentation/controllers/
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('first poll seeds pending without presenting', () {
+  test('first poll returns pending for immediate present', () {
     final gate = PsychicInvitePollGate();
     expect(
       gate.takeNewPendingSessionIds(['s1', 's2']),
-      isEmpty,
+      ['s1', 's2'],
     );
     expect(
       gate.takeNewPendingSessionIds(['s1', 's2']),

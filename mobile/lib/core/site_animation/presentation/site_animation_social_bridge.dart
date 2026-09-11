@@ -8,10 +8,14 @@ import 'widgets/site_animation_context_host.dart';
 
 typedef _SiteAnimationRead = T Function<T>(ProviderListenable<T> provider);
 
+bool _isSocialPostAnnouncement(String raw) =>
+    VoiceOfficialJoin.isHomeBannerSocialPostAnnouncement(raw);
+
 void _dispatchSiteAnimationSocialEntrance(_SiteAnimationRead read, String bannerLine) {
   final trimmed = bannerLine.trim();
   if (trimmed.isEmpty) return;
   if (VoiceOfficialJoin.isHomeBannerGiftAnnouncement(trimmed)) return;
+  if (_isSocialPostAnnouncement(trimmed)) return;
   if (!VoiceOfficialJoin.isHomeBannerEntranceAnnouncement(trimmed) &&
       !VoiceOfficialJoin.isOfficialEntrance(trimmed) &&
       !_looksLikeSocialEntrance(trimmed)) {
@@ -65,6 +69,13 @@ String? _parseDisplayName(String raw) {
   );
   s = s.replaceAll(
     RegExp(r'\s+sosyal paylaşımlara giriş yaptı\.?$', caseSensitive: false),
+    '',
+  );
+  s = s.replaceAll(
+    RegExp(
+      r'\s+sosyal alanda paylaşımda bulundu!?\.?$',
+      caseSensitive: false,
+    ),
     '',
   );
   s = s.replaceAll(

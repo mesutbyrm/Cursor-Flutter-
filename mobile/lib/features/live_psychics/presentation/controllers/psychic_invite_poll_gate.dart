@@ -1,10 +1,9 @@
-/// İlk API poll'da bekleyen davetleri kuyruğa alır ama dialog göstermez.
-/// Oturum içinde yalnızca yeni gelen pending davetler sunulur.
+/// Poll ile gelen pending davetler — yinelenen sunumu önler.
 class PsychicInvitePollGate {
   final _knownPending = <String>{};
   var _initialPollDone = false;
 
-  /// İlk poll: tüm pending sessionId'leri kaydet, sunma.
+  /// İlk poll: bekleyen davetleri hemen sun (SSE gecikmesinde falcı çağrısı kaçmasın).
   /// Sonraki poll: yalnızca yeni sessionId'leri döndür.
   List<String> takeNewPendingSessionIds(Iterable<String> pendingIds) {
     final ids = pendingIds
@@ -14,7 +13,7 @@ class PsychicInvitePollGate {
     if (!_initialPollDone) {
       _initialPollDone = true;
       _knownPending.addAll(ids);
-      return const [];
+      return ids;
     }
     final fresh = <String>[];
     for (final id in ids) {

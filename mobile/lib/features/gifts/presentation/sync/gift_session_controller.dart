@@ -418,10 +418,6 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
         ? state.animationQueue.sublist(1)
         : <LiveGiftEvent>[];
 
-    // Animasyonu hemen başlat — prefetch arka planda (video hediyeler gecikmesin).
-    state = state.copyWith(activeAnimation: next, animationQueue: rest);
-    GiftSyncLog.uiRender(_roomId, 'gift_engine_queue_immediate');
-
     try {
       final catalog = lookupGiftCatalog(
         ref.read(allGiftCatalogByIdProvider),
@@ -432,24 +428,27 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       GiftSyncLog.pipelineStage(next.id, 'prefetch');
       final tPrefetch = DateTime.now();
       final backlog = state.animationQueue.length;
-      unawaited(
-        GiftEnginePreloader.prefetch(next).timeout(
-          Duration(
-            milliseconds: backlog > 4
-                ? 1800
-                : (GiftEngineParser.fromEvent(next).animationType ==
-                        GiftEngineAnimationType.mp4 ||
-                    GiftEngineParser.fromEvent(next).animationType ==
-                        GiftEngineAnimationType.webm
-                    ? 2500
-                    : 900),
-          ),
-        ).catchError((_) {}),
-      );
+      final animType = GiftEngineParser.fromEvent(next).animationType;
+      final isVideo = animType == GiftEngineAnimationType.mp4 ||
+          animType == GiftEngineAnimationType.webm;
+      final prefetchMs = backlog > 4
+          ? 1800
+          : (isVideo ? 3200 : 900);
+      try {
+        await GiftEnginePreloader.prefetch(next).timeout(
+          Duration(milliseconds: prefetchMs),
+        );
+      } catch (_) {}
       GiftSyncLog.pipelineMs(
         next.id,
         'prefetch',
         DateTime.now().difference(tPrefetch).inMilliseconds,
+      );
+
+      state = state.copyWith(activeAnimation: next, animationQueue: rest);
+      GiftSyncLog.uiRender(
+        _roomId,
+        isVideo ? 'gift_engine_queue_after_video_prefetch' : 'gift_engine_queue_immediate',
       );
 
       if (catalog != null) {

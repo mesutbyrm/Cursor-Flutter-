@@ -161,8 +161,8 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
     if (!_mayRunTellerBackgroundSync()) return;
     final sseActive = _sseService?.isStreamActive == true;
     final interval = sseActive
-        ? const Duration(seconds: 30)
-        : const Duration(seconds: 4);
+        ? const Duration(seconds: 10)
+        : const Duration(seconds: 3);
     _poll = Timer.periodic(interval, (_) => _pollApi());
     unawaited(_pollApi());
   }

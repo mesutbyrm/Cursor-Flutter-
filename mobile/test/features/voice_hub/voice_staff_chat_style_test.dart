@@ -89,6 +89,21 @@ void main() {
       );
     });
 
+    test('social post activity is marquee-only not static banner', () {
+      expect(
+        VoiceOfficialJoin.isHomeBannerSocialPostAnnouncement(
+          'İlham Perisi sosyal alanda paylaşımda bulundu!',
+        ),
+        isTrue,
+      );
+      expect(
+        VoiceOfficialJoin.isHomeBannerMarqueeOnly(
+          'İlham Perisi sosyal alanda paylaşımda bulundu!',
+        ),
+        isTrue,
+      );
+    });
+
     test('homepage ticker gift line is a gift announcement', () {
       expect(
         VoiceOfficialJoin.isHomeBannerGiftAnnouncement(
