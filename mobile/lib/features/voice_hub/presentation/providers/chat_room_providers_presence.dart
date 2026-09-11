@@ -575,8 +575,9 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
   void _announceSelfLeave() {
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null || user.id.isEmpty) return;
-    final name = user.displayName.trim().isNotEmpty
-        ? user.displayName.trim()
+    final display = user.displayName?.trim() ?? '';
+    final name = display.isNotEmpty
+        ? display
         : (user.display.trim().isNotEmpty ? user.display.trim() : user.username);
     if (name.isEmpty) return;
     final userRef = ChatRoomUserRef(
