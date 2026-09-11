@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../gifts/data/gift_sound_service.dart';
 import '../../../gifts/domain/gift_revenue_display.dart';
+import '../../../gifts/domain/gift_staff_finance_mode.dart';
 import '../../../gifts/domain/lucky_gift_entities.dart';
 import '../../data/datasources/live_gifts_remote_datasource.dart';
 import '../../data/services/live_gift_realtime_service.dart';
@@ -76,6 +77,7 @@ class LiveGiftController extends ChangeNotifier {
     int quantity = 1,
     String? toUserId,
     String? pkMatchId,
+    GiftStaffFinanceMode? staffFinanceMode,
   }) async {
     final streamId = _streamId;
     if (streamId == null || streamId.isEmpty || sending) return null;
@@ -97,6 +99,7 @@ class LiveGiftController extends ChangeNotifier {
         toUserId: toUserId,
         pkMatchId: pkMatchId,
         isLucky: gift.isLucky,
+        staffFinanceMode: staffFinanceMode,
       );
       if (result.luckyResult != null) {
         if (result.newBalance != null) coinBalance = result.newBalance;

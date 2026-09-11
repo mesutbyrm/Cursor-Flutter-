@@ -4,6 +4,7 @@ import '../../../../../core/network/api_endpoints.dart';
 import '../../../../../core/network/dio_provider.dart';
 import '../../../../../core/util/json_util.dart';
 import '../../../../gifts/data/gift_idempotency.dart';
+import '../../../../gifts/domain/gift_staff_finance_mode.dart';
 import '../../../../gifts/data/lucky_gift_remote_datasource.dart';
 import '../../../../gifts/domain/lucky_gift_entities.dart';
 import 'live_field_api_util.dart';
@@ -30,6 +31,7 @@ class LiveFieldGiftApi {
     String? recipientId,
     int quantity = 1,
     bool isLucky = false,
+    GiftStaffFinanceMode? staffFinanceMode,
   }) async {
     if (isLucky) {
       final luckyDs = LuckyGiftRemoteDataSource(_dio);
@@ -55,6 +57,7 @@ class LiveFieldGiftApi {
         'idempotencyKey': newGiftIdempotencyKey(),
         if (recipientId != null && recipientId.isNotEmpty)
           'recipientId': recipientId,
+        if (staffFinanceMode != null) ...staffFinanceMode.toRequestFields(),
       },
     );
     final map = LiveFieldApiUtil.unwrapData(res.data);

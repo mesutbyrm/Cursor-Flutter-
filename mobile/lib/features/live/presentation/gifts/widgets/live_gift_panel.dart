@@ -10,6 +10,7 @@ import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import '../../../../../core/config/env.dart';
 import '../../../../../core/navigation/wallet_navigation.dart';
 import '../../../../../core/network/api_exception.dart';
+import '../../../../gifts/presentation/widgets/gift_staff_finance_prompt.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
 import '../../../domain/entities/live_gift_catalog.dart';
 import '../../../domain/entities/live_gift_type.dart';
@@ -153,12 +154,19 @@ class _LiveGiftPanelState extends ConsumerState<LiveGiftPanel> {
                         ? null
                         : () async {
                             final g = _selected!;
+                            final financeMode =
+                                await resolveGiftStaffFinanceMode(context, ref);
+                            if (financeMode == null &&
+                                shouldAskGiftStaffFinanceMode(ref)) {
+                              return;
+                            }
                             try {
                               await widget.controller.send(
                                 gift: g,
                                 senderName: widget.senderName,
                                 senderId: widget.senderId,
                                 quantity: _qty,
+                                staffFinanceMode: financeMode,
                               );
                               ref.refreshWalletCache(force: true);
                               if (context.mounted) widget.onClose();

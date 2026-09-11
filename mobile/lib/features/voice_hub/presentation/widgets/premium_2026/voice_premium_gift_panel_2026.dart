@@ -13,6 +13,7 @@ import '../../../../../core/navigation/wallet_navigation.dart';
 import '../../../../../core/network/api_exception.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../gifts/presentation/sync/gift_sync_log.dart';
+import '../../../../gifts/presentation/widgets/gift_staff_finance_prompt.dart';
 import '../../../../gifts/domain/gift_rarity.dart';
 import '../../../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../../../gifts/presentation/widgets/lucky_gift_badge.dart';
@@ -266,6 +267,8 @@ class _VoicePremiumGiftPanel2026State
     final g = _selected;
     final receiver = _receiver ?? _pickInitialReceiver();
     if (g == null || _sending || receiver == null) return;
+    final financeMode = await resolveGiftStaffFinanceMode(context, ref);
+    if (financeMode == null && shouldAskGiftStaffFinanceMode(ref)) return;
     setState(() => _sending = true);
     try {
       final user = ref.read(authControllerProvider).valueOrNull;
@@ -287,6 +290,7 @@ class _VoicePremiumGiftPanel2026State
             receiverId: receiver.id,
             battleId: pkBattleId,
             isLucky: g.isLucky,
+            staffFinanceMode: financeMode,
           )
           .timeout(const Duration(seconds: 25));
       if (result.luckyResult != null) {

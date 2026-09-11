@@ -15,6 +15,7 @@ import '../../../live/data/datasources/live_field/live_field_api_remote_datasour
 import '../../../live/data/datasources/live_gifts_remote_datasource.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/domain/entities/live_gift_type.dart';
+import '../../../gifts/domain/gift_staff_finance_mode.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
 import '../../domain/entities/voice_gift_revenue.dart';
 
@@ -73,6 +74,7 @@ class ChatRoomGiftsRemoteDataSource {
     String platform = 'mobile',
     String? battleId,
     bool isLucky = false,
+    GiftStaffFinanceMode? staffFinanceMode,
   }) async {
     if (isLucky) {
       final lucky = await _lucky.sendLuckyGift(
@@ -97,6 +99,7 @@ class ChatRoomGiftsRemoteDataSource {
             recipientId: receiverId,
             quantity: quantity,
             isLucky: isLucky,
+            staffFinanceMode: staffFinanceMode,
           );
       return _mapSendResponse(
         body: field.raw,
@@ -125,6 +128,7 @@ class ChatRoomGiftsRemoteDataSource {
         if (battleId != null && battleId.isNotEmpty) 'battleId': battleId,
         'platform': platform,
         'idempotencyKey': newGiftIdempotencyKey(),
+        if (staffFinanceMode != null) ...staffFinanceMode.toRequestFields(),
       },
     );
     final body = res.data;

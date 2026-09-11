@@ -12,6 +12,7 @@ import '../../../gifts/presentation/widgets/lucky_gift_badge.dart';
 import '../../../gifts/presentation/widgets/lucky_gift_spin_overlay.dart';
 import '../../../gifts/presentation/providers/gift_providers.dart';
 import '../../../gifts/presentation/sync/gift_sync_log.dart';
+import '../../../gifts/presentation/widgets/gift_staff_finance_prompt.dart';
 import '../../domain/entities/live_gift_catalog.dart';
 import '../../domain/entities/live_gift_type.dart';
 import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
@@ -97,6 +98,12 @@ Future<void> showLiveGiftPicker(
                               onTap: () async {
                                 final user = ref.read(authControllerProvider).valueOrNull;
                                 final sender = user?.displayName ?? user?.username ?? 'Kullanıcı';
+                                final financeMode =
+                                    await resolveGiftStaffFinanceMode(context, ref);
+                                if (financeMode == null &&
+                                    shouldAskGiftStaffFinanceMode(ref)) {
+                                  return;
+                                }
                                 try {
                                   final result = await ref
                                       .read(liveGiftsRemoteProvider)
@@ -110,6 +117,7 @@ Future<void> showLiveGiftPicker(
                                         unitPrice: g.price,
                                         senderId: user?.id,
                                         isLucky: g.isLucky,
+                                        staffFinanceMode: financeMode,
                                       );
                                   if (context.mounted) {
                                     ref.refreshWalletCache(force: true);

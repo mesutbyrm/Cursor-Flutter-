@@ -114,7 +114,7 @@ import '../widgets/broadcast_room/live_moderation_sheet.dart';
 import '../providers/live_broadcast_settings_provider.dart';
 import '../widgets/broadcast_room/live_broadcast_settings_sheet.dart';
 import '../widgets/broadcast_room/live_viewers_sheet.dart';
-import '../widgets/broadcast_room/live_fortune_viewer_rail.dart';
+import '../widgets/broadcast_room/live_fortune_request_popup.dart';
 import '../widgets/broadcast_room/live_room_chat_fal_panel.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
 import '../widgets/broadcast_room/live_room_video_background.dart';
@@ -792,39 +792,26 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     if (streamId != null && streamId.isNotEmpty && _fortuneRequestsOpen(s)) {
       final balance =
           ref.read(coinBalanceProvider) ?? user.coinBalance;
-      final ok = await showModalBottomSheet<bool>(
+      final ok = await showLiveFortuneRequestPopup(
         context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (ctx) => Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.viewInsetsOf(ctx).bottom + 16,
-            left: 16,
-            right: 16,
-          ),
-          child: LiveFortuneRequestForm(
-            balance: balance,
-            initialFortuneType: _streamFortuneTypeSlug(s) ?? 'tarot',
-            onSubmit: ({
-              required displayName,
-              required question,
-              required fortuneType,
-              required priority,
-              required jetonCost,
-            }) async {
-              final success = await _submitStreamFortuneRequest(
-                streamId: streamId,
-                displayName: displayName,
-                question: question,
-                fortuneType: fortuneType,
-                priority: priority,
-                jetonCost: jetonCost,
-              );
-              if (success && ctx.mounted) Navigator.pop(ctx, true);
-              return success;
-            },
-          ),
-        ),
+        balance: balance,
+        initialFortuneType: _streamFortuneTypeSlug(s) ?? 'tarot',
+        title: _fortuneCtaLabel(s),
+        onSubmit: ({
+          required displayName,
+          required question,
+          required fortuneType,
+          required priority,
+          required jetonCost,
+        }) =>
+            _submitStreamFortuneRequest(
+              streamId: streamId,
+              displayName: displayName,
+              question: question,
+              fortuneType: fortuneType,
+              priority: priority,
+              jetonCost: jetonCost,
+            ),
       );
       if (ok == true && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -2958,31 +2945,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 message: 'Bağlantı hatası — yayına yeniden bağlanmayı deneyin',
                 onRetry: () => unawaited(_initTrtc()),
               ),
-            if (hasStream && !s.isHost && _fortuneRequestsOpen(s))
-              Positioned(
-                right: 8,
-                bottom: 300,
-                child: LiveFortuneViewerRail(
-                  streamId: streamId,
-                  balance: balance,
-                  initialFortuneType: _streamFortuneTypeSlug(s) ?? 'tarot',
-                  onSubmit: ({
-                    required displayName,
-                    required question,
-                    required fortuneType,
-                    required priority,
-                    required jetonCost,
-                  }) =>
-                      _submitStreamFortuneRequest(
-                        streamId: streamId,
-                        displayName: displayName,
-                        question: question,
-                        fortuneType: fortuneType,
-                        priority: priority,
-                        jetonCost: jetonCost,
-                      ),
-                ),
-              ),
             if (hasStream && pkState?.battle != null &&
                 (pkStatus == 'active' || pkStatus == 'ended'))
               LivePkPremiumOverlay(
@@ -3263,8 +3225,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                                           ),
                                         ]
                                       : roomState.messages,
-                                  showFortuneTab:
-                                      !s.isHost && _fortuneRequestsOpen(s),
+                                  showFortuneTab: false,
                                   canModerate: s.isHost,
                                   onMessageLongPress: s.isHost
                                       ? (m) => unawaited(_onChatModeration(m))
@@ -3368,16 +3329,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                       chatVisible: _chatVisible,
                       onToggleChat: () =>
                           setState(() => _chatVisible = !_chatVisible),
-                      onEmoji: _showLiveEmojiPicker,
                       onGift: !s.isHost && broadcastSettings.giftsEnabled && streamId != null
                           ? () => ref
                               .read(liveGiftControllerProvider)
                               .setPanelOpen(true)
                           : null,
-                      onFortune: !s.isHost && _fortuneRequestsOpen(s)
-                          ? () => unawaited(_onFortuneRequest(s))
-                          : null,
-                      fortuneLabel: _fortuneCtaLabel(s),
                       onTip: !s.isHost && streamId != null
                           ? () {
                               ref.read(liveGiftControllerProvider).setPanelOpen(true);

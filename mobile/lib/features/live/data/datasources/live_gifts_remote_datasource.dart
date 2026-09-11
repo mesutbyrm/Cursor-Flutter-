@@ -12,6 +12,7 @@ import '../../../gifts/data/gift_reciprocal_guard.dart';
 import '../../../gifts/domain/gift_animation_kind.dart';
 import '../../../gifts/domain/gift_entity.dart';
 import '../../../gifts/domain/gift_platform.dart';
+import '../../../gifts/domain/gift_staff_finance_mode.dart';
 import '../../../gifts/domain/gift_media_spec.dart';
 import '../../../gifts/domain/gift_rarity.dart';
 import '../../domain/entities/live_gift_catalog.dart';
@@ -112,6 +113,7 @@ class LiveGiftsRemoteDataSource {
     String? toUserId,
     String? pkMatchId,
     bool isLucky = false,
+    GiftStaffFinanceMode? staffFinanceMode,
   }) async {
     if (isLucky) {
       final lucky = await _lucky.sendLuckyGift(
@@ -142,6 +144,7 @@ class LiveGiftsRemoteDataSource {
         // PK Faz 2: belirli bir koltuk misafirine hediye → puan o koltuğa/takıma.
         if (toUserId != null && toUserId.isNotEmpty) 'toUserId': toUserId,
         if (pkMatchId != null && pkMatchId.isNotEmpty) 'pkMatchId': pkMatchId,
+        if (staffFinanceMode != null) ...staffFinanceMode.toRequestFields(),
       },
     );
     final raw = _unwrap(res.data);

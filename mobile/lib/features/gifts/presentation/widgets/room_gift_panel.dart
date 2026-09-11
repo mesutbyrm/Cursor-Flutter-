@@ -11,6 +11,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../live/domain/entities/live_gift_catalog.dart';
 import '../../../live/domain/entities/live_gift_type.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
+import '../widgets/gift_staff_finance_prompt.dart';
 import '../../../voice_hub/presentation/providers/voice_gift_providers.dart';
 import '../../../voice_hub/presentation/widgets/voice_room_gift_sheet.dart';
 
@@ -101,10 +102,13 @@ class RoomGiftPanel extends ConsumerWidget {
     WidgetRef ref,
     LiveVideoGiftType g,
   ) async {
+    final financeMode = await resolveGiftStaffFinanceMode(context, ref);
+    if (financeMode == null && shouldAskGiftStaffFinanceMode(ref)) return;
     try {
       await ref.read(chatRoomGiftsRemoteProvider).sendGift(
             roomId: roomId,
             giftTypeId: g.id,
+            staffFinanceMode: financeMode,
           );
       if (!context.mounted) return;
       ref.refreshWalletCache(force: true);

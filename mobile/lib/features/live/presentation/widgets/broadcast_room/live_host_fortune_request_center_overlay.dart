@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../domain/entities/live_fortune_request_entity.dart';
 import '../../../domain/utils/live_fortune_display_label.dart';
@@ -133,13 +134,13 @@ class _LiveHostFortuneRequestCenterOverlayState
                             style: TextStyle(fontSize: 36),
                           ),
                           const SizedBox(height: 6),
-                          const Text(
+                          Text(
                             'Fal İsteği',
-                            style: TextStyle(
+                            style: GoogleFonts.plusJakartaSans(
                               color: Colors.white,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 22,
-                              letterSpacing: 0.2,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 24,
+                              letterSpacing: 0.3,
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -159,13 +160,14 @@ class _LiveHostFortuneRequestCenterOverlayState
                           const SizedBox(height: 10),
                           Text(
                             current.displayName,
-                            maxLines: 1,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
+                            style: GoogleFonts.plusJakartaSans(
                               color: Colors.white,
                               fontWeight: FontWeight.w800,
-                              fontSize: 18,
+                              fontSize: 26,
+                              height: 1.15,
                             ),
                           ),
                           const SizedBox(height: 6),
@@ -184,12 +186,13 @@ class _LiveHostFortuneRequestCenterOverlayState
                                 ? '"${current.question.trim()}"'
                                 : 'Fal bakmamı istiyor.',
                             textAlign: TextAlign.center,
-                            maxLines: 3,
+                            maxLines: 5,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.78),
-                              fontSize: 14,
-                              height: 1.35,
+                            style: GoogleFonts.plusJakartaSans(
+                              color: Colors.white.withValues(alpha: 0.92),
+                              fontSize: 19,
+                              fontWeight: FontWeight.w600,
+                              height: 1.4,
                               fontStyle: current.question.trim().isEmpty
                                   ? FontStyle.italic
                                   : FontStyle.normal,

@@ -11,6 +11,7 @@ import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../gifts/presentation/providers/gift_providers.dart';
+import '../../../gifts/presentation/widgets/gift_staff_finance_prompt.dart';
 import '../../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../../live/domain/entities/live_gift_catalog.dart';
 import '../../../live/domain/entities/live_gift_type.dart';
@@ -140,6 +141,12 @@ Future<void> showVoiceRoomGiftPickerLegacy(
                               gift: g,
                               jetonLabel: jetonLabel,
                               onTap: () async {
+                                final financeMode =
+                                    await resolveGiftStaffFinanceMode(context, ref);
+                                if (financeMode == null &&
+                                    shouldAskGiftStaffFinanceMode(ref)) {
+                                  return;
+                                }
                                 try {
                                   final user = ref
                                       .read(authControllerProvider)
@@ -154,6 +161,7 @@ Future<void> showVoiceRoomGiftPickerLegacy(
                                         receiverName:
                                             room.ownerName ?? 'Yayıncı',
                                         receiverId: room.ownerId,
+                                        staffFinanceMode: financeMode,
                                       );
                                   await ref
                                       .read(giftSoundServiceProvider)

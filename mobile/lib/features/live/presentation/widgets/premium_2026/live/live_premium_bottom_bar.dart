@@ -108,35 +108,9 @@ class LivePremiumBottomBar extends StatelessWidget {
                         active: chatVisible,
                       ),
                     ),
-                  if (onEmoji != null)
-                    _ActionIcon(
-                      icon: Icons.emoji_emotions_outlined,
-                      label: 'Emoji',
-                      onTap: onEmoji,
-                    ),
-                  if (onGift != null)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 2),
-                      child: _GiftBoxButton(onTap: onGift!),
-                    ),
-                  if (onFortune != null)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 2),
-                      child: _FortuneCtaButton(
-                        label: fortuneLabel ?? 'Fal İste',
-                        onTap: onFortune!,
-                      ),
-                    ),
-                  if (onTip != null)
-                    _ActionIcon(
-                      icon: Icons.volunteer_activism_rounded,
-                      label: 'Bahşiş',
-                      onTap: onTip,
-                    ),
-                  const SizedBox(width: 4),
                   Expanded(
                     child: Container(
-                      height: 40,
+                      height: 44,
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(22),
@@ -153,7 +127,7 @@ class LivePremiumBottomBar extends StatelessWidget {
                               enabled: commentsEnabled,
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 13,
+                                fontSize: 14,
                               ),
                               decoration: InputDecoration(
                                 isDense: true,
@@ -162,11 +136,11 @@ class LivePremiumBottomBar extends StatelessWidget {
                                     : 'Yorumlar kapalı',
                                 hintStyle: TextStyle(
                                   color: Colors.white.withValues(alpha: 0.45),
-                                  fontSize: 13,
+                                  fontSize: 14,
                                 ),
                                 border: InputBorder.none,
                                 contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 10,
+                                  vertical: 11,
                                 ),
                               ),
                               onSubmitted: (_) => onSend(),
@@ -181,6 +155,17 @@ class LivePremiumBottomBar extends StatelessWidget {
                     icon: const Icon(Icons.send_rounded, color: Colors.white),
                     tooltip: 'Gönder',
                   ),
+                  if (onGift != null)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 2),
+                      child: _GiftBoxButton(onTap: onGift!),
+                    ),
+                  if (onTip != null)
+                    _ActionIcon(
+                      icon: Icons.volunteer_activism_rounded,
+                      label: 'Bahşiş',
+                      onTap: onTip,
+                    ),
                   if (onMore != null)
                     _ActionIcon(
                       icon: Icons.apps_rounded,

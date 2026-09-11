@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.473+511 (2026-09-11) — Canlı fal UI, admin hediye jeton modu
+
+- **Admin/kurucu hediye:** gönderimden önce **Staff jeton** / **Gerçek jeton** seçimi (`financeMode` API)
+- **Canlı izleme:** fazla «Fal İste» kaldırıldı; sağ şerit + alt bar + sohbet sekmesi — tek giriş (yan rail)
+- **Fal isteği:** ~%62 yükseklikte yuvarlatılmış popup; emoji kaldırıldı, mesaj alanı genişletildi
+- **Yayıncı fal overlay:** Plus Jakarta Sans, daha büyük isim ve soru metni
+
 ## 1.0.472+510 (2026-09-11) — Falcı davet, hediye, admin onay, sosyal banner
 
 - **Admin jeton onayı:** PATCH önce `/api/admin/cfc-payment-requests` (404 düzeltmesi)
