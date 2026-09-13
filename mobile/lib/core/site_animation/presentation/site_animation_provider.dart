@@ -9,6 +9,7 @@ import '../domain/site_animation_catalog_entry.dart';
 import '../domain/site_animation_command.dart';
 import '../domain/site_animation_type.dart';
 import 'site_animation_catalog_provider.dart';
+import 'site_animation_realtime_policy.dart';
 
 class SiteAnimationNotifier
     extends AutoDisposeFamilyNotifier<SiteAnimationState, String> {
@@ -44,6 +45,11 @@ class SiteAnimationNotifier
         );
         if (base == null) return null;
         if (_shouldSuppressSelfEntrance(base)) return null;
+        if ((base.type.isEntrance || base.type.isExit) &&
+            (!activeGoldEntranceMembershipFromPayload(payload) ||
+                !siteAnimationTierAllowsEntranceExit(base.tier))) {
+          return null;
+        }
         final catalog = ref.read(siteAnimationCatalogProvider).valueOrNull ??
             const SiteAnimationCatalogSnapshot();
         return SiteAnimationResolver.resolve(base: base, catalog: catalog);

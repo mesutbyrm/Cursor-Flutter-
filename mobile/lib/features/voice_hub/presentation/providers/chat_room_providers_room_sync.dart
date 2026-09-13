@@ -65,7 +65,6 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       ..addAll(participants.map((p) => p.id).where((id) => id.isNotEmpty));
     final mergedPresence =
         _mergePresenceStable(participants, source: 'state_snapshot');
-    _entrancesArmed = true;
     state = state.copyWith(
       presence: mergedPresence,
       seatSlots: snapshot.seats.isNotEmpty ? snapshot.seats : state.seatSlots,
@@ -268,6 +267,16 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     });
   }
 
+  void _armRealtimeEntranceEffects() {
+    if (_realtimeEffectsEpochMs != null) return;
+    _realtimeEffectsEpochMs = DateTime.now().millisecondsSinceEpoch;
+    _entrancesArmed = true;
+    VoiceRoomDebugLog.log('fx.realtime_armed', {
+      'room': _roomKey,
+      'epochMs': _realtimeEffectsEpochMs,
+    });
+  }
+
   void _dispatchSiteAnimation(String event, Map<String, dynamic> payload) {
     if (_roomKey.isEmpty) return;
     ref.read(siteAnimationProvider(_roomKey).notifier).handleRoomEvent(
@@ -275,6 +284,30 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
           payload,
           ownerId: state.ownerId,
         );
+  }
+
+  void _dispatchRealtimeMemberSiteAnimation(
+    String event,
+    Map<String, dynamic> payload, {
+    required bool memberWasAlreadyKnown,
+  }) {
+    final normalized = event.toLowerCase().trim();
+    final isMember =
+        normalized == 'user_joined' || normalized == 'user_left';
+    if (isMember) {
+      if (!shouldPlayRealtimeMemberEntranceExit(
+        type: normalized == 'user_joined'
+            ? SiteAnimationType.memberJoined
+            : SiteAnimationType.memberLeft,
+        payload: payload,
+        effectsArmed: _entrancesArmed,
+        sessionEpochMs: _realtimeEffectsEpochMs,
+        memberWasAlreadyKnown: memberWasAlreadyKnown,
+      )) {
+        return;
+      }
+    }
+    _dispatchSiteAnimation(event, payload);
   }
 
   void _applyRoomEventUserJoined(Map<String, dynamic> payload) {
@@ -299,7 +332,11 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     if (!wasKnown) {
       _announcePresenceJoin(user);
     }
-    _dispatchSiteAnimation('user_joined', payload);
+    _dispatchRealtimeMemberSiteAnimation(
+      'user_joined',
+      payload,
+      memberWasAlreadyKnown: wasKnown,
+    );
     final seatIndex = user.seatIndex ?? _parseEventInt(payload['seatIndex']);
     if (seatIndex != null && seatIndex > 0) {
       _dispatchSiteAnimation('seat_rank_glow', {
@@ -315,6 +352,19 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
   void _applyRoomEventUserLeft(Map<String, dynamic> payload) {
     final userId = payload['userId']?.toString() ?? payload['id']?.toString();
     if (userId == null || userId.isEmpty) return;
+    ChatRoomPresence? departed;
+    for (final p in state.presence) {
+      if (p.id == userId) {
+        departed = p;
+        break;
+      }
+    }
+    final enriched = Map<String, dynamic>.from(payload);
+    if (departed?.membership != null &&
+        departed!.membership!.trim().isNotEmpty &&
+        enriched['membership'] == null) {
+      enriched['membership'] = departed.membership;
+    }
     final name = payload['name']?.toString() ?? 'Bir kullanıcı';
     final remaining = state.presence.where((p) => p.id != userId).toList();
     if (remaining.length == state.presence.length) return;
@@ -332,7 +382,11 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       user: ChatRoomUserRef(id: userId, name: name),
     );
     _clearSeatForUser(userId);
-    _dispatchSiteAnimation('user_left', payload);
+    _dispatchRealtimeMemberSiteAnimation(
+      'user_left',
+      enriched,
+      memberWasAlreadyKnown: false,
+    );
   }
 
   void _applyRoomEventMicChanged(Map<String, dynamic> payload) {

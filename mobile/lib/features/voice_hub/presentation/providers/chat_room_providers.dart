@@ -112,6 +112,8 @@ import '../../../gifts/presentation/sync/gift_sse_dispatch.dart';
 import '../../../gifts/presentation/sync/gift_sync_log.dart';
 import '../../../../core/site_animation/presentation/site_animation_provider.dart';
 import '../../../../core/site_animation/presentation/site_animation_catalog_provider.dart';
+import '../../../../core/site_animation/presentation/site_animation_realtime_policy.dart';
+import '../../../../core/site_animation/domain/site_animation_type.dart';
 import 'voice_gift_leaderboard_provider.dart';
 import 'voice_recent_gifts_provider.dart';
 import 'voice_seat_gift_flash_provider.dart';
@@ -470,6 +472,8 @@ class VoiceRoomLiveController
   var _autoSeatAttempted = false;
   /// Odaya girince eski giriş/çıkış mesajları duyurulmasın.
   var _entrancesArmed = false;
+  /// Bootstrap bittikten sonra gerçek zamanlı giriş/çıkış efektleri için alt sınır (ms).
+  int? _realtimeEffectsEpochMs;
   DateTime? _lastSseEventAt;
   DateTime? _sessionJoinedAt;
   int _peakViewerCount = 0;

@@ -65,7 +65,11 @@ class SiteAnimationManager {
     if (_state.active?.eventId == command.eventId) return;
 
     _queue.add(command);
-    _queue.sort((a, b) => b.priority.compareTo(a.priority));
+    _queue.sort((a, b) {
+      final byPriority = b.priority.compareTo(a.priority);
+      if (byPriority != 0) return byPriority;
+      return (a.createdAtMs ?? 0).compareTo(b.createdAtMs ?? 0);
+    });
     _emit(_state.copyWith(queueLength: _queue.length));
     unawaited(preload(command.asset));
   }
