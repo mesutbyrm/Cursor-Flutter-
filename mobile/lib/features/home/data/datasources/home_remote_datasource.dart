@@ -193,8 +193,16 @@ class HomeRemoteDataSource {
     return const [];
   }
 
-  /// `POST /api/horoscope/daily` — günlük burç yorumu.
+  /// `GET /api/horoscope/daily` — OpenAPI yalnız `lang` query (burç parametresi doğrulanamadı).
   Future<String?> fetchDailyHoroscope(String zodiacSign) async {
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.horoscopeDaily,
+        query: const {'lang': 'tr'},
+      );
+      final text = _horoscopeTextFromBody(res.data);
+      if (text != null && text.trim().isNotEmpty) return text;
+    } catch (_) {}
     try {
       final res = await _dio.safePost<dynamic>(
         ApiEndpoints.horoscopeDaily,

@@ -1,5 +1,223 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.475+513 (2026-09-13) — Abacus backend sözleşme hizalaması
+
+- **Referans:** `backend-reference/canlifal_flutter_entegrasyon_paketi.zip` (Abacus paketi; dosyalar değiştirilmedi)
+- **Rapor:** `docs/ABACUS_FLUTTER_INTEGRATION_REPORT.md`
+- OpenAPI method düzeltmeleri: tema `PATCH`, hediye reciprocal `POST`, oyun liderlik `GET`, bildirim okundu `POST`, burç `GET` (+ eski POST yedek)
+
+## 1.0.474+512 (2026-09-11) — Flutter-only API denetimi, backend hizalama
+
+- **Rapor:** `docs/FLUTTER_ONLY_ENDPOINT_AUDIT.md` — 114 OpenAPI-dışı literal için MATCH / YEDEK / KALDIR (`scripts/generate_flutter_only_endpoint_audit.py`)
+- **Cüzdan:** birincil `GET /api/wallet`, yedek `GET /api/user/wallet`
+- **Fal erişim:** `POST /api/fortune-access/check`; ayarlar `ip-status` → `settings` yedek
+- **Referral:** birincil `GET /api/referral` + `GET /api/user/referral-earnings`; eski `/api/referral/stats|users|earnings` yedek
+- **Kılavuz:** `getFortuneAccess` POST olarak güncellendi
+
+## 1.0.473+511 (2026-09-11) — Canlı fal UI, admin hediye jeton modu
+
+- **Admin/kurucu hediye:** gönderimden önce **Staff jeton** / **Gerçek jeton** seçimi (`financeMode` API)
+- **Canlı izleme:** fazla «Fal İste» kaldırıldı; sağ şerit + alt bar + sohbet sekmesi — tek giriş (yan rail)
+- **Fal isteği:** ~%62 yükseklikte yuvarlatılmış popup; emoji kaldırıldı, mesaj alanı genişletildi
+- **Yayıncı fal overlay:** Plus Jakarta Sans, daha büyük isim ve soru metni
+
+## 1.0.472+510 (2026-09-11) — Falcı davet, hediye, admin onay, sosyal banner
+
+- **Admin jeton onayı:** PATCH önce `/api/admin/cfc-payment-requests` (404 düzeltmesi)
+- **Canlı falcı davet:** ilk poll bekleyen çağrıyı hemen sunar; poll 3s / 10s
+- **Ana sayfa:** Gold/sosyal paylaşım duyuruları sabit mor kart yerine kayan şerit
+- **Video hediye:** MP4/WebM prefetch bitince animasyon başlar
+- **Koltuk altı hediye:** gönderen etiketi 3 sn sonra kalkar (`FxRecentGiftsStrip` + son hediyeler kutusu)
+
+## 1.0.471+509 (2026-09-11) — CI release gate (ödeme yedek yolları)
+
+- Ödeme API yedekleri: legacy path literal’ları kaldırıldı (canonical endpoint sözleşme testi); 404’te segment birleştirme ile yedek
+
+## 1.0.470+508 (2026-09-11) — Jeton / CFC ödeme talebi (tam)
+
+### Ödeme
+- `normalizePaymentRequestBody`: jeton → `coins`+`amount`+`packageId`; CFC → yalnız `amount` (jeton dalına düşme önlenir)
+- `POST` yedek: `/api/payments/requests` → `/api/payment/requests`
+- Ödeme ayarları GET: `/api/payments/config` → `/api/payment/config`
+- `buildCfcPaymentRequest` — CFC mağazası ve ödeme bildirimi
+- Geçersiz miktar / yöntem için anlaşılır hata metinleri
+
+## 1.0.469+507 (2026-09-11) — Jeton, oda sayım, giriş, canlı yayın, VIP şifre
+
+### Jeton / CFC
+- Jeton ödeme talebi: `amount` = `coins` (API **Geçersiz miktar** düzeltmesi); admin onayda `creditType` ayrımı korunur
+- CFC checkout: `requestType: cfc` + `amount` (değişmedi)
+
+### Sesli oda
+- Keşfet/liste: boş odada hayalet **1 çevrimiçi** gösterimi azaltıldı
+- Odadan çıkış: kendi **çıkış yaptı** mesajı; listeden anında düşme
+- VIP şifre sheet: **Şifreyi öğren** (sunucu `request_password`); gece 00:00 cooldown
+- Oda sahibi: şifre isteği popup (**İzin ver** / **Reddet**); red sonrası istekçi gece 00:00’a kadar bekler
+
+### Giriş
+- `emailOrUsername` + giriş sonrası 90 sn grace; heartbeat login anında atlanır
+
+### Canlı yayın
+- Uygulama içinde başka sayfada gezinirken **yayın açık** uyarısı (devam / sonlandır)
+
+## 1.0.468+506 (2026-09-10) — PK, jeton/CFC onay, oda presence, canlı yayın
+
+### PK
+- Games backend: `/api/pk/*` ve `/api/live/pk` yönlendirme
+- Canlı PK daveti: `POST /api/video-streams/pk` sonrası `POST /api/live/pk` yedek
+
+### Ödeme (admin onay)
+- Jeton talebinde `amount` gönderilmez (yanlış CFC kredisi önlenir)
+- `resolvePaymentRequestType` kaynak/başlık/not ile güçlendirildi
+- Onay PATCH: `requestType` / `creditType` + doğru admin uç (jeton vs CFC ayrı)
+
+### Ana sayfa müzik
+- Kırık global müzik şeridi kaldırıldı (oda içi müzik korunur)
+
+### Sesli oda
+- Kendi kullanıcı için giriş/çıkış duyurusu ve presence flicker azaltma
+
+### Canlı yayın
+- Geri tuşu: yayın bitir onayı (skipHostConfirm kapatıldı)
+- Hazırlık: 5 dk içinde “devam et / yayını kapat” diyalogu
+
+## 1.0.467+505 (2026-09-10) — Giriş izinleri, müzik ANR, PK, mini player
+
+### Giriş / izinler
+- TRTC ön-ısıtma: girişten sonra mikrofon/kamera izni ve SDK başlatma kaldırıldı (Android activity restart → tekrar giriş)
+- Push/OneSignal: otomatik bildirim izni girişte istenmez (banner/ayarlar)
+
+### Müzik
+- !istek / sorgu: kuyrukta beklerken yerel oynatıcı/WebView yeniden başlatılmaz (ANR azaltma)
+- Oynatma gecikmesi 520 ms; ana sayfa mini player yalnızca `visible` detached oturumda
+- Oturum açılışında müzik session sıfırlanır
+
+### Site animasyon
+- Giriş kartında admin seed `description` metni yerine kullanıcı adı / `name` gösterilir
+
+### PK (sesli oda)
+- Davet gövdesi kılavuz §9.3: `guestUserId` + `durationSec` öncelikli
+- Rakip `ownerId` için `GET …/state` + presence yedek; eksikse anlamlı hata
+
+### Koltuk
+- Presence join sonrası anında `_tryAutoPrivilegedSeat` + zamanlanmış denemeler
+
+## 1.0.466+504 (2026-09-10) — Hediye tek kanal + presence SSE
+
+### Hediye
+- SSE / gönder yanıtı: yalnızca `publishRemote` → `GiftEventListener` + orchestrator (çift koltuk flaşı ve feed paneli kaldırıldı)
+- Koltuk flaşı: realtime stream dinleyicisi kapatıldı; yalnızca orchestrator `enqueue`
+- Sesli oda HUD: sağ üst `GiftFeedPanel` kaldırıldı (`FxRecentGiftsStrip` + banner yeterli)
+- Başarılı hediye SnackBar kaldırıldı (hata mesajları duruyor)
+
+### Presence / admin oda
+- SSE boş presence snapshot önceki listeyi silmez
+- Join sonrası kendinizi presence listesine ekleme SSE merge’de de uygulanır
+
+## 1.0.465+503 (2026-09-10) — Sesli oda koltuk + hediye realtime
+
+### Koltuk
+- Koltuğa oturma: optimistic UI (15 sn grace) + backend `GET /seats` ile birleştirme — gecikmede düşme azaltıldı
+- Mevcut SSE `seat_changed` / presence merge korunur; polling SSE bağlıyken presence için kapalı
+
+### Hediye (sesli oda)
+- `VoiceRoomGiftOrchestrator` — canonical `eventId` dedupe; tek pipeline
+- Normal hediye: koltuk altı `FxRecentGiftsStrip` (TikTok tarzı)
+- Featured / büyük hediye: üst `FxBigGiftBanner` (`isFeatured` katalog + jeton eşiği)
+- Kaldırıldı: çift kayan ticker + client chat satırı + global overlay (oda içi)
+- Gift Engine animasyon kuyruğu aynı SSE/realtime kaynaktan
+
+### Katalog
+- `GiftEntity.isFeatured` — admin panel `isFeatured` / `featuredGift` JSON
+
+## 1.0.464+502 (2026-09-10) — Sesli oda admin giriş / koltuk
+
+### Sesli oda
+- Admin / kurucu nick (`admin`, `yonetici` …) staff API yüklenmeden otomatik koltuk önceliği
+- Odaya girişte koltuk ataması yeniden denenir; küçük odalarda (2 koltuk) doğru indeks
+- Çevrimiçi sayaç: odadayken liste boşsa en az 1 gösterilir
+- Presence listesine kendinizi ekleme (join yanıtı eksikse)
+- Yetkili kullanıcı boş koltuğa dokununca önce kendisi oturur (atama paneli yerine)
+
+## 1.0.463+501 (2026-09-10) — Fal hub layout, mini müzik sync
+
+### Fal & Tarot hub
+- `UltraFortuneCoverBackdrop` / kapak görselleri: sınırsız yükseklik (`StackFit.expand`) kaldırıldı — boş yıldız alanı ve `ErrorWidget` zinciri giderildi
+- App bar, cüzdan chip, bölüm başlıkları ve durum panellerinde dar ekran taşması düzeltildi
+- Fal türleri başlık satırı: `Flexible` + kısa “Tümü >” linki
+
+### Ana sayfa mini müzik
+- Odadan ayrıldıktan sonra arka plan senkronu artık `voiceRoomLiveProvider.refresh` yerine yalnızca `fetchDj` — ana sekmede oda oturumu açılmıyor
+- Global şerit oynat/duraklat: `detachedTogglePlayPause` (yerel player + isteğe bağlı sunucu)
+
+### Sosyal
+- (1.0.462) Hikaye şeridi kaldırıldı; Paylaş düğmesi tam görünür
+
+### Test
+- `fortune_tarot_hub_smoke_test`, `detached_music_bar_test`, `social_page_composer_test`
+
+## 1.0.462+500 (2026-09-10) — Fal hub, mini müzik, Sosyal
+
+### Ana sayfa / sesli mini player
+- Global müzik şeridi artık odadan çıkınca `voiceRoomLiveProvider` başlatmıyor (`detachedMiniPlayer`) — “Bir bölüm yüklenemedi” build hatası giderildi
+- Durdur/kapat: müzik oturumu notifier; oynat/duraklat: yerel DJ player (+ yetkiliyse sunucu sync)
+
+### Fal & Tarot hub
+- Fal türleri grid anında mount; lazy bölümlerde RepaintBoundary raster hayaleti kapatıldı
+- Hero başlık fontu offline Google Fonts için fallback
+
+### Sosyal
+- Hikaye şeridi Sosyal sekmesinden kaldırıldı (Ana sayfa hikayeleri duruyor)
+- Paylaş düğmesi yatay kaydırmalı araç çubuğu + sabit genişlik — “Payla…” kırpması düzeltildi
+
+## 1.0.461+499 (2026-09-10) — PK layout, oda sayımı, giriş, CI gate
+
+### Canlı PK
+- Yarım ekran PK layout yalnızca split video hazır olduğunda (`isLivePkSplitReady`)
+- Canlı PK `accepted` yanıtı iki yayın kimliği yoksa `pending` kalır
+
+### Sesli oda
+- Presence join sonrası anında koltuk senkronu + otomatik koltuk denemesi
+- Oda içi online: boş presence + API `1` → 0 (hayalet sayım)
+
+### Auth
+- Giriş sonrası TRTC prewarm 2 sn gecikmeli (ilk giriş çöküşü riski)
+
+### CI
+- Release gate özeti: HTTP/METADATA `SKIP` artık sahte FAIL üretmez
+
+### Fal hub
+- Başlık fontu Google Fonts hata durumunda sistem fallback
+
+## 1.0.460+498 (2026-09-10) — Cihaz hotfix: PK, sesli oda, fal hub, falcı PiP
+
+### Canlı PK
+- Split video yalnızca gerçekten aktif PK + iki yayın kimliği varsa (erken TRTC çöküşü önlenir)
+- `pending` / `created` durumları split ekranı açmaz
+
+### Sesli oda
+- Keşfet çevrimiçi sayısı: SSE izlenen odalarda hayalet “1 kişi” düşürülür
+- Koltuk: SSE gecikmesinde koltuktan düşme azaltıldı
+- Giriş animasyonları: state snapshot sonrası entrance motoru erken devreye girer
+- PK daveti: sahip odalar için ek poll (slug = kullanıcı adı)
+
+### Fal & Tarot
+- Fal türleri grid hero altında hemen yüklenir (boş ekran riski)
+
+### Canlı falcı görüşme
+- Küçük PiP üst bar / kapat ile çakışmayacak şekilde aşağı alındı
+
+### Profil
+- Boş kullanıcı kimliğiyle profil açılışı engellenir; hata ekranında geri aksiyonu
+
+## 1.0.459+497 (2026-09-10) — Canlı yayın heartbeat, falcı API alanları
+
+### Canlı yayın
+- Yayıncı canlılık: `POST /api/video-streams/{id}/media-heartbeat` (signal ping yerine kanonik uç)
+
+### Canlı falcılar
+- `GET /api/fortune-tellers` — `isGoldUser`, `favoriteCount`, `presenceLabel`, `isFavorited` alanları parse
+
 ## 1.0.458+496 (2026-09-10) — Abacus backend entegrasyon, jeton katalog
 
 ### Backend kaynak seti

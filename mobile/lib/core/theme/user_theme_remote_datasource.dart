@@ -4,7 +4,7 @@ import '../network/api_endpoints.dart';
 import '../network/dio_provider.dart';
 import '../util/json_util.dart';
 
-/// `GET/POST /api/user/theme` — web ile tema senkronu.
+/// `GET/PATCH /api/user/theme` — Abacus OpenAPI ile tema senkronu.
 class UserThemeRemoteDataSource {
   UserThemeRemoteDataSource(this._dio);
 
@@ -35,7 +35,7 @@ class UserThemeRemoteDataSource {
   Future<void> updateTheme(String theme) async {
     final value = theme.trim().toLowerCase();
     if (value.isEmpty) return;
-    await _dio.safePost<dynamic>(
+    await _dio.safePatch<dynamic>(
       ApiEndpoints.userTheme,
       data: {'theme': value},
     );
