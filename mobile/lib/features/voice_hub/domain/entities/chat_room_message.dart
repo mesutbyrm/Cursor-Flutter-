@@ -12,9 +12,12 @@ class ChatRoomUserRef extends Equatable {
     this.chatRole,
     this.roleSymbol,
     this.membership,
+    this.favoriteTeam,
+    this.teamRaw,
   });
 
   factory ChatRoomUserRef.fromJson(Map<String, dynamic> json) {
+    final teamRaw = json['team'];
     return ChatRoomUserRef(
       id: json['id']?.toString() ??
           json['userId']?.toString() ??
@@ -33,6 +36,9 @@ class ChatRoomUserRef extends Equatable {
       chatRole: json['chatRole']?.toString(),
       roleSymbol: json['roleSymbol']?.toString(),
       membership: json['membership']?.toString(),
+      favoriteTeam: json['favoriteTeam']?.toString() ??
+          json['favorite_team']?.toString(),
+      teamRaw: teamRaw is Map ? Map<String, dynamic>.from(teamRaw) : null,
     );
   }
 
@@ -43,6 +49,8 @@ class ChatRoomUserRef extends Equatable {
   final String? chatRole;
   final String? roleSymbol;
   final String? membership;
+  final String? favoriteTeam;
+  final Map<String, dynamic>? teamRaw;
 
   /// Görünen ad — kullanıcı adı değil, site `displayName` / `name` öncelikli.
   String get displayName {
@@ -78,7 +86,17 @@ class ChatRoomUserRef extends Equatable {
 
   @override
   List<Object?> get props =>
-      [id, name, nickname, image, chatRole, roleSymbol, membership];
+      [
+        id,
+        name,
+        nickname,
+        image,
+        chatRole,
+        roleSymbol,
+        membership,
+        favoriteTeam,
+        teamRaw,
+      ];
 }
 
 enum ChatMessageKind { text, systemJoin, systemLeave, gift, unknown }

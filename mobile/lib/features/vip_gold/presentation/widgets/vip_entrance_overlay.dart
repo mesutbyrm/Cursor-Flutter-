@@ -5,11 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entrance_theme.dart';
+import '../../domain/entrance_visual_style.dart';
 import '../../domain/vip_tier.dart';
 import '../../../../core/network/voice_event_log.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../providers/entrance_effect_settings_provider.dart';
 import '../theme/vip_gold_tokens.dart';
+import 'gold_team_top_entrance_banner.dart';
 import 'vip_badge.dart';
 
 /// Özel giriş animasyonu — sağdan sola kayan tam ekran FX (takım renkleri destekli).
@@ -78,6 +80,17 @@ class VipEntranceOverlayState extends ConsumerState<VipEntranceOverlay>
   @override
   Widget build(BuildContext context) {
     if (!widget.tier.hasEntranceFx) return const SizedBox.shrink();
+
+    final settings = ref.watch(entranceEffectSettingsProvider);
+    if (settings.visualStyle == EntranceVisualStyle.topTeamPass) {
+      return GoldTeamTopEntranceBanner(
+        userName: widget.userName,
+        tier: widget.tier,
+        theme: _theme,
+        profileImageUrl: widget.profileImageUrl,
+        onFinished: widget.onFinished,
+      );
+    }
 
     final theme = _theme;
     final ctrl = _ctrl;

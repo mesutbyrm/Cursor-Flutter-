@@ -73,6 +73,7 @@ import 'utils/voice_music_access.dart';
 import 'utils/voice_room_pending_music_search_flow.dart';
 import 'providers/voice_room_live_side_effect_slices.dart';
 import 'widgets/voice_room/voice_room_staff_join_banner.dart';
+import 'widgets/voice_room/voice_room_gold_entrance_host.dart';
 import 'theme/voice_room_tokens.dart';
 import 'utils/voice_room_permissions.dart';
 import 'utils/voice_room_user_actions.dart';
@@ -1911,6 +1912,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                   canControl: canControlMusic,
                   bottomInset: 118,
                 ),
+              ),
+            if (_liveRoomKey.isNotEmpty)
+              VoiceRoomGoldEntranceHost(
+                roomKey: _liveRoomKey,
+                topInset: 40,
               ),
             if (_showVipEntrance && user != null)
               _VoiceRoomRtcVipEntrance(

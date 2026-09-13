@@ -1,4 +1,6 @@
-/// Admin panelinden yönetilen giriş efekti varsayılanları (cihaz önbelleği).
+import 'entrance_visual_style.dart';
+
+/// Giriş efekti — cihaz önbelleği (admin + Gold kullanıcı ayarları).
 class EntranceEffectSettings {
   const EntranceEffectSettings({
     this.speed = 1.0,
@@ -10,6 +12,7 @@ class EntranceEffectSettings {
     this.svipEnabled = true,
     this.adminEnabled = true,
     this.teamColorsEnabled = true,
+    this.visualStyle = EntranceVisualStyle.topTeamPass,
   });
 
   final double speed;
@@ -21,6 +24,7 @@ class EntranceEffectSettings {
   final bool svipEnabled;
   final bool adminEnabled;
   final bool teamColorsEnabled;
+  final EntranceVisualStyle visualStyle;
 
   Duration get animationDuration => Duration(
         milliseconds: (durationMs / speed).round().clamp(900, 6000),
@@ -36,6 +40,7 @@ class EntranceEffectSettings {
     bool? svipEnabled,
     bool? adminEnabled,
     bool? teamColorsEnabled,
+    EntranceVisualStyle? visualStyle,
   }) {
     return EntranceEffectSettings(
       speed: speed ?? this.speed,
@@ -47,6 +52,7 @@ class EntranceEffectSettings {
       svipEnabled: svipEnabled ?? this.svipEnabled,
       adminEnabled: adminEnabled ?? this.adminEnabled,
       teamColorsEnabled: teamColorsEnabled ?? this.teamColorsEnabled,
+      visualStyle: visualStyle ?? this.visualStyle,
     );
   }
 
@@ -60,6 +66,7 @@ class EntranceEffectSettings {
         'svipEnabled': svipEnabled,
         'adminEnabled': adminEnabled,
         'teamColorsEnabled': teamColorsEnabled,
+        'visualStyle': visualStyle.wire,
       };
 
   factory EntranceEffectSettings.fromJson(Map<String, dynamic> json) {
@@ -73,6 +80,9 @@ class EntranceEffectSettings {
       svipEnabled: json['svipEnabled'] as bool? ?? true,
       adminEnabled: json['adminEnabled'] as bool? ?? true,
       teamColorsEnabled: json['teamColorsEnabled'] as bool? ?? true,
+      visualStyle: EntranceVisualStyleWire.parse(
+        json['visualStyle']?.toString(),
+      ),
     );
   }
 }

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/network/api_exception.dart';
@@ -12,6 +13,7 @@ import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../auth/presentation/widgets/auth_shell.dart';
 import '../../../vip_gold/domain/entrance_theme.dart';
+import '../../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../premium_2026/profile_membership_helpers.dart';
 import '../premium_2026/widgets/profile_membership_manage_tile.dart';
 import '../providers/profile_hub_providers.dart';
@@ -278,6 +280,18 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
                     ),
                     const SizedBox(height: 8),
                     const ProfileMembershipManageTile(),
+                    if (ref.watch(vipTierProvider).hasEntranceFx) ...[
+                      const SizedBox(height: 8),
+                      ListTile(
+                        leading: const Icon(Icons.vertical_align_top_rounded),
+                        title: const Text('Giriş efekti ayarları'),
+                        subtitle: const Text(
+                          'Takım amblemi, hız ve üstten geçiş',
+                        ),
+                        trailing: const Icon(Icons.chevron_right_rounded),
+                        onTap: () => context.push('/settings/entrance-effects'),
+                      ),
+                    ],
                   ],
                 ),
               ),

@@ -44,8 +44,11 @@ class _SiteAnimationCardState extends State<SiteAnimationCard>
       curve: const Interval(0, 0.35, curve: Curves.easeOut),
       reverseCurve: const Interval(0.65, 1, curve: Curves.easeIn),
     );
+    final fromTop = (widget.command.type == SiteAnimationType.memberJoined ||
+            widget.command.type == SiteAnimationType.hostSeat) &&
+        widget.command.tier.index >= SiteAnimationTier.gold.index;
     _slide = Tween<Offset>(
-      begin: const Offset(-0.42, 0),
+      begin: fromTop ? const Offset(0, -0.55) : const Offset(-0.42, 0),
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _ctrl,

@@ -100,6 +100,7 @@ import '../../features/referral/presentation/pages/referral_earnings_page.dart';
 import '../../features/referral/presentation/pages/referral_invite_page.dart';
 import '../../features/referral/presentation/pages/referral_users_page.dart';
 import '../../features/membership/presentation/pages/premium_membership_page.dart';
+import '../../features/vip_gold/presentation/pages/entrance_effect_user_settings_page.dart';
 import '../../features/profile/presentation/pages/cfc_purchase_page.dart';
 import '../../features/profile/presentation/pages/jeton_purchase_page.dart';
 import '../../features/wallet/presentation/pages/wallet_center_page.dart';
@@ -768,6 +769,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings/devices',
         builder: (context, state) => const ActiveDevicesPage(),
+      ),
+      GoRoute(
+        path: '/settings/entrance-effects',
+        builder: (context, state) => const EntranceEffectUserSettingsPage(),
       ),
       if (kDebugMode)
         GoRoute(

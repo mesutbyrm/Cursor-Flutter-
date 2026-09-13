@@ -1,5 +1,18 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.482+520 (2026-09-13) — Gold giriş: takım amblemi üstten
+
+- Gold/Diamond/SVIP: tuttuğu takım renkleri + amblem ile üstten kayan giriş (`GoldTeamTopEntranceBanner`)
+- Ayarlar: Profil düzenle → Giriş efekti (hız, süre, geçiş, üstten/tam ekran, takım renkleri)
+- Sesli oda: diğer Gold üyelerin girişi odada üst banner; canlı yayın VIP girişi aynı stil
+- Site animation Gold+ kartları üstten kayma
+
+## 1.0.481+519 (2026-09-13) — PK davet (sesli oda + canlı yayın)
+
+- Sesli oda: games `action:create` + `targetRoomId` gövdesi öncelikli; `guestUserId` olmadan da davet (rakip oda kimliği yeterli)
+- Canlı yayın: kılavuz §9.4 `{ opponentStreamId, durationMinutes }` önce; 400/422’de sıradaki gövde
+- Yerel API mirror: `targetRoomId`, `durationSec`, `durationMinutes` alias
+
 ## 1.0.480+518 (2026-09-13) — FAZ 3 repository bağlantıları (guest, gift-box, OTP)
 
 - Canlı misafir: `LiveGuestRepository` → `GET/POST /api/live/guest`, liste `/api/live/guest/list`; co-broadcast UI aynı `action`/`streamId`/`userId` gövdesi

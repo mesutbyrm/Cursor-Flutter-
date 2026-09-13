@@ -5,9 +5,10 @@ import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../vip_gold/domain/entrance_theme.dart';
+import '../../../vip_gold/domain/entrance_visual_style.dart';
+import '../../../vip_gold/presentation/widgets/gold_team_top_entrance_banner.dart';
 import '../../../vip_gold/domain/vip_tier.dart';
 import '../../../vip_gold/presentation/providers/entrance_effect_settings_provider.dart';
-import '../../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
 import '../providers/staff_access_provider.dart';
 import '../widgets/admin_local_preview_banner.dart';
 
@@ -153,6 +154,23 @@ class _AdminEntranceEffectsPageState
                           settings.copyWith(teamColorsEnabled: v),
                         ),
                       ),
+                      const SizedBox(height: 8),
+                      SegmentedButton<EntranceVisualStyle>(
+                        segments: const [
+                          ButtonSegment(
+                            value: EntranceVisualStyle.topTeamPass,
+                            label: Text('Üstten takım'),
+                          ),
+                          ButtonSegment(
+                            value: EntranceVisualStyle.centerFullscreen,
+                            label: Text('Tam ekran'),
+                          ),
+                        ],
+                        selected: {settings.visualStyle},
+                        onSelectionChanged: (s) => notifier.update(
+                          settings.copyWith(visualStyle: s.first),
+                        ),
+                      ),
                       const SizedBox(height: 16),
                       FilledButton.icon(
                         onPressed: () => setState(() => _preview = true),
@@ -180,7 +198,7 @@ class _AdminEntranceEffectsPageState
               ],
             ),
             if (_preview)
-              VipEntranceOverlay(
+              GoldTeamTopEntranceBanner(
                 tier: VipTier.gold,
                 theme: TeamCatalog.resolve(favoriteTeam: 'galatasaray'),
                 userName: access.username ?? 'Admin',

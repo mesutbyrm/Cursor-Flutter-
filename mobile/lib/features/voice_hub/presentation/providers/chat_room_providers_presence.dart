@@ -768,7 +768,42 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     _pushEntranceBanner(formatted);
   }
 
-  void _pushEntranceBanner(String banner) {
+  void _pushGoldTeamEntrance(ChatRoomUserRef? user, String displayName) {
+    if (user == null) return;
+    final tier = VipTier.fromMembership(user.membership);
+    if (!tier.hasEntranceFx) return;
+    final settings = ref.read(entranceEffectSettingsProvider);
+    if (!entranceEffectAllowed(
+      tier: tier,
+      settings: settings,
+      isStaff: false,
+    )) {
+      return;
+    }
+    final theme = settings.teamColorsEnabled
+        ? entranceThemeFromUserJson({
+            'favoriteTeam': user.favoriteTeam,
+            if (user.teamRaw != null) 'team': user.teamRaw,
+            'membership': user.membership,
+          })
+        : EntranceTheme.turkey;
+    final roomKey = _roomKey;
+    if (roomKey.isEmpty) return;
+    ref.read(voiceRoomGoldEntranceProvider(roomKey).notifier).show(
+          VoiceRoomGoldEntranceEvent(
+            userName: displayName,
+            tier: tier,
+            theme: theme,
+            avatarUrl: user.image,
+          ),
+          dedupeKey: '${user.id}:gold_team_entrance',
+        );
+  }
+
+  void _pushEntranceBanner(String banner, {ChatRoomUserRef? user, String? displayName}) {
+    if (user != null && displayName != null && displayName.isNotEmpty) {
+      _pushGoldTeamEntrance(user, displayName);
+    }
     ref.read(staffEntranceMarqueeProvider.notifier).enqueue(
           banner,
           roomName: _roomMeta.nameTr,
@@ -813,7 +848,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
             roomName: _roomMeta.nameTr,
           );
     if (banner.isEmpty || !_markEntranceOnce(banner)) return;
-    _pushEntranceBanner(banner);
+    _pushEntranceBanner(banner, user: user, displayName: displayName);
   }
 
   ChatRoomPresence? _resolvePresence(String target) {
