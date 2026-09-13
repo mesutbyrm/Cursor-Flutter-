@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/datasources/live_stream_extras_datasource.dart';
+import '../../domain/repositories/live_guest_repository.dart';
+import 'live_namespace_providers.dart';
 import 'live_providers.dart';
 
 class CoBroadcastState {
@@ -39,6 +41,8 @@ class CoBroadcastState {
 class CoBroadcastNotifier extends Notifier<CoBroadcastState> {
   LiveStreamExtrasDataSource get _remote => ref.read(liveStreamExtrasProvider);
 
+  LiveGuestRepository get _guest => ref.read(liveGuestRepositoryProvider);
+
   @override
   CoBroadcastState build() => const CoBroadcastState();
 
@@ -75,14 +79,14 @@ class CoBroadcastNotifier extends Notifier<CoBroadcastState> {
   }
 
   Future<void> requestJoin(String streamId) async {
-    await _remote.coBroadcastAction(streamId: streamId, action: 'request');
+    await _guest.postCoBroadcastCompat(streamId: streamId, action: 'request');
   }
 
   Future<void> approveRequest({
     required String streamId,
     required String userId,
   }) async {
-    await _remote.coBroadcastAction(
+    await _guest.postCoBroadcastCompat(
       streamId: streamId,
       action: 'approve',
       userId: userId,
@@ -94,7 +98,7 @@ class CoBroadcastNotifier extends Notifier<CoBroadcastState> {
     required String streamId,
     required String userId,
   }) async {
-    await _remote.coBroadcastAction(
+    await _guest.postCoBroadcastCompat(
       streamId: streamId,
       action: 'reject',
       userId: userId,
@@ -103,15 +107,15 @@ class CoBroadcastNotifier extends Notifier<CoBroadcastState> {
   }
 
   Future<void> acceptInvite(String streamId) async {
-    await _remote.patchCoBroadcast(streamId: streamId, action: 'accept');
+    await _guest.patchCoBroadcastCompat(streamId: streamId, action: 'accept');
   }
 
   Future<void> rejectInvite(String streamId) async {
-    await _remote.patchCoBroadcast(streamId: streamId, action: 'reject');
+    await _guest.patchCoBroadcastCompat(streamId: streamId, action: 'reject');
   }
 
   Future<void> leave(String streamId) async {
-    await _remote.patchCoBroadcast(streamId: streamId, action: 'leave');
+    await _guest.patchCoBroadcastCompat(streamId: streamId, action: 'leave');
   }
 
   void clear() {

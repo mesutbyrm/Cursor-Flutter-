@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.480+518 (2026-09-13) — FAZ 3 repository bağlantıları (guest, gift-box, OTP)
+
+- Canlı misafir: `LiveGuestRepository` → `GET/POST /api/live/guest`, liste `/api/live/guest/list`; co-broadcast UI aynı `action`/`streamId`/`userId` gövdesi
+- Hediye kutusu: `GiftBoxRepository` → `GiftBoxRemoteDataSource` (ham `postAction`; UI REST akışı yok)
+- Telefon OTP: `AuthRepository.sendPhoneVerificationOtp` / `verifyPhoneVerificationOtp` — gövde `{ phone }` / `{ phone, code }` (`authentication.md`)
+- `LiveApiRemoteDataSource.fetchGuestSession` / `postGuestAction`; canlı PK create yedeği `LiveFieldPkApi`
+
 ## 1.0.479+517 (2026-09-13) — Abacus ZIP paketi (envanter + §1–§4/§11 katman)
 
 - `backend-reference/canlifal_flutter_paketi/` (77 dosya) repoya eklendi; `docs/ABACUS_ZIP_PACKAGE_INDEX.md` + `ABACUS_ZIP_FLUTTER_ROADMAP.md`

@@ -6,6 +6,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/pk_event_log.dart';
 import '../../../../core/util/json_util.dart';
+import '../../../live/data/datasources/live_field/live_field_pk_api.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
 
 /// Canlı PK davet gövdesi — üretim `POST /api/video-streams/pk` kontratı.
@@ -34,6 +35,8 @@ class PkBattleRemoteDataSource {
   PkBattleRemoteDataSource(this._dio);
 
   final Dio _dio;
+
+  LiveFieldPkApi get _liveFieldPk => LiveFieldPkApi(_dio);
 
   Map<String, dynamic>? _unwrap(dynamic body) {
     if (body is Map<String, dynamic>) {
@@ -450,21 +453,26 @@ class PkBattleRemoteDataSource {
         if (e.statusCode != 404 && e.statusCode != 405) rethrow;
       }
       try {
-        final res = await _dio.safePost<dynamic>(
-          ApiEndpoints.livePk,
-          data: {
-            'action': 'create',
-            'roomId': host,
-            'streamId': host,
-            'targetRoomId': target,
-            'targetStreamId': target,
-            'opponentStreamId': target,
-            'durationSeconds': durationSec,
-            'durationSec': durationSec,
-          },
+        final fieldBattle = await _liveFieldPk.pkAction(
+          action: 'create',
+          roomId: host,
+          targetRoomId: target,
+          durationSeconds: durationSec,
         );
-        final battle = _parseBattle(res.data);
-        if (battle != null) return battle;
+        if (fieldBattle != null && fieldBattle.id.isNotEmpty) {
+          final battle = _parseBattle({
+            'battle': {
+              'id': fieldBattle.id,
+              'status': fieldBattle.status,
+              'durationSeconds': fieldBattle.durationSeconds,
+              'room1Score': fieldBattle.room1Score,
+              'room2Score': fieldBattle.room2Score,
+              'hostStreamId': host,
+              'opponentStreamId': target,
+            },
+          });
+          if (battle != null) return battle;
+        }
       } on ApiException catch (e) {
         PkEventLog.apiFailure(
           method: 'POST',

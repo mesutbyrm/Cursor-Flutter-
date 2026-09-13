@@ -4,6 +4,7 @@ import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
+import '../../../../core/util/json_util.dart';
 
 class AuthRemoteDataSource {
   AuthRemoteDataSource(this._dio);
@@ -19,9 +20,17 @@ class AuthRemoteDataSource {
     final trimmed = identifier.trim();
     // Kılavuz §9.1 — `{email}` veya `{username}` + `password` (emailOrUsername yok).
     final body = trimmed.contains('@')
-        ? {'email': trimmed, 'password': password}
+        ? {
+            'email': trimmed,
+            'emailOrUsername': trimmed,
+            'password': password,
+          }
         : Env.useMobileAuth
-            ? {'username': trimmed, 'password': password}
+            ? {
+                'username': trimmed,
+                'emailOrUsername': trimmed,
+                'password': password,
+              }
             : {'email': trimmed, 'password': password};
     final res = await _dio.safePost<Map<String, dynamic>>(
       path,
@@ -206,6 +215,50 @@ class AuthRemoteDataSource {
     final path = Env.useMobileAuth ? ApiEndpoints.me : ApiEndpoints.authMe;
     final res = await _dio.safeGet<Map<String, dynamic>>(path);
     return _unwrapAuthBody(res.data);
+  }
+
+  /// Abacus `POST /api/auth/email/send-verification` (OpenAPI; ham gövde).
+  Future<Map<String, dynamic>> postEmailSendVerification([
+    Map<String, dynamic>? body,
+  ]) async {
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.authEmailSendVerification,
+      data: body ?? const <String, dynamic>{},
+    );
+    return asJsonMap(res.data);
+  }
+
+  /// `authentication.md` BÖLÜM 17 — gövde `{ phone }`. Ham `Map` yalnızca bu anahtarlar için.
+  Future<Map<String, dynamic>> postPhoneSendOtp(Map<String, dynamic> body) async {
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.authPhoneSendOtp,
+      data: body,
+    );
+    return asJsonMap(res.data);
+  }
+
+  /// `authentication.md` BÖLÜM 17 — gövde `{ phone, code }`.
+  Future<Map<String, dynamic>> postPhoneVerifyOtp(Map<String, dynamic> body) async {
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.authPhoneVerifyOtp,
+      data: body,
+    );
+    return asJsonMap(res.data);
+  }
+
+  Future<Map<String, dynamic>> fetchVerificationRoute() async {
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.authVerification);
+    return asJsonMap(res.data);
+  }
+
+  Future<Map<String, dynamic>> postVerificationRoute(
+    Map<String, dynamic> body,
+  ) async {
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.authVerification,
+      data: body,
+    );
+    return asJsonMap(res.data);
   }
 
   Map<String, dynamic> _unwrapAuthBody(Map<String, dynamic>? body) {

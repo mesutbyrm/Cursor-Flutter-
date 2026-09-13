@@ -70,6 +70,7 @@ import '../../domain/pk/pk_status_helper.dart';
 import '../../domain/pk/pk_unified_bridge.dart';
 import '../../domain/live_co_broadcast_constants.dart';
 import '../../domain/live_guest_layout_resolver.dart';
+import '../../domain/live_guest_list_snapshot.dart';
 import '../providers/live_namespace_providers.dart';
 import '../../domain/utils/live_fortune_type_slug.dart';
 import '../../domain/utils/co_guest_camera_signal_util.dart';
@@ -1743,8 +1744,17 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
 
   Future<void> _applyGuestPresenceFromApi(String streamId) async {
     try {
-      final snap =
-          await ref.read(liveApiRemoteProvider).fetchGuestList(streamId: streamId);
+      final guestRepo = ref.read(liveGuestRepositoryProvider);
+      LiveGuestListSnapshot snap;
+      try {
+        final session = await guestRepo.fetchGuestSession(streamId: streamId);
+        snap = LiveGuestListSnapshot.fromJson(session);
+        if (snap.count <= 0 && snap.guests.isEmpty) {
+          snap = await guestRepo.fetchGuestList(streamId: streamId);
+        }
+      } catch (_) {
+        snap = await guestRepo.fetchGuestList(streamId: streamId);
+      }
       if (snap.count <= 0 && snap.guests.isEmpty) return;
       final guests = snap.toCoBroadcasters();
       final layout = resolveGuestLayout(

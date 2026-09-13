@@ -20,6 +20,15 @@ abstract class AuthRepository {
   Future<void> requestPasswordReset(String email);
   Future<void> sendEmailVerification({String? email});
   Future<void> verifyEmail({required String email, required String code});
+
+  /// `POST /api/auth/phone/send-otp` — gövde `{ phone }` (authentication.md BÖLÜM 17).
+  Future<Map<String, dynamic>> sendPhoneVerificationOtp(String phone);
+
+  /// `POST /api/auth/phone/verify-otp` — gövde `{ phone, code }`.
+  Future<Map<String, dynamic>> verifyPhoneVerificationOtp({
+    required String phone,
+    required String code,
+  });
   Future<List<ActiveSessionEntity>> fetchActiveSessions();
   Future<void> revokeSession(String sessionId);
   Future<void> logoutAllDevices({bool removeDevices = false});

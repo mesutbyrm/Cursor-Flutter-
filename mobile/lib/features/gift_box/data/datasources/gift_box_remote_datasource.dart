@@ -31,7 +31,8 @@ class GiftBoxRemoteDataSource {
     return asJsonMap(res.data);
   }
 
-  /// BÖLÜM 22 — `action: create` | `cancel` ve oluşturma alanları.
+  /// BÖLÜM 22 — `action: create` | `cancel` ve oluşturma alanları (OpenAPI eksik;
+  /// `route.ts` repoda yok — gövde çağıran/UI tarafından verilir, burada uydurulmaz).
   Future<Map<String, dynamic>> postAction(
     Map<String, dynamic> body, {
     String? roomId,

@@ -251,6 +251,23 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Map<String, dynamic>> sendPhoneVerificationOtp(String phone) {
+    final normalized = phone.trim();
+    return _remote.postPhoneSendOtp({'phone': normalized});
+  }
+
+  @override
+  Future<Map<String, dynamic>> verifyPhoneVerificationOtp({
+    required String phone,
+    required String code,
+  }) {
+    return _remote.postPhoneVerifyOtp({
+      'phone': phone.trim(),
+      'code': code.trim(),
+    });
+  }
+
+  @override
   Future<List<ActiveSessionEntity>> fetchActiveSessions() async {
     final rows = await _remote.fetchActiveSessions();
     return rows.map(ActiveSessionEntity.fromJson).toList(growable: false);

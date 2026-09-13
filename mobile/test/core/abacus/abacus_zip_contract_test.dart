@@ -4,6 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Abacus zip §1 auth paths', () {
+    test('live guest canonical path', () {
+      expect(ApiEndpoints.liveGuest, '/api/live/guest');
+    });
+
     test('canonical', () {
       expect(
         ApiEndpoints.authEmailSendVerification,

@@ -22,6 +22,53 @@ class LiveApiRemoteDataSource {
     return parsePkMatchList(res.data);
   }
 
+  /// `GET /api/live/guest` — oturumlu misafir durumu (Bearer).
+  ///
+  /// Query: `roomId`, `streamId`, `view` (OpenAPI). Gövde şeması route.ts olmadan
+  /// doğrulanmadı; ham JSON döner.
+  Future<Map<String, dynamic>> fetchGuestSession({
+    String? roomId,
+    String? streamId,
+    String? view,
+  }) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.liveGuest,
+      query: {
+        if (roomId != null && roomId.isNotEmpty) 'roomId': roomId,
+        if (streamId != null && streamId.isNotEmpty) 'streamId': streamId,
+        if (view != null && view.isNotEmpty) 'view': view,
+      },
+      forceRefresh: true,
+    );
+    if (res.data is Map) {
+      return asJsonMap(res.data);
+    }
+    return {};
+  }
+
+  /// `POST /api/live/guest` — `action` tabanlı gövde production probe ile doğrulandı;
+  /// tam alan listesi BLOCKED (route.ts yok). [body] çağıran tarafından verilir.
+  Future<Map<String, dynamic>> postGuestAction(
+    Map<String, dynamic> body, {
+    String? roomId,
+    String? streamId,
+    String? view,
+  }) async {
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.liveGuest,
+      data: body,
+      query: {
+        if (roomId != null && roomId.isNotEmpty) 'roomId': roomId,
+        if (streamId != null && streamId.isNotEmpty) 'streamId': streamId,
+        if (view != null && view.isNotEmpty) 'view': view,
+      },
+    );
+    if (res.data is Map) {
+      return asJsonMap(res.data);
+    }
+    return {};
+  }
+
   /// `GET /api/live/guest/list` — public; `streamId` opsiyonel.
   Future<LiveGuestListSnapshot> fetchGuestList({String? streamId}) async {
     final res = await _dio.safeGet<dynamic>(

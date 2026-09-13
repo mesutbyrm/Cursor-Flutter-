@@ -561,6 +561,8 @@ abstract final class ApiEndpoints {
   static const livePkActive = '/api/live/pk/active';
 
   /// Çoklu yayın misafir listesi (public) — `?streamId=` opsiyonel.
+  /// Multi-guest oturum — `GET` / `POST` (Bearer). Liste için [liveGuestList].
+  static const liveGuest = '/api/live/guest';
   static const liveGuestList = '/api/live/guest/list';
 
   static const pkRequest = '/api/pk/request';
