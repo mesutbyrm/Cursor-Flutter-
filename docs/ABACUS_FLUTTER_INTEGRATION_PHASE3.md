@@ -137,7 +137,13 @@ Doğrulama (değişiklik gerekmedi):
 
 ## M) Test sonuçları
 
-*(CI/agent çıktısı — `flutter analyze`, `api_endpoint_canonical_contract_test`, `economy_integration_test`, gift_box + active_session testleri)*
+| Komut | Sonuç |
+|-------|--------|
+| `dart analyze` | Başarılı (exit 0) |
+| `flutter test test/core/network/api_endpoint_canonical_contract_test.dart` | 6/6 geçti |
+| `flutter test test/core/economy/economy_integration_test.dart` | 7/7 geçti |
+| `flutter test test/features/gift_box/gift_box_contract_test.dart` | 1/1 geçti |
+| `flutter test test/features/auth/active_session_entity_test.dart` | 1/1 geçti |
 
 ---
 
