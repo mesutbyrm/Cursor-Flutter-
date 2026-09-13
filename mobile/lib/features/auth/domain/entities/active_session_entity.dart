@@ -33,7 +33,10 @@ class ActiveSessionEntity extends Equatable {
         'Bilinmeyen cihaz';
 
     return ActiveSessionEntity(
-      id: json['id']?.toString() ?? '',
+      id: json['id']?.toString() ??
+          json['deviceId']?.toString() ??
+          json['sessionId']?.toString() ??
+          '',
       deviceLabel: label,
       devicePlatform: json['devicePlatform']?.toString() ?? 'unknown',
       lastSeenAt: parseDate(json['lastSeenAt']),

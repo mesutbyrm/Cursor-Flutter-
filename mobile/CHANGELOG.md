@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.477+515 (2026-09-13) — Abacus entegrasyon aşama 3
+
+- Hediye kutusu API katmanı: `GET/POST /api/gift-box`, `GET /api/gift-box/{id}`, `join`, `share`; oda/yayın `sync`
+- Oturum: `GET/DELETE /api/auth/sessions`, `POST /api/auth/logout-all` (+ mobil oturum yedek)
+- SSE sesli oda: `gift_box` olay tipi
+- Rapor: `docs/ABACUS_FLUTTER_INTEGRATION_PHASE3.md`
+
 ## 1.0.476+514 (2026-09-13) — Abacus entegrasyon aşama 2
 
 - Hediye POST: `Idempotency-Key` başlığı (yayın, sesli oda, live/gift/send)

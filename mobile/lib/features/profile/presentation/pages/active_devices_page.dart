@@ -31,15 +31,26 @@ class ActiveDevicesPage extends ConsumerWidget {
             ),
             data: (rows) {
               if (rows.isEmpty) {
-                return const Center(
-                  child: Text('Kayıtlı oturum bulunamadı'),
+                return Column(
+                  children: [
+                    const Expanded(
+                      child: Center(child: Text('Kayıtlı oturum bulunamadı')),
+                    ),
+                    _LogoutAllButton(ref: ref),
+                  ],
                 );
               }
               return ListView.separated(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
-                itemCount: rows.length,
+                itemCount: rows.length + 1,
                 separatorBuilder: (_, _) => const SizedBox(height: 10),
                 itemBuilder: (context, index) {
+                  if (index == rows.length) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: _LogoutAllButton(ref: ref),
+                    );
+                  }
                   final row = rows[index];
                   return _SessionCard(
                     session: row,
@@ -69,6 +80,56 @@ class ActiveDevicesPage extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _LogoutAllButton extends StatelessWidget {
+  const _LogoutAllButton({required this.ref});
+
+  final WidgetRef ref;
+
+  Future<void> _confirm(BuildContext context) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Tüm cihazlardan çıkış'),
+        content: const Text(
+          'Hesabınızdaki tüm oturumlar sonlandırılır. Bu cihazda da çıkış yapılır.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('İptal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Onayla'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    try {
+      await ref.read(authRepositoryProvider).logoutAllDevices();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tüm oturumlar sonlandırıldı')),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: () => _confirm(context),
+      icon: const Icon(Icons.logout_rounded),
+      label: const Text('Tüm cihazlardan çıkış'),
     );
   }
 }

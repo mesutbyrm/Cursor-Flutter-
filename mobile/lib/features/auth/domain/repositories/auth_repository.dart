@@ -22,6 +22,7 @@ abstract class AuthRepository {
   Future<void> verifyEmail({required String email, required String code});
   Future<List<ActiveSessionEntity>> fetchActiveSessions();
   Future<void> revokeSession(String sessionId);
+  Future<void> logoutAllDevices({bool removeDevices = false});
   Future<void> resetPassword({
     required String token,
     required String password,

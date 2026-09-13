@@ -262,6 +262,12 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<void> logoutAllDevices({bool removeDevices = false}) async {
+    await _remote.logoutAllDevices(removeDevices: removeDevices);
+    await logout();
+  }
+
+  @override
   Future<void> resetPassword({
     required String token,
     required String password,

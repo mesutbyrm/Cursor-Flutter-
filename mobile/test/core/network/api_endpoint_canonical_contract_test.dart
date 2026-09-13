@@ -42,6 +42,12 @@ Iterable<File> _dartSourcesUnderLib() sync* {
 
 void main() {
   group('canonical API endpoint contracts', () {
+    test('auth session and gift box endpoints use Abacus canonical paths', () {
+      expect(ApiEndpoints.authLogoutAll, '/api/auth/logout-all');
+      expect(ApiEndpoints.authSessions, '/api/auth/sessions');
+      expect(ApiEndpoints.giftBox, '/api/gift-box');
+    });
+
     test('payment and membership endpoints use uploaded backend canonical paths', () {
       expect(ApiEndpoints.paymentConfig, '/api/payments/config');
       expect(ApiEndpoints.paymentMethods, '/api/payments/methods');

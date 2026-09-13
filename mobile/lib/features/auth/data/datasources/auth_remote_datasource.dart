@@ -48,11 +48,65 @@ class AuthRemoteDataSource {
   }
 
   Future<List<Map<String, dynamic>>> fetchActiveSessions() async {
+    final fromAbacus = await _tryFetchAuthSessions();
+    if (fromAbacus != null) return fromAbacus;
+
     final res = await _dio.safeGet<Map<String, dynamic>>(
       ApiEndpoints.authMobileSessions,
     );
-    final root = res.data ?? {};
-    final sessions = root['sessions'] ?? root['data']?['sessions'];
+    return _parseSessionRows(res.data);
+  }
+
+  Future<void> revokeSession(String sessionId) async {
+    final deviceId = sessionId.trim();
+    if (deviceId.isEmpty) return;
+    try {
+      await _dio.safeDelete<dynamic>(
+        ApiEndpoints.authSessions,
+        queryParameters: {'deviceId': deviceId},
+      );
+      return;
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      if (status != null && status != 404 && status != 405) {
+        rethrow;
+      }
+    }
+    await _dio.safeDelete<dynamic>(
+      ApiEndpoints.authMobileSessionRevoke(deviceId),
+    );
+  }
+
+  /// `POST /api/auth/logout-all` — `removeDevices` isteğe bağlı (`authentication.md`).
+  Future<void> logoutAllDevices({bool removeDevices = false}) async {
+    await _dio.safePost<dynamic>(
+      ApiEndpoints.authLogoutAll,
+      data: {if (removeDevices) 'removeDevices': true},
+    );
+  }
+
+  Future<List<Map<String, dynamic>>?> _tryFetchAuthSessions() async {
+    try {
+      final res = await _dio.safeGet<Map<String, dynamic>>(
+        ApiEndpoints.authSessions,
+      );
+      final rows = _parseSessionRows(res.data);
+      if (rows.isNotEmpty) return rows;
+      // Boş liste geçerli yanıt olabilir; yine Abacus uçunu kullan.
+      return rows;
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      if (status == 404 || status == 405) return null;
+      rethrow;
+    }
+  }
+
+  List<Map<String, dynamic>> _parseSessionRows(Map<String, dynamic>? root) {
+    if (root == null) return const [];
+    final sessions = root['sessions'] ??
+        root['devices'] ??
+        root['data']?['sessions'] ??
+        root['data']?['devices'];
     if (sessions is List) {
       return sessions
           .whereType<Map>()
@@ -60,12 +114,6 @@ class AuthRemoteDataSource {
           .toList(growable: false);
     }
     return const [];
-  }
-
-  Future<void> revokeSession(String sessionId) async {
-    await _dio.safeDelete<dynamic>(
-      ApiEndpoints.authMobileSessionRevoke(sessionId),
-    );
   }
 
   Future<Map<String, dynamic>> register({

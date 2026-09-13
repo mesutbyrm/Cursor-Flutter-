@@ -27,6 +27,7 @@ enum ChatRoomSseEventType {
   fortuneRequest,
   speakRequest,
   pk,
+  giftBox,
   typing,
   roomEvent,
   unknown,
@@ -148,6 +149,9 @@ ChatRoomSseEventType chatRoomSseEventTypeFrom(String? raw) {
     case 'pk_score_updated':
     case 'pkscoreupdated':
       return ChatRoomSseEventType.pk;
+    case 'gift_box':
+    case 'giftbox':
+      return ChatRoomSseEventType.giftBox;
     case 'gift_ranking_updated':
     case 'giftrankingupdated':
     case 'room_rank_changed':

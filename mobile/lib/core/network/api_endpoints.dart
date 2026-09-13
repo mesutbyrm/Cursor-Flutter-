@@ -17,8 +17,12 @@ abstract final class ApiEndpoints {
   static const authMobileTiktok = '/api/auth/mobile-tiktok';
   static const authMobileRefresh = '/api/auth/mobile-refresh';
   static const authLogout = '/api/auth/logout';
+  /// Tüm cihazlardaki token'ları geçersiz kılar (`authentication.md`).
+  static const authLogoutAll = '/api/auth/logout-all';
   static const authMobileSendVerification = '/api/auth/mobile-send-verification';
   static const authMobileVerifyEmail = '/api/auth/mobile-verify-email';
+  /// Abacus — kayıtlı cihazlar (`GET` / `DELETE ?deviceId=`).
+  static const authSessions = '/api/auth/sessions';
   static const authMobileSessions = '/api/auth/mobile-sessions';
   static String authMobileSessionRevoke(String id) =>
       '/api/auth/mobile-sessions/$id';
@@ -334,6 +338,10 @@ abstract final class ApiEndpoints {
   /// Tek kaynaklı oda durumu — katılımcılar, koltuklar, TRTC, owner.
   static String chatRoomState(String roomId) =>
       '/api/chat/rooms/$roomId/state';
+
+  /// Oda PK + hediye kutusu senkronu (BÖLÜM 22 §6).
+  static String chatRoomSync(String roomId) =>
+      '/api/chat/rooms/$roomId/sync';
 
   /// Koltuk yönetimi — kılavuz §9.3 `POST` (`action`, `seatIndex`).
   static String chatRoomSeats(String roomId) =>
@@ -728,6 +736,10 @@ abstract final class ApiEndpoints {
   static String videoStreamSse(String streamId) =>
       '/api/video-streams/$streamId/stream';
 
+  /// Yayın misafir / PK / hediye kutusu senkronu (BÖLÜM 22 §6).
+  static String videoStreamSync(String streamId) =>
+      '/api/video-streams/$streamId/sync';
+
   static String videoStreamViewers(String streamId) =>
       '/api/video-streams/$streamId/viewers';
 
@@ -819,6 +831,12 @@ abstract final class ApiEndpoints {
 
   /// Kılavuz §9.9 — karşılıklı hediye kontrolü (`?userId=`).
   static const giftsCheckReciprocal = '/api/gifts/check-reciprocal';
+
+  /// Hediye kutusu — OpenAPI `gift-box` + BÖLÜM 22.
+  static const giftBox = '/api/gift-box';
+  static String giftBoxById(String boxId) => '/api/gift-box/$boxId';
+  static String giftBoxJoin(String boxId) => '/api/gift-box/$boxId/join';
+  static const giftBoxShare = '/api/gift-box/share';
 
   static const homepageButtons = '/api/homepage-buttons';
 
