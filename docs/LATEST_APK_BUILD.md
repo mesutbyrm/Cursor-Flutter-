@@ -4,24 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.457+495` |
-| Tarih (UTC) | 2026-09-10 02:15 |
-| Commit | [`0fe7598279514c1924a1a2beae91cfd445309cdf`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/0fe7598279514c1924a1a2beae91cfd445309cdf) |
-| İş akışı | [Run 34428015324](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34428015324) |
+| Sürüm | `1.0.482+520` |
+| Tarih (UTC) | 2026-09-13 23:51 |
+| Commit | [`e3fe7541d0070a4697a2ff0e3f1bf4d6d800c132`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/e3fe7541d0070a4697a2ff0e3f1bf4d6d800c132) |
+| İş akışı | [Run 34790104275](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34790104275) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.458+496 (2026-09-10) — Abacus backend entegrasyon, jeton katalog
+## 1.0.482+520 (2026-09-13) — Gold giriş: takım amblemi üstten
 
-### Backend kaynak seti
-- `backend-docs/abacus-current/` + OpenAPI 502 path / 780 endpoint index materialize
-- `_zip_analysis/CURRENT_BACKEND_SOURCE_SET.md` — Sep 10 canlı kod envanteri (852 endpoint)
-- MCP `lib.mjs` schema fallback; parity betiği `scripts/abacus-openapi-parity.sh`
-
-### Jeton / ödeme
-- `GET /api/jeton` backend authoritative — API fail'de sahte preset katalog gösterilmez
-- Ödeme bildirimi preset chip'leri yalnızca API paketlerinden
+- Gold/Diamond/SVIP: tuttuğu takım renkleri + amblem ile üstten kayan giriş (`GoldTeamTopEntranceBanner`)
+- Ayarlar: Profil düzenle → Giriş efekti (hız, süre, geçiş, üstten/tam ekran, takım renkleri)
+- Sesli oda: diğer Gold üyelerin girişi odada üst banner; canlı yayın VIP girişi aynı stil
+- Site animation Gold+ kartları üstten kayma
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
