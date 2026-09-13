@@ -114,21 +114,20 @@ class NotificationsRemoteDataSource {
   }
 
   Future<void> markRead(String id) async {
+    final bodies = [
+      {'notificationIds': [id]},
+      {'notificationId': id},
+      {'id': id, 'read': true},
+    ];
+    for (final body in bodies) {
+      try {
+        await _dio.safePost<dynamic>(ApiEndpoints.notifications, data: body);
+        return;
+      } catch (_) {}
+    }
     try {
-      await _dio.safePatch<dynamic>(
-        ApiEndpoints.notifications,
-        data: {'notificationId': id},
-      );
-      return;
+      await _dio.safePatch(ApiEndpoints.notificationRead(id), data: const {});
     } catch (_) {}
-    try {
-      await _dio.safePatch<dynamic>(
-        ApiEndpoints.notifications,
-        data: {'id': id, 'read': true},
-      );
-      return;
-    } catch (_) {}
-    await _dio.safePatch(ApiEndpoints.notificationRead(id), data: const {});
   }
 
   Future<void> markAllRead() async {
@@ -140,12 +139,6 @@ class NotificationsRemoteDataSource {
     for (final body in bodies) {
       try {
         await _dio.safePost<dynamic>(ApiEndpoints.notifications, data: body);
-        return;
-      } catch (_) {}
-    }
-    for (final body in bodies) {
-      try {
-        await _dio.safePatch<dynamic>(ApiEndpoints.notifications, data: body);
         return;
       } catch (_) {}
     }

@@ -183,11 +183,11 @@ class GiftRepository {
     return data;
   }
 
-  /// Kılavuz §9.9 — karşılıklı hediye kontrolü (`GET ?userId=`).
+  /// Abacus OpenAPI — `POST /api/gifts/check-reciprocal` `{ recipientId }`.
   Future<Map<String, dynamic>> checkReciprocal(String userId) async {
-    final res = await _dio.safeGet<dynamic>(
+    final res = await _dio.safePost<dynamic>(
       ApiEndpoints.giftsCheckReciprocal,
-      query: {'userId': userId.trim()},
+      data: {'recipientId': userId.trim()},
     );
     final body = _unwrap(res.data);
     if (body is Map) return Map<String, dynamic>.from(body);

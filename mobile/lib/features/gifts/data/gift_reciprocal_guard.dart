@@ -18,9 +18,9 @@ Future<void> assertReciprocalGiftAllowed(
   if (id.isEmpty) return;
   try {
     final res = await dio
-        .safeGet<dynamic>(
+        .safePost<dynamic>(
           ApiEndpoints.giftsCheckReciprocal,
-          query: {'userId': id},
+          data: {'recipientId': id},
         )
         .timeout(const Duration(seconds: 3));
     var body = res.data;

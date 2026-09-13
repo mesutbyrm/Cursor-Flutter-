@@ -190,9 +190,9 @@ class GameRemoteDataSource {
   }
 
   Future<List<GameScoreItem>> fetchLeaderboard({String period = 'weekly'}) async {
-    final res = await _dio.safePost<dynamic>(
+    final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.gameLeaderboard,
-      data: {'period': period, 'range': period},
+      query: {'period': period},
     );
     return _scores(res.data);
   }

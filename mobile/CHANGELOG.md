@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.475+513 (2026-09-13) — Abacus backend sözleşme hizalaması
+
+- **Referans:** `backend-reference/canlifal_flutter_entegrasyon_paketi.zip` (Abacus paketi; dosyalar değiştirilmedi)
+- **Rapor:** `docs/ABACUS_FLUTTER_INTEGRATION_REPORT.md`
+- OpenAPI method düzeltmeleri: tema `PATCH`, hediye reciprocal `POST`, oyun liderlik `GET`, bildirim okundu `POST`, burç `GET` (+ eski POST yedek)
+
 ## 1.0.474+512 (2026-09-11) — Flutter-only API denetimi, backend hizalama
 
 - **Rapor:** `docs/FLUTTER_ONLY_ENDPOINT_AUDIT.md` — 114 OpenAPI-dışı literal için MATCH / YEDEK / KALDIR (`scripts/generate_flutter_only_endpoint_audit.py`)
