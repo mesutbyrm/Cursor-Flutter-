@@ -1,0 +1,35 @@
+{
+  "description": "Flutter yolu → mevcut nextjs_space route (re-export; yeni iş mantığı yazılmaz)",
+  "maps": [
+    {
+      "flutter": "/api/users/me/activity",
+      "target": "@/app/api/user/activity/route",
+      "methods": ["GET", "POST"]
+    },
+    {
+      "flutter": "/api/users/me/broadcast-history",
+      "target": "@/app/api/user/broadcast-history/route",
+      "methods": ["GET"]
+    },
+    {
+      "flutter": "/api/users/me/profile-visitors",
+      "target": "@/app/api/me/profile-visitors/route",
+      "methods": ["GET", "POST"]
+    },
+    {
+      "flutter": "/api/users/me/stats",
+      "target": "@/app/api/user/stats/route",
+      "methods": ["GET", "POST"]
+    },
+    {
+      "flutter": "/api/auth/mobile/device-token",
+      "target": "@/app/api/devices/fcm/route",
+      "methods": ["POST", "DELETE"]
+    },
+    {
+      "flutter": "/api/user/device-token",
+      "target": "@/app/api/devices/fcm/route",
+      "methods": ["POST", "DELETE"]
+    }
+  ]
+}
