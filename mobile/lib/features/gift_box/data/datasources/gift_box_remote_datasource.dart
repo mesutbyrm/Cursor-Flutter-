@@ -16,7 +16,7 @@ class GiftBoxRemoteDataSource {
   }) async {
     final res = await _dio.safeGet<Map<String, dynamic>>(
       ApiEndpoints.giftBox,
-      queryParameters: {
+      query: {
         if (roomId != null && roomId.isNotEmpty) 'roomId': roomId,
         if (streamId != null && streamId.isNotEmpty) 'streamId': streamId,
       },
@@ -40,7 +40,7 @@ class GiftBoxRemoteDataSource {
     final res = await _dio.safePost<Map<String, dynamic>>(
       ApiEndpoints.giftBox,
       data: body,
-      queryParameters: {
+      query: {
         if (roomId != null && roomId.isNotEmpty) 'roomId': roomId,
         if (streamId != null && streamId.isNotEmpty) 'streamId': streamId,
       },

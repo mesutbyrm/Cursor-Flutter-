@@ -261,6 +261,10 @@ class ChatRoomSseService extends BaseSseService {
       case ChatRoomSseEventType.pk:
         _emitPk(map);
         return;
+      case ChatRoomSseEventType.giftBox:
+        // BÖLÜM 22 — tam UI bağlanana kadar ham olay (payload uydurulmaz).
+        _onRoomEvent?.call(map);
+        return;
       case ChatRoomSseEventType.roomEvent:
         _onRoomEvent?.call(map);
         return;

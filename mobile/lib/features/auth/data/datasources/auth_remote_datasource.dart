@@ -63,7 +63,7 @@ class AuthRemoteDataSource {
     try {
       await _dio.safeDelete<dynamic>(
         ApiEndpoints.authSessions,
-        queryParameters: {'deviceId': deviceId},
+        query: {'deviceId': deviceId},
       );
       return;
     } on DioException catch (e) {
@@ -90,15 +90,28 @@ class AuthRemoteDataSource {
       final res = await _dio.safeGet<Map<String, dynamic>>(
         ApiEndpoints.authSessions,
       );
-      final rows = _parseSessionRows(res.data);
+      final root = res.data;
+      final rows = _parseSessionRows(root);
       if (rows.isNotEmpty) return rows;
-      // Boş liste geçerli yanıt olabilir; yine Abacus uçunu kullan.
-      return rows;
+      if (_authSessionsResponseRecognized(root)) return rows;
+      return null;
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       if (status == 404 || status == 405) return null;
       rethrow;
     }
+  }
+
+  bool _authSessionsResponseRecognized(Map<String, dynamic>? root) {
+    if (root == null || root.isEmpty) return false;
+    if (root.containsKey('sessions') ||
+        root.containsKey('devices') ||
+        root['data'] is Map &&
+            ((root['data'] as Map).containsKey('sessions') ||
+                (root['data'] as Map).containsKey('devices'))) {
+      return true;
+    }
+    return root.containsKey('lastGlobalLogoutAt');
   }
 
   List<Map<String, dynamic>> _parseSessionRows(Map<String, dynamic>? root) {

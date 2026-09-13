@@ -227,6 +227,7 @@ extension DioApi on Dio {
   Future<Response<T>> safeDelete<T>(
     String path, {
     Object? data,
+    Map<String, dynamic>? query,
     Options? options,
     CancelToken? cancelToken,
   }) async {
@@ -234,6 +235,7 @@ extension DioApi on Dio {
       return await delete<T>(
         path,
         data: data,
+        queryParameters: query,
         options: options,
         cancelToken: cancelToken,
       );
