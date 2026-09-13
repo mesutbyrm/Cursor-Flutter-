@@ -241,9 +241,32 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       case 'room_closed':
         _applyRoomEventRoomClosed(payload);
         return;
+      case 'gift_box_created':
+      case 'gift_box_started':
+      case 'gift_box_joined':
+      case 'gift_box_task_verified':
+      case 'gift_box_winner':
+      case 'gift_box_reward_distributed':
+      case 'gift_box_finished':
+      case 'gift_box_expired':
+      case 'gift_box_cancelled':
+        _refreshGiftBoxFromRoomSse();
+        return;
       default:
+        if (event.startsWith('gift_box_') ||
+            (payload['type']?.toString() == 'gift_box')) {
+          _refreshGiftBoxFromRoomSse();
+        }
         return;
     }
+  }
+
+  void _refreshGiftBoxFromRoomSse() {
+    if (_roomKey.isEmpty) return;
+    bumpGiftBoxRefresh(
+      ref,
+      (roomId: _roomKey, streamId: null),
+    );
   }
 
   void _refreshGiftGoalFromRoomSse() {

@@ -39,6 +39,7 @@ import '../../data/services/voice_room_music_pipeline_log.dart';
 import '../../data/services/chat_room_sse_service.dart';
 import '../../data/services/voice_seat_rest_service.dart';
 import 'voice_gift_providers.dart';
+import '../../../gift_box/presentation/providers/gift_box_scope_providers.dart';
 import 'voice_room_audio_providers.dart';
 import 'pk_battle_provider.dart';
 import 'pk_battle_remote_provider.dart';

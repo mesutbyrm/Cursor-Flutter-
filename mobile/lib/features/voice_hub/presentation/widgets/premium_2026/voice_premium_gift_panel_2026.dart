@@ -29,6 +29,8 @@ import '../../providers/staff_entrance_marquee_provider.dart';
 import '../../providers/voice_gift_providers.dart';
 import '../../utils/voice_gift_pk_sync.dart';
 import '../voice_room_gift_sheet.dart';
+import '../../../../gift_box/presentation/providers/gift_box_scope_providers.dart';
+import '../../../../gift_box/presentation/widgets/gift_box_panel_section.dart';
 
 /// TikTok Live — blur panel, 8 premium hediye, combo, sıralama.
 class VoicePremiumGiftPanel2026 extends ConsumerStatefulWidget {
@@ -52,7 +54,7 @@ class VoicePremiumGiftPanel2026 extends ConsumerStatefulWidget {
       _VoicePremiumGiftPanel2026State();
 }
 
-enum _GiftCategory { all, popular, special, vip }
+enum _GiftCategory { all, popular, special, vip, giftBox }
 
 class _VoicePremiumGiftPanel2026State
     extends ConsumerState<VoicePremiumGiftPanel2026> {
@@ -101,6 +103,7 @@ class _VoicePremiumGiftPanel2026State
           final r = PremiumGiftCatalog2026.rarity(g.id);
           return g.price >= 1000 || r == GiftRarity.mythic;
         }).toList(),
+      _GiftCategory.giftBox => const [],
       _ => list,
     };
   }
@@ -222,6 +225,7 @@ class _VoicePremiumGiftPanel2026State
                             _GiftCategory.popular => 'Popüler',
                             _GiftCategory.special => 'Özel',
                             _GiftCategory.vip => 'VIP',
+                            _GiftCategory.giftBox => 'Hediye kutusu',
                           },
                           selected: _category == c,
                           onTap: () => setState(() => _category = c),
@@ -232,29 +236,39 @@ class _VoicePremiumGiftPanel2026State
               ),
               const SizedBox(height: 8),
               Expanded(
-                child: gifts.when(
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppThemeColors.accentPink,
-                    ),
-                  ),
-                  error: (e, _) => Center(
-                    child: Text(ApiException.userMessage(e)),
-                  ),
-                  data: (list) {
-                    final filtered = _displayGifts(list);
-                    return _GiftsTab(
-                      gifts: filtered,
-                      selected: _selected,
-                      qty: _qty,
-                      sending: _sending,
-                      onSelect: (g) => setState(() => _selected = g),
-                      onQty: (q) => setState(() => _qty = q),
-                      onSend: () => _send(list),
-                    );
-                  },
-                ),
+                child: _category == _GiftCategory.giftBox
+                    ? GiftBoxPanelSection(
+                        scope: (
+                          roomId: widget.room.apiRoomKey.isNotEmpty
+                              ? widget.room.apiRoomKey
+                              : widget.room.id,
+                          streamId: null,
+                        ),
+                        creatorUserId: widget.room.ownerId,
+                      )
+                    : gifts.when(
+                        loading: () => const Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppThemeColors.accentPink,
+                          ),
+                        ),
+                        error: (e, _) => Center(
+                          child: Text(ApiException.userMessage(e)),
+                        ),
+                        data: (list) {
+                          final filtered = _displayGifts(list);
+                          return _GiftsTab(
+                            gifts: filtered,
+                            selected: _selected,
+                            qty: _qty,
+                            sending: _sending,
+                            onSelect: (g) => setState(() => _selected = g),
+                            onQty: (q) => setState(() => _qty = q),
+                            onSend: () => _send(list),
+                          );
+                        },
+                      ),
               ),
             ],
           ),

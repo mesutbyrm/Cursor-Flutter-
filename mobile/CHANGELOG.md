@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## Unreleased — hediye kutusu + Tanış Kaynaş (APK sürüm bump bekliyor)
+
+- Sesli oda ve canlı yayın hediye paneli: **Hediye kutusu** sekmesi (create / join / cancel, BÖLÜM 22)
+- Oda SSE: `gift_box_*` olaylarında kutu listesi yenileme
+- Tanış Kaynaş: Keşfet + Etkileşimler + Hashtag & Takım sekmeleri; `favorite` aksiyonu
+- CI: `scripts/apk-pending-features-gate.sh` (release gate 2b) — eksik özellik varsa APK üretilmez
+
 ## 1.0.482+520 (2026-09-13) — Gold giriş: takım amblemi üstten
 
 - Gold/Diamond/SVIP: tuttuğu takım renkleri + amblem ile üstten kayan giriş (`GoldTeamTopEntranceBanner`)

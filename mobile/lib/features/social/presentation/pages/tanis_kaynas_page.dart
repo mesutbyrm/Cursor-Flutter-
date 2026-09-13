@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
+import '../../../../core/util/json_util.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
@@ -12,7 +13,7 @@ import '../../domain/entities/social_discovery_user.dart';
 import '../../domain/entities/user_location_settings.dart';
 import '../providers/social_discovery_providers.dart';
 
-/// BÖLÜM 21/A6 — Tanış & Kaynaş (`/api/social/discovery`, actions, konum).
+/// BÖLÜM 21/A6 — Tanış & Kaynaş (discovery, actions, konum, hashtag, takımlar).
 class TanisKaynasPage extends ConsumerStatefulWidget {
   const TanisKaynasPage({super.key});
 
@@ -20,12 +21,31 @@ class TanisKaynasPage extends ConsumerStatefulWidget {
   ConsumerState<TanisKaynasPage> createState() => _TanisKaynasPageState();
 }
 
-class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage> {
+class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
+    with SingleTickerProviderStateMixin {
   var _savingLocation = false;
+  late final TabController _tabs;
+  final _hashtagQuery = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _tabs = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabs.dispose();
+    _hashtagQuery.dispose();
+    super.dispose();
+  }
 
   Future<void> _refresh() async {
     ref.invalidate(socialDiscoveryFeedProvider);
     ref.invalidate(userLocationSettingsProvider);
+    ref.invalidate(socialDiscoveryActionsProvider);
+    ref.invalidate(socialTrendingHashtagsProvider);
+    ref.invalidate(socialTeamsListProvider);
   }
 
   Future<void> _postAction(String type, String targetId) async {
@@ -34,6 +54,7 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage> {
             type: type,
             targetId: targetId,
           );
+      ref.invalidate(socialDiscoveryActionsProvider);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(_actionSuccessLabel(type))),
@@ -112,73 +133,309 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage> {
   Widget build(BuildContext context) {
     final discovery = ref.watch(socialDiscoveryFeedProvider);
     final location = ref.watch(userLocationSettingsProvider);
+    final actions = ref.watch(socialDiscoveryActionsProvider);
+    final hashtags = ref.watch(socialTrendingHashtagsProvider);
+    final teams = ref.watch(socialTeamsListProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: DiscoverSubPage(
           title: 'Tanış Kaynaş',
-          subtitle: 'Yakınındaki kişileri keşfet',
-          body: RefreshIndicator(
-            onRefresh: _refresh,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-              children: [
-                location.when(
-                  loading: () => const SizedBox.shrink(),
-                  error: (_, _) => const SizedBox.shrink(),
-                  data: (settings) => _LocationCard(
-                    settings: settings,
-                    busy: _savingLocation,
-                    onLocationEnabled: (v) => _updateLocation(
-                      current: settings,
-                      locationEnabled: v,
-                    ),
-                    onShowDistance: (v) => _updateLocation(
-                      current: settings,
-                      showDistance: v,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                discovery.when(
-                  loading: () => const Padding(
-                    padding: EdgeInsets.all(32),
-                    child: Center(child: DiscoverAccentLoader()),
-                  ),
-                  error: (e, _) => DiscoverEmptyState(
-                    icon: Icons.wifi_off_rounded,
-                    message: ApiException.userMessage(e),
-                    actionLabel: 'Yenile',
-                    action: _refresh,
-                  ),
-                  data: (users) {
-                    if (users.isEmpty) {
-                      return const DiscoverEmptyState(
-                        icon: Icons.people_outline_rounded,
-                        message:
-                            'Şu an keşfedilecek profil yok. Konum paylaşımını açıp yenileyin.',
-                      );
-                    }
-                    return Column(
-                      children: [
-                        for (final u in users) ...[
-                          _DiscoveryUserCard(
-                            user: u,
-                            onOpenProfile: () =>
-                                context.push('/user/${Uri.encodeComponent(u.id)}'),
-                            onLike: () => _postAction('like', u.id),
-                            onFriendRequest: () =>
-                                _postAction('friend_request', u.id),
+          subtitle: 'Keşfet, etkileşim, hashtag ve takımlar',
+          body: Column(
+            children: [
+              TabBar(
+                controller: _tabs,
+                tabs: const [
+                  Tab(text: 'Keşfet'),
+                  Tab(text: 'Etkileşimler'),
+                  Tab(text: 'Hashtag & Takım'),
+                ],
+              ),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabs,
+                  children: [
+                    RefreshIndicator(
+                      onRefresh: _refresh,
+                      child: ListView(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                        children: [
+                          location.when(
+                            loading: () => const SizedBox.shrink(),
+                            error: (_, _) => const SizedBox.shrink(),
+                            data: (settings) => _LocationCard(
+                              settings: settings,
+                              busy: _savingLocation,
+                              onLocationEnabled: (v) => _updateLocation(
+                                current: settings,
+                                locationEnabled: v,
+                              ),
+                              onShowDistance: (v) => _updateLocation(
+                                current: settings,
+                                showDistance: v,
+                              ),
+                            ),
                           ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 12),
+                          discovery.when(
+                            loading: () => const Padding(
+                              padding: EdgeInsets.all(32),
+                              child: Center(child: DiscoverAccentLoader()),
+                            ),
+                            error: (e, _) => DiscoverEmptyState(
+                              icon: Icons.wifi_off_rounded,
+                              message: ApiException.userMessage(e),
+                              actionLabel: 'Yenile',
+                              action: _refresh,
+                            ),
+                            data: (users) {
+                              if (users.isEmpty) {
+                                return const DiscoverEmptyState(
+                                  icon: Icons.people_outline_rounded,
+                                  message:
+                                      'Şu an keşfedilecek profil yok. Konum paylaşımını açıp yenileyin.',
+                                );
+                              }
+                              return Column(
+                                children: [
+                                  for (final u in users) ...[
+                                    _DiscoveryUserCard(
+                                      user: u,
+                                      onOpenProfile: () => context.push(
+                                        '/user/${Uri.encodeComponent(u.id)}',
+                                      ),
+                                      onLike: () => _postAction('like', u.id),
+                                      onFavorite: () =>
+                                          _postAction('favorite', u.id),
+                                      onFriendRequest: () => _postAction(
+                                        'friend_request',
+                                        u.id,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                  ],
+                                ],
+                              );
+                            },
+                          ),
                         ],
-                      ],
-                    );
-                  },
+                      ),
+                    ),
+                    RefreshIndicator(
+                      onRefresh: _refresh,
+                      child: actions.when(
+                        loading: () => ListView(
+                          children: [
+                            SizedBox(
+                              height: 120,
+                              child: const Center(
+                                child: DiscoverAccentLoader(),
+                              ),
+                            ),
+                          ],
+                        ),
+                        error: (e, _) => ListView(
+                          children: [
+                            DiscoverEmptyState(
+                              icon: Icons.history_rounded,
+                              message: ApiException.userMessage(e),
+                              actionLabel: 'Yenile',
+                              action: _refresh,
+                            ),
+                          ],
+                        ),
+                        data: (rows) {
+                          if (rows.isEmpty) {
+                            return ListView(
+                              children: [
+                                const DiscoverEmptyState(
+                                  icon: Icons.inbox_outlined,
+                                  message: 'Henüz sosyal etkileşim kaydı yok.',
+                                ),
+                              ],
+                            );
+                          }
+                          return ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: rows.length,
+                            itemBuilder: (context, i) {
+                              final row = rows[i];
+                              final type =
+                                  (pick(row, ['type', 'action']) ?? '')
+                                      .toString();
+                              final target =
+                                  (pick(row, ['targetId', 'userId']) ?? '')
+                                      .toString();
+                              return Card(
+                                child: ListTile(
+                                  title: Text(_actionSuccessLabel(type)),
+                                  subtitle: Text(
+                                    target.isNotEmpty
+                                        ? 'Hedef: $target'
+                                        : row.toString(),
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                    RefreshIndicator(
+                      onRefresh: _refresh,
+                      child: ListView(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                        children: [
+                          TextField(
+                            controller: _hashtagQuery,
+                            decoration: InputDecoration(
+                              labelText: 'Hashtag ara',
+                              suffixIcon: IconButton(
+                                icon: const Icon(Icons.search),
+                                onPressed: () async {
+                                  final q = _hashtagQuery.text.trim();
+                                  if (q.isEmpty) return;
+                                  try {
+                                    final res = await ref
+                                        .read(socialDiscoveryRemoteProvider)
+                                        .searchHashtags(q: q);
+                                    if (!mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          res.isEmpty
+                                              ? 'Sonuç yok'
+                                              : 'Hashtag verisi alındı',
+                                        ),
+                                      ),
+                                    );
+                                  } catch (e) {
+                                    if (!mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          ApiException.userMessage(e),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Trend hashtag',
+                            style: const TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                          const SizedBox(height: 8),
+                          hashtags.when(
+                            loading: () => const DiscoverAccentLoader(),
+                            error: (e, _) => Text(ApiException.userMessage(e)),
+                            data: (map) {
+                              final list = pick(map, [
+                                'hashtags',
+                                'items',
+                                'trending',
+                              ]);
+                              if (list is! List || list.isEmpty) {
+                                return const Text('Trend verisi yok');
+                              }
+                              return Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  for (final h in list)
+                                    if (h is Map)
+                                      ActionChip(
+                                        label: Text(
+                                          '#${pick(Map<String, dynamic>.from(h), ['name', 'tag']) ?? ''}',
+                                        ),
+                                        onPressed: () async {
+                                          final row =
+                                              Map<String, dynamic>.from(h);
+                                          final name =
+                                              pick(row, ['name', 'tag'])
+                                                  ?.toString();
+                                          if (name == null || name.isEmpty) {
+                                            return;
+                                          }
+                                          try {
+                                            await ref
+                                                .read(
+                                                  socialDiscoveryRemoteProvider,
+                                                )
+                                                .fetchHashtag(name);
+                                          } catch (_) {}
+                                        },
+                                      ),
+                                ],
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            'Takımlar',
+                            style: const TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                          const SizedBox(height: 8),
+                          teams.when(
+                            loading: () => const DiscoverAccentLoader(),
+                            error: (e, _) => Text(ApiException.userMessage(e)),
+                            data: (map) {
+                              final list = pick(map, ['teams', 'items', 'data']);
+                              if (list is! List || list.isEmpty) {
+                                return const Text('Takım listesi boş');
+                              }
+                              return Column(
+                                children: [
+                                  for (final t in list)
+                                    if (t is Map)
+                                      Card(
+                                        child: ListTile(
+                                          title: Text(
+                                            (pick(
+                                                  Map<String, dynamic>.from(t),
+                                                  ['name', 'title'],
+                                                ) ??
+                                                '')
+                                                .toString(),
+                                          ),
+                                          subtitle: Text(
+                                            (pick(
+                                                  Map<String, dynamic>.from(t),
+                                                  ['id'],
+                                                ) ??
+                                                '')
+                                                .toString(),
+                                          ),
+                                          trailing: const Icon(
+                                            Icons.chevron_right,
+                                          ),
+                                          onTap: () {
+                                            final id = pick(
+                                              Map<String, dynamic>.from(t),
+                                              ['id'],
+                                            )?.toString();
+                                            if (id != null && id.isNotEmpty) {
+                                              context.push('/teams/$id');
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                ],
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -216,7 +473,8 @@ class _LocationCard extends StatelessWidget {
             SwitchListTile(
               title: const Text('Mesafemi göster'),
               value: settings.showDistance,
-              onChanged: busy || !settings.locationEnabled ? null : onShowDistance,
+              onChanged:
+                  busy || !settings.locationEnabled ? null : onShowDistance,
             ),
           ],
         ),
@@ -230,12 +488,14 @@ class _DiscoveryUserCard extends StatelessWidget {
     required this.user,
     required this.onOpenProfile,
     required this.onLike,
+    required this.onFavorite,
     required this.onFriendRequest,
   });
 
   final SocialDiscoveryUser user;
   final VoidCallback onOpenProfile;
   final VoidCallback onLike;
+  final VoidCallback onFavorite;
   final VoidCallback onFriendRequest;
 
   @override
@@ -283,6 +543,11 @@ class _DiscoveryUserCard extends StatelessWidget {
                 tooltip: 'Beğen',
                 onPressed: onLike,
                 icon: const Icon(Icons.favorite_border_rounded),
+              ),
+              IconButton(
+                tooltip: 'Favori',
+                onPressed: onFavorite,
+                icon: const Icon(Icons.star_border_rounded),
               ),
               IconButton(
                 tooltip: 'Arkadaşlık isteği',

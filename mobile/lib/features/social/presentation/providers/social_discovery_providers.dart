@@ -19,3 +19,18 @@ final userLocationSettingsProvider =
     FutureProvider.autoDispose<UserLocationSettings>((ref) async {
   return ref.read(socialDiscoveryRemoteProvider).fetchLocationSettings();
 });
+
+final socialDiscoveryActionsProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  return ref.read(socialDiscoveryRemoteProvider).fetchActions();
+});
+
+final socialTrendingHashtagsProvider =
+    FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+  return ref.read(socialDiscoveryRemoteProvider).fetchTrendingHashtags();
+});
+
+final socialTeamsListProvider =
+    FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+  return ref.read(socialDiscoveryRemoteProvider).fetchTeams();
+});

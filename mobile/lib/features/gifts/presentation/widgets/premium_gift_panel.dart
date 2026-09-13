@@ -20,6 +20,7 @@ import '../../domain/gift_platform.dart';
 import '../../domain/gift_rarity.dart';
 import '../providers/gift_providers.dart';
 import 'top_gifters_leaderboard.dart';
+import '../../../gift_box/presentation/widgets/gift_box_panel_section.dart';
 
 /// TikTok benzeri premium hediye paneli — blur, neon, yatay liste, leaderboard sekmesi.
 class PremiumGiftPanel extends ConsumerStatefulWidget {
@@ -143,6 +144,7 @@ class _PremiumGiftPanelState extends ConsumerState<PremiumGiftPanel>
                   children: [
                     _GiftsTab(
                       gifts: gifts,
+                      streamId: widget.streamId,
                       category: _category,
                       onCategory: (c) => setState(() => _category = c),
                       selected: _selected,
@@ -201,6 +203,7 @@ class _PremiumGiftPanelState extends ConsumerState<PremiumGiftPanel>
 class _GiftsTab extends StatelessWidget {
   const _GiftsTab({
     required this.gifts,
+    required this.streamId,
     required this.category,
     required this.onCategory,
     required this.selected,
@@ -212,6 +215,7 @@ class _GiftsTab extends StatelessWidget {
   });
 
   final AsyncValue<List<GiftEntity>> gifts;
+  final String streamId;
   final String category;
   final ValueChanged<String> onCategory;
   final LiveVideoGiftType? selected;
@@ -240,6 +244,40 @@ class _GiftsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (category == 'gift_box') {
+      return Column(
+        children: [
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              children: [
+                for (final c in const [
+                  ('popular', 'Popüler'),
+                  ('fortune', 'Fal'),
+                  ('vip', 'VIP'),
+                  ('event', 'Etkinlik'),
+                  ('gift_box', 'Hediye kutusu'),
+                ])
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(c.$2),
+                      selected: category == c.$1,
+                      onSelected: (_) => onCategory(c.$1),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: GiftBoxPanelSection(
+              scope: (roomId: null, streamId: streamId),
+            ),
+          ),
+        ],
+      );
+    }
     return gifts.when(
       loading: () => const Center(
         child: CircularProgressIndicator(strokeWidth: 2, color: AppThemeColors.accentPink),
@@ -269,6 +307,7 @@ class _GiftsTab extends StatelessWidget {
                     ('fortune', 'Fal'),
                     ('vip', 'VIP'),
                     ('event', 'Etkinlik'),
+                    ('gift_box', 'Hediye kutusu'),
                   ])
                     Padding(
                       padding: const EdgeInsets.only(right: 8),

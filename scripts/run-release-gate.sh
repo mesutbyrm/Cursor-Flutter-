@@ -178,6 +178,19 @@ else
   GATE2_STATUS="FAIL"
 fi
 
+# Gate 2b — APK bekleyen özellikler (sürüm bump öncesi kilidi)
+echo ""
+echo "── Gate 2b: APK pending features ──"
+if [[ "$TEST_OK" -eq 1 ]]; then
+  if bash "$ROOT/scripts/apk-pending-features-gate.sh"; then
+    gate_record "2b" "APK pending features" PASS "docs/APK_PENDING_FEATURES.md"
+  else
+    gate_record "2b" "APK pending features" FAIL "eksik özellik — APK yayınlanmaz"
+  fi
+else
+  gate_record "2b" "APK pending features" FAIL "Gate 2 başarısız — atlandı"
+fi
+
 # Gate 3–8 — API
 echo ""
 echo "── Gate 3–8: API doğrulama ──"
