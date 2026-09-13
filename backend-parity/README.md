@@ -1,32 +1,27 @@
 # Backend API parite — uygulama paketi
 
-Flutter `fl_ref/extra_main.json` içindeki eksik uçlar için `nextjs_space/app/api/**/route.ts` dosyaları.
+Flutter `fl_ref/extra_main.json` (**98** yol) için hazır `app/api/**/route.ts` dosyaları.
 
-## Kurulum
+## Durum
 
-```bash
-cd fortune_telling_platform
-bash ../Cursor-Flutter-/scripts/apply-backend-parity-to-nextjs.sh
-# veya bu repo kökünden:
-bash scripts/apply-backend-parity-to-nextjs.sh /path/to/fortune_telling_platform/nextjs_space
-```
+| Ölçüm | Değer |
+|--------|--------|
+| `extra_main` eşleşmesi | **98/98** (`EKSİK: 0`) |
+| Paket kökü | `backend-parity/nextjs_space/` |
+| Kullanıcı telefon / terminal | **Gerekmez** |
+| Özet (Türkçe) | `fl_ref/docs/BACKEND_PARITY_STATUS.md` |
 
-Sonra:
+Cloud Agent bu repoda `scripts/check-extra-main-api-routes.py` ile doğrulamayı çalıştırır.
 
-```bash
-cd nextjs_space && yarn tsc --noEmit && yarn run build
-python3 ../Cursor-Flutter-/scripts/check-extra-main-api-routes.py
-```
+## Üretim Next.js’e taşıma (geliştirici ortamı)
 
-## Faz 1 durumu (tamam)
+`fortune_telling_platform` deposu aynı makinede/CI’da olduğunda `scripts/apply-backend-parity-to-nextjs.sh` eksik route dosyalarını kopyalar (mevcut dosyaları silmez). Ardından hedef `nextjs_space` içinde TypeScript build yapılır.
 
-| Tür | Adet | Açıklama |
-|-----|------|----------|
-| Re-export | 9 | `users/me/*`, cihaz token, `daily-tasks`, `story` |
-| Proxy / yeni | 10 | bildirimler, DM, oturum revoke, fal pin/rate, favoriler |
-| Faz 2 (chat/platform) | 18 | oda alias + platform ayarı |
-| **Toplam** | **37** | Faz 1+2 (`extra_main` 98’in 37’si) |
+Bu adımlar **Cursor-Flutter** deposunda tek başına çalıştırılmaz; backend repo veya Cloud Agent backend oturumu gerekir.
 
-`lib/dm-typing-state.ts`, `lib/parity-route-params.ts` — `nextjs_space/lib/` altına kopyalanır.
+## İçerik
 
-Kaynak şema/lib: `backend-reference/canlifal_flutter_paketi/kaynak/`.
+- Faz notları: `fl_ref/docs/FAZ1_PROGRESS.md` … `FAZ4_PROGRESS.md`
+- Re-export listesi: `fl_ref/reexport_map.json`
+- Prisma (additive): `prisma-additive/`
+- Referans: `backend-reference/canlifal_flutter_paketi/kaynak/`
