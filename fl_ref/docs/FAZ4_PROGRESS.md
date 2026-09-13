@@ -29,4 +29,4 @@ Re-export / proxy: `cfc-payment-requests`, `animations/*`, `room-themes/backgrou
 
 `lib/video-stream-parity.ts`, `parity-live-fal-handlers.ts`, `parity-faz4-misc-handlers.ts`, `parity-admin-handlers.ts`.
 
-Uygulama: `apply-backend-parity-to-nextjs.sh` → `yarn tsc --noEmit && yarn build`.
+Durum ve telefon notu: `fl_ref/docs/BACKEND_PARITY_STATUS.md`. Üretim merge Cloud Agent / backend repo ortamında.
