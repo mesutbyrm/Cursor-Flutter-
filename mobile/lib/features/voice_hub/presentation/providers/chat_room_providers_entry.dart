@@ -12,9 +12,14 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
     _sseStarted = false;
     _sseAttachedRoomKey = null;
     _sessionActive = true;
+    _entrancesArmed = false;
+    _realtimeEffectsEpochMs = null;
     _knownPresenceIds.clear();
     _lastKnownPresenceNames.clear();
     _shownEntranceKeys.clear();
+    if (_roomKey.isNotEmpty) {
+      ref.read(siteAnimationProvider(_roomKey).notifier).clearQueue();
+    }
     registerVoiceRoomLiveSession(ref, _presenceApiKey, aliases: _roomKeyAliases);
     VoiceEventLog.joinStart(roomId: _roomKey);
     ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
@@ -63,6 +68,7 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
             VoiceSessionPhase.connected,
           );
       _sessionJoinedAt = DateTime.now();
+      _armRealtimeEntranceEffects();
       _peakViewerCount = state.presence.length;
       final user = ref.read(authControllerProvider).valueOrNull;
       VoiceEventLog.membershipLoaded(tier: user?.role);
@@ -148,7 +154,6 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
         roomMuted: bundle.roomMuted ?? state.roomMuted,
         loading: false,
       );
-      _entrancesArmed = true;
     } catch (_) {}
   }
 

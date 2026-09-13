@@ -7,6 +7,7 @@ import '../domain/site_animation_command.dart';
 import '../domain/site_animation_layout.dart';
 import '../domain/site_animation_tier.dart';
 import '../domain/site_animation_type.dart';
+import '../presentation/site_animation_realtime_policy.dart';
 import 'site_animation_asset_registry.dart';
 
 /// SSE `room_event` payload → [SiteAnimationCommand].
@@ -127,7 +128,8 @@ abstract final class SiteAnimationParser {
       layout: resolvedLayout,
       asset: asset,
       micOn: _parseBool(payload['micOn']),
-      createdAtMs: DateTime.now().millisecondsSinceEpoch,
+      createdAtMs: siteAnimationEventTimestampMs(payload) ??
+          DateTime.now().millisecondsSinceEpoch,
       animationId: animationId,
       soundUrl: _parseSoundUrl(payload),
       cooldownMs: _parseCooldownMs(payload),

@@ -17,17 +17,35 @@ String resolvePaymentRequestId(Map<String, dynamic> row) {
   return '';
 }
 
+bool _isJetonPackageId(String packageId) {
+  final id = packageId.trim().toLowerCase();
+  if (id.isEmpty) return false;
+  return RegExp(r'^p\d+$').hasMatch(id);
+}
+
 /// Jeton mu CFC mi — `requestType` yoksa alanlardan çıkar.
 String resolvePaymentRequestType(Map<String, dynamic> row) {
   final raw = (row['requestType'] ?? row['type'] ?? '').toString().toLowerCase();
-  if (raw.contains('jeton')) return 'jeton';
-  if (raw.contains('cfc')) return 'cfc';
+  if (raw == 'jeton' || raw.contains('jeton')) return 'jeton';
+  if (raw == 'cfc' || raw.contains('cfc')) return 'cfc';
 
   final source = row['source']?.toString().toLowerCase() ?? '';
-  if (source.contains('jeton') || source.contains('membership_checkout')) {
+  if (source.contains('mobile_jeton') || source.contains('jeton_checkout')) {
     return 'jeton';
   }
-  if (source.contains('cfc')) return 'cfc';
+  if (source.contains('mobile_cfc') || source.contains('cfc_checkout')) {
+    return 'cfc';
+  }
+  if (source.contains('membership_cfc')) return 'cfc';
+  if (source.contains('membership_checkout') && !source.contains('cfc')) {
+    return 'jeton';
+  }
+
+  final packageId = row['packageId']?.toString().trim().toLowerCase() ?? '';
+  if (_isJetonPackageId(packageId)) return 'jeton';
+  if (packageId.startsWith('membership_') && source.contains('cfc')) {
+    return 'cfc';
+  }
 
   final title = (row['packageTitle'] ?? row['title'] ?? '').toString().toLowerCase();
   if (title.contains('jeton')) return 'jeton';
@@ -42,8 +60,18 @@ String resolvePaymentRequestType(Map<String, dynamic> row) {
       int.parse(row['coins'].toString()) > 0;
   if (hasCoins || row['jeton'] != null) return 'jeton';
 
-  if (row['amount'] != null && !hasCoins) return 'cfc';
-  if (row['priceTry'] != null && hasCoins) return 'jeton';
+  final amount = int.tryParse('${row['amount']}');
+  final priceTry = num.tryParse('${row['priceTry']}');
+  final hasPriceTry = priceTry != null && priceTry > 0;
+  if (hasPriceTry && amount != null && amount > 0) {
+    if (!notes.contains('cfc') &&
+        !source.contains('cfc') &&
+        !title.contains('cfc')) {
+      return 'jeton';
+    }
+  }
+
+  if (amount != null && amount > 0 && !hasCoins) return 'cfc';
 
   return 'cfc';
 }
@@ -55,14 +83,22 @@ Future<void> reviewAdminPaymentRequest(
   required String action,
   String? requestType,
   String? reviewNote,
+  Map<String, dynamic>? requestRow,
 }) async {
   final id = requestId.trim();
   if (id.isEmpty) {
     throw const ApiException('Ödeme talebi kimliği bulunamadı.');
   }
 
-  final resolvedType =
-      (requestType ?? '').trim().isEmpty ? 'cfc' : requestType!.toLowerCase();
+  var resolvedType = (requestType ?? '').trim().toLowerCase();
+  if (resolvedType.isEmpty && requestRow != null) {
+    resolvedType = resolvePaymentRequestType(requestRow);
+  }
+  if (resolvedType.isEmpty) {
+    throw const ApiException(
+      'Ödeme türü belirlenemedi. Listeyi yenileyip tekrar deneyin.',
+    );
+  }
   final isJeton = resolvedType == 'jeton';
   // Üretim PATCH yalnızca `/api/admin/cfc-payment-requests` (jeton + CFC).
   final paths = <String>[
@@ -82,6 +118,14 @@ Future<void> reviewAdminPaymentRequest(
     if (action == 'reject' && (reviewNote?.trim().isNotEmpty ?? false))
       'reviewNote': reviewNote!.trim(),
   };
+  if (isJeton && requestRow != null) {
+    final coins = requestRow['coins'] ?? requestRow['amount'];
+    if (coins != null) body['coins'] = coins;
+    final packageId = requestRow['packageId']?.toString().trim();
+    if (packageId != null && packageId.isNotEmpty) {
+      body['packageId'] = packageId;
+    }
+  }
 
   ApiException? last;
   for (final path in paths) {

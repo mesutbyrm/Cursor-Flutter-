@@ -525,7 +525,18 @@ walletRouter.patch(
       return jsonError(res, 400, "Bu talep zaten işlenmiş");
     }
 
-    const isJeton = row.requestType === "jeton" || row.packageId != null;
+    const patchType = String(
+      req.body?.requestType ?? req.body?.creditType ?? req.body?.type ?? "",
+    )
+      .toLowerCase()
+      .trim();
+    let isJeton = row.requestType === "jeton";
+    if (patchType === "jeton") isJeton = true;
+    if (patchType === "cfc") isJeton = false;
+    if (!patchType && row.packageId) {
+      const pkg = row.packageId.toString();
+      if (/^p\d+$/i.test(pkg)) isJeton = true;
+    }
 
     if (action === "approve") {
       const jetonCredit = isJeton ? row.coins ?? row.amount : 0;

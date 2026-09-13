@@ -25,8 +25,7 @@ void _dispatchSiteAnimationSocialEntrance(_SiteAnimationRead read, String banner
   final name = _parseDisplayName(trimmed);
   if (name == null || name.isEmpty) return;
 
-  final eventId =
-      'social:${trimmed.hashCode}:${DateTime.now().millisecondsSinceEpoch}';
+  final eventId = 'social:${trimmed.hashCode}';
   read(siteAnimationProvider(SiteAnimationContext.social.overlayId).notifier)
       .handleRoomEvent('user_joined', {
     'userId': 'social:$name',

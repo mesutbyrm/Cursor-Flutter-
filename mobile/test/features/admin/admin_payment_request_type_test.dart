@@ -36,11 +36,23 @@ void main() {
       );
     });
 
-    test('does not treat priceTry alone as jeton', () {
+    test('amount+priceTry without CFC markers is jeton checkout', () {
       expect(
         resolvePaymentRequestType({
           'amount': 500,
           'priceTry': 50,
+          'packageId': 'p500',
+        }),
+        'jeton',
+      );
+    });
+
+    test('amount+priceTry with cfc source stays cfc', () {
+      expect(
+        resolvePaymentRequestType({
+          'amount': 500,
+          'priceTry': 50,
+          'source': 'mobile_cfc_checkout',
         }),
         'cfc',
       );

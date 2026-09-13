@@ -23,6 +23,8 @@ import '../../../gifts/domain/gift_system_message.dart';
 import '../../../gifts/domain/session_summary_message.dart';
 import '../../../gifts/domain/session_gift_summary.dart';
 import '../../../../core/site_animation/presentation/site_animation_provider.dart';
+import '../../../../core/site_animation/presentation/site_animation_realtime_policy.dart';
+import '../../../../core/site_animation/domain/site_animation_type.dart';
 import '../../../../core/site_animation/presentation/widgets/site_animation_context_host.dart';
 import '../../../gifts/presentation/sync/gift_sse_dispatch.dart';
 import '../../../gifts/presentation/sync/gift_sync_log.dart';
@@ -101,8 +103,12 @@ class LiveRoomState {
 class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String> {
   Timer? _poll;
   final Set<String> _seenIds = {};
+  final Set<String> _knownViewerIds = {};
+  final Map<String, String?> _viewerMembershipById = {};
   var _tearDownDone = false;
   var _swipeSuspended = false;
+  var _liveEffectsArmed = false;
+  int? _liveRealtimeEffectsEpochMs;
 
   /// Idempotent çıkış — SSE, socket, hediye poll ve backend leave.
   Future<void> tearDownSession() async {
@@ -154,6 +160,14 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
   }
 
   Future<void> _bootstrap(String streamId) async {
+    _liveEffectsArmed = false;
+    _liveRealtimeEffectsEpochMs = null;
+    _knownViewerIds.clear();
+    _viewerMembershipById.clear();
+    ref
+        .read(siteAnimationProvider(SiteAnimationContext.liveStream.overlayId)
+            .notifier)
+        .clearQueue();
     try {
       final remote = ref.read(liveRemoteProvider);
       final boot = await NetworkPerf.parallel([
@@ -204,6 +218,10 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
         GiftSyncLog.broadcast(streamId, 'sse', 'connected');
         GiftSyncLog.sseConnected(streamId);
         LiveDebugLog.log('stream.room.sse_ok', {'streamId': streamId});
+        if (!_liveEffectsArmed) {
+          _liveEffectsArmed = true;
+          _liveRealtimeEffectsEpochMs = DateTime.now().millisecondsSinceEpoch;
+        }
       },
       onViewerCount: (count) {
         if (count >= 0) state = state.copyWith(viewerCount: count);
@@ -246,12 +264,31 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
             .toString()
             .trim();
         final joinId = (user['id'] ?? user['userId'] ?? name).toString();
-        _dispatchLiveSiteAnimation('user_joined', {
+        final membership = user['membership']?.toString() ??
+            user['tier']?.toString() ??
+            user['vipTier']?.toString();
+        final joinPayload = {
           ...user,
           'userId': joinId,
           'name': name,
+          if (membership != null && membership.isNotEmpty)
+            'membership': membership,
           if (count is num) 'viewerCount': count.round(),
-        });
+        };
+        final wasKnown = _knownViewerIds.contains(joinId);
+        if (joinId.isNotEmpty) {
+          _knownViewerIds.add(joinId);
+          _viewerMembershipById[joinId] = membership;
+        }
+        if (shouldPlayRealtimeMemberEntranceExit(
+          type: SiteAnimationType.memberJoined,
+          payload: joinPayload,
+          effectsArmed: _liveEffectsArmed,
+          sessionEpochMs: _liveRealtimeEffectsEpochMs,
+          memberWasAlreadyKnown: wasKnown,
+        )) {
+          _dispatchLiveSiteAnimation('user_joined', joinPayload);
+        }
         var next = state;
         if (count is num) {
           next = next.copyWith(viewerCount: count.round());
@@ -304,7 +341,23 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
       },
       onUserLeft: (userId) {
         LiveEventLog.viewerLeft(streamId: streamId, userId: userId);
-        _dispatchLiveSiteAnimation('user_left', {'userId': userId});
+        final leavePayload = {
+          'userId': userId,
+          if (_viewerMembershipById[userId] != null)
+            'membership': _viewerMembershipById[userId],
+        };
+        final wasKnown = _knownViewerIds.contains(userId);
+        _knownViewerIds.remove(userId);
+        _viewerMembershipById.remove(userId);
+        if (shouldPlayRealtimeMemberEntranceExit(
+          type: SiteAnimationType.memberLeft,
+          payload: leavePayload,
+          effectsArmed: _liveEffectsArmed,
+          sessionEpochMs: _liveRealtimeEffectsEpochMs,
+          memberWasAlreadyKnown: !wasKnown,
+        )) {
+          _dispatchLiveSiteAnimation('user_left', leavePayload);
+        }
       },
       onModeratorUpdated: (userId, isModerator) {
         _applyModeratorFlag(userId: userId, isModerator: isModerator);

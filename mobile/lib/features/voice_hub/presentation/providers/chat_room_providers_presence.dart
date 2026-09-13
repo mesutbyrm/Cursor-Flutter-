@@ -454,7 +454,6 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       _knownPresenceIds
         ..clear()
         ..addAll(merged.map((p) => p.id).where((id) => id.isNotEmpty));
-      _entrancesArmed = true;
       ref
           .read(voiceRoomDiagnosticProvider.notifier)
           .setPresence(joined: true, count: merged.length);

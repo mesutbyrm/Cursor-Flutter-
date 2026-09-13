@@ -316,13 +316,29 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
       reviewNote = await _askRejectReason(context);
       if (reviewNote == null) return;
     }
+    Map<String, dynamic>? requestRow;
+    final pending = ref.read(adminPaymentRequestsProvider).valueOrNull;
+    if (pending != null) {
+      for (final row in pending) {
+        if (resolvePaymentRequestId(row) == requestId) {
+          requestRow = row;
+          break;
+        }
+      }
+    }
+    final resolvedType = (requestType?.trim().isNotEmpty == true)
+        ? requestType!.trim().toLowerCase()
+        : (requestRow != null
+            ? resolvePaymentRequestType(requestRow)
+            : null);
     try {
       await reviewAdminPaymentRequest(
         ref.read(dioProvider),
         requestId: requestId,
         action: action,
-        requestType: requestType,
+        requestType: resolvedType,
         reviewNote: reviewNote,
+        requestRow: requestRow,
       );
       _refreshAll();
       await NetworkPerf.parallel([
@@ -770,9 +786,14 @@ class _PaymentNotificationsTab extends StatelessWidget {
               final isRequest = isPaymentNotificationType(n['type']?.toString()) &&
                   (n['type']?.toString() ?? '').contains('request');
               final requestId = resolvePaymentRequestId(n);
-              final requestType = (n['type']?.toString() ?? '').contains('jeton')
-                  ? 'jeton'
-                  : 'cfc';
+              final nested = n['data'] is Map
+                  ? Map<String, dynamic>.from(n['data'] as Map)
+                  : <String, dynamic>{};
+              final requestType = resolvePaymentRequestType({
+                ...nested,
+                if (n['type'] != null) 'type': n['type'],
+                if (n['requestType'] != null) 'requestType': n['requestType'],
+              });
 
               return DiscoverGlassCard(
                 onTap: isRequest && requestId.isEmpty ? onOpenPending : null,

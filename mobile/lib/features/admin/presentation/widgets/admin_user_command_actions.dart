@@ -291,6 +291,7 @@ abstract final class AdminUserCommandActions {
         action: action,
         requestType: resolvePaymentRequestType(request),
         reviewNote: note,
+        requestRow: request,
       );
       onDone();
       if (context.mounted) {
