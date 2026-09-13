@@ -30,6 +30,36 @@
       "flutter": "/api/user/device-token",
       "target": "@/app/api/devices/fcm/route",
       "methods": ["POST", "DELETE"]
+    },
+    {
+      "flutter": "/api/social/announcements",
+      "target": "@/app/api/announcements/route",
+      "methods": ["GET", "POST"]
+    },
+    {
+      "flutter": "/api/social/public-stats",
+      "target": "@/app/api/public-stats/route",
+      "methods": ["GET"]
+    },
+    {
+      "flutter": "/api/social/stories",
+      "target": "@/app/api/stories/route",
+      "methods": ["GET", "POST"]
+    },
+    {
+      "flutter": "/api/short-videos/hashtags/search",
+      "target": "@/app/api/hashtags/search/route",
+      "methods": ["GET"]
+    },
+    {
+      "flutter": "/api/short-videos/hashtags/trending",
+      "target": "@/app/api/hashtags/trending/route",
+      "methods": ["GET"]
+    },
+    {
+      "flutter": "/api/short-videos/music/recommend",
+      "target": "@/app/api/short-videos/music/route",
+      "methods": ["GET"]
     }
   ]
 }
