@@ -153,6 +153,12 @@ jobs:
           flutter-version: '3.44.8'
           cache: true
 
+      - name: MCP server bağımlılıkları (FAZ 0 selftest)
+        working-directory: mcp-server
+        run: |
+          set -eux
+          npm ci
+
       - name: Acceptance secret doğrulama
         continue-on-error: true
         env:
