@@ -60,6 +60,31 @@
       "flutter": "/api/short-videos/music/recommend",
       "target": "@/app/api/short-videos/music/route",
       "methods": ["GET"]
+    },
+    {
+      "flutter": "/api/fortune-access/settings",
+      "target": "@/app/api/fortune-access/ip-status/route",
+      "methods": ["GET"]
+    },
+    {
+      "flutter": "/api/teller/gifts",
+      "target": "@/app/api/fortune-tellers/gifts/route",
+      "methods": ["GET", "POST"]
+    },
+    {
+      "flutter": "/api/video-streams/{streamId}/moderator",
+      "target": "@/app/api/video-streams/[streamId]/moderators/route",
+      "methods": ["GET", "POST", "PATCH", "DELETE"]
+    },
+    {
+      "flutter": "/api/admin/payment-requests",
+      "target": "@/app/api/admin/cfc-payment-requests/route",
+      "methods": ["GET", "PATCH", "POST"]
+    },
+    {
+      "flutter": "/api/admin/site-animations",
+      "target": "@/app/api/admin/animations/route",
+      "methods": ["GET", "POST"]
     }
   ]
 }

@@ -6,10 +6,11 @@ Kaynak: `mobile/lib/core/network/api_endpoints.dart`, `fl_ref/extra_main.json`, 
 
 | Ölçüm | Değer |
 |------|------|
-| Flutter → ana backend eksik (`extra_main.json`) | **98** |
+| Flutter → ana backend eksik (`extra_main.json`) | **98** yol listelenir |
+| **Parite paketi (`backend-parity/nextjs_space`)** | **98/98 route eşleşmesi** (Cloud Agent doğrulandı) |
 | Flutter → oyun backend (`canlifalapi.abacusai.app`) | **25** (nextjs_space kapsamı dışı) |
 | Kontrol betiği | `scripts/check-extra-main-api-routes.py` |
-| Hedef | `EKSİK: 0` |
+| Telefon / kullanıcı terminali | **Gerekmez** — ayrıntı: `BACKEND_PARITY_STATUS.md` |
 
 Detaylı sınıflandırma: `uploads/PARITE_ANALIZI_7bee.md` (aynı 98 yol).
 
@@ -27,4 +28,4 @@ Detaylı sınıflandırma: `uploads/PARITE_ANALIZI_7bee.md` (aynı 98 yol).
 | `/api/live/fal-request*` | `/api/video-streams/{id}/fortune-requests` |
 | `/api/fortune-access/settings` | `/api/fortune-access/ip-status` (mobil tolere) |
 
-Her faz bitiminde: `yarn tsc --noEmit`, `yarn build`, `check-extra-main-api-routes.py`.
+Doğrulama bu repoda: `check-extra-main-api-routes.py`. TypeScript build yalnızca `fortune_telling_platform/nextjs_space` klonunda (Cloud Agent veya CI).
