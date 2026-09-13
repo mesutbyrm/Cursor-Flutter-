@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../notifications/domain/entities/app_notification_entity.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';
+import '../../../notifications/presentation/providers/notifications_list_notifier.dart';
 import '../../../notifications/presentation/providers/notification_event_gate_provider.dart';
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/theme/app_theme_colors.dart';
@@ -26,19 +27,28 @@ class _JetonPaymentStatusListenerState
     extends ConsumerState<JetonPaymentStatusListener> {
   var _historySeeded = false;
 
+  void _onNotificationList(Iterable<AppNotificationEntity> list) {
+    final gate = ref.read(notificationEventGateProvider);
+    if (!_historySeeded) {
+      gate.seedFromHistory(list.map((n) => n.id));
+      _historySeeded = true;
+    }
+    for (final n in list) {
+      unawaited(_maybeShow(n));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen(notificationsListProvider, (prev, next) {
       final list = next.valueOrNull;
       if (list == null) return;
-      final gate = ref.read(notificationEventGateProvider);
-      if (!_historySeeded) {
-        gate.seedFromHistory(list.map((n) => n.id));
-        _historySeeded = true;
-      }
-      for (final n in list) {
-        unawaited(_maybeShow(n));
-      }
+      _onNotificationList(list);
+    });
+    ref.listen(notificationsListNotifierProvider, (prev, next) {
+      final list = next.valueOrNull?.all;
+      if (list == null) return;
+      _onNotificationList(list);
     });
     return widget.child;
   }

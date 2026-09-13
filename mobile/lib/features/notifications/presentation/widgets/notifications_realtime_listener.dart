@@ -20,6 +20,7 @@ import '../../../social/presentation/services/social_fortune_feed_sync.dart';
 import '../providers/notification_event_gate_provider.dart';
 import '../providers/notifications_list_notifier.dart';
 import '../providers/notifications_providers.dart';
+import '../../../profile/presentation/widgets/jeton_payment_realtime_notifications.dart';
 
 final notificationsSseServiceProvider = Provider<NotificationsSseService>((ref) {
   final service = NotificationsSseService();
@@ -77,6 +78,9 @@ class _NotificationsRealtimeListenerState
     ref.invalidate(notificationsUnreadApiProvider);
     handleNotificationGiftForGlobalOverlay(ref, notification);
     final type = notification.type?.toLowerCase() ?? '';
+    if (isJetonPaymentResultNotificationType(type)) {
+      unawaited(handleJetonPaymentResultNotification(ref, notification));
+    }
     if (type.contains('pk')) {
       ref.invalidate(pkPendingInvitesProvider);
       ref.invalidate(livePkStreamsProvider);
