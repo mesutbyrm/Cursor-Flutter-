@@ -16,21 +16,25 @@
 | `/api/notifications/payment` | yeni | DELETE ödeme tipi bildirimler |
 | `/api/notifications/{}/read` | yeni | PATCH/POST `isRead` |
 
-**Paket içi EKSİK:** 98 − 9 = **89** (henüz `nextjs_space`’e kopyalanmadı).
+**Paket içi (Faz 1 tamam):** **19 / 98** route dosyası — **EKSİK: 79** (henüz `nextjs_space`’e kopyalanmadı).
 
-## Faz 1b (sıradaki — `nextjs_space` içinde implement)
+## Faz 1b — pakette hazır
 
-| Flutter yolu | Öneri |
+| Flutter yolu | Durum |
 |--------------|--------|
-| `/api/messages/conversations/{}/messages` | `Conversation` + `DirectMessage` |
-| `/api/messages/conversations/{}/stream` | SSE (mevcut chat-events lib) |
-| `/api/messages/conversations/{}/typing` | presence / kısa TTL cache |
-| `/api/messages/{}/{}` | legacy alias → peer messages |
-| `/api/auth/mobile-sessions/{}` | `auth/sessions` ile hizala |
-| `/api/user/daily-tasks` | görev modeli / `daily-rewards` |
-| `/api/user/favorites` | kullanıcı favori tablosu |
-| `/api/user/fortunes/{}/pin` | fal kaydı pin |
-| `/api/user/fortunes/{}/rate` | fal puanlama |
-| `/api/user/story` | hikâye CRUD |
+| `/api/messages/conversations` (+ alt uçlar) | proxy → `messages`, `messages/[userId]`, typing lib, SSE keepalive |
+| `/api/messages/{}/{}` | DELETE `DirectMessage` |
+| `/api/auth/mobile-sessions/{}` | DELETE → `auth/sessions?deviceId=` |
+| `/api/user/daily-tasks` | re-export → `daily-missions` |
+| `/api/user/story` | re-export → `stories` |
+| `/api/user/favorites` (+ `[id]`) | `UserContentFavorite` + prisma snippet |
+| `/api/user/fortunes/{}/pin` | `Fortune.isPinned` |
+| `/api/user/fortunes/{}/rate` | `FortuneRating` upsert |
+
+**Favoriler:** `backend-parity/prisma-additive/user_content_favorites.prisma.snippet` → `schema.prisma`’a ekleyip `prisma db push` (additive).
 
 Uygulama: `bash scripts/apply-backend-parity-to-nextjs.sh <nextjs_space>` sonra `yarn tsc && yarn build`.
+
+## Sıradaki — Faz 2
+
+`/api/chat/rooms/*` (17) + `/api/chat/music/popular` + `/api/platform/voice-room-settings`.

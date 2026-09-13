@@ -1,0 +1,18 @@
+// EKLEMELİ — schema.prisma User modeline ilişki ekleyin:
+//   userContentFavorites UserContentFavorite[]
+
+model UserContentFavorite {
+  id         String   @id @default(cuid())
+  userId     String
+  targetType String
+  targetId   String
+  title      String?
+  url        String?
+  imageUrl   String?
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, targetType, targetId])
+  @@index([userId])
+  @@map("user_content_favorites")
+}

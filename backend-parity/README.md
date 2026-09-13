@@ -18,12 +18,14 @@ cd nextjs_space && yarn tsc --noEmit && yarn run build
 python3 ../Cursor-Flutter-/scripts/check-extra-main-api-routes.py
 ```
 
-## Faz 1 durumu
+## Faz 1 durumu (tamam)
 
-| Tür | Dosya sayısı | Açıklama |
-|-----|--------------|----------|
-| Re-export | 6 | `users/me/*`, cihaz token alias |
-| Yeni handler | 3 | `notifications/unread`, `payment`, `[id]/read` |
-| Sonraki (Faz 1b) | 10 | DM conversations, `user/*` görevler, `auth/mobile-sessions` |
+| Tür | Adet | Açıklama |
+|-----|------|----------|
+| Re-export | 9 | `users/me/*`, cihaz token, `daily-tasks`, `story` |
+| Proxy / yeni | 10 | bildirimler, DM, oturum revoke, fal pin/rate, favoriler |
+| **Toplam** | **19** | `extra_main` Faz 1 kapsamı |
+
+`lib/dm-typing-state.ts`, `lib/parity-route-params.ts` — `nextjs_space/lib/` altına kopyalanır.
 
 Kaynak şema/lib: `backend-reference/canlifal_flutter_paketi/kaynak/`.
