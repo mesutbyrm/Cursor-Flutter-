@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../domain/site_animation_command.dart';
 import '../../domain/site_animation_layout.dart';
 import '../../domain/site_animation_tier.dart';
+import '../../domain/site_animation_type.dart';
 import '../utils/site_animation_seat_anchor.dart';
 import '../utils/site_animation_voice_room_layout.dart';
 import 'site_animation_media.dart';
