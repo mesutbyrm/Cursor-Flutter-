@@ -30,6 +30,12 @@ abstract final class ApiEndpoints {
   static const authForgotPassword = '/api/auth/forgot-password';
   static const authResetPassword = '/api/auth/reset-password';
   static const authChangePassword = '/api/auth/change-password';
+  /// Abacus zip §1 — e-posta doğrulama gönder (`openapi.yaml`).
+  static const authEmailSendVerification = '/api/auth/email/send-verification';
+  static const authPhoneSendOtp = '/api/auth/phone/send-otp';
+  static const authPhoneVerifyOtp = '/api/auth/phone/verify-otp';
+  /// Kimlik / belge doğrulama başvurusu (`GET` / `POST`).
+  static const authVerification = '/api/verification';
   /// PART10 — cihaz doğrulama (metot: GET vs POST doküman çelişkisi; bkz. uyumluluk raporu).
   static const authVerifyDevice = '/api/auth/verify-device';
   static const authReclaimDevice = '/api/auth/reclaim-device';
@@ -45,6 +51,14 @@ abstract final class ApiEndpoints {
   static const userPresenceSections = '/api/presence/sections';
 
   static const me = '/api/me';
+  static const meMembership = '/api/me/membership';
+  static const meMembershipEvents = '/api/me/membership-events';
+  static const meMembershipHistory = '/api/me/membership-history';
+  static const meProfileVisitorsCanonical = '/api/me/profile-visitors';
+  static const meVipIdentity = '/api/me/vip-identity';
+  static const meVipPreferences = '/api/me/vip-preferences';
+  static const meVipXp = '/api/me/vip-xp';
+  static const meAdminCapabilities = '/api/me/admin-capabilities';
   static const meStats = '/api/users/me/stats';
   /// Kılavuz §9.2 — alınan hediyeler (eski `/api/users/me/gifts-received` yedek).
   static const userReceivedGifts = '/api/user/received-gifts';
@@ -87,6 +101,12 @@ abstract final class ApiEndpoints {
   static const socialActions = '/api/social/actions';
   static const socialProfile = '/api/social/profile';
   static const shareCard = '/api/share-card';
+  static const hashtagsTrending = '/api/hashtags/trending';
+  static const hashtagsSearch = '/api/hashtags/search';
+  static String hashtagByName(String name) => '/api/hashtags/$name';
+  static const teams = '/api/teams';
+  static String teamById(String teamId) => '/api/teams/$teamId';
+  static const activities = '/api/activities';
 
   static const chatMusicPopular = '/api/chat/music/popular';
   static const adminVoiceRoomBackgrounds = '/api/admin/voice-room-backgrounds';
@@ -242,6 +262,17 @@ abstract final class ApiEndpoints {
   static const dreams = '/api/dreams';
   static const dreamSymbols = '/api/dream-symbols';
   static const dreamContest = '/api/dream-contest';
+  static String dreamContestEntries(String contestId) =>
+      '/api/dream-contest/$contestId/entries';
+  static String dreamContestVote(String contestId) =>
+      '/api/dream-contest/$contestId/vote';
+  static const dreamsFavorites = '/api/dreams/favorites';
+  static const dreamsRecommendations = '/api/dreams/recommendations';
+  static const dreamsInterpret = '/api/dreams/interpret';
+  static String dreamSlugFavorite(String slug) =>
+      '/api/dreams/${Uri.encodeComponent(slug)}/favorite';
+  static String dreamSlugView(String slug) =>
+      '/api/dreams/${Uri.encodeComponent(slug)}/view';
   static const dreamDiary = '/api/dream-diary';
   static const dreamStats = '/api/dream-stats';
   static const weeklyDreamReport = '/api/weekly-dream-report';
@@ -577,6 +608,10 @@ abstract final class ApiEndpoints {
 
   /// Oturumlu kullanıcı profili (takipçi, bio, görsel — NextAuth çerezi).
   static const userSiteProfile = '/api/user/profile';
+  static const userSocialSettings = '/api/user/social-settings';
+  static const userAccount = '/api/user/account';
+  static String userAchievementsFor(String userId) =>
+      '/api/user/$userId/achievements';
   static const userTheme = '/api/user/theme';
 
   /// Platform popup bildirimleri (oturum gerekir).
@@ -635,7 +670,6 @@ abstract final class ApiEndpoints {
   static const adminFinance = '/api/admin/finance';
   static const adminActivityFeed = '/api/admin/activity-feed';
   static const adminWithdrawals = '/api/admin/withdrawals';
-  static const activities = '/api/activities';
 
   static String adminUser(String userId) => '/api/admin/users/$userId';
 
@@ -852,6 +886,7 @@ abstract final class ApiEndpoints {
   static const announcements = '/api/announcements';
 
   static const horoscopeDaily = '/api/horoscope/daily';
+  static const astrologyPanel = '/api/astrology-panel';
 
   static const creditPackages = '/api/credit-packages';
 

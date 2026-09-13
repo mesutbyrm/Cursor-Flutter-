@@ -9,6 +9,9 @@ void main() {
       expect(ApiEndpoints.socialDiscovery, '/api/social/discovery');
       expect(ApiEndpoints.socialActions, '/api/social/actions');
       expect(ApiEndpoints.userLocation, '/api/user/location');
+      expect(ApiEndpoints.socialProfile, '/api/social/profile');
+      expect(ApiEndpoints.shareCard, '/api/share-card');
+      expect(ApiEndpoints.activities, '/api/activities');
     });
   });
 

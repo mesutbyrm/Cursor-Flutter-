@@ -1,0 +1,6463 @@
+[
+ {
+  "path": "/api/[...unmatched]",
+  "methods": [
+   "DELETE",
+   "GET",
+   "HEAD",
+   "OPTIONS",
+   "PATCH",
+   "POST",
+   "PUT"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/[...unmatched]/route.ts"
+ },
+ {
+  "path": "/api/activities",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/activities/route.ts"
+ },
+ {
+  "path": "/api/admin/activity-feed",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/activity-feed/route.ts"
+ },
+ {
+  "path": "/api/admin/ad-networks",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/ad-networks/route.ts"
+ },
+ {
+  "path": "/api/admin/ad-placements",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/ad-placements/route.ts"
+ },
+ {
+  "path": "/api/admin/ad-placements/[id]",
+  "methods": [
+   "DELETE",
+   "GET",
+   "PATCH"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/ad-placements/[id]/route.ts"
+ },
+ {
+  "path": "/api/admin/ad-placements/stats",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/ad-placements/stats/route.ts"
+ },
+ {
+  "path": "/api/admin/agencies",
+  "methods": [
+   "DELETE",
+   "GET",
+   "PATCH",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/agencies/route.ts"
+ },
+ {
+  "path": "/api/admin/agencies/[agencyId]/commission",
+  "methods": [
+   "GET",
+   "PUT"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/agencies/[agencyId]/commission/route.ts"
+ },
+ {
+  "path": "/api/admin/agencies/[agencyId]/wallet",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/agencies/[agencyId]/wallet/route.ts"
+ },
+ {
+  "path": "/api/admin/agency-applicant-config",
+  "methods": [
+   "GET",
+   "PUT"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/agency-applicant-config/route.ts"
+ },
+ {
+  "path": "/api/admin/agency-finance",
+  "methods": [
+   "GET",
+   "PUT"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/agency-finance/route.ts"
+ },
+ {
+  "path": "/api/admin/animations",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/animations/route.ts"
+ },
+ {
+  "path": "/api/admin/animations/[id]",
+  "methods": [
+   "DELETE",
+   "GET",
+   "PATCH"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/animations/[id]/route.ts"
+ },
+ {
+  "path": "/api/admin/animations/assignments",
+  "methods": [
+   "DELETE",
+   "GET",
+   "PATCH",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/animations/assignments/route.ts"
+ },
+ {
+  "path": "/api/admin/animations/membership-defaults",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/animations/membership-defaults/route.ts"
+ },
+ {
+  "path": "/api/admin/animations/stats",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/animations/stats/route.ts"
+ },
+ {
+  "path": "/api/admin/announcement-sections",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/announcement-sections/route.ts"
+ },
+ {
+  "path": "/api/admin/audit-logs",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/audit-logs/route.ts"
+ },
+ {
+  "path": "/api/admin/avatar-accessories",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/avatar-accessories/route.ts"
+ },
+ {
+  "path": "/api/admin/awards",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/awards/route.ts"
+ },
+ {
+  "path": "/api/admin/backup",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/backup/route.ts"
+ },
+ {
+  "path": "/api/admin/badges",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST",
+   "PUT"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/badges/route.ts"
+ },
+ {
+  "path": "/api/admin/bana-ozel",
+  "methods": [
+   "GET",
+   "PATCH",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/bana-ozel/route.ts"
+ },
+ {
+  "path": "/api/admin/blog",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/blog/route.ts"
+ },
+ {
+  "path": "/api/admin/blog/[postId]",
+  "methods": [
+   "DELETE",
+   "PATCH",
+   "PUT"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/blog/[postId]/route.ts"
+ },
+ {
+  "path": "/api/admin/blog/analytics",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/blog/analytics/route.ts"
+ },
+ {
+  "path": "/api/admin/blog/bulk-category",
+  "methods": [
+   "PATCH"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/blog/bulk-category/route.ts"
+ },
+ {
+  "path": "/api/admin/blog/bulk-delete",
+  "methods": [
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/blog/bulk-delete/route.ts"
+ },
+ {
+  "path": "/api/admin/blog/bulk-generate",
+  "methods": [
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/blog/bulk-generate/route.ts"
+ },
+ {
+  "path": "/api/admin/blog/bulk-import",
+  "methods": [
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/blog/bulk-import/route.ts"
+ },
+ {
+  "path": "/api/admin/blog/bulk-publish",
+  "methods": [
+   "PATCH"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/blog/bulk-publish/route.ts"
+ },
+ {
+  "path": "/api/admin/blog/categories",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/blog/categories/route.ts"
+ },
+ {
+  "path": "/api/admin/blog/comments",
+  "methods": [
+   "GET",
+   "PATCH"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/blog/comments/route.ts"
+ },
+ {
+  "path": "/api/admin/blog/generate",
+  "methods": [
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/blog/generate/route.ts"
+ },
+ {
+  "path": "/api/admin/blog/import",
+  "methods": [
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/blog/import/route.ts"
+ },
+ {
+  "path": "/api/admin/blog/schedule-publish",
+  "methods": [
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/blog/schedule-publish/route.ts"
+ },
+ {
+  "path": "/api/admin/bots",
+  "methods": [
+   "GET",
+   "PATCH"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/bots/route.ts"
+ },
+ {
+  "path": "/api/admin/bots/simulate",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/bots/simulate/route.ts"
+ },
+ {
+  "path": "/api/admin/bots/simulate-fortune",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/bots/simulate-fortune/route.ts"
+ },
+ {
+  "path": "/api/admin/bots/simulate-master",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/bots/simulate-master/route.ts"
+ },
+ {
+  "path": "/api/admin/bots/simulate-social",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/bots/simulate-social/route.ts"
+ },
+ {
+  "path": "/api/admin/broadcast-images",
+  "methods": [
+   "DELETE",
+   "GET",
+   "PATCH",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/broadcast-images/route.ts"
+ },
+ {
+  "path": "/api/admin/button-order",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/button-order/route.ts"
+ },
+ {
+  "path": "/api/admin/cache",
+  "methods": [
+   "DELETE",
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/cache/route.ts"
+ },
+ {
+  "path": "/api/admin/cfc-arena",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/cfc-arena/route.ts"
+ },
+ {
+  "path": "/api/admin/cfc-arena/[contestId]",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/cfc-arena/[contestId]/route.ts"
+ },
+ {
+  "path": "/api/admin/cfc-payment-requests",
+  "methods": [
+   "GET",
+   "PATCH"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/cfc-payment-requests/route.ts"
+ },
+ {
+  "path": "/api/admin/cfc-settings",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/cfc-settings/route.ts"
+ },
+ {
+  "path": "/api/admin/chat-bubbles",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/chat-bubbles/route.ts"
+ },
+ {
+  "path": "/api/admin/chat-rooms",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST",
+   "PUT"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/chat-rooms/route.ts"
+ },
+ {
+  "path": "/api/admin/contests",
+  "methods": [
+   "DELETE",
+   "GET",
+   "PATCH",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/contests/route.ts"
+ },
+ {
+  "path": "/api/admin/credit-packages",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/credit-packages/route.ts"
+ },
+ {
+  "path": "/api/admin/credit-packages/[packageId]",
+  "methods": [
+   "DELETE",
+   "PATCH"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/credit-packages/[packageId]/route.ts"
+ },
+ {
+  "path": "/api/admin/credits",
+  "methods": [
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/credits/route.ts"
+ },
+ {
+  "path": "/api/admin/currency-config",
+  "methods": [
+   "GET",
+   "POST",
+   "PUT"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/currency-config/route.ts"
+ },
+ {
+  "path": "/api/admin/currency-settings",
+  "methods": [
+   "GET",
+   "PATCH"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/currency-settings/route.ts"
+ },
+ {
+  "path": "/api/admin/dreams",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST",
+   "PUT"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/dreams/route.ts"
+ },
+ {
+  "path": "/api/admin/dreams/bulk-category",
+  "methods": [
+   "PATCH"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/dreams/bulk-category/route.ts"
+ },
+ {
+  "path": "/api/admin/dreams/bulk-delete",
+  "methods": [
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/dreams/bulk-delete/route.ts"
+ },
+ {
+  "path": "/api/admin/dreams/bulk-import",
+  "methods": [
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/dreams/bulk-import/route.ts"
+ },
+ {
+  "path": "/api/admin/dreams/bulk-publish",
+  "methods": [
+   "PATCH"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/dreams/bulk-publish/route.ts"
+ },
+ {
+  "path": "/api/admin/dreams/generate",
+  "methods": [
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/dreams/generate/route.ts"
+ },
+ {
+  "path": "/api/admin/effect-rules",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/effect-rules/route.ts"
+ },
+ {
+  "path": "/api/admin/effect-rules/[ruleId]",
+  "methods": [
+   "DELETE",
+   "PATCH"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/effect-rules/[ruleId]/route.ts"
+ },
+ {
+  "path": "/api/admin/emoji-packs",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/emoji-packs/route.ts"
+ },
+ {
+  "path": "/api/admin/entrance-effects",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/entrance-effects/route.ts"
+ },
+ {
+  "path": "/api/admin/feature-flags",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/feature-flags/route.ts"
+ },
+ {
+  "path": "/api/admin/feature-flags/[flagId]",
+  "methods": [
+   "DELETE",
+   "PATCH"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/feature-flags/[flagId]/route.ts"
+ },
+ {
+  "path": "/api/admin/finance",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/finance/route.ts"
+ },
+ {
+  "path": "/api/admin/fortune-request-types",
+  "methods": [
+   "DELETE",
+   "GET",
+   "PATCH",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/fortune-request-types/route.ts"
+ },
+ {
+  "path": "/api/admin/fortunes",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/fortunes/route.ts"
+ },
+ {
+  "path": "/api/admin/games",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST",
+   "PUT"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/games/route.ts"
+ },
+ {
+  "path": "/api/admin/games/rooms",
+  "methods": [
+   "DELETE",
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/games/rooms/route.ts"
+ },
+ {
+  "path": "/api/admin/games/settings",
+  "methods": [
+   "GET",
+   "PUT"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/games/settings/route.ts"
+ },
+ {
+  "path": "/api/admin/gift-collections",
+  "methods": [
+   "GET",
+   "PATCH",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/gift-collections/route.ts"
+ },
+ {
+  "path": "/api/admin/gift-upload",
+  "methods": [
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/gift-upload/route.ts"
+ },
+ {
+  "path": "/api/admin/gifts",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/gifts/route.ts"
+ },
+ {
+  "path": "/api/admin/gifts/[giftId]",
+  "methods": [
+   "DELETE",
+   "GET",
+   "PATCH"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/gifts/[giftId]/route.ts"
+ },
+ {
+  "path": "/api/admin/gifts/stats",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/gifts/stats/route.ts"
+ },
+ {
+  "path": "/api/admin/global-search",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/global-search/route.ts"
+ },
+ {
+  "path": "/api/admin/homepage-buttons",
+  "methods": [
+   "DELETE",
+   "GET",
+   "PATCH",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/homepage-buttons/route.ts"
+ },
+ {
+  "path": "/api/admin/homepage-fortune-cards",
+  "methods": [
+   "DELETE",
+   "GET",
+   "PATCH",
+   "POST",
+   "PUT"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/homepage-fortune-cards/route.ts"
+ },
+ {
+  "path": "/api/admin/integrations/apple",
+  "methods": [
+   "DELETE",
+   "GET",
+   "PUT"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/integrations/apple/route.ts"
+ },
+ {
+  "path": "/api/admin/integrations/google-play",
+  "methods": [
+   "DELETE",
+   "GET",
+   "PUT"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/integrations/google-play/route.ts"
+ },
+ {
+  "path": "/api/admin/integrations/sms",
+  "methods": [
+   "GET",
+   "PATCH"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/integrations/sms/route.ts"
+ },
+ {
+  "path": "/api/admin/integrations/sms/[providerKey]",
+  "methods": [
+   "DELETE",
+   "PATCH",
+   "PUT"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/integrations/sms/[providerKey]/route.ts"
+ },
+ {
+  "path": "/api/admin/integrations/sms/[providerKey]/test",
+  "methods": [
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/integrations/sms/[providerKey]/test/route.ts"
+ },
+ {
+  "path": "/api/admin/leaderboards",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/leaderboards/route.ts"
+ },
+ {
+  "path": "/api/admin/ledger",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/ledger/route.ts"
+ },
+ {
+  "path": "/api/admin/live-tellers",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/live-tellers/route.ts"
+ },
+ {
+  "path": "/api/admin/live-tellers/[tellerId]",
+  "methods": [
+   "DELETE",
+   "GET",
+   "PUT"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/live-tellers/[tellerId]/route.ts"
+ },
+ {
+  "path": "/api/admin/live-tellers/[tellerId]/approve",
+  "methods": [
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/live-tellers/[tellerId]/approve/route.ts"
+ },
+ {
+  "path": "/api/admin/live-tellers/[tellerId]/ban",
+  "methods": [
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/live-tellers/[tellerId]/ban/route.ts"
+ },
+ {
+  "path": "/api/admin/live-tellers/[tellerId]/bonus",
+  "methods": [
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/live-tellers/[tellerId]/bonus/route.ts"
+ },
+ {
+  "path": "/api/admin/live-tellers/[tellerId]/freeze",
+  "methods": [
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/live-tellers/[tellerId]/freeze/route.ts"
+ },
+ {
+  "path": "/api/admin/live-tellers/[tellerId]/permissions",
+  "methods": [
+   "PUT"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/live-tellers/[tellerId]/permissions/route.ts"
+ },
+ {
+  "path": "/api/admin/live-tellers/[tellerId]/warning",
+  "methods": [
+   "DELETE",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/live-tellers/[tellerId]/warning/route.ts"
+ },
+ {
+  "path": "/api/admin/lucky-gifts/tiers",
+  "methods": [
+   "DELETE",
+   "GET",
+   "PATCH",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/lucky-gifts/tiers/route.ts"
+ },
+ {
+  "path": "/api/admin/membership-badges",
+  "methods": [
+   "DELETE",
+   "GET",
+   "PATCH",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/membership-badges/route.ts"
+ },
+ {
+  "path": "/api/admin/membership-events",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST",
+   "PUT"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/membership-events/route.ts"
+ },
+ {
+  "path": "/api/admin/membership-features",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST",
+   "PUT"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/membership-features/route.ts"
+ },
+ {
+  "path": "/api/admin/membership-grants",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/membership-grants/route.ts"
+ },
+ {
+  "path": "/api/admin/membership-reports",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/membership-reports/route.ts"
+ },
+ {
+  "path": "/api/admin/membership-tiers",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST",
+   "PUT"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/membership-tiers/route.ts"
+ },
+ {
+  "path": "/api/admin/memberships",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST",
+   "PUT"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/memberships/route.ts"
+ },
+ {
+  "path": "/api/admin/memberships/purchases",
+  "methods": [
+   "GET",
+   "PATCH",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/memberships/purchases/route.ts"
+ },
+ {
+  "path": "/api/admin/mic-frames",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/mic-frames/route.ts"
+ },
+ {
+  "path": "/api/admin/moderation",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/moderation/route.ts"
+ },
+ {
+  "path": "/api/admin/name-effects",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/name-effects/route.ts"
+ },
+ {
+  "path": "/api/admin/notifications",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/notifications/route.ts"
+ },
+ {
+  "path": "/api/admin/online-fal/buttons",
+  "methods": [
+   "DELETE",
+   "GET",
+   "PATCH",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/online-fal/buttons/route.ts"
+ },
+ {
+  "path": "/api/admin/online-fal/sections",
+  "methods": [
+   "GET",
+   "PATCH",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/online-fal/sections/route.ts"
+ },
+ {
+  "path": "/api/admin/payment-methods",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/payment-methods/route.ts"
+ },
+ {
+  "path": "/api/admin/payments",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/payments/route.ts"
+ },
+ {
+  "path": "/api/admin/pending-counts",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/pending-counts/route.ts"
+ },
+ {
+  "path": "/api/admin/platform-analytics",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/platform-analytics/route.ts"
+ },
+ {
+  "path": "/api/admin/popups",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST",
+   "PUT"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/popups/route.ts"
+ },
+ {
+  "path": "/api/admin/premium-entrance",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/premium-entrance/route.ts"
+ },
+ {
+  "path": "/api/admin/profile-frames",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/profile-frames/route.ts"
+ },
+ {
+  "path": "/api/admin/profile-frames/assign",
+  "methods": [
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/profile-frames/assign/route.ts"
+ },
+ {
+  "path": "/api/admin/referral-commission",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/referral-commission/route.ts"
+ },
+ {
+  "path": "/api/admin/referral-commission/settings",
+  "methods": [
+   "GET",
+   "PATCH"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/referral-commission/settings/route.ts"
+ },
+ {
+  "path": "/api/admin/refunds",
+  "methods": [
+   "GET",
+   "PATCH"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/refunds/route.ts"
+ },
+ {
+  "path": "/api/admin/remote-config",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/remote-config/route.ts"
+ },
+ {
+  "path": "/api/admin/remote-config/[configId]",
+  "methods": [
+   "DELETE",
+   "PATCH"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/remote-config/[configId]/route.ts"
+ },
+ {
+  "path": "/api/admin/risk-events",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/risk-events/route.ts"
+ },
+ {
+  "path": "/api/admin/risk-events/[eventId]",
+  "methods": [
+   "PATCH"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/risk-events/[eventId]/route.ts"
+ },
+ {
+  "path": "/api/admin/roles",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/roles/route.ts"
+ },
+ {
+  "path": "/api/admin/roles/[roleId]",
+  "methods": [
+   "DELETE",
+   "PATCH"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/roles/[roleId]/route.ts"
+ },
+ {
+  "path": "/api/admin/room-themes",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/room-themes/route.ts"
+ },
+ {
+  "path": "/api/admin/room-themes/backgrounds",
+  "methods": [
+   "GET",
+   "PATCH",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/room-themes/backgrounds/route.ts"
+ },
+ {
+  "path": "/api/admin/rooms",
+  "methods": [
+   "GET",
+   "PATCH"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/rooms/route.ts"
+ },
+ {
+  "path": "/api/admin/rtc-telemetry",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/rtc-telemetry/route.ts"
+ },
+ {
+  "path": "/api/admin/seo-settings",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/seo-settings/route.ts"
+ },
+ {
+  "path": "/api/admin/settings",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/settings/route.ts"
+ },
+ {
+  "path": "/api/admin/site-pages",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST",
+   "PUT"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/site-pages/route.ts"
+ },
+ {
+  "path": "/api/admin/statistics",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/statistics/route.ts"
+ },
+ {
+  "path": "/api/admin/support",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/support/route.ts"
+ },
+ {
+  "path": "/api/admin/system-stats",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/system-stats/route.ts"
+ },
+ {
+  "path": "/api/admin/teller-levels",
+  "methods": [
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/teller-levels/route.ts"
+ },
+ {
+  "path": "/api/admin/teller-performance",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/teller-performance/route.ts"
+ },
+ {
+  "path": "/api/admin/teller-verification",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/teller-verification/route.ts"
+ },
+ {
+  "path": "/api/admin/ticker-messages",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/ticker-messages/route.ts"
+ },
+ {
+  "path": "/api/admin/ticker-messages/[messageId]",
+  "methods": [
+   "DELETE",
+   "PATCH"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/ticker-messages/[messageId]/route.ts"
+ },
+ {
+  "path": "/api/admin/tiktok-categories",
+  "methods": [
+   "DELETE",
+   "GET",
+   "PATCH",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/tiktok-categories/route.ts"
+ },
+ {
+  "path": "/api/admin/tiktok-videos",
+  "methods": [
+   "DELETE",
+   "GET",
+   "PATCH",
+   "POST",
+   "PUT"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/tiktok-videos/route.ts"
+ },
+ {
+  "path": "/api/admin/topup-bonus-tiers",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/topup-bonus-tiers/route.ts"
+ },
+ {
+  "path": "/api/admin/topup-bonus-tiers/[id]",
+  "methods": [
+   "DELETE",
+   "PATCH"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/topup-bonus-tiers/[id]/route.ts"
+ },
+ {
+  "path": "/api/admin/tournaments",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/tournaments/route.ts"
+ },
+ {
+  "path": "/api/admin/trend-videos",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/trend-videos/route.ts"
+ },
+ {
+  "path": "/api/admin/trend-videos/youtube",
+  "methods": [
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/trend-videos/youtube/route.ts"
+ },
+ {
+  "path": "/api/admin/trends",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/trends/route.ts"
+ },
+ {
+  "path": "/api/admin/users",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/users/route.ts"
+ },
+ {
+  "path": "/api/admin/users/[userId]",
+  "methods": [
+   "DELETE",
+   "GET",
+   "PATCH"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/users/[userId]/route.ts"
+ },
+ {
+  "path": "/api/admin/users/[userId]/360",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/users/[userId]/360/route.ts"
+ },
+ {
+  "path": "/api/admin/users/[userId]/manage",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/users/[userId]/manage/route.ts"
+ },
+ {
+  "path": "/api/admin/users/search",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/users/search/route.ts"
+ },
+ {
+  "path": "/api/admin/users/withdrawal-limit",
+  "methods": [
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/users/withdrawal-limit/route.ts"
+ },
+ {
+  "path": "/api/admin/verification",
+  "methods": [
+   "GET",
+   "PATCH"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/verification/route.ts"
+ },
+ {
+  "path": "/api/admin/video-streams",
+  "methods": [
+   "DELETE",
+   "GET",
+   "PATCH"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/video-streams/route.ts"
+ },
+ {
+  "path": "/api/admin/visitor-stats",
+  "methods": [
+   "GET"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/visitor-stats/route.ts"
+ },
+ {
+  "path": "/api/admin/withdrawals",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/admin/withdrawals/route.ts"
+ },
+ {
+  "path": "/api/ads/active",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/ads/active/route.ts"
+ },
+ {
+  "path": "/api/ads/placement",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/ads/placement/route.ts"
+ },
+ {
+  "path": "/api/ads/reward",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/ads/reward/route.ts"
+ },
+ {
+  "path": "/api/agency/applicant-score/[userId]",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/agency/applicant-score/[userId]/route.ts"
+ },
+ {
+  "path": "/api/agency/apply",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/agency/apply/route.ts"
+ },
+ {
+  "path": "/api/agency/earnings",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/agency/earnings/route.ts"
+ },
+ {
+  "path": "/api/agency/growth",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/agency/growth/route.ts"
+ },
+ {
+  "path": "/api/agency/invite",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/agency/invite/route.ts"
+ },
+ {
+  "path": "/api/agency/invite-earnings",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/agency/invite-earnings/route.ts"
+ },
+ {
+  "path": "/api/agency/join",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/agency/join/route.ts"
+ },
+ {
+  "path": "/api/agency/leaderboard",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/agency/leaderboard/route.ts"
+ },
+ {
+  "path": "/api/agency/leave",
+  "methods": [
+   "DELETE",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/agency/leave/route.ts"
+ },
+ {
+  "path": "/api/agency/live-status",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/agency/live-status/route.ts"
+ },
+ {
+  "path": "/api/agency/members",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/agency/members/route.ts"
+ },
+ {
+  "path": "/api/agency/my",
+  "methods": [
+   "GET",
+   "PATCH"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/agency/my/route.ts"
+ },
+ {
+  "path": "/api/agency/tasks",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/agency/tasks/route.ts"
+ },
+ {
+  "path": "/api/agency/wallet",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/agency/wallet/route.ts"
+ },
+ {
+  "path": "/api/agency/wallet/transfer",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/agency/wallet/transfer/route.ts"
+ },
+ {
+  "path": "/api/agency/withdrawals",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/agency/withdrawals/route.ts"
+ },
+ {
+  "path": "/api/animations/manifest",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/animations/manifest/route.ts"
+ },
+ {
+  "path": "/api/animations/me",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/animations/me/route.ts"
+ },
+ {
+  "path": "/api/animations/resolve",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/animations/resolve/route.ts"
+ },
+ {
+  "path": "/api/announcements",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/announcements/route.ts"
+ },
+ {
+  "path": "/api/announcements/event",
+  "methods": [
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/announcements/event/route.ts"
+ },
+ {
+  "path": "/api/anonymous",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/anonymous/route.ts"
+ },
+ {
+  "path": "/api/anonymous/watch-ad",
+  "methods": [
+   "POST"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/anonymous/watch-ad/route.ts"
+ },
+ {
+  "path": "/api/astrology-panel",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/astrology-panel/route.ts"
+ },
+ {
+  "path": "/api/auth/[...nextauth]",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/auth/[...nextauth]/route.ts"
+ },
+ {
+  "path": "/api/auth/change-password",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/auth/change-password/route.ts"
+ },
+ {
+  "path": "/api/auth/email/send-verification",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/auth/email/send-verification/route.ts"
+ },
+ {
+  "path": "/api/auth/email/verify",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/auth/email/verify/route.ts"
+ },
+ {
+  "path": "/api/auth/forgot-password",
+  "methods": [
+   "POST"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/auth/forgot-password/route.ts"
+ },
+ {
+  "path": "/api/auth/logout",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/auth/logout/route.ts"
+ },
+ {
+  "path": "/api/auth/logout-all",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/auth/logout-all/route.ts"
+ },
+ {
+  "path": "/api/auth/mobile-apple",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/auth/mobile-apple/route.ts"
+ },
+ {
+  "path": "/api/auth/mobile-google",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/auth/mobile-google/route.ts"
+ },
+ {
+  "path": "/api/auth/mobile-login",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/auth/mobile-login/route.ts"
+ },
+ {
+  "path": "/api/auth/mobile-refresh",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/auth/mobile-refresh/route.ts"
+ },
+ {
+  "path": "/api/auth/mobile-register",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/auth/mobile-register/route.ts"
+ },
+ {
+  "path": "/api/auth/mobile-tiktok",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/auth/mobile-tiktok/route.ts"
+ },
+ {
+  "path": "/api/auth/phone/send-otp",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/auth/phone/send-otp/route.ts"
+ },
+ {
+  "path": "/api/auth/phone/verify-otp",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/auth/phone/verify-otp/route.ts"
+ },
+ {
+  "path": "/api/auth/reclaim-device",
+  "methods": [
+   "POST"
+  ],
+  "class": "MISSING_MOBILE_SUPPORT",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/auth/reclaim-device/route.ts"
+ },
+ {
+  "path": "/api/auth/reset-password",
+  "methods": [
+   "POST"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/auth/reset-password/route.ts"
+ },
+ {
+  "path": "/api/auth/sessions",
+  "methods": [
+   "DELETE",
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/auth/sessions/route.ts"
+ },
+ {
+  "path": "/api/auth/verify-device",
+  "methods": [
+   "GET"
+  ],
+  "class": "WEB_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/auth/verify-device/route.ts"
+ },
+ {
+  "path": "/api/avatar-accessories",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/avatar-accessories/route.ts"
+ },
+ {
+  "path": "/api/bana-ozel",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/bana-ozel/route.ts"
+ },
+ {
+  "path": "/api/bana-ozel/open",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/bana-ozel/open/route.ts"
+ },
+ {
+  "path": "/api/billing/app-store/verify",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/billing/app-store/verify/route.ts"
+ },
+ {
+  "path": "/api/billing/google-play/verify",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/billing/google-play/verify/route.ts"
+ },
+ {
+  "path": "/api/blog",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/blog/route.ts"
+ },
+ {
+  "path": "/api/blog/categories",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/blog/categories/route.ts"
+ },
+ {
+  "path": "/api/blog/comments",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/blog/comments/route.ts"
+ },
+ {
+  "path": "/api/blog/favorite",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/blog/favorite/route.ts"
+ },
+ {
+  "path": "/api/blog/interactions",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/blog/interactions/route.ts"
+ },
+ {
+  "path": "/api/blog/like",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/blog/like/route.ts"
+ },
+ {
+  "path": "/api/blog/related",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/blog/related/route.ts"
+ },
+ {
+  "path": "/api/blog/zodiac",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/blog/zodiac/route.ts"
+ },
+ {
+  "path": "/api/bootstrap",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/bootstrap/route.ts"
+ },
+ {
+  "path": "/api/broadcast-images",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/broadcast-images/route.ts"
+ },
+ {
+  "path": "/api/cache",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/cache/route.ts"
+ },
+ {
+  "path": "/api/cfc-arena",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/cfc-arena/route.ts"
+ },
+ {
+  "path": "/api/cfc-arena/[contestId]",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/cfc-arena/[contestId]/route.ts"
+ },
+ {
+  "path": "/api/cfc-arena/join",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/cfc-arena/join/route.ts"
+ },
+ {
+  "path": "/api/chat-bubbles",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat-bubbles/route.ts"
+ },
+ {
+  "path": "/api/chat/broadcast-images",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat/broadcast-images/route.ts"
+ },
+ {
+  "path": "/api/chat/cleanup",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST"
+  ],
+  "class": "INTERNAL",
+  "mobile": false,
+  "web": false,
+  "file": "app/api/chat/cleanup/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat/rooms/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/[roomId]/dj",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/chat/rooms/[roomId]/dj/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/[roomId]/gifts",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat/rooms/[roomId]/gifts/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/[roomId]/messages",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat/rooms/[roomId]/messages/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/[roomId]/moderation",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat/rooms/[roomId]/moderation/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/[roomId]/music",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat/rooms/[roomId]/music/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/[roomId]/music-queue",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat/rooms/[roomId]/music-queue/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/[roomId]/music/stop",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat/rooms/[roomId]/music/stop/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/[roomId]/pin-message",
+  "methods": [
+   "POST"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat/rooms/[roomId]/pin-message/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/[roomId]/pk",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/chat/rooms/[roomId]/pk/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/[roomId]/pk/score",
+  "methods": [
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/chat/rooms/[roomId]/pk/score/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/[roomId]/presence",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/chat/rooms/[roomId]/presence/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/[roomId]/seats",
+  "methods": [
+   "GET",
+   "PATCH"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat/rooms/[roomId]/seats/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/[roomId]/settings",
+  "methods": [
+   "GET",
+   "PATCH"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat/rooms/[roomId]/settings/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/[roomId]/song-request",
+  "methods": [
+   "GET",
+   "PATCH",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat/rooms/[roomId]/song-request/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/[roomId]/speak-request",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat/rooms/[roomId]/speak-request/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/[roomId]/speak-request/[userId]/block",
+  "methods": [
+   "DELETE",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat/rooms/[roomId]/speak-request/[userId]/block/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/[roomId]/speak-request/[userId]/reject",
+  "methods": [
+   "DELETE",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat/rooms/[roomId]/speak-request/[userId]/reject/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/[roomId]/speak-requests",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat/rooms/[roomId]/speak-requests/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/[roomId]/speak-requests/[targetUserId]/approve",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat/rooms/[roomId]/speak-requests/[targetUserId]/approve/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/[roomId]/speak-requests/[targetUserId]/block",
+  "methods": [
+   "DELETE",
+   "POST"
+  ],
+  "class": "DEPRECATED_ALIAS",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/chat/rooms/[roomId]/speak-requests/[targetUserId]/block/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/[roomId]/speak-requests/[targetUserId]/reject",
+  "methods": [
+   "DELETE",
+   "POST"
+  ],
+  "class": "DEPRECATED_ALIAS",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/chat/rooms/[roomId]/speak-requests/[targetUserId]/reject/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/[roomId]/state",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat/rooms/[roomId]/state/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/[roomId]/stream",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat/rooms/[roomId]/stream/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/[roomId]/sync",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat/rooms/[roomId]/sync/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/[roomId]/transfer-ownership",
+  "methods": [
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/chat/rooms/[roomId]/transfer-ownership/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/[roomId]/typing",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat/rooms/[roomId]/typing/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/[roomId]/voice",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat/rooms/[roomId]/voice/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/backgrounds",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat/rooms/backgrounds/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/create",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat/rooms/create/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/pk-list",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat/rooms/pk-list/route.ts"
+ },
+ {
+  "path": "/api/chat/rooms/pk/candidates",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat/rooms/pk/candidates/route.ts"
+ },
+ {
+  "path": "/api/chat/youtube-audio",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat/youtube-audio/route.ts"
+ },
+ {
+  "path": "/api/chat/youtube-stream",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/chat/youtube-stream/route.ts"
+ },
+ {
+  "path": "/api/compatibility",
+  "methods": [
+   "POST"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/compatibility/route.ts"
+ },
+ {
+  "path": "/api/config",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/config/route.ts"
+ },
+ {
+  "path": "/api/contact",
+  "methods": [
+   "POST"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/contact/route.ts"
+ },
+ {
+  "path": "/api/credit-packages",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/credit-packages/route.ts"
+ },
+ {
+  "path": "/api/cron/membership-expiry",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "INTERNAL",
+  "mobile": false,
+  "web": false,
+  "file": "app/api/cron/membership-expiry/route.ts"
+ },
+ {
+  "path": "/api/currency-branding",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/currency-branding/route.ts"
+ },
+ {
+  "path": "/api/daily-login",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/daily-login/route.ts"
+ },
+ {
+  "path": "/api/daily-missions",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/daily-missions/route.ts"
+ },
+ {
+  "path": "/api/deeplink/resolve",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/deeplink/resolve/route.ts"
+ },
+ {
+  "path": "/api/devices/fcm",
+  "methods": [
+   "DELETE",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/devices/fcm/route.ts"
+ },
+ {
+  "path": "/api/dream-contest",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/dream-contest/route.ts"
+ },
+ {
+  "path": "/api/dream-contest/[contestId]/entries",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/dream-contest/[contestId]/entries/route.ts"
+ },
+ {
+  "path": "/api/dream-contest/[contestId]/vote",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/dream-contest/[contestId]/vote/route.ts"
+ },
+ {
+  "path": "/api/dream-diary",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/dream-diary/route.ts"
+ },
+ {
+  "path": "/api/dream-stats",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/dream-stats/route.ts"
+ },
+ {
+  "path": "/api/dream-symbols",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/dream-symbols/route.ts"
+ },
+ {
+  "path": "/api/dream-symbols/[slug]",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/dream-symbols/[slug]/route.ts"
+ },
+ {
+  "path": "/api/dreams",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/dreams/route.ts"
+ },
+ {
+  "path": "/api/dreams/[slug]",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/dreams/[slug]/route.ts"
+ },
+ {
+  "path": "/api/dreams/[slug]/comments",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/dreams/[slug]/comments/route.ts"
+ },
+ {
+  "path": "/api/dreams/[slug]/favorite",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/dreams/[slug]/favorite/route.ts"
+ },
+ {
+  "path": "/api/dreams/[slug]/view",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/dreams/[slug]/view/route.ts"
+ },
+ {
+  "path": "/api/dreams/favorites",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/dreams/favorites/route.ts"
+ },
+ {
+  "path": "/api/dreams/generate",
+  "methods": [
+   "POST"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/dreams/generate/route.ts"
+ },
+ {
+  "path": "/api/dreams/interpret",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/dreams/interpret/route.ts"
+ },
+ {
+  "path": "/api/dreams/morning-reminder",
+  "methods": [
+   "POST"
+  ],
+  "class": "INTERNAL",
+  "mobile": false,
+  "web": false,
+  "file": "app/api/dreams/morning-reminder/route.ts"
+ },
+ {
+  "path": "/api/dreams/recommendations",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/dreams/recommendations/route.ts"
+ },
+ {
+  "path": "/api/dreams/trends",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/dreams/trends/route.ts"
+ },
+ {
+  "path": "/api/effects/resolve",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/effects/resolve/route.ts"
+ },
+ {
+  "path": "/api/emoji-packs",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/emoji-packs/route.ts"
+ },
+ {
+  "path": "/api/entrance-effects",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/entrance-effects/route.ts"
+ },
+ {
+  "path": "/api/favorite-tellers",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/favorite-tellers/route.ts"
+ },
+ {
+  "path": "/api/football",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/football/route.ts"
+ },
+ {
+  "path": "/api/fortune-access/check",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortune-access/check/route.ts"
+ },
+ {
+  "path": "/api/fortune-access/ip-status",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortune-access/ip-status/route.ts"
+ },
+ {
+  "path": "/api/fortune-request-types",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortune-request-types/route.ts"
+ },
+ {
+  "path": "/api/fortune-tellers",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortune-tellers/route.ts"
+ },
+ {
+  "path": "/api/fortune-tellers/[tellerId]",
+  "methods": [
+   "GET",
+   "PATCH"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/fortune-tellers/[tellerId]/route.ts"
+ },
+ {
+  "path": "/api/fortune-tellers/[tellerId]/reviews",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortune-tellers/[tellerId]/reviews/route.ts"
+ },
+ {
+  "path": "/api/fortune-tellers/[tellerId]/session",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortune-tellers/[tellerId]/session/route.ts"
+ },
+ {
+  "path": "/api/fortune-tellers/apply",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortune-tellers/apply/route.ts"
+ },
+ {
+  "path": "/api/fortune-tellers/awards",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortune-tellers/awards/route.ts"
+ },
+ {
+  "path": "/api/fortune-tellers/gifts",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortune-tellers/gifts/route.ts"
+ },
+ {
+  "path": "/api/fortune-tellers/my-profile",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortune-tellers/my-profile/route.ts"
+ },
+ {
+  "path": "/api/fortune-tellers/session",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortune-tellers/session/route.ts"
+ },
+ {
+  "path": "/api/fortune-tellers/sessions",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortune-tellers/sessions/route.ts"
+ },
+ {
+  "path": "/api/fortune-tellers/sessions/[sessionId]",
+  "methods": [
+   "PATCH"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortune-tellers/sessions/[sessionId]/route.ts"
+ },
+ {
+  "path": "/api/fortune-tellers/sessions/stream",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortune-tellers/sessions/stream/route.ts"
+ },
+ {
+  "path": "/api/fortune-tellers/toggle-online",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortune-tellers/toggle-online/route.ts"
+ },
+ {
+  "path": "/api/fortunes/ask-uyumu",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortunes/ask-uyumu/route.ts"
+ },
+ {
+  "path": "/api/fortunes/aura-analizi",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortunes/aura-analizi/route.ts"
+ },
+ {
+  "path": "/api/fortunes/burc-yorumu",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortunes/burc-yorumu/route.ts"
+ },
+ {
+  "path": "/api/fortunes/dogum-haritasi",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortunes/dogum-haritasi/route.ts"
+ },
+ {
+  "path": "/api/fortunes/el-fali",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortunes/el-fali/route.ts"
+ },
+ {
+  "path": "/api/fortunes/evet-hayir",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortunes/evet-hayir/route.ts"
+ },
+ {
+  "path": "/api/fortunes/istihare",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortunes/istihare/route.ts"
+ },
+ {
+  "path": "/api/fortunes/kahve-fali",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortunes/kahve-fali/route.ts"
+ },
+ {
+  "path": "/api/fortunes/kahve-fali-image",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortunes/kahve-fali-image/route.ts"
+ },
+ {
+  "path": "/api/fortunes/katina",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortunes/katina/route.ts"
+ },
+ {
+  "path": "/api/fortunes/kursundokme",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortunes/kursundokme/route.ts"
+ },
+ {
+  "path": "/api/fortunes/melek-kartlari",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortunes/melek-kartlari/route.ts"
+ },
+ {
+  "path": "/api/fortunes/numeroloji",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortunes/numeroloji/route.ts"
+ },
+ {
+  "path": "/api/fortunes/ruya-yorumu",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortunes/ruya-yorumu/route.ts"
+ },
+ {
+  "path": "/api/fortunes/tarot-fali",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/fortunes/tarot-fali/route.ts"
+ },
+ {
+  "path": "/api/games",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/games/route.ts"
+ },
+ {
+  "path": "/api/games/auto-match",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/games/auto-match/route.ts"
+ },
+ {
+  "path": "/api/games/daily-reward",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/games/daily-reward/route.ts"
+ },
+ {
+  "path": "/api/games/daily-spin",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/games/daily-spin/route.ts"
+ },
+ {
+  "path": "/api/games/grid-settings",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/games/grid-settings/route.ts"
+ },
+ {
+  "path": "/api/games/lamba-cini",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/games/lamba-cini/route.ts"
+ },
+ {
+  "path": "/api/games/leaderboard",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/games/leaderboard/route.ts"
+ },
+ {
+  "path": "/api/games/lobby",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/games/lobby/route.ts"
+ },
+ {
+  "path": "/api/games/play",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/games/play/route.ts"
+ },
+ {
+  "path": "/api/games/profile",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/games/profile/route.ts"
+ },
+ {
+  "path": "/api/games/quests",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/games/quests/route.ts"
+ },
+ {
+  "path": "/api/games/room",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/games/room/route.ts"
+ },
+ {
+  "path": "/api/games/room/[roomId]",
+  "methods": [
+   "DELETE",
+   "GET",
+   "PATCH",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/games/room/[roomId]/route.ts"
+ },
+ {
+  "path": "/api/games/room/[roomId]/chat",
+  "methods": [
+   "GET",
+   "PATCH",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/games/room/[roomId]/chat/route.ts"
+ },
+ {
+  "path": "/api/games/room/[roomId]/replace-ai",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/games/room/[roomId]/replace-ai/route.ts"
+ },
+ {
+  "path": "/api/games/room/[roomId]/viewers",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/games/room/[roomId]/viewers/route.ts"
+ },
+ {
+  "path": "/api/games/rooms",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/games/rooms/route.ts"
+ },
+ {
+  "path": "/api/games/sos",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/games/sos/route.ts"
+ },
+ {
+  "path": "/api/games/sos/[gameId]",
+  "methods": [
+   "DELETE",
+   "GET",
+   "PATCH",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/games/sos/[gameId]/route.ts"
+ },
+ {
+  "path": "/api/games/sos/[gameId]/chat",
+  "methods": [
+   "GET",
+   "PATCH",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/games/sos/[gameId]/chat/route.ts"
+ },
+ {
+  "path": "/api/games/sos/[gameId]/viewers",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/games/sos/[gameId]/viewers/route.ts"
+ },
+ {
+  "path": "/api/gift-box",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gift-box/route.ts"
+ },
+ {
+  "path": "/api/gift-box/[boxId]",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gift-box/[boxId]/route.ts"
+ },
+ {
+  "path": "/api/gift-box/[boxId]/join",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gift-box/[boxId]/join/route.ts"
+ },
+ {
+  "path": "/api/gift-box/share",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gift-box/share/route.ts"
+ },
+ {
+  "path": "/api/gift-engine/finish",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gift-engine/finish/route.ts"
+ },
+ {
+  "path": "/api/gift-engine/gifts",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gift-engine/gifts/route.ts"
+ },
+ {
+  "path": "/api/gift-engine/queue",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gift-engine/queue/route.ts"
+ },
+ {
+  "path": "/api/gifts/battles",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gifts/battles/route.ts"
+ },
+ {
+  "path": "/api/gifts/battles/[battleId]",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gifts/battles/[battleId]/route.ts"
+ },
+ {
+  "path": "/api/gifts/catalog",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gifts/catalog/route.ts"
+ },
+ {
+  "path": "/api/gifts/check-reciprocal",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gifts/check-reciprocal/route.ts"
+ },
+ {
+  "path": "/api/gifts/goals",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gifts/goals/route.ts"
+ },
+ {
+  "path": "/api/gifts/insights/album/[userId]",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gifts/insights/album/[userId]/route.ts"
+ },
+ {
+  "path": "/api/gifts/insights/badge/[userId]",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gifts/insights/badge/[userId]/route.ts"
+ },
+ {
+  "path": "/api/gifts/insights/collection/[userId]",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gifts/insights/collection/[userId]/route.ts"
+ },
+ {
+  "path": "/api/gifts/insights/feed",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gifts/insights/feed/route.ts"
+ },
+ {
+  "path": "/api/gifts/insights/first-gifter/[context]/[contextId]",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gifts/insights/first-gifter/[context]/[contextId]/route.ts"
+ },
+ {
+  "path": "/api/gifts/insights/leaderboard",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gifts/insights/leaderboard/route.ts"
+ },
+ {
+  "path": "/api/gifts/insights/map",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gifts/insights/map/route.ts"
+ },
+ {
+  "path": "/api/gifts/insights/me/badge",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gifts/insights/me/badge/route.ts"
+ },
+ {
+  "path": "/api/gifts/insights/me/history",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gifts/insights/me/history/route.ts"
+ },
+ {
+  "path": "/api/gifts/insights/me/recommendations",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gifts/insights/me/recommendations/route.ts"
+ },
+ {
+  "path": "/api/gifts/lucky/config",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gifts/lucky/config/route.ts"
+ },
+ {
+  "path": "/api/gifts/lucky/history",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gifts/lucky/history/route.ts"
+ },
+ {
+  "path": "/api/gifts/lucky/send",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gifts/lucky/send/route.ts"
+ },
+ {
+  "path": "/api/gifts/missions",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gifts/missions/route.ts"
+ },
+ {
+  "path": "/api/gifts/missions/[missionId]/claim",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gifts/missions/[missionId]/claim/route.ts"
+ },
+ {
+  "path": "/api/gifts/missions/me",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gifts/missions/me/route.ts"
+ },
+ {
+  "path": "/api/gifts/recent-big",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gifts/recent-big/route.ts"
+ },
+ {
+  "path": "/api/gifts/send",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gifts/send/route.ts"
+ },
+ {
+  "path": "/api/gifts/types",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gifts/types/route.ts"
+ },
+ {
+  "path": "/api/gifts/version",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/gifts/version/route.ts"
+ },
+ {
+  "path": "/api/hashtags/[name]",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/hashtags/[name]/route.ts"
+ },
+ {
+  "path": "/api/hashtags/search",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/hashtags/search/route.ts"
+ },
+ {
+  "path": "/api/hashtags/trending",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/hashtags/trending/route.ts"
+ },
+ {
+  "path": "/api/health",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/health/route.ts"
+ },
+ {
+  "path": "/api/homepage-buttons",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/homepage-buttons/route.ts"
+ },
+ {
+  "path": "/api/homepage-fortune-cards",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/homepage-fortune-cards/route.ts"
+ },
+ {
+  "path": "/api/homepage-ticker",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/homepage-ticker/route.ts"
+ },
+ {
+  "path": "/api/horoscope/daily",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/horoscope/daily/route.ts"
+ },
+ {
+  "path": "/api/jeton",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/jeton/route.ts"
+ },
+ {
+  "path": "/api/leaderboards",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/leaderboards/route.ts"
+ },
+ {
+  "path": "/api/leaderboards/top100",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/leaderboards/top100/route.ts"
+ },
+ {
+  "path": "/api/legal/child-safety",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/legal/child-safety/route.ts"
+ },
+ {
+  "path": "/api/live/create-room",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/live/create-room/route.ts"
+ },
+ {
+  "path": "/api/live/gift-types",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/live/gift-types/route.ts"
+ },
+ {
+  "path": "/api/live/gift/send",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/live/gift/send/route.ts"
+ },
+ {
+  "path": "/api/live/guest",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/live/guest/route.ts"
+ },
+ {
+  "path": "/api/live/guest/list",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/live/guest/list/route.ts"
+ },
+ {
+  "path": "/api/live/heartbeat",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/live/heartbeat/route.ts"
+ },
+ {
+  "path": "/api/live/join-room",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/live/join-room/route.ts"
+ },
+ {
+  "path": "/api/live/leave-room",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/live/leave-room/route.ts"
+ },
+ {
+  "path": "/api/live/message",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/live/message/route.ts"
+ },
+ {
+  "path": "/api/live/online-users",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/live/online-users/route.ts"
+ },
+ {
+  "path": "/api/live/pk",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/live/pk/route.ts"
+ },
+ {
+  "path": "/api/live/pk/active",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/live/pk/active/route.ts"
+ },
+ {
+  "path": "/api/live/pk/score",
+  "methods": [
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/live/pk/score/route.ts"
+ },
+ {
+  "path": "/api/live/rooms",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/live/rooms/route.ts"
+ },
+ {
+  "path": "/api/live/seats",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/live/seats/route.ts"
+ },
+ {
+  "path": "/api/me",
+  "methods": [
+   "GET",
+   "PATCH"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/me/route.ts"
+ },
+ {
+  "path": "/api/me/admin-capabilities",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/me/admin-capabilities/route.ts"
+ },
+ {
+  "path": "/api/me/membership",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/me/membership/route.ts"
+ },
+ {
+  "path": "/api/me/membership-events",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/me/membership-events/route.ts"
+ },
+ {
+  "path": "/api/me/membership-history",
+  "methods": [
+   "GET",
+   "PUT"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/me/membership-history/route.ts"
+ },
+ {
+  "path": "/api/me/profile-visitors",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/me/profile-visitors/route.ts"
+ },
+ {
+  "path": "/api/me/vip-identity",
+  "methods": [
+   "GET",
+   "PUT"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/me/vip-identity/route.ts"
+ },
+ {
+  "path": "/api/me/vip-preferences",
+  "methods": [
+   "GET",
+   "PUT"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/me/vip-preferences/route.ts"
+ },
+ {
+  "path": "/api/me/vip-xp",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/me/vip-xp/route.ts"
+ },
+ {
+  "path": "/api/membership-badges",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/membership-badges/route.ts"
+ },
+ {
+  "path": "/api/membership/plans",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/membership/plans/route.ts"
+ },
+ {
+  "path": "/api/membership/purchase",
+  "methods": [
+   "POST"
+  ],
+  "class": "DEPRECATED_ALIAS",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/membership/purchase/route.ts"
+ },
+ {
+  "path": "/api/memberships",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/memberships/route.ts"
+ },
+ {
+  "path": "/api/memberships/comparison",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/memberships/comparison/route.ts"
+ },
+ {
+  "path": "/api/memberships/gift",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/memberships/gift/route.ts"
+ },
+ {
+  "path": "/api/memberships/packages",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/memberships/packages/route.ts"
+ },
+ {
+  "path": "/api/memberships/purchase",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/memberships/purchase/route.ts"
+ },
+ {
+  "path": "/api/messages",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/messages/route.ts"
+ },
+ {
+  "path": "/api/messages/[userId]",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/messages/[userId]/route.ts"
+ },
+ {
+  "path": "/api/messages/request",
+  "methods": [
+   "PATCH",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/messages/request/route.ts"
+ },
+ {
+  "path": "/api/mic-frames",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/mic-frames/route.ts"
+ },
+ {
+  "path": "/api/mobile/config",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/mobile/config/route.ts"
+ },
+ {
+  "path": "/api/mobile/fortune-menu",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/mobile/fortune-menu/route.ts"
+ },
+ {
+  "path": "/api/mobile/home",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/mobile/home/route.ts"
+ },
+ {
+  "path": "/api/mobile/user-profile/[userId]",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/mobile/user-profile/[userId]/route.ts"
+ },
+ {
+  "path": "/api/monitoring",
+  "methods": [
+   "GET"
+  ],
+  "class": "WEB_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/monitoring/route.ts"
+ },
+ {
+  "path": "/api/music/history",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/music/history/route.ts"
+ },
+ {
+  "path": "/api/music/search",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/music/search/route.ts"
+ },
+ {
+  "path": "/api/name-effects",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/name-effects/route.ts"
+ },
+ {
+  "path": "/api/notifications",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/notifications/route.ts"
+ },
+ {
+  "path": "/api/notifications/stream",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/notifications/stream/route.ts"
+ },
+ {
+  "path": "/api/online-fal",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/online-fal/route.ts"
+ },
+ {
+  "path": "/api/payments/config",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/payments/config/route.ts"
+ },
+ {
+  "path": "/api/payments/methods",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/payments/methods/route.ts"
+ },
+ {
+  "path": "/api/payments/notifications/[notificationId]/dispute",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/payments/notifications/[notificationId]/dispute/route.ts"
+ },
+ {
+  "path": "/api/payments/notify",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/payments/notify/route.ts"
+ },
+ {
+  "path": "/api/payments/requests",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/payments/requests/route.ts"
+ },
+ {
+  "path": "/api/payments/settings",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/payments/settings/route.ts"
+ },
+ {
+  "path": "/api/pk/[matchId]",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/pk/[matchId]/route.ts"
+ },
+ {
+  "path": "/api/pk/[matchId]/stream",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/pk/[matchId]/stream/route.ts"
+ },
+ {
+  "path": "/api/pk/active",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/pk/active/route.ts"
+ },
+ {
+  "path": "/api/pk/leaderboard",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/pk/leaderboard/route.ts"
+ },
+ {
+  "path": "/api/pk/me/invites",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/pk/me/invites/route.ts"
+ },
+ {
+  "path": "/api/platform/commission-rate",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/platform/commission-rate/route.ts"
+ },
+ {
+  "path": "/api/popups",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/popups/route.ts"
+ },
+ {
+  "path": "/api/presence",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/presence/route.ts"
+ },
+ {
+  "path": "/api/presence/online-events",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/presence/online-events/route.ts"
+ },
+ {
+  "path": "/api/presence/sections",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/presence/sections/route.ts"
+ },
+ {
+  "path": "/api/profile-frames",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/profile-frames/route.ts"
+ },
+ {
+  "path": "/api/public-stats",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/public-stats/route.ts"
+ },
+ {
+  "path": "/api/public/announcement-settings",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/public/announcement-settings/route.ts"
+ },
+ {
+  "path": "/api/public/jeton-price",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/public/jeton-price/route.ts"
+ },
+ {
+  "path": "/api/referral",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/referral/route.ts"
+ },
+ {
+  "path": "/api/referral/validate",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/referral/validate/route.ts"
+ },
+ {
+  "path": "/api/refunds",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/refunds/route.ts"
+ },
+ {
+  "path": "/api/room-themes",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/room-themes/route.ts"
+ },
+ {
+  "path": "/api/room-themes/catalog",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/room-themes/catalog/route.ts"
+ },
+ {
+  "path": "/api/room/[sessionId]",
+  "methods": [
+   "GET",
+   "PATCH"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/room/[sessionId]/route.ts"
+ },
+ {
+  "path": "/api/room/[sessionId]/messages",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/room/[sessionId]/messages/route.ts"
+ },
+ {
+  "path": "/api/room/[sessionId]/review",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/room/[sessionId]/review/route.ts"
+ },
+ {
+  "path": "/api/room/[sessionId]/stream",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/room/[sessionId]/stream/route.ts"
+ },
+ {
+  "path": "/api/room/[sessionId]/summary",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/room/[sessionId]/summary/route.ts"
+ },
+ {
+  "path": "/api/room/[sessionId]/tip",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/room/[sessionId]/tip/route.ts"
+ },
+ {
+  "path": "/api/room/signal",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/room/signal/route.ts"
+ },
+ {
+  "path": "/api/rtc/telemetry",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/rtc/telemetry/route.ts"
+ },
+ {
+  "path": "/api/search",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/search/route.ts"
+ },
+ {
+  "path": "/api/search/advanced",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/search/advanced/route.ts"
+ },
+ {
+  "path": "/api/seo-settings",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/seo-settings/route.ts"
+ },
+ {
+  "path": "/api/settings/ads",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/settings/ads/route.ts"
+ },
+ {
+  "path": "/api/settings/canlidark-hero",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/settings/canlidark-hero/route.ts"
+ },
+ {
+  "path": "/api/settings/public",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/settings/public/route.ts"
+ },
+ {
+  "path": "/api/settings/themes",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/settings/themes/route.ts"
+ },
+ {
+  "path": "/api/share-card",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/share-card/route.ts"
+ },
+ {
+  "path": "/api/short-videos",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/short-videos/route.ts"
+ },
+ {
+  "path": "/api/short-videos/[id]",
+  "methods": [
+   "DELETE",
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/short-videos/[id]/route.ts"
+ },
+ {
+  "path": "/api/short-videos/[id]/comments",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/short-videos/[id]/comments/route.ts"
+ },
+ {
+  "path": "/api/short-videos/[id]/comments/[commentId]",
+  "methods": [
+   "DELETE"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/short-videos/[id]/comments/[commentId]/route.ts"
+ },
+ {
+  "path": "/api/short-videos/[id]/comments/[commentId]/like",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/short-videos/[id]/comments/[commentId]/like/route.ts"
+ },
+ {
+  "path": "/api/short-videos/[id]/comments/[commentId]/pin",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/short-videos/[id]/comments/[commentId]/pin/route.ts"
+ },
+ {
+  "path": "/api/short-videos/[id]/duets",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/short-videos/[id]/duets/route.ts"
+ },
+ {
+  "path": "/api/short-videos/[id]/like",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/short-videos/[id]/like/route.ts"
+ },
+ {
+  "path": "/api/short-videos/[id]/save",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/short-videos/[id]/save/route.ts"
+ },
+ {
+  "path": "/api/short-videos/[id]/share",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/short-videos/[id]/share/route.ts"
+ },
+ {
+  "path": "/api/short-videos/[id]/view",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/short-videos/[id]/view/route.ts"
+ },
+ {
+  "path": "/api/short-videos/explore",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/short-videos/explore/route.ts"
+ },
+ {
+  "path": "/api/short-videos/mentions/search",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/short-videos/mentions/search/route.ts"
+ },
+ {
+  "path": "/api/short-videos/music",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/short-videos/music/route.ts"
+ },
+ {
+  "path": "/api/short-videos/profile/[userId]",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/short-videos/profile/[userId]/route.ts"
+ },
+ {
+  "path": "/api/short-videos/register",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/short-videos/register/route.ts"
+ },
+ {
+  "path": "/api/short-videos/upload",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/short-videos/upload/route.ts"
+ },
+ {
+  "path": "/api/short-videos/upload-url",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/short-videos/upload-url/route.ts"
+ },
+ {
+  "path": "/api/short-videos/user/[userId]",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/short-videos/user/[userId]/route.ts"
+ },
+ {
+  "path": "/api/signup",
+  "methods": [
+   "POST"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/signup/route.ts"
+ },
+ {
+  "path": "/api/site-pages/[slug]",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/site-pages/[slug]/route.ts"
+ },
+ {
+  "path": "/api/social/actions",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/social/actions/route.ts"
+ },
+ {
+  "path": "/api/social/discovery",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/social/discovery/route.ts"
+ },
+ {
+  "path": "/api/social/posts",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/social/posts/route.ts"
+ },
+ {
+  "path": "/api/social/posts/[postId]",
+  "methods": [
+   "DELETE",
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/social/posts/[postId]/route.ts"
+ },
+ {
+  "path": "/api/social/posts/[postId]/comments",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/social/posts/[postId]/comments/route.ts"
+ },
+ {
+  "path": "/api/social/posts/[postId]/likes",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/social/posts/[postId]/likes/route.ts"
+ },
+ {
+  "path": "/api/social/posts/[postId]/view",
+  "methods": [
+   "POST"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/social/posts/[postId]/view/route.ts"
+ },
+ {
+  "path": "/api/social/profile",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/social/profile/route.ts"
+ },
+ {
+  "path": "/api/stories",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/stories/route.ts"
+ },
+ {
+  "path": "/api/support/tickets",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/support/tickets/route.ts"
+ },
+ {
+  "path": "/api/support/tickets/[ticketId]",
+  "methods": [
+   "GET",
+   "PATCH"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/support/tickets/[ticketId]/route.ts"
+ },
+ {
+  "path": "/api/support/tickets/[ticketId]/messages",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/support/tickets/[ticketId]/messages/route.ts"
+ },
+ {
+  "path": "/api/supporter-levels",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/supporter-levels/route.ts"
+ },
+ {
+  "path": "/api/teams",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/teams/route.ts"
+ },
+ {
+  "path": "/api/teams/[teamId]",
+  "methods": [
+   "GET",
+   "PATCH"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/teams/[teamId]/route.ts"
+ },
+ {
+  "path": "/api/teller-chat",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/teller-chat/route.ts"
+ },
+ {
+  "path": "/api/teller-chat/[sessionId]",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/teller-chat/[sessionId]/route.ts"
+ },
+ {
+  "path": "/api/teller/analytics",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/teller/analytics/route.ts"
+ },
+ {
+  "path": "/api/teller/level",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/teller/level/route.ts"
+ },
+ {
+  "path": "/api/teller/verification",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/teller/verification/route.ts"
+ },
+ {
+  "path": "/api/tencent/webhook",
+  "methods": [
+   "POST"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/tencent/webhook/route.ts"
+ },
+ {
+  "path": "/api/tiktok-videos",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/tiktok-videos/route.ts"
+ },
+ {
+  "path": "/api/tiktok-videos/[id]",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/tiktok-videos/[id]/route.ts"
+ },
+ {
+  "path": "/api/tiktok-videos/oembed",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/tiktok-videos/oembed/route.ts"
+ },
+ {
+  "path": "/api/tmdb",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/tmdb/route.ts"
+ },
+ {
+  "path": "/api/tournaments",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/tournaments/route.ts"
+ },
+ {
+  "path": "/api/translations",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/translations/route.ts"
+ },
+ {
+  "path": "/api/trend-videos",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/trend-videos/route.ts"
+ },
+ {
+  "path": "/api/trends",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/trends/route.ts"
+ },
+ {
+  "path": "/api/trends/[slug]",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/trends/[slug]/route.ts"
+ },
+ {
+  "path": "/api/trends/[slug]/like",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/trends/[slug]/like/route.ts"
+ },
+ {
+  "path": "/api/trtc/token",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/trtc/token/route.ts"
+ },
+ {
+  "path": "/api/trtc/usersig",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/trtc/usersig/route.ts"
+ },
+ {
+  "path": "/api/trtc/webhook",
+  "methods": [
+   "POST"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/trtc/webhook/route.ts"
+ },
+ {
+  "path": "/api/upload/get-url",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/upload/get-url/route.ts"
+ },
+ {
+  "path": "/api/upload/presigned",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/upload/presigned/route.ts"
+ },
+ {
+  "path": "/api/user/[userId]/achievements",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/[userId]/achievements/route.ts"
+ },
+ {
+  "path": "/api/user/[userId]/follow",
+  "methods": [
+   "DELETE",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/[userId]/follow/route.ts"
+ },
+ {
+  "path": "/api/user/[userId]/follow-status",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/[userId]/follow-status/route.ts"
+ },
+ {
+  "path": "/api/user/account",
+  "methods": [
+   "DELETE",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/account/route.ts"
+ },
+ {
+  "path": "/api/user/account/delete",
+  "methods": [
+   "POST"
+  ],
+  "class": "DEPRECATED_ALIAS",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/user/account/delete/route.ts"
+ },
+ {
+  "path": "/api/user/achievements",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/achievements/route.ts"
+ },
+ {
+  "path": "/api/user/active-sessions",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/active-sessions/route.ts"
+ },
+ {
+  "path": "/api/user/activity",
+  "methods": [
+   "GET",
+   "PATCH"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/activity/route.ts"
+ },
+ {
+  "path": "/api/user/block",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/block/route.ts"
+ },
+ {
+  "path": "/api/user/blocked",
+  "methods": [
+   "DELETE",
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/blocked/route.ts"
+ },
+ {
+  "path": "/api/user/broadcast-history",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/broadcast-history/route.ts"
+ },
+ {
+  "path": "/api/user/co-broadcast-invites",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/co-broadcast-invites/route.ts"
+ },
+ {
+  "path": "/api/user/credits",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/credits/route.ts"
+ },
+ {
+  "path": "/api/user/followers",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/followers/route.ts"
+ },
+ {
+  "path": "/api/user/following",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/following/route.ts"
+ },
+ {
+  "path": "/api/user/fortunes",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/fortunes/route.ts"
+ },
+ {
+  "path": "/api/user/fortunes/[fortuneId]",
+  "methods": [
+   "PATCH"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/fortunes/[fortuneId]/route.ts"
+ },
+ {
+  "path": "/api/user/likers",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/likers/route.ts"
+ },
+ {
+  "path": "/api/user/location",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/location/route.ts"
+ },
+ {
+  "path": "/api/user/profile",
+  "methods": [
+   "GET",
+   "PATCH"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/profile/route.ts"
+ },
+ {
+  "path": "/api/user/received-gifts",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/received-gifts/route.ts"
+ },
+ {
+  "path": "/api/user/referral-earnings",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/referral-earnings/route.ts"
+ },
+ {
+  "path": "/api/user/report",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/report/route.ts"
+ },
+ {
+  "path": "/api/user/social-settings",
+  "methods": [
+   "GET",
+   "PUT"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/social-settings/route.ts"
+ },
+ {
+  "path": "/api/user/statistics",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/statistics/route.ts"
+ },
+ {
+  "path": "/api/user/stats",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/stats/route.ts"
+ },
+ {
+  "path": "/api/user/theme",
+  "methods": [
+   "GET",
+   "PATCH"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/theme/route.ts"
+ },
+ {
+  "path": "/api/user/wallet",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/wallet/route.ts"
+ },
+ {
+  "path": "/api/user/watch-ad",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/watch-ad/route.ts"
+ },
+ {
+  "path": "/api/user/xp",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/user/xp/route.ts"
+ },
+ {
+  "path": "/api/users/[userId]",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/users/[userId]/route.ts"
+ },
+ {
+  "path": "/api/users/[userId]/follow",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/users/[userId]/follow/route.ts"
+ },
+ {
+  "path": "/api/users/[userId]/posts",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/users/[userId]/posts/route.ts"
+ },
+ {
+  "path": "/api/users/lookup/[username]",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/users/lookup/[username]/route.ts"
+ },
+ {
+  "path": "/api/users/online",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/users/online/route.ts"
+ },
+ {
+  "path": "/api/users/search",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/users/search/route.ts"
+ },
+ {
+  "path": "/api/verification",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/verification/route.ts"
+ },
+ {
+  "path": "/api/video-streams",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/video-streams/route.ts"
+ },
+ {
+  "path": "/api/video-streams/[streamId]",
+  "methods": [
+   "GET",
+   "PATCH"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/video-streams/[streamId]/route.ts"
+ },
+ {
+  "path": "/api/video-streams/[streamId]/auto-close",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/video-streams/[streamId]/auto-close/route.ts"
+ },
+ {
+  "path": "/api/video-streams/[streamId]/ban",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/video-streams/[streamId]/ban/route.ts"
+ },
+ {
+  "path": "/api/video-streams/[streamId]/co-broadcast",
+  "methods": [
+   "GET",
+   "PATCH",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/video-streams/[streamId]/co-broadcast/route.ts"
+ },
+ {
+  "path": "/api/video-streams/[streamId]/co-broadcast/invite",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/video-streams/[streamId]/co-broadcast/invite/route.ts"
+ },
+ {
+  "path": "/api/video-streams/[streamId]/comments",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/video-streams/[streamId]/comments/route.ts"
+ },
+ {
+  "path": "/api/video-streams/[streamId]/end",
+  "methods": [
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/video-streams/[streamId]/end/route.ts"
+ },
+ {
+  "path": "/api/video-streams/[streamId]/fortune-requests",
+  "methods": [
+   "DELETE",
+   "GET",
+   "PATCH",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/video-streams/[streamId]/fortune-requests/route.ts"
+ },
+ {
+  "path": "/api/video-streams/[streamId]/fortune-requests/my-status",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/video-streams/[streamId]/fortune-requests/my-status/route.ts"
+ },
+ {
+  "path": "/api/video-streams/[streamId]/gifts",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/video-streams/[streamId]/gifts/route.ts"
+ },
+ {
+  "path": "/api/video-streams/[streamId]/join",
+  "methods": [
+   "DELETE",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/video-streams/[streamId]/join/route.ts"
+ },
+ {
+  "path": "/api/video-streams/[streamId]/leave",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/video-streams/[streamId]/leave/route.ts"
+ },
+ {
+  "path": "/api/video-streams/[streamId]/like",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/video-streams/[streamId]/like/route.ts"
+ },
+ {
+  "path": "/api/video-streams/[streamId]/live-started",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/video-streams/[streamId]/live-started/route.ts"
+ },
+ {
+  "path": "/api/video-streams/[streamId]/media-heartbeat",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/video-streams/[streamId]/media-heartbeat/route.ts"
+ },
+ {
+  "path": "/api/video-streams/[streamId]/messages",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/video-streams/[streamId]/messages/route.ts"
+ },
+ {
+  "path": "/api/video-streams/[streamId]/moderators",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/video-streams/[streamId]/moderators/route.ts"
+ },
+ {
+  "path": "/api/video-streams/[streamId]/mute",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/video-streams/[streamId]/mute/route.ts"
+ },
+ {
+  "path": "/api/video-streams/[streamId]/pk-battle",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/video-streams/[streamId]/pk-battle/route.ts"
+ },
+ {
+  "path": "/api/video-streams/[streamId]/signal",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/video-streams/[streamId]/signal/route.ts"
+ },
+ {
+  "path": "/api/video-streams/[streamId]/stream",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/video-streams/[streamId]/stream/route.ts"
+ },
+ {
+  "path": "/api/video-streams/[streamId]/sync",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/video-streams/[streamId]/sync/route.ts"
+ },
+ {
+  "path": "/api/video-streams/[streamId]/viewers",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/video-streams/[streamId]/viewers/route.ts"
+ },
+ {
+  "path": "/api/video-streams/gifts",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/video-streams/gifts/route.ts"
+ },
+ {
+  "path": "/api/video-streams/pk",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "ADMIN_ONLY",
+  "mobile": false,
+  "web": true,
+  "file": "app/api/video-streams/pk/route.ts"
+ },
+ {
+  "path": "/api/video-streams/pk/candidates",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/video-streams/pk/candidates/route.ts"
+ },
+ {
+  "path": "/api/video-streams/pk/list",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/video-streams/pk/list/route.ts"
+ },
+ {
+  "path": "/api/video-streams/pk/score",
+  "methods": [
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/video-streams/pk/score/route.ts"
+ },
+ {
+  "path": "/api/video-streams/signal",
+  "methods": [
+   "DELETE",
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/video-streams/signal/route.ts"
+ },
+ {
+  "path": "/api/vip/leaderboard",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/vip/leaderboard/route.ts"
+ },
+ {
+  "path": "/api/wallet",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/wallet/route.ts"
+ },
+ {
+  "path": "/api/warmup",
+  "methods": [
+   "GET"
+  ],
+  "class": "PUBLIC",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/warmup/route.ts"
+ },
+ {
+  "path": "/api/weekly-dream-report",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/weekly-dream-report/route.ts"
+ },
+ {
+  "path": "/api/withdrawals",
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/withdrawals/route.ts"
+ },
+ {
+  "path": "/api/youtube/search",
+  "methods": [
+   "GET"
+  ],
+  "class": "FLUTTER_READY",
+  "mobile": true,
+  "web": true,
+  "file": "app/api/youtube/search/route.ts"
+ }
+]

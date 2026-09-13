@@ -6,7 +6,7 @@ import '../../../../core/util/json_util.dart';
 import '../../domain/entities/social_discovery_user.dart';
 import '../../domain/entities/user_location_settings.dart';
 
-/// Abacus BÖLÜM 21/A6 — Tanış & Kaynaş (`discovery`, `actions`, `user/location`).
+/// Abacus §11 Sosyal & Keşif + BÖLÜM 21/A6 konum (`TUM_OZELLIKLER_HARITASI`).
 class SocialDiscoveryRemoteDataSource {
   SocialDiscoveryRemoteDataSource(this._dio);
 
@@ -102,5 +102,71 @@ class SocialDiscoveryRemoteDataSource {
       return Map<String, dynamic>.from(body);
     }
     return {};
+  }
+
+  Future<Map<String, dynamic>> fetchSocialProfile({String? userId}) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.socialProfile,
+      query: {if (userId != null && userId.isNotEmpty) 'userId': userId},
+    );
+    return asJsonMap(res.data);
+  }
+
+  Future<Map<String, dynamic>> fetchShareCard({
+    String? fortuneId,
+    String? postId,
+  }) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.shareCard,
+      query: {
+        if (fortuneId != null && fortuneId.isNotEmpty) 'fortuneId': fortuneId,
+        if (postId != null && postId.isNotEmpty) 'postId': postId,
+      },
+    );
+    return asJsonMap(res.data);
+  }
+
+  Future<Map<String, dynamic>> fetchHashtag(String name) async {
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.hashtagByName(name));
+    return asJsonMap(res.data);
+  }
+
+  Future<Map<String, dynamic>> searchHashtags({required String q}) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.hashtagsSearch,
+      query: {'q': q},
+    );
+    return asJsonMap(res.data);
+  }
+
+  Future<Map<String, dynamic>> fetchTrendingHashtags() async {
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.hashtagsTrending);
+    return asJsonMap(res.data);
+  }
+
+  Future<Map<String, dynamic>> fetchTeams() async {
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.teams);
+    return asJsonMap(res.data);
+  }
+
+  Future<Map<String, dynamic>> fetchTeam(String teamId) async {
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.teamById(teamId));
+    return asJsonMap(res.data);
+  }
+
+  Future<Map<String, dynamic>> createTeam(Map<String, dynamic> body) async {
+    final res = await _dio.safePost<dynamic>(ApiEndpoints.teams, data: body);
+    return asJsonMap(res.data);
+  }
+
+  Future<Map<String, dynamic>> patchTeam(
+    String teamId,
+    Map<String, dynamic> body,
+  ) async {
+    final res = await _dio.safePatch<dynamic>(
+      ApiEndpoints.teamById(teamId),
+      data: body,
+    );
+    return asJsonMap(res.data);
   }
 }

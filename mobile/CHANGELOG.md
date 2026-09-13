@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.479+517 (2026-09-13) — Abacus ZIP paketi (envanter + §1–§4/§11 katman)
+
+- `backend-reference/canlifal_flutter_paketi/` (77 dosya) repoya eklendi; `docs/ABACUS_ZIP_PACKAGE_INDEX.md` + `ABACUS_ZIP_FLUTTER_ROADMAP.md`
+- §1: e-posta/telefon OTP, `/api/verification` — `AbacusAuthRemoteDataSource`
+- §2: `/api/me/membership*`, VIP, profil ziyaretçileri — `MeEntitlementsRemoteDataSource`; sosyal ayarlar — `UserAbacusRemoteDataSource`
+- §4: rüya yarışması / interpret — `DreamsAbacusRemoteDataSource`
+- §11: profil, share-card, hashtag, takım uçları — `SocialDiscoveryRemoteDataSource` genişletmesi
+- `AbacusApiBridge`, `AbacusFortuneReadyPaths`, `scripts/generate_abacus_zip_roadmap.py`
+
 ## 1.0.478+516 (2026-09-13) — Tanış Kaynaş (BÖLÜM 21/A6)
 
 - `GET /api/social/discovery`, `GET/POST /api/social/actions`, `GET/POST /api/user/location`
