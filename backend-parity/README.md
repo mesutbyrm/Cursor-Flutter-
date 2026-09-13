@@ -24,7 +24,8 @@ python3 ../Cursor-Flutter-/scripts/check-extra-main-api-routes.py
 |-----|------|----------|
 | Re-export | 9 | `users/me/*`, cihaz token, `daily-tasks`, `story` |
 | Proxy / yeni | 10 | bildirimler, DM, oturum revoke, fal pin/rate, favoriler |
-| **Toplam** | **19** | `extra_main` Faz 1 kapsamı |
+| Faz 2 (chat/platform) | 18 | oda alias + platform ayarı |
+| **Toplam** | **37** | Faz 1+2 (`extra_main` 98’in 37’si) |
 
 `lib/dm-typing-state.ts`, `lib/parity-route-params.ts` — `nextjs_space/lib/` altına kopyalanır.
 
