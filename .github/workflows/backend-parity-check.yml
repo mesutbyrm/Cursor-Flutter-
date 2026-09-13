@@ -1,0 +1,30 @@
+name: Backend parity check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend-parity/**'
+      - 'fl_ref/extra_main.json'
+      - 'fl_ref/reexport_map.json'
+      - 'scripts/check-extra-main-api-routes.py'
+      - '.github/workflows/backend-parity-check.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend-parity/**'
+      - 'fl_ref/extra_main.json'
+      - 'fl_ref/reexport_map.json'
+      - 'scripts/check-extra-main-api-routes.py'
+  workflow_dispatch:
+
+jobs:
+  extra-main-routes:
+    name: extra_main 98 routes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify route.ts coverage (backend-parity)
+        run: python3 scripts/check-extra-main-api-routes.py

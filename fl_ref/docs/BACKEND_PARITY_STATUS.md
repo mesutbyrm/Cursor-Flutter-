@@ -1,6 +1,8 @@
 # Backend parite durumu (telefon / terminal gerekmez)
 
-**Son doğrulama (Cloud Agent workspace):** `extra_main.json` içindeki **98** Flutter ana-backend yolu için `backend-parity/nextjs_space` altında `route.ts` eşleşmesi **tamam** (`EKSİK: 0`).
+**Durum: TAMAMLANDI** — `extra_main.json` içindeki **98** Flutter ana-backend yolu için `backend-parity/nextjs_space` altında `route.ts` eşleşmesi **tamam** (`EKSİK: 0`).
+
+**Son doğrulama:** Cloud Agent workspace (`check-extra-main-api-routes.py`). CI: workflow `backend-parity-check.yml`.
 
 ## Bu repoda nerede?
 

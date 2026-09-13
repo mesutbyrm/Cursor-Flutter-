@@ -48,6 +48,10 @@ mobile/ios/Runner.xcodeproj/xcuserdata/
 dist/
 *.apk
 
+# Python
+scripts/__pycache__/
+**/__pycache__/
+
 # Agent / debug çıktıları (kök ve scripts)
 /*-out.txt
 /*_out.txt
