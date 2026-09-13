@@ -123,8 +123,12 @@ export async function handleVoiceRoomPkAction(
   body: Record<string, unknown>,
 ) {
   const action = String(body.action ?? "create").trim().toLowerCase();
-  const opponentRoomId = body.opponentRoomId?.toString() ?? body.opponentVoiceRoomId?.toString();
+  const opponentRoomId =
+    body.opponentRoomId?.toString() ??
+    body.opponentVoiceRoomId?.toString() ??
+    body.targetRoomId?.toString();
   const battleId = body.battleId?.toString();
+  const guestUserId = body.guestUserId?.toString()?.trim();
 
   if (action === "create") {
     if (!opponentRoomId) {
@@ -132,13 +136,16 @@ export async function handleVoiceRoomPkAction(
     }
     const room = getChatRoom(roomId);
     const opp = getChatRoom(opponentRoomId);
+    const durationRaw =
+      body.durationSeconds ?? body.durationSec ?? body.duration ?? 300;
     return createPkInvite({
       battleType: "voice_room",
       challengerId: userId,
       voiceRoomId: roomId,
       opponentVoiceRoomId: opponentRoomId,
-      opponentId: opp?.ownerId ?? body.opponentId?.toString(),
-      durationSeconds: Number(body.durationSeconds ?? 300),
+      opponentId:
+        opp?.ownerId ?? body.opponentId?.toString() ?? guestUserId ?? undefined,
+      durationSeconds: Number(durationRaw),
       targetScore: Number(body.targetScore ?? 150_000),
       challengerDisplay: {
         name: room?.owner?.displayName ?? room?.nameTr,
@@ -178,7 +185,9 @@ export async function handleLiveStreamPkAction(
 ) {
   const action = String(body.action ?? "create").trim().toLowerCase();
   const opponentStreamId =
-    body.opponentStreamId?.toString() ?? body.opponentLiveStreamId?.toString();
+    body.opponentStreamId?.toString() ??
+    body.opponentLiveStreamId?.toString() ??
+    body.targetStreamId?.toString();
   const battleId = body.battleId?.toString();
 
   if (action === "create") {
@@ -187,13 +196,22 @@ export async function handleLiveStreamPkAction(
     }
     const stream = getLiveStream(streamId);
     const opp = getLiveStream(opponentStreamId);
+    const durationMinutes = Number(body.durationMinutes ?? 0);
+    const durationFromMinutes =
+      durationMinutes > 0 ? durationMinutes * 60 : undefined;
+    const durationRaw =
+      body.durationSeconds ??
+      body.durationSec ??
+      durationFromMinutes ??
+      body.duration ??
+      300;
     return createPkInvite({
       battleType: "live_stream",
       challengerId: userId,
       liveStreamId: streamId,
       opponentLiveStreamId: opponentStreamId,
       opponentId: opp?.broadcasterId ?? body.opponentId?.toString(),
-      durationSeconds: Number(body.durationSeconds ?? 300),
+      durationSeconds: Number(durationRaw),
       targetScore: Number(body.targetScore ?? 150_000),
       challengerDisplay: {
         name: stream?.title,
