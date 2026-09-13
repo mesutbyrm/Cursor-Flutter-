@@ -103,6 +103,7 @@ ChatRoomSseEventType chatRoomSseEventTypeFrom(String? raw) {
     case 'duyuru':
       return ChatRoomSseEventType.announcement;
     case 'gift':
+    case 'gift_received':
     case 'giftsent':
     case 'gift_sent':
     case 'gift-sent':

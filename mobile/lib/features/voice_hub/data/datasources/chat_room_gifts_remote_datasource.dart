@@ -112,6 +112,7 @@ class ChatRoomGiftsRemoteDataSource {
       if (e.statusCode != 404 && e.statusCode != 405) rethrow;
     } catch (_) {}
 
+    final idempotencyKey = newGiftIdempotencyKey();
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.chatRoomGifts(roomId),
       data: {
@@ -127,9 +128,10 @@ class ChatRoomGiftsRemoteDataSource {
         },
         if (battleId != null && battleId.isNotEmpty) 'battleId': battleId,
         'platform': platform,
-        'idempotencyKey': newGiftIdempotencyKey(),
+        'idempotencyKey': idempotencyKey,
         if (staffFinanceMode != null) ...staffFinanceMode.toRequestFields(),
       },
+      options: giftIdempotentPostOptions(idempotencyKey),
     );
     final body = res.data;
     Map<String, dynamic>? revenueMap;

@@ -46,6 +46,17 @@ void main() {
   });
 
   group('EconomyWalletSnapshot', () {
+    test('parses Abacus GET /api/wallet flat payload', () {
+      final snapshot = EconomyWalletSnapshot.fromJson({
+        'coins': 0,
+        'jetonBalance': 12,
+        'cfcBalance': 55,
+        'credits': 55,
+      });
+      expect(snapshot.jeton, 12);
+      expect(snapshot.cfc, 55);
+    });
+
     test('parses unified wallet payload', () {
       final snapshot = EconomyWalletSnapshot.fromJson({
         'balances': {'cfc': 55, 'jeton': 10, 'legacyCfc': 0},

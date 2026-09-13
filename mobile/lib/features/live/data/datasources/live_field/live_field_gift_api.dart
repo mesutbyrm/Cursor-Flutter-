@@ -47,6 +47,7 @@ class LiveFieldGiftApi {
         luckyResult: lucky,
       );
     }
+    final idempotencyKey = newGiftIdempotencyKey();
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.liveGiftSend,
       data: {
@@ -54,11 +55,12 @@ class LiveFieldGiftApi {
         'roomType': roomType,
         'giftTypeId': giftTypeId,
         'quantity': quantity,
-        'idempotencyKey': newGiftIdempotencyKey(),
+        'idempotencyKey': idempotencyKey,
         if (recipientId != null && recipientId.isNotEmpty)
           'recipientId': recipientId,
         if (staffFinanceMode != null) ...staffFinanceMode.toRequestFields(),
       },
+      options: giftIdempotentPostOptions(idempotencyKey),
     );
     final map = LiveFieldApiUtil.unwrapData(res.data);
     if (map == null) {

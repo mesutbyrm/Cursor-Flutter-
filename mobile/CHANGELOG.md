@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.476+514 (2026-09-13) — Abacus entegrasyon aşama 2
+
+- Hediye POST: `Idempotency-Key` başlığı (yayın, sesli oda, live/gift/send)
+- Sesli oda presence heartbeat: OpenAPI `POST` (PATCH kaldırıldı)
+- `GET /api/wallet` düz `jetonBalance` / `cfcBalance` parse
+- SSE sesli oda: `gift_received` olayı
+- Rapor: `docs/ABACUS_FLUTTER_INTEGRATION_PHASE2.md`
+
 ## 1.0.475+513 (2026-09-13) — Abacus backend sözleşme hizalaması
 
 - **Referans:** `backend-reference/canlifal_flutter_entegrasyon_paketi.zip` (Abacus paketi; dosyalar değiştirilmedi)

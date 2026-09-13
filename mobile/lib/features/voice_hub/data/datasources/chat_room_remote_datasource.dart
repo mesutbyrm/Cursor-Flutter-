@@ -103,19 +103,12 @@ class ChatRoomRemoteDataSource {
   /// Üretim presence/voice — kılavuz §9.3 + PART4/PART10 (20–30 sn; 25 sn).
   static const presenceHeartbeatInterval = Duration(seconds: 15);
 
-  /// Heartbeat — `PATCH /presence` (kılavuz §9.3 / üretim).
+  /// Heartbeat — Abacus OpenAPI: `POST /presence` (GET/POST/DELETE; PATCH yok).
   Future<void> presenceHeartbeat(
     String roomKey, {
     String? alternateKey,
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      try {
-        await _dio.safePatch<dynamic>(presencePath(key));
-        return;
-      } on ApiException catch (e) {
-        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
-      }
-      // Eski backend: boş POST da heartbeat kabul edebilir.
       await _dio.safePost<dynamic>(
         presencePath(key),
         data: const {'action': 'heartbeat'},

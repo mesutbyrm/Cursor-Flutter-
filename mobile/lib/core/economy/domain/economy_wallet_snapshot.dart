@@ -3,7 +3,7 @@ import 'package:equatable/equatable.dart';
 import '../../util/json_util.dart';
 import 'currency_branding_snapshot.dart';
 
-/// `GET /api/user/wallet` yanıtının mobil özeti.
+/// `GET /api/wallet` veya `GET /api/user/wallet` yanıtının mobil özeti.
 class EconomyWalletSnapshot extends Equatable {
   const EconomyWalletSnapshot({
     this.cfc = 0,
@@ -42,9 +42,14 @@ class EconomyWalletSnapshot extends Equatable {
             .toList()
         : const <EconomyWalletTransaction>[];
 
+    final nestedCfc = asInt(pick(balances, ['cfc', 'credits']));
+    final nestedJeton = asInt(pick(balances, ['jeton', 'jetonBalance']));
+    final flatCfc = asInt(pick(json, ['cfcBalance', 'credits']));
+    final flatJeton = asInt(pick(json, ['jetonBalance', 'coins']));
+
     return EconomyWalletSnapshot(
-      cfc: asInt(pick(balances, ['cfc', 'credits'])),
-      jeton: asInt(pick(balances, ['jeton', 'jetonBalance'])),
+      cfc: nestedCfc != 0 ? nestedCfc : flatCfc,
+      jeton: nestedJeton != 0 ? nestedJeton : flatJeton,
       legacyCfc: asInt(pick(balances, ['legacyCfc', 'cfcBalance'])),
       branding: brandingRaw is Map
           ? CurrencyBrandingSnapshot.fromJson(asJsonMap(brandingRaw))

@@ -130,6 +130,7 @@ class LiveGiftsRemoteDataSource {
     if (toUserId != null && toUserId.isNotEmpty) {
       await assertReciprocalGiftAllowed(_dio, toUserId);
     }
+    final idempotencyKey = newGiftIdempotencyKey();
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.videoStreamGifts(streamId),
       data: {
@@ -137,7 +138,7 @@ class LiveGiftsRemoteDataSource {
         'giftId': giftTypeId,
         'giftTypeId': giftTypeId,
         'quantity': quantity,
-        'idempotencyKey': newGiftIdempotencyKey(),
+        'idempotencyKey': idempotencyKey,
         'platform': GiftPlatform.mobile.queryValue,
         if (senderName.trim().isNotEmpty) 'senderName': senderName.trim(),
         if (receiverName.trim().isNotEmpty) 'receiverName': receiverName.trim(),
@@ -146,6 +147,7 @@ class LiveGiftsRemoteDataSource {
         if (pkMatchId != null && pkMatchId.isNotEmpty) 'pkMatchId': pkMatchId,
         if (staffFinanceMode != null) ...staffFinanceMode.toRequestFields(),
       },
+      options: giftIdempotentPostOptions(idempotencyKey),
     );
     final raw = _unwrap(res.data);
     final b = raw is Map ? asJsonMap(raw) : <String, dynamic>{};
