@@ -113,6 +113,11 @@ bash scripts/print-live-psychics-e2e-checklist.sh  # Tam E2E (P0 sonrası)
 
 ## Faz parity / status (banner güncel)
 
+| Kaynak | Not |
+|--------|-----|
+| [`../fl_ref/docs/BACKEND_PARITY_STATUS.md`](../fl_ref/docs/BACKEND_PARITY_STATUS.md) | **extra_main 98/98** — `backend-parity` paketi (Next.js route paritesi, tamamlandı) |
+| [`../fl_ref/docs/API_ENDPOINT_MATRIX.md`](../fl_ref/docs/API_ENDPOINT_MATRIX.md) | Endpoint matrisi + re-export notları |
+
 `FAZ1_STATUS.md` … `FAZ12_E2E_STATUS.md`, `FAZ2_*_PARITY.md` … `FAZ9_*_PARITY.md`
 
 ## Stage / acceptance (banner güncel, gövde tarihsel)
