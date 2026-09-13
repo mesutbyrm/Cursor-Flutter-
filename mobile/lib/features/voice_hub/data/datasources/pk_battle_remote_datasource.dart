@@ -9,7 +9,89 @@ import '../../../../core/util/json_util.dart';
 import '../../../live/data/datasources/live_field/live_field_pk_api.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
 
-/// Canlı PK davet gövdesi — üretim `POST /api/video-streams/pk` kontratı.
+int pkDurationMinutesFromSeconds(int durationSeconds) {
+  final sec = durationSeconds.clamp(60, 3600);
+  return (sec / 60).ceil().clamp(1, 60);
+}
+
+/// Sesli oda PK daveti — games `action:create` + kılavuz §9.3 gövdeleri (sırayla dene).
+List<Map<String, dynamic>> voicePkInviteRequestBodies({
+  required String opponentRoomId,
+  String guestUserId = '',
+  required int durationSeconds,
+}) {
+  final opp = opponentRoomId.trim();
+  final duration = durationSeconds.clamp(60, 3600);
+  final guest = guestUserId.trim();
+
+  final gamesCreate = <String, dynamic>{
+    'action': 'create',
+    'targetRoomId': opp,
+    'opponentRoomId': opp,
+    'opponentVoiceRoomId': opp,
+    'duration': '$duration',
+    'durationSec': duration,
+    'durationSeconds': duration,
+    if (guest.isNotEmpty) 'guestUserId': guest,
+  };
+
+  final guideWithRoom = <String, dynamic>{
+    'durationSec': duration,
+    'targetRoomId': opp,
+    if (guest.isNotEmpty) 'guestUserId': guest,
+  };
+
+  final bodies = <Map<String, dynamic>>[gamesCreate, guideWithRoom];
+
+  if (guest.isNotEmpty) {
+    bodies.add({'guestUserId': guest, 'durationSec': duration});
+    bodies.add({
+      'guestUserId': guest,
+      'durationSec': duration,
+      'targetRoomId': opp,
+    });
+  }
+
+  return bodies;
+}
+
+/// Canlı PK create gövdeleri — kılavuz §9.4 önce, sonra action tabanlı yedekler.
+List<Map<String, dynamic>> livePkCreateRequestBodies({
+  required String hostStreamId,
+  required String targetStreamId,
+  required int durationSeconds,
+}) {
+  final host = hostStreamId.trim();
+  final target = targetStreamId.trim();
+  final duration = durationSeconds.clamp(60, 3600);
+  final minutes = pkDurationMinutesFromSeconds(duration);
+
+  return [
+    {
+      'opponentStreamId': target,
+      'durationMinutes': minutes,
+    },
+    {
+      'streamId': host,
+      'opponentStreamId': target,
+      'durationMinutes': minutes,
+    },
+    {
+      'action': 'create',
+      'streamId': host,
+      'targetStreamId': target,
+      'duration': '$duration',
+      'durationSec': duration,
+    },
+    livePkCreateRequestBody(
+      hostStreamId: host,
+      targetStreamId: target,
+      durationSeconds: duration,
+    ),
+  ];
+}
+
+/// Canlı PK davet gövdesi — üretim `POST /api/video-streams/pk` action fallback.
 Map<String, dynamic> livePkCreateRequestBody({
   required String hostStreamId,
   required String targetStreamId,
@@ -28,6 +110,7 @@ Map<String, dynamic> livePkCreateRequestBody({
     'duration': duration,
     'durationSeconds': duration,
     'durationSec': duration,
+    'durationMinutes': pkDurationMinutesFromSeconds(duration),
   };
 }
 
@@ -237,39 +320,11 @@ class PkBattleRemoteDataSource {
       throw const ApiException('PK daveti için rakip oda seçilmeli');
     }
     final duration = durationSeconds.clamp(60, 3600);
-    final guest = guestUserId.trim();
-    if (guest.isEmpty) {
-      throw const ApiException(
-        'PK daveti için rakip oda sahibi (guestUserId) gerekli',
-      );
-    }
-
-    // Kılavuz §9.3 birincil gövde — games backend yedek alanları sonra.
-    final guideBody = {
-      'guestUserId': guest,
-      'durationSec': duration,
-    };
-
-    final unifiedBody = {
-      'action': 'create',
-      'guestUserId': guest,
-      'durationSec': duration,
-      'opponentRoomId': oppRoom,
-      'targetRoomId': oppRoom,
-      'opponentVoiceRoomId': oppRoom,
-      'durationSeconds': duration,
-      'duration': duration,
-    };
-
-    final bodies = <Map<String, dynamic>>[
-      guideBody,
-      unifiedBody,
-      {
-        'guestUserId': guest,
-        'durationSec': duration,
-        'targetRoomId': oppRoom,
-      },
-    ];
+    final bodies = voicePkInviteRequestBodies(
+      opponentRoomId: oppRoom,
+      guestUserId: guestUserId,
+      durationSeconds: duration,
+    );
 
     ApiException? lastError;
     for (final body in bodies) {
@@ -429,28 +484,35 @@ class PkBattleRemoteDataSource {
       }
       final durationSec =
           duration != null ? duration.clamp(60, 3600) : 180;
-      final body = livePkCreateRequestBody(
+      final bodies = livePkCreateRequestBodies(
         hostStreamId: host,
         targetStreamId: target,
         durationSeconds: durationSec,
       );
-      try {
-        final res = await _dio.safePost<dynamic>(
-          ApiEndpoints.videoStreamPk,
-          data: body,
-        );
-        final battle = _parseBattle(res.data);
-        if (battle != null) return battle;
-      } on ApiException catch (e) {
-        PkEventLog.apiFailure(
-          method: 'POST',
-          url: ApiEndpoints.videoStreamPk,
-          statusCode: e.statusCode,
-          roomId: host,
-          targetUserId: target,
-          responseBody: e.message,
-        );
-        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      ApiException? lastCreateError;
+      for (final body in bodies) {
+        try {
+          final res = await _dio.safePost<dynamic>(
+            ApiEndpoints.videoStreamPk,
+            data: body,
+          );
+          final battle = _parseBattle(res.data);
+          if (battle != null) return battle;
+          final synthesized = _synthesizePendingBattle(res.data, roomId: host);
+          if (synthesized != null) return synthesized;
+        } on ApiException catch (e) {
+          lastCreateError = e;
+          PkEventLog.apiFailure(
+            method: 'POST',
+            url: ApiEndpoints.videoStreamPk,
+            statusCode: e.statusCode,
+            roomId: host,
+            targetUserId: target,
+            responseBody: e.message,
+          );
+          if (e.statusCode == 400 || e.statusCode == 422) continue;
+          if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+        }
       }
       try {
         final fieldBattle = await _liveFieldPk.pkAction(
@@ -484,24 +546,29 @@ class PkBattleRemoteDataSource {
         );
         if (e.statusCode != 404 && e.statusCode != 405) rethrow;
       }
-      try {
-        final res = await _dio.safePost<dynamic>(
-          ApiEndpoints.videoStreamPkBattle(host),
-          data: body,
-        );
-        final battle = _parseBattle(res.data);
-        if (battle != null) return battle;
-      } on ApiException catch (e) {
-        PkEventLog.apiFailure(
-          method: 'POST',
-          url: ApiEndpoints.videoStreamPkBattle(host),
-          statusCode: e.statusCode,
-          roomId: host,
-          targetUserId: target,
-          responseBody: e.message,
-        );
-        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      for (final body in bodies) {
+        try {
+          final res = await _dio.safePost<dynamic>(
+            ApiEndpoints.videoStreamPkBattle(host),
+            data: body,
+          );
+          final battle = _parseBattle(res.data);
+          if (battle != null) return battle;
+        } on ApiException catch (e) {
+          lastCreateError = e;
+          PkEventLog.apiFailure(
+            method: 'POST',
+            url: ApiEndpoints.videoStreamPkBattle(host),
+            statusCode: e.statusCode,
+            roomId: host,
+            targetUserId: target,
+            responseBody: e.message,
+          );
+          if (e.statusCode == 400 || e.statusCode == 422) continue;
+          if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+        }
       }
+      if (lastCreateError != null) throw lastCreateError;
       return null;
     }
 

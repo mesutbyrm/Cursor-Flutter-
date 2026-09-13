@@ -14,5 +14,18 @@ void main() {
     expect(body['opponentStreamId'], 'stream-target');
     expect(body['duration'], 180);
     expect(body['durationSec'], 180);
+    expect(body['durationMinutes'], 3);
+  });
+
+  test('livePkCreateRequestBodies guide-first', () {
+    final bodies = livePkCreateRequestBodies(
+      hostStreamId: 'stream-host',
+      targetStreamId: 'stream-target',
+      durationSeconds: 300,
+    );
+    expect(bodies.first, {
+      'opponentStreamId': 'stream-target',
+      'durationMinutes': 5,
+    });
   });
 }

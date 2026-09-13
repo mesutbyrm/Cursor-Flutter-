@@ -144,15 +144,10 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
           guestUserId = resolvePkGuestUserId(presence: presence);
         } catch (_) {}
       }
-      if (guestUserId == null || guestUserId.isEmpty) {
-        setState(() => _error =
-            'Rakip odanın sahibi bulunamadı — oda açık ve dolu olmalı.');
-        return;
-      }
       final battle = await remote.inviteRoom(
         roomId: _roomKey,
         alternateRoomId: _altRoomKey,
-        guestUserId: guestUserId,
+        guestUserId: guestUserId ?? '',
         opponentRoomId: oppKey,
         durationSeconds: _durationSeconds,
       );
