@@ -1,5 +1,6 @@
 /// Sosyal sekme keşif kısayolu etiketleri — test ve acceptance sözleşmesi.
 const socialDiscoverShortcutLabels = <String>[
+  'Tanış Kaynaş',
   'Ünlüler',
   'Fan Club',
   'Canlı',
@@ -8,6 +9,7 @@ const socialDiscoverShortcutLabels = <String>[
 
 /// Sosyal sekme keşif kısayolu rotaları.
 const socialDiscoverShortcutRoutes = <String>[
+  '/social/tanis-kaynas',
   '/celebrities-hub',
   '/fan-club-hub',
   '/live',

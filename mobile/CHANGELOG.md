@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.478+516 (2026-09-13) — Tanış Kaynaş (BÖLÜM 21/A6)
+
+- `GET /api/social/discovery`, `GET/POST /api/social/actions`, `GET/POST /api/user/location`
+- Sosyal sekme kısayolu + `/social/tanis-kaynas` ekranı (konum ayarı, keşif listesi, like / arkadaşlık isteği)
+
 ## 1.0.477+515 (2026-09-13) — Abacus entegrasyon aşama 3
 
 - Hediye kutusu API katmanı: `GET/POST /api/gift-box`, `GET /api/gift-box/{id}`, `join`, `share`; oda/yayın `sync`

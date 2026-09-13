@@ -3,8 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:canlifal_social/features/social/presentation/utils/social_discover_shortcut_labels.dart';
 
 void main() {
-  test('socialDiscoverShortcutLabels has four entries', () {
-    expect(socialDiscoverShortcutLabels, hasLength(4));
+  test('socialDiscoverShortcutLabels has five entries', () {
+    expect(socialDiscoverShortcutLabels, hasLength(5));
+    expect(socialDiscoverShortcutLabels.first, 'Tanış Kaynaş');
     expect(socialDiscoverShortcutLabels, contains('Ünlüler'));
     expect(socialDiscoverShortcutLabels, contains('Sesli'));
   });

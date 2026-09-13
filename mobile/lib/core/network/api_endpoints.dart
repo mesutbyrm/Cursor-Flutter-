@@ -81,6 +81,12 @@ abstract final class ApiEndpoints {
   /// canlifal.com sosyal akış (web `/sosyal` ile aynı veri).
   static const socialPosts = '/api/social/posts';
   static const socialStories = '/api/social/stories';
+  /// BÖLÜM 21/A6 — Tanış & Kaynaş keşif listesi.
+  static const socialDiscovery = '/api/social/discovery';
+  /// Sosyal etkileşim (like, friend_request, block, …).
+  static const socialActions = '/api/social/actions';
+  static const socialProfile = '/api/social/profile';
+  static const shareCard = '/api/share-card';
 
   static const chatMusicPopular = '/api/chat/music/popular';
   static const adminVoiceRoomBackgrounds = '/api/admin/voice-room-backgrounds';
@@ -974,6 +980,7 @@ abstract final class ApiEndpoints {
   /// ZIP ekonomi v2 — production doğrulanana kadar mevcut uçlar korunur; adapter fallback kullanır.
   static const currencyBranding = '/api/currency-branding';
   static const userWallet = '/api/user/wallet';
+  static const userLocation = '/api/user/location';
   static const userReferralEarnings = '/api/user/referral-earnings';
   static const agencyInviteEarnings = '/api/agency/invite-earnings';
 

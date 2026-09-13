@@ -471,8 +471,8 @@ void main() {
 
   group('20n — Sosyal bölüm faz 4 helper sözleşmesi', () {
     test('keşif kısayolu etiketleri', () {
-      expect(socialDiscoverShortcutLabels, hasLength(4));
-      expect(socialDiscoverShortcutLabels.first, 'Ünlüler');
+      expect(socialDiscoverShortcutLabels, hasLength(5));
+      expect(socialDiscoverShortcutLabels.first, 'Tanış Kaynaş');
       expect(socialDiscoverShortcutLabels.last, 'Sesli');
     });
 

@@ -11,27 +11,33 @@ class SocialDiscoverShortcuts extends StatelessWidget {
 
   static final _items = [
     _ShortcutItem(
-      icon: Icons.star_rounded,
+      icon: Icons.people_rounded,
       label: socialDiscoverShortcutLabels[0],
       route: socialDiscoverShortcutRoutes[0],
+      color: AppThemeColors.accentPurple,
+    ),
+    _ShortcutItem(
+      icon: Icons.star_rounded,
+      label: socialDiscoverShortcutLabels[1],
+      route: socialDiscoverShortcutRoutes[1],
       color: AppThemeColors.coinGold,
     ),
     _ShortcutItem(
       icon: Icons.favorite_rounded,
-      label: socialDiscoverShortcutLabels[1],
-      route: socialDiscoverShortcutRoutes[1],
+      label: socialDiscoverShortcutLabels[2],
+      route: socialDiscoverShortcutRoutes[2],
       color: AppThemeColors.accentPink,
     ),
     _ShortcutItem(
       icon: Icons.live_tv_rounded,
-      label: socialDiscoverShortcutLabels[2],
-      route: socialDiscoverShortcutRoutes[2],
+      label: socialDiscoverShortcutLabels[3],
+      route: socialDiscoverShortcutRoutes[3],
       color: AppThemeColors.liveRed,
     ),
     _ShortcutItem(
       icon: Icons.mic_rounded,
-      label: socialDiscoverShortcutLabels[3],
-      route: socialDiscoverShortcutRoutes[3],
+      label: socialDiscoverShortcutLabels[4],
+      route: socialDiscoverShortcutRoutes[4],
       color: AppThemeColors.accentPurple,
     ),
   ];

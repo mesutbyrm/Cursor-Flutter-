@@ -46,6 +46,9 @@ void main() {
       expect(ApiEndpoints.authLogoutAll, '/api/auth/logout-all');
       expect(ApiEndpoints.authSessions, '/api/auth/sessions');
       expect(ApiEndpoints.giftBox, '/api/gift-box');
+      expect(ApiEndpoints.socialDiscovery, '/api/social/discovery');
+      expect(ApiEndpoints.socialActions, '/api/social/actions');
+      expect(ApiEndpoints.userLocation, '/api/user/location');
     });
 
     test('payment and membership endpoints use uploaded backend canonical paths', () {
