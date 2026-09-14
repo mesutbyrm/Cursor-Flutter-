@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:canlifal_social/core/design_system/cds_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
@@ -120,14 +121,15 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
   }
 
   Future<void> _pickMention() async {
-    final picked = await showModalBottomSheet<SearchUserEntity>(
+    final picked = await CdsBottomSheet.showTransparent<SearchUserEntity>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: const Color(0xFF120A24),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      builder: (ctx) => DecoratedBox(
+        decoration: const BoxDecoration(
+          color: Color(0xFF120A24),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: const SocialMentionPickerSheet(),
       ),
-      builder: (ctx) => const SocialMentionPickerSheet(),
     );
     if (picked != null) {
       _insertText('@${picked.username} ');
@@ -408,7 +410,11 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  FilledButton(
+                  Semantics(
+                    button: true,
+                    label: 'Gönderiyi paylaş',
+                    enabled: _canShare && !_submitting,
+                    child: FilledButton(
                     onPressed: _canShare ? _submit : null,
                     style: FilledButton.styleFrom(
                       backgroundColor: AppThemeColors.accentPink,
@@ -433,6 +439,7 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
                             ),
                           ),
                   ),
+                  ),
                 ],
               ),
             ),
@@ -444,32 +451,38 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
 
   void _showMoodPicker() {
     _expand();
-    showModalBottomSheet<void>(
+    CdsBottomSheet.showTransparent<void>(
       context: context,
-      backgroundColor: const Color(0xFF120A24),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            alignment: WrapAlignment.center,
-            children: _moods.map((e) {
-              return InkWell(
-                onTap: () {
-                  setState(() => _moodEmoji = e);
-                  Navigator.pop(ctx);
-                },
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Text(e, style: const TextStyle(fontSize: 32)),
-                ),
-              );
-            }).toList(),
+      builder: (ctx) => DecoratedBox(
+        decoration: const BoxDecoration(
+          color: Color(0xFF120A24),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              alignment: WrapAlignment.center,
+              children: _moods.map((e) {
+                return Semantics(
+                  button: true,
+                  label: 'Duygu $e',
+                  child: InkWell(
+                    onTap: () {
+                      setState(() => _moodEmoji = e);
+                      Navigator.pop(ctx);
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Text(e, style: const TextStyle(fontSize: 32)),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
           ),
         ),
       ),

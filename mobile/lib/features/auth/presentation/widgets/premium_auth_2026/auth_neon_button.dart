@@ -39,7 +39,12 @@ class _AuthNeonButtonState extends State<AuthNeonButton> {
   Widget build(BuildContext context) {
     final enabled = widget.onPressed != null || widget.loading;
 
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: widget.label,
+      child: ExcludeSemantics(
+      child: GestureDetector(
       onTapDown: enabled && !widget.loading ? (_) => setState(() => _pressed = true) : null,
       onTapUp: enabled && !widget.loading ? (_) => setState(() => _pressed = false) : null,
       onTapCancel: () => setState(() => _pressed = false),
@@ -92,6 +97,8 @@ class _AuthNeonButtonState extends State<AuthNeonButton> {
           ),
         ),
       ),
+    ),
+    ),
     );
   }
 }

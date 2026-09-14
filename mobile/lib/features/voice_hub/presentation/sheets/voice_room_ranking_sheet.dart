@@ -1,3 +1,4 @@
+import 'package:canlifal_social/core/design_system/cds_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,14 +16,15 @@ Future<void> showVoiceRoomRankingSheet(
   WidgetRef ref, {
   VoiceRoomRankingPeriod initial = VoiceRoomRankingPeriod.hourly,
 }) {
-  return showModalBottomSheet<void>(
+  return CdsBottomSheet.showTransparent<void>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: const Color(0xFF12082A),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    builder: (ctx) => DecoratedBox(
+      decoration: const BoxDecoration(
+        color: Color(0xFF12082A),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: _VoiceRoomRankingSheet(initial: initial),
     ),
-    builder: (ctx) => _VoiceRoomRankingSheet(initial: initial),
   );
 }
 

@@ -76,7 +76,11 @@ class _AuthFloatingFieldState extends State<AuthFloatingField> {
           ]
         : <BoxShadow>[];
 
-    return AnimatedContainer(
+    return Semantics(
+      textField: true,
+      label: widget.label,
+      hint: widget.hint,
+      child: AnimatedContainer(
       duration: PremiumMotion.medium,
       curve: PremiumMotion.easeOut,
       decoration: BoxDecoration(
@@ -154,6 +158,7 @@ class _AuthFloatingFieldState extends State<AuthFloatingField> {
           ),
         ),
       ),
+    ),
     );
   }
 }

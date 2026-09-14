@@ -112,6 +112,9 @@ import '../widgets/broadcast_room/live_broadcast_room_connection_overlays.dart';
 import '../widgets/broadcast_room/live_broadcast_room_gift_overlays.dart';
 import '../widgets/broadcast_room/live_broadcast_room_host_overlays.dart';
 import '../widgets/broadcast_room/live_broadcast_room_hud_overlays.dart';
+import '../widgets/broadcast_room/live_broadcast_room_gift_panel_overlay.dart';
+import '../widgets/broadcast_room/live_broadcast_room_host_away_overlay.dart';
+import '../widgets/broadcast_room/live_broadcast_room_viewer_rail.dart';
 import '../widgets/broadcast_room/live_reconnect_banner.dart';
 import '../widgets/broadcast_room/live_host_guest_request_center_overlay.dart';
 import '../providers/live_guest_request_blocklist_provider.dart';
@@ -2372,22 +2375,17 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     required LiveRoomInteractionState interaction,
     required LiveGiftController giftCtrl,
   }) {
-    return LiveMockupSideRail(
-      likeLabel: _likeRailLabel(interaction),
+    return LiveBroadcastRoomViewerRail(
+      session: s,
+      interaction: interaction,
+      likeLabel: formatLiveLikeRailLabel(interaction),
       onLike: _onDoubleTapHeart,
-      showFortune: !s.isHost && _fortuneRequestsOpen(s),
+      showFortune: _fortuneRequestsOpen(s),
       fortuneLabel: _fortuneCtaLabel(s),
       onFortune: !s.isHost && _fortuneRequestsOpen(s)
           ? () => unawaited(_onFortuneRequest(s))
           : null,
     );
-  }
-
-  String _likeRailLabel(LiveRoomInteractionState interaction) {
-    final total = _fmtLikes(interaction.likeCount);
-    final mine = interaction.myLikeCount;
-    if (mine <= 0) return total;
-    return '$total\nSen: $mine';
   }
 
   Widget _videoLayer(LiveBroadcastSession s) {
@@ -3307,63 +3305,17 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               ),
             ),
             if (_hostAway && s.isHost)
-              Positioned.fill(
-                child: ColoredBox(
-                  color: Colors.black.withValues(alpha: 0.72),
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.wifi_off_rounded, color: Colors.white70, size: 48),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'Bağlantı koptu',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Yayın 5 dakika daha açık. Geri döndüğünüzde devam edebilirsiniz.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.85),
-                              height: 1.4,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          FilledButton.icon(
-                            onPressed: () => unawaited(_resumeHostBroadcast()),
-                            icon: const Icon(Icons.refresh_rounded),
-                            label: const Text('Yayına devam et'),
-                          ),
-                          const SizedBox(height: 10),
-                          TextButton(
-                            onPressed: () => unawaited(_exitBroadcast(context)),
-                            child: const Text('Yayını bitir'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+              LiveBroadcastRoomHostAwayOverlay(
+                onResume: () => unawaited(_resumeHostBroadcast()),
+                onEndBroadcast: () => unawaited(_exitBroadcast(context)),
               ),
             if (giftCtrl.panelOpen && user != null && broadcastSettings.giftsEnabled)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: PremiumGiftPanel(
-                  controller: giftCtrl,
-                  streamId: widget.session.streamId ?? '',
-                  senderName: user.display,
-                  senderId: user.id,
-                  onClose: () => giftCtrl.setPanelOpen(false),
-                ),
+              LiveBroadcastRoomGiftPanelOverlay(
+                controller: giftCtrl,
+                streamId: widget.session.streamId ?? '',
+                senderName: user.display,
+                senderId: user.id,
+                onClose: () => giftCtrl.setPanelOpen(false),
               ),
           ],
         ),
