@@ -168,7 +168,7 @@ class FortuneTellerProfileResolver {
         if (detail != null && detail.id.trim().isNotEmpty) {
           return (
             profile: detail,
-            source: '/api/me→fortune-tellers/$tellerId',
+            source: 'me.fortuneTellers/$tellerId',
             rawMeSnippet: rawMeSnippet,
             fortuneTellerId: tellerId,
             isFortuneTellerFlag: isFortuneTellerFlag,
@@ -184,7 +184,7 @@ class FortuneTellerProfileResolver {
             name: user.display,
             applicationStatus: 'approved',
           ),
-          source: '/api/me→isFortuneTeller',
+          source: 'me.isFortuneTeller',
           rawMeSnippet: rawMeSnippet,
           fortuneTellerId: tellerId,
           isFortuneTellerFlag: true,
@@ -254,7 +254,7 @@ class FortuneTellerProfileResolver {
         if (detail != null && detail.id.trim().isNotEmpty) {
           return (
             profile: detail,
-            source: '/api/user/profile→fortune-tellers/$tellerId',
+            source: 'userProfile.fortuneTellers/$tellerId',
             fortuneTellerId: tellerId,
             isFortuneTellerFlag: isFortuneTellerFlag,
           );
@@ -269,7 +269,7 @@ class FortuneTellerProfileResolver {
             name: user.display,
             applicationStatus: 'approved',
           ),
-          source: '/api/user/profile→isFortuneTeller',
+          source: 'userProfile.isFortuneTeller',
           fortuneTellerId: tellerId,
           isFortuneTellerFlag: true,
         );

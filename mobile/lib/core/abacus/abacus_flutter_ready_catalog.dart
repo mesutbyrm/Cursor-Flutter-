@@ -19,7 +19,7 @@ abstract final class AbacusFlutterReadyCatalog {
       '/api/auth/phone/send-otp',
       '/api/auth/phone/verify-otp',
       '/api/auth/sessions',
-      '/api/devices/fcm',
+      '/api/user/device-token',
       '/api/mobile/fortune-menu',
       '/api/mobile/home',
       '/api/mobile/user-profile/[userId]',

@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 
-import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
@@ -15,25 +14,21 @@ class AuthRemoteDataSource {
     required String identifier,
     required String password,
   }) async {
-    final path =
-        Env.useMobileAuth ? ApiEndpoints.authMobileLogin : ApiEndpoints.authLogin;
     final trimmed = identifier.trim();
-    // Kılavuz §9.1 — `{email}` veya `{username}` + `password` (emailOrUsername yok).
+    // Kılavuz §9.1 — `{email}` veya `{username}` + `password`.
     final body = trimmed.contains('@')
         ? {
             'email': trimmed,
             'emailOrUsername': trimmed,
             'password': password,
           }
-        : Env.useMobileAuth
-            ? {
-                'username': trimmed,
-                'emailOrUsername': trimmed,
-                'password': password,
-              }
-            : {'email': trimmed, 'password': password};
+        : {
+            'username': trimmed,
+            'emailOrUsername': trimmed,
+            'password': password,
+          };
     final res = await _dio.safePost<Map<String, dynamic>>(
-      path,
+      ApiEndpoints.authMobileLogin,
       data: body,
     );
     return _unwrapAuthBody(res.data);
@@ -149,43 +144,27 @@ class AuthRemoteDataSource {
     String language = 'tr',
     String? referralCode,
   }) async {
-    if (Env.useMobileAuth) {
-      if (birthDate == null ||
-          birthDate.isEmpty ||
-          birthTime == null ||
-          birthTime.isEmpty) {
-        throw const ApiException(
-          'Doğum tarihi ve doğum saati zorunludur',
-        );
-      }
-      final res = await _dio.safePost<Map<String, dynamic>>(
-        ApiEndpoints.authMobileRegister,
-        data: {
-          'email': email,
-          'password': password,
-          'name': displayName,
-          'username': username,
-          'birthDate': birthDate,
-          'birthTime': birthTime,
-          'preferredLanguage': language,
-          if (referralCode != null && referralCode.isNotEmpty)
-            'referralCode': referralCode,
-        },
+    if (birthDate == null ||
+        birthDate.isEmpty ||
+        birthTime == null ||
+        birthTime.isEmpty) {
+      throw const ApiException(
+        'Doğum tarihi ve doğum saati zorunludur',
       );
-      return _unwrapAuthBody(res.data);
     }
-
     final res = await _dio.safePost<Map<String, dynamic>>(
-      ApiEndpoints.authRegister,
+      ApiEndpoints.authMobileRegister,
       data: {
         'email': email,
         'password': password,
-        'displayName': displayName,
+        'name': displayName,
         'username': username,
+        'birthDate': birthDate,
+        'birthTime': birthTime,
+        'preferredLanguage': language,
         if (phone != null && phone.isNotEmpty) 'phone': phone,
-        if (birthDate != null && birthDate.isNotEmpty) 'birthDate': birthDate,
-        if (birthTime != null && birthTime.isNotEmpty) 'birthTime': birthTime,
-        'language': language,
+        if (referralCode != null && referralCode.isNotEmpty)
+          'referralCode': referralCode,
       },
     );
     return _unwrapAuthBody(res.data);
@@ -212,8 +191,7 @@ class AuthRemoteDataSource {
   }
 
   Future<Map<String, dynamic>> me() async {
-    final path = Env.useMobileAuth ? ApiEndpoints.me : ApiEndpoints.authMe;
-    final res = await _dio.safeGet<Map<String, dynamic>>(path);
+    final res = await _dio.safeGet<Map<String, dynamic>>(ApiEndpoints.me);
     return _unwrapAuthBody(res.data);
   }
 
