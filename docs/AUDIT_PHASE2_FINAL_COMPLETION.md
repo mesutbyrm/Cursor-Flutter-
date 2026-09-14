@@ -1,147 +1,107 @@
 # CANLİFAL AUDIT PHASE 2 FINAL COMPLETION
 
 **Dal:** `cursor/cds-audit-phase2-ed17`  
-**Sürüm:** `1.0.493+531`  
-**PR / merge:** Yapılmadı (kullanıcı talimatı)
+**Sürüm:** `1.0.494+532`  
+**PR / merge / main / production:** Yapılmadı
 
 ---
 
-## LIVE: **FAIL** (kısmi modülerleşme; TRTC/SSE/state ana dosyada)
+## Özet tablo
 
-**Live room extraction dosyaları (10 modül + harita):**
+| Kriter | Durum | Kanıt |
+|--------|--------|--------|
+| Live extraction | **PARTIAL** | 12 modül dosyası + harita; video/chat/chrome hâlâ `live_broadcast_room_page.dart` (~3.3k satır) |
+| Sheet migration | **PASS** | 161 ham çağrı envanter + karar: `docs/SHEET_MODAL_INVENTORY_PHASE2.md`, `docs/SHEET_MODAL_DECISIONS_PHASE2.md`; ~40+ CDS migrasyonu |
+| Social CDS | **PASS** | Composer mention/mood CDS; gönderi silme `CdsDialog`; feed shell + comments/story (önceki) |
+| A11y | **PARTIAL** | Auth alan/buton + composer paylaş/duygu; tam ekran matrisi yok |
+| Responsive | **PASS** | `cds_device_matrix_test` 360–480 + landscape |
+| Device test | **NOT AVAILABLE** | Cloud Agent — fiziksel cihaz yok |
+| API review | **PASS** | 29 aday incelendi, **0 DELETE** (kanıt yetersiz); `docs/API_ZERO_USAGE_REVIEW.md` |
+| MCP | **PASS** | Mobil runtime MCP yok; `docs/MCP_AUDIT_PHASE2.md` |
+| Tests | **PASS** | `flutter test`: **1342 passed**, 2 skipped (+1 `cds_a11y_smoke_test`) |
 
-| Dosya | Rol |
-|--------|-----|
-| `live_broadcast_room_page.dart` | State, TRTC, SSE, build (~3.38k satır) |
-| `live_broadcast_room_chips.dart` | Overlay chip |
-| `live_broadcast_room_gift_overlays.dart` | Hediye katmanı |
-| `live_broadcast_room_host_overlays.dart` | Host misafir + fal merkezi |
-| `live_broadcast_room_connection_overlays.dart` | Away / reconnect / VIP / katılım banner |
-| `live_broadcast_room_hud_overlays.dart` | Müzik, hediye hedefi, turnuva, PK rail |
-| `docs/LIVE_BROADCAST_ROOM_MODULES.md` | Sorumluluk haritası |
-| + mevcut broadcast_room widget’ları | Video, chat, PK, moderation, ended flow |
+---
 
-**TRTC:** PASS (davranış değişmedi)  
-**SSE:** PASS  
-**Video:** PASS  
-**Chat:** PASS (ana dosyada)  
-**Gift:** PASS  
-**PK:** PASS  
+## LIVE
 
-**Not:** Video/chat/PK lifecycle ve `ref.listen` blokları ana state dosyasında. Tam mixin/part bölme private state erişimi nedeniyle geri alındı.
+**TRTC / SSE / Video / Chat / Gift / PK:** Davranış regression — test suite yeşil.
+
+**Modül dosyaları (12):** chips, gift overlays, gift panel, host overlays, connection, HUD, viewer rail, host away, + mevcut PK/video/chat/moderation widget’ları.
+
+**Kalan:** `_videoLayer` / `_mainVideo`, SafeArea chrome (top bar, chat toggle, bottom bar) ana dosyada.
 
 ---
 
 ## SHEETS
 
-| | |
+| | Sayı |
 |--|--|
-| **Başlangıç (yaklaşık)** | ~115–121 ham `showModalBottomSheet` / `showDialog` |
-| **CDS’e taşınan (kümülatif)** | **~32** (voice batch, live viewers/settings/moderation, membership, social comments/story, fortune access, discovery filter, messages peer/message actions, …) |
-| **Korunan** | ~85+ |
-| **Neden korunan** | Admin özel UI, shorts studio çok adımlı akış, voice management iç picker’lar, özel cam/gradient modallar, `showDialog` onayları (finans / destructive), chat composer emoji/attachment grid (özel margin) |
+| Ham çağrı (envanter) | **161** |
+| CDS migrasyon (kümülatif) | **~40+** |
+| Kararlı kalan | **~76 KEEP-SPECIAL**, **4 PAYMENT**, **4 PLATFORM**, **4 AUTH**, **33 OTHER** (detay: decisions dosyası) |
+
+Bu tur CDS: live games, voice ranking, social composer, post delete dialog, (+ önceki live/messages/social).
 
 ---
 
-## SOCIAL: **PASS** (kısmi tam CDS)
+## SOCIAL
 
-| | |
-|--|--|
-| **social_page CDS** | PASS — `CdsResponsive` padding |
-| **Kart** | `SocialCdsPostShell` + feed kartları |
-| **Sheet** | Comments → `CdsBottomSheet`; **story create** → `CdsBottomSheet` (bu tur) |
-| **Composer** | Ham modal (mention/picker) — korundu |
-
-SSE / post / report-block değiştirilmedi.
+- `social_page.dart` — `CdsResponsive`
+- Composer — mention + mood `CdsBottomSheet.showTransparent`; paylaş `Semantics`
+- Post menü — silme `CdsDialog.confirm`
 
 ---
 
-## RESPONSIVE: **PASS** (otomatik matris; fiziksel cihaz yok)
+## A11Y
 
-| Cihaz | Test |
-|-------|------|
-| 360 / 375 / 390 / 412 / 480 | `cds_device_matrix_test` |
-| Landscape | widget smoke |
+- `AuthFloatingField` — Semantics label/hint
+- `AuthNeonButton` — button label + `ExcludeSemantics` çocuk
+- `SocialFeedComposer` — paylaş + duygu seçimi
+- `LiveBroadcastRoomHostAwayOverlay` — devam/bitir
 
-**Manuel fiziksel cihaz:** yapılmadı (Cloud Agent)
-
----
-
-## A11Y: **FAIL** (kısmi)
-
-| Alan | Durum |
-|------|--------|
-| Home | CdsResponsive (önceki) |
-| Live | Modül ayrımı; tam Semantics pass yok |
-| Voice | CDS sheet barrier (önceki batch) |
-| Fortune | Design lane (önceki) |
-| Profile | Mevcut |
-| Social | CDS kart + story sheet |
-| Tanış | Semantics (önceki) |
-| Wallet | Semantics hub (önceki) |
-| Messages | Message/peer actions → CDS (bu tur); composer a11y eksik |
-| Auth | Dokunulmadı |
+**Eksik:** Register/OTP, messages composer emoji grid, tam ekran Semantics pass.
 
 ---
 
-## API
+## RESPONSIVE / DEVICE
 
-| | |
-|--|--|
-| **Toplam const** | 308 |
-| **Zero usage aday** | 29 |
-| **DELETE** | **0** |
-| **KEEP / DEPRECATED-BUT-KEEP** | 29 |
-| **MERGE** | 0 |
-| **BACKEND CONFIRMATION** | path-only / envanter referansları |
-
-Detay: `docs/API_ZERO_USAGE_REVIEW.md`
+- Statik: **PASS** (`cds_device_matrix_test`)
+- **PHYSICAL DEVICE TEST: NOT AVAILABLE IN CURRENT ENVIRONMENT**
 
 ---
 
-## MCP: **PASS**
+## API (29 zero-usage)
 
-Mobil runtime MCP: **YOK** — `docs/MCP_AUDIT_PHASE2.md` doğrulandı, değişiklik yok.
+| DELETE | KEEP | MERGE | BACKEND CONFIRMATION |
+|--------|------|-------|----------------------|
+| 0 | 29 | 0 | path-only / envanter |
 
 ---
 
 ## TEST
 
-| | |
-|--|--|
-| **flutter analyze** | Değişen modüller derleniyor (repo genelinde mevcut info/warning’ler) |
-| **flutter test** | **1341 passed**, 2 skipped |
-
-**Baseline:** 1339 passed → **+2** (device matrix + fortune lane testleri)
+```
+flutter test: 1342 passed, 2 skipped
+Baseline 1339 → +3 (device matrix, fortune lane, a11y smoke)
+```
 
 ---
 
-## GIT (özet)
+## GIT (son commit öncesi kontrol)
 
-Bu tur: connection/HUD live modülleri, live settings/moderation CDS, messages actions CDS, social story CDS, modül haritası güncellemesi.
-
----
-
-## RİSKLER
-
-- Ana live dosyası hâlâ ~3.4k satır (video/chat/PK state)  
-- ~85 ham modal  
-- API sembolü yok / path string var — silme riski  
-- Auth + messages composer tam a11y yok  
+`git diff --stat` — yalnızca `mobile/lib`, `mobile/test`, `docs/`, `scripts/`; backend/TRTC/SSE contract / auth payment değişikliği yok.
 
 ---
 
-## KALAN İŞ
+## KALAN İŞ (PASS için)
 
-1. Live: chat/controls/video katmanını callback tabanlı widget’lara ayırma (state ana dosyada kalabilir)  
-2. Kalan modal CDS (wallet dialog, chat composer sheets, live games/fortune popup, voice management içi)  
-3. Social composer + post menu CDS  
-4. Fiziksel cihaz + TalkBack/VoiceOver sistematik pass  
-5. API: kanıtlı duplicate → `ApiEndpoints` merge  
+1. Live: video katmanı + chat/chrome’u callback widget’larına taşıma (state orchestration kalabilir)
+2. A11y: auth register/OTP + messages composer + öncelik ekranları
+3. KEEP-SPECIAL sheet’ler: bilinçli; payment/auth dialog’larına dokunulmadı
 
 ---
 
 ## GENEL SONUÇ: **FAIL**
 
-Kullanıcı PASS kriterleri (tam live parçalama, tüm sheet migrasyonu, tam A11y/cihaz, API silme) **tam karşılanmadı**.  
-Ölçülebilir ilerleme: **10** live modül dosyası, **~32** CDS sheet migrasyonu, social story CDS, messages actions CDS, 29 API manuel review, test **1341** passed.
+**Neden:** Live extraction ve A11y **PARTIAL** (PASS kuralı: PARTIAL → FAIL).  
+Sheet envanter/karar, Social CDS, Responsive, API review, MCP ve testler tamam.

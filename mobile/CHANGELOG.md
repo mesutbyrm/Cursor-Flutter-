@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.494+532 (2026-09-14) — Phase 2 FAIL→PASS turu (kısmi)
+
+- Live: viewer rail, host away, gift panel modülleri; sheet envanter script + karar dosyaları
+- CDS: live games, voice ranking, social composer, post silme dialog
+- A11y: auth alan/buton, composer paylaş; `cds_a11y_smoke_test`
+- Rapor: `docs/AUDIT_PHASE2_FINAL_COMPLETION.md` — **GENEL: FAIL** (live + a11y PARTIAL)
+
 ## 1.0.493+531 (2026-09-14) — Phase 2 final completion (kısmi)
 
 - **Live:** `live_broadcast_room_connection_overlays`, `live_broadcast_room_hud_overlays`; ana sayfa ~90 satır sadeleşti
