@@ -1,6 +1,6 @@
 # Flutter-only endpoint denetimi (MATCH / YEDEK / KALDIR)
 
-> **Generated:** 2026-09-11 21:20 UTC (`scripts/generate_flutter_only_endpoint_audit.py`)
+> **Generated:** 2026-09-14 11:18 UTC (`scripts/generate_flutter_only_endpoint_audit.py`)
 
 OpenAPI `backend-docs/openapi.json` ile **normalize eşleşmeyen** `mobile/lib` `/api/` literal’leri.
 Kılavuz: `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` (§9 mobil sözleşme, §10 opsiyonel/fallback).
@@ -9,24 +9,35 @@ Kılavuz: `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` (§9 mobil sözleşme, §10 ops
 
 | Karar | Adet |
 |-------|-----:|
-| **MATCH** | 63 |
-| **YEDEK** | 40 |
-| **KALDIR** | 11 |
-| **Toplam** | 114 |
+| **MATCH** | 127 |
+| **YEDEK** | 95 |
+| **KALDIR** | 3 |
+| **Toplam** | 225 |
 
 - **MATCH:** Birincil üretim/kılavuz yolu (şablon farkı veya opsiyonel uç).
 - **YEDEK:** Geriye dönük veya ikincil; kanonik uç başarısız olunca kullan.
 - **KALDIR:** Ölü kod, log artefaktı veya yanlış auth prefix.
 
-## Mobil hizalama (bu oturum)
+## Mobil hizalama (2026-09-14 parite — `1.0.490+528`)
 
 | Alan | Birincil (OpenAPI/kılavuz) | Yedek |
 |------|---------------------------|-------|
+| Auth | `mobile-login/register/refresh`, `GET /api/me` | (legacy web auth kaldırıldı) |
+| Push token | `POST /api/user/device-token` | `POST /api/auth/mobile/device-token` |
+| Bildirim unread | `GET /api/notifications?unreadOnly=true` | `GET /api/messages?unreadCount=true` |
+| Günlük ödül | `GET/POST /api/games/daily-reward` | `GET /api/mobile/home` gömülü |
+| Fal jeton/CFC ön | `POST /api/fortune-access/check` | (consume kaldırıldı) |
+| Popüler müzik | `GET /api/music/search` | `GET /api/chat/music/popular` |
+| Turnuva katılım | `POST /api/tournaments` `{action:join}` | — |
 | Cüzdan | `GET /api/wallet` | `GET /api/user/wallet` |
-| Fal erişim kontrol | `POST /api/fortune-access/check` | — |
 | Fal erişim ayar | `GET /api/fortune-access/ip-status` | `GET /api/fortune-access/settings` |
 | Referral özet | `GET /api/referral` | `/api/referral/stats`, `/me` |
 | Referral kazanç | `GET /api/user/referral-earnings` | `/api/referral/earnings` |
+| İstatistik | `GET /api/user/stats` | `GET /api/user/statistics` |
+| Hediyeler | `GET /api/user/received-gifts` | — |
+| Site stats | `GET /api/public-stats` | — |
+| Stories | `GET /api/stories` | `GET /api/social/stories` |
+| Ana sayfa banner | `GET /api/mobile/home` | `GET /api/social/announcements` |
 
 ## Tam liste
 
@@ -51,50 +62,104 @@ Kılavuz: `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` (§9 mobil sözleşme, §10 ops
 | `/api/admin/voice-room-backgrounds` | **YEDEK** | `/api/admin/voice-rooms` | Arka plan yönetimi |
 | `/api/admin/voice-room-finance-audit` | **YEDEK** | `/api/admin/voice-room-finance` | Finans denetimi |
 | `/api/admin/voice-room-settings` | **YEDEK** | `/api/platform/voice-room-settings` | Platform ayarı |
+| `/api/ads/placement` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
 | `/api/advisors` | **MATCH** | `GET /api/advisors` | OpenAPI şablon farkı (literal prefix) |
 | `/api/advisors/online` | **MATCH** | `GET /api/advisors/online` | Şablon |
+| `/api/agency/applicant-score/[userId]` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/agency/growth` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
 | `/api/agency/invite-earnings` | **MATCH** | Kılavuz §10 opsiyonel | 404 → gizle |
+| `/api/agency/live-status` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/agency/wallet` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/agency/wallet/transfer` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/animations/me` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/animations/resolve` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
 | `/api/auth/` | **KALDIR** | `/api/auth/mobile-*` | Eski web auth prefix — mobilde kullanılmamalı |
-| `/api/auth/google` | **KALDIR** | `POST /api/auth/mobile-google` | Legacy web |
-| `/api/auth/login` | **KALDIR** | `POST /api/auth/mobile-login` | Legacy web |
-| `/api/auth/me` | **KALDIR** | `GET /api/me` | Legacy web |
+| `/api/auth/email/send-verification` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/auth/logout-all` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
 | `/api/auth/mobile-send-verification` | **YEDEK** | `POST /api/auth/mobile-verify-email` | Doğrulama akışı |
 | `/api/auth/mobile-sessions` | **MATCH** | Kılavuz §9 Auth | Üretimde mobil oturumlar |
 | `/api/auth/mobile-verify-email` | **MATCH** | Kılavuz §9 Auth | Üretim |
 | `/api/auth/mobile/device-token` | **MATCH** | `POST /api/user/device-token` | Cihaz token alias |
-| `/api/auth/refresh` | **KALDIR** | `POST /api/auth/mobile-refresh` | Legacy refresh |
-| `/api/auth/register` | **KALDIR** | `POST /api/auth/mobile-register` | Legacy register |
-| `/api/auth/tiktok` | **KALDIR** | `POST /api/auth/mobile-tiktok` | Legacy TikTok |
-| `/api/banners` | **MATCH** | `GET /api/banners` | Ana sayfa |
+| `/api/auth/phone/send-otp` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/auth/phone/verify-otp` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/auth/sessions` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/billing/app-store/verify` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/billing/google-play/verify` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
 | `/api/blog/recent` | **MATCH** | `GET /api/blog/recent` | Blog |
 | `/api/celebrities` | **MATCH** | `GET /api/celebrities` | Keşfet |
+| `/api/cfc-arena/join` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
 | `/api/chat/music/popular` | **MATCH** | `GET /api/chat/music/popular` | Müzik |
 | `/api/chat/rooms/` | **MATCH** | `/api/chat/rooms/{id}/*` | Dinamik oda prefix |
+| `/api/chat/rooms/[roomId]/gifts` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/chat/rooms/[roomId]/messages` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/chat/rooms/[roomId]/moderation` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/chat/rooms/[roomId]/music` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/chat/rooms/[roomId]/music-queue` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/chat/rooms/[roomId]/music/stop` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/chat/rooms/[roomId]/seats` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/chat/rooms/[roomId]/settings` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/chat/rooms/[roomId]/song-request` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/chat/rooms/[roomId]/speak-request` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/chat/rooms/[roomId]/speak-request/[userId]/block` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/chat/rooms/[roomId]/speak-request/[userId]/reject` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/chat/rooms/[roomId]/speak-requests` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/chat/rooms/[roomId]/speak-requests/[targetUserId]/approve` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/chat/rooms/[roomId]/state` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/chat/rooms/[roomId]/stream` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/chat/rooms/[roomId]/sync` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/chat/rooms/[roomId]/typing` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/chat/rooms/[roomId]/voice` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/chat/rooms/pk/candidates` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
 | `/api/currency-branding` | **MATCH** | Kılavuz §10 | OpenAPI’de olabilir; ekonomi v2 |
-| `/api/daily-rewards` | **MATCH** | `GET /api/daily-rewards` | Günlük ödül |
+| `/api/dream-contest/[contestId]/entries` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/dream-contest/[contestId]/vote` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/dreams/[slug]/favorite` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/dreams/[slug]/view` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
 | `/api/fan-clubs` | **MATCH** | `GET /api/fan-clubs` | Fan kulüp |
 | `/api/fan-clubs/popular` | **MATCH** | `GET /api/fan-clubs/popular` | Fan kulüp |
-| `/api/fortune-access/consume` | **YEDEK** | Fal POST / jeton düşümü | OpenAPI’de yok; 404 tolere |
 | `/api/fortune-access/settings` | **YEDEK** | `GET /api/fortune-access/ip-status` | Settings 404; ip-status kanonik |
+| `/api/fortune-tellers/[tellerId]/session` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/fortune-tellers/sessions/[sessionId]` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
 | `/api/games/history` | **MATCH** | `GET /api/games/history` | Oyun geçmişi |
 | `/api/games/mini-scores` | **MATCH** | `GET /api/games/mini-scores` | Mini oyun |
+| `/api/games/room/[roomId]` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/games/room/[roomId]/chat` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/games/room/[roomId]/replace-ai` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/games/room/[roomId]/viewers` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/games/sos/[gameId]` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/games/sos/[gameId]/chat` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/games/sos/[gameId]/viewers` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
 | `/api/games/sos/create` | **MATCH** | Kılavuz §10 korunan | SOS oluştur |
+| `/api/gift-box` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/gift-box/[boxId]/join` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/gift-box/share` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
 | `/api/gifts/display-settings` | **MATCH** | `GET /api/gifts/display-settings` | Hediye UI |
-| `/api/homepage` | **MATCH** | `GET /api/homepage` | Ana sayfa |
+| `/api/gifts/missions/[missionId]/claim` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/hashtags/[name]` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
 | `/api/leaderboard` | **MATCH** | `GET /api/leaderboard` | Liderlik |
+| `/api/leaderboards/top100` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
 | `/api/live` | **MATCH** | `/api/live/*` | Canlı prefix |
 | `/api/live/fal-request/create` | **YEDEK** | `/api/video-streams/{id}/fortune-requests` | Legacy canlı fal |
 | `/api/live/fal-requests` | **YEDEK** | `/api/video-streams/{id}/fortune-requests` | Legacy liste |
+| `/api/me/admin-capabilities` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/me/membership` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/me/membership-events` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/me/membership-history` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/me/profile-visitors` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/me/vip-identity` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/me/vip-preferences` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/me/vip-xp` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/memberships/gift` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/messages/[userId]` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
 | `/api/messages/conversations` | **MATCH** | `GET /api/messages/conversations` | DM |
-| `/api/me→isFortuneTeller` | **KALDIR** | (log string) | Gerçek endpoint değil |
 | `/api/mobile/auth/web-session` | **YEDEK** | `/api/auth/mobile-*` | Web oturum köprüsü |
+| `/api/mobile/user-profile/[userId]` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
 | `/api/notifications/payment` | **MATCH** | `GET /api/notifications/payment` | Ödeme bildirimi |
-| `/api/notifications/unread` | **MATCH** | `GET /api/notifications/unread` | Okunmamış |
+| `/api/payments/notifications/[notificationId]/dispute` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
 | `/api/pk` | **MATCH** | `/api/pk/*` (games host) | Router → games API |
 | `/api/pk/` | **MATCH** | `/api/pk/*` | Router prefix |
 | `/api/pk/admin/ban` | **YEDEK** | games PK admin | Games backend |
 | `/api/pk/admin/bans` | **YEDEK** | games PK admin | Games backend |
-| `/api/pk/battles` | **MATCH** | `GET /api/pk/battles` | Games host |
 | `/api/pk/history` | **YEDEK** | `GET /api/pk/me/history` | Şablon/host |
 | `/api/pk/me/history` | **YEDEK** | games `/api/pk/me/history` | Ana host 404 |
 | `/api/pk/me/matches` | **YEDEK** | games PK | Ana host 404 |
@@ -110,42 +175,99 @@ Kılavuz: `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` (§9 mobil sözleşme, §10 ops
 | `/api/referral/settings` | **YEDEK** | `GET /api/referral` | Ayarlar gömülü |
 | `/api/referral/stats` | **YEDEK** | `GET /api/referral` | OpenAPI kanonik |
 | `/api/referral/users` | **YEDEK** | `GET /api/referral` | referrals[] gömülü |
+| `/api/refunds` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
 | `/api/reports` | **MATCH** | `POST /api/reports` | Şikayet |
+| `/api/room/[sessionId]` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/room/[sessionId]/messages` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/room/[sessionId]/review` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/room/[sessionId]/stream` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/room/[sessionId]/summary` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/room/[sessionId]/tip` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/short-videos/[id]` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/short-videos/[id]/comments` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/short-videos/[id]/comments/[commentId]/like` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/short-videos/[id]/comments/[commentId]/pin` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/short-videos/[id]/duets` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/short-videos/[id]/like` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/short-videos/[id]/save` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/short-videos/[id]/share` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/short-videos/[id]/view` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
 | `/api/short-videos/explore/nearby` | **MATCH** | `GET /api/short-videos/explore/nearby` | Keşfet |
 | `/api/short-videos/hashtags/search` | **MATCH** | `GET .../search` | Hashtag |
 | `/api/short-videos/hashtags/trending` | **MATCH** | `GET .../trending` | Hashtag |
 | `/api/short-videos/live-clip` | **MATCH** | `POST /api/short-videos/live-clip` | Klip |
 | `/api/short-videos/music/recommend` | **MATCH** | `GET .../recommend` | Müzik |
+| `/api/short-videos/profile/[userId]` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
 | `/api/short-videos/recommend` | **MATCH** | `GET /api/short-videos/recommend` | Öneri |
 | `/api/short-videos/suggest-metadata` | **MATCH** | `POST .../suggest-metadata` | Metadata |
+| `/api/short-videos/user/[userId]` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
 | `/api/short-videos/viewed/me` | **MATCH** | `GET .../viewed/me` | İzleme geçmişi |
 | `/api/site-animations/active` | **YEDEK** | Yerel asset katalog | Üretim 404; fallback |
+| `/api/social/actions` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
 | `/api/social/announcements` | **MATCH** | `GET /api/social/announcements` | Duyuru |
+| `/api/social/discovery` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/social/posts/[postId]` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/social/posts/[postId]/comments` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/social/posts/[postId]/likes` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
 | `/api/social/posts/auto-fortune` | **MATCH** | `POST .../auto-fortune` | Sosyal fal |
-| `/api/social/public-stats` | **MATCH** | `GET /api/social/public-stats` | İstatistik |
+| `/api/social/profile` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
 | `/api/social/stories` | **MATCH** | `GET /api/social/stories` | Hikaye |
+| `/api/support/tickets/[ticketId]` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/support/tickets/[ticketId]/messages` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/teams/[teamId]` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/teller-chat/[sessionId]` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
 | `/api/teller/gifts` | **MATCH** | `GET /api/teller/gifts` | Falcı hediye |
 | `/api/teller/reviews` | **MATCH** | `GET /api/teller/reviews` | Yorum |
-| `/api/tournaments/join` | **MATCH** | `POST /api/tournaments/join` | Turnuva |
+| `/api/trends/[slug]/like` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/user/[userId]/achievements` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/user/[userId]/follow` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/user/[userId]/follow-status` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/user/account` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
 | `/api/user/cosmetics` | **MATCH** | `GET /api/user/cosmetics` | Kozmetik |
 | `/api/user/cosmetics/equip` | **MATCH** | `POST .../equip` | Kozmetik |
 | `/api/user/cosmetics/loadout` | **MATCH** | `GET .../loadout` | Loadout |
 | `/api/user/daily-tasks` | **MATCH** | `GET /api/user/daily-tasks` | Görevler |
 | `/api/user/device-token` | **MATCH** | `POST /api/user/device-token` | FCM |
 | `/api/user/favorites` | **MATCH** | `GET /api/user/favorites` | Favori |
+| `/api/user/fortunes/[fortuneId]` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/user/location` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
 | `/api/user/profile/cosmetics/equip` | **YEDEK** | `/api/user/cosmetics/equip` | Alias |
-| `/api/user/profile→isFortuneTeller` | **KALDIR** | (log string) | Gerçek endpoint değil |
 | `/api/user/referral-earnings` | **MATCH** | Kılavuz §10 birincil (404→`/api/referral`) | Ekonomi ekranı |
+| `/api/user/social-settings` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
 | `/api/user/story` | **MATCH** | `GET/POST /api/user/story` | Hikaye |
 | `/api/user/wallet` | **YEDEK** | `GET /api/wallet` | Kılavuz §9/§10; OpenAPI kanonik wallet |
+| `/api/users/[userId]` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/users/[userId]/follow` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/users/[userId]/posts` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
+| `/api/users/lookup/[username]` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
 | `/api/users/me/activity` | **MATCH** | `GET /api/users/me/activity` | Aktivite |
 | `/api/users/me/broadcast-history` | **MATCH** | `GET .../broadcast-history` | Yayın |
-| `/api/users/me/gifts-received` | **MATCH** | `GET .../gifts-received` | Hediye |
 | `/api/users/me/profile-visitors` | **MATCH** | `GET .../profile-visitors` | Ziyaretçi |
-| `/api/users/me/stats` | **MATCH** | `GET /api/users/me/stats` | İstatistik |
 | `/api/v1` | **KALDIR** | Yerel mirror / Invidious | Üretim API değil |
 | `/api/v1/` | **KALDIR** | Yerel mirror | Üretim API değil |
 | `/api/video` | **MATCH** | `/api/video/*` prefix | Video modülü |
+| `/api/video-streams/[streamId]/auto-close` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/video-streams/[streamId]/ban` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/video-streams/[streamId]/co-broadcast` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/video-streams/[streamId]/co-broadcast/invite` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/video-streams/[streamId]/comments` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/video-streams/[streamId]/fortune-requests` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/video-streams/[streamId]/fortune-requests/my-status` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/video-streams/[streamId]/gifts` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/video-streams/[streamId]/join` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/video-streams/[streamId]/leave` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/video-streams/[streamId]/like` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/video-streams/[streamId]/live-started` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/video-streams/[streamId]/media-heartbeat` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/video-streams/[streamId]/messages` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/video-streams/[streamId]/moderators` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/video-streams/[streamId]/mute` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/video-streams/[streamId]/pk-battle` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/video-streams/[streamId]/signal` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/video-streams/[streamId]/stream` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/video-streams/[streamId]/sync` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/video-streams/pk/candidates` | **MATCH** | Kılavuz §9 | Backtick referans; OpenAPI şablon farkı |
+| `/api/vip/leaderboard` | **YEDEK** | (doğrula) | OpenAPI’de birebir yok — üretim probe gerekir |
 
 ## Komut
 

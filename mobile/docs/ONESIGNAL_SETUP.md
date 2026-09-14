@@ -29,7 +29,7 @@ OneSignal Android’de teslimat için **Firebase Cloud Messaging** kullanır.
 
 Kullanıcı giriş yaptığında SDK `OneSignal.login(userId)` çağırır; panelden kullanıcıya hedefli bildirim gönderebilirsiniz.
 
-Push token sunucuya `POST /api/devices/fcm` ile kaydedilir (`provider: onesignal`).
+Push token sunucuya `POST /api/user/device-token` ile kaydedilir (`provider: onesignal`; yedek: `POST /api/auth/mobile/device-token`).
 
 ## Sunucu (API) — REST API Key
 

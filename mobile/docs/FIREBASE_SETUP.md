@@ -53,7 +53,7 @@ Push için OneSignal kullanılıyor; ayrıntılar: [ONESIGNAL_SETUP.md](./ONESIG
 
 ## Backend
 
-Oturum açıldığında uygulama `POST /api/devices/fcm` ile token kaydı dener (OneSignal veya FCM token; canlifal.com’da uç yoksa sessizce atlanır). Self-hosted API bu uçu destekler.
+Oturum açıldığında uygulama `POST /api/user/device-token` ile token kaydı dener (yedek: `POST /api/auth/mobile/device-token`). OneSignal veya FCM token; uç yanıt vermezse kayıt atlanır.
 
 ## Analytics
 
