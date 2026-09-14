@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/push/push_notification_service.dart';
+import '../../../../core/design_system/cds_fx.dart';
 import '../../../../core/ui/premium_2026/premium_2026.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover_refresh.dart';
@@ -97,6 +98,7 @@ class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
+    final reduceMotion = ref.watch(cdsFxProvider).performanceMode;
     final bg = context.isDarkTheme
         ? UltraFortuneTokens.deepNight
         : context.colors.scaffoldBackground;
@@ -107,6 +109,7 @@ class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
       backgroundColor: bg,
       body: UltraFortuneCosmicBackground(
         scrollParallax: _scrollParallax,
+        reduceMotion: reduceMotion,
         child: DiscoverRefresh.wrap(
           onRefresh: _onRefresh,
           child: CustomScrollView(

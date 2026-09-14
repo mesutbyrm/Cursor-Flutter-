@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/bootstrap/app_cache_clear.dart';
+import '../../../../core/design_system/cds_fx.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
@@ -136,6 +137,19 @@ class SettingsPage extends ConsumerWidget {
               const SizedBox(height: 20),
               const _SectionLabel('Görünüm'),
               const ThemeModeSelector(),
+              ProfileGlass(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: SwitchListTile(
+                  secondary: const Icon(Icons.speed_rounded),
+                  title: const Text('Performans modu'),
+                  subtitle: const Text(
+                    'Dekoratif animasyon ve blur azaltılır; sohbet, hediye ve yayın çalışır.',
+                  ),
+                  value: ref.watch(cdsFxProvider).performanceMode,
+                  onChanged: (v) =>
+                      ref.read(cdsFxProvider.notifier).setPerformanceMode(v),
+                ),
+              ),
               const SizedBox(height: 20),
               const _SectionLabel('Depolama'),
               ProfileGlass(

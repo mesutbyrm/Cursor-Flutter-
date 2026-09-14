@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.491+529 (2026-09-14) — CDS v1 audit uygulama (Aşama 2)
+
+- **CDS v1:** `lib/core/design_system/` (renk, tipografi, buton, kart, sheet, dialog, FX gate)
+- **Performans modu:** Ayarlar + `cdsFxProvider`; fal cosmic / PK shimmer / VIP entrance gated
+- **Ana sayfa IA:** Devam et, story+canlı hero, fal+Gold spotlight, Tanış CTA
+- **Hediye:** `CdsFullscreenGiftGate` tek tam ekran hediye
+- **Sheet migrate:** `fortune_access_sheet` → `CdsBottomSheet`
+- **Dead UI:** `DiscoverBottomBar`, `FeedComposerBar`, `VoicePremiumStage`, `PremiumNavBar`
+- Dokümantasyon: `docs/CDS_V1.md`, `docs/API_ENDPOINT_USAGE_TOP30.txt`
+
 ## 1.0.490+528 (2026-09-14) — API parite son kontrol
 
 - `mobile/home` liste anahtarları ortak (`MobileHomeCompoundLists`)

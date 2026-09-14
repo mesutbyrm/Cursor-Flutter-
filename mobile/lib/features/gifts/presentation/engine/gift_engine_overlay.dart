@@ -14,6 +14,7 @@ import '../sync/gift_session_controller.dart';
 import '../widgets/gift_animation_player.dart';
 import '../widgets/gift_media_widget.dart';
 import '../widgets/gift_stage_layout.dart';
+import '../../../../core/design_system/cds_overlay_priority.dart';
 
 /// Backend Gift Engine — tek aktif animasyon, alan ve öncelik backend'den.
 class GiftEngineOverlay extends ConsumerStatefulWidget {
@@ -70,6 +71,7 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
 
     Future<void>.delayed(delay, () {
       if (!mounted || widget.event?.id != ev.id) return;
+      if (!CdsFullscreenGiftGate.instance.tryAcquire(ev.id)) return;
       setState(() => _visible = true);
       final key = widget.sessionKey?.trim();
       if (key != null && key.isNotEmpty) {
@@ -77,6 +79,7 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
       }
       _finishTimer = Timer(duration, () {
         if (!mounted) return;
+        CdsFullscreenGiftGate.instance.release(ev.id);
         widget.onFinished?.call(ev.id);
       });
     });
@@ -85,6 +88,10 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
   @override
   void dispose() {
     _finishTimer?.cancel();
+    final id = widget.event?.id;
+    if (id != null) {
+      CdsFullscreenGiftGate.instance.release(id);
+    }
     super.dispose();
   }
 

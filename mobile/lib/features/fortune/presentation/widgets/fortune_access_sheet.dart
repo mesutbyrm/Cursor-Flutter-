@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/design_system/cds_bottom_sheet.dart';
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../domain/fortune_access_config.dart';
 import '../providers/fortune_access_providers.dart';
@@ -21,11 +22,9 @@ Future<FortuneAccessChoice?> showFortuneAccessSheet({
   required String fortuneTitle,
 }) {
   final container = ProviderScope.containerOf(context);
-  return showModalBottomSheet<FortuneAccessChoice>(
+  return CdsBottomSheet.show<FortuneAccessChoice>(
     context: context,
-    showDragHandle: true,
-    isScrollControlled: true,
-    builder: (ctx) => UncontrolledProviderScope(
+    child: UncontrolledProviderScope(
       container: container,
       child: _FortuneAccessSheetBody(
         state: state,

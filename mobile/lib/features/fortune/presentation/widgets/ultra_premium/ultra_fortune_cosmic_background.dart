@@ -12,6 +12,7 @@ class UltraFortuneCosmicBackground extends StatefulWidget {
     required this.child,
     this.scrollOffset = 0,
     this.scrollParallax,
+    this.reduceMotion = false,
   });
 
   final Widget child;
@@ -21,6 +22,9 @@ class UltraFortuneCosmicBackground extends StatefulWidget {
 
   /// Scroll parallax — yalnızca arka plan katmanları rebuild olur.
   final ScrollParallaxNotifier? scrollParallax;
+
+  /// CDS performance mode — statik gradient, ticker kapalı.
+  final bool reduceMotion;
 
   @override
   State<UltraFortuneCosmicBackground> createState() =>
@@ -42,15 +46,36 @@ class _UltraFortuneCosmicBackgroundState extends State<UltraFortuneCosmicBackgro
     _nebula = AnimationController(
       vsync: this,
       duration: UltraFortuneTokens.nebulaBreath,
-    )..repeat(reverse: true);
+    );
     _particles = AnimationController(
       vsync: this,
       duration: UltraFortuneTokens.particleLoop,
-    )..repeat();
+    );
     _fog = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 18),
-    )..repeat();
+    );
+    if (!widget.reduceMotion) {
+      _nebula.repeat(reverse: true);
+      _particles.repeat();
+      _fog.repeat();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant UltraFortuneCosmicBackground oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.reduceMotion != widget.reduceMotion) {
+      if (widget.reduceMotion) {
+        _nebula.stop();
+        _particles.stop();
+        _fog.stop();
+      } else {
+        if (!_nebula.isAnimating) _nebula.repeat(reverse: true);
+        if (!_particles.isAnimating) _particles.repeat();
+        if (!_fog.isAnimating) _fog.repeat();
+      }
+    }
   }
 
   void _ensureFields(Size size) {
@@ -142,13 +167,14 @@ class _UltraFortuneCosmicBackgroundState extends State<UltraFortuneCosmicBackgro
         const DecoratedBox(
           decoration: BoxDecoration(gradient: UltraFortuneTokens.deepSpaceGradient),
         ),
-        if (parallax != null)
-          ListenableBuilder(
-            listenable: parallax,
-            builder: (_, _) => _animatedLayers(size, parallax.offset),
-          )
-        else
-          _animatedLayers(size, _parallaxOffset()),
+        if (!widget.reduceMotion)
+          if (parallax != null)
+            ListenableBuilder(
+              listenable: parallax,
+              builder: (_, _) => _animatedLayers(size, parallax.offset),
+            )
+          else
+            _animatedLayers(size, _parallaxOffset()),
         DecoratedBox(
           decoration: BoxDecoration(
             gradient: RadialGradient(
