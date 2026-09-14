@@ -8,6 +8,7 @@ import '../../../../core/util/json_util.dart';
 import '../../../../core/util/fortune_price_parser.dart';
 import '../models/mobile_compound_models.dart';
 import '../homepage_ticker_parser.dart';
+import '../mobile_home_compound_lists.dart';
 import 'mobile_compound_remote_datasource.dart';
 import '../../domain/entities/home_banner_entity.dart';
 import '../../domain/entities/home_blog_post_entity.dart';
@@ -233,36 +234,20 @@ class HomeRemoteDataSource {
   }
 
   List<HomeFanClubItem> _fanClubsFromCompound(Map<String, dynamic> raw) {
-    for (final key in const [
-      'fanClubs',
-      'popularFanClubs',
-      'clubs',
-    ]) {
-      final v = raw[key];
-      if (v is! List || v.isEmpty) continue;
-      return v
-          .map(_mapFanClub)
-          .where((c) => c.id.isNotEmpty && c.title.isNotEmpty)
-          .toList();
-    }
-    return const [];
+    return MobileHomeCompoundLists.rows(raw, MobileHomeCompoundLists.fanClubKeys)
+        .map(_mapFanClub)
+        .where((c) => c.id.isNotEmpty && c.title.isNotEmpty)
+        .toList();
   }
 
   List<DailyRewardEntity> _dailyRewardsFromCompound(Map<String, dynamic> raw) {
-    for (final key in const ['dailyRewards', 'rewards', 'dailyReward']) {
-      final v = raw[key];
-      if (v is List && v.isNotEmpty) {
-        return v
-            .map(_mapDailyReward)
-            .where((r) => r.id.isNotEmpty || r.title.isNotEmpty)
-            .toList();
-      }
-      if (v is Map) {
-        final one = _mapDailyReward(v);
-        if (one.id.isNotEmpty || one.title.isNotEmpty) return [one];
-      }
-    }
-    return const [];
+    return MobileHomeCompoundLists.rows(
+          raw,
+          MobileHomeCompoundLists.dailyRewardKeys,
+        )
+        .map(_mapDailyReward)
+        .where((r) => r.id.isNotEmpty || r.title.isNotEmpty)
+        .toList();
   }
 
   List<DailyRewardEntity> _parseDailyRewardsBody(dynamic body) {

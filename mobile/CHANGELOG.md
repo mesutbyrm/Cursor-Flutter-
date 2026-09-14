@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.490+528 (2026-09-14) — API parite son kontrol
+
+- `mobile/home` liste anahtarları ortak (`MobileHomeCompoundLists`)
+- Yasak legacy path taraması: `api_parity_forbidden_paths_test`
+- Logout FCM yorumu: `user/device-token`
+
 ## 1.0.489+527 (2026-09-14) — API parite (fal erişim, content hub)
 
 - Fal jeton/CFC ön doğrulama: `POST /api/fortune-access/check` (`/consume` kaldırıldı)

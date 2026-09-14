@@ -5,6 +5,7 @@ import '../../../core/network/api_endpoints.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../../core/util/json_util.dart';
 import '../../home/data/datasources/mobile_compound_remote_datasource.dart';
+import '../../home/data/mobile_home_compound_lists.dart';
 import '../domain/native_feature_item.dart';
 
 class NativeFeatureRemoteDataSource {
@@ -119,22 +120,17 @@ class NativeFeatureRemoteDataSource {
     IconData icon,
     String route,
   ) {
-    for (final key in const ['fanClubs', 'popularFanClubs', 'clubs']) {
-      final v = raw[key];
-      if (v is! List || v.isEmpty) continue;
-      return v
-          .whereType<Map>()
-          .map(
-            (e) => _mapItem(
-              asJsonMap(e),
-              fallbackIcon: icon,
-              fallbackRoute: route,
-            ),
-          )
-          .where((item) => item.title.trim().isNotEmpty)
-          .toList();
-    }
-    return const [];
+    return MobileHomeCompoundLists.rows(raw, MobileHomeCompoundLists.fanClubKeys)
+        .whereType<Map>()
+        .map(
+          (e) => _mapItem(
+            asJsonMap(e),
+            fallbackIcon: icon,
+            fallbackRoute: route,
+          ),
+        )
+        .where((item) => item.title.trim().isNotEmpty)
+        .toList();
   }
 
   Future<List<NativeFeatureItem>> _fetchPath(

@@ -260,7 +260,7 @@ class AuthService {
     );
   }
 
-  /// `POST /api/auth/logout` + `DELETE /api/devices/fcm` + yerel temizlik.
+  /// `POST /api/auth/logout` + `DELETE /api/user/device-token` + yerel temizlik.
   Future<void> logout() async {
     try {
       await _authedDio.safePost<dynamic>(ApiEndpoints.authLogout);
