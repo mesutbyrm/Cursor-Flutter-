@@ -7,6 +7,7 @@ import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart
 import '../../data/pk_battle_bridge.dart';
 import '../../data/pk_exception.dart';
 import '../../data/pk_models.dart';
+import '../../data/pk_service.dart';
 import 'pk_providers.dart';
 
 enum PkContextKind { live, voice }
