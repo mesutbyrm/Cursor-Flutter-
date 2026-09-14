@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.493+531 (2026-09-14) — Phase 2 final completion (kısmi)
+
+- **Live:** `live_broadcast_room_connection_overlays`, `live_broadcast_room_hud_overlays`; ana sayfa ~90 satır sadeleşti
+- **CDS sheet:** live moderasyon/ayarlar, mesaj/peer aksiyonları, hikâye oluşturma
+- Rapor: `docs/AUDIT_PHASE2_FINAL_COMPLETION.md` (GENEL: FAIL — kalan işler listeli)
+
 ## 1.0.492+530 (2026-09-14) — Audit phase 2 FAZ 7–16 (kısmi)
 
 - **Fortune design lane:** `fortune_design_lane.dart` — hub/session/result ortak backdrop + kart + motion
