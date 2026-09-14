@@ -7,7 +7,10 @@ import 'profile_hub_header.dart';
 import 'profile_hub_tabbed_sections.dart';
 import '../../../shorts/presentation/widgets/shorts_profile_content.dart';
 
-/// Referans profil hub düzeni — accordion kartlar.
+/// Referans profil hub — tek scroll: Header → Avatar/Cover → Stats → rol bölümleri → üyelik/cüzdan → ayarlar.
+///
+/// Rol çözümü [ProfileScreenState] + `showAdmin` / `showStaff` / `showPublisher` bayraklarından gelir;
+/// client tarafında sahte rol üretilmez.
 class ProfileHubLayout extends StatelessWidget {
   const ProfileHubLayout({
     super.key,

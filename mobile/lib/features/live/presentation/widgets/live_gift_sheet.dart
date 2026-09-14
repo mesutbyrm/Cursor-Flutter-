@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/design_system/cds_bottom_sheet.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/config/env.dart';
@@ -25,13 +26,9 @@ Future<void> showLiveGiftPicker(
   String receiverName = 'Yayıncı',
 }) async {
   ref.invalidate(liveStreamGiftCatalogProvider);
-  await showModalBottomSheet<void>(
+  await CdsBottomSheet.show<void>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: AppTheme.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
+    child: Builder(
     builder: (ctx) {
       return Consumer(
         builder: (context, ref, _) {
@@ -182,6 +179,7 @@ Future<void> showLiveGiftPicker(
         },
       );
     },
+    ),
   );
 }
 

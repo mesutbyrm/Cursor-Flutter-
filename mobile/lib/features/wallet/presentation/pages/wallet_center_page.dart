@@ -179,7 +179,10 @@ class _HubCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DiscoverGlassCard(
+    return Semantics(
+      button: true,
+      label: title,
+      child: DiscoverGlassCard(
       onTap: onTap,
       padding: const EdgeInsets.all(16),
       borderColor: color.withValues(alpha: 0.45),
@@ -213,6 +216,7 @@ class _HubCard extends StatelessWidget {
           Icon(Icons.chevron_right_rounded, color: color.withValues(alpha: 0.9)),
         ],
       ),
+    ),
     );
   }
 }

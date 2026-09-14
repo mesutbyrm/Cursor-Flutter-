@@ -107,6 +107,7 @@ import '../widgets/broadcast_room/live_broadcast_ended_flow.dart';
 import '../widgets/broadcast_room/live_network_quality_pill.dart';
 import '../widgets/broadcast_room/live_host_away_viewer_banner.dart';
 import '../widgets/broadcast_room/live_stream_games_sheet.dart';
+import '../widgets/broadcast_room/live_broadcast_room_chips.dart';
 import '../widgets/broadcast_room/live_reconnect_banner.dart';
 import '../widgets/broadcast_room/live_host_guest_request_center_overlay.dart';
 import '../providers/live_guest_request_blocklist_provider.dart';
@@ -3062,7 +3063,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               Positioned(
                 left: 12,
                 bottom: 268,
-                child: _LiveLikeContributorsChip(
+                child: LiveBroadcastLikeContributorsChip(
                   counts: interaction.userLikeCounts,
                 ),
               ),
@@ -3232,7 +3233,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                                         .lastJoinedDisplayName!.isNotEmpty)
                                   Padding(
                                     padding: const EdgeInsets.only(bottom: 6),
-                                    child: _LastJoinedChip(
+                                    child: LiveBroadcastLastJoinedChip(
                                       name: roomState.lastJoinedDisplayName!,
                                     ),
                                   ),
@@ -3472,81 +3473,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         ),
       ),
       ),
-      ),
-    );
-  }
-}
-
-class _LastJoinedChip extends StatelessWidget {
-  const _LastJoinedChip({required this.name});
-
-  final String name;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF7C4DFF).withValues(alpha: 0.55)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.waving_hand_rounded,
-                size: 14, color: Color(0xFFFFD54F)),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                '$name yayına katıldı',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _LiveLikeContributorsChip extends StatelessWidget {
-  const _LiveLikeContributorsChip({required this.counts});
-
-  final Map<String, int> counts;
-
-  @override
-  Widget build(BuildContext context) {
-    final top = counts.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    final line = top
-        .take(3)
-        .map((e) => '❤️ ${e.value}')
-        .join('  ');
-    if (line.isEmpty) return const SizedBox.shrink();
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white24),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        child: Text(
-          line,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
       ),
     );
   }

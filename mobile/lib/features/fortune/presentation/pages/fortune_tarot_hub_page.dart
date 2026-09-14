@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/push/push_notification_service.dart';
-import '../../../../core/design_system/cds_fx.dart';
 import '../../../../core/ui/premium_2026/premium_2026.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover_refresh.dart';
@@ -16,7 +15,7 @@ import '../providers/fortune_types_display_provider.dart';
 import '../../../bana_ozel/presentation/providers/bana_ozel_providers.dart';
 import '../../../live_psychics/presentation/widgets/psychics_home_section.dart';
 import '../widgets/ultra_premium/ultra_fortune_app_bar.dart';
-import '../widgets/ultra_premium/ultra_fortune_cosmic_background.dart';
+import '../design/fortune_design_lane.dart';
 import '../widgets/ultra_premium/ultra_fortune_daily_energy.dart';
 import '../widgets/ultra_premium/ultra_fortune_daily_missions_strip.dart';
 import '../widgets/ultra_premium/ultra_fortune_hero_section.dart';
@@ -98,7 +97,6 @@ class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
-    final reduceMotion = ref.watch(cdsFxProvider).performanceMode;
     final bg = context.isDarkTheme
         ? UltraFortuneTokens.deepNight
         : context.colors.scaffoldBackground;
@@ -107,9 +105,9 @@ class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
       context: SiteAnimationContext.falTarot,
       child: Scaffold(
       backgroundColor: bg,
-      body: UltraFortuneCosmicBackground(
+      body: FortuneLaneBackdrop(
+        surface: FortuneLaneSurface.hub,
         scrollParallax: _scrollParallax,
-        reduceMotion: reduceMotion,
         child: DiscoverRefresh.wrap(
           onRefresh: _onRefresh,
           child: CustomScrollView(

@@ -15,6 +15,7 @@ import '../widgets/premium_2026/fortune_type_immersive_scaffold.dart';
 import '../widgets/premium_ai/fortune_result_action_panel.dart';
 import '../widgets/premium_ai/fortune_share_story_card.dart';
 import '../widgets/premium_ai/premium_fortune_result_canvas.dart';
+import '../widgets/ultra_premium/ultra_fortune_tokens.dart';
 
 /// Premium AI fal sonucu — derin link / geçmiş rotası.
 class FortuneResultPage extends ConsumerStatefulWidget {
@@ -101,7 +102,7 @@ class _FortuneResultPageState extends ConsumerState<FortuneResultPage> {
     final me = ref.read(authControllerProvider).valueOrNull;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0118),
+      backgroundColor: UltraFortuneTokens.deepNight,
       body: Stack(
         children: [
           FortuneTypeImmersiveScaffold(

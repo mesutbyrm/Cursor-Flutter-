@@ -7,8 +7,11 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/util/json_util.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
-import '../../../../core/widgets/user_avatar.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
+import '../../../moderation/domain/entities/report_target.dart';
+import '../../../moderation/presentation/utils/open_report_flow.dart';
+import '../widgets/discovery_filter_sheet.dart';
+import '../widgets/discovery_social_user_card.dart';
 import '../../domain/entities/social_discovery_user.dart';
 import '../../domain/entities/user_location_settings.dart';
 import '../providers/social_discovery_providers.dart';
@@ -26,6 +29,8 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
   var _savingLocation = false;
   late final TabController _tabs;
   final _hashtagQuery = TextEditingController();
+  final _skippedUserIds = <String>{};
+  DiscoveryFilterState _discoveryFilter = const DiscoveryFilterState();
 
   @override
   void initState() {
@@ -65,6 +70,43 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
         SnackBar(content: Text(ApiException.userMessage(e))),
       );
     }
+  }
+
+  List<SocialDiscoveryUser> _filterDiscoveryUsers(List<SocialDiscoveryUser> users) {
+    return users.where((u) {
+      if (_skippedUserIds.contains(u.id)) return false;
+      if (_discoveryFilter.onlineOnly) {
+        final raw = u.raw['user'] is Map
+            ? asJsonMap(u.raw['user'])
+            : asJsonMap(u.raw);
+        if (pick(raw, ['isOnline', 'online']) != true) return false;
+      }
+      final raw = u.raw['user'] is Map
+          ? asJsonMap(u.raw['user'])
+          : asJsonMap(u.raw);
+      final age = pick(raw, ['age', 'userAge']);
+      if (age is num) {
+        final a = age.round();
+        if (a < _discoveryFilter.minAge || a > _discoveryFilter.maxAge) {
+          return false;
+        }
+      }
+      final q = _discoveryFilter.interestQuery.trim().toLowerCase();
+      if (q.isNotEmpty) {
+        final interests = pick(raw, ['interests', 'tags', 'hobbies']);
+        final hay = interests?.toString().toLowerCase() ?? '';
+        if (!hay.contains(q)) return false;
+      }
+      return true;
+    }).toList();
+  }
+
+  Future<void> _openDiscoveryFilters() async {
+    final next = await showDiscoveryFilterSheet(
+      context,
+      initial: _discoveryFilter,
+    );
+    if (next != null) setState(() => _discoveryFilter = next);
   }
 
   String _actionSuccessLabel(String type) {
@@ -143,6 +185,12 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
         child: DiscoverSubPage(
           title: 'Tanış Kaynaş',
           subtitle: 'Keşfet, etkileşim, hashtag ve takımlar',
+          actions: [
+            DiscoverIconButton(
+              icon: Icons.tune_rounded,
+              onPressed: _openDiscoveryFilters,
+            ),
+          ],
           body: Column(
             children: [
               TabBar(
@@ -191,7 +239,8 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
                               action: _refresh,
                             ),
                             data: (users) {
-                              if (users.isEmpty) {
+                              final visible = _filterDiscoveryUsers(users);
+                              if (visible.isEmpty) {
                                 return const DiscoverEmptyState(
                                   icon: Icons.people_outline_rounded,
                                   message:
@@ -200,18 +249,23 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
                               }
                               return Column(
                                 children: [
-                                  for (final u in users) ...[
-                                    _DiscoveryUserCard(
+                                  for (final u in visible) ...[
+                                    DiscoverySocialUserCard(
                                       user: u,
                                       onOpenProfile: () => context.push(
                                         '/user/${Uri.encodeComponent(u.id)}',
                                       ),
                                       onLike: () => _postAction('like', u.id),
-                                      onFavorite: () =>
-                                          _postAction('favorite', u.id),
-                                      onFriendRequest: () => _postAction(
-                                        'friend_request',
-                                        u.id,
+                                      onSkip: () => setState(
+                                        () => _skippedUserIds.add(u.id),
+                                      ),
+                                      onReport: () => openReportFlow(
+                                        context,
+                                        ReportTarget(
+                                          type: ReportTargetType.user,
+                                          targetId: u.id,
+                                          displayTitle: u.displayName,
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(height: 10),
@@ -477,85 +531,6 @@ class _LocationCard extends StatelessWidget {
                   busy || !settings.locationEnabled ? null : onShowDistance,
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DiscoveryUserCard extends StatelessWidget {
-  const _DiscoveryUserCard({
-    required this.user,
-    required this.onOpenProfile,
-    required this.onLike,
-    required this.onFavorite,
-    required this.onFriendRequest,
-  });
-
-  final SocialDiscoveryUser user;
-  final VoidCallback onOpenProfile;
-  final VoidCallback onLike;
-  final VoidCallback onFavorite;
-  final VoidCallback onFriendRequest;
-
-  @override
-  Widget build(BuildContext context) {
-    final u = user;
-    return Card(
-      color: context.colors.surfaceElevated.withValues(alpha: 0.35),
-      child: InkWell(
-        onTap: onOpenProfile,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              UserAvatar(url: u.avatarUrl, radius: 26),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      u.displayName,
-                      style: const TextStyle(fontWeight: FontWeight.w800),
-                    ),
-                    if (u.username != null && u.username!.isNotEmpty)
-                      Text(
-                        '@${u.username}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: context.colors.onSurfaceMuted,
-                        ),
-                      ),
-                    if (u.distanceLabel != null)
-                      Text(
-                        u.distanceLabel!,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: context.colors.primary,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              IconButton(
-                tooltip: 'Beğen',
-                onPressed: onLike,
-                icon: const Icon(Icons.favorite_border_rounded),
-              ),
-              IconButton(
-                tooltip: 'Favori',
-                onPressed: onFavorite,
-                icon: const Icon(Icons.star_border_rounded),
-              ),
-              IconButton(
-                tooltip: 'Arkadaşlık isteği',
-                onPressed: onFriendRequest,
-                icon: const Icon(Icons.person_add_outlined),
-              ),
-            ],
-          ),
         ),
       ),
     );

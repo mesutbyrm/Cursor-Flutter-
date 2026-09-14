@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/design_system/cds_bottom_sheet.dart';
 import 'package:canlifal_social/core/network/api_exception.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
@@ -22,10 +23,8 @@ Future<void> showVoiceSpeakerListSheet(
   required VoiceRoomEntity room,
   void Function(ChatRoomPresence user)? onUserTap,
 }) {
-  return showModalBottomSheet(
+  return CdsBottomSheet.showTransparent(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
     builder: (ctx) => _SpeakerListSheet(
       presence: presence,
       room: room,
@@ -35,10 +34,8 @@ Future<void> showVoiceSpeakerListSheet(
 }
 
 Future<void> showVoiceEffectsSheet(BuildContext context, WidgetRef ref) {
-  return showModalBottomSheet(
+  return CdsBottomSheet.showTransparent(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
     builder: (ctx) => Consumer(
       builder: (_, ref, _) => _EffectsSheet(
         state: ref.watch(voiceRoomUiProvider),
@@ -54,9 +51,8 @@ Future<void> showVoiceRequestSpeakSheet(
   required bool pending,
   required Future<void> Function() onPrimary,
 }) {
-  return showModalBottomSheet(
+  return CdsBottomSheet.showTransparent(
     context: context,
-    backgroundColor: Colors.transparent,
     builder: (ctx) => _RequestSpeakSheet(
       pending: pending,
       onPrimary: () async {

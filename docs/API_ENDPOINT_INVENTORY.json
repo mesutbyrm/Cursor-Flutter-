@@ -1,0 +1,562 @@
+{
+  "generated": "phase2",
+  "total_const": 308,
+  "total_function": 202,
+  "zero_usage_const": [
+    {
+      "name": "authVerifyDevice",
+      "path": "/api/auth/verify-device",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 1
+    },
+    {
+      "name": "authReclaimDevice",
+      "path": "/api/auth/reclaim-device",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 1
+    },
+    {
+      "name": "userPresenceSections",
+      "path": "/api/presence/sections",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 1
+    },
+    {
+      "name": "messagesRequest",
+      "path": "/api/messages/request",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 2
+    },
+    {
+      "name": "dreamDiary",
+      "path": "/api/dream-diary",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 2
+    },
+    {
+      "name": "dreamStats",
+      "path": "/api/dream-stats",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 2
+    },
+    {
+      "name": "weeklyDreamReport",
+      "path": "/api/weekly-dream-report",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 2
+    },
+    {
+      "name": "blogCategories",
+      "path": "/api/blog/categories",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 1
+    },
+    {
+      "name": "blogLike",
+      "path": "/api/blog/like",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 2
+    },
+    {
+      "name": "blogFavorite",
+      "path": "/api/blog/favorite",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 2
+    },
+    {
+      "name": "blogComments",
+      "path": "/api/blog/comments",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 2
+    },
+    {
+      "name": "agencyApply",
+      "path": "/api/agency/apply",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 2
+    },
+    {
+      "name": "agencyJoin",
+      "path": "/api/agency/join",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 2
+    },
+    {
+      "name": "agencyWithdrawals",
+      "path": "/api/agency/withdrawals",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 2
+    },
+    {
+      "name": "feedPosts",
+      "path": "/api/social/posts",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 12
+    },
+    {
+      "name": "videoStreamPkScore",
+      "path": "/api/video-streams/pk/score",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 2
+    },
+    {
+      "name": "membershipsPurchase",
+      "path": "/api/memberships/purchase",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 5
+    },
+    {
+      "name": "referralInviteLink",
+      "path": "/api/referral/invite-link",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 1
+    },
+    {
+      "name": "referralSettings",
+      "path": "/api/referral/settings",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 1
+    },
+    {
+      "name": "referralValidate",
+      "path": "/api/referral/validate",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 1
+    },
+    {
+      "name": "liveFalRequestCreate",
+      "path": "/api/live/fal-request/create",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 1
+    },
+    {
+      "name": "giftsSend",
+      "path": "/api/gifts/send",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 2
+    },
+    {
+      "name": "announcements",
+      "path": "/api/announcements",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 1
+    },
+    {
+      "name": "creditPackages",
+      "path": "/api/credit-packages",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 1
+    },
+    {
+      "name": "gamesDailySpin",
+      "path": "/api/games/daily-spin",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 2
+    },
+    {
+      "name": "gamesQuests",
+      "path": "/api/games/quests",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 2
+    },
+    {
+      "name": "tellerReviews",
+      "path": "/api/teller/reviews",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 1
+    },
+    {
+      "name": "userStory",
+      "path": "/api/user/story",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 1
+    },
+    {
+      "name": "userReport",
+      "path": "/api/user/report",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 3
+    }
+  ],
+  "entries_sample": [
+    {
+      "name": "authMobileRegister",
+      "path": "/api/auth/mobile-register",
+      "kind": "const",
+      "usage_files": 3,
+      "string_ref_files": 3
+    },
+    {
+      "name": "authMobileLogin",
+      "path": "/api/auth/mobile-login",
+      "kind": "const",
+      "usage_files": 3,
+      "string_ref_files": 6
+    },
+    {
+      "name": "authMobileGoogle",
+      "path": "/api/auth/mobile-google",
+      "kind": "const",
+      "usage_files": 3,
+      "string_ref_files": 3
+    },
+    {
+      "name": "authMobileApple",
+      "path": "/api/auth/mobile-apple",
+      "kind": "const",
+      "usage_files": 2,
+      "string_ref_files": 3
+    },
+    {
+      "name": "authMobileTiktok",
+      "path": "/api/auth/mobile-tiktok",
+      "kind": "const",
+      "usage_files": 3,
+      "string_ref_files": 3
+    },
+    {
+      "name": "authMobileRefresh",
+      "path": "/api/auth/mobile-refresh",
+      "kind": "const",
+      "usage_files": 4,
+      "string_ref_files": 5
+    },
+    {
+      "name": "authLogout",
+      "path": "/api/auth/logout",
+      "kind": "const",
+      "usage_files": 4,
+      "string_ref_files": 5
+    },
+    {
+      "name": "authLogoutAll",
+      "path": "/api/auth/logout-all",
+      "kind": "const",
+      "usage_files": 2,
+      "string_ref_files": 4
+    },
+    {
+      "name": "authMobileSendVerification",
+      "path": "/api/auth/mobile-send-verification",
+      "kind": "const",
+      "usage_files": 2,
+      "string_ref_files": 1
+    },
+    {
+      "name": "authMobileVerifyEmail",
+      "path": "/api/auth/mobile-verify-email",
+      "kind": "const",
+      "usage_files": 2,
+      "string_ref_files": 1
+    },
+    {
+      "name": "authSessions",
+      "path": "/api/auth/sessions",
+      "kind": "const",
+      "usage_files": 2,
+      "string_ref_files": 3
+    },
+    {
+      "name": "authMobileSessions",
+      "path": "/api/auth/mobile-sessions",
+      "kind": "const",
+      "usage_files": 1,
+      "string_ref_files": 1
+    },
+    {
+      "name": "authMobileDeviceToken",
+      "path": "/api/auth/mobile/device-token",
+      "kind": "const",
+      "usage_files": 1,
+      "string_ref_files": 1
+    },
+    {
+      "name": "authForgotPassword",
+      "path": "/api/auth/forgot-password",
+      "kind": "const",
+      "usage_files": 3,
+      "string_ref_files": 2
+    },
+    {
+      "name": "authResetPassword",
+      "path": "/api/auth/reset-password",
+      "kind": "const",
+      "usage_files": 3,
+      "string_ref_files": 2
+    },
+    {
+      "name": "authChangePassword",
+      "path": "/api/auth/change-password",
+      "kind": "const",
+      "usage_files": 2,
+      "string_ref_files": 3
+    },
+    {
+      "name": "authEmailSendVerification",
+      "path": "/api/auth/email/send-verification",
+      "kind": "const",
+      "usage_files": 2,
+      "string_ref_files": 4
+    },
+    {
+      "name": "authPhoneSendOtp",
+      "path": "/api/auth/phone/send-otp",
+      "kind": "const",
+      "usage_files": 3,
+      "string_ref_files": 4
+    },
+    {
+      "name": "authPhoneVerifyOtp",
+      "path": "/api/auth/phone/verify-otp",
+      "kind": "const",
+      "usage_files": 3,
+      "string_ref_files": 4
+    },
+    {
+      "name": "authVerification",
+      "path": "/api/verification",
+      "kind": "const",
+      "usage_files": 2,
+      "string_ref_files": 3
+    },
+    {
+      "name": "authVerifyDevice",
+      "path": "/api/auth/verify-device",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 1
+    },
+    {
+      "name": "authReclaimDevice",
+      "path": "/api/auth/reclaim-device",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 1
+    },
+    {
+      "name": "mobileConfig",
+      "path": "/api/mobile/config",
+      "kind": "const",
+      "usage_files": 1,
+      "string_ref_files": 5
+    },
+    {
+      "name": "mobileHome",
+      "path": "/api/mobile/home",
+      "kind": "const",
+      "usage_files": 1,
+      "string_ref_files": 7
+    },
+    {
+      "name": "legalChildSafety",
+      "path": "/api/legal/child-safety",
+      "kind": "const",
+      "usage_files": 2,
+      "string_ref_files": 1
+    },
+    {
+      "name": "mobileFortuneMenu",
+      "path": "/api/mobile/fortune-menu",
+      "kind": "const",
+      "usage_files": 1,
+      "string_ref_files": 6
+    },
+    {
+      "name": "userPresence",
+      "path": "/api/presence",
+      "kind": "const",
+      "usage_files": 1,
+      "string_ref_files": 3
+    },
+    {
+      "name": "userPresenceSections",
+      "path": "/api/presence/sections",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 1
+    },
+    {
+      "name": "me",
+      "path": "/api/me",
+      "kind": "const",
+      "usage_files": 18,
+      "string_ref_files": 22
+    },
+    {
+      "name": "meMembership",
+      "path": "/api/me/membership",
+      "kind": "const",
+      "usage_files": 2,
+      "string_ref_files": 4
+    },
+    {
+      "name": "meMembershipEvents",
+      "path": "/api/me/membership-events",
+      "kind": "const",
+      "usage_files": 1,
+      "string_ref_files": 2
+    },
+    {
+      "name": "meMembershipHistory",
+      "path": "/api/me/membership-history",
+      "kind": "const",
+      "usage_files": 1,
+      "string_ref_files": 2
+    },
+    {
+      "name": "meProfileVisitorsCanonical",
+      "path": "/api/me/profile-visitors",
+      "kind": "const",
+      "usage_files": 2,
+      "string_ref_files": 3
+    },
+    {
+      "name": "meVipIdentity",
+      "path": "/api/me/vip-identity",
+      "kind": "const",
+      "usage_files": 1,
+      "string_ref_files": 2
+    },
+    {
+      "name": "meVipPreferences",
+      "path": "/api/me/vip-preferences",
+      "kind": "const",
+      "usage_files": 1,
+      "string_ref_files": 2
+    },
+    {
+      "name": "meVipXp",
+      "path": "/api/me/vip-xp",
+      "kind": "const",
+      "usage_files": 1,
+      "string_ref_files": 2
+    },
+    {
+      "name": "meAdminCapabilities",
+      "path": "/api/me/admin-capabilities",
+      "kind": "const",
+      "usage_files": 1,
+      "string_ref_files": 2
+    },
+    {
+      "name": "userReceivedGifts",
+      "path": "/api/user/received-gifts",
+      "kind": "const",
+      "usage_files": 2,
+      "string_ref_files": 3
+    },
+    {
+      "name": "meBroadcastHistory",
+      "path": "/api/users/me/broadcast-history",
+      "kind": "const",
+      "usage_files": 2,
+      "string_ref_files": 1
+    },
+    {
+      "name": "meActivity",
+      "path": "/api/users/me/activity",
+      "kind": "const",
+      "usage_files": 2,
+      "string_ref_files": 2
+    },
+    {
+      "name": "meProfileVisitors",
+      "path": "/api/users/me/profile-visitors",
+      "kind": "const",
+      "usage_files": 4,
+      "string_ref_files": 1
+    },
+    {
+      "name": "userStats",
+      "path": "/api/user/stats",
+      "kind": "const",
+      "usage_files": 1,
+      "string_ref_files": 3
+    },
+    {
+      "name": "userStatistics",
+      "path": "/api/user/statistics",
+      "kind": "const",
+      "usage_files": 1,
+      "string_ref_files": 3
+    },
+    {
+      "name": "userXp",
+      "path": "/api/user/xp",
+      "kind": "const",
+      "usage_files": 1,
+      "string_ref_files": 2
+    },
+    {
+      "name": "messages",
+      "path": "/api/messages",
+      "kind": "const",
+      "usage_files": 3,
+      "string_ref_files": 3
+    },
+    {
+      "name": "messagesRequest",
+      "path": "/api/messages/request",
+      "kind": "const",
+      "usage_files": 0,
+      "string_ref_files": 2
+    },
+    {
+      "name": "messagesConversations",
+      "path": "/api/messages/conversations",
+      "kind": "const",
+      "usage_files": 1,
+      "string_ref_files": 1
+    },
+    {
+      "name": "feed",
+      "path": "/api/stories",
+      "kind": "const",
+      "usage_files": 2,
+      "string_ref_files": 8
+    },
+    {
+      "name": "socialPosts",
+      "path": "/api/social/posts",
+      "kind": "const",
+      "usage_files": 2,
+      "string_ref_files": 12
+    },
+    {
+      "name": "socialStories",
+      "path": "/api/social/stories",
+      "kind": "const",
+      "usage_files": 1,
+      "string_ref_files": 3
+    }
+  ]
+}

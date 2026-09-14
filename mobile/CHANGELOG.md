@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.492+530 (2026-09-14) — Audit phase 2 FAZ 7–16 (kısmi)
+
+- **Fortune design lane:** `fortune_design_lane.dart` — hub/session/result ortak backdrop + kart + motion
+- **Tanış:** CDS keşif kartı, filtre sheet, Geç/Şikayet; report deep-link
+- **Live:** yayın chip widget’ları ayrı dosya; hediye sheet → `CdsBottomSheet`
+- **Voice:** 3 sheet → `CdsBottomSheet.showTransparent`
+- **Responsive:** `CdsResponsive` + `HomeViewportSection` esnek placeholder
+- **API/MCP:** envanter script + `API_ENDPOINT_INVENTORY.md`; `MCP_AUDIT_PHASE2.md` (silme yok)
+- Rapor: `docs/AUDIT_PHASE2_FINAL.md`
+
 ## 1.0.491+529 (2026-09-14) — CDS v1 audit uygulama (Aşama 2)
 
 - **CDS v1:** `lib/core/design_system/` (renk, tipografi, buton, kart, sheet, dialog, FX gate)
