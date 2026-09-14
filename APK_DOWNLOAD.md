@@ -1,7 +1,7 @@
 # Canlifal — Android APK indirme
 
 
-> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`docs/DOCS_RELEASE_INDEX.md`](docs/DOCS_RELEASE_INDEX.md)
+> **Güncel (2026-09-14):** **`1.0.490+528`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · API parite (486–490) · [`docs/DOCS_RELEASE_INDEX.md`](docs/DOCS_RELEASE_INDEX.md)
 
 ## Doğrudan indirme (önerilen)
 
@@ -20,7 +20,7 @@ https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlif
 | Sürüm | İndirme |
 |-------|---------|
 | **apk-latest** (otomatik, `main` son derleme) | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
-| **Kaynak sürüm (dal)** | `mobile/pubspec.yaml` → `version:` (**1.0.371+409**) |
+| **Kaynak sürüm (dal)** | `mobile/pubspec.yaml` → `version:` (**1.0.490+528**) |
 | **v1.0.6** (ana sayfa + navbar) | [Releases](https://github.com/mesutbyrm/Cursor-Flutter-/releases) |
 | v1.0.5 | [Releases](https://github.com/mesutbyrm/Cursor-Flutter-/releases/tag/v1.0.5) |
 | v1.0.4 sesli oda (neon UI) | [canlifal-v104-voice-7009.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-v104-voice-7009/canlifal-v104-voice-7009.apk) |
