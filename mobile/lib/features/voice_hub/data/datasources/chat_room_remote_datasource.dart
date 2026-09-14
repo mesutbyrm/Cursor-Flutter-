@@ -1071,20 +1071,6 @@ class ChatRoomRemoteDataSource {
       ),
     ];
     try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.chatMusicPopular);
-      final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
-      final raw = map['items'];
-      if (raw is List && raw.isNotEmpty) {
-        return raw
-            .whereType<Map>()
-            .map(
-              (e) =>
-                  PopularMusicSuggestion.fromJson(Map<String, dynamic>.from(e)),
-            )
-            .toList();
-      }
-    } catch (_) {}
-    try {
       final res = await _dio.safeGet<dynamic>(
         musicSearchPath(),
         query: const {'q': 'popüler'},
@@ -1097,6 +1083,20 @@ class ChatRoomRemoteDataSource {
             .map((e) => PopularMusicSuggestion.fromJson(
                   Map<String, dynamic>.from(e),
                 ))
+            .toList();
+      }
+    } catch (_) {}
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.chatMusicPopular);
+      final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+      final raw = map['items'];
+      if (raw is List && raw.isNotEmpty) {
+        return raw
+            .whereType<Map>()
+            .map(
+              (e) =>
+                  PopularMusicSuggestion.fromJson(Map<String, dynamic>.from(e)),
+            )
             .toList();
       }
     } catch (_) {}

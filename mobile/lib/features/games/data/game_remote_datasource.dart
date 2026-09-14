@@ -266,9 +266,13 @@ class GameRemoteDataSource {
   }
 
   Future<void> joinTournament(String tournamentId) async {
+    final id = tournamentId.trim();
+    if (id.isEmpty) {
+      throw const ApiException('Turnuva kimliği boş');
+    }
     await _dio.safePost<dynamic>(
-      ApiEndpoints.tournamentsJoin,
-      data: {'tournamentId': tournamentId, 'id': tournamentId},
+      ApiEndpoints.tournaments,
+      data: {'action': 'join', 'tournamentId': id, 'id': id},
     );
   }
 

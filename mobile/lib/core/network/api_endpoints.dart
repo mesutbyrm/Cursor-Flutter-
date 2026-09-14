@@ -219,7 +219,6 @@ abstract final class ApiEndpoints {
   static const gameProfile = '/api/games/profile';
   static const gameMiniScores = '/api/games/mini-scores';
   static const tournaments = '/api/tournaments';
-  static const tournamentsJoin = '/api/tournaments/join';
   static String gameRoom(String roomId) => '/api/games/room/$roomId';
   /// Yeni backend: `POST /api/games/room/:id` (gövdesiz katılma).
   static String gameRoomJoin(String roomId) => '/api/games/room/$roomId';
@@ -238,8 +237,9 @@ abstract final class ApiEndpoints {
   static String gameSosViewers(String gameId) =>
       '/api/games/sos/$gameId/viewers';
 
-  /// Günlük ödüller.
-  static const homeDailyRewards = '/api/daily-rewards';
+  /// Günlük ödül — üretim kanonik (OpenAPI FLUTTER_READY).
+  static const gamesDailyReward = '/api/games/daily-reward';
+
   static const userDailyTasks = '/api/user/daily-tasks';
   static const userAchievements = '/api/user/achievements';
   static const userWatchAd = '/api/user/watch-ad';
@@ -584,6 +584,11 @@ abstract final class ApiEndpoints {
   static const userSiteProfile = '/api/user/profile';
   static const userSocialSettings = '/api/user/social-settings';
   static const userAccount = '/api/user/account';
+  static const userCosmetics = '/api/user/cosmetics';
+  static const userCosmeticsLoadout = '/api/user/cosmetics/loadout';
+  static const userCosmeticsEquip = '/api/user/cosmetics/equip';
+  static const userProfileCosmeticsEquip =
+      '/api/user/profile/cosmetics/equip';
   static String userAchievementsFor(String userId) =>
       '/api/user/$userId/achievements';
   static const userTheme = '/api/user/theme';
@@ -915,6 +920,7 @@ abstract final class ApiEndpoints {
   static const fortuneAccessCheck = '/api/fortune-access/check';
 
   /// Jeton ile fal kilidi tüketimi (opsiyonel; yoksa fal POST'unda düşülür).
+  /// @deprecated — üretimde 404; jeton/CFC düşümü sunucu fal akışında. 404 sessiz.
   static const fortuneAccessConsume = '/api/fortune-access/consume';
 
   static String userFortuneDetail(String fortuneId) =>

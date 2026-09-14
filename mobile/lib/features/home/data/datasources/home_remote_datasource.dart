@@ -61,8 +61,8 @@ class HomeRemoteDataSource {
       return compound.advisors;
     }
     for (final path in [
-      ApiEndpoints.homeAdvisorsOnline,
       ApiEndpoints.fortuneTellers,
+      ApiEndpoints.homeAdvisorsOnline,
     ]) {
       try {
         final res = await _dio.safeGet<dynamic>(path);
@@ -173,6 +173,11 @@ class HomeRemoteDataSource {
 
   /// `GET /api/fan-clubs` — popüler fan kulüpleri.
   Future<List<HomeFanClubItem>> fetchFanClubs() async {
+    final compound = await fetchMobileHome();
+    if (compound != null) {
+      final fromHome = _fanClubsFromCompound(compound.raw);
+      if (fromHome.isNotEmpty) return fromHome;
+    }
     for (final path in [ApiEndpoints.fanClubsPopular, ApiEndpoints.fanClubs]) {
       try {
         final res = await _dio.safeGet<dynamic>(path);
@@ -212,13 +217,76 @@ class HomeRemoteDataSource {
   }
 
   Future<List<DailyRewardEntity>> fetchDailyRewards() async {
-    try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.homeDailyRewards);
-      final items = _itemsFromBody(res.data);
-      return items.map(_mapDailyReward).where((r) => r.id.isNotEmpty).toList();
-    } catch (_) {
-      return const [];
+    final compound = await fetchMobileHome();
+    if (compound != null) {
+      final fromHome = _dailyRewardsFromCompound(compound.raw);
+      if (fromHome.isNotEmpty) return fromHome;
     }
+    for (final path in [ApiEndpoints.gamesDailyReward]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(path);
+        final parsed = _parseDailyRewardsBody(res.data);
+        if (parsed.isNotEmpty) return parsed;
+      } catch (_) {}
+    }
+    return const [];
+  }
+
+  List<HomeFanClubItem> _fanClubsFromCompound(Map<String, dynamic> raw) {
+    for (final key in const [
+      'fanClubs',
+      'popularFanClubs',
+      'clubs',
+    ]) {
+      final v = raw[key];
+      if (v is! List || v.isEmpty) continue;
+      return v
+          .map(_mapFanClub)
+          .where((c) => c.id.isNotEmpty && c.title.isNotEmpty)
+          .toList();
+    }
+    return const [];
+  }
+
+  List<DailyRewardEntity> _dailyRewardsFromCompound(Map<String, dynamic> raw) {
+    for (final key in const ['dailyRewards', 'rewards', 'dailyReward']) {
+      final v = raw[key];
+      if (v is List && v.isNotEmpty) {
+        return v
+            .map(_mapDailyReward)
+            .where((r) => r.id.isNotEmpty || r.title.isNotEmpty)
+            .toList();
+      }
+      if (v is Map) {
+        final one = _mapDailyReward(v);
+        if (one.id.isNotEmpty || one.title.isNotEmpty) return [one];
+      }
+    }
+    return const [];
+  }
+
+  List<DailyRewardEntity> _parseDailyRewardsBody(dynamic body) {
+    final items = _itemsFromBody(body);
+    if (items.isNotEmpty) {
+      return items
+          .map(_mapDailyReward)
+          .where((r) => r.id.isNotEmpty || r.title.isNotEmpty)
+          .toList();
+    }
+    if (body is Map) {
+      final map = asJsonMap(body);
+      final data = map['data'] is Map ? asJsonMap(map['data']) : map;
+      final nested = _itemsFromBody(data);
+      if (nested.isNotEmpty) {
+        return nested
+            .map(_mapDailyReward)
+            .where((r) => r.id.isNotEmpty || r.title.isNotEmpty)
+            .toList();
+      }
+      final one = _mapDailyReward(data);
+      if (one.id.isNotEmpty || one.title.isNotEmpty) return [one];
+    }
+    return const [];
   }
 
   Future<List<HomeTrendVideoEntity>> fetchTrendVideos() async {

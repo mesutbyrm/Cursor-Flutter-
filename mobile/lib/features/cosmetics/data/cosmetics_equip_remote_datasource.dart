@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../domain/cosmetic_slot.dart';
 import '../domain/user_cosmetic_loadout.dart';
@@ -11,13 +12,13 @@ class CosmeticsEquipRemoteDataSource {
   final Dio _dio;
 
   static const _equipPaths = [
-    '/api/user/cosmetics/equip',
-    '/api/user/profile/cosmetics/equip',
+    ApiEndpoints.userCosmeticsEquip,
+    ApiEndpoints.userProfileCosmeticsEquip,
   ];
 
   static const _loadoutPaths = [
-    '/api/user/cosmetics/loadout',
-    '/api/user/cosmetics',
+    ApiEndpoints.userCosmeticsLoadout,
+    ApiEndpoints.userCosmetics,
   ];
 
   Future<UserCosmeticLoadout?> fetchRemoteLoadout() async {

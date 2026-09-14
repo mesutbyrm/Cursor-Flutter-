@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.488+526 (2026-09-14) — API parite P0 (günlük ödül, ana sayfa, müzik, turnuva)
+
+- Günlük ödül: birincil `GET/POST /api/games/daily-reward` (+ `mobile/home` gömülü veri)
+- Danışmanlar: `fortune-tellers` önce; fan kulüp `mobile/home` yedek
+- Popüler müzik: `music/search` önce (`chat/music/popular` yedek)
+- Kısa video müzik öneri: `music/search` önce
+- Turnuva katılım: `tournaments/join` 404 ise `POST /api/tournaments` action join
+- Kozmetik uçları `ApiEndpoints` üzerinden merkezi
+
 ## 1.0.487+525 (2026-09-14) — API parite (bildirim, istatistik, PK, müzik)
 
 - Okunmamış bildirim: `GET /api/notifications?unreadOnly=true` (+ messages yedek); `/api/notifications/unread` kaldırıldı

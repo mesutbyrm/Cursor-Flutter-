@@ -71,17 +71,16 @@ class DailyTasksRemoteDataSource {
   }
 
   Future<bool> claimDailyLogin() async {
-    try {
-      await _dio.safePost<dynamic>(ApiEndpoints.dailyLogin);
-      return true;
-    } catch (_) {
+    for (final path in [
+      ApiEndpoints.gamesDailyReward,
+      ApiEndpoints.dailyLogin,
+    ]) {
       try {
-        await _dio.safePost<dynamic>(ApiEndpoints.homeDailyRewards);
+        await _dio.safePost<dynamic>(path);
         return true;
-      } catch (_) {
-        return false;
-      }
+      } catch (_) {}
     }
+    return false;
   }
 
   Future<UserLevelEntity> fetchUserLevel() async {

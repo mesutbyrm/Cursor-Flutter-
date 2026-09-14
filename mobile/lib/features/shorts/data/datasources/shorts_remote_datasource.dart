@@ -957,6 +957,26 @@ class ShortsRemoteDataSource {
     List<String> hashtags = const [],
     String? videoKey,
   }) async {
+    final q = [
+      if (description != null && description.trim().isNotEmpty) description.trim(),
+      if (hashtags.isNotEmpty) hashtags.join(' '),
+    ].join(' ').trim();
+    if (q.isNotEmpty) {
+      try {
+        final res = await _dio.safeGet<dynamic>(
+          ApiEndpoints.musicSearch,
+          query: {'q': q},
+        );
+        final m = _unwrap(res.data);
+        final raw = m?['items'] ?? m?['results'] ?? m?['tracks'];
+        if (raw is List && raw.isNotEmpty) {
+          return asJsonList(raw)
+              .map((j) => _musicEntityFrom(asJsonMap(j)))
+              .where((e) => e.id.isNotEmpty)
+              .toList();
+        }
+      } catch (_) {}
+    }
     try {
       final res = await _dio.safeGet<dynamic>(
         ApiEndpoints.shortVideosMusicRecommend,

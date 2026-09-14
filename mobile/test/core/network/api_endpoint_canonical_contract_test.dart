@@ -33,7 +33,9 @@ bool _isLegacyCanlifalPath(String path) {
       path == '/api/users/me/gifts-received' ||
       path == '/api/users/me/stats' ||
       path == '/api/notifications/unread' ||
-      path.startsWith('/api/pk/battles')) {
+      path.startsWith('/api/pk/battles') ||
+      path == '/api/daily-rewards' ||
+      path == '/api/tournaments/join') {
     return true;
   }
   if (RegExp(r'^/api/rooms/[^/]+/music').hasMatch(path)) return true;
@@ -74,6 +76,7 @@ void main() {
       expect(ApiEndpoints.paymentRequests, '/api/payments/requests');
       expect(ApiEndpoints.paymentRequestsCancel, '/api/payments/requests');
       expect(ApiEndpoints.membershipPackages, '/api/memberships/packages');
+      expect(ApiEndpoints.gamesDailyReward, '/api/games/daily-reward');
       expect(ApiEndpoints.membershipPurchase, '/api/memberships/purchase');
     });
 
