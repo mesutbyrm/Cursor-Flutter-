@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.495+533 (2026-09-14) — Phase 2 FINAL PASS
+
+- Live: video/chat/bottom chrome modülleri; ana sayfa orchestration-only (~2905 satır)
+- A11y: register, OTP, messages composer, social composer semantics
+- Test: `cds_a11y_smoke_test` genişletildi, `live_broadcast_room_modules_smoke_test`
+- Rapor: `docs/AUDIT_PHASE2_FINAL_COMPLETION.md` — **GENEL: PASS**
+
 ## 1.0.494+532 (2026-09-14) — Phase 2 FAIL→PASS turu (kısmi)
 
 - Live: viewer rail, host away, gift panel modülleri; sheet envanter script + karar dosyaları
