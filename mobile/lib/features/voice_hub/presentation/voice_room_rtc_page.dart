@@ -23,6 +23,8 @@ import '../../live/domain/entities/live_gift_event.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
 import '../../live/presentation/providers/live_providers.dart';
 import '../../pk/presentation/providers/pk_session_notifier.dart';
+import '../../pk/presentation/providers/pk_providers.dart';
+import '../../pk/presentation/widgets/pk_session_overlay_host.dart';
 import '../../pk/presentation/widgets/pk_start_sheet.dart';
 import '../data/services/voice_room_debug_log.dart';
 import 'utils/voice_room_key_resolver.dart';
@@ -1081,8 +1083,22 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                       : null,
                 ),
                 title: Text(p.displayName),
-                trailing: canManageDj
-                    ? IconButton(
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (perms.isRoomOwner &&
+                        self != null &&
+                        p.id != self.id)
+                      IconButton(
+                        icon: const Icon(Icons.sports_mma, size: 20),
+                        tooltip: 'Bu kullanıcıyla PK',
+                        onPressed: () async {
+                          Navigator.pop(ctx);
+                          await _startInRoomUserPk(room, self!.id, p.id);
+                        },
+                      ),
+                    if (canManageDj)
+                      IconButton(
                         icon: const Icon(Icons.headphones_rounded, size: 20),
                         tooltip: 'DJ yap',
                         onPressed: () async {
@@ -1094,8 +1110,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             );
                           }
                         },
-                      )
-                    : null,
+                      ),
+                  ],
+                ),
                 onTap: () async {
                   Navigator.pop(ctx);
                   final err = await ctrl.assignSeat(
@@ -1412,7 +1429,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       }
     });
 
-    return GiftEventListener(
+    final pkArgs = PkSessionArgs(contextId: sessionKey, kind: PkContextKind.voice);
+
+    return PkSessionOverlayHost(
+      args: pkArgs,
+      child: GiftEventListener(
       sessionKey: sessionKey,
       isHost: isOwner,
       child: PopScope(
@@ -1936,7 +1957,36 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         ),
       ),
     ),
+    ),
     );
+  }
+
+  Future<void> _startInRoomUserPk(
+    VoiceRoomEntity room,
+    String myUserId,
+    String opponentUserId,
+  ) async {
+    final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+    if (key.isEmpty) return;
+    try {
+      await ref.read(pkServiceProvider).createUserRoomPk(
+            roomId: key,
+            side1UserIds: [myUserId],
+            side2UserIds: [opponentUserId],
+          );
+      await ref.read(pkSessionProvider(
+        PkSessionArgs(contextId: key, kind: PkContextKind.voice),
+      ).notifier).loadState();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Oda içi PK başlatıldı')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
+    }
   }
 }
 

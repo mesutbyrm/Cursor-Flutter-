@@ -104,6 +104,36 @@ class PkService {
         'battleId': battleId.trim(),
       });
 
+  /// Oda içi kullanıcı PK — `POST /api/chat/rooms/{roomId}/pk` `create_user`.
+  Future<PkBattle> createUserRoomPk({
+    required String roomId,
+    required List<String> side1UserIds,
+    required List<String> side2UserIds,
+    int durationSeconds = 180,
+    int countdownSec = 5,
+  }) async {
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.chatRoomPk(roomId.trim()),
+      data: {
+        'action': 'create_user',
+        'side1UserIds': side1UserIds,
+        'side2UserIds': side2UserIds,
+        'duration': durationSeconds.clamp(60, 600),
+        'countdownSec': countdownSec.clamp(0, 30),
+      },
+    );
+    final battle = parseUnwrappedBattle(res.data);
+    if (battle == null) {
+      throw PkException.fromResponse(
+        statusCode: res.statusCode,
+        body: res.data,
+        fallback: 'Oda içi PK başlatılamadı',
+      );
+    }
+    _applyServerNow(battle.serverNow);
+    return battle;
+  }
+
   Future<PkCandidatesBundle> streamCandidates(String streamId) async {
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.videoStreamPkCandidates,

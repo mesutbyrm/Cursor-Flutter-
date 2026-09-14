@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../live/domain/entities/voice_room_entity.dart';
-import '../../../../live/presentation/widgets/broadcast_room/live_pk_score_bar.dart';
+import '../../../../pk/presentation/providers/pk_session_notifier.dart';
+import '../../../../pk/presentation/widgets/pk_pending_banner.dart';
+import '../../../../pk/presentation/widgets/pk_score_bar.dart';
+import '../../../../pk/data/pk_models.dart';
 import '../../../domain/pk/pk_battle_remote_models.dart';
 import '../../../domain/pk/pk_opponent_room_filter.dart';
 import '../../providers/pk_battle_remote_provider.dart';
@@ -70,30 +73,12 @@ class _VoicePkRoomStripState extends ConsumerState<VoicePkRoomStrip> {
     if (remote.isPending) {
       final isChallenger = isPkChallengerRoom(remote, widget.room);
       if (!isChallenger) return const SizedBox.shrink();
+      final key =
+          widget.room.apiRoomKey.isNotEmpty ? widget.room.apiRoomKey : widget.room.id;
       return Padding(
         padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
-        child: Material(
-          color: Colors.black.withValues(alpha: 0.45),
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(
-              children: [
-                const Icon(Icons.sports_mma_outlined, color: Colors.amber, size: 18),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    'PK daveti gönderildi — rakip kabul edene kadar bekleniyor…',
-                    style: TextStyle(color: Colors.white70, fontSize: 12),
-                  ),
-                ),
-                TextButton(
-                  onPressed: widget.onOpenPk,
-                  child: const Text('Detay'),
-                ),
-              ],
-            ),
-          ),
+        child: PkPendingBanner(
+          args: PkSessionArgs(contextId: key, kind: PkContextKind.voice),
         ),
       );
     }
@@ -144,12 +129,18 @@ class _VoicePkRoomStripState extends ConsumerState<VoicePkRoomStrip> {
               ],
             ),
             const SizedBox(height: 4),
-            LivePkScoreBar(
-              leftScore: leftScore,
-              rightScore: rightScore,
-              status: 'active',
-              isHost: widget.onEndPk != null,
-              onEnd: widget.onEndPk == null ? null : () => widget.onEndPk!(remote),
+            PkScoreBar(
+              battle: PkBattle(
+                id: remote.id,
+                status: remote.status == 'paused'
+                    ? PkStatus.paused
+                    : PkStatus.active,
+                score1: leftScore,
+                score2: rightScore,
+              ),
+              leftLabel: leftName,
+              rightLabel: rightName,
+              remaining: Duration(seconds: seconds),
             ),
           ],
         ),

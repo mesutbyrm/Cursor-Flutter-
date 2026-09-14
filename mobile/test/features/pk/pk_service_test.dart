@@ -1,3 +1,4 @@
+import 'package:canlifal_social/features/pk/data/pk_exception.dart';
 import 'package:canlifal_social/features/pk/data/pk_models.dart';
 import 'package:canlifal_social/features/pk/data/pk_service.dart';
 import 'package:flutter_test/flutter_test.dart';
