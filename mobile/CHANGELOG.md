@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.499+538 (2026-09-14) — CI derleme düzeltmesi
+
+- `payment_requests_notifier`: `WalletRepository.myPaymentRequestsPage` imzasıyla uyum (APK gate analyze)
+
 ## 1.0.499+537 (2026-09-14) — PK oda içi davet + ödeme kuyruğu
 
 - Kontrol merkezinden PK sekmesi kaldırıldı; davet yalnızca canlı yayın / sesli oda ekranında

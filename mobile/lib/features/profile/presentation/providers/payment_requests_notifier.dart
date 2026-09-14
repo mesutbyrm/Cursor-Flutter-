@@ -110,7 +110,7 @@ class PaymentRequestsNotifier
     var page = 1;
     var cancelled = 0;
     while (page <= 20) {
-      final bundle = await repo.myPaymentRequestsPage(page: page, limit: 50);
+      final bundle = await repo.myPaymentRequestsPage(page: page);
       final pending = bundle.items
           .where((r) => r.status.toLowerCase() == 'pending')
           .toList();
