@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/auth/bot_account_guard.dart';
 import '../../../../core/auth/bot_account_provider.dart';
+import '../../domain/pk/live_pk_ingest.dart';
 import '../../domain/pk/pk_status_helper.dart';
 import '../../domain/pk/pk_unified_bridge.dart';
+import 'live_pk_action_lock_provider.dart';
 import '../../../voice_hub/domain/pk/pk_battle_remote_models.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
 import 'pk_session_phase_provider.dart';
@@ -60,6 +62,7 @@ class LiveVideoPkState {
 
 class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, String> {
   Timer? _poll;
+  String? _lastIngestFingerprint;
 
   @override
   LiveVideoPkState build(String streamId) {
@@ -119,6 +122,12 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
   }
 
   void applyRemoteBattle(Map<String, dynamic> battle) {
+    final fp = livePkBattleIngestFingerprint(battle);
+    if (fp.isNotEmpty && fp == _lastIngestFingerprint) {
+      return;
+    }
+    _lastIngestFingerprint = fp;
+
     final status = battle['status']?.toString() ?? '';
     // Pending davet split ekranı açmaz; yalnızca kabul sonrası aktif senkron.
     if (isPkInvitePendingStatus(status)) {
@@ -182,15 +191,19 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
   Future<void> end() => _action('end');
 
   Future<void> _action(String action) async {
+    final api = ref.read(pkBattleRemoteDataSourceProvider);
+    final battleId = state.unifiedMatchId ?? state.battle?['id']?.toString();
+    if (battleId == null || battleId.isEmpty) {
+      ref.read(pkSessionPhaseProvider.notifier).reset();
+      state = state.copyWith(loading: false, error: 'PK bulunamadı');
+      return;
+    }
+    final lock = ref.read(livePkActionLockProvider.notifier);
+    if (!lock.tryAcquire(battleId, action)) {
+      return;
+    }
     state = state.copyWith(loading: true, clearError: true);
     try {
-      final api = ref.read(pkBattleRemoteDataSourceProvider);
-      final battleId = state.unifiedMatchId ?? state.battle?['id']?.toString();
-      if (battleId == null || battleId.isEmpty) {
-        ref.read(pkSessionPhaseProvider.notifier).reset();
-        state = state.copyWith(loading: false, error: 'PK bulunamadı');
-        return;
-      }
       PkBattleRemote? remote;
       switch (action) {
         case 'accept':
@@ -239,6 +252,8 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
     } catch (e) {
       ref.read(pkSessionPhaseProvider.notifier).reset();
       state = state.copyWith(loading: false, error: '$e');
+    } finally {
+      lock.release(battleId, action);
     }
   }
 }

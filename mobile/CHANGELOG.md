@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.496+534 (2026-09-14) — Canlı PK crash (TRTC çift oda)
+
+- PK kabul: zaten açık yayın odasındaysa ikinci `/live/room` push edilmez (paylaşılan TRTC kopması)
+- `liveActiveBroadcastStreamIdProvider` — aktif yayıncı oturumu kaydı
+- Global PK dinleyici: oda içindeyken çift davet poll/dialog atlanır
+- `livePkActionLockProvider` — accept/reject/respond eşzamanlı çift çağrı engeli
+- `livePkBattleIngestFingerprint` — SSE/REST tekrarlayan PK state güncellemesi dedupe
+
 ## 1.0.495+533 (2026-09-14) — Phase 2 FINAL PASS
 
 - Live: video/chat/bottom chrome modülleri; ana sayfa orchestration-only (~2905 satır)

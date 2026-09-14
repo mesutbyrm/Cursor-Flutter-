@@ -6,6 +6,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../data/host_live_stream_recovery.dart';
 import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_stream_entity.dart';
+import '../providers/live_active_broadcast_provider.dart';
 import '../providers/live_providers.dart';
 
 /// PK kabul sonrası yayıncıyı aktif yayın odasına yönlendirir.
@@ -16,6 +17,10 @@ Future<bool> openHostBroadcastRoomIfNeeded({
 }) async {
   final id = streamId.trim();
   if (id.isEmpty || !context.mounted) return false;
+
+  if (isLiveBroadcastRoomActiveForStream(ref, id)) {
+    return true;
+  }
 
   final recovered = await HostLiveStreamRecovery.loadIfValid();
   if (recovered != null && recovered.streamId?.trim() == id) {

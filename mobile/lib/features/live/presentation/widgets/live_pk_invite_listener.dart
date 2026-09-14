@@ -10,7 +10,9 @@ import '../../../voice_hub/domain/pk/pk_battle_remote_models.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
 import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/pk/live_pk_invite_helper.dart';
+import '../providers/live_active_broadcast_provider.dart';
 import '../providers/live_invite_dedup_provider.dart';
+import '../providers/live_pk_action_lock_provider.dart';
 import '../providers/live_pk_invite_signal_provider.dart';
 import '../providers/live_providers.dart';
 import '../providers/live_video_pk_provider.dart';
@@ -99,6 +101,9 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
 
       // Canlı 1v1 PK — ana backend `GET /api/video-streams/{id}/pk-battle` (tek kaynak).
       for (final stream in owned) {
+        if (isLiveBroadcastRoomActiveForStream(ref, stream.id)) {
+          continue;
+        }
         final battle = await api.fetchStreamBattle(stream.id);
         if (battle == null || battle.isEnded) continue;
         if (!battle.isPending) continue;
@@ -180,22 +185,29 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
     // Dialog timeout / dismiss — backend pending state korunur; otomatik reject yok.
     if (!mounted || accept == null) return;
 
+    final battleId = battle.effectiveId;
+    final lock = ref.read(livePkActionLockProvider.notifier);
+    if (!lock.tryAcquire(battleId, 'respond')) {
+      return;
+    }
     final remote = ref.read(pkBattleRemoteProvider.notifier);
     final pkNotifier = ref.read(liveVideoPkProvider(myStreamId).notifier);
     try {
       if (accept) {
-        PkEventLog.acceptStart(inviteId: battle.effectiveId);
-        await remote.accept(battle.effectiveId, streamId: myStreamId);
+        PkEventLog.acceptStart(inviteId: battleId);
+        await remote.accept(battleId, streamId: myStreamId);
         await pkNotifier.refresh();
-        PkEventLog.acceptSuccess(battleId: battle.effectiveId);
-        await openHostBroadcastRoomIfNeeded(
-          ref: ref,
-          context: context,
-          streamId: myStreamId,
-        );
+        PkEventLog.acceptSuccess(battleId: battleId);
+        if (!isLiveBroadcastRoomActiveForStream(ref, myStreamId)) {
+          await openHostBroadcastRoomIfNeeded(
+            ref: ref,
+            context: context,
+            streamId: myStreamId,
+          );
+        }
       } else {
-        PkEventLog.reject(inviteId: battle.effectiveId);
-        await remote.reject(battle.effectiveId, streamId: myStreamId);
+        PkEventLog.reject(inviteId: battleId);
+        await remote.reject(battleId, streamId: myStreamId);
         await pkNotifier.refresh();
       }
       if (mounted) {
@@ -215,6 +227,8 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
           SnackBar(content: Text(ApiException.userMessage(e))),
         );
       }
+    } finally {
+      lock.release(battleId, 'respond');
     }
   }
 

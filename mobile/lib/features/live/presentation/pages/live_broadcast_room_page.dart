@@ -81,7 +81,9 @@ import '../gifts/providers/live_seat_gift_flash_provider.dart';
 import '../providers/live_host_rank_provider.dart';
 import '../../../games/presentation/providers/game_providers.dart';
 import '../providers/pk_room_providers.dart';
+import '../providers/live_active_broadcast_provider.dart';
 import '../providers/live_invite_dedup_provider.dart';
+import '../providers/live_pk_action_lock_provider.dart';
 import '../providers/live_co_guest_camera_signal_provider.dart';
 import '../providers/live_pk_invite_signal_provider.dart';
 import '../providers/live_providers.dart';
@@ -220,6 +222,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final streamId = widget.session.streamId?.trim();
       if (streamId != null && streamId.isNotEmpty) {
+        if (widget.session.isHost) {
+          ref.read(liveActiveBroadcastStreamIdProvider.notifier).state =
+              streamId;
+        }
         final hostId = widget.session.hostUserId?.trim();
         if (hostId != null && hostId.isNotEmpty) {
           ref.read(liveFortuneHostUserIdProvider(streamId).notifier).state =
@@ -628,6 +634,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     final streamId = widget.session.streamId?.trim();
+    if (widget.session.isHost &&
+        streamId != null &&
+        streamId.isNotEmpty &&
+        ref.read(liveActiveBroadcastStreamIdProvider) == streamId) {
+      ref.read(liveActiveBroadcastStreamIdProvider.notifier).state = null;
+    }
     if (streamId != null && streamId.isNotEmpty) {
       ref.read(liveSeatGiftTotalsProvider.notifier).clear();
       ref.read(voiceRecentGiftsProvider.notifier).clear();
@@ -1850,6 +1862,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       _livePkInviteDialogOpen = false;
       return;
     }
+    final lock = ref.read(livePkActionLockProvider.notifier);
+    if (!lock.tryAcquire(battleId, 'respond')) {
+      _livePkInviteDialogOpen = false;
+      return;
+    }
     try {
       if (accept) {
         PkEventLog.acceptStart(matchId: battleId);
@@ -1888,6 +1905,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         );
       }
     } finally {
+      lock.release(battleId, 'respond');
       _livePkInviteDialogOpen = false;
     }
   }
