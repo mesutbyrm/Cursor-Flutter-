@@ -1,5 +1,18 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.503+542 (2026-09-14) — PR #372 Bugbot + canlı PK overlay
+
+- `GiftEngineOverlay`: tam ekran hediye gate serbest bırakma (sıra değişiminde sızıntı)
+- `AuthNeonButton`: `Semantics.onTap` — ekran okuyucu ile CTA
+- Canlı yayın: `PkSessionOverlayHost` (geri sayım / sonuç)
+
+## 1.0.502+541 (2026-09-14) — PK overlay + oda içi PK
+
+- `PkCountdownOverlay` / `PkResultOverlay` + `PkSessionOverlayHost` (sesli oda)
+- Oda sahibi: koltuk atama sheet → **Bu kullanıcıyla PK** (`create_user`)
+- Sesli oda şeridi: `PkPendingBanner` + `PkScoreBar`
+- `PkService.createUserRoomPk` — `/api/chat/rooms/{id}/pk`
+
 ## 1.0.501+540 (2026-09-14) — PK oturum + UI (Riverpod)
 
 - `PkSessionNotifier` — `/api/live/pk` senkron, aday listesi, create/accept/reject/cancel/end

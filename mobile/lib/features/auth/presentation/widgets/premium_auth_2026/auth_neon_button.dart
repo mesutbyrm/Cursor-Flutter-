@@ -43,6 +43,7 @@ class _AuthNeonButtonState extends State<AuthNeonButton> {
       button: true,
       enabled: enabled,
       label: widget.label,
+      onTap: widget.loading ? null : widget.onPressed,
       child: ExcludeSemantics(
       child: GestureDetector(
       onTapDown: enabled && !widget.loading ? (_) => setState(() => _pressed = true) : null,

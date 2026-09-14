@@ -100,6 +100,7 @@ import '../providers/pk_session_phase_provider.dart';
 import '../utils/live_pk_invite_flow.dart';
 import '../../../pk/presentation/providers/pk_session_notifier.dart';
 import '../../../pk/presentation/widgets/pk_start_sheet.dart';
+import '../../../pk/presentation/widgets/pk_session_overlay_host.dart';
 import '../widgets/live_tiktok/live_background_picker_sheet.dart';
 import '../widgets/live_tiktok/live_guest_grid.dart';
 import '../widgets/broadcast_room/live_pk_score_bar.dart';
@@ -2607,7 +2608,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final hostRank = hostRankAsync.valueOrNull;
     final tournamentsAsync = ref.watch(gameTournamentsProvider);
 
-    return SiteAnimationContextHost(
+    final liveTree = SiteAnimationContextHost(
       context: SiteAnimationContext.liveStream,
       child: GiftEventListener(
       sessionKey: streamId ?? '',
@@ -2898,6 +2899,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       ),
       ),
       ),
+    );
+
+    if (!hasStream) return liveTree;
+    return PkSessionOverlayHost(
+      args: PkSessionArgs(contextId: streamId!, kind: PkContextKind.live),
+      child: liveTree,
     );
   }
 }

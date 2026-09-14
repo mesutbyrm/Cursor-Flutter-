@@ -44,6 +44,7 @@ class GiftEngineOverlay extends ConsumerStatefulWidget {
 class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
   Timer? _finishTimer;
   var _visible = false;
+  String? _gateEventId;
 
   @override
   void didUpdateWidget(covariant GiftEngineOverlay oldWidget) {
@@ -59,8 +60,16 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
     _schedule();
   }
 
+  void _releaseGate() {
+    final id = _gateEventId;
+    if (id == null) return;
+    CdsFullscreenGiftGate.instance.release(id);
+    _gateEventId = null;
+  }
+
   void _schedule() {
     _finishTimer?.cancel();
+    _releaseGate();
     _visible = false;
     final ev = widget.event;
     if (!widget.enabled || ev == null) return;
@@ -71,7 +80,11 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
 
     Future<void>.delayed(delay, () {
       if (!mounted || widget.event?.id != ev.id) return;
-      if (!CdsFullscreenGiftGate.instance.tryAcquire(ev.id)) return;
+      if (!CdsFullscreenGiftGate.instance.tryAcquire(ev.id)) {
+        widget.onFinished?.call(ev.id);
+        return;
+      }
+      _gateEventId = ev.id;
       setState(() => _visible = true);
       final key = widget.sessionKey?.trim();
       if (key != null && key.isNotEmpty) {
@@ -79,7 +92,7 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
       }
       _finishTimer = Timer(duration, () {
         if (!mounted) return;
-        CdsFullscreenGiftGate.instance.release(ev.id);
+        _releaseGate();
         widget.onFinished?.call(ev.id);
       });
     });
@@ -88,10 +101,7 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
   @override
   void dispose() {
     _finishTimer?.cancel();
-    final id = widget.event?.id;
-    if (id != null) {
-      CdsFullscreenGiftGate.instance.release(id);
-    }
+    _releaseGate();
     super.dispose();
   }
 

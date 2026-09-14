@@ -23,6 +23,20 @@ void main() {
     final semantics = tester.getSemantics(find.text('Giriş Yap'));
     expect(semantics.label, 'Giriş Yap');
     expect(semantics.hasFlag(SemanticsFlag.isButton), isTrue);
+
+    var tapped = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AuthNeonButton(
+            label: 'Giriş Yap',
+            onPressed: () => tapped = true,
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.bySemanticsLabel('Giriş Yap'));
+    expect(tapped, isTrue);
   });
 
   testWidgets('Register page exposes Kayıt ol button semantics', (tester) async {
