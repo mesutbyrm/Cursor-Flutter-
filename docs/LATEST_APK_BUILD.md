@@ -4,20 +4,17 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.495+533` |
-| Tarih (UTC) | 2026-09-14 15:37 |
-| Commit | [`0337cd755f4e19604bf2de70eacc48c955f7fbfa`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/0337cd755f4e19604bf2de70eacc48c955f7fbfa) |
-| İş akışı | [Run 34861440465](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34861440465) |
+| Sürüm | `1.0.497+535` |
+| Tarih (UTC) | 2026-09-14 18:59 |
+| Commit | [`60be6ae8ef6f300efc0f71ceb2469cacdf04c6db`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/60be6ae8ef6f300efc0f71ceb2469cacdf04c6db) |
+| İş akışı | [Run 34882392970](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34882392970) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.495+533 (2026-09-14) — Phase 2 FINAL PASS
+## 1.0.497+535 (2026-09-14) — Canlı PK derleme düzeltmesi
 
-- Live: video/chat/bottom chrome modülleri; ana sayfa orchestration-only (~2905 satır)
-- A11y: register, OTP, messages composer, social composer semantics
-- Test: `cds_a11y_smoke_test` genişletildi, `live_broadcast_room_modules_smoke_test`
-- Rapor: `docs/AUDIT_PHASE2_FINAL_COMPLETION.md` — **GENEL: PASS**
+- `isLiveBroadcastRoomActiveForStream`: `WidgetRef` uyumu (CI/CodeQL compile fix)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
