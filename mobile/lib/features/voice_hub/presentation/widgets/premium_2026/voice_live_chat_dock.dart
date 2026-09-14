@@ -1,3 +1,4 @@
+import 'package:canlifal_social/core/design_system/cds_bottom_sheet.dart';
 import 'package:canlifal_social/core/performance/effects_perf.dart';
 import 'package:canlifal_social/core/performance/scroll_perf.dart';
 import 'package:flutter/material.dart';
@@ -224,9 +225,8 @@ void _showEmojiPicker(BuildContext context, TextEditingController controller) {
     '😀', '😂', '❤️', '🔥', '👏', '🎉', '💎', '🎤',
     '🙏', '✨', '💜', '😍', '🤣', '👋', '🌙', '⭐',
   ];
-  showModalBottomSheet<void>(
+  CdsBottomSheet.showTransparent<void>(
     context: context,
-    backgroundColor: Colors.transparent,
     builder: (ctx) => Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       decoration: BoxDecoration(

@@ -108,6 +108,8 @@ import '../widgets/broadcast_room/live_network_quality_pill.dart';
 import '../widgets/broadcast_room/live_host_away_viewer_banner.dart';
 import '../widgets/broadcast_room/live_stream_games_sheet.dart';
 import '../widgets/broadcast_room/live_broadcast_room_chips.dart';
+import '../widgets/broadcast_room/live_broadcast_room_gift_overlays.dart';
+import '../widgets/broadcast_room/live_broadcast_room_host_overlays.dart';
 import '../widgets/broadcast_room/live_reconnect_banner.dart';
 import '../widgets/broadcast_room/live_host_guest_request_center_overlay.dart';
 import '../providers/live_guest_request_blocklist_provider.dart';
@@ -2919,34 +2921,19 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               emojiRainToken: 0,
               applauseToken: interaction.applauseToken,
             ),
-            GiftEngineSeatEffectsOverlay(event: activeGift),
-            Positioned.fill(
-              child: IgnorePointer(
-                child: GiftEngineOverlay(
-                  event: activeGift,
-                  enabled: broadcastSettings.giftsEnabled,
-                  stage: GiftStageContext.liveStream,
-                  sessionKey: streamId,
-                  onFinished: (id) {
-                    if (!hasStream) return;
-                    ref
-                        .read(giftSessionProvider(streamId).notifier)
-                        .dequeueAnimation(id);
-                  },
-                ),
+            if (hasStream)
+              LiveBroadcastRoomGiftOverlays(
+                streamId: streamId!,
+                activeGift: activeGift,
               ),
-            ),
-            if (hasStream) GiftFeedPanel(sessionKey: streamId),
             if (hasStream && s.isHost)
-              LiveHostGuestRequestCenterOverlay(
-                streamId: streamId,
+              LiveBroadcastRoomHostOverlays(
+                streamId: streamId!,
                 currentGuestCount: coBroadcast.coBroadcasters.length,
                 onApproved: _approveGuestRequest,
                 onRejected: _rejectGuestRequest,
                 onBlocked: _blockGuestRequest,
               ),
-            if (hasStream && s.isHost)
-              LiveHostFortuneRequestCenterOverlay(streamId: streamId),
             if (hasStream &&
                 _viewerHostAwayBannerVisible &&
                 !s.isHost &&

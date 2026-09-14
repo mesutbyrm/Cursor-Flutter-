@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/design_system/cds_responsive.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../providers/social_providers.dart';
 import '../utils/social_feed_refresh.dart';
@@ -69,11 +70,12 @@ class _SocialPageState extends ConsumerState<SocialPage>
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom + 88;
-
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
-        child: Column(
+        child: Padding(
+          padding: CdsResponsive.screenPadding(context),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             RepaintBoundary(
@@ -92,6 +94,7 @@ class _SocialPageState extends ConsumerState<SocialPage>
               ),
             ),
           ],
+        ),
         ),
       ),
     );

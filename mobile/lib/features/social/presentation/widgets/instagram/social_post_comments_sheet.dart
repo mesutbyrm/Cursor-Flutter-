@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/design_system/cds_bottom_sheet.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -39,19 +40,11 @@ class SocialPostCommentsSheet extends ConsumerStatefulWidget {
       context.go('/login');
       return Future.value();
     }
-    return showModalBottomSheet<void>(
+    return CdsBottomSheet.show<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: const Color(0xFF120A24),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
-        child: SocialPostCommentsSheet(
-          postId: postId,
-          initialCount: initialCount,
-        ),
+      child: SocialPostCommentsSheet(
+        postId: postId,
+        initialCount: initialCount,
       ),
     );
   }

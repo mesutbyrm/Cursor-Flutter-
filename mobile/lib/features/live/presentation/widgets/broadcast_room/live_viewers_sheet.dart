@@ -1,3 +1,4 @@
+import 'package:canlifal_social/core/design_system/cds_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -16,13 +17,9 @@ Future<void> showLiveViewersSheet(
   bool isHost = false,
   void Function(String userId, String displayName)? onInviteGuest,
 }) {
-  return showModalBottomSheet<void>(
+  return CdsBottomSheet.show<void>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: const Color(0xFF12081F),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
+    child: Builder(
     builder: (ctx) => DraggableScrollableSheet(
       expand: false,
       initialChildSize: 0.55,
@@ -82,6 +79,7 @@ Future<void> showLiveViewersSheet(
           );
         },
       ),
+    ),
     ),
   );
 }

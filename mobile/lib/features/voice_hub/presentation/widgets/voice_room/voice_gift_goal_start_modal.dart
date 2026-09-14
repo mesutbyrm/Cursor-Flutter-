@@ -1,3 +1,4 @@
+import 'package:canlifal_social/core/design_system/cds_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -18,10 +19,8 @@ Future<VoiceGiftGoalStartResult?> showVoiceGiftGoalStartModal(
   BuildContext context,
   WidgetRef ref,
 ) {
-  return showModalBottomSheet<VoiceGiftGoalStartResult>(
+  return CdsBottomSheet.showTransparent<VoiceGiftGoalStartResult>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
     builder: (ctx) => _VoiceGiftGoalStartSheet(
       jetonLabel: economyCurrencyLabel(ref, key: 'jeton'),
     ),

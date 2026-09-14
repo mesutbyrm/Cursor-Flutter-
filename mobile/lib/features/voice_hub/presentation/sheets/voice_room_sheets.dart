@@ -604,10 +604,8 @@ Future<void> showVoiceUserManagementSheet(
   required List<ChatRoomPresence> presence,
   void Function(ChatRoomPresence user)? onUserTap,
 }) {
-  return showModalBottomSheet(
+  return CdsBottomSheet.showTransparent(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
     builder: (ctx) => DraggableScrollableSheet(
       initialChildSize: 0.5,
       minChildSize: 0.35,
