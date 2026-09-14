@@ -138,7 +138,11 @@ class _OtpVerifyPageState extends ConsumerState<OtpVerifyPage> {
             children: List.generate(6, (i) {
               return SizedBox(
                 width: 46,
-                child: TextField(
+                child: Semantics(
+                  textField: true,
+                  label: 'Doğrulama kodu ${i + 1} / 6',
+                  hint: 'Rakam girin',
+                  child: TextField(
                   controller: _controllers[i],
                   focusNode: _nodes[i],
                   textAlign: TextAlign.center,
@@ -170,6 +174,7 @@ class _OtpVerifyPageState extends ConsumerState<OtpVerifyPage> {
                     ),
                   ),
                   onChanged: (v) => _onDigit(i, v),
+                ),
                 ),
               );
             }),

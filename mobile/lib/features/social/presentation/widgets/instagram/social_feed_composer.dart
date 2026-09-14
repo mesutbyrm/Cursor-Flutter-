@@ -510,9 +510,13 @@ class _MediaPreview extends StatelessWidget {
           child: Material(
             color: Colors.black54,
             shape: const CircleBorder(),
-            child: IconButton(
+            child: Semantics(
+              button: true,
+              label: 'Medya önizlemesini kaldır',
+              child: IconButton(
               icon: const Icon(Icons.close_rounded, color: Colors.white),
               onPressed: onClear,
+            ),
             ),
           ),
         ),
@@ -536,7 +540,10 @@ class _ComposerAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return Semantics(
+      button: true,
+      label: label,
+      child: InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Padding(
@@ -557,6 +564,7 @@ class _ComposerAction extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

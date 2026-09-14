@@ -199,22 +199,33 @@ class ChatComposer extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
         child: Row(
           children: [
-            IconButton(
+            Semantics(
+              button: true,
+              label: 'Ek ekle',
+              child: IconButton(
               onPressed: () => _showActionSheet(context, ref),
               icon: Icon(
                 Icons.add_circle_outline_rounded,
                 color: AppThemeColors.accentPurple.withValues(alpha: 0.9),
               ),
             ),
-            IconButton(
+            ),
+            Semantics(
+              button: true,
+              label: 'Emoji seç',
+              child: IconButton(
               onPressed: () => _showEmojiPicker(context),
               icon: const Icon(
                 Icons.emoji_emotions_outlined,
                 color: Colors.white70,
               ),
             ),
+            ),
             Expanded(
-              child: TextField(
+              child: Semantics(
+                textField: true,
+                label: 'Mesaj yazın',
+                child: TextField(
                 controller: controller,
                 onChanged: onChanged,
                 minLines: 1,
@@ -254,16 +265,25 @@ class ChatComposer extends ConsumerWidget {
                 onSubmitted: (_) => onSend(),
               ),
             ),
+            ),
             const SizedBox(width: 8),
-            IconButton.filled(
+            Semantics(
+              button: true,
+              label: 'Sesli fal',
+              child: IconButton.filled(
               onPressed: () => onAction?.call(DmComposerAction.voiceFortune),
               style: IconButton.styleFrom(
                 backgroundColor: AppThemeColors.accentPurple.withValues(alpha: 0.72),
               ),
               icon: const Icon(Icons.mic_rounded, color: Colors.white),
             ),
+            ),
             const SizedBox(width: 8),
-            Material(
+            Semantics(
+              button: true,
+              label: 'Mesaj gönder',
+              enabled: !sending,
+              child: Material(
               color: Colors.transparent,
               child: InkWell(
                 onTap: sending ? null : onSend,
@@ -293,6 +313,7 @@ class ChatComposer extends ConsumerWidget {
                   ),
                 ),
               ),
+            ),
             ),
           ],
         ),

@@ -277,7 +277,10 @@ class _BirthChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
+    return Semantics(
+      button: true,
+      label: label,
+      child: Material(
       color: const Color(0xFF140A28).withValues(alpha: 0.72),
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
@@ -302,6 +305,7 @@ class _BirthChip extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }
