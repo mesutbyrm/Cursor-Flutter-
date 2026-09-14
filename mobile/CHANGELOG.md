@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.497+535 (2026-09-14) — Canlı PK derleme düzeltmesi
+
+- `isLiveBroadcastRoomActiveForStream`: `WidgetRef` uyumu (CI/CodeQL compile fix)
+
 ## 1.0.496+534 (2026-09-14) — Canlı PK crash (TRTC çift oda)
 
 - PK kabul: zaten açık yayın odasındaysa ikinci `/live/room` push edilmez (paylaşılan TRTC kopması)

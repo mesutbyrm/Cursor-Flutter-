@@ -4,8 +4,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// ikinci oda/TRTC oturumu açılmasını engellemek için.
 final liveActiveBroadcastStreamIdProvider = StateProvider<String?>((ref) => null);
 
-bool isLiveBroadcastRoomActiveForStream(Ref ref, String streamId) {
-  final active = ref.read(liveActiveBroadcastStreamIdProvider)?.trim() ?? '';
+bool isLiveBroadcastRoomActiveForStreamId(
+  String? activeStreamId,
+  String streamId,
+) {
+  final active = activeStreamId?.trim() ?? '';
   final sid = streamId.trim();
   return active.isNotEmpty && sid.isNotEmpty && active == sid;
+}
+
+bool isLiveBroadcastRoomActiveForStream(WidgetRef ref, String streamId) {
+  return isLiveBroadcastRoomActiveForStreamId(
+    ref.read(liveActiveBroadcastStreamIdProvider),
+    streamId,
+  );
 }

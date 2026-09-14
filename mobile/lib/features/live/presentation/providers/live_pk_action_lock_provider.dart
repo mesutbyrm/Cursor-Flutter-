@@ -29,5 +29,3 @@ final livePkActionLockProvider =
     NotifierProvider<LivePkActionLockNotifier, Set<String>>(
   LivePkActionLockNotifier.new,
 );
-
-String livePkRespondLockKey(String battleId) => '$battleId:respond';
