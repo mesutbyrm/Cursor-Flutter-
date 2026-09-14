@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.484+522 (2026-09-14) — Canlı PK davet sinyali
+
+- Canlı PK `inviteStream` sonrası `livePkInviteSignal` bump (rakip poll/SSE tetiklenir)
+- Cihaz checklist: `docs/MOBILE_STAGE2_DEVICE_CHECKLIST.md`
+
 ## 1.0.483+521 (2026-09-14) — PK / canlı fal Aşama 2
 
 - Canlı PK: faz makinesi sıfırlama, kabul/red zaman aşımı, çift davet diyaloğu engeli

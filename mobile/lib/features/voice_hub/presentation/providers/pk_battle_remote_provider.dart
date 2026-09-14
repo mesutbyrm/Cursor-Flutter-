@@ -146,6 +146,9 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     if (battle != null) {
       _apply(battle, 'pk:invite');
       _syncLiveVideoPk(battle);
+      if (battle.isPending) {
+        ref.read(livePkInviteSignalProvider.notifier).bump();
+      }
     }
     return battle;
   }
