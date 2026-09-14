@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/design_system/cds_bottom_sheet.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../../core/network/api_exception.dart';
@@ -78,18 +79,20 @@ Future<void> showLiveModerationSheet({
   String? targetAvatarUrl,
   bool isModerator = false,
 }) async {
-  await showModalBottomSheet<void>(
+  await CdsBottomSheet.showTransparent<void>(
     context: context,
-    backgroundColor: const Color(0xFF1E1030),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    builder: (_) => _LiveModerationSheet(
-      streamId: streamId,
-      targetUserId: targetUserId,
-      targetDisplayName: targetDisplayName,
-      targetAvatarUrl: targetAvatarUrl,
-      isModerator: isModerator,
+    builder: (_) => DecoratedBox(
+      decoration: const BoxDecoration(
+        color: Color(0xFF1E1030),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: _LiveModerationSheet(
+        streamId: streamId,
+        targetUserId: targetUserId,
+        targetDisplayName: targetDisplayName,
+        targetAvatarUrl: targetAvatarUrl,
+        isModerator: isModerator,
+      ),
     ),
   );
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/design_system/cds_bottom_sheet.dart';
 
 import '../../../domain/entities/live_guest_layout.dart';
 import '../../providers/live_broadcast_settings_provider.dart';
@@ -9,22 +10,19 @@ Future<void> showLiveBroadcastSettingsSheet({
   required BuildContext context,
   required WidgetRef ref,
 }) {
-  return showModalBottomSheet<void>(
+  return CdsBottomSheet.show<void>(
     context: context,
-    backgroundColor: const Color(0xFF151522),
-    showDragHandle: true,
-    builder: (ctx) {
-      return Consumer(
-        builder: (context, ref, _) {
-          final settings = ref.watch(liveBroadcastSettingsProvider);
-          final notifier = ref.read(liveBroadcastSettingsProvider.notifier);
+    child: Consumer(
+      builder: (context, ref, _) {
+        final settings = ref.watch(liveBroadcastSettingsProvider);
+        final notifier = ref.read(liveBroadcastSettingsProvider.notifier);
 
-          return SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(8, 0, 8, 16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 0, 8, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
                   const ListTile(
                     title: Text(
                       'Yayın Ayarları',
@@ -106,13 +104,12 @@ Future<void> showLiveBroadcastSettingsSheet({
                       ),
                     ),
                   ),
-                  const LiveStreamQualityPicker(compact: true, showTitle: false),
-                ],
-              ),
+                const LiveStreamQualityPicker(compact: true, showTitle: false),
+              ],
             ),
-          );
-        },
-      );
-    },
+          ),
+        );
+      },
+    ),
   );
 }

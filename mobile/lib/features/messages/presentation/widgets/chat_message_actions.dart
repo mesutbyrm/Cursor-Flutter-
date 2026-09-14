@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:canlifal_social/core/design_system/cds_bottom_sheet.dart';
 
 import '../../domain/entities/message_entities.dart';
 
@@ -10,19 +11,20 @@ Future<void> showChatMessageActions({
   required VoidCallback onReply,
   required VoidCallback onForward,
 }) {
-  return showModalBottomSheet<void>(
+  return CdsBottomSheet.showTransparent<void>(
     context: context,
-    backgroundColor: const Color(0xFF111827),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-    ),
-    builder: (ctx) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            leading: const Icon(Icons.reply_rounded, color: Colors.white70),
-            title: const Text('Yanıtla', style: TextStyle(color: Colors.white)),
+    builder: (ctx) => DecoratedBox(
+      decoration: const BoxDecoration(
+        color: Color(0xFF111827),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.reply_rounded, color: Colors.white70),
+              title: const Text('Yanıtla', style: TextStyle(color: Colors.white)),
             onTap: () {
               Navigator.pop(ctx);
               onReply();
@@ -57,7 +59,8 @@ Future<void> showChatMessageActions({
                 onDelete();
               },
             ),
-        ],
+          ],
+        ),
       ),
     ),
   );
@@ -69,28 +72,29 @@ Future<void> showConversationPeerActions({
   required VoidCallback onDeleteChat,
   required VoidCallback onBlock,
 }) {
-  return showModalBottomSheet<void>(
+  return CdsBottomSheet.showTransparent<void>(
     context: context,
-    backgroundColor: const Color(0xFF111827),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-    ),
-    builder: (ctx) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              peerName,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
+    builder: (ctx) => DecoratedBox(
+      decoration: const BoxDecoration(
+        color: Color(0xFF111827),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                peerName,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
-          ),
-          ListTile(
+            ListTile(
             leading: const Icon(Icons.delete_sweep_outlined, color: Colors.white70),
             title: const Text('Sohbeti sil', style: TextStyle(color: Colors.white)),
             subtitle: const Text(
@@ -110,8 +114,9 @@ Future<void> showConversationPeerActions({
               Navigator.pop(ctx);
               onBlock();
             },
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     ),
   );

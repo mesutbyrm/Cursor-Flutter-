@@ -108,8 +108,10 @@ import '../widgets/broadcast_room/live_network_quality_pill.dart';
 import '../widgets/broadcast_room/live_host_away_viewer_banner.dart';
 import '../widgets/broadcast_room/live_stream_games_sheet.dart';
 import '../widgets/broadcast_room/live_broadcast_room_chips.dart';
+import '../widgets/broadcast_room/live_broadcast_room_connection_overlays.dart';
 import '../widgets/broadcast_room/live_broadcast_room_gift_overlays.dart';
 import '../widgets/broadcast_room/live_broadcast_room_host_overlays.dart';
+import '../widgets/broadcast_room/live_broadcast_room_hud_overlays.dart';
 import '../widgets/broadcast_room/live_reconnect_banner.dart';
 import '../widgets/broadcast_room/live_host_guest_request_center_overlay.dart';
 import '../providers/live_guest_request_blocklist_provider.dart';
@@ -2853,9 +2855,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         : const AsyncValue<LiveHostRankInfo?>.data(null);
     final hostRank = hostRankAsync.valueOrNull;
     final tournamentsAsync = ref.watch(gameTournamentsProvider);
-    final tournamentRank = tournamentsAsync.valueOrNull?.isNotEmpty == true
-        ? (tournamentsAsync.valueOrNull!.first.rank ?? 3)
-        : null;
 
     return SiteAnimationContextHost(
       context: SiteAnimationContext.liveStream,
@@ -2934,27 +2933,25 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 onRejected: _rejectGuestRequest,
                 onBlocked: _blockGuestRequest,
               ),
-            if (hasStream &&
-                _viewerHostAwayBannerVisible &&
-                !s.isHost &&
-                !_hostAway)
-              LiveHostAwayViewerBanner(graceEndsAt: _viewerGraceEndsAt),
-            if (hasStream &&
-                _phase == LiveSessionPhase.reconnecting &&
-                !_hostAway)
-              LiveReconnectBanner(
-                message: s.isHost
-                    ? 'Bağlantı koptu — yayın yeniden bağlanıyor…'
-                    : 'Yayın yeniden bağlanıyor — video birazdan devam edecek',
-              ),
-            if (hasStream &&
-                _phase == LiveSessionPhase.error &&
-                !s.isHost &&
-                !_hostAway)
-              LiveReconnectBanner(
-                message: 'Bağlantı hatası — yayına yeniden bağlanmayı deneyin',
-                onRetry: () => unawaited(_initTrtc()),
-              ),
+            LiveBroadcastRoomConnectionOverlays(
+              topInset: top,
+              hasStream: hasStream,
+              isHost: s.isHost,
+              viewerHostAwayBannerVisible: _viewerHostAwayBannerVisible,
+              hostAway: _hostAway,
+              phaseReconnecting: _phase == LiveSessionPhase.reconnecting,
+              phaseError: _phase == LiveSessionPhase.error,
+              viewerGraceEndsAt: _viewerGraceEndsAt,
+              onRetryRtc: () => unawaited(_initTrtc()),
+              vipBannerName: _vipBannerName,
+              vipBannerTheme: _vipBannerTheme,
+              onVipBannerDone: () => setState(() {
+                _vipBannerName = null;
+                _vipBannerTheme = null;
+              }),
+              joinRequestPending: _joinRequestPending,
+              coHostUpgraded: _coHostUpgraded,
+            ),
             if (hasStream && pkState?.battle != null &&
                 (pkStatus == 'active' || pkStatus == 'ended'))
               LivePkPremiumOverlay(
@@ -2966,105 +2963,17 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 mvpName: pkExtras?['mvpName']?.toString(),
                 winnerSide: pkExtras?['winnerSide']?.toString(),
               ),
-            if (_vipBannerName != null)
-              Positioned(
-                top: top + 72,
-                left: 16,
-                right: 16,
-                child: LiveVipEntranceBanner(
-                  displayName: _vipBannerName!,
-                  theme: _vipBannerTheme,
-                  onDone: () => setState(() {
-                    _vipBannerName = null;
-                    _vipBannerTheme = null;
-                  }),
-                ),
-              ),
-            if (_joinRequestPending && !s.isHost && !_coHostUpgraded)
-              Positioned(
-                top: top + 72,
-                left: 16,
-                right: 16,
-                child: Material(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
-                    child: Row(
-                      children: [
-                        const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white70,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'Yayına katılma isteği gönderildi — yayıncı onayı bekleniyor',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Colors.white,
-                                ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
             if (hasStream)
-              Positioned(
-                left: 12,
-                right: 12,
-                bottom: 300,
-                child: MusicVideoPlayer(streamId: streamId),
-              ),
-            if (hasStream)
-              Positioned(
-                left: 12,
-                top: top + 108,
-                child: SizedBox(
-                  width: MediaQuery.sizeOf(context).width * 0.42,
-                  child: GiftGoalBar(
-                    context: 'live_stream',
-                    contextId: streamId,
-                  ),
-                ),
-              ),
-            if (hasStream && tournamentsAsync.valueOrNull?.isNotEmpty == true)
-              Positioned(
-                right: 12,
-                top: top + 108,
-                child: LiveStarTournamentCard(
-                  rank: tournamentRank ?? hostRank?.popularRank ?? 3,
-                  onTap: () =>
-                      unawaited(showLiveStarTournamentSheet(context, ref)),
-                ),
-              ),
-            if (hasStream && interaction.userLikeCounts.isNotEmpty)
-              Positioned(
-                left: 12,
-                bottom: 268,
-                child: LiveBroadcastLikeContributorsChip(
-                  counts: interaction.userLikeCounts,
-                ),
-              ),
-            if (hasStream)
-              Positioned(
-                left: 12,
-                bottom: 210,
-                child: SizedBox(
-                  width: MediaQuery.sizeOf(context).width * 0.55,
-                  child: PkRoomLiveSection(
-                    streamId: streamId,
-                    myUserId: user?.id ?? '',
-                  ),
-                ),
+              LiveBroadcastRoomHudOverlays(
+                hasStream: hasStream,
+                streamId: streamId!,
+                topInset: top,
+                myUserId: user?.id ?? '',
+                userLikeCounts: interaction.userLikeCounts,
+                onTournamentTap: () =>
+                    unawaited(showLiveStarTournamentSheet(context, ref)),
+                hostRank: hostRank,
+                tournamentsAsync: tournamentsAsync,
               ),
             SafeArea(
               bottom: false,
