@@ -920,9 +920,6 @@ abstract final class ApiEndpoints {
   static const fortuneAccessCheck = '/api/fortune-access/check';
 
   /// Jeton ile fal kilidi tüketimi (opsiyonel; yoksa fal POST'unda düşülür).
-  /// @deprecated — üretimde 404; jeton/CFC düşümü sunucu fal akışında. 404 sessiz.
-  static const fortuneAccessConsume = '/api/fortune-access/consume';
-
   static String userFortuneDetail(String fortuneId) =>
       '/api/user/fortunes/$fortuneId';
 

@@ -35,7 +35,8 @@ bool _isLegacyCanlifalPath(String path) {
       path == '/api/notifications/unread' ||
       path.startsWith('/api/pk/battles') ||
       path == '/api/daily-rewards' ||
-      path == '/api/tournaments/join') {
+      path == '/api/tournaments/join' ||
+      path == '/api/fortune-access/consume') {
     return true;
   }
   if (RegExp(r'^/api/rooms/[^/]+/music').hasMatch(path)) return true;

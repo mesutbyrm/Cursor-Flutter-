@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.489+527 (2026-09-14) — API parite (fal erişim, content hub)
+
+- Fal jeton/CFC ön doğrulama: `POST /api/fortune-access/check` (`/consume` kaldırıldı)
+- Content hub fan kulüp: `GET /api/mobile/home` birincil, fan-clubs yedek
+
 ## 1.0.488+526 (2026-09-14) — API parite P0 (günlük ödül, ana sayfa, müzik, turnuva)
 
 - Günlük ödül: birincil `GET/POST /api/games/daily-reward` (+ `mobile/home` gömülü veri)

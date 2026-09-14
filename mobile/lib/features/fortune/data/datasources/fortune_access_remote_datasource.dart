@@ -58,43 +58,42 @@ class FortuneAccessRemoteDataSource {
     return _parseReward(res.data);
   }
 
-  /// Jeton ile fal kilidi — sunucu jeton düşerse burada doğrulanır.
+  /// Jeton ön doğrulama — kanonik `POST /api/fortune-access/check` (jeton düşümü fal POST).
   Future<void> consumeJetonAccess({
     required String slug,
     required int jetonCost,
   }) async {
-    try {
-      await _dio.safePost<dynamic>(
-        ApiEndpoints.fortuneAccessConsume,
-        data: {
-          'slug': slug,
-          'method': 'jeton',
-          'jetonCost': jetonCost,
-          'platform': 'mobile',
-        },
-      );
-    } on ApiException catch (e) {
-      if (e.statusCode == 404) return;
-      rethrow;
-    }
+    await _postFortuneAccessPreflight(body: {
+      'fortuneType': slug,
+      'method': 'jeton',
+      'jetonCost': jetonCost,
+      'platform': 'mobile',
+    });
   }
 
   Future<void> consumeCfcAccess({
     required String slug,
     required int cfcCost,
   }) async {
+    await _postFortuneAccessPreflight(body: {
+        'fortuneType': slug,
+        'method': 'cfc',
+        'cfcCost': cfcCost,
+        'platform': 'mobile',
+      },
+    );
+  }
+
+  Future<void> _postFortuneAccessPreflight({
+    required Map<String, dynamic> body,
+  }) async {
     try {
       await _dio.safePost<dynamic>(
-        ApiEndpoints.fortuneAccessConsume,
-        data: {
-          'slug': slug,
-          'method': 'cfc',
-          'cfcCost': cfcCost,
-          'platform': 'mobile',
-        },
+        ApiEndpoints.fortuneAccessCheck,
+        data: body,
       );
     } on ApiException catch (e) {
-      if (e.statusCode == 404) return;
+      if (e.statusCode == 404 || e.statusCode == 405) return;
       rethrow;
     }
   }

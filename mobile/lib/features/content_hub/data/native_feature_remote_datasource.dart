@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import '../../../core/network/api_endpoints.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../../core/util/json_util.dart';
+import '../../home/data/datasources/mobile_compound_remote_datasource.dart';
 import '../domain/native_feature_item.dart';
 
 class NativeFeatureRemoteDataSource {
-  NativeFeatureRemoteDataSource(this._dio);
+  NativeFeatureRemoteDataSource(this._dio, this._compound);
 
   final Dio _dio;
+  final MobileCompoundRemoteDataSource _compound;
 
   Future<List<NativeFeatureItem>> fetch(NativeFeatureHubKind kind) {
     return switch (kind) {
@@ -93,12 +95,46 @@ class NativeFeatureRemoteDataSource {
     );
   }
 
-  Future<List<NativeFeatureItem>> _fetchFanClubs() {
-    return _fetchPath(
-      ApiEndpoints.fanClubs,
-      fallbackIcon: Icons.favorite_rounded,
-      fallbackRoute: '/fan-club-hub',
-    );
+  Future<List<NativeFeatureItem>> _fetchFanClubs() async {
+    const icon = Icons.favorite_rounded;
+    const route = '/fan-club-hub';
+    final home = await _compound.fetchHome();
+    if (home != null) {
+      final fromCompound = _fanClubItemsFromCompound(home.raw, icon, route);
+      if (fromCompound.isNotEmpty) return fromCompound;
+    }
+    for (final path in [ApiEndpoints.fanClubsPopular, ApiEndpoints.fanClubs]) {
+      final items = await _fetchPath(
+        path,
+        fallbackIcon: icon,
+        fallbackRoute: route,
+      );
+      if (items.isNotEmpty) return _dedupe(items);
+    }
+    return const [];
+  }
+
+  List<NativeFeatureItem> _fanClubItemsFromCompound(
+    Map<String, dynamic> raw,
+    IconData icon,
+    String route,
+  ) {
+    for (final key in const ['fanClubs', 'popularFanClubs', 'clubs']) {
+      final v = raw[key];
+      if (v is! List || v.isEmpty) continue;
+      return v
+          .whereType<Map>()
+          .map(
+            (e) => _mapItem(
+              asJsonMap(e),
+              fallbackIcon: icon,
+              fallbackRoute: route,
+            ),
+          )
+          .where((item) => item.title.trim().isNotEmpty)
+          .toList();
+    }
+    return const [];
   }
 
   Future<List<NativeFeatureItem>> _fetchPath(
