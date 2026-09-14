@@ -105,5 +105,19 @@ void main() {
       expect(tip.amount, 50);
       expect(tip.fromName, 'Ayşe');
     });
+
+    test('tip without type but nested data amount', () {
+      final event = parseSessionRoomSsePayload(
+        {
+          'data': {'amount': 25, 'fromName': 'Mehmet'},
+        },
+        sessionId: 'sess_tip_nested',
+      );
+
+      expect(event, isA<PsychicRoomSseTip>());
+      final tip = event as PsychicRoomSseTip;
+      expect(tip.amount, 25);
+      expect(tip.fromName, 'Mehmet');
+    });
   });
 }

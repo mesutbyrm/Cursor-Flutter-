@@ -939,6 +939,14 @@ class LivePsychicsRemoteDataSource {
         );
         return true;
       } catch (_) {
+        try {
+          final fallback = await roomAction(
+            sid,
+            'tip',
+            extra: {'amount': amount},
+          );
+          if (fallback != null) return true;
+        } catch (_) {}
         return false;
       }
     }

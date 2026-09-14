@@ -92,9 +92,10 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
         battle.id,
         roomId: roomId,
         alternateRoomId: alternateRoomId,
-      );
+      ).timeout(const Duration(seconds: 8));
     } catch (_) {}
     clear();
+    ref.read(pkSessionPhaseProvider.notifier).reset();
     return true;
   }
 
@@ -177,6 +178,8 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     if (battle != null) {
       PkEventLog.acceptSuccess(battleId: battle.id);
       _apply(battle, 'pk:accept');
+    } else {
+      ref.read(pkSessionPhaseProvider.notifier).reset();
     }
     return battle;
   }
@@ -207,6 +210,8 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     }
     if (battle != null) {
       _apply(battle, 'pk:reject');
+    } else {
+      ref.read(pkSessionPhaseProvider.notifier).reset();
     }
     return battle;
   }
@@ -238,6 +243,8 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     if (battle != null) {
       PkEventLog.ended(battleId: battleId);
       _apply(battle, 'pk:end');
+    } else {
+      ref.read(pkSessionPhaseProvider.notifier).reset();
     }
     return battle;
   }

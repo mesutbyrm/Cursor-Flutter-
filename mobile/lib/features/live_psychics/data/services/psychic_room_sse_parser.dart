@@ -44,13 +44,25 @@ class PsychicRoomSseTip extends PsychicRoomSseEvent {
   final String? eventId;
 }
 
+Map<String, dynamic> _mergeSsePayload(Map<String, dynamic> map) {
+  final merged = Map<String, dynamic>.from(map);
+  for (final key in ['data', 'payload', 'body']) {
+    final nested = map[key];
+    if (nested is Map) {
+      merged.addAll(Map<String, dynamic>.from(nested));
+    }
+  }
+  return merged;
+}
+
 PsychicRoomSseEvent? parseSessionRoomSsePayload(
   Map<String, dynamic> map, {
   String? eventName,
   required String sessionId,
   String? myUserId,
 }) {
-  final type = inferSessionRoomSseEventType(map, eventName: eventName) ?? '';
+  final merged = _mergeSsePayload(map);
+  final type = inferSessionRoomSseEventType(merged, eventName: eventName) ?? '';
   if (type == 'connected') {
     return PsychicRoomSseConnected(
       PsychicModel.roomFromJson(map, fallbackId: sessionId),
@@ -84,17 +96,17 @@ PsychicRoomSseEvent? parseSessionRoomSsePayload(
       type.contains('hediye') ||
       (eventName?.toLowerCase().contains('gift') ?? false) ||
       (eventName?.toLowerCase().contains('tip') ?? false)) {
-    final amount = _parseTipAmount(map);
+    final amount = _parseTipAmount(merged);
     if (amount <= 0) return null;
-    final eventId = map['id']?.toString() ??
-        map['eventId']?.toString() ??
-        map['messageId']?.toString() ??
-        map['tipId']?.toString();
+    final eventId = merged['id']?.toString() ??
+        merged['eventId']?.toString() ??
+        merged['messageId']?.toString() ??
+        merged['tipId']?.toString();
     return PsychicRoomSseTip(
       amount: amount,
-      fromName: map['senderName']?.toString() ??
-          map['clientName']?.toString() ??
-          map['fromName']?.toString(),
+      fromName: merged['senderName']?.toString() ??
+          merged['clientName']?.toString() ??
+          merged['fromName']?.toString(),
       eventId: eventId,
     );
   }

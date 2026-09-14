@@ -15,6 +15,7 @@ import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_duration_pick
 import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_stream_entity.dart';
 import '../providers/live_pk_streams_provider.dart';
+import '../providers/pk_session_phase_provider.dart';
 
 /// Canlı yayın PK daveti — tek endpoint; liste SSE/socket ile yenilenir.
 class LivePkInvitePage extends ConsumerStatefulWidget {
@@ -90,12 +91,14 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
 
       // Birincil: üretim ana backend — POST /api/video-streams/pk (action:create)
       try {
-        final legacy =
-            await ref.read(pkBattleRemoteProvider.notifier).inviteStream(
-                  streamId: streamId,
-                  opponentStreamId: opponent.id,
-                  durationSeconds: _durationSeconds,
-                );
+        final legacy = await ref
+            .read(pkBattleRemoteProvider.notifier)
+            .inviteStream(
+              streamId: streamId,
+              opponentStreamId: opponent.id,
+              durationSeconds: _durationSeconds,
+            )
+            .timeout(const Duration(seconds: 45));
         if (legacy != null) {
           PkEventLog.requestSuccess(battleId: legacy.id);
           if (!mounted) return;
@@ -117,7 +120,14 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
       throw lastErr ?? Exception('PK daveti gönderilemedi');
     } catch (e) {
       PkEventLog.error('request', e);
-      if (mounted) setState(() => _error = ApiException.userMessage(e));
+      ref.read(pkSessionPhaseProvider.notifier).reset();
+      if (mounted) {
+        setState(() {
+          _error = e is TimeoutException
+              ? 'PK daveti zaman aşımına uğradı. Tekrar deneyin.'
+              : ApiException.userMessage(e);
+        });
+      }
     } finally {
       _inviting = false;
       if (mounted) setState(() => _loading = false);

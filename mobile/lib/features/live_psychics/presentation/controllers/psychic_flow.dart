@@ -130,17 +130,20 @@ abstract final class PsychicFlow {
   static Future<PsychicSessionStatusResult?> _findBlockingSession({
     required LivePsychicsRepository repo,
   }) async {
-    final active = await repo.fetchActiveSessions();
+    final stored = await PsychicSessionStore.load();
+    final activeFuture = repo.fetchActiveSessions();
+    final storedStatusFuture = stored != null && stored.isClient
+        ? repo.fetchSessionStatus(stored.sessionId)
+        : Future<PsychicSessionStatusResult?>.value(null);
+
+    final active = await activeFuture;
     final fromActive = PsychicClientSessionGuard.firstBlockingFromActive(active);
     if (fromActive != null) return fromActive;
 
-    final stored = await PsychicSessionStore.load();
-    if (stored != null && stored.isClient) {
-      final status = await repo.fetchSessionStatus(stored.sessionId);
-      if (status != null &&
-          PsychicClientSessionGuard.blocksNewBooking(status.status)) {
-        return status;
-      }
+    final status = await storedStatusFuture;
+    if (status != null &&
+        PsychicClientSessionGuard.blocksNewBooking(status.status)) {
+      return status;
     }
     return null;
   }

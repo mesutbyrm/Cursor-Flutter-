@@ -10,6 +10,7 @@ import '../../../../app/router/app_router.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
+import '../../../live/presentation/providers/pk_session_phase_provider.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
 import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../providers/pk_battle_remote_provider.dart';
@@ -92,10 +93,9 @@ Future<void> showPkInviteDialog(
     Future<void>.microtask(() async {
       try {
         if (accept == null) {
-          PkEventLog.reject(inviteId: inviteId);
-          await remote.reject(inviteId, roomId: key, alternateRoomId: alt);
-          remote.clear();
+          // Zaman aşımı / dışarı tıklama — sunucu pending bırakır; otomatik red yok.
           clearPkInviteDedup(ref, inviteId);
+          ref.read(pkSessionPhaseProvider.notifier).reset();
           return;
         }
         if (accept) {

@@ -8,6 +8,7 @@ import '../../domain/pk/pk_status_helper.dart';
 import '../../domain/pk/pk_unified_bridge.dart';
 import '../../../voice_hub/domain/pk/pk_battle_remote_models.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
+import 'pk_session_phase_provider.dart';
 
 class LiveVideoPkState {
   const LiveVideoPkState({
@@ -186,6 +187,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
       final api = ref.read(pkBattleRemoteDataSourceProvider);
       final battleId = state.unifiedMatchId ?? state.battle?['id']?.toString();
       if (battleId == null || battleId.isEmpty) {
+        ref.read(pkSessionPhaseProvider.notifier).reset();
         state = state.copyWith(loading: false, error: 'PK bulunamadı');
         return;
       }
@@ -232,8 +234,10 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
         }
         return;
       }
+      ref.read(pkSessionPhaseProvider.notifier).reset();
       state = state.copyWith(loading: false, error: 'PK işlemi başarısız');
     } catch (e) {
+      ref.read(pkSessionPhaseProvider.notifier).reset();
       state = state.copyWith(loading: false, error: '$e');
     }
   }

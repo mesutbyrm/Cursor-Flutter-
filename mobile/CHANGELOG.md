@@ -1,6 +1,13 @@
 # Sürüm notları — canlifal_social
 
-## Unreleased — hediye kutusu + Tanış Kaynaş (APK sürüm bump bekliyor)
+## 1.0.483+521 (2026-09-14) — PK / canlı fal Aşama 2
+
+- Canlı PK: faz makinesi sıfırlama, kabul/red zaman aşımı, çift davet diyaloğu engeli
+- Sesli PK: `GET /api/pk/me/invites` poll; davet zaman aşımında otomatik red kaldırıldı
+- Canlı fal: bahşiş SSE iç içe `data`/`amount`; falcı sinyal poll sıklaştırma; seans oluşturma paralel kontrol
+- PK JSON: `opponentStreamId` / `hostStreamId` alan eşlemesi
+
+## Unreleased — hediye kutusu + Tanış Kaynaş
 
 - Sesli oda ve canlı yayın hediye paneli: **Hediye kutusu** sekmesi (create / join / cancel, BÖLÜM 22)
 - Oda SSE: `gift_box_*` olaylarında kutu listesi yenileme

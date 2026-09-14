@@ -19,6 +19,10 @@ String? inferSessionRoomSseEventType(
     return 'timer_started';
   }
 
+  if (_ssePayloadLooksLikeTip(map)) {
+    return 'tip_received';
+  }
+
   final message = map['message']?.toString().trim() ?? '';
   if (message.isNotEmpty &&
       (map.containsKey('senderId') ||
@@ -35,6 +39,31 @@ String? inferSessionRoomSseEventType(
   }
 
   return null;
+}
+
+bool _ssePayloadLooksLikeTip(Map<String, dynamic> map) {
+  final nested = map['data'] is Map
+      ? Map<String, dynamic>.from(map['data'] as Map)
+      : map['payload'] is Map
+          ? Map<String, dynamic>.from(map['payload'] as Map)
+          : null;
+  final sources = <Map<String, dynamic>>[map];
+  if (nested != null) sources.add(nested);
+
+  for (final src in sources) {
+    final amount = src['amount'] ??
+        src['jeton'] ??
+        src['tipAmount'] ??
+        src['giftValue'] ??
+        src['coins'] ??
+        src['coin'] ??
+        src['price'] ??
+        src['value'];
+    if (amount is num && amount > 0) return true;
+    final parsed = int.tryParse(amount?.toString() ?? '');
+    if (parsed != null && parsed > 0) return true;
+  }
+  return false;
 }
 
 bool isSessionRoomSseCommentBlock(String block) {

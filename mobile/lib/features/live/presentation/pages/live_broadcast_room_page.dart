@@ -95,6 +95,7 @@ import '../providers/live_room_interaction_provider.dart'
     show LiveRoomInteractionNotifier, LiveRoomInteractionState, liveRoomInteractionProvider;
 import '../providers/live_room_providers.dart';
 import '../providers/live_video_pk_provider.dart';
+import '../providers/pk_session_phase_provider.dart';
 import '../widgets/live_tiktok/live_background_picker_sheet.dart';
 import '../widgets/live_tiktok/live_guest_grid.dart';
 import '../widgets/broadcast_room/live_pk_score_bar.dart';
@@ -1781,8 +1782,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     }
   }
 
+  var _livePkInviteDialogOpen = false;
+
   void _maybeShowPkInvite(String streamId, Map<String, dynamic> battle) {
     if (!widget.session.isHost) return;
+    if (_livePkInviteDialogOpen) return;
     final userId = ref.read(authControllerProvider).valueOrNull?.id;
     final status = battle['status']?.toString() ?? '';
     if (!isPkInvitePendingStatus(status)) return;
@@ -1813,7 +1817,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     String battleId,
     Map<String, dynamic> battle,
   ) async {
-    if (!mounted) return;
+    if (!mounted || _livePkInviteDialogOpen) return;
+    _livePkInviteDialogOpen = true;
     final challenger = battle['leftName']?.toString() ??
         battle['challengerName']?.toString() ??
         'Yayıncı';
@@ -1839,7 +1844,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         ],
       ),
     );
-    if (!mounted || accept == null) return;
+    if (!mounted || accept == null) {
+      _livePkInviteDialogOpen = false;
+      return;
+    }
     try {
       if (accept) {
         PkEventLog.acceptStart(matchId: battleId);
@@ -1854,9 +1862,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       } else {
         final pk = ref.read(liveVideoPkProvider(streamId).notifier);
         if (accept) {
-          await pk.accept();
+          await pk.accept().timeout(const Duration(seconds: 30));
         } else {
-          await pk.reject();
+          await pk.reject().timeout(const Duration(seconds: 30));
         }
       }
       if (accept) {
@@ -1870,11 +1878,15 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       }
     } catch (e) {
       PkEventLog.error(accept ? 'accept' : 'reject', e);
+      ref.read(pkSessionPhaseProvider.notifier).reset();
+      ref.read(liveVideoPkProvider(streamId).notifier).refresh();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(ApiException.userMessage(e))),
         );
       }
+    } finally {
+      _livePkInviteDialogOpen = false;
     }
   }
 

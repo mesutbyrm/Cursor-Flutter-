@@ -100,15 +100,29 @@ class PkBattleRemote extends Equatable {
     var status = (json['status']?.toString() ?? 'pending').toLowerCase();
     final battleType = json['battleType']?.toString() ?? 'voice_room';
     final liveStreamId = json['liveStreamId']?.toString().trim() ?? '';
-    final opponentLiveStreamId =
-        json['opponentLiveStreamId']?.toString().trim() ?? '';
+    final opponentLiveStreamId = (json['opponentLiveStreamId'] ??
+            json['opponentStreamId'] ??
+            json['targetStreamId'])
+        ?.toString()
+        .trim() ??
+        '';
+    final parsedLiveStreamId = (json['liveStreamId'] ??
+            json['hostStreamId'] ??
+            json['streamId'])
+        ?.toString()
+        .trim() ??
+        '';
     final isLiveStreamPk = battleType.contains('live') ||
+        parsedLiveStreamId.isNotEmpty ||
         liveStreamId.isNotEmpty ||
         opponentLiveStreamId.isNotEmpty;
     // Sunucu accept sonrası "accepted" dönebilir — canlı PK'da iki yayın hazır değilse pending.
     if (status == 'accepted' || status == 'accepted_invite') {
+      final hostStream = parsedLiveStreamId.isNotEmpty
+          ? parsedLiveStreamId
+          : liveStreamId;
       if (isLiveStreamPk &&
-          (liveStreamId.isEmpty || opponentLiveStreamId.isEmpty)) {
+          (hostStream.isEmpty || opponentLiveStreamId.isEmpty)) {
         status = 'pending';
       } else {
         status = 'active';
@@ -150,8 +164,10 @@ class PkBattleRemote extends Equatable {
               json['opponentRoomId'] ??
               json['guestRoomId'])
           ?.toString(),
-      liveStreamId: json['liveStreamId']?.toString(),
-      opponentLiveStreamId: json['opponentLiveStreamId']?.toString(),
+      liveStreamId:
+          parsedLiveStreamId.isNotEmpty ? parsedLiveStreamId : liveStreamId,
+      opponentLiveStreamId:
+          opponentLiveStreamId.isNotEmpty ? opponentLiveStreamId : null,
       challengerId: (json['challengerId'] ?? json['hostUserId'])?.toString(),
       opponentId: (json['opponentId'] ?? json['opponentUserId'])?.toString(),
       targetUserId: json['targetUserId']?.toString(),

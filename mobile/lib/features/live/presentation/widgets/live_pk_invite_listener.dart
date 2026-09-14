@@ -14,6 +14,7 @@ import '../providers/live_invite_dedup_provider.dart';
 import '../providers/live_pk_invite_signal_provider.dart';
 import '../providers/live_providers.dart';
 import '../providers/live_video_pk_provider.dart';
+import '../providers/pk_session_phase_provider.dart';
 import '../utils/open_host_broadcast_room.dart';
 
 /// Canlı yayın PK davetleri — stream SSE + `GET /api/video-streams/{id}/pk-battle`.
@@ -207,6 +208,8 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
         );
       }
     } catch (e) {
+      ref.read(pkSessionPhaseProvider.notifier).reset();
+      ref.read(liveVideoPkProvider(myStreamId).notifier).refresh();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(ApiException.userMessage(e))),

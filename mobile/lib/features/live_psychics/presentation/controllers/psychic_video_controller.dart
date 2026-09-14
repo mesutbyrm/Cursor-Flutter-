@@ -396,8 +396,10 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     // SSE bağlıyken oturum sonu / bahşiş SSE'den gelir; sinyal poll yalnızca
     // media_state (RTC) için yedek — daha seyrek.
     final interval = state.sseConnected
-        ? const Duration(seconds: 30)
-        : const Duration(seconds: 3);
+        ? (session.isClient
+            ? const Duration(seconds: 30)
+            : const Duration(seconds: 8))
+        : const Duration(seconds: 2);
     _signalPoll = Timer.periodic(interval, (_) {
       unawaited(_pollRoomSignals());
     });

@@ -164,6 +164,15 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
 
       // Sahip olunan tüm odalar — başka odadayken SSE kaçırsa bile yakala.
       await _pollOwnedRooms(user.id, user.username, activeKey, api);
+
+      // Rakip odada pending görünmeyebilir — kullanıcıya yönelik davet listesi.
+      final invites = await api.fetchMyInvites();
+      for (final battle in invites) {
+        if (battle.isEnded || !battle.isPending) continue;
+        ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(battle);
+        _onBattleUpdate(battle);
+        if (battle.isPending) return;
+      }
     } catch (e, st) {
       PkEventLog.apiFailure(
         method: 'GET',
