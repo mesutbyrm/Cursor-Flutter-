@@ -4,21 +4,18 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.487+525` |
-| Tarih (UTC) | 2026-09-14 10:23 |
-| Commit | [`d478cda4a2055252e0723f4584d25b2b6a80cde5`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/d478cda4a2055252e0723f4584d25b2b6a80cde5) |
-| İş akışı | [Run 34830562714](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34830562714) |
+| Sürüm | `1.0.488+526` |
+| Tarih (UTC) | 2026-09-14 10:58 |
+| Commit | [`b867e5f9a421f55f04e7b71451864d40a754c8fc`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/b867e5f9a421f55f04e7b71451864d40a754c8fc) |
+| İş akışı | [Run 34834381476](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34834381476) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.487+525 (2026-09-14) — API parite (bildirim, istatistik, PK, müzik)
+## 1.0.489+527 (2026-09-14) — API parite (fal erişim, content hub)
 
-- Okunmamış bildirim: `GET /api/notifications?unreadOnly=true` (+ messages yedek); `/api/notifications/unread` kaldırıldı
-- Profil istatistik: yalnızca `/api/user/stats` ve `/api/user/statistics` (`/api/users/me/stats` kaldırıldı)
-- PK: kullanılmayan `/api/pk/battles/*` sabitleri ve `fetchBattle` kaldırıldı (oda PK korunur)
-- Popüler müzik: `/api/chat/music/popular` 404 ise `/api/music/search?q=popüler` yedek
-- Oyun geçmişi: mini-scores / profile önce, sonra `/api/games/history`
+- Fal jeton/CFC ön doğrulama: `POST /api/fortune-access/check` (`/consume` kaldırıldı)
+- Content hub fan kulüp: `GET /api/mobile/home` birincil, fan-clubs yedek
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
