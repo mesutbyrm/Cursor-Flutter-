@@ -28,7 +28,7 @@ final notificationsListProvider =
   return ref.watch(notificationsRepositoryProvider).fetch();
 });
 
-/// Backend unread count — GET /api/notifications/unread
+/// Backend unread count — `GET /api/notifications?unreadOnly=true` (yedek: messages)
 final notificationsUnreadApiProvider = FutureProvider<int?>((ref) async {
   final userId = ref.watch(
     authControllerProvider.select((a) => a.valueOrNull?.id),

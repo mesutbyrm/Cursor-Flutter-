@@ -103,13 +103,48 @@ class NotificationsRemoteDataSource {
   }
 
   Future<int?> fetchUnreadCount() async {
+    for (final query in <Map<String, dynamic>>[
+      const {'unreadOnly': 'true', 'limit': '1'},
+      const {'unreadOnly': true},
+    ]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(
+          ApiEndpoints.notifications,
+          query: query,
+        );
+        final fromMeta = _unreadCountFromBody(res.data);
+        if (fromMeta != null) return fromMeta;
+        final parsed = _parseList(res.data);
+        if (parsed != null) {
+          return parsed.where((n) => !n.read).length;
+        }
+      } catch (_) {}
+    }
     try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.notificationsUnread);
-      final map = asJsonMap(res.data);
-      final data = map['data'] is Map ? asJsonMap(map['data']) : map;
-      final countRaw = pick(data, ['count', 'unread', 'unreadCount']);
-      if (countRaw != null) return asInt(countRaw);
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.messages,
+        query: const {'unreadCount': 'true'},
+      );
+      final fromMeta = _unreadCountFromBody(res.data);
+      if (fromMeta != null) return fromMeta;
     } catch (_) {}
+    return null;
+  }
+
+  int? _unreadCountFromBody(dynamic body) {
+    if (body is! Map) return null;
+    final map = asJsonMap(body);
+    if (map['success'] == true && map['data'] != null) {
+      return _unreadCountFromBody(map['data']);
+    }
+    final layer = map['data'] is Map ? asJsonMap(map['data']) : map;
+    final countRaw = pick(layer, [
+      'unreadCount',
+      'count',
+      'unread',
+      'totalUnread',
+    ]);
+    if (countRaw != null) return asInt(countRaw);
     return null;
   }
 

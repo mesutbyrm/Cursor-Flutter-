@@ -30,7 +30,10 @@ bool _isLegacyCanlifalPath(String path) {
   if (path == '/api/banners' ||
       path == '/api/social/public-stats' ||
       path == '/api/devices/fcm' ||
-      path == '/api/users/me/gifts-received') {
+      path == '/api/users/me/gifts-received' ||
+      path == '/api/users/me/stats' ||
+      path == '/api/notifications/unread' ||
+      path.startsWith('/api/pk/battles')) {
     return true;
   }
   if (RegExp(r'^/api/rooms/[^/]+/music').hasMatch(path)) return true;

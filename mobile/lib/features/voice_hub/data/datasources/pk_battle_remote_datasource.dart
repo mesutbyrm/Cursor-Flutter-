@@ -268,11 +268,6 @@ class PkBattleRemoteDataSource {
     return _parseBattle(res.data);
   }
 
-  Future<PkBattleRemote?> fetchBattle(String battleId) async {
-    final res = await _dio.safeGet<dynamic>(ApiEndpoints.pkBattle(battleId));
-    return _parseBattle(res.data);
-  }
-
   Future<List<PkBattleRemote>> fetchHistory({
     String? battleType,
     int limit = 20,

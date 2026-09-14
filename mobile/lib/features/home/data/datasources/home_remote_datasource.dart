@@ -331,24 +331,48 @@ class HomeRemoteDataSource {
   }
 
   Future<int?> fetchUnreadNotifications() async {
-    try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.notificationsUnread);
-      final map = asJsonMap(res.data);
-      final data = map['data'] is Map ? asJsonMap(map['data']) : map;
-      final countRaw = pick(data, ['count', 'unread', 'unreadCount']);
-      if (countRaw != null) return asInt(countRaw);
-    } catch (_) {}
-    if (Env.useMobileAuth) {
+    for (final query in <Map<String, dynamic>>[
+      const {'unreadOnly': 'true', 'limit': '1'},
+      const {'unreadOnly': true},
+    ]) {
       try {
         final res = await _dio.safeGet<dynamic>(
-          ApiEndpoints.messages,
-          query: {'unreadCount': 'true'},
+          ApiEndpoints.notifications,
+          query: query,
         );
         final map = asJsonMap(res.data);
-        final countRaw = pick(map, ['unreadCount', 'count', 'unread']);
+        if (map['success'] == true && map['data'] != null) {
+          final nested = _homeUnreadFromMap(map['data']);
+          if (nested != null) return nested;
+        }
+        final countRaw = pick(map, [
+          'unreadCount',
+          'count',
+          'unread',
+          'totalUnread',
+        ]);
         if (countRaw != null) return asInt(countRaw);
+        final data = map['data'] is Map ? asJsonMap(map['data']) : map;
+        final inner = pick(data, ['unreadCount', 'count', 'unread']);
+        if (inner != null) return asInt(inner);
       } catch (_) {}
     }
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.messages,
+        query: const {'unreadCount': 'true'},
+      );
+      final nested = _homeUnreadFromMap(res.data);
+      if (nested != null) return nested;
+    } catch (_) {}
+    return null;
+  }
+
+  int? _homeUnreadFromMap(dynamic body) {
+    if (body is! Map) return null;
+    final map = asJsonMap(body);
+    final countRaw = pick(map, ['unreadCount', 'count', 'unread', 'totalUnread']);
+    if (countRaw != null) return asInt(countRaw);
     return null;
   }
 

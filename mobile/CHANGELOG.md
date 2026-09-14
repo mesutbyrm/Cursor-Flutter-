@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.487+525 (2026-09-14) — API parite (bildirim, istatistik, PK, müzik)
+
+- Okunmamış bildirim: `GET /api/notifications?unreadOnly=true` (+ messages yedek); `/api/notifications/unread` kaldırıldı
+- Profil istatistik: yalnızca `/api/user/stats` ve `/api/user/statistics` (`/api/users/me/stats` kaldırıldı)
+- PK: kullanılmayan `/api/pk/battles/*` sabitleri ve `fetchBattle` kaldırıldı (oda PK korunur)
+- Popüler müzik: `/api/chat/music/popular` 404 ise `/api/music/search?q=popüler` yedek
+- Oyun geçmişi: mini-scores / profile önce, sonra `/api/games/history`
+
 ## 1.0.486+524 (2026-09-14) — API parite / legacy auth temizliği
 
 - Auth: yalnızca `mobile-login`, `mobile-register`, `mobile-refresh`, `GET /api/me`

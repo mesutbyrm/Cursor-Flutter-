@@ -59,7 +59,6 @@ abstract final class ApiEndpoints {
   static const meVipPreferences = '/api/me/vip-preferences';
   static const meVipXp = '/api/me/vip-xp';
   static const meAdminCapabilities = '/api/me/admin-capabilities';
-  static const meStats = '/api/users/me/stats';
   /// Kılavuz §9.2 — alınan hediyeler (eski `/api/users/me/gifts-received` yedek).
   static const userReceivedGifts = '/api/user/received-gifts';
   @Deprecated('Kılavuz §9.2: userReceivedGifts kullanın')
@@ -310,7 +309,6 @@ abstract final class ApiEndpoints {
   static const feedPosts = '/api/social/posts';
 
   /// Okunmamış bildirim sayısı (yoksa liste üzerinden hesaplanır).
-  static const notificationsUnread = '/api/notifications/unread';
   static const socialPostsAutoFortune = '/api/social/posts/auto-fortune';
   /// Tek gönderi detayı — kılavuz §9.10 `getPost`.
   static String socialPost(String postId) => '/api/social/posts/$postId';
@@ -578,18 +576,6 @@ abstract final class ApiEndpoints {
       '/api/pk/admin/$matchId/force-kick/$userId';
 
   /// Merkezi PK daveti — oda uçları 404 ise fallback.
-  static const pkBattles = '/api/pk/battles';
-
-  static String pkBattle(String battleId) => '/api/pk/battles/$battleId';
-
-  static String pkBattleAccept(String battleId) =>
-      '/api/pk/battles/$battleId/accept';
-
-  static String pkBattleReject(String battleId) =>
-      '/api/pk/battles/$battleId/reject';
-
-  static String pkBattleEnd(String battleId) => '/api/pk/battles/$battleId/end';
-
   static const musicSearch = '/api/music/search';
 
   static const chatYoutubeStream = '/api/chat/youtube-stream';

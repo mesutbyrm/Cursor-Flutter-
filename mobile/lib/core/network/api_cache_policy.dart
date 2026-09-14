@@ -93,7 +93,7 @@ abstract final class ApiCachePolicy {
     _TtlRule(prefix: '/api/fortune-tellers', ttl: Duration(seconds: 90)),
     _TtlRule(prefix: '/api/user/stats', ttl: Duration(seconds: 90)),
     _TtlRule(prefix: '/api/user/activity', ttl: Duration(seconds: 90)),
-    _TtlRule(prefix: '/api/users/me/stats', ttl: Duration(seconds: 90)),
+    _TtlRule(prefix: '/api/user/stats', ttl: Duration(seconds: 90)),
     _TtlRule(prefix: '/api/users/me/activity', ttl: Duration(seconds: 90)),
     _TtlRule(prefix: '/api/wallet', ttl: Duration(seconds: 8)),
     _TtlRule(prefix: '/api/jeton', ttl: Duration(seconds: 45)),

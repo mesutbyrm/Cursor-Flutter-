@@ -186,7 +186,6 @@ class ProfileRemoteDataSource {
     for (final path in [
       ApiEndpoints.userStats,
       ApiEndpoints.userStatistics,
-      ApiEndpoints.meStats,
     ]) {
       try {
         final res = await _dio.safeGet<Map<String, dynamic>>(path);
@@ -219,7 +218,6 @@ class ProfileRemoteDataSource {
     for (final path in [
       ApiEndpoints.userStatistics,
       ApiEndpoints.userStats,
-      ApiEndpoints.meStats,
     ]) {
       try {
         final res = await _dio.safeGet<dynamic>(path);
