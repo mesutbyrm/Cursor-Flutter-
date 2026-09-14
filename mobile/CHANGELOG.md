@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.499+537 (2026-09-14) — PK oda içi davet + ödeme kuyruğu
+
+- Kontrol merkezinden PK sekmesi kaldırıldı; davet yalnızca canlı yayın / sesli oda ekranında
+- Canlı PK: yayın odasındayken REST poll provider günceller; `refresh` `/api/pk/me/invites` yedek; pending state silinmez
+- Jeton/CFC: bekleyen talep engelinde otomatik iptal + yeniden deneme; iptal tüm sayfaları sunucudan çeker
+- Admin: toplu kapat yedek olarak listedeki talepleri tek tek reddeder
+
 ## 1.0.498+536 (2026-09-14) — PK davet popup + ayarlar kabul/red
 
 - Canlı PK: dedup sırası düzeltildi; `/api/pk/me/invites` poll; ortak `respondLivePkInvite` + popup

@@ -280,17 +280,41 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
     if (ok != true || !context.mounted) return;
 
     try {
-      final res = await ref.read(dioProvider).safePost<dynamic>(
-        ApiEndpoints.adminDismissPendingPayments,
-      );
-      final dismissed = (res.data is Map ? res.data['dismissed'] : null) as num?;
+      final dio = ref.read(dioProvider);
+      var dismissed = 0;
+      try {
+        final res = await dio.safePost<dynamic>(
+          ApiEndpoints.adminDismissPendingPayments,
+        );
+        final n = (res.data is Map ? res.data['dismissed'] : null) as num?;
+        if (n != null) dismissed = n.toInt();
+      } catch (_) {}
+
+      if (dismissed == 0) {
+        final rows = await ref.read(adminPaymentRequestsProvider.future);
+        for (final row in rows) {
+          final id = resolvePaymentRequestId(row);
+          if (id.isEmpty) continue;
+          try {
+            await reviewAdminPaymentRequest(
+              dio,
+              requestId: id,
+              action: 'reject',
+              requestRow: row,
+              reviewNote: 'Toplu kapatıldı — yeni talep gönderebilirsiniz.',
+            );
+            dismissed++;
+          } catch (_) {}
+        }
+      }
+
       _refreshAll();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              dismissed != null && dismissed > 0
-                  ? '${dismissed.toInt()} bekleyen talep kapatıldı'
+              dismissed > 0
+                  ? '$dismissed bekleyen talep kapatıldı'
                   : 'Bekleyen talep yok',
             ),
           ),

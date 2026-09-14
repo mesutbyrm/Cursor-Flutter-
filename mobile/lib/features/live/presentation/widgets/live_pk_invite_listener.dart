@@ -123,16 +123,17 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
       final owned = _ownedLiveStreams(user.id);
 
       for (final stream in owned) {
-        if (isLiveBroadcastRoomActiveForStream(ref, stream.id)) {
-          continue;
-        }
+        final inRoom = isLiveBroadcastRoomActiveForStream(ref, stream.id);
         final battle = await api.fetchStreamBattle(stream.id);
-        if (battle == null) continue;
-        ref.read(liveVideoPkProvider(stream.id).notifier).applyRemoteBattle(
-              pkBattleRemoteToBattleMap(battle, myStreamId: stream.id),
-            );
-        await _tryShowBattle(battle, user.id, owned);
-        if (_showing) return;
+        if (battle != null) {
+          ref.read(liveVideoPkProvider(stream.id).notifier).applyRemoteBattle(
+                pkBattleRemoteToBattleMap(battle, myStreamId: stream.id),
+              );
+          if (!inRoom) {
+            await _tryShowBattle(battle, user.id, owned);
+            if (_showing) return;
+          }
+        }
       }
 
       final invites = await api.fetchMyInvites();
@@ -140,6 +141,12 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
         if (!battle.isPending || battle.isEnded) continue;
         if (!isLiveStreamPkBattle(battle)) continue;
         ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(battle);
+        final streamId = _recipientStreamId(battle, user.id, owned);
+        if (streamId != null && streamId.isNotEmpty) {
+          ref.read(liveVideoPkProvider(streamId).notifier).applyRemoteBattle(
+                pkBattleRemoteToBattleMap(battle, myStreamId: streamId),
+              );
+        }
         await _tryShowBattle(battle, user.id, owned);
         if (_showing) return;
       }

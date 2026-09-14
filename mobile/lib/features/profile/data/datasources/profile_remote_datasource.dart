@@ -632,6 +632,27 @@ class WalletRemoteDataSource {
     }
   }
 
+  Future<void> _cancelAllMyPendingPaymentRequests() async {
+    var page = 1;
+    for (var guard = 0; guard < 20; guard++) {
+      final bundle = await myPaymentRequestsPage(page: page, limit: 50);
+      for (final row in bundle.items) {
+        if (row.status.toLowerCase() != 'pending') continue;
+        try {
+          await cancelPaymentRequest(row.id);
+        } catch (_) {}
+      }
+      if (!bundle.hasMore || bundle.items.isEmpty) break;
+      page++;
+    }
+  }
+
+  bool _isPendingPaymentConflict(int code, String msg) {
+    if (code != 400) return false;
+    final lower = msg.toLowerCase();
+    return lower.contains('bekleyen') && lower.contains('talep');
+  }
+
   Future<void> submitPaymentRequest(Map<String, dynamic> rawBody) async {
     final body = normalizePaymentRequestBody(rawBody);
     final access = await _tokens.readAccess();
@@ -677,14 +698,33 @@ class WalletRemoteDataSource {
               !data.contains('<html')) {
             msg = data;
           }
-          if (code == 400 &&
-              msg.toLowerCase().contains('bekleyen') &&
-              msg.toLowerCase().contains('talep')) {
-            throw ApiException(
-              'Zaten bekleyen bir ödeme talebiniz var. Jeton mağazasındaki '
-              '"Talepleri iptal et" ile temizleyip yeniden deneyin.',
-              statusCode: code,
-            );
+          if (_isPendingPaymentConflict(code, msg)) {
+            await _cancelAllMyPendingPaymentRequests();
+            final retry = await _postPaymentRequest(path, body);
+            final retryCode = retry.statusCode ?? 0;
+            final retryData = retry.data;
+            if (retryCode >= 400) {
+              var retryMsg = msg;
+              if (retryData is Map) {
+                retryMsg =
+                    (retryData['error'] ?? retryData['message'] ?? retryMsg)
+                        .toString();
+              }
+              if (_isPendingPaymentConflict(retryCode, retryMsg)) {
+                throw ApiException(
+                  'Bekleyen ödeme talebi sunucuda duruyor. Admin panelinden '
+                  '"Tüm bekleyenleri kapat" ile temizleyin veya destek ile '
+                  'iletişime geçin.',
+                  statusCode: retryCode,
+                );
+              }
+              throw ApiException(retryMsg, statusCode: retryCode);
+            }
+            if (_paymentRequestAccepted(retryData, retryCode)) return;
+            if (retryCode >= 200 && retryCode < 300) {
+              _triggerAdminPaymentNotification(body);
+              return;
+            }
           }
           if (code == 400 && msg.toLowerCase().contains('geçersiz miktar')) {
             final isJeton = body['requestType'] == 'jeton';

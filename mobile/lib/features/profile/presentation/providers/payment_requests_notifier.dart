@@ -104,21 +104,30 @@ class PaymentRequestsNotifier
     await refresh();
   }
 
-  /// Tüm bekleyen talepleri iptal eder — birden fazla talep engeli olduğunda.
-  Future<void> cancelAllPending() async {
+  /// Tüm bekleyen talepleri iptal eder — sunucudan sayfalı çeker (önbellek boş olabilir).
+  Future<int> cancelAllPending() async {
     final repo = ref.read(walletRepositoryProvider);
-    final pending = (state.valueOrNull ?? const [])
-        .where((r) => r.status.toLowerCase() == 'pending')
-        .toList();
-    for (final r in pending) {
-      try {
-        await repo.cancelPaymentRequest(r.id);
-      } catch (_) {}
+    var page = 1;
+    var cancelled = 0;
+    while (page <= 20) {
+      final bundle = await repo.myPaymentRequestsPage(page: page, limit: 50);
+      final pending = bundle.items
+          .where((r) => r.status.toLowerCase() == 'pending')
+          .toList();
+      for (final r in pending) {
+        try {
+          await repo.cancelPaymentRequest(r.id);
+          cancelled++;
+        } catch (_) {}
+      }
+      if (!bundle.hasMore || bundle.items.isEmpty) break;
+      page++;
     }
     try {
       await ref.read(notificationsRepositoryProvider).clearPaymentNotifications();
     } catch (_) {}
     await refresh();
+    return cancelled;
   }
 }
 

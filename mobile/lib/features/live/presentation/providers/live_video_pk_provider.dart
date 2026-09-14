@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/auth/bot_account_guard.dart';
 import '../../../../core/auth/bot_account_provider.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../domain/pk/live_pk_invite_helper.dart';
 import '../../domain/pk/live_pk_ingest.dart';
 import '../../domain/pk/pk_status_helper.dart';
 import '../../domain/pk/pk_unified_bridge.dart';
@@ -90,10 +92,31 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
   }
 
   Future<void> refresh() async {
-    // Canlı 1v1 PK — tek kaynak: GET /api/video-streams/{id}/pk-battle
+    // Canlı 1v1 PK — GET stream battle; yoksa /api/pk/me/invites yedek.
     try {
       final api = ref.read(pkBattleRemoteDataSourceProvider);
-      final remote = await api.fetchStreamBattle(arg);
+      var remote = await api.fetchStreamBattle(arg);
+      if (remote == null || remote.isEnded) {
+        final userId = ref.read(authControllerProvider).valueOrNull?.id ?? '';
+        if (userId.isNotEmpty) {
+          final invites = await api.fetchMyInvites();
+          for (final inv in invites) {
+            if (!inv.isPending || inv.isEnded || !isLiveStreamPkBattle(inv)) {
+              continue;
+            }
+            if (isLivePkInviteRecipientBattle(
+                  inv,
+                  myUserId: userId,
+                  myStreamId: arg,
+                ) ||
+                inv.opponentLiveStreamId?.trim() == arg ||
+                inv.liveStreamId?.trim() == arg) {
+              remote = inv;
+              break;
+            }
+          }
+        }
+      }
       if (remote != null && !remote.isEnded) {
         final map = pkBattleRemoteToBattleMap(remote, myStreamId: arg);
         state = state.copyWith(
@@ -113,6 +136,9 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
     }
 
     _stopPolling();
+    if (isPkInvitePendingStatus(state.status)) {
+      return;
+    }
     state = state.copyWith(clearBattle: true, clearUnifiedMatchId: true);
   }
 

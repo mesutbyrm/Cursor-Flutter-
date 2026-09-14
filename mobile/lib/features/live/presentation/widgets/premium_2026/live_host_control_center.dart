@@ -10,11 +10,6 @@ import '../../providers/co_broadcast_provider.dart';
 import '../../providers/live_guest_grid_provider.dart';
 import '../../providers/live_fortune_request_provider.dart';
 import '../../providers/live_host_dashboard_provider.dart';
-import '../../providers/live_video_pk_provider.dart';
-import '../../utils/live_pk_invite_flow.dart';
-import '../../../../../core/network/api_exception.dart';
-import '../../../domain/pk/pk_status_helper.dart';
-import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../providers/live_stream_engagement_provider.dart';
 import '../../providers/live_stream_viewers_provider.dart';
 import '../../../../../core/economy/presentation/providers/economy_providers.dart';
@@ -22,7 +17,7 @@ import '../../../../../core/widgets/lazy_list_views.dart';
 import '../../widgets/broadcast_room/live_moderation_sheet.dart';
 import 'live_host_dashboard_chart.dart';
 
-/// Sağdan açılan yayıncı kontrol merkezi — 6 sekme.
+/// Sağdan açılan yayıncı kontrol merkezi — PK daveti yalnızca yayın/oda ekranında.
 Future<void> openLiveHostControlCenter({
   required BuildContext context,
   required WidgetRef ref,
@@ -72,7 +67,7 @@ class _LiveHostControlCenterState extends ConsumerState<_LiveHostControlCenter>
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 7, vsync: this);
+    _tabs = TabController(length: 6, vsync: this);
   }
 
   @override
@@ -141,7 +136,6 @@ class _LiveHostControlCenterState extends ConsumerState<_LiveHostControlCenter>
                     tabs: const [
                       Tab(text: 'Fal'),
                       Tab(text: 'Hediye'),
-                      Tab(text: 'PK'),
                       Tab(text: 'Konuk'),
                       Tab(text: 'Mod'),
                       Tab(text: 'Etkinlik'),
@@ -154,7 +148,6 @@ class _LiveHostControlCenterState extends ConsumerState<_LiveHostControlCenter>
                       children: [
                         _FortuneTab(streamId: widget.streamId),
                         _GiftsTab(streamId: widget.streamId),
-                        _PkTab(streamId: widget.streamId),
                         _GuestsTab(streamId: widget.streamId),
                         _ModerationTab(streamId: widget.streamId),
                         _EngagementTab(streamId: widget.streamId),
@@ -389,104 +382,6 @@ class _GiftsTab extends ConsumerWidget {
           ),
         );
       },
-    );
-  }
-}
-
-class _PkTab extends ConsumerWidget {
-  const _PkTab({required this.streamId});
-  final String streamId;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final pk = ref.watch(liveVideoPkProvider(streamId));
-    final battle = pk.battle;
-    final userId = ref.watch(authControllerProvider).valueOrNull?.id;
-    final status = normalizePkStatus(pk.status);
-    final incoming = isLivePkIncomingInviteForHost(battle, streamId, userId);
-    final outgoing = isLivePkOutgoingInvite(battle, userId);
-
-    Future<void> respond(bool accept) async {
-      final battleId = (pk.unifiedMatchId ??
-              battle?['id'] ??
-              battle?['battleId'] ??
-              battle?['pkBattleId'])
-          ?.toString()
-          .trim();
-      if (battleId == null || battleId.isEmpty) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('PK kimliği bulunamadı')),
-          );
-        }
-        return;
-      }
-      try {
-        await respondLivePkInvite(
-          ref,
-          streamId: streamId,
-          battleId: battleId,
-          accept: accept,
-        );
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(accept ? 'PK kabul edildi' : 'PK reddedildi'),
-            ),
-          );
-        }
-      } catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(ApiException.userMessage(e))),
-          );
-        }
-      }
-    }
-
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        if (battle == null)
-          const Text('Aktif PK daveti yok', style: TextStyle(color: Colors.white54))
-        else ...[
-          Text('Durum: $status', style: const TextStyle(color: Colors.white)),
-          const SizedBox(height: 8),
-          Text(
-            'Skor: ${pk.leftScore} — ${pk.rightScore}',
-            style: const TextStyle(
-              color: Color(0xFFFFD700),
-              fontWeight: FontWeight.w900,
-              fontSize: 20,
-            ),
-          ),
-          const SizedBox(height: 16),
-          if (incoming)
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => respond(false),
-                    child: const Text('Reddet'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: FilledButton(
-                    onPressed: () => respond(true),
-                    child: const Text('Kabul'),
-                  ),
-                ),
-              ],
-            ),
-          if (outgoing && isPkInvitePendingStatus(status))
-            FilledButton(
-              onPressed: () =>
-                  ref.read(liveVideoPkProvider(streamId).notifier).cancel(),
-              child: const Text('Daveti iptal et'),
-            ),
-        ],
-      ],
     );
   }
 }
