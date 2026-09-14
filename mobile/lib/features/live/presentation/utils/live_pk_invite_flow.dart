@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/pk_event_log.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../pk/presentation/providers/pk_providers.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
 import '../../domain/pk/live_pk_invite_helper.dart';
 import '../../domain/pk/pk_status_helper.dart';
@@ -32,12 +33,20 @@ Future<bool> respondLivePkInvite(
   try {
     if (accept) {
       PkEventLog.acceptStart(inviteId: id);
-      await ref.read(pkBattleRemoteProvider.notifier).accept(id, streamId: sid);
+      try {
+        await ref.read(pkServiceProvider).accept(id);
+      } catch (_) {
+        await ref.read(pkBattleRemoteProvider.notifier).accept(id, streamId: sid);
+      }
       await ref.read(liveVideoPkProvider(sid).notifier).refresh();
       PkEventLog.acceptSuccess(battleId: id);
     } else {
       PkEventLog.reject(inviteId: id);
-      await ref.read(pkBattleRemoteProvider.notifier).reject(id, streamId: sid);
+      try {
+        await ref.read(pkServiceProvider).reject(id);
+      } catch (_) {
+        await ref.read(pkBattleRemoteProvider.notifier).reject(id, streamId: sid);
+      }
       await ref.read(liveVideoPkProvider(sid).notifier).refresh();
     }
     return true;

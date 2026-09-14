@@ -98,6 +98,8 @@ import '../providers/live_room_providers.dart';
 import '../providers/live_video_pk_provider.dart';
 import '../providers/pk_session_phase_provider.dart';
 import '../utils/live_pk_invite_flow.dart';
+import '../../../pk/presentation/providers/pk_session_notifier.dart';
+import '../../../pk/presentation/widgets/pk_start_sheet.dart';
 import '../widgets/live_tiktok/live_background_picker_sheet.dart';
 import '../widgets/live_tiktok/live_guest_grid.dart';
 import '../widgets/broadcast_room/live_pk_score_bar.dart';
@@ -1398,11 +1400,18 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         : sig;
     final battle = payload['battle'] ?? payload['pk'];
     if (battle is Map) {
+      final map = Map<String, dynamic>.from(battle);
       ref
           .read(liveVideoPkProvider(streamId).notifier)
-          .applyRemoteBattle(Map<String, dynamic>.from(battle));
+          .applyRemoteBattle(map);
+      ref.read(pkSessionProvider(
+        PkSessionArgs(contextId: streamId, kind: PkContextKind.live),
+      ).notifier).ingestFromSse(map);
     } else {
       ref.read(liveVideoPkProvider(streamId).notifier).refresh();
+      unawaited(ref.read(pkSessionProvider(
+        PkSessionArgs(contextId: streamId, kind: PkContextKind.live),
+      ).notifier).loadState());
     }
   }
 
@@ -2015,6 +2024,17 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
 
   Future<void> _openPkPanel() async {
     if (!mounted) return;
+    final streamId = widget.session.streamId?.trim();
+    if (streamId != null &&
+        streamId.isNotEmpty &&
+        widget.session.isHost) {
+      await showPkStartSheet(
+        context,
+        ref,
+        args: PkSessionArgs(contextId: streamId, kind: PkContextKind.live),
+      );
+      return;
+    }
     await context.push('/live/pk-invite', extra: widget.session);
   }
 

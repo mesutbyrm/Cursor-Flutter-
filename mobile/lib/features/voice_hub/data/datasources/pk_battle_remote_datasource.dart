@@ -557,38 +557,6 @@ class PkBattleRemoteDataSource {
           if (e.statusCode != 404 && e.statusCode != 405) rethrow;
         }
       }
-      try {
-        final fieldBattle = await _liveFieldPk.pkAction(
-          action: 'create',
-          roomId: host,
-          targetRoomId: target,
-          durationSeconds: durationSec,
-        );
-        if (fieldBattle != null && fieldBattle.id.isNotEmpty) {
-          final battle = _parseBattle({
-            'battle': {
-              'id': fieldBattle.id,
-              'status': fieldBattle.status,
-              'durationSeconds': fieldBattle.durationSeconds,
-              'room1Score': fieldBattle.room1Score,
-              'room2Score': fieldBattle.room2Score,
-              'hostStreamId': host,
-              'opponentStreamId': target,
-            },
-          });
-          if (battle != null) return battle;
-        }
-      } on ApiException catch (e) {
-        PkEventLog.apiFailure(
-          method: 'POST',
-          url: ApiEndpoints.livePk,
-          statusCode: e.statusCode,
-          roomId: host,
-          targetUserId: target,
-          responseBody: e.message,
-        );
-        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
-      }
       for (final body in bodies) {
         try {
           final res = await _dio.safePost<dynamic>(

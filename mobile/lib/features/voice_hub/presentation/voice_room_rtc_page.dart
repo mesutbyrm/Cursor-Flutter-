@@ -22,6 +22,8 @@ import '../../profile/presentation/providers/profile_providers.dart';
 import '../../live/domain/entities/live_gift_event.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
 import '../../live/presentation/providers/live_providers.dart';
+import '../../pk/presentation/providers/pk_session_notifier.dart';
+import '../../pk/presentation/widgets/pk_start_sheet.dart';
 import '../data/services/voice_room_debug_log.dart';
 import 'utils/voice_room_key_resolver.dart';
 import '../domain/entities/voice_room_realtime_event.dart';
@@ -768,7 +770,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       return;
     }
     try {
-      await context.push('/voice-room/$key/pk-invite', extra: room);
+      await showPkStartSheet(
+        context,
+        ref,
+        args: PkSessionArgs(contextId: key, kind: PkContextKind.voice),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

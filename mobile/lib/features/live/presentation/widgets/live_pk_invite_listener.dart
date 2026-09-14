@@ -15,6 +15,7 @@ import '../providers/live_invite_dedup_provider.dart';
 import '../providers/live_pk_invite_signal_provider.dart';
 import '../providers/live_providers.dart';
 import '../providers/live_video_pk_provider.dart';
+import '../../../pk/presentation/providers/pk_session_notifier.dart';
 import '../providers/pk_session_phase_provider.dart';
 import '../utils/live_pk_invite_flow.dart';
 import '../../domain/pk/pk_unified_bridge.dart';
@@ -129,6 +130,9 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
           ref.read(liveVideoPkProvider(stream.id).notifier).applyRemoteBattle(
                 pkBattleRemoteToBattleMap(battle, myStreamId: stream.id),
               );
+          unawaited(ref.read(pkSessionProvider(
+            PkSessionArgs(contextId: stream.id, kind: PkContextKind.live),
+          ).notifier).loadState());
           if (!inRoom) {
             await _tryShowBattle(battle, user.id, owned);
             if (_showing) return;

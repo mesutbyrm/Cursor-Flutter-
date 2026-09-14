@@ -1,5 +1,19 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.501+540 (2026-09-14) — PK oturum + UI (Riverpod)
+
+- `PkSessionNotifier` — `/api/live/pk` senkron, aday listesi, create/accept/reject/cancel/end
+- UI: `pk_start_sheet`, `pk_invite_dialog`, `pk_pending_banner`, `pk_score_bar`
+- Canlı yayın / sesli oda ⚔️ → birleşik PK başlatma sheet; SSE sonrası oturum yenileme
+- Kabul/red önce `PkService`, yedek eski PK remote
+
+## 1.0.500+539 (2026-09-14) — PK birleşik servis (Abacus sözleşmesi)
+
+- `docs/PK_ENTEGRASYON.md` + `docs/CURSOR_PROMPT_PK.md` repoda
+- `lib/features/pk/data/` — `pk_models`, `pk_service`, `pk_exception`
+- Canlı PK create/fetch: önce `POST/GET /api/live/pk`; `LiveFieldPkApi` `data` parse düzeltmesi
+- Aday uçları: `videoStreamPkCandidates`, `chatRoomPkCandidates`
+
 ## 1.0.499+538 (2026-09-14) — CI derleme düzeltmesi
 
 - `payment_requests_notifier`: `WalletRepository.myPaymentRequestsPage` imzasıyla uyum (APK gate analyze)
