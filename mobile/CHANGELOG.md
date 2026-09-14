@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.503+543 (2026-09-14) — analyze gate
+
+- `pk_session_notifier`: `PkService` import (CI analyze)
+
 ## 1.0.503+542 (2026-09-14) — PR #372 Bugbot + canlı PK overlay
 
 - `GiftEngineOverlay`: tam ekran hediye gate serbest bırakma (sıra değişiminde sızıntı)
