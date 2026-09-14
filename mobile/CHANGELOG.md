@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.485+523 (2026-09-14) — Jeton/CFC ödeme onayı düzeltmesi
+
+- Admin: iki liste birleşiminde `requestType` / `coins` korunur; onayda sunucu kaydı öncelikli
+- Jeton talebi gövdesine `creditType: jeton`; bildirim türünden jeton/CFC ayrımı
+
 ## 1.0.484+522 (2026-09-14) — Canlı PK davet sinyali
 
 - Canlı PK `inviteStream` sonrası `livePkInviteSignal` bump (rakip poll/SSE tetiklenir)

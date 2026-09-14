@@ -57,5 +57,40 @@ void main() {
         'cfc',
       );
     });
+
+    test('notification type jeton_payment_request', () {
+      expect(
+        resolvePaymentRequestType({
+          'type': 'jeton_payment_request',
+          'amount': 500,
+        }),
+        'jeton',
+      );
+    });
+
+    test('merge preserves requestType when second row is sparse', () {
+      final merged = mergeAdminPaymentRequestRow(
+        {'id': 'r1', 'amount': 500, 'status': 'pending'},
+        {
+          'id': 'r1',
+          'requestType': 'jeton',
+          'coins': 500,
+          'packageId': 'p500',
+        },
+      );
+      expect(merged['requestType'], 'jeton');
+      expect(merged['coins'], 500);
+      expect(resolvePaymentRequestType(merged), 'jeton');
+    });
+
+    test('review type prefers server requestType over UI guess', () {
+      expect(
+        resolvePaymentRequestTypeForReview(
+          uiRequestType: 'cfc',
+          requestRow: {'requestType': 'jeton', 'coins': 100},
+        ),
+        'jeton',
+      );
+    });
   });
 }

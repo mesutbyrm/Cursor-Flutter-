@@ -23,9 +23,56 @@ bool _isJetonPackageId(String packageId) {
   return RegExp(r'^p\d+$').hasMatch(id);
 }
 
+/// İki admin listesi yanıtını birleştir — eksik `requestType` / `coins` kaybolmasın.
+Map<String, dynamic> mergeAdminPaymentRequestRow(
+  Map<String, dynamic>? existing,
+  Map<String, dynamic> incoming,
+) {
+  if (existing == null || existing.isEmpty) {
+    return Map<String, dynamic>.from(incoming);
+  }
+  final out = Map<String, dynamic>.from(existing);
+  for (final entry in incoming.entries) {
+    final key = entry.key;
+    final value = entry.value;
+    if (value == null) continue;
+    final prev = out[key];
+    if (prev == null || (prev is String && prev.trim().isEmpty)) {
+      out[key] = value;
+    }
+  }
+  final existingRt = out['requestType']?.toString().toLowerCase().trim();
+  final incomingRt = incoming['requestType']?.toString().toLowerCase().trim();
+  if (existingRt != 'jeton' &&
+      existingRt != 'cfc' &&
+      (incomingRt == 'jeton' || incomingRt == 'cfc')) {
+    out['requestType'] = incoming['requestType'];
+  }
+  if (out['coins'] == null && incoming['coins'] != null) {
+    out['coins'] = incoming['coins'];
+  }
+  if ((out['packageId']?.toString().trim().isEmpty ?? true) &&
+      incoming['packageId'] != null) {
+    out['packageId'] = incoming['packageId'];
+  }
+  if ((out['source']?.toString().trim().isEmpty ?? true) &&
+      incoming['source'] != null) {
+    out['source'] = incoming['source'];
+  }
+  return out;
+}
+
 /// Jeton mu CFC mi — `requestType` yoksa alanlardan çıkar.
 String resolvePaymentRequestType(Map<String, dynamic> row) {
-  final raw = (row['requestType'] ?? row['type'] ?? '').toString().toLowerCase();
+  final reqType = row['requestType']?.toString().toLowerCase().trim();
+  if (reqType == 'jeton') return 'jeton';
+  if (reqType == 'cfc') return 'cfc';
+
+  final notifType = row['type']?.toString().toLowerCase().trim();
+  if (notifType == 'jeton_payment_request') return 'jeton';
+  if (notifType == 'cfc_payment_request') return 'cfc';
+
+  final raw = row['type']?.toString().toLowerCase() ?? '';
   if (raw == 'jeton' || raw.contains('jeton')) return 'jeton';
   if (raw == 'cfc' || raw.contains('cfc')) return 'cfc';
 
@@ -71,9 +118,30 @@ String resolvePaymentRequestType(Map<String, dynamic> row) {
     }
   }
 
+  if (amount != null && amount > 0 && !hasCoins && _isJetonPackageId(packageId)) {
+    return 'jeton';
+  }
+
   if (amount != null && amount > 0 && !hasCoins) return 'cfc';
 
   return 'cfc';
+}
+
+/// Onay/red için tür — sunucu kaydı öncelikli.
+String resolvePaymentRequestTypeForReview({
+  String? uiRequestType,
+  Map<String, dynamic>? requestRow,
+}) {
+  if (requestRow != null) {
+    final rowType = requestRow['requestType']?.toString().toLowerCase().trim();
+    if (rowType == 'jeton') return 'jeton';
+    if (rowType == 'cfc') return 'cfc';
+  }
+  final ui = uiRequestType?.trim().toLowerCase();
+  if (ui == 'jeton') return 'jeton';
+  if (ui == 'cfc') return 'cfc';
+  if (requestRow != null) return resolvePaymentRequestType(requestRow);
+  return '';
 }
 
 /// Admin ödeme onay/red — jeton ve CFC uçlarını sırayla dener.
@@ -90,10 +158,10 @@ Future<void> reviewAdminPaymentRequest(
     throw const ApiException('Ödeme talebi kimliği bulunamadı.');
   }
 
-  var resolvedType = (requestType ?? '').trim().toLowerCase();
-  if (resolvedType.isEmpty && requestRow != null) {
-    resolvedType = resolvePaymentRequestType(requestRow);
-  }
+  final resolvedType = resolvePaymentRequestTypeForReview(
+    uiRequestType: requestType,
+    requestRow: requestRow,
+  );
   if (resolvedType.isEmpty) {
     throw const ApiException(
       'Ödeme türü belirlenemedi. Listeyi yenileyip tekrar deneyin.',

@@ -326,11 +326,10 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
         }
       }
     }
-    final resolvedType = (requestType?.trim().isNotEmpty == true)
-        ? requestType!.trim().toLowerCase()
-        : (requestRow != null
-            ? resolvePaymentRequestType(requestRow)
-            : null);
+    final resolvedType = resolvePaymentRequestTypeForReview(
+      uiRequestType: requestType,
+      requestRow: requestRow,
+    );
     try {
       await reviewAdminPaymentRequest(
         ref.read(dioProvider),

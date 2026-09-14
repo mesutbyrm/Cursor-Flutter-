@@ -35,7 +35,7 @@ final adminPaymentRequestsProvider =
       for (final row in parseAdminPaymentRequests(res.data)) {
         final id = row['id']?.toString().trim();
         if (id == null || id.isEmpty) continue;
-        merged[id] = row;
+        merged[id] = mergeAdminPaymentRequestRow(merged[id], row);
       }
     } on ApiException catch (e) {
       if (e.statusCode == 403) {
@@ -298,7 +298,7 @@ bool isPaymentNotificationType(String? type) {
 }
 
 String paymentRequestSummary(Map<String, dynamic> r) {
-  final type = (r['requestType'] ?? 'cfc').toString();
+  final type = resolvePaymentRequestType(r);
   final method = (r['method'] ?? '').toString();
   if (type == 'jeton') {
     final coins = r['coins'] ?? r['amount'];
@@ -310,7 +310,7 @@ String paymentRequestSummary(Map<String, dynamic> r) {
 }
 
 String paymentRequestDetailLine(Map<String, dynamic> r) {
-  final type = (r['requestType'] ?? 'cfc').toString();
+  final type = resolvePaymentRequestType(r);
   if (type == 'jeton') {
     final coins = r['coins'] ?? r['amount'] ?? '—';
     final price = r['priceTry'] ?? '—';

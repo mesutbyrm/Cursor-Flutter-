@@ -33,6 +33,7 @@ Map<String, dynamic> normalizePaymentRequestBody(Map<String, dynamic> raw) {
     final out = <String, dynamic>{
       'requestType': 'jeton',
       'type': 'jeton',
+      'creditType': 'jeton',
       'method': method,
       'packageId': packageId,
       'packageTitle':
@@ -63,6 +64,7 @@ Map<String, dynamic> normalizePaymentRequestBody(Map<String, dynamic> raw) {
   final out = <String, dynamic>{
     'requestType': 'cfc',
     'type': 'cfc',
+    'creditType': 'cfc',
     'method': method,
     'amount': safeAmount,
   };
