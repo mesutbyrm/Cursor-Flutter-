@@ -19,6 +19,20 @@ bool _isLegacyCanlifalPath(String path) {
   if (path.startsWith('/api/v1/') || path.startsWith('/api/v2/')) return true;
   if (path.startsWith('/api/payment/')) return true;
   if (path == '/api/membership/packages') return true;
+  if (path == '/api/auth/login' ||
+      path == '/api/auth/register' ||
+      path == '/api/auth/refresh' ||
+      path == '/api/auth/me' ||
+      path == '/api/auth/google' ||
+      path == '/api/auth/tiktok') {
+    return true;
+  }
+  if (path == '/api/banners' ||
+      path == '/api/social/public-stats' ||
+      path == '/api/devices/fcm' ||
+      path == '/api/users/me/gifts-received') {
+    return true;
+  }
   if (RegExp(r'^/api/rooms/[^/]+/music').hasMatch(path)) return true;
   return false;
 }

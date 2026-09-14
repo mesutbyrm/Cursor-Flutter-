@@ -71,14 +71,6 @@ abstract final class ApiEndpoints {
   static const userStatistics = '/api/user/statistics';
   static const userXp = '/api/user/xp';
 
-  // --- Eski / self-hosted (geriye dönük) ---
-  static const authLogin = '/api/auth/login';
-  static const authRegister = '/api/auth/register';
-  static const authRefresh = '/api/auth/refresh';
-  static const authMe = '/api/auth/me';
-  static const authGoogle = '/api/auth/google';
-  static const authTiktok = '/api/auth/tiktok';
-
   /// DM sohbet listesi (Bearer).
   static const messages = '/api/messages';
   static String messagesWithUser(String userId) => '/api/messages/$userId';
@@ -139,12 +131,6 @@ abstract final class ApiEndpoints {
   /// Site geneli istatistikler (kılavuz §9.13 — web ile aynı).
   static const publicStats = '/api/public-stats';
   static const platformStats = '/api/platform-stats';
-
-  /// @deprecated — [publicStats] kullanın.
-  static const socialPublicStats = '/api/social/public-stats';
-
-  /// Ana sayfa promosyon slider.
-  static const homeBanners = '/api/banners';
 
   /// Ana sayfa fal kartları vitrin.
   static const homepageFortuneCards = '/api/homepage-fortune-cards';
@@ -1008,8 +994,7 @@ abstract final class ApiEndpoints {
   static const notificationsPaymentClear = '/api/notifications/payment';
   static String notificationRead(String id) => '/api/notifications/$id/read';
 
-  /// FCM cihaz token kaydı (canlifal.com veya self-hosted API).
-  static const registerFcmDevice = '/api/devices/fcm';
+  /// Push cihaz token kaydı (üretim kanonik).
   static const registerUserDeviceToken = '/api/user/device-token';
 
   static const wallet = '/api/wallet';

@@ -34,17 +34,10 @@ bool _isPublicAuthPath(String path) {
       path == ApiEndpoints.authMobileSendVerification ||
       path == ApiEndpoints.authMobileVerifyEmail ||
       path == ApiEndpoints.authForgotPassword ||
-      path == ApiEndpoints.authResetPassword ||
-      path == ApiEndpoints.authLogin ||
-      path == ApiEndpoints.authRegister ||
-      path == ApiEndpoints.authGoogle ||
-      path == ApiEndpoints.authTiktok ||
-      path == ApiEndpoints.authRefresh;
+      path == ApiEndpoints.authResetPassword;
 }
 
-String _refreshPath() => Env.useMobileAuth
-    ? ApiEndpoints.authMobileRefresh
-    : ApiEndpoints.authRefresh;
+String _refreshPath() => ApiEndpoints.authMobileRefresh;
 
 Dio _createApiDio(Ref ref, {required Dio tokenRefreshDio}) {
   final tokenStorage = ref.watch(tokenStorageProvider);

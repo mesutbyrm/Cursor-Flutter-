@@ -37,9 +37,8 @@ class PushRegistrar {
       };
 
       final endpoints = [
-        ApiEndpoints.authMobileDeviceToken,
-        ApiEndpoints.registerFcmDevice,
         ApiEndpoints.registerUserDeviceToken,
+        ApiEndpoints.authMobileDeviceToken,
       ];
 
       for (final path in endpoints) {
@@ -71,7 +70,7 @@ class PushRegistrar {
     if (fcmToken == null || fcmToken.isEmpty) return;
     try {
       await _dio.safeDelete(
-        ApiEndpoints.registerFcmDevice,
+        ApiEndpoints.registerUserDeviceToken,
         data: {'token': fcmToken, 'fcmToken': fcmToken},
       );
       if (kDebugMode) debugPrint('Stale FCM token deregistered from backend');

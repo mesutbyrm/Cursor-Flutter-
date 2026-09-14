@@ -357,7 +357,7 @@ class AuthService {
           await PushNotificationService.instance.currentFcmToken();
       if (fcmToken == null || fcmToken.isEmpty) return;
       await _authedDio.safeDelete(
-        ApiEndpoints.registerFcmDevice,
+        ApiEndpoints.registerUserDeviceToken,
         data: {'token': fcmToken, 'fcmToken': fcmToken},
       );
     } catch (e) {

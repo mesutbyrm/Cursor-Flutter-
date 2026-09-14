@@ -86,7 +86,7 @@ abstract final class ApiCachePolicy {
     _TtlRule(prefix: '/api/chat/rooms', ttl: Duration(seconds: 20)),
     _TtlRule(prefix: '/api/live', ttl: Duration(seconds: 12)),
     _TtlRule(prefix: '/api/video', ttl: Duration(seconds: 12)),
-    _TtlRule(prefix: '/api/banners', ttl: Duration(minutes: 3)),
+    _TtlRule(prefix: '/api/social/announcements', ttl: Duration(minutes: 3)),
     _TtlRule(prefix: '/api/homepage', ttl: Duration(minutes: 3)),
     _TtlRule(prefix: '/api/advisors', ttl: Duration(seconds: 90)),
     _TtlRule(prefix: '/api/short-videos', ttl: Duration(seconds: 20)),

@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.486+524 (2026-09-14) — API parite / legacy auth temizliği
+
+- Auth: yalnızca `mobile-login`, `mobile-register`, `mobile-refresh`, `GET /api/me`
+- Push: kanonik `POST/DELETE /api/user/device-token` (`/api/devices/fcm` kaldırıldı)
+- Ana sayfa banner yedek: `/api/social/announcements` (404 `/api/banners` kaldırıldı)
+- Hediyeler: yalnızca `GET /api/user/received-gifts`
+- Sözleşme testi: legacy auth ve 404 yolları lib’de yasak
+
 ## 1.0.485+523 (2026-09-14) — Jeton/CFC ödeme onayı düzeltmesi
 
 - Admin: iki liste birleşiminde `requestType` / `coins` korunur; onayda sunucu kaydı öncelikli

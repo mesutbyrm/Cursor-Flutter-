@@ -122,14 +122,10 @@ class NativeAuthDataSource {
       throw const ApiException('TikTok yetkilendirme kodu alınamadı');
     }
 
-    final path = Env.useMobileAuth
-        ? ApiEndpoints.authMobileTiktok
-        : ApiEndpoints.authTiktok;
     final res = await _dio.safePost<Map<String, dynamic>>(
-      path,
+      ApiEndpoints.authMobileTiktok,
       data: {
         'code': code,
-        if (!Env.useMobileAuth) 'redirectUri': redirect,
         if (referralCode != null && referralCode.isNotEmpty)
           'referralCode': referralCode,
       },

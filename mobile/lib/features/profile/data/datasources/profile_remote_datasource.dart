@@ -312,10 +312,7 @@ class ProfileRemoteDataSource {
   }
 
   Future<List<GiftReceivedSummaryEntity>> giftsReceivedSummary() async {
-    for (final path in [
-      ApiEndpoints.userReceivedGifts,
-      '/api/users/me/gifts-received',
-    ]) {
+    for (final path in [ApiEndpoints.userReceivedGifts]) {
       try {
         final res = await _dio.safeGet<Map<String, dynamic>>(path);
         final body = res.data ?? {};

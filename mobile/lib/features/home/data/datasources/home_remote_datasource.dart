@@ -35,10 +35,7 @@ class HomeRemoteDataSource {
     if (compound != null && compound.banners.isNotEmpty) {
       return compound.banners;
     }
-    for (final path in [
-      ApiEndpoints.homeBanners,
-      ApiEndpoints.socialAnnouncements,
-    ]) {
+    for (final path in [ApiEndpoints.socialAnnouncements]) {
       try {
         final res = await _dio.safeGet<dynamic>(path);
         final items = _itemsFromBody(res.data);
