@@ -12,6 +12,12 @@ class LiveInviteDedupNotifier extends Notifier<Set<String>> {
     state = {...state, id};
     return true;
   }
+
+  void unmark(String key) {
+    final id = key.trim();
+    if (id.isEmpty || !state.contains(id)) return;
+    state = state.where((e) => e != id).toSet();
+  }
 }
 
 final liveInviteDedupProvider =

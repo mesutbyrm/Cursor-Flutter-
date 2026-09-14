@@ -12,14 +12,14 @@ import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/pk/live_pk_invite_helper.dart';
 import '../providers/live_active_broadcast_provider.dart';
 import '../providers/live_invite_dedup_provider.dart';
-import '../providers/live_pk_action_lock_provider.dart';
 import '../providers/live_pk_invite_signal_provider.dart';
 import '../providers/live_providers.dart';
 import '../providers/live_video_pk_provider.dart';
 import '../providers/pk_session_phase_provider.dart';
-import '../utils/open_host_broadcast_room.dart';
+import '../utils/live_pk_invite_flow.dart';
+import '../../domain/pk/pk_unified_bridge.dart';
 
-/// Canlı yayın PK davetleri — stream SSE + `GET /api/video-streams/{id}/pk-battle`.
+/// Canlı yayın PK davetleri — stream SSE + poll + `GET /api/pk/me/invites`.
 class LivePkInviteListener extends ConsumerStatefulWidget {
   const LivePkInviteListener({super.key, required this.child});
 
@@ -33,8 +33,6 @@ class LivePkInviteListener extends ConsumerStatefulWidget {
 class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
   var _showing = false;
   Timer? _pollTimer;
-
-  static const _dialogTimeout = Duration(seconds: 30);
 
   @override
   void initState() {
@@ -77,16 +75,42 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
         return stream.id;
       }
     }
+    final host = battle.liveStreamId?.trim() ?? '';
+    final opp = battle.opponentLiveStreamId?.trim() ?? '';
+    for (final stream in owned) {
+      if (stream.id == host || stream.id == opp) return stream.id;
+    }
     return null;
   }
 
-  bool _isRecipient(PkBattleRemote battle, String userId, String myStreamId) {
-    if (userId.isEmpty) return false;
-    return isLivePkInviteRecipientBattle(
+  Future<void> _tryShowBattle(
+    PkBattleRemote battle,
+    String userId,
+    List<LiveStreamEntity> owned,
+  ) async {
+    if (!battle.isPending || battle.isEnded) return;
+    if (battle.challengerId == userId) return;
+    final streamId = _recipientStreamId(battle, userId, owned);
+    if (streamId == null || streamId.isEmpty) return;
+    if (!isLivePkInviteRecipientBattle(
       battle,
       myUserId: userId,
-      myStreamId: myStreamId,
-    );
+      myStreamId: streamId,
+    )) {
+      return;
+    }
+    if (isLiveBroadcastRoomActiveForStream(ref, streamId)) {
+      return;
+    }
+    final inviteId = battle.effectiveId;
+    if (inviteId.isEmpty ||
+        !ref
+            .read(liveInviteDedupProvider.notifier)
+            .tryMark(livePkInviteDedupKey(inviteId))) {
+      return;
+    }
+    PkEventLog.incomingRequest(inviteId: inviteId);
+    await _showDialog(battle, streamId);
   }
 
   Future<void> _processPendingInvites() async {
@@ -97,28 +121,27 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
     try {
       final api = ref.read(pkBattleRemoteDataSourceProvider);
       final owned = _ownedLiveStreams(user.id);
-      if (owned.isEmpty) return;
 
-      // Canlı 1v1 PK — ana backend `GET /api/video-streams/{id}/pk-battle` (tek kaynak).
       for (final stream in owned) {
         if (isLiveBroadcastRoomActiveForStream(ref, stream.id)) {
           continue;
         }
         final battle = await api.fetchStreamBattle(stream.id);
-        if (battle == null || battle.isEnded) continue;
-        if (!battle.isPending) continue;
-        if (battle.challengerId == user.id) continue;
-        if (!_isRecipient(battle, user.id, stream.id)) continue;
-        final inviteId = battle.effectiveId;
-        if (inviteId.isEmpty ||
-            !ref
-                .read(liveInviteDedupProvider.notifier)
-                .tryMark(livePkInviteDedupKey(inviteId))) {
-          continue;
-        }
-        PkEventLog.incomingRequest(inviteId: inviteId);
-        await _showDialog(battle, stream.id);
-        return;
+        if (battle == null) continue;
+        ref.read(liveVideoPkProvider(stream.id).notifier).applyRemoteBattle(
+              pkBattleRemoteToBattleMap(battle, myStreamId: stream.id),
+            );
+        await _tryShowBattle(battle, user.id, owned);
+        if (_showing) return;
+      }
+
+      final invites = await api.fetchMyInvites();
+      for (final battle in invites) {
+        if (!battle.isPending || battle.isEnded) continue;
+        if (!isLiveStreamPkBattle(battle)) continue;
+        ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(battle);
+        await _tryShowBattle(battle, user.id, owned);
+        if (_showing) return;
       }
     } catch (e, st) {
       assert(() {
@@ -131,104 +154,16 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
   Future<void> _showDialog(PkBattleRemote battle, String myStreamId) async {
     if (!mounted || _showing) return;
     _showing = true;
-    final challenger =
-        battle.challenger?.displayName?.trim() ?? 'Yayıncı';
-
-    bool? accept;
     try {
-      accept = await showDialog<bool>(
-        context: context,
-        barrierDismissible: false,
-        builder: (ctx) => AlertDialog(
-          backgroundColor: const Color(0xFF1A0F2E),
-          title: const Row(
-            children: [
-              Text('🔥 ', style: TextStyle(fontSize: 22)),
-              Text('PK Daveti', style: TextStyle(color: Colors.white)),
-            ],
-          ),
-          content: Text(
-            '$challenger seninle PK yapmak istiyor.',
-            style: const TextStyle(color: Colors.white70),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Reddet'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Kabul Et'),
-            ),
-          ],
-        ),
-      ).timeout(
-        _dialogTimeout,
-        onTimeout: () {
-          if (mounted && Navigator.canPop(context)) {
-            Navigator.pop(context, null);
-          }
-          return null;
-        },
+      final map = pkBattleRemoteToBattleMap(battle, myStreamId: myStreamId);
+      await showLiveStreamPkInviteDialog(
+        context,
+        ref,
+        streamId: myStreamId,
+        battle: map,
       );
-    } on TimeoutException {
-      accept = null;
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('PK daveti süresi doldu')),
-        );
-      }
     } finally {
       _showing = false;
-    }
-
-    // Dialog timeout / dismiss — backend pending state korunur; otomatik reject yok.
-    if (!mounted || accept == null) return;
-
-    final battleId = battle.effectiveId;
-    final lock = ref.read(livePkActionLockProvider.notifier);
-    if (!lock.tryAcquire(battleId, 'respond')) {
-      return;
-    }
-    final remote = ref.read(pkBattleRemoteProvider.notifier);
-    final pkNotifier = ref.read(liveVideoPkProvider(myStreamId).notifier);
-    try {
-      if (accept) {
-        PkEventLog.acceptStart(inviteId: battleId);
-        await remote.accept(battleId, streamId: myStreamId);
-        await pkNotifier.refresh();
-        PkEventLog.acceptSuccess(battleId: battleId);
-        if (!isLiveBroadcastRoomActiveForStream(ref, myStreamId)) {
-          await openHostBroadcastRoomIfNeeded(
-            ref: ref,
-            context: context,
-            streamId: myStreamId,
-          );
-        }
-      } else {
-        PkEventLog.reject(inviteId: battleId);
-        await remote.reject(battleId, streamId: myStreamId);
-        await pkNotifier.refresh();
-      }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              accept ? 'PK kabul edildi' : 'PK daveti reddedildi',
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      ref.read(pkSessionPhaseProvider.notifier).reset();
-      ref.read(liveVideoPkProvider(myStreamId).notifier).refresh();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
-        );
-      }
-    } finally {
-      lock.release(battleId, 'respond');
     }
   }
 

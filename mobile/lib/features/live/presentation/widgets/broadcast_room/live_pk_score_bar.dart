@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../domain/pk/pk_status_helper.dart';
 import '../../../../profile/presentation/widgets/premium/profile_glass.dart';
 
 /// Canlı yayın PK skor çubuğu — web ile aynı sol/sağ puan gösterimi.
@@ -116,7 +117,7 @@ class LivePkScoreBar extends ConsumerWidget {
               ),
             ),
           ),
-          if (status == 'pending' && !isHost) ...[
+          if (isPkInvitePendingStatus(status) && !isHost) ...[
             const SizedBox(height: 10),
             Row(
               children: [

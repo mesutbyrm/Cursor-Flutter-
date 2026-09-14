@@ -1,4 +1,5 @@
 import 'package:canlifal_social/features/live/domain/pk/live_pk_ingest.dart';
+import 'package:canlifal_social/features/live/presentation/providers/live_active_broadcast_provider.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -20,6 +21,12 @@ void main() {
       'opponentLiveStreamId': 's2',
     });
     expect(a, isNot(equals(b)));
+  });
+
+  test('isLiveBroadcastRoomActiveForStreamId matches same stream only', () {
+    expect(isLiveBroadcastRoomActiveForStreamId('s1', 's1'), isTrue);
+    expect(isLiveBroadcastRoomActiveForStreamId('s1', 's2'), isFalse);
+    expect(isLiveBroadcastRoomActiveForStreamId(null, 's1'), isFalse);
   });
 
   test('livePkBattleIngestFingerprint stable for duplicate SSE', () {

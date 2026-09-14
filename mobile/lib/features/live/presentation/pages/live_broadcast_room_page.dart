@@ -83,7 +83,6 @@ import '../../../games/presentation/providers/game_providers.dart';
 import '../providers/pk_room_providers.dart';
 import '../providers/live_active_broadcast_provider.dart';
 import '../providers/live_invite_dedup_provider.dart';
-import '../providers/live_pk_action_lock_provider.dart';
 import '../providers/live_co_guest_camera_signal_provider.dart';
 import '../providers/live_pk_invite_signal_provider.dart';
 import '../providers/live_providers.dart';
@@ -98,6 +97,7 @@ import '../providers/live_room_interaction_provider.dart'
 import '../providers/live_room_providers.dart';
 import '../providers/live_video_pk_provider.dart';
 import '../providers/pk_session_phase_provider.dart';
+import '../utils/live_pk_invite_flow.dart';
 import '../widgets/live_tiktok/live_background_picker_sheet.dart';
 import '../widgets/live_tiktok/live_guest_grid.dart';
 import '../widgets/broadcast_room/live_pk_score_bar.dart';
@@ -1811,101 +1811,61 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     )) {
       return;
     }
-    final id = battle['id']?.toString() ?? '';
-    if (id.isEmpty ||
-        !ref
-            .read(liveInviteDedupProvider.notifier)
-            .tryMark(livePkInviteDedupKey(id))) {
+    final id = (battle['id'] ?? battle['battleId'] ?? battle['pkBattleId'])
+            ?.toString()
+            .trim() ??
+        '';
+    if (id.isEmpty) return;
+    if (!ref
+        .read(liveInviteDedupProvider.notifier)
+        .tryMark(livePkInviteDedupKey(id))) {
       return;
     }
     PkEventLog.incomingRequest(matchId: id);
-    final hostStream = battle['hostStreamId']?.toString();
-    if (hostStream != null && hostStream.isNotEmpty && hostStream == streamId) {
-      return;
-    }
-    unawaited(_showIncomingLivePkInvite(streamId, id, battle));
+    unawaited(_showIncomingLivePkInvite(streamId, battle));
   }
 
   Future<void> _showIncomingLivePkInvite(
     String streamId,
-    String battleId,
     Map<String, dynamic> battle,
   ) async {
     if (!mounted || _livePkInviteDialogOpen) return;
     _livePkInviteDialogOpen = true;
-    final challenger = battle['leftName']?.toString() ??
-        battle['challengerName']?.toString() ??
-        'Yayıncı';
-    final accept = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A0F2E),
-        title: const Text('PK Daveti', style: TextStyle(color: Colors.white)),
-        content: Text(
-          '$challenger size PK daveti gönderdi.\nKabul ediyor musunuz?',
-          style: const TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Reddet'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Kabul Et'),
-          ),
-        ],
-      ),
-    );
-    if (!mounted || accept == null) {
-      _livePkInviteDialogOpen = false;
-      return;
-    }
-    final lock = ref.read(livePkActionLockProvider.notifier);
-    if (!lock.tryAcquire(battleId, 'respond')) {
-      _livePkInviteDialogOpen = false;
-      return;
-    }
     try {
-      if (accept) {
-        PkEventLog.acceptStart(matchId: battleId);
-      } else {
-        PkEventLog.reject(matchId: battleId);
-      }
       if (battle['unifiedPk'] == true) {
+        final battleId = battle['id']?.toString() ?? '';
+        final accept = await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            title: const Text('PK Daveti'),
+            content: const Text('Birleşik PK daveti aldınız. Kabul ediyor musunuz?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Reddet'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Kabul Et'),
+              ),
+            ],
+          ),
+        );
+        if (!mounted || accept == null) return;
         await ref.read(pkUnifiedInviteProvider).respond(
               matchId: battleId,
               accept: accept,
             );
-      } else {
-        final pk = ref.read(liveVideoPkProvider(streamId).notifier);
-        if (accept) {
-          await pk.accept().timeout(const Duration(seconds: 30));
-        } else {
-          await pk.reject().timeout(const Duration(seconds: 30));
-        }
+        return;
       }
-      if (accept) {
-        PkEventLog.acceptSuccess(matchId: battleId);
-      }
-      if (accept && mounted) {
-        await ref.read(liveVideoPkProvider(streamId).notifier).refresh();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('PK başlatılıyor…')),
-        );
-      }
-    } catch (e) {
-      PkEventLog.error(accept ? 'accept' : 'reject', e);
-      ref.read(pkSessionPhaseProvider.notifier).reset();
-      ref.read(liveVideoPkProvider(streamId).notifier).refresh();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
-        );
-      }
+      await showLiveStreamPkInviteDialog(
+        context,
+        ref,
+        streamId: streamId,
+        battle: battle,
+      );
     } finally {
-      lock.release(battleId, 'respond');
       _livePkInviteDialogOpen = false;
     }
   }

@@ -305,6 +305,20 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
         if (isPkInviteTarget(battle, room, userId: user.id)) return true;
         if (pkBattleBelongsToRoom(battle, room)) return true;
       }
+      final allRooms = ref.read(voiceRoomsProvider).valueOrNull ?? const [];
+      for (final room in allRooms) {
+        if (isPkInviteTarget(battle, room, userId: user.id)) return true;
+      }
+      final uid = user.id.trim();
+      final directIds = <String?>{
+        battle.guestUserId,
+        battle.opponentId,
+        battle.targetUserId,
+        battle.opponent?.userId,
+      };
+      for (final id in directIds) {
+        if (id != null && id.trim() == uid) return true;
+      }
     }
 
     // Odada değilken yalnızca kullanıcıya yönelik pending davetler (yukarıda).

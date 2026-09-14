@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.498+536 (2026-09-14) — PK davet popup + ayarlar kabul/red
+
+- Canlı PK: dedup sırası düzeltildi; `/api/pk/me/invites` poll; ortak `respondLivePkInvite` + popup
+- Kontrol merkezi PK sekmesi: `invited`/`pending` durumları, yalnızca gelen davette kabul/red
+- Sesli oda: pending PK ingest hedef kullanıcı + tüm oda listesi eşlemesi
+
 ## 1.0.497+535 (2026-09-14) — Canlı PK derleme düzeltmesi
 
 - `isLiveBroadcastRoomActiveForStream`: `WidgetRef` uyumu (CI/CodeQL compile fix)

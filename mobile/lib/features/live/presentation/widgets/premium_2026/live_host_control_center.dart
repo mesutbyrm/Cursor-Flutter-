@@ -11,6 +11,10 @@ import '../../providers/live_guest_grid_provider.dart';
 import '../../providers/live_fortune_request_provider.dart';
 import '../../providers/live_host_dashboard_provider.dart';
 import '../../providers/live_video_pk_provider.dart';
+import '../../utils/live_pk_invite_flow.dart';
+import '../../../../core/network/api_exception.dart';
+import '../../domain/pk/pk_status_helper.dart';
+import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../providers/live_stream_engagement_provider.dart';
 import '../../providers/live_stream_viewers_provider.dart';
 import '../../../../../core/economy/presentation/providers/economy_providers.dart';
@@ -397,13 +401,56 @@ class _PkTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final pk = ref.watch(liveVideoPkProvider(streamId));
     final battle = pk.battle;
+    final userId = ref.watch(authControllerProvider).valueOrNull?.id;
+    final status = normalizePkStatus(pk.status);
+    final incoming = isLivePkIncomingInviteForHost(battle, streamId, userId);
+    final outgoing = isLivePkOutgoingInvite(battle, userId);
+
+    Future<void> respond(bool accept) async {
+      final battleId = (pk.unifiedMatchId ??
+              battle?['id'] ??
+              battle?['battleId'] ??
+              battle?['pkBattleId'])
+          ?.toString()
+          .trim();
+      if (battleId == null || battleId.isEmpty) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('PK kimliği bulunamadı')),
+          );
+        }
+        return;
+      }
+      try {
+        await respondLivePkInvite(
+          ref,
+          streamId: streamId,
+          battleId: battleId,
+          accept: accept,
+        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(accept ? 'PK kabul edildi' : 'PK reddedildi'),
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(ApiException.userMessage(e))),
+          );
+        }
+      }
+    }
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         if (battle == null)
           const Text('Aktif PK daveti yok', style: TextStyle(color: Colors.white54))
         else ...[
-          Text('Durum: ${pk.status}', style: const TextStyle(color: Colors.white)),
+          Text('Durum: $status', style: const TextStyle(color: Colors.white)),
           const SizedBox(height: 8),
           Text(
             'Skor: ${pk.leftScore} — ${pk.rightScore}',
@@ -414,25 +461,29 @@ class _PkTab extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
-          if (pk.status == 'pending')
+          if (incoming)
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () =>
-                        ref.read(liveVideoPkProvider(streamId).notifier).reject(),
+                    onPressed: () => respond(false),
                     child: const Text('Reddet'),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: FilledButton(
-                    onPressed: () =>
-                        ref.read(liveVideoPkProvider(streamId).notifier).accept(),
+                    onPressed: () => respond(true),
                     child: const Text('Kabul'),
                   ),
                 ),
               ],
+            ),
+          if (outgoing && isPkInvitePendingStatus(status))
+            FilledButton(
+              onPressed: () =>
+                  ref.read(liveVideoPkProvider(streamId).notifier).cancel(),
+              child: const Text('Daveti iptal et'),
             ),
         ],
       ],
