@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:canlifal_social/core/design_system/cds_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -13,11 +14,10 @@ Future<void> showLiveStreamGamesSheet({
   required WidgetRef ref,
   required String streamId,
 }) {
-  return showModalBottomSheet<void>(
+  return CdsBottomSheet.show<void>(
     context: context,
-    backgroundColor: const Color(0xFF151522),
-    showDragHandle: true,
-    builder: (ctx) {
+    child: Builder(
+      builder: (ctx) {
       Future<void> launch(String gameId, String label) async {
         Navigator.pop(ctx);
         try {
@@ -94,5 +94,6 @@ Future<void> showLiveStreamGamesSheet({
         ),
       );
     },
+    ),
   );
 }

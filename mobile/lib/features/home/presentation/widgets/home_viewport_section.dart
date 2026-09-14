@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/design_system/cds_responsive.dart';
 import '../../../../core/performance/scroll_perf.dart';
 
 /// Ana sayfa bölümünü viewport yakınına gelince mount eder — erken API yükünü azaltır.
@@ -68,10 +69,16 @@ class _HomeViewportSectionState extends State<HomeViewportSection> {
   Widget build(BuildContext context) {
     if (_mounted) return widget.child;
 
+    final height = CdsResponsive.sectionHeight(
+      context,
+      min: widget.estimatedHeight * 0.85,
+      max: widget.estimatedHeight * 1.35,
+      fractionOfWidth: 0.42,
+    );
     return widget.placeholder ??
         SizedBox(
           key: _anchorKey,
-          height: widget.estimatedHeight,
+          height: height,
         );
   }
 }

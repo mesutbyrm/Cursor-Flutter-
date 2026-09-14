@@ -1,3 +1,4 @@
+import 'package:canlifal_social/core/design_system/cds_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,10 +23,8 @@ Future<void> showVoiceRoomToolsSheet(
   required VoiceRoomPermissions perms,
   required bool isOwner,
 }) {
-  return showModalBottomSheet(
+  return CdsBottomSheet.showTransparent(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
     builder: (ctx) => ProviderScope(
       parent: ProviderScope.containerOf(ctx),
       child: _VoiceRoomToolsSheet(

@@ -1,3 +1,4 @@
+import 'package:canlifal_social/core/design_system/cds_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
@@ -18,12 +19,9 @@ Future<MembershipCheckoutChoice?> showMembershipCheckoutSheet(
   String externalMethodsLabel = PaymentMethodsSummaryLine.externalCheckoutFallback,
 }) {
   final hasCfc = cfcBalance >= priceCfc && priceCfc > 0;
-  return showModalBottomSheet<MembershipCheckoutChoice>(
+  return CdsBottomSheet.show<MembershipCheckoutChoice>(
     context: context,
-    backgroundColor: const Color(0xFF12081C),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
+    child: Builder(
     builder: (ctx) {
       return Consumer(
         builder: (context, ref, _) {
@@ -105,6 +103,7 @@ Future<MembershipCheckoutChoice?> showMembershipCheckoutSheet(
         },
       );
     },
+    ),
   );
 }
 

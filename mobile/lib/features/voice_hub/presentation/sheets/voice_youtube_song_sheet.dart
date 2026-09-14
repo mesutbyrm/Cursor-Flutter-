@@ -1,3 +1,4 @@
+import 'package:canlifal_social/core/design_system/cds_bottom_sheet.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -34,10 +35,8 @@ Future<void> showVoiceYoutubeSongSheet(
   bool? preferVideo,
 }) {
   final container = ProviderScope.containerOf(context);
-  return showModalBottomSheet<void>(
+  return CdsBottomSheet.showTransparent<void>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
     builder: (ctx) => UncontrolledProviderScope(
       container: container,
       child: _YoutubeSongSheet(room: room, preferVideo: preferVideo),

@@ -1,3 +1,4 @@
+import 'package:canlifal_social/core/design_system/cds_bottom_sheet.dart';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -61,10 +62,9 @@ class VoicePremiumMessageBar extends StatelessWidget {
       '😀', '😂', '❤️', '🔥', '👏', '🎉', '💎', '🎤',
       '🙏', '✨', '💜', '😍', '🤣', '👋', '🌙', '⭐',
     ];
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
+    CdsBottomSheet.showTransparent<void>(
+    context: context,
+    builder: (ctx) => Container(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         decoration: BoxDecoration(
           color: const Color(0xFF14101F).withValues(alpha: 0.96),

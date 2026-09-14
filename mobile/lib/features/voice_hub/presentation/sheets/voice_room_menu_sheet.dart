@@ -1,3 +1,4 @@
+import 'package:canlifal_social/core/design_system/cds_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -32,10 +33,8 @@ Future<void> showVoiceRoomMenuSheet(
   void Function(ChatRoomPresence user)? onUserTap,
   VoidCallback? onPkInvite,
 }) {
-  return showModalBottomSheet<void>(
+  return CdsBottomSheet.showTransparent<void>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
     builder: (ctx) => ProviderScope(
       parent: ProviderScope.containerOf(ctx),
       child: _VoiceRoomMenuSheet(

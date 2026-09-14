@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/design_system/cds_bottom_sheet.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/network/api_exception.dart';
@@ -7,33 +8,34 @@ import '../providers/social_providers.dart';
 
 /// Hikâye ekleme — galeriden görsel veya video.
 Future<bool> showStoryCreateSheet(BuildContext context, WidgetRef ref) async {
-  final choice = await showModalBottomSheet<_StoryMediaChoice>(
+  final choice = await CdsBottomSheet.show<_StoryMediaChoice>(
     context: context,
-    showDragHandle: true,
-    builder: (ctx) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Hikâye ekle',
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
-            ),
-            const SizedBox(height: 12),
-            ListTile(
-              leading: const Icon(Icons.photo_outlined),
-              title: const Text('Galeriden fotoğraf'),
-              onTap: () => Navigator.pop(ctx, _StoryMediaChoice.image),
-            ),
-            ListTile(
-              leading: const Icon(Icons.videocam_outlined),
-              title: const Text('Galeriden video'),
-              subtitle: const Text('En fazla 60 sn önerilir'),
-              onTap: () => Navigator.pop(ctx, _StoryMediaChoice.video),
-            ),
-          ],
+    child: Builder(
+      builder: (sheetCtx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Hikâye ekle',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                leading: const Icon(Icons.photo_outlined),
+                title: const Text('Galeriden fotoğraf'),
+                onTap: () => Navigator.pop(sheetCtx, _StoryMediaChoice.image),
+              ),
+              ListTile(
+                leading: const Icon(Icons.videocam_outlined),
+                title: const Text('Galeriden video'),
+                subtitle: const Text('En fazla 60 sn önerilir'),
+                onTap: () => Navigator.pop(sheetCtx, _StoryMediaChoice.video),
+              ),
+            ],
+          ),
         ),
       ),
     ),

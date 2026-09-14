@@ -15,7 +15,7 @@ import '../providers/fortune_types_display_provider.dart';
 import '../../../bana_ozel/presentation/providers/bana_ozel_providers.dart';
 import '../../../live_psychics/presentation/widgets/psychics_home_section.dart';
 import '../widgets/ultra_premium/ultra_fortune_app_bar.dart';
-import '../widgets/ultra_premium/ultra_fortune_cosmic_background.dart';
+import '../design/fortune_design_lane.dart';
 import '../widgets/ultra_premium/ultra_fortune_daily_energy.dart';
 import '../widgets/ultra_premium/ultra_fortune_daily_missions_strip.dart';
 import '../widgets/ultra_premium/ultra_fortune_hero_section.dart';
@@ -105,7 +105,8 @@ class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
       context: SiteAnimationContext.falTarot,
       child: Scaffold(
       backgroundColor: bg,
-      body: UltraFortuneCosmicBackground(
+      body: FortuneLaneBackdrop(
+        surface: FortuneLaneSurface.hub,
         scrollParallax: _scrollParallax,
         child: DiscoverRefresh.wrap(
           onRefresh: _onRefresh,

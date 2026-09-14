@@ -10,6 +10,7 @@ import '../../domain/vip_tier.dart';
 import '../../../../core/network/voice_event_log.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../providers/entrance_effect_settings_provider.dart';
+import '../../../../core/design_system/cds_fx.dart';
 import '../theme/vip_gold_tokens.dart';
 import 'gold_team_top_entrance_banner.dart';
 import 'vip_badge.dart';
@@ -51,6 +52,7 @@ class VipEntranceOverlayState extends ConsumerState<VipEntranceOverlay>
   void _startPass() {
     final settings = ref.read(entranceEffectSettingsProvider);
     final user = ref.read(authControllerProvider).valueOrNull;
+    ref.read(cdsFxProvider.notifier).markSessionEntranceShown();
     VoiceEventLog.entryEffectStarted(userId: user?.id, tier: widget.tier.label);
     _ctrl?.dispose();
     _ctrl = AnimationController(
@@ -80,6 +82,20 @@ class VipEntranceOverlayState extends ConsumerState<VipEntranceOverlay>
   @override
   Widget build(BuildContext context) {
     if (!widget.tier.hasEntranceFx) return const SizedBox.shrink();
+
+    final fx = ref.watch(cdsFxProvider);
+    if (fx.performanceMode) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.onFinished?.call();
+      });
+      return const SizedBox.shrink();
+    }
+    if (fx.sessionEntranceShown) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.onFinished?.call();
+      });
+      return const SizedBox.shrink();
+    }
 
     final settings = ref.watch(entranceEffectSettingsProvider);
     if (settings.visualStyle == EntranceVisualStyle.topTeamPass) {

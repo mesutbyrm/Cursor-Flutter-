@@ -14,6 +14,7 @@ import '../utils/open_social_create_post.dart';
 import '../utils/social_feed_layout.dart';
 import '../widgets/instagram/social_active_rooms.dart';
 import '../widgets/instagram/social_instagram_post_card.dart';
+import 'social_cds_post_shell.dart';
 import '../widgets/social_feed_end_banner.dart';
 import '../widgets/social_feed_load_more_error_banner.dart';
 
@@ -134,8 +135,10 @@ class SocialFeedScrollView extends ConsumerWidget {
                   );
                   if (postIdx != null) {
                     return ScrollPerf.item(
-                      SocialInstagramPostCard(
-                        post: posts[postIdx],
+                      SocialCdsPostShell(
+                        child: SocialInstagramPostCard(
+                          post: posts[postIdx],
+                        ),
                       ),
                     );
                   }

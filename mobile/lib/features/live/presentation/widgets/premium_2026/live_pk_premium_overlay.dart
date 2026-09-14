@@ -1,11 +1,15 @@
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../../core/design_system/cds_fx.dart';
+import '../../../../../core/design_system/cds_motion.dart';
+import '../../../../../core/performance/effects_perf.dart';
 
 /// TikTok seviyesi PK overlay — geri sayım, MVP, kazanan efekti.
-class LivePkPremiumOverlay extends StatefulWidget {
+class LivePkPremiumOverlay extends ConsumerStatefulWidget {
   const LivePkPremiumOverlay({
     super.key,
     required this.leftScore,
@@ -26,10 +30,11 @@ class LivePkPremiumOverlay extends StatefulWidget {
   final String? winnerSide;
 
   @override
-  State<LivePkPremiumOverlay> createState() => _LivePkPremiumOverlayState();
+  ConsumerState<LivePkPremiumOverlay> createState() =>
+      _LivePkPremiumOverlayState();
 }
 
-class _LivePkPremiumOverlayState extends State<LivePkPremiumOverlay>
+class _LivePkPremiumOverlayState extends ConsumerState<LivePkPremiumOverlay>
     with SingleTickerProviderStateMixin {
   late AnimationController _confetti;
 
@@ -40,9 +45,6 @@ class _LivePkPremiumOverlayState extends State<LivePkPremiumOverlay>
       vsync: this,
       duration: const Duration(seconds: 2),
     );
-    if (widget.status == 'ended' && widget.winnerSide != null) {
-      _confetti.forward();
-    }
   }
 
   @override
@@ -51,7 +53,9 @@ class _LivePkPremiumOverlayState extends State<LivePkPremiumOverlay>
     if (widget.status == 'ended' &&
         widget.winnerSide != null &&
         oldWidget.status != 'ended') {
-      _confetti.forward(from: 0);
+      if (!ref.read(cdsFxProvider).performanceMode) {
+        _confetti.forward(from: 0);
+      }
     }
   }
 
@@ -63,9 +67,20 @@ class _LivePkPremiumOverlayState extends State<LivePkPremiumOverlay>
 
   @override
   Widget build(BuildContext context) {
+    final perf = ref.watch(cdsFxProvider).performanceMode;
     final total = (widget.leftScore + widget.rightScore).clamp(1, 999999999);
     final leftPct = (widget.leftScore / total * 100).round();
     final rightPct = 100 - leftPct;
+
+    final countdown = Text(
+      widget.secondsLeft != null ? '${widget.secondsLeft}s' : 'PK',
+      style: TextStyle(
+        fontSize: 42,
+        fontWeight: FontWeight.w900,
+        color: Colors.white.withValues(alpha: 0.35),
+        shadows: const [Shadow(color: Color(0xFFB832FF), blurRadius: 24)],
+      ),
+    );
 
     return IgnorePointer(
       child: Stack(
@@ -73,15 +88,16 @@ class _LivePkPremiumOverlayState extends State<LivePkPremiumOverlay>
         children: [
           if (widget.status == 'active')
             Center(
-              child: Text(
-                widget.secondsLeft != null ? '${widget.secondsLeft}s' : 'PK',
-                style: TextStyle(
-                  fontSize: 42,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white.withValues(alpha: 0.35),
-                  shadows: const [Shadow(color: Color(0xFFB832FF), blurRadius: 24)],
-                ),
-              ).animate(onPlay: (c) => c.repeat()).shimmer(duration: 1200.ms),
+              child: perf
+                  ? countdown
+                  : countdown
+                      .animate()
+                      .fadeIn(duration: CdsMotion.fast)
+                      .scale(
+                        begin: const Offset(0.96, 0.96),
+                        end: const Offset(1, 1),
+                        duration: CdsMotion.fast,
+                      ),
             ),
           Positioned(
             top: MediaQuery.paddingOf(context).top + 120,
@@ -89,71 +105,33 @@ class _LivePkPremiumOverlayState extends State<LivePkPremiumOverlay>
             right: 16,
             child: ClipRRect(
               borderRadius: BorderRadius.circular(18),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.42),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Colors.white24),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          _team('Sen', widget.leftScore, leftPct, const Color(0xFFFF4D9D)),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 8),
-                            child: Text('VS', style: TextStyle(color: Colors.white54)),
-                          ),
-                          _team('Rakip', widget.rightScore, rightPct, const Color(0xFF22D3EE)),
-                        ],
+              child: perf
+                  ? Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.55),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: Colors.white24),
                       ),
-                      const SizedBox(height: 10),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
-                        child: SizedBox(
-                          height: 10,
-                          child: Row(
-                            children: [
-                              Expanded(
-                                flex: leftPct.clamp(5, 95),
-                                child: Container(color: const Color(0xFFFF4D9D)),
-                              ),
-                              Expanded(
-                                flex: rightPct.clamp(5, 95),
-                                child: Container(color: const Color(0xFF22D3EE)),
-                              ),
-                            ],
-                          ),
+                      child: _scoreColumn(leftPct, rightPct),
+                    )
+                  : EffectsPerf.backdrop(
+                      sigma: 16,
+                      borderRadius: BorderRadius.circular(18),
+                      child: Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.42),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: Colors.white24),
                         ),
+                        child: _scoreColumn(leftPct, rightPct),
                       ),
-                      if (widget.topSupporter != null) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          'En büyük destekçi: ${widget.topSupporter}',
-                          style: const TextStyle(color: Colors.white70, fontSize: 11),
-                        ),
-                      ],
-                      if (widget.mvpName != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          'MVP: ${widget.mvpName}',
-                          style: const TextStyle(
-                            color: Color(0xFFFFD700),
-                            fontWeight: FontWeight.w900,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
+                    ),
             ),
           ),
-          AnimatedBuilder(
+          if (!perf)
+            AnimatedBuilder(
             animation: _confetti,
             builder: (_, _) {
               if (_confetti.value <= 0) return const SizedBox.shrink();
@@ -165,6 +143,60 @@ class _LivePkPremiumOverlayState extends State<LivePkPremiumOverlay>
           ),
         ],
       ),
+    );
+  }
+
+  Widget _scoreColumn(int leftPct, int rightPct) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            _team('Sen', widget.leftScore, leftPct, const Color(0xFFFF4D9D)),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8),
+              child: Text('VS', style: TextStyle(color: Colors.white54)),
+            ),
+            _team('Rakip', widget.rightScore, rightPct, const Color(0xFF22D3EE)),
+          ],
+        ),
+        const SizedBox(height: 10),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: SizedBox(
+            height: 10,
+            child: Row(
+              children: [
+                Expanded(
+                  flex: leftPct.clamp(5, 95),
+                  child: Container(color: const Color(0xFFFF4D9D)),
+                ),
+                Expanded(
+                  flex: rightPct.clamp(5, 95),
+                  child: Container(color: const Color(0xFF22D3EE)),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (widget.topSupporter != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            'En büyük destekçi: ${widget.topSupporter}',
+            style: const TextStyle(color: Colors.white70, fontSize: 11),
+          ),
+        ],
+        if (widget.mvpName != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            'MVP: ${widget.mvpName}',
+            style: const TextStyle(
+              color: Color(0xFFFFD700),
+              fontWeight: FontWeight.w900,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ],
     );
   }
 

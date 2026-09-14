@@ -1,3 +1,4 @@
+import 'package:canlifal_social/core/design_system/cds_bottom_sheet.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -59,10 +60,8 @@ Future<void> showVoiceRoomManagementPanel(
   VoidCallback? onPkInvite,
   VoiceMgmtInitial initial = VoiceMgmtInitial.home,
 }) {
-  return showModalBottomSheet<void>(
+  return CdsBottomSheet.showTransparent<void>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
     builder: (ctx) => ProviderScope(
       parent: ProviderScope.containerOf(ctx),
       child: _VoiceRoomManagementPanel(

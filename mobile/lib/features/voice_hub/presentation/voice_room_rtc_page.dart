@@ -1,3 +1,4 @@
+import 'package:canlifal_social/core/design_system/cds_bottom_sheet.dart';
 import 'dart:async';
 
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
@@ -994,10 +995,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         perms.canManageDj ||
         perms.canManageRoom;
 
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => VoiceGlass(
+    await CdsBottomSheet.showTransparent<void>(
+    context: context,
+    builder: (ctx) => VoiceGlass(
         borderRadius: 24,
         padding: const EdgeInsets.fromLTRB(12, 16, 12, 24),
         child: Column(

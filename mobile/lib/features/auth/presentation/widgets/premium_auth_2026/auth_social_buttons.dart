@@ -188,7 +188,10 @@ class AuthTextLinkPremium extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextButton(
+    return Semantics(
+      button: true,
+      label: label,
+      child: TextButton(
       onPressed: onPressed,
       child: Text(
         label,
@@ -198,6 +201,7 @@ class AuthTextLinkPremium extends StatelessWidget {
           fontSize: 14,
         ),
       ),
+    ),
     );
   }
 }

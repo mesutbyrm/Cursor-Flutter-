@@ -1,3 +1,4 @@
+import 'package:canlifal_social/core/design_system/cds_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -21,10 +22,8 @@ Future<bool> showVoiceRoomPreviewSheet(
   ref.read(voiceRoomsPresenceProvider.notifier).mergeTrackRooms([room]);
   if (!context.mounted) return false;
 
-  final result = await showModalBottomSheet<bool>(
+  final result = await CdsBottomSheet.showTransparent<bool>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
     builder: (ctx) => _VoiceRoomPreviewSheet(room: room),
   );
   return result == true;

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/fortune_type_entity.dart';
+import '../design/fortune_design_lane.dart';
 import '../services/fortune_reading_coordinator.dart';
-import '../widgets/fortune_mystic_background.dart';
 
 /// Eski oturum rotası — doğrudan fal sonucuna yönlendirir (falına bak ekranı kaldırıldı).
 class FortuneSessionPage extends ConsumerStatefulWidget {
@@ -35,26 +35,9 @@ class _FortuneSessionPageState extends ConsumerState<FortuneSessionPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: FortuneMysticBackground(
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircularProgressIndicator(color: widget.type.accent),
-              const SizedBox(height: 16),
-              Text(
-                '${widget.type.title} hazırlanıyor…',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.9),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return FortuneLaneSessionLoading(
+      title: widget.type.title,
+      accent: widget.type.accent,
     );
   }
 }

@@ -1,3 +1,5 @@
+import 'package:canlifal_social/core/design_system/cds_button.dart';
+import 'package:canlifal_social/core/design_system/cds_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
@@ -261,23 +263,13 @@ class _SocialInstagramPostCardState
   }
 
   Future<void> _deletePost(BuildContext context) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A0B2E),
-        title: Text('Gönderiyi sil'),
-        content: Text('Bu paylaşımı kaldırmak istediğinize emin misiniz?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Vazgeç'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Sil', style: TextStyle(color: Colors.redAccent)),
-          ),
-        ],
-      ),
+    final ok = await CdsDialog.confirm(
+      context,
+      title: 'Gönderiyi sil',
+      message: 'Bu paylaşımı kaldırmak istediğinize emin misiniz?',
+      cancelLabel: 'Vazgeç',
+      confirmLabel: 'Sil',
+      confirmVariant: CdsButtonVariant.danger,
     );
     if (ok != true || !context.mounted) return;
 

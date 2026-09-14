@@ -1,3 +1,4 @@
+import 'package:canlifal_social/core/design_system/cds_bottom_sheet.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -322,9 +323,8 @@ Future<void> showVoiceRoomBasicAssignSeatSheet({
       perms.canManageDj ||
       perms.canManageRoom;
 
-  await showModalBottomSheet<void>(
+  await CdsBottomSheet.showTransparent<void>(
     context: context,
-    backgroundColor: Colors.transparent,
     builder: (ctx) => VoiceGlass(
       borderRadius: 24,
       padding: const EdgeInsets.fromLTRB(12, 16, 12, 24),

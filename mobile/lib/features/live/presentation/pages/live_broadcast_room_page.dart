@@ -107,6 +107,17 @@ import '../widgets/broadcast_room/live_broadcast_ended_flow.dart';
 import '../widgets/broadcast_room/live_network_quality_pill.dart';
 import '../widgets/broadcast_room/live_host_away_viewer_banner.dart';
 import '../widgets/broadcast_room/live_stream_games_sheet.dart';
+import '../widgets/broadcast_room/live_broadcast_room_chips.dart';
+import '../widgets/broadcast_room/live_broadcast_room_connection_overlays.dart';
+import '../widgets/broadcast_room/live_broadcast_room_gift_overlays.dart';
+import '../widgets/broadcast_room/live_broadcast_room_host_overlays.dart';
+import '../widgets/broadcast_room/live_broadcast_room_hud_overlays.dart';
+import '../widgets/broadcast_room/live_broadcast_room_chrome_column.dart';
+import '../widgets/broadcast_room/live_broadcast_room_gift_panel_overlay.dart';
+import '../widgets/broadcast_room/live_broadcast_room_host_away_overlay.dart';
+import '../widgets/broadcast_room/live_broadcast_room_video_layer.dart';
+import '../widgets/broadcast_room/live_broadcast_room_viewer_rail.dart';
+import 'live_session_phase.dart';
 import '../widgets/broadcast_room/live_reconnect_banner.dart';
 import '../widgets/broadcast_room/live_host_guest_request_center_overlay.dart';
 import '../providers/live_guest_request_blocklist_provider.dart';
@@ -123,15 +134,6 @@ import '../widgets/broadcast_room/live_room_video_background.dart';
 import '../widgets/live_playback_bridge.dart';
 import '../widgets/premium_2026/live/live_star_tournament_sheet.dart';
 import '../widgets/premium_2026/live_premium_2026.dart';
-
-/// Canlı oturum fazı — UI ve reconnect davranışı için ayrı tutulur.
-enum LiveSessionPhase {
-  joining,
-  live,
-  reconnecting,
-  ended,
-  error,
-}
 
 /// Premium 2026 canlı yayın — TRTC + immersive overlay + hediye + kalpler.
 class LiveBroadcastRoomPage extends ConsumerStatefulWidget {
@@ -2367,42 +2369,17 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     required LiveRoomInteractionState interaction,
     required LiveGiftController giftCtrl,
   }) {
-    return LiveMockupSideRail(
-      likeLabel: _likeRailLabel(interaction),
+    return LiveBroadcastRoomViewerRail(
+      session: s,
+      interaction: interaction,
+      likeLabel: formatLiveLikeRailLabel(interaction),
       onLike: _onDoubleTapHeart,
-      showFortune: !s.isHost && _fortuneRequestsOpen(s),
+      showFortune: _fortuneRequestsOpen(s),
       fortuneLabel: _fortuneCtaLabel(s),
       onFortune: !s.isHost && _fortuneRequestsOpen(s)
           ? () => unawaited(_onFortuneRequest(s))
           : null,
     );
-  }
-
-  String _likeRailLabel(LiveRoomInteractionState interaction) {
-    final total = _fmtLikes(interaction.likeCount);
-    final mine = interaction.myLikeCount;
-    if (mine <= 0) return total;
-    return '$total\nSen: $mine';
-  }
-
-  Widget _videoLayer(LiveBroadcastSession s) {
-    if (s.backgroundUrl?.trim().isNotEmpty == true && !s.isImageMode) {
-      return Stack(
-        fit: StackFit.expand,
-        children: [
-          CanlifalNetworkImage(
-            url: s.backgroundUrl!,
-            fit: BoxFit.cover,
-            errorWidget: const SizedBox.shrink(),
-          ),
-          _mainVideo(s),
-        ],
-      );
-    }
-    if (s.isImageMode && s.coverImageUrl?.trim().isNotEmpty == true) {
-      return _imageModeLayer(s);
-    }
-    return _mainVideo(s);
   }
 
   Future<void> _endActivePk(String streamId) async {
@@ -2427,225 +2404,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         const SnackBar(content: Text('PK sona erdi')),
       );
     }
-  }
-
-  Widget _mainVideo(LiveBroadcastSession s) {
-    final streamId = s.streamId?.trim() ?? '';
-    if (streamId.isNotEmpty) {
-      final pkState = ref.watch(liveVideoPkProvider(streamId));
-      if (isLivePkSplitReady(pkState.battle, pkState.status)) {
-        return LivePkSplitVideoLayer(
-          streamId: streamId,
-          session: s,
-          trtc: _trtc,
-          rtcReady: _rtcReady,
-          onEndPk: s.isHost ? () => unawaited(_endActivePk(streamId)) : null,
-        );
-      }
-    }
-    if (_phase == LiveSessionPhase.reconnecting) {
-      return Stack(
-        fit: StackFit.expand,
-        children: [
-          if (!s.isHost)
-            LivePlaybackBridge(
-              playbackUrl: s.playbackUrl,
-              thumbnailUrl: s.coverImageUrl ?? s.avatarUrl,
-            )
-          else
-            _imageModeLayer(s),
-          const Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: 28,
-                  height: 28,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    color: Colors.white,
-                  ),
-                ),
-                SizedBox(height: 12),
-                Text(
-                  'Yeniden bağlanılıyor…',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      );
-    }
-    if (!_rtcReady) {
-      return Stack(
-        fit: StackFit.expand,
-        children: [
-          if (!s.isHost)
-            LivePlaybackBridge(
-              playbackUrl: s.playbackUrl,
-              thumbnailUrl: s.coverImageUrl ?? s.avatarUrl,
-            )
-          else
-            _imageModeLayer(s),
-          if (_rtcError == null && s.isHost)
-            Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.sensors_rounded,
-                    size: 56,
-                    color: Color(0xFFB832FF),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Yayın başlatılıyor…',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 18,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  const SizedBox(
-                    width: 28,
-                    height: 28,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          if (_rtcError == null && !s.isHost)
-            Positioned(
-              left: 16,
-              bottom: 128,
-              child: _liveConnectingBadge(),
-            ),
-          if (_signalPollError != null && _rtcError == null)
-            Positioned(
-              top: MediaQuery.paddingOf(context).top + 52,
-              left: 16,
-              right: 16,
-              child: Material(
-                color: Colors.orange.withValues(alpha: 0.92),
-                borderRadius: BorderRadius.circular(8),
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  child: Text(
-                    _signalPollError!,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 12, color: Colors.white),
-                  ),
-                ),
-              ),
-            ),
-          if (_rtcError != null)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  _rtcError!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.textSecondary),
-                ),
-              ),
-            ),
-        ],
-      );
-    }
-
-    final remoteUid = _trtc.remoteAnchorUserIdNotifier.value;
-    final layout = _resolveGuestLayout();
-    final hostJeton = ref.read(liveGiftControllerProvider).streamerEarnings ?? 0;
-    return ValueListenableBuilder<List<String>>(
-      valueListenable: _trtc.remoteUserIdsNotifier,
-      builder: (context, remoteUids, _) {
-        return LiveGuestGrid(
-          layout: layout,
-          isHost: s.isHost,
-          trtc: _trtc,
-          localPreviewKey: _localPreviewKey,
-          hostAvatarUrl: s.avatarUrl,
-          hostName: s.streamerName,
-          remoteUserId: remoteUid,
-          hostJetonEarned: hostJeton,
-          onInviteSlot: s.isHost ? (_) => _openControlCenter() : null,
-          onGuestAction: s.isHost ? _onGuestAction : null,
-        );
-      },
-    );
-  }
-
-  Widget _liveConnectingBadge() {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.45),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white24),
-      ),
-      child: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: 14,
-              height: 14,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white70,
-              ),
-            ),
-            SizedBox(width: 8),
-            Text(
-              'Canlı bağlanıyor',
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _imageModeLayer(LiveBroadcastSession s) {
-    final image = s.coverImageUrl?.trim();
-    final bg = s.backgroundUrl?.trim();
-    final url = image?.isNotEmpty == true ? image : bg;
-    if (url == null || url.isEmpty) return const LiveRoomVideoBackground();
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        CanlifalNetworkImage(
-          url: url,
-          fit: BoxFit.cover,
-          errorWidget: const LiveRoomVideoBackground(),
-        ),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.black.withValues(alpha: 0.15),
-                Colors.black.withValues(alpha: 0.62),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
   }
 
   void _openHostProfile(BuildContext context, LiveBroadcastSession s) {
@@ -2850,9 +2608,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         : const AsyncValue<LiveHostRankInfo?>.data(null);
     final hostRank = hostRankAsync.valueOrNull;
     final tournamentsAsync = ref.watch(gameTournamentsProvider);
-    final tournamentRank = tournamentsAsync.valueOrNull?.isNotEmpty == true
-        ? (tournamentsAsync.valueOrNull!.first.rank ?? 3)
-        : null;
 
     return SiteAnimationContextHost(
       context: SiteAnimationContext.liveStream,
@@ -2887,10 +2642,36 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 left: 0,
                 right: 0,
                 height: MediaQuery.sizeOf(context).height * 0.5,
-                child: _videoLayer(s),
+                child: LiveBroadcastRoomVideoLayer(
+                  session: s,
+                  phase: _phase,
+                  trtc: _trtc,
+                  rtcReady: _rtcReady,
+                  rtcError: _rtcError,
+                  signalPollError: _signalPollError,
+                  localPreviewKey: _localPreviewKey,
+                  guestLayout: _resolveGuestLayout(),
+                  onEndActivePk: _endActivePk,
+                  onOpenControlCenter: _openControlCenter,
+                  onGuestAction: _onGuestAction,
+                ),
               )
             else
-              Positioned.fill(child: _videoLayer(s)),
+              Positioned.fill(
+                child: LiveBroadcastRoomVideoLayer(
+                  session: s,
+                  phase: _phase,
+                  trtc: _trtc,
+                  rtcReady: _rtcReady,
+                  rtcError: _rtcError,
+                  signalPollError: _signalPollError,
+                  localPreviewKey: _localPreviewKey,
+                  guestLayout: _resolveGuestLayout(),
+                  onEndActivePk: _endActivePk,
+                  onOpenControlCenter: _openControlCenter,
+                  onGuestAction: _onGuestAction,
+                ),
+              ),
             if (_isSplitStage(
               s,
               pkStatus,
@@ -2918,55 +2699,38 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               emojiRainToken: 0,
               applauseToken: interaction.applauseToken,
             ),
-            GiftEngineSeatEffectsOverlay(event: activeGift),
-            Positioned.fill(
-              child: IgnorePointer(
-                child: GiftEngineOverlay(
-                  event: activeGift,
-                  enabled: broadcastSettings.giftsEnabled,
-                  stage: GiftStageContext.liveStream,
-                  sessionKey: streamId,
-                  onFinished: (id) {
-                    if (!hasStream) return;
-                    ref
-                        .read(giftSessionProvider(streamId).notifier)
-                        .dequeueAnimation(id);
-                  },
-                ),
+            if (hasStream)
+              LiveBroadcastRoomGiftOverlays(
+                streamId: streamId!,
+                activeGift: activeGift,
               ),
-            ),
-            if (hasStream) GiftFeedPanel(sessionKey: streamId),
             if (hasStream && s.isHost)
-              LiveHostGuestRequestCenterOverlay(
-                streamId: streamId,
+              LiveBroadcastRoomHostOverlays(
+                streamId: streamId!,
                 currentGuestCount: coBroadcast.coBroadcasters.length,
                 onApproved: _approveGuestRequest,
                 onRejected: _rejectGuestRequest,
                 onBlocked: _blockGuestRequest,
               ),
-            if (hasStream && s.isHost)
-              LiveHostFortuneRequestCenterOverlay(streamId: streamId),
-            if (hasStream &&
-                _viewerHostAwayBannerVisible &&
-                !s.isHost &&
-                !_hostAway)
-              LiveHostAwayViewerBanner(graceEndsAt: _viewerGraceEndsAt),
-            if (hasStream &&
-                _phase == LiveSessionPhase.reconnecting &&
-                !_hostAway)
-              LiveReconnectBanner(
-                message: s.isHost
-                    ? 'Bağlantı koptu — yayın yeniden bağlanıyor…'
-                    : 'Yayın yeniden bağlanıyor — video birazdan devam edecek',
-              ),
-            if (hasStream &&
-                _phase == LiveSessionPhase.error &&
-                !s.isHost &&
-                !_hostAway)
-              LiveReconnectBanner(
-                message: 'Bağlantı hatası — yayına yeniden bağlanmayı deneyin',
-                onRetry: () => unawaited(_initTrtc()),
-              ),
+            LiveBroadcastRoomConnectionOverlays(
+              topInset: top,
+              hasStream: hasStream,
+              isHost: s.isHost,
+              viewerHostAwayBannerVisible: _viewerHostAwayBannerVisible,
+              hostAway: _hostAway,
+              phaseReconnecting: _phase == LiveSessionPhase.reconnecting,
+              phaseError: _phase == LiveSessionPhase.error,
+              viewerGraceEndsAt: _viewerGraceEndsAt,
+              onRetryRtc: () => unawaited(_initTrtc()),
+              vipBannerName: _vipBannerName,
+              vipBannerTheme: _vipBannerTheme,
+              onVipBannerDone: () => setState(() {
+                _vipBannerName = null;
+                _vipBannerTheme = null;
+              }),
+              joinRequestPending: _joinRequestPending,
+              coHostUpgraded: _coHostUpgraded,
+            ),
             if (hasStream && pkState?.battle != null &&
                 (pkStatus == 'active' || pkStatus == 'ended'))
               LivePkPremiumOverlay(
@@ -2978,575 +2742,163 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 mvpName: pkExtras?['mvpName']?.toString(),
                 winnerSide: pkExtras?['winnerSide']?.toString(),
               ),
-            if (_vipBannerName != null)
-              Positioned(
-                top: top + 72,
-                left: 16,
-                right: 16,
-                child: LiveVipEntranceBanner(
-                  displayName: _vipBannerName!,
-                  theme: _vipBannerTheme,
-                  onDone: () => setState(() {
-                    _vipBannerName = null;
-                    _vipBannerTheme = null;
-                  }),
-                ),
-              ),
-            if (_joinRequestPending && !s.isHost && !_coHostUpgraded)
-              Positioned(
-                top: top + 72,
-                left: 16,
-                right: 16,
-                child: Material(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
-                    child: Row(
-                      children: [
-                        const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white70,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'Yayına katılma isteği gönderildi — yayıncı onayı bekleniyor',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Colors.white,
-                                ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
             if (hasStream)
-              Positioned(
-                left: 12,
-                right: 12,
-                bottom: 300,
-                child: MusicVideoPlayer(streamId: streamId),
+              LiveBroadcastRoomHudOverlays(
+                hasStream: hasStream,
+                streamId: streamId!,
+                topInset: top,
+                myUserId: user?.id ?? '',
+                userLikeCounts: interaction.userLikeCounts,
+                onTournamentTap: () =>
+                    unawaited(showLiveStarTournamentSheet(context, ref)),
+                hostRank: hostRank,
+                tournamentsAsync: tournamentsAsync,
               ),
-            if (hasStream)
-              Positioned(
-                left: 12,
-                top: top + 108,
-                child: SizedBox(
-                  width: MediaQuery.sizeOf(context).width * 0.42,
-                  child: GiftGoalBar(
-                    context: 'live_stream',
-                    contextId: streamId,
-                  ),
-                ),
+            LiveBroadcastRoomChromeColumn(
+              topInset: top,
+              session: s,
+              streamId: streamId,
+              hasStream: hasStream,
+              embeddedInSwipe: widget.embeddedInSwipe,
+              chatVisible: _chatVisible,
+              onChatVisibleChanged: (v) => setState(() => _chatVisible = v),
+              roomMessages: roomState.messages,
+              lastJoinedName: roomState.lastJoinedDisplayName,
+              balance: balance is int ? balance as int? : balance?.toInt(),
+              initialFortuneType: _streamFortuneTypeSlug(s),
+              onMessageLongPress: s.isHost
+                  ? (m) => unawaited(_onChatModeration(m))
+                  : null,
+              onSubmitFortuneRequest: hasStream
+                  ? ({
+                      required displayName,
+                      required question,
+                      required fortuneType,
+                      required priority,
+                      required jetonCost,
+                    }) =>
+                        _submitStreamFortuneRequest(
+                          streamId: streamId!,
+                          displayName: displayName,
+                          question: question,
+                          fortuneType: fortuneType,
+                          priority: priority,
+                          jetonCost: jetonCost,
+                        )
+                  : ({
+                      required displayName,
+                      required question,
+                      required fortuneType,
+                      required priority,
+                      required jetonCost,
+                    }) async =>
+                        false,
+              viewerSideRail: _viewerSideRail(
+                s: s,
+                interaction: interaction,
+                giftCtrl: giftCtrl,
               ),
-            if (hasStream && tournamentsAsync.valueOrNull?.isNotEmpty == true)
-              Positioned(
-                right: 12,
-                top: top + 108,
-                child: LiveStarTournamentCard(
-                  rank: tournamentRank ?? hostRank?.popularRank ?? 3,
-                  onTap: () =>
-                      unawaited(showLiveStarTournamentSheet(context, ref)),
-                ),
-              ),
-            if (hasStream && interaction.userLikeCounts.isNotEmpty)
-              Positioned(
-                left: 12,
-                bottom: 268,
-                child: _LiveLikeContributorsChip(
-                  counts: interaction.userLikeCounts,
-                ),
-              ),
-            if (hasStream)
-              Positioned(
-                left: 12,
-                bottom: 210,
-                child: SizedBox(
-                  width: MediaQuery.sizeOf(context).width * 0.55,
-                  child: PkRoomLiveSection(
-                    streamId: streamId,
-                    myUserId: user?.id ?? '',
-                  ),
-                ),
-              ),
-            SafeArea(
-              bottom: false,
-              child: Column(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(12, top > 0 ? 4 : 12, 12, 0),
-                    child: LivePremiumTopBar(
-                      session: s,
-                      elapsedBadge: const LiveElapsedTimePill(),
-                      streamTitle: s.title.trim().isNotEmpty ? s.title : null,
-                      fortuneTypeBadge: _fortuneRequestsOpen(s)
-                          ? liveFortuneTypeBadge(
-                              _streamFortuneTypeSlug(s) ?? 'tarot',
-                            )
-                          : null,
-                      networkQualityBadge: s.isHost
-                          ? LiveNetworkQualityPill(
-                              qualityListenable: _trtc.networkQuality,
-                            )
-                          : null,
-                      following: interaction.following,
-                      followLoading: interaction.followLoading,
-                      onFollow: _onFollow,
-                      onClose: () => unawaited(_exitBroadcast(context)),
-                      topGifters: hasStream
-                          ? ref.watch(liveGiftLeaderboardProvider(streamId))
-                          : const [],
-                      popularRank: hostRank?.popularRank,
-                      leagueLabel: hostRank?.leagueLabel,
-                      onPopularTap: () => context.push('/pk/leaderboard'),
-                      onLeagueTap: () => context.push('/pk/leaderboard'),
-                      onViewersTap: hasStream
-                          ? () => showLiveViewersSheet(
-                                context,
-                                ref,
-                                streamId: streamId,
-                                isHost: s.isHost,
-                                onInviteGuest: s.isHost
-                                    ? (userId, name) => unawaited(
-                                          _inviteViewerAsGuest(
-                                            userId: userId,
-                                            displayName: name,
-                                          ),
-                                        )
-                                    : null,
-                              )
-                          : null,
-                      onProfileTap: s.hostUserId != null || s.streamerHandle != null
-                          ? () => _openHostProfile(context, s)
-                          : null,
-                      onDiscoverTap: () => context.go('/live'),
-                      onBack: widget.embeddedInSwipe
-                          ? () => unawaited(_exitBroadcast(context))
-                          : null,
-                    ),
-                  ),
-                  if (hasStream && pkState?.battle != null && pkStatus == 'pending')
-                    Positioned(
-                      top: top + 56,
-                      left: 16,
-                      right: 16,
-                      child: Material(
-                        color: Colors.black54,
-                        borderRadius: BorderRadius.circular(12),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Text(
-                            s.isHost
-                                ? 'PK daveti gönderildi — karşı yayıncının yanıtı bekleniyor…'
-                                : 'PK daveti bekleniyor…',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(color: Colors.white70),
-                          ),
-                        ),
-                      ),
-                    ),
-                  if (hasStream && pkState?.battle != null && pkStatus == 'pending' && !s.isHost)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                      child: Builder(
-                        builder: (_) {
-                          final canRespond = pkState!.isOpponent;
-                          return LivePkScoreBar(
-                            leftScore: pkState.leftScore,
-                            rightScore: pkState.rightScore,
-                            status: pkStatus,
-                            isHost: s.isHost,
-                            onAccept: canRespond
-                                ? () => ref
-                                    .read(liveVideoPkProvider(streamId).notifier)
-                                    .accept()
-                                : null,
-                            onReject: canRespond
-                                ? () => ref
-                                    .read(liveVideoPkProvider(streamId).notifier)
-                                    .reject()
-                                : null,
-                          );
-                        },
-                      ),
-                    ),
-                  const Spacer(),
-                  if (_chatVisible)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 12, bottom: 4),
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: GestureDetector(
-                          onTap: () => setState(() => _chatVisible = false),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.45),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.white24),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.keyboard_arrow_down_rounded,
-                                    color: Colors.white, size: 18),
-                                Text(
-                                  'Sohbeti gizle',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
+              chatController: _chat,
+              trtc: _trtc,
+              networkQualityListenable: _trtc.networkQuality,
+              following: interaction.following,
+              followLoading: interaction.followLoading,
+              onFollow: _onFollow,
+              onClose: () => unawaited(_exitBroadcast(context)),
+              onViewersTap: hasStream
+                  ? () => showLiveViewersSheet(
+                        context,
+                        ref,
+                        streamId: streamId!,
+                        isHost: s.isHost,
+                        onInviteGuest: s.isHost
+                            ? (userId, name) => unawaited(
+                                  _inviteViewerAsGuest(
+                                    userId: userId,
+                                    displayName: name,
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  if (_chatVisible)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (roomState.lastJoinedDisplayName != null &&
-                                    roomState
-                                        .lastJoinedDisplayName!.isNotEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 6),
-                                    child: _LastJoinedChip(
-                                      name: roomState.lastJoinedDisplayName!,
-                                    ),
-                                  ),
-                                const SizedBox(height: 6),
-                                LiveRoomChatFalPanel(
-                                  messages: roomState.messages.isEmpty
-                                      ? const [
-                                          LiveRoomChatMessage(
-                                            user: 'Sistem',
-                                            text: 'Canlı yayına hoş geldin',
-                                            isSystem: true,
-                                          ),
-                                        ]
-                                      : roomState.messages,
-                                  showFortuneTab: false,
-                                  canModerate: s.isHost,
-                                  onMessageLongPress: s.isHost
-                                      ? (m) => unawaited(_onChatModeration(m))
-                                      : null,
-                                  balance: balance,
-                                  initialFortuneType: _streamFortuneTypeSlug(s),
-                                  onSubmitFortuneRequest: hasStream
-                                      ? ({
-                                          required displayName,
-                                          required question,
-                                          required fortuneType,
-                                          required priority,
-                                          required jetonCost,
-                                        }) =>
-                                            _submitStreamFortuneRequest(
-                                              streamId: streamId,
-                                              displayName: displayName,
-                                              question: question,
-                                              fortuneType: fortuneType,
-                                              priority: priority,
-                                              jetonCost: jetonCost,
-                                            )
-                                      : ({
-                                          required displayName,
-                                          required question,
-                                          required fortuneType,
-                                          required priority,
-                                          required jetonCost,
-                                        }) async =>
-                                            false,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          _viewerSideRail(
-                            s: s,
-                            interaction: interaction,
-                            giftCtrl: giftCtrl,
-                          ),
-                        ],
-                      ),
+                                )
+                            : null,
+                      )
+                  : null,
+              onProfileTap: s.hostUserId != null || s.streamerHandle != null
+                  ? () => _openHostProfile(context, s)
+                  : null,
+              fortuneTypeBadge: _fortuneRequestsOpen(s)
+                  ? liveFortuneTypeBadge(
+                      _streamFortuneTypeSlug(s) ?? 'tarot',
                     )
-                  else
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          const Spacer(),
-                          GestureDetector(
-                            onTap: () => setState(() => _chatVisible = true),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF22C55E).withValues(alpha: 0.9),
-                                borderRadius: BorderRadius.circular(24),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.chat_bubble_rounded,
-                                      color: Colors.white, size: 16),
-                                  SizedBox(width: 6),
-                                  Text(
-                                    'Sohbet',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                  : null,
+              hostRank: hostRank,
+              pkState: pkState,
+              pkStatus: pkStatus,
+              commentsEnabled: broadcastSettings.commentsEnabled,
+              onGift: !s.isHost && broadcastSettings.giftsEnabled && streamId != null
+                  ? () => ref.read(liveGiftControllerProvider).setPanelOpen(true)
+                  : null,
+              onTip: !s.isHost && streamId != null
+                  ? () {
+                      ref.read(liveGiftControllerProvider).setPanelOpen(true);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Bahşiş jeton hediyesi olarak gönderilir.',
                           ),
-                          const SizedBox(width: 10),
-                          _viewerSideRail(
-                            s: s,
-                            interaction: interaction,
-                            giftCtrl: giftCtrl,
-                          ),
-                        ],
-                      ),
-                    ),
-                  const SizedBox(height: 8),
-                  AnimatedPadding(
-                    duration: const Duration(milliseconds: 180),
-                    curve: Curves.easeOutCubic,
-                    padding: EdgeInsets.only(
-                      bottom: MediaQuery.viewInsetsOf(context).bottom,
-                    ),
-                    child: LivePremiumBottomBar(
-                      chatController: _chat,
-                      isHost: s.isHost,
-                      trtc: s.isHost ? _trtc : null,
-                      commentsEnabled: broadcastSettings.commentsEnabled,
-                      chatVisible: _chatVisible,
-                      onToggleChat: () =>
-                          setState(() => _chatVisible = !_chatVisible),
-                      onGift: !s.isHost && broadcastSettings.giftsEnabled && streamId != null
-                          ? () => ref
-                              .read(liveGiftControllerProvider)
-                              .setPanelOpen(true)
-                          : null,
-                      onTip: !s.isHost && streamId != null
-                          ? () {
-                              ref.read(liveGiftControllerProvider).setPanelOpen(true);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Bahşiş jeton hediyesi olarak gönderilir.',
-                                  ),
-                                ),
-                              );
-                            }
-                          : null,
-                      onMore: () => unawaited(
-                        _openLiveMoreMenu(
-                          s: s,
-                          giftsEnabled: broadcastSettings.giftsEnabled,
-                          pkEnabled: broadcastSettings.pkEnabled,
-                          pendingFortune: fortuneReqState?.pendingCount ?? 0,
-                          showTournament:
-                              tournamentsAsync.valueOrNull?.isNotEmpty == true,
                         ),
-                      ),
-                      onRtcStateChanged: s.isHost
-                          ? () => setState(() => _localPreviewKey = UniqueKey())
-                          : null,
-                      onToggleCamera: s.isHost
-                          ? () {
-                              _trtc.setCameraEnabled(!_trtc.cameraOn);
-                              setState(() => _localPreviewKey = UniqueKey());
-                            }
-                          : null,
-                      onSend: () {
-                        final t = _chat.text.trim();
-                        if (t.isEmpty || streamId == null || streamId.isEmpty) {
-                          return;
-                        }
-                        _chat.clear();
-                        unawaited(
-                          ref
-                              .read(liveRoomProvider(streamId).notifier)
-                              .sendMessage(
-                                t,
-                                selfName: user?.display ?? 'Sen',
-                              ),
-                        );
-                      },
-                      onEnd:
-                          s.isHost ? () => unawaited(_exitBroadcast(context)) : null,
-                    ),
-                  ),
-                ],
+                      );
+                    }
+                  : null,
+              onMore: () => unawaited(
+                _openLiveMoreMenu(
+                  s: s,
+                  giftsEnabled: broadcastSettings.giftsEnabled,
+                  pkEnabled: broadcastSettings.pkEnabled,
+                  pendingFortune: fortuneReqState?.pendingCount ?? 0,
+                  showTournament:
+                      tournamentsAsync.valueOrNull?.isNotEmpty == true,
+                ),
               ),
+              onRtcStateChanged: s.isHost
+                  ? () => setState(() => _localPreviewKey = UniqueKey())
+                  : null,
+              onToggleCamera: s.isHost
+                  ? () {
+                      _trtc.setCameraEnabled(!_trtc.cameraOn);
+                      setState(() => _localPreviewKey = UniqueKey());
+                    }
+                  : null,
+              onSend: () {
+                final t = _chat.text.trim();
+                if (t.isEmpty || streamId == null || streamId.isEmpty) {
+                  return;
+                }
+                _chat.clear();
+                unawaited(
+                  ref.read(liveRoomProvider(streamId).notifier).sendMessage(
+                        t,
+                        selfName: user?.display ?? 'Sen',
+                      ),
+                );
+              },
+              onEnd: s.isHost ? () => unawaited(_exitBroadcast(context)) : null,
             ),
             if (_hostAway && s.isHost)
-              Positioned.fill(
-                child: ColoredBox(
-                  color: Colors.black.withValues(alpha: 0.72),
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.wifi_off_rounded, color: Colors.white70, size: 48),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'Bağlantı koptu',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Yayın 5 dakika daha açık. Geri döndüğünüzde devam edebilirsiniz.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.85),
-                              height: 1.4,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          FilledButton.icon(
-                            onPressed: () => unawaited(_resumeHostBroadcast()),
-                            icon: const Icon(Icons.refresh_rounded),
-                            label: const Text('Yayına devam et'),
-                          ),
-                          const SizedBox(height: 10),
-                          TextButton(
-                            onPressed: () => unawaited(_exitBroadcast(context)),
-                            child: const Text('Yayını bitir'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+              LiveBroadcastRoomHostAwayOverlay(
+                onResume: () => unawaited(_resumeHostBroadcast()),
+                onEndBroadcast: () => unawaited(_exitBroadcast(context)),
               ),
             if (giftCtrl.panelOpen && user != null && broadcastSettings.giftsEnabled)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: PremiumGiftPanel(
-                  controller: giftCtrl,
-                  streamId: widget.session.streamId ?? '',
-                  senderName: user.display,
-                  senderId: user.id,
-                  onClose: () => giftCtrl.setPanelOpen(false),
-                ),
+              LiveBroadcastRoomGiftPanelOverlay(
+                controller: giftCtrl,
+                streamId: widget.session.streamId ?? '',
+                senderName: user.display,
+                senderId: user.id,
+                onClose: () => giftCtrl.setPanelOpen(false),
               ),
           ],
         ),
       ),
       ),
-      ),
-    );
-  }
-}
-
-class _LastJoinedChip extends StatelessWidget {
-  const _LastJoinedChip({required this.name});
-
-  final String name;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF7C4DFF).withValues(alpha: 0.55)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.waving_hand_rounded,
-                size: 14, color: Color(0xFFFFD54F)),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                '$name yayına katıldı',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _LiveLikeContributorsChip extends StatelessWidget {
-  const _LiveLikeContributorsChip({required this.counts});
-
-  final Map<String, int> counts;
-
-  @override
-  Widget build(BuildContext context) {
-    final top = counts.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    final line = top
-        .take(3)
-        .map((e) => '❤️ ${e.value}')
-        .join('  ');
-    if (line.isEmpty) return const SizedBox.shrink();
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white24),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        child: Text(
-          line,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
       ),
     );
   }

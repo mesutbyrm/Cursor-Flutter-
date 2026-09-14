@@ -1,5 +1,45 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.495+533 (2026-09-14) — Phase 2 FINAL PASS
+
+- Live: video/chat/bottom chrome modülleri; ana sayfa orchestration-only (~2905 satır)
+- A11y: register, OTP, messages composer, social composer semantics
+- Test: `cds_a11y_smoke_test` genişletildi, `live_broadcast_room_modules_smoke_test`
+- Rapor: `docs/AUDIT_PHASE2_FINAL_COMPLETION.md` — **GENEL: PASS**
+
+## 1.0.494+532 (2026-09-14) — Phase 2 FAIL→PASS turu (kısmi)
+
+- Live: viewer rail, host away, gift panel modülleri; sheet envanter script + karar dosyaları
+- CDS: live games, voice ranking, social composer, post silme dialog
+- A11y: auth alan/buton, composer paylaş; `cds_a11y_smoke_test`
+- Rapor: `docs/AUDIT_PHASE2_FINAL_COMPLETION.md` — **GENEL: FAIL** (live + a11y PARTIAL)
+
+## 1.0.493+531 (2026-09-14) — Phase 2 final completion (kısmi)
+
+- **Live:** `live_broadcast_room_connection_overlays`, `live_broadcast_room_hud_overlays`; ana sayfa ~90 satır sadeleşti
+- **CDS sheet:** live moderasyon/ayarlar, mesaj/peer aksiyonları, hikâye oluşturma
+- Rapor: `docs/AUDIT_PHASE2_FINAL_COMPLETION.md` (GENEL: FAIL — kalan işler listeli)
+
+## 1.0.492+530 (2026-09-14) — Audit phase 2 FAZ 7–16 (kısmi)
+
+- **Fortune design lane:** `fortune_design_lane.dart` — hub/session/result ortak backdrop + kart + motion
+- **Tanış:** CDS keşif kartı, filtre sheet, Geç/Şikayet; report deep-link
+- **Live:** yayın chip widget’ları ayrı dosya; hediye sheet → `CdsBottomSheet`
+- **Voice:** 3 sheet → `CdsBottomSheet.showTransparent`
+- **Responsive:** `CdsResponsive` + `HomeViewportSection` esnek placeholder
+- **API/MCP:** envanter script + `API_ENDPOINT_INVENTORY.md`; `MCP_AUDIT_PHASE2.md` (silme yok)
+- Rapor: `docs/AUDIT_PHASE2_FINAL.md`
+
+## 1.0.491+529 (2026-09-14) — CDS v1 audit uygulama (Aşama 2)
+
+- **CDS v1:** `lib/core/design_system/` (renk, tipografi, buton, kart, sheet, dialog, FX gate)
+- **Performans modu:** Ayarlar + `cdsFxProvider`; fal cosmic / PK shimmer / VIP entrance gated
+- **Ana sayfa IA:** Devam et, story+canlı hero, fal+Gold spotlight, Tanış CTA
+- **Hediye:** `CdsFullscreenGiftGate` tek tam ekran hediye
+- **Sheet migrate:** `fortune_access_sheet` → `CdsBottomSheet`
+- **Dead UI:** `DiscoverBottomBar`, `FeedComposerBar`, `VoicePremiumStage`, `PremiumNavBar`
+- Dokümantasyon: `docs/CDS_V1.md`, `docs/API_ENDPOINT_USAGE_TOP30.txt`
+
 ## 1.0.490+528 (2026-09-14) — API parite son kontrol
 
 - `mobile/home` liste anahtarları ortak (`MobileHomeCompoundLists`)
