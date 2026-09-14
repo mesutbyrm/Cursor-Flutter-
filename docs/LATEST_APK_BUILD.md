@@ -4,18 +4,19 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.488+526` |
-| Tarih (UTC) | 2026-09-14 10:58 |
-| Commit | [`b867e5f9a421f55f04e7b71451864d40a754c8fc`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/b867e5f9a421f55f04e7b71451864d40a754c8fc) |
-| İş akışı | [Run 34834381476](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34834381476) |
+| Sürüm | `1.0.489+527` |
+| Tarih (UTC) | 2026-09-14 11:17 |
+| Commit | [`6fc1d3e7f77b3336f92cfb114fa6e57f1ade79cc`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/6fc1d3e7f77b3336f92cfb114fa6e57f1ade79cc) |
+| İş akışı | [Run 34835099910](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34835099910) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.489+527 (2026-09-14) — API parite (fal erişim, content hub)
+## 1.0.490+528 (2026-09-14) — API parite son kontrol
 
-- Fal jeton/CFC ön doğrulama: `POST /api/fortune-access/check` (`/consume` kaldırıldı)
-- Content hub fan kulüp: `GET /api/mobile/home` birincil, fan-clubs yedek
+- `mobile/home` liste anahtarları ortak (`MobileHomeCompoundLists`)
+- Yasak legacy path taraması: `api_parity_forbidden_paths_test`
+- Logout FCM yorumu: `user/device-token`
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
