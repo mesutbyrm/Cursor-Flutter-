@@ -29,6 +29,8 @@ def norm(p: str) -> str:
 def main() -> None:
     openapi_path = ROOT / "backend-docs/openapi.json"
     openapi_abacus = ROOT / "backend-docs/abacus-current/priority1/openapi.json"
+    if not openapi_abacus.exists():
+        openapi_abacus = openapi_path
     idx_path = ROOT / "backend-docs/endpoints_index.json"
 
     openapi = load_json(openapi_path)

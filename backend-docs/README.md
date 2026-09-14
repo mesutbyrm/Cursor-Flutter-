@@ -9,11 +9,14 @@
 
 | Dosya | Açıklama |
 |-------|----------|
-| `openapi.json` | OpenAPI 3.0.3 — **502** path |
-| `endpoints_index.json` | **780** handler kaydı |
-| `schema.prisma` | Üretim Prisma şeması |
-| `ENDPOINTS.md` | İnsan okur API listesi |
-| `abacus-current/` | Tam Abacus export (priority1–3, flutter) |
+| `openapi.json` | OpenAPI 3.0.3 — **502** path (**kanonik**; priority1 kopyası yok) |
+| `endpoints_index.json` | **780** handler kaydı (**kanonik**) |
+| `schema.prisma` | Üretim Prisma şeması (**kanonik**) |
+| `ENDPOINTS.md` | İnsan okur API listesi (**kanonik**) |
+| `abacus-current/` | Abacus export (priority1–3, flutter); büyük dosyalar kök `backend-docs/` |
+| `../backend-reference/canlifal_flutter_paketi/` | Abacus ZIP referansı (BÖLÜM 22, değiştirilmez) |
+| `../docs/BACKEND_INTEGRATION_LAYOUT.md` | Aşama 1 yerleşim özeti |
+| `../mobile/integration/backend/README.md` | Flutter geliştirici indeksi |
 | `B1_12_*`, `MCP_INVENTORY.md` | **LEGACY** — kullanmayın |
 
 ## Canlı probe notları (18 Ağustos 2026)

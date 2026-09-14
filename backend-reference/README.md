@@ -15,3 +15,11 @@ KURALLAR:
 8. Mevcut çalışan kod silinmez.
 
 Kaynak: Abacus.ai Flutter entegrasyon paketi.
+
+## İlişkili kanonik dosyalar (repoda)
+
+| Amaç | Yol |
+|------|-----|
+| OpenAPI JSON (betikler) | `backend-docs/openapi.json` |
+| Mobil entegrasyon kılavuzu | `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` |
+| Yerleşim / duplicate politikası | `docs/BACKEND_INTEGRATION_LAYOUT.md` |
