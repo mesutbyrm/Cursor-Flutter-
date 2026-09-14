@@ -532,6 +532,10 @@ abstract final class ApiEndpoints {
   /// Üretim PK — `GET/POST /api/video-streams/pk`
   static const videoStreamPk = '/api/video-streams/pk';
 
+  static const videoStreamPkCandidates = '/api/video-streams/pk/candidates';
+
+  static const chatRoomPkCandidates = '/api/chat/rooms/pk/candidates';
+
   static const videoStreamPkList = '/api/video-streams/pk/list';
 
   static const videoStreamPkScore = '/api/video-streams/pk/score';

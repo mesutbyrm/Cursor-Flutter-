@@ -17,9 +17,10 @@ class LiveFieldPkApi {
       query: {'roomId': roomId},
     );
     final map = LiveFieldApiUtil.unwrapData(res.data);
-    if (map == null) return null;
-    final battle = asJsonMap(map['battle']);
-    if (battle.isEmpty) return null;
+    if (map == null || map.isEmpty) return null;
+    final nested = asJsonMap(map['battle']);
+    final battle = nested.isNotEmpty ? nested : map;
+    if (battle['id']?.toString().trim().isEmpty ?? true) return null;
     return LiveFieldPkBattle.fromJson(battle);
   }
 
@@ -48,9 +49,10 @@ class LiveFieldPkApi {
       },
     );
     final map = LiveFieldApiUtil.unwrapData(res.data);
-    if (map == null) return null;
-    final battle = asJsonMap(map['battle'] ?? map);
-    if (battle.isEmpty) return null;
+    if (map == null || map.isEmpty) return null;
+    final nested = asJsonMap(map['battle']);
+    final battle = nested.isNotEmpty ? nested : map;
+    if (battle['id']?.toString().trim().isEmpty ?? true) return null;
     return LiveFieldPkBattle.fromJson(battle);
   }
 
@@ -93,15 +95,19 @@ class LiveFieldPkBattle {
   factory LiveFieldPkBattle.fromJson(Map<String, dynamic> json) {
     final r1 = asJsonMap(json['room1']);
     final r2 = asJsonMap(json['room2']);
+    final duration = (json['durationSeconds'] as num?)?.toInt() ??
+        (json['duration'] as num?)?.toInt();
     return LiveFieldPkBattle(
       id: json['id']?.toString() ?? '',
       status: json['status']?.toString(),
-      durationSeconds: (json['durationSeconds'] as num?)?.toInt(),
+      durationSeconds: duration,
       room1Score: (r1['score'] as num?)?.toInt() ??
           (json['room1Score'] as num?)?.toInt() ??
+          (json['score1'] as num?)?.toInt() ??
           0,
       room2Score: (r2['score'] as num?)?.toInt() ??
           (json['room2Score'] as num?)?.toInt() ??
+          (json['score2'] as num?)?.toInt() ??
           0,
     );
   }

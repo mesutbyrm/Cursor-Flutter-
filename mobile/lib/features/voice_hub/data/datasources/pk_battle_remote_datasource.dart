@@ -264,7 +264,23 @@ class PkBattleRemoteDataSource {
   }
 
   Future<PkBattleRemote?> fetchStreamBattle(String streamId) async {
-    final res = await _dio.safeGet<dynamic>(ApiEndpoints.videoStreamPkBattle(streamId));
+    final id = streamId.trim();
+    if (id.isEmpty) return null;
+    try {
+      final field = await _liveFieldPk.fetchPk(id);
+      if (field != null && field.id.isNotEmpty) {
+        final battle = _parseBattle({
+          'id': field.id,
+          'status': field.status,
+          'duration': field.durationSeconds,
+          'score1': field.room1Score,
+          'score2': field.room2Score,
+          'liveStreamId': id,
+        });
+        if (battle != null) return battle;
+      }
+    } catch (_) {}
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.videoStreamPkBattle(id));
     return _parseBattle(res.data);
   }
 
@@ -479,6 +495,38 @@ class PkBattleRemoteDataSource {
       }
       final durationSec =
           duration != null ? duration.clamp(60, 3600) : 180;
+      try {
+        final fieldBattle = await _liveFieldPk.pkAction(
+          action: 'create',
+          roomId: host,
+          targetRoomId: target,
+          durationSeconds: durationSec,
+        );
+        if (fieldBattle != null && fieldBattle.id.isNotEmpty) {
+          final battle = _parseBattle({
+            'id': fieldBattle.id,
+            'status': fieldBattle.status ?? 'pending',
+            'duration': fieldBattle.durationSeconds ?? durationSec,
+            'score1': fieldBattle.room1Score,
+            'score2': fieldBattle.room2Score,
+            'liveStreamId': host,
+            'opponentLiveStreamId': target,
+          });
+          if (battle != null) return battle;
+        }
+      } on ApiException catch (e) {
+        PkEventLog.apiFailure(
+          method: 'POST',
+          url: ApiEndpoints.livePk,
+          statusCode: e.statusCode,
+          roomId: host,
+          targetUserId: target,
+          responseBody: e.message,
+        );
+        if (e.statusCode != 404 && e.statusCode != 405 && e.statusCode != 409) {
+          rethrow;
+        }
+      }
       final bodies = livePkCreateRequestBodies(
         hostStreamId: host,
         targetStreamId: target,
