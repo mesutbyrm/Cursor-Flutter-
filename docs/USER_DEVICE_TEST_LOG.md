@@ -49,4 +49,14 @@ Doğrula: `bash scripts/p0-go.sh`
 
 ## Kayıtlar
 
-_(Henüz kayıt yok — P0 cihaz testi sonrası doldurulacak.)_
+## 2026-09-15 21:13 UTC — Psychic P0 **PASS**
+
+| Alan | Değer |
+|------|--------|
+| Sürüm | `1.0.525+566` |
+| Faz | Psychic P0 |
+| Sonuç | **PASS** |
+| Not | Canlı Falcılar seans + bahşiş popup |
+
+Sonraki: `bash scripts/p1-go.sh` · `docs/P1_DEVICE_START.md`
+
