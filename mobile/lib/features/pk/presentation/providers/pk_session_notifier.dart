@@ -5,8 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/pk_event_log.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/presentation/providers/live_pk_streams_provider.dart';
+import '../../../live/presentation/providers/live_providers.dart';
 import '../../../live/presentation/providers/live_video_pk_provider.dart';
+import '../../../voice_hub/domain/pk/pk_opponent_room_filter.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
+import '../../../live/presentation/providers/voice_rooms_list_notifier.dart';
 import '../../data/pk_battle_bridge.dart';
 import '../../data/pk_exception.dart';
 import '../../data/pk_models.dart';
@@ -163,6 +166,33 @@ class PkSessionNotifier
             .where((c) => c.contextId.isNotEmpty)
             .toList();
         PkEventLog.log('pk_candidates_fallback_streams', {
+          'count': candidates.length,
+        });
+      }
+      if (candidates.isEmpty && arg.kind == PkContextKind.voice) {
+        try {
+          await ref.read(voiceRoomsListNotifierProvider.notifier).refresh();
+        } catch (_) {}
+        final rooms = ref.read(voiceRoomsProvider).valueOrNull ?? [];
+        final others = filterPkEligibleOpponentRooms(
+          rooms,
+          excludeRoomKey: id,
+        );
+        candidates = others
+            .map(
+              (r) => PkCandidate(
+                contextId:
+                    r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id,
+                userId: r.ownerId ?? '',
+                name: r.displayTitle,
+                image: '',
+                title: r.displayTitle,
+                viewers: r.displayOnline,
+              ),
+            )
+            .where((c) => c.contextId.isNotEmpty)
+            .toList();
+        PkEventLog.log('pk_candidates_fallback_voice_rooms', {
           'count': candidates.length,
         });
       }

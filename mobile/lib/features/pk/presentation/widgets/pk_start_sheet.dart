@@ -1,10 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../voice_hub/domain/pk/pk_duration_options.dart';
 import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_duration_picker.dart';
 import '../../data/pk_models.dart';
 import '../providers/pk_session_notifier.dart';
+
+/// Sesli oda PK — birleşik aday listesi (`/api/chat/rooms/pk/candidates`).
+Future<void> openVoicePkInviteSheet(
+  BuildContext context,
+  WidgetRef ref,
+  VoiceRoomEntity room,
+) async {
+  final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+  if (key.isEmpty) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Oda bilgisi yüklenemedi — PK başlatılamadı')),
+    );
+    return;
+  }
+  await showPkStartSheet(
+    context,
+    ref,
+    args: PkSessionArgs(contextId: key, kind: PkContextKind.voice),
+  );
+}
 
 /// PK gönder — aday listesi + süre seçici (premium).
 Future<void> showPkStartSheet(

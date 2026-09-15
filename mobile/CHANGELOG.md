@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.506+546 (2026-09-15) — PK sesli birleşik sheet + Tanış kaydırma
+
+- Sesli PK: tüm girişler `openVoicePkInviteSheet` → `/api/chat/rooms/pk/candidates` + `POST /api/live/pk`
+- `PkSessionNotifier`: sesli oda listesi yedek adayları
+- `PkInvitePage`: rota uyumu — açılışta premium PK sheet
+- Tanış Kaynaş: kaydırmalı keşif destesi (beğen/geç), `skip` aksiyonu, eşleşme snackbar
+
 ## 1.0.505+545 (2026-09-15) — PK liste + entegrasyon paketi
 
 - Canlı PK adayları: `GET /api/video-streams/pk/candidates` (yanlış `video-streams/pk` GET kaldırıldı)

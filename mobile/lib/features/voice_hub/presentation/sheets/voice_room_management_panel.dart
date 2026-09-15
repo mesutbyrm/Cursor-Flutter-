@@ -15,6 +15,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
+import '../../../pk/presentation/widgets/pk_start_sheet.dart';
 import '../../../vip_gold/domain/voice_room_access.dart';
 import '../../../gifts/presentation/providers/gift_battle_providers.dart';
 import '../../../gifts/presentation/providers/gift_goal_providers.dart';
@@ -757,7 +758,7 @@ class _VoiceRoomManagementPanelState
             } else if (widget.onPkInvite != null) {
               widget.onPkInvite!();
             } else {
-              context.push('/voice-room/$roomKey/pk-invite', extra: room);
+              openVoicePkInviteSheet(context, ref, room);
             }
           }),
         ),

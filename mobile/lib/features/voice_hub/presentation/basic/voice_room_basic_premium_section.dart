@@ -11,6 +11,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
+import '../../../pk/presentation/widgets/pk_start_sheet.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../domain/entities/chat_room_message.dart';
 import '../../domain/entities/chat_room_presence.dart';
@@ -718,7 +719,7 @@ Future<void> openVoiceRoomBasicPkInvite(
     return;
   }
   try {
-    await context.push('/voice-room/$key/pk-invite', extra: room);
+    await openVoicePkInviteSheet(context, ref, room);
   } catch (e) {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(

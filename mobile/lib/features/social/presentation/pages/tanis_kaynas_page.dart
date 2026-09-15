@@ -11,7 +11,7 @@ import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../widgets/discovery_filter_sheet.dart';
-import '../widgets/discovery_social_user_card.dart';
+import '../widgets/discovery_swipe_deck.dart';
 import '../../domain/entities/social_discovery_user.dart';
 import '../../domain/entities/user_location_settings.dart';
 import '../providers/social_discovery_providers.dart';
@@ -55,14 +55,19 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
 
   Future<void> _postAction(String type, String targetId) async {
     try {
-      await ref.read(socialDiscoveryRemoteProvider).postAction(
+      final res = await ref.read(socialDiscoveryRemoteProvider).postAction(
             type: type,
             targetId: targetId,
           );
       ref.invalidate(socialDiscoveryActionsProvider);
       if (!mounted) return;
+      final matched = pick(res, ['matched', 'isMatch', 'match']) == true;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_actionSuccessLabel(type))),
+        SnackBar(
+          content: Text(
+            matched ? 'Eşleşme! Karşılıklı beğeni 🎉' : _actionSuccessLabel(type),
+          ),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
@@ -117,6 +122,8 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
         return 'Arkadaşlık isteği gönderildi';
       case 'favorite':
         return 'Favorilere eklendi';
+      case 'skip':
+        return 'Profil geçildi';
       default:
         return 'İşlem kaydedildi';
     }
@@ -247,30 +254,28 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
                                       'Şu an keşfedilecek profil yok. Konum paylaşımını açıp yenileyin.',
                                 );
                               }
-                              return Column(
-                                children: [
-                                  for (final u in visible) ...[
-                                    DiscoverySocialUserCard(
-                                      user: u,
-                                      onOpenProfile: () => context.push(
-                                        '/user/${Uri.encodeComponent(u.id)}',
-                                      ),
-                                      onLike: () => _postAction('like', u.id),
-                                      onSkip: () => setState(
-                                        () => _skippedUserIds.add(u.id),
-                                      ),
-                                      onReport: () => openReportFlow(
-                                        context,
-                                        ReportTarget(
-                                          type: ReportTargetType.user,
-                                          targetId: u.id,
-                                          displayTitle: u.displayName,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 10),
-                                  ],
-                                ],
+                              return DiscoverySwipeDeck(
+                                users: visible,
+                                onOpenProfile: (u) => context.push(
+                                  '/user/${Uri.encodeComponent(u.id)}',
+                                ),
+                                onLike: (u) => _postAction('like', u.id),
+                                onSkip: (u) async {
+                                  setState(() => _skippedUserIds.add(u.id));
+                                  try {
+                                    await ref
+                                        .read(socialDiscoveryRemoteProvider)
+                                        .postAction(type: 'skip', targetId: u.id);
+                                  } catch (_) {}
+                                },
+                                onReport: (u) => openReportFlow(
+                                  context,
+                                  ReportTarget(
+                                    type: ReportTargetType.user,
+                                    targetId: u.id,
+                                    displayTitle: u.displayName,
+                                  ),
+                                ),
                               );
                             },
                           ),
