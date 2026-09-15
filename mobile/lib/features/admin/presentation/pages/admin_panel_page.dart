@@ -213,6 +213,12 @@ class _AdminPanelPageState extends ConsumerState<AdminPanelPage> {
                           onTap: () => context.push('/admin/entrance-effects'),
                         ),
                         _PanelItem(
+                          icon: Icons.workspace_premium_rounded,
+                          label: 'Üyelik yönetimi',
+                          subtitle: 'Capability matrisi (API)',
+                          onTap: () => context.push('/admin/membership-management'),
+                        ),
+                        _PanelItem(
                           icon: Icons.celebration_rounded,
                           label: 'Görsel efektler',
                           subtitle: 'Yerel önizleme',

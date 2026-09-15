@@ -19,7 +19,7 @@ bool entranceEffectAllowed({
     VipTier.svip => settings.svipEnabled && tier.hasEntranceFx,
     VipTier.diamond => settings.diamondEnabled && tier.hasEntranceFx,
     VipTier.gold => settings.goldEnabled && tier.hasEntranceFx,
-    VipTier.premium => settings.premiumEnabled && tier.hasPremiumFrame,
+    VipTier.premium => settings.premiumEnabled && tier.hasEntranceFx,
     VipTier.basic => false,
   };
 }

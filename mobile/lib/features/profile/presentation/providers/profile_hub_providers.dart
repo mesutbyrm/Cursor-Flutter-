@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/media/cloud_upload_service.dart';
+import '../../../../core/me/me_entitlements_providers.dart';
+import '../../../../core/membership/membership_capability_providers.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../cosmetics/presentation/providers/cosmetics_providers.dart';
@@ -81,6 +83,8 @@ Future<void> refreshProfileHub(WidgetRef ref, {String? userId}) async {
   ref.invalidate(membershipBadgesCatalogProvider);
   ref.invalidate(membershipCatalogProvider);
   ref.invalidate(membershipControllerProvider);
+  ref.invalidate(meMembershipPackageProvider);
+  ref.invalidate(membershipCapabilitiesProvider);
   ref.invalidate(paymentRequestsNotifierProvider);
   ref.invalidate(paymentMethodsProvider);
   unawaited(ref.read(authControllerProvider.notifier).refreshMe());
@@ -98,6 +102,8 @@ Future<void> refreshMembershipAfterPurchase(WidgetRef ref) async {
   ref.invalidate(membershipBadgesCatalogProvider);
   ref.invalidate(membershipCatalogProvider);
   ref.invalidate(membershipControllerProvider);
+  ref.invalidate(meMembershipPackageProvider);
+  ref.invalidate(membershipCapabilitiesProvider);
   ref.invalidate(walletBalancesProvider);
   ref.invalidate(paymentRequestsNotifierProvider);
   ref.invalidate(paymentMethodsProvider);

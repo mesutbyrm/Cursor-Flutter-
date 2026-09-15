@@ -72,7 +72,7 @@ void showVipPrivilegeDetailSheet(
                   (p) => p.title == privilege.title,
                   orElse: () => privilege,
                 );
-                final tierHas = tier.index >= privilege.minTier.index;
+                final tierHas = tier.isAtLeast(privilege.minTier);
                 final isCurrent = tier == currentTier;
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4),

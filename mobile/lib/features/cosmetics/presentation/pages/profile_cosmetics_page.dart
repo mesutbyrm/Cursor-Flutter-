@@ -59,7 +59,7 @@ class _ProfileCosmeticsPageState extends ConsumerState<ProfileCosmeticsPage>
   @override
   Widget build(BuildContext context) {
     final tier = ref.watch(vipTierProvider);
-    final canCustomize = tier.index >= VipTier.gold.index;
+    final canCustomize = tier.isAtLeast(VipTier.gold);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,

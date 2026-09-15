@@ -103,7 +103,7 @@ abstract final class VipPrivilegeCatalog {
           title: p.title,
           subtitle: p.subtitle,
           minTier: p.minTier,
-          unlocked: tier.index >= p.minTier.index,
+          unlocked: tier.isAtLeast(p.minTier),
         ),
     ];
   }

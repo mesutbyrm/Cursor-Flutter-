@@ -39,6 +39,7 @@ import '../../features/admin/domain/admin_site_animation.dart';
 import '../../features/admin/presentation/pages/admin_voice_room_backgrounds_page.dart';
 import '../../features/admin/presentation/pages/admin_gift_collection_hub_page.dart';
 import '../../features/admin/presentation/pages/admin_hub_page.dart';
+import '../../features/admin/presentation/pages/admin_membership_management_page.dart';
 import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
 import '../../features/admin/presentation/pages/admin_live_streams_page.dart';
 import '../../features/admin/presentation/pages/admin_voice_rooms_page.dart';
@@ -947,6 +948,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
           child: const AdminEntranceEffectsPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/admin/membership-management',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const AdminMembershipManagementPage(),
         ),
       ),
       GoRoute(

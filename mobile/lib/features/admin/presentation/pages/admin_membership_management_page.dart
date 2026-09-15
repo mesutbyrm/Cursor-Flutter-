@@ -1,0 +1,190 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../core/membership/membership_capability_keys.dart';
+import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/api_exception.dart';
+import '../../../../core/network/dio_provider.dart';
+import '../../../../core/util/json_util.dart';
+import '../providers/staff_access_provider.dart';
+
+/// Admin — üyelik kademeleri ve capability matrisi (canlifal.com API).
+class AdminMembershipManagementPage extends ConsumerStatefulWidget {
+  const AdminMembershipManagementPage({super.key});
+
+  @override
+  ConsumerState<AdminMembershipManagementPage> createState() =>
+      _AdminMembershipManagementPageState();
+}
+
+class _AdminMembershipManagementPageState
+    extends ConsumerState<AdminMembershipManagementPage> {
+  var _loading = true;
+  String? _error;
+  List<Map<String, dynamic>> _tiers = [];
+  List<Map<String, dynamic>> _features = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    final dio = ref.read(dioProvider);
+    try {
+      final tiersRes = await dio.safeGet<dynamic>(ApiEndpoints.adminMembershipTiers);
+      final featRes =
+          await dio.safeGet<dynamic>(ApiEndpoints.adminMembershipFeatures);
+      _tiers = _parseList(tiersRes.data);
+      _features = _parseList(featRes.data);
+    } catch (e) {
+      _error = ApiException.userMessage(e);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  List<Map<String, dynamic>> _parseList(dynamic data) {
+    if (data is List) {
+      return data.map((e) => asJsonMap(e)).toList();
+    }
+    if (data is Map) {
+      final items = data['items'] ?? data['tiers'] ?? data['features'];
+      if (items is List) {
+        return items.map((e) => asJsonMap(e)).toList();
+      }
+    }
+    return const [];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final staff = ref.watch(staffAccessProvider);
+    if (!staff.canManagePayments && !staff.isSiteAdmin) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Üyelik Yönetimi')),
+        body: const Center(child: Text('Yetkiniz yok.')),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Üyelik Yönetimi'),
+        actions: [
+          IconButton(
+            onPressed: _loading ? null : _load,
+            icon: const Icon(Icons.refresh_rounded),
+          ),
+        ],
+      ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(_error!, textAlign: TextAlign.center),
+                        const SizedBox(height: 12),
+                        FilledButton(
+                          onPressed: _load,
+                          child: const Text('Yeniden dene'),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : RefreshIndicator(
+                  onRefresh: _load,
+                  child: ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      Text(
+                        'Kademeler ve özellikler sunucudan yüklenir. '
+                        'Değişiklikler APK gerektirmez.',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Kademeler (${_tiers.length})',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      if (_tiers.isEmpty)
+                        const Text('API boş — üretimde seed gerekir.')
+                      else
+                        ..._tiers.map(_tierTile),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Capability anahtarları (istemci)',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      ...[
+                              MembershipCapabilityKeys.profileFrame,
+                              MembershipCapabilityKeys.entranceEffect,
+                              MembershipCapabilityKeys.hiddenOnline,
+                              MembershipCapabilityKeys.profileVisitors,
+                              MembershipCapabilityKeys.vipRooms,
+                              MembershipCapabilityKeys.svipLounge,
+                              MembershipCapabilityKeys.discoveryPriority,
+                            ].map(
+                              (k) => ListTile(
+                                dense: true,
+                                title: Text(k),
+                                subtitle: Text(
+                                  _features
+                                          .any((f) => f['key'] == k)
+                                      ? 'Sunucu kataloğunda'
+                                      : 'Yalnızca istemci fallback',
+                                ),
+                              ),
+                            ),
+                      if (_features.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        Text(
+                          'Sunucu özellikleri (${_features.length})',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        ..._features.take(40).map(
+                              (f) => ListTile(
+                                title: Text(
+                                  (f['name'] ?? f['key'] ?? '—').toString(),
+                                ),
+                                subtitle: Text(
+                                  '${f['key'] ?? ''} · ${f['category'] ?? ''}',
+                                ),
+                              ),
+                            ),
+                      ],
+                    ],
+                  ),
+                ),
+    );
+  }
+
+  Widget _tierTile(Map<String, dynamic> t) {
+    final key = (t['key'] ?? t['id'] ?? '').toString();
+    final name = (t['name'] ?? key).toString();
+    final weight = t['discoveryWeight'] ?? t['discovery_weight'];
+    return Card(
+      child: ListTile(
+        title: Text(name),
+        subtitle: Text(
+          'key: $key'
+          '${weight != null ? ' · keşfet ağırlığı: $weight' : ''}',
+        ),
+        trailing: t['isActive'] == false
+            ? const Icon(Icons.pause_circle_outline, color: Colors.orange)
+            : const Icon(Icons.check_circle_outline, color: Colors.green),
+      ),
+    );
+  }
+}

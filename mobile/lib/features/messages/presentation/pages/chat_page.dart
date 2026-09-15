@@ -233,7 +233,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
 
   Future<void> _startVoiceCall() async {
     final tier = ref.read(vipTierProvider);
-    if (tier.index < VipTier.gold.index) {
+    if (!tier.isAtLeast(VipTier.gold)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Sesli arama Gold üyelere özeldir.'),
@@ -381,7 +381,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
     final statusLabel = _peerTyping
         ? 'Yazıyor...'
         : (_peerOnline ? 'Çevrimiçi' : 'Son görülme yakın zamanda');
-    final isGold = ref.watch(vipTierProvider).index >= VipTier.gold.index;
+    final isGold = ref.watch(vipTierProvider).isAtLeast(VipTier.gold);
 
     ref.listen(conversationsListNotifierProvider, (_, __) => _loadPeerMeta());
 

@@ -64,7 +64,7 @@ class FortuneAccessService {
   ) {
     if (!config.premiumUnlimited) return false;
     return hasPaidMembershipRaw(membership) &&
-        tier.index >= VipTier.premium.index;
+        tier.isAtLeast(VipTier.premium);
   }
 
   /// Fal açılmadan önce ödeme / hak tüketimi.

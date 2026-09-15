@@ -39,7 +39,7 @@ abstract final class VoiceStaffChatStyle {
   static bool isGoldOrAdminChatUser(ChatRoomUserRef? user) {
     if (user == null) return false;
     final tier = VipTier.fromMembership(user.membership);
-    if (tier.index >= VipTier.gold.index) return true;
+    if (tier.isAtLeast(VipTier.gold)) return true;
     final nick = (user.nickname ?? user.name).trim();
     if (nick.startsWith('%') ||
         nick.startsWith('~') ||

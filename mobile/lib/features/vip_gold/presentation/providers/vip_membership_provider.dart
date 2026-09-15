@@ -30,4 +30,4 @@ final vipUnlockedRoomsProvider =
 );
 
 /// Kullanıcının VIP odasına girebilir mi?
-bool canEnterVipRoom(VipTier tier) => tier.index >= VipTier.gold.index;
+bool canEnterVipRoom(VipTier tier) => tier.isAtLeast(VipTier.diamond);

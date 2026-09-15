@@ -387,13 +387,13 @@ abstract final class CosmeticCatalogDefaults {
     if (r.contains('support') || r.contains('destek')) {
       return _frames.firstWhere((f) => f.id == 'frame_support_heart');
     }
-    if (tier.index >= VipTier.diamond.index) {
+    if (tier.isAtLeast(VipTier.diamond)) {
       return _frames.firstWhere((f) => f.id == 'frame_vip_rainbow');
     }
-    if (tier.index >= VipTier.gold.index) {
+    if (tier.isAtLeast(VipTier.gold)) {
       return _frames.firstWhere((f) => f.id == 'frame_gold_rotating');
     }
-    if (tier.index >= VipTier.premium.index) {
+    if (tier.isAtLeast(VipTier.premium)) {
       return _frames.firstWhere((f) => f.id == 'frame_premium_diamond');
     }
     return null;

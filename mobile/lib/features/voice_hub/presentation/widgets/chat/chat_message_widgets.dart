@@ -114,7 +114,7 @@ class _ChatMessageBody extends ConsumerWidget {
     final user = message.user;
     final name = user?.displayName ?? 'Kullanıcı';
     final tier = VipTier.fromMembership(user?.membership);
-    final vip = user?.isBroadcaster == true || tier.index >= VipTier.gold.index;
+    final vip = user?.isBroadcaster == true || tier.isAtLeast(VipTier.gold);
     final rank = VoiceStaffChatStyle.rankOf(user);
     final isStaff = VoiceStaffChatStyle.isStaffUser(user);
     final isPremiumChat = isStaff || VoiceStaffChatStyle.isGoldOrAdminChatUser(user);

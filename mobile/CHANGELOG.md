@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.512+552 (2026-09-15) — VIP capability merkezi + üyelik admin
+
+- `MembershipCapabilities` — `/api/me/membership` + admin matrisi; jeton ödül/indirim ayrı
+- `VipTier` sıra düzeltmesi: Basic < Gold < Premium < Diamond < SVIP (`isAtLeast`)
+- Admin: `/admin/membership-management` — kademe/özellik API görünümü
+- Doküman: `docs/MEMBERSHIP_VIP_SYSTEM_ANALYSIS.md`
+
 ## 1.0.511+551 (2026-09-15) — Jeton talep temizliği + PK TikTok UI
 
 - Jeton/CFC ödeme: yeni talep öncesi bekleyen talepler iptal; admin bildirimi her başarılı POST’ta

@@ -133,7 +133,7 @@ final resolvedProfileFrameProvider = Provider<CosmeticItem?>((ref) {
 });
 
 final resolvedNameEffectProvider = Provider<CosmeticItem?>((ref) {
-  if (ref.watch(vipTierProvider).index < VipTier.gold.index) return null;
+  if (!ref.watch(vipTierProvider).isAtLeast(VipTier.gold)) return null;
   return _resolveEquipped(
     CosmeticSlot.nameEffect,
     ref.watch(cosmeticLoadoutProvider).valueOrNull,
@@ -142,7 +142,7 @@ final resolvedNameEffectProvider = Provider<CosmeticItem?>((ref) {
 });
 
 final resolvedProfileEffectProvider = Provider<CosmeticItem?>((ref) {
-  if (ref.watch(vipTierProvider).index < VipTier.gold.index) return null;
+  if (!ref.watch(vipTierProvider).isAtLeast(VipTier.gold)) return null;
   return _resolveEquipped(
     CosmeticSlot.profileEffect,
     ref.watch(cosmeticLoadoutProvider).valueOrNull,
@@ -151,7 +151,7 @@ final resolvedProfileEffectProvider = Provider<CosmeticItem?>((ref) {
 });
 
 final resolvedEntranceEffectProvider = Provider<CosmeticItem?>((ref) {
-  if (ref.watch(vipTierProvider).index < VipTier.gold.index) return null;
+  if (!ref.watch(vipTierProvider).isAtLeast(VipTier.gold)) return null;
   return _resolveEquipped(
     CosmeticSlot.entranceAnimation,
     ref.watch(cosmeticLoadoutProvider).valueOrNull,
@@ -160,7 +160,7 @@ final resolvedEntranceEffectProvider = Provider<CosmeticItem?>((ref) {
 });
 
 final resolvedChatBubbleProvider = Provider<CosmeticItem?>((ref) {
-  if (ref.watch(vipTierProvider).index < VipTier.gold.index) return null;
+  if (!ref.watch(vipTierProvider).isAtLeast(VipTier.gold)) return null;
   return _resolveEquipped(
     CosmeticSlot.chatBubble,
     ref.watch(cosmeticLoadoutProvider).valueOrNull,
@@ -169,7 +169,7 @@ final resolvedChatBubbleProvider = Provider<CosmeticItem?>((ref) {
 });
 
 final resolvedMicrophoneFrameProvider = Provider<CosmeticItem?>((ref) {
-  if (ref.watch(vipTierProvider).index < VipTier.gold.index) return null;
+  if (!ref.watch(vipTierProvider).isAtLeast(VipTier.gold)) return null;
   return _resolveEquipped(
     CosmeticSlot.microphoneFrame,
     ref.watch(cosmeticLoadoutProvider).valueOrNull,
@@ -178,7 +178,7 @@ final resolvedMicrophoneFrameProvider = Provider<CosmeticItem?>((ref) {
 });
 
 final canCustomizeCosmeticsProvider = Provider<bool>((ref) {
-  return ref.watch(vipTierProvider).index >= VipTier.gold.index;
+  return ref.watch(vipTierProvider).isAtLeast(VipTier.gold);
 });
 
 final resolvedMembershipBadgeProvider = Provider<CosmeticItem?>((ref) {

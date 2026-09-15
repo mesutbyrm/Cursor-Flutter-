@@ -19,7 +19,7 @@ class ProfileMembershipInfo {
   final int? daysRemaining;
 
   /// `free`, `basic` veya boş — ücretli plan yok.
-  bool get hasPaidTier => tier.index > VipTier.basic.index;
+  bool get hasPaidTier => tier.isAtLeast(VipTier.gold);
 
   /// Gold ve üzeri (VIP odalar, çerçeve vb.).
   bool get isVip => tier.isVip;
