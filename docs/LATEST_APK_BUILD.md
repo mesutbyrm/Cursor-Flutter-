@@ -4,21 +4,17 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.505+545` |
-| Tarih (UTC) | 2026-09-15 10:06 |
-| Commit | [`8cc6849cc9dd9992e2ff88d08de31b6f365cbd9b`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/8cc6849cc9dd9992e2ff88d08de31b6f365cbd9b) |
-| İş akışı | [Run 34954198837](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34954198837) |
+| Sürüm | `1.0.510+550` |
+| Tarih (UTC) | 2026-09-15 12:53 |
+| Commit | [`6dcba5109c2edeba6ab6f293f87269c35f891741`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/6dcba5109c2edeba6ab6f293f87269c35f891741) |
+| İş akışı | [Run 34969785216](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34969785216) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.505+545 (2026-09-15) — PK liste + entegrasyon paketi
+## 1.0.510+550 (2026-09-15) — CI analyze düzeltmesi
 
-- Canlı PK adayları: `GET /api/video-streams/pk/candidates` (yanlış `video-streams/pk` GET kaldırıldı)
-- `PkSessionNotifier`: canlı keşif yedek listesi, çift davet engeli, debug `PkEventLog`
-- PK başlatma sheet: premium kartlar, CANLI rozeti, PK İste + loading
-- Sesli oda: admin nick artık otomatik “yönetim/staff” sayılmaz (yalnızca `%~&@+` önek veya sunucu rolü)
-- Sosyal feed: yatay tam genişlik kartlar
+- Ana sayfa fal kartı: `Ink` üzerinde geçersiz `clipBehavior` kaldırıldı; `ClipRRect` ile kırpma (release gate Gate 1)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
