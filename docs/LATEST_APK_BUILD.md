@@ -5,20 +5,29 @@
 | Alan | Değer |
 |------|--------|
 | Sürüm | `1.0.516+557` |
-| Tarih (UTC) | 2026-09-15 16:05 |
-| Commit | [`3e59a71e0ee1bdc5ed6e6191126de9ee815199fe`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/3e59a71e0ee1bdc5ed6e6191126de9ee815199fe) |
-| İş akışı | [Run 34990730580](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34990730580) |
+| Tarih (UTC) | 2026-09-15 16:42 |
+| Commit | [`87e3cc17e3016968c34361ee5a485566e6bc0a15`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/87e3cc17e3016968c34361ee5a485566e6bc0a15) |
+| İş akışı | [Run 34995307690](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34995307690) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.516+556 (2026-09-15) — VIP gizlilik, SVIP lounge, admin matris
+## 1.0.517+558 (2026-09-15) — P0–P2 parite + hub API
 
-- `GET/PUT /api/me/vip-preferences` — Ayarlar gizlilik bölümü (capability kilitli)
-- `/vip-svip-lounge` — SVIP capability + VIP oda listesi
-- Admin tier×feature matrisi düzenleme (PUT membership_features)
-- Giriş efekti / site animasyon / app bar rank düzeltmeleri
-- `docs/MEMBERSHIP_REMAINING.md` — üretim + release kalanları
+- backend-parity: admin user hub routes (overview, activity, agency, …) + `360`
+- Ajans: `POST /api/agency/wallet/transfer` (ledger + idempotency + audit)
+- Referans: `lib/admin-mutation.ts` (P0 guard)
+- Mobil: `admin_user_hub_providers`, aktivite timeline API
+- `docs/PLATFORM_PRODUCTION_DEPLOY_P0_P2.md`
+
+## Unreleased — Profesyonel platform sprint (mobil katman)
+
+- Admin komuta merkezi: VIP, Ajans, Mod., Rapor sekmeleri + hızlı işlem şeridi
+- `AdminUserHubLauncher` — staff uzun basış ile merkezi kullanıcı yönetimi
+- Mesafe: `DistanceBand` (yuvarlanmış bant; kesin km gösterimi kaldırıldı)
+- Ajans panel: jeton kredisi probe + üyeye transfer sheet (`/api/agency/wallet*`)
+- CFC Arena hub rotası `/cfc-arena` (liste probe)
+- `docs/PLATFORM_PROFESSIONAL_SOCIAL_MASTER_PLAN.md` — tam sistem analizi ve faz planı
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
