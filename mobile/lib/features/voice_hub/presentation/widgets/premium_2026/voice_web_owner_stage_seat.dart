@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../trtc/presentation/trtc_room_manager.dart';
 import '../../../domain/entities/chat_room_presence.dart';
+import '../../../../admin/presentation/providers/staff_access_provider.dart';
+import '../../../../admin/presentation/widgets/admin_user_hub_launcher.dart';
 import '../../providers/chat_room_providers.dart';
 import '../../utils/voice_seat_snapshot.dart';
 import 'voice_mic_seat.dart';
@@ -54,7 +56,7 @@ class VoiceWebOwnerStageSeat extends ConsumerWidget {
     );
 
     final user = snap.user;
-    return VoiceMicSeat(
+    final seat = VoiceMicSeat(
       user: user,
       seatIndex: seatIndex,
       size: size,
@@ -66,11 +68,23 @@ class VoiceWebOwnerStageSeat extends ConsumerWidget {
       locked: snap.locked,
       micOpen: snap.micOpen,
       onTap: () => onSeatTap?.call(seatIndex, user),
-      onLongPress: user == null ? () => onSeatLongPress?.call(seatIndex) : null,
+      onLongPress: user == null
+          ? () => onSeatLongPress?.call(seatIndex)
+          : AdminUserHubLauncher.canOpen(ref.watch(staffAccessProvider))
+              ? () => AdminUserHubLauncher.open(context, userId: user.id)
+              : null,
       trtc: trtc,
       trtcReady: trtcReady,
       selfUserId: selfUserId,
       remoteTrtcUserId: remoteTrtcUserId,
+    );
+    if (user == null) return seat;
+    return AdminUserHubLauncher.wrap(
+      context: context,
+      ref: ref,
+      userId: user.id,
+      onTap: () => onSeatTap?.call(seatIndex, user),
+      child: seat,
     );
   }
 }

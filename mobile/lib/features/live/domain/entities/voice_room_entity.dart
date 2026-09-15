@@ -27,6 +27,8 @@ class VoiceRoomEntity extends Equatable {
     this.maxUsers,
     this.isPkLive = false,
     this.isMusicPlaying = false,
+    this.distanceBand,
+    this.distanceLabel,
   });
 
   final String id;
@@ -56,6 +58,9 @@ class VoiceRoomEntity extends Equatable {
   final int? maxUsers;
   final bool isPkLive;
   final bool isMusicPlaying;
+  /// Sunucu mesafe bandı — kesin km gönderilmez.
+  final String? distanceBand;
+  final String? distanceLabel;
 
   /// Liste kartları — API bazen boş odada `onlineCount: 1` döndürür (hayalet).
   int get displayOnline {
@@ -109,6 +114,8 @@ class VoiceRoomEntity extends Equatable {
         maxUsers: maxUsers,
         isPkLive: isPkLive,
         isMusicPlaying: isMusicPlaying,
+        distanceBand: distanceBand,
+        distanceLabel: distanceLabel,
       );
 
   VoiceRoomEntity copyWith({
@@ -179,5 +186,7 @@ class VoiceRoomEntity extends Equatable {
         maxUsers,
         isPkLive,
         isMusicPlaying,
+        distanceBand,
+        distanceLabel,
       ];
 }

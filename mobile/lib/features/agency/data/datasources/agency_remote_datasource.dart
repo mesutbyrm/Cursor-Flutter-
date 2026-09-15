@@ -89,6 +89,37 @@ class AgencyRemoteDataSource {
     }
   }
 
+  Future<List<AgencyMemberApplicationEntity>> fetchMemberApplications() async {
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.agencyMemberApplications);
+      final list = _extractList(res.data);
+      return list.map((raw) {
+        final m = asJsonMap(raw);
+        final user = asJsonMap(m['user'] ?? m['profile']);
+        return AgencyMemberApplicationEntity(
+          id: _str(m, ['id', '_id']) ?? '',
+          type: _str(m, ['type']) ?? 'application',
+          status: _str(m, ['status']) ?? 'pending',
+          userId: _str(m, ['userId']) ??
+              _str(user, ['id', 'userId']) ??
+              '',
+          displayName: _str(m, ['displayName', 'name']) ??
+              _str(user, ['name', 'displayName', 'username']) ??
+              'Kullanıcı',
+          username: _str(user, ['username']),
+          avatarUrl: _str(m, ['avatarUrl', 'image']) ??
+              _str(user, ['avatarUrl', 'image']),
+          reason: _str(m, ['reason', 'message']),
+          createdAt: DateTime.tryParse(
+            pick(m, ['createdAt', 'created_at'])?.toString() ?? '',
+          ),
+        );
+      }).where((e) => e.id.isNotEmpty).toList(growable: false);
+    } catch (_) {
+      return const [];
+    }
+  }
+
   Future<bool> sendInvite(String userId) async {
     if (userId.trim().isEmpty) return false;
     try {

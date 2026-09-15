@@ -1072,6 +1072,11 @@ class LiveRemoteDataSource {
     ]) ||
         pick(json, ['activeDjId']) != null ||
         djIds.isNotEmpty;
+    final distanceBand =
+        pick(json, ['distanceBand', 'distance_band'])?.toString();
+    final distanceLabel =
+        pick(json, ['distanceLabel', 'distance_label', 'distanceText'])
+            ?.toString();
     return VoiceRoomEntity(
       id: rawId,
       slug: slug,
@@ -1108,6 +1113,8 @@ class LiveRemoteDataSource {
       maxUsers: asInt(pick(json, ['maxUsers', 'max_users', 'userLimit'])),
       isPkLive: isPkLive,
       isMusicPlaying: isMusicPlaying,
+      distanceBand: distanceBand,
+      distanceLabel: distanceLabel,
     );
   }
 

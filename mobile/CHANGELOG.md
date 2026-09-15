@@ -1,5 +1,20 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.519+560 (2026-09-15) — Keşif / ajans / oda mesafe eksikleri
+
+- Sesli oda keşfet: sahte km kaldırıldı; API `distanceBand` / `distanceLabel` veya nötr «Yakınınızda»
+- Tanış: keşif profil bottom sheet (beğen/geç/şikayet + tam profil)
+- Admin Yetkiler: `hiddenFromDiscovery`, `discoveryPriority` PATCH anahtarları
+- Ajans: `/api/agency/applications` parity + «Üye talepleri» ekranı
+- Sesli oda koltuk: staff uzun basış → kullanıcı komuta merkezi
+
+## 1.0.518+559 (2026-09-15) — Hub eksikleri (ledger, presence, arena)
+
+- Admin: durum şeridi, kazanç/harcama API ledger (tarih aralığı), arama/canlı izleyici uzun basış → hub
+- Ajans: canlı durum listesi (`/api/agency/presence`)
+- CFC Arena: detay + katıl; backend join/detail/ledger parity
+- `social-distance.ts` sunucu bant yardımcısı
+
 ## 1.0.517+558 (2026-09-15) — P0–P2 parite + hub API
 
 - backend-parity: admin user hub routes (overview, activity, agency, …) + `360`

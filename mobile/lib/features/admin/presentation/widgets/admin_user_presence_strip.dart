@@ -22,7 +22,8 @@ class AdminUserPresenceStrip extends ConsumerWidget {
         if (presence is! Map) return const SizedBox.shrink();
         final labels = presence['labels'];
         if (labels is! List || labels.isEmpty) {
-          final online = pick(presence, ['online']) == true;
+          final online =
+              pick(asJsonMap(presence), ['online']) == true;
           if (!online) return const SizedBox.shrink();
           return _chip('🟢 Online');
         }

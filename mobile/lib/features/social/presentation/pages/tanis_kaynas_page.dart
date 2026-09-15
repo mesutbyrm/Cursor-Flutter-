@@ -10,6 +10,7 @@ import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
+import '../sheets/social_discovery_profile_sheet.dart';
 import '../widgets/discovery_filter_sheet.dart';
 import '../widgets/discovery_swipe_deck.dart';
 import '../../domain/entities/social_discovery_user.dart';
@@ -256,8 +257,21 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
                               }
                               return DiscoverySwipeDeck(
                                 users: visible,
-                                onOpenProfile: (u) => context.push(
-                                  '/user/${Uri.encodeComponent(u.id)}',
+                                onOpenProfile: (u) => showSocialDiscoveryProfileSheet(
+                                  context,
+                                  user: u,
+                                  onLike: () => _postAction('like', u.id),
+                                  onSkip: () async {
+                                    setState(() => _skippedUserIds.add(u.id));
+                                    try {
+                                      await ref
+                                          .read(socialDiscoveryRemoteProvider)
+                                          .postAction(
+                                            type: 'skip',
+                                            targetId: u.id,
+                                          );
+                                    } catch (_) {}
+                                  },
                                 ),
                                 onLike: (u) => _postAction('like', u.id),
                                 onSkip: (u) async {
