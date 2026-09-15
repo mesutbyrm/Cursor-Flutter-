@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.526+567 (2026-09-15) — Tanış Kaynaş swipe / eşleşme UX
+
+- Keşfet: tam ekran swipe kartları, BEĞEN/GEÇ damgası, 4 aksiyon (geri al, geç, süper beğeni, beğen)
+- `GET /api/social/discovery` `data.users` ayrıştırma + sayfa/filtre sorguları
+- Eşleşmeler sekmesi: `GET /api/social/actions?filter=matches` + mesaj (`/chat/{userId}`)
+- Eşleşme diyaloğu; süper beğeni → `favorite`; geçiş istemci (üretimde `skip` yok)
+- Gold: süper beğeni + geri alma; hashtag/takım yan sayfa
+
 ## 1.0.525+566 (2026-09-15) — Canlı falcı bahşiş popup kapanma
 
 - Seans bahşiş teşekkür / falcı bildirim overlay: `Timer` ile otomatik kapanma; ekrana dokunarak kapatma

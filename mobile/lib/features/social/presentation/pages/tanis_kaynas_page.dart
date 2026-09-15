@@ -8,18 +8,16 @@ import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/util/json_util.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
-import '../../../moderation/domain/entities/report_target.dart';
-import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../../../admin/presentation/widgets/admin_user_hub_launcher.dart';
 import '../../../platform_social/presentation/widgets/platform_social_ui_kit.dart';
 import '../sheets/social_discovery_profile_sheet.dart';
-import '../widgets/discovery_filter_sheet.dart';
-import '../widgets/discovery_swipe_deck.dart';
 import '../../domain/entities/social_discovery_user.dart';
 import '../../domain/entities/user_location_settings.dart';
 import '../providers/social_discovery_providers.dart';
+import 'tanis_discover_tab.dart';
+import 'tanis_matches_tab.dart';
 
-/// BÖLÜM 21/A6 — Tanış & Kaynaş (discovery, actions, konum, hashtag, takımlar).
+/// Tanış & Kaynaş — swipe keşif, eşleşmeler, etkileşimler.
 class TanisKaynasPage extends ConsumerStatefulWidget {
   const TanisKaynasPage({super.key});
 
@@ -31,9 +29,6 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
     with SingleTickerProviderStateMixin {
   var _savingLocation = false;
   late final TabController _tabs;
-  final _hashtagQuery = TextEditingController();
-  final _skippedUserIds = <String>{};
-  DiscoveryFilterState _discoveryFilter = const DiscoveryFilterState();
 
   @override
   void initState() {
@@ -44,108 +39,34 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
   @override
   void dispose() {
     _tabs.dispose();
-    _hashtagQuery.dispose();
     super.dispose();
   }
 
   Future<void> _refresh() async {
     ref.invalidate(socialDiscoveryFeedProvider);
+    ref.invalidate(socialDiscoveryMatchesProvider);
     ref.invalidate(userLocationSettingsProvider);
     ref.invalidate(socialDiscoveryActionsProvider);
     ref.invalidate(socialTrendingHashtagsProvider);
     ref.invalidate(socialTeamsListProvider);
   }
 
-  Future<void> _postAction(String type, String targetId) async {
-    try {
-      final res = await ref.read(socialDiscoveryRemoteProvider).postAction(
-            type: type,
-            targetId: targetId,
-          );
-      ref.invalidate(socialDiscoveryActionsProvider);
-      if (!mounted) return;
-      final matched = pick(res, ['matched', 'isMatch', 'match']) == true;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            matched ? 'Eşleşme! Karşılıklı beğeni 🎉' : _actionSuccessLabel(type),
-          ),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ApiException.userMessage(e))),
-      );
-    }
-  }
-
-  List<SocialDiscoveryUser> _filterDiscoveryUsers(List<SocialDiscoveryUser> users) {
-    return users.where((u) {
-      if (_skippedUserIds.contains(u.id)) return false;
-      if (_discoveryFilter.onlineOnly) {
-        final raw = u.raw['user'] is Map
-            ? asJsonMap(u.raw['user'])
-            : asJsonMap(u.raw);
-        if (pick(raw, ['isOnline', 'online']) != true) return false;
-      }
-      final raw = u.raw['user'] is Map
-          ? asJsonMap(u.raw['user'])
-          : asJsonMap(u.raw);
-      final age = pick(raw, ['age', 'userAge']);
-      if (age is num) {
-        final a = age.round();
-        if (a < _discoveryFilter.minAge || a > _discoveryFilter.maxAge) {
-          return false;
-        }
-      }
-      final q = _discoveryFilter.interestQuery.trim().toLowerCase();
-      if (q.isNotEmpty) {
-        final interests = pick(raw, ['interests', 'tags', 'hobbies']);
-        final hay = interests?.toString().toLowerCase() ?? '';
-        if (!hay.contains(q)) return false;
-      }
-      return true;
-    }).toList();
-  }
-
-  Future<void> _openDiscoveryFilters() async {
-    final next = await showDiscoveryFilterSheet(
-      context,
-      initial: _discoveryFilter,
-    );
-    if (next != null) setState(() => _discoveryFilter = next);
-  }
-
   SocialDiscoveryUser? _interactionTargetUser(Map<String, dynamic> row) {
-    final target = row['target'];
-    if (target is Map) {
-      return SocialDiscoveryUser.fromJson({
-        'user': Map<String, dynamic>.from(target),
-      });
-    }
-    final targetId = pick(row, ['targetId', 'userId', 'targetUserId'])?.toString();
-    if (targetId == null || targetId.isEmpty) return null;
-    final name = pick(row, ['targetName', 'displayName', 'name'])?.toString();
-    return SocialDiscoveryUser(
-      id: targetId,
-      displayName: name ?? 'Kullanıcı',
-      raw: row,
-    );
+    return SocialDiscoveryUser.fromActionRow(row);
   }
 
   String _actionSuccessLabel(String type) {
     switch (type) {
       case 'like':
-        return 'Beğeni gönderildi';
-      case 'friend_request':
-        return 'Arkadaşlık isteği gönderildi';
+        return 'Beğeni';
       case 'favorite':
-        return 'Favorilere eklendi';
+        return 'Süper beğeni (favori)';
+      case 'friend_request':
+        return 'Arkadaşlık isteği';
       case 'skip':
-        return 'Profil geçildi';
+        return 'Geçildi';
       default:
-        return 'İşlem kaydedildi';
+        return type;
     }
   }
 
@@ -198,133 +119,67 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
     }
   }
 
+  void _openHashtagTeams(BuildContext context) {
+    context.push('/social/tanis-kaynas/extras');
+  }
+
   @override
   Widget build(BuildContext context) {
-    final discovery = ref.watch(socialDiscoveryFeedProvider);
     final location = ref.watch(userLocationSettingsProvider);
     final actions = ref.watch(socialDiscoveryActionsProvider);
-    final hashtags = ref.watch(socialTrendingHashtagsProvider);
-    final teams = ref.watch(socialTeamsListProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: DiscoverSubPage(
           title: 'Tanış Kaynaş',
-          subtitle: 'Keşfet, etkileşim, hashtag ve takımlar',
+          subtitle: 'Swipe ile keşfet · gerçek eşleşmeler',
           actions: [
             DiscoverIconButton(
-              icon: Icons.tune_rounded,
-              onPressed: _openDiscoveryFilters,
+              icon: Icons.tag_rounded,
+              onPressed: () => _openHashtagTeams(context),
             ),
           ],
           body: Column(
             children: [
+              location.when(
+                loading: () => const SizedBox.shrink(),
+                error: (_, _) => const SizedBox.shrink(),
+                data: (settings) => _LocationCard(
+                  settings: settings,
+                  busy: _savingLocation,
+                  onLocationEnabled: (v) => _updateLocation(
+                    current: settings,
+                    locationEnabled: v,
+                  ),
+                  onShowDistance: (v) => _updateLocation(
+                    current: settings,
+                    showDistance: v,
+                  ),
+                ),
+              ),
               TabBar(
                 controller: _tabs,
                 tabs: const [
                   Tab(text: 'Keşfet'),
+                  Tab(text: 'Eşleşmeler'),
                   Tab(text: 'Etkileşimler'),
-                  Tab(text: 'Hashtag & Takım'),
                 ],
               ),
               Expanded(
                 child: TabBarView(
                   controller: _tabs,
                   children: [
-                    RefreshIndicator(
-                      onRefresh: _refresh,
-                      child: ListView(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-                        children: [
-                          location.when(
-                            loading: () => const SizedBox.shrink(),
-                            error: (_, _) => const SizedBox.shrink(),
-                            data: (settings) => _LocationCard(
-                              settings: settings,
-                              busy: _savingLocation,
-                              onLocationEnabled: (v) => _updateLocation(
-                                current: settings,
-                                locationEnabled: v,
-                              ),
-                              onShowDistance: (v) => _updateLocation(
-                                current: settings,
-                                showDistance: v,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          discovery.when(
-                            loading: () => const Padding(
-                              padding: EdgeInsets.all(32),
-                              child: Center(child: DiscoverAccentLoader()),
-                            ),
-                            error: (e, _) => DiscoverEmptyState(
-                              icon: Icons.wifi_off_rounded,
-                              message: ApiException.userMessage(e),
-                              actionLabel: 'Yenile',
-                              action: _refresh,
-                            ),
-                            data: (users) {
-                              final visible = _filterDiscoveryUsers(users);
-                              if (visible.isEmpty) {
-                                return const DiscoverEmptyState(
-                                  icon: Icons.people_outline_rounded,
-                                  message:
-                                      'Şu an keşfedilecek profil yok. Konum paylaşımını açıp yenileyin.',
-                                );
-                              }
-                              return DiscoverySwipeDeck(
-                                users: visible,
-                                onOpenProfile: (u) => showSocialDiscoveryProfileSheet(
-                                  context,
-                                  user: u,
-                                  onLike: () => _postAction('like', u.id),
-                                  onSkip: () async {
-                                    setState(() => _skippedUserIds.add(u.id));
-                                    try {
-                                      await ref
-                                          .read(socialDiscoveryRemoteProvider)
-                                          .postAction(
-                                            type: 'skip',
-                                            targetId: u.id,
-                                          );
-                                    } catch (_) {}
-                                  },
-                                ),
-                                onLike: (u) => _postAction('like', u.id),
-                                onSkip: (u) async {
-                                  setState(() => _skippedUserIds.add(u.id));
-                                  try {
-                                    await ref
-                                        .read(socialDiscoveryRemoteProvider)
-                                        .postAction(type: 'skip', targetId: u.id);
-                                  } catch (_) {}
-                                },
-                                onReport: (u) => openReportFlow(
-                                  context,
-                                  ReportTarget(
-                                    type: ReportTargetType.user,
-                                    targetId: u.id,
-                                    displayTitle: u.displayName,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
+                    TanisDiscoverTab(onRefreshParent: _refresh),
+                    TanisMatchesTab(onRefresh: _refresh),
                     RefreshIndicator(
                       onRefresh: _refresh,
                       child: actions.when(
                         loading: () => ListView(
-                          children: [
+                          children: const [
                             SizedBox(
                               height: 120,
-                              child: const Center(
-                                child: DiscoverAccentLoader(),
-                              ),
+                              child: Center(child: CircularProgressIndicator()),
                             ),
                           ],
                         ),
@@ -341,8 +196,8 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
                         data: (rows) {
                           if (rows.isEmpty) {
                             return ListView(
-                              children: [
-                                const DiscoverEmptyState(
+                              children: const [
+                                DiscoverEmptyState(
                                   icon: Icons.inbox_outlined,
                                   message: 'Henüz sosyal etkileşim kaydı yok.',
                                 ),
@@ -391,162 +246,6 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
                         },
                       ),
                     ),
-                    RefreshIndicator(
-                      onRefresh: _refresh,
-                      child: ListView(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-                        children: [
-                          TextField(
-                            controller: _hashtagQuery,
-                            decoration: InputDecoration(
-                              labelText: 'Hashtag ara',
-                              suffixIcon: IconButton(
-                                icon: const Icon(Icons.search),
-                                onPressed: () async {
-                                  final q = _hashtagQuery.text.trim();
-                                  if (q.isEmpty) return;
-                                  try {
-                                    final res = await ref
-                                        .read(socialDiscoveryRemoteProvider)
-                                        .searchHashtags(q: q);
-                                    if (!mounted) return;
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          res.isEmpty
-                                              ? 'Sonuç yok'
-                                              : 'Hashtag verisi alındı',
-                                        ),
-                                      ),
-                                    );
-                                  } catch (e) {
-                                    if (!mounted) return;
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          ApiException.userMessage(e),
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                },
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          const PlatformSocialSectionTitle('Trend hashtag'),
-                          const SizedBox(height: 8),
-                          hashtags.when(
-                            loading: () => const DiscoverAccentLoader(),
-                            error: (e, _) => Text(ApiException.userMessage(e)),
-                            data: (map) {
-                              final list = pick(map, [
-                                'hashtags',
-                                'items',
-                                'trending',
-                              ]);
-                              if (list is! List || list.isEmpty) {
-                                return const Text('Trend verisi yok');
-                              }
-                              return Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: [
-                                  for (final h in list)
-                                    if (h is Map)
-                                      ActionChip(
-                                        label: Text(
-                                          '#${pick(Map<String, dynamic>.from(h), ['name', 'tag']) ?? ''}',
-                                        ),
-                                        onPressed: () async {
-                                          final row =
-                                              Map<String, dynamic>.from(h);
-                                          final name =
-                                              pick(row, ['name', 'tag'])
-                                                  ?.toString();
-                                          if (name == null || name.isEmpty) {
-                                            return;
-                                          }
-                                          try {
-                                            await ref
-                                                .read(
-                                                  socialDiscoveryRemoteProvider,
-                                                )
-                                                .fetchHashtag(name);
-                                          } catch (_) {}
-                                        },
-                                      ),
-                                ],
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 20),
-                          const PlatformSocialSectionTitle('Takımlar'),
-                          teams.when(
-                            loading: () => const DiscoverAccentLoader(),
-                            error: (e, _) => Text(ApiException.userMessage(e)),
-                            data: (map) {
-                              final list = pick(map, ['teams', 'items', 'data']);
-                              if (list is! List || list.isEmpty) {
-                                return const Text('Takım listesi boş');
-                              }
-                              return Column(
-                                children: [
-                                  for (final t in list)
-                                    if (t is Map) ...[
-                                      Builder(
-                                        builder: (context) {
-                                          final row =
-                                              Map<String, dynamic>.from(t);
-                                          final name = (pick(row, [
-                                                'name',
-                                                'title',
-                                              ]) ??
-                                              '')
-                                              .toString();
-                                          final id = pick(row, ['id'])
-                                              ?.toString();
-                                          final leaderId = pick(row, [
-                                            'ownerId',
-                                            'leaderId',
-                                            'creatorId',
-                                            'captainUserId',
-                                          ])?.toString();
-                                          final tile = PlatformSocialListRow(
-                                            title: name.isEmpty ? 'Takım' : name,
-                                            subtitle: id ?? '',
-                                            leading: const Icon(
-                                              Icons.groups_rounded,
-                                              color: PlatformSocialPalette.accent,
-                                            ),
-                                            onTap: id != null && id.isNotEmpty
-                                                ? () => context.push('/teams/$id')
-                                                : null,
-                                          );
-                                          if (leaderId == null ||
-                                              leaderId.isEmpty) {
-                                            return tile;
-                                          }
-                                          return AdminUserHubLauncher.wrap(
-                                            context: context,
-                                            ref: ref,
-                                            userId: leaderId,
-                                            onTap: id != null && id.isNotEmpty
-                                                ? () =>
-                                                    context.push('/teams/$id')
-                                                : null,
-                                            child: tile,
-                                          );
-                                        },
-                                      ),
-                                    ],
-                                ],
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -574,25 +273,23 @@ class _LocationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
       color: context.colors.surfaceElevated.withValues(alpha: 0.35),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: Column(
-          children: [
-            SwitchListTile(
-              title: const Text('Konum ile keşfet'),
-              subtitle: const Text('Yakındaki profiller için konum paylaşımı'),
-              value: settings.locationEnabled,
-              onChanged: busy ? null : onLocationEnabled,
-            ),
-            SwitchListTile(
-              title: const Text('Mesafemi göster'),
-              value: settings.showDistance,
-              onChanged:
-                  busy || !settings.locationEnabled ? null : onShowDistance,
-            ),
-          ],
-        ),
+      child: ExpansionTile(
+        title: const Text('Konum ile keşfet', style: TextStyle(fontSize: 14)),
+        children: [
+          SwitchListTile(
+            title: const Text('Konum paylaşımı'),
+            value: settings.locationEnabled,
+            onChanged: busy ? null : onLocationEnabled,
+          ),
+          SwitchListTile(
+            title: const Text('Mesafemi göster'),
+            value: settings.showDistance,
+            onChanged:
+                busy || !settings.locationEnabled ? null : onShowDistance,
+          ),
+        ],
       ),
     );
   }

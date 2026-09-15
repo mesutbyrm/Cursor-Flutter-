@@ -2,17 +2,38 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
 import '../../data/datasources/social_discovery_remote_datasource.dart';
+import '../../domain/entities/social_discovery_feed.dart';
 import '../../domain/entities/social_discovery_user.dart';
 import '../../domain/entities/user_location_settings.dart';
+import '../widgets/discovery_filter_sheet.dart';
 
 final socialDiscoveryRemoteProvider =
     Provider<SocialDiscoveryRemoteDataSource>((ref) {
   return SocialDiscoveryRemoteDataSource(ref.watch(dioProvider));
 });
 
+final discoveryFilterProvider = StateProvider<DiscoveryFilterState>(
+  (ref) => const DiscoveryFilterState(),
+);
+
 final socialDiscoveryFeedProvider =
+    FutureProvider.autoDispose<SocialDiscoveryFeed>((ref) async {
+  final filters = ref.watch(discoveryFilterProvider);
+  return ref.read(socialDiscoveryRemoteProvider).fetchDiscovery(
+        page: 1,
+        minAge: filters.minAge,
+        maxAge: filters.maxAge,
+        city: filters.city,
+        onlineOnly: filters.onlineOnly,
+        gender: filters.gender,
+        membership: filters.goldOnly ? 'gold' : null,
+        interest: filters.interestQuery,
+      );
+});
+
+final socialDiscoveryMatchesProvider =
     FutureProvider.autoDispose<List<SocialDiscoveryUser>>((ref) async {
-  return ref.read(socialDiscoveryRemoteProvider).fetchDiscovery();
+  return ref.read(socialDiscoveryRemoteProvider).fetchMatches();
 });
 
 final userLocationSettingsProvider =

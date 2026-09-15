@@ -1,39 +1,57 @@
 {
   "runId": "",
   "baseUrl": "",
-  "pass": 5,
+  "pass": 7,
   "fail": 0,
-  "skip": 0,
+  "skip": 1,
   "results": [
-    {
-      "id": "SEARCH",
-      "name": "Music search",
-      "status": "✅ PASS",
-      "detail": "12 sonuç, videoId+title"
-    },
     {
       "id": "AUTH",
       "name": "Login",
       "status": "✅ PASS",
-      "detail": "token alındı"
+      "detail": "token alındı (cursor.test.1786235468@mailinator.com)"
     },
     {
-      "id": "QUEUE",
-      "name": "Queue costs",
+      "id": "ROOMKEY",
+      "name": "Room key resolve",
       "status": "✅ PASS",
-      "detail": "kuyruk OK, audio=10 jeton"
+      "detail": "cmoohrbr → cmokyb9o9007iod09gi6pb1tb (presence join)"
     },
     {
-      "id": "SONGREQ",
-      "name": "Song request",
+      "id": "PJOIN",
+      "name": "Presence join",
       "status": "✅ PASS",
-      "detail": "HTTP 400 (Yetersiz jeton. 10 jeton gerekiyor.)"
+      "detail": "HTTP 200, presence≈1 (room=cmokyb9o9007iod09gi6pb1tb)"
     },
     {
-      "id": "SSE_DJ",
-      "name": "SSE dj stream",
+      "id": "SEATS",
+      "name": "Seats list",
       "status": "✅ PASS",
-      "detail": "stream açık"
+      "detail": "HTTP 200, seats=15"
+    },
+    {
+      "id": "STAKE",
+      "name": "Seat take/leave",
+      "status": "✅ PASS",
+      "detail": "take/leave HTTP OK (presence seatIndex=?)"
+    },
+    {
+      "id": "VOICE",
+      "name": "Voice join",
+      "status": "⏭️ SKIP",
+      "detail": "HTTP 403 (koltuk/+V yetkisi gerekli olabilir)"
+    },
+    {
+      "id": "SSE",
+      "name": "Room SSE stream",
+      "status": "✅ PASS",
+      "detail": "stream açık (room=cmokyb9o9007iod09gi6pb1tb)"
+    },
+    {
+      "id": "PLEAVE",
+      "name": "Presence leave",
+      "status": "✅ PASS",
+      "detail": "HTTP 200"
     }
   ]
 }

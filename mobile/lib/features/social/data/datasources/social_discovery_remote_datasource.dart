@@ -1,8 +1,10 @@
 import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
+import '../../domain/entities/social_discovery_feed.dart';
 import '../../domain/entities/social_discovery_user.dart';
 import '../../domain/entities/user_location_settings.dart';
 
@@ -12,37 +14,88 @@ class SocialDiscoveryRemoteDataSource {
 
   final Dio _dio;
 
-  Future<List<SocialDiscoveryUser>> fetchDiscovery() async {
-    final res = await _dio.safeGet<dynamic>(ApiEndpoints.socialDiscovery);
-    return _parseUsers(res.data);
+  Future<SocialDiscoveryFeed> fetchDiscovery({
+    int page = 1,
+    int limit = 20,
+    int? minAge,
+    int? maxAge,
+    String? city,
+    bool? onlineOnly,
+    String? gender,
+    String? membership,
+    String? interest,
+  }) async {
+    final query = <String, dynamic>{
+      'page': page,
+      'limit': limit,
+      if (minAge != null) 'minAge': minAge,
+      if (maxAge != null) 'maxAge': maxAge,
+      if (city != null && city.trim().isNotEmpty) 'city': city.trim(),
+      if (onlineOnly == true) 'online': true,
+      if (gender != null && gender.trim().isNotEmpty) 'gender': gender.trim(),
+      if (membership != null && membership.trim().isNotEmpty)
+        'membership': membership.trim(),
+      if (interest != null && interest.trim().isNotEmpty)
+        'interest': interest.trim(),
+    };
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.socialDiscovery,
+      query: query,
+    );
+    return _parseFeed(res.data, page: page, limit: limit);
   }
 
-  Future<List<Map<String, dynamic>>> fetchActions() async {
-    final res = await _dio.safeGet<dynamic>(ApiEndpoints.socialActions);
+  Future<List<Map<String, dynamic>>> fetchActions({
+    String? filter,
+    String? scope,
+    String? type,
+  }) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.socialActions,
+      query: {
+        if (filter != null && filter.isNotEmpty) 'filter': filter,
+        if (scope != null && scope.isNotEmpty) 'scope': scope,
+        if (type != null && type.isNotEmpty) 'type': type,
+      },
+    );
     return _parseActionRows(res.data);
   }
 
-  Future<Map<String, dynamic>> postAction({
+  Future<List<SocialDiscoveryUser>> fetchMatches() async {
+    final rows = await fetchActions(filter: 'matches');
+    return rows
+        .map(SocialDiscoveryUser.fromActionRow)
+        .where((u) => u.id.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  Future<SocialDiscoveryActionResult> postAction({
     required String type,
     required String targetId,
     String? message,
   }) async {
-    final res = await _dio.safePost<Map<String, dynamic>>(
-      ApiEndpoints.socialActions,
-      data: {
-        'type': type,
-        'targetId': targetId,
-        if (message != null && message.isNotEmpty) 'message': message,
-      },
-    );
-    return asJsonMap(res.data);
+    try {
+      final res = await _dio.safePost<Map<String, dynamic>>(
+        ApiEndpoints.socialActions,
+        data: {
+          'type': type,
+          'targetId': targetId,
+          if (message != null && message.isNotEmpty) 'message': message,
+        },
+      );
+      return _parseActionResult(res.data);
+    } on ApiException catch (e) {
+      return SocialDiscoveryActionResult(
+        success: false,
+        message: e.message,
+        errorCode: e.errorCode,
+      );
+    }
   }
 
   Future<UserLocationSettings> fetchLocationSettings() async {
     final res = await _dio.safeGet<dynamic>(ApiEndpoints.userLocation);
-    final map = res.data is Map
-        ? Map<String, dynamic>.from(res.data as Map)
-        : <String, dynamic>{};
+    final map = _unwrap(res.data);
     return UserLocationSettings.fromJson(map);
   }
 
@@ -53,13 +106,15 @@ class SocialDiscoveryRemoteDataSource {
       ApiEndpoints.userLocation,
       data: body,
     );
-    final map = res.data is Map
-        ? Map<String, dynamic>.from(res.data as Map)
-        : <String, dynamic>{};
+    final map = _unwrap(res.data);
     return UserLocationSettings.fromJson(map);
   }
 
-  List<SocialDiscoveryUser> _parseUsers(dynamic body) {
+  SocialDiscoveryFeed _parseFeed(
+    dynamic body, {
+    required int page,
+    required int limit,
+  }) {
     final root = _unwrap(body);
     final list = pick(root, [
       'users',
@@ -67,22 +122,46 @@ class SocialDiscoveryRemoteDataSource {
       'items',
       'results',
       'discovery',
-      'data',
     ]);
+    final users = <SocialDiscoveryUser>[];
     if (list is List) {
-      return list
-          .whereType<Map>()
-          .map((e) => SocialDiscoveryUser.fromJson(Map<String, dynamic>.from(e)))
-          .where((u) => u.id.isNotEmpty)
-          .toList(growable: false);
+      for (final e in list) {
+        if (e is Map) {
+          users.add(
+            SocialDiscoveryUser.fromJson(Map<String, dynamic>.from(e)),
+          );
+        }
+      }
     }
-    if (root['users'] is List) {
-      return asJsonList(root['users'])
-          .map(SocialDiscoveryUser.fromJson)
-          .where((u) => u.id.isNotEmpty)
-          .toList(growable: false);
-    }
-    return const [];
+    final total = pick(root, ['total']) is num
+        ? (pick(root, ['total']) as num).round()
+        : users.length;
+    final pageNo = pick(root, ['page']) is num
+        ? (pick(root, ['page']) as num).round()
+        : page;
+    final lim = pick(root, ['limit']) is num
+        ? (pick(root, ['limit']) as num).round()
+        : limit;
+    return SocialDiscoveryFeed(
+      users: users.where((u) => u.id.isNotEmpty).toList(growable: false),
+      total: total,
+      page: pageNo,
+      limit: lim,
+    );
+  }
+
+  SocialDiscoveryActionResult _parseActionResult(dynamic body) {
+    final root = _unwrap(body);
+    final success = root['success'] == true;
+    final matched = pick(root, ['matched', 'isMatch', 'match']) == true ||
+        pick(asJsonMap(root['data']), ['matched', 'isMatch', 'match']) == true;
+    return SocialDiscoveryActionResult(
+      success: success,
+      toggled: root['toggled'] == true,
+      matched: matched,
+      message: pick(root, ['message'])?.toString(),
+      errorCode: pick(asJsonMap(root['error']), ['code'])?.toString(),
+    );
   }
 
   List<Map<String, dynamic>> _parseActionRows(dynamic body) {
@@ -98,10 +177,13 @@ class SocialDiscoveryRemoteDataSource {
   }
 
   Map<String, dynamic> _unwrap(dynamic body) {
-    if (body is Map) {
-      return Map<String, dynamic>.from(body);
+    if (body is! Map) return {};
+    final map = Map<String, dynamic>.from(body);
+    final data = map['data'];
+    if (data is Map) {
+      return {...map, ...Map<String, dynamic>.from(data)};
     }
-    return {};
+    return map;
   }
 
   Future<Map<String, dynamic>> fetchSocialProfile({String? userId}) async {

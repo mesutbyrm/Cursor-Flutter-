@@ -66,6 +66,7 @@ import '../../features/live/presentation/pages/live_swipe_viewer_page.dart';
 import '../../features/social/presentation/pages/social_create_post_page.dart';
 import '../../features/social/presentation/pages/social_page.dart';
 import '../../features/social/presentation/pages/tanis_kaynas_page.dart';
+import '../../features/social/presentation/pages/tanis_kaynas_extras_page.dart';
 import '../../features/social/presentation/pages/social_post_detail_page.dart';
 import '../../features/social/presentation/pages/story_viewer_page.dart';
 import '../../features/social/presentation/utils/story_viewer_args.dart';
@@ -357,6 +358,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                       key: state.pageKey,
                       child: const TanisKaynasPage(),
                     ),
+                    routes: [
+                      GoRoute(
+                        path: 'extras',
+                        parentNavigatorKey: rootNavigatorKey,
+                        builder: (context, state) =>
+                            const TanisKaynasExtrasPage(),
+                      ),
+                    ],
                   ),
                   GoRoute(
                     path: 'create',

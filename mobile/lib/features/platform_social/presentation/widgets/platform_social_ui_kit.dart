@@ -472,6 +472,8 @@ IconData platformSocialActionIcon(String type) {
   switch (type) {
     case 'like':
       return Icons.favorite_rounded;
+    case 'favorite':
+      return Icons.star_rounded;
     case 'skip':
       return Icons.close_rounded;
     case 'friend_request':

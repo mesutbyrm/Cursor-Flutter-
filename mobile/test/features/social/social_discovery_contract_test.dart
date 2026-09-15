@@ -15,6 +15,26 @@ void main() {
     });
   });
 
+  test('SocialDiscoveryUser parses production flat user in data.users', () {
+    final u = SocialDiscoveryUser.fromJson({
+      'id': 'u1',
+      'name': 'Ayşe',
+      'username': 'ayse',
+      'image': 'https://example.com/a.jpg',
+      'age': 28,
+      'city': 'İstanbul',
+      'membership': 'gold',
+      'bio': 'Merhaba',
+      'hobbies': ['müzik'],
+    });
+    expect(u.id, 'u1');
+    expect(u.displayName, 'Ayşe');
+    expect(u.age, 28);
+    expect(u.city, 'İstanbul');
+    expect(u.membership, 'gold');
+    expect(u.hobbies, ['müzik']);
+  });
+
   test('SocialDiscoveryUser parses nested user without inventing fields', () {
     final u = SocialDiscoveryUser.fromJson({
       'user': {'id': 'u1', 'displayName': 'Ayşe', 'username': 'ayse'},
