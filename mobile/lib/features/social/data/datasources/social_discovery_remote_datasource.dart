@@ -191,7 +191,7 @@ class SocialDiscoveryRemoteDataSource {
       ApiEndpoints.socialProfile,
       query: {if (userId != null && userId.isNotEmpty) 'userId': userId},
     );
-    return asJsonMap(res.data);
+    return _unwrap(res.data);
   }
 
   Future<Map<String, dynamic>> fetchShareCard({

@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.527+568 (2026-09-15) — Tanış Kaynaş profil + filtre
+
+- Keşif: mesafe (km) istemci filtresi, profil tekilleştirme, süper beğeni eşleşme doğrulama
+- Profil sheet: `GET /api/social/profile` zenginleştirme, arkadaşlık isteği, engelle
+- Eşleşme sonrası Eşleşmeler sekmesine geçiş; sekme rozeti (adet)
+- Kart: uyum yüzdesi rozeti (`matchPercent`)
+
 ## 1.0.526+567 (2026-09-15) — Tanış Kaynaş swipe / eşleşme UX
 
 - Keşfet: tam ekran swipe kartları, BEĞEN/GEÇ damgası, 4 aksiyon (geri al, geç, süper beğeni, beğen)

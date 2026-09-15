@@ -158,19 +158,61 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
                   ),
                 ),
               ),
-              TabBar(
-                controller: _tabs,
-                tabs: const [
-                  Tab(text: 'Keşfet'),
-                  Tab(text: 'Eşleşmeler'),
-                  Tab(text: 'Etkileşimler'),
-                ],
+              Consumer(
+                builder: (context, ref, _) {
+                  final matchCount =
+                      ref.watch(socialDiscoveryMatchesProvider).valueOrNull
+                              ?.length ??
+                          0;
+                  return TabBar(
+                    controller: _tabs,
+                    tabs: [
+                      const Tab(text: 'Keşfet'),
+                      Tab(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text('Eşleşmeler'),
+                            if (matchCount > 0) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: PlatformSocialPalette.accent,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  '$matchCount',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const Tab(text: 'Etkileşimler'),
+                    ],
+                  );
+                },
               ),
               Expanded(
                 child: TabBarView(
                   controller: _tabs,
                   children: [
-                    TanisDiscoverTab(onRefreshParent: _refresh),
+                    TanisDiscoverTab(
+                      onRefreshParent: _refresh,
+                      onMatched: () {
+                        if (_tabs.index != 1) {
+                          _tabs.animateTo(1);
+                        }
+                      },
+                    ),
                     TanisMatchesTab(onRefresh: _refresh),
                     RefreshIndicator(
                       onRefresh: _refresh,

@@ -34,6 +34,7 @@ class DiscoveryDatingProfileCard extends ConsumerWidget {
     final mediaUrl = user.coverMediaUrl;
     final bio = user.bio?.trim();
     final hobbies = user.hobbies;
+    final matchPercent = user.matchPercent;
 
     final card = ClipRRect(
       borderRadius: BorderRadius.circular(28),
@@ -142,6 +143,12 @@ class DiscoveryDatingProfileCard extends ConsumerWidget {
                           label: 'Çevrimiçi',
                           icon: Icons.circle,
                           tone: PlatformSocialPillTone.success,
+                        ),
+                      if (matchPercent != null && matchPercent > 0)
+                        PlatformSocialStatusPill(
+                          label: '%$matchPercent uyum',
+                          icon: Icons.auto_awesome_rounded,
+                          tone: PlatformSocialPillTone.accent,
                         ),
                     ],
                   ),

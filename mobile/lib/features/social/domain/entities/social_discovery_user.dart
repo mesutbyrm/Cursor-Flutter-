@@ -43,6 +43,20 @@ class SocialDiscoveryUser {
     return const [];
   }
 
+  /// Ham km (varsa) — istemci mesafe filtresi için.
+  double? get distanceKm {
+    final v = pick(raw, ['distanceKm', 'distance_km']) ??
+        pick(_profileMap, ['distanceKm', 'distance_km', 'distance']);
+    if (v is num) return v.toDouble();
+    return double.tryParse('$v');
+  }
+
+  int? get matchPercent {
+    final v = pick(_profileMap, ['matchPercent', 'match_percent']);
+    if (v is num) return v.round().clamp(0, 100);
+    return int.tryParse('$v');
+  }
+
   bool get isOnline {
     if (pick(_profileMap, ['isOnline', 'online']) == true) return true;
     final last = pick(_profileMap, ['lastActive', 'lastSeenAt']);

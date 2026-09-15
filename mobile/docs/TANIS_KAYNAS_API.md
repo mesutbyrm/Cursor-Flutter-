@@ -1,6 +1,6 @@
 # Tanış Kaynaş — üretim API (canlifal.com)
 
-Mobil sürüm **1.0.526+567** ile hizalı.
+Mobil sürüm **1.0.527+568** ile hizalı.
 
 ## Kullanılan uçlar
 
@@ -26,7 +26,9 @@ Mobil sürüm **1.0.526+567** ile hizalı.
 - **Süper beğeni:** `favorite` + Gold üyelik kontrolü
 - **Geri al:** Gold; son kartı geri getirir; `like`/`favorite` ise toggle ile API
 - **Eşleşme:** yanıtta `matched` yoksa `filter=matches` ile doğrulama
-- **Filtreler:** sorgu parametreleri + istemci yedek (yaş, şehir, online, gold, ilgi)
+- **Filtreler:** sorgu parametreleri + istemci yedek (yaş, şehir, online, gold, ilgi, max km)
+- **Profil sheet:** `GET /api/social/profile?userId=` (uyum %, ortak hobiler, arkadaşlık durumu)
+- **Eşleşme:** diyalog sonrası Eşleşmeler sekmesi; rozet sayısı
 
 ## Eksik / sınırlı (backend)
 

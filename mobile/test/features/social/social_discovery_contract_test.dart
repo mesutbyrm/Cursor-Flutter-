@@ -1,4 +1,5 @@
 import 'package:canlifal_social/core/network/api_endpoints.dart';
+import 'package:canlifal_social/features/social/domain/entities/social_discovery_feed.dart';
 import 'package:canlifal_social/features/social/domain/entities/social_discovery_user.dart';
 import 'package:canlifal_social/features/social/domain/entities/user_location_settings.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -43,6 +44,27 @@ void main() {
     expect(u.id, 'u1');
     expect(u.displayName, 'Ayşe');
     expect(u.distanceLabel, contains('km'));
+  });
+
+  test('SocialDiscoveryUser distanceKm and matchPercent from wire', () {
+    final u = SocialDiscoveryUser.fromJson({
+      'id': 'u2',
+      'name': 'Test',
+      'distanceKm': 12.5,
+      'matchPercent': 88,
+    });
+    expect(u.distanceKm, 12.5);
+    expect(u.matchPercent, 88);
+  });
+
+  test('SocialDiscoveryFeed hasMore uses total from data envelope', () {
+    const feed = SocialDiscoveryFeed(
+      users: const [],
+      total: 136,
+      page: 1,
+      limit: 20,
+    );
+    expect(feed.hasMore, isTrue);
   });
 
   test('UserLocationSettings POST body uses OpenAPI field names', () {

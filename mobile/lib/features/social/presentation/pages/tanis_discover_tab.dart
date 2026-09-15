@@ -24,9 +24,14 @@ class _SwipeHistory {
 
 /// Keşfet sekmesi — swipe destesi + API aksiyonları.
 class TanisDiscoverTab extends ConsumerStatefulWidget {
-  const TanisDiscoverTab({super.key, required this.onRefreshParent});
+  const TanisDiscoverTab({
+    super.key,
+    required this.onRefreshParent,
+    this.onMatched,
+  });
 
   final Future<void> Function() onRefreshParent;
+  final VoidCallback? onMatched;
 
   @override
   ConsumerState<TanisDiscoverTab> createState() => _TanisDiscoverTabState();
@@ -39,6 +44,15 @@ class _TanisDiscoverTabState extends ConsumerState<TanisDiscoverTab> {
   var _extraPage = 1;
   final _extraUsers = <SocialDiscoveryUser>[];
   var _loadingMore = false;
+
+  List<SocialDiscoveryUser> _dedupeById(List<SocialDiscoveryUser> users) {
+    final seen = <String>{};
+    final out = <SocialDiscoveryUser>[];
+    for (final u in users) {
+      if (seen.add(u.id)) out.add(u);
+    }
+    return out;
+  }
 
   List<SocialDiscoveryUser> _applyClientFilters(List<SocialDiscoveryUser> users) {
     final filters = ref.read(discoveryFilterProvider);
@@ -61,6 +75,10 @@ class _TanisDiscoverTabState extends ConsumerState<TanisDiscoverTab> {
         if (!m.contains('gold') && !m.contains('vip') && !m.contains('svip')) {
           return false;
         }
+      }
+      final km = u.distanceKm;
+      if (km != null && km > filters.maxDistanceKm) {
+        return false;
       }
       final q = filters.interestQuery.trim().toLowerCase();
       if (q.isNotEmpty) {
@@ -114,7 +132,7 @@ class _TanisDiscoverTabState extends ConsumerState<TanisDiscoverTab> {
     ref.invalidate(socialDiscoveryMatchesProvider);
 
     var matched = result.matched;
-    if (!matched && action == 'like') {
+    if (!matched && (action == 'like' || action == 'favorite')) {
       matched = await _isMatchWith(user.id);
     }
     if (matched && mounted) {
@@ -124,6 +142,7 @@ class _TanisDiscoverTabState extends ConsumerState<TanisDiscoverTab> {
         matchedUser: user,
         myAvatarUrl: me?.avatarUrl,
       );
+      widget.onMatched?.call();
     }
   }
 
@@ -282,6 +301,8 @@ class _TanisDiscoverTabState extends ConsumerState<TanisDiscoverTab> {
                   if (filters.goldOnly) const Chip(label: Text('Gold')),
                   if (filters.city.isNotEmpty)
                     Chip(label: Text(filters.city)),
+                  if (filters.maxDistanceKm < 200)
+                    Chip(label: Text('≤${filters.maxDistanceKm} km')),
                 ],
               ),
             ),
@@ -296,7 +317,7 @@ class _TanisDiscoverTabState extends ConsumerState<TanisDiscoverTab> {
               subtitle: ApiException.userMessage(e),
             ),
             data: (feed) {
-              final merged = [...feed.users, ..._extraUsers];
+              final merged = _dedupeById([...feed.users, ..._extraUsers]);
               final visible = _applyClientFilters(merged);
               if (visible.isEmpty) {
                 return const DiscoverEmptyInline(
@@ -321,6 +342,9 @@ class _TanisDiscoverTabState extends ConsumerState<TanisDiscoverTab> {
                   user: u,
                   onLike: () => _like(u),
                   onSkip: () => _skip(u),
+                  onBlocked: () {
+                    setState(() => _passedIds.add(u.id));
+                  },
                 ),
                 onLike: _like,
                 onSkip: _skip,
