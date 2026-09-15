@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
+import '../../../../core/membership/membership_capability_keys.dart';
+import '../../../../core/membership/membership_capability_providers.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/token_storage.dart';
@@ -15,8 +17,6 @@ import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
-import '../../../vip_gold/domain/vip_tier.dart';
-import '../../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../../data/services/dm_message_sound_service.dart';
 import '../../domain/entities/message_entities.dart';
 import '../../domain/utils/dm_message_codec.dart';
@@ -232,8 +232,9 @@ class _ChatPageState extends ConsumerState<ChatPage>
   }
 
   Future<void> _startVoiceCall() async {
-    final tier = ref.read(vipTierProvider);
-    if (!tier.isAtLeast(VipTier.gold)) {
+    if (!ref
+        .read(membershipCapabilitiesSyncProvider)
+        .allows(MembershipCapabilityKeys.adFree)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Sesli arama Gold üyelere özeldir.'),
@@ -381,7 +382,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
     final statusLabel = _peerTyping
         ? 'Yazıyor...'
         : (_peerOnline ? 'Çevrimiçi' : 'Son görülme yakın zamanda');
-    final isGold = ref.watch(vipTierProvider).isAtLeast(VipTier.gold);
+    final isGold = ref
+        .watch(membershipCapabilityAllowsProvider(MembershipCapabilityKeys.adFree));
 
     ref.listen(conversationsListNotifierProvider, (_, __) => _loadPeerMeta());
 

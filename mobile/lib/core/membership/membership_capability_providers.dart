@@ -33,3 +33,13 @@ final membershipCapabilitiesSyncProvider =
 bool membershipAllows(WidgetRef ref, String capabilityKey) {
   return ref.watch(membershipCapabilitiesSyncProvider).allows(capabilityKey);
 }
+
+/// Provider / notifier içinden capability kontrolü.
+bool membershipAllowsRef(Ref ref, String capabilityKey) {
+  return ref.watch(membershipCapabilitiesSyncProvider).allows(capabilityKey);
+}
+
+final membershipCapabilityAllowsProvider =
+    Provider.family<bool, String>((ref, capabilityKey) {
+  return ref.watch(membershipCapabilitiesSyncProvider).allows(capabilityKey);
+});

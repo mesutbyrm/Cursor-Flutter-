@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/membership/membership_capabilities.dart';
+import '../../../../core/membership/membership_capability_providers.dart';
 import '../../../../core/performance/network_perf.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../vip_gold/domain/vip_tier.dart';
-import '../../../vip_gold/presentation/providers/vip_membership_provider.dart';
-import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../data/datasources/fortune_access_remote_datasource.dart';
 import '../../data/fortune_access_local_store.dart';
 import '../../data/services/rewarded_ad_service.dart';
@@ -38,7 +38,7 @@ class FortuneAccessService {
     final config = pair[0] as FortuneAccessConfig;
     final store = pair[1] as FortuneAccessLocalStore;
     final wallet = _ref.read(walletBalancesProvider).valueOrNull;
-    final tier = _ref.read(vipTierProvider);
+    final caps = _ref.read(membershipCapabilitiesSyncProvider);
     final jeton = wallet?.jeton ?? 0;
     final cfc = wallet?.cfc ?? 0;
     final serverCredits = wallet?.fortuneAdCredits;
@@ -46,7 +46,7 @@ class FortuneAccessService {
     if (serverCredits != null && serverCredits != store.adCredits) {
       await store.setAdCredits(serverCredits);
     }
-    final isPremium = _isPremiumUnlimited(config, tier, wallet?.membership);
+    final isPremium = _isPremiumUnlimited(config, caps);
     return FortuneAccessState(
       config: config,
       adCredits: adCredits,
@@ -59,12 +59,10 @@ class FortuneAccessService {
 
   bool _isPremiumUnlimited(
     FortuneAccessConfig config,
-    VipTier tier,
-    String? membership,
+    MembershipCapabilities caps,
   ) {
     if (!config.premiumUnlimited) return false;
-    return hasPaidMembershipRaw(membership) &&
-        tier.isAtLeast(VipTier.premium);
+    return caps.effectiveTier.isAtLeast(VipTier.premium);
   }
 
   /// Fal açılmadan önce ödeme / hak tüketimi.

@@ -28,6 +28,10 @@
 | VIP oda kapısı | `open_voice_room_vip.dart` → `membershipCapabilitiesSyncProvider` + `vip.vip_rooms` |
 | Kim Baktı kapısı | `profile_visitors_page.dart` → `vip.profile_visitors` + limit |
 | Kilit CTA bileşeni | `membership_capability_gate.dart` |
+| Kozmetik slot → key | `cosmetic_slot_membership.dart` + `cosmetics_providers` |
+| DM / fal / giriş FX | `chat_page`, `fortune_access_service`, `entrance_effect_gate_provider` |
+| VIP hub canlı grid | `vip_gold_hub_page` + `VipPrivilegeCatalog.forCapabilities` |
+| Admin tier toggle | `admin_membership_management_page` → PUT tiers |
 
 ## Üretimde değiştirilmesi gerekenler (canlifal.com — bu repoda değil)
 

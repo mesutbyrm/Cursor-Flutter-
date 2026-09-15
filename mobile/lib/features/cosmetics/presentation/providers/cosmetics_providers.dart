@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../core/membership/membership_capability_keys.dart';
+import '../../../../core/membership/membership_capability_providers.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../vip_gold/domain/vip_tier.dart';
@@ -12,6 +14,7 @@ import '../../data/cosmetics_remote_datasource.dart';
 import '../../domain/cosmetic_catalog_defaults.dart';
 import '../../domain/cosmetic_item.dart';
 import '../../domain/cosmetic_slot.dart';
+import '../../domain/cosmetic_slot_membership.dart';
 import '../../domain/user_cosmetic_loadout.dart';
 
 final cosmeticsRemoteProvider = Provider<CosmeticsRemoteDataSource>((ref) {
@@ -109,6 +112,7 @@ CosmeticItem? _resolveEquipped(
 }
 
 final resolvedProfileFrameProvider = Provider<CosmeticItem?>((ref) {
+  if (!_cosmeticSlotAllowed(ref, CosmeticSlot.profileFrame)) return null;
   final user = ref.watch(authControllerProvider).valueOrNull;
   final tier = ref.watch(vipTierProvider);
   final loadout = ref.watch(cosmeticLoadoutProvider).valueOrNull;
@@ -132,8 +136,16 @@ final resolvedProfileFrameProvider = Provider<CosmeticItem?>((ref) {
   );
 });
 
+bool _cosmeticSlotAllowed(Ref ref, CosmeticSlot slot) {
+  final key = slot.membershipCapabilityKey;
+  if (key == null) {
+    return ref.watch(vipTierProvider) != VipTier.basic;
+  }
+  return membershipAllowsRef(ref, key);
+}
+
 final resolvedNameEffectProvider = Provider<CosmeticItem?>((ref) {
-  if (!ref.watch(vipTierProvider).isAtLeast(VipTier.gold)) return null;
+  if (!_cosmeticSlotAllowed(ref, CosmeticSlot.nameEffect)) return null;
   return _resolveEquipped(
     CosmeticSlot.nameEffect,
     ref.watch(cosmeticLoadoutProvider).valueOrNull,
@@ -142,7 +154,7 @@ final resolvedNameEffectProvider = Provider<CosmeticItem?>((ref) {
 });
 
 final resolvedProfileEffectProvider = Provider<CosmeticItem?>((ref) {
-  if (!ref.watch(vipTierProvider).isAtLeast(VipTier.gold)) return null;
+  if (!_cosmeticSlotAllowed(ref, CosmeticSlot.profileEffect)) return null;
   return _resolveEquipped(
     CosmeticSlot.profileEffect,
     ref.watch(cosmeticLoadoutProvider).valueOrNull,
@@ -151,7 +163,7 @@ final resolvedProfileEffectProvider = Provider<CosmeticItem?>((ref) {
 });
 
 final resolvedEntranceEffectProvider = Provider<CosmeticItem?>((ref) {
-  if (!ref.watch(vipTierProvider).isAtLeast(VipTier.gold)) return null;
+  if (!_cosmeticSlotAllowed(ref, CosmeticSlot.entranceAnimation)) return null;
   return _resolveEquipped(
     CosmeticSlot.entranceAnimation,
     ref.watch(cosmeticLoadoutProvider).valueOrNull,
@@ -160,7 +172,7 @@ final resolvedEntranceEffectProvider = Provider<CosmeticItem?>((ref) {
 });
 
 final resolvedChatBubbleProvider = Provider<CosmeticItem?>((ref) {
-  if (!ref.watch(vipTierProvider).isAtLeast(VipTier.gold)) return null;
+  if (!_cosmeticSlotAllowed(ref, CosmeticSlot.chatBubble)) return null;
   return _resolveEquipped(
     CosmeticSlot.chatBubble,
     ref.watch(cosmeticLoadoutProvider).valueOrNull,
@@ -169,7 +181,7 @@ final resolvedChatBubbleProvider = Provider<CosmeticItem?>((ref) {
 });
 
 final resolvedMicrophoneFrameProvider = Provider<CosmeticItem?>((ref) {
-  if (!ref.watch(vipTierProvider).isAtLeast(VipTier.gold)) return null;
+  if (!_cosmeticSlotAllowed(ref, CosmeticSlot.microphoneFrame)) return null;
   return _resolveEquipped(
     CosmeticSlot.microphoneFrame,
     ref.watch(cosmeticLoadoutProvider).valueOrNull,
@@ -178,7 +190,8 @@ final resolvedMicrophoneFrameProvider = Provider<CosmeticItem?>((ref) {
 });
 
 final canCustomizeCosmeticsProvider = Provider<bool>((ref) {
-  return ref.watch(vipTierProvider).isAtLeast(VipTier.gold);
+  return membershipAllowsRef(ref, MembershipCapabilityKeys.profileFrame) ||
+      membershipAllowsRef(ref, MembershipCapabilityKeys.nameEffect);
 });
 
 final resolvedMembershipBadgeProvider = Provider<CosmeticItem?>((ref) {

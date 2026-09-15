@@ -5,6 +5,7 @@ import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/membership/membership_capability_providers.dart';
 import '../../domain/vip_tier.dart';
 import '../providers/vip_membership_provider.dart';
 import '../theme/vip_gold_tokens.dart';
@@ -28,6 +29,7 @@ class _VipGoldHubPageState extends ConsumerState<VipGoldHubPage> {
   Widget build(BuildContext context) {
     final tier = ref.watch(vipTierProvider);
     final days = ref.watch(vipMembershipDaysProvider);
+    final capabilities = ref.watch(membershipCapabilitiesSyncProvider);
 
     return Scaffold(
       backgroundColor: VipGoldTokens.bgDeep,
@@ -129,6 +131,25 @@ class _VipGoldHubPageState extends ConsumerState<VipGoldHubPage> {
                             ],
                           ),
                         ),
+                        if (tier != VipTier.basic) ...[
+                          const SizedBox(height: 24),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Aktif ayrıcalıklarınız',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                color: context.colors.onSurfaceMuted
+                                    .withValues(alpha: 0.95),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          VipPrivilegeGrid(
+                            tier: tier,
+                            capabilities: capabilities,
+                          ),
+                        ],
                         const SizedBox(height: 24),
                         Align(
                           alignment: Alignment.centerLeft,

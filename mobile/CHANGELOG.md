@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.515+555 (2026-09-15) — Capability genişletme (kozmetik, DM, fal, admin)
+
+- Kozmetik slotları → `membershipAllowsRef` (çerçeve, balon, giriş, koltuk efekti)
+- DM sesli arama + Gold UI: `vip.ad_free`; giriş efekti capability + admin ayarı
+- Fal sınırsız erişim: `membershipCapabilitiesSyncProvider` effective tier
+- VIP hub: canlı capability grid; ayrıcalık kataloğu API anahtarları
+- Admin üyelik: kademe aktif/pasif `PUT /api/admin/membership_tiers`
+
 ## 1.0.514+554 (2026-09-15) — Capability bağlantıları (VIP oda + ziyaretçiler)
 
 - VIP oda girişi: `/api/me/membership` capability matrisi (`vip.vip_rooms`)

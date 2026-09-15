@@ -49,6 +49,30 @@ class _AdminMembershipManagementPageState
     }
   }
 
+  Future<void> _setTierActive(String key, bool active) async {
+    if (key.isEmpty) return;
+    final dio = ref.read(dioProvider);
+    try {
+      await dio.safePut<dynamic>(
+        ApiEndpoints.adminMembershipTiers,
+        query: {'key': key},
+        data: {'isActive': active},
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(active ? '$key aktif' : '$key pasif')),
+        );
+      }
+      await _load();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
+        );
+      }
+    }
+  }
+
   List<Map<String, dynamic>> _parseList(dynamic data) {
     if (data is List) {
       return data.map((e) => asJsonMap(e)).toList();
@@ -174,6 +198,7 @@ class _AdminMembershipManagementPageState
     final key = (t['key'] ?? t['id'] ?? '').toString();
     final name = (t['name'] ?? key).toString();
     final weight = t['discoveryWeight'] ?? t['discovery_weight'];
+    final isActive = t['isActive'] != false;
     return Card(
       child: ListTile(
         title: Text(name),
@@ -181,9 +206,10 @@ class _AdminMembershipManagementPageState
           'key: $key'
           '${weight != null ? ' · keşfet ağırlığı: $weight' : ''}',
         ),
-        trailing: t['isActive'] == false
-            ? const Icon(Icons.pause_circle_outline, color: Colors.orange)
-            : const Icon(Icons.check_circle_outline, color: Colors.green),
+        trailing: Switch(
+          value: isActive,
+          onChanged: key.isEmpty ? null : (v) => _setTierActive(key, v),
+        ),
       ),
     );
   }

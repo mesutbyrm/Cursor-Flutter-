@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/performance/list_perf.dart';
+import '../../../../core/membership/membership_capabilities.dart';
 import '../../domain/vip_privilege.dart';
 import '../../domain/vip_tier.dart';
 import '../theme/vip_gold_tokens.dart';
@@ -9,13 +10,20 @@ import 'vip_privilege_detail_sheet.dart';
 
 /// 3x2 ayrıcalık grid — SVIP tarzı.
 class VipPrivilegeGrid extends StatelessWidget {
-  const VipPrivilegeGrid({super.key, required this.tier});
+  const VipPrivilegeGrid({
+    super.key,
+    required this.tier,
+    this.capabilities,
+  });
 
   final VipTier tier;
+  final MembershipCapabilities? capabilities;
 
   @override
   Widget build(BuildContext context) {
-    final perks = VipPrivilegeCatalog.forTier(tier);
+    final perks = capabilities != null
+        ? VipPrivilegeCatalog.forCapabilities(capabilities!)
+        : VipPrivilegeCatalog.forTier(tier);
     final unlocked = perks.where((p) => p.unlocked).length;
 
     return Column(

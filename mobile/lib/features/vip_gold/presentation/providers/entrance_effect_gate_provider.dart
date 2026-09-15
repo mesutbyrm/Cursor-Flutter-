@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/membership/membership_capability_keys.dart';
+import '../../../../core/membership/membership_capability_providers.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../domain/entrance_effect_settings.dart';
 import '../../domain/vip_tier.dart';
@@ -28,9 +30,15 @@ final entranceEffectAllowedProvider = Provider<bool>((ref) {
   final tier = ref.watch(vipTierProvider);
   final settings = ref.watch(entranceEffectSettingsProvider);
   final staff = ref.watch(staffAccessProvider);
-  return entranceEffectAllowed(
+  final capabilityOk = membershipAllowsRef(
+    ref,
+    MembershipCapabilityKeys.entranceEffect,
+  );
+  final tierOk = entranceEffectAllowed(
     tier: tier,
     settings: settings,
     isStaff: staff.isSiteAdmin || staff.isFounder,
   );
+  if (staff.isSiteAdmin || staff.isFounder) return tierOk;
+  return tierOk && capabilityOk;
 });
