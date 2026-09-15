@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/user_avatar.dart';
+import '../../../platform_social/presentation/widgets/platform_social_ui_kit.dart';
 import '../../domain/entities/agency_entity.dart';
 import '../providers/agency_applications_provider.dart';
 import '../providers/agency_providers.dart';
@@ -16,20 +16,17 @@ class AgencyApplicationsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final apps = ref.watch(agencyMemberApplicationsProvider);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF0A1020),
-      appBar: AppBar(
-        title: const Text('Üye talepleri'),
-        backgroundColor: Colors.transparent,
-        actions: [
-          IconButton(
-            onPressed: () =>
-                ref.invalidate(agencyMemberApplicationsProvider),
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
+    return PlatformSocialScaffold(
+      title: 'Üye talepleri',
+      subtitle: 'Bekleyen çıkış ve üyelik istekleri',
+      actions: [
+        IconButton(
+          onPressed: () => ref.invalidate(agencyMemberApplicationsProvider),
+          icon: const Icon(Icons.refresh_rounded),
+        ),
+      ],
       body: RefreshIndicator(
+        color: PlatformSocialPalette.accent,
         onRefresh: () async {
           ref.invalidate(agencyMemberApplicationsProvider);
           await ref.read(agencyMemberApplicationsProvider.future);
@@ -38,27 +35,19 @@ class AgencyApplicationsPage extends ConsumerWidget {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => ListView(
             children: [
-              Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  ApiException.userMessage(e),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: context.colors.onSurfaceMuted),
-                ),
+              PlatformSocialEmptyState(
+                icon: Icons.wifi_off_rounded,
+                message: ApiException.userMessage(e),
               ),
             ],
           ),
           data: (items) {
             if (items.isEmpty) {
               return ListView(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(32),
-                    child: Text(
-                      'Bekleyen talep yok.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: context.colors.onSurfaceMuted),
-                    ),
+                children: const [
+                  PlatformSocialEmptyState(
+                    icon: Icons.inbox_outlined,
+                    message: 'Bekleyen talep yok — her şey güncel.',
                   ),
                 ],
               );
@@ -66,7 +55,7 @@ class AgencyApplicationsPage extends ConsumerWidget {
             return ListView.separated(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
               itemCount: items.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, i) => _ApplicationTile(
                 item: items[i],
                 onReviewed: () =>
@@ -94,71 +83,96 @@ class _ApplicationTile extends ConsumerWidget {
     final typeLabel = item.type == 'leave_request'
         ? 'Ayrılma talebi'
         : 'Üyelik talebi';
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white12),
-      ),
-      child: Row(
+    final pending = item.status == 'pending';
+    return PlatformSocialGlassCard(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          UserAvatar(url: item.avatarUrl, radius: 22),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.displayName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-                if (item.username != null)
-                  Text(
-                    '@${item.username}',
-                    style: const TextStyle(color: Colors.white54, fontSize: 12),
-                  ),
-                const SizedBox(height: 4),
-                Text(
-                  '$typeLabel · ${item.status}',
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
-                ),
-                if (item.reason != null && item.reason!.trim().isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Text(
-                      item.reason!.trim(),
-                      style: const TextStyle(color: Colors.white60, fontSize: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              UserAvatar(url: item.avatarUrl, radius: 26),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.displayName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
                     ),
-                  ),
-                if (item.status == 'pending' && item.type == 'leave_request')
-                  Padding(
-                    padding: const EdgeInsets.only(top: 10),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => _review(ref, context, false),
-                            child: const Text('Reddet'),
-                          ),
+                    if (item.username != null)
+                      Text(
+                        '@${item.username}',
+                        style: const TextStyle(
+                          color: PlatformSocialPalette.textMuted,
+                          fontSize: 12,
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: FilledButton(
-                            onPressed: () => _review(ref, context, true),
-                            child: const Text('Onayla'),
-                          ),
+                      ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        PlatformSocialStatusPill(
+                          label: typeLabel,
+                          icon: Icons.description_outlined,
+                          tone: PlatformSocialPillTone.accent,
+                        ),
+                        PlatformSocialStatusPill(
+                          label: item.status,
+                          tone: pending
+                              ? PlatformSocialPillTone.gold
+                              : PlatformSocialPillTone.neutral,
                         ),
                       ],
                     ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (item.reason != null && item.reason!.trim().isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              item.reason!.trim(),
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 13,
+                height: 1.4,
+              ),
+            ),
+          ],
+          if (pending && item.type == 'leave_request') ...[
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => _review(ref, context, false),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: PlatformSocialPalette.danger,
+                      side: const BorderSide(color: PlatformSocialPalette.danger),
+                    ),
+                    child: const Text('Reddet'),
                   ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: () => _review(ref, context, true),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: PlatformSocialPalette.success,
+                    ),
+                    child: const Text('Onayla'),
+                  ),
+                ),
               ],
             ),
-          ),
+          ],
         ],
       ),
     );

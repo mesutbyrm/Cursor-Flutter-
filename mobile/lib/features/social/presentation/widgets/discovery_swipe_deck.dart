@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_theme_extensions.dart';
+import '../../../platform_social/presentation/widgets/platform_social_ui_kit.dart';
 import '../../domain/entities/social_discovery_user.dart';
 import 'discovery_social_user_card.dart';
 
@@ -191,27 +191,25 @@ class _DiscoverySwipeDeckState extends State<DiscoverySwipeDeck>
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _ActionCircle(
-              color: context.colors.onSurface.withValues(alpha: 0.15),
+            PlatformSocialCircleAction(
               icon: Icons.close_rounded,
-              iconColor: Colors.redAccent,
+              tone: PlatformSocialPillTone.danger,
               onTap: _dismissLeft,
             ),
             const SizedBox(width: 28),
-            _ActionCircle(
-              color: const Color(0xFF9B4DFF).withValues(alpha: 0.25),
+            PlatformSocialCircleAction(
               icon: Icons.favorite_rounded,
-              iconColor: const Color(0xFFFF2D7A),
+              tone: PlatformSocialPillTone.accent,
               onTap: _dismissRight,
             ),
           ],
         ),
         const SizedBox(height: 8),
-        Text(
+        const Text(
           'Sola kaydır: geç · Sağa kaydır: beğen',
           style: TextStyle(
             fontSize: 11,
-            color: context.colors.onSurface.withValues(alpha: 0.5),
+            color: PlatformSocialPalette.textMuted,
           ),
         ),
       ],
@@ -248,33 +246,3 @@ class _SwipeStamp extends StatelessWidget {
   }
 }
 
-class _ActionCircle extends StatelessWidget {
-  const _ActionCircle({
-    required this.color,
-    required this.icon,
-    required this.iconColor,
-    required this.onTap,
-  });
-
-  final Color color;
-  final IconData icon;
-  final Color iconColor;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: color,
-      shape: const CircleBorder(),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onTap,
-        child: SizedBox(
-          width: 56,
-          height: 56,
-          child: Icon(icon, color: iconColor, size: 28),
-        ),
-      ),
-    );
-  }
-}

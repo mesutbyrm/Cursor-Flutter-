@@ -10,6 +10,7 @@ import 'discover_room_visuals.dart';
 import '../../../domain/discover_category.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../voice_hub/presentation/widgets/premium_2026/voice_discover_2026.dart';
+import '../../../../platform_social/presentation/widgets/platform_social_ui_kit.dart';
 
 /// Neon glow sesli oda kartı — canlı dalga, rozetler, konuşan avatar vurgusu.
 class DiscoverPremiumRoomCard extends StatefulWidget {
@@ -143,6 +144,11 @@ class _DiscoverPremiumRoomCardState extends State<DiscoverPremiumRoomCard>
                     child: Row(
                       children: [
                         _GlowingOnlinePill(count: online),
+                        if (widget.room.distanceLabel != null &&
+                            widget.room.distanceLabel!.isNotEmpty) ...[
+                          const SizedBox(width: 6),
+                          _DistanceBandPill(label: widget.room.distanceLabel!),
+                        ],
                         if (widget.hourlyRank != null && widget.hourlyRank! <= 3) ...[
                           const SizedBox(width: 6),
                           _HourlyRankMedal(rank: widget.hourlyRank!),
@@ -314,6 +320,45 @@ class _DiscoverPremiumRoomCardState extends State<DiscoverPremiumRoomCard>
     if (type.contains('muzik') || type.contains('music')) return 'Müzik';
     if (type.contains('sohbet') || type.contains('chat')) return 'Sohbet';
     return type.length > 12 ? '${type.substring(0, 12)}…' : type;
+  }
+}
+
+class _DistanceBandPill extends StatelessWidget {
+  const _DistanceBandPill({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+      decoration: BoxDecoration(
+        color: PlatformSocialPalette.accent.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: PlatformSocialPalette.accent.withValues(alpha: 0.7),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.near_me_rounded,
+            size: 11,
+            color: Colors.white,
+          ),
+          const SizedBox(width: 3),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

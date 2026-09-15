@@ -10,6 +10,7 @@ import '../../../../core/theme/app_theme_extensions.dart';
 import '../../domain/entities/agency_entity.dart';
 import '../providers/agency_presence_provider.dart';
 import '../providers/agency_providers.dart';
+import '../../../platform_social/presentation/widgets/platform_social_ui_kit.dart';
 import '../widgets/agency_jeton_transfer_sheet.dart';
 
 /// Onaylı ajans kontrol paneli — üyeler, kazançlar, görevler.
@@ -50,10 +51,11 @@ class AgencyDashboardScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0A1020),
+      backgroundColor: PlatformSocialPalette.bgTop,
       appBar: AppBar(
         title: const Text('Ajans Panel'),
         backgroundColor: Colors.transparent,
+        elevation: 0,
         actions: [
           IconButton(
             tooltip: 'Üye talepleri',
@@ -66,33 +68,79 @@ class AgencyDashboardScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: RefreshIndicator(
+      body: PlatformSocialBackground(
+        child: RefreshIndicator(
         onRefresh: () => ref.read(agencyDashboardProvider.notifier).refresh(),
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
           children: [
             _AgencyHeader(agency: agency),
+            const SizedBox(height: 12),
+            PlatformSocialGlassCard(
+              onTap: () => context.push('/ajans/talepler'),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: const Row(
+                children: [
+                  Icon(Icons.inbox_rounded, color: PlatformSocialPalette.accent),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Üye talepleri',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          'Çıkış ve başvuruları incele',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: PlatformSocialPalette.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.chevron_right_rounded, color: Colors.white38),
+                ],
+              ),
+            ),
             const SizedBox(height: 16),
             walletAsync.when(
               data: (w) {
                 if (w == null) return const SizedBox.shrink();
-                return Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white12),
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: PlatformSocialGlassCard(
+                  padding: const EdgeInsets.all(14),
+                  gradient: LinearGradient(
+                    colors: [
+                      PlatformSocialPalette.gold.withValues(alpha: 0.12),
+                      PlatformSocialPalette.card.withValues(alpha: 0.95),
+                    ],
                   ),
-                  child: Text(
-                    'Ajans jeton kredisi: ${w.jetonBalance.toStringAsFixed(0)} '
-                    '$jetonLabel${w.isLocked ? ' (kilitli)' : ''}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.account_balance_wallet_outlined,
+                        color: PlatformSocialPalette.gold,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Ajans jeton kredisi: ${w.jetonBalance.toStringAsFixed(0)} '
+                          '$jetonLabel${w.isLocked ? ' (kilitli)' : ''}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
+                ),
                 );
               },
               loading: () => const SizedBox.shrink(),
@@ -118,7 +166,7 @@ class AgencyDashboardScreen extends ConsumerWidget {
               ),
             ],
             const SizedBox(height: 20),
-            _SectionTitle('Canlı durum'),
+            const PlatformSocialSectionTitle('Canlı durum'),
             presenceAsync.when(
               data: (items) {
                 if (items.isEmpty) {
@@ -128,10 +176,14 @@ class AgencyDashboardScreen extends ConsumerWidget {
                   children: items.take(8).map((m) {
                     final label = (m['label'] ?? m['status'] ?? '').toString();
                     final name = (m['name'] ?? m['username'] ?? 'Üye').toString();
-                    return ListTile(
-                      dense: true,
-                      title: Text(name, style: const TextStyle(color: Colors.white)),
-                      trailing: Text(label, style: const TextStyle(fontSize: 11)),
+                    return PlatformSocialListRow(
+                      title: name,
+                      trailing: PlatformSocialStatusPill(
+                        label: label.isEmpty ? '—' : label,
+                        tone: label.toLowerCase().contains('canlı')
+                            ? PlatformSocialPillTone.success
+                            : PlatformSocialPillTone.neutral,
+                      ),
                     );
                   }).toList(),
                 );
@@ -143,7 +195,7 @@ class AgencyDashboardScreen extends ConsumerWidget {
               error: (_, __) => _emptyHint('Durum yüklenemedi.'),
             ),
             const SizedBox(height: 16),
-            _SectionTitle('Üyeler (${dash.members.length})'),
+            PlatformSocialSectionTitle('Üyeler (${dash.members.length})'),
             if (dash.members.isEmpty)
               _emptyHint('Henüz üye yok.')
             else
@@ -156,19 +208,20 @@ class AgencyDashboardScreen extends ConsumerWidget {
                 ),
               ),
             const SizedBox(height: 20),
-            _SectionTitle('Son Kazançlar'),
+            const PlatformSocialSectionTitle('Son Kazançlar'),
             if (dash.earnings.isEmpty)
               _emptyHint('Kazanç kaydı yok.')
             else
               ...dash.earnings.take(8).map((e) => _EarningTile(e, jetonLabel: jetonLabel)),
             const SizedBox(height: 20),
-            _SectionTitle('Görevler'),
+            const PlatformSocialSectionTitle('Görevler'),
             if (dash.tasks.isEmpty)
               _emptyHint('Aktif görev yok.')
             else
               ...dash.tasks.map((t) => _TaskTile(t, jetonLabel: jetonLabel)),
           ],
         ),
+      ),
       ),
     );
   }
@@ -181,15 +234,8 @@ class _AgencyHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1A2A50), Color(0xFF0A1428)],
-        ),
-        border: Border.all(color: Colors.white24),
-      ),
+    return PlatformSocialGlassCard(
+      gradient: PlatformSocialPalette.heroGradient,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -315,51 +361,7 @@ class _StatGrid extends StatelessWidget {
   }
 
   Widget _statCard(String label, String value) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(label, style: const TextStyle(color: Colors.white54, fontSize: 12)),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
+    return PlatformSocialStatTile(label: label, value: value);
   }
 }
 
@@ -385,44 +387,39 @@ class _MemberTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Card(
-      color: const Color(0xFF141E35),
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundImage:
-              member.avatarUrl != null ? canlifalImageProvider(member.avatarUrl!) : null,
-          child: member.avatarUrl == null
-              ? Text(member.name.isNotEmpty ? member.name[0] : '?')
-              : null,
-        ),
-        title: Text(member.name, style: const TextStyle(color: Colors.white)),
-        subtitle: Text(
-          '${member.role ?? "Üye"} · ${member.earnings} $jetonLabel',
-          style: const TextStyle(color: Colors.white60),
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (walletBalance > 0)
-              TextButton(
-                onPressed: () => AgencyJetonTransferSheet.show(
-                  context,
-                  ref: ref,
-                  memberUserId: member.id,
-                  memberLabel: member.name,
-                  agencyBalance: walletBalance,
-                  onSuccess: onTransfer,
-                ),
-                child: const Text('Jeton'),
+    return PlatformSocialListRow(
+      title: member.name,
+      subtitle: '${member.role ?? "Üye"} · ${member.earnings} $jetonLabel',
+      leading: CircleAvatar(
+        backgroundImage:
+            member.avatarUrl != null ? canlifalImageProvider(member.avatarUrl!) : null,
+        child: member.avatarUrl == null
+            ? Text(member.name.isNotEmpty ? member.name[0] : '?')
+            : null,
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (walletBalance > 0)
+            TextButton(
+              onPressed: () => AgencyJetonTransferSheet.show(
+                context,
+                ref: ref,
+                memberUserId: member.id,
+                memberLabel: member.name,
+                agencyBalance: walletBalance,
+                onSuccess: onTransfer,
               ),
-            Icon(
-              Icons.circle,
-              size: 10,
-              color: member.isOnline ? Colors.greenAccent : Colors.grey,
+              child: const Text('Jeton'),
             ),
-          ],
-        ),
+          Icon(
+            Icons.circle,
+            size: 10,
+            color: member.isOnline
+                ? PlatformSocialPalette.success
+                : Colors.grey,
+          ),
+        ],
       ),
     );
   }
@@ -436,24 +433,15 @@ class _EarningTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: const Color(0xFF141E35),
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        title: Text(
-          '+${earning.amount} $jetonLabel',
-          style: const TextStyle(
-            color: Color(0xFF00E676),
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        subtitle: Text(
-          [
-            if (earning.memberName != null) earning.memberName,
-            if (earning.source != null) earning.source,
-          ].whereType<String>().join(' · '),
-          style: const TextStyle(color: Colors.white60),
-        ),
+    return PlatformSocialListRow(
+      title: '+${earning.amount} $jetonLabel',
+      subtitle: [
+        if (earning.memberName != null) earning.memberName,
+        if (earning.source != null) earning.source,
+      ].whereType<String>().join(' · '),
+      leading: const Icon(
+        Icons.trending_up_rounded,
+        color: PlatformSocialPalette.success,
       ),
     );
   }
@@ -467,19 +455,15 @@ class _TaskTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: const Color(0xFF141E35),
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: Icon(
-          task.completed ? Icons.check_circle : Icons.radio_button_unchecked,
-          color: task.completed ? Colors.greenAccent : Colors.white54,
-        ),
-        title: Text(task.title, style: const TextStyle(color: Colors.white)),
-        subtitle: Text(
+    return PlatformSocialListRow(
+      title: task.title,
+      subtitle:
           '${task.reward} $jetonLabel${task.description != null ? " · ${task.description}" : ""}',
-          style: const TextStyle(color: Colors.white60),
-        ),
+      leading: Icon(
+        task.completed ? Icons.check_circle : Icons.radio_button_unchecked,
+        color: task.completed
+            ? PlatformSocialPalette.success
+            : PlatformSocialPalette.textMuted,
       ),
     );
   }

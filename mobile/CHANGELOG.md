@@ -1,5 +1,21 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.523+564 (2026-09-15) — Platform sosyal UI tamamlama
+
+- Keşif kartı + swipe destesi: cam kart, mesafe/online pill, platform aksiyon düğmeleri
+- Ajans paneli: gradient arka plan, cüzdan/istatistik/üye/kazanç/görev cam kartları
+- Admin komuta merkezi özet: hero profil kartı, `PlatformSocialStatTile` / bilgi satırları
+- Sesli oda keşif kartı: `distanceLabel` mor mesafe rozeti
+- UI kit: `StatTile`, `InfoRow`, `ListRow`, `CircleAction`
+- Web P6 modal: mobil palet ile hizalı gradient + sekme stilleri
+
+## 1.0.522+563 (2026-09-15) — Platform sosyal UI kit (tüm yeni yüzeyler)
+
+- `platform_social_ui_kit.dart` — ortak gradient, cam kart, CTA, sıralama, etkileşim
+- Tanış profil sheet + Etkileşimler; CFC Arena hub/detay; Ajans talepleri + panel kartı
+- Admin keşfet yetkileri kartı (`AdminDiscoveryPermissionsCard`)
+- `docs/PLATFORM_SOCIAL_UI_SPEC.md`
+
 ## 1.0.521+562 (2026-09-15) — Parity sosyal/oda listesi, hub, P6 iskelet
 
 - Parity: `GET /api/social/discovery`, `/social/actions`, `/chat/rooms` (mesafe bandı)

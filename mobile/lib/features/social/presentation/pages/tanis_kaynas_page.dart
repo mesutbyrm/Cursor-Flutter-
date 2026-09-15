@@ -11,6 +11,7 @@ import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../../../admin/presentation/widgets/admin_user_hub_launcher.dart';
+import '../../../platform_social/presentation/widgets/platform_social_ui_kit.dart';
 import '../sheets/social_discovery_profile_sheet.dart';
 import '../widgets/discovery_filter_sheet.dart';
 import '../widgets/discovery_swipe_deck.dart';
@@ -361,9 +362,10 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
                               final title = targetUser?.displayName ??
                                   (targetId.isNotEmpty ? targetId : null) ??
                                   _actionSuccessLabel(type);
-                              final tile = ListTile(
-                                title: Text(_actionSuccessLabel(type)),
-                                subtitle: Text(title),
+                              final tile = PlatformSocialInteractionTile(
+                                actionLabel: _actionSuccessLabel(type),
+                                targetLabel: title,
+                                icon: platformSocialActionIcon(type),
                                 onTap: targetUser == null
                                     ? null
                                     : () => showSocialDiscoveryProfileSheet(
@@ -371,22 +373,18 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
                                           user: targetUser,
                                         ),
                               );
-                              if (targetId.isEmpty) {
-                                return Card(child: tile);
-                              }
-                              return Card(
-                                child: AdminUserHubLauncher.wrap(
-                                  context: context,
-                                  ref: ref,
-                                  userId: targetId,
-                                  onTap: targetUser == null
-                                      ? null
-                                      : () => showSocialDiscoveryProfileSheet(
-                                            context,
-                                            user: targetUser,
-                                          ),
-                                  child: tile,
-                                ),
+                              if (targetId.isEmpty) return tile;
+                              return AdminUserHubLauncher.wrap(
+                                context: context,
+                                ref: ref,
+                                userId: targetId,
+                                onTap: targetUser == null
+                                    ? null
+                                    : () => showSocialDiscoveryProfileSheet(
+                                          context,
+                                          user: targetUser,
+                                        ),
+                                child: tile,
                               );
                             },
                           );

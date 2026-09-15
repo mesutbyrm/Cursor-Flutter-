@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/util/json_util.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
+import '../../../platform_social/presentation/widgets/platform_social_ui_kit.dart';
 import '../../domain/entities/social_discovery_user.dart';
 
 /// Tanış keşif — zengin profil önizleme (tam profile gitmeden).
@@ -52,14 +52,14 @@ class _SocialDiscoveryProfileSheet extends StatelessWidget {
         : <String>[];
 
     return DraggableScrollableSheet(
-      initialChildSize: 0.72,
+      initialChildSize: 0.78,
       minChildSize: 0.45,
       maxChildSize: 0.92,
       builder: (context, scrollController) {
         return Container(
-          decoration: BoxDecoration(
-            color: context.colors.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          decoration: const BoxDecoration(
+            gradient: PlatformSocialPalette.backgroundGradient,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: ListView(
             controller: scrollController,
@@ -70,83 +70,89 @@ class _SocialDiscoveryProfileSheet extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: context.colors.onSurfaceMuted.withValues(alpha: 0.35),
+                    color: Colors.white24,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
               const SizedBox(height: 16),
-              Center(child: UserAvatar(url: user.avatarUrl, radius: 48)),
-              const SizedBox(height: 12),
-              Text(
-                user.displayName,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              if (user.username != null && user.username!.isNotEmpty)
-                Text(
-                  '@${user.username}',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: context.colors.onSurfaceMuted),
+              PlatformSocialGlassCard(
+                gradient: PlatformSocialPalette.heroGradient,
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    UserAvatar(url: user.avatarUrl, radius: 52),
+                    const SizedBox(height: 12),
+                    Text(
+                      user.displayName,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
+                    ),
+                    if (user.username != null && user.username!.isNotEmpty)
+                      Text(
+                        '@${user.username}',
+                        style: const TextStyle(color: PlatformSocialPalette.textMuted),
+                      ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        if (online)
+                          const PlatformSocialStatusPill(
+                            label: 'Çevrimiçi',
+                            icon: Icons.circle,
+                            tone: PlatformSocialPillTone.success,
+                          ),
+                        if (age is num)
+                          PlatformSocialStatusPill(
+                            label: '${age.round()} yaş',
+                            icon: Icons.cake_outlined,
+                          ),
+                        if (user.distanceLabel != null)
+                          PlatformSocialStatusPill(
+                            label: user.distanceLabel!,
+                            icon: Icons.place_outlined,
+                            tone: PlatformSocialPillTone.accent,
+                          ),
+                      ],
+                    ),
+                  ],
                 ),
-              const SizedBox(height: 8),
-              Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 8,
-                runSpacing: 6,
-                children: [
-                  if (online)
-                    Chip(
-                      label: const Text('Çevrimiçi'),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  if (age is num)
-                    Chip(
-                      label: Text('${age.round()} yaş'),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  if (user.distanceLabel != null)
-                    Chip(
-                      label: Text(user.distanceLabel!),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                ],
               ),
               if (bio != null && bio.trim().isNotEmpty) ...[
                 const SizedBox(height: 16),
-                Text(bio.trim()),
+                const PlatformSocialSectionTitle('Hakkında'),
+                PlatformSocialGlassCard(
+                  child: Text(bio.trim(), style: const TextStyle(height: 1.45)),
+                ),
               ],
               if (interests.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                Text(
-                  'İlgi alanları',
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                const SizedBox(height: 8),
+                const PlatformSocialSectionTitle('İlgi alanları'),
                 Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: interests
-                      .take(8)
-                      .map(
-                        (t) => Chip(
-                          label: Text(t),
-                          visualDensity: VisualDensity.compact,
-                        ),
-                      )
-                      .toList(),
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: interests.take(10).map((t) {
+                    return PlatformSocialStatusPill(label: t, tone: PlatformSocialPillTone.accent);
+                  }).toList(),
                 ),
               ],
               const SizedBox(height: 24),
-              FilledButton.icon(
+              PlatformSocialPrimaryButton(
+                label: 'Tam profile git',
+                icon: Icons.person_outline_rounded,
                 onPressed: () {
                   Navigator.of(context).pop();
                   context.push('/user/${Uri.encodeComponent(user.id)}');
                 },
-                icon: const Icon(Icons.person_outline),
-                label: const Text('Tam profile git'),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   if (onSkip != null)
@@ -156,6 +162,11 @@ class _SocialDiscoveryProfileSheet extends StatelessWidget {
                           Navigator.of(context).pop();
                           onSkip!();
                         },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white70,
+                          side: const BorderSide(color: Colors.white24),
+                          minimumSize: const Size.fromHeight(48),
+                        ),
                         child: const Text('Geç'),
                       ),
                     ),
@@ -167,6 +178,10 @@ class _SocialDiscoveryProfileSheet extends StatelessWidget {
                           Navigator.of(context).pop();
                           onLike!();
                         },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: PlatformSocialPalette.danger,
+                          minimumSize: const Size.fromHeight(48),
+                        ),
                         child: const Text('Beğen'),
                       ),
                     ),
@@ -184,7 +199,7 @@ class _SocialDiscoveryProfileSheet extends StatelessWidget {
                     ),
                   );
                 },
-                child: const Text('Şikayet et'),
+                child: const Text('Şikayet et', style: TextStyle(color: Colors.white54)),
               ),
             ],
           ),

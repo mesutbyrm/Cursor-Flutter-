@@ -68,31 +68,54 @@ export function UserCommandCenterModal({ userId, open, onClose }: Props) {
           width: 'min(920px, 96vw)',
           maxHeight: '90vh',
           overflow: 'auto',
-          background: '#0f1220',
+          background: 'linear-gradient(145deg, #0B0F1E 0%, #15102B 100%)',
           color: '#fff',
-          borderRadius: 12,
+          borderRadius: 16,
+          border: '1px solid rgba(255,255,255,0.12)',
+          boxShadow: '0 12px 40px rgba(0,0,0,0.45)',
           padding: 20,
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <header style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <h2 style={{ margin: 0 }}>Kullanıcı merkezi</h2>
-          <button type="button" onClick={onClose}>Kapat</button>
+        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h2 style={{ margin: 0, fontWeight: 800 }}>Kullanıcı merkezi</h2>
+            <p style={{ margin: '4px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>
+              {userId}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              background: 'rgba(184,50,255,0.22)',
+              border: '1px solid rgba(184,50,255,0.45)',
+              color: '#fff',
+              borderRadius: 10,
+              padding: '8px 14px',
+              cursor: 'pointer',
+              fontWeight: 700,
+            }}
+          >
+            Kapat
+          </button>
         </header>
-        <p style={{ opacity: 0.7, fontSize: 13 }}>userId: {userId}</p>
-        <nav style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+        <nav style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '16px 0' }}>
           {TABS.map((t) => (
             <button
               key={t}
               type="button"
               onClick={() => setTab(t)}
               style={{
-                fontWeight: tab === t ? 700 : 400,
-                background: tab === t ? '#3d2a7a' : 'transparent',
+                fontWeight: tab === t ? 800 : 500,
+                background: tab === t ? 'rgba(184,50,255,0.28)' : 'rgba(255,255,255,0.06)',
                 color: '#fff',
-                border: '1px solid #444',
-                borderRadius: 8,
-                padding: '6px 10px',
+                border: tab === t
+                  ? '1px solid rgba(184,50,255,0.55)'
+                  : '1px solid rgba(255,255,255,0.12)',
+                borderRadius: 10,
+                padding: '6px 12px',
+                cursor: 'pointer',
               }}
             >
               {t}

@@ -23,7 +23,9 @@ import '../../domain/admin_user_extended_data.dart';
 import '../widgets/admin_role_permissions_matrix.dart';
 import '../widgets/admin_user_command_actions.dart';
 import '../widgets/admin_user_finance_ledger_section.dart';
+import '../widgets/admin_discovery_permissions_card.dart';
 import '../widgets/admin_user_presence_strip.dart';
+import '../../../platform_social/presentation/widgets/platform_social_ui_kit.dart';
 import 'admin_user_command_center_extended_tabs.dart';
 
 /// Tam kullanıcı komuta merkezi — özet, finans, hediye, yetki, aktivite.
@@ -109,7 +111,7 @@ class _AdminUserCommandCenterPageState
             TabBar(
               controller: _tabs,
               isScrollable: true,
-              indicatorColor: AppThemeColors.accentPink,
+              indicatorColor: PlatformSocialPalette.accent,
               labelColor: Colors.white,
               unselectedLabelColor: Colors.white54,
               tabs: const [
@@ -341,59 +343,69 @@ class _OverviewTab extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        Row(
-          children: [
-            CircleAvatar(
-              radius: 32,
-              backgroundImage: detail.avatarUrl != null &&
-                      detail.avatarUrl!.isNotEmpty
-                  ? canlifalImageProvider(detail.avatarUrl!)
-                  : null,
-              child: detail.avatarUrl == null || detail.avatarUrl!.isEmpty
-                  ? Text(
-                      (detail.displayName?.isNotEmpty == true
-                              ? detail.displayName![0]
-                              : '?')
-                          .toUpperCase(),
-                    )
-                  : null,
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        PlatformSocialGlassCard(
+          gradient: PlatformSocialPalette.heroGradient,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  Text(
-                    detail.displayName ?? detail.label,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 18,
+                  CircleAvatar(
+                    radius: 32,
+                    backgroundImage: detail.avatarUrl != null &&
+                            detail.avatarUrl!.isNotEmpty
+                        ? canlifalImageProvider(detail.avatarUrl!)
+                        : null,
+                    child: detail.avatarUrl == null || detail.avatarUrl!.isEmpty
+                        ? Text(
+                            (detail.displayName?.isNotEmpty == true
+                                    ? detail.displayName![0]
+                                    : '?')
+                                .toUpperCase(),
+                          )
+                        : null,
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          detail.displayName ?? detail.label,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 18,
+                          ),
+                        ),
+                        if (detail.username != null)
+                          Text(
+                            '@${detail.username}',
+                            style: const TextStyle(
+                              color: PlatformSocialPalette.textMuted,
+                            ),
+                          ),
+                        Text(
+                          'Rol: ${detail.role} · ${detail.membership}',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ],
                     ),
                   ),
-                  if (detail.username != null)
-                    Text('@${detail.username}',
-                        style: TextStyle(color: Colors.grey.shade500)),
-                  Text(
-                    'Rol: ${detail.role} · ${detail.membership}',
-                    style: const TextStyle(fontSize: 12),
-                  ),
+                  if (detail.isOnline)
+                    const PlatformSocialStatusPill(
+                      label: 'Online',
+                      tone: PlatformSocialPillTone.success,
+                      icon: Icons.circle,
+                    ),
                 ],
               ),
-            ),
-            if (detail.isOnline)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text('Online', style: TextStyle(fontSize: 11)),
-              ),
-          ],
+              const SizedBox(height: 12),
+              AdminUserPresenceStrip(userId: detail.userId),
+            ],
+          ),
         ),
-        const SizedBox(height: 12),
-        AdminUserPresenceStrip(userId: detail.userId),
         const SizedBox(height: 16),
+        const PlatformSocialSectionTitle('Özet istatistikler'),
         _StatGrid(items: [
           _Stat('Jeton', '${detail.jeton}'),
           _Stat('CFC', '${detail.cfc}'),
@@ -407,11 +419,12 @@ class _OverviewTab extends StatelessWidget {
           _Stat('Profil görüntüleme', '${detail.profileViews}'),
         ]),
         const SizedBox(height: 16),
-        _InfoTile(
+        const PlatformSocialSectionTitle('Profil bilgisi'),
+        PlatformSocialInfoRow(
           label: 'Üyelik süresi',
           value: formatMembershipTenure(detail.memberSince),
         ),
-        _InfoTile(
+        PlatformSocialInfoRow(
           label: 'Son online',
           value: formatLastOnline(
             detail.lastSeenAt,
@@ -419,18 +432,18 @@ class _OverviewTab extends StatelessWidget {
           ),
         ),
         if (detail.memberSince != null)
-          _InfoTile(
+          PlatformSocialInfoRow(
             label: 'Kayıt tarihi',
             value: DateFormat('dd.MM.yyyy HH:mm')
                 .format(detail.memberSince!.toLocal()),
           ),
         if (detail.isPsychic)
-          _InfoTile(
+          PlatformSocialInfoRow(
             label: 'Canlı falcı',
             value: detail.psychicStatus ?? 'Onaylı',
           ),
         if (detail.isBanned)
-          _InfoTile(
+          PlatformSocialInfoRow(
             label: 'Ban',
             value: detail.banReason ?? 'Askıda',
           ),
@@ -971,45 +984,25 @@ class _PermissionsTab extends ConsumerWidget {
               {'canOpenVoiceRoom': v, 'canCreateRoom': v},
             ),
           ),
-          SwitchListTile(
-            title: const Text('Tanış keşfetten gizle'),
-            subtitle: const Text('hiddenFromDiscovery'),
-            value: detail.hiddenFromDiscovery,
-            onChanged: (v) => _patchFlag(
+          const SizedBox(height: 8),
+          AdminDiscoveryPermissionsCard(
+            hiddenFromDiscovery: detail.hiddenFromDiscovery,
+            discoveryPriority: detail.discoveryPriority,
+            canDecreasePriority: detail.discoveryPriority > 0,
+            onHiddenChanged: (v) => _patchFlag(
               ref,
               context,
               {'hiddenFromDiscovery': v},
             ),
-          ),
-          ListTile(
-            title: const Text('Keşif önceliği'),
-            subtitle: Text('discoveryPriority: ${detail.discoveryPriority}'),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.remove),
-                  onPressed: detail.discoveryPriority <= 0
-                      ? null
-                      : () => _patchFlag(
-                            ref,
-                            context,
-                            {
-                              'discoveryPriority':
-                                  detail.discoveryPriority - 1,
-                            },
-                          ),
-                ),
-                Text('${detail.discoveryPriority}'),
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: () => _patchFlag(
-                    ref,
-                    context,
-                    {'discoveryPriority': detail.discoveryPriority + 1},
-                  ),
-                ),
-              ],
+            onPriorityDecrease: () => _patchFlag(
+              ref,
+              context,
+              {'discoveryPriority': detail.discoveryPriority - 1},
+            ),
+            onPriorityIncrease: () => _patchFlag(
+              ref,
+              context,
+              {'discoveryPriority': detail.discoveryPriority + 1},
             ),
           ),
         ],
@@ -1122,27 +1115,15 @@ class _StatGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final w = (MediaQuery.sizeOf(context).width - 56) / 2;
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: [
         for (final s in items)
-          Container(
-            width: (MediaQuery.sizeOf(context).width - 56) / 2,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(s.value,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w900, fontSize: 16)),
-                Text(s.label, style: const TextStyle(fontSize: 10)),
-              ],
-            ),
+          SizedBox(
+            width: w,
+            child: PlatformSocialStatTile(label: s.label, value: s.value),
           ),
       ],
     );
@@ -1156,17 +1137,7 @@ class _InfoTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(label, style: TextStyle(color: Colors.grey.shade500)),
-          ),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
-        ],
-      ),
-    );
+    return PlatformSocialInfoRow(label: label, value: value);
   }
 }
 
