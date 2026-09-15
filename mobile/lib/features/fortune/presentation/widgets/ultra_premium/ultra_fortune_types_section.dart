@@ -79,6 +79,14 @@ class _UltraFortuneTypesSectionState extends ConsumerState<UltraFortuneTypesSect
               ),
             ],
           ),
+          Text(
+            'Kategoriye dokun — detay ve hizmetler',
+            style: TextStyle(
+              color: UltraFortuneTokens.softLilac.withValues(alpha: 0.75),
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const SizedBox(height: 14),
           entries.when(
             loading: () => _buildGrid(
