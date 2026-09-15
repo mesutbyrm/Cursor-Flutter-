@@ -49,8 +49,8 @@ check "Tanış — hashtag tab" \
   "$MOBILE/lib/features/social/presentation/pages/tanis_kaynas_page.dart" \
   'socialTrendingHashtagsProvider'
 
-check "Tanış — favorite action" \
-  "$MOBILE/lib/features/social/presentation/pages/tanis_kaynas_page.dart" \
+check "Tanış — favorite action (süper beğeni)" \
+  "$MOBILE/lib/features/social/presentation/pages/tanis_discover_tab.dart" \
   "'favorite'"
 
 if [[ "$FAIL" -gt 0 ]]; then

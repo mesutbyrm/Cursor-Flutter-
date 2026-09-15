@@ -11,6 +11,6 @@ CI: `scripts/apk-pending-features-gate.sh` (release gate madde 2 sonrası).
 | 4 | SSE hediye kutusu yenileme (oda) | `chat_room_providers_room_sync.dart` → `gift_box_` |
 | 5 | Tanış Kaynaş — etkileşimler sekmesi | `tanis_kaynas_page.dart` → `socialDiscoveryActionsProvider` |
 | 6 | Tanış Kaynaş — hashtag & takım | `tanis_kaynas_page.dart` → `socialTrendingHashtagsProvider` |
-| 7 | Tanış Kaynaş — favori aksiyonu | `tanis_kaynas_page.dart` → `favorite` |
+| 7 | Tanış Kaynaş — favori aksiyonu (süper beğeni) | `tanis_discover_tab.dart` → `favorite` |
 
 **Sürüm bump:** `mobile/pubspec.yaml` ve CHANGELOG yalnızca bu gate PASS olduktan sonra artırılır.
