@@ -434,10 +434,7 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
                             ),
                           ),
                           const SizedBox(height: 12),
-                          Text(
-                            'Trend hashtag',
-                            style: const TextStyle(fontWeight: FontWeight.w800),
-                          ),
+                          const PlatformSocialSectionTitle('Trend hashtag'),
                           const SizedBox(height: 8),
                           hashtags.when(
                             loading: () => const DiscoverAccentLoader(),
@@ -484,11 +481,7 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
                             },
                           ),
                           const SizedBox(height: 20),
-                          Text(
-                            'Takımlar',
-                            style: const TextStyle(fontWeight: FontWeight.w800),
-                          ),
-                          const SizedBox(height: 8),
+                          const PlatformSocialSectionTitle('Takımlar'),
                           teams.when(
                             loading: () => const DiscoverAccentLoader(),
                             error: (e, _) => Text(ApiException.userMessage(e)),
@@ -500,39 +493,53 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
                               return Column(
                                 children: [
                                   for (final t in list)
-                                    if (t is Map)
-                                      Card(
-                                        child: ListTile(
-                                          title: Text(
-                                            (pick(
-                                                  Map<String, dynamic>.from(t),
-                                                  ['name', 'title'],
-                                                ) ??
-                                                '')
-                                                .toString(),
-                                          ),
-                                          subtitle: Text(
-                                            (pick(
-                                                  Map<String, dynamic>.from(t),
-                                                  ['id'],
-                                                ) ??
-                                                '')
-                                                .toString(),
-                                          ),
-                                          trailing: const Icon(
-                                            Icons.chevron_right,
-                                          ),
-                                          onTap: () {
-                                            final id = pick(
-                                              Map<String, dynamic>.from(t),
-                                              ['id'],
-                                            )?.toString();
-                                            if (id != null && id.isNotEmpty) {
-                                              context.push('/teams/$id');
-                                            }
-                                          },
-                                        ),
+                                    if (t is Map) ...[
+                                      Builder(
+                                        builder: (context) {
+                                          final row =
+                                              Map<String, dynamic>.from(t);
+                                          final name = (pick(row, [
+                                                'name',
+                                                'title',
+                                              ]) ??
+                                              '')
+                                              .toString();
+                                          final id = pick(row, ['id'])
+                                              ?.toString();
+                                          final leaderId = pick(row, [
+                                            'ownerId',
+                                            'leaderId',
+                                            'creatorId',
+                                            'captainUserId',
+                                          ])?.toString();
+                                          final tile = PlatformSocialListRow(
+                                            title: name.isEmpty ? 'Takım' : name,
+                                            subtitle: id ?? '',
+                                            leading: const Icon(
+                                              Icons.groups_rounded,
+                                              color: PlatformSocialPalette.accent,
+                                            ),
+                                            onTap: id != null && id.isNotEmpty
+                                                ? () => context.push('/teams/$id')
+                                                : null,
+                                          );
+                                          if (leaderId == null ||
+                                              leaderId.isEmpty) {
+                                            return tile;
+                                          }
+                                          return AdminUserHubLauncher.wrap(
+                                            context: context,
+                                            ref: ref,
+                                            userId: leaderId,
+                                            onTap: id != null && id.isNotEmpty
+                                                ? () =>
+                                                    context.push('/teams/$id')
+                                                : null,
+                                            child: tile,
+                                          );
+                                        },
                                       ),
+                                    ],
                                 ],
                               );
                             },

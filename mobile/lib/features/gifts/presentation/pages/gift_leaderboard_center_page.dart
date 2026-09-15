@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../admin/presentation/providers/staff_access_provider.dart';
+import '../../../admin/presentation/widgets/admin_user_hub_launcher.dart';
+import '../../../platform_social/presentation/widgets/platform_social_ui_kit.dart';
 import '../../domain/gift_leaderboard_entry.dart';
 import '../providers/gift_insights_providers.dart';
 
@@ -34,9 +37,10 @@ class GiftLeaderboardCenterPage extends ConsumerWidget {
     final notifier = ref.read(giftLeaderboardFilterProvider.notifier);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0B1D),
+      backgroundColor: PlatformSocialPalette.bgTop,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF12082A),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         title: const Text('Hediye Liderlik Merkezi'),
         actions: [
           _HubButton(),
@@ -194,7 +198,7 @@ class _HubButton extends ConsumerWidget {
   }
 }
 
-class _RankRow extends StatelessWidget {
+class _RankRow extends ConsumerWidget {
   const _RankRow({required this.entry});
 
   final GiftLeaderboardEntry entry;
@@ -213,18 +217,11 @@ class _RankRow extends StatelessWidget {
       };
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final loc = [entry.city, entry.country]
         .where((e) => e != null && e.trim().isNotEmpty)
         .join(', ');
-    final container = Container(
-      margin: const EdgeInsets.symmetric(vertical: 3),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1030),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
+    final row = Row(
         children: [
           SizedBox(
             width: 28,
@@ -324,15 +321,28 @@ class _RankRow extends StatelessWidget {
             ],
           ),
         ],
-      ),
-    );
+      );
 
-    if (entry.userId == null || entry.userId!.trim().isEmpty) return container;
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: () =>
-          context.push('/gifts/collection?userId=${entry.userId}'),
-      child: container,
+    final uid = entry.userId?.trim() ?? '';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: GestureDetector(
+        onLongPress: uid.isEmpty
+            ? null
+            : () {
+                final access = ref.read(staffAccessProvider);
+                if (AdminUserHubLauncher.canOpen(access)) {
+                  AdminUserHubLauncher.open(context, userId: uid);
+                }
+              },
+        child: PlatformSocialGlassCard(
+          onTap: uid.isEmpty
+              ? null
+              : () => context.push('/gifts/collection?userId=$uid'),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: row,
+        ),
+      ),
     );
   }
 

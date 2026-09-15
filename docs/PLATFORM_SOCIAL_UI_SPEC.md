@@ -1,7 +1,7 @@
 # Platform sosyal — UI spesifikasyonu (Flutter)
 
 > **Kit:** `mobile/lib/features/platform_social/presentation/widgets/platform_social_ui_kit.dart`  
-> **Sürüm:** 1.0.523+564
+> **Sürüm:** 1.0.524+565
 
 ## Renk paleti
 
@@ -39,8 +39,10 @@
 1. **Tanış** — profil sheet, Etkileşimler, keşif kartı + swipe destesi  
 2. **CFC Arena** — hub liste + detay (sıralama, skor log)  
 3. **Ajans** — talepler + tam panel (header, cüzdan, üyeler, kazanç, görev)  
-4. **Admin** — Özet + Yetkiler keşfet kartı  
+4. **Admin** — tüm 10 sekme (özet, finans, hediye, yayın, VIP, ajans, yetki, mod, aktivite, rapor)  
 5. **Ses keşif** — oda kartında mesafe rozeti  
+6. **PK / hediye liderlik** — platform kartları + staff uzun basış hub  
+7. **Tanış takımlar** — cam satır + kaptan hub  
 
 ## Web (P6)
 

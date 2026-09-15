@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/images/canlifal_network_image.dart';
+import '../../../admin/presentation/providers/staff_access_provider.dart';
+import '../../../admin/presentation/widgets/admin_user_hub_launcher.dart';
+import '../../../platform_social/presentation/widgets/platform_social_ui_kit.dart';
 import '../../domain/pk/pk_leaderboard_models.dart';
 import '../providers/pk_room_providers.dart';
 
@@ -36,12 +39,9 @@ class _PkLeaderboardPageState extends ConsumerState<PkLeaderboardPage> {
     final board = ref.watch(pkLeaderboardProvider(key));
     final myStats = ref.watch(pkStatsProvider(null));
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF0E0524),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF12082A),
-        title: const Text('PK Liderlik'),
-      ),
+    return PlatformSocialScaffold(
+      title: 'PK Liderlik',
+      subtitle: 'Haftalık · aylık · sezon',
       body: Column(
         children: [
           myStats.maybeWhen(
@@ -113,14 +113,10 @@ class _MyStatsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [Color(0xFF2A1660), Color(0xFF14093A)]),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0x33FFFFFF)),
-      ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+      child: PlatformSocialGlassCard(
+      gradient: PlatformSocialPalette.heroGradient,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
@@ -130,6 +126,7 @@ class _MyStatsCard extends StatelessWidget {
           _stat('${stats.streak}', 'Seri', const Color(0xFFFFD54F)),
           _stat(_fmt(stats.bestScore), 'En İyi', const Color(0xFF40C4FF)),
         ],
+      ),
       ),
     );
   }
@@ -147,70 +144,33 @@ class _MyStatsCard extends StatelessWidget {
   }
 }
 
-class _RankRow extends StatelessWidget {
+class _RankRow extends ConsumerWidget {
   const _RankRow({required this.entry, required this.metric});
   final PkLeaderboardEntry entry;
   final String metric;
 
-  Color get _rankColor => switch (entry.rank) {
-        1 => const Color(0xFFFFD54F),
-        2 => const Color(0xFFC0C0C0),
-        3 => const Color(0xFFCD7F32),
-        _ => Colors.white54,
-      };
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final value = metric == 'wins' ? '${entry.wins} galibiyet' : _fmt(entry.score);
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 3),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1030),
-        borderRadius: BorderRadius.circular(12),
+    final tile = Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: PlatformSocialRankTile(
+        rank: entry.rank,
+        title: entry.displayName ?? 'Yayıncı',
+        subtitle: metric == 'wins' ? 'Galibiyet sıralaması' : 'Puan sıralaması',
+        score: value,
+        highlight: entry.rank <= 3,
       ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 28,
-            child: Text('${entry.rank}',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    color: _rankColor, fontWeight: FontWeight.w900, fontSize: 15)),
-          ),
-          const SizedBox(width: 6),
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: const Color(0xFF2A1A45),
-            backgroundImage: entry.avatarUrl != null && entry.avatarUrl!.isNotEmpty
-                ? canlifalImageProvider(entry.avatarUrl!)
-                : null,
-            child: entry.avatarUrl == null || entry.avatarUrl!.isEmpty
-                ? const Icon(Icons.person, color: Colors.white54, size: 18)
-                : null,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(entry.displayName ?? 'Yayıncı',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
-          ),
-          Row(
-            children: [
-              Icon(metric == 'wins' ? Icons.emoji_events_rounded : Icons.bolt_rounded,
-                  color: const Color(0xFFFFD54F), size: 14),
-              const SizedBox(width: 3),
-              Text(value,
-                  style: const TextStyle(
-                      color: Color(0xFFFFE082),
-                      fontWeight: FontWeight.w900,
-                      fontSize: 13)),
-            ],
-          ),
-        ],
-      ),
+    );
+    if (entry.userId.isEmpty) return tile;
+    return GestureDetector(
+      onLongPress: () {
+        final access = ref.read(staffAccessProvider);
+        if (AdminUserHubLauncher.canOpen(access)) {
+          AdminUserHubLauncher.open(context, userId: entry.userId);
+        }
+      },
+      child: tile,
     );
   }
 }

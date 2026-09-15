@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.524+565 (2026-09-15) — Admin sekmeleri + PK/hediye hub UI
+
+- Admin komuta merkezi: Finans, Hediyeler, Yayın/Oda, Yetkiler, VIP, Ajans, Mod., Aktivite, Rapor — platform cam kartları
+- `admin_hub_platform_social.dart` ortak sekme bileşenleri
+- PK liderlik: platform scaffold + sıra kartı; staff uzun basış → kullanıcı hub
+- Hediye liderlik + ses oturum top spenders: cam satır; staff uzun basış → hub
+- Tanış takımlar: cam liste; kaptan/owner uzun basış → hub
+
 ## 1.0.523+564 (2026-09-15) — Platform sosyal UI tamamlama
 
 - Keşif kartı + swipe destesi: cam kart, mesafe/online pill, platform aksiyon düğmeleri

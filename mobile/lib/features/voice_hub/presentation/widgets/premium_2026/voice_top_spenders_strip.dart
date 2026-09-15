@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../admin/presentation/providers/staff_access_provider.dart';
+import '../../../../admin/presentation/widgets/admin_user_hub_launcher.dart';
 import '../../../../gifts/domain/gift_leaderboard_entry.dart';
 import '../../providers/voice_gift_leaderboard_provider.dart';
 import '../../theme/voice_room_tokens.dart';
@@ -49,7 +51,7 @@ class VoiceTopSpendersStrip extends ConsumerWidget {
                     children: [
                       for (var i = 0; i < top.length; i++) ...[
                         if (i > 0) const SizedBox(width: 10),
-                        _SpenderChip(entry: top[i], rank: i + 1),
+                        _SpenderChip(entry: top[i], rank: i + 1, ref: ref),
                       ],
                     ],
                   ),
@@ -67,10 +69,15 @@ class VoiceTopSpendersStrip extends ConsumerWidget {
 }
 
 class _SpenderChip extends StatelessWidget {
-  const _SpenderChip({required this.entry, required this.rank});
+  const _SpenderChip({
+    required this.entry,
+    required this.rank,
+    required this.ref,
+  });
 
   final GiftLeaderboardEntry entry;
   final int rank;
+  final WidgetRef ref;
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +87,17 @@ class _SpenderChip extends StatelessWidget {
     final coins = entry.totalCoins;
     final avatar = entry.avatarUrl;
 
-    return Container(
+    final uid = entry.userId?.trim() ?? '';
+    return GestureDetector(
+      onLongPress: uid.isEmpty
+          ? null
+          : () {
+              final access = ref.read(staffAccessProvider);
+              if (AdminUserHubLauncher.canOpen(access)) {
+                AdminUserHubLauncher.open(context, userId: uid);
+              }
+            },
+      child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.06),
@@ -129,6 +146,7 @@ class _SpenderChip extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

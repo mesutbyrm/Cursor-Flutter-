@@ -4,12 +4,13 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
-import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/util/json_util.dart';
 import '../../domain/admin_user_detail.dart';
 import '../../domain/admin_user_permissions.dart';
 import '../providers/admin_user_hub_providers.dart';
 import '../providers/staff_access_provider.dart';
+import '../../../platform_social/presentation/widgets/platform_social_ui_kit.dart';
+import '../widgets/admin_hub_platform_social.dart';
 
 /// Lazy sekmeler — üretim uçları yoksa boş durum + probe mesajı (§49).
 final adminUserAgencyProbeProvider = FutureProvider.autoDispose
@@ -69,28 +70,40 @@ class AdminUserVipTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final overview = ref.watch(adminUserOverviewProvider(detail.userId));
-    return ListView(
-      padding: const EdgeInsets.all(20),
+    return AdminHubTabScroll(
       children: [
-        _info('Üyelik', detail.membership),
-        _info('Rol', detail.role),
-        _info('Falcı', detail.isPsychic ? (detail.psychicStatus ?? 'aktif') : 'hayır'),
-        overview.when(
-          data: (o) {
-            if (o == null) return const SizedBox.shrink();
-            final user = o['user'] is Map ? asJsonMap(o['user']) : o;
-            final exp = pick(user, ['membershipExpiresAt'])?.toString();
-            if (exp != null) return _info('VIP bitiş', exp);
-            return const SizedBox.shrink();
-          },
-          loading: () => const LinearProgressIndicator(),
-          error: (_, __) => const SizedBox.shrink(),
-        ),
-        const SizedBox(height: 16),
-        const Text(
-          'VIP ver/al ve süre değişikliği Finans ve Yetkiler sekmelerinden; '
-          'tüm işlemler sunucu audit log’a yazılmalıdır.',
-          style: TextStyle(fontSize: 12, color: Colors.white54),
+        AdminHubSectionCard(
+          title: 'VIP & üyelik',
+          children: [
+            PlatformSocialInfoRow(label: 'Üyelik', value: detail.membership),
+            PlatformSocialInfoRow(label: 'Rol', value: detail.role),
+            PlatformSocialInfoRow(
+              label: 'Falcı',
+              value: detail.isPsychic ? (detail.psychicStatus ?? 'aktif') : 'hayır',
+            ),
+            overview.when(
+              data: (o) {
+                if (o == null) return const SizedBox.shrink();
+                final user = o['user'] is Map ? asJsonMap(o['user']) : o;
+                final exp = pick(user, ['membershipExpiresAt'])?.toString();
+                if (exp != null) {
+                  return PlatformSocialInfoRow(label: 'VIP bitiş', value: exp);
+                }
+                return const SizedBox.shrink();
+              },
+              loading: () => const LinearProgressIndicator(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
+          ],
+          footer: const Text(
+            'VIP ver/al ve süre değişikliği Finans ve Yetkiler sekmelerinden; '
+            'tüm işlemler sunucu audit log’a yazılmalıdır.',
+            style: TextStyle(
+              fontSize: 11,
+              color: PlatformSocialPalette.textMuted,
+              height: 1.35,
+            ),
+          ),
         ),
       ],
     );
@@ -107,10 +120,10 @@ class AdminUserAgencyTab extends ConsumerWidget {
     final async = ref.watch(adminUserAgencyProbeProvider(userId));
     return async.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => _empty('Ajans verisi yüklenemedi'),
+      error: (e, _) => adminHubEmpty('Ajans verisi yüklenemedi'),
       data: (data) {
         if (data == null || data.isEmpty) {
-          return _empty(
+          return adminHubEmpty(
             'GET ${ApiEndpoints.adminUserAgency(userId)} henüz yok — '
             'özet profil alanları kullanılır.',
           );
@@ -118,13 +131,29 @@ class AdminUserAgencyTab extends ConsumerWidget {
         final agency = data['agency'] is Map
             ? asJsonMap(data['agency'])
             : data;
-        return ListView(
-          padding: const EdgeInsets.all(20),
+        return AdminHubTabScroll(
           children: [
-            _info('Ajans', pick(agency, ['name', 'displayName'])?.toString()),
-            _info('Rol', pick(agency, ['role', 'memberRole'])?.toString()),
-            _info('Durum', pick(agency, ['status', 'applicationStatus'])?.toString()),
-            _info('Ajans ID', pick(agency, ['agencyId', 'id'])?.toString()),
+            AdminHubSectionCard(
+              title: 'Ajans üyeliği',
+              children: [
+                PlatformSocialInfoRow(
+                  label: 'Ajans',
+                  value: pick(agency, ['name', 'displayName'])?.toString(),
+                ),
+                PlatformSocialInfoRow(
+                  label: 'Rol',
+                  value: pick(agency, ['role', 'memberRole'])?.toString(),
+                ),
+                PlatformSocialInfoRow(
+                  label: 'Durum',
+                  value: pick(agency, ['status', 'applicationStatus'])?.toString(),
+                ),
+                PlatformSocialInfoRow(
+                  label: 'Ajans ID',
+                  value: pick(agency, ['agencyId', 'id'])?.toString(),
+                ),
+              ],
+            ),
           ],
         );
       },
@@ -146,29 +175,49 @@ class AdminUserModerationTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final access = ref.watch(staffAccessProvider);
     final async = ref.watch(adminUserModerationProbeProvider(userId));
-    return ListView(
-      padding: const EdgeInsets.all(20),
+    return AdminHubTabScroll(
       children: [
-        _info('Ban', detail.isBanned == true ? 'Evet' : 'Hayır'),
-        if (AdminUserPermissions.canBanUser(access))
-          ListTile(
-            leading: const Icon(Icons.gavel_outlined),
-            title: const Text('Moderasyon paneli'),
-            onTap: () => context.push('/admin/moderation'),
-          ),
-        const Divider(),
+        AdminHubSectionCard(
+          title: 'Moderasyon özeti',
+          children: [
+            PlatformSocialInfoRow(
+              label: 'Ban',
+              value: detail.isBanned == true ? 'Evet' : 'Hayır',
+            ),
+            if (AdminUserPermissions.canBanUser(access))
+              AdminHubActionRow(
+                title: 'Moderasyon paneli',
+                icon: Icons.gavel_outlined,
+                onTap: () => context.push('/admin/moderation'),
+              ),
+          ],
+        ),
         async.when(
           loading: () => const LinearProgressIndicator(),
           error: (_, __) => const SizedBox.shrink(),
           data: (data) {
             if (data == null) {
-              return const Text(
-                'Detaylı moderasyon geçmişi için üretim '
-                '`GET /api/admin/users/{id}/moderation` bekleniyor.',
-                style: TextStyle(fontSize: 12, color: Colors.white54),
+              return const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text(
+                  'Detaylı moderasyon geçmişi için üretim '
+                  '`GET /api/admin/users/{id}/moderation` bekleniyor.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: PlatformSocialPalette.textMuted,
+                  ),
+                ),
               );
             }
-            return Text(data.toString());
+            return AdminHubSectionCard(
+              title: 'Moderasyon API',
+              children: [
+                PlatformSocialInfoRow(
+                  label: 'Ham veri',
+                  value: data.toString(),
+                ),
+              ],
+            );
           },
         ),
       ],
@@ -212,29 +261,31 @@ class _ActivityList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) {
-      return const Center(child: Text('Bu kullanıcı için aktivite bulunamadı.'));
+      return adminHubEmpty('Bu kullanıcı için aktivite bulunamadı.');
     }
-    return ListView.separated(
+    return ListView.builder(
       padding: const EdgeInsets.all(20),
       itemCount: items.length,
-      separatorBuilder: (_, __) => const Divider(height: 1),
       itemBuilder: (_, i) {
         final a = items[i];
         final type = (a['activityType'] ?? a['type'] ?? a['label'] ?? 'aktivite')
             .toString();
         final at = a['createdAt'] ?? a['at'];
-        return ListTile(
-          dense: true,
-          title: Text(type, style: const TextStyle(fontWeight: FontWeight.w600)),
-          subtitle: Text(a['description']?.toString() ?? ''),
-          trailing: at != null
-              ? Text(
-                  at.toString().length > 16
-                      ? at.toString().substring(0, 16)
-                      : at.toString(),
-                  style: const TextStyle(fontSize: 10),
-                )
-              : null,
+        final when = at != null
+            ? (at.toString().length > 16
+                ? at.toString().substring(0, 16)
+                : at.toString())
+            : '';
+        return PlatformSocialListRow(
+          title: type,
+          subtitle: [
+            if (a['description'] != null) a['description'].toString(),
+            if (when.isNotEmpty) when,
+          ].join(' · '),
+          leading: const Icon(
+            Icons.timeline_rounded,
+            color: PlatformSocialPalette.accentSecondary,
+          ),
         );
       },
     );
@@ -251,25 +302,25 @@ class AdminUserReportsTab extends ConsumerWidget {
     final async = ref.watch(adminUserReportsProbeProvider(userId));
     return async.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => _empty('Raporlar yüklenemedi'),
+      error: (e, _) => adminHubEmpty('Raporlar yüklenemedi'),
       data: (rows) {
         if (rows.isEmpty) {
-          return _empty(
+          return adminHubEmpty(
             'Şikayet kaydı yok veya `GET ${ApiEndpoints.adminUserReports(userId)}` '
             'henüz aktif değil.',
           );
         }
         return ListView.builder(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(20),
           itemCount: rows.length,
           itemBuilder: (_, i) {
             final r = rows[i];
-            return ListTile(
-              title: Text(
-                (r['reason'] ?? r['type'] ?? 'Rapor').toString(),
-              ),
-              subtitle: Text(
-                (r['createdAt'] ?? r['status'] ?? '').toString(),
+            return PlatformSocialListRow(
+              title: (r['reason'] ?? r['type'] ?? 'Rapor').toString(),
+              subtitle: (r['createdAt'] ?? r['status'] ?? '').toString(),
+              leading: const Icon(
+                Icons.flag_outlined,
+                color: PlatformSocialPalette.danger,
               ),
             );
           },
@@ -277,40 +328,6 @@ class AdminUserReportsTab extends ConsumerWidget {
       },
     );
   }
-}
-
-Widget _empty(String message) {
-  return Center(
-    child: Padding(
-      padding: const EdgeInsets.all(24),
-      child: Text(
-        message,
-        textAlign: TextAlign.center,
-        style: const TextStyle(color: Colors.white54, fontSize: 13),
-      ),
-    ),
-  );
-}
-
-Widget _info(String label, String? value) {
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 10),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 120,
-          child: Text(label, style: const TextStyle(color: Colors.white54)),
-        ),
-        Expanded(
-          child: Text(
-            value?.trim().isNotEmpty == true ? value! : '—',
-            style: const TextStyle(fontWeight: FontWeight.w500),
-          ),
-        ),
-      ],
-    ),
-  );
 }
 
 /// Üst hızlı işlem şeridi (§51) — yalnızca yetkili butonlar.
@@ -355,8 +372,10 @@ class AdminUserQuickActionBar extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: ActionChip(
-        avatar: Icon(icon, size: 18, color: AppThemeColors.accentPink),
+        avatar: Icon(icon, size: 18, color: PlatformSocialPalette.accent),
         label: Text(label),
+        backgroundColor: PlatformSocialPalette.accent.withValues(alpha: 0.15),
+        side: BorderSide(color: PlatformSocialPalette.accent.withValues(alpha: 0.35)),
         onPressed: onTap,
       ),
     );
