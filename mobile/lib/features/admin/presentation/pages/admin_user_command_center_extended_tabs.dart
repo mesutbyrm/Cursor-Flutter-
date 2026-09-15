@@ -138,19 +138,21 @@ class AdminUserAgencyTab extends ConsumerWidget {
               children: [
                 PlatformSocialInfoRow(
                   label: 'Ajans',
-                  value: pick(agency, ['name', 'displayName'])?.toString(),
+                  value: pick(agency, ['name', 'displayName'])?.toString() ?? '—',
                 ),
                 PlatformSocialInfoRow(
                   label: 'Rol',
-                  value: pick(agency, ['role', 'memberRole'])?.toString(),
+                  value: pick(agency, ['role', 'memberRole'])?.toString() ?? '—',
                 ),
                 PlatformSocialInfoRow(
                   label: 'Durum',
-                  value: pick(agency, ['status', 'applicationStatus'])?.toString(),
+                  value:
+                      pick(agency, ['status', 'applicationStatus'])?.toString() ??
+                          '—',
                 ),
                 PlatformSocialInfoRow(
                   label: 'Ajans ID',
-                  value: pick(agency, ['agencyId', 'id'])?.toString(),
+                  value: pick(agency, ['agencyId', 'id'])?.toString() ?? '—',
                 ),
               ],
             ),
