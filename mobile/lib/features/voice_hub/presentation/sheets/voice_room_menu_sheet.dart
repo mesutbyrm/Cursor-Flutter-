@@ -12,6 +12,7 @@ import '../../domain/entities/chat_room_presence.dart';
 import '../providers/chat_room_providers.dart';
 import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../providers/pk_battle_remote_provider.dart';
+import '../../../pk/presentation/widgets/pk_start_sheet.dart';
 import '../theme/voice_room_tokens.dart';
 import '../utils/voice_room_permissions.dart';
 import '../widgets/premium/voice_glass.dart';
@@ -95,9 +96,7 @@ class _VoiceRoomMenuSheet extends ConsumerWidget {
           } else if (onPkInvite != null) {
             onPkInvite!();
           } else {
-            final key =
-                room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
-            context.push('/voice-room/$key/pk-invite', extra: room);
+            openVoicePkInviteSheet(context, ref, room);
           }
         },
       ),

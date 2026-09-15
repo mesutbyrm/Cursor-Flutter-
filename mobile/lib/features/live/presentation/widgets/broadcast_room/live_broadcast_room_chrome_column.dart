@@ -15,6 +15,7 @@ import 'live_broadcast_room_bottom_chrome.dart';
 import 'live_broadcast_room_chat_overlay.dart';
 import 'live_pk_score_bar.dart';
 import 'live_room_chat_message.dart';
+import '../pk/live_pk_host_pending_banner.dart';
 
 /// Üst bar + PK bekleyen + sohbet + alt kontrol (orchestration üstte).
 class LiveBroadcastRoomChromeColumn extends ConsumerWidget {
@@ -137,6 +138,8 @@ class LiveBroadcastRoomChromeColumn extends ConsumerWidget {
               onBack: embeddedInSwipe ? onClose : null,
             ),
           ),
+          if (hasStream && streamId != null && s.isHost)
+            LivePkHostPendingBanner(streamId: streamId!),
           if (hasStream && pkState?.battle != null && pkStatus == 'pending' && !s.isHost)
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../fortune/presentation/data/fortune_catalog.dart';
+import '../../../fortune/presentation/widgets/fortune_type_cover_image.dart';
 import '../../../platform/data/models/fortune_request_type.dart';
 import '../providers/home_providers.dart';
 import '../theme/home_approved_design.dart';
@@ -71,7 +72,7 @@ class HomeFortuneRequestTypesSection extends ConsumerWidget {
               onAction: () => context.push('/fortune/types'),
             ),
             HomeHorizontalList(
-              height: 112,
+              height: 128,
               itemCount: items.length,
               itemBuilder: (_, i) => _TypeCard(type: items[i]),
             ),
@@ -105,44 +106,73 @@ class _TypeCard extends ConsumerWidget {
         onTap: () => context.push('/fortune/$_routeSlug'),
         borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
         child: Ink(
-          width: 120,
+          width: 132,
+          height: 128,
           decoration: HomePremiumDesign.glassCard(
             tint: HomePremiumDesign.surface,
             radius: HomeApprovedDesign.cardRadius,
-            border: Border.all(color: accent.withValues(alpha: 0.28)),
+            border: Border.all(color: accent.withValues(alpha: 0.35)),
           ),
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          clipBehavior: Clip.antiAlias,
+          child: Stack(
+            fit: StackFit.expand,
             children: [
-              Icon(
-                Icons.auto_awesome_rounded,
-                size: 18,
-                color: accent,
+              FortuneTypeCoverImage(
+                slug: _routeSlug,
+                accent: accent,
+                imageWidth: 480,
               ),
-              const Spacer(),
-              Text(
-                type.label,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: HomeApprovedDesign.textPrimary,
-                  height: 1.15,
-                ),
-              ),
-              if (cost != null && cost > 0) ...[
-                const SizedBox(height: 4),
-                Text(
-                  '$cost $jetonLabel',
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: HomeApprovedDesign.gold,
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.05),
+                      Colors.black.withValues(alpha: 0.82),
+                    ],
                   ),
                 ),
-              ],
+              ),
+              Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (catalog?.emoji.isNotEmpty ?? false)
+                      Text(catalog!.emoji, style: const TextStyle(fontSize: 16)),
+                    const Spacer(),
+                    Text(
+                      type.label,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        height: 1.15,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black54,
+                            blurRadius: 6,
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (cost != null && cost > 0) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        '$cost $jetonLabel',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: HomeApprovedDesign.gold,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ],
           ),
         ),

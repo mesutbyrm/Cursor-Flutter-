@@ -112,12 +112,17 @@ class PkService {
     int durationSeconds = 180,
     int countdownSec = 5,
   }) async {
+    final s1 = side1UserIds.where((id) => id.trim().isNotEmpty).take(4).toList();
+    final s2 = side2UserIds.where((id) => id.trim().isNotEmpty).take(4).toList();
+    if (s1.isEmpty || s2.isEmpty) {
+      throw const PkException('PK için her iki tarafta en az bir kullanıcı gerekli');
+    }
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.chatRoomPk(roomId.trim()),
       data: {
         'action': 'create_user',
-        'side1UserIds': side1UserIds,
-        'side2UserIds': side2UserIds,
+        'side1UserIds': s1,
+        'side2UserIds': s2,
         'duration': durationSeconds.clamp(60, 600),
         'countdownSec': countdownSec.clamp(0, 30),
       },

@@ -2026,9 +2026,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   Future<void> _openPkPanel() async {
     if (!mounted) return;
     final streamId = widget.session.streamId?.trim();
-    if (streamId != null &&
-        streamId.isNotEmpty &&
-        widget.session.isHost) {
+    if (streamId != null && streamId.isNotEmpty) {
       await showPkStartSheet(
         context,
         ref,
@@ -2036,7 +2034,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       );
       return;
     }
-    await context.push('/live/pk-invite', extra: widget.session);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Yayın kimliği yüklenemedi — PK başlatılamadı')),
+    );
   }
 
   Future<void> _openHostTools() async {

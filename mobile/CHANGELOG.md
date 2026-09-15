@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.507+547 (2026-09-15) — Canlı PK banner + ana sayfa fal görselleri
+
+- Canlı yayıncı: bekleyen PK için `PkPendingBanner` (üst chrome)
+- Canlı PK: `/live/pk-invite` ve panel yalnızca birleşik `showPkStartSheet`
+- Sesli menü: PK daveti doğrudan `openVoicePkInviteSheet`
+- Ana sayfa fal türleri: mistik kapak görselleri (`FortuneTypeCoverImage`)
+- Oda içi PK: `create_user` tarafları en fazla 4 kullanıcı (sunucu sözleşmesi)
+
 ## 1.0.506+546 (2026-09-15) — PK sesli birleşik sheet + Tanış kaydırma
 
 - Sesli PK: tüm girişler `openVoicePkInviteSheet` → `/api/chat/rooms/pk/candidates` + `POST /api/live/pk`
