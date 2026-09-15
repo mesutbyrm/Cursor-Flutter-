@@ -4,22 +4,17 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.520+561` |
-| Tarih (UTC) | 2026-09-15 17:17 |
-| Commit | [`66eb4e32c2d06bdda2dea4b73a1580c91d033f3d`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/66eb4e32c2d06bdda2dea4b73a1580c91d033f3d) |
-| İş akışı | [Run 34997974023](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34997974023) |
+| Sürüm | `1.0.524+565` |
+| Tarih (UTC) | 2026-09-15 19:43 |
+| Commit | [`679bd506134a09d0752304909cae4d5f2d0253a2`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/679bd506134a09d0752304909cae4d5f2d0253a2) |
+| İş akışı | [Run 35013711808](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35013711808) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.523+564 (2026-09-15) — Platform sosyal UI tamamlama
+## 1.0.524+565 (2026-09-15) — CI FAZ0 oda probe (ban fallback)
 
-- Keşif kartı + swipe destesi: cam kart, mesafe/online pill, platform aksiyon düğmeleri
-- Ajans paneli: gradient arka plan, cüzdan/istatistik/üye/kazanç/görev cam kartları
-- Admin komuta merkezi özet: hero profil kartı, `PlatformSocialStatTile` / bilgi satırları
-- Sesli oda keşif kartı: `distanceLabel` mor mesafe rozeti
-- UI kit: `StatTile`, `InfoRow`, `ListRow`, `CircleAction`
-- Web P6 modal: mobil palet ile hizalı gradient + sekme stilleri
+- Kabul testleri: `pick_acceptance_probe_room_id` — probe oda banlıysa join yapılabilen oda seçilir (SSE/presence)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
