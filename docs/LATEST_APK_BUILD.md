@@ -4,21 +4,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.514+554` |
-| Tarih (UTC) | 2026-09-15 15:18 |
-| Commit | [`a426279032ed266288ade369c756ed14d8a8bb8b`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/a426279032ed266288ade369c756ed14d8a8bb8b) |
-| İş akışı | [Run 34985634645](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34985634645) |
+| Sürüm | `1.0.515+555` |
+| Tarih (UTC) | 2026-09-15 15:38 |
+| Commit | [`aac03bda2b4b5b6fcae68087c40da3ac68e76912`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/aac03bda2b4b5b6fcae68087c40da3ac68e76912) |
+| İş akışı | [Run 34987075272](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34987075272) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.515+555 (2026-09-15) — Capability genişletme (kozmetik, DM, fal, admin)
+## 1.0.516+556 (2026-09-15) — VIP gizlilik, SVIP lounge, admin matris
 
-- Kozmetik slotları → `membershipAllowsRef` (çerçeve, balon, giriş, koltuk efekti)
-- DM sesli arama + Gold UI: `vip.ad_free`; giriş efekti capability + admin ayarı
-- Fal sınırsız erişim: `membershipCapabilitiesSyncProvider` effective tier
-- VIP hub: canlı capability grid; ayrıcalık kataloğu API anahtarları
-- Admin üyelik: kademe aktif/pasif `PUT /api/admin/membership_tiers`
+- `GET/PUT /api/me/vip-preferences` — Ayarlar gizlilik bölümü (capability kilitli)
+- `/vip-svip-lounge` — SVIP capability + VIP oda listesi
+- Admin tier×feature matrisi düzenleme (PUT membership_features)
+- Giriş efekti / site animasyon / app bar rank düzeltmeleri
+- `docs/MEMBERSHIP_REMAINING.md` — üretim + release kalanları
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
