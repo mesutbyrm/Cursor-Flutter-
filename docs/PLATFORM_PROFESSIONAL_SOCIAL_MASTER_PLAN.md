@@ -118,9 +118,9 @@ flowchart TB
 
 | Faz | İçerik | Repo |
 |-----|--------|------|
-| **P0** | RBAC + audit tüm admin POST’larda; jeton/CFC idempotent | Üretim |
-| **P1** | Admin User Hub API paketi (`/overview`, `/activity`, …) | Üretim + mobil probe → native |
-| **P2** | Agency wallet ledger + transfer + bonus/komisyon config UI | Üretim + mobil ajans panel |
+| **P0** | RBAC + audit tüm admin POST’larda; jeton/CFC idempotent | `admin-mutation.ts` referans + deploy rehberi |
+| **P1** | Admin User Hub API paketi (`/overview`, `/activity`, …) | **backend-parity route’lar** + mobil provider |
+| **P2** | Agency wallet ledger + transfer + bonus/komisyon config UI | **transfer handler** parite + mobil UI |
 | **P3** | Activity timeline + presence (oda/yayın/fal) | Üretim |
 | **P4** | CFC Arena admin + server-side scoring | Üretim + `/cfc-arena` mobil |
 | **P5** | Tanış geniş profil, ilgi alanı, sosyal link gizlilik | Üretim + mobil |

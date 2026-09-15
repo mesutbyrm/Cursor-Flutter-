@@ -1,5 +1,22 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.517+558 (2026-09-15) — P0–P2 parite + hub API
+
+- backend-parity: admin user hub routes (overview, activity, agency, …) + `360`
+- Ajans: `POST /api/agency/wallet/transfer` (ledger + idempotency + audit)
+- Referans: `lib/admin-mutation.ts` (P0 guard)
+- Mobil: `admin_user_hub_providers`, aktivite timeline API
+- `docs/PLATFORM_PRODUCTION_DEPLOY_P0_P2.md`
+
+## Unreleased — Profesyonel platform sprint (mobil katman)
+
+- Admin komuta merkezi: VIP, Ajans, Mod., Rapor sekmeleri + hızlı işlem şeridi
+- `AdminUserHubLauncher` — staff uzun basış ile merkezi kullanıcı yönetimi
+- Mesafe: `DistanceBand` (yuvarlanmış bant; kesin km gösterimi kaldırıldı)
+- Ajans panel: jeton kredisi probe + üyeye transfer sheet (`/api/agency/wallet*`)
+- CFC Arena hub rotası `/cfc-arena` (liste probe)
+- `docs/PLATFORM_PROFESSIONAL_SOCIAL_MASTER_PLAN.md` — tam sistem analizi ve faz planı
+
 ## 1.0.516+556 (2026-09-15) — VIP gizlilik, SVIP lounge, admin matris
 
 - `GET/PUT /api/me/vip-preferences` — Ayarlar gizlilik bölümü (capability kilitli)

@@ -8,6 +8,7 @@ import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/util/json_util.dart';
 import '../../domain/admin_user_detail.dart';
 import '../../domain/admin_user_permissions.dart';
+import '../providers/admin_user_hub_providers.dart';
 import '../providers/staff_access_provider.dart';
 
 /// Lazy sekmeler — üretim uçları yoksa boş durum + probe mesajı (§49).
@@ -60,19 +61,31 @@ List<Map<String, dynamic>> _parseList(dynamic body) {
   return const [];
 }
 
-class AdminUserVipTab extends StatelessWidget {
+class AdminUserVipTab extends ConsumerWidget {
   const AdminUserVipTab({super.key, required this.detail});
 
   final AdminUserDetail detail;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final overview = ref.watch(adminUserOverviewProvider(detail.userId));
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
         _info('Üyelik', detail.membership),
         _info('Rol', detail.role),
         _info('Falcı', detail.isPsychic ? (detail.psychicStatus ?? 'aktif') : 'hayır'),
+        overview.when(
+          data: (o) {
+            if (o == null) return const SizedBox.shrink();
+            final user = o['user'] is Map ? asJsonMap(o['user']) : o;
+            final exp = pick(user, ['membershipExpiresAt'])?.toString();
+            if (exp != null) return _info('VIP bitiş', exp);
+            return const SizedBox.shrink();
+          },
+          loading: () => const LinearProgressIndicator(),
+          error: (_, __) => const SizedBox.shrink(),
+        ),
         const SizedBox(height: 16),
         const Text(
           'VIP ver/al ve süre değişikliği Finans ve Yetkiler sekmelerinden; '
@@ -159,6 +172,71 @@ class AdminUserModerationTab extends ConsumerWidget {
           },
         ),
       ],
+    );
+  }
+}
+
+class AdminUserActivityTab extends ConsumerWidget {
+  const AdminUserActivityTab({
+    super.key,
+    required this.userId,
+    required this.fallback,
+    required this.access,
+  });
+
+  final String userId;
+  final List<Map<String, dynamic>> fallback;
+  final StaffAccess access;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (!AdminUserPermissions.canViewActivity(access)) {
+      return const Center(child: Text('Aktivite görüntüleme yetkiniz yok.'));
+    }
+    final timeline = ref.watch(adminUserActivityTimelineProvider(userId));
+    return timeline.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, __) => _ActivityList(items: fallback),
+      data: (items) => _ActivityList(
+        items: items.isNotEmpty ? items : fallback,
+      ),
+    );
+  }
+}
+
+class _ActivityList extends StatelessWidget {
+  const _ActivityList({required this.items});
+
+  final List<Map<String, dynamic>> items;
+
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty) {
+      return const Center(child: Text('Bu kullanıcı için aktivite bulunamadı.'));
+    }
+    return ListView.separated(
+      padding: const EdgeInsets.all(20),
+      itemCount: items.length,
+      separatorBuilder: (_, __) => const Divider(height: 1),
+      itemBuilder: (_, i) {
+        final a = items[i];
+        final type = (a['activityType'] ?? a['type'] ?? a['label'] ?? 'aktivite')
+            .toString();
+        final at = a['createdAt'] ?? a['at'];
+        return ListTile(
+          dense: true,
+          title: Text(type, style: const TextStyle(fontWeight: FontWeight.w600)),
+          subtitle: Text(a['description']?.toString() ?? ''),
+          trailing: at != null
+              ? Text(
+                  at.toString().length > 16
+                      ? at.toString().substring(0, 16)
+                      : at.toString(),
+                  style: const TextStyle(fontSize: 10),
+                )
+              : null,
+        );
+      },
     );
   }
 }

@@ -269,7 +269,11 @@ class _TabBody extends StatelessWidget {
           onSaved: onRefresh,
         ),
         AdminUserModerationTab(userId: d.userId, detail: d),
-        _ActivityTab(activities: bundle.activities, access: access),
+        AdminUserActivityTab(
+          userId: d.userId,
+          fallback: bundle.activities,
+          access: access,
+        ),
         AdminUserReportsTab(userId: d.userId),
       ],
     );

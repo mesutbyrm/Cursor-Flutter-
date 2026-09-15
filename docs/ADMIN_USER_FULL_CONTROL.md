@@ -61,14 +61,24 @@ Kod: `mobile/lib/features/admin/domain/admin_user_permissions.dart`
 
 ---
 
-## UI sekmeleri (Faz 1 — uygulandı)
+## UI sekmeleri (Faz 1–4 — mobil)
 
 1. **Özet** — jeton, CFC, yayın/oda sayısı, üyelik süresi, son online, sosyal
 2. **Finans** — geçmiş + jeton/CFC/üyelik hızlı işlemler
 3. **Hediyeler** — koleksiyon + albüm (tür bazlı; zaman damgası Faz 2)
 4. **Yayın/Oda** — sayılar, izin bayrakları, aktif listelere link
-5. **Yetkiler** — rol formu, ban, özellik switch’leri (PATCH)
-6. **Aktivite** — activity-feed’den kullanıcıya filtrelenmiş satırlar
+5. **VIP** — üyelik / falcı özet
+6. **Ajans** — `GET /api/admin/users/{id}/agency` probe
+7. **Yetkiler** — rol formu, ban, özellik switch’leri (PATCH)
+8. **Mod.** — moderasyon probe + panel linki
+9. **Aktivite** — activity-feed’den kullanıcıya filtrelenmiş satırlar
+10. **Rapor** — şikayet listesi probe
+
+**Hızlı işlem şeridi (üst):** Jeton, VIP, Ban, Falcı (yetkiye göre).
+
+**Her yerden açılış:** `AdminUserHubLauncher` → `/admin/users/{id}` (ör. Tanış kartında staff uzun basış).
+
+Mimari plan: `docs/PLATFORM_PROFESSIONAL_SOCIAL_MASTER_PLAN.md`
 
 ---
 
