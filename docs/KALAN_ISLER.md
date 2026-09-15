@@ -87,3 +87,5 @@ FAIL: `bash scripts/on-p0-fail.sh "T+5s donma"`
 Kayıt: `docs/USER_DEVICE_TEST_LOG.md`
 
 Detay: [`REMAINING_WORK.md`](REMAINING_WORK.md) · [`RELEASE_USER_NEXT_STEPS.md`](RELEASE_USER_NEXT_STEPS.md)
+
+PK / entegrasyon kalan maddeler: [`PK_FLUTTER_KALAN_ISLER.md`](PK_FLUTTER_KALAN_ISLER.md)

@@ -7,6 +7,9 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/pk_event_log.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../pk/presentation/providers/pk_providers.dart';
+import '../../../pk/presentation/providers/pk_session_notifier.dart';
+import '../../../pk/presentation/widgets/pk_invite_dialog.dart';
+import '../../../pk/data/pk_models.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
 import '../../domain/pk/live_pk_invite_helper.dart';
 import '../../domain/pk/pk_status_helper.dart';
@@ -31,6 +34,7 @@ Future<bool> respondLivePkInvite(
   final lock = ref.read(livePkActionLockProvider.notifier);
   if (!lock.tryAcquire(id, 'respond')) return false;
   try {
+    final sessionArgs = PkSessionArgs(contextId: sid, kind: PkContextKind.live);
     if (accept) {
       PkEventLog.acceptStart(inviteId: id);
       try {
@@ -39,6 +43,7 @@ Future<bool> respondLivePkInvite(
         await ref.read(pkBattleRemoteProvider.notifier).accept(id, streamId: sid);
       }
       await ref.read(liveVideoPkProvider(sid).notifier).refresh();
+      await ref.read(pkSessionProvider(sessionArgs).notifier).loadState();
       PkEventLog.acceptSuccess(battleId: id);
     } else {
       PkEventLog.reject(inviteId: id);
@@ -48,6 +53,7 @@ Future<bool> respondLivePkInvite(
         await ref.read(pkBattleRemoteProvider.notifier).reject(id, streamId: sid);
       }
       await ref.read(liveVideoPkProvider(sid).notifier).refresh();
+      await ref.read(pkSessionProvider(sessionArgs).notifier).loadState();
     }
     return true;
   } catch (e) {
@@ -73,38 +79,29 @@ Future<void> showLiveStreamPkInviteDialog(
 
   final challenger = battle['leftName']?.toString() ??
       battle['challengerName']?.toString() ??
+      battle['challenger']?.toString() ??
       'Yayıncı';
+  final image = battle['challengerImage']?.toString() ??
+      battle['leftImage']?.toString() ??
+      (battle['user1'] is Map
+          ? (battle['user1'] as Map)['image']?.toString()
+          : null) ??
+      '';
 
-  final accept = await showDialog<bool>(
-    context: context,
-    barrierDismissible: false,
-    barrierColor: Colors.black.withValues(alpha: 0.72),
-    builder: (ctx) => AlertDialog(
-      backgroundColor: const Color(0xFF1A0F2E),
-      title: const Row(
-        children: [
-          Text('🔥 ', style: TextStyle(fontSize: 22)),
-          Text('PK Daveti', style: TextStyle(color: Colors.white)),
-        ],
-      ),
-      content: Text(
-        '$challenger seninle PK yapmak istiyor.',
-        style: const TextStyle(color: Colors.white70),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Reddet'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.pop(ctx, true),
-          child: const Text('Kabul Et'),
-        ),
-      ],
-    ),
-  ).timeout(
-    const Duration(seconds: 45),
-    onTimeout: () => null,
+  var normalized = Map<String, dynamic>.from(battle);
+  if ((normalized['id']?.toString() ?? '').isEmpty) {
+    normalized['id'] = battleId;
+  }
+  final pkBattle = PkBattle.fromJson(normalized);
+  final skew = ref.read(pkServiceProvider).clockSkew;
+  final inviteTimeout = pkBattle.remainingInvite(skew) ??
+      const Duration(seconds: 60);
+
+  final accept = await showPkInviteDialog(
+    context,
+    challengerName: challenger,
+    challengerImageUrl: image,
+    inviteTimeout: inviteTimeout,
   );
 
   if (!context.mounted || accept == null) {

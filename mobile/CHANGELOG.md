@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.509+549 (2026-09-15) — Canlı PK gelen davet UI + kalan işler doc
+
+- Gelen canlı PK: premium `showPkInviteDialog` (geri sayım + avatar)
+- Kabul/red sonrası `PkSession` yenileme
+- `docs/PK_FLUTTER_KALAN_ISLER.md` — PK + release kalan işler listesi
+
 ## 1.0.508+548 (2026-09-15) — Oda içi PK takım + sesli davet API
 
 - Oda yönetimi: **Oda içi PK (takım)** sheet — 2 takım, 4+4 kullanıcı, `create_user`
