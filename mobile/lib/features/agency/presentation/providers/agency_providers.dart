@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../data/datasources/agency_remote_datasource.dart';
+import '../../data/datasources/agency_wallet_datasource.dart';
 import '../../domain/entities/agency_entity.dart';
 import '../../../shell/presentation/providers/role_panel_providers.dart';
 
@@ -156,3 +157,9 @@ final agencyDashboardProvider =
     AutoDisposeNotifierProvider<AgencyDashboardNotifier, AgencyDashboardState>(
   AgencyDashboardNotifier.new,
 );
+
+final agencyWalletProvider =
+    FutureProvider.autoDispose<AgencyWalletSnapshot?>((ref) async {
+  final ds = AgencyWalletDataSource(ref.watch(dioProvider));
+  return ds.fetchWallet();
+});

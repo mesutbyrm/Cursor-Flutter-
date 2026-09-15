@@ -22,7 +22,7 @@ void main() {
     });
     expect(u.id, 'u1');
     expect(u.displayName, 'Ayşe');
-    expect(u.distanceLabel, isNotNull);
+    expect(u.distanceLabel, contains('km'));
   });
 
   test('UserLocationSettings POST body uses OpenAPI field names', () {

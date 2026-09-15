@@ -22,6 +22,7 @@ import '../widgets/admin_user_manage_sheet.dart';
 import '../../domain/admin_user_extended_data.dart';
 import '../widgets/admin_role_permissions_matrix.dart';
 import '../widgets/admin_user_command_actions.dart';
+import 'admin_user_command_center_extended_tabs.dart';
 
 /// Tam kullanıcı komuta merkezi — özet, finans, hediye, yetki, aktivite.
 class AdminUserCommandCenterPage extends ConsumerStatefulWidget {
@@ -42,7 +43,7 @@ class _AdminUserCommandCenterPageState
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 6, vsync: this);
+    _tabs = TabController(length: 10, vsync: this);
   }
 
   @override
@@ -114,9 +115,22 @@ class _AdminUserCommandCenterPageState
                 Tab(text: 'Finans'),
                 Tab(text: 'Hediyeler'),
                 Tab(text: 'Yayın/Oda'),
+                Tab(text: 'VIP'),
+                Tab(text: 'Ajans'),
                 Tab(text: 'Yetkiler'),
+                Tab(text: 'Mod.'),
                 Tab(text: 'Aktivite'),
+                Tab(text: 'Rapor'),
               ],
+            ),
+            bundleAsync.when(
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+              data: (bundle) => _AdminQuickActionsRow(
+                bundle: bundle,
+                access: access,
+                onRefresh: _refresh,
+              ),
             ),
             Expanded(
               child: bundleAsync.when(
@@ -244,6 +258,8 @@ class _TabBody extends StatelessWidget {
           access: access,
           onRefresh: onRefresh,
         ),
+        AdminUserVipTab(detail: d),
+        AdminUserAgencyTab(userId: d.userId),
         _PermissionsTab(
           detail: d,
           access: access,
@@ -252,8 +268,58 @@ class _TabBody extends StatelessWidget {
           animationSlots: bundle.siteAnimationSlots,
           onSaved: onRefresh,
         ),
+        AdminUserModerationTab(userId: d.userId, detail: d),
         _ActivityTab(activities: bundle.activities, access: access),
+        AdminUserReportsTab(userId: d.userId),
       ],
+    );
+  }
+}
+
+class _AdminQuickActionsRow extends ConsumerWidget {
+  const _AdminQuickActionsRow({
+    required this.bundle,
+    required this.access,
+    required this.onRefresh,
+  });
+
+  final AdminUserBundle bundle;
+  final StaffAccess access;
+  final VoidCallback onRefresh;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final d = bundle.detail;
+    return AdminUserQuickActionBar(
+      access: access,
+      onJeton: () async {
+        await AdminCreditSheet.show(
+          context,
+          ref: ref,
+          user: d.raw,
+          kind: AdminCreditKind.jeton,
+        );
+        onRefresh();
+      },
+      onVip: () async {
+        await AdminMembershipSheet.show(context, ref: ref, user: d.raw);
+        onRefresh();
+      },
+      onBan: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Yetkiler sekmesinden ban/askı')),
+        );
+      },
+      onPsychic: () {
+        AdminUserCommandActions.showPsychicSheet(
+          context,
+          ref,
+          userId: d.userId,
+          displayName: d.displayName ?? d.label,
+          teller: bundle.liveTeller,
+          onDone: onRefresh,
+        );
+      },
     );
   }
 }
