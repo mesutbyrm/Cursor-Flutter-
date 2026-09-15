@@ -280,6 +280,12 @@ abstract final class ApiEndpoints {
   static const agencyLeaderboard = '/api/agency/leaderboard';
   static const agencyWithdrawals = '/api/agency/withdrawals';
   static const agencyTasks = '/api/agency/tasks';
+  /// Ajans jeton kredisi cüzdanı (ledger — üretim probe).
+  static const agencyWallet = '/api/agency/wallet';
+  static const agencyWalletTransfer = '/api/agency/wallet/transfer';
+  static const agencyWalletTransactions = '/api/agency/wallet/transactions';
+  static const agencyMemberApplications = '/api/agency/applications';
+  static const agencyLivePresence = '/api/agency/presence';
 
   static const celebrities = '/api/celebrities';
   static String celebrity(String id) => '/api/celebrities/$id';
@@ -678,6 +684,28 @@ abstract final class ApiEndpoints {
   static String adminUserRooms(String userId) =>
       '/api/admin/users/$userId/rooms';
   static String adminUserAds(String userId) => '/api/admin/users/$userId/ads';
+  static String adminUserOverview(String userId) =>
+      '/api/admin/users/$userId/overview';
+  static String adminUserActivity(String userId) =>
+      '/api/admin/users/$userId/activity';
+  static String adminUserEarnings(String userId) =>
+      '/api/admin/users/$userId/earnings';
+  static String adminUserSpending(String userId) =>
+      '/api/admin/users/$userId/spending';
+  static String adminUserAgency(String userId) =>
+      '/api/admin/users/$userId/agency';
+  static String adminUserModeration(String userId) =>
+      '/api/admin/users/$userId/moderation';
+  static String adminUserReports(String userId) =>
+      '/api/admin/users/$userId/reports';
+
+  static const cfcArena = '/api/cfc-arena';
+  static String cfcArenaContest(String contestId) =>
+      '/api/cfc-arena/$contestId';
+  static const cfcArenaJoin = '/api/cfc-arena/join';
+  static const adminCfcArena = '/api/admin/cfc-arena';
+  static String adminCfcArenaContest(String contestId) =>
+      '/api/admin/cfc-arena/$contestId';
   static const adminChatRoomsCreateForUser =
       '/api/admin/chat/rooms/create-for-user';
 

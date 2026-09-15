@@ -8,6 +8,7 @@ import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../domain/entities/agency_entity.dart';
 import '../providers/agency_providers.dart';
+import '../widgets/agency_jeton_transfer_sheet.dart';
 
 /// Onaylı ajans kontrol paneli — üyeler, kazançlar, görevler.
 class AgencyDashboardScreen extends ConsumerWidget {
@@ -17,6 +18,7 @@ class AgencyDashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final approved = ref.watch(approvedAgencyProvider);
     final dash = ref.watch(agencyDashboardProvider);
+    final walletAsync = ref.watch(agencyWalletProvider);
     final agency = dash.agency ?? approved.agency;
     final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
@@ -63,6 +65,31 @@ class AgencyDashboardScreen extends ConsumerWidget {
           children: [
             _AgencyHeader(agency: agency),
             const SizedBox(height: 16),
+            walletAsync.when(
+              data: (w) {
+                if (w == null) return const SizedBox.shrink();
+                return Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white12),
+                  ),
+                  child: Text(
+                    'Ajans jeton kredisi: ${w.jetonBalance.toStringAsFixed(0)} '
+                    '$jetonLabel${w.isLocked ? ' (kilitli)' : ''}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                );
+              },
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
             _StatGrid(
               memberCount: agency.memberCount > 0
                   ? agency.memberCount
@@ -87,7 +114,14 @@ class AgencyDashboardScreen extends ConsumerWidget {
             if (dash.members.isEmpty)
               _emptyHint('Henüz üye yok.')
             else
-              ...dash.members.take(10).map((m) => _MemberTile(m, jetonLabel: jetonLabel)),
+              ...dash.members.take(10).map(
+                (m) => _MemberTile(
+                  m,
+                  jetonLabel: jetonLabel,
+                  walletBalance: walletAsync.valueOrNull?.jetonBalance ?? 0,
+                  onTransfer: () => ref.invalidate(agencyWalletProvider),
+                ),
+              ),
             const SizedBox(height: 20),
             _SectionTitle('Son Kazançlar'),
             if (dash.earnings.isEmpty)
@@ -303,14 +337,21 @@ Widget _emptyHint(String text) {
   );
 }
 
-class _MemberTile extends StatelessWidget {
-  const _MemberTile(this.member, {required this.jetonLabel});
+class _MemberTile extends ConsumerWidget {
+  const _MemberTile(
+    this.member, {
+    required this.jetonLabel,
+    required this.walletBalance,
+    required this.onTransfer,
+  });
 
   final AgencyMemberEntity member;
   final String jetonLabel;
+  final double walletBalance;
+  final VoidCallback onTransfer;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Card(
       color: const Color(0xFF141E35),
       margin: const EdgeInsets.only(bottom: 8),
@@ -327,10 +368,27 @@ class _MemberTile extends StatelessWidget {
           '${member.role ?? "Üye"} · ${member.earnings} $jetonLabel',
           style: const TextStyle(color: Colors.white60),
         ),
-        trailing: Icon(
-          Icons.circle,
-          size: 10,
-          color: member.isOnline ? Colors.greenAccent : Colors.grey,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (walletBalance > 0)
+              TextButton(
+                onPressed: () => AgencyJetonTransferSheet.show(
+                  context,
+                  ref: ref,
+                  memberUserId: member.id,
+                  memberLabel: member.name,
+                  agencyBalance: walletBalance,
+                  onSuccess: onTransfer,
+                ),
+                child: const Text('Jeton'),
+              ),
+            Icon(
+              Icons.circle,
+              size: 10,
+              color: member.isOnline ? Colors.greenAccent : Colors.grey,
+            ),
+          ],
         ),
       ),
     );

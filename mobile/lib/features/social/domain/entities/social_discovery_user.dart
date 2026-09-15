@@ -1,3 +1,4 @@
+import '../../../../core/location/distance_band.dart';
 import '../../../../core/util/json_util.dart';
 
 /// `GET /api/social/discovery` — OpenAPI şema MISSING; yalnızca wire alanları okunur.
@@ -39,13 +40,21 @@ class SocialDiscoveryUser {
       'profileImage',
       'photo',
     ])?.toString();
-    final dist = pick(json, ['distance', 'distanceKm', 'distanceLabel', 'distanceText'])
-        ?? pick(user, ['distance', 'distanceKm', 'distanceLabel', 'distanceText']);
-    String? distanceLabel;
-    if (dist is num) {
-      distanceLabel = '${dist.toStringAsFixed(dist is int ? 0 : 1)} km';
-    } else if (dist != null) {
-      distanceLabel = dist.toString();
+    final hidden = pick(json, ['distanceHidden', 'hideDistance']) == true ||
+        pick(user, ['distanceHidden', 'hideDistance']) == true;
+    final bandKey = pick(json, ['distanceBand', 'distance_band'])?.toString() ??
+        pick(user, ['distanceBand', 'distance_band'])?.toString();
+    final distKm = pick(json, ['distanceKm', 'distance_km']) ??
+        pick(user, ['distanceKm', 'distance_km']);
+    final distLegacy = pick(json, ['distance', 'distanceLabel', 'distanceText'])
+        ?? pick(user, ['distance', 'distanceLabel', 'distanceText']);
+    String? distanceLabel = DistanceBand.labelFromBandKey(bandKey, hidden: hidden);
+    if (distanceLabel == null && distKm is num) {
+      distanceLabel = DistanceBand.displayLabel(distKm, hidden: hidden);
+    } else if (distanceLabel == null && distLegacy is num) {
+      distanceLabel = DistanceBand.displayLabel(distLegacy, hidden: hidden);
+    } else if (distanceLabel == null && distLegacy is String && distLegacy.isNotEmpty) {
+      distanceLabel = hidden ? 'Mesafe bilgisi gizli' : distLegacy;
     }
     return SocialDiscoveryUser(
       id: id,

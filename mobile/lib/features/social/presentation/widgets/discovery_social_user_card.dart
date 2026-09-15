@@ -6,6 +6,7 @@ import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/util/json_util.dart';
 import '../../../../core/widgets/user_avatar.dart';
+import '../../../admin/presentation/widgets/admin_user_hub_launcher.dart';
 import '../../domain/entities/social_discovery_user.dart';
 
 /// Tanış & sosyal keşif — ortak CDS kart (Like / Geç).
@@ -41,7 +42,7 @@ class DiscoverySocialUserCard extends ConsumerWidget {
       interestsLine = interestsRaw.toString();
     }
 
-    return Semantics(
+    final hubChild = Semantics(
       container: true,
       label: '${u.displayName} keşif kartı',
       child: CdsCard(
@@ -138,6 +139,14 @@ class DiscoverySocialUserCard extends ConsumerWidget {
           ],
         ),
       ),
+    );
+    if (u.id.isEmpty) return hubChild;
+    return AdminUserHubLauncher.wrap(
+      context: context,
+      ref: ref,
+      userId: u.id,
+      onTap: onOpenProfile,
+      child: hubChild,
     );
   }
 }
