@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/location/distance_band.dart';
 import '../../../../core/util/json_util.dart';
 import '../../../gifts/domain/gift_leaderboard_entry.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
@@ -113,7 +114,7 @@ abstract final class VoiceRoomsDiscoverMapper {
             ? r.descTr!.trim()
             : r.ownerName ?? 'Sesli oda',
         tags: _tagsFor(r),
-        distance: _pseudoDistance(r),
+        distance: _distanceLabel(r),
         viewers: _formatCount(r.displayOnline),
         ringColor: r.displayOnline > 0
             ? VoiceRoomsUiTokens.onlineGreen
@@ -235,9 +236,11 @@ abstract final class VoiceRoomsDiscoverMapper {
     return '$n';
   }
 
-  static String _pseudoDistance(VoiceRoomEntity r) {
-    final bucket = r.id.hashCode.abs() % 30;
-    final km = (bucket + 1) / 10.0;
-    return '${km.toStringAsFixed(1)} km';
+  static String _distanceLabel(VoiceRoomEntity r) {
+    final label = r.distanceLabel?.trim();
+    if (label != null && label.isNotEmpty) return label;
+    final fromBand = DistanceBand.labelFromBandKey(r.distanceBand);
+    if (fromBand != null && fromBand.isNotEmpty) return fromBand;
+    return 'Yakınınızda';
   }
 }

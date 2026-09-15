@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:canlifal_social/core/performance/list_perf.dart';
 
@@ -54,6 +55,11 @@ class AgencyDashboardScreen extends ConsumerWidget {
         title: const Text('Ajans Panel'),
         backgroundColor: Colors.transparent,
         actions: [
+          IconButton(
+            tooltip: 'Üye talepleri',
+            onPressed: () => context.push('/ajans/talepler'),
+            icon: const Icon(Icons.inbox_outlined),
+          ),
           IconButton(
             onPressed: () => ref.read(agencyDashboardProvider.notifier).refresh(),
             icon: const Icon(Icons.refresh),

@@ -971,6 +971,47 @@ class _PermissionsTab extends ConsumerWidget {
               {'canOpenVoiceRoom': v, 'canCreateRoom': v},
             ),
           ),
+          SwitchListTile(
+            title: const Text('Tanış keşfetten gizle'),
+            subtitle: const Text('hiddenFromDiscovery'),
+            value: detail.hiddenFromDiscovery,
+            onChanged: (v) => _patchFlag(
+              ref,
+              context,
+              {'hiddenFromDiscovery': v},
+            ),
+          ),
+          ListTile(
+            title: const Text('Keşif önceliği'),
+            subtitle: Text('discoveryPriority: ${detail.discoveryPriority}'),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.remove),
+                  onPressed: detail.discoveryPriority <= 0
+                      ? null
+                      : () => _patchFlag(
+                            ref,
+                            context,
+                            {
+                              'discoveryPriority':
+                                  detail.discoveryPriority - 1,
+                            },
+                          ),
+                ),
+                Text('${detail.discoveryPriority}'),
+                IconButton(
+                  icon: const Icon(Icons.add),
+                  onPressed: () => _patchFlag(
+                    ref,
+                    context,
+                    {'discoveryPriority': detail.discoveryPriority + 1},
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
         if (AdminUserPermissions.canBanUser(access))
           ListTile(

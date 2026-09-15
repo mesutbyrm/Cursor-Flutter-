@@ -34,6 +34,8 @@ class AdminUserDetail {
     this.canOpenVoiceRoom,
     this.isBanned = false,
     this.banReason,
+    this.hiddenFromDiscovery = false,
+    this.discoveryPriority = 0,
   });
 
   final String userId;
@@ -66,6 +68,8 @@ class AdminUserDetail {
   final bool? canOpenVoiceRoom;
   final bool isBanned;
   final String? banReason;
+  final bool hiddenFromDiscovery;
+  final int discoveryPriority;
 
   String get label {
     if (username != null && username!.isNotEmpty) return '@$username';
@@ -227,6 +231,15 @@ class AdminUserDetail {
       ]),
       isBanned: readBool(['isBanned', 'banned', 'isSuspended']),
       banReason: pick(merged, ['banReason', 'suspensionReason'])?.toString(),
+      hiddenFromDiscovery: readBool([
+        'hiddenFromDiscovery',
+        'hideFromDiscovery',
+        'discoveryHidden',
+      ]),
+      discoveryPriority: readInt([
+        'discoveryPriority',
+        'discovery_priority',
+      ]),
     );
   }
 

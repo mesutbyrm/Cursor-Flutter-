@@ -126,3 +126,41 @@ class AgencyTaskEntity extends Equatable {
   List<Object?> get props =>
       [id, title, description, reward, completed, deadline];
 }
+
+/// `GET /api/agency/applications` — bekleyen üye / çıkış talepleri.
+class AgencyMemberApplicationEntity extends Equatable {
+  const AgencyMemberApplicationEntity({
+    required this.id,
+    required this.type,
+    required this.status,
+    required this.userId,
+    required this.displayName,
+    this.username,
+    this.avatarUrl,
+    this.reason,
+    this.createdAt,
+  });
+
+  final String id;
+  final String type;
+  final String status;
+  final String userId;
+  final String displayName;
+  final String? username;
+  final String? avatarUrl;
+  final String? reason;
+  final DateTime? createdAt;
+
+  @override
+  List<Object?> get props => [
+        id,
+        type,
+        status,
+        userId,
+        displayName,
+        username,
+        avatarUrl,
+        reason,
+        createdAt,
+      ];
+}
