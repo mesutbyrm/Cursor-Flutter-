@@ -4,20 +4,17 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.511+551` |
-| Tarih (UTC) | 2026-09-15 13:53 |
-| Commit | [`1da040c1389e220361d4ed11d243ef23d26830a6`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/1da040c1389e220361d4ed11d243ef23d26830a6) |
-| İş akışı | [Run 34975554107](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34975554107) |
+| Sürüm | `1.0.513+553` |
+| Tarih (UTC) | 2026-09-15 14:47 |
+| Commit | [`6f03f27b63f61390ed60e013353cf1d2058bea1b`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/6f03f27b63f61390ed60e013353cf1d2058bea1b) |
+| İş akışı | [Run 34981875022](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34981875022) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.512+552 (2026-09-15) — VIP capability merkezi + üyelik admin
+## 1.0.513+553 (2026-09-15) — Profil VIP rozeti (Premium ayrımı)
 
-- `MembershipCapabilities` — `/api/me/membership` + admin matrisi; jeton ödül/indirim ayrı
-- `VipTier` sıra düzeltmesi: Basic < Gold < Premium < Diamond < SVIP (`isAtLeast`)
-- Admin: `/admin/membership-management` — kademe/özellik API görünümü
-- Doküman: `docs/MEMBERSHIP_VIP_SYSTEM_ANALYSIS.md`
+- `ProfileMembershipInfo.isVip`: Premium ücretli kalır; Gold/Diamond/SVIP VIP rozeti (release gate test düzeltmesi)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
