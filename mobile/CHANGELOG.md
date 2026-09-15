@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.520+561 (2026-09-15) — Hub genişletme, CFC skor, ajans onay
+
+- Staff hub: oda sıralaması (oda sahibi), seste olanlar listesi uzun basış
+- CFC Arena: katılımda `CfcScoreLog` + skor API; mobil sıralama ve log listesi
+- Ajans: çıkış talebi onay/red (`POST /api/agency/applications`)
+- Parity: `voice-room-distance-enrich.ts` (üretim oda listesi için)
+
 ## 1.0.519+560 (2026-09-15) — Keşif / ajans / oda mesafe eksikleri
 
 - Sesli oda keşfet: sahte km kaldırıldı; API `distanceBand` / `distanceLabel` veya nötr «Yakınınızda»

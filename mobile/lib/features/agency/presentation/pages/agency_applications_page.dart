@@ -6,6 +6,7 @@ import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../domain/entities/agency_entity.dart';
 import '../providers/agency_applications_provider.dart';
+import '../providers/agency_providers.dart';
 
 /// Ajans yöneticisi — bekleyen üye / çıkış talepleri.
 class AgencyApplicationsPage extends ConsumerWidget {
@@ -66,7 +67,11 @@ class AgencyApplicationsPage extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
               itemCount: items.length,
               separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (context, i) => _ApplicationTile(item: items[i]),
+              itemBuilder: (context, i) => _ApplicationTile(
+                item: items[i],
+                onReviewed: () =>
+                    ref.invalidate(agencyMemberApplicationsProvider),
+              ),
             );
           },
         ),
@@ -75,13 +80,17 @@ class AgencyApplicationsPage extends ConsumerWidget {
   }
 }
 
-class _ApplicationTile extends StatelessWidget {
-  const _ApplicationTile({required this.item});
+class _ApplicationTile extends ConsumerWidget {
+  const _ApplicationTile({
+    required this.item,
+    required this.onReviewed,
+  });
 
   final AgencyMemberApplicationEntity item;
+  final VoidCallback onReviewed;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final typeLabel = item.type == 'leave_request'
         ? 'Ayrılma talebi'
         : 'Üyelik talebi';
@@ -126,11 +135,54 @@ class _ApplicationTile extends StatelessWidget {
                       style: const TextStyle(color: Colors.white60, fontSize: 12),
                     ),
                   ),
+                if (item.status == 'pending' && item.type == 'leave_request')
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => _review(ref, context, false),
+                            child: const Text('Reddet'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: () => _review(ref, context, true),
+                            child: const Text('Onayla'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _review(
+    WidgetRef ref,
+    BuildContext context,
+    bool approve,
+  ) async {
+    final ok = await ref.read(agencyRemoteProvider).reviewMemberApplication(
+          id: item.id,
+          approve: approve,
+        );
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok
+              ? (approve ? 'Talep onaylandı' : 'Talep reddedildi')
+              : 'İşlem başarısız',
+        ),
+      ),
+    );
+    if (ok) onReviewed();
   }
 }

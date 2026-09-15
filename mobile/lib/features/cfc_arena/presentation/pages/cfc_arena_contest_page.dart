@@ -6,6 +6,23 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 
+final cfcContestScoresProvider = FutureProvider.autoDispose
+    .family<List<Map<String, dynamic>>, String>((ref, contestId) async {
+  final dio = ref.watch(dioProvider);
+  try {
+    final res =
+        await dio.safeGet<dynamic>(ApiEndpoints.cfcArenaContestScores(contestId));
+    final body = res.data;
+    if (body is Map) {
+      final items = body['items'] ?? body['data'];
+      if (items is List) {
+        return items.whereType<Map>().map((e) => asJsonMap(e)).toList();
+      }
+    }
+  } catch (_) {}
+  return const [];
+});
+
 final cfcContestDetailProvider = FutureProvider.autoDispose
     .family<Map<String, dynamic>?, String>((ref, contestId) async {
   final dio = ref.watch(dioProvider);
@@ -29,6 +46,7 @@ class CfcArenaContestPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(cfcContestDetailProvider(contestId));
+    final scores = ref.watch(cfcContestScoresProvider(contestId));
     return Scaffold(
       appBar: AppBar(title: const Text('Yarışma')),
       body: async.when(
@@ -64,6 +82,7 @@ class CfcArenaContestPage extends ConsumerWidget {
                         const SnackBar(content: Text('Yarışmaya katıldınız')),
                       );
                       ref.invalidate(cfcContestDetailProvider(contestId));
+                      ref.invalidate(cfcContestScoresProvider(contestId));
                     }
                   } catch (e) {
                     if (context.mounted) {
@@ -76,10 +95,64 @@ class CfcArenaContestPage extends ConsumerWidget {
                 icon: const Icon(Icons.emoji_events_outlined),
                 label: const Text('Yarışmaya katıl'),
               ),
+              const SizedBox(height: 24),
+              Text(
+                'Sıralama',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              ..._participants(c).map(
+                (p) => ListTile(
+                  dense: true,
+                  title: Text(
+                    (p['userId'] ?? p['displayName'] ?? 'Katılımcı')
+                        .toString(),
+                  ),
+                  trailing: Text('${pick(p, ['score']) ?? 0} p'),
+                ),
+              ),
+              if (_participants(c).isEmpty)
+                const Text('Henüz katılımcı yok.'),
+              const SizedBox(height: 16),
+              Text(
+                'Son skor kayıtları',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              scores.when(
+                loading: () => const LinearProgressIndicator(),
+                error: (_, __) => const SizedBox.shrink(),
+                data: (logs) {
+                  if (logs.isEmpty) {
+                    return const Text('Skor kaydı yok.');
+                  }
+                  return Column(
+                    children: logs.take(8).map((log) {
+                      final metric = (log['metric'] ?? '').toString();
+                      final delta = pick(log, ['delta']);
+                      return ListTile(
+                        dense: true,
+                        title: Text(metric.isEmpty ? 'Skor' : metric),
+                        subtitle: Text(
+                          (log['reason'] ?? '').toString(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        trailing: Text('+$delta'),
+                      );
+                    }).toList(),
+                  );
+                },
+              ),
             ],
           );
         },
       ),
     );
+  }
+
+  static List<Map<String, dynamic>> _participants(Map<String, dynamic> c) {
+    final raw = c['participants'];
+    if (raw is! List) return const [];
+    return raw.whereType<Map>().map((e) => asJsonMap(e)).toList();
   }
 }

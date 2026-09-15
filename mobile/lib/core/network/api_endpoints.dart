@@ -702,6 +702,8 @@ abstract final class ApiEndpoints {
   static const cfcArena = '/api/cfc-arena';
   static String cfcArenaContest(String contestId) =>
       '/api/cfc-arena/$contestId';
+  static String cfcArenaContestScores(String contestId) =>
+      '/api/cfc-arena/$contestId/scores';
   static const cfcArenaJoin = '/api/cfc-arena/join';
   static const adminCfcArena = '/api/admin/cfc-arena';
   static String adminCfcArenaContest(String contestId) =>

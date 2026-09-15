@@ -11,7 +11,8 @@ Yeni dosyalar (özet):
 - `app/api/admin/users/[userId]/360|overview|activity|earnings|spending|agency|moderation|reports/route.ts`
 - `app/api/agency/wallet/route.ts`, `wallet/transfer/route.ts`
 - `lib/admin-user-hub-handlers.ts`, `lib/agency-wallet-handlers.ts`, `lib/social-distance.ts`, `lib/hub-date-range.ts`
-- `app/api/cfc-arena/join`, `cfc-arena/[contestId]`, `agency/wallet/transactions`, `agency/applications`
+- `app/api/cfc-arena/join`, `cfc-arena/[contestId]`, `cfc-arena/[contestId]/scores`, `agency/wallet/transactions`, `agency/applications` (GET+POST)
+- `lib/voice-room-distance-enrich.ts`, `lib/cfc-score-service.ts`
 
 ## 2. P0 — RBAC + audit + idempotency
 

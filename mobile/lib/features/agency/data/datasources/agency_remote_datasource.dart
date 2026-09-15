@@ -120,6 +120,26 @@ class AgencyRemoteDataSource {
     }
   }
 
+  Future<bool> reviewMemberApplication({
+    required String id,
+    required bool approve,
+    String? note,
+  }) async {
+    try {
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.agencyMemberApplications,
+        data: {
+          'id': id,
+          'action': approve ? 'approve' : 'reject',
+          if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
+        },
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<bool> sendInvite(String userId) async {
     if (userId.trim().isEmpty) return false;
     try {

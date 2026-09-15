@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../admin/presentation/providers/staff_access_provider.dart';
+import '../../../admin/presentation/widgets/admin_user_hub_launcher.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
 import 'voice_room_preview_sheet.dart';
@@ -209,11 +211,23 @@ class _RankList extends ConsumerWidget {
           liveCounts: liveCounts,
           resetLabel: resetLabel,
           onRoomTap: onRoomTap,
-          onPreview: (room) => showVoiceRoomPreviewSheet(context, ref, room: room),
+          onPreview: (room) => _rankRowLongPress(context, ref, room),
         ),
       ),
     );
   }
+}
+
+void _rankRowLongPress(BuildContext context, WidgetRef ref, VoiceRoomEntity room) {
+  final ownerId = room.ownerId?.trim();
+  final access = ref.read(staffAccessProvider);
+  if (ownerId != null &&
+      ownerId.isNotEmpty &&
+      AdminUserHubLauncher.canOpen(access)) {
+    AdminUserHubLauncher.open(context, userId: ownerId);
+    return;
+  }
+  showVoiceRoomPreviewSheet(context, ref, room: room);
 }
 
 int _listItemCount(List<VoiceRoomRankEntry> entries) {

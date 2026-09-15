@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../admin/presentation/widgets/admin_user_hub_launcher.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../providers/chat_room_providers.dart';
 import '../theme/voice_room_tokens.dart';
@@ -112,35 +113,46 @@ class _VoiceUsersSheetState extends ConsumerState<_VoiceUsersSheet> {
                   itemCount: _users.length,
                   itemBuilder: (_, i) {
                     final u = _users[i];
-                    return ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: VoiceNeonAvatar(url: u.image, size: 40),
-                      title: Text(
-                        u.displayName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      subtitle: u.isSpeaking
-                          ? const Text(
-                              'Konuşuyor',
-                              style: TextStyle(
-                                color: VoiceRoomTokens.neonBlue,
-                                fontSize: 11,
-                              ),
-                            )
-                          : null,
-                      trailing: u.isSpeaking
-                          ? const Icon(Icons.graphic_eq_rounded,
-                              color: VoiceRoomTokens.neonPink, size: 18)
-                          : null,
+                    return AdminUserHubLauncher.wrap(
+                      context: context,
+                      ref: ref,
+                      userId: u.id,
                       onTap: widget.onUserTap == null
                           ? null
                           : () {
                               Navigator.pop(context);
                               widget.onUserTap!(u);
                             },
+                      child: ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: VoiceNeonAvatar(url: u.image, size: 40),
+                        title: Text(
+                          u.displayName,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        subtitle: u.isSpeaking
+                            ? const Text(
+                                'Konuşuyor',
+                                style: TextStyle(
+                                  color: VoiceRoomTokens.neonBlue,
+                                  fontSize: 11,
+                                ),
+                              )
+                            : null,
+                        trailing: u.isSpeaking
+                            ? const Icon(Icons.graphic_eq_rounded,
+                                color: VoiceRoomTokens.neonPink, size: 18)
+                            : null,
+                        onTap: widget.onUserTap == null
+                            ? null
+                            : () {
+                                Navigator.pop(context);
+                                widget.onUserTap!(u);
+                              },
+                      ),
                     );
                   },
                 ),

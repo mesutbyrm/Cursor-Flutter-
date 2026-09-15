@@ -35,6 +35,19 @@ export async function POST(req: NextRequest) {
       },
     })
 
+    try {
+      const { recordCfcScoreDelta } = await import('@/lib/cfc-score-service')
+      await recordCfcScoreDelta(prisma, {
+        contestId,
+        userId: auth.user.id,
+        metric: 'join_bonus',
+        delta: 10,
+        reason: 'Yarışmaya katılım',
+      })
+    } catch (scoreErr) {
+      console.warn('[cfc-arena/join] score log skipped', scoreErr)
+    }
+
     return NextResponse.json({ success: true, participantId: participant.id })
   } catch (e) {
     console.error('[cfc-arena/join]', e)
