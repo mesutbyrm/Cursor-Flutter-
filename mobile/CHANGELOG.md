@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.524+565 (2026-09-15) — CI FAZ0 oda probe (ban fallback)
+
+- Kabul testleri: `pick_acceptance_probe_room_id` — probe oda banlıysa join yapılabilen oda seçilir (SSE/presence)
+
 ## 1.0.524+565 (2026-09-15) — Admin sekmeleri + PK/hediye hub UI
 
 - Admin komuta merkezi: Finans, Hediyeler, Yayın/Oda, Yetkiler, VIP, Ajans, Mod., Aktivite, Rapor — platform cam kartları

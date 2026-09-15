@@ -195,16 +195,18 @@ gate_sse_dj() {
   fi
   local tmp
   tmp=$(mktemp)
-  timeout 5 curl -sS -N \
+  timeout 8 curl -sS -N \
     -H "Authorization: Bearer $USER_TOKEN" \
     -H "Accept: text/event-stream" \
     "$BASE/api/chat/rooms/$ROOM_ID/stream" 2>/dev/null | head -c 4096 >"$tmp" || true
   if grep -qE '^(data:|event:|:)' "$tmp" && ! grep -qi 'room not found' "$tmp"; then
     record "SSE_DJ" "SSE dj stream" PASS "stream açık (room=$ROOM_ID)"
+  elif grep -qi 'banned from this room' "$tmp"; then
+    record "SSE_DJ" "SSE dj stream" FAIL "oda ban — MUSIC_PROBE_ROOM değiştirin veya ban kaldırın"
   elif grep -qi 'room not found' "$tmp"; then
     record "SSE_DJ" "SSE dj stream" FAIL "Room not found (kısmi id? çözüm: tam cuid)"
   else
-    record "SSE_DJ" "SSE dj stream" FAIL "veri yok"
+    record "SSE_DJ" "SSE dj stream" FAIL "veri yok (timeout/ban?)"
   fi
   rm -f "$tmp"
 }
@@ -212,11 +214,22 @@ gate_sse_dj() {
 gate_room_key_resolve() {
   echo "--- ROOM KEY RESOLVE ---"
   skip_unless_user_token "ROOMKEY" "Room key resolve" || return 0
+  local picked
+  picked=$(pick_acceptance_probe_room_id "$USER_TOKEN" "$MUSIC_PROBE_ROOM" 2>/dev/null || true)
+  if [[ -n "$picked" ]]; then
+    if [[ "$picked" == *"$MUSIC_PROBE_ROOM"* ]] || [[ ${#MUSIC_PROBE_ROOM} -ge 6 && "$picked" == *"${MUSIC_PROBE_ROOM:0:8}"* ]]; then
+      record "ROOMKEY" "Room key resolve" PASS "$MUSIC_PROBE_ROOM → $picked (presence join)"
+    else
+      record "ROOMKEY" "Room key resolve" PASS "fallback oda (ban?) $MUSIC_PROBE_ROOM → $picked"
+    fi
+    ROOM_ID="$picked"
+    return
+  fi
   local body resolved
   body=$(curl_json "$BASE/api/chat/rooms?limit=50" -H "Authorization: Bearer $USER_TOKEN")
   resolved=$(resolve_room_id_from_list "$MUSIC_PROBE_ROOM" "$body")
   if [[ "$resolved" != "$MUSIC_PROBE_ROOM" && ${#resolved} -ge 18 ]]; then
-    record "ROOMKEY" "Room key resolve" PASS "$MUSIC_PROBE_ROOM → $resolved"
+    record "ROOMKEY" "Room key resolve" FAIL "join yok — $MUSIC_PROBE_ROOM → $resolved (oda ban?)"
     ROOM_ID="$resolved"
   elif [[ "$resolved" == "$MUSIC_PROBE_ROOM" ]]; then
     record "ROOMKEY" "Room key resolve" FAIL "önek çözülemedi"

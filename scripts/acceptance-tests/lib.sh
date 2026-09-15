@@ -50,6 +50,93 @@ curl_json() {
   curl "${CURL_ACCEPTANCE_OPTS[@]}" "$@"
 }
 
+# Kabul testleri için presence join yapılabilen oda (probe slug banlıysa listeden seçer).
+pick_acceptance_probe_room_id() {
+  local token="$1" preferred_slug="${2:-}"
+  [[ -n "$token" ]] || return 1
+  local body room_id
+  body=$(curl_json "$BASE/api/chat/rooms?limit=80&withCounts=true" \
+    -H "Authorization: Bearer $token") || return 1
+  room_id=$(BODY="$body" TOKEN="$token" PREF="$preferred_slug" BASE="$BASE" python3 <<'PY'
+import json, os, subprocess, sys
+
+base = os.environ["BASE"]
+token = os.environ["TOKEN"]
+pref = os.environ.get("PREF", "").strip().lower()
+
+try:
+    d = json.loads(os.environ["BODY"])
+except json.JSONDecodeError:
+    sys.exit(1)
+
+rooms = d if isinstance(d, list) else d.get("rooms") or d.get("data") or []
+if not isinstance(rooms, list):
+    sys.exit(1)
+
+def ordered_ids():
+    out = []
+    if pref:
+        for r in rooms:
+            if not isinstance(r, dict):
+                continue
+            rid = str(r.get("id") or r.get("roomId") or "").strip()
+            rslug = str(r.get("slug") or "").strip().lower()
+            if not rid:
+                continue
+            if (
+                rid.lower() == pref
+                or rslug == pref
+                or (len(pref) >= 6 and rid.lower().startswith(pref))
+            ):
+                out.append(rid)
+                break
+    for r in rooms:
+        if not isinstance(r, dict):
+            continue
+        rid = str(r.get("id") or r.get("roomId") or "").strip()
+        if len(rid) >= 12 and rid not in out:
+            out.append(rid)
+    return out
+
+def join_ok(rid: str) -> bool:
+    proc = subprocess.run(
+        [
+            "curl",
+            "-sS",
+            "-o",
+            "/dev/null",
+            "-w",
+            "%{http_code}",
+            "-X",
+            "POST",
+            f"{base}/api/chat/rooms/{rid}/presence",
+            "-H",
+            f"Authorization: Bearer {token}",
+            "-H",
+            "Content-Type: application/json",
+            "-d",
+            '{"action":"join"}',
+        ],
+        capture_output=True,
+        text=True,
+        timeout=25,
+    )
+    return proc.stdout.strip() in ("200", "201")
+
+for rid in ordered_ids():
+    if join_ok(rid):
+        print(rid)
+        sys.exit(0)
+sys.exit(1)
+PY
+) || true
+  if [[ -n "$room_id" ]]; then
+    printf '%s' "$room_id"
+    return 0
+  fi
+  return 1
+}
+
 mobile_login() {
   local body="$1"
   curl "${CURL_ACCEPTANCE_OPTS[@]}" -X POST "$BASE/api/auth/mobile-login" \

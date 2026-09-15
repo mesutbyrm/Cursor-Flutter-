@@ -1,25 +1,23 @@
 # Acceptance Test Raporu
 
-
-> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · Psychic P0 cihaz · [`../../docs/DOCS_RELEASE_INDEX.md`](../../docs/DOCS_RELEASE_INDEX.md)
-
 | Alan | Değer |
 |------|--------|
-| Tarih | 2026-08-09 09:36:35 UTC |
-| Run | local-1786268188 |
+| Tarih | 2026-09-15 19:19:28 UTC |
+| Run | local-1789499957 |
 | API | https://canlifal.com |
 | Geçti | 5 |
 | Başarısız | 0 |
-| Atlandı | 0 |
+| Atlandı | 1 |
 
 ## Sonuçlar
 
 | # | Test | Durum | Detay |
 |---|------|-------|-------|
 | SEARCH | Music search | ✅ PASS | 12 sonuç, videoId+title |
-| AUTH | Login | ✅ PASS | token alındı |
-| QUEUE | Queue costs | ✅ PASS | kuyruk OK, audio=10 jeton |
-| SONGREQ | Song request | ✅ PASS | HTTP 400 (Yetersiz jeton. 10 jeton gerekiyor.) |
-| SSE_DJ | SSE dj stream | ✅ PASS | stream açık |
+| AUTH | Login | ✅ PASS | token alındı (cursor.test.1786235468@mailinator.com) |
+| QUEUE | Queue costs | ✅ PASS | kuyruk OK (fiyat song-request yanıtından) |
+| ROOMKEY | Room key resolve | ✅ PASS | fallback oda (ban?) cmoohrbr → cmokyb9o9007iod09gi6pb1tb |
+| SONGREQ | Song request | ⏭️ SKIP | hesapta yeterli jeton — E2E mümkün |
+| SSE_DJ | SSE dj stream | ✅ PASS | stream açık (room=cmokyb9o9007iod09gi6pb1tb) |
 
-**API acceptance testleri geçti** — istemci testleri bekleniyor.
+**API testleri atlandı veya kısmen geçti** (1 atlandı) — istemci testleri bekleniyor.

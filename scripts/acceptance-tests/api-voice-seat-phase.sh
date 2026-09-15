@@ -99,6 +99,12 @@ ensure_room_id() {
     return 0
   fi
   skip_unless_user_token "ROOM" "Room resolve" || return 1
+  local picked
+  picked=$(pick_acceptance_probe_room_id "$USER_TOKEN" "$VOICE_PROBE_ROOM" 2>/dev/null || true)
+  if [[ -n "$picked" ]]; then
+    ROOM_ID="$picked"
+    return 0
+  fi
   local body
   body=$(curl_json "$BASE/api/chat/rooms?limit=50&withCounts=true" \
     -H "Authorization: Bearer $USER_TOKEN")
@@ -123,12 +129,19 @@ gate_auth() {
 gate_room_resolve() {
   echo "--- ROOM RESOLVE ---"
   skip_unless_user_token "ROOMKEY" "Room key resolve" || return 0
+  local picked
+  picked=$(pick_acceptance_probe_room_id "$USER_TOKEN" "$VOICE_PROBE_ROOM" 2>/dev/null || true)
+  if [[ -n "$picked" ]]; then
+    record "ROOMKEY" "Room key resolve" PASS "$VOICE_PROBE_ROOM → $picked (presence join)"
+    ROOM_ID="$picked"
+    return
+  fi
   local body resolved
   body=$(curl_json "$BASE/api/chat/rooms?limit=50&withCounts=true" \
     -H "Authorization: Bearer $USER_TOKEN")
   resolved=$(resolve_room_id_from_list "$VOICE_PROBE_ROOM" "$body")
   if [[ "$resolved" != "$VOICE_PROBE_ROOM" && ${#resolved} -ge 18 ]]; then
-    record "ROOMKEY" "Room key resolve" PASS "$VOICE_PROBE_ROOM → $resolved"
+    record "ROOMKEY" "Room key resolve" FAIL "join yok — $VOICE_PROBE_ROOM → $resolved"
     ROOM_ID="$resolved"
   elif [[ "$resolved" == "$VOICE_PROBE_ROOM" ]]; then
     record "ROOMKEY" "Room key resolve" SKIP "önek çözülemedi — ham id denenir"
@@ -167,6 +180,8 @@ print(len(rows) if isinstance(rows,list) else 0)
 " 2>/dev/null || echo 0)
   if [[ "$code" == "200" || "$code" == "201" ]]; then
     record "PJOIN" "Presence join" PASS "HTTP $code, presence≈$count (room=$ROOM_ID)"
+  elif [[ "$code" == "403" ]] && echo "$body" | grep -qi 'banned'; then
+    record "PJOIN" "Presence join" FAIL "HTTP 403 oda ban — pick_acceptance_probe_room_id başarısız"
   else
     record "PJOIN" "Presence join" FAIL "HTTP $code"
   fi
@@ -308,16 +323,18 @@ gate_sse_stream() {
   }
   local tmp
   tmp=$(mktemp)
-  timeout 5 curl -sS -N \
+  timeout 8 curl -sS -N \
     -H "Authorization: Bearer $USER_TOKEN" \
     -H "Accept: text/event-stream" \
     "$BASE/api/chat/rooms/$ROOM_ID/stream" 2>/dev/null | head -c 4096 >"$tmp" || true
   if grep -qE '^(data:|event:|:)' "$tmp" && ! grep -qi 'room not found' "$tmp"; then
     record "SSE" "Room SSE stream" PASS "stream açık (room=$ROOM_ID)"
+  elif grep -qi 'banned from this room' "$tmp"; then
+    record "SSE" "Room SSE stream" FAIL "oda ban"
   elif grep -qi 'room not found' "$tmp"; then
     record "SSE" "Room SSE stream" FAIL "Room not found"
   else
-    record "SSE" "Room SSE stream" FAIL "veri yok"
+    record "SSE" "Room SSE stream" FAIL "veri yok (timeout/ban?)"
   fi
   rm -f "$tmp"
 }

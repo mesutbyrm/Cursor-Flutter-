@@ -1,15 +1,12 @@
 # FAZ 0 — Otomatik doğrulama raporu
 
-
-> **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
-
-**Tarih:** 2026-08-21 03:11 UTC  
-**APK:** `1.0.333+369`  
-**Sonuç:** **AUTOMATED_PASS (M5 cihaz bekliyor)**
+**Tarih:** 2026-09-15 19:19 UTC  
+**APK:** `1.0.524+565`  
+**Sonuç:** **INCOMPLETE**
 
 | Geçti | Uyarı | Başarısız |
 |-------|-------|-----------|
-| 4 | 1 | 0 |
+| 4 | 0 | 1 |
 
 ## Kapılar
 
@@ -18,8 +15,8 @@
 | API müzik (6/6 + M7 probe) | PASS | run-music-acceptance.sh |
 | API voice seat | PASS | run-voice-seat-acceptance.sh |
 | voice_hub unit | PASS | 93 tests |
-| MCP selftest | PASS | v1.2.0 read_source |
-| Jeton | WARN | cursor.test.1786235468@mailinator.com jeton=0 — M5/M7 için ≥10 gerekli |
+| MCP selftest | FAIL | log: /tmp/faz0-mcp.log |
+| Jeton bakiyesi | PASS | cursor.test.1786235468@mailinator.com jeton=85164 |
 
 ## Manuel bekleyen
 
