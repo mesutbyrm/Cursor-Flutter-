@@ -154,6 +154,9 @@ class PkService {
     Map<String, dynamic>? map;
     if (body is Map) {
       map = asJsonMap(body);
+      if (map['success'] == true && map['data'] is Map) {
+        map = asJsonMap(map['data']);
+      }
     }
     if (map == null) {
       return const PkCandidatesBundle(candidates: []);

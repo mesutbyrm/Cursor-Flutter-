@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.504+544 (2026-09-15) — PK istekleri (backend-reference zip)
+
+- `/api/live/pk` yönlendirme: **canlifal.com** (games’de 404 — istek gitmiyordu)
+- `PkService` yanıt parse: iç içe `battle` / `pkBattle`
+- Sesli oda `inviteVoiceRoom`: önce birleşik `POST /api/live/pk` `create`
+
 ## 1.0.503+543 (2026-09-14) — analyze gate
 
 - `pk_session_notifier`: `PkService` import (CI analyze)
