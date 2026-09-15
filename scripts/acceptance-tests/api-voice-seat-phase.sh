@@ -272,6 +272,47 @@ print(d.get('id') or (d.get('user') or {}).get('id') or '')
   fi
 }
 
+VOICE_POST_LAST_CODE=""
+VOICE_POST_LAST_BODY=""
+
+voice_post_with_fallback() {
+  # Üretim: yalnızca action → 400 "Invalid type"; mobil sırasıyla dener (kılavuz + type uyumu).
+  local room_id="$1" token="$2" mode="$3"
+  local payload code
+  local -a payloads=()
+  case "$mode" in
+    join)
+      payloads=('{"action":"join"}' '{"type":"join"}' '{"action":"join","type":"join"}')
+      ;;
+    leave)
+      payloads=('{"action":"leave"}' '{"type":"leave"}' '{"action":"leave","type":"leave"}')
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+  VOICE_POST_LAST_CODE="000"
+  VOICE_POST_LAST_BODY=""
+  for payload in "${payloads[@]}"; do
+    code=$(http_code -X POST "$BASE/api/chat/rooms/$room_id/voice" \
+      -H "Authorization: Bearer $token" \
+      -H "Content-Type: application/json" \
+      -d "$payload")
+    if [[ "$code" =~ ^(200|201)$ ]]; then
+      VOICE_POST_LAST_CODE="$code"
+      VOICE_POST_LAST_BODY=$(curl_json -X POST "$BASE/api/chat/rooms/$room_id/voice" \
+        -H "Authorization: Bearer $token" \
+        -H "Content-Type: application/json" \
+        -d "$payload")
+      return 0
+    fi
+    VOICE_POST_LAST_CODE="$code"
+    if [[ "$code" != "400" && "$code" != "422" ]]; then
+      return 0
+    fi
+  done
+}
+
 gate_voice_join() {
   echo "--- VOICE JOIN ---"
   skip_unless_user_token "VOICE" "Voice join" || return 0
@@ -280,14 +321,9 @@ gate_voice_join() {
     return
   }
   local code body has_users
-  code=$(http_code -X POST "$BASE/api/chat/rooms/$ROOM_ID/voice" \
-    -H "Authorization: Bearer $USER_TOKEN" \
-    -H "Content-Type: application/json" \
-    -d '{"action":"join"}')
-  body=$(curl_json -X POST "$BASE/api/chat/rooms/$ROOM_ID/voice" \
-    -H "Authorization: Bearer $USER_TOKEN" \
-    -H "Content-Type: application/json" \
-    -d '{"action":"join"}')
+  voice_post_with_fallback "$ROOM_ID" "$USER_TOKEN" join
+  code="$VOICE_POST_LAST_CODE"
+  body="$VOICE_POST_LAST_BODY"
   has_users=$(printf '%s' "$body" | python3 -c "
 import json,sys
 raw=sys.stdin.read().strip()
@@ -308,10 +344,7 @@ print('no')
   else
     record "VOICE" "Voice join" FAIL "HTTP $code"
   fi
-  http_code -X POST "$BASE/api/chat/rooms/$ROOM_ID/voice" \
-    -H "Authorization: Bearer $USER_TOKEN" \
-    -H "Content-Type: application/json" \
-    -d '{"action":"leave"}' >/dev/null 2>&1 || true
+  voice_post_with_fallback "$ROOM_ID" "$USER_TOKEN" leave >/dev/null 2>&1 || true
 }
 
 gate_sse_stream() {
