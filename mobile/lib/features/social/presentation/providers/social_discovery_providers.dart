@@ -43,6 +43,28 @@ final socialDiscoveryMatchesProvider =
   return sorted;
 });
 
+final socialDiscoveryIncomingLikesProvider =
+    FutureProvider.autoDispose<List<SocialDiscoveryUser>>((ref) async {
+  return ref.read(socialDiscoveryRemoteProvider).fetchIncomingLikes();
+});
+
+final socialDiscoverySentLikesProvider =
+    FutureProvider.autoDispose<List<SocialDiscoveryUser>>((ref) async {
+  final list = await ref.read(socialDiscoveryRemoteProvider).fetchSentLikes();
+  final sorted = [...list];
+  sorted.sort((a, b) {
+    final at = a.actionAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+    final bt = b.actionAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+    return bt.compareTo(at);
+  });
+  return sorted;
+});
+
+final socialDiscoverySentTargetIdsProvider =
+    FutureProvider.autoDispose<Set<String>>((ref) async {
+  return ref.read(socialDiscoveryRemoteProvider).fetchSentActionTargetIds();
+});
+
 final userLocationSettingsProvider =
     FutureProvider.autoDispose<UserLocationSettings>((ref) async {
   return ref.read(socialDiscoveryRemoteProvider).fetchLocationSettings();

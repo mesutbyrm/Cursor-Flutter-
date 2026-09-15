@@ -13,6 +13,7 @@ import '../../domain/entities/user_location_settings.dart';
 import '../providers/social_discovery_providers.dart';
 import 'tanis_discover_tab.dart';
 import 'tanis_interactions_tab.dart';
+import 'tanis_likes_tab.dart';
 import 'tanis_matches_tab.dart';
 
 /// Tanış & Kaynaş — swipe keşif, eşleşmeler, etkileşimler.
@@ -34,7 +35,7 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 3, vsync: this);
+    _tabs = TabController(length: 4, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final q = widget.initialInterestQuery?.trim();
       if (q == null || q.isEmpty) return;
@@ -58,6 +59,9 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
     ref.invalidate(socialTrendingHashtagsProvider);
     ref.invalidate(socialTeamsListProvider);
     ref.invalidate(conversationsProvider);
+    ref.invalidate(socialDiscoveryIncomingLikesProvider);
+    ref.invalidate(socialDiscoverySentLikesProvider);
+    ref.invalidate(socialDiscoverySentTargetIdsProvider);
   }
 
   Future<void> _updateLocation({
@@ -155,6 +159,8 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
                           0;
                   return TabBar(
                     controller: _tabs,
+                    isScrollable: true,
+                    tabAlignment: TabAlignment.start,
                     tabs: [
                       const Tab(text: 'Keşfet'),
                       Tab(
@@ -185,6 +191,7 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
                           ],
                         ),
                       ),
+                      const Tab(text: 'Beğeniler'),
                       const Tab(text: 'Etkileşimler'),
                     ],
                   );
@@ -203,6 +210,7 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
                       },
                     ),
                     TanisMatchesTab(onRefresh: _refresh),
+                    TanisLikesTab(onRefresh: _refresh),
                     TanisInteractionsTab(onRefresh: _refresh),
                   ],
                 ),

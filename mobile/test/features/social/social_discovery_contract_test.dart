@@ -57,6 +57,17 @@ void main() {
     expect(u.matchPercent, 88);
   });
 
+  test('SocialDiscoveryUser commonHobbies separate from hobbies', () {
+    final u = SocialDiscoveryUser.fromJson({
+      'id': 'u3',
+      'name': 'Test',
+      'hobbies': ['spor'],
+      'commonHobbies': ['müzik'],
+    });
+    expect(u.hobbies, ['spor']);
+    expect(u.commonHobbies, ['müzik']);
+  });
+
   test('SocialDiscoveryUser actionAt from action row', () {
     final u = SocialDiscoveryUser.fromActionRow({
       'type': 'like',

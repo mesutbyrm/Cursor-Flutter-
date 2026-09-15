@@ -63,6 +63,41 @@ class SocialDiscoveryRemoteDataSource {
 
   Future<List<SocialDiscoveryUser>> fetchMatches() async {
     final rows = await fetchActions(filter: 'matches');
+    return _usersFromActionRows(rows);
+  }
+
+  /// Üretimde boş olabilir; sırayla bilinen filtreleri dener.
+  Future<List<SocialDiscoveryUser>> fetchIncomingLikes() async {
+    for (final filter in ['liked_me', 'incoming', 'likes']) {
+      final rows = await fetchActions(filter: filter);
+      final users = _usersFromActionRows(rows);
+      if (users.isNotEmpty) return users;
+    }
+    final received = await fetchActions(scope: 'received', type: 'like');
+    return _usersFromActionRows(received);
+  }
+
+  Future<List<SocialDiscoveryUser>> fetchSentLikes() async {
+    final likes = await fetchActions(scope: 'sent', type: 'like');
+    final favorites = await fetchActions(scope: 'sent', type: 'favorite');
+    return _usersFromActionRows([...likes, ...favorites]);
+  }
+
+  Future<Set<String>> fetchSentActionTargetIds() async {
+    final out = <String>{};
+    for (final type in ['like', 'favorite']) {
+      final rows = await fetchActions(scope: 'sent', type: type);
+      for (final row in rows) {
+        final id = pick(row, ['targetId', 'userId'])?.toString() ?? '';
+        if (id.isNotEmpty) out.add(id);
+        final u = SocialDiscoveryUser.fromActionRow(row);
+        if (u.id.isNotEmpty) out.add(u.id);
+      }
+    }
+    return out;
+  }
+
+  List<SocialDiscoveryUser> _usersFromActionRows(List<Map<String, dynamic>> rows) {
     return rows
         .map(SocialDiscoveryUser.fromActionRow)
         .where((u) => u.id.isNotEmpty)

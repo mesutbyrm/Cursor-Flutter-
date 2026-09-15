@@ -53,6 +53,18 @@ check "Tanış — favorite action (süper beğeni)" \
   "$MOBILE/lib/features/social/presentation/pages/tanis_discover_tab.dart" \
   "'favorite'"
 
+check "Tanış — beğeniler sekmesi" \
+  "$MOBILE/lib/features/social/presentation/pages/tanis_likes_tab.dart" \
+  'Sana gelen'
+
+check "Tanış — gelen beğeni API yedek" \
+  "$MOBILE/lib/features/social/data/datasources/social_discovery_remote_datasource.dart" \
+  'fetchIncomingLikes'
+
+check "Tanış — hashtag keşif köprüsü" \
+  "$MOBILE/lib/features/social/presentation/utils/discovery_hashtag_navigation.dart" \
+  'applyDiscoveryInterestFilter'
+
 if [[ "$FAIL" -gt 0 ]]; then
   echo ""
   echo "APK yayın kilidi: $FAIL madde eksik. docs/APK_PENDING_FEATURES.md"

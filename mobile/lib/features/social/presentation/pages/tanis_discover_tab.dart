@@ -46,6 +46,24 @@ class _TanisDiscoverTabState extends ConsumerState<TanisDiscoverTab> {
   final _extraUsers = <SocialDiscoveryUser>[];
   var _loadingMore = false;
   var _autoPageFetches = 0;
+  final _sentActionIds = <String>{};
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _syncSentActionIds());
+  }
+
+  Future<void> _syncSentActionIds() async {
+    try {
+      final ids =
+          await ref.read(socialDiscoveryRemoteProvider).fetchSentActionTargetIds();
+      if (!mounted) return;
+      setState(() => _sentActionIds
+        ..clear()
+        ..addAll(ids));
+    } catch (_) {}
+  }
 
   List<SocialDiscoveryUser> _dedupeById(List<SocialDiscoveryUser> users) {
     final seen = <String>{};
@@ -63,6 +81,7 @@ class _TanisDiscoverTabState extends ConsumerState<TanisDiscoverTab> {
       if (u.id.isEmpty) return false;
       if (myId != null && u.id == myId) return false;
       if (_passedIds.contains(u.id)) return false;
+      if (_sentActionIds.contains(u.id)) return false;
       if (filters.onlineOnly && !u.isOnline) return false;
       final age = u.age;
       if (age != null && (age < filters.minAge || age > filters.maxAge)) {
@@ -132,8 +151,13 @@ class _TanisDiscoverTabState extends ConsumerState<TanisDiscoverTab> {
       return;
     }
     _history.add(_SwipeHistory(user, action));
+    if (action == 'like' || action == 'favorite') {
+      _sentActionIds.add(user.id);
+    }
     ref.invalidate(socialDiscoveryActionsProvider);
     ref.invalidate(socialDiscoveryMatchesProvider);
+    ref.invalidate(socialDiscoverySentLikesProvider);
+    ref.invalidate(socialDiscoverySentTargetIdsProvider);
 
     var matched = result.matched;
     if (!matched && (action == 'like' || action == 'favorite')) {
@@ -272,6 +296,7 @@ class _TanisDiscoverTabState extends ConsumerState<TanisDiscoverTab> {
           _autoPageFetches = 0;
         });
         ref.invalidate(socialDiscoveryFeedProvider);
+        await _syncSentActionIds();
         await widget.onRefreshParent();
       },
       child: ListView(

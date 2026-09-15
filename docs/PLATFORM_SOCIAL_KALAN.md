@@ -39,6 +39,7 @@
 | ✅ Parity | `social-discovery` + `user/location` stub, `voice-room-distance-enrich` |
 | Kalan | Üretim discovery sıralaması (`discoveryPriority`, `discoveryWeight`) |
 | ✅ | Etkileşimler sekmesi staff hub (bu sprint) |
+| ✅ Mobil | Swipe keşif, eşleşme, beğeniler (gelen/giden), hashtag→filtre, DM önizleme |
 
 ## P6 — Web admin
 

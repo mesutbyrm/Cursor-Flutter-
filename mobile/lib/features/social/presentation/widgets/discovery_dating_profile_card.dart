@@ -34,6 +34,7 @@ class DiscoveryDatingProfileCard extends ConsumerWidget {
     final mediaUrl = user.coverMediaUrl;
     final bio = user.bio?.trim();
     final hobbies = user.hobbies;
+    final commonHobbies = user.commonHobbies;
     final matchPercent = user.matchPercent;
 
     final card = ClipRRect(
@@ -162,6 +163,19 @@ class DiscoveryDatingProfileCard extends ConsumerWidget {
                         color: Colors.white,
                         fontSize: 14,
                         height: 1.35,
+                      ),
+                    ),
+                  ],
+                  if (commonHobbies.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Ortak: ${commonHobbies.take(3).join(' · ')}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF86EFAC),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],

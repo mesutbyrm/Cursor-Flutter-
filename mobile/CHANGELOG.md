@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.530+571 (2026-09-15) — Tanış beğeniler + keşif tamamlama
+
+- **Beğeniler** sekmesi: sana gelen (`liked_me` / yedek filtreler) ve gönderilen (`scope=sent`)
+- Keşif: gönderilmiş beğeni/favori profilleri tekrar göstermez
+- Swipe kartında **ortak hobiler** önizleme
+- Hashtag arama → keşif ilgi filtresi (extras)
+- APK gate: beğeniler sekmesi + hashtag köprüsü işaretleri
+
 ## 1.0.529+570 (2026-09-15) — Tanış hashtag + etkileşim filtre
 
 - Hashtag & Takım: trend etiket → keşif ilgi filtresi + ana ekrana dönüş

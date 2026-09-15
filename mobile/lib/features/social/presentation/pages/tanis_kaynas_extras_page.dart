@@ -61,18 +61,14 @@ class _TanisKaynasExtrasPageState extends ConsumerState<TanisKaynasExtrasPage> {
                           await ref
                               .read(socialDiscoveryRemoteProvider)
                               .searchHashtags(q: q);
-                          if (!mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Hashtag verisi alındı')),
-                          );
-                        } catch (e) {
-                          if (!mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(ApiException.userMessage(e)),
-                            ),
-                          );
-                        }
+                        } catch (_) {}
+                        if (!mounted) return;
+                        applyDiscoveryInterestFilter(
+                          context,
+                          ref,
+                          interest: q,
+                          snackMessage: 'Keşif filtresi: $q',
+                        );
                       },
                     ),
                   ),
