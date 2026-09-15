@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.510+550 (2026-09-15) — CI analyze düzeltmesi
+
+- Ana sayfa fal kartı: `Ink` üzerinde geçersiz `clipBehavior` kaldırıldı; `ClipRRect` ile kırpma (release gate Gate 1)
+
 ## 1.0.509+549 (2026-09-15) — Canlı PK gelen davet UI + kalan işler doc
 
 - Gelen canlı PK: premium `showPkInviteDialog` (geri sayım + avatar)

@@ -105,16 +105,17 @@ class _TypeCard extends ConsumerWidget {
       child: InkWell(
         onTap: () => context.push('/fortune/$_routeSlug'),
         borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
-        child: Ink(
-          width: 132,
-          height: 128,
-          decoration: HomePremiumDesign.glassCard(
-            tint: HomePremiumDesign.surface,
-            radius: HomeApprovedDesign.cardRadius,
-            border: Border.all(color: accent.withValues(alpha: 0.35)),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Stack(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
+          child: Ink(
+            width: 132,
+            height: 128,
+            decoration: HomePremiumDesign.glassCard(
+              tint: HomePremiumDesign.surface,
+              radius: HomeApprovedDesign.cardRadius,
+              border: Border.all(color: accent.withValues(alpha: 0.35)),
+            ),
+            child: Stack(
             fit: StackFit.expand,
             children: [
               FortuneTypeCoverImage(
@@ -175,6 +176,7 @@ class _TypeCard extends ConsumerWidget {
               ),
             ],
           ),
+        ),
         ),
       ),
     );
