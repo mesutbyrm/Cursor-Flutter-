@@ -22,6 +22,8 @@ import '../widgets/admin_user_manage_sheet.dart';
 import '../../domain/admin_user_extended_data.dart';
 import '../widgets/admin_role_permissions_matrix.dart';
 import '../widgets/admin_user_command_actions.dart';
+import '../widgets/admin_user_finance_ledger_section.dart';
+import '../widgets/admin_user_presence_strip.dart';
 import 'admin_user_command_center_extended_tabs.dart';
 
 /// Tam kullanıcı komuta merkezi — özet, finans, hediye, yetki, aktivite.
@@ -389,7 +391,9 @@ class _OverviewTab extends StatelessWidget {
               ),
           ],
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
+        AdminUserPresenceStrip(userId: detail.userId),
+        const SizedBox(height: 16),
         _StatGrid(items: [
           _Stat('Jeton', '${detail.jeton}'),
           _Stat('CFC', '${detail.cfc}'),
@@ -615,6 +619,8 @@ class _FinanceTabState extends ConsumerState<_FinanceTab> {
           )
         else
           ...filtered.map((r) => _FinanceRow(row: r)),
+        if (AdminUserPermissions.canViewFinance(access))
+          AdminUserFinanceLedgerSection(userId: widget.detail.userId),
       ],
     );
   }

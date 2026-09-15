@@ -152,6 +152,7 @@ import '../../features/live_psychics/presentation/screens/psychic_teller_dashboa
 import '../../features/live_psychics/presentation/screens/psychic_profile_screen.dart';
 import '../../features/live_psychics/presentation/screens/psychics_list_screen.dart';
 import '../../features/agency/presentation/pages/agency_dashboard_screen.dart';
+import '../../features/cfc_arena/presentation/pages/cfc_arena_contest_page.dart';
 import '../../features/cfc_arena/presentation/pages/cfc_arena_hub_page.dart';
 import '../../features/agency/presentation/providers/agency_providers.dart';
 import '../../features/vip_gold/presentation/pages/vip_gold_hub_page.dart';
@@ -1284,6 +1285,17 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           key: state.pageKey,
           child: const CfcArenaHubPage(),
         ),
+        routes: [
+          GoRoute(
+            path: ':contestId',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: CfcArenaContestPage(
+                contestId: state.pathParameters['contestId']!,
+              ),
+            ),
+          ),
+        ],
       ),
       GoRoute(
         path: '/canli-falcilar',

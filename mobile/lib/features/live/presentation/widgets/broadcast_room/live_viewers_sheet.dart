@@ -7,6 +7,8 @@ import 'package:intl/intl.dart';
 import '../../../../../core/theme/app_theme_colors.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../domain/entities/live_stream_viewer.dart';
+import '../../../../admin/presentation/providers/staff_access_provider.dart';
+import '../../../../admin/presentation/widgets/admin_user_hub_launcher.dart';
 import '../../providers/live_stream_viewers_provider.dart';
 import 'live_moderation_sheet.dart';
 
@@ -99,6 +101,7 @@ class _ViewerTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final staff = ref.watch(staffAccessProvider);
     final seen = viewer.lastSeen != null
         ? DateFormat('HH:mm').format(viewer.lastSeen!.toLocal())
         : null;
@@ -141,19 +144,25 @@ class _ViewerTile extends ConsumerWidget {
           ),
         ],
       ),
-      onLongPress: isHost && viewer.id.isNotEmpty
-          ? () {
-              showLiveModerationSheet(
-                context: context,
-                ref: ref,
-                streamId: streamId,
-                targetUserId: viewer.id,
-                targetDisplayName: viewer.displayName,
-                targetAvatarUrl: viewer.avatarUrl,
-                isModerator: viewer.isModerator,
-              );
-            }
-          : null,
+      onLongPress: viewer.id.isEmpty
+          ? null
+          : () {
+              if (AdminUserHubLauncher.canOpen(staff)) {
+                AdminUserHubLauncher.open(context, userId: viewer.id);
+                return;
+              }
+              if (isHost) {
+                showLiveModerationSheet(
+                  context: context,
+                  ref: ref,
+                  streamId: streamId,
+                  targetUserId: viewer.id,
+                  targetDisplayName: viewer.displayName,
+                  targetAvatarUrl: viewer.avatarUrl,
+                  isModerator: viewer.isModerator,
+                );
+              }
+            },
       onTap: viewer.id.isEmpty
           ? null
           : () {

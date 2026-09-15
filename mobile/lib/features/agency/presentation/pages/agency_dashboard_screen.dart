@@ -7,6 +7,7 @@ import 'package:canlifal_social/core/performance/list_perf.dart';
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../domain/entities/agency_entity.dart';
+import '../providers/agency_presence_provider.dart';
 import '../providers/agency_providers.dart';
 import '../widgets/agency_jeton_transfer_sheet.dart';
 
@@ -19,6 +20,7 @@ class AgencyDashboardScreen extends ConsumerWidget {
     final approved = ref.watch(approvedAgencyProvider);
     final dash = ref.watch(agencyDashboardProvider);
     final walletAsync = ref.watch(agencyWalletProvider);
+    final presenceAsync = ref.watch(agencyPresenceProvider);
     final agency = dash.agency ?? approved.agency;
     final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
@@ -110,6 +112,31 @@ class AgencyDashboardScreen extends ConsumerWidget {
               ),
             ],
             const SizedBox(height: 20),
+            _SectionTitle('Canlı durum'),
+            presenceAsync.when(
+              data: (items) {
+                if (items.isEmpty) {
+                  return _emptyHint('Canlı durum API yok veya üye yok.');
+                }
+                return Column(
+                  children: items.take(8).map((m) {
+                    final label = (m['label'] ?? m['status'] ?? '').toString();
+                    final name = (m['name'] ?? m['username'] ?? 'Üye').toString();
+                    return ListTile(
+                      dense: true,
+                      title: Text(name, style: const TextStyle(color: Colors.white)),
+                      trailing: Text(label, style: const TextStyle(fontSize: 11)),
+                    );
+                  }).toList(),
+                );
+              },
+              loading: () => const Padding(
+                padding: EdgeInsets.all(8),
+                child: LinearProgressIndicator(),
+              ),
+              error: (_, __) => _emptyHint('Durum yüklenemedi.'),
+            ),
+            const SizedBox(height: 16),
             _SectionTitle('Üyeler (${dash.members.length})'),
             if (dash.members.isEmpty)
               _emptyHint('Henüz üye yok.')

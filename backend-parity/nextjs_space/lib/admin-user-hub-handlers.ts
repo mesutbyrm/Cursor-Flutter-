@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+import { hubRangeSince } from '@/lib/hub-date-range'
+
 type HubCtx = { userId: string }
 
 async function tryPrisma() {
@@ -62,6 +64,27 @@ export async function getAdminUserOverview(_req: NextRequest, { userId }: HubCtx
     include: { agency: { select: { id: true, name: true, status: true } } },
   }).catch(() => null)
 
+  const labels: string[] = []
+  if (user.isBanned) labels.push('🔴 Banlı')
+  if (user.isFrozen) labels.push('🧊 Dondurulmuş')
+  if (user.hiddenFromDiscovery) labels.push('🙈 Keşfet gizli')
+  if (!user.canBroadcast) labels.push('📺 Yayın kapalı')
+  if (!user.canCreateRoom) labels.push('🎙 Oda kapalı')
+
+  const live = await prisma.videoStream
+    .findFirst({ where: { userId, status: 'live' }, select: { id: true, title: true } })
+    .catch(() => null)
+  if (live) labels.push('📺 Canlı yayında')
+
+  const teller = await prisma.liveFortuneTeller
+    .findFirst({ where: { userId }, select: { id: true, isOnline: true } })
+    .catch(() => null)
+  if (teller?.isOnline) labels.push('🔮 Canlı falcı')
+
+  if (agencyUser && (agencyUser as { isActive?: boolean }).isActive !== false) {
+    labels.push('🏢 Ajans üyesi')
+  }
+
   return NextResponse.json({
     success: true,
     data: {
@@ -75,8 +98,8 @@ export async function getAdminUserOverview(_req: NextRequest, { userId }: HubCtx
           }
         : null,
       presence: {
-        online: false,
-        labels: [] as string[],
+        online: labels.some((l) => l.includes('Canlı')),
+        labels,
       },
     },
   })
@@ -141,15 +164,39 @@ export async function getAdminUserModeration(_req: NextRequest, { userId }: HubC
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { isBanned: true, banReason: true, role: true },
+    select: {
+      isBanned: true,
+      banReason: true,
+      bannedAt: true,
+      bannedUntil: true,
+      role: true,
+      isFrozen: true,
+      frozenReason: true,
+      warningCount: true,
+      canBroadcast: true,
+      canCreateRoom: true,
+      canChat: true,
+      hiddenFromDiscovery: true,
+    },
   })
+
+  const actions = await prisma.adminUserAction
+    .findMany({
+      where: { targetUserId: userId },
+      orderBy: { createdAt: 'desc' },
+      take: 30,
+    })
+    .catch(() => [])
 
   return NextResponse.json({
     success: true,
     userId,
     isBanned: user?.isBanned ?? false,
     banReason: user?.banReason ?? null,
-    warnings: [],
+    isFrozen: user?.isFrozen ?? false,
+    warningCount: user?.warningCount ?? 0,
+    user,
+    warnings: actions,
   })
 }
 
@@ -170,28 +217,104 @@ export async function getAdminUserReports(_req: NextRequest, { userId }: HubCtx)
   return NextResponse.json({ success: true, items: reports, userId })
 }
 
-export async function getAdminUserEarnings(
-  _req: NextRequest,
-  { userId }: HubCtx,
-) {
-  return NextResponse.json({
-    success: true,
-    userId,
-    items: [],
-    message: 'Ledger aggregation — üretimde WalletTransaction filtresi',
-  })
+export async function getAdminUserEarnings(req: NextRequest, { userId }: HubCtx) {
+  const prisma = await tryPrisma()
+  if (!prisma) {
+    return NextResponse.json({ success: true, userId, items: [] })
+  }
+  const since = hubRangeSince(req)
+  const whereJeton: Record<string, unknown> = { userId, amount: { gt: 0 } }
+  const whereCredit: Record<string, unknown> = { userId, amount: { gt: 0 } }
+  if (since) {
+    whereJeton.createdAt = { gte: since }
+    whereCredit.createdAt = { gte: since }
+  }
+
+  const [jetonRows, creditRows] = await Promise.all([
+    prisma.jetonTransaction.findMany({
+      where: whereJeton,
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    }),
+    prisma.creditTransaction.findMany({
+      where: whereCredit,
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    }),
+  ])
+
+  const items = [
+    ...jetonRows.map((r: { id: string; amount: number; type: string; description: string | null; createdAt: Date; balanceAfter: number }) => ({
+      id: r.id,
+      currency: 'jeton',
+      amount: r.amount,
+      type: r.type,
+      description: r.description,
+      createdAt: r.createdAt,
+      balanceAfter: r.balanceAfter,
+    })),
+    ...creditRows.map((r: { id: string; amount: number; type: string; description: string | null; createdAt: Date; balance: number }) => ({
+      id: r.id,
+      currency: 'credit',
+      amount: r.amount,
+      type: r.type,
+      description: r.description,
+      createdAt: r.createdAt,
+      balanceAfter: r.balance,
+    })),
+  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+
+  return NextResponse.json({ success: true, userId, items, range: req.nextUrl.searchParams.get('range') ?? 'all' })
 }
 
-export async function getAdminUserSpending(
-  _req: NextRequest,
-  { userId }: HubCtx,
-) {
-  return NextResponse.json({
-    success: true,
-    userId,
-    items: [],
-    message: 'Ledger aggregation — üretimde WalletTransaction filtresi',
-  })
+export async function getAdminUserSpending(req: NextRequest, { userId }: HubCtx) {
+  const prisma = await tryPrisma()
+  if (!prisma) {
+    return NextResponse.json({ success: true, userId, items: [] })
+  }
+  const since = hubRangeSince(req)
+  const whereJeton: Record<string, unknown> = { userId, amount: { lt: 0 } }
+  const whereCredit: Record<string, unknown> = { userId, amount: { lt: 0 } }
+  if (since) {
+    whereJeton.createdAt = { gte: since }
+    whereCredit.createdAt = { gte: since }
+  }
+
+  const [jetonRows, creditRows] = await Promise.all([
+    prisma.jetonTransaction.findMany({
+      where: whereJeton,
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    }),
+    prisma.creditTransaction.findMany({
+      where: whereCredit,
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    }),
+  ])
+
+  const items = [
+    ...jetonRows.map((r: { id: string; amount: number; type: string; description: string | null; createdAt: Date; balanceAfter: number }) => ({
+      id: r.id,
+      currency: 'jeton',
+      amount: r.amount,
+      type: r.type,
+      description: r.description,
+      createdAt: r.createdAt,
+      balanceAfter: r.balanceAfter,
+    })),
+    ...creditRows.map((r: { id: string; amount: number; type: string; description: string | null; createdAt: Date; balance: number }) => ({
+      id: r.id,
+      currency: 'credit',
+      amount: r.amount,
+      type: r.type,
+      description: r.description,
+      createdAt: r.createdAt,
+      balanceAfter: r.balance,
+    })),
+  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+
+  return NextResponse.json({ success: true, userId, items, range: req.nextUrl.searchParams.get('range') ?? 'all' })
 }
 
 export async function getAdminUser360(req: NextRequest, { userId }: HubCtx) {

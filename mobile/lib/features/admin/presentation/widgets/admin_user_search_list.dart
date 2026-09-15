@@ -4,7 +4,10 @@ import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/images/canlifal_network_image.dart';
+import '../../domain/admin_user_util.dart';
 import '../providers/admin_panel_providers.dart';
+import '../providers/staff_access_provider.dart';
+import 'admin_user_hub_launcher.dart';
 
 /// Admin kullanıcı araması — harf yazınca anında liste.
 class AdminUserSearchList extends ConsumerStatefulWidget {
@@ -59,6 +62,7 @@ class _AdminUserSearchListState extends ConsumerState<AdminUserSearchList> {
   @override
   Widget build(BuildContext context) {
     final results = ref.watch(adminUserSearchProvider);
+    final staff = ref.watch(staffAccessProvider);
     final query = _controller.text.trim();
 
     return Column(
@@ -139,6 +143,14 @@ class _AdminUserSearchListState extends ConsumerState<AdminUserSearchList> {
                     ),
                     trailing: const Icon(Icons.chevron_right_rounded),
                     onTap: () => widget.onUserSelected(u),
+                    onLongPress: AdminUserHubLauncher.canOpen(staff)
+                        ? () {
+                            final id = resolveAdminUserId(u);
+                            if (id.isNotEmpty) {
+                              AdminUserHubLauncher.open(context, userId: id);
+                            }
+                          }
+                        : null,
                   );
                 },
               );

@@ -22,13 +22,23 @@ export async function GET(req: NextRequest) {
       include: { user: { select: { id: true, name: true, username: true, image: true } } },
     })
 
-    const items = members.map((m: { userId: string; user: { name: string; username: string | null } }) => ({
-      userId: m.userId,
-      name: m.user.name,
-      username: m.user.username,
-      status: 'offline',
-      label: '⚪ Çevrimdışı',
-    }))
+    const userIds = members.map((m: { userId: string }) => m.userId)
+    const liveStreams = await prisma.videoStream.findMany({
+      where: { userId: { in: userIds }, status: 'live' },
+      select: { userId: true, title: true },
+    })
+    const liveSet = new Set(liveStreams.map((s: { userId: string }) => s.userId))
+
+    const items = members.map((m: { userId: string; user: { name: string; username: string | null } }) => {
+      const onLive = liveSet.has(m.userId)
+      return {
+        userId: m.userId,
+        name: m.user.name,
+        username: m.user.username,
+        status: onLive ? 'live' : 'offline',
+        label: onLive ? '🟢 Canlı yayında' : '⚪ Çevrimdışı',
+      }
+    })
 
     return NextResponse.json({ success: true, items })
   } catch (e) {

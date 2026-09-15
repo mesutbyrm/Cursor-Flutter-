@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../core/util/json_util.dart';
 import '../providers/cfc_arena_providers.dart';
 
 /// CFC Arena — puan/rozet odaklı yarışmalar (§21–25); ödül para/jeton değil.
@@ -36,11 +38,15 @@ class CfcArenaHubPage extends ConsumerWidget {
               final c = rows[i];
               final name = (c['name'] ?? c['title'] ?? 'Yarışma').toString();
               final status = (c['status'] ?? c['phase'] ?? '').toString();
+              final id = pick(c, ['id', 'contestId', '_id'])?.toString() ?? '';
               return Card(
                 child: ListTile(
                   title: Text(name),
                   subtitle: Text(status),
                   trailing: const Icon(Icons.emoji_events_outlined),
+                  onTap: id.isEmpty
+                      ? null
+                      : () => context.push('/cfc-arena/$id'),
                 ),
               );
             },
