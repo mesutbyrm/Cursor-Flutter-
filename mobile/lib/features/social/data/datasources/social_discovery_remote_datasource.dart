@@ -89,6 +89,7 @@ class SocialDiscoveryRemoteDataSource {
         success: false,
         message: e.message,
         errorCode: e.errorCode,
+        statusCode: e.statusCode,
       );
     }
   }
@@ -155,12 +156,21 @@ class SocialDiscoveryRemoteDataSource {
     final success = root['success'] == true;
     final matched = pick(root, ['matched', 'isMatch', 'match']) == true ||
         pick(asJsonMap(root['data']), ['matched', 'isMatch', 'match']) == true;
+    final err = root['error'];
+    String? message = pick(root, ['message'])?.toString();
+    if ((message == null || message.isEmpty) && err is String) {
+      message = err;
+    }
+    if ((message == null || message.isEmpty) && err is Map) {
+      message = pick(asJsonMap(err), ['message', 'error', 'description'])
+          ?.toString();
+    }
     return SocialDiscoveryActionResult(
       success: success,
       toggled: root['toggled'] == true,
       matched: matched,
-      message: pick(root, ['message'])?.toString(),
-      errorCode: pick(asJsonMap(root['error']), ['code'])?.toString(),
+      message: message,
+      errorCode: pick(asJsonMap(err is Map ? err : null), ['code'])?.toString(),
     );
   }
 

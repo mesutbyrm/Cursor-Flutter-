@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/widgets/user_avatar.dart';
+import '../../../messages/domain/entities/message_entities.dart';
+import '../../../messages/presentation/providers/messages_providers.dart';
 import '../../../platform_social/presentation/widgets/platform_social_ui_kit.dart';
 import '../../domain/entities/social_discovery_user.dart';
 import '../providers/social_discovery_providers.dart';
@@ -18,10 +20,12 @@ class TanisMatchesTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final matches = ref.watch(socialDiscoveryMatchesProvider);
+    final conversations = ref.watch(conversationsProvider);
 
     return RefreshIndicator(
       onRefresh: () async {
         ref.invalidate(socialDiscoveryMatchesProvider);
+        ref.invalidate(conversationsProvider);
         await onRefresh();
       },
       child: matches.when(
@@ -42,6 +46,10 @@ class TanisMatchesTab extends ConsumerWidget {
           ],
         ),
         data: (users) {
+          final dmByPeer = <String, ConversationEntity>{};
+          conversations.valueOrNull?.forEach((c) {
+            if (c.id.isNotEmpty) dmByPeer[c.id] = c;
+          });
           if (users.isEmpty) {
             return ListView(
               children: [
@@ -63,7 +71,7 @@ class TanisMatchesTab extends ConsumerWidget {
             separatorBuilder: (_, _) => const SizedBox(height: 10),
             itemBuilder: (context, i) {
               final u = users[i];
-              return _MatchTile(user: u);
+              return _MatchTile(user: u, conversation: dmByPeer[u.id]);
             },
           );
         },
@@ -73,9 +81,10 @@ class TanisMatchesTab extends ConsumerWidget {
 }
 
 class _MatchTile extends StatelessWidget {
-  const _MatchTile({required this.user});
+  const _MatchTile({required this.user, this.conversation});
 
   final SocialDiscoveryUser user;
+  final ConversationEntity? conversation;
 
   @override
   Widget build(BuildContext context) {
@@ -102,9 +111,41 @@ class _MatchTile extends StatelessWidget {
                       color: PlatformSocialPalette.textMuted,
                     ),
                   ),
+                if (conversation?.subtitle != null &&
+                    conversation!.subtitle!.trim().isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      conversation!.subtitle!.trim(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: PlatformSocialPalette.textMuted,
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
+          if (conversation != null && conversation!.unreadCount > 0)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: CircleAvatar(
+                radius: 11,
+                backgroundColor: PlatformSocialPalette.accent,
+                child: Text(
+                  conversation!.unreadCount > 9
+                      ? '9+'
+                      : '${conversation!.unreadCount}',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
           FilledButton.icon(
             onPressed: () => context.push('/chat/${user.id}'),
             icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),

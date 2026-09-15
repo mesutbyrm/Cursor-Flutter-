@@ -27,6 +27,9 @@ class SocialDiscoveryUser {
 
   String? get city => pick(_profileMap, ['city', 'location'])?.toString();
 
+  String? get gender =>
+      pick(_profileMap, ['gender', 'sex', 'genderPreference'])?.toString();
+
   String? get bio =>
       pick(_profileMap, ['bio', 'about', 'description'])?.toString();
 

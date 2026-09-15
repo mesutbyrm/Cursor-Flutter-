@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.528+569 (2026-09-15) — Tanış Kaynaş DM önizleme + kota
+
+- Beğeni / aksiyon hataları: 429 ve kota mesajları; Gold kısayolu (`/vip-gold`)
+- Eşleşmeler: `conversations` ile son mesaj önizleme ve okunmamış rozeti
+- Keşif: konum kapalı uyarısı, filtre sonrası otomatik sayfa yükleme, cinsiyet istemci filtresi
+- Profil: ortak takipçi sayısı (`commonFollowers`)
+
 ## 1.0.527+568 (2026-09-15) — Tanış Kaynaş profil + filtre
 
 - Keşif: mesafe (km) istemci filtresi, profil tekilleştirme, süper beğeni eşleşme doğrulama

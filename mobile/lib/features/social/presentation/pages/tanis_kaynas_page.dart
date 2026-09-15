@@ -8,6 +8,7 @@ import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/util/json_util.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
+import '../../../messages/presentation/providers/messages_providers.dart';
 import '../../../admin/presentation/widgets/admin_user_hub_launcher.dart';
 import '../../../platform_social/presentation/widgets/platform_social_ui_kit.dart';
 import '../sheets/social_discovery_profile_sheet.dart';
@@ -49,6 +50,7 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
     ref.invalidate(socialDiscoveryActionsProvider);
     ref.invalidate(socialTrendingHashtagsProvider);
     ref.invalidate(socialTeamsListProvider);
+    ref.invalidate(conversationsProvider);
   }
 
   SocialDiscoveryUser? _interactionTargetUser(Map<String, dynamic> row) {

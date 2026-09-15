@@ -25,6 +25,7 @@ class SocialDiscoveryActionResult {
     this.matched = false,
     this.message,
     this.errorCode,
+    this.statusCode,
   });
 
   final bool success;
@@ -32,4 +33,14 @@ class SocialDiscoveryActionResult {
   final bool matched;
   final String? message;
   final String? errorCode;
+  final int? statusCode;
+
+  bool get isRateOrQuotaLimit {
+    if (statusCode == 429) return true;
+    final m = (message ?? '').toLowerCase();
+    return m.contains('limit') ||
+        m.contains('kot') ||
+        m.contains('quota') ||
+        m.contains('fazla');
+  }
 }

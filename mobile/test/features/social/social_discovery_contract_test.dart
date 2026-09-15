@@ -57,6 +57,20 @@ void main() {
     expect(u.matchPercent, 88);
   });
 
+  test('SocialDiscoveryActionResult rate limit helper', () {
+    const limited = SocialDiscoveryActionResult(
+      success: false,
+      statusCode: 429,
+      message: 'Too many',
+    );
+    expect(limited.isRateOrQuotaLimit, isTrue);
+    const msg = SocialDiscoveryActionResult(
+      success: false,
+      message: 'Günlük kota doldu',
+    );
+    expect(msg.isRateOrQuotaLimit, isTrue);
+  });
+
   test('SocialDiscoveryFeed hasMore uses total from data envelope', () {
     const feed = SocialDiscoveryFeed(
       users: const [],

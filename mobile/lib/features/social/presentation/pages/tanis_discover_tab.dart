@@ -12,6 +12,7 @@ import '../../domain/entities/social_discovery_user.dart';
 import '../providers/social_discovery_providers.dart';
 import '../sheets/social_discovery_profile_sheet.dart';
 import '../widgets/discovery_filter_sheet.dart';
+import '../utils/discovery_action_feedback.dart';
 import '../widgets/discovery_match_dialog.dart';
 import '../widgets/discovery_swipe_deck.dart';
 
@@ -44,6 +45,7 @@ class _TanisDiscoverTabState extends ConsumerState<TanisDiscoverTab> {
   var _extraPage = 1;
   final _extraUsers = <SocialDiscoveryUser>[];
   var _loadingMore = false;
+  var _autoPageFetches = 0;
 
   List<SocialDiscoveryUser> _dedupeById(List<SocialDiscoveryUser> users) {
     final seen = <String>{};
@@ -76,6 +78,13 @@ class _TanisDiscoverTabState extends ConsumerState<TanisDiscoverTab> {
           return false;
         }
       }
+      if (filters.gender.trim().isNotEmpty) {
+        final want = filters.gender.trim().toLowerCase();
+        final g = u.gender?.toLowerCase();
+        if (g != null && g.isNotEmpty && g != want) {
+          return false;
+        }
+      }
       final km = u.distanceKm;
       if (km != null && km > filters.maxDistanceKm) {
         return false;
@@ -102,6 +111,7 @@ class _TanisDiscoverTabState extends ConsumerState<TanisDiscoverTab> {
       _extraUsers.clear();
       _passedIds.clear();
       _history.clear();
+      _autoPageFetches = 0;
     });
   }
 
@@ -118,13 +128,7 @@ class _TanisDiscoverTabState extends ConsumerState<TanisDiscoverTab> {
   }) async {
     if (!result.success) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            result.message ?? 'İşlem tamamlanamadı',
-          ),
-        ),
-      );
+      showDiscoveryActionFailure(context, result);
       return;
     }
     _history.add(_SwipeHistory(user, action));
@@ -256,6 +260,7 @@ class _TanisDiscoverTabState extends ConsumerState<TanisDiscoverTab> {
   Widget build(BuildContext context) {
     final discovery = ref.watch(socialDiscoveryFeedProvider);
     final filters = ref.watch(discoveryFilterProvider);
+    final location = ref.watch(userLocationSettingsProvider);
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -264,6 +269,7 @@ class _TanisDiscoverTabState extends ConsumerState<TanisDiscoverTab> {
           _extraUsers.clear();
           _passedIds.clear();
           _history.clear();
+          _autoPageFetches = 0;
         });
         ref.invalidate(socialDiscoveryFeedProvider);
         await widget.onRefreshParent();
@@ -306,6 +312,23 @@ class _TanisDiscoverTabState extends ConsumerState<TanisDiscoverTab> {
                 ],
               ),
             ),
+          location.when(
+            data: (settings) {
+              if (settings.locationEnabled) return const SizedBox.shrink();
+              return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: ListTile(
+                  leading: const Icon(Icons.location_off_outlined),
+                  title: const Text('Konum kapalı'),
+                  subtitle: const Text(
+                    'Yakındaki profiller için üstteki “Konum ile keşfet” bölümünü açın.',
+                  ),
+                ),
+              );
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (_, _) => const SizedBox.shrink(),
+          ),
           discovery.when(
             loading: () => const Padding(
               padding: EdgeInsets.all(48),
@@ -320,6 +343,16 @@ class _TanisDiscoverTabState extends ConsumerState<TanisDiscoverTab> {
               final merged = _dedupeById([...feed.users, ..._extraUsers]);
               final visible = _applyClientFilters(merged);
               if (visible.isEmpty) {
+                if (feed.hasMore && _autoPageFetches < 4 && !_loadingMore) {
+                  _autoPageFetches++;
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    _loadMore();
+                  });
+                  return const Padding(
+                    padding: EdgeInsets.all(48),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
                 return const DiscoverEmptyInline(
                   icon: Icons.people_outline_rounded,
                   title: 'Şimdilik yeni profil yok',
@@ -327,6 +360,7 @@ class _TanisDiscoverTabState extends ConsumerState<TanisDiscoverTab> {
                       'Filtreleri gevşetin veya konum paylaşımını açıp yenileyin.',
                 );
               }
+              _autoPageFetches = 0;
               final tier = ref.watch(vipTierProvider);
               return DiscoverySwipeDeck(
                 users: visible,

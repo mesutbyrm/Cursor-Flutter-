@@ -175,6 +175,8 @@ class _SocialDiscoveryProfileSheetState
     final friendStatus =
         pick(rawUser, ['friendStatus', 'friendshipStatus'])?.toString();
     final isBlocked = pick(rawUser, ['isBlocked']) == true;
+    final commonFollowers = pick(rawUser, ['commonFollowers']);
+    final commonCount = commonFollowers is num ? commonFollowers.round() : 0;
     final canFriendRequest = !isBlocked &&
         friendStatus != 'pending' &&
         friendStatus != 'friends' &&
@@ -263,6 +265,11 @@ class _SocialDiscoveryProfileSheetState
                             label: '%${matchPercent.round()} uyum',
                             icon: Icons.auto_awesome_rounded,
                             tone: PlatformSocialPillTone.accent,
+                          ),
+                        if (commonCount > 0)
+                          PlatformSocialStatusPill(
+                            label: '$commonCount ortak takipçi',
+                            icon: Icons.people_outline_rounded,
                           ),
                       ],
                     ),
