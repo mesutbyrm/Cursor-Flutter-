@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/membership/membership_capabilities.dart';
+import '../../../../core/membership/membership_capability_keys.dart';
 import '../../../profile/presentation/providers/profile_hub_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../domain/vip_tier.dart';
@@ -29,5 +31,11 @@ final vipUnlockedRoomsProvider =
   VipUnlockedRooms.new,
 );
 
-/// Kullanıcının VIP odasına girebilir mi?
-bool canEnterVipRoom(VipTier tier) => tier.isAtLeast(VipTier.diamond);
+/// Kullanıcının VIP odasına girebilir mi? (API matrisi veya fallback).
+bool canEnterVipRoomWith(MembershipCapabilities capabilities) {
+  return capabilities.allows(MembershipCapabilityKeys.vipRooms);
+}
+
+/// Tier-only yedek — test ve saf domain çağrıları.
+bool canEnterVipRoom(VipTier tier) =>
+    canEnterVipRoomWith(MembershipCapabilities.forTier(tier));

@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.514+554 (2026-09-15) — Capability bağlantıları (VIP oda + ziyaretçiler)
+
+- VIP oda girişi: `/api/me/membership` capability matrisi (`vip.vip_rooms`)
+- Kim Baktı: Premium+ kapı; API limit ile liste kısaltma
+- `MembershipCapabilityLockedBody` — üyelik yükseltme CTA
+- VIP ayrıcalık kataloğu: VIP odalar Diamond eşiği ile hizalandı
+
 ## 1.0.513+553 (2026-09-15) — Profil VIP rozeti (Premium ayrımı)
 
 - `ProfileMembershipInfo.isVip`: Premium ücretli kalır; Gold/Diamond/SVIP VIP rozeti (release gate test düzeltmesi)

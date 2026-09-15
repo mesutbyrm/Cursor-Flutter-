@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/membership/membership_capability_providers.dart';
 import '../../../../core/performance/voice_room_entry_perf.dart';
 import '../../../../core/providers/auth_selectors.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
@@ -45,8 +46,10 @@ Future<void> openVoiceRoomWithVipGate(
       room.ownerId == me;
   final isOwner = skipVipGateForOwner && isRoomOwner;
 
-  final tier = ref.read(vipTierProvider);
-  if (!isOwner && room.isVipGoldRoom && !canEnterVipRoom(tier)) {
+  final capabilities = ref.read(membershipCapabilitiesSyncProvider);
+  if (!isOwner &&
+      room.isVipGoldRoom &&
+      !canEnterVipRoomWith(capabilities)) {
     await VoiceGoldVipPage.show(
       context,
       room: room,

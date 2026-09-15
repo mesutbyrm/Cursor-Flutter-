@@ -48,8 +48,8 @@ abstract final class VipPrivilegeCatalog {
     VipPrivilege(
       icon: Icons.meeting_room_rounded,
       title: 'VIP Odalar',
-      subtitle: 'Gold odalara erişim',
-      minTier: VipTier.gold,
+      subtitle: 'Diamond ve üzeri VIP odalar',
+      minTier: VipTier.diamond,
     ),
     VipPrivilege(
       icon: Icons.live_tv_rounded,

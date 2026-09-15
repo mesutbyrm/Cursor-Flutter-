@@ -1,6 +1,7 @@
 import 'package:canlifal_social/core/membership/membership_capabilities.dart';
 import 'package:canlifal_social/core/membership/membership_capability_keys.dart';
 import 'package:canlifal_social/features/vip_gold/domain/vip_tier.dart';
+import 'package:canlifal_social/features/vip_gold/presentation/providers/vip_membership_provider.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -22,6 +23,23 @@ void main() {
     expect(cap.allows(MembershipCapabilityKeys.profileVisitors), isTrue);
     expect(cap.limitFor(MembershipCapabilityKeys.profileVisitors), 50);
     expect(cap.source, MembershipCapabilitySource.api);
+  });
+
+  test('vip rooms fallback requires diamond not gold', () {
+    expect(canEnterVipRoom(VipTier.gold), isFalse);
+    expect(canEnterVipRoom(VipTier.premium), isFalse);
+    expect(canEnterVipRoom(VipTier.diamond), isTrue);
+    expect(
+      canEnterVipRoomWith(
+        MembershipCapabilities.parse({
+          'membership': 'gold',
+          'capabilities': {
+            MembershipCapabilityKeys.vipRooms: {'enabled': true},
+          },
+        }),
+      ),
+      isTrue,
+    );
   });
 
   test('svip lounge requires svip tier in fallback', () {

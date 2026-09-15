@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../core/membership/membership_capability_gate.dart';
+import '../../../../core/membership/membership_capability_keys.dart';
+import '../../../../core/membership/membership_capability_providers.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
@@ -79,6 +82,11 @@ class ProfileVisitorsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final caps = ref.watch(membershipCapabilitiesSyncProvider);
+    final canView =
+        caps.allows(MembershipCapabilityKeys.profileVisitors);
+    final visitorLimit = caps.limitFor(MembershipCapabilityKeys.profileVisitors);
+
     final async = ref.watch(profileVisitorsProvider);
     final statsAsync = ref.watch(profileStatsProvider);
     final views = statsAsync.valueOrNull?.profileViews ?? 0;
@@ -88,19 +96,42 @@ class ProfileVisitorsPage extends ConsumerWidget {
       body: DiscoverBackground(
         child: DiscoverSubPage(
           title: 'Kim Baktı',
-          body: async.when(
+          body: !canView
+              ? MembershipCapabilityLockedBody(
+                  capabilityKey: MembershipCapabilityKeys.profileVisitors,
+                  title: 'Kim Baktı — Premium',
+                  message:
+                      'Profil ziyaretçilerini görmek için Premium veya üzeri üyelik gerekir.',
+                )
+              : async.when(
             loading: () => const Center(child: DiscoverAccentLoader()),
             error: (e, _) => DiscoverEmptyState(
               icon: Icons.error_outline_rounded,
               message: ApiException.userMessage(e),
             ),
-            data: (visitors) => CustomScrollView(
+            data: (visitors) {
+              final capped = visitorLimit != null && visitorLimit > 0
+                  ? visitors.take(visitorLimit).toList()
+                  : visitors;
+              return CustomScrollView(
               slivers: [
+                if (visitorLimit != null)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                      child: Text(
+                        visitorLimit > 0
+                            ? 'Son $visitorLimit ziyaretçi gösteriliyor.'
+                            : 'Tüm ziyaretçiler görünür.',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  ),
                 if (views > 0)
                   SliverToBoxAdapter(
                     child: _ViewCountBanner(views: views),
                   ),
-                if (visitors.isEmpty)
+                if (capped.isEmpty)
                   SliverFillRemaining(
                     child: DiscoverEmptyState(
                       icon: Icons.visibility_outlined,
@@ -109,12 +140,13 @@ class ProfileVisitorsPage extends ConsumerWidget {
                   )
                 else
                   SliverList.builder(
-                    itemCount: visitors.length,
+                    itemCount: capped.length,
                     itemBuilder: (context, i) =>
-                        _VisitorTile(visitor: visitors[i]),
+                        _VisitorTile(visitor: capped[i]),
                   ),
               ],
-            ),
+            );
+            },
           ),
         ),
       ),

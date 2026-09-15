@@ -25,6 +25,9 @@
 | Capability Riverpod | `mobile/lib/core/membership/membership_capability_providers.dart` |
 | Admin üyelik matrisi UI | `mobile/lib/features/admin/presentation/pages/admin_membership_management_page.dart` |
 | API sabitleri | `api_endpoints.dart` → `adminMembershipTiers`, `adminMembershipFeatures` |
+| VIP oda kapısı | `open_voice_room_vip.dart` → `membershipCapabilitiesSyncProvider` + `vip.vip_rooms` |
+| Kim Baktı kapısı | `profile_visitors_page.dart` → `vip.profile_visitors` + limit |
+| Kilit CTA bileşeni | `membership_capability_gate.dart` |
 
 ## Üretimde değiştirilmesi gerekenler (canlifal.com — bu repoda değil)
 
