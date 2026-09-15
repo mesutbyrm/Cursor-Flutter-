@@ -17,13 +17,19 @@ class PkCountdownOverlay extends StatefulWidget {
   State<PkCountdownOverlay> createState() => _PkCountdownOverlayState();
 }
 
-class _PkCountdownOverlayState extends State<PkCountdownOverlay> {
+class _PkCountdownOverlayState extends State<PkCountdownOverlay>
+    with SingleTickerProviderStateMixin {
   late int _left;
   Timer? _timer;
+  late final AnimationController _pulse;
 
   @override
   void initState() {
     super.initState();
+    _pulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 420),
+    )..repeat(reverse: true);
     _left = widget.seconds.clamp(1, 30);
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
@@ -40,20 +46,41 @@ class _PkCountdownOverlayState extends State<PkCountdownOverlay> {
   @override
   void dispose() {
     _timer?.cancel();
+    _pulse.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final urgent = _left <= 3;
+    final gold = urgent ? const Color(0xFFFF3B30) : const Color(0xFFFFD700);
     return Material(
       color: Colors.black.withValues(alpha: 0.82),
       child: Center(
-        child: Text(
-          '$_left',
-          style: const TextStyle(
-            color: Color(0xFFFFD700),
-            fontSize: 96,
-            fontWeight: FontWeight.w900,
+        child: AnimatedBuilder(
+          animation: _pulse,
+          builder: (context, child) {
+            final scale = urgent ? 1.0 + 0.18 * _pulse.value : 1.0;
+            return Transform.scale(
+              scale: scale,
+              child: child,
+            );
+          },
+          child: Text(
+            '$_left',
+            style: TextStyle(
+              color: gold,
+              fontSize: urgent ? 108 : 96,
+              fontWeight: FontWeight.w900,
+              shadows: urgent
+                  ? [
+                      Shadow(
+                        color: gold.withValues(alpha: 0.6 * _pulse.value),
+                        blurRadius: 24,
+                      ),
+                    ]
+                  : null,
+            ),
           ),
         ),
       ),

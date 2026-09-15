@@ -337,6 +337,10 @@ class _JetonPremiumPurchaseViewState
       );
 
       await ref
+          .read(paymentRequestsNotifierProvider.notifier)
+          .cancelAllPending();
+
+      await ref
           .read(walletRepositoryProvider)
           .submitPaymentRequest(body)
           .timeout(const Duration(seconds: 35));

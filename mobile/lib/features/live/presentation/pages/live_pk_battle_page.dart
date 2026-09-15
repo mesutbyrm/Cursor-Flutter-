@@ -32,6 +32,8 @@ import '../../../gifts/presentation/widgets/gift_stage_layout.dart';
 import '../providers/pk_room_providers.dart';
 import '../gifts/providers/live_gift_providers.dart';
 import '../widgets/broadcast_room/live_pk_score_bar.dart';
+import '../widgets/live_playback_bridge.dart';
+import '../../../pk/presentation/widgets/pk_battle_visuals.dart';
 
 /// Canlı yayın split-screen PK — sol kendi yayın, sağ rakip, jeton skorları.
 class LivePkBattlePage extends ConsumerStatefulWidget {
@@ -227,6 +229,27 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
     final leftWon = pkState.winner == PkBattleWinner.left;
     final rightWon = pkState.winner == PkBattleWinner.right;
     final showLoserFx = pkState.isFinished && pkState.winner != PkBattleWinner.tie;
+    final secondsLeft = remote?.secondsLeft ?? pk.secondsLeft;
+    final pkActive = remote?.isActive == true || pk.isActive;
+    final urgentTimer = pkActive && secondsLeft > 0 && secondsLeft <= 10;
+    final leftOutcome = pkSideOutcome(
+      isLeft: true,
+      leftScore: leftScore,
+      rightScore: rightScore,
+      battleActive: pkActive,
+      leftWon: leftWon,
+      rightWon: rightWon,
+      isDraw: pkState.winner == PkBattleWinner.tie,
+    );
+    final rightOutcome = pkSideOutcome(
+      isLeft: false,
+      leftScore: leftScore,
+      rightScore: rightScore,
+      battleActive: pkActive,
+      leftWon: leftWon,
+      rightWon: rightWon,
+      isDraw: pkState.winner == PkBattleWinner.tie,
+    );
 
     return GiftEventListener(
       sessionKey: streamId,
@@ -258,7 +281,9 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
                           style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17),
                         ),
                       ),
-                      if (durationLabel != null)
+                      if (pkActive && secondsLeft > 0)
+                        PkBattleTimerBadge(secondsLeft: secondsLeft)
+                      else if (durationLabel != null)
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
@@ -299,22 +324,31 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
                     Row(
                       children: [
                         Expanded(
-                          child: _PkVideoPane(
-                            label: leftName,
-                            accent: Colors.pinkAccent,
-                            thumbnailUrl: widget.session.avatarUrl ??
-                                widget.session.coverImageUrl,
-                            trtc: _trtcReady ? _trtc : null,
-                            isLocal: true,
+                          child: PkOutcomeBorder(
+                            outcome: leftOutcome,
+                            urgentPulse: urgentTimer,
+                            child: _PkVideoPane(
+                              label: leftName,
+                              accent: Colors.pinkAccent,
+                              thumbnailUrl: widget.session.avatarUrl ??
+                                  widget.session.coverImageUrl,
+                              trtc: _trtcReady ? _trtc : null,
+                              isLocal: true,
+                            ),
                           ),
                         ),
                         Container(width: 2, color: Colors.white24),
                         Expanded(
-                          child: _PkVideoPane(
-                            label: rightName,
-                            accent: Colors.cyanAccent,
-                            thumbnailUrl: widget.opponentStream?.thumbnailUrl,
-                            isLocal: false,
+                          child: PkOutcomeBorder(
+                            outcome: rightOutcome,
+                            urgentPulse: urgentTimer,
+                            child: _PkVideoPane(
+                              label: rightName,
+                              accent: Colors.cyanAccent,
+                              thumbnailUrl: widget.opponentStream?.thumbnailUrl,
+                              playbackUrl: widget.opponentStream?.playbackUrl,
+                              isLocal: false,
+                            ),
                           ),
                         ),
                       ],
@@ -397,6 +431,7 @@ class _PkVideoPane extends StatelessWidget {
     required this.label,
     required this.accent,
     this.thumbnailUrl,
+    this.playbackUrl,
     this.trtc,
     this.isLocal = false,
   });
@@ -404,6 +439,7 @@ class _PkVideoPane extends StatelessWidget {
   final String label;
   final Color accent;
   final String? thumbnailUrl;
+  final String? playbackUrl;
   final TrtcRoomManager? trtc;
   final bool isLocal;
 
@@ -412,6 +448,12 @@ class _PkVideoPane extends StatelessWidget {
     Widget videoChild;
     if (isLocal && trtc != null) {
       videoChild = TrtcLocalVideoView(manager: trtc!);
+    } else if (playbackUrl != null && playbackUrl!.trim().isNotEmpty) {
+      videoChild = LivePlaybackBridge(
+        playbackUrl: playbackUrl,
+        thumbnailUrl: thumbnailUrl,
+        audible: true,
+      );
     } else if (thumbnailUrl != null && thumbnailUrl!.isNotEmpty) {
       videoChild = CanlifalNetworkImage(
         url: thumbnailUrl!,

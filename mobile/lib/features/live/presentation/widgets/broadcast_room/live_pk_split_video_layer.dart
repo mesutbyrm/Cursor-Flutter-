@@ -11,6 +11,7 @@ import '../../providers/live_providers.dart';
 import '../../providers/live_video_pk_provider.dart';
 import '../../../domain/pk/pk_status_helper.dart';
 import '../live_playback_bridge.dart';
+import '../../../../pk/presentation/widgets/pk_battle_visuals.dart';
 
 /// PK aktifken üst yarım: sol yerel/yayıncı, sağ rakip.
 class LivePkSplitVideoLayer extends ConsumerWidget {
@@ -49,6 +50,12 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
 
     final opponentMuted = ref.watch(livePkOpponentMutedProvider(streamId));
     final streams = ref.watch(liveStreamsProvider).valueOrNull ?? const [];
+    final battleMap = Map<String, dynamic>.from(battle);
+    final leftScore = pkScoreFromBattleMap(battleMap, left: true);
+    final rightScore = pkScoreFromBattleMap(battleMap, left: false);
+    final secondsLeft = pkBattleSecondsLeftFromMap(battleMap);
+    final pkActive = isLivePkSplitReady(battle, pk.status);
+    final urgent = pkActive && secondsLeft > 0 && secondsLeft <= 10;
 
     String? playbackFor(String? targetStreamId) {
       final id = targetStreamId?.trim() ?? '';
@@ -65,30 +72,58 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
         Row(
           children: [
             Expanded(
-              child: _PkPane(
-                pane: layout.left,
-                trtc: trtc,
-                rtcReady: rtcReady,
-                playbackUrl: layout.left.isLocalPane
-                    ? null
-                    : playbackFor(layout.left.streamId),
-                accent: Colors.pinkAccent,
+              child: PkOutcomeBorder(
+                outcome: pkSideOutcome(
+                  isLeft: true,
+                  leftScore: leftScore,
+                  rightScore: rightScore,
+                  battleActive: pkActive,
+                ),
+                urgentPulse: urgent,
+                child: _PkPane(
+                  pane: layout.left,
+                  trtc: trtc,
+                  rtcReady: rtcReady,
+                  playbackUrl: layout.left.isLocalPane
+                      ? null
+                      : playbackFor(layout.left.streamId),
+                  accent: Colors.pinkAccent,
+                  playbackAudible: true,
+                ),
               ),
             ),
             Container(width: 2, color: Colors.white24),
             Expanded(
-              child: _PkPane(
-                pane: layout.right,
-                trtc: trtc,
-                rtcReady: rtcReady,
-                playbackUrl: playbackFor(layout.right.streamId),
-                accent: Colors.cyanAccent,
-                preferRemoteUserId: layout.right.userId,
-                playbackAudible: !session.isHost,
+              child: PkOutcomeBorder(
+                outcome: pkSideOutcome(
+                  isLeft: false,
+                  leftScore: leftScore,
+                  rightScore: rightScore,
+                  battleActive: pkActive,
+                ),
+                urgentPulse: urgent,
+                child: _PkPane(
+                  pane: layout.right,
+                  trtc: trtc,
+                  rtcReady: rtcReady,
+                  playbackUrl: playbackFor(layout.right.streamId),
+                  accent: Colors.cyanAccent,
+                  preferRemoteUserId: layout.right.userId,
+                  playbackAudible: true,
+                ),
               ),
             ),
           ],
         ),
+        if (pkActive && secondsLeft > 0)
+          Positioned(
+            top: 12,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: PkBattleTimerBadge(secondsLeft: secondsLeft),
+            ),
+          ),
         if (session.isHost)
           Positioned(
             top: 8,

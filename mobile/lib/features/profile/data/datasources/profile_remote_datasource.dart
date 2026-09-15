@@ -669,6 +669,11 @@ class WalletRemoteDataSource {
       );
     }
 
+    // Eski bekleyen talepler yeni bildirimi engellemesin — önce iptal et.
+    try {
+      await _cancelAllMyPendingPaymentRequests();
+    } catch (_) {}
+
     PaymentDebugLog.log('submitNormalized', {
       'requestType': body['requestType'],
       'amount': body['amount'],
@@ -720,7 +725,10 @@ class WalletRemoteDataSource {
               }
               throw ApiException(retryMsg, statusCode: retryCode);
             }
-            if (_paymentRequestAccepted(retryData, retryCode)) return;
+            if (_paymentRequestAccepted(retryData, retryCode)) {
+              _triggerAdminPaymentNotification(body);
+              return;
+            }
             if (retryCode >= 200 && retryCode < 300) {
               _triggerAdminPaymentNotification(body);
               return;
@@ -751,7 +759,10 @@ class WalletRemoteDataSource {
           throw ApiException(msg, statusCode: code);
         }
 
-        if (_paymentRequestAccepted(data, code)) return;
+        if (_paymentRequestAccepted(data, code)) {
+          _triggerAdminPaymentNotification(body);
+          return;
+        }
 
         if (data is String) {
           final s = data.trim();

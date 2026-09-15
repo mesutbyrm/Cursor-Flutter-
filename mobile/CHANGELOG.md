@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.511+551 (2026-09-15) — Jeton talep temizliği + PK TikTok UI
+
+- Jeton/CFC ödeme: yeni talep öncesi bekleyen talepler iptal; admin bildirimi her başarılı POST’ta
+- Canlı/sesli PK: yeşil/kırmızı/mavi taraf çerçevesi, son 10 sn yanıp sönen süre, rakip yayın sesi açık
+
 ## 1.0.510+550 (2026-09-15) — CI analyze düzeltmesi
 
 - Ana sayfa fal kartı: `Ink` üzerinde geçersiz `clipBehavior` kaldırıldı; `ClipRRect` ile kırpma (release gate Gate 1)

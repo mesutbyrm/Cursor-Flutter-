@@ -41,6 +41,7 @@ import '../widgets/premium_2026/pk/pk_team_battle_strip.dart';
 import '../widgets/premium_2026/pk/pk_vs_emblem.dart';
 import '../widgets/voice_room_gift_sheet.dart';
 import '../../../pk/presentation/widgets/pk_start_sheet.dart';
+import '../../../pk/presentation/widgets/pk_battle_visuals.dart';
 
 /// Premium 2026 PK savaş — 1v1, takım, realtime skor, hediye gücü, kazanan FX.
 class VoicePkBattlePage extends ConsumerStatefulWidget {
@@ -225,6 +226,7 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
               children: [
                 _PkHeader(
                   timer: pk.timerLabel,
+                  secondsLeft: remote?.secondsLeft ?? pk.secondsLeft,
                   phase: pk.phase,
                   onBack: () => context.pop(),
                   onMode: pk.isActive && !pk.serverAuthoritative
@@ -374,6 +376,7 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
 class _PkHeader extends StatelessWidget {
   const _PkHeader({
     required this.timer,
+    required this.secondsLeft,
     required this.mode,
     required this.phase,
     required this.onBack,
@@ -381,6 +384,7 @@ class _PkHeader extends StatelessWidget {
   });
 
   final String timer;
+  final int secondsLeft;
   final PkBattleMode mode;
   final PkBattlePhase phase;
   final VoidCallback onBack;
@@ -442,14 +446,17 @@ class _PkHeader extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                 ],
-                Text(
-                  liveLabel,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 15,
-                    fontFeatures: [FontFeature.tabularFigures()],
+                if (phase == PkBattlePhase.active && secondsLeft > 0)
+                  PkBattleTimerBadge(secondsLeft: secondsLeft)
+                else
+                  Text(
+                    liveLabel,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15,
+                      fontFeatures: [FontFeature.tabularFigures()],
+                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -534,44 +541,72 @@ class _OneVsOneBody extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.center,
-                    colors: [
-                      VoiceRoomTokens.neonPink.withValues(alpha: 0.35),
-                      Colors.transparent,
-                    ],
-                  ),
+              child: PkOutcomeBorder(
+                outcome: pkSideOutcome(
+                  isLeft: true,
+                  leftScore: state.left.total,
+                  rightScore: state.right.total,
+                  battleActive: state.isActive,
+                  leftWon: state.winner == PkBattleWinner.left,
+                  rightWon: state.winner == PkBattleWinner.right,
+                  isDraw: state.winner == PkBattleWinner.tie,
                 ),
-                child: PkPlayerHudFrame(
-                  user: state.left.leader,
-                  accent: VoiceRoomTokens.neonPurple,
-                  label: state.left.leader?.displayName ?? 'PLAYER 01',
-                  score: state.left.total,
-                  isLeading: leadingLeft && state.isActive,
+                urgentPulse: state.isActive &&
+                    state.secondsLeft > 0 &&
+                    state.secondsLeft <= 10,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.center,
+                      colors: [
+                        VoiceRoomTokens.neonPink.withValues(alpha: 0.35),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                  child: PkPlayerHudFrame(
+                    user: state.left.leader,
+                    accent: VoiceRoomTokens.neonPurple,
+                    label: state.left.leader?.displayName ?? 'PLAYER 01',
+                    score: state.left.total,
+                    isLeading: leadingLeft && state.isActive,
+                  ),
                 ),
               ),
             ),
             Expanded(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.centerRight,
-                    end: Alignment.center,
-                    colors: [
-                      VoiceRoomTokens.neonBlue.withValues(alpha: 0.35),
-                      Colors.transparent,
-                    ],
-                  ),
+              child: PkOutcomeBorder(
+                outcome: pkSideOutcome(
+                  isLeft: false,
+                  leftScore: state.left.total,
+                  rightScore: state.right.total,
+                  battleActive: state.isActive,
+                  leftWon: state.winner == PkBattleWinner.left,
+                  rightWon: state.winner == PkBattleWinner.right,
+                  isDraw: state.winner == PkBattleWinner.tie,
                 ),
-                child: PkPlayerHudFrame(
-                  user: state.right.leader,
-                  accent: VoiceRoomTokens.neonBlue,
-                  label: state.right.leader?.displayName ?? 'PLAYER 02',
-                  score: state.right.total,
-                  isLeading: !leadingLeft && state.isActive,
+                urgentPulse: state.isActive &&
+                    state.secondsLeft > 0 &&
+                    state.secondsLeft <= 10,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerRight,
+                      end: Alignment.center,
+                      colors: [
+                        VoiceRoomTokens.neonBlue.withValues(alpha: 0.35),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                  child: PkPlayerHudFrame(
+                    user: state.right.leader,
+                    accent: VoiceRoomTokens.neonBlue,
+                    label: state.right.leader?.displayName ?? 'PLAYER 02',
+                    score: state.right.total,
+                    isLeading: !leadingLeft && state.isActive,
+                  ),
                 ),
               ),
             ),
