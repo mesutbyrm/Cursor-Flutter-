@@ -4,17 +4,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.524+565` |
-| Tarih (UTC) | 2026-09-15 19:43 |
-| Commit | [`679bd506134a09d0752304909cae4d5f2d0253a2`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/679bd506134a09d0752304909cae4d5f2d0253a2) |
-| İş akışı | [Run 35013711808](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35013711808) |
+| Sürüm | `1.0.526+567` |
+| Tarih (UTC) | 2026-09-15 22:06 |
+| Commit | [`d017815c244e6eaed7cea8db6c7733fbadfe4cb4`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/d017815c244e6eaed7cea8db6c7733fbadfe4cb4) |
+| İş akışı | [Run 35027616414](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35027616414) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.524+565 (2026-09-15) — CI FAZ0 oda probe (ban fallback)
+## 1.0.526+567 (2026-09-15) — Tanış Kaynaş swipe / eşleşme UX
 
-- Kabul testleri: `pick_acceptance_probe_room_id` — probe oda banlıysa join yapılabilen oda seçilir (SSE/presence)
+- Keşfet: tam ekran swipe kartları, BEĞEN/GEÇ damgası, 4 aksiyon (geri al, geç, süper beğeni, beğen)
+- `GET /api/social/discovery` `data.users` ayrıştırma + sayfa/filtre sorguları
+- Eşleşmeler sekmesi: `GET /api/social/actions?filter=matches` + mesaj (`/chat/{userId}`)
+- Eşleşme diyaloğu; süper beğeni → `favorite`; geçiş istemci (üretimde `skip` yok)
+- Gold: süper beğeni + geri alma; hashtag/takım yan sayfa
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
