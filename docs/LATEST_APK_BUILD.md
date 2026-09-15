@@ -4,30 +4,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.516+557` |
-| Tarih (UTC) | 2026-09-15 16:42 |
-| Commit | [`87e3cc17e3016968c34361ee5a485566e6bc0a15`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/87e3cc17e3016968c34361ee5a485566e6bc0a15) |
-| İş akışı | [Run 34995307690](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34995307690) |
+| Sürüm | `1.0.520+561` |
+| Tarih (UTC) | 2026-09-15 17:17 |
+| Commit | [`66eb4e32c2d06bdda2dea4b73a1580c91d033f3d`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/66eb4e32c2d06bdda2dea4b73a1580c91d033f3d) |
+| İş akışı | [Run 34997974023](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34997974023) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.517+558 (2026-09-15) — P0–P2 parite + hub API
+## 1.0.523+564 (2026-09-15) — Platform sosyal UI tamamlama
 
-- backend-parity: admin user hub routes (overview, activity, agency, …) + `360`
-- Ajans: `POST /api/agency/wallet/transfer` (ledger + idempotency + audit)
-- Referans: `lib/admin-mutation.ts` (P0 guard)
-- Mobil: `admin_user_hub_providers`, aktivite timeline API
-- `docs/PLATFORM_PRODUCTION_DEPLOY_P0_P2.md`
-
-## Unreleased — Profesyonel platform sprint (mobil katman)
-
-- Admin komuta merkezi: VIP, Ajans, Mod., Rapor sekmeleri + hızlı işlem şeridi
-- `AdminUserHubLauncher` — staff uzun basış ile merkezi kullanıcı yönetimi
-- Mesafe: `DistanceBand` (yuvarlanmış bant; kesin km gösterimi kaldırıldı)
-- Ajans panel: jeton kredisi probe + üyeye transfer sheet (`/api/agency/wallet*`)
-- CFC Arena hub rotası `/cfc-arena` (liste probe)
-- `docs/PLATFORM_PROFESSIONAL_SOCIAL_MASTER_PLAN.md` — tam sistem analizi ve faz planı
+- Keşif kartı + swipe destesi: cam kart, mesafe/online pill, platform aksiyon düğmeleri
+- Ajans paneli: gradient arka plan, cüzdan/istatistik/üye/kazanç/görev cam kartları
+- Admin komuta merkezi özet: hero profil kartı, `PlatformSocialStatTile` / bilgi satırları
+- Sesli oda keşif kartı: `distanceLabel` mor mesafe rozeti
+- UI kit: `StatTile`, `InfoRow`, `ListRow`, `CircleAction`
+- Web P6 modal: mobil palet ile hizalı gradient + sekme stilleri
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
