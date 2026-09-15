@@ -40,8 +40,12 @@ abstract final class VoiceStaffChatStyle {
     if (user == null) return false;
     final tier = VipTier.fromMembership(user.membership);
     if (tier.index >= VipTier.gold.index) return true;
-    final nick = user.nickname ?? user.name;
-    if (VoiceStaffRankParser.fromUsername(nick) != VoiceStaffRank.none) {
+    final nick = (user.nickname ?? user.name).trim();
+    if (nick.startsWith('%') ||
+        nick.startsWith('~') ||
+        nick.startsWith('&') ||
+        nick.startsWith('@') ||
+        nick.startsWith('+')) {
       return true;
     }
     final role = user.chatRole?.toLowerCase() ?? '';

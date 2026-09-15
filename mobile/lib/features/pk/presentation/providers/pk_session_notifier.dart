@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/pk_event_log.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../live/presentation/providers/live_pk_streams_provider.dart';
 import '../../../live/presentation/providers/live_video_pk_provider.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
 import '../../data/pk_battle_bridge.dart';
@@ -126,12 +129,49 @@ class PkSessionNotifier
   Future<void> loadCandidates() async {
     final id = arg.contextId.trim();
     if (id.isEmpty) return;
+    final userId = ref.read(authControllerProvider).valueOrNull?.id ?? '';
+    PkEventLog.log('pk_load_candidates', {
+      'contextId': id,
+      'kind': arg.kind.name,
+      'userId': userId,
+    });
     try {
       final bundle = arg.kind == PkContextKind.live
           ? await _api.streamCandidates(id)
           : await _api.roomCandidates(id);
+      var candidates = bundle.candidates
+          .where((c) => c.contextId.isNotEmpty && c.contextId != id)
+          .toList();
+      if (candidates.isEmpty && arg.kind == PkContextKind.live) {
+        await ref
+            .read(livePkStreamsProvider.notifier)
+            .refresh(silent: true, myStreamId: id);
+        final streams = ref
+            .read(livePkStreamsProvider.notifier)
+            .opponentsFor(id);
+        candidates = streams
+            .map(
+              (s) => PkCandidate(
+                contextId: s.id,
+                userId: s.hostUserId ?? '',
+                name: s.streamerName ?? s.title,
+                image: s.thumbnailUrl ?? '',
+                title: s.title,
+                viewers: s.viewerCount,
+              ),
+            )
+            .where((c) => c.contextId.isNotEmpty)
+            .toList();
+        PkEventLog.log('pk_candidates_fallback_streams', {
+          'count': candidates.length,
+        });
+      }
+      PkEventLog.log('pk_eligible_hosts', {
+        'count': candidates.length,
+        'selfBusy': bundle.selfBusy,
+      });
       state = state.copyWith(
-        candidates: bundle.candidates,
+        candidates: candidates,
         selfBusy: bundle.selfBusy,
         clearError: true,
       );
@@ -139,6 +179,7 @@ class PkSessionNotifier
       state = state.copyWith(
         error: e is PkException ? e.message : '$e',
       );
+      PkEventLog.error('load_candidates', e);
     }
   }
 
@@ -189,11 +230,32 @@ class PkSessionNotifier
 
   Future<void> create(String targetContextId, {int durationSeconds = 180}) async {
     if (state.isRateLimited) return;
+    final target = targetContextId.trim();
+    if (target.isEmpty) return;
+    final pending = state.battle;
+    if (pending != null &&
+        pending.status == PkStatus.pending &&
+        (pending.room2Id == target || pending.user2Id == target)) {
+      state = state.copyWith(
+        error: 'Bu yayıncıya zaten PK daveti gönderildi',
+      );
+      return;
+    }
+    if (state.selfBusy ||
+        (pending != null && pending.status.isLive && pending.id.isNotEmpty)) {
+      state = state.copyWith(error: 'Zaten aktif veya bekleyen bir PK var');
+      return;
+    }
+    PkEventLog.requestStart(
+      streamId: arg.kind == PkContextKind.live ? arg.contextId : null,
+      roomId: arg.kind == PkContextKind.voice ? arg.contextId : null,
+      targetId: target,
+    );
     state = state.copyWith(loading: true, clearError: true);
     try {
       final battle = await _api.create(
         roomId: arg.contextId,
-        targetRoomId: targetContextId,
+        targetRoomId: target,
         durationSeconds: durationSeconds,
       );
       _applyBattle(battle);

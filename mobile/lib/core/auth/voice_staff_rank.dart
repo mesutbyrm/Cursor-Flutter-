@@ -19,13 +19,7 @@ abstract final class VoiceStaffRankParser {
     if (n.startsWith('&')) return VoiceStaffRank.sop;
     if (n.startsWith('@')) return VoiceStaffRank.op;
     if (n.startsWith('+')) return VoiceStaffRank.voice;
-    final lower = n.toLowerCase();
-    if (lower == 'admin' ||
-        lower == 'destek' ||
-        lower == 'moderator' ||
-        lower == 'yonetici') {
-      return VoiceStaffRank.admin;
-    }
+    // Nick adı tek başına yetki vermez — yalnızca sunucu rolü / önek sembolleri.
     return VoiceStaffRank.none;
   }
 

@@ -100,7 +100,7 @@ class _SocialInstagramPostCardState
     final likeCount = _likeCount;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+      padding: const EdgeInsets.fromLTRB(0, 6, 0, 6),
       child: ProGlassCard(
         blur: 14,
         animateIn: false,

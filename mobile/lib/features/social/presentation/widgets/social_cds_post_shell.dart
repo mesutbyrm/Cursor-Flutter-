@@ -8,7 +8,7 @@ class SocialCdsPostShell extends ConsumerWidget {
   const SocialCdsPostShell({
     super.key,
     required this.child,
-    this.margin = const EdgeInsets.fromLTRB(12, 0, 12, 14),
+    this.margin = const EdgeInsets.fromLTRB(0, 0, 0, 12),
   });
 
   final Widget child;

@@ -61,13 +61,37 @@ class LiveRemoteDataSource {
     return _parseStreamList(res.data);
   }
 
-  /// PK rakip listesi — API dokümanı: GET /api/video-streams/pk, yedek pk/list + canlı.
+  /// PK rakip listesi — önce `GET /api/video-streams/pk/candidates`, yedek canlı keşif.
   Future<List<LiveStreamEntity>> fetchPkEligibleStreams({
+    String? myStreamId,
     CancelToken? cancelToken,
   }) async {
+    final sid = myStreamId?.trim() ?? '';
+    if (sid.isNotEmpty) {
+      try {
+        final res = await _dio.safeGet<dynamic>(
+          ApiEndpoints.videoStreamPkCandidates,
+          query: {'streamId': sid},
+          forceRefresh: true,
+          cancelToken: cancelToken,
+          options: Options(
+            receiveTimeout: const Duration(seconds: 8),
+            sendTimeout: const Duration(seconds: 8),
+          ),
+        );
+        final fromCandidates = _parsePkCandidateStreams(res.data);
+        if (fromCandidates.isNotEmpty) return fromCandidates;
+      } catch (e, st) {
+        LiveDebugLog.log('pk_candidates_fail', {
+          'streamId': sid,
+          'error': e.toString().split('\n').first,
+        });
+      }
+    }
+
     for (final path in [
-      ApiEndpoints.videoStreamPk,
       ApiEndpoints.videoStreamPkList,
+      ApiEndpoints.videoStreamPk,
     ]) {
       try {
         final res = await _dio.safeGet<dynamic>(
@@ -86,6 +110,44 @@ class LiveRemoteDataSource {
 
     final live = await fetch(page: 1);
     return live.where((s) => s.isLive).toList();
+  }
+
+  List<LiveStreamEntity> _parsePkCandidateStreams(dynamic body) {
+    Map<String, dynamic>? map;
+    if (body is Map) {
+      map = asJsonMap(body);
+      if (map['success'] == true && map['data'] is Map) {
+        map = asJsonMap(map['data']);
+      }
+    }
+    if (map == null) return const [];
+    final list = asJsonList(map['candidates'] ?? map['items']);
+    final out = <LiveStreamEntity>[];
+    final seen = <String>{};
+    for (final raw in list) {
+      final m = asJsonMap(raw);
+      final id = (m['streamId'] ??
+              m['targetRoomId'] ??
+              m['roomId'] ??
+              m['id'])
+          ?.toString()
+          .trim();
+      if (id == null || id.isEmpty || seen.contains(id)) continue;
+      seen.add(id);
+      out.add(
+        LiveStreamEntity(
+          id: id,
+          title: m['title']?.toString() ?? '',
+          streamerName: m['name']?.toString(),
+          thumbnailUrl: m['image']?.toString() ?? m['thumbnailUrl']?.toString(),
+          category: m['category']?.toString(),
+          viewerCount: asInt(m['viewers'] ?? m['viewerCount']),
+          isLive: true,
+          hostUserId: m['userId']?.toString(),
+        ),
+      );
+    }
+    return out;
   }
 
   List<LiveStreamEntity> _parseStreamList(dynamic body) {
