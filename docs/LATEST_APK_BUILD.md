@@ -4,21 +4,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.526+567` |
-| Tarih (UTC) | 2026-09-15 22:06 |
-| Commit | [`d017815c244e6eaed7cea8db6c7733fbadfe4cb4`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/d017815c244e6eaed7cea8db6c7733fbadfe4cb4) |
-| İş akışı | [Run 35027616414](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35027616414) |
+| Sürüm | `1.0.527+568` |
+| Tarih (UTC) | 2026-09-15 22:41 |
+| Commit | [`6652dda2b16bc808d25fea8d83bb8587de0bb60a`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/6652dda2b16bc808d25fea8d83bb8587de0bb60a) |
+| İş akışı | [Run 35030735403](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35030735403) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.526+567 (2026-09-15) — Tanış Kaynaş swipe / eşleşme UX
+## 1.0.529+570 (2026-09-15) — Tanış hashtag + etkileşim filtre
 
-- Keşfet: tam ekran swipe kartları, BEĞEN/GEÇ damgası, 4 aksiyon (geri al, geç, süper beğeni, beğen)
-- `GET /api/social/discovery` `data.users` ayrıştırma + sayfa/filtre sorguları
-- Eşleşmeler sekmesi: `GET /api/social/actions?filter=matches` + mesaj (`/chat/{userId}`)
-- Eşleşme diyaloğu; süper beğeni → `favorite`; geçiş istemci (üretimde `skip` yok)
-- Gold: süper beğeni + geri alma; hashtag/takım yan sayfa
+- Hashtag & Takım: trend etiket → keşif ilgi filtresi + ana ekrana dönüş
+- Derin link: `/social/tanis-kaynas?interest=...`
+- Eşleşmeler: `createdAt` ile yeniden-eskiye sıralama; göreli zaman etiketi
+- Etkileşimler sekmesi: tür filtreleri (beğeni, favori, arkadaşlık)
+- Profil: ortak ilgi alanları bölümü (`commonHobbies`)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
