@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.508+548 (2026-09-15) — Oda içi PK takım + sesli davet API
+
+- Oda yönetimi: **Oda içi PK (takım)** sheet — 2 takım, 4+4 kullanıcı, `create_user`
+- Sesli PK kabul/red: önce `POST /api/live/pk`, yedek oda uçları; oturum yenileme
+- PK savaş sayfası: geçersiz durumda sheet (eski `/pk-invite` replace yok)
+
 ## 1.0.507+547 (2026-09-15) — Canlı PK banner + ana sayfa fal görselleri
 
 - Canlı yayıncı: bekleyen PK için `PkPendingBanner` (üst chrome)

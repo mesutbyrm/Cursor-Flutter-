@@ -16,6 +16,7 @@ import '../../../auth/domain/entities/user_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../../pk/presentation/widgets/pk_start_sheet.dart';
+import 'voice_in_room_pk_sheet.dart';
 import '../../../vip_gold/domain/voice_room_access.dart';
 import '../../../gifts/presentation/providers/gift_battle_providers.dart';
 import '../../../gifts/presentation/providers/gift_goal_providers.dart';
@@ -762,6 +763,20 @@ class _VoiceRoomManagementPanelState
             }
           }),
         ),
+        if (isOwner && !pkLive)
+          ListTile(
+            leading: const Icon(Icons.groups_rounded, color: VoiceRoomTokens.neonPink),
+            title: const Text('Oda içi PK (takım)'),
+            subtitle: const Text('Odadaki kullanıcılarla 2 takım, en fazla 4+4'),
+            onTap: () => _closeAndVoid(() {
+              showVoiceInRoomPkSheet(
+                context,
+                ref,
+                room: room,
+                presence: _live.presence,
+              );
+            }),
+          ),
         if (perms.canManageDj || isOwner || perms.canModerate)
           ListTile(
             leading: const Icon(Icons.library_music_rounded),

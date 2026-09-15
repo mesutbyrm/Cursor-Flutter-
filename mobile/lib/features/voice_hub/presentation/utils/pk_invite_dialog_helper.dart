@@ -14,6 +14,8 @@ import '../../../live/presentation/providers/pk_session_phase_provider.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
 import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../providers/pk_battle_remote_provider.dart';
+import '../../../pk/presentation/providers/pk_providers.dart';
+import '../../../pk/presentation/providers/pk_session_notifier.dart';
 import '../providers/voice_room_session_registry.dart';
 import '../widgets/premium_2026/voice_pk_invite_center_modal.dart';
 import 'voice_room_session_utils.dart';
@@ -100,7 +102,14 @@ Future<void> showPkInviteDialog(
         }
         if (accept) {
           PkEventLog.acceptStart(inviteId: inviteId);
-          await remote.accept(inviteId, roomId: key, alternateRoomId: alt);
+          try {
+            await ref.read(pkServiceProvider).accept(inviteId);
+          } catch (_) {
+            await remote.accept(inviteId, roomId: key, alternateRoomId: alt);
+          }
+          await ref.read(pkSessionProvider(
+            PkSessionArgs(contextId: key, kind: PkContextKind.voice),
+          ).notifier).loadState();
           await prepareVoiceRoomSwitch(
             ref,
             nextLiveKey: key,
@@ -116,7 +125,14 @@ Future<void> showPkInviteDialog(
           }
         } else {
           PkEventLog.reject(inviteId: inviteId);
-          await remote.reject(inviteId, roomId: key, alternateRoomId: alt);
+          try {
+            await ref.read(pkServiceProvider).reject(inviteId);
+          } catch (_) {
+            await remote.reject(inviteId, roomId: key, alternateRoomId: alt);
+          }
+          await ref.read(pkSessionProvider(
+            PkSessionArgs(contextId: key, kind: PkContextKind.voice),
+          ).notifier).loadState();
           remote.clear();
           clearPkInviteDedup(ref, inviteId);
           final nav = rootNavigatorKey.currentContext;

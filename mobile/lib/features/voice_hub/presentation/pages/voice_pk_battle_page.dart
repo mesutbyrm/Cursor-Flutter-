@@ -40,6 +40,7 @@ import '../widgets/premium_2026/pk/pk_player_hud_frame.dart';
 import '../widgets/premium_2026/pk/pk_team_battle_strip.dart';
 import '../widgets/premium_2026/pk/pk_vs_emblem.dart';
 import '../widgets/voice_room_gift_sheet.dart';
+import '../../../pk/presentation/widgets/pk_start_sheet.dart';
 
 /// Premium 2026 PK savaş — 1v1, takım, realtime skor, hediye gücü, kazanan FX.
 class VoicePkBattlePage extends ConsumerStatefulWidget {
@@ -99,7 +100,9 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
       final isTarget = isPkInviteTarget(battle, r, userId: userId);
       final isChallenger = isPkChallengerRoom(battle, r);
       if (!isTarget && !isChallenger) {
-        context.replace('/voice-room/$roomKey/pk-invite', extra: r);
+        if (!mounted) return;
+        Navigator.of(context).pop();
+        await openVoicePkInviteSheet(context, ref, r);
         return;
       }
     }
