@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.513+553 (2026-09-15) — Profil VIP rozeti (Premium ayrımı)
+
+- `ProfileMembershipInfo.isVip`: Premium ücretli kalır; Gold/Diamond/SVIP VIP rozeti (release gate test düzeltmesi)
+
 ## 1.0.512+552 (2026-09-15) — VIP capability merkezi + üyelik admin
 
 - `MembershipCapabilities` — `/api/me/membership` + admin matrisi; jeton ödül/indirim ayrı
