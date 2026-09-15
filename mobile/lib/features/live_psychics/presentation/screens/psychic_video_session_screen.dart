@@ -226,7 +226,10 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
               ),
             if (state.tipThankYouAmount != null && session.isClient)
               Positioned.fill(
-                child: ColoredBox(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: ctrl.dismissTipThankYouOverlay,
+                  child: ColoredBox(
                   color: Colors.black.withValues(alpha: 0.45),
                   child: Center(
                     child: ProfileGlass(
@@ -269,10 +272,14 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                     ),
                   ),
                 ),
+                ),
               ),
             if (state.tipReceivedAmount != null && !session.isClient)
               Positioned.fill(
-                child: ColoredBox(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: ctrl.dismissTipReceivedOverlay,
+                  child: ColoredBox(
                   color: Colors.black.withValues(alpha: 0.45),
                   child: Center(
                     child: ProfileGlass(
@@ -309,6 +316,7 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                       ),
                     ),
                   ),
+                ),
                 ),
               ),
             Positioned(

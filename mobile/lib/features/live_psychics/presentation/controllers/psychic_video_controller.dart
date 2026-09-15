@@ -184,6 +184,10 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   Timer? _sseAutoRetryTimer;
   var _sseAutoRetryCount = 0;
   static const _maxSseAutoRetry = 3;
+  Timer? _tipThankYouDismissTimer;
+  Timer? _tipReceivedDismissTimer;
+  static const _tipOverlayDismissDuration = Duration(seconds: 3);
+  DateTime? _lastTipReceivedPopupAt;
   StreamSubscription<bool>? _onlineSub;
 
   VoidCallback? _remoteVideoListener;
@@ -440,9 +444,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
               type.contains('bahsis') ||
               type.contains('gift') ||
               type.contains('hediye'))) {
-        final data = sig['data'] is Map
-            ? Map<String, dynamic>.from(sig['data'] as Map)
-            : sig;
+        final data = _mergeSignalPayload(sig);
         final amountRaw = data['amount'] ??
             data['jeton'] ??
             data['tipAmount'] ??
@@ -461,6 +463,17 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
         _onTipReceived(amount, from, eventId: id);
       }
     }
+  }
+
+  Map<String, dynamic> _mergeSignalPayload(Map<String, dynamic> sig) {
+    final merged = Map<String, dynamic>.from(sig);
+    for (final key in ['data', 'payload', 'body']) {
+      final nested = sig[key];
+      if (nested is Map) {
+        merged.addAll(Map<String, dynamic>.from(nested));
+      }
+    }
+    return merged;
   }
 
   void _onPeerMediaSignal(Map<String, dynamic> sig) {
@@ -644,7 +657,19 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   void _onTipReceived(int amount, String? fromName, {String? eventId}) {
     if (amount <= 0) return;
     final id = eventId?.trim();
-    if (id != null && id.isNotEmpty && !_seenTipEventIds.add(id)) return;
+    if (id != null && id.isNotEmpty) {
+      if (!_seenTipEventIds.add(id)) return;
+    } else {
+      final now = DateTime.now();
+      final last = _lastTipReceivedPopupAt;
+      if (last != null &&
+          now.difference(last) < const Duration(seconds: 6) &&
+          state.tipReceivedAmount == amount) {
+        _scheduleTipReceivedDismiss();
+        return;
+      }
+      _lastTipReceivedPopupAt = now;
+    }
 
     // Danışan yalnızca kendi gönderim teşekkürünü görür; falcı SSE/sinyal popup alır.
     if (session.isClient) return;
@@ -655,8 +680,38 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       tipReceivedFrom: fromName,
       sessionTipsTotal: total,
     );
-    Future<void>.delayed(const Duration(seconds: 4), () {
-      if (!_disposed) state = state.copyWith(clearTipReceived: true);
+    _scheduleTipReceivedDismiss();
+  }
+
+  void dismissTipThankYouOverlay() {
+    _tipThankYouDismissTimer?.cancel();
+    _tipThankYouDismissTimer = null;
+    if (!_disposed && state.tipThankYouAmount != null) {
+      state = state.copyWith(clearTipThankYou: true);
+    }
+  }
+
+  void dismissTipReceivedOverlay() {
+    _tipReceivedDismissTimer?.cancel();
+    _tipReceivedDismissTimer = null;
+    if (!_disposed && state.tipReceivedAmount != null) {
+      state = state.copyWith(clearTipReceived: true);
+    }
+  }
+
+  void _scheduleTipThankYouDismiss() {
+    _tipThankYouDismissTimer?.cancel();
+    _tipThankYouDismissTimer = Timer(_tipOverlayDismissDuration, () {
+      _tipThankYouDismissTimer = null;
+      dismissTipThankYouOverlay();
+    });
+  }
+
+  void _scheduleTipReceivedDismiss() {
+    _tipReceivedDismissTimer?.cancel();
+    _tipReceivedDismissTimer = Timer(_tipOverlayDismissDuration, () {
+      _tipReceivedDismissTimer = null;
+      dismissTipReceivedOverlay();
     });
   }
 
@@ -1029,9 +1084,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     if (ok) {
       invalidateWalletCacheFromRef(ref);
       state = state.copyWith(tipThankYouAmount: amount);
-      Future<void>.delayed(const Duration(seconds: 3), () {
-        if (!_disposed) state = state.copyWith(clearTipThankYou: true);
-      });
+      _scheduleTipThankYouDismiss();
       final tellerUid = session.tellerUserId ??
           state.room?.tellerUserId ??
           session.psychic.userId;
@@ -1311,6 +1364,8 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     _roomPoll?.cancel();
     _signalPoll?.cancel();
     _sseAutoRetryTimer?.cancel();
+    _tipThankYouDismissTimer?.cancel();
+    _tipReceivedDismissTimer?.cancel();
     unawaited(_onlineSub?.cancel());
     _onlineSub = null;
     _trtc.onConnectionLost = null;

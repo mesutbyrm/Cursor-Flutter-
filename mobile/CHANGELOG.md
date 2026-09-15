@@ -1,11 +1,13 @@
 # Sürüm notları — canlifal_social
 
-## 1.0.524+565 (2026-09-15) — CI FAZ0 oda probe (ban fallback)
+## 1.0.525+566 (2026-09-15) — Canlı falcı bahşiş popup kapanma
 
-- Kabul testleri: `pick_acceptance_probe_room_id` — probe oda banlıysa join yapılabilen oda seçilir (SSE/presence)
+- Seans bahşiş teşekkür / falcı bildirim overlay: `Timer` ile otomatik kapanma; ekrana dokunarak kapatma
+- Tekrarlayan SSE/sinyal bahşişi popup'ı yeniden açmayı keser (6 sn pencere)
 
-## 1.0.524+565 (2026-09-15) — Admin sekmeleri + PK/hediye hub UI
+## 1.0.524+565 (2026-09-15) — Admin sekmeleri + PK/hediye hub UI + FAZ0 oda probe
 
+- Kabul testleri: probe oda (`cmoohrbr`) banlıysa join yapılabilen oda otomatik seçilir (SSE/presence)
 - Admin komuta merkezi: Finans, Hediyeler, Yayın/Oda, Yetkiler, VIP, Ajans, Mod., Aktivite, Rapor — platform cam kartları
 - `admin_hub_platform_social.dart` ortak sekme bileşenleri
 - PK liderlik: platform scaffold + sıra kartı; staff uzun basış → kullanıcı hub

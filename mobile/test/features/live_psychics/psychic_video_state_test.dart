@@ -44,5 +44,21 @@ void main() {
       final recovered = state.copyWith(sseFailed: false);
       expect(recovered.sseFailed, isFalse);
     });
+
+    test('copyWith clearTipThankYou removes thank-you overlay state', () {
+      const withTip = PsychicVideoState(tipThankYouAmount: 100);
+      final cleared = withTip.copyWith(clearTipThankYou: true);
+      expect(cleared.tipThankYouAmount, isNull);
+    });
+
+    test('copyWith clearTipReceived removes received-tip overlay state', () {
+      const withTip = PsychicVideoState(
+        tipReceivedAmount: 50,
+        tipReceivedFrom: 'Ali',
+      );
+      final cleared = withTip.copyWith(clearTipReceived: true);
+      expect(cleared.tipReceivedAmount, isNull);
+      expect(cleared.tipReceivedFrom, isNull);
+    });
   });
 }
