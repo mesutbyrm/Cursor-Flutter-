@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/me/me_entitlements_providers.dart';
 import '../../../../core/membership/membership_capability_keys.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
@@ -49,6 +50,64 @@ class _AdminMembershipManagementPageState
     }
   }
 
+  bool _cellEnabled(String tierKey, String featureKey) {
+    for (final f in _features) {
+      final fk = (f['key'] ?? f['featureKey'] ?? '').toString();
+      if (fk != featureKey) continue;
+      final cells = f['cells'] ?? f['tierGrants'] ?? f['grants'];
+      if (cells is Map) {
+        final v = cells[tierKey];
+        if (v is bool) return v;
+        if (v is Map) return v['enabled'] == true;
+      }
+      if (cells is List) {
+        for (final c in cells) {
+          if (c is! Map) continue;
+          final tk = (c['tierKey'] ?? c['tier'] ?? '').toString();
+          if (tk == tierKey) return c['enabled'] == true;
+        }
+      }
+    }
+    return false;
+  }
+
+  Future<void> _setFeatureCell(
+    String tierKey,
+    String featureKey,
+    bool enabled,
+  ) async {
+    if (tierKey.isEmpty || featureKey.isEmpty) return;
+    final dio = ref.read(dioProvider);
+    try {
+      await dio.safePut<dynamic>(
+        ApiEndpoints.adminMembershipFeatures,
+        query: {'tierKey': tierKey, 'featureKey': featureKey},
+        data: {
+          'cells': [
+            {
+              'tierKey': tierKey,
+              'featureKey': featureKey,
+              'enabled': enabled,
+            },
+          ],
+        },
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$tierKey · $featureKey → $enabled')),
+        );
+      }
+      await _load();
+      ref.invalidate(meMembershipPackageProvider);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
+        );
+      }
+    }
+  }
+
   Future<void> _setTierActive(String key, bool active) async {
     if (key.isEmpty) return;
     final dio = ref.read(dioProvider);
@@ -64,6 +123,7 @@ class _AdminMembershipManagementPageState
         );
       }
       await _load();
+      ref.invalidate(meMembershipPackageProvider);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -145,6 +205,53 @@ class _AdminMembershipManagementPageState
                         const Text('API boş — üretimde seed gerekir.')
                       else
                         ..._tiers.map(_tierTile),
+                      if (_tiers.isNotEmpty) ...[
+                        const SizedBox(height: 24),
+                        Text(
+                          'Tier × özellik matrisi',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        ...[
+                          MembershipCapabilityKeys.adFree,
+                          MembershipCapabilityKeys.profileFrame,
+                          MembershipCapabilityKeys.entranceEffect,
+                          MembershipCapabilityKeys.hiddenOnline,
+                          MembershipCapabilityKeys.hiddenRoomEntry,
+                          MembershipCapabilityKeys.profileVisitors,
+                          MembershipCapabilityKeys.vipRooms,
+                          MembershipCapabilityKeys.svipLounge,
+                        ].map(
+                          (featureKey) => ExpansionTile(
+                            title: Text(featureKey, style: const TextStyle(fontSize: 13)),
+                            children: [
+                              for (final t in _tiers)
+                                Builder(
+                                  builder: (context) {
+                                    final tierKey =
+                                        (t['key'] ?? t['id'] ?? '').toString();
+                                    if (tierKey.isEmpty) {
+                                      return const SizedBox.shrink();
+                                    }
+                                    final on = _cellEnabled(tierKey, featureKey);
+                                    return SwitchListTile(
+                                      dense: true,
+                                      title: Text(
+                                        (t['name'] ?? tierKey).toString(),
+                                      ),
+                                      value: on,
+                                      onChanged: (v) => _setFeatureCell(
+                                        tierKey,
+                                        featureKey,
+                                        v,
+                                      ),
+                                    );
+                                  },
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 24),
                       Text(
                         'Capability anahtarları (istemci)',

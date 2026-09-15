@@ -6,6 +6,8 @@ import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../domain/entrance_visual_style.dart';
 import '../providers/entrance_effect_settings_provider.dart';
+import '../../../../core/membership/membership_capability_keys.dart';
+import '../../../../core/membership/membership_capability_providers.dart';
 import '../providers/vip_membership_provider.dart';
 import '../widgets/gold_team_top_entrance_banner.dart';
 import '../../domain/entrance_theme.dart';
@@ -26,8 +28,9 @@ class _EntranceEffectUserSettingsPageState
 
   @override
   Widget build(BuildContext context) {
-    final tier = ref.watch(vipTierProvider);
-    if (!tier.hasEntranceFx) {
+    if (!ref.watch(
+      membershipCapabilityAllowsProvider(MembershipCapabilityKeys.entranceEffect),
+    )) {
       return Scaffold(
         body: DiscoverBackground(
           child: Center(
@@ -43,6 +46,7 @@ class _EntranceEffectUserSettingsPageState
       );
     }
 
+    final tier = ref.watch(vipTierProvider);
     final settings = ref.watch(entranceEffectSettingsProvider);
     final notifier = ref.read(entranceEffectSettingsProvider.notifier);
     final theme = ref.watch(myEntranceThemeProvider);

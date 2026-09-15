@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.516+556 (2026-09-15) — VIP gizlilik, SVIP lounge, admin matris
+
+- `GET/PUT /api/me/vip-preferences` — Ayarlar gizlilik bölümü (capability kilitli)
+- `/vip-svip-lounge` — SVIP capability + VIP oda listesi
+- Admin tier×feature matrisi düzenleme (PUT membership_features)
+- Giriş efekti / site animasyon / app bar rank düzeltmeleri
+- `docs/MEMBERSHIP_REMAINING.md` — üretim + release kalanları
+
 ## 1.0.515+555 (2026-09-15) — Capability genişletme (kozmetik, DM, fal, admin)
 
 - Kozmetik slotları → `membershipAllowsRef` (çerçeve, balon, giriş, koltuk efekti)

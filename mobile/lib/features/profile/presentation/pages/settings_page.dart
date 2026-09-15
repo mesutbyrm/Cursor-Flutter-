@@ -16,6 +16,7 @@ import '../../../inbox/domain/inbox_tab.dart';
 import '../../../inbox/presentation/inbox_routes.dart';
 import '../premium_2026/profile_membership_helpers.dart';
 import '../widgets/premium/profile_glass.dart';
+import '../widgets/vip_privacy_settings_section.dart';
 
 /// Merkezi ayarlar — hesap, güvenlik, gizlilik, bildirimler.
 class SettingsPage extends ConsumerWidget {
@@ -91,23 +92,8 @@ class SettingsPage extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              const _SectionLabel('Gizlilik'),
-              ProfileGlass(
-                padding: EdgeInsets.zero,
-                child: Column(
-                  children: [
-                    _PrivacyToggle(
-                      label: 'Profilimi herkese açık göster',
-                      initial: true,
-                    ),
-                    const _Divider(),
-                    _PrivacyToggle(
-                      label: 'Çevrimiçi durumumu göster',
-                      initial: true,
-                    ),
-                  ],
-                ),
-              ),
+              const _SectionLabel('Gizlilik & VIP'),
+              const VipPrivacySettingsSection(),
               const SizedBox(height: 20),
               const _SectionLabel('Gelen Kutusu'),
               ProfileGlass(
@@ -309,28 +295,3 @@ class _SettingsTile extends StatelessWidget {
   }
 }
 
-class _PrivacyToggle extends StatefulWidget {
-  const _PrivacyToggle({required this.label, required this.initial});
-
-  final String label;
-  final bool initial;
-
-  @override
-  State<_PrivacyToggle> createState() => _PrivacyToggleState();
-}
-
-class _PrivacyToggleState extends State<_PrivacyToggle> {
-  late var _value = widget.initial;
-
-  @override
-  Widget build(BuildContext context) {
-    return SwitchListTile(
-      title: Text(
-        widget.label,
-        style: const TextStyle(fontWeight: FontWeight.w600),
-      ),
-      value: _value,
-      onChanged: (v) => setState(() => _value = v),
-    );
-  }
-}

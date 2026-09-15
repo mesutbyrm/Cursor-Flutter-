@@ -5,6 +5,7 @@ import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/membership/membership_capability_keys.dart';
 import '../../../../core/membership/membership_capability_providers.dart';
 import '../../domain/vip_tier.dart';
 import '../providers/vip_membership_provider.dart';
@@ -131,6 +132,14 @@ class _VipGoldHubPageState extends ConsumerState<VipGoldHubPage> {
                             ],
                           ),
                         ),
+                        if (capabilities
+                            .allows(MembershipCapabilityKeys.svipLounge)) ...[
+                          const SizedBox(height: 12),
+                          FilledButton.tonal(
+                            onPressed: () => context.push('/vip-svip-lounge'),
+                            child: const Text('SVIP Lounge'),
+                          ),
+                        ],
                         if (tier != VipTier.basic) ...[
                           const SizedBox(height: 24),
                           Align(

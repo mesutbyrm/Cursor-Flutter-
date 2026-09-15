@@ -21,7 +21,7 @@ class VoiceRoomsAppBar extends ConsumerWidget {
         (a) => a.valueOrNull?.display ?? '',
       ),
     );
-    final vipLevel = ref.watch(vipTierProvider.select((t) => t.index + 1));
+    final vipLevel = ref.watch(vipTierProvider.select((t) => t.rank));
     final inboxCount = ref.watch(inboxUnreadCountProvider);
     final avatarUrl = ref.watch(
       authControllerProvider.select((a) => a.valueOrNull?.avatarUrl),

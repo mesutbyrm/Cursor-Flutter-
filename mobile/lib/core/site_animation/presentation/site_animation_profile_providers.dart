@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../features/auth/presentation/providers/auth_providers.dart';
 import '../../../features/vip_gold/domain/vip_tier.dart';
+import '../../membership/membership_capability_providers.dart';
 import '../../../features/vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../../../core/auth/voice_staff_rank.dart';
 import '../data/site_animation_profile_resolver.dart';
@@ -11,7 +12,7 @@ import 'site_animation_catalog_provider.dart';
 
 SiteAnimationTier _profileTier(Ref ref) {
   final user = ref.watch(authControllerProvider).valueOrNull;
-  final tier = ref.watch(vipTierProvider);
+  final tier = ref.watch(membershipCapabilitiesSyncProvider).effectiveTier;
   final membership = switch (tier) {
     VipTier.svip => 'svip',
     VipTier.diamond => 'diamond',
