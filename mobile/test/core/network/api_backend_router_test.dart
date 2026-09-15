@@ -94,10 +94,10 @@ void main() {
       );
     });
 
-    test('canlı PK games backend; misafir uçları Main backend', () {
+    test('birleşik /api/live/pk ana backend; misafir uçları Main backend', () {
       expect(
         ApiBackendRouter.resolve('/api/live/pk/active'),
-        ApiBackendKind.game,
+        ApiBackendKind.main,
       );
       expect(
         ApiBackendRouter.resolve('/api/live/guest/list'),
@@ -109,11 +109,11 @@ void main() {
       );
       expect(
         ApiBackendRouter.resolve('/api/live/pk'),
-        ApiBackendKind.game,
+        ApiBackendKind.main,
       );
       expect(
         ApiBackendRouter.resolve('/api/live/pk/score', method: 'POST'),
-        ApiBackendKind.game,
+        ApiBackendKind.main,
       );
       // Canlı video PK REST ana sitede kalır (davet yedek games’e ayrı gider).
       expect(

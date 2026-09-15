@@ -331,6 +331,33 @@ class PkBattleRemoteDataSource {
       throw const ApiException('PK daveti için rakip oda seçilmeli');
     }
     final duration = durationSeconds.clamp(60, 3600);
+    for (final key in _roomKeyCandidates(roomId, alternateRoomId)) {
+      try {
+        final fieldBattle = await _liveFieldPk.pkAction(
+          action: 'create',
+          roomId: key,
+          targetRoomId: oppRoom,
+          guestUserId: guestUserId,
+          durationSeconds: duration,
+        );
+        if (fieldBattle != null && fieldBattle.id.isNotEmpty) {
+          final battle = _parseBattle({
+            'id': fieldBattle.id,
+            'status': fieldBattle.status ?? 'pending',
+            'duration': fieldBattle.durationSeconds ?? duration,
+            'score1': fieldBattle.room1Score,
+            'score2': fieldBattle.room2Score,
+            'voiceRoomId': key,
+            'opponentVoiceRoomId': oppRoom,
+          });
+          if (battle != null) return battle;
+        }
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405 && e.statusCode != 409) {
+          rethrow;
+        }
+      }
+    }
     final bodies = voicePkInviteRequestBodies(
       opponentRoomId: oppRoom,
       guestUserId: guestUserId,

@@ -20,6 +20,8 @@ abstract final class ApiBackendRouter {
   /// `/api/trtc/token`, `/api/trtc/usersig`.
   static ApiBackendKind resolve(String path, {String method = 'GET'}) {
     final p = _normalizePath(path);
+    // Birleşik PK — üretim + `PK_ENTEGRASYON.md` (canlifal.com); games’de 404.
+    if (_isMainLivePkPath(p)) return ApiBackendKind.main;
     if (_isVoiceRoomPkPath(p)) return ApiBackendKind.game;
     if (_isGamesPkNamespacePath(p)) return ApiBackendKind.game;
     return ApiBackendKind.main;
@@ -33,8 +35,13 @@ abstract final class ApiBackendRouter {
     return p;
   }
 
-  /// Sesli oda PK — `GET/POST /api/chat/rooms/{roomId}/pk[...]`.
-  /// Birleşik/canlı PK REST — `/api/pk/*`, `/api/live/pk/*` (games).
+  /// `GET/POST /api/live/pk` ve `/api/live/pk/*` — ana site (zip + üretim curl).
+  static bool _isMainLivePkPath(String path) {
+    return path == '/api/live/pk' || path.startsWith('/api/live/pk/');
+  }
+
+  /// Sesli oda PK — `GET/POST /api/chat/rooms/{roomId}/pk[...]` (games).
+  /// Eski birleşik namespace — `/api/pk/*` (games).
   /// `POST /api/video-streams/pk` ana backend’de kalır.
   static bool _isVoiceRoomPkPath(String path) {
     if (!path.startsWith('/api/chat/rooms/')) return false;
@@ -50,10 +57,9 @@ abstract final class ApiBackendRouter {
     return segments[4] == 'pk';
   }
 
-  /// Games backend PK — `/api/pk/*`, `/api/live/pk/*` (sesli oda PK REST ayrı).
+  /// Games backend PK — `/api/pk/*` (sesli oda `/chat/rooms/{id}/pk` ayrı).
   static bool _isGamesPkNamespacePath(String path) {
     if (path.startsWith('/api/pk/') || path == '/api/pk') return true;
-    if (path.startsWith('/api/live/pk')) return true;
     return false;
   }
 

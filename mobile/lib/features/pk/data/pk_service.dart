@@ -34,7 +34,7 @@ class PkService {
       final data = (res.data as Map)['data'];
       if (data == null) return null;
       if (data is Map) {
-        final battle = PkBattle.fromJson(asJsonMap(data));
+        final battle = PkBattle.fromJson(_battleJsonFromPayload(asJsonMap(data)));
         _applyServerNow(battle.serverNow);
         return battle.id.isEmpty ? null : battle;
       }
@@ -64,7 +64,7 @@ class PkService {
     if (map == null || map.isEmpty) {
       throw const PkException('PK yanıtı boş');
     }
-    final battle = PkBattle.fromJson(map);
+    final battle = PkBattle.fromJson(_battleJsonFromPayload(map));
     _applyServerNow(battle.serverNow);
     if (battle.id.isEmpty) {
       throw const PkException('PK kimliği alınamadı');
@@ -170,6 +170,17 @@ class PkService {
       selfBusy: map['selfBusy'] == true,
       total: asInt(map['total']),
     );
+  }
+
+  static Map<String, dynamic> _battleJsonFromPayload(Map<String, dynamic> json) {
+    if (json['id']?.toString().trim().isNotEmpty ?? false) return json;
+    for (final key in ['battle', 'pkBattle', 'pk']) {
+      final nested = asJsonMap(json[key]);
+      if (nested.isNotEmpty && nested['id']?.toString().trim().isNotEmpty == true) {
+        return nested;
+      }
+    }
+    return json;
   }
 
   /// Zarfsız oda/yayın PK yanıtı (`/api/chat/rooms/.../pk`, `/api/video-streams/pk`).
