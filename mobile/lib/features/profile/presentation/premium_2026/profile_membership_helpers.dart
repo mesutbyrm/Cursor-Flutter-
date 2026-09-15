@@ -21,8 +21,9 @@ class ProfileMembershipInfo {
   /// `free`, `basic` veya boş — ücretli plan yok.
   bool get hasPaidTier => tier.isAtLeast(VipTier.gold);
 
-  /// Gold ve üzeri (VIP odalar, çerçeve vb.).
-  bool get isVip => tier.isVip;
+  /// Gold / Diamond / SVIP — profil «VIP» rozeti (Premium ücretli ama VIP değil).
+  bool get isVip =>
+      tier.isAtLeast(VipTier.gold) && tier != VipTier.premium;
 
   /// Süresi dolmamış ücretli abonelik.
   bool get hasActiveSubscription =>
