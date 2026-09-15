@@ -10,6 +10,7 @@ import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
+import '../../../admin/presentation/widgets/admin_user_hub_launcher.dart';
 import '../sheets/social_discovery_profile_sheet.dart';
 import '../widgets/discovery_filter_sheet.dart';
 import '../widgets/discovery_swipe_deck.dart';
@@ -113,6 +114,23 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
       initial: _discoveryFilter,
     );
     if (next != null) setState(() => _discoveryFilter = next);
+  }
+
+  SocialDiscoveryUser? _interactionTargetUser(Map<String, dynamic> row) {
+    final target = row['target'];
+    if (target is Map) {
+      return SocialDiscoveryUser.fromJson({
+        'user': Map<String, dynamic>.from(target),
+      });
+    }
+    final targetId = pick(row, ['targetId', 'userId', 'targetUserId'])?.toString();
+    if (targetId == null || targetId.isEmpty) return null;
+    final name = pick(row, ['targetName', 'displayName', 'name'])?.toString();
+    return SocialDiscoveryUser(
+      id: targetId,
+      displayName: name ?? 'Kullanıcı',
+      raw: row,
+    );
   }
 
   String _actionSuccessLabel(String type) {
@@ -338,17 +356,36 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
                               final type =
                                   (pick(row, ['type', 'action']) ?? '')
                                       .toString();
-                              final target =
-                                  (pick(row, ['targetId', 'userId']) ?? '')
-                                      .toString();
+                              final targetUser = _interactionTargetUser(row);
+                              final targetId = targetUser?.id ?? '';
+                              final title = targetUser?.displayName ??
+                                  (targetId.isNotEmpty ? targetId : null) ??
+                                  _actionSuccessLabel(type);
+                              final tile = ListTile(
+                                title: Text(_actionSuccessLabel(type)),
+                                subtitle: Text(title),
+                                onTap: targetUser == null
+                                    ? null
+                                    : () => showSocialDiscoveryProfileSheet(
+                                          context,
+                                          user: targetUser,
+                                        ),
+                              );
+                              if (targetId.isEmpty) {
+                                return Card(child: tile);
+                              }
                               return Card(
-                                child: ListTile(
-                                  title: Text(_actionSuccessLabel(type)),
-                                  subtitle: Text(
-                                    target.isNotEmpty
-                                        ? 'Hedef: $target'
-                                        : row.toString(),
-                                  ),
+                                child: AdminUserHubLauncher.wrap(
+                                  context: context,
+                                  ref: ref,
+                                  userId: targetId,
+                                  onTap: targetUser == null
+                                      ? null
+                                      : () => showSocialDiscoveryProfileSheet(
+                                            context,
+                                            user: targetUser,
+                                          ),
+                                  child: tile,
                                 ),
                               );
                             },

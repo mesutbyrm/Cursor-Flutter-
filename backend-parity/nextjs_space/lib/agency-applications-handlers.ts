@@ -89,9 +89,21 @@ export async function getAgencyApplications(req: NextRequest) {
 /** `POST /api/agency/applications` — çıkış talebi onay / red. */
 export async function postAgencyApplicationReview(req: NextRequest) {
   try {
-    const { requireAuth } = await import('@/lib/rbac')
-    const auth = await requireAuth(req)
-    if (auth instanceof NextResponse) return auth
+    const body = await req.json().catch(() => ({}))
+    const requestId = String(body.id ?? body.requestId ?? '').trim()
+    const { guardAdminMutation, completeAdminMutation } = await import(
+      '@/lib/admin-mutation'
+    )
+    const guard = await guardAdminMutation(req, {
+      permission: 'agency.members.view',
+      action: 'agency.leave_request.review',
+      targetType: 'agency_leave_request',
+      targetId: requestId || 'unknown',
+      requireReason: false,
+    })
+    if (guard instanceof NextResponse) return guard
+
+    const auth = { user: guard.actor }
 
     const lead = await resolveAgencyLead(auth.user.id)
     if (!lead) {
@@ -101,8 +113,7 @@ export async function postAgencyApplicationReview(req: NextRequest) {
       )
     }
 
-    const body = await req.json().catch(() => ({}))
-    const id = String(body.id ?? body.requestId ?? '').trim()
+    const id = requestId
     const action = String(body.action ?? body.decision ?? '').trim().toLowerCase()
     const note = String(body.note ?? body.reviewNote ?? '').trim()
 
@@ -145,7 +156,19 @@ export async function postAgencyApplicationReview(req: NextRequest) {
       })
     }
 
-    return NextResponse.json({ success: true, status })
+    return completeAdminMutation(
+      {
+        req,
+        actor: auth.user,
+        permission: 'agency.members.view',
+        action: 'agency.leave_request.review',
+        targetType: 'agency_leave_request',
+        targetId: id,
+        reason: note || status,
+        idempotencyKey: guard.idempotencyKey,
+      },
+      { status },
+    )
   } catch (e) {
     console.error('[agency/applications POST]', e)
     return NextResponse.json({ success: false, error: 'İşlem başarısız' }, { status: 500 })

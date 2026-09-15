@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.521+562 (2026-09-15) — Parity sosyal/oda listesi, hub, P6 iskelet
+
+- Parity: `GET /api/social/discovery`, `/social/actions`, `/chat/rooms` (mesafe bandı)
+- `admin-mutation.ts` parity + ajans başvuru audit
+- Admin activity: sosyal aksiyonlar timeline’a eklenir
+- Tanış Etkileşimler + oda katılımcı listesi staff uzun basış → hub
+- Web: `UserCommandCenterModal.tsx` iskelet · `docs/PLATFORM_SOCIAL_KALAN.md`
+
 ## 1.0.520+561 (2026-09-15) — Hub genişletme, CFC skor, ajans onay
 
 - Staff hub: oda sıralaması (oda sahibi), seste olanlar listesi uzun basış

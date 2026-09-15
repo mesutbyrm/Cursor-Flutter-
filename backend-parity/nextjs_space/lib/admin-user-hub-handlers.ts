@@ -127,9 +127,31 @@ export async function getAdminUserActivity(
     type: a.action,
     at: a.createdAt,
     label: a.description ?? a.action,
+    source: 'audit',
   }))
 
-  return NextResponse.json({ success: true, items, userId })
+  const social = await prisma.socialAction
+    .findMany({
+      where: { OR: [{ actorId: userId }, { targetId: userId }] },
+      orderBy: { createdAt: 'desc' },
+      take: Math.max(10, limit - items.length),
+    })
+    .catch(() => [])
+
+  for (const s of social) {
+    items.push({
+      type: String(s.type ?? 'social'),
+      at: s.createdAt,
+      label: `Sosyal ${s.type}`,
+      source: 'social',
+      targetId: s.targetId,
+      actorId: s.actorId,
+    })
+  }
+
+  items.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
+
+  return NextResponse.json({ success: true, items: items.slice(0, limit), userId })
 }
 
 export async function getAdminUserAgency(_req: NextRequest, { userId }: HubCtx) {

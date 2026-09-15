@@ -15,6 +15,7 @@ import '../theme/voice_room_tokens.dart';
 import '../widgets/premium/voice_glass.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
 import '../widgets/voice_room_gift_sheet.dart';
+import '../../../admin/presentation/widgets/admin_user_hub_launcher.dart';
 import 'voice_room_management_panel.dart';
 
 Future<void> showVoiceSpeakerListSheet(
@@ -188,7 +189,7 @@ Future<void> showVoiceMoreMenuSheet(
   );
 }
 
-class _SpeakerListSheet extends StatefulWidget {
+class _SpeakerListSheet extends ConsumerStatefulWidget {
   const _SpeakerListSheet({
     required this.presence,
     required this.room,
@@ -200,10 +201,10 @@ class _SpeakerListSheet extends StatefulWidget {
   final void Function(ChatRoomPresence user)? onUserTap;
 
   @override
-  State<_SpeakerListSheet> createState() => _SpeakerListSheetState();
+  ConsumerState<_SpeakerListSheet> createState() => _SpeakerListSheetState();
 }
 
-class _SpeakerListSheetState extends State<_SpeakerListSheet>
+class _SpeakerListSheetState extends ConsumerState<_SpeakerListSheet>
     with SingleTickerProviderStateMixin {
   late TabController _tab;
 
@@ -310,33 +311,42 @@ class _SpeakerListSheetState extends State<_SpeakerListSheet>
                         final u = list[i];
                         final isOwner = u.id == widget.room.ownerId;
                         final isMod = widget.room.djUserIds.contains(u.id);
-                        return ListTile(
-                          leading: VoiceNeonAvatar(
-                            url: u.image,
-                            size: 44,
-                            speaking: u.isSpeaking,
-                            showCrown: isOwner,
-                          ),
-                          title: Text(u.displayName),
-                          subtitle: Text(
-                            isOwner
-                                ? 'Sahip'
-                                : isMod
-                                    ? 'Yönetici'
-                                    : 'Dinleyici',
-                          ),
-                          trailing: Icon(
-                            u.isSpeaking
-                                ? Icons.mic_rounded
-                                : Icons.mic_off_rounded,
-                            color: u.isSpeaking
-                                ? AppThemeColors.onlineGreen
-                                : context.colors.onSurfaceMuted,
-                          ),
+                        return AdminUserHubLauncher.wrap(
+                          context: context,
+                          ref: ref,
+                          userId: u.id,
                           onTap: () {
                             Navigator.pop(context);
                             widget.onUserTap?.call(u);
                           },
+                          child: ListTile(
+                            leading: VoiceNeonAvatar(
+                              url: u.image,
+                              size: 44,
+                              speaking: u.isSpeaking,
+                              showCrown: isOwner,
+                            ),
+                            title: Text(u.displayName),
+                            subtitle: Text(
+                              isOwner
+                                  ? 'Sahip'
+                                  : isMod
+                                      ? 'Yönetici'
+                                      : 'Dinleyici',
+                            ),
+                            trailing: Icon(
+                              u.isSpeaking
+                                  ? Icons.mic_rounded
+                                  : Icons.mic_off_rounded,
+                              color: u.isSpeaking
+                                  ? AppThemeColors.onlineGreen
+                                  : context.colors.onSurfaceMuted,
+                            ),
+                            onTap: () {
+                              Navigator.pop(context);
+                              widget.onUserTap?.call(u);
+                            },
+                          ),
                         );
                       },
                     );

@@ -49,11 +49,21 @@ export async function getAgencyWallet(req: NextRequest) {
 
 export async function postAgencyWalletTransfer(req: NextRequest) {
   try {
-    const { requireAuth } = await import('@/lib/rbac')
-    const auth = await requireAuth(req)
-    if (auth instanceof NextResponse) return auth
-
     const body = await req.json().catch(() => ({}))
+    const targetUserIdEarly = String(body.userId ?? '').trim()
+    const { guardAdminMutation, completeAdminMutation } = await import(
+      '@/lib/admin-mutation'
+    )
+    const guard = await guardAdminMutation(req, {
+      permission: 'agency.wallet.transfer',
+      action: 'agency.wallet.transfer',
+      targetType: 'user',
+      targetId: targetUserIdEarly || 'unknown',
+      requireReason: false,
+    })
+    if (guard instanceof NextResponse) return guard
+
+    const auth = { user: guard.actor }
     const targetUserId = String(body.userId ?? '').trim()
     const amount = Number(body.amount)
     const reason = String(body.reason ?? '').trim()
