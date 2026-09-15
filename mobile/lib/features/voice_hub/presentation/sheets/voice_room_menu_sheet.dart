@@ -12,6 +12,7 @@ import '../../domain/entities/chat_room_presence.dart';
 import '../providers/chat_room_providers.dart';
 import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../providers/pk_battle_remote_provider.dart';
+import '../../../pk/presentation/providers/pk_feature_enabled_provider.dart';
 import '../../../pk/presentation/widgets/pk_start_sheet.dart';
 import '../theme/voice_room_tokens.dart';
 import '../utils/voice_room_permissions.dart';
@@ -81,25 +82,27 @@ class _VoiceRoomMenuSheet extends ConsumerWidget {
         perms.canKickUsers ||
         perms.canBanUsers;
     final bottom = MediaQuery.paddingOf(context).bottom;
+    final pkFeatureOn = ref.watch(pkFeatureEnabledProvider);
 
     final actions = <_MenuAction>[
-      _MenuAction(
-        icon: pkLive ? Icons.flash_on_rounded : Icons.sports_mma_rounded,
-        color: VoiceRoomTokens.neonPink,
-        tooltip: pkLive ? 'PK savaşı' : 'PK daveti',
-        onTap: () {
-          Navigator.pop(context);
-          if (pkLive) {
-            final key =
-                room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
-            context.push('/voice-room/$key/pk', extra: room);
-          } else if (onPkInvite != null) {
-            onPkInvite!();
-          } else {
-            openVoicePkInviteSheet(context, ref, room);
-          }
-        },
-      ),
+      if (pkFeatureOn)
+        _MenuAction(
+          icon: pkLive ? Icons.flash_on_rounded : Icons.sports_mma_rounded,
+          color: VoiceRoomTokens.neonPink,
+          tooltip: pkLive ? 'PK savaşı' : 'PK daveti',
+          onTap: () {
+            Navigator.pop(context);
+            if (pkLive) {
+              final key =
+                  room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+              context.push('/voice-room/$key/pk', extra: room);
+            } else if (onPkInvite != null) {
+              onPkInvite!();
+            } else {
+              openVoicePkInviteSheet(context, ref, room);
+            }
+          },
+        ),
       _MenuAction(
         icon: Icons.tune_rounded,
         color: VoiceRoomTokens.neonBlue,

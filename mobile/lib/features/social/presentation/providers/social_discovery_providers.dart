@@ -85,6 +85,12 @@ final socialTeamsListProvider =
   return ref.read(socialDiscoveryRemoteProvider).fetchTeams();
 });
 
+final socialTeamDetailProvider = FutureProvider.autoDispose
+    .family<Map<String, dynamic>, String>((ref, teamId) async {
+  if (teamId.trim().isEmpty) return {};
+  return ref.read(socialDiscoveryRemoteProvider).fetchTeam(teamId.trim());
+});
+
 /// `GET /api/social/profile?userId=` — keşif kartı / sheet zenginleştirme.
 final socialDiscoveryProfileProvider = FutureProvider.autoDispose
     .family<Map<String, dynamic>, String>((ref, userId) async {

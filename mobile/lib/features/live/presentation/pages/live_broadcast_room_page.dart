@@ -31,6 +31,7 @@ import '../../../live_psychics/presentation/providers/live_psychics_providers.da
 import '../../../live_psychics/presentation/widgets/psychic_booking_sheet.dart';
 import '../../../live_psychics/presentation/widgets/psychic_fortune_types.dart';
 import '../../../voice_hub/presentation/coordinators/room_leave_coordinator.dart';
+import '../../../pk/presentation/providers/pk_feature_enabled_provider.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
 import '../../../voice_hub/presentation/providers/voice_recent_gifts_provider.dart';
 import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
@@ -2852,7 +2853,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 _openLiveMoreMenu(
                   s: s,
                   giftsEnabled: broadcastSettings.giftsEnabled,
-                  pkEnabled: broadcastSettings.pkEnabled,
+                  pkEnabled: broadcastSettings.pkEnabled &&
+                      ref.watch(pkFeatureEnabledProvider),
                   pendingFortune: fortuneReqState?.pendingCount ?? 0,
                   showTournament:
                       tournamentsAsync.valueOrNull?.isNotEmpty == true,

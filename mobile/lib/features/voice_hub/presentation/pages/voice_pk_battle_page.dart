@@ -23,6 +23,7 @@ import '../providers/voice_gift_combo_tracker.dart';
 import '../providers/voice_gift_leaderboard_provider.dart';
 import '../providers/voice_gift_providers.dart';
 import '../providers/voice_room_ui_provider.dart';
+import '../utils/voice_room_permissions.dart';
 import '../theme/voice_room_tokens.dart';
 import '../../../gifts/presentation/engine/gift_engine_overlay.dart';
 import '../../../gifts/presentation/sync/gift_session_controller.dart';
@@ -171,6 +172,25 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
     final room = widget.room;
     final sessionKey =
         room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+    final user = ref.watch(authControllerProvider).valueOrNull;
+    ChatRoomPresence? selfPresence;
+    if (user != null) {
+      for (final p in live.presence) {
+        if (p.id == user.id) {
+          selfPresence = p;
+          break;
+        }
+      }
+    }
+    final perms = VoiceRoomPermissions.forUser(
+      user: user,
+      room: room,
+      selfPresence: selfPresence,
+      server: live.serverPermissions,
+    );
+    final canControlPk =
+        perms.isRoomOwner || perms.canModerate || perms.isSiteAdmin;
+    final isPaused = remote?.status == 'paused';
 
     ref.listen<PkBattleState>(pkBattleProvider, (prev, next) {
       _openResultPageIfNeeded(pk: next, remote: remote);
@@ -302,40 +322,95 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                   flex: 2,
                   child: PkGiftFeedPanel(messages: live.messages),
                 ),
-                if (pk.isActive)
+                if (pk.isActive && canControlPk)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: () async {
-                          final battle = ref.read(
-                            pkBattleForRoomProvider(widget.room),
-                          );
-                          final battleId = battle?.effectiveId ?? '';
-                          if (battleId.isEmpty) return;
-                          final r = widget.room;
-                          final roomKey =
-                              r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
-                          PkEventLog.ending(battleId: battleId);
-                          await ref.read(pkBattleRemoteProvider.notifier).end(
-                                battleId,
-                                roomId: roomKey,
-                                alternateRoomId:
-                                    r.slug != roomKey ? r.slug : null,
+                    child: Row(
+                      children: [
+                        if (remote != null &&
+                            (remote.isActive || remote.status == 'paused'))
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () async {
+                                final battleId = remote.effectiveId;
+                                if (battleId.isEmpty) return;
+                                final r = widget.room;
+                                final roomKey = r.apiRoomKey.isNotEmpty
+                                    ? r.apiRoomKey
+                                    : r.id;
+                                final notifier =
+                                    ref.read(pkBattleRemoteProvider.notifier);
+                                if (isPaused) {
+                                  await notifier.resume(
+                                    battleId,
+                                    roomId: roomKey,
+                                    alternateRoomId:
+                                        r.slug != roomKey ? r.slug : null,
+                                  );
+                                } else {
+                                  await notifier.pause(
+                                    battleId,
+                                    roomId: roomKey,
+                                    alternateRoomId:
+                                        r.slug != roomKey ? r.slug : null,
+                                  );
+                                }
+                              },
+                              icon: Icon(
+                                isPaused
+                                    ? Icons.play_arrow_rounded
+                                    : Icons.pause_rounded,
+                                size: 18,
+                              ),
+                              label: Text(isPaused ? 'Devam' : 'Duraklat'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                side: BorderSide(
+                                  color: Colors.white.withValues(alpha: 0.45),
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (remote != null &&
+                            (remote.isActive || remote.status == 'paused'))
+                          const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () async {
+                              final battle = ref.read(
+                                pkBattleForRoomProvider(widget.room),
                               );
-                          PkEventLog.ended(battleId: battleId);
-                          if (context.mounted) context.pop();
-                        },
-                        icon: const Icon(Icons.stop_circle_outlined, size: 18),
-                        label: const Text('PK\'yi Bitir'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          side: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.45),
+                              final battleId = battle?.effectiveId ?? '';
+                              if (battleId.isEmpty) return;
+                              final r = widget.room;
+                              final roomKey =
+                                  r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
+                              PkEventLog.ending(battleId: battleId);
+                              await ref
+                                  .read(pkBattleRemoteProvider.notifier)
+                                  .end(
+                                    battleId,
+                                    roomId: roomKey,
+                                    alternateRoomId:
+                                        r.slug != roomKey ? r.slug : null,
+                                  );
+                              PkEventLog.ended(battleId: battleId);
+                              if (context.mounted) context.pop();
+                            },
+                            icon: const Icon(
+                              Icons.stop_circle_outlined,
+                              size: 18,
+                            ),
+                            label: const Text('Bitir'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              side: BorderSide(
+                                color: Colors.white.withValues(alpha: 0.45),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 PkActionBottomBar(

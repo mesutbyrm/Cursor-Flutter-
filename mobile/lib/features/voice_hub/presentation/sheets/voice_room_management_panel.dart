@@ -15,6 +15,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
+import '../../../pk/presentation/providers/pk_feature_enabled_provider.dart';
 import '../../../pk/presentation/widgets/pk_start_sheet.dart';
 import 'voice_in_room_pk_sheet.dart';
 import '../../../vip_gold/domain/voice_room_access.dart';
@@ -741,29 +742,31 @@ class _VoiceRoomManagementPanelState
     final canBg = perms.canChangeBackground || isOwner;
     final pk = ref.watch(pkBattleForRoomProvider(room));
     final pkLive = isPkBattleLive(pk);
+    final pkFeatureOn = ref.watch(pkFeatureEnabledProvider);
     final roomKey = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
     final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     return ListView(
       controller: scroll,
       children: [
-        ListTile(
-          leading: Icon(
-            pkLive ? Icons.flash_on_rounded : Icons.sports_mma_rounded,
-            color: VoiceRoomTokens.neonPink,
+        if (pkFeatureOn)
+          ListTile(
+            leading: Icon(
+              pkLive ? Icons.flash_on_rounded : Icons.sports_mma_rounded,
+              color: VoiceRoomTokens.neonPink,
+            ),
+            title: Text(pkLive ? 'PK savaşı' : 'PK daveti'),
+            onTap: () => _closeAndVoid(() {
+              if (pkLive) {
+                context.push('/voice-room/$roomKey/pk', extra: room);
+              } else if (widget.onPkInvite != null) {
+                widget.onPkInvite!();
+              } else {
+                openVoicePkInviteSheet(context, ref, room);
+              }
+            }),
           ),
-          title: Text(pkLive ? 'PK savaşı' : 'PK daveti'),
-          onTap: () => _closeAndVoid(() {
-            if (pkLive) {
-              context.push('/voice-room/$roomKey/pk', extra: room);
-            } else if (widget.onPkInvite != null) {
-              widget.onPkInvite!();
-            } else {
-              openVoicePkInviteSheet(context, ref, room);
-            }
-          }),
-        ),
-        if (isOwner && !pkLive)
+        if (pkFeatureOn && isOwner && !pkLive)
           ListTile(
             leading: const Icon(Icons.groups_rounded, color: VoiceRoomTokens.neonPink),
             title: const Text('Oda içi PK (takım)'),

@@ -493,6 +493,29 @@ class PkBattleRemoteDataSource {
     return null;
   }
 
+  /// `POST /api/chat/rooms/{roomId}/pk` — `{ action:'pause'|'resume', battleId }`.
+  Future<PkBattleRemote?> pauseBattle(
+    String battleId, {
+    required String roomId,
+    String? alternateRoomId,
+  }) =>
+      _postPkAction(
+        roomId: roomId,
+        alternateRoomId: alternateRoomId,
+        body: {'action': 'pause', 'battleId': battleId},
+      );
+
+  Future<PkBattleRemote?> resumeBattle(
+    String battleId, {
+    required String roomId,
+    String? alternateRoomId,
+  }) =>
+      _postPkAction(
+        roomId: roomId,
+        alternateRoomId: alternateRoomId,
+        body: {'action': 'resume', 'battleId': battleId},
+      );
+
   /// `POST /api/chat/rooms/{roomId}/pk` — `{ action:'cancel', battleId }`.
   Future<PkBattleRemote?> cancelBattle(
     String battleId, {

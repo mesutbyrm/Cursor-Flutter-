@@ -219,6 +219,34 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     return battle;
   }
 
+  Future<PkBattleRemote?> pause(
+    String battleId, {
+    required String roomId,
+    String? alternateRoomId,
+  }) async {
+    final battle = await _api.pauseBattle(
+      battleId,
+      roomId: roomId,
+      alternateRoomId: alternateRoomId,
+    );
+    if (battle != null) _apply(battle, 'pk:pause');
+    return battle;
+  }
+
+  Future<PkBattleRemote?> resume(
+    String battleId, {
+    required String roomId,
+    String? alternateRoomId,
+  }) async {
+    final battle = await _api.resumeBattle(
+      battleId,
+      roomId: roomId,
+      alternateRoomId: alternateRoomId,
+    );
+    if (battle != null) _apply(battle, 'pk:resume');
+    return battle;
+  }
+
   Future<PkBattleRemote?> end(
     String battleId, {
     String? roomId,

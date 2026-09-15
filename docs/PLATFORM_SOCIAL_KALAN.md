@@ -55,7 +55,8 @@
 |--------|--------|
 | ✅ | Keşif kartı, admin arama, canlı izleyici, oda koltuk, sıralama sahibi, ses listesi |
 | ✅ | Konuşmacı/dinleyici listesi (bu sprint) |
-| Kalan | PK sıralama, hediye liderlik, sosyal takım üyeleri |
+| ✅ | PK sıralama, hediye liderlik (staff uzun basış) |
+| ✅ Mobil | Sosyal takım detay + üye listesi staff hub (`/teams/:id`) |
 
 ## Ajans
 

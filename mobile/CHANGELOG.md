@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.531+572 (2026-09-15) — Platform sosyal + PK tamamlama
+
+- Sosyal **takım detay** sayfası (`/teams/:id`) — üyeler, staff uzun basış → kullanıcı hub
+- PK: sunucu `features.pkBattle` kapalıysa davet menüleri gizlenir
+- Sesli oda PK: **duraklat / devam** (oda sahibi / moderatör)
+- Canlı yayın: PK menü bayrağı mobil config ile hizalı
+
 ## 1.0.530+571 (2026-09-15) — Tanış beğeniler + keşif tamamlama
 
 - **Beğeniler** sekmesi: sana gelen (`liked_me` / yedek filtreler) ve gönderilen (`scope=sent`)

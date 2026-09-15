@@ -11,7 +11,7 @@
 - Canlı yayıncı bekleyen davet banner; gelen davet premium diyalog
 - Sesli kabul/red önce `/api/live/pk`, yedek oda uçları
 - Oda içi PK: `create_user` takım sheet (4+4), koltuktan 1v1
-- Tanış Kaynaş kaydırma destesi + `skip` / eşleşme snackbar
+- Tanış Kaynaş kaydırma destesi + eşleşme diyalogu (geç = istemci-only)
 - Ana sayfa fal türleri mistik kapak görselleri
 - Sosyal feed tam genişlik; sesli admin nick staff hatası düzeltildi
 
@@ -21,8 +21,8 @@
 |--------|-----|-----|
 | P1 | **PK cihaz senaryoları 1–12** | Split ekran, timeout, red, iptal, ayrılma, SSE senkron, karışık oda↔yayın |
 | P1 | **Ödeme / hediye kuyruğu PK** | Spec’teki sıra ve jeton düşümü — cihazda doğrula; kodda ayrı `pk_queue` yok |
-| P2 | **`PK_ENABLED` sunucu bayrağı** | Uygulama açılışında kontrol; kapalıysa PK UI gizle |
-| P2 | **pause / resume** | Yalnızca `POST /api/chat/rooms/{id}/pk` — UI eksik |
+| ✅ | **`PK_ENABLED`** | `GET /api/mobile/config` → `features.pkBattle`; PK menüleri gizlenir |
+| ✅ | **pause / resume** | Oda PK savaş ekranı — oda sahibi / mod |
 | P2 | **Canlı kontrol merkezi** | PK yalnızca oda içi (kısmen); kontrol merkezinden kaldırma tam cihaz doğrulaması |
 | P3 | **Eski diyalog temizliği** | `voice_pk_invite_center_modal` vs `pk_invite_dialog` — tek görsel dil |
 | P3 | **Dokümantasyon** | `USER_DEVICE_TEST_LOG.md` PK maddeleri PASS/FAIL |

@@ -5,6 +5,7 @@ import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../voice_hub/domain/pk/pk_duration_options.dart';
 import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_duration_picker.dart';
 import '../../data/pk_models.dart';
+import '../providers/pk_feature_enabled_provider.dart';
 import '../providers/pk_session_notifier.dart';
 
 /// Sesli oda PK — birleşik aday listesi (`/api/chat/rooms/pk/candidates`).
@@ -13,6 +14,13 @@ Future<void> openVoicePkInviteSheet(
   WidgetRef ref,
   VoiceRoomEntity room,
 ) async {
+  if (!ref.read(pkFeatureEnabledProvider)) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('PK özelliği şu an kapalı')),
+    );
+    return;
+  }
   final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
   if (key.isEmpty) {
     if (!context.mounted) return;
@@ -34,6 +42,13 @@ Future<void> showPkStartSheet(
   WidgetRef ref, {
   required PkSessionArgs args,
 }) async {
+  if (!ref.read(pkFeatureEnabledProvider)) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('PK özelliği şu an kapalı')),
+    );
+    return;
+  }
   await ref.read(pkSessionProvider(args).notifier).loadCandidates();
   if (!context.mounted) return;
   await showModalBottomSheet<void>(

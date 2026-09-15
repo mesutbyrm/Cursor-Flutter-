@@ -1,6 +1,6 @@
 # Tanış Kaynaş — üretim API (canlifal.com)
 
-Mobil sürüm **1.0.530+571** ile hizalı.
+Mobil sürüm **1.0.531+572** ile hizalı.
 
 ## Kullanılan uçlar
 
@@ -37,6 +37,7 @@ Mobil sürüm **1.0.530+571** ile hizalı.
 - **Beğeniler sekmesi:** sana gelen (`filter=liked_me` …) + gönderilen (`scope=sent`)
 - **Keşif:** daha önce beğenilen/favori profiller destede gizlenir (`scope=sent`)
 - **Kart:** ortak hobiler satırı (`commonHobbies`)
+- **Takım:** `GET /api/teams/{id}` detay + üye listesi (`/teams/:id`); staff uzun basış → hub
 
 ## Eksik / sınırlı (backend)
 
