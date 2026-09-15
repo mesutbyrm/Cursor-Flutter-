@@ -4,17 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.510+550` |
-| Tarih (UTC) | 2026-09-15 12:53 |
-| Commit | [`6dcba5109c2edeba6ab6f293f87269c35f891741`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/6dcba5109c2edeba6ab6f293f87269c35f891741) |
-| İş akışı | [Run 34969785216](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34969785216) |
+| Sürüm | `1.0.511+551` |
+| Tarih (UTC) | 2026-09-15 13:53 |
+| Commit | [`1da040c1389e220361d4ed11d243ef23d26830a6`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/1da040c1389e220361d4ed11d243ef23d26830a6) |
+| İş akışı | [Run 34975554107](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/34975554107) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.510+550 (2026-09-15) — CI analyze düzeltmesi
+## 1.0.512+552 (2026-09-15) — VIP capability merkezi + üyelik admin
 
-- Ana sayfa fal kartı: `Ink` üzerinde geçersiz `clipBehavior` kaldırıldı; `ClipRRect` ile kırpma (release gate Gate 1)
+- `MembershipCapabilities` — `/api/me/membership` + admin matrisi; jeton ödül/indirim ayrı
+- `VipTier` sıra düzeltmesi: Basic < Gold < Premium < Diamond < SVIP (`isAtLeast`)
+- Admin: `/admin/membership-management` — kademe/özellik API görünümü
+- Doküman: `docs/MEMBERSHIP_VIP_SYSTEM_ANALYSIS.md`
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
