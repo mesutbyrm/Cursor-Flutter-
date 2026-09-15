@@ -32,6 +32,10 @@
 | DM / fal / giriş FX | `chat_page`, `fortune_access_service`, `entrance_effect_gate_provider` |
 | VIP hub canlı grid | `vip_gold_hub_page` + `VipPrivilegeCatalog.forCapabilities` |
 | Admin tier toggle | `admin_membership_management_page` → PUT tiers |
+| VIP gizlilik API | `vip_preferences_*` + `VipPrivacySettingsSection` |
+| SVIP Lounge | `/vip-svip-lounge` |
+| Admin feature matrisi | PUT `membership_features` (cells) |
+| Kalan özet | `docs/MEMBERSHIP_REMAINING.md` |
 
 ## Üretimde değiştirilmesi gerekenler (canlifal.com — bu repoda değil)
 
