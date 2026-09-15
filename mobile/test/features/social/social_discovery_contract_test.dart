@@ -57,6 +57,16 @@ void main() {
     expect(u.matchPercent, 88);
   });
 
+  test('SocialDiscoveryUser actionAt from action row', () {
+    final u = SocialDiscoveryUser.fromActionRow({
+      'type': 'like',
+      'createdAt': '2026-09-15T12:00:00.000Z',
+      'otherUser': {'id': 'u9', 'name': 'Test'},
+    });
+    expect(u.id, 'u9');
+    expect(u.actionAt?.toUtc().hour, 12);
+  });
+
   test('SocialDiscoveryActionResult rate limit helper', () {
     const limited = SocialDiscoveryActionResult(
       success: false,

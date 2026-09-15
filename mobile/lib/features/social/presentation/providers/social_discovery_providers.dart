@@ -33,7 +33,14 @@ final socialDiscoveryFeedProvider =
 
 final socialDiscoveryMatchesProvider =
     FutureProvider.autoDispose<List<SocialDiscoveryUser>>((ref) async {
-  return ref.read(socialDiscoveryRemoteProvider).fetchMatches();
+  final list = await ref.read(socialDiscoveryRemoteProvider).fetchMatches();
+  final sorted = [...list];
+  sorted.sort((a, b) {
+    final at = a.actionAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+    final bt = b.actionAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+    return bt.compareTo(at);
+  });
+  return sorted;
 });
 
 final userLocationSettingsProvider =

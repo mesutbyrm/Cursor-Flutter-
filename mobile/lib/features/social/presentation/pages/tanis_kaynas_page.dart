@@ -5,22 +5,22 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
-import '../../../../core/util/json_util.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../messages/presentation/providers/messages_providers.dart';
-import '../../../admin/presentation/widgets/admin_user_hub_launcher.dart';
 import '../../../platform_social/presentation/widgets/platform_social_ui_kit.dart';
-import '../sheets/social_discovery_profile_sheet.dart';
-import '../../domain/entities/social_discovery_user.dart';
 import '../../domain/entities/user_location_settings.dart';
 import '../providers/social_discovery_providers.dart';
 import 'tanis_discover_tab.dart';
+import 'tanis_interactions_tab.dart';
 import 'tanis_matches_tab.dart';
 
 /// Tanış & Kaynaş — swipe keşif, eşleşmeler, etkileşimler.
 class TanisKaynasPage extends ConsumerStatefulWidget {
-  const TanisKaynasPage({super.key});
+  const TanisKaynasPage({super.key, this.initialInterestQuery});
+
+  /// Derin link: `/social/tanis-kaynas?interest=müzik`
+  final String? initialInterestQuery;
 
   @override
   ConsumerState<TanisKaynasPage> createState() => _TanisKaynasPageState();
@@ -35,6 +35,13 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
   void initState() {
     super.initState();
     _tabs = TabController(length: 3, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final q = widget.initialInterestQuery?.trim();
+      if (q == null || q.isEmpty) return;
+      ref.read(discoveryFilterProvider.notifier).state =
+          ref.read(discoveryFilterProvider).copyWith(interestQuery: q);
+      ref.invalidate(socialDiscoveryFeedProvider);
+    });
   }
 
   @override
@@ -51,25 +58,6 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
     ref.invalidate(socialTrendingHashtagsProvider);
     ref.invalidate(socialTeamsListProvider);
     ref.invalidate(conversationsProvider);
-  }
-
-  SocialDiscoveryUser? _interactionTargetUser(Map<String, dynamic> row) {
-    return SocialDiscoveryUser.fromActionRow(row);
-  }
-
-  String _actionSuccessLabel(String type) {
-    switch (type) {
-      case 'like':
-        return 'Beğeni';
-      case 'favorite':
-        return 'Süper beğeni (favori)';
-      case 'friend_request':
-        return 'Arkadaşlık isteği';
-      case 'skip':
-        return 'Geçildi';
-      default:
-        return type;
-    }
   }
 
   Future<void> _updateLocation({
@@ -128,7 +116,6 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
   @override
   Widget build(BuildContext context) {
     final location = ref.watch(userLocationSettingsProvider);
-    final actions = ref.watch(socialDiscoveryActionsProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -216,80 +203,7 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage>
                       },
                     ),
                     TanisMatchesTab(onRefresh: _refresh),
-                    RefreshIndicator(
-                      onRefresh: _refresh,
-                      child: actions.when(
-                        loading: () => ListView(
-                          children: const [
-                            SizedBox(
-                              height: 120,
-                              child: Center(child: CircularProgressIndicator()),
-                            ),
-                          ],
-                        ),
-                        error: (e, _) => ListView(
-                          children: [
-                            DiscoverEmptyState(
-                              icon: Icons.history_rounded,
-                              message: ApiException.userMessage(e),
-                              actionLabel: 'Yenile',
-                              action: _refresh,
-                            ),
-                          ],
-                        ),
-                        data: (rows) {
-                          if (rows.isEmpty) {
-                            return ListView(
-                              children: const [
-                                DiscoverEmptyState(
-                                  icon: Icons.inbox_outlined,
-                                  message: 'Henüz sosyal etkileşim kaydı yok.',
-                                ),
-                              ],
-                            );
-                          }
-                          return ListView.builder(
-                            padding: const EdgeInsets.all(16),
-                            itemCount: rows.length,
-                            itemBuilder: (context, i) {
-                              final row = rows[i];
-                              final type =
-                                  (pick(row, ['type', 'action']) ?? '')
-                                      .toString();
-                              final targetUser = _interactionTargetUser(row);
-                              final targetId = targetUser?.id ?? '';
-                              final title = targetUser?.displayName ??
-                                  (targetId.isNotEmpty ? targetId : null) ??
-                                  _actionSuccessLabel(type);
-                              final tile = PlatformSocialInteractionTile(
-                                actionLabel: _actionSuccessLabel(type),
-                                targetLabel: title,
-                                icon: platformSocialActionIcon(type),
-                                onTap: targetUser == null
-                                    ? null
-                                    : () => showSocialDiscoveryProfileSheet(
-                                          context,
-                                          user: targetUser,
-                                        ),
-                              );
-                              if (targetId.isEmpty) return tile;
-                              return AdminUserHubLauncher.wrap(
-                                context: context,
-                                ref: ref,
-                                userId: targetId,
-                                onTap: targetUser == null
-                                    ? null
-                                    : () => showSocialDiscoveryProfileSheet(
-                                          context,
-                                          user: targetUser,
-                                        ),
-                                child: tile,
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ),
+                    TanisInteractionsTab(onRefresh: _refresh),
                   ],
                 ),
               ),

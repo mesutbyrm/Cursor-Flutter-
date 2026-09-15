@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.529+570 (2026-09-15) — Tanış hashtag + etkileşim filtre
+
+- Hashtag & Takım: trend etiket → keşif ilgi filtresi + ana ekrana dönüş
+- Derin link: `/social/tanis-kaynas?interest=...`
+- Eşleşmeler: `createdAt` ile yeniden-eskiye sıralama; göreli zaman etiketi
+- Etkileşimler sekmesi: tür filtreleri (beğeni, favori, arkadaşlık)
+- Profil: ortak ilgi alanları bölümü (`commonHobbies`)
+
 ## 1.0.528+569 (2026-09-15) — Tanış Kaynaş DM önizleme + kota
 
 - Beğeni / aksiyon hataları: 429 ve kota mesajları; Gold kısayolu (`/vip-gold`)

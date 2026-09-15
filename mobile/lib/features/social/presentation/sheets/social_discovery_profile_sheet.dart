@@ -163,15 +163,20 @@ class _SocialDiscoveryProfileSheetState
     final bio = pick(rawUser, ['bio', 'about'])?.toString();
     final online = pick(rawUser, ['isOnline', 'online']) == true;
     final matchPercent = pick(rawUser, ['matchPercent']);
-    final interestsRaw = pick(rawUser, [
-      'commonHobbies',
-      'interests',
-      'tags',
-      'hobbies',
-    ]);
+    final interestsRaw = pick(rawUser, ['interests', 'tags', 'hobbies']);
     final interests = interestsRaw is List
         ? interestsRaw.map((e) => e.toString()).where((s) => s.isNotEmpty).toList()
         : <String>[];
+    final commonRaw = pick(rawUser, ['commonHobbies', 'common_hobbies']);
+    final commonFromApi = commonRaw is List
+        ? commonRaw
+            .map((e) => e.toString())
+            .where((s) => s.isNotEmpty)
+            .toList()
+        : <String>[];
+    final commonInterests = commonFromApi.isNotEmpty
+        ? commonFromApi
+        : widget.user.commonHobbies;
     final friendStatus =
         pick(rawUser, ['friendStatus', 'friendshipStatus'])?.toString();
     final isBlocked = pick(rawUser, ['isBlocked']) == true;
@@ -281,6 +286,21 @@ class _SocialDiscoveryProfileSheetState
                 const PlatformSocialSectionTitle('Hakkında'),
                 PlatformSocialGlassCard(
                   child: Text(bio.trim(), style: const TextStyle(height: 1.45)),
+                ),
+              ],
+              if (commonInterests.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                const PlatformSocialSectionTitle('Ortak ilgi alanları'),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: commonInterests.take(8).map((t) {
+                    return PlatformSocialStatusPill(
+                      label: t,
+                      icon: Icons.favorite_outline_rounded,
+                      tone: PlatformSocialPillTone.success,
+                    );
+                  }).toList(),
                 ),
               ],
               if (interests.isNotEmpty) ...[

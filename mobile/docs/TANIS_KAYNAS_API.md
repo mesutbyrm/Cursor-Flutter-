@@ -1,6 +1,6 @@
 # Tanış Kaynaş — üretim API (canlifal.com)
 
-Mobil sürüm **1.0.528+569** ile hizalı.
+Mobil sürüm **1.0.529+570** ile hizalı.
 
 ## Kullanılan uçlar
 
@@ -31,6 +31,8 @@ Mobil sürüm **1.0.528+569** ile hizalı.
 - **Eşleşme:** diyalog sonrası Eşleşmeler sekmesi; rozet sayısı
 - **DM önizleme:** `GET /api/messages` veya `/api/messages/conversations` — eşleşme satırında son mesaj
 - **Kota:** `POST /api/social/actions` 429 / limit mesajı → kullanıcı bilgilendirme
+- **Hashtag → keşif:** extras trend chip → `interestQuery` istemci filtresi
+- **Derin link:** `?interest=` sorgu parametresi
 
 ## Eksik / sınırlı (backend)
 

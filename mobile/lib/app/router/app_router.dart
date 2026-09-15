@@ -356,7 +356,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     path: 'tanis-kaynas',
                     pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
                       key: state.pageKey,
-                      child: const TanisKaynasPage(),
+                      child: TanisKaynasPage(
+                        initialInterestQuery:
+                            state.uri.queryParameters['interest'],
+                      ),
                     ),
                     routes: [
                       GoRoute(

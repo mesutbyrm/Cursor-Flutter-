@@ -296,7 +296,8 @@ class _TanisDiscoverTabState extends ConsumerState<TanisDiscoverTab> {
           ),
           if (filters.onlineOnly ||
               filters.goldOnly ||
-              filters.city.isNotEmpty)
+              filters.city.isNotEmpty ||
+              filters.interestQuery.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Wrap(
@@ -307,6 +308,8 @@ class _TanisDiscoverTabState extends ConsumerState<TanisDiscoverTab> {
                   if (filters.goldOnly) const Chip(label: Text('Gold')),
                   if (filters.city.isNotEmpty)
                     Chip(label: Text(filters.city)),
+                  if (filters.interestQuery.isNotEmpty)
+                    Chip(label: Text('#${filters.interestQuery}')),
                   if (filters.maxDistanceKm < 200)
                     Chip(label: Text('≤${filters.maxDistanceKm} km')),
                 ],

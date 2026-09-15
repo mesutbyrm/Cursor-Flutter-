@@ -9,6 +9,7 @@ class SocialDiscoveryUser {
     this.username,
     this.avatarUrl,
     this.distanceLabel,
+    this.actionAt,
     this.raw = const {},
   });
 
@@ -17,6 +18,8 @@ class SocialDiscoveryUser {
   final String? username;
   final String? avatarUrl;
   final String? distanceLabel;
+  /// Eşleşme / aksiyon satırı zamanı (`createdAt` vb.).
+  final DateTime? actionAt;
   final Map<String, dynamic> raw;
 
   int? get age {
@@ -39,11 +42,36 @@ class SocialDiscoveryUser {
   bool get isVerified => pick(_profileMap, ['isVerified', 'verified']) == true;
 
   List<String> get hobbies {
-    final raw = pick(_profileMap, ['hobbies', 'interests', 'tags', 'commonHobbies']);
+    final raw = pick(_profileMap, ['hobbies', 'interests', 'tags']);
     if (raw is List) {
       return raw.map((e) => e.toString()).where((s) => s.isNotEmpty).toList();
     }
     return const [];
+  }
+
+  List<String> get commonHobbies {
+    final raw = pick(_profileMap, ['commonHobbies', 'common_hobbies']);
+    if (raw is List) {
+      return raw.map((e) => e.toString()).where((s) => s.isNotEmpty).toList();
+    }
+    return const [];
+  }
+
+  static DateTime? _parseActionAt(Map<String, dynamic> json) {
+    for (final key in [
+      'createdAt',
+      'created_at',
+      'matchedAt',
+      'updatedAt',
+      'timestamp',
+    ]) {
+      final v = pick(json, [key]);
+      if (v is String) {
+        final dt = DateTime.tryParse(v);
+        if (dt != null) return dt;
+      }
+    }
+    return null;
   }
 
   /// Ham km (varsa) — istemci mesafe filtresi için.
@@ -138,6 +166,7 @@ class SocialDiscoveryUser {
       username: username,
       avatarUrl: avatar,
       distanceLabel: distanceLabel,
+      actionAt: _parseActionAt(json),
       raw: json['user'] is Map || json['target'] is Map || json['otherUser'] is Map
           ? Map<String, dynamic>.from(json)
           : merged,
@@ -147,15 +176,25 @@ class SocialDiscoveryUser {
   factory SocialDiscoveryUser.fromActionRow(Map<String, dynamic> row) {
     final other = row['otherUser'] ?? row['target'] ?? row['user'];
     if (other is Map) {
-      return SocialDiscoveryUser.fromJson({
+      final user = SocialDiscoveryUser.fromJson({
         ...Map<String, dynamic>.from(row),
         'otherUser': Map<String, dynamic>.from(other),
       });
+      return SocialDiscoveryUser(
+        id: user.id,
+        displayName: user.displayName,
+        username: user.username,
+        avatarUrl: user.avatarUrl,
+        distanceLabel: user.distanceLabel,
+        actionAt: _parseActionAt(row) ?? user.actionAt,
+        raw: user.raw,
+      );
     }
     final targetId = pick(row, ['targetId', 'userId'])?.toString() ?? '';
     return SocialDiscoveryUser(
       id: targetId,
       displayName: pick(row, ['targetName', 'name'])?.toString() ?? 'Kullanıcı',
+      actionAt: _parseActionAt(row),
       raw: row,
     );
   }

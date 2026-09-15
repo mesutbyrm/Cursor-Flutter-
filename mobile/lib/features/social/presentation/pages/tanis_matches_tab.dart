@@ -10,6 +10,7 @@ import '../../../platform_social/presentation/widgets/platform_social_ui_kit.dar
 import '../../domain/entities/social_discovery_user.dart';
 import '../providers/social_discovery_providers.dart';
 import '../sheets/social_discovery_profile_sheet.dart';
+import '../utils/social_discovery_time_label.dart';
 import '../widgets/discovery_swipe_deck.dart';
 
 class TanisMatchesTab extends ConsumerWidget {
@@ -111,20 +112,34 @@ class _MatchTile extends StatelessWidget {
                       color: PlatformSocialPalette.textMuted,
                     ),
                   ),
-                if (conversation?.subtitle != null &&
-                    conversation!.subtitle!.trim().isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(
-                      conversation!.subtitle!.trim(),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: PlatformSocialPalette.textMuted,
+                Builder(
+                  builder: (context) {
+                    final preview = conversation?.subtitle?.trim();
+                    final when = socialDiscoveryRelativeTimeLabel(
+                      conversation?.lastMessageAt ?? user.actionAt,
+                    );
+                    final line = preview != null && preview.isNotEmpty
+                        ? preview
+                        : when;
+                    if (line == null || line.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        preview != null && preview.isNotEmpty && when != null
+                            ? '$preview · $when'
+                            : line,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: PlatformSocialPalette.textMuted,
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
+                ),
               ],
             ),
           ),

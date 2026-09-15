@@ -8,6 +8,7 @@ import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../platform_social/presentation/widgets/platform_social_ui_kit.dart';
 import '../providers/social_discovery_providers.dart';
+import '../utils/discovery_hashtag_navigation.dart';
 
 /// Hashtag ve takımlar — Tanış Kaynaş yan menü.
 class TanisKaynasExtrasPage extends ConsumerStatefulWidget {
@@ -99,18 +100,20 @@ class _TanisKaynasExtrasPageState extends ConsumerState<TanisKaynasExtrasPage> {
                               label: Text(
                                 '#${pick(Map<String, dynamic>.from(h), ['name', 'tag']) ?? ''}',
                               ),
-                              onPressed: () async {
+                              onPressed: () {
                                 final name =
                                     pick(Map<String, dynamic>.from(h), [
                                   'name',
                                   'tag',
                                 ])?.toString();
                                 if (name == null || name.isEmpty) return;
-                                try {
-                                  await ref
-                                      .read(socialDiscoveryRemoteProvider)
-                                      .fetchHashtag(name);
-                                } catch (_) {}
+                                applyDiscoveryInterestFilter(
+                                  context,
+                                  ref,
+                                  interest: name,
+                                  snackMessage:
+                                      'Keşif filtresi: $name',
+                                );
                               },
                             ),
                       ],
