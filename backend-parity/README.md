@@ -19,6 +19,10 @@ Cloud Agent bu repoda `scripts/check-extra-main-api-routes.py` ile doğrulamayı
 
 Bu adımlar **Cursor-Flutter** deposunda tek başına çalıştırılmaz; backend repo veya Cloud Agent backend oturumu gerekir.
 
+## Platform hub (2026-09-15)
+
+Admin kullanıcı 360° + ajans cüzdanı + CFC Arena listesi route’ları eklendi. Deploy: `docs/PLATFORM_PRODUCTION_DEPLOY_P0_P2.md`
+
 ## İçerik
 
 - Faz notları: `fl_ref/docs/FAZ1_PROGRESS.md` … `FAZ4_PROGRESS.md`
