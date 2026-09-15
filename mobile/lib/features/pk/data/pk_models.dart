@@ -182,7 +182,12 @@ class PkCandidate {
 
   factory PkCandidate.fromStreamJson(Map<String, dynamic> json) {
     return PkCandidate(
-      contextId: json['streamId']?.toString() ?? '',
+      contextId: (json['streamId'] ??
+              json['targetRoomId'] ??
+              json['roomId'] ??
+              json['id'])
+          ?.toString() ??
+          '',
       userId: json['userId']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
       image: json['image']?.toString() ?? '',
@@ -193,7 +198,12 @@ class PkCandidate {
 
   factory PkCandidate.fromRoomJson(Map<String, dynamic> json) {
     return PkCandidate(
-      contextId: json['roomId']?.toString() ?? json['id']?.toString() ?? '',
+      contextId: (json['roomId'] ??
+              json['targetRoomId'] ??
+              json['streamId'] ??
+              json['id'])
+          ?.toString() ??
+          '',
       userId: json['ownerId']?.toString() ?? json['userId']?.toString() ?? '',
       name: json['name']?.toString() ?? json['title']?.toString() ?? '',
       image: json['image']?.toString() ?? '',

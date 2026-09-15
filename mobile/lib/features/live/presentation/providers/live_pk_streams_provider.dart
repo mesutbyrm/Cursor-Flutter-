@@ -10,7 +10,8 @@ import 'live_providers.dart';
 /// PK rakip listesi — cache yok, SSE/socket ile yenilenir; 5 sn timeout.
 class LivePkStreamsNotifier extends Notifier<AsyncValue<List<LiveStreamEntity>>> {
   CancelToken? _cancel;
-  static const _fetchTimeout = Duration(seconds: 5);
+  static const _fetchTimeout = Duration(seconds: 8);
+  String? _myStreamId;
 
   @override
   AsyncValue<List<LiveStreamEntity>> build() {
@@ -26,7 +27,10 @@ class LivePkStreamsNotifier extends Notifier<AsyncValue<List<LiveStreamEntity>>>
     _cancel?.cancel();
   }
 
-  Future<void> refresh({bool silent = false}) async {
+  Future<void> refresh({bool silent = false, String? myStreamId}) async {
+    if (myStreamId != null && myStreamId.trim().isNotEmpty) {
+      _myStreamId = myStreamId.trim();
+    }
     _cancel?.cancel('refresh');
     _cancel = CancelToken();
     final token = _cancel;
@@ -39,7 +43,10 @@ class LivePkStreamsNotifier extends Notifier<AsyncValue<List<LiveStreamEntity>>>
     try {
       final remote = ref.read(liveRemoteProvider);
       final raw = await remote
-          .fetchPkEligibleStreams(cancelToken: token)
+          .fetchPkEligibleStreams(
+            myStreamId: _myStreamId,
+            cancelToken: token,
+          )
           .timeout(_fetchTimeout);
       if (token?.isCancelled == true) return;
       state = AsyncValue.data(raw);

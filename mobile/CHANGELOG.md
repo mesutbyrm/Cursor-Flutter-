@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.505+545 (2026-09-15) — PK liste + entegrasyon paketi
+
+- Canlı PK adayları: `GET /api/video-streams/pk/candidates` (yanlış `video-streams/pk` GET kaldırıldı)
+- `PkSessionNotifier`: canlı keşif yedek listesi, çift davet engeli, debug `PkEventLog`
+- PK başlatma sheet: premium kartlar, CANLI rozeti, PK İste + loading
+- Sesli oda: admin nick artık otomatik “yönetim/staff” sayılmaz (yalnızca `%~&@+` önek veya sunucu rolü)
+- Sosyal feed: yatay tam genişlik kartlar
+
 ## 1.0.504+544 (2026-09-15) — PK istekleri (backend-reference zip)
 
 - `/api/live/pk` yönlendirme: **canlifal.com** (games’de 404 — istek gitmiyordu)

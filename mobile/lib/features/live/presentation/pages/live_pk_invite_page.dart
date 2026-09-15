@@ -14,6 +14,7 @@ import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart
 import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_duration_picker.dart';
 import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_stream_entity.dart';
+import '../../../pk/presentation/providers/pk_session_notifier.dart';
 import '../providers/live_pk_streams_provider.dart';
 import '../providers/pk_session_phase_provider.dart';
 
@@ -40,10 +41,16 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(livePkStreamsProvider.notifier).refresh();
+      final sid = _streamId;
+      ref
+          .read(livePkStreamsProvider.notifier)
+          .refresh(myStreamId: sid);
       _listRefresh = Timer.periodic(const Duration(seconds: 10), (_) {
         if (mounted) {
-          ref.read(livePkStreamsProvider.notifier).refresh(silent: true);
+          ref.read(livePkStreamsProvider.notifier).refresh(
+                silent: true,
+                myStreamId: _streamId,
+              );
         }
       });
     });
@@ -88,8 +95,32 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
     );
     try {
       Object? lastErr;
+      final args = PkSessionArgs(contextId: streamId, kind: PkContextKind.live);
 
-      // Birincil: üretim ana backend — POST /api/video-streams/pk (action:create)
+      try {
+        await ref
+            .read(pkSessionProvider(args).notifier)
+            .create(opponent.id, durationSeconds: _durationSeconds);
+        final err = ref.read(pkSessionProvider(args)).error;
+        if (err == null) {
+          PkEventLog.requestSuccess();
+          if (!mounted) return;
+          final messenger = ScaffoldMessenger.of(context);
+          Navigator.of(context).pop();
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(
+                '${opponent.streamerName ?? opponent.title} kullanıcısına PK daveti gönderildi',
+              ),
+            ),
+          );
+          return;
+        }
+        lastErr = Exception(err);
+      } catch (e) {
+        lastErr = e;
+      }
+
       try {
         final legacy = await ref
             .read(pkBattleRemoteProvider.notifier)
