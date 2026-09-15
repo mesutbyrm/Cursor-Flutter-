@@ -199,7 +199,7 @@ final resolvedMembershipBadgeProvider = Provider<CosmeticItem?>((ref) {
 
   CosmeticItem? best;
   for (final badge in catalog) {
-    if (tier.index < badge.requiredTier.index) continue;
+    if (!tier.isAtLeast(badge.requiredTier)) continue;
     if (best == null || badge.requiredTier.index > best.requiredTier.index) {
       best = badge;
     }

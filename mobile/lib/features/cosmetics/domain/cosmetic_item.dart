@@ -81,7 +81,7 @@ class CosmeticItem extends Equatable {
     String? role,
   }) {
     if (!active) return false;
-    if (tier.index < requiredTier.index) return false;
+    if (!tier.isAtLeast(requiredTier)) return false;
     final req = requiredRole?.trim().toLowerCase();
     if (req != null && req.isNotEmpty) {
       final r = role?.trim().toLowerCase() ?? '';
