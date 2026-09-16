@@ -3077,10 +3077,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                         ),
                   );
                 },
+                onMore: _openControlCenter,
                 onRtcStateChanged: s.isHost
                     ? () => setState(() => _localPreviewKey = UniqueKey())
                     : null,
-                onClose: () => unawaited(_exitBroadcast(context)),
               ),
             if (_hostAway && s.isHost)
               LiveBroadcastRoomHostAwayOverlay(

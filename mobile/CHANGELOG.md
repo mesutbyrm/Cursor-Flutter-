@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.542+583 (2026-09-16) — PK referans UI 1:1 yerleşim
+
+- Tam ekran split video (siyah boşluk kaldırıldı); skor bandı + sohbet video üzerinde overlay
+- Üst bar: CanlıFal marka + alt başlık, sıralı izleyici avatarları (1-2-3), kapat
+- Orta PK geri sayım kapsülü; VS büyütüldü; gerçek takipçi/rozet/lig chip
+- Skor: sayılar üstte, bar, yüzde + durum pill; alt kontroller referans etiketleri
+
 ## 1.0.541+582 (2026-09-16) — PK referans UI tamamlama
 
 - PK üst bar: izleyici avatar şeridi + sayı (`LivePkViewerStrip`)

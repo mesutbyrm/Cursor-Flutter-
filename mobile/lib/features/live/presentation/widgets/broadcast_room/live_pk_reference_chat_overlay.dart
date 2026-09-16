@@ -31,7 +31,7 @@ class LivePkReferenceChatOverlay extends ConsumerWidget {
     return Align(
       alignment: Alignment.bottomLeft,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 0, 80, 88),
+        padding: const EdgeInsets.fromLTRB(10, 0, 4, 4),
         child: ConstrainedBox(
           constraints: BoxConstraints(maxHeight: maxHeight),
           child: ListView.builder(

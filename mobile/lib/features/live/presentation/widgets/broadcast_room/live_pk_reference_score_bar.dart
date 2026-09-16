@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../../../voice_hub/presentation/widgets/premium_2026/pk/pk_animated_score_bar.dart';
 
-/// Referans görsel — iki taraflı skor, yüzde ve orta PK rozeti.
+/// Referans — skorlar üstte, bar ortada, yüzde + durum altta.
 class LivePkReferenceScoreBar extends StatelessWidget {
   const LivePkReferenceScoreBar({
     super.key,
     required this.leftScore,
     required this.rightScore,
-    required this.leftLabel,
-    required this.rightLabel,
     this.statusLabel = 'PK devam ediyor!',
     this.active = true,
     this.showEndedScores = false,
@@ -17,11 +15,8 @@ class LivePkReferenceScoreBar extends StatelessWidget {
 
   final int leftScore;
   final int rightScore;
-  final String leftLabel;
-  final String rightLabel;
   final String statusLabel;
   final bool active;
-  /// Bittiğinde skor satırını vurgula (tam ekran overlay yerine).
   final bool showEndedScores;
 
   static double leftRatio(int left, int right) {
@@ -35,43 +30,36 @@ class LivePkReferenceScoreBar extends StatelessWidget {
     final ratio = leftRatio(leftScore, rightScore);
     final leftPct = (ratio * 100).round();
     final rightPct = 100 - leftPct;
+    final highlight = !active || showEndedScores;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
               Expanded(
-                child: _SideScore(
-                  label: leftLabel,
+                child: _ScoreNumber(
                   value: leftScore,
-                  percent: leftPct,
                   alignStart: true,
-                  gradient: const [Color(0xFFFF2D7A), Color(0xFFB832FF)],
+                  colors: const [Color(0xFFFF2D7A), Color(0xFFB832FF)],
                 ),
               ),
-              _CenterPill(
-                label: statusLabel,
-                highlight: !active || showEndedScores,
-              ),
               Expanded(
-                child: _SideScore(
-                  label: rightLabel,
+                child: _ScoreNumber(
                   value: rightScore,
-                  percent: rightPct,
                   alignStart: false,
-                  gradient: const [Color(0xFF00D2FF), Color(0xFF448AFF)],
+                  colors: const [Color(0xFF00D2FF), Color(0xFF448AFF)],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
             child: SizedBox(
-              height: 10,
+              height: 12,
               child: Row(
                 children: [
                   Expanded(
@@ -98,14 +86,67 @@ class LivePkReferenceScoreBar extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Text(
+                '$leftPct%',
+                style: TextStyle(
+                  color: const Color(0xFFFF6B9D),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              Expanded(
+                child: Center(
+                  child: _StatusPill(label: statusLabel, highlight: highlight),
+                ),
+              ),
+              Text(
+                '$rightPct%',
+                style: TextStyle(
+                  color: const Color(0xFF64B5F6),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
 }
 
-class _CenterPill extends StatelessWidget {
-  const _CenterPill({required this.label, this.highlight = false});
+class _ScoreNumber extends StatelessWidget {
+  const _ScoreNumber({
+    required this.value,
+    required this.alignStart,
+    required this.colors,
+  });
+
+  final int value;
+  final bool alignStart;
+  final List<Color> colors;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      PkAnimatedScoreBar.fmt(value),
+      textAlign: alignStart ? TextAlign.left : TextAlign.right,
+      style: TextStyle(
+        fontSize: 22,
+        fontWeight: FontWeight.w900,
+        foreground: Paint()
+          ..shader = LinearGradient(colors: colors)
+              .createShader(const Rect.fromLTWH(0, 0, 140, 30)),
+      ),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({required this.label, this.highlight = false});
 
   final String label;
   final bool highlight;
@@ -113,16 +154,14 @@ class _CenterPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.65),
+        color: Colors.black.withValues(alpha: 0.68),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: highlight
               ? const Color(0xFFFFD54F).withValues(alpha: 0.85)
-              : const Color(0xFFB832FF).withValues(alpha: 0.5),
-          width: highlight ? 1.5 : 1,
+              : Colors.white.withValues(alpha: 0.12),
         ),
       ),
       child: Row(
@@ -134,65 +173,12 @@ class _CenterPill extends StatelessWidget {
             label,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 10,
+              fontSize: 11,
               fontWeight: FontWeight.w800,
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _SideScore extends StatelessWidget {
-  const _SideScore({
-    required this.label,
-    required this.value,
-    required this.percent,
-    required this.alignStart,
-    required this.gradient,
-  });
-
-  final String label;
-  final int value;
-  final int percent;
-  final bool alignStart;
-  final List<Color> gradient;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment:
-          alignStart ? CrossAxisAlignment.start : CrossAxisAlignment.end,
-      children: [
-        Text(
-          PkAnimatedScoreBar.fmt(value),
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w900,
-            foreground: Paint()
-              ..shader = LinearGradient(colors: gradient)
-                  .createShader(const Rect.fromLTWH(0, 0, 120, 28)),
-          ),
-        ),
-        Text(
-          '$percent%',
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.75),
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.55),
-            fontSize: 10,
-          ),
-        ),
-      ],
     );
   }
 }

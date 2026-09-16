@@ -434,8 +434,6 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
                   child: LivePkReferenceScoreBar(
                     leftScore: leftScore,
                     rightScore: rightScore,
-                    leftLabel: leftName,
-                    rightLabel: rightName,
                     statusLabel: outcomeLabel,
                     active: pkActive && !finished,
                     showEndedScores: finished,

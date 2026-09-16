@@ -10,11 +10,13 @@ class LivePkViewerStrip extends StatelessWidget {
     required this.viewers,
     required this.totalCount,
     this.maxAvatars = 3,
+    this.showRankBadges = false,
   });
 
   final List<LiveStreamViewer> viewers;
   final int totalCount;
   final int maxAvatars;
+  final bool showRankBadges;
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +37,10 @@ class LivePkViewerStrip extends StatelessWidget {
                 for (var i = 0; i < shown.length; i++)
                   Positioned(
                     left: i * 14.0,
-                    child: _AvatarRing(viewer: shown[i]),
+                    child: _AvatarRing(
+                      viewer: shown[i],
+                      rank: showRankBadges ? i + 1 : null,
+                    ),
                   ),
               ],
             ),
@@ -63,39 +68,76 @@ class LivePkViewerStrip extends StatelessWidget {
 }
 
 class _AvatarRing extends StatelessWidget {
-  const _AvatarRing({required this.viewer});
+  const _AvatarRing({required this.viewer, this.rank});
 
   final LiveStreamViewer viewer;
+  final int? rank;
 
   @override
   Widget build(BuildContext context) {
     final url = viewer.avatarUrl?.trim() ?? '';
-    return Container(
-      width: 26,
-      height: 26,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 1.5),
-      ),
-      child: ClipOval(
-        child: url.isNotEmpty
-            ? CanlifalNetworkImage(url: url, fit: BoxFit.cover)
-            : ColoredBox(
-                color: const Color(0xFF7C3AED).withValues(alpha: 0.7),
-                child: Center(
-                  child: Text(
-                    viewer.displayName.isNotEmpty
-                        ? viewer.displayName[0].toUpperCase()
-                        : '?',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
+    Color? rankColor;
+    if (rank == 1) rankColor = const Color(0xFFFFD54F);
+    if (rank == 2) rankColor = const Color(0xFFE0E0E0);
+    if (rank == 3) rankColor = const Color(0xFFCD7F32);
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: 26,
+          height: 26,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: rankColor ?? Colors.white,
+              width: rank != null ? 2 : 1.5,
+            ),
+          ),
+          child: ClipOval(
+            child: url.isNotEmpty
+                ? CanlifalNetworkImage(url: url, fit: BoxFit.cover)
+                : ColoredBox(
+                    color: const Color(0xFF7C3AED).withValues(alpha: 0.7),
+                    child: Center(
+                      child: Text(
+                        viewer.displayName.isNotEmpty
+                            ? viewer.displayName[0].toUpperCase()
+                            : '?',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                     ),
                   ),
+          ),
+        ),
+        if (rank != null)
+          Positioned(
+            right: -4,
+            bottom: -2,
+            child: Container(
+              width: 14,
+              height: 14,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: rankColor ?? Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.black87, width: 1),
+              ),
+              child: Text(
+                '$rank',
+                style: const TextStyle(
+                  fontSize: 8,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.black87,
                 ),
               ),
-      ),
+            ),
+          ),
+      ],
     );
   }
 }

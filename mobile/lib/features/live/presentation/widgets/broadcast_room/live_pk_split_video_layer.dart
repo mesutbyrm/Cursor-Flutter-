@@ -21,7 +21,7 @@ import 'live_pk_resolved_timer.dart';
 import 'live_pk_reference_score_bar.dart';
 import 'live_pk_reference_chat_overlay.dart';
 import 'live_pk_gift_toast_overlay.dart';
-import 'live_pk_viewer_strip.dart';
+import 'live_pk_layout_metrics.dart';
 import '../../providers/live_stream_viewers_provider.dart';
 import '../../providers/live_host_rank_provider.dart';
 import '../../providers/live_room_interaction_provider.dart';
@@ -156,8 +156,10 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final h = constraints.maxHeight;
-        final videoH = (h * 0.52).clamp(240.0, h * 0.55);
+        final chromeBottom = LivePkLayoutMetrics.chromeReserve(context);
+        final scoreH = LivePkLayoutMetrics.scoreBandHeight;
+        final videoBottom = LivePkLayoutMetrics.videoBottomInset(context);
+        final headerH = LivePkLayoutMetrics.headerHeight(context);
 
         return ColoredBox(
           color: Colors.black,
@@ -168,7 +170,7 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
                 top: 0,
                 left: 0,
                 right: 0,
-                height: videoH,
+                bottom: videoBottom,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -229,126 +231,127 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    Center(
-                      child: PkVsEmblem(size: 48, pulse: true),
-                    ),
+                    Center(child: PkVsEmblem(size: 62, pulse: true)),
                     Positioned(
-                      right: 10,
-                      top: videoH * 0.28,
+                      right: 8,
+                      bottom: 24,
                       child: _PkLikeRail(count: likeCount),
                     ),
-                    if (session.isHost)
-                      Positioned(
-                        top: MediaQuery.paddingOf(context).top + 8,
-                        right: 8,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (layout.right.userId != null &&
-                                layout.right.userId!.isNotEmpty)
-                              Material(
-                                color: Colors.black54,
-                                borderRadius: BorderRadius.circular(20),
-                                child: IconButton(
-                                  tooltip: opponentMuted
-                                      ? 'Sesi aç'
-                                      : 'Rakibi sessize al',
-                                  icon: Icon(
-                                    opponentMuted
-                                        ? Icons.volume_off_rounded
-                                        : Icons.volume_up_rounded,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
-                                  onPressed: () {
-                                    final oppId = layout.right.userId!.trim();
-                                    final next = !opponentMuted;
-                                    ref
-                                        .read(
-                                          livePkOpponentMutedProvider(streamId)
-                                              .notifier,
-                                        )
-                                        .state = next;
-                                    onMuteOpponent?.call(oppId, next);
-                                    trtc.muteRemoteAudio(oppId, next);
-                                  },
-                                ),
-                              ),
-                            const SizedBox(width: 4),
-                            Material(
-                              color: Colors.red.withValues(alpha: 0.75),
-                              borderRadius: BorderRadius.circular(20),
-                              child: IconButton(
-                                tooltip: 'PK bitir',
-                                icon: const Icon(
-                                  Icons.close_rounded,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                                onPressed: onEndPk,
-                              ),
+                    Positioned(
+                      top: headerH - 8,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.55),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.12),
                             ),
-                          ],
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 6,
+                            ),
+                            child: ended
+                                ? const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.bolt_rounded,
+                                          color: Color(0xFFFFD54F), size: 18),
+                                      SizedBox(width: 6),
+                                      Text(
+                                        'PK',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      SizedBox(width: 8),
+                                      PkBattleTimerBadge(
+                                        secondsLeft: 0,
+                                        flashThreshold: 10,
+                                      ),
+                                    ],
+                                  )
+                                : LivePkResolvedTimer(
+                                    remote: null,
+                                    fallbackSeconds: secondsLeft,
+                                    endsAt: endsAt,
+                                    countdownActive: true,
+                                    centered: true,
+                                    onExpired:
+                                        session.isHost ? onEndPk : null,
+                                  ),
+                          ),
                         ),
                       ),
+                    ),
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                            colors: [
+                              Colors.black.withValues(alpha: 0.55),
+                              Colors.transparent,
+                            ],
+                            stops: const [0, 0.35],
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
               Positioned(
                 left: 0,
                 right: 0,
-                top: videoH - 6,
-                child: LivePkReferenceScoreBar(
-                  leftScore: leftScore,
-                  rightScore: rightScore,
-                  leftLabel: layout.left.label,
-                  rightLabel: layout.right.label,
-                  statusLabel: statusLabel,
-                  active: pkActive,
-                  showEndedScores: ended,
+                bottom: chromeBottom,
+                height: scoreH,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.92),
+                        Colors.black.withValues(alpha: 0.35),
+                      ],
+                    ),
+                  ),
+                  child: Center(
+                    child: LivePkReferenceScoreBar(
+                      leftScore: leftScore,
+                      rightScore: rightScore,
+                      statusLabel: statusLabel,
+                      active: pkActive,
+                      showEndedScores: ended,
+                    ),
+                  ),
                 ),
               ),
-              LivePkReferenceChatOverlay(
-                streamId: streamId,
-                maxHeight: (h - videoH - 72).clamp(72, 200),
-                visible: chatVisible,
+              Positioned(
+                left: 0,
+                right: 72,
+                bottom: chromeBottom + scoreH - 4,
+                height: 168,
+                child: LivePkReferenceChatOverlay(
+                  streamId: streamId,
+                  maxHeight: 168,
+                  visible: chatVisible,
+                ),
               ),
-              const LivePkGiftToastOverlay(),
+              LivePkGiftToastOverlay(bottomInset: chromeBottom + scoreH + 8),
               LivePkReferenceTopBar(
                 onBack: onBack,
+                onClose: onBack,
                 viewerCount: viewerCount,
-                brandTitle: 'CanlıFal',
-                viewerStrip: LivePkViewerStrip(
-                  viewers: viewers,
-                  totalCount: viewerCount,
-                ),
-                timer: ended
-                    ? const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.bolt_rounded,
-                              color: Color(0xFFFFD54F), size: 18),
-                          SizedBox(width: 4),
-                          Text(
-                            'PK',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 13,
-                            ),
-                          ),
-                          SizedBox(width: 8),
-                          PkBattleTimerBadge(secondsLeft: 0, flashThreshold: 10),
-                        ],
-                      )
-                    : LivePkResolvedTimer(
-                        remote: null,
-                        fallbackSeconds: secondsLeft,
-                        endsAt: endsAt,
-                        countdownActive: true,
-                        centered: true,
-                        onExpired: session.isHost ? onEndPk : null,
-                      ),
+                viewers: viewers,
               ),
             ],
           ),

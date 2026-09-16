@@ -110,6 +110,7 @@ class LivePkChatInputBar extends StatelessWidget {
     this.onToggleVisibility,
     this.onGift,
     this.onQuickRose,
+    this.onMore,
     this.visible = true,
   });
 
@@ -118,6 +119,7 @@ class LivePkChatInputBar extends StatelessWidget {
   final VoidCallback? onToggleVisibility;
   final VoidCallback? onGift;
   final VoidCallback? onQuickRose;
+  final VoidCallback? onMore;
   final bool visible;
 
   @override
@@ -145,6 +147,11 @@ class LivePkChatInputBar extends StatelessWidget {
                   hintStyle: TextStyle(
                     color: Colors.white.withValues(alpha: 0.45),
                   ),
+                  prefixIcon: Icon(
+                    Icons.emoji_emotions_outlined,
+                    color: Colors.white.withValues(alpha: 0.55),
+                    size: 22,
+                  ),
                   border: InputBorder.none,
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -166,9 +173,15 @@ class LivePkChatInputBar extends StatelessWidget {
               icon: const Icon(Icons.card_giftcard_rounded,
                   color: Color(0xFFFFD54F)),
             ),
+          if (onMore != null)
+            IconButton(
+              onPressed: onMore,
+              tooltip: 'Daha fazla',
+              icon: const Icon(Icons.more_horiz_rounded, color: Colors.white70),
+            ),
           IconButton(
             onPressed: onSend,
-            icon: const Icon(Icons.send_rounded, color: Color(0xFFB832FF)),
+            icon: const Icon(Icons.send_rounded, color: Colors.white),
           ),
         ],
       ),
@@ -178,15 +191,20 @@ class LivePkChatInputBar extends StatelessWidget {
 
 /// Sağ kenar floating hediye — referans "Gönder".
 class LivePkFloatingGiftButton extends StatelessWidget {
-  const LivePkFloatingGiftButton({super.key, required this.onTap});
+  const LivePkFloatingGiftButton({
+    super.key,
+    required this.onTap,
+    this.bottom = 168,
+  });
 
   final VoidCallback onTap;
+  final double bottom;
 
   @override
   Widget build(BuildContext context) {
     return Positioned(
       right: 12,
-      bottom: 168,
+      bottom: bottom,
       child: Material(
         color: Colors.black.withValues(alpha: 0.45),
         shape: const CircleBorder(),

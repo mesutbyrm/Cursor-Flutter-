@@ -6,11 +6,11 @@ import '../../../domain/entities/live_broadcast_session.dart';
 import '../../../domain/pk/live_pk_broadcast_stage.dart';
 import '../../../domain/pk/pk_status_helper.dart';
 import '../../providers/live_pk_ui_providers.dart';
-import '../../providers/live_room_interaction_provider.dart';
 import '../../providers/live_video_pk_provider.dart';
 import 'live_pk_immersive_controls.dart';
+import 'live_pk_layout_metrics.dart';
 
-/// Yayın odası PK — timer, beğeni, alt kontroller + floating gül.
+/// Yayın odası PK — alt kontroller + mesaj girişi (referans 1:1).
 class LivePkBroadcastOverlay extends ConsumerWidget {
   const LivePkBroadcastOverlay({
     super.key,
@@ -25,7 +25,7 @@ class LivePkBroadcastOverlay extends ConsumerWidget {
     required this.onGift,
     required this.onSendChat,
     this.onRtcStateChanged,
-    this.onClose,
+    this.onMore,
   });
 
   final String streamId;
@@ -39,56 +39,30 @@ class LivePkBroadcastOverlay extends ConsumerWidget {
   final VoidCallback onGift;
   final VoidCallback onSendChat;
   final VoidCallback? onRtcStateChanged;
-  final VoidCallback? onClose;
+  final VoidCallback? onMore;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isHost = session.isHost;
     final opponentMuted = ref.watch(livePkOpponentMutedProvider(streamId));
-    final interaction = ref.watch(liveRoomInteractionProvider(streamId));
     final pk = ref.watch(liveVideoPkProvider(streamId));
     final battle = pk.battle ?? const <String, dynamic>{};
     final pkActive = isLivePkBroadcastStage(battle, pk.status);
     final pkRunning = isLivePkActiveStatus(pk.status);
 
-    final top = MediaQuery.paddingOf(context).top;
-    final bottom = MediaQuery.paddingOf(context).bottom;
-    final controlsHeight = 96.0 + bottom;
+    final chromeBottom = LivePkLayoutMetrics.chromeReserve(context);
+    final controlsHeight = LivePkLayoutMetrics.controlBarHeight +
+        LivePkLayoutMetrics.bottomInset(context);
+
+    if (!pkActive) return const SizedBox.shrink();
 
     return Stack(
       fit: StackFit.expand,
       children: [
-        if (pkActive)
-          Positioned(
-            top: top + 52,
-            right: 12,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.55),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.favorite_rounded,
-                        color: Color(0xFFFF2D7A), size: 16),
-                    const SizedBox(width: 6),
-                    Text(
-                      '${interaction.likeCount}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        LivePkFloatingGiftButton(onTap: onGift),
+        LivePkFloatingGiftButton(
+          onTap: onGift,
+          bottom: chromeBottom + LivePkLayoutMetrics.scoreBandHeight + 12,
+        ),
         Positioned(
           left: 0,
           right: 0,
@@ -99,6 +73,7 @@ class LivePkBroadcastOverlay extends ConsumerWidget {
             onGift: onGift,
             onQuickRose: onGift,
             onSend: onSendChat,
+            onMore: onMore,
             onToggleVisibility: () => onChatOpenChanged(false),
           ),
         ),
@@ -134,7 +109,7 @@ class LivePkBroadcastOverlay extends ConsumerWidget {
                 icon: opponentMuted
                     ? Icons.volume_off_rounded
                     : Icons.hearing_rounded,
-                label: 'Rakip ses',
+                label: 'Rakibi sessize al',
                 active: !opponentMuted,
                 onTap: () {
                   final next = !opponentMuted;
@@ -157,7 +132,7 @@ class LivePkBroadcastOverlay extends ConsumerWidget {
               if (isHost && pkRunning)
                 LivePkControlItem(
                   icon: Icons.stop_circle_outlined,
-                  label: 'Bitir',
+                  label: "PK'yi Bitir",
                   danger: true,
                   onTap: onEndPk,
                 ),

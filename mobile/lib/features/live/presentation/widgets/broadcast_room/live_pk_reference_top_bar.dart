@@ -1,23 +1,22 @@
 import 'package:flutter/material.dart';
 
-/// Referans PK üst bar — geri + ortada PK geri sayım.
+import 'live_pk_viewer_strip.dart';
+import '../../../domain/entities/live_stream_viewer.dart';
+
+/// Referans PK üst bar — marka, izleyiciler, kapat.
 class LivePkReferenceTopBar extends StatelessWidget {
   const LivePkReferenceTopBar({
     super.key,
-    required this.timer,
     this.onBack,
+    this.onClose,
     this.viewerCount = 0,
-    this.trailing,
-    this.brandTitle,
-    this.viewerStrip,
+    this.viewers = const [],
   });
 
-  final Widget timer;
   final VoidCallback? onBack;
+  final VoidCallback? onClose;
   final int viewerCount;
-  final Widget? trailing;
-  final String? brandTitle;
-  final Widget? viewerStrip;
+  final List<LiveStreamViewer> viewers;
 
   @override
   Widget build(BuildContext context) {
@@ -32,14 +31,15 @@ class LivePkReferenceTopBar extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Colors.black.withValues(alpha: 0.78),
+              Colors.black.withValues(alpha: 0.82),
               Colors.transparent,
             ],
           ),
         ),
         child: Padding(
-          padding: EdgeInsets.fromLTRB(4, top + 4, 8, 12),
+          padding: EdgeInsets.fromLTRB(2, top + 2, 6, 10),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               if (onBack != null)
                 IconButton(
@@ -47,61 +47,81 @@ class LivePkReferenceTopBar extends StatelessWidget {
                   icon: const Icon(
                     Icons.arrow_back_ios_new_rounded,
                     color: Colors.white,
-                    size: 20,
+                    size: 18,
                   ),
                 )
               else
-                const SizedBox(width: 8),
-              if (brandTitle != null && brandTitle!.trim().isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: Text(
-                    brandTitle!,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 13,
-                      letterSpacing: 0.2,
-                    ),
-                  ),
-                ),
-              Expanded(child: Center(child: timer)),
-              Padding(
-                padding: const EdgeInsets.only(right: 4),
-                child: viewerStrip ??
-                    (viewerCount > 0
-                        ? Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.visibility_rounded,
-                                color: Colors.white70,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                _fmtCount(viewerCount),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          )
-                        : const SizedBox(width: 8)),
+                const SizedBox(width: 4),
+              _BrandMark(),
+              const Spacer(),
+              LivePkViewerStrip(
+                viewers: viewers,
+                totalCount: viewerCount,
+                showRankBadges: true,
               ),
-              trailing ?? const SizedBox(width: 8),
+              if (onClose != null)
+                IconButton(
+                  onPressed: onClose,
+                  icon: const Icon(Icons.close_rounded, color: Colors.white, size: 22),
+                  tooltip: 'Kapat',
+                ),
             ],
           ),
         ),
       ),
     );
   }
+}
 
-  static String _fmtCount(int n) {
-    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
-    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
-    return '$n';
+class _BrandMark extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: const LinearGradient(
+              colors: [Color(0xFF7C3AED), Color(0xFFB832FF)],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFB832FF).withValues(alpha: 0.45),
+                blurRadius: 10,
+              ),
+            ],
+          ),
+          child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 18),
+        ),
+        const SizedBox(width: 8),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'CanlıFal 💜',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 14,
+                height: 1.1,
+              ),
+            ),
+            Text(
+              'Hayata Fal Kat 💜',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.72),
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                height: 1.1,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 }

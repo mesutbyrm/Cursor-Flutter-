@@ -36,37 +36,43 @@ class LivePkStreamerChip extends ConsumerStatefulWidget {
 class _LivePkStreamerChipState extends ConsumerState<LivePkStreamerChip> {
   var _following = false;
   var _followLoading = false;
-  var _loadedFollow = false;
+  var _loadedProfile = false;
+  var _verified = false;
+  var _followersCount = 0;
 
   @override
   void initState() {
     super.initState();
-    _loadFollow();
+    _loadProfile();
   }
 
   @override
   void didUpdateWidget(covariant LivePkStreamerChip oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.userId != widget.userId) {
-      _loadedFollow = false;
-      _loadFollow();
+      _loadedProfile = false;
+      _loadProfile();
     }
   }
 
-  Future<void> _loadFollow() async {
-    if (!widget.showFollow || widget.isLocal) return;
+  Future<void> _loadProfile() async {
     final id = widget.userId?.trim() ?? '';
-    if (id.isEmpty) return;
+    if (id.isEmpty || widget.isLocal) {
+      if (mounted) setState(() => _loadedProfile = true);
+      return;
+    }
     try {
       final profile = await ref.read(profileRepositoryProvider).getUser(id);
       if (mounted) {
         setState(() {
           _following = profile.isFollowing;
-          _loadedFollow = true;
+          _verified = profile.isVerified;
+          _followersCount = profile.followersCount;
+          _loadedProfile = true;
         });
       }
     } catch (_) {
-      if (mounted) setState(() => _loadedFollow = true);
+      if (mounted) setState(() => _loadedProfile = true);
     }
   }
 
@@ -94,14 +100,19 @@ class _LivePkStreamerChipState extends ConsumerState<LivePkStreamerChip> {
     final showFollowBtn = widget.showFollow &&
         !widget.isLocal &&
         (widget.userId?.trim().isNotEmpty ?? false) &&
-        _loadedFollow &&
+        _loadedProfile &&
         !_following;
 
     return Positioned(
       top: 8,
       left: left ? 8 : null,
       right: left ? null : 8,
-      child: DecoratedBox(
+      child: Column(
+        crossAxisAlignment:
+            left ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           gradient: LinearGradient(
@@ -117,27 +128,52 @@ class _LivePkStreamerChipState extends ConsumerState<LivePkStreamerChip> {
             mainAxisSize: MainAxisSize.min,
             children: [
               _Avatar(url: widget.avatarUrl, name: widget.displayName),
-              if (widget.leagueLabel != null &&
-                  widget.leagueLabel!.trim().isNotEmpty) ...[
-                const SizedBox(width: 4),
-                _LeagueBadge(label: widget.leagueLabel!.trim()),
-              ],
               const SizedBox(width: 8),
               ConstrainedBox(
                 constraints: BoxConstraints(
-                  maxWidth: MediaQuery.sizeOf(context).width * 0.22,
+                  maxWidth: MediaQuery.sizeOf(context).width * 0.2,
                 ),
-                child: Text(
-                  widget.isLocal ? 'Sen · ${widget.displayName}' : widget.displayName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        widget.isLocal
+                            ? 'Sen · ${widget.displayName}'
+                            : widget.displayName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    if (_verified) ...[
+                      const SizedBox(width: 3),
+                      const Icon(
+                        Icons.verified_rounded,
+                        color: Color(0xFF448AFF),
+                        size: 14,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (_followersCount > 0) ...[
+                const SizedBox(width: 6),
+                const Icon(Icons.local_fire_department_rounded,
+                    color: Color(0xFFFF7043), size: 14),
+                Text(
+                  _fmtCount(_followersCount),
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
-                    fontSize: 12,
+                    fontSize: 11,
                   ),
                 ),
-              ),
+              ],
               const SizedBox(width: 6),
               Icon(
                 widget.micOn ? Icons.mic_rounded : Icons.mic_off_rounded,
@@ -170,11 +206,11 @@ class _LivePkStreamerChipState extends ConsumerState<LivePkStreamerChip> {
                               ),
                             )
                           : const Text(
-                              'Takip',
+                              '+ Takip et',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w900,
-                                fontSize: 11,
+                                fontSize: 10,
                               ),
                             ),
                     ),
@@ -185,7 +221,21 @@ class _LivePkStreamerChipState extends ConsumerState<LivePkStreamerChip> {
           ),
         ),
       ),
+          if (widget.leagueLabel != null &&
+              widget.leagueLabel!.trim().isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4, left: 4),
+              child: _LeagueBadge(label: widget.leagueLabel!.trim()),
+            ),
+        ],
+      ),
     );
+  }
+
+  static String _fmtCount(int n) {
+    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
+    return '$n';
   }
 }
 
@@ -204,13 +254,20 @@ class _LeagueBadge extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: Color(0xFF3E2723),
-          fontSize: 9,
-          fontWeight: FontWeight.w900,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.diamond_rounded, size: 10, color: Color(0xFF3E2723)),
+          const SizedBox(width: 3),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF3E2723),
+              fontSize: 9,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
       ),
     );
   }
