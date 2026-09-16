@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.536+577 (2026-09-16) — Yayın PK referans kontroller + sonuç
+
+- PK aktif: immersive alt bar (mik, kamera, rakip ses, sohbet, bitir) + floating gül
+- Şeffaf PK sohbet video üzerinde; standart alt chrome gizlenir
+- PK bitti: `PkWinnerCelebration` (premium overlay yerine); Tekrar PK → başlat sheet
+
 ## 1.0.535+576 (2026-09-16) — CI: PK premium overlay analyze düzeltmesi
 
 - `live_pk_premium_overlay.dart`: 0-0 skor bar `scoreSum` kapsam hatası (Gate 1)

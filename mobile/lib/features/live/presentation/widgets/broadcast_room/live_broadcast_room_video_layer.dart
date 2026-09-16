@@ -30,6 +30,7 @@ class LiveBroadcastRoomVideoLayer extends ConsumerWidget {
     required this.onEndActivePk,
     required this.onOpenControlCenter,
     required this.onGuestAction,
+    this.chatVisibleForPk = true,
   });
 
   final LiveBroadcastSession session;
@@ -43,6 +44,7 @@ class LiveBroadcastRoomVideoLayer extends ConsumerWidget {
   final Future<void> Function(String streamId) onEndActivePk;
   final VoidCallback onOpenControlCenter;
   final void Function(int slotIndex, String action) onGuestAction;
+  final bool chatVisibleForPk;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -76,6 +78,7 @@ class LiveBroadcastRoomVideoLayer extends ConsumerWidget {
           session: s,
           trtc: trtc,
           rtcReady: rtcReady,
+          chatVisible: chatVisibleForPk,
           onEndPk: s.isHost ? () => onEndActivePk(streamId) : null,
         );
       }

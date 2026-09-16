@@ -56,6 +56,8 @@ class LiveBroadcastRoomChromeColumn extends ConsumerWidget {
     required this.onToggleCamera,
     required this.onSend,
     required this.onEnd,
+    this.suppressBottomChrome = false,
+    this.suppressChatColumn = false,
   });
 
   final double topInset;
@@ -99,6 +101,8 @@ class LiveBroadcastRoomChromeColumn extends ConsumerWidget {
   final VoidCallback? onToggleCamera;
   final VoidCallback onSend;
   final VoidCallback? onEnd;
+  final bool suppressBottomChrome;
+  final bool suppressChatColumn;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -167,35 +171,38 @@ class LiveBroadcastRoomChromeColumn extends ConsumerWidget {
               ),
             ),
           const Spacer(),
-          LiveBroadcastRoomChatOverlay(
-            chatVisible: chatVisible,
-            onHideChat: () => onChatVisibleChanged(false),
-            onShowChat: () => onChatVisibleChanged(true),
-            session: s,
-            lastJoinedName: lastJoinedName,
-            messages: roomMessages,
-            balance: balance,
-            initialFortuneType: initialFortuneType,
-            onMessageLongPress: onMessageLongPress,
-            onSubmitFortuneRequest: onSubmitFortuneRequest,
-            viewerSideRail: viewerSideRail,
-          ),
-          const SizedBox(height: 8),
-          LiveBroadcastRoomBottomChrome(
-            chatController: chatController,
-            isHost: s.isHost,
-            trtc: s.isHost ? trtc : null,
-            commentsEnabled: commentsEnabled,
-            chatVisible: chatVisible,
-            onToggleChat: () => onChatVisibleChanged(!chatVisible),
-            onGift: onGift,
-            onTip: onTip,
-            onMore: onMore,
-            onRtcStateChanged: onRtcStateChanged,
-            onToggleCamera: onToggleCamera,
-            onSend: onSend,
-            onEnd: onEnd,
-          ),
+          if (!suppressChatColumn)
+            LiveBroadcastRoomChatOverlay(
+              chatVisible: chatVisible,
+              onHideChat: () => onChatVisibleChanged(false),
+              onShowChat: () => onChatVisibleChanged(true),
+              session: s,
+              lastJoinedName: lastJoinedName,
+              messages: roomMessages,
+              balance: balance,
+              initialFortuneType: initialFortuneType,
+              onMessageLongPress: onMessageLongPress,
+              onSubmitFortuneRequest: onSubmitFortuneRequest,
+              viewerSideRail: viewerSideRail,
+            ),
+          if (!suppressBottomChrome) ...[
+            const SizedBox(height: 8),
+            LiveBroadcastRoomBottomChrome(
+              chatController: chatController,
+              isHost: s.isHost,
+              trtc: s.isHost ? trtc : null,
+              commentsEnabled: commentsEnabled,
+              chatVisible: chatVisible,
+              onToggleChat: () => onChatVisibleChanged(!chatVisible),
+              onGift: onGift,
+              onTip: onTip,
+              onMore: onMore,
+              onRtcStateChanged: onRtcStateChanged,
+              onToggleCamera: onToggleCamera,
+              onSend: onSend,
+              onEnd: onEnd,
+            ),
+          ],
         ],
       ),
     );

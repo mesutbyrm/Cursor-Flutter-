@@ -29,7 +29,7 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
     required this.rtcReady,
     this.onEndPk,
     this.onMuteOpponent,
-    this.chatVisible = false,
+    this.chatVisible = true,
   });
 
   final String streamId;
