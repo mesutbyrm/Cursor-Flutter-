@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.535+576 (2026-09-16) — CI: PK premium overlay analyze düzeltmesi
+
+- `live_pk_premium_overlay.dart`: 0-0 skor bar `scoreSum` kapsam hatası (Gate 1)
+
 ## 1.0.534+575 (2026-09-16) — Yayın PK timer `endsAt` geri sayım
 
 - `LivePkResolvedTimer`: battle `endsAt` ile saniye saniye senkron (yayın split katmanı)
