@@ -2853,6 +2853,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
             LiveFloatingHeartsOverlay(
               key: _heartsKey,
               burstToken: interaction.heartBurstToken,
+              pkRailMode: pkImmersive,
               onDoubleTap: _onDoubleTapHeart,
               onTripleTap: _onTripleTapSuperLike,
               onLongPress: _onLongPressApplause,

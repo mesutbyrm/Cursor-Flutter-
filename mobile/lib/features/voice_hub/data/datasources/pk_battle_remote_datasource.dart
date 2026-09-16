@@ -674,6 +674,8 @@ class PkBattleRemoteDataSource {
       final list = map?['items'] ??
           map?['invites'] ??
           map?['pending'] ??
+          map?['data'] ??
+          (res.data is List ? res.data : null) ??
           res.data;
       final out = <PkBattleRemote>[];
       for (final raw in asJsonList(list)) {

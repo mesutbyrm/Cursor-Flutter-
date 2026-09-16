@@ -175,7 +175,7 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
     final user = ref.watch(authControllerProvider).valueOrNull;
     ChatRoomPresence? selfPresence;
     if (user != null) {
-      for (final p in live.presence) {
+      for (final p in List<ChatRoomPresence>.from(live.presence)) {
         if (p.id == user.id) {
           selfPresence = p;
           break;

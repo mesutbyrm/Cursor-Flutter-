@@ -15,6 +15,7 @@ class LivePkImmersiveVideoPane extends StatelessWidget {
     this.chipAlignment = Alignment.topLeft,
     this.streamerUserId,
     this.showFollowOnChip = false,
+    this.leagueLabel,
   });
 
   final Widget video;
@@ -26,6 +27,7 @@ class LivePkImmersiveVideoPane extends StatelessWidget {
   final Alignment chipAlignment;
   final String? streamerUserId;
   final bool showFollowOnChip;
+  final String? leagueLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -73,6 +75,7 @@ class LivePkImmersiveVideoPane extends StatelessWidget {
             alignment: chipAlignment,
             userId: streamerUserId,
             showFollow: showFollowOnChip,
+            leagueLabel: leagueLabel,
           ),
         ],
       ),

@@ -16,6 +16,7 @@ class LivePkStreamerChip extends ConsumerStatefulWidget {
     this.alignment = Alignment.topLeft,
     this.userId,
     this.showFollow = false,
+    this.leagueLabel,
   });
 
   final String displayName;
@@ -26,6 +27,7 @@ class LivePkStreamerChip extends ConsumerStatefulWidget {
   final Alignment alignment;
   final String? userId;
   final bool showFollow;
+  final String? leagueLabel;
 
   @override
   ConsumerState<LivePkStreamerChip> createState() => _LivePkStreamerChipState();
@@ -115,6 +117,11 @@ class _LivePkStreamerChipState extends ConsumerState<LivePkStreamerChip> {
             mainAxisSize: MainAxisSize.min,
             children: [
               _Avatar(url: widget.avatarUrl, name: widget.displayName),
+              if (widget.leagueLabel != null &&
+                  widget.leagueLabel!.trim().isNotEmpty) ...[
+                const SizedBox(width: 4),
+                _LeagueBadge(label: widget.leagueLabel!.trim()),
+              ],
               const SizedBox(width: 8),
               ConstrainedBox(
                 constraints: BoxConstraints(
@@ -176,6 +183,33 @@ class _LivePkStreamerChipState extends ConsumerState<LivePkStreamerChip> {
               ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LeagueBadge extends StatelessWidget {
+  const _LeagueBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFFD54F), Color(0xFFFFA000)],
+        ),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Color(0xFF3E2723),
+          fontSize: 9,
+          fontWeight: FontWeight.w900,
         ),
       ),
     );

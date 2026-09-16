@@ -65,7 +65,7 @@ class _VoiceSpeakRequestListenerState
     required VoiceRoomLiveState live,
   }) {
     ChatRoomPresence? self;
-    for (final p in live.presence) {
+    for (final p in List<ChatRoomPresence>.from(live.presence)) {
       if (p.id == user.id) {
         self = p;
         break;
@@ -141,7 +141,7 @@ class _VoiceSpeakRequestListenerState
         if (_pendingDialogKeys.contains(key)) continue;
 
         ChatRoomPresence? target;
-        for (final p in live.presence) {
+        for (final p in List<ChatRoomPresence>.from(live.presence)) {
           if (p.id == id) {
             target = p;
             break;

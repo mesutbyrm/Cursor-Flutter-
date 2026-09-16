@@ -61,7 +61,7 @@ class LivePkBroadcastOverlay extends ConsumerWidget {
         if (pkActive)
           Positioned(
             top: top + 52,
-            left: 12,
+            right: 12,
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: Colors.black.withValues(alpha: 0.55),

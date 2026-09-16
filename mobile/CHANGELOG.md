@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.541+582 (2026-09-16) — PK referans UI tamamlama
+
+- PK üst bar: izleyici avatar şeridi + sayı (`LivePkViewerStrip`)
+- Yayıncı chip: lig rozeti (PK leaderboard); sağda beğeni rail + kalpler PK rail modu
+- Sesli PK: `fetchMyInvites` ek JSON şekilleri; presence döngüleri güvenli kopya
+
 ## 1.0.540+581 (2026-09-16) — PK takip + mesajlar tümünü oku + sesli oda
 
 - PK split: yayıncı chip'inde «Takip»; üst bar «CanlıFal» markası

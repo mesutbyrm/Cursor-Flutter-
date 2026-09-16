@@ -13,10 +13,12 @@ class LiveFloatingHeartsOverlay extends StatefulWidget {
     this.onDoubleTap,
     this.onTripleTap,
     this.onLongPress,
+    this.pkRailMode = false,
   });
 
   final int burstToken;
   final bool enabled;
+  final bool pkRailMode;
   final VoidCallback? onDoubleTap;
   final VoidCallback? onTripleTap;
   final VoidCallback? onLongPress;
@@ -66,11 +68,15 @@ class LiveFloatingHeartsOverlayState extends State<LiveFloatingHeartsOverlay>
           AppThemeColors.liveRed,
           Colors.white,
         ];
+        final rail = widget.pkRailMode;
         _hearts.add(_HeartParticle(
           id: _rand.nextInt(1 << 30),
           left: fromTap != null
-              ? (fromTap.dx / MediaQuery.sizeOf(context).width).clamp(0.2, 0.8)
-              : 0.55 + _rand.nextDouble() * 0.38,
+              ? (fromTap.dx / MediaQuery.sizeOf(context).width)
+                  .clamp(rail ? 0.68 : 0.2, rail ? 0.92 : 0.8)
+              : rail
+                  ? 0.74 + _rand.nextDouble() * 0.14
+                  : 0.55 + _rand.nextDouble() * 0.38,
           phase: _rand.nextDouble(),
           size: 14 + _rand.nextDouble() * 18,
           color: colors[_rand.nextInt(colors.length)],
@@ -115,7 +121,9 @@ class LiveFloatingHeartsOverlayState extends State<LiveFloatingHeartsOverlay>
                 for (final p in _hearts)
                   Positioned(
                     left: w * p.left + sin((_ctrl.value + p.phase) * pi * 2) * 24,
-                    bottom: h * 0.18 + ((_ctrl.value + p.phase) % 1.0) * h * 0.55,
+                    bottom: (widget.pkRailMode ? h * 0.22 : h * 0.18) +
+                        ((_ctrl.value + p.phase) % 1.0) *
+                            (widget.pkRailMode ? h * 0.48 : h * 0.55),
                     child: Opacity(
                       opacity: (1 - ((_ctrl.value + p.phase) % 1.0)).clamp(0.0, 1.0),
                       child: Icon(

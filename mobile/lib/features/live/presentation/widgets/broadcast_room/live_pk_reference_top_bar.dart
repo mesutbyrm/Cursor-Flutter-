@@ -9,6 +9,7 @@ class LivePkReferenceTopBar extends StatelessWidget {
     this.viewerCount = 0,
     this.trailing,
     this.brandTitle,
+    this.viewerStrip,
   });
 
   final Widget timer;
@@ -16,6 +17,7 @@ class LivePkReferenceTopBar extends StatelessWidget {
   final int viewerCount;
   final Widget? trailing;
   final String? brandTitle;
+  final Widget? viewerStrip;
 
   @override
   Widget build(BuildContext context) {
@@ -64,30 +66,32 @@ class LivePkReferenceTopBar extends StatelessWidget {
                   ),
                 ),
               Expanded(child: Center(child: timer)),
-              if (viewerCount > 0)
-                Padding(
-                  padding: const EdgeInsets.only(right: 4),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.visibility_rounded,
-                        color: Colors.white70,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _fmtCount(viewerCount),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              trailing ?? const SizedBox(width: 40),
+              Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: viewerStrip ??
+                    (viewerCount > 0
+                        ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.visibility_rounded,
+                                color: Colors.white70,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                _fmtCount(viewerCount),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          )
+                        : const SizedBox(width: 8)),
+              ),
+              trailing ?? const SizedBox(width: 8),
             ],
           ),
         ),

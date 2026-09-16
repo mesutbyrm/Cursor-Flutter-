@@ -5,6 +5,7 @@ import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import '../../../../trtc/presentation/trtc_room_manager.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../domain/entities/live_broadcast_session.dart';
+import '../../../domain/entities/live_stream_viewer.dart';
 import '../../../domain/pk/live_pk_side_resolver.dart';
 import '../../providers/live_pk_ui_providers.dart';
 import '../../providers/live_providers.dart';
@@ -20,6 +21,10 @@ import 'live_pk_resolved_timer.dart';
 import 'live_pk_reference_score_bar.dart';
 import 'live_pk_reference_chat_overlay.dart';
 import 'live_pk_gift_toast_overlay.dart';
+import 'live_pk_viewer_strip.dart';
+import '../../providers/live_stream_viewers_provider.dart';
+import '../../providers/live_host_rank_provider.dart';
+import '../../providers/live_room_interaction_provider.dart';
 
 /// PK aktifken tam ekran split: sol yerel/yayıncı, sağ rakip + referans overlay.
 class LivePkSplitVideoLayer extends ConsumerWidget {
@@ -66,6 +71,9 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
     );
 
     final opponentMuted = ref.watch(livePkOpponentMutedProvider(streamId));
+    final interaction = ref.watch(liveRoomInteractionProvider(streamId));
+    final viewers = ref.watch(liveStreamViewersProvider(streamId)).valueOrNull ??
+        const [];
     final streams = ref.watch(liveStreamsProvider).valueOrNull ?? const [];
     final battleMap = Map<String, dynamic>.from(battle);
     final leftScore = pkScoreFromBattleMap(battleMap, left: true);
@@ -110,6 +118,8 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
           remoteMic: remoteMic,
           ended: ended,
           pkActive: pkActive,
+          viewers: viewers,
+          likeCount: interaction.likeCount,
         );
       },
     );
@@ -130,7 +140,11 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
     required bool remoteMic,
     required bool ended,
     required bool pkActive,
+    required List<LiveStreamViewer> viewers,
+    required int likeCount,
   }) {
+    final leftLeague = _leagueForUser(ref, layout.left.userId);
+    final rightLeague = _leagueForUser(ref, layout.right.userId);
     final statusLabel = livePkOutcomeStatusLabel(
       ended: ended,
       localOnLeft: layout.left.isLocalPane,
@@ -170,6 +184,7 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
                               layout.left,
                               myUserId: myUserId,
                             ),
+                            leagueLabel: leftLeague,
                             micOn: layout.left.isLocalPane ? trtc.micOn : remoteMic,
                             cameraOn:
                                 layout.left.isLocalPane ? trtc.cameraOn : remoteCam,
@@ -196,6 +211,7 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
                               layout.right,
                               myUserId: myUserId,
                             ),
+                            leagueLabel: rightLeague,
                             micOn: remoteMic,
                             cameraOn: remoteCam,
                             chipAlignment: Alignment.topRight,
@@ -215,6 +231,11 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
                     ),
                     Center(
                       child: PkVsEmblem(size: 48, pulse: true),
+                    ),
+                    Positioned(
+                      right: 10,
+                      top: videoH * 0.28,
+                      child: _PkLikeRail(count: likeCount),
                     ),
                     if (session.isHost)
                       Positioned(
@@ -297,6 +318,10 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
                 onBack: onBack,
                 viewerCount: viewerCount,
                 brandTitle: 'CanlıFal',
+                viewerStrip: LivePkViewerStrip(
+                  viewers: viewers,
+                  totalCount: viewerCount,
+                ),
                 timer: ended
                     ? const Row(
                         mainAxisSize: MainAxisSize.min,
@@ -332,6 +357,12 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
     );
   }
 
+  static String? _leagueForUser(WidgetRef ref, String? userId) {
+    final id = userId?.trim() ?? '';
+    if (id.isEmpty) return null;
+    return ref.watch(liveHostRankProvider(id)).valueOrNull?.leagueLabel;
+  }
+
   static bool _showPkFollow(
     LivePkPaneModel pane, {
     String? myUserId,
@@ -342,6 +373,40 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
     final me = myUserId?.trim() ?? '';
     if (me.isNotEmpty && me == uid) return false;
     return true;
+  }
+}
+
+class _PkLikeRail extends StatelessWidget {
+  const _PkLikeRail({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.favorite_rounded, color: Color(0xFFFF2D7A), size: 22),
+            const SizedBox(height: 4),
+            Text(
+              '$count',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
