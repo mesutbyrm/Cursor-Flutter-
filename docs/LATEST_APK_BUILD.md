@@ -4,21 +4,19 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.545+586` |
-| Tarih (UTC) | 2026-09-16 19:38 |
-| Commit | [`452bc6d08b6947e6801b867f13a5d1c9dfbf6758`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/452bc6d08b6947e6801b867f13a5d1c9dfbf6758) |
-| İş akışı | [Run 35139717006](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35139717006) |
+| Sürüm | `1.0.546+587` |
+| Tarih (UTC) | 2026-09-16 23:18 |
+| Commit | [`7cee8ef89c9381293dd97d71848ce5aa748b8230`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/7cee8ef89c9381293dd97d71848ce5aa748b8230) |
+| İş akışı | [Run 35160279258](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35160279258) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.545+586 (2026-09-16) — Sesli oda + canlı PK hata listesi
+## 1.0.546+587 (2026-09-16) — PK sohbet + kamera donması
 
-- Sesli oda: presence SSE işleme kopya liste; `voiceSeatActionLockProvider` (PK lock deseni)
-- Pending seat guard + reaktif yetkili auto-seat listener (`VoiceRoomPrivilegedAutoSeatListener`)
-- Sesli PK davet: `room1`/`room2` eksikse tanılama logu (backend doğrulama gerekir)
-- Canlı PK: tam ekran kazanan overlay kalıntıları kaldırıldı; inline rozet latch (flicker yok)
-- PK oluşturma hatası snackbar + `ApiException` mesajı
+- PK sohbet: challenger yayın odasında birleşik SSE/gönderim (`livePkEffectiveChatStreamId`)
+- Sohbet overlay sabit boyut (referans mock: ~%56 genişlik, 118px yükseklik)
+- TRTC PK: zaten anchor odadaysa gereksiz leave/join atlanır (kamera donması)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
