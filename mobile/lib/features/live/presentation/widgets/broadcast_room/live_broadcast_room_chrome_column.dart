@@ -58,6 +58,7 @@ class LiveBroadcastRoomChromeColumn extends ConsumerWidget {
     required this.onEnd,
     this.suppressBottomChrome = false,
     this.suppressChatColumn = false,
+    this.suppressTopChrome = false,
   });
 
   final double topInset;
@@ -103,6 +104,7 @@ class LiveBroadcastRoomChromeColumn extends ConsumerWidget {
   final VoidCallback? onEnd;
   final bool suppressBottomChrome;
   final bool suppressChatColumn;
+  final bool suppressTopChrome;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -113,7 +115,8 @@ class LiveBroadcastRoomChromeColumn extends ConsumerWidget {
       bottom: false,
       child: Column(
         children: [
-          Padding(
+          if (!suppressTopChrome)
+            Padding(
             padding: EdgeInsets.fromLTRB(12, topInset > 0 ? 4 : 12, 12, 0),
             child: LivePremiumTopBar(
               session: s,
@@ -142,9 +145,13 @@ class LiveBroadcastRoomChromeColumn extends ConsumerWidget {
               onBack: embeddedInSwipe ? onClose : null,
             ),
           ),
-          if (hasStream && streamId != null && s.isHost)
+          if (!suppressTopChrome && hasStream && streamId != null && s.isHost)
             LivePkHostPendingBanner(streamId: streamId!),
-          if (hasStream && pkState?.battle != null && pkStatus == 'pending' && !s.isHost)
+          if (!suppressTopChrome &&
+              hasStream &&
+              pkState?.battle != null &&
+              pkStatus == 'pending' &&
+              !s.isHost)
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
               child: Builder(

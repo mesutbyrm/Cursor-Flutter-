@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../trtc/presentation/trtc_room_manager.dart';
+import '../../../../pk/presentation/widgets/pk_battle_visuals.dart';
 import '../../../domain/entities/live_broadcast_session.dart';
+import '../../../domain/pk/pk_status_helper.dart';
 import '../../providers/live_pk_ui_providers.dart';
+import '../../providers/live_room_interaction_provider.dart';
+import '../../providers/live_video_pk_provider.dart';
 import 'live_pk_immersive_controls.dart';
+import 'live_pk_resolved_timer.dart';
 
-/// Yayın odası PK — referans alt kontroller + floating gül + kompakt sohbet.
+/// Yayın odası PK — timer, beğeni, alt kontroller + floating gül.
 class LivePkBroadcastOverlay extends ConsumerWidget {
   const LivePkBroadcastOverlay({
     super.key,
@@ -21,6 +26,7 @@ class LivePkBroadcastOverlay extends ConsumerWidget {
     required this.onGift,
     required this.onSendChat,
     this.onRtcStateChanged,
+    this.onClose,
   });
 
   final String streamId;
@@ -34,18 +40,106 @@ class LivePkBroadcastOverlay extends ConsumerWidget {
   final VoidCallback onGift;
   final VoidCallback onSendChat;
   final VoidCallback? onRtcStateChanged;
+  final VoidCallback? onClose;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isHost = session.isHost;
     final opponentMuted = ref.watch(livePkOpponentMutedProvider(streamId));
+    final interaction = ref.watch(liveRoomInteractionProvider(streamId));
+    final pk = ref.watch(liveVideoPkProvider(streamId));
+    final battle = pk.battle ?? const <String, dynamic>{};
+    final battleMap = Map<String, dynamic>.from(battle);
+    final secondsLeft = pkBattleSecondsLeftFromMap(battleMap);
+    final endsAtRaw = battleMap['endsAt']?.toString();
+    final endsAt = endsAtRaw != null && endsAtRaw.isNotEmpty
+        ? DateTime.tryParse(endsAtRaw)
+        : null;
+    final pkActive = isLivePkSplitReady(battle, pk.status);
+
+    final top = MediaQuery.paddingOf(context).top;
     final bottom = MediaQuery.paddingOf(context).bottom;
-    final chatBarHeight = chatOpen ? 52.0 : 0.0;
     final controlsHeight = 96.0 + bottom;
 
     return Stack(
       fit: StackFit.expand,
       children: [
+        if (onClose != null)
+          Positioned(
+            top: top + 4,
+            left: 8,
+            child: Material(
+              color: Colors.black54,
+              shape: const CircleBorder(),
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                tooltip: 'Geri',
+                onPressed: onClose,
+              ),
+            ),
+          ),
+        if (pkActive)
+          Positioned(
+            top: top + 56,
+            left: 12,
+            right: 12,
+            child: Row(
+              children: [
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.55),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.favorite_rounded,
+                            color: Color(0xFFFF2D7A), size: 16),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${interaction.likeCount}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.62),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: const Color(0xFFB832FF).withValues(alpha: 0.45),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
+                    child: LivePkResolvedTimer(
+                      remote: null,
+                      fallbackSeconds: secondsLeft,
+                      endsAt: endsAt,
+                      countdownActive: true,
+                      centered: true,
+                      onExpired: isHost ? onEndPk : null,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         LivePkFloatingGiftButton(onTap: onGift),
         Positioned(
           left: 0,
@@ -96,8 +190,9 @@ class LivePkBroadcastOverlay extends ConsumerWidget {
                 active: !opponentMuted,
                 onTap: () {
                   final next = !opponentMuted;
-                  ref.read(livePkOpponentMutedProvider(streamId).notifier).state =
-                      next;
+                  ref
+                      .read(livePkOpponentMutedProvider(streamId).notifier)
+                      .state = next;
                   final opp = opponentUserId.trim();
                   if (opp.isNotEmpty) {
                     trtc.muteRemoteAudio(opp, next);

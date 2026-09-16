@@ -61,7 +61,8 @@ final voiceRoomGiftEventsProvider = Provider.autoDispose
 });
 
 String voiceRoomSpeakingSignature(List<ChatRoomPresence> presence) {
-  final ids = [for (final p in presence) if (p.isSpeaking) p.id]..sort();
+  final snapshot = List<ChatRoomPresence>.from(presence);
+  final ids = [for (final p in snapshot) if (p.isSpeaking) p.id]..sort();
   return ids.join('|');
 }
 

@@ -69,6 +69,7 @@ import '../../domain/entities/live_guest_layout.dart';
 import '../../domain/pk/live_pk_invite_helper.dart';
 import '../../domain/pk/live_pk_side_resolver.dart';
 import '../../domain/pk/live_pk_ui_state_mapper.dart';
+import '../../domain/pk/live_pk_trtc_anchor.dart';
 import '../../domain/pk/pk_status_helper.dart';
 import '../../domain/pk/pk_unified_bridge.dart';
 import '../../domain/live_co_broadcast_constants.dart';
@@ -208,6 +209,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   var _coHostUpgraded = false;
   var _pkTwoWayRtc = false;
   var _pkCelebrationDismissed = false;
+  String? _lastPkCelebrationBattleId;
   var _joinRequestPending = false;
   String? _vipBannerName;
   EntranceTheme? _vipBannerTheme;
@@ -551,35 +553,38 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   }
 
   Future<void> _ensurePkTwoWayRtc(String streamId) async {
-    if (_leaving || !_rtcReady || _pkTwoWayRtc) return;
+    if (_leaving || !_rtcReady) return;
+    if (_pkTwoWayRtc) return;
     if (!widget.session.isHost && !_coHostUpgraded) return;
     final pk = ref.read(liveVideoPkProvider(streamId));
     if (!isLivePkSplitReady(pk.battle, pk.status)) return;
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null || _trtcCoordinator == null) return;
     final battle = pk.battle ?? const <String, dynamic>{};
-    final opponentId = (battle['opponentId'] ??
-            battle['opponentUserId'] ??
-            battle['targetUserId'])
-        ?.toString()
-        .trim();
+    final anchor = resolveLivePkTrtcAnchor(
+      battle: battle,
+      myStreamId: streamId,
+      myUserId: user.id,
+    );
+    if (anchor.trtcRoomId.isEmpty) return;
     try {
       _trtcCoordinator!.setReconnectSuspended(true);
       await _trtcCoordinator!.leave();
       await _trtcCoordinator!.join(
-        roomId: streamId,
+        roomId: anchor.trtcRoomId,
         roomType: 'stream',
         userId: user.id,
-        isHost: true,
+        isHost: anchor.publishAsHost,
         twoWayVideo: true,
-        expectedAnchorUserId: opponentId?.isNotEmpty == true
-            ? opponentId
+        expectedAnchorUserId: anchor.expectedRemoteUserId?.isNotEmpty == true
+            ? anchor.expectedRemoteUserId
             : widget.session.hostUserId,
         useCompoundJoin: true,
       );
       _pkTwoWayRtc = true;
       _applyRtcPublishPolicy();
     } catch (e) {
+      _pkTwoWayRtc = false;
       if (kDebugMode) debugPrint('[PK] twoWayVideo rejoin failed: $e');
     } finally {
       _trtcCoordinator?.setReconnectSuspended(false);
@@ -1957,6 +1962,28 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           likes: 1,
           userId: userId,
         );
+    final pk = ref.read(liveVideoPkProvider(streamId));
+    if (isLivePkSplitReady(pk.battle, pk.status)) {
+      unawaited(_postPkHeartScore(streamId, pk.battle));
+    }
+  }
+
+  Future<void> _postPkHeartScore(
+    String streamId,
+    Map<String, dynamic>? battle,
+  ) async {
+    if (battle == null) return;
+    final battleId = battle['id']?.toString() ?? battle['battleId']?.toString();
+    final side = livePkScoreSideForStream(battle: battle, myStreamId: streamId);
+    try {
+      await ref.read(pkBattleRemoteDataSourceProvider).postLivePkScore(
+            amount: 3,
+            battleId: battleId,
+            roomId: streamId,
+            side: side,
+          );
+      await ref.read(liveVideoPkProvider(streamId).notifier).refresh();
+    } catch (_) {}
   }
 
   void _onTripleTapSuperLike() {
@@ -2570,9 +2597,13 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         final wasSplit =
             prev != null && isLivePkSplitReady(prev.battle, prev.status);
         final nowSplit = isLivePkSplitReady(next.battle, next.status);
-        if (nowSplit && !wasSplit) {
-          unawaited(_ensurePkTwoWayRtc(streamId));
-          if (mounted) setState(() => _pkCelebrationDismissed = false);
+        if (nowSplit) {
+          if (!wasSplit && mounted) {
+            setState(() => _pkCelebrationDismissed = false);
+          }
+          if (!_pkTwoWayRtc) {
+            unawaited(_ensurePkTwoWayRtc(streamId));
+          }
         } else if (wasSplit && !nowSplit) {
           unawaited(_revertPkTwoWayRtc(streamId));
         }
@@ -2580,7 +2611,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
             prev != null && isLivePkActiveStatus(prev.status);
         final nowEnded = _isPkEndedStatus(next.status);
         if (wasActive && nowEnded && mounted) {
-          setState(() => _pkCelebrationDismissed = false);
+          final bid = next.battle?['id']?.toString() ?? '';
+          if (bid.isNotEmpty && bid != _lastPkCelebrationBattleId) {
+            _lastPkCelebrationBattleId = bid;
+            setState(() => _pkCelebrationDismissed = false);
+          }
         }
       });
       ref.listen(livePkInviteSignalProvider, (_, __) {
@@ -2715,6 +2750,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         isLivePkSplitReady(pkState?.battle, pkStatus);
     final pkEnded =
         hasStream && pkState?.battle != null && _isPkEndedStatus(pkStatus);
+    final pkResultBlocking = pkEnded && !_pkCelebrationDismissed;
     final pkOpponentUserId = hasStream && streamId != null
         ? _pkOpponentUserId(streamId!, s, pkState?.battle)
         : '';
@@ -2856,64 +2892,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               joinRequestPending: _joinRequestPending,
               coHostUpgraded: _coHostUpgraded,
             ),
-            if (pkImmersive && streamId != null)
-              LivePkBroadcastOverlay(
-                streamId: streamId!,
-                session: s,
-                trtc: _trtc,
-                chatController: _chat,
-                chatOpen: _chatVisible,
-                onChatOpenChanged: (v) => setState(() => _chatVisible = v),
-                opponentUserId: pkOpponentUserId,
-                onEndPk: () => unawaited(_endActivePk(streamId!)),
-                onGift: () {
-                  if (broadcastSettings.giftsEnabled) {
-                    if (s.isHost) {
-                      unawaited(
-                        showLiveGiftPicker(
-                          context,
-                          ref,
-                          streamId: streamId!,
-                          receiverName: pkRightName,
-                        ),
-                      );
-                    } else {
-                      ref.read(liveGiftControllerProvider).setPanelOpen(true);
-                    }
-                  }
-                },
-                onSendChat: () {
-                  final t = _chat.text.trim();
-                  if (t.isEmpty) return;
-                  _chat.clear();
-                  unawaited(
-                    ref.read(liveRoomProvider(streamId!).notifier).sendMessage(
-                          t,
-                          selfName: user?.display ?? 'Sen',
-                        ),
-                  );
-                },
-                onRtcStateChanged: s.isHost
-                    ? () => setState(() => _localPreviewKey = UniqueKey())
-                    : null,
-              ),
-            if (pkEnded && !_pkCelebrationDismissed && pkState != null)
-              PkWinnerCelebration(
-                state: livePkBattleStateFromBroadcast(
-                  battle: pkState.battle,
-                  status: pkStatus,
-                  leftScore: pkState.leftScore,
-                  rightScore: pkState.rightScore,
-                  leftDisplayName: pkLeftName,
-                  rightDisplayName: pkRightName,
-                ),
-                onRestart: () {
-                  setState(() => _pkCelebrationDismissed = true);
-                  unawaited(_openPkPanel());
-                },
-                onClose: () => setState(() => _pkCelebrationDismissed = true),
-              ),
-            if (hasStream)
+            if (hasStream && !pkImmersive)
               LiveBroadcastRoomHudOverlays(
                 hasStream: hasStream,
                 streamId: streamId!,
@@ -2925,7 +2904,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 hostRank: hostRank,
                 tournamentsAsync: tournamentsAsync,
               ),
-            LiveBroadcastRoomChromeColumn(
+            if (!pkResultBlocking)
+              LiveBroadcastRoomChromeColumn(
               topInset: top,
               session: s,
               streamId: streamId,
@@ -2933,6 +2913,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               embeddedInSwipe: widget.embeddedInSwipe,
               suppressBottomChrome: pkImmersive,
               suppressChatColumn: pkImmersive,
+              suppressTopChrome: pkImmersive,
               chatVisible: _chatVisible,
               onChatVisibleChanged: (v) => setState(() => _chatVisible = v),
               roomMessages: roomState.messages,
@@ -3056,6 +3037,71 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               },
               onEnd: s.isHost ? () => unawaited(_exitBroadcast(context)) : null,
             ),
+            if (pkImmersive && streamId != null)
+              LivePkBroadcastOverlay(
+                streamId: streamId!,
+                session: s,
+                trtc: _trtc,
+                chatController: _chat,
+                chatOpen: _chatVisible,
+                onChatOpenChanged: (v) => setState(() => _chatVisible = v),
+                opponentUserId: pkOpponentUserId,
+                onEndPk: () => unawaited(_endActivePk(streamId!)),
+                onGift: () {
+                  if (broadcastSettings.giftsEnabled) {
+                    if (s.isHost) {
+                      unawaited(
+                        showLiveGiftPicker(
+                          context,
+                          ref,
+                          streamId: streamId!,
+                          receiverName: pkRightName,
+                        ),
+                      );
+                    } else {
+                      ref.read(liveGiftControllerProvider).setPanelOpen(true);
+                    }
+                  }
+                },
+                onSendChat: () {
+                  final t = _chat.text.trim();
+                  if (t.isEmpty) return;
+                  _chat.clear();
+                  unawaited(
+                    ref.read(liveRoomProvider(streamId!).notifier).sendMessage(
+                          t,
+                          selfName: user?.display ?? 'Sen',
+                        ),
+                  );
+                },
+                onRtcStateChanged: s.isHost
+                    ? () => setState(() => _localPreviewKey = UniqueKey())
+                    : null,
+                onClose: () => unawaited(_exitBroadcast(context)),
+              ),
+            if (pkEnded && !_pkCelebrationDismissed && pkState != null)
+              PkWinnerCelebration(
+                state: livePkBattleStateFromBroadcast(
+                  battle: pkState.battle,
+                  status: pkStatus,
+                  leftScore: pkState.leftScore,
+                  rightScore: pkState.rightScore,
+                  leftDisplayName: pkLeftName,
+                  rightDisplayName: pkRightName,
+                ),
+                onRestart: () {
+                  setState(() => _pkCelebrationDismissed = true);
+                  unawaited(_openPkPanel());
+                },
+                onClose: () {
+                  setState(() => _pkCelebrationDismissed = true);
+                  if (streamId != null) {
+                    unawaited(
+                      ref.read(liveVideoPkProvider(streamId!).notifier).refresh(),
+                    );
+                  }
+                },
+              ),
             if (_hostAway && s.isHost)
               LiveBroadcastRoomHostAwayOverlay(
                 onResume: () => unawaited(_resumeHostBroadcast()),

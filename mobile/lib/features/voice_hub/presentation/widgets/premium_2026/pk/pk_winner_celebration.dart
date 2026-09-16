@@ -44,11 +44,16 @@ class PkWinnerCelebration extends StatelessWidget {
       _ => VoiceRoomTokens.gold,
     };
 
-    return IgnorePointer(
-      ignoring: false,
+    return Material(
+      color: Colors.transparent,
       child: Stack(
         fit: StackFit.expand,
         children: [
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onClose,
+            child: Container(color: Colors.black.withValues(alpha: 0.72)),
+          ),
           if (winner == PkBattleWinner.left)
             const PkLoserSideOverlay(
               visible: true,
@@ -59,15 +64,26 @@ class PkWinnerCelebration extends StatelessWidget {
               visible: true,
               alignment: Alignment.centerLeft,
             ),
-          Container(color: Colors.black.withValues(alpha: 0.72)),
           CustomPaint(
             painter: _ConfettiPainter(seed: state.reactionBurst),
             size: Size.infinite,
           ),
-          Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+          SafeArea(
+            child: Stack(
               children: [
+                Positioned(
+                  top: 8,
+                  right: 12,
+                  child: IconButton(
+                    onPressed: onClose,
+                    icon: const Icon(Icons.close_rounded, color: Colors.white),
+                    tooltip: 'Kapat',
+                  ),
+                ),
+                Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                 Icon(
                   winner == PkBattleWinner.tie
                       ? Icons.handshake_rounded
@@ -132,6 +148,9 @@ class PkWinnerCelebration extends StatelessWidget {
                       child: const Text('Tekrar PK'),
                     ),
                   ],
+                ),
+                    ],
+                  ),
                 ),
               ],
             ),

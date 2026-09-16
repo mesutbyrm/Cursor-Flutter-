@@ -30,6 +30,7 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
     this.onEndPk,
     this.onMuteOpponent,
     this.chatVisible = true,
+    this.hideTopTimer = false,
   });
 
   final String streamId;
@@ -39,6 +40,7 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
   final VoidCallback? onEndPk;
   final void Function(String opponentUserId, bool mute)? onMuteOpponent;
   final bool chatVisible;
+  final bool hideTopTimer;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -182,33 +184,34 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
                     Center(
                       child: PkVsEmblem(size: 48, pulse: true),
                     ),
-                    Positioned(
-                      top: MediaQuery.paddingOf(context).top + 4,
-                      left: 0,
-                      right: 0,
-                      child: Center(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.55),
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
+                    if (!hideTopTimer)
+                      Positioned(
+                        top: MediaQuery.paddingOf(context).top + 4,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.55),
+                              borderRadius: BorderRadius.circular(24),
                             ),
-                            child: LivePkResolvedTimer(
-                              remote: null,
-                              fallbackSeconds: secondsLeft,
-                              endsAt: endsAt,
-                              countdownActive: true,
-                              centered: true,
-                              onExpired: session.isHost ? onEndPk : null,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              child: LivePkResolvedTimer(
+                                remote: null,
+                                fallbackSeconds: secondsLeft,
+                                endsAt: endsAt,
+                                countdownActive: true,
+                                centered: true,
+                                onExpired: session.isHost ? onEndPk : null,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
                     if (session.isHost)
                       Positioned(
                         top: MediaQuery.paddingOf(context).top + 8,

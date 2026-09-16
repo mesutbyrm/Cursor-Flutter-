@@ -35,7 +35,7 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
   @override
   void initState() {
     super.initState();
-    _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+    _pollTimer = Timer.periodic(const Duration(seconds: 2), (_) {
       if (!mounted || _showing) return;
       unawaited(_pollPendingInvites());
     });
@@ -172,6 +172,19 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
         ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(battle);
         _onBattleUpdate(battle);
         if (battle.isPending) return;
+      }
+
+      final oppRoomId = ref.read(pkBattleRemoteProvider)?.opponentVoiceRoomId
+              ?.trim() ??
+          '';
+      if (oppRoomId.isNotEmpty && activeKey != oppRoomId) {
+        final oppBattle = await api.fetchRoomBattle(oppRoomId);
+        if (oppBattle != null &&
+            !oppBattle.isEnded &&
+            oppBattle.isPending) {
+          ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(oppBattle);
+          _onBattleUpdate(oppBattle);
+        }
       }
     } catch (e, st) {
       PkEventLog.apiFailure(

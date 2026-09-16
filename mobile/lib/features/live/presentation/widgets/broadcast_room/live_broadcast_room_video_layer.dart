@@ -79,6 +79,7 @@ class LiveBroadcastRoomVideoLayer extends ConsumerWidget {
           trtc: trtc,
           rtcReady: rtcReady,
           chatVisible: chatVisibleForPk,
+          hideTopTimer: true,
           onEndPk: s.isHost ? () => onEndActivePk(streamId) : null,
         );
       }

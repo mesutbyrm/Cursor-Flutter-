@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../live/domain/entities/voice_room_entity.dart';
+import '../../../domain/entities/chat_room_presence.dart';
 import '../../../../live/presentation/providers/live_providers.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
 import '../../providers/chat_room_providers.dart';
@@ -92,7 +93,7 @@ class VoiceRoomRtcHeaderBand extends ConsumerWidget {
         ? null
         : ref.watch(
             voiceRoomSeatSliceProvider(liveRoomKey).select((slice) {
-              for (final p in slice.presence) {
+              for (final p in List<ChatRoomPresence>.from(slice.presence)) {
                 if (p.id == ownerId) return p.image;
               }
               return null;
@@ -165,7 +166,7 @@ class VoiceRoomBasicHeaderBand extends ConsumerWidget {
         ? null
         : ref.watch(
             voiceRoomSeatSliceProvider(liveRoomKey).select((slice) {
-              for (final p in slice.presence) {
+              for (final p in List<ChatRoomPresence>.from(slice.presence)) {
                 if (p.id == ownerId) return p.image;
               }
               return null;

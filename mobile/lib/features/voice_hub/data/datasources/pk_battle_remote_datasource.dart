@@ -687,4 +687,20 @@ class PkBattleRemoteDataSource {
       rethrow;
     }
   }
+
+  /// Canlı PK — çift tık beğeni / bonus puan (`POST /api/live/pk/score`).
+  Future<void> postLivePkScore({
+    required int amount,
+    String? battleId,
+    String? roomId,
+    String? side,
+  }) async {
+    if (amount <= 0) return;
+    await _liveFieldPk.updateScore(
+      amount: amount,
+      battleId: battleId,
+      roomId: roomId,
+      side: side,
+    );
+  }
 }

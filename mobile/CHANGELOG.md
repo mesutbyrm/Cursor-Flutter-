@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.537+578 (2026-09-16) — Yayın PK + sesli oda PK/ses düzeltmeleri
+
+- Canlı PK: timer + beğeni üstte; immersive overlay chrome üstünde (tuşlar görünür)
+- Berabere/kazanan ekranı: kapat (X / dokun), sonuçta chrome gizlenir
+- Çift tık beğeni → `POST /api/live/pk/score` +3 puan; TRTC PK oda anchor (rakip ses/görüntü)
+- Sesli PK: davet poll 2s, `room1/room2` alanları, rakip oda REST yedeği
+- Sesli oda: presence iterasyonu kopya liste (Concurrent modification)
+
 ## 1.0.536+577 (2026-09-16) — Yayın PK referans kontroller + sonuç
 
 - PK aktif: immersive alt bar (mik, kamera, rakip ses, sohbet, bitir) + floating gül
