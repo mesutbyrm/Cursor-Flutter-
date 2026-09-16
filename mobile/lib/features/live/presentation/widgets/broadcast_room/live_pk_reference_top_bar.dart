@@ -8,12 +8,14 @@ class LivePkReferenceTopBar extends StatelessWidget {
     this.onBack,
     this.viewerCount = 0,
     this.trailing,
+    this.brandTitle,
   });
 
   final Widget timer;
   final VoidCallback? onBack;
   final int viewerCount;
   final Widget? trailing;
+  final String? brandTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +50,19 @@ class LivePkReferenceTopBar extends StatelessWidget {
                 )
               else
                 const SizedBox(width: 8),
+              if (brandTitle != null && brandTitle!.trim().isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: Text(
+                    brandTitle!,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 13,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ),
               Expanded(child: Center(child: timer)),
               if (viewerCount > 0)
                 Padding(

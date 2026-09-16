@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.540+581 (2026-09-16) — PK takip + mesajlar tümünü oku + sesli oda
+
+- PK split: yayıncı chip'inde «Takip»; üst bar «CanlıFal» markası
+- Gelen kutusu mesajlar: «Tümünü oku» — PATCH yedek olarak thread GET ile sunucu senkronu
+- Sesli PK davet: oda eşleşmezse sahip olunan oda yedeği
+- Sesli oda RTC: presence/seatSlots iterasyonu güvenli kopya listeler
+
 ## 1.0.539+580 (2026-09-16) — PK beğeni/state + geri sayım düzeltmeleri
 
 - PK beğeni: `refresh()` artık aktif PK battle'ı silmez; skor `applyLocalScoreDelta` (ekran düşmez)

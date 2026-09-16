@@ -138,4 +138,11 @@ class MessagesRepositoryImpl implements MessagesRepository {
   @override
   Future<bool> pingTyping(String conversationId, {bool selfTyping = true}) =>
       _remote.pingTyping(conversationId, selfTyping: selfTyping);
+
+  @override
+  Future<void> markAllConversationsRead({String? currentUserId}) async {
+    await _remote.markAllConversationsRead();
+    final uid = currentUserId ?? '';
+    await ApiCacheStore.clear(MessagesLoadPerf.conversationsKey(uid));
+  }
 }

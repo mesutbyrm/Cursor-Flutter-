@@ -64,7 +64,25 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
     if (_showing) return;
 
     if (battle.isPending) {
-      final room = resolvePkInviteTargetRoom(ref, battle, user.id);
+      var room = resolvePkInviteTargetRoom(ref, battle, user.id);
+      if (room == null) {
+        final owned = ref.read(myOwnedVoiceRoomsProvider);
+        if (owned.isNotEmpty) {
+          room = owned.first;
+        } else {
+          final all = ref.read(voiceRoomsProvider).valueOrNull ?? const [];
+          for (final r in all) {
+            if (isUserOwnedVoiceRoom(
+              r,
+              userId: user.id,
+              username: user.username,
+            )) {
+              room = r;
+              break;
+            }
+          }
+        }
+      }
       if (room != null) {
         final inviteId = battle.effectiveId;
         if (inviteId.isNotEmpty) {

@@ -56,7 +56,8 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
     final ended = isLivePkEndedStatus(pk.status);
     final pkActive = isLivePkActiveStatus(pk.status);
 
-    final myUserId = ref.read(authControllerProvider).valueOrNull?.id;
+    final authUser = ref.read(authControllerProvider).valueOrNull;
+    final myUserId = authUser?.id;
     final layout = resolveLivePkSplitLayout(
       battle: battle,
       myStreamId: streamId,
@@ -98,6 +99,7 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
           context,
           ref,
           layout: layout,
+          myUserId: myUserId,
           opponentMuted: opponentMuted,
           leftScore: leftScore,
           rightScore: rightScore,
@@ -117,6 +119,7 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref, {
     required LivePkSplitLayout layout,
+    String? myUserId,
     required bool opponentMuted,
     required int leftScore,
     required int rightScore,
@@ -162,6 +165,11 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
                             isLocal: layout.left.isLocalPane,
                             displayName: layout.left.label,
                             avatarUrl: layout.left.avatarUrl,
+                            streamerUserId: layout.left.userId,
+                            showFollowOnChip: _showPkFollow(
+                              layout.left,
+                              myUserId: myUserId,
+                            ),
                             micOn: layout.left.isLocalPane ? trtc.micOn : remoteMic,
                             cameraOn:
                                 layout.left.isLocalPane ? trtc.cameraOn : remoteCam,
@@ -183,6 +191,11 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
                           child: LivePkImmersiveVideoPane(
                             displayName: layout.right.label,
                             avatarUrl: layout.right.avatarUrl,
+                            streamerUserId: layout.right.userId,
+                            showFollowOnChip: _showPkFollow(
+                              layout.right,
+                              myUserId: myUserId,
+                            ),
                             micOn: remoteMic,
                             cameraOn: remoteCam,
                             chipAlignment: Alignment.topRight,
@@ -283,6 +296,7 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
               LivePkReferenceTopBar(
                 onBack: onBack,
                 viewerCount: viewerCount,
+                brandTitle: 'CanlıFal',
                 timer: ended
                     ? const Row(
                         mainAxisSize: MainAxisSize.min,
@@ -316,6 +330,18 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
         );
       },
     );
+  }
+
+  static bool _showPkFollow(
+    LivePkPaneModel pane, {
+    String? myUserId,
+  }) {
+    if (pane.isLocalPane) return false;
+    final uid = pane.userId?.trim() ?? '';
+    if (uid.isEmpty) return false;
+    final me = myUserId?.trim() ?? '';
+    if (me.isNotEmpty && me == uid) return false;
+    return true;
   }
 }
 

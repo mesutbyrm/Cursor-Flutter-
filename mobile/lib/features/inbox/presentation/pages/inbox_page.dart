@@ -9,6 +9,7 @@ import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../messages/presentation/providers/conversations_list_notifier.dart';
 import '../../../messages/presentation/providers/messages_providers.dart';
+import '../../../messages/presentation/providers/messages_mark_read_providers.dart';
 import '../../../messages/presentation/widgets/conversations_list_sliver.dart';
 import '../../../notifications/presentation/providers/notifications_list_notifier.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';
@@ -75,6 +76,14 @@ class _InboxPageState extends ConsumerState<InboxPage> {
     super.dispose();
   }
 
+  Future<void> _markAllMessagesRead() async {
+    await markAllMessagesRead(ref);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Tüm mesajlar okundu olarak işaretlendi')),
+    );
+  }
+
   Future<void> _refresh() async {
     await Future.wait([
       ref.read(conversationsListNotifierProvider.notifier).refresh(
@@ -131,6 +140,12 @@ class _InboxPageState extends ConsumerState<InboxPage> {
       subtitle: 'Mesajlar ve sistem bildirimleri',
       onRefresh: _refresh,
       actions: [
+        if (_tab == InboxTab.messages)
+          DiscoverIconButton(
+            icon: Icons.done_all_rounded,
+            tooltip: 'Tümünü oku',
+            onPressed: () => unawaited(_markAllMessagesRead()),
+          ),
         DiscoverIconButton(
           icon: Icons.edit_square,
           tooltip: 'Yeni mesaj',

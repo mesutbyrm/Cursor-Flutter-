@@ -8,6 +8,7 @@ import '../../data/datasources/messages_remote_datasource.dart';
 import '../../data/repositories/messages_repository_impl.dart';
 
 export 'messages_unread_providers.dart';
+export 'messages_mark_read_providers.dart';
 
 final messagesRemoteProvider = Provider<MessagesRemoteDataSource>((ref) {
   return MessagesRemoteDataSource(ref.watch(dioProvider));

@@ -353,7 +353,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     required bool isOwner,
   }) {
     ChatRoomPresence? found;
-    for (final e in live.presence) {
+    for (final e in List<ChatRoomPresence>.from(live.presence)) {
       if (e.id == userId) {
         found = e;
         break;
@@ -834,7 +834,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final liveState = ref.read(voiceRoomLiveProvider(_liveRoomKey));
     ChatRoomPresence? selfPresence;
     if (auth != null) {
-      for (final p in liveState.presence) {
+      for (final p in List<ChatRoomPresence>.from(liveState.presence)) {
         if (p.id == auth.id) {
           selfPresence = p;
           break;
@@ -922,7 +922,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       return;
     }
     VoiceRoomSeatSlot? slot;
-    for (final s in live.seatSlots) {
+    for (final s in List<VoiceRoomSeatSlot>.from(live.seatSlots)) {
       if (s.index == internalSeatIndex) {
         slot = s;
         break;
@@ -987,15 +987,16 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final ctrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
     final onStage = voiceBackendSeatedIds(live.presence);
     VoiceRoomSeatSlot? seatSlot;
-    for (final s in live.seatSlots) {
+    for (final s in List<VoiceRoomSeatSlot>.from(live.seatSlots)) {
       if (s.index == seatIndex) {
         seatSlot = s;
         break;
       }
     }
+    final presenceCopy = List<ChatRoomPresence>.from(live.presence);
     final candidates = showAllMembers
-        ? List<ChatRoomPresence>.from(live.presence)
-        : live.presence
+        ? presenceCopy
+        : presenceCopy
             .where((p) => !onStage.contains(p.id) || p.seatIndex == seatIndex)
             .toList();
     final canManageDj = perms.isRoomOwner ||

@@ -243,6 +243,39 @@ class MessagesRemoteDataSource {
   }
 
   /// Profilden sohbet — mobil API doğrudan userId ile çalışır.
+  /// Okunmamış DM'leri sunucuda sıfırlar — önce PATCH, sonra thread GET yedeği.
+  Future<void> markAllConversationsRead() async {
+    try {
+      await _dio.safePatch<dynamic>(
+        ApiEndpoints.messages,
+        data: const {'markAllRead': true},
+      );
+      return;
+    } on ApiException catch (e) {
+      if (e.statusCode != 404 && e.statusCode != 405 && e.statusCode != 501) {
+        rethrow;
+      }
+    } catch (_) {}
+
+    final convs = await conversations(forceRefresh: true);
+    final peers = convs
+        .where((c) => c.unreadCount > 0 && c.id.trim().isNotEmpty)
+        .map((c) => c.id.trim())
+        .toList();
+    for (final peerId in peers) {
+      try {
+        await _dio.safeGet<dynamic>(
+          ApiEndpoints.messagesWithUser(peerId),
+          query: const {'limit': '1'},
+        );
+      } catch (_) {
+        try {
+          await _dio.safeGet<dynamic>(ApiEndpoints.messagesWithUser(peerId));
+        } catch (_) {}
+      }
+    }
+  }
+
   Future<ConversationEntity> startConversation(String recipientId) async {
     if (Env.useMobileAuth) {
       return ConversationEntity(

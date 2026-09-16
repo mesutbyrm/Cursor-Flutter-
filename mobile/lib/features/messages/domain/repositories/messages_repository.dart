@@ -38,4 +38,7 @@ abstract class MessagesRepository {
 
   /// "Yazıyor" işareti gönderir, karşı tarafın yazıp yazmadığını döndürür.
   Future<bool> pingTyping(String conversationId, {bool selfTyping = true});
+
+  /// Tüm DM konuşmalarını okundu işaretle (sunucu PATCH yoksa thread GET yedeği).
+  Future<void> markAllConversationsRead({String? currentUserId});
 }

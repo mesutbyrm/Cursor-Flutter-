@@ -86,6 +86,24 @@ class ConversationsListNotifier extends AsyncNotifier<ConversationsListState> {
       ),
     );
   }
+
+  void markAllReadLocally() {
+    final cur = state.valueOrNull;
+    if (cur == null) return;
+    final cleared = [
+      for (final c in cur.all)
+        ConversationEntity(
+          id: c.id,
+          title: c.title,
+          subtitle: c.subtitle,
+          avatarUrl: c.avatarUrl,
+          unreadCount: 0,
+          isOnline: c.isOnline,
+          lastMessageAt: c.lastMessageAt,
+        ),
+    ];
+    state = AsyncValue.data(cur.copyWith(all: cleared));
+  }
 }
 
 final conversationsListNotifierProvider =
