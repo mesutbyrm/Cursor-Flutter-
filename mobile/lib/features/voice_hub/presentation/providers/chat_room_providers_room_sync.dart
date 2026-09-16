@@ -653,7 +653,8 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
 
     var changed = false;
     final next = <ChatRoomPresence>[];
-    for (final p in presence) {
+    final presenceCopy = List<ChatRoomPresence>.from(presence);
+    for (final p in presenceCopy) {
       final fromSlot = seatByUser[p.id];
       if (fromSlot == null) {
         // Koltuk haritası gecikirse presence koltuğunu düşürme (SSE yarışı).

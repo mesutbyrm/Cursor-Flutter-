@@ -11,6 +11,7 @@ import '../../providers/live_pk_ui_providers.dart';
 import '../../providers/live_providers.dart';
 import '../../providers/live_video_pk_provider.dart';
 import '../../../domain/pk/live_pk_broadcast_stage.dart';
+import '../../../domain/pk/live_pk_outcome_latch.dart';
 import '../../../domain/pk/pk_status_helper.dart';
 import 'live_pk_reference_top_bar.dart';
 import '../live_playback_bridge.dart';
@@ -28,7 +29,7 @@ import '../../providers/live_host_rank_provider.dart';
 import '../../providers/live_room_interaction_provider.dart';
 
 /// PK aktifken tam ekran split: sol yerel/yayıncı, sağ rakip + referans overlay.
-class LivePkSplitVideoLayer extends ConsumerWidget {
+class LivePkSplitVideoLayer extends ConsumerStatefulWidget {
   const LivePkSplitVideoLayer({
     super.key,
     required this.streamId,
@@ -53,7 +54,19 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
   final int viewerCount;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LivePkSplitVideoLayer> createState() =>
+      _LivePkSplitVideoLayerState();
+}
+
+class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer> {
+  final _outcomeLatch = LivePkOutcomeLatch();
+
+  @override
+  Widget build(BuildContext context) {
+    final streamId = widget.streamId;
+    final session = widget.session;
+    final trtc = widget.trtc;
+    final rtcReady = widget.rtcReady;
     final pk = ref.watch(liveVideoPkProvider(streamId));
     final battle = pk.battle;
     if (battle == null || !isLivePkBroadcastStage(battle, pk.status)) {
@@ -107,6 +120,12 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
         return _buildStack(
           context,
           ref,
+          streamId: streamId,
+          session: session,
+          trtc: trtc,
+          rtcReady: rtcReady,
+          battleId: battleMap['id']?.toString() ??
+              battleMap['battleId']?.toString(),
           layout: layout,
           myUserId: myUserId,
           opponentMuted: opponentMuted,
@@ -129,6 +148,11 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
   Widget _buildStack(
     BuildContext context,
     WidgetRef ref, {
+    required String streamId,
+    required LiveBroadcastSession session,
+    required TrtcRoomManager trtc,
+    required bool rtcReady,
+    required String? battleId,
     required LivePkSplitLayout layout,
     String? myUserId,
     required bool opponentMuted,
@@ -146,13 +170,18 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
   }) {
     final leftLeague = _leagueForUser(ref, layout.left.userId);
     final rightLeague = _leagueForUser(ref, layout.right.userId);
-    final statusLabel = livePkOutcomeStatusLabel(
+    final computedLabel = livePkOutcomeStatusLabel(
       ended: ended,
       localOnLeft: layout.left.isLocalPane,
       leftScore: leftScore,
       rightScore: rightScore,
       leftLabel: layout.left.label,
       rightLabel: layout.right.label,
+    );
+    final statusLabel = _outcomeLatch.resolve(
+      currentBattleId: battleId,
+      ended: ended,
+      computedLabel: computedLabel,
     );
 
     return LayoutBuilder(
@@ -315,7 +344,7 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
                                     countdownActive: true,
                                     centered: true,
                                     onExpired:
-                                        session.isHost ? onEndPk : null,
+                                        session.isHost ? widget.onEndPk : null,
                                   ),
                           ),
                         ),
@@ -374,14 +403,14 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
                 child: LivePkReferenceChatOverlay(
                   streamId: streamId,
                   maxHeight: 168,
-                  visible: chatVisible,
+                  visible: widget.chatVisible,
                 ),
               ),
               LivePkGiftToastOverlay(bottomInset: chromeBottom + scoreH + 8),
               LivePkReferenceTopBar(
-                onBack: onBack,
-                onClose: onBack,
-                viewerCount: viewerCount,
+                onBack: widget.onBack,
+                onClose: widget.onBack,
+                viewerCount: widget.viewerCount,
                 viewers: viewers,
               ),
             ],

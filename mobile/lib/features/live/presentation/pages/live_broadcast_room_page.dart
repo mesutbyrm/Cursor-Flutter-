@@ -207,8 +207,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   final Set<String> _seenVipEntrances = {};
   var _coHostUpgraded = false;
   var _pkTwoWayRtc = false;
-  var _pkCelebrationDismissed = false;
-  String? _lastPkCelebrationBattleId;
   var _joinRequestPending = false;
   String? _vipBannerName;
   EntranceTheme? _vipBannerTheme;
@@ -2604,26 +2602,24 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         final nowSplit =
             isLivePkBroadcastStage(next.battle, next.status);
         if (nowSplit) {
-          if (!wasSplit && mounted) {
-            setState(() => _pkCelebrationDismissed = false);
-          }
           if (!_pkTwoWayRtc) {
             unawaited(_ensurePkTwoWayRtc(streamId));
           }
         } else if (wasSplit && !nowSplit) {
           unawaited(_revertPkTwoWayRtc(streamId));
         }
-        final wasActive =
-            prev != null && isLivePkActiveStatus(prev.status);
-        final nowEnded = _isPkEndedStatus(next.status);
-        if (wasActive && nowEnded && mounted) {
-          final bid = next.battle?['id']?.toString() ?? '';
-          if (bid.isNotEmpty && bid != _lastPkCelebrationBattleId) {
-            _lastPkCelebrationBattleId = bid;
-            setState(() => _pkCelebrationDismissed = false);
-          }
-        }
       });
+      ref.listen(
+        liveVideoPkProvider(streamId).select((s) => s.error),
+        (prev, next) {
+          final msg = next?.trim() ?? '';
+          if (msg.isEmpty || msg == prev?.trim()) return;
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(msg)),
+          );
+        },
+      );
       ref.listen(livePkInviteSignalProvider, (_, __) {
         _applyPkInvites(streamId);
       });

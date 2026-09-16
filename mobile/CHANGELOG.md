@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.545+586 (2026-09-16) — Sesli oda + canlı PK hata listesi
+
+- Sesli oda: presence SSE işleme kopya liste; `voiceSeatActionLockProvider` (PK lock deseni)
+- Pending seat guard + reaktif yetkili auto-seat listener (`VoiceRoomPrivilegedAutoSeatListener`)
+- Sesli PK davet: `room1`/`room2` eksikse tanılama logu (backend doğrulama gerekir)
+- Canlı PK: tam ekran kazanan overlay kalıntıları kaldırıldı; inline rozet latch (flicker yok)
+- PK oluşturma hatası snackbar + `ApiException` mesajı
+
 ## 1.0.544+585 (2026-09-16) — Sesli oda koltuk senkron yarışı
 
 - Pending seat lock (5 sn): seat-take/leave sırasında presence snapshot kullanıcıyı düşürmez

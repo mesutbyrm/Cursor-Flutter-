@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/auth/bot_account_guard.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/auth/bot_account_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/pk/live_pk_invite_helper.dart';
@@ -281,9 +282,15 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
           return;
         }
       }
-      state = state.copyWith(loading: false, error: 'PK oluşturulamadı');
+      state = state.copyWith(
+        loading: false,
+        error: 'PK oluşturulamadı. Sunucu yanıt vermedi; bağlantınızı kontrol edin.',
+      );
     } catch (e) {
-      state = state.copyWith(loading: false, error: '$e');
+      state = state.copyWith(
+        loading: false,
+        error: ApiException.userMessage(e),
+      );
     }
   }
 

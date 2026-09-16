@@ -65,6 +65,14 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
 
     if (battle.isPending) {
       var room = resolvePkInviteTargetRoom(ref, battle, user.id);
+      if (room == null &&
+          battle.voiceRoomId?.trim().isEmpty == true &&
+          battle.opponentVoiceRoomId?.trim().isEmpty == true) {
+        PkEventLog.error(
+          'invite_missing_rooms',
+          'PK davetinde room1/room2 (voiceRoomId) yok — backend response doğrulanmalı',
+        );
+      }
       if (room == null) {
         final owned = ref.read(myOwnedVoiceRoomsProvider);
         if (owned.isNotEmpty) {

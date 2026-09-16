@@ -62,6 +62,7 @@ import '../../../live/domain/entities/live_gift_event.dart';
 import '../../domain/entities/chat_room_message.dart';
 import '../../domain/presence_canonical.dart';
 import '../../domain/voice_seat_pending_guard.dart';
+import 'voice_seat_action_lock_provider.dart';
 import '../../domain/room_event_scope.dart';
 import '../../domain/voice_playback_limits.dart';
 import '../../domain/voice_music_sync.dart';
@@ -549,6 +550,12 @@ class VoiceRoomLiveController
 
   /// Prisma cuid — slug değil.
   String get _roomKey => arg.trim();
+
+  List<ChatRoomPresence> _presenceCopy() =>
+      List<ChatRoomPresence>.from(state.presence);
+
+  List<VoiceRoomSeatSlot> _seatSlotsCopy() =>
+      List<VoiceRoomSeatSlot>.from(state.seatSlots);
 
   VoiceRoomEntity get _roomMeta {
     final key = _roomKey;
@@ -1476,7 +1483,7 @@ class VoiceRoomLiveController
     }
     final users = _presenceFromSsePayload(payload);
     if (users.isEmpty) return;
-    final byId = {for (final p in state.presence) p.id: p};
+    final byId = {for (final p in _presenceCopy()) p.id: p};
     for (final user in users) {
       byId[user.id] = user;
     }
@@ -1510,7 +1517,7 @@ class VoiceRoomLiveController
     final userId = payload['userId']?.toString() ?? payload['id']?.toString();
     if (userId == null || userId.isEmpty) return;
     ChatRoomPresence? departed;
-    for (final p in state.presence) {
+    for (final p in _presenceCopy()) {
       if (p.id == userId) {
         departed = p;
         break;

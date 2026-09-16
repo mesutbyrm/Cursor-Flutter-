@@ -118,6 +118,7 @@ import 'widgets/voice_room/voice_room_video_close_bar.dart';
 import 'widgets/voice_room_error_boundary.dart';
 import 'sheets/voice_youtube_song_sheet.dart';
 import 'widgets/premium_2026/voice_pk_invite_banner.dart';
+import 'widgets/voice_room_privileged_auto_seat_listener.dart';
 
 /// Sesli sohbet odası — Tencent TRTC + canlifal.com chat API.
 class VoiceRoomRtcPage extends ConsumerStatefulWidget {
@@ -1435,6 +1436,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
     return PkSessionOverlayHost(
       args: pkArgs,
+      child: VoiceRoomPrivilegedAutoSeatListener(
+      roomKey: _liveRoomKey.isNotEmpty ? _liveRoomKey : widget.room.id,
       child: GiftEventListener(
       sessionKey: sessionKey,
       isHost: isOwner,
@@ -1958,6 +1961,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           ],
         ),
       ),
+    ),
     ),
     ),
     );

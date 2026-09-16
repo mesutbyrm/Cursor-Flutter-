@@ -551,6 +551,12 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
   Future<String?> assignSeat({required int seatIndex, String? userId}) async {
     final selfId = userId ?? ref.read(authControllerProvider).valueOrNull?.id;
     final isSelf = userId == null && selfId != null && selfId.isNotEmpty;
+    final targetUserId = (userId ?? selfId ?? '').trim();
+    if (targetUserId.isEmpty) return 'Kullanıcı bulunamadı';
+    final seatLock = ref.read(voiceSeatActionLockProvider.notifier);
+    if (!seatLock.tryAcquire(targetUserId, 'take', seatIndex: seatIndex)) {
+      return null;
+    }
     if (isSelf) {
       final user = ref.read(authControllerProvider).valueOrNull;
       _registerPendingSeatTake(selfId!, seatIndex);
@@ -596,6 +602,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
         _lastSelfSeatTakeSuccessAt = DateTime.now();
         _clearPendingSeatClaim(seatIndex, selfId!);
       }
+      seatLock.release(targetUserId, 'take', seatIndex: seatIndex);
       unawaited(_refreshSeatsFromBackend());
       return null;
     } catch (e) {
@@ -603,6 +610,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
         _clearPendingSeatClaim(seatIndex, selfId!);
         await _refreshSeatsFromBackend();
       }
+      seatLock.release(targetUserId, 'take', seatIndex: seatIndex);
       return ApiException.userMessage(e);
     }
   }
@@ -669,6 +677,10 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
           p,
     ];
     state = state.copyWith(presence: prev);
+    final seatLock = ref.read(voiceSeatActionLockProvider.notifier);
+    if (!seatLock.tryAcquire(userId, 'leave')) {
+      return null;
+    }
     _registerPendingSeatLeave(userId);
     try {
       VoiceEventLog.seatLeave(roomId: _roomKey);
@@ -678,12 +690,19 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
             userId: userId,
           );
       _clearPendingSeatForUser(userId);
+      seatLock.release(userId, 'leave');
       await refresh();
       return null;
     } catch (e) {
       _clearPendingSeatForUser(userId);
+      seatLock.release(userId, 'leave');
       return ApiException.userMessage(e);
     }
+  }
+
+  /// UI `ref.listen` — presence/izin değişiminde auto-seat.
+  void scheduleReactivePrivilegedAutoSeatFromUi() {
+    _scheduleReactivePrivilegedAutoSeat();
   }
 
   Future<void> _autoSeatAfterRoleGrant(String userId) async {

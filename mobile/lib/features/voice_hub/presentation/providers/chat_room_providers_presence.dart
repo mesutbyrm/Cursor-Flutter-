@@ -211,7 +211,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     List<ChatRoomPresence> incoming, {
     required String source,
   }) {
-    final previous = state.presence;
+    final previous = List<ChatRoomPresence>.from(state.presence);
     final pollSource =
         source == 'refresh' || source == 'poll' || source == 'preload';
 
