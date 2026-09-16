@@ -11,7 +11,6 @@ import '../../../trtc/presentation/trtc_room_manager.dart';
 import '../../../voice_hub/domain/pk/pk_battle_mode.dart';
 import '../../../voice_hub/domain/pk/pk_battle_remote_models.dart';
 import '../../../voice_hub/domain/pk/pk_battle_state.dart';
-import '../../../voice_hub/domain/pk/pk_duration_options.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_provider.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
 import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_floating_reactions.dart';
@@ -26,6 +25,8 @@ import '../widgets/broadcast_room/live_pk_resolved_timer.dart';
 import '../widgets/broadcast_room/live_pk_reference_score_bar.dart';
 import '../widgets/broadcast_room/live_pk_reference_chat_overlay.dart';
 import '../widgets/broadcast_room/live_pk_gift_toast_overlay.dart';
+import '../widgets/broadcast_room/live_pk_layout_metrics.dart';
+import '../widgets/broadcast_room/live_pk_pane_gifter_strip.dart';
 import '../widgets/broadcast_room/live_pk_score_pop_overlay.dart';
 import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_gift_event.dart';
@@ -336,9 +337,10 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
     final pkActive = remote?.isActive == true || pk.isActive;
     final pending = remote?.isPending == true && !pkActive;
     final topInset = MediaQuery.paddingOf(context).top;
-    final bottomPad = MediaQuery.paddingOf(context).bottom;
-    final controlsHeight = 96.0 + bottomPad;
-    final chatInputHeight = _chatOpen ? 52.0 : 0.0;
+    final chromeBottom = LivePkLayoutMetrics.chromeReserve(context);
+    final scoreH = LivePkLayoutMetrics.scoreBandHeight;
+    final videoBottom = LivePkLayoutMetrics.videoBottomInset(context);
+    final myUserId = ref.watch(authControllerProvider).valueOrNull?.id;
     final outcomeLabel = livePkOutcomeStatusLabel(
       ended: finished,
       localOnLeft: true,
@@ -359,59 +361,102 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
         resizeToAvoidBottomInset: false,
         body: LayoutBuilder(
           builder: (context, constraints) {
-            final h = constraints.maxHeight;
-            final videoH = (h * 0.52).clamp(240.0, h * 0.55);
+            return ValueListenableBuilder<Map<String, bool>>(
+              valueListenable: _trtc.remoteVideoByUser,
+              builder: (context, remoteVideoMap, _) {
+                final opp = opponentUserId.trim();
+                final remoteCam =
+                    opp.isEmpty ? true : (remoteVideoMap[opp] ?? true);
+                final remoteMic = opp.isEmpty
+                    ? true
+                    : (_trtc.remoteAudioByUser.value[opp] ?? true);
+                final showOppFollow = opp.isNotEmpty &&
+                    (myUserId == null || myUserId.trim() != opp);
 
-            return Stack(
+                return Stack(
               fit: StackFit.expand,
               children: [
-                if (videoH > 0)
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: videoH,
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: LivePkImmersiveVideoPane(
-                            isLocal: true,
-                            displayName: leftName,
-                            avatarUrl:
-                                widget.session.avatarUrl ?? widget.session.coverImageUrl,
-                            micOn: _trtc.micOn,
-                            cameraOn: _trtc.cameraOn,
-                            chipAlignment: Alignment.topLeft,
-                            video: _trtcReady && isHost
-                                ? TrtcLocalVideoView(manager: _trtc)
-                                : _fallbackThumb(widget.session.coverImageUrl),
-                          ),
-                        ),
-                        Expanded(
-                          child: LivePkImmersiveVideoPane(
-                            displayName: rightName,
-                            avatarUrl: widget.opponentStream?.thumbnailUrl,
-                            micOn: true,
-                            cameraOn: true,
-                            chipAlignment: Alignment.topRight,
-                            video: _opponentVideo(
-                              opponentUserId: opponentUserId,
-                              opponentMuted: opponentMuted,
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: videoBottom,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: LivePkImmersiveVideoPane(
+                              isLocal: true,
+                              displayName: leftName,
+                              avatarUrl: widget.session.avatarUrl ??
+                                  widget.session.coverImageUrl,
+                              micOn: _trtc.micOn,
+                              cameraOn: _trtc.cameraOn,
+                              chipAlignment: Alignment.topLeft,
+                              followAccent: const Color(0xFFFF2D7A),
+                              footerOverlay: streamId.isNotEmpty
+                                  ? LivePkPaneGifterStrip(
+                                      sessionKey: streamId,
+                                      hostLabel: leftName,
+                                      hostUserId: widget.session.hostUserId,
+                                      alignLeft: true,
+                                    )
+                                  : null,
+                              video: _trtcReady && isHost
+                                  ? TrtcLocalVideoView(manager: _trtc)
+                                  : _fallbackThumb(widget.session.coverImageUrl),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
+                          Container(
+                            width: 2,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.white.withValues(alpha: 0.05),
+                                  Colors.white.withValues(alpha: 0.35),
+                                  Colors.white.withValues(alpha: 0.05),
+                                ],
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: LivePkImmersiveVideoPane(
+                              displayName: rightName,
+                              avatarUrl: widget.opponentStream?.thumbnailUrl,
+                              streamerUserId:
+                                  opp.isNotEmpty ? opp : null,
+                              showFollowOnChip: showOppFollow,
+                              micOn: remoteMic,
+                              cameraOn: remoteCam,
+                              chipAlignment: Alignment.topRight,
+                              followAccent: const Color(0xFF448AFF),
+                              footerOverlay: streamId.isNotEmpty
+                                  ? LivePkPaneGifterStrip(
+                                      sessionKey: streamId,
+                                      hostLabel: rightName,
+                                      hostUserId:
+                                          opp.isNotEmpty ? opp : null,
+                                      alignLeft: false,
+                                    )
+                                  : null,
+                              video: _opponentVideo(
+                                opponentUserId: opponentUserId,
+                                opponentMuted: opponentMuted,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Center(
+                        child: PkVsEmblem(size: 62, pulse: true),
+                      ),
+                    ],
                   ),
-                if (videoH > 0)
-                  Positioned(
-                    top: videoH * 0.42,
-                    left: 0,
-                    right: 0,
-                    child: const Center(
-                      child: PkVsEmblem(size: 44, pulse: true),
-                    ),
-                  ),
+                ),
                 if (pending)
                   Positioned(
                     left: 12,
@@ -430,22 +475,45 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
                 Positioned(
                   left: 0,
                   right: 0,
-                  top: videoH - 4,
-                  child: LivePkReferenceScoreBar(
-                    leftScore: leftScore,
-                    rightScore: rightScore,
-                    statusLabel: outcomeLabel,
-                    active: pkActive && !finished,
-                    showEndedScores: finished,
+                  bottom: chromeBottom,
+                  height: scoreH,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                        colors: [
+                          Colors.black.withValues(alpha: 0.92),
+                          Colors.black.withValues(alpha: 0.35),
+                        ],
+                      ),
+                    ),
+                    child: Center(
+                      child: LivePkReferenceScoreBar(
+                        leftScore: leftScore,
+                        rightScore: rightScore,
+                        statusLabel: outcomeLabel,
+                        active: pkActive && !finished,
+                        showEndedScores: finished,
+                      ),
+                    ),
                   ),
                 ),
                 if (streamId.isNotEmpty)
-                  LivePkReferenceChatOverlay(
-                    streamId: streamId,
-                    maxHeight: 140,
-                    visible: _chatOpen,
+                  Positioned(
+                    left: 0,
+                    right: 72,
+                    bottom: chromeBottom + scoreH - 4,
+                    height: 168,
+                    child: LivePkReferenceChatOverlay(
+                      streamId: streamId,
+                      maxHeight: 168,
+                      visible: _chatOpen,
+                    ),
                   ),
-                const LivePkGiftToastOverlay(),
+                LivePkGiftToastOverlay(
+                  bottomInset: chromeBottom + scoreH + 8,
+                ),
                 if (pkActive && streamId.isNotEmpty && !finished)
                   LivePkFloatingGiftButton(
                     onTap: () => showLiveGiftPicker(
@@ -472,7 +540,8 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
                 Positioned(
                     left: 0,
                     right: 0,
-                    bottom: controlsHeight,
+                    bottom: LivePkLayoutMetrics.controlBarHeight +
+                        LivePkLayoutMetrics.bottomInset(context),
                     child: LivePkChatInputBar(
                       controller: _chatController,
                       visible: _chatOpen,
@@ -593,6 +662,8 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
                   ),
                 ],
               ],
+            );
+              },
             );
           },
         ),

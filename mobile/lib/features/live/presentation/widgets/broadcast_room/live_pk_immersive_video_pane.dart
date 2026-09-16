@@ -16,6 +16,8 @@ class LivePkImmersiveVideoPane extends StatelessWidget {
     this.streamerUserId,
     this.showFollowOnChip = false,
     this.leagueLabel,
+    this.footerOverlay,
+    this.followAccent = const Color(0xFFFF2D7A),
   });
 
   final Widget video;
@@ -28,6 +30,8 @@ class LivePkImmersiveVideoPane extends StatelessWidget {
   final String? streamerUserId;
   final bool showFollowOnChip;
   final String? leagueLabel;
+  final Widget? footerOverlay;
+  final Color followAccent;
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +80,15 @@ class LivePkImmersiveVideoPane extends StatelessWidget {
             userId: streamerUserId,
             showFollow: showFollowOnChip,
             leagueLabel: leagueLabel,
+            followAccent: followAccent,
           ),
+          if (footerOverlay != null)
+            Positioned(
+              left: chipAlignment == Alignment.topLeft ? 10 : null,
+              right: chipAlignment == Alignment.topRight ? 10 : null,
+              bottom: 10,
+              child: footerOverlay!,
+            ),
         ],
       ),
     );

@@ -17,6 +17,7 @@ class LivePkStreamerChip extends ConsumerStatefulWidget {
     this.userId,
     this.showFollow = false,
     this.leagueLabel,
+    this.followAccent = const Color(0xFFFF2D7A),
   });
 
   final String displayName;
@@ -28,6 +29,7 @@ class LivePkStreamerChip extends ConsumerStatefulWidget {
   final String? userId;
   final bool showFollow;
   final String? leagueLabel;
+  final Color followAccent;
 
   @override
   ConsumerState<LivePkStreamerChip> createState() => _LivePkStreamerChipState();
@@ -57,7 +59,7 @@ class _LivePkStreamerChipState extends ConsumerState<LivePkStreamerChip> {
 
   Future<void> _loadProfile() async {
     final id = widget.userId?.trim() ?? '';
-    if (id.isEmpty || widget.isLocal) {
+    if (id.isEmpty) {
       if (mounted) setState(() => _loadedProfile = true);
       return;
     }
@@ -189,7 +191,7 @@ class _LivePkStreamerChipState extends ConsumerState<LivePkStreamerChip> {
               if (showFollowBtn) ...[
                 const SizedBox(width: 6),
                 Material(
-                  color: const Color(0xFFFF2D7A),
+                  color: widget.followAccent,
                   borderRadius: BorderRadius.circular(12),
                   child: InkWell(
                     onTap: _followLoading ? null : _toggleFollow,

@@ -22,6 +22,7 @@ import 'live_pk_reference_score_bar.dart';
 import 'live_pk_reference_chat_overlay.dart';
 import 'live_pk_gift_toast_overlay.dart';
 import 'live_pk_layout_metrics.dart';
+import 'live_pk_pane_gifter_strip.dart';
 import '../../providers/live_stream_viewers_provider.dart';
 import '../../providers/live_host_rank_provider.dart';
 import '../../providers/live_room_interaction_provider.dart';
@@ -187,6 +188,13 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
                               myUserId: myUserId,
                             ),
                             leagueLabel: leftLeague,
+                            followAccent: const Color(0xFFFF2D7A),
+                            footerOverlay: LivePkPaneGifterStrip(
+                              sessionKey: streamId,
+                              hostLabel: layout.left.label,
+                              hostUserId: layout.left.userId,
+                              alignLeft: true,
+                            ),
                             micOn: layout.left.isLocalPane ? trtc.micOn : remoteMic,
                             cameraOn:
                                 layout.left.isLocalPane ? trtc.cameraOn : remoteCam,
@@ -204,8 +212,23 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
                             ),
                           ),
                         ),
+                        Container(
+                          width: 2,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.white.withValues(alpha: 0.05),
+                                Colors.white.withValues(alpha: 0.35),
+                                Colors.white.withValues(alpha: 0.05),
+                              ],
+                            ),
+                          ),
+                        ),
                         Expanded(
                           child: LivePkImmersiveVideoPane(
+                            isLocal: layout.right.isLocalPane,
                             displayName: layout.right.label,
                             avatarUrl: layout.right.avatarUrl,
                             streamerUserId: layout.right.userId,
@@ -214,8 +237,16 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
                               myUserId: myUserId,
                             ),
                             leagueLabel: rightLeague,
-                            micOn: remoteMic,
-                            cameraOn: remoteCam,
+                            followAccent: const Color(0xFF448AFF),
+                            footerOverlay: LivePkPaneGifterStrip(
+                              sessionKey: streamId,
+                              hostLabel: layout.right.label,
+                              hostUserId: layout.right.userId,
+                              alignLeft: false,
+                            ),
+                            micOn: layout.right.isLocalPane ? trtc.micOn : remoteMic,
+                            cameraOn:
+                                layout.right.isLocalPane ? trtc.cameraOn : remoteCam,
                             chipAlignment: Alignment.topRight,
                             video: _PkPane(
                               pane: layout.right,

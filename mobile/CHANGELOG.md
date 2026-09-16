@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.543+584 (2026-09-16) — PK ince ayar (gifter + standalone sayfa)
+
+- Pane altı top-3 destekçi şeridi (gerçek hediye oturumu, yayıncıya göre filtre)
+- Yayıncı chip: takip butonu pembe/mavi vurgu, yerel pane için de profil/takipçi
+- Sohbet satırı: avatar dairesi + VIP altın kullanıcı adı
+- `LivePkBattlePage`: tam ekran video ölçüleri, skor bandı, rakip mic/kamera TRTC, takip + gifter
+
 ## 1.0.542+583 (2026-09-16) — PK referans UI 1:1 yerleşim
 
 - Tam ekran split video (siyah boşluk kaldırıldı); skor bandı + sohbet video üzerinde overlay

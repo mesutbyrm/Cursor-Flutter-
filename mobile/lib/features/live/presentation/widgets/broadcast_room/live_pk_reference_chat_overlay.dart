@@ -61,38 +61,63 @@ class _ChatLine extends StatelessWidget {
     final isGift = message.text.contains('hediye') ||
         message.text.contains('🌹') ||
         message.text.contains('Gönderdi');
+    final initial =
+        message.user.isNotEmpty ? message.user[0].toUpperCase() : '?';
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: isGift ? 0.55 : 0.38),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          child: RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: '${message.user} ',
-                  style: const TextStyle(
-                    color: Color(0xFFB832FF),
-                    fontWeight: FontWeight.w800,
-                    fontSize: 12,
-                  ),
-                ),
-                TextSpan(
-                  text: message.text,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    height: 1.25,
-                  ),
-                ),
-              ],
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            radius: 11,
+            backgroundColor: const Color(0xFF7C3AED).withValues(alpha: 0.65),
+            child: Text(
+              initial,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
-        ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: isGift ? 0.55 : 0.38),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                child: RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: '${message.user} ',
+                        style: TextStyle(
+                          color: message.isVip
+                              ? const Color(0xFFFFD54F)
+                              : const Color(0xFFB832FF),
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                        ),
+                      ),
+                      TextSpan(
+                        text: message.text,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          height: 1.25,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
