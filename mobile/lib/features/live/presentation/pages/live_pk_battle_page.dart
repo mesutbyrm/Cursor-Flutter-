@@ -31,6 +31,7 @@ import '../../../gifts/presentation/sync/gift_session_state.dart';
 import '../../../gifts/presentation/engine/gift_engine_overlay.dart';
 import '../../../gifts/presentation/engine/gift_engine_seat_effects_overlay.dart';
 import '../../../gifts/presentation/widgets/gift_stage_layout.dart';
+import '../providers/live_room_providers.dart';
 import '../providers/pk_room_providers.dart';
 import '../gifts/live_gift_controller.dart';
 import '../gifts/providers/live_gift_providers.dart';
@@ -341,13 +342,14 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
                 visible: _chatOpen && pkActive,
                 onSend: () {
                   final text = _chatController.text.trim();
-                  if (text.isEmpty) return;
+                  if (text.isEmpty || streamId.isEmpty) return;
                   _chatController.clear();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Mesaj gönderildi: $text'),
-                      duration: const Duration(seconds: 1),
-                    ),
+                  final name = widget.session.streamerName ?? 'Yayıncı';
+                  unawaited(
+                    ref.read(liveRoomProvider(streamId).notifier).sendMessage(
+                          text,
+                          selfName: name,
+                        ),
                   );
                 },
                 onToggleVisibility: () => setState(() => _chatOpen = false),
