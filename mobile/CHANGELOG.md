@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.532+573 (2026-09-16) — Canlı PK immersive UI (Bigo/TikTok tarzı)
+
+- Tam ekran split video — TRTC cover, gradient overlay, yayıncı chip (mik/kamera)
+- Üst bar: geri + sunucu senkron PK timer (`endsAt`)
+- Skor şeridi videonun üzerinde; 0-0 beraberlikte %50 progress
+- Alt kontroller: mikrofon, kamera, rakip ses (yerel), sohbet, PK bitir — gerçek RTC
+- VS intro, hediye +N float, mevcut kazanan sonuç overlay
+- Yayın odası içi `LivePkSplitVideoLayer` aynı görsel dil
+
 ## 1.0.531+572 (2026-09-15) — Platform sosyal + PK tamamlama
 
 - Sosyal **takım detay** sayfası (`/teams/:id`) — üyeler, staff uzun basış → kullanıcı hub
