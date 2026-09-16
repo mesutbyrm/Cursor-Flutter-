@@ -12,6 +12,9 @@ import '../../providers/live_video_pk_provider.dart';
 import '../../../domain/pk/pk_status_helper.dart';
 import '../live_playback_bridge.dart';
 import '../../../../pk/presentation/widgets/pk_battle_visuals.dart';
+import 'live_pk_immersive_score_overlay.dart';
+import 'live_pk_immersive_video_pane.dart';
+import 'live_pk_resolved_timer.dart';
 
 /// PK aktifken üst yarım: sol yerel/yayıncı, sağ rakip.
 class LivePkSplitVideoLayer extends ConsumerWidget {
@@ -55,8 +58,6 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
     final rightScore = pkScoreFromBattleMap(battleMap, left: false);
     final secondsLeft = pkBattleSecondsLeftFromMap(battleMap);
     final pkActive = isLivePkSplitReady(battle, pk.status);
-    final urgent = pkActive && secondsLeft > 0 && secondsLeft <= 10;
-
     String? playbackFor(String? targetStreamId) {
       final id = targetStreamId?.trim() ?? '';
       if (id.isEmpty) return null;
@@ -72,15 +73,12 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
         Row(
           children: [
             Expanded(
-              child: PkOutcomeBorder(
-                outcome: pkSideOutcome(
-                  isLeft: true,
-                  leftScore: leftScore,
-                  rightScore: rightScore,
-                  battleActive: pkActive,
-                ),
-                urgentPulse: urgent,
-                child: _PkPane(
+              child: LivePkImmersiveVideoPane(
+                isLocal: layout.left.isLocalPane,
+                displayName: layout.left.label,
+                avatarUrl: layout.left.avatarUrl,
+                chipAlignment: Alignment.topLeft,
+                video: _PkPane(
                   pane: layout.left,
                   trtc: trtc,
                   rtcReady: rtcReady,
@@ -89,39 +87,50 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
                       : playbackFor(layout.left.streamId),
                   accent: Colors.pinkAccent,
                   playbackAudible: true,
+                  bare: true,
                 ),
               ),
             ),
-            Container(width: 2, color: Colors.white24),
             Expanded(
-              child: PkOutcomeBorder(
-                outcome: pkSideOutcome(
-                  isLeft: false,
-                  leftScore: leftScore,
-                  rightScore: rightScore,
-                  battleActive: pkActive,
-                ),
-                urgentPulse: urgent,
-                child: _PkPane(
+              child: LivePkImmersiveVideoPane(
+                displayName: layout.right.label,
+                avatarUrl: layout.right.avatarUrl,
+                chipAlignment: Alignment.topRight,
+                video: _PkPane(
                   pane: layout.right,
                   trtc: trtc,
                   rtcReady: rtcReady,
                   playbackUrl: playbackFor(layout.right.streamId),
                   accent: Colors.cyanAccent,
                   preferRemoteUserId: layout.right.userId,
-                  playbackAudible: true,
+                  playbackAudible: !opponentMuted,
+                  bare: true,
                 ),
               ),
             ),
           ],
         ),
-        if (pkActive && secondsLeft > 0)
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 8,
+          child: LivePkImmersiveScoreOverlay(
+            leftScore: leftScore,
+            rightScore: rightScore,
+            leftLabel: layout.left.label,
+            rightLabel: layout.right.label,
+          ),
+        ),
+        if (pkActive)
           Positioned(
-            top: 12,
+            top: 8,
             left: 0,
             right: 0,
             child: Center(
-              child: PkBattleTimerBadge(secondsLeft: secondsLeft),
+              child: LivePkResolvedTimer(
+                remote: null,
+                fallbackSeconds: secondsLeft,
+              ),
             ),
           ),
         if (session.isHost)
@@ -197,6 +206,7 @@ class _PkPane extends StatelessWidget {
     this.playbackUrl,
     this.preferRemoteUserId,
     this.playbackAudible = false,
+    this.bare = false,
   });
 
   final LivePkPaneModel pane;
@@ -206,6 +216,7 @@ class _PkPane extends StatelessWidget {
   final String? playbackUrl;
   final String? preferRemoteUserId;
   final bool playbackAudible;
+  final bool bare;
 
   @override
   Widget build(BuildContext context) {
@@ -239,36 +250,10 @@ class _PkPane extends StatelessWidget {
           );
         }
 
+        if (bare) return video;
         return ColoredBox(
           color: const Color(0xFF120A1E),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              video,
-              Positioned(
-                left: 8,
-                bottom: 8,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: Colors.black54,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    child: Text(
-                      pane.label,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          child: video,
         );
       },
     );

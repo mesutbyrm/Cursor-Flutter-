@@ -7,17 +7,20 @@ import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../trtc/presentation/trtc_room_manager.dart';
 import '../../../voice_hub/domain/pk/pk_battle_mode.dart';
-import '../../../voice_hub/domain/pk/pk_battle_remote_models.dart';
 import '../../../voice_hub/domain/pk/pk_battle_state.dart';
 import '../../../voice_hub/domain/pk/pk_duration_options.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_provider.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
-import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_animated_score_bar.dart';
 import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_floating_reactions.dart';
 import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_gift_explosion_flash.dart';
-import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_loser_side_overlay.dart';
-import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_vs_emblem.dart';
 import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_winner_celebration.dart';
+import '../providers/live_pk_ui_providers.dart';
+import '../widgets/broadcast_room/live_pk_immersive_controls.dart';
+import '../widgets/broadcast_room/live_pk_immersive_score_overlay.dart';
+import '../widgets/broadcast_room/live_pk_immersive_video_pane.dart';
+import '../widgets/broadcast_room/live_pk_intro_overlay.dart';
+import '../widgets/broadcast_room/live_pk_resolved_timer.dart';
+import '../widgets/broadcast_room/live_pk_score_pop_overlay.dart';
 import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_gift_event.dart';
 import '../../domain/entities/live_stream_entity.dart';
@@ -27,13 +30,12 @@ import '../../../gifts/presentation/sync/gift_session_controller.dart';
 import '../../../gifts/presentation/sync/gift_session_state.dart';
 import '../../../gifts/presentation/engine/gift_engine_overlay.dart';
 import '../../../gifts/presentation/engine/gift_engine_seat_effects_overlay.dart';
-import '../../../gifts/presentation/engine/gift_feed_panel.dart';
 import '../../../gifts/presentation/widgets/gift_stage_layout.dart';
 import '../providers/pk_room_providers.dart';
+import '../gifts/live_gift_controller.dart';
 import '../gifts/providers/live_gift_providers.dart';
 import '../widgets/broadcast_room/live_pk_score_bar.dart';
 import '../widgets/live_playback_bridge.dart';
-import '../../../pk/presentation/widgets/pk_battle_visuals.dart';
 
 /// Canlı yayın split-screen PK — sol kendi yayın, sağ rakip, jeton skorları.
 class LivePkBattlePage extends ConsumerStatefulWidget {
@@ -52,8 +54,11 @@ class LivePkBattlePage extends ConsumerStatefulWidget {
 
 class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
   final _trtc = TrtcRoomManager();
+  final _chatController = TextEditingController();
   var _lastGiftSideLeft = true;
+  var _lastGiftDelta = 0;
   var _trtcReady = false;
+  var _chatOpen = true;
   Timer? _pkPollTimer;
   String? _unifiedMatchId;
 
@@ -116,12 +121,14 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
     final challengerId = ref.read(pkBattleRemoteProvider)?.challengerId;
     final toLeft = challengerId == null || event.senderId == challengerId;
     _lastGiftSideLeft = toLeft;
+    _lastGiftDelta = (event.coinCost * event.quantity).clamp(1, 999999);
     ref.read(pkBattleProvider.notifier).applyGift(event, toLeft: toLeft);
   }
 
   @override
   void dispose() {
     _pkPollTimer?.cancel();
+    _chatController.dispose();
     ref.read(liveGiftControllerProvider).detach();
     _trtc.dispose();
     super.dispose();
@@ -184,6 +191,13 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<LiveGiftController>(liveGiftControllerProvider, (prev, next) {
+      final list = next.notifications;
+      if (list.isEmpty) return;
+      if (prev != null && prev.notifications.length == list.length) return;
+      _onGift(list.last);
+    });
+
     final remote = ref.watch(pkBattleRemoteProvider);
     final unifiedId = _unifiedMatchId;
     final unifiedMatch = unifiedId != null && unifiedId.isNotEmpty
@@ -195,6 +209,9 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
         ? ref.watch(giftSessionProvider(streamId))
         : const GiftSessionState();
     final activeGift = giftSession.activeAnimation;
+    final opponentMuted = streamId.isNotEmpty
+        ? ref.watch(livePkOpponentMutedProvider(streamId))
+        : false;
 
     final leftScore = unifiedMatch?.leftScore ??
         remote?.challengerScore ??
@@ -208,9 +225,9 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
     final rightName = widget.opponentStream?.streamerName ??
         remote?.opponent?.displayName ??
         'Rakip';
-    final durationLabel = remote != null
-        ? pkDurationBySeconds(remote.durationSeconds).shortLabel
-        : null;
+    final opponentUserId = remote?.opponentId ??
+        widget.opponentStream?.hostUserId ??
+        '';
 
     final pkState = PkBattleState(
       phase: remote?.isEnded == true || pk.isFinished
@@ -218,7 +235,7 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
           : remote?.isActive == true || pk.isActive
               ? PkBattlePhase.active
               : PkBattlePhase.ready,
-      secondsLeft: remote?.secondsLeft ?? pk.secondsLeft,
+      secondsLeft: remote?.resolvedSecondsLeft() ?? pk.secondsLeft,
       left: pk.left.copyWith(score: leftScore, giftPower: 0),
       right: pk.right.copyWith(score: rightScore, giftPower: 0),
       winner: pk.winner,
@@ -226,30 +243,11 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
       serverAuthoritative: remote != null,
     );
 
-    final leftWon = pkState.winner == PkBattleWinner.left;
-    final rightWon = pkState.winner == PkBattleWinner.right;
-    final showLoserFx = pkState.isFinished && pkState.winner != PkBattleWinner.tie;
-    final secondsLeft = remote?.secondsLeft ?? pk.secondsLeft;
     final pkActive = remote?.isActive == true || pk.isActive;
-    final urgentTimer = pkActive && secondsLeft > 0 && secondsLeft <= 10;
-    final leftOutcome = pkSideOutcome(
-      isLeft: true,
-      leftScore: leftScore,
-      rightScore: rightScore,
-      battleActive: pkActive,
-      leftWon: leftWon,
-      rightWon: rightWon,
-      isDraw: pkState.winner == PkBattleWinner.tie,
-    );
-    final rightOutcome = pkSideOutcome(
-      isLeft: false,
-      leftScore: leftScore,
-      rightScore: rightScore,
-      battleActive: pkActive,
-      leftWon: leftWon,
-      rightWon: rightWon,
-      isDraw: pkState.winner == PkBattleWinner.tie,
-    );
+    final pending = remote?.isPending == true && !pkActive;
+    final topInset = MediaQuery.paddingOf(context).top;
+    final chatHeight = _chatOpen ? 52.0 : 0.0;
+    final controlsHeight = 88.0 + MediaQuery.paddingOf(context).bottom;
 
     return GiftEventListener(
       sessionKey: streamId,
@@ -258,51 +256,48 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
       useLiveRealtime: streamId.isNotEmpty,
       liveStreamId: streamId.isEmpty ? null : streamId,
       child: Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          Column(
-            children: [
-              SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        onPressed: () => context.pop(),
-                        icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-                      ),
-                      const Expanded(
-                        child: Text(
-                          'Canlı PK',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17),
-                        ),
-                      ),
-                      if (pkActive && secondsLeft > 0)
-                        PkBattleTimerBadge(secondsLeft: secondsLeft)
-                      else if (durationLabel != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.white12,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            durationLabel,
-                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-                          ),
-                        )
-                      else
-                        const SizedBox(width: 48),
-                    ],
+        backgroundColor: Colors.black,
+        resizeToAvoidBottomInset: false,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            Positioned.fill(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: LivePkImmersiveVideoPane(
+                      isLocal: true,
+                      displayName: leftName,
+                      avatarUrl: widget.session.avatarUrl ?? widget.session.coverImageUrl,
+                      micOn: _trtc.micOn,
+                      cameraOn: _trtc.cameraOn,
+                      chipAlignment: Alignment.topLeft,
+                      video: _trtcReady
+                          ? TrtcLocalVideoView(manager: _trtc)
+                          : _fallbackThumb(widget.session.coverImageUrl),
+                    ),
                   ),
-                ),
+                  Expanded(
+                    child: LivePkImmersiveVideoPane(
+                      displayName: rightName,
+                      avatarUrl: widget.opponentStream?.thumbnailUrl,
+                      micOn: true,
+                      cameraOn: true,
+                      chipAlignment: Alignment.topRight,
+                      video: _opponentVideo(
+                        opponentUserId: opponentUserId,
+                        opponentMuted: opponentMuted,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+            ),
+            if (pending)
+              Positioned(
+                left: 12,
+                right: 12,
+                top: topInset + 56,
                 child: LivePkScoreBar(
                   leftScore: leftScore,
                   rightScore: rightScore,
@@ -313,214 +308,231 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
                   onEnd: _end,
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                child: PkAnimatedScoreBar(state: pkState, compact: true),
-              ),
-              Expanded(
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: PkOutcomeBorder(
-                            outcome: leftOutcome,
-                            urgentPulse: urgentTimer,
-                            child: _PkVideoPane(
-                              label: leftName,
-                              accent: Colors.pinkAccent,
-                              thumbnailUrl: widget.session.avatarUrl ??
-                                  widget.session.coverImageUrl,
-                              trtc: _trtcReady ? _trtc : null,
-                              isLocal: true,
-                            ),
-                          ),
-                        ),
-                        Container(width: 2, color: Colors.white24),
-                        Expanded(
-                          child: PkOutcomeBorder(
-                            outcome: rightOutcome,
-                            urgentPulse: urgentTimer,
-                            child: _PkVideoPane(
-                              label: rightName,
-                              accent: Colors.cyanAccent,
-                              thumbnailUrl: widget.opponentStream?.thumbnailUrl,
-                              playbackUrl: widget.opponentStream?.playbackUrl,
-                              isLocal: false,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const PkVsEmblem(size: 72),
-                    if (showLoserFx && rightWon)
-                      const PkLoserSideOverlay(
-                        visible: true,
-                        alignment: Alignment.centerLeft,
-                      ),
-                    if (showLoserFx && leftWon)
-                      const PkLoserSideOverlay(
-                        visible: true,
-                        alignment: Alignment.centerRight,
-                      ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => context.pop(),
-                        child: const Text('Geri'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    if (remote?.isActive == true)
-                      Expanded(
-                        child: FilledButton(
-                          onPressed: isHost ? _end : null,
-                          child: const Text('PK Bitir'),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          PkFloatingReactions(
-            burstToken: pk.reactionBurst,
-            enabled: pkState.isActive,
-          ),
-          PkGiftExplosionFlash(
-            token: pk.reactionBurst,
-            toLeft: _lastGiftSideLeft,
-          ),
-          GiftEngineSeatEffectsOverlay(event: activeGift),
-          Positioned.fill(
-            child: IgnorePointer(
-              child: GiftEngineOverlay(
-                event: activeGift,
-                stage: GiftStageContext.liveStream,
-                onFinished: (id) => ref
-                    .read(giftSessionProvider(streamId).notifier)
-                    .dequeueAnimation(id),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: controlsHeight + chatHeight,
+              child: LivePkImmersiveScoreOverlay(
+                leftScore: leftScore,
+                rightScore: rightScore,
+                leftLabel: leftName,
+                rightLabel: rightName,
+                showTieHint: pkState.isFinished,
               ),
             ),
-          ),
-          if (streamId.isNotEmpty) GiftFeedPanel(sessionKey: streamId),
-          PkWinnerCelebration(
-            state: pkState,
-            onRestart: () {
-              final dur = remote?.durationSeconds ?? pkDefaultDurationSeconds;
-              ref.read(pkBattleProvider.notifier).restart(durationSeconds: dur);
-            },
-            onClose: () => context.pop(),
-          ),
-        ],
+            Positioned(
+              left: 0,
+              right: 0,
+              top: topInset + 4,
+              child: _TopBar(
+                onBack: () => context.pop(),
+                timer: LivePkResolvedTimer(
+                  remote: remote,
+                  fallbackSeconds: pk.secondsLeft,
+                ),
+              ),
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: controlsHeight,
+              child: LivePkChatInputBar(
+                controller: _chatController,
+                visible: _chatOpen && pkActive,
+                onSend: () {
+                  final text = _chatController.text.trim();
+                  if (text.isEmpty) return;
+                  _chatController.clear();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Mesaj gönderildi: $text'),
+                      duration: const Duration(seconds: 1),
+                    ),
+                  );
+                },
+                onToggleVisibility: () => setState(() => _chatOpen = false),
+              ),
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: LivePkImmersiveControls(
+                items: [
+                  LivePkControlItem(
+                    icon: _trtc.micOn ? Icons.mic_rounded : Icons.mic_off_rounded,
+                    label: 'Mikrofon',
+                    active: _trtc.micOn,
+                    onTap: isHost
+                        ? () {
+                            _trtc.setMicEnabled(!_trtc.micOn);
+                            setState(() {});
+                          }
+                        : null,
+                  ),
+                  LivePkControlItem(
+                    icon: _trtc.cameraOn
+                        ? Icons.videocam_rounded
+                        : Icons.videocam_off_rounded,
+                    label: 'Kamera',
+                    active: _trtc.cameraOn,
+                    onTap: isHost
+                        ? () {
+                            _trtc.setCameraEnabled(!_trtc.cameraOn);
+                            setState(() {});
+                          }
+                        : null,
+                  ),
+                  LivePkControlItem(
+                    icon: opponentMuted
+                        ? Icons.volume_off_rounded
+                        : Icons.hearing_rounded,
+                    label: 'Rakip ses',
+                    active: !opponentMuted,
+                    onTap: () {
+                      if (streamId.isEmpty) return;
+                      final next = !opponentMuted;
+                      ref
+                          .read(livePkOpponentMutedProvider(streamId).notifier)
+                          .state = next;
+                      final opp = opponentUserId.trim();
+                      if (opp.isNotEmpty) {
+                        _trtc.muteRemoteAudio(opp, next);
+                      }
+                      setState(() {});
+                    },
+                  ),
+                  LivePkControlItem(
+                    icon: _chatOpen
+                        ? Icons.chat_bubble_rounded
+                        : Icons.chat_bubble_outline_rounded,
+                    label: 'Sohbet',
+                    onTap: () => setState(() => _chatOpen = !_chatOpen),
+                  ),
+                  LivePkControlItem(
+                    icon: Icons.stop_circle_outlined,
+                    label: 'Bitir',
+                    danger: true,
+                    onTap: pkActive && isHost ? _end : null,
+                  ),
+                ],
+              ),
+            ),
+            LivePkIntroOverlay(visible: pkActive),
+            LivePkScorePopOverlay(
+              burstToken: pk.reactionBurst,
+              delta: _lastGiftDelta,
+              toLeft: _lastGiftSideLeft,
+            ),
+            PkFloatingReactions(
+              burstToken: pk.reactionBurst,
+              enabled: pkState.isActive,
+            ),
+            PkGiftExplosionFlash(
+              token: pk.reactionBurst,
+              toLeft: _lastGiftSideLeft,
+            ),
+            GiftEngineSeatEffectsOverlay(event: activeGift),
+            Positioned.fill(
+              child: IgnorePointer(
+                child: GiftEngineOverlay(
+                  event: activeGift,
+                  stage: GiftStageContext.liveStream,
+                  onFinished: (id) => ref
+                      .read(giftSessionProvider(streamId).notifier)
+                      .dequeueAnimation(id),
+                ),
+              ),
+            ),
+            PkWinnerCelebration(
+              state: pkState,
+              onRestart: () {
+                final dur = remote?.durationSeconds ?? pkDefaultDurationSeconds;
+                ref.read(pkBattleProvider.notifier).restart(durationSeconds: dur);
+              },
+              onClose: () => context.pop(),
+            ),
+          ],
+        ),
       ),
-      ),
+    );
+  }
+
+  Widget _fallbackThumb(String? url) {
+    if (url != null && url.trim().isNotEmpty) {
+      return CanlifalNetworkImage(url: url, fit: BoxFit.cover);
+    }
+    return const ColoredBox(color: Color(0xFF120A1E));
+  }
+
+  Widget _opponentVideo({
+    required String opponentUserId,
+    required bool opponentMuted,
+  }) {
+    final playback = widget.opponentStream?.playbackUrl;
+    final thumb = widget.opponentStream?.thumbnailUrl;
+    return ValueListenableBuilder<List<String>>(
+      valueListenable: _trtc.remoteUserIdsNotifier,
+      builder: (context, remoteIds, _) {
+        final opp = opponentUserId.trim();
+        if (_trtcReady && opp.isNotEmpty && remoteIds.contains(opp)) {
+          return TrtcRemoteVideoView(manager: _trtc, userId: opp);
+        }
+        if (playback != null && playback.trim().isNotEmpty) {
+          return LivePlaybackBridge(
+            key: ValueKey('pk_opp_$opponentMuted'),
+            playbackUrl: playback,
+            thumbnailUrl: thumb,
+            audible: !opponentMuted,
+          );
+        }
+        return _fallbackThumb(thumb);
+      },
     );
   }
 }
 
-class _PkVideoPane extends StatelessWidget {
-  const _PkVideoPane({
-    required this.label,
-    required this.accent,
-    this.thumbnailUrl,
-    this.playbackUrl,
-    this.trtc,
-    this.isLocal = false,
-  });
+class _TopBar extends StatelessWidget {
+  const _TopBar({required this.onBack, required this.timer});
 
-  final String label;
-  final Color accent;
-  final String? thumbnailUrl;
-  final String? playbackUrl;
-  final TrtcRoomManager? trtc;
-  final bool isLocal;
+  final VoidCallback onBack;
+  final Widget timer;
 
   @override
   Widget build(BuildContext context) {
-    Widget videoChild;
-    if (isLocal && trtc != null) {
-      videoChild = TrtcLocalVideoView(manager: trtc!);
-    } else if (playbackUrl != null && playbackUrl!.trim().isNotEmpty) {
-      videoChild = LivePlaybackBridge(
-        playbackUrl: playbackUrl,
-        thumbnailUrl: thumbnailUrl,
-        audible: true,
-      );
-    } else if (thumbnailUrl != null && thumbnailUrl!.isNotEmpty) {
-      videoChild = CanlifalNetworkImage(
-        url: thumbnailUrl!,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: double.infinity,
-      );
-    } else {
-      videoChild = Center(
-        child: Icon(Icons.videocam_rounded, size: 48, color: accent),
-      );
-    }
-
-    return Container(
-      color: const Color(0xFF120A1E),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          videoChild,
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-                colors: [
-                  Colors.black.withValues(alpha: 0.75),
-                  Colors.transparent,
-                ],
-                stops: const [0, 0.45],
-              ),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.black.withValues(alpha: 0.72),
+            Colors.transparent,
+          ],
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(4, 4, 8, 16),
+        child: Row(
+          children: [
+            IconButton(
+              onPressed: onBack,
+              icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                  color: Colors.white, size: 20),
             ),
-          ),
-          Positioned(
-            left: 8,
-            bottom: 8,
-            right: 8,
-            child: Row(
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: accent,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(color: accent.withValues(alpha: 0.8), blurRadius: 6),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
+            Expanded(child: Center(child: timer)),
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
+              color: const Color(0xFF1A1F35),
+              onSelected: (_) {},
+              itemBuilder: (context) => const [
+                PopupMenuItem(value: 'report', child: Text('Bildir')),
               ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
+
