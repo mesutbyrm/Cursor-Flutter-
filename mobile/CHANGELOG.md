@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.546+587 (2026-09-16) — PK sohbet + kamera donması
+
+- PK sohbet: challenger yayın odasında birleşik SSE/gönderim (`livePkEffectiveChatStreamId`)
+- Sohbet overlay sabit boyut (referans mock: ~%56 genişlik, 118px yükseklik)
+- TRTC PK: zaten anchor odadaysa gereksiz leave/join atlanır (kamera donması)
+
 ## 1.0.545+586 (2026-09-16) — Sesli oda + canlı PK hata listesi
 
 - Sesli oda: presence SSE işleme kopya liste; `voiceSeatActionLockProvider` (PK lock deseni)

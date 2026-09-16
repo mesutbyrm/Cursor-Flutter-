@@ -17,6 +17,7 @@ import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_floating_reac
 import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_gift_explosion_flash.dart';
 import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_vs_emblem.dart';
 import '../../domain/pk/live_pk_broadcast_stage.dart';
+import '../../domain/pk/live_pk_chat_stream.dart';
 import '../providers/live_pk_ui_providers.dart';
 import '../widgets/broadcast_room/live_pk_immersive_controls.dart';
 import '../widgets/broadcast_room/live_pk_immersive_video_pane.dart';
@@ -349,6 +350,18 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
       leftLabel: leftName,
       rightLabel: rightName,
     );
+    final chatBattle = <String, dynamic>{
+      if (remote?.liveStreamId?.isNotEmpty == true)
+        'liveStreamId': remote!.liveStreamId,
+      if (remote?.opponentLiveStreamId?.isNotEmpty == true)
+        'opponentLiveStreamId': remote!.opponentLiveStreamId,
+      if (streamId.isNotEmpty) 'hostStreamId': streamId,
+      'opponentStreamId': widget.opponentStream?.id,
+    };
+    final chatStreamId = livePkEffectiveChatStreamId(
+      battle: chatBattle,
+      myStreamId: streamId,
+    );
 
     return GiftEventListener(
       sessionKey: streamId,
@@ -499,15 +512,15 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
                     ),
                   ),
                 ),
-                if (streamId.isNotEmpty)
+                if (chatStreamId.isNotEmpty)
                   Positioned(
-                    left: 0,
-                    right: 72,
-                    bottom: chromeBottom + scoreH - 4,
-                    height: 168,
+                    left: LivePkLayoutMetrics.chatOverlayLeftPadding,
+                    bottom: chromeBottom + scoreH + 6,
+                    width: MediaQuery.sizeOf(context).width *
+                        LivePkLayoutMetrics.chatOverlayWidthFactor,
+                    height: LivePkLayoutMetrics.chatOverlayHeight,
                     child: LivePkReferenceChatOverlay(
-                      streamId: streamId,
-                      maxHeight: 168,
+                      streamId: chatStreamId,
                       visible: _chatOpen,
                     ),
                   ),
@@ -555,11 +568,13 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
                           : null,
                       onSend: () {
                         final text = _chatController.text.trim();
-                        if (text.isEmpty || streamId.isEmpty) return;
+                        if (text.isEmpty || chatStreamId.isEmpty) return;
                         _chatController.clear();
                         final name = widget.session.streamerName ?? 'Yayıncı';
                         unawaited(
-                          ref.read(liveRoomProvider(streamId).notifier).sendMessage(
+                          ref
+                              .read(liveRoomProvider(chatStreamId).notifier)
+                              .sendMessage(
                                 text,
                                 selfName: name,
                               ),

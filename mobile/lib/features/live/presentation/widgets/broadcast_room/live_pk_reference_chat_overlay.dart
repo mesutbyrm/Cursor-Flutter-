@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/live_room_providers.dart';
+import 'live_pk_layout_metrics.dart';
 import 'live_room_chat_message.dart';
 
 /// Referans — şeffaf sohbet akışı (video üzerinde).
@@ -9,7 +10,7 @@ class LivePkReferenceChatOverlay extends ConsumerWidget {
   const LivePkReferenceChatOverlay({
     super.key,
     required this.streamId,
-    this.maxHeight = 148,
+    this.maxHeight = LivePkLayoutMetrics.chatOverlayHeight,
     this.visible = true,
   });
 
@@ -30,21 +31,17 @@ class LivePkReferenceChatOverlay extends ConsumerWidget {
 
     return Align(
       alignment: Alignment.bottomLeft,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 0, 4, 4),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: maxHeight),
-          child: ListView.builder(
-            reverse: true,
-            shrinkWrap: true,
-            padding: EdgeInsets.zero,
-            physics: const BouncingScrollPhysics(),
-            itemCount: tail.length,
-            itemBuilder: (context, i) {
-              final m = tail[tail.length - 1 - i];
-              return _ChatLine(message: m);
-            },
-          ),
+      child: SizedBox(
+        height: maxHeight,
+        child: ListView.builder(
+          reverse: true,
+          padding: EdgeInsets.zero,
+          physics: const ClampingScrollPhysics(),
+          itemCount: tail.length,
+          itemBuilder: (context, i) {
+            final m = tail[tail.length - 1 - i];
+            return _ChatLine(message: m);
+          },
         ),
       ),
     );
@@ -82,7 +79,7 @@ class _ChatLine extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 6),
-          Expanded(
+          Flexible(
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: Colors.black.withValues(alpha: isGift ? 0.55 : 0.38),
