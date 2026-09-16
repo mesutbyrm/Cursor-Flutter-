@@ -201,6 +201,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   final Set<String> _seenGuestJoinIds = {};
   final Set<String> _seenVipEntrances = {};
   var _coHostUpgraded = false;
+  var _pkTwoWayRtc = false;
   var _joinRequestPending = false;
   String? _vipBannerName;
   EntranceTheme? _vipBannerTheme;
@@ -541,6 +542,67 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       PkEventLog.error('teardown', e);
     }
     ref.read(pkBattleRemoteProvider.notifier).clear();
+  }
+
+  Future<void> _ensurePkTwoWayRtc(String streamId) async {
+    if (_leaving || !_rtcReady || _pkTwoWayRtc) return;
+    if (!widget.session.isHost && !_coHostUpgraded) return;
+    final pk = ref.read(liveVideoPkProvider(streamId));
+    if (!isLivePkSplitReady(pk.battle, pk.status)) return;
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null || _trtcCoordinator == null) return;
+    final battle = pk.battle ?? const <String, dynamic>{};
+    final opponentId = (battle['opponentId'] ??
+            battle['opponentUserId'] ??
+            battle['targetUserId'])
+        ?.toString()
+        .trim();
+    try {
+      _trtcCoordinator!.setReconnectSuspended(true);
+      await _trtcCoordinator!.leave();
+      await _trtcCoordinator!.join(
+        roomId: streamId,
+        roomType: 'stream',
+        userId: user.id,
+        isHost: true,
+        twoWayVideo: true,
+        expectedAnchorUserId: opponentId?.isNotEmpty == true
+            ? opponentId
+            : widget.session.hostUserId,
+        useCompoundJoin: true,
+      );
+      _pkTwoWayRtc = true;
+      _applyRtcPublishPolicy();
+    } catch (e) {
+      if (kDebugMode) debugPrint('[PK] twoWayVideo rejoin failed: $e');
+    } finally {
+      _trtcCoordinator?.setReconnectSuspended(false);
+    }
+  }
+
+  Future<void> _revertPkTwoWayRtc(String streamId) async {
+    if (!_pkTwoWayRtc || _leaving) return;
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null || _trtcCoordinator == null) return;
+    _pkTwoWayRtc = false;
+    try {
+      _trtcCoordinator!.setReconnectSuspended(true);
+      await _trtcCoordinator!.leave();
+      await _trtcCoordinator!.join(
+        roomId: streamId,
+        roomType: 'stream',
+        userId: user.id,
+        isHost: widget.session.isHost,
+        twoWayVideo: widget.session.isHost || _coHostUpgraded,
+        expectedAnchorUserId: widget.session.hostUserId,
+        useCompoundJoin: true,
+      );
+      _applyRtcPublishPolicy();
+    } catch (_) {
+      _applyRtcPublishPolicy();
+    } finally {
+      _trtcCoordinator?.setReconnectSuspended(false);
+    }
   }
 
   void _applyRtcPublishPolicy() {
@@ -1911,10 +1973,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     bool hasCoGuests = false,
     Map<String, dynamic>? pkBattle,
   }) {
-    final pkOn = isLivePkSplitReady(pkBattle, pkStatus);
+    // PK: tam ekran immersive video (referans UI); yalnızca misafir grid split.
     final guestOn =
         _resolveGuestLayout() != LiveGuestLayout.solo || hasCoGuests;
-    return pkOn || guestOn;
+    return guestOn;
   }
 
   LiveGuestLayout _resolveGuestLayout() {
@@ -2475,6 +2537,14 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         if (battle != null) {
           _maybeShowPkInvite(streamId, battle);
         }
+        final wasSplit =
+            prev != null && isLivePkSplitReady(prev.battle, prev.status);
+        final nowSplit = isLivePkSplitReady(next.battle, next.status);
+        if (nowSplit && !wasSplit) {
+          unawaited(_ensurePkTwoWayRtc(streamId));
+        } else if (wasSplit && !nowSplit) {
+          unawaited(_revertPkTwoWayRtc(streamId));
+        }
       });
       ref.listen(livePkInviteSignalProvider, (_, __) {
         _applyPkInvites(streamId);
@@ -2732,8 +2802,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               joinRequestPending: _joinRequestPending,
               coHostUpgraded: _coHostUpgraded,
             ),
-            if (hasStream && pkState?.battle != null &&
-                (pkStatus == 'active' || pkStatus == 'ended'))
+            if (hasStream &&
+                pkState?.battle != null &&
+                (pkStatus == 'ended' || pkStatus == 'completed'))
               LivePkPremiumOverlay(
                 leftScore: pkState!.leftScore,
                 rightScore: pkState.rightScore,

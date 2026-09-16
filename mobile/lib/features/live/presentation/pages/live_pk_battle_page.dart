@@ -5,21 +5,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../trtc/presentation/trtc_live_room_coordinator.dart';
 import '../../../trtc/presentation/trtc_room_manager.dart';
 import '../../../voice_hub/domain/pk/pk_battle_mode.dart';
+import '../../../voice_hub/domain/pk/pk_battle_remote_models.dart';
 import '../../../voice_hub/domain/pk/pk_battle_state.dart';
 import '../../../voice_hub/domain/pk/pk_duration_options.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_provider.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
 import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_floating_reactions.dart';
 import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_gift_explosion_flash.dart';
+import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_vs_emblem.dart';
 import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_winner_celebration.dart';
 import '../providers/live_pk_ui_providers.dart';
 import '../widgets/broadcast_room/live_pk_immersive_controls.dart';
-import '../widgets/broadcast_room/live_pk_immersive_score_overlay.dart';
 import '../widgets/broadcast_room/live_pk_immersive_video_pane.dart';
 import '../widgets/broadcast_room/live_pk_intro_overlay.dart';
 import '../widgets/broadcast_room/live_pk_resolved_timer.dart';
+import '../widgets/broadcast_room/live_pk_reference_score_bar.dart';
+import '../widgets/broadcast_room/live_pk_reference_chat_overlay.dart';
+import '../widgets/broadcast_room/live_pk_gift_toast_overlay.dart';
 import '../widgets/broadcast_room/live_pk_score_pop_overlay.dart';
 import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_gift_event.dart';
@@ -36,25 +42,33 @@ import '../providers/pk_room_providers.dart';
 import '../gifts/live_gift_controller.dart';
 import '../gifts/providers/live_gift_providers.dart';
 import '../widgets/broadcast_room/live_pk_score_bar.dart';
+import '../widgets/live_gift_sheet.dart';
 import '../widgets/live_playback_bridge.dart';
+import '../../../trtc/presentation/providers/trtc_providers.dart';
 
-/// Canlı yayın split-screen PK — sol kendi yayın, sağ rakip, jeton skorları.
+/// Canlı yayın split-screen PK — referans UI, gerçek RTC + backend.
 class LivePkBattlePage extends ConsumerStatefulWidget {
   const LivePkBattlePage({
     super.key,
     required this.session,
     this.opponentStream,
+    this.sharedTrtc,
   });
 
   final LiveBroadcastSession session;
   final LiveStreamEntity? opponentStream;
+
+  /// Yayın odasından geçilirse paylaşılan TRTC (dispose edilmez).
+  final TrtcRoomManager? sharedTrtc;
 
   @override
   ConsumerState<LivePkBattlePage> createState() => _LivePkBattlePageState();
 }
 
 class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
-  final _trtc = TrtcRoomManager();
+  late final TrtcRoomManager _trtc;
+  var _ownsTrtc = true;
+  TrtcLiveRoomCoordinator? _trtcCoordinator;
   final _chatController = TextEditingController();
   var _lastGiftSideLeft = true;
   var _lastGiftDelta = 0;
@@ -62,12 +76,16 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
   var _chatOpen = true;
   Timer? _pkPollTimer;
   String? _unifiedMatchId;
+  var _endInFlight = false;
+  var _timerEndFired = false;
 
   String? get _streamId => widget.session.streamId?.trim();
 
   @override
   void initState() {
     super.initState();
+    _trtc = widget.sharedTrtc ?? TrtcRoomManager();
+    _ownsTrtc = widget.sharedTrtc == null;
     WidgetsBinding.instance.addPostFrameCallback((_) => _bootstrap());
   }
 
@@ -75,7 +93,7 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
     final streamId = _streamId;
     if (streamId == null || streamId.isEmpty) return;
 
-    await _initTrtcPreview();
+    await _initTrtcRoom(streamId);
 
     final remote = ref.read(pkBattleRemoteProvider.notifier);
     final unified = await ref.read(pkRoomRemoteProvider).activeForStream(streamId);
@@ -95,12 +113,48 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
     _pollPk();
   }
 
-  Future<void> _initTrtcPreview() async {
-    if (!widget.session.isHost) return;
-    try {
-      await _trtc.startPreviewOnly();
+  void _syncLocalPkFromRemote(PkBattleRemote? remote) {
+    if (remote == null) return;
+    ref.read(pkBattleProvider.notifier).applyRemoteBattle(remote);
+  }
+
+  Future<void> _initTrtcRoom(String streamId) async {
+    if (!_trtc.isSupported) return;
+    if (_trtc.inRoom) {
       if (mounted) setState(() => _trtcReady = true);
-    } catch (_) {}
+      return;
+    }
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null) return;
+    if (!widget.session.isHost) {
+      if (mounted) setState(() => _trtcReady = true);
+      return;
+    }
+    try {
+      _trtcCoordinator = TrtcLiveRoomCoordinator(
+        liveRoom: ref.read(liveRoomRemoteProvider),
+        trtcRemote: ref.read(trtcRemoteProvider),
+        roomManager: _trtc,
+      );
+      final opponentId = widget.opponentStream?.hostUserId?.trim();
+      await _trtcCoordinator!.join(
+        roomId: streamId,
+        roomType: 'stream',
+        userId: user.id,
+        isHost: true,
+        twoWayVideo: true,
+        expectedAnchorUserId: opponentId?.isNotEmpty == true
+            ? opponentId
+            : widget.session.hostUserId,
+        useCompoundJoin: true,
+      );
+      if (mounted) setState(() => _trtcReady = true);
+    } catch (_) {
+      try {
+        await _trtc.startPreviewOnly();
+        if (mounted) setState(() => _trtcReady = true);
+      } catch (_) {}
+    }
   }
 
   void _pollPk() {
@@ -126,12 +180,20 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
     ref.read(pkBattleProvider.notifier).applyGift(event, toLeft: toLeft);
   }
 
+  Future<void> _teardownRtc() async {
+    if (_ownsTrtc) {
+      await _trtcCoordinator?.leave();
+      _trtcCoordinator = null;
+      await _trtc.disposeAsync();
+    }
+  }
+
   @override
   void dispose() {
     _pkPollTimer?.cancel();
     _chatController.dispose();
     ref.read(liveGiftControllerProvider).detach();
-    _trtc.dispose();
+    unawaited(_teardownRtc());
     super.dispose();
   }
 
@@ -176,18 +238,33 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
   }
 
   Future<void> _end() async {
-    final unifiedId = _unifiedMatchId;
-    if (unifiedId != null && unifiedId.isNotEmpty) {
-      await ref.read(pkUnifiedInviteProvider).end(unifiedId);
-      return;
+    if (_endInFlight) return;
+    _endInFlight = true;
+    try {
+      final unifiedId = _unifiedMatchId;
+      if (unifiedId != null && unifiedId.isNotEmpty) {
+        await ref.read(pkUnifiedInviteProvider).end(unifiedId);
+        return;
+      }
+      final id = ref.read(pkBattleRemoteProvider)?.id;
+      final streamId = _streamId;
+      if (id == null || streamId == null || streamId.isEmpty) return;
+      await ref.read(pkBattleRemoteProvider.notifier).end(
+            id,
+            streamId: streamId,
+          );
+    } finally {
+      _endInFlight = false;
     }
-    final id = ref.read(pkBattleRemoteProvider)?.id;
-    final streamId = _streamId;
-    if (id == null || streamId == null || streamId.isEmpty) return;
-    await ref.read(pkBattleRemoteProvider.notifier).end(
-          id,
-          streamId: streamId,
-        );
+  }
+
+  void _onTimerExpired() {
+    if (_timerEndFired) return;
+    _timerEndFired = true;
+    final remote = ref.read(pkBattleRemoteProvider);
+    if (remote?.isActive == true && widget.session.isHost) {
+      unawaited(_end());
+    }
   }
 
   @override
@@ -197,6 +274,13 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
       if (list.isEmpty) return;
       if (prev != null && prev.notifications.length == list.length) return;
       _onGift(list.last);
+    });
+
+    ref.listen(pkBattleRemoteProvider, (prev, next) {
+      if (next != null && next.isEnded && prev?.isEnded != true) {
+        _syncLocalPkFromRemote(next);
+        if (_ownsTrtc) unawaited(_teardownRtc());
+      }
     });
 
     final remote = ref.watch(pkBattleRemoteProvider);
@@ -213,6 +297,9 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
     final opponentMuted = streamId.isNotEmpty
         ? ref.watch(livePkOpponentMutedProvider(streamId))
         : false;
+    final viewerCount = streamId.isNotEmpty
+        ? ref.watch(liveRoomProvider(streamId)).viewerCount
+        : 0;
 
     final leftScore = unifiedMatch?.leftScore ??
         remote?.challengerScore ??
@@ -230,8 +317,10 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
         widget.opponentStream?.hostUserId ??
         '';
 
+    final finished = remote?.isEnded == true || pk.isFinished;
+
     final pkState = PkBattleState(
-      phase: remote?.isEnded == true || pk.isFinished
+      phase: finished
           ? PkBattlePhase.finished
           : remote?.isActive == true || pk.isActive
               ? PkBattlePhase.active
@@ -239,7 +328,7 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
       secondsLeft: remote?.resolvedSecondsLeft() ?? pk.secondsLeft,
       left: pk.left.copyWith(score: leftScore, giftPower: 0),
       right: pk.right.copyWith(score: rightScore, giftPower: 0),
-      winner: pk.winner,
+      winner: _resolveWinner(remote, pk, leftScore, rightScore),
       reactionBurst: pk.reactionBurst,
       serverAuthoritative: remote != null,
     );
@@ -247,8 +336,9 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
     final pkActive = remote?.isActive == true || pk.isActive;
     final pending = remote?.isPending == true && !pkActive;
     final topInset = MediaQuery.paddingOf(context).top;
-    final chatHeight = _chatOpen ? 52.0 : 0.0;
-    final controlsHeight = 88.0 + MediaQuery.paddingOf(context).bottom;
+    final bottomPad = MediaQuery.paddingOf(context).bottom;
+    final controlsHeight = 96.0 + bottomPad;
+    final chatInputHeight = _chatOpen && pkActive && !finished ? 52.0 : 0.0;
 
     return GiftEventListener(
       sessionKey: streamId,
@@ -259,205 +349,277 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
       child: Scaffold(
         backgroundColor: Colors.black,
         resizeToAvoidBottomInset: false,
-        body: Stack(
-          fit: StackFit.expand,
-          children: [
-            Positioned.fill(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: LivePkImmersiveVideoPane(
-                      isLocal: true,
-                      displayName: leftName,
-                      avatarUrl: widget.session.avatarUrl ?? widget.session.coverImageUrl,
-                      micOn: _trtc.micOn,
-                      cameraOn: _trtc.cameraOn,
-                      chipAlignment: Alignment.topLeft,
-                      video: _trtcReady
-                          ? TrtcLocalVideoView(manager: _trtc)
-                          : _fallbackThumb(widget.session.coverImageUrl),
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final h = constraints.maxHeight;
+            final videoH = finished ? 0.0 : (h * 0.56).clamp(240.0, h * 0.65);
+
+            return Stack(
+              fit: StackFit.expand,
+              children: [
+                if (!finished && videoH > 0)
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: videoH,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: LivePkImmersiveVideoPane(
+                            isLocal: true,
+                            displayName: leftName,
+                            avatarUrl:
+                                widget.session.avatarUrl ?? widget.session.coverImageUrl,
+                            micOn: _trtc.micOn,
+                            cameraOn: _trtc.cameraOn,
+                            chipAlignment: Alignment.topLeft,
+                            video: _trtcReady && isHost
+                                ? TrtcLocalVideoView(manager: _trtc)
+                                : _fallbackThumb(widget.session.coverImageUrl),
+                          ),
+                        ),
+                        Expanded(
+                          child: LivePkImmersiveVideoPane(
+                            displayName: rightName,
+                            avatarUrl: widget.opponentStream?.thumbnailUrl,
+                            micOn: true,
+                            cameraOn: true,
+                            chipAlignment: Alignment.topRight,
+                            video: _opponentVideo(
+                              opponentUserId: opponentUserId,
+                              opponentMuted: opponentMuted,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  Expanded(
-                    child: LivePkImmersiveVideoPane(
-                      displayName: rightName,
-                      avatarUrl: widget.opponentStream?.thumbnailUrl,
-                      micOn: true,
-                      cameraOn: true,
-                      chipAlignment: Alignment.topRight,
-                      video: _opponentVideo(
-                        opponentUserId: opponentUserId,
-                        opponentMuted: opponentMuted,
+                if (!finished && videoH > 0)
+                  Positioned(
+                    top: videoH * 0.42,
+                    left: 0,
+                    right: 0,
+                    child: const Center(
+                      child: PkVsEmblem(size: 44, pulse: true),
+                    ),
+                  ),
+                if (pending)
+                  Positioned(
+                    left: 12,
+                    right: 12,
+                    top: topInset + 56,
+                    child: LivePkScoreBar(
+                      leftScore: leftScore,
+                      rightScore: rightScore,
+                      status: status,
+                      isHost: isHost,
+                      onAccept: _accept,
+                      onReject: _reject,
+                      onEnd: _end,
+                    ),
+                  ),
+                if (!finished)
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    top: videoH > 0 ? videoH - 4 : null,
+                    bottom: videoH > 0 ? null : controlsHeight + chatInputHeight + 8,
+                    child: LivePkReferenceScoreBar(
+                      leftScore: leftScore,
+                      rightScore: rightScore,
+                      leftLabel: leftName,
+                      rightLabel: rightName,
+                      active: pkActive,
+                    ),
+                  ),
+                if (!finished && streamId.isNotEmpty)
+                  LivePkReferenceChatOverlay(
+                    streamId: streamId,
+                    maxHeight: 140,
+                    visible: _chatOpen && pkActive,
+                  ),
+                if (!finished) const LivePkGiftToastOverlay(),
+                if (!finished && pkActive && streamId.isNotEmpty)
+                  LivePkFloatingGiftButton(
+                    onTap: () => showLiveGiftPicker(
+                      context,
+                      ref,
+                      streamId: streamId,
+                      receiverName: rightName,
+                    ),
+                  ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: topInset + 4,
+                  child: _TopBar(
+                    onBack: () => context.pop(),
+                    viewerCount: viewerCount,
+                    timer: LivePkResolvedTimer(
+                      remote: remote,
+                      fallbackSeconds: pk.secondsLeft,
+                      onExpired: _onTimerExpired,
+                    ),
+                  ),
+                ),
+                if (!finished)
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: controlsHeight,
+                    child: LivePkChatInputBar(
+                      controller: _chatController,
+                      visible: _chatOpen && pkActive,
+                      onGift: streamId.isNotEmpty
+                          ? () => showLiveGiftPicker(
+                                context,
+                                ref,
+                                streamId: streamId,
+                                receiverName: rightName,
+                              )
+                          : null,
+                      onSend: () {
+                        final text = _chatController.text.trim();
+                        if (text.isEmpty || streamId.isEmpty) return;
+                        _chatController.clear();
+                        final name = widget.session.streamerName ?? 'Yayıncı';
+                        unawaited(
+                          ref.read(liveRoomProvider(streamId).notifier).sendMessage(
+                                text,
+                                selfName: name,
+                              ),
+                        );
+                      },
+                      onToggleVisibility: () => setState(() => _chatOpen = false),
+                    ),
+                  ),
+                if (!finished)
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: LivePkImmersiveControls(
+                      items: [
+                        LivePkControlItem(
+                          icon: _trtc.micOn ? Icons.mic_rounded : Icons.mic_off_rounded,
+                          label: 'Mikrofon',
+                          active: _trtc.micOn,
+                          onTap: isHost
+                              ? () {
+                                  _trtc.setMicEnabled(!_trtc.micOn);
+                                  setState(() {});
+                                }
+                              : null,
+                        ),
+                        LivePkControlItem(
+                          icon: _trtc.cameraOn
+                              ? Icons.videocam_rounded
+                              : Icons.videocam_off_rounded,
+                          label: 'Kamera',
+                          active: _trtc.cameraOn,
+                          onTap: isHost
+                              ? () {
+                                  _trtc.setCameraEnabled(!_trtc.cameraOn);
+                                  setState(() {});
+                                }
+                              : null,
+                        ),
+                        LivePkControlItem(
+                          icon: opponentMuted
+                              ? Icons.volume_off_rounded
+                              : Icons.hearing_rounded,
+                          label: 'Rakip ses',
+                          active: !opponentMuted,
+                          onTap: () {
+                            if (streamId.isEmpty) return;
+                            final next = !opponentMuted;
+                            ref
+                                .read(livePkOpponentMutedProvider(streamId).notifier)
+                                .state = next;
+                            final opp = opponentUserId.trim();
+                            if (opp.isNotEmpty) {
+                              _trtc.muteRemoteAudio(opp, next);
+                            }
+                            setState(() {});
+                          },
+                        ),
+                        LivePkControlItem(
+                          icon: _chatOpen
+                              ? Icons.chat_bubble_rounded
+                              : Icons.chat_bubble_outline_rounded,
+                          label: 'Sohbet',
+                          onTap: () => setState(() => _chatOpen = !_chatOpen),
+                        ),
+                        LivePkControlItem(
+                          icon: Icons.stop_circle_outlined,
+                          label: 'Bitir',
+                          danger: true,
+                          onTap: pkActive && isHost ? _end : null,
+                        ),
+                      ],
+                    ),
+                  ),
+                LivePkIntroOverlay(visible: pkActive && !finished),
+                if (!finished) ...[
+                  LivePkScorePopOverlay(
+                    burstToken: pk.reactionBurst,
+                    delta: _lastGiftDelta,
+                    toLeft: _lastGiftSideLeft,
+                  ),
+                  PkFloatingReactions(
+                    burstToken: pk.reactionBurst,
+                    enabled: pkState.isActive,
+                  ),
+                  PkGiftExplosionFlash(
+                    token: pk.reactionBurst,
+                    toLeft: _lastGiftSideLeft,
+                  ),
+                  GiftEngineSeatEffectsOverlay(event: activeGift),
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: GiftEngineOverlay(
+                        event: activeGift,
+                        stage: GiftStageContext.liveStream,
+                        onFinished: (id) => ref
+                            .read(giftSessionProvider(streamId).notifier)
+                            .dequeueAnimation(id),
                       ),
                     ),
                   ),
                 ],
-              ),
-            ),
-            if (pending)
-              Positioned(
-                left: 12,
-                right: 12,
-                top: topInset + 56,
-                child: LivePkScoreBar(
-                  leftScore: leftScore,
-                  rightScore: rightScore,
-                  status: status,
-                  isHost: isHost,
-                  onAccept: _accept,
-                  onReject: _reject,
-                  onEnd: _end,
+                PkWinnerCelebration(
+                  state: pkState,
+                  onRestart: () {
+                    final dur = remote?.durationSeconds ?? pkDefaultDurationSeconds;
+                    ref.read(pkBattleProvider.notifier).restart(durationSeconds: dur);
+                    _timerEndFired = false;
+                  },
+                  onClose: () => context.pop(),
                 ),
-              ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: controlsHeight + chatHeight,
-              child: LivePkImmersiveScoreOverlay(
-                leftScore: leftScore,
-                rightScore: rightScore,
-                leftLabel: leftName,
-                rightLabel: rightName,
-                showTieHint: pkState.isFinished,
-              ),
-            ),
-            Positioned(
-              left: 0,
-              right: 0,
-              top: topInset + 4,
-              child: _TopBar(
-                onBack: () => context.pop(),
-                timer: LivePkResolvedTimer(
-                  remote: remote,
-                  fallbackSeconds: pk.secondsLeft,
-                ),
-              ),
-            ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: controlsHeight,
-              child: LivePkChatInputBar(
-                controller: _chatController,
-                visible: _chatOpen && pkActive,
-                onSend: () {
-                  final text = _chatController.text.trim();
-                  if (text.isEmpty || streamId.isEmpty) return;
-                  _chatController.clear();
-                  final name = widget.session.streamerName ?? 'Yayıncı';
-                  unawaited(
-                    ref.read(liveRoomProvider(streamId).notifier).sendMessage(
-                          text,
-                          selfName: name,
-                        ),
-                  );
-                },
-                onToggleVisibility: () => setState(() => _chatOpen = false),
-              ),
-            ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: LivePkImmersiveControls(
-                items: [
-                  LivePkControlItem(
-                    icon: _trtc.micOn ? Icons.mic_rounded : Icons.mic_off_rounded,
-                    label: 'Mikrofon',
-                    active: _trtc.micOn,
-                    onTap: isHost
-                        ? () {
-                            _trtc.setMicEnabled(!_trtc.micOn);
-                            setState(() {});
-                          }
-                        : null,
-                  ),
-                  LivePkControlItem(
-                    icon: _trtc.cameraOn
-                        ? Icons.videocam_rounded
-                        : Icons.videocam_off_rounded,
-                    label: 'Kamera',
-                    active: _trtc.cameraOn,
-                    onTap: isHost
-                        ? () {
-                            _trtc.setCameraEnabled(!_trtc.cameraOn);
-                            setState(() {});
-                          }
-                        : null,
-                  ),
-                  LivePkControlItem(
-                    icon: opponentMuted
-                        ? Icons.volume_off_rounded
-                        : Icons.hearing_rounded,
-                    label: 'Rakip ses',
-                    active: !opponentMuted,
-                    onTap: () {
-                      if (streamId.isEmpty) return;
-                      final next = !opponentMuted;
-                      ref
-                          .read(livePkOpponentMutedProvider(streamId).notifier)
-                          .state = next;
-                      final opp = opponentUserId.trim();
-                      if (opp.isNotEmpty) {
-                        _trtc.muteRemoteAudio(opp, next);
-                      }
-                      setState(() {});
-                    },
-                  ),
-                  LivePkControlItem(
-                    icon: _chatOpen
-                        ? Icons.chat_bubble_rounded
-                        : Icons.chat_bubble_outline_rounded,
-                    label: 'Sohbet',
-                    onTap: () => setState(() => _chatOpen = !_chatOpen),
-                  ),
-                  LivePkControlItem(
-                    icon: Icons.stop_circle_outlined,
-                    label: 'Bitir',
-                    danger: true,
-                    onTap: pkActive && isHost ? _end : null,
-                  ),
-                ],
-              ),
-            ),
-            LivePkIntroOverlay(visible: pkActive),
-            LivePkScorePopOverlay(
-              burstToken: pk.reactionBurst,
-              delta: _lastGiftDelta,
-              toLeft: _lastGiftSideLeft,
-            ),
-            PkFloatingReactions(
-              burstToken: pk.reactionBurst,
-              enabled: pkState.isActive,
-            ),
-            PkGiftExplosionFlash(
-              token: pk.reactionBurst,
-              toLeft: _lastGiftSideLeft,
-            ),
-            GiftEngineSeatEffectsOverlay(event: activeGift),
-            Positioned.fill(
-              child: IgnorePointer(
-                child: GiftEngineOverlay(
-                  event: activeGift,
-                  stage: GiftStageContext.liveStream,
-                  onFinished: (id) => ref
-                      .read(giftSessionProvider(streamId).notifier)
-                      .dequeueAnimation(id),
-                ),
-              ),
-            ),
-            PkWinnerCelebration(
-              state: pkState,
-              onRestart: () {
-                final dur = remote?.durationSeconds ?? pkDefaultDurationSeconds;
-                ref.read(pkBattleProvider.notifier).restart(durationSeconds: dur);
-              },
-              onClose: () => context.pop(),
-            ),
-          ],
+              ],
+            );
+          },
         ),
       ),
     );
+  }
+
+  PkBattleWinner _resolveWinner(
+    PkBattleRemote? remote,
+    PkBattleState pk,
+    int leftScore,
+    int rightScore,
+  ) {
+    if (remote?.isEnded == true && remote?.result != null) {
+      final side = remote!.result!.winnerSide;
+      if (side == 'tie') return PkBattleWinner.tie;
+      if (side == 'challenger') return PkBattleWinner.left;
+      if (side == 'opponent') return PkBattleWinner.right;
+    }
+    if (pk.phase == PkBattlePhase.finished) return pk.winner;
+    if (leftScore == rightScore) return PkBattleWinner.tie;
+    return leftScore > rightScore ? PkBattleWinner.left : PkBattleWinner.right;
   }
 
   Widget _fallbackThumb(String? url) {
@@ -495,10 +657,15 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
 }
 
 class _TopBar extends StatelessWidget {
-  const _TopBar({required this.onBack, required this.timer});
+  const _TopBar({
+    required this.onBack,
+    required this.timer,
+    this.viewerCount = 0,
+  });
 
   final VoidCallback onBack;
   final Widget timer;
+  final int viewerCount;
 
   @override
   Widget build(BuildContext context) {
@@ -523,6 +690,26 @@ class _TopBar extends StatelessWidget {
                   color: Colors.white, size: 20),
             ),
             Expanded(child: Center(child: timer)),
+            if (viewerCount > 0)
+              Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.visibility_rounded,
+                        color: Colors.white70, size: 16),
+                    const SizedBox(width: 4),
+                    Text(
+                      _fmtCount(viewerCount),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
               color: const Color(0xFF1A1F35),
@@ -536,5 +723,10 @@ class _TopBar extends StatelessWidget {
       ),
     );
   }
-}
 
+  static String _fmtCount(int n) {
+    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
+    return '$n';
+  }
+}

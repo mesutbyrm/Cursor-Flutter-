@@ -68,8 +68,9 @@ class _LivePkPremiumOverlayState extends ConsumerState<LivePkPremiumOverlay>
   @override
   Widget build(BuildContext context) {
     final perf = ref.watch(cdsFxProvider).performanceMode;
-    final total = (widget.leftScore + widget.rightScore).clamp(1, 999999999);
-    final leftPct = (widget.leftScore / total * 100).round();
+    final sum = widget.leftScore + widget.rightScore;
+    final leftPct =
+        sum <= 0 ? 50 : (widget.leftScore / sum * 100).round().clamp(0, 100);
     final rightPct = 100 - leftPct;
 
     final countdown = Text(
@@ -167,11 +168,11 @@ class _LivePkPremiumOverlayState extends ConsumerState<LivePkPremiumOverlay>
             child: Row(
               children: [
                 Expanded(
-                  flex: leftPct.clamp(5, 95),
+                  flex: sum <= 0 ? 500 : leftPct.clamp(5, 95),
                   child: Container(color: const Color(0xFFFF4D9D)),
                 ),
                 Expanded(
-                  flex: rightPct.clamp(5, 95),
+                  flex: sum <= 0 ? 500 : rightPct.clamp(5, 95),
                   child: Container(color: const Color(0xFF22D3EE)),
                 ),
               ],

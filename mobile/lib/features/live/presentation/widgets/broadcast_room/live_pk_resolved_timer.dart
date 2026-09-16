@@ -13,12 +13,14 @@ class LivePkResolvedTimer extends StatefulWidget {
     this.fallbackSeconds = 0,
     this.showPkLabel = true,
     this.centered = true,
+    this.onExpired,
   });
 
   final PkBattleRemote? remote;
   final int fallbackSeconds;
   final bool showPkLabel;
   final bool centered;
+  final VoidCallback? onExpired;
 
   @override
   State<LivePkResolvedTimer> createState() => _LivePkResolvedTimerState();
@@ -27,6 +29,7 @@ class LivePkResolvedTimer extends StatefulWidget {
 class _LivePkResolvedTimerState extends State<LivePkResolvedTimer> {
   Timer? _tick;
   int _display = 0;
+  var _expiredFired = false;
 
   @override
   void initState() {
@@ -49,6 +52,13 @@ class _LivePkResolvedTimerState extends State<LivePkResolvedTimer> {
     if (next != _display) {
       setState(() => _display = next);
     }
+    if (next <= 0 &&
+        !_expiredFired &&
+        (remote?.isActive == true || widget.fallbackSeconds > 0)) {
+      _expiredFired = true;
+      widget.onExpired?.call();
+    }
+    if (next > 0) _expiredFired = false;
   }
 
   @override
@@ -62,7 +72,10 @@ class _LivePkResolvedTimerState extends State<LivePkResolvedTimer> {
     if (_display <= 0 && widget.remote?.isActive != true) {
       return const SizedBox.shrink();
     }
-    final badge = PkBattleTimerBadge(secondsLeft: _display);
+    final badge = PkBattleTimerBadge(
+      secondsLeft: _display,
+      flashThreshold: 10,
+    );
     if (!widget.showPkLabel) return badge;
     final row = Row(
       mainAxisSize: MainAxisSize.min,

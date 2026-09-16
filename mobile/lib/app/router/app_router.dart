@@ -136,6 +136,7 @@ import '../../features/shell/presentation/main_shell_page.dart';
 import '../../features/live/domain/entities/live_stream_entity.dart';
 import '../../features/live/domain/entities/voice_room_entity.dart';
 import '../../features/live/presentation/pages/live_pk_battle_page.dart';
+import '../../features/trtc/presentation/trtc_room_manager.dart';
 import '../../features/live/presentation/pages/live_pk_invite_page.dart';
 import '../../features/voice_hub/presentation/pages/pk_history_page.dart';
 import '../../features/voice_hub/presentation/pages/pk_invite_page.dart';
@@ -1482,7 +1483,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             opponent = extra['opponent'] as LiveStreamEntity?;
           }
           if (session == null) return const LiveBroadcastPrepPage();
-          return LivePkBattlePage(session: session, opponentStream: opponent);
+          final sharedTrtc = extra is Map
+              ? extra['trtc'] as TrtcRoomManager?
+              : null;
+          return LivePkBattlePage(
+            session: session,
+            opponentStream: opponent,
+            sharedTrtc: sharedTrtc,
+          );
         },
       ),
       GoRoute(

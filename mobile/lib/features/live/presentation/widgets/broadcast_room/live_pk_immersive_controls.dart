@@ -108,12 +108,16 @@ class LivePkChatInputBar extends StatelessWidget {
     required this.controller,
     required this.onSend,
     this.onToggleVisibility,
+    this.onGift,
+    this.onQuickRose,
     this.visible = true,
   });
 
   final TextEditingController controller;
   final VoidCallback onSend;
   final VoidCallback? onToggleVisibility;
+  final VoidCallback? onGift;
+  final VoidCallback? onQuickRose;
   final bool visible;
 
   @override
@@ -149,11 +153,64 @@ class LivePkChatInputBar extends StatelessWidget {
               ),
             ),
           ),
+          if (onQuickRose != null)
+            IconButton(
+              onPressed: onQuickRose,
+              tooltip: 'Gül',
+              icon: const Text('🌹', style: TextStyle(fontSize: 20)),
+            ),
+          if (onGift != null)
+            IconButton(
+              onPressed: onGift,
+              tooltip: 'Hediye',
+              icon: const Icon(Icons.card_giftcard_rounded,
+                  color: Color(0xFFFFD54F)),
+            ),
           IconButton(
             onPressed: onSend,
             icon: const Icon(Icons.send_rounded, color: Color(0xFFB832FF)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Sağ kenar floating hediye — referans "Gönder".
+class LivePkFloatingGiftButton extends StatelessWidget {
+  const LivePkFloatingGiftButton({super.key, required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      right: 12,
+      bottom: 168,
+      child: Material(
+        color: Colors.black.withValues(alpha: 0.45),
+        shape: const CircleBorder(),
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          child: const Padding(
+            padding: EdgeInsets.all(12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('🌹', style: TextStyle(fontSize: 22)),
+                Text(
+                  'Gönder',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

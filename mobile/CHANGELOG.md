@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.533+574 (2026-09-16) — PK referans UI 1:1 + RTC/skor düzeltmeleri
+
+- Yayın PK: tam ekran video (alt siyah yarım kaldırıldı); split yalnızca misafir grid
+- PK aktif: TRTC `twoWayVideo` yeniden join — karşı yayıncı uzak video/ses
+- Referans skor çubuğu (%50 @ 0-0), VS rozeti, şeffaf sohbet/hediye toast, floating gül
+- `LivePkBattlePage`: tam oda join, timer `onExpired` → bitir, sonuçta video/RTC temizliği
+- Sonuç overlay: skor 0-0 yüzde hatası düzeltildi (`LivePkPremiumOverlay`)
+
 ## 1.0.532+573 (2026-09-16) — Canlı PK immersive UI (Bigo/TikTok tarzı)
 
 - Tam ekran split video — TRTC cover, gradient overlay, yayıncı chip (mik/kamera)
