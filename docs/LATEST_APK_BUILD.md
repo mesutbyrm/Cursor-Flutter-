@@ -4,20 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.542+583` |
-| Tarih (UTC) | 2026-09-16 17:44 |
-| Commit | [`64f15c6c696434e6b0b61a1defe455730443cbdb`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/64f15c6c696434e6b0b61a1defe455730443cbdb) |
-| İş akışı | [Run 35127915522](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35127915522) |
+| Sürüm | `1.0.543+584` |
+| Tarih (UTC) | 2026-09-16 18:02 |
+| Commit | [`0086dee57795acba8ee311cc4d5ffdf3c87c4a9b`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/0086dee57795acba8ee311cc4d5ffdf3c87c4a9b) |
+| İş akışı | [Run 35129205316](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35129205316) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.543+584 (2026-09-16) — PK ince ayar (gifter + standalone sayfa)
+## 1.0.544+585 (2026-09-16) — Sesli oda koltuk senkron yarışı
 
-- Pane altı top-3 destekçi şeridi (gerçek hediye oturumu, yayıncıya göre filtre)
-- Yayıncı chip: takip butonu pembe/mavi vurgu, yerel pane için de profil/takipçi
-- Sohbet satırı: avatar dairesi + VIP altın kullanıcı adı
-- `LivePkBattlePage`: tam ekran video ölçüleri, skor bandı, rakip mic/kamera TRTC, takip + gifter
+- Pending seat lock (5 sn): seat-take/leave sırasında presence snapshot kullanıcıyı düşürmez
+- Reaktif yetkili auto-seat: rol/izin + presence değişince tek deneme (context latch)
+- Host reconciliation: koltuksuz host 3 sn sonra yeniden oturma (pending yoksa)
+- Birim test: `voice_seat_pending_guard_test.dart`
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
