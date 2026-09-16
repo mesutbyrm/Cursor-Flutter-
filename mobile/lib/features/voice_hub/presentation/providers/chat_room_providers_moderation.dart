@@ -41,7 +41,9 @@ extension VoiceRoomModerationControls on VoiceRoomLiveController {
           );
       if (perms != null && perms.hasAnyServerFlag) {
         state = state.copyWith(serverPermissions: perms);
-        unawaited(_tryAutoPrivilegedSeat());
+        _autoSeatContextAttempted = null;
+        _autoSeatAttempted = false;
+        _scheduleReactivePrivilegedAutoSeat();
         return;
       }
       final staff = ref.read(staffAccessProvider);
@@ -63,7 +65,9 @@ extension VoiceRoomModerationControls on VoiceRoomLiveController {
           serverPermissions: perms ?? _ownerPermissionsFallback(),
         );
         _autoSeatAttempted = false;
+        _autoSeatContextAttempted = null;
         schedulePrivilegedSeatAttempts();
+        _scheduleReactivePrivilegedAutoSeat();
       }
     } catch (_) {
       final staff = ref.read(staffAccessProvider);
@@ -83,7 +87,9 @@ extension VoiceRoomModerationControls on VoiceRoomLiveController {
           staffByProfile) {
         state = state.copyWith(serverPermissions: _ownerPermissionsFallback());
         _autoSeatAttempted = false;
+        _autoSeatContextAttempted = null;
         schedulePrivilegedSeatAttempts();
+        _scheduleReactivePrivilegedAutoSeat();
       }
     }
   }

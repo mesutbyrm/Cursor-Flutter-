@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.544+585 (2026-09-16) — Sesli oda koltuk senkron yarışı
+
+- Pending seat lock (5 sn): seat-take/leave sırasında presence snapshot kullanıcıyı düşürmez
+- Reaktif yetkili auto-seat: rol/izin + presence değişince tek deneme (context latch)
+- Host reconciliation: koltuksuz host 3 sn sonra yeniden oturma (pending yoksa)
+- Birim test: `voice_seat_pending_guard_test.dart`
+
 ## 1.0.543+584 (2026-09-16) — PK ince ayar (gifter + standalone sayfa)
 
 - Pane altı top-3 destekçi şeridi (gerçek hediye oturumu, yayıncıya göre filtre)

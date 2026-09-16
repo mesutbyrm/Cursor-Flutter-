@@ -252,14 +252,21 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       previous: previous,
       incoming: incoming,
     );
+    _purgeExpiredPendingSeatActions();
+    final guarded = guardPresenceAgainstPendingSeatActions(
+      merged: replaced,
+      previous: previous,
+      pendingByUser: _pendingSeatByUser,
+    );
+    _confirmPendingSeatFromSnapshot(guarded);
     VoiceRoomDebugLog.presenceUpdate(
       roomId: _roomKey,
       previousCount: previous.length,
       incomingCount: incoming.length,
-      mergedCount: replaced.length,
+      mergedCount: guarded.length,
       source: isPresenceReplaceSource(source) ? source : '$source.replace',
     );
-    final seatCount = replaced.where((p) => p.seatIndex != null).length;
+    final seatCount = guarded.where((p) => p.seatIndex != null).length;
     if (seatCount > 0) {
       VoiceRoomDebugLog.seatUpdate(
         roomId: _roomKey,
@@ -267,7 +274,9 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         source: source,
       );
     }
-    return replaced;
+    _scheduleReactivePrivilegedAutoSeat();
+    _maybeReconcileHostSeatIfNeeded();
+    return guarded;
   }
 
   void _detectMicChanges(List<ChatRoomPresence> next) {

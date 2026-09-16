@@ -61,6 +61,7 @@ import '../../domain/entities/music_queue_item.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../domain/entities/chat_room_message.dart';
 import '../../domain/presence_canonical.dart';
+import '../../domain/voice_seat_pending_guard.dart';
 import '../../domain/room_event_scope.dart';
 import '../../domain/voice_playback_limits.dart';
 import '../../domain/voice_music_sync.dart';
@@ -424,6 +425,9 @@ class _PendingSeatClaim {
   bool get active => DateTime.now().isBefore(until);
 }
 
+/// Presence snapshot kilidi — kullanıcı bazlı (5 sn).
+const _pendingSeatActionTtl = Duration(seconds: 5);
+
 class VoiceRoomLiveController
     extends AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
     with VoiceRoomDjSyncMixin, VoiceRoomSseMixin {
@@ -458,6 +462,11 @@ class VoiceRoomLiveController
   final Set<String> _shownEntranceKeys = {};
   /// Yerel koltuk oturma — backend gecikince kullanıcı koltuktan düşmesin.
   final _pendingSeatClaims = <int, _PendingSeatClaim>{};
+  final Map<String, VoiceSeatPendingAction> _pendingSeatByUser = {};
+  DateTime? _lastSelfSeatTakeSuccessAt;
+  DateTime? _lastHostReconcileAttemptAt;
+  String? _autoSeatContextAttempted;
+  Timer? _autoSeatDebounce;
   final Set<String> _knownPresenceIds = {};
   /// Oturumda duyurulan girişler — aynı kullanıcı iki kez gösterilmez.
   final Set<String> _sessionAnnouncedJoinUserIds = {};
@@ -727,7 +736,8 @@ class VoiceRoomLiveController
       final nowPrivileged = next.isSiteAdmin || next.isFounder;
       if (!wasPrivileged && nowPrivileged) {
         _autoSeatAttempted = false;
-        unawaited(_tryAutoPrivilegedSeat());
+        _autoSeatContextAttempted = null;
+        _scheduleReactivePrivilegedAutoSeat();
       }
     });
     ref.listen(walletBalancesProvider, (prev, next) {
@@ -736,6 +746,7 @@ class VoiceRoomLiveController
       final nowAdmin = next.valueOrNull?.isAdmin == true;
       if (!wasAdmin && nowAdmin) {
         _autoSeatAttempted = false;
+        _autoSeatContextAttempted = null;
         unawaited(_tryAutoPrivilegedSeat());
       }
     });
@@ -989,6 +1000,7 @@ class VoiceRoomLiveController
     _sseRoomRefreshDebounce?.cancel();
     _rankingRefreshDebounce?.cancel();
     _roomSongBlocSyncTimer?.cancel();
+    _autoSeatDebounce?.cancel();
   }
 
   /// Odadan çıkış — TRTC/ses kesilir, ardından backend leave, sonra SSE/state.

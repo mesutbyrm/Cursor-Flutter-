@@ -7,6 +7,133 @@ part of 'chat_room_providers.dart';
 /// Sesli oda koltuk/mikrofon-sırası API'si — [VoiceRoomLiveController]'dan ayrıldı.
 /// `part of` — aynı kütüphane; private erişim ve davranış birebir korunur.
 extension VoiceRoomSeatControls on VoiceRoomLiveController {
+  void _purgeExpiredPendingSeatActions() {
+    _pendingSeatByUser.removeWhere((_, action) => !action.active);
+    _pendingSeatClaims.removeWhere((_, claim) => !claim.active);
+  }
+
+  void _registerPendingSeatTake(String userId, int seatIndex) {
+    final id = userId.trim();
+    if (id.isEmpty || seatIndex < 1) return;
+    _pendingSeatByUser[id] = VoiceSeatPendingAction(
+      userId: id,
+      kind: VoiceSeatPendingKind.take,
+      seatIndex: seatIndex,
+      expiresAt: DateTime.now().add(_pendingSeatActionTtl),
+    );
+  }
+
+  void _registerPendingSeatLeave(String userId) {
+    final id = userId.trim();
+    if (id.isEmpty) return;
+    _pendingSeatByUser[id] = VoiceSeatPendingAction(
+      userId: id,
+      kind: VoiceSeatPendingKind.leave,
+      expiresAt: DateTime.now().add(_pendingSeatActionTtl),
+    );
+  }
+
+  void _clearPendingSeatForUser(String userId) {
+    final id = userId.trim();
+    if (id.isEmpty) return;
+    _pendingSeatByUser.remove(id);
+    _pendingSeatClaims.removeWhere((_, claim) => claim.userId == id);
+  }
+
+  void _confirmPendingSeatFromSnapshot(List<ChatRoomPresence> merged) {
+    for (final row in merged) {
+      final id = row.id.trim();
+      if (id.isEmpty) continue;
+      final pending = _pendingSeatByUser[id];
+      if (pending == null || !pending.active) continue;
+      switch (pending.kind) {
+        case VoiceSeatPendingKind.take:
+          if (pending.seatIndex != null && row.seatIndex == pending.seatIndex) {
+            _clearPendingSeatForUser(id);
+          }
+        case VoiceSeatPendingKind.leave:
+          if (row.seatIndex == null) {
+            _clearPendingSeatForUser(id);
+          }
+      }
+    }
+  }
+
+  String _privilegedAutoSeatContextKey() {
+    final perms = state.serverPermissions;
+    final owner = (state.ownerId ?? _roomMeta.ownerId ?? '').trim();
+    return [
+      owner,
+      perms?.role ?? '',
+      perms?.isRoomOwner,
+      perms?.canModerate,
+      perms?.canGiveVoice,
+      perms?.canGiveOp,
+      state.presence.length,
+    ].join('|');
+  }
+
+  void _scheduleReactivePrivilegedAutoSeat() {
+    if (!_sessionActive || !state.selfInRoom || _roomKey.isEmpty) return;
+    _autoSeatDebounce?.cancel();
+    _autoSeatDebounce = Timer(const Duration(milliseconds: 250), () {
+      unawaited(_evaluateReactivePrivilegedAutoSeat());
+    });
+  }
+
+  Future<void> _evaluateReactivePrivilegedAutoSeat() async {
+    if (!_sessionActive || !state.selfInRoom || _roomKey.isEmpty) return;
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null) return;
+    if (_isSelfSeated(user.id)) return;
+    final pending = _pendingSeatByUser[user.id];
+    if (pending != null && pending.active) return;
+
+    final ctx = _privilegedAutoSeatContextKey();
+    if (_autoSeatContextAttempted == ctx) return;
+
+    ChatRoomPresence? self;
+    for (final p in state.presence) {
+      if (p.id == user.id) {
+        self = p;
+        break;
+      }
+    }
+    final priority = _privilegedRolePriority(
+      user,
+      state.serverPermissions,
+      self,
+    );
+    if (priority == null) return;
+
+    _autoSeatContextAttempted = ctx;
+    await _tryAutoPrivilegedSeat();
+  }
+
+  void _maybeReconcileHostSeatIfNeeded() {
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null || !_sessionActive || !state.selfInRoom) return;
+    final ownerId = (state.ownerId ?? _roomMeta.ownerId ?? '').trim();
+    if (ownerId.isEmpty || ownerId != user.id) return;
+    if (_isSelfSeated(user.id)) return;
+    final pending = _pendingSeatByUser[user.id];
+    if (pending != null && pending.active) return;
+
+    final lastTake = _lastSelfSeatTakeSuccessAt;
+    if (lastTake != null &&
+        DateTime.now().difference(lastTake) < const Duration(seconds: 3)) {
+      return;
+    }
+    final lastReco = _lastHostReconcileAttemptAt;
+    if (lastReco != null &&
+        DateTime.now().difference(lastReco) < const Duration(seconds: 3)) {
+      return;
+    }
+    _lastHostReconcileAttemptAt = DateTime.now();
+    _autoSeatAttempted = false;
+    unawaited(_tryAutoPrivilegedSeat());
+  }
+
   int? _privilegedRolePriority(
     UserEntity user,
     ChatRoomMyPermissions? server,
@@ -353,9 +480,10 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     String? name,
     String? image,
   }) {
+    _registerPendingSeatTake(userId, seatIndex);
     _pendingSeatClaims[seatIndex] = _PendingSeatClaim(
       userId: userId,
-      until: DateTime.now().add(const Duration(seconds: 15)),
+      until: DateTime.now().add(_pendingSeatActionTtl),
       name: name,
       image: image,
     );
@@ -384,6 +512,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     if (claim?.userId == userId) {
       _pendingSeatClaims.remove(seatIndex);
     }
+    _clearPendingSeatForUser(userId);
   }
 
   List<VoiceRoomSeatSlot> _mergePendingSeatClaimsInto(
@@ -424,6 +553,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     final isSelf = userId == null && selfId != null && selfId.isNotEmpty;
     if (isSelf) {
       final user = ref.read(authControllerProvider).valueOrNull;
+      _registerPendingSeatTake(selfId!, seatIndex);
       _optimisticOccupySeat(
         seatIndex: seatIndex,
         userId: selfId!,
@@ -463,6 +593,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
             .takeSeat(_roomKey, seatIndex, userId: userId);
       }
       if (isSelf) {
+        _lastSelfSeatTakeSuccessAt = DateTime.now();
         _clearPendingSeatClaim(seatIndex, selfId!);
       }
       unawaited(_refreshSeatsFromBackend());
@@ -538,6 +669,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
           p,
     ];
     state = state.copyWith(presence: prev);
+    _registerPendingSeatLeave(userId);
     try {
       VoiceEventLog.seatLeave(roomId: _roomKey);
       await ref.read(chatRoomRemoteProvider).clearSeat(
@@ -545,9 +677,11 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
             alternateKey: _musicAlternateKey,
             userId: userId,
           );
+      _clearPendingSeatForUser(userId);
       await refresh();
       return null;
     } catch (e) {
+      _clearPendingSeatForUser(userId);
       return ApiException.userMessage(e);
     }
   }
