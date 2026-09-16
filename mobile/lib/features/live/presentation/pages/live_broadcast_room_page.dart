@@ -68,6 +68,7 @@ import '../../domain/entities/live_gift_event.dart';
 import '../../domain/entities/live_guest_layout.dart';
 import '../../domain/pk/live_pk_invite_helper.dart';
 import '../../domain/pk/live_pk_side_resolver.dart';
+import '../../domain/pk/live_pk_chat_stream.dart';
 import '../../domain/pk/live_pk_trtc_anchor.dart';
 import '../../domain/pk/live_pk_broadcast_stage.dart';
 import '../../domain/pk/pk_status_helper.dart';
@@ -564,6 +565,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       myUserId: user.id,
     );
     if (anchor.trtcRoomId.isEmpty) return;
+    final mgr = _trtcCoordinator!.roomManager;
+    if (mgr.inRoom && mgr.joinedStrRoomId == anchor.trtcRoomId) {
+      _pkTwoWayRtc = true;
+      _applyRtcPublishPolicy();
+      return;
+    }
     try {
       _trtcCoordinator!.setReconnectSuspended(true);
       await _trtcCoordinator!.leave();
@@ -3027,8 +3034,16 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                   return;
                 }
                 _chat.clear();
+                final chatRoomId = pkImmersive
+                    ? livePkEffectiveChatStreamId(
+                        battle: pkState?.battle,
+                        myStreamId: streamId,
+                      )
+                    : streamId;
                 unawaited(
-                  ref.read(liveRoomProvider(streamId).notifier).sendMessage(
+                  ref
+                      .read(liveRoomProvider(chatRoomId).notifier)
+                      .sendMessage(
                         t,
                         selfName: user?.display ?? 'Sen',
                       ),
@@ -3066,8 +3081,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                   final t = _chat.text.trim();
                   if (t.isEmpty) return;
                   _chat.clear();
+                  final chatRoomId = livePkEffectiveChatStreamId(
+                    battle: pkState?.battle,
+                    myStreamId: streamId!,
+                  );
                   unawaited(
-                    ref.read(liveRoomProvider(streamId!).notifier).sendMessage(
+                    ref.read(liveRoomProvider(chatRoomId).notifier).sendMessage(
                           t,
                           selfName: user?.display ?? 'Sen',
                         ),

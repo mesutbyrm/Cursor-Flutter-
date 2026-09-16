@@ -11,6 +11,7 @@ import '../../providers/live_pk_ui_providers.dart';
 import '../../providers/live_providers.dart';
 import '../../providers/live_video_pk_provider.dart';
 import '../../../domain/pk/live_pk_broadcast_stage.dart';
+import '../../../domain/pk/live_pk_chat_stream.dart';
 import '../../../domain/pk/live_pk_outcome_latch.dart';
 import '../../../domain/pk/pk_status_helper.dart';
 import 'live_pk_reference_top_bar.dart';
@@ -90,6 +91,10 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer> {
         const [];
     final streams = ref.watch(liveStreamsProvider).valueOrNull ?? const [];
     final battleMap = Map<String, dynamic>.from(battle);
+    final chatStreamId = livePkEffectiveChatStreamId(
+      battle: battleMap,
+      myStreamId: streamId,
+    );
     final leftScore = pkScoreFromBattleMap(battleMap, left: true);
     final rightScore = pkScoreFromBattleMap(battleMap, left: false);
     final secondsLeft = pkBattleSecondsLeftFromMap(battleMap);
@@ -121,6 +126,7 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer> {
           context,
           ref,
           streamId: streamId,
+          chatStreamId: chatStreamId,
           session: session,
           trtc: trtc,
           rtcReady: rtcReady,
@@ -149,6 +155,7 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer> {
     BuildContext context,
     WidgetRef ref, {
     required String streamId,
+    required String chatStreamId,
     required LiveBroadcastSession session,
     required TrtcRoomManager trtc,
     required bool rtcReady,
@@ -396,13 +403,13 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer> {
                 ),
               ),
               Positioned(
-                left: 0,
-                right: 72,
-                bottom: chromeBottom + scoreH - 4,
-                height: 168,
+                left: LivePkLayoutMetrics.chatOverlayLeftPadding,
+                bottom: chromeBottom + scoreH + 6,
+                width: MediaQuery.sizeOf(context).width *
+                    LivePkLayoutMetrics.chatOverlayWidthFactor,
+                height: LivePkLayoutMetrics.chatOverlayHeight,
                 child: LivePkReferenceChatOverlay(
-                  streamId: streamId,
-                  maxHeight: 168,
+                  streamId: chatStreamId,
                   visible: widget.chatVisible,
                 ),
               ),
