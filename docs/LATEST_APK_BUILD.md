@@ -4,20 +4,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.544+585` |
-| Tarih (UTC) | 2026-09-16 18:22 |
-| Commit | [`8c42e6db39c7f0fbe3df621fe0c5b7f482c3e7c3`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/8c42e6db39c7f0fbe3df621fe0c5b7f482c3e7c3) |
-| İş akışı | [Run 35131101953](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35131101953) |
+| Sürüm | `1.0.545+586` |
+| Tarih (UTC) | 2026-09-16 19:38 |
+| Commit | [`452bc6d08b6947e6801b867f13a5d1c9dfbf6758`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/452bc6d08b6947e6801b867f13a5d1c9dfbf6758) |
+| İş akışı | [Run 35139717006](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35139717006) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.544+585 (2026-09-16) — Sesli oda koltuk senkron yarışı
+## 1.0.545+586 (2026-09-16) — Sesli oda + canlı PK hata listesi
 
-- Pending seat lock (5 sn): seat-take/leave sırasında presence snapshot kullanıcıyı düşürmez
-- Reaktif yetkili auto-seat: rol/izin + presence değişince tek deneme (context latch)
-- Host reconciliation: koltuksuz host 3 sn sonra yeniden oturma (pending yoksa)
-- Birim test: `voice_seat_pending_guard_test.dart`
+- Sesli oda: presence SSE işleme kopya liste; `voiceSeatActionLockProvider` (PK lock deseni)
+- Pending seat guard + reaktif yetkili auto-seat listener (`VoiceRoomPrivilegedAutoSeatListener`)
+- Sesli PK davet: `room1`/`room2` eksikse tanılama logu (backend doğrulama gerekir)
+- Canlı PK: tam ekran kazanan overlay kalıntıları kaldırıldı; inline rozet latch (flicker yok)
+- PK oluşturma hatası snackbar + `ApiException` mesajı
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
