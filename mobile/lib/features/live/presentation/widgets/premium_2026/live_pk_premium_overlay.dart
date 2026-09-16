@@ -114,7 +114,7 @@ class _LivePkPremiumOverlayState extends ConsumerState<LivePkPremiumOverlay>
                         borderRadius: BorderRadius.circular(18),
                         border: Border.all(color: Colors.white24),
                       ),
-                      child: _scoreColumn(leftPct, rightPct),
+                      child: _scoreColumn(leftPct, rightPct, sum),
                     )
                   : EffectsPerf.backdrop(
                       sigma: 16,
@@ -126,7 +126,7 @@ class _LivePkPremiumOverlayState extends ConsumerState<LivePkPremiumOverlay>
                           borderRadius: BorderRadius.circular(18),
                           border: Border.all(color: Colors.white24),
                         ),
-                        child: _scoreColumn(leftPct, rightPct),
+                        child: _scoreColumn(leftPct, rightPct, sum),
                       ),
                     ),
             ),
@@ -147,7 +147,7 @@ class _LivePkPremiumOverlayState extends ConsumerState<LivePkPremiumOverlay>
     );
   }
 
-  Widget _scoreColumn(int leftPct, int rightPct) {
+  Widget _scoreColumn(int leftPct, int rightPct, int scoreSum) {
     return Column(
       children: [
         Row(
@@ -168,11 +168,11 @@ class _LivePkPremiumOverlayState extends ConsumerState<LivePkPremiumOverlay>
             child: Row(
               children: [
                 Expanded(
-                  flex: sum <= 0 ? 500 : leftPct.clamp(5, 95),
+                  flex: scoreSum <= 0 ? 500 : leftPct.clamp(5, 95),
                   child: Container(color: const Color(0xFFFF4D9D)),
                 ),
                 Expanded(
-                  flex: sum <= 0 ? 500 : rightPct.clamp(5, 95),
+                  flex: scoreSum <= 0 ? 500 : rightPct.clamp(5, 95),
                   child: Container(color: const Color(0xFF22D3EE)),
                 ),
               ],
