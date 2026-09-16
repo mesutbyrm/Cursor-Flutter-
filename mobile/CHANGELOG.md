@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.539+580 (2026-09-16) — PK beğeni/state + geri sayım düzeltmeleri
+
+- PK beğeni: `refresh()` artık aktif PK battle'ı silmez; skor `applyLocalScoreDelta` (ekran düşmez)
+- `endsAt` / `startedAt` battle map'e yazılıyor — geri sayım sunucu zamanına bağlı
+- Kalp: 1 tık = 1 burst; çift spawn ve sürekli SSE pulse sınırlandı
+- RTC split dinleyici `isLivePkBroadcastStage` ile hizalandı
+
 ## 1.0.538+579 (2026-09-16) — PK referans UI + inline sonuç
 
 - PK bitti: tam ekran kazanan/berabere overlay kaldırıldı — skor çubuğunda KAZANDIN/KAYBETTİ/BERABERE

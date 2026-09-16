@@ -7,6 +7,7 @@ import '../../../../core/auth/bot_account_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/pk/live_pk_invite_helper.dart';
 import '../../domain/pk/live_pk_ingest.dart';
+import '../../domain/pk/live_pk_broadcast_stage.dart';
 import '../../domain/pk/pk_status_helper.dart';
 import '../../domain/pk/pk_unified_bridge.dart';
 import 'live_pk_action_lock_provider.dart';
@@ -117,29 +118,103 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
           }
         }
       }
-      if (remote != null && !remote.isEnded) {
-        final map = pkBattleRemoteToBattleMap(remote, myStreamId: arg);
-        state = state.copyWith(
-          battle: map,
-          unifiedMatchId: remote.effectiveId,
-          clearError: true,
+      if (remote != null) {
+        final map = _mergeBattleMap(
+          pkBattleRemoteToBattleMap(remote, myStreamId: arg),
+          previous: state.battle,
         );
-        if (isLivePkActiveStatus(remote.status)) {
-          _startPolling();
-        } else {
-          _stopPolling();
+        if (!remote.isEnded || isLivePkEndedStatus(remote.status)) {
+          state = state.copyWith(
+            battle: map,
+            unifiedMatchId: remote.effectiveId,
+            clearError: true,
+          );
+          if (isLivePkActiveStatus(remote.status)) {
+            _startPolling();
+          } else {
+            _stopPolling();
+          }
+          return;
         }
-        return;
       }
     } catch (e) {
       state = state.copyWith(error: '$e');
+      if (isLivePkBroadcastStage(state.battle, state.status)) {
+        return;
+      }
     }
 
     _stopPolling();
     if (isPkInvitePendingStatus(state.status)) {
       return;
     }
+    if (isLivePkBroadcastStage(state.battle, state.status)) {
+      return;
+    }
     state = state.copyWith(clearBattle: true, clearUnifiedMatchId: true);
+  }
+
+  /// Skor güncellemesi — tam `refresh` PK ekranını düşürmez.
+  void applyLocalScoreDelta({required String side, required int amount}) {
+    if (amount <= 0) return;
+    final b = state.battle;
+    if (b == null) return;
+    final next = Map<String, dynamic>.from(b);
+    final isLeft = side == 'score1' || side == 'left';
+    final key = isLeft ? 'score1' : 'score2';
+    final altLeft = 'leftScore';
+    final altRight = 'rightScore';
+    final cur = int.tryParse('${next[key] ?? (isLeft ? next[altLeft] : next[altRight]) ?? 0}') ?? 0;
+    next[key] = cur + amount;
+    if (isLeft) {
+      next[altLeft] = next[key];
+      next['challengerScore'] = next[key];
+    } else {
+      next[altRight] = next[key];
+      next['opponentScore'] = next[key];
+    }
+    state = state.copyWith(battle: next, clearError: true);
+  }
+
+  Map<String, dynamic> _mergeBattleMap(
+    Map<String, dynamic> incoming,
+    {Map<String, dynamic>? previous,
+  }) {
+    if (previous == null) return incoming;
+    final out = Map<String, dynamic>.from(previous);
+    for (final e in incoming.entries) {
+      final v = e.value;
+      if (v == null) continue;
+      if (v is String && v.trim().isEmpty) continue;
+      out[e.key] = v;
+    }
+    for (final key in [
+      'liveStreamId',
+      'hostStreamId',
+      'opponentLiveStreamId',
+      'opponentStreamId',
+      'endsAt',
+      'startedAt',
+    ]) {
+      final inc = incoming[key]?.toString().trim() ?? '';
+      if (inc.isEmpty) continue;
+      out[key] = incoming[key];
+    }
+    _ensurePkEndsAt(out);
+    return out;
+  }
+
+  void _ensurePkEndsAt(Map<String, dynamic> battle) {
+    final endsRaw = battle['endsAt']?.toString().trim() ?? '';
+    if (endsRaw.isNotEmpty && DateTime.tryParse(endsRaw) != null) return;
+    final started = DateTime.tryParse(battle['startedAt']?.toString() ?? '');
+    if (started == null) return;
+    final dur = int.tryParse(
+          '${battle['durationSeconds'] ?? battle['duration'] ?? 180}',
+        ) ??
+        180;
+    battle['endsAt'] =
+        started.toUtc().add(Duration(seconds: dur)).toIso8601String();
   }
 
   /// Kabul sonrası veya SSE'den — ana backend PK durumunu yeniler.
@@ -156,19 +231,20 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
 
     final status = battle['status']?.toString() ?? '';
     // Pending davet split ekranı açmaz; yalnızca kabul sonrası aktif senkron.
+    final merged = _mergeBattleMap(battle, previous: state.battle);
     if (isPkInvitePendingStatus(status)) {
-      state = state.copyWith(battle: battle, clearError: true);
+      state = state.copyWith(battle: merged, clearError: true);
       _stopPolling();
       return;
     }
     if (!isLivePkActiveStatus(status)) {
-      state = state.copyWith(battle: battle, clearError: true);
+      state = state.copyWith(battle: merged, clearError: true);
       _stopPolling();
       return;
     }
-    final matchId = battle['id']?.toString() ?? battle['battleId']?.toString();
+    final matchId = merged['id']?.toString() ?? merged['battleId']?.toString();
     state = state.copyWith(
-      battle: battle,
+      battle: merged,
       unifiedMatchId: matchId ?? state.unifiedMatchId,
       clearError: true,
     );

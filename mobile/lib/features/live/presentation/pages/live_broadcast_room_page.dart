@@ -1979,13 +1979,15 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final battleId = battle['id']?.toString() ?? battle['battleId']?.toString();
     final side = livePkScoreSideForStream(battle: battle, myStreamId: streamId);
     try {
+      ref
+          .read(liveVideoPkProvider(streamId).notifier)
+          .applyLocalScoreDelta(side: side, amount: 3);
       await ref.read(pkBattleRemoteDataSourceProvider).postLivePkScore(
             amount: 3,
             battleId: battleId,
             roomId: streamId,
             side: side,
           );
-      await ref.read(liveVideoPkProvider(streamId).notifier).refresh();
     } catch (_) {}
   }
 
@@ -2597,9 +2599,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         if (battle != null) {
           _maybeShowPkInvite(streamId, battle);
         }
-        final wasSplit =
-            prev != null && isLivePkSplitReady(prev.battle, prev.status);
-        final nowSplit = isLivePkSplitReady(next.battle, next.status);
+        final wasSplit = prev != null &&
+            isLivePkBroadcastStage(prev.battle, prev.status);
+        final nowSplit =
+            isLivePkBroadcastStage(next.battle, next.status);
         if (nowSplit) {
           if (!wasSplit && mounted) {
             setState(() => _pkCelebrationDismissed = false);

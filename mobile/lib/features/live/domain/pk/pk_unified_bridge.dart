@@ -105,6 +105,10 @@ Map<String, dynamic> pkBattleRemoteToBattleMap(
     'isOpponent': isOpponent,
     'hostOnLeft': isChallenger || !isOpponent,
     'unifiedPk': false,
+    if (remote.endsAt != null) 'endsAt': remote.endsAt!.toUtc().toIso8601String(),
+    if (remote.startedAt != null)
+      'startedAt': remote.startedAt!.toUtc().toIso8601String(),
+    'secondsLeft': remote.resolvedSecondsLeft(),
   };
 }
 

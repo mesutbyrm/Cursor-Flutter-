@@ -46,7 +46,8 @@ class LiveFloatingHeartsOverlayState extends State<LiveFloatingHeartsOverlay>
   void didUpdateWidget(covariant LiveFloatingHeartsOverlay oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.burstToken != oldWidget.burstToken) {
-      _spawn(count: 10, fromTap: _lastTap);
+      final delta = (widget.burstToken - oldWidget.burstToken).clamp(1, 5);
+      _spawn(count: delta, fromTap: _lastTap);
     }
   }
 
@@ -91,7 +92,6 @@ class LiveFloatingHeartsOverlayState extends State<LiveFloatingHeartsOverlay>
   void _registerTap(Offset? globalPos) {
     if (globalPos != null) _lastTap = globalPos;
     widget.onDoubleTap?.call();
-    if (globalPos != null) burstAt(globalPos, count: 8);
   }
 
   @override
