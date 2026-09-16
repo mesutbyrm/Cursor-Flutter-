@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
@@ -11,6 +12,8 @@ class LivePkResolvedTimer extends StatefulWidget {
     super.key,
     this.remote,
     this.fallbackSeconds = 0,
+    this.endsAt,
+    this.countdownActive = false,
     this.showPkLabel = true,
     this.centered = true,
     this.onExpired,
@@ -18,6 +21,9 @@ class LivePkResolvedTimer extends StatefulWidget {
 
   final PkBattleRemote? remote;
   final int fallbackSeconds;
+  /// Yayın PK battle map `endsAt` — `remote` yoksa saniye saniye geri sayım.
+  final DateTime? endsAt;
+  final bool countdownActive;
   final bool showPkLabel;
   final bool centered;
   final VoidCallback? onExpired;
@@ -44,17 +50,26 @@ class _LivePkResolvedTimerState extends State<LivePkResolvedTimer> {
     _sync();
   }
 
+  int _resolveSeconds() {
+    final remote = widget.remote;
+    if (remote != null) return remote.resolvedSecondsLeft();
+    final ends = widget.endsAt;
+    if (ends != null) {
+      return math.max(0, ends.difference(DateTime.now()).inSeconds);
+    }
+    return widget.fallbackSeconds.clamp(0, 86400);
+  }
+
   void _sync() {
     final remote = widget.remote;
-    final next = remote != null
-        ? remote.resolvedSecondsLeft()
-        : widget.fallbackSeconds.clamp(0, 86400);
+    final next = _resolveSeconds();
     if (next != _display) {
       setState(() => _display = next);
     }
-    if (next <= 0 &&
-        !_expiredFired &&
-        (remote?.isActive == true || widget.fallbackSeconds > 0)) {
+    final active = remote?.isActive == true ||
+        widget.countdownActive ||
+        widget.endsAt != null;
+    if (next <= 0 && !_expiredFired && active) {
       _expiredFired = true;
       widget.onExpired?.call();
     }

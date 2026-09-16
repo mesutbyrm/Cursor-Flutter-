@@ -62,6 +62,10 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
     final leftScore = pkScoreFromBattleMap(battleMap, left: true);
     final rightScore = pkScoreFromBattleMap(battleMap, left: false);
     final secondsLeft = pkBattleSecondsLeftFromMap(battleMap);
+    final endsAtRaw = battleMap['endsAt']?.toString();
+    final endsAt = endsAtRaw != null && endsAtRaw.isNotEmpty
+        ? DateTime.tryParse(endsAtRaw)
+        : null;
 
     String? playbackFor(String? targetStreamId) {
       final id = targetStreamId?.trim() ?? '';
@@ -90,6 +94,7 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
           leftScore: leftScore,
           rightScore: rightScore,
           secondsLeft: secondsLeft,
+          endsAt: endsAt,
           playbackFor: playbackFor,
           remoteCam: remoteCam,
           remoteMic: remoteMic,
@@ -106,6 +111,7 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
     required int leftScore,
     required int rightScore,
     required int secondsLeft,
+    required DateTime? endsAt,
     required String? Function(String?) playbackFor,
     required bool remoteCam,
     required bool remoteMic,
@@ -194,7 +200,10 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
                             child: LivePkResolvedTimer(
                               remote: null,
                               fallbackSeconds: secondsLeft,
+                              endsAt: endsAt,
+                              countdownActive: true,
                               centered: true,
+                              onExpired: session.isHost ? onEndPk : null,
                             ),
                           ),
                         ),

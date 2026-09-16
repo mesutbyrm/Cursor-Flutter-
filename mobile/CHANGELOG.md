@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.534+575 (2026-09-16) — Yayın PK timer `endsAt` geri sayım
+
+- `LivePkResolvedTimer`: battle `endsAt` ile saniye saniye senkron (yayın split katmanı)
+- Süre 0 → yayıncıda `onEndPk` tetiklenir
+
 ## 1.0.533+574 (2026-09-16) — PK referans UI 1:1 + RTC/skor düzeltmeleri
 
 - Yayın PK: tam ekran video (alt siyah yarım kaldırıldı); split yalnızca misafir grid
