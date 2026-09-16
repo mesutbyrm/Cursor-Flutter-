@@ -6,6 +6,7 @@ import 'package:canlifal_social/core/theme/app_colors.dart';
 import 'package:canlifal_social/features/trtc/presentation/trtc_room_manager.dart';
 import '../../../domain/entities/live_broadcast_session.dart';
 import '../../../domain/entities/live_guest_layout.dart';
+import '../../../domain/pk/live_pk_broadcast_stage.dart';
 import '../../../domain/pk/pk_status_helper.dart';
 import '../../pages/live_session_phase.dart';
 import '../../gifts/providers/live_gift_providers.dart';
@@ -31,6 +32,8 @@ class LiveBroadcastRoomVideoLayer extends ConsumerWidget {
     required this.onOpenControlCenter,
     required this.onGuestAction,
     this.chatVisibleForPk = true,
+    this.pkOnBack,
+    this.pkViewerCount = 0,
   });
 
   final LiveBroadcastSession session;
@@ -45,6 +48,8 @@ class LiveBroadcastRoomVideoLayer extends ConsumerWidget {
   final VoidCallback onOpenControlCenter;
   final void Function(int slotIndex, String action) onGuestAction;
   final bool chatVisibleForPk;
+  final VoidCallback? pkOnBack;
+  final int pkViewerCount;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -72,14 +77,15 @@ class LiveBroadcastRoomVideoLayer extends ConsumerWidget {
     final streamId = s.streamId?.trim() ?? '';
     if (streamId.isNotEmpty) {
       final pkState = ref.watch(liveVideoPkProvider(streamId));
-      if (isLivePkSplitReady(pkState.battle, pkState.status)) {
+      if (isLivePkBroadcastStage(pkState.battle, pkState.status)) {
         return LivePkSplitVideoLayer(
           streamId: streamId,
           session: s,
           trtc: trtc,
           rtcReady: rtcReady,
           chatVisible: chatVisibleForPk,
-          hideTopTimer: true,
+          onBack: pkOnBack,
+          viewerCount: pkViewerCount,
           onEndPk: s.isHost ? () => onEndActivePk(streamId) : null,
         );
       }

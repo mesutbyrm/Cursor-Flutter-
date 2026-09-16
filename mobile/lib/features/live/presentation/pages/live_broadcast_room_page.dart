@@ -70,6 +70,7 @@ import '../../domain/pk/live_pk_invite_helper.dart';
 import '../../domain/pk/live_pk_side_resolver.dart';
 import '../../domain/pk/live_pk_ui_state_mapper.dart';
 import '../../domain/pk/live_pk_trtc_anchor.dart';
+import '../../domain/pk/live_pk_broadcast_stage.dart';
 import '../../domain/pk/pk_status_helper.dart';
 import '../../domain/pk/pk_unified_bridge.dart';
 import '../../domain/live_co_broadcast_constants.dart';
@@ -1958,14 +1959,18 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final streamId = widget.session.streamId?.trim();
     if (streamId == null || streamId.isEmpty) return;
     final userId = ref.read(authControllerProvider).valueOrNull?.id;
+    final pk = ref.read(liveVideoPkProvider(streamId));
+    final inPk = isLivePkBroadcastStage(pk.battle, pk.status) &&
+        isLivePkActiveStatus(pk.status);
+    if (inPk) {
+      ref.read(liveRoomInteractionProvider(streamId).notifier).pulseHeartsVisual();
+      unawaited(_postPkHeartScore(streamId, pk.battle));
+      return;
+    }
     ref.read(liveRoomInteractionProvider(streamId).notifier).burstHearts(
           likes: 1,
           userId: userId,
         );
-    final pk = ref.read(liveVideoPkProvider(streamId));
-    if (isLivePkSplitReady(pk.battle, pk.status)) {
-      unawaited(_postPkHeartScore(streamId, pk.battle));
-    }
   }
 
   Future<void> _postPkHeartScore(
@@ -2747,10 +2752,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final pkStatus = pkState?.status ?? '';
     final pkImmersive = hasStream &&
         streamId != null &&
-        isLivePkSplitReady(pkState?.battle, pkStatus);
+        isLivePkBroadcastStage(pkState?.battle, pkStatus);
     final pkEnded =
-        hasStream && pkState?.battle != null && _isPkEndedStatus(pkStatus);
-    final pkResultBlocking = pkEnded && !_pkCelebrationDismissed;
+        hasStream && pkState?.battle != null && isLivePkEndedStatus(pkStatus);
     final pkOpponentUserId = hasStream && streamId != null
         ? _pkOpponentUserId(streamId!, s, pkState?.battle)
         : '';
@@ -2814,6 +2818,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                   onOpenControlCenter: _openControlCenter,
                   onGuestAction: _onGuestAction,
                   chatVisibleForPk: _chatVisible,
+                  pkOnBack: () => unawaited(_exitBroadcast(context)),
+                  pkViewerCount: roomState.viewerCount,
                 ),
               )
             else
@@ -2831,6 +2837,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                   onOpenControlCenter: _openControlCenter,
                   onGuestAction: _onGuestAction,
                   chatVisibleForPk: _chatVisible,
+                  pkOnBack: () => unawaited(_exitBroadcast(context)),
+                  pkViewerCount: roomState.viewerCount,
                 ),
               ),
             if (_isSplitStage(
@@ -2904,8 +2912,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 hostRank: hostRank,
                 tournamentsAsync: tournamentsAsync,
               ),
-            if (!pkResultBlocking)
-              LiveBroadcastRoomChromeColumn(
+            LiveBroadcastRoomChromeColumn(
               topInset: top,
               session: s,
               streamId: streamId,
@@ -3078,29 +3085,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                     ? () => setState(() => _localPreviewKey = UniqueKey())
                     : null,
                 onClose: () => unawaited(_exitBroadcast(context)),
-              ),
-            if (pkEnded && !_pkCelebrationDismissed && pkState != null)
-              PkWinnerCelebration(
-                state: livePkBattleStateFromBroadcast(
-                  battle: pkState.battle,
-                  status: pkStatus,
-                  leftScore: pkState.leftScore,
-                  rightScore: pkState.rightScore,
-                  leftDisplayName: pkLeftName,
-                  rightDisplayName: pkRightName,
-                ),
-                onRestart: () {
-                  setState(() => _pkCelebrationDismissed = true);
-                  unawaited(_openPkPanel());
-                },
-                onClose: () {
-                  setState(() => _pkCelebrationDismissed = true);
-                  if (streamId != null) {
-                    unawaited(
-                      ref.read(liveVideoPkProvider(streamId!).notifier).refresh(),
-                    );
-                  }
-                },
               ),
             if (_hostAway && s.isHost)
               LiveBroadcastRoomHostAwayOverlay(

@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.538+579 (2026-09-16) — PK referans UI + inline sonuç
+
+- PK bitti: tam ekran kazanan/berabere overlay kaldırıldı — skor çubuğunda KAZANDIN/KAYBETTİ/BERABERE
+- Yayın PK: referans üst timer (PK + 00:MM), kırmızı-mavi skor barı PK bitene kadar ekranda kalır
+- PK sırasında çift tık: yalnızca +3 PK puanı + kalp animasyonu (jeton/beğeni API yok)
+- Sesli PK davet: root navigator + oda listesi yenileme; sohbet girişi PK sonrası da açık
+
 ## 1.0.537+578 (2026-09-16) — Yayın PK + sesli oda PK/ses düzeltmeleri
 
 - Canlı PK: timer + beğeni üstte; immersive overlay chrome üstünde (tuşlar görünür)

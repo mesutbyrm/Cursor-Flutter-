@@ -148,6 +148,7 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
     if (user == null) return;
     try {
       final api = ref.read(pkBattleRemoteDataSourceProvider);
+      await ref.read(voiceRoomsProvider.future);
 
       // Sesli oda PK — games backend `GET /api/chat/rooms/{id}/pk` (unified /api/pk/* yok).
       final activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';

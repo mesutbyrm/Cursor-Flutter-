@@ -17,7 +17,7 @@ import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart
 import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_floating_reactions.dart';
 import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_gift_explosion_flash.dart';
 import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_vs_emblem.dart';
-import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_winner_celebration.dart';
+import '../../domain/pk/live_pk_broadcast_stage.dart';
 import '../providers/live_pk_ui_providers.dart';
 import '../widgets/broadcast_room/live_pk_immersive_controls.dart';
 import '../widgets/broadcast_room/live_pk_immersive_video_pane.dart';
@@ -338,7 +338,15 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
     final topInset = MediaQuery.paddingOf(context).top;
     final bottomPad = MediaQuery.paddingOf(context).bottom;
     final controlsHeight = 96.0 + bottomPad;
-    final chatInputHeight = _chatOpen && pkActive && !finished ? 52.0 : 0.0;
+    final chatInputHeight = _chatOpen ? 52.0 : 0.0;
+    final outcomeLabel = livePkOutcomeStatusLabel(
+      ended: finished,
+      localOnLeft: true,
+      leftScore: leftScore,
+      rightScore: rightScore,
+      leftLabel: leftName,
+      rightLabel: rightName,
+    );
 
     return GiftEventListener(
       sessionKey: streamId,
@@ -352,12 +360,12 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
         body: LayoutBuilder(
           builder: (context, constraints) {
             final h = constraints.maxHeight;
-            final videoH = finished ? 0.0 : (h * 0.56).clamp(240.0, h * 0.65);
+            final videoH = (h * 0.52).clamp(240.0, h * 0.55);
 
             return Stack(
               fit: StackFit.expand,
               children: [
-                if (!finished && videoH > 0)
+                if (videoH > 0)
                   Positioned(
                     top: 0,
                     left: 0,
@@ -395,7 +403,7 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
                       ],
                     ),
                   ),
-                if (!finished && videoH > 0)
+                if (videoH > 0)
                   Positioned(
                     top: videoH * 0.42,
                     left: 0,
@@ -419,28 +427,28 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
                       onEnd: _end,
                     ),
                   ),
-                if (!finished)
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    top: videoH > 0 ? videoH - 4 : null,
-                    bottom: videoH > 0 ? null : controlsHeight + chatInputHeight + 8,
-                    child: LivePkReferenceScoreBar(
-                      leftScore: leftScore,
-                      rightScore: rightScore,
-                      leftLabel: leftName,
-                      rightLabel: rightName,
-                      active: pkActive,
-                    ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: videoH - 4,
+                  child: LivePkReferenceScoreBar(
+                    leftScore: leftScore,
+                    rightScore: rightScore,
+                    leftLabel: leftName,
+                    rightLabel: rightName,
+                    statusLabel: outcomeLabel,
+                    active: pkActive && !finished,
+                    showEndedScores: finished,
                   ),
-                if (!finished && streamId.isNotEmpty)
+                ),
+                if (streamId.isNotEmpty)
                   LivePkReferenceChatOverlay(
                     streamId: streamId,
                     maxHeight: 140,
-                    visible: _chatOpen && pkActive,
+                    visible: _chatOpen,
                   ),
-                if (!finished) const LivePkGiftToastOverlay(),
-                if (!finished && pkActive && streamId.isNotEmpty)
+                const LivePkGiftToastOverlay(),
+                if (pkActive && streamId.isNotEmpty && !finished)
                   LivePkFloatingGiftButton(
                     onTap: () => showLiveGiftPicker(
                       context,
@@ -463,14 +471,13 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
                     ),
                   ),
                 ),
-                if (!finished)
-                  Positioned(
+                Positioned(
                     left: 0,
                     right: 0,
                     bottom: controlsHeight,
                     child: LivePkChatInputBar(
                       controller: _chatController,
-                      visible: _chatOpen && pkActive,
+                      visible: _chatOpen,
                       onGift: streamId.isNotEmpty
                           ? () => showLiveGiftPicker(
                                 context,
@@ -494,8 +501,7 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
                       onToggleVisibility: () => setState(() => _chatOpen = false),
                     ),
                   ),
-                if (!finished)
-                  Positioned(
+                Positioned(
                     left: 0,
                     right: 0,
                     bottom: 0,
@@ -588,15 +594,6 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
                     ),
                   ),
                 ],
-                PkWinnerCelebration(
-                  state: pkState,
-                  onRestart: () {
-                    final dur = remote?.durationSeconds ?? pkDefaultDurationSeconds;
-                    ref.read(pkBattleProvider.notifier).restart(durationSeconds: dur);
-                    _timerEndFired = false;
-                  },
-                  onClose: () => context.pop(),
-                ),
               ],
             );
           },

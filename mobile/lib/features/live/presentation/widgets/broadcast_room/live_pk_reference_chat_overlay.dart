@@ -28,23 +28,22 @@ class LivePkReferenceChatOverlay extends ConsumerWidget {
         ? messages.sublist(messages.length - 12)
         : messages;
 
-    return IgnorePointer(
-      child: Align(
-        alignment: Alignment.bottomLeft,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 0, 80, 0),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: maxHeight),
-            child: ListView.builder(
-              reverse: true,
-              shrinkWrap: true,
-              padding: EdgeInsets.zero,
-              itemCount: tail.length,
-              itemBuilder: (context, i) {
-                final m = tail[tail.length - 1 - i];
-                return _ChatLine(message: m);
-              },
-            ),
+    return Align(
+      alignment: Alignment.bottomLeft,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 0, 80, 88),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxHeight),
+          child: ListView.builder(
+            reverse: true,
+            shrinkWrap: true,
+            padding: EdgeInsets.zero,
+            physics: const BouncingScrollPhysics(),
+            itemCount: tail.length,
+            itemBuilder: (context, i) {
+              final m = tail[tail.length - 1 - i];
+              return _ChatLine(message: m);
+            },
           ),
         ),
       ),

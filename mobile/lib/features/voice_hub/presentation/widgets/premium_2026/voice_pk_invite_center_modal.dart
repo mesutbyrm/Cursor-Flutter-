@@ -13,6 +13,7 @@ Future<bool?> showVoicePkInviteCenterModal({
 
   return showDialog<bool>(
     context: context,
+    useRootNavigator: true,
     barrierDismissible: false,
     barrierColor: Colors.black.withValues(alpha: 0.72),
     builder: (ctx) {

@@ -9,7 +9,9 @@ import '../../../domain/pk/live_pk_side_resolver.dart';
 import '../../providers/live_pk_ui_providers.dart';
 import '../../providers/live_providers.dart';
 import '../../providers/live_video_pk_provider.dart';
+import '../../../domain/pk/live_pk_broadcast_stage.dart';
 import '../../../domain/pk/pk_status_helper.dart';
+import 'live_pk_reference_top_bar.dart';
 import '../live_playback_bridge.dart';
 import '../../../../pk/presentation/widgets/pk_battle_visuals.dart';
 import '../../../../voice_hub/presentation/widgets/premium_2026/pk/pk_vs_emblem.dart';
@@ -30,7 +32,8 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
     this.onEndPk,
     this.onMuteOpponent,
     this.chatVisible = true,
-    this.hideTopTimer = false,
+    this.onBack,
+    this.viewerCount = 0,
   });
 
   final String streamId;
@@ -40,15 +43,18 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
   final VoidCallback? onEndPk;
   final void Function(String opponentUserId, bool mute)? onMuteOpponent;
   final bool chatVisible;
-  final bool hideTopTimer;
+  final VoidCallback? onBack;
+  final int viewerCount;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final pk = ref.watch(liveVideoPkProvider(streamId));
     final battle = pk.battle;
-    if (battle == null || !isLivePkSplitReady(battle, pk.status)) {
+    if (battle == null || !isLivePkBroadcastStage(battle, pk.status)) {
       return const ColoredBox(color: Color(0xFF120A1E));
     }
+    final ended = isLivePkEndedStatus(pk.status);
+    final pkActive = isLivePkActiveStatus(pk.status);
 
     final myUserId = ref.read(authControllerProvider).valueOrNull?.id;
     final layout = resolveLivePkSplitLayout(
@@ -100,6 +106,8 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
           playbackFor: playbackFor,
           remoteCam: remoteCam,
           remoteMic: remoteMic,
+          ended: ended,
+          pkActive: pkActive,
         );
       },
     );
@@ -117,11 +125,22 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
     required String? Function(String?) playbackFor,
     required bool remoteCam,
     required bool remoteMic,
+    required bool ended,
+    required bool pkActive,
   }) {
+    final statusLabel = livePkOutcomeStatusLabel(
+      ended: ended,
+      localOnLeft: layout.left.isLocalPane,
+      leftScore: leftScore,
+      rightScore: rightScore,
+      leftLabel: layout.left.label,
+      rightLabel: layout.right.label,
+    );
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final h = constraints.maxHeight;
-        final videoH = (h * 0.58).clamp(220.0, h);
+        final videoH = (h * 0.52).clamp(240.0, h * 0.55);
 
         return ColoredBox(
           color: Colors.black,
@@ -184,34 +203,6 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
                     Center(
                       child: PkVsEmblem(size: 48, pulse: true),
                     ),
-                    if (!hideTopTimer)
-                      Positioned(
-                        top: MediaQuery.paddingOf(context).top + 4,
-                        left: 0,
-                        right: 0,
-                        child: Center(
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.55),
-                              borderRadius: BorderRadius.circular(24),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              child: LivePkResolvedTimer(
-                                remote: null,
-                                fallbackSeconds: secondsLeft,
-                                endsAt: endsAt,
-                                countdownActive: true,
-                                centered: true,
-                                onExpired: session.isHost ? onEndPk : null,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
                     if (session.isHost)
                       Positioned(
                         top: MediaQuery.paddingOf(context).top + 8,
@@ -272,20 +263,54 @@ class LivePkSplitVideoLayer extends ConsumerWidget {
               Positioned(
                 left: 0,
                 right: 0,
-                top: videoH - 8,
+                top: videoH - 6,
                 child: LivePkReferenceScoreBar(
                   leftScore: leftScore,
                   rightScore: rightScore,
                   leftLabel: layout.left.label,
                   rightLabel: layout.right.label,
+                  statusLabel: statusLabel,
+                  active: pkActive,
+                  showEndedScores: ended,
                 ),
               ),
               LivePkReferenceChatOverlay(
                 streamId: streamId,
-                maxHeight: (h - videoH).clamp(80, 160),
+                maxHeight: (h - videoH - 72).clamp(72, 200),
                 visible: chatVisible,
               ),
               const LivePkGiftToastOverlay(),
+              LivePkReferenceTopBar(
+                onBack: onBack,
+                viewerCount: viewerCount,
+                timer: ended
+                    ? const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.bolt_rounded,
+                              color: Color(0xFFFFD54F), size: 18),
+                          SizedBox(width: 4),
+                          Text(
+                            'PK',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 13,
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          PkBattleTimerBadge(secondsLeft: 0, flashThreshold: 10),
+                        ],
+                      )
+                    : LivePkResolvedTimer(
+                        remote: null,
+                        fallbackSeconds: secondsLeft,
+                        endsAt: endsAt,
+                        countdownActive: true,
+                        centered: true,
+                        onExpired: session.isHost ? onEndPk : null,
+                      ),
+              ),
             ],
           ),
         );

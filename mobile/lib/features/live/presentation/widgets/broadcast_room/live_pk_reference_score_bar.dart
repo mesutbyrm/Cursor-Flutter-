@@ -12,6 +12,7 @@ class LivePkReferenceScoreBar extends StatelessWidget {
     required this.rightLabel,
     this.statusLabel = 'PK devam ediyor!',
     this.active = true,
+    this.showEndedScores = false,
   });
 
   final int leftScore;
@@ -20,6 +21,8 @@ class LivePkReferenceScoreBar extends StatelessWidget {
   final String rightLabel;
   final String statusLabel;
   final bool active;
+  /// Bittiğinde skor satırını vurgula (tam ekran overlay yerine).
+  final bool showEndedScores;
 
   static double leftRatio(int left, int right) {
     final t = left + right;
@@ -49,7 +52,10 @@ class LivePkReferenceScoreBar extends StatelessWidget {
                   gradient: const [Color(0xFFFF2D7A), Color(0xFFB832FF)],
                 ),
               ),
-              _CenterPill(label: active ? statusLabel : 'PK bitti'),
+              _CenterPill(
+                label: statusLabel,
+                highlight: !active || showEndedScores,
+              ),
               Expanded(
                 child: _SideScore(
                   label: rightLabel,
@@ -99,9 +105,10 @@ class LivePkReferenceScoreBar extends StatelessWidget {
 }
 
 class _CenterPill extends StatelessWidget {
-  const _CenterPill({required this.label});
+  const _CenterPill({required this.label, this.highlight = false});
 
   final String label;
+  final bool highlight;
 
   @override
   Widget build(BuildContext context) {
@@ -111,7 +118,12 @@ class _CenterPill extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.65),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFB832FF).withValues(alpha: 0.5)),
+        border: Border.all(
+          color: highlight
+              ? const Color(0xFFFFD54F).withValues(alpha: 0.85)
+              : const Color(0xFFB832FF).withValues(alpha: 0.5),
+          width: highlight ? 1.5 : 1,
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

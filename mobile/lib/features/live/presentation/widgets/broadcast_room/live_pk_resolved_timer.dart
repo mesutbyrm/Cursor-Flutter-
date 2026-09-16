@@ -84,7 +84,10 @@ class _LivePkResolvedTimerState extends State<LivePkResolvedTimer> {
 
   @override
   Widget build(BuildContext context) {
-    if (_display <= 0 && widget.remote?.isActive != true) {
+    if (_display <= 0 &&
+        widget.remote?.isActive != true &&
+        !widget.countdownActive &&
+        widget.endsAt == null) {
       return const SizedBox.shrink();
     }
     final badge = PkBattleTimerBadge(
