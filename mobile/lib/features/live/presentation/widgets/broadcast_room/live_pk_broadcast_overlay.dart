@@ -48,7 +48,6 @@ class LivePkBroadcastOverlay extends ConsumerWidget {
     final interaction = ref.watch(liveRoomInteractionProvider(streamId));
     final pk = ref.watch(liveVideoPkProvider(streamId));
     final battle = pk.battle ?? const <String, dynamic>{};
-    final battleMap = Map<String, dynamic>.from(battle);
     final pkActive = isLivePkBroadcastStage(battle, pk.status);
     final pkRunning = isLivePkActiveStatus(pk.status);
 

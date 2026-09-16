@@ -68,7 +68,6 @@ import '../../domain/entities/live_gift_event.dart';
 import '../../domain/entities/live_guest_layout.dart';
 import '../../domain/pk/live_pk_invite_helper.dart';
 import '../../domain/pk/live_pk_side_resolver.dart';
-import '../../domain/pk/live_pk_ui_state_mapper.dart';
 import '../../domain/pk/live_pk_trtc_anchor.dart';
 import '../../domain/pk/live_pk_broadcast_stage.dart';
 import '../../domain/pk/pk_status_helper.dart';
@@ -128,7 +127,6 @@ import '../widgets/broadcast_room/live_broadcast_room_host_away_overlay.dart';
 import '../widgets/broadcast_room/live_broadcast_room_video_layer.dart';
 import '../widgets/broadcast_room/live_pk_broadcast_overlay.dart';
 import '../widgets/live_gift_sheet.dart';
-import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_winner_celebration.dart';
 import '../widgets/broadcast_room/live_broadcast_room_viewer_rail.dart';
 import 'live_session_phase.dart';
 import '../widgets/broadcast_room/live_reconnect_banner.dart';
@@ -2753,15 +2751,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final pkImmersive = hasStream &&
         streamId != null &&
         isLivePkBroadcastStage(pkState?.battle, pkStatus);
-    final pkEnded =
-        hasStream && pkState?.battle != null && isLivePkEndedStatus(pkStatus);
     final pkOpponentUserId = hasStream && streamId != null
         ? _pkOpponentUserId(streamId!, s, pkState?.battle)
         : '';
-    final pkLeftName = pkState?.battle?['leftName']?.toString() ??
-        pkState?.battle?['challengerName']?.toString() ??
-        s.streamerName ??
-        'Sen';
     final pkRightName = pkState?.battle?['rightName']?.toString() ??
         pkState?.battle?['opponentName']?.toString() ??
         'Rakip';
