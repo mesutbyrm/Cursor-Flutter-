@@ -1026,6 +1026,11 @@ class VoiceRoomLiveController
     _leaveInFlight = true;
     _sessionActive = false;
     _entryBegun = false;
+    _pendingSeatByUser.clear();
+    _pendingSeatClaims.clear();
+    _autoSeatContextAttempted = null;
+    _lastSelfSeatTakeSuccessAt = null;
+    _lastHostReconcileAttemptAt = null;
     final forcePresenceLeave =
         _presenceJoined || state.selfInRoom || _voiceJoined;
     final roomKey = _roomKey;
