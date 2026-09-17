@@ -15,3 +15,4 @@ export 'cds_spacing.dart';
 export 'cds_states.dart';
 export 'cds_typography.dart';
 export 'cds_responsive.dart';
+export '../motion/canlifal_motion.dart';

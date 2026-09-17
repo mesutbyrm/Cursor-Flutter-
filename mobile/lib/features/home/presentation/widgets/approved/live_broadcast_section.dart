@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/motion/canlifal_motion_tokens.dart';
+import '../../../../../core/motion/canlifal_motion_widgets.dart';
 import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/ui/premium/live_badge.dart';
 import '../../../../../core/ui/premium/premium_skeleton.dart';
@@ -93,9 +95,12 @@ class LiveBroadcastSection extends ConsumerWidget {
           itemCount: list.take(12).length,
           itemBuilder: (context, i) {
             final stream = list[i];
-            return _LiveCard(
-              stream: stream,
-              onTap: () => openLiveStreamNative(context, ref, stream),
+            return CanlifalEntranceFadeSlide(
+              delay: CanlifalMotionTokens.staggerIndex(i),
+              child: _LiveCard(
+                stream: stream,
+                onTap: () => openLiveStreamNative(context, ref, stream),
+              ),
             );
           },
         ),
@@ -115,11 +120,10 @@ class _LiveCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
+    return CanlifalPressable(
+      onTap: onTap,
+      child: Material(
+        color: Colors.transparent,
         child: Ink(
           width: HomeApprovedDesign.liveCardW,
           height: HomeApprovedDesign.liveCardH,

@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.552+593 (2026-09-17) — Global motion + premium micro-UX (UI only)
+
+- `CanlifalMotionTokens` + press/entrance/nav/gold ring widget'ları (`lib/core/motion/`)
+- CDS motion süreleri token'lara hizalandı; analiz `docs/UI_UX_MOTION_SYSTEM_ANALYSIS.md`
+- Alt nav: scale + opacity; canlı kart: stagger fade-slide + press scale
+- Gold avatar: tek döngülük hafif ring pulse (FX performans modunda kapalı)
+- Sayfa fade-slide süresi merkezi token
+
 ## 1.0.551+592 (2026-09-17) — PK TikTok Match: profil, hediye, sohbet
 
 - Split PK: profil + PK puanı kamera alt-sol; alt skor bandı kaldırıldı

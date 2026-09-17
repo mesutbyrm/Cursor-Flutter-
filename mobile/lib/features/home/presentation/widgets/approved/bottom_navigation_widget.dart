@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../core/motion/canlifal_motion_tokens.dart';
+import '../../../../../core/motion/canlifal_motion_widgets.dart';
 import '../../../../../core/theme/app_theme_extensions.dart';
 import '../../theme/home_approved_design.dart';
 import '../../theme/home_premium_design.dart';
@@ -120,12 +122,11 @@ class _NavItem extends StatelessWidget {
         ? HomeApprovedDesign.textMuted
         : context.colors.onSurfaceMuted;
 
-    return GestureDetector(
+    return CanlifalPressable(
       onTap: onTap,
       onLongPress: onLongPress,
-      behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
+        duration: CanlifalMotionTokens.micro,
         width: 56,
         padding: const EdgeInsets.symmetric(vertical: 2),
         decoration: active
@@ -137,7 +138,12 @@ class _NavItem extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 24, color: active ? activeColor : inactiveColor),
+            CanlifalNavIcon(
+              icon: icon,
+              active: active,
+              activeColor: activeColor,
+              inactiveColor: inactiveColor,
+            ),
             if (active) ...[
               const SizedBox(height: 2),
               Text(

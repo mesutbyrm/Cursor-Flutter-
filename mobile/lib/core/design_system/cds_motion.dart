@@ -1,11 +1,13 @@
 import 'package:flutter/animation.dart';
 
-/// CDS motion süreleri.
-abstract final class CdsMotion {
-  static const Duration fast = Duration(milliseconds: 200);
-  static const Duration standard = Duration(milliseconds: 300);
-  static const Duration emphasis = Duration(milliseconds: 400);
+import '../motion/canlifal_motion_tokens.dart';
 
-  static const Curve easeOut = Curves.easeOutCubic;
-  static const Curve easeIn = Curves.easeInCubic;
+/// CDS motion süreleri — [CanlifalMotionTokens] ile hizalı.
+abstract final class CdsMotion {
+  static const Duration fast = CanlifalMotionTokens.micro;
+  static const Duration standard = CanlifalMotionTokens.normal;
+  static const Duration emphasis = CanlifalMotionTokens.premium;
+
+  static const Curve easeOut = CanlifalMotionTokens.easeOut;
+  static const Curve easeIn = CanlifalMotionTokens.easeIn;
 }

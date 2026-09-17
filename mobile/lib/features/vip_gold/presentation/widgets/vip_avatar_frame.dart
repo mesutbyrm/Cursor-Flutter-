@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/motion/canlifal_motion_widgets.dart';
 import '../../domain/vip_tier.dart';
 import '../theme/vip_gold_tokens.dart';
 import 'vip_badge.dart';
@@ -12,12 +13,14 @@ class VipAvatarFrame extends StatelessWidget {
     required this.tier,
     this.size = 72,
     this.showBadge = true,
+    this.entrancePulse = true,
   });
 
   final Widget child;
   final VipTier tier;
   final double size;
   final bool showBadge;
+  final bool entrancePulse;
 
   @override
   Widget build(BuildContext context) {
@@ -48,17 +51,25 @@ class VipAvatarFrame extends StatelessWidget {
         clipBehavior: Clip.none,
         alignment: Alignment.topCenter,
         children: [
-          Container(
-            width: size,
-            height: size,
-            padding: const EdgeInsets.all(3.5),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: gradient,
-              boxShadow: VipGoldTokens.goldGlow(blur: tier.isVip ? 18 : 10),
-            ),
-            child: ClipOval(child: child),
-          ),
+          tier.isVip && entrancePulse
+              ? CanlifalGoldRingPulse(
+                  size: size,
+                  gradient: gradient,
+                  enabled: tier == VipTier.gold || tier == VipTier.svip,
+                  child: child,
+                )
+              : Container(
+                  width: size,
+                  height: size,
+                  padding: const EdgeInsets.all(3.5),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: gradient,
+                    boxShadow:
+                        VipGoldTokens.goldGlow(blur: tier.isVip ? 18 : 10),
+                  ),
+                  child: ClipOval(child: child),
+                ),
           if (showBadge && tier.badgeShort.isNotEmpty)
             Positioned(
               bottom: 0,

@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 
+import '../motion/canlifal_motion_tokens.dart';
 import '../ui/premium_2026/premium_motion.dart';
 
 /// Android varsayılan geçişleri modal barrier/scrim bırakabiliyor — barrier yok.
@@ -35,7 +36,7 @@ abstract final class AppPageTransitions {
   static CustomTransitionPage<T> fadeSlide<T>({
     required LocalKey? key,
     required Widget child,
-    Duration duration = const Duration(milliseconds: 240),
+    Duration duration = CanlifalMotionTokens.page,
   }) {
     return CustomTransitionPage<T>(
       key: key,
