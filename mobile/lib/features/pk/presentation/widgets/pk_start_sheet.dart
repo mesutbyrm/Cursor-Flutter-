@@ -258,7 +258,7 @@ class _PendingInvitePanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sec = (inviteRemaining ?? const Duration(seconds: 15)).inSeconds
+    final sec = (inviteRemaining ?? const Duration(seconds: 60)).inSeconds
         .clamp(0, 99);
     final m = sec ~/ 60;
     final r = sec % 60;
