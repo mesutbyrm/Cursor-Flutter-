@@ -7,7 +7,9 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/auth/bot_account_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/pk/live_pk_invite_helper.dart';
+import '../../domain/pk/live_pk_event_dedup.dart';
 import '../../domain/pk/live_pk_ingest.dart';
+import 'live_pk_score_burst_provider.dart';
 import '../../domain/pk/live_pk_broadcast_stage.dart';
 import '../../domain/pk/pk_status_helper.dart';
 import '../../domain/pk/pk_unified_bridge.dart';
@@ -66,11 +68,16 @@ class LiveVideoPkState {
 
 class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, String> {
   Timer? _poll;
+  Timer? _endedCleanup;
   String? _lastIngestFingerprint;
+  final _eventDedup = LivePkEventDedup();
 
   @override
   LiveVideoPkState build(String streamId) {
-    ref.onDispose(() => _poll?.cancel());
+    ref.onDispose(() {
+      _poll?.cancel();
+      _endedCleanup?.cancel();
+    });
     Future.microtask(() => refresh());
     return const LiveVideoPkState();
   }
@@ -134,6 +141,9 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
             _startPolling();
           } else {
             _stopPolling();
+            if (isLivePkEndedStatus(remote.status)) {
+              _scheduleEndedCleanup(remote.effectiveId);
+            }
           }
           return;
         }
@@ -224,6 +234,9 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
   }
 
   void applyRemoteBattle(Map<String, dynamic> battle) {
+    if (!_eventDedup.shouldProcess(battle)) {
+      return;
+    }
     final fp = livePkBattleIngestFingerprint(battle);
     if (fp.isNotEmpty && fp == _lastIngestFingerprint) {
       return;
@@ -241,6 +254,9 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
     if (!isLivePkActiveStatus(status)) {
       state = state.copyWith(battle: merged, clearError: true);
       _stopPolling();
+      if (isLivePkEndedStatus(status)) {
+        _scheduleEndedCleanup(merged['id']?.toString() ?? '');
+      }
       return;
     }
     final matchId = merged['id']?.toString() ?? merged['battleId']?.toString();
@@ -252,6 +268,20 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
     if (state.isUnified && matchId != null && matchId.isNotEmpty) {
       _stopPolling();
     }
+  }
+
+  void _scheduleEndedCleanup(String battleId) {
+    final bid = battleId.trim();
+    if (bid.isEmpty) return;
+    _endedCleanup?.cancel();
+    _endedCleanup = Timer(const Duration(seconds: 7), () {
+      final currentId = state.battle?['id']?.toString() ?? '';
+      if (!isLivePkEndedStatus(state.status) || currentId != bid) return;
+      _eventDedup.clear();
+      _lastIngestFingerprint = null;
+      ref.read(livePkScoreBurstProvider(arg).notifier).reset();
+      state = state.copyWith(clearBattle: true, clearUnifiedMatchId: true);
+    });
   }
 
   Future<void> create({String? opponentStreamId, String? targetStreamId}) async {
@@ -352,7 +382,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
         );
         if (remote.isEnded) {
           _stopPolling();
-          state = state.copyWith(clearBattle: true, clearUnifiedMatchId: true);
+          _scheduleEndedCleanup(remote.effectiveId);
         }
         return;
       }

@@ -98,4 +98,10 @@ Yeni endpoint **uydurulmaz**; eksik backend özelliği ürün notu olarak raporl
 
 - Ortak PK sohbet: rakip yayıncının host stream chat odasına yazma izni
 - `room1`/`room2` sesli PK yanıtı
-- Authoritative `winnerId` / `isDraw` alanları bitiş eventinde
+
+## İstemci (1.0.550+591)
+
+- `resolveLivePkAuthoritativeOutcome` — `winnerId` / `isDraw` sonra skor
+- `LivePkEventDedup` — `eventId` / `transactionId` tekrarları
+- PK bitiş: 7 sn gecikmeli battle cleanup (`liveVideoPkProvider`)
+- Foreground: `refresh()`; reconnect banner PK metni

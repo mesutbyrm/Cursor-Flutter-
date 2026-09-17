@@ -757,6 +757,16 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     super.dispose();
   }
 
+  void _refreshPkStateAfterForeground() {
+    final streamId = widget.session.streamId?.trim();
+    if (streamId == null || streamId.isEmpty) return;
+    final pk = ref.read(liveVideoPkProvider(streamId));
+    if (isLivePkBroadcastStage(pk.battle, pk.status) ||
+        isPkInvitePendingStatus(pk.status)) {
+      unawaited(ref.read(liveVideoPkProvider(streamId).notifier).refresh());
+    }
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (_leaving) return;
@@ -779,6 +789,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               }
             }
           }
+          _refreshPkStateAfterForeground();
           return;
         case AppLifecycleState.detached:
           unawaited(_exitBroadcast(context, skipHostConfirm: true));
@@ -794,6 +805,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       unawaited(_exitBroadcast(context, skipHostConfirm: true));
     } else if (state == AppLifecycleState.resumed && _hostAway) {
       unawaited(_resumeHostBroadcast());
+    } else if (state == AppLifecycleState.resumed) {
+      _refreshPkStateAfterForeground();
     }
   }
 
@@ -2904,6 +2917,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               }),
               joinRequestPending: _joinRequestPending,
               coHostUpgraded: _coHostUpgraded,
+              pkImmersive: pkImmersive,
             ),
             if (hasStream && !pkImmersive)
               LiveBroadcastRoomHudOverlays(

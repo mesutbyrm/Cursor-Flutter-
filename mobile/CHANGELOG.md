@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.550+591 (2026-09-17) — PK kalan: reconnect, sonuç, dedup, cleanup
+
+- PK reconnect banner (split + bağlantı overlay PK metni)
+- Sonuç: `winnerId` / `isDraw` öncelikli; bitişte battle 7 sn sonra temizlenir (sonuç UI)
+- SSE `eventId` dedup; foreground’da PK state `refresh`
+- Test: authoritative outcome + event dedup
+
 ## 1.0.549+590 (2026-09-17) — Profesyonel canlı PK (davet, hazırlık, sonuç)
 
 - Davet: premium popup (15 sn), PK SAVAŞI sheet — gönderildi + iptal + geri sayım

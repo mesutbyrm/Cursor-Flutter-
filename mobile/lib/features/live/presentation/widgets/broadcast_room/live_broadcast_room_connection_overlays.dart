@@ -23,6 +23,7 @@ class LiveBroadcastRoomConnectionOverlays extends StatelessWidget {
     required this.onVipBannerDone,
     required this.joinRequestPending,
     required this.coHostUpgraded,
+    this.pkImmersive = false,
   });
 
   final double topInset;
@@ -39,6 +40,7 @@ class LiveBroadcastRoomConnectionOverlays extends StatelessWidget {
   final VoidCallback onVipBannerDone;
   final bool joinRequestPending;
   final bool coHostUpgraded;
+  final bool pkImmersive;
 
   @override
   Widget build(BuildContext context) {
@@ -53,9 +55,11 @@ class LiveBroadcastRoomConnectionOverlays extends StatelessWidget {
           LiveHostAwayViewerBanner(graceEndsAt: viewerGraceEndsAt),
         if (hasStream && phaseReconnecting && !hostAway)
           LiveReconnectBanner(
-            message: isHost
-                ? 'Bağlantı koptu — yayın yeniden bağlanıyor…'
-                : 'Yayın yeniden bağlanıyor — video birazdan devam edecek',
+            message: pkImmersive
+                ? 'Bağlantı yeniden kuruluyor… PK devam ediyor'
+                : isHost
+                    ? 'Bağlantı koptu — yayın yeniden bağlanıyor…'
+                    : 'Yayın yeniden bağlanıyor — video birazdan devam edecek',
           ),
         if (hasStream && phaseError && !isHost && !hostAway)
           LiveReconnectBanner(

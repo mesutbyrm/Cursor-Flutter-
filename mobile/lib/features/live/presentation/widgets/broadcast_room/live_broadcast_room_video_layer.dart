@@ -86,6 +86,7 @@ class LiveBroadcastRoomVideoLayer extends ConsumerWidget {
           chatVisible: chatVisibleForPk,
           onBack: pkOnBack,
           viewerCount: pkViewerCount,
+          sessionPhase: phase,
           onEndPk: s.isHost ? () => onEndActivePk(streamId) : null,
         );
       }

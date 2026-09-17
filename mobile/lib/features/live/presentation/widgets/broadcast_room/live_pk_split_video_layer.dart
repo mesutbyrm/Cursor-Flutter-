@@ -14,7 +14,10 @@ import '../../providers/live_providers.dart';
 import '../../providers/live_video_pk_provider.dart';
 import '../../../domain/pk/live_pk_broadcast_stage.dart';
 import '../../../domain/pk/live_pk_chat_stream.dart';
+import '../../../domain/pk/live_pk_authoritative_outcome.dart';
 import '../../../domain/pk/live_pk_outcome_latch.dart';
+import '../../pages/live_session_phase.dart';
+import 'live_pk_reconnect_banner.dart';
 import '../../../domain/pk/pk_status_helper.dart';
 import 'live_pk_reference_top_bar.dart';
 import '../live_playback_bridge.dart';
@@ -51,6 +54,7 @@ class LivePkSplitVideoLayer extends ConsumerStatefulWidget {
     this.chatVisible = true,
     this.onBack,
     this.viewerCount = 0,
+    this.sessionPhase = LiveSessionPhase.live,
   });
 
   final String streamId;
@@ -62,6 +66,7 @@ class LivePkSplitVideoLayer extends ConsumerStatefulWidget {
   final bool chatVisible;
   final VoidCallback? onBack;
   final int viewerCount;
+  final LiveSessionPhase sessionPhase;
 
   @override
   ConsumerState<LivePkSplitVideoLayer> createState() =>
@@ -211,6 +216,7 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
           rtcReady: rtcReady,
           battleId: battleMap['id']?.toString() ??
               battleMap['battleId']?.toString(),
+          battleMap: battleMap,
           layout: layout,
           myUserId: myUserId,
           opponentMuted: opponentMuted,
@@ -228,6 +234,7 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
           pkStarting: pkStarting,
           burst: burst,
           viewers: viewers,
+          sessionPhase: widget.sessionPhase,
         );
       },
     );
@@ -242,6 +249,7 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
     required TrtcRoomManager trtc,
     required bool rtcReady,
     required String? battleId,
+    required Map<String, dynamic> battleMap,
     required LivePkSplitLayout layout,
     String? myUserId,
     required bool opponentMuted,
@@ -259,6 +267,7 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
     required bool pkStarting,
     required LivePkScoreBurstState burst,
     required List<LiveStreamViewer> viewers,
+    required LiveSessionPhase sessionPhase,
   }) {
     final leftLeague = _leagueForUser(ref, layout.left.userId);
     final rightLeague = _leagueForUser(ref, layout.right.userId);
@@ -294,11 +303,16 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
     final localOnLeft = layout.left.isLocalPane;
     final myScore = localOnLeft ? leftScore : rightScore;
     final oppScore = localOnLeft ? rightScore : leftScore;
-    final isDraw = ended && leftScore == rightScore;
-    final iWon = ended &&
-        !isDraw &&
-        ((localOnLeft && leftScore > rightScore) ||
-            (!localOnLeft && rightScore > leftScore));
+    final outcome = resolveLivePkAuthoritativeOutcome(
+      battle: battleMap,
+      ended: ended,
+      myUserId: myUserId,
+      localOnLeft: localOnLeft,
+      leftScore: leftScore,
+      rightScore: rightScore,
+    );
+    final isDraw = outcome.isDraw;
+    final iWon = outcome.localWon;
     return AnimatedBuilder(
       animation: _outcomeFx,
       builder: (context, _) {
@@ -583,6 +597,9 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                 iWon: iWon,
                 myScore: myScore,
                 opponentScore: oppScore,
+              ),
+              LivePkReconnectBanner(
+                visible: sessionPhase == LiveSessionPhase.reconnecting,
               ),
             ],
           ),
