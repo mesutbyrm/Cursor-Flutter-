@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.553+594 (2026-09-17) — UI motion faz 2 (profil, sosyal, tanış, gold)
+
+- Profil hub: header/stats giriş animasyonu; istatistik value bump
+- Sosyal: feed stagger (ilk 8); beğeni burst scale
+- Tanış-Kaynaş: swipe snap motion token
+- Gold hub: crown hero fade-slide
+
 ## 1.0.552+593 (2026-09-17) — Global motion + premium micro-UX (UI only)
 
 - `CanlifalMotionTokens` + press/entrance/nav/gold ring widget'ları (`lib/core/motion/`)
