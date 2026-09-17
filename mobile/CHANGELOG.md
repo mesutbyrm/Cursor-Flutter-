@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.551+592 (2026-09-17) — PK TikTok Match: profil, hediye, sohbet
+
+- Split PK: profil + PK puanı kamera alt-sol; alt skor bandı kaldırıldı
+- Hediye: `giftSessionProvider` pane toast (gönderen/alıcı); PK hediye sheet (A/B/Kendim, `toUserId` + `pkMatchId`)
+- PK sohbet: PK/hediye sistem satırları filtre; PK sırasında hediye chat’e yazılmaz
+- Self-gift: reciprocal guard sender==receiver atlanır; like PK’da 3 puan/kullanıcı istemci bütçesi
+- Analiz: `docs/PK_TIKTOK_MATCH_ANALYSIS.md`
+
 ## 1.0.550+591 (2026-09-17) — PK kalan: reconnect, sonuç, dedup, cleanup
 
 - PK reconnect banner (split + bağlantı overlay PK metni)

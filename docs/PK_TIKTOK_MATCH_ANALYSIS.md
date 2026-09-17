@@ -56,3 +56,10 @@
 6. `live_pk_gift_picker_sheet.dart`, `live_broadcast_room_page.dart`
 7. `live_gifts_remote_datasource.dart` (self-gift reciprocal skip)
 8. `live_pk_like_budget.dart`, `_postPkHeartScore` guard
+
+## Uygulama (1.0.551+592)
+
+- Split layer: `LivePkPaneProfileFooter`, gift toast `sessionKey`, alt skor bandı kaldırıldı
+- `showPkLiveGiftPicker` yayın sayfasında PK immersive hediye girişi
+- `GiftEventListener` PK aşamasında `appendGiftSystemMessage` atlar
+- `live_pk_chat_filter` PK overlay sohbetinde

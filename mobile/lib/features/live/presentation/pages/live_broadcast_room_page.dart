@@ -2006,7 +2006,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final battleId =
         battle['id']?.toString() ?? battle['battleId']?.toString() ?? '';
     if (battleId.isEmpty) return;
-    final userId = ref.read(authControllerProvider).valueOrNull?.id?.trim() ?? '';
+    final userId = ref.read(authControllerProvider).valueOrNull?.id.trim() ?? '';
     if (userId.isEmpty) return;
     const points = 3;
     if (!_pkLikeBudget.canAward(battleId, userId, points)) return;
