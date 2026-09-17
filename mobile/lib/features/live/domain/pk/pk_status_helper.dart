@@ -17,6 +17,12 @@ bool isLivePkActiveStatus(String? status) {
       s == 'running';
 }
 
+/// Kabul sonrası hazırlık / 3-2-1 — backend `starting` ve eşdeğerleri.
+bool isLivePkStartingStatus(String? status) {
+  final s = normalizePkStatus(status);
+  return s == 'starting' || s == 'countdown' || s == 'preparing';
+}
+
 /// Aktif PK için iki yayın kimliği gerekli (erken split TRTC çökmesini önler).
 bool isLivePkSplitReady(Map<String, dynamic>? battle, String? status) {
   if (battle == null || !isLivePkActiveStatus(status)) return false;

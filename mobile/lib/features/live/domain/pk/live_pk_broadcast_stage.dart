@@ -33,6 +33,7 @@ bool isLivePkEndedStatus(String? status) {
 /// Aktif veya bitti — split video + skor çubuğu (tam ekran sonuç overlay yok).
 bool isLivePkBroadcastStage(Map<String, dynamic>? battle, String? status) {
   if (!livePkHasDualStreams(battle)) return false;
+  if (isLivePkStartingStatus(status)) return true;
   if (isLivePkActiveStatus(status)) return true;
   return isLivePkEndedStatus(status);
 }

@@ -101,7 +101,7 @@ class _PkStartSheetState extends ConsumerState<_PkStartSheet> {
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
-                    'PK Daveti',
+                    'PK SAVAŞI',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w900,
@@ -121,29 +121,47 @@ class _PkStartSheetState extends ConsumerState<_PkStartSheet> {
             const SizedBox(height: 4),
             Text(
               widget.args.kind == PkContextKind.live
-                  ? 'Canlı yayındaki rakiplerden birini seç'
+                  ? 'Karşı yayıncı seç'
                   : 'Aktif sesli odalardan birini seç',
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.55),
                 fontSize: 12,
               ),
             ),
-            const SizedBox(height: 12),
-            PkDurationPicker(
-              selectedSeconds: _duration,
-              onChanged: busy ? (_) {} : (v) => setState(() => _duration = v),
-            ),
-            const SizedBox(height: 12),
+            if (pending && session.battle != null) ...[
+              const SizedBox(height: 14),
+              _PendingInvitePanel(
+                args: widget.args,
+                battle: session.battle!,
+                inviteRemaining: session.inviteRemaining,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Karşı taraf kabul ettiğinde PK başlayacaktır.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.45),
+                  fontSize: 11,
+                ),
+              ),
+            ] else ...[
+              const SizedBox(height: 12),
+              PkDurationPicker(
+                selectedSeconds: _duration,
+                onChanged: busy ? (_) {} : (v) => setState(() => _duration = v),
+              ),
+              const SizedBox(height: 12),
+            ],
             if (session.isRateLimited)
               _banner(
                 'Çok fazla istek — lütfen biraz bekleyin',
                 Colors.orangeAccent,
               ),
-            if (pending && session.battle != null)
-              _banner('Bekleyen PK daveti var', const Color(0xFF9B4DFF)),
             if (session.error != null)
               _banner(session.error!, Colors.orangeAccent),
-            if (session.candidates.isEmpty && !session.loading)
+            if (pending && session.battle != null)
+              const SizedBox.shrink()
+            else if (session.candidates.isEmpty && !session.loading)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 28),
                 child: Column(
@@ -217,11 +235,109 @@ class _PkStartSheetState extends ConsumerState<_PkStartSheet> {
     setState(() => _invitingTargetId = null);
     final err = ref.read(pkSessionProvider(widget.args)).error;
     if (err == null) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('PK daveti gönderildi')),
-      );
+      final stillPending =
+          ref.read(pkSessionProvider(widget.args)).battle?.status ==
+              PkStatus.pending;
+      if (!stillPending && mounted) {
+        Navigator.pop(context);
+      }
     }
+  }
+}
+
+class _PendingInvitePanel extends ConsumerWidget {
+  const _PendingInvitePanel({
+    required this.args,
+    required this.battle,
+    this.inviteRemaining,
+  });
+
+  final PkSessionArgs args;
+  final PkBattle battle;
+  final Duration? inviteRemaining;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sec = (inviteRemaining ?? const Duration(seconds: 15)).inSeconds
+        .clamp(0, 99);
+    final m = sec ~/ 60;
+    final r = sec % 60;
+    final label =
+        '${m.toString().padLeft(2, '0')}:${r.toString().padLeft(2, '0')}';
+    final name = battle.user2?.name ?? battle.user1?.name ?? 'Yayıncı';
+    final image = battle.user2?.image ?? battle.user1?.image ?? '';
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: const Color(0xFF2A1540).withValues(alpha: 0.9),
+        border: Border.all(color: const Color(0xFF9B4DFF).withValues(alpha: 0.4)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 22,
+                  backgroundImage:
+                      image.isNotEmpty ? NetworkImage(image) : null,
+                  child: image.isEmpty
+                      ? const Icon(Icons.person, color: Colors.white54)
+                      : null,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const Text(
+                        '🟢 CANLI',
+                        style: TextStyle(color: Color(0xFF4ADE80), fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'PK İSTEĞİ GÖNDERİLDİ',
+              style: TextStyle(
+                color: Color(0xFFFFD54F),
+                fontWeight: FontWeight.w900,
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 26,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton(
+              onPressed: () async {
+                await ref.read(pkSessionProvider(args).notifier).cancel();
+                if (context.mounted) Navigator.pop(context);
+              },
+              child: const Text('İptal'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -347,8 +463,8 @@ class _CandidateTile extends StatelessWidget {
                       ),
                     )
                   : const Text(
-                      'PK İste',
-                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+                      'PK İSTEĞİ GÖNDER',
+                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11),
                     ),
             ),
           ],

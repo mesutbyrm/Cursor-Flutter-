@@ -94,8 +94,11 @@ Future<void> showLiveStreamPkInviteDialog(
   }
   final pkBattle = PkBattle.fromJson(normalized);
   final skew = ref.read(pkServiceProvider).clockSkew;
-  final inviteTimeout = pkBattle.remainingInvite(skew) ??
-      const Duration(seconds: 60);
+  final rawInvite = pkBattle.remainingInvite(skew) ??
+      const Duration(seconds: 15);
+  final inviteTimeout = rawInvite > const Duration(seconds: 15)
+      ? const Duration(seconds: 15)
+      : rawInvite;
 
   final accept = await showPkInviteDialog(
     context,

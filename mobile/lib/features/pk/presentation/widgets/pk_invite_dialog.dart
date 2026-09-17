@@ -1,28 +1,32 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../data/pk_models.dart';
-import '../providers/pk_providers.dart';
-import '../providers/pk_session_notifier.dart';
-
-/// Gelen PK daveti — 60 sn geri sayım, kabul / red.
+/// Gelen PK daveti — 15 sn geri sayım (sunucu süresi ile kısaltılır), kabul / red.
 Future<bool?> showPkInviteDialog(
   BuildContext context, {
   required String challengerName,
   required String challengerImageUrl,
-  Duration inviteTimeout = const Duration(seconds: 60),
+  Duration inviteTimeout = const Duration(seconds: 15),
 }) {
-  return showDialog<bool>(
+  return showGeneralDialog<bool>(
     context: context,
     barrierDismissible: false,
-    barrierColor: Colors.black.withValues(alpha: 0.72),
-    builder: (ctx) => _PkInviteDialog(
+    barrierLabel: 'PK daveti',
+    barrierColor: Colors.black.withValues(alpha: 0.78),
+    transitionDuration: const Duration(milliseconds: 320),
+    pageBuilder: (ctx, a1, a2) => _PkInviteDialog(
       challengerName: challengerName,
       challengerImageUrl: challengerImageUrl,
       inviteTimeout: inviteTimeout,
     ),
+    transitionBuilder: (ctx, anim, _, child) {
+      return Transform.scale(
+        scale: Curves.easeOutBack.transform(anim.value),
+        child: Opacity(opacity: anim.value, child: child),
+      );
+    },
   );
 }
 
@@ -66,81 +70,127 @@ class _PkInviteDialogState extends State<_PkInviteDialog> {
     super.dispose();
   }
 
+  String _countdownLabel() {
+    final s = _left.inSeconds;
+    final m = s ~/ 60;
+    final r = s % 60;
+    return '${m.toString().padLeft(2, '0')}:${r.toString().padLeft(2, '0')}';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final sec = _left.inSeconds;
-    return AlertDialog(
-      backgroundColor: const Color(0xFF1A0F2E),
-      title: const Row(
-        children: [
-          Text('🔥 ', style: TextStyle(fontSize: 22)),
-          Text('PK Daveti', style: TextStyle(color: Colors.white)),
-        ],
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CircleAvatar(
-            radius: 36,
-            backgroundImage: widget.challengerImageUrl.isNotEmpty
-                ? NetworkImage(widget.challengerImageUrl)
-                : null,
-            child: widget.challengerImageUrl.isEmpty
-                ? const Icon(Icons.person, color: Colors.white54)
-                : null,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            '${widget.challengerName} PK daveti gönderdi',
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white70),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            '${sec}s',
-            style: const TextStyle(
-              color: Color(0xFFFFD700),
-              fontSize: 28,
-              fontWeight: FontWeight.w900,
+    return Center(
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          width: MediaQuery.sizeOf(context).width * 0.86,
+          padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF2A1548), Color(0xFF12081F)],
             ),
+            border: Border.all(color: const Color(0xFF9B4DFF).withValues(alpha: 0.45)),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF9B4DFF).withValues(alpha: 0.35),
+                blurRadius: 28,
+                spreadRadius: 2,
+              ),
+            ],
           ),
-        ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                '⚔ PK DAVETİ',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 18,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 16),
+              CircleAvatar(
+                radius: 40,
+                backgroundColor: const Color(0xFF3D2560),
+                backgroundImage: widget.challengerImageUrl.isNotEmpty
+                    ? NetworkImage(widget.challengerImageUrl)
+                    : null,
+                child: widget.challengerImageUrl.isEmpty
+                    ? const Icon(Icons.person, color: Colors.white54, size: 36)
+                    : null,
+              ).animate().scale(
+                    begin: const Offset(0.85, 0.85),
+                    end: const Offset(1, 1),
+                    duration: 400.ms,
+                  ),
+              const SizedBox(height: 12),
+              Text(
+                '@${widget.challengerName}',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'seni PK savaşına davet ediyor',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.65),
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                _countdownLabel(),
+                style: const TextStyle(
+                  color: Color(0xFFFFD54F),
+                  fontSize: 32,
+                  fontWeight: FontWeight.w900,
+                  fontFeatures: [FontFeature.tabularFigures()],
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white70,
+                        side: BorderSide(color: Colors.white24),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      child: const Text('REDDET'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF9B4DFF),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      child: const Text(
+                        'KABUL ET',
+                        style: TextStyle(fontWeight: FontWeight.w900),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context, false),
-          child: const Text('Reddet'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.pop(context, true),
-          child: const Text('Kabul Et'),
-        ),
-      ],
     );
-  }
-}
-
-/// Oturum + diyalog — kabul/red sonrası birleşik API.
-Future<void> runPkInviteDialogForSession(
-  BuildContext context,
-  WidgetRef ref,
-  PkSessionArgs args, {
-  required PkBattle battle,
-  required String challengerName,
-  String challengerImageUrl = '',
-}) async {
-  final accept = await showPkInviteDialog(
-    context,
-    challengerName: challengerName,
-    challengerImageUrl: challengerImageUrl,
-    inviteTimeout: battle.remainingInvite(ref.read(pkServiceProvider).clockSkew) ??
-        const Duration(seconds: 60),
-  );
-  if (!context.mounted || accept == null) return;
-  final notifier = ref.read(pkSessionProvider(args).notifier);
-  if (accept) {
-    await notifier.accept();
-  } else {
-    await notifier.reject();
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
@@ -29,6 +31,12 @@ import '../../providers/live_stream_viewers_provider.dart';
 import '../../providers/live_host_rank_provider.dart';
 import '../../providers/live_pk_ended_lock_provider.dart';
 import 'live_pk_pane_outcome_overlay.dart';
+import 'live_pk_preparing_overlay.dart';
+import 'live_pk_final_countdown_overlay.dart';
+import 'live_pk_result_flash_overlay.dart';
+import 'live_pk_score_pop_overlay.dart';
+import 'live_pk_top_supporters_panel.dart';
+import '../../providers/live_pk_score_burst_provider.dart';
 
 /// PK aktifken tam ekran split: sol yerel/yayıncı, sağ rakip + referans overlay.
 class LivePkSplitVideoLayer extends ConsumerStatefulWidget {
@@ -65,10 +73,15 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
   final _outcomeLatch = LivePkOutcomeLatch();
   late final AnimationController _outcomeFx;
   var _outcomeFxVisible = false;
+  var _resultFlashVisible = false;
+  Timer? _uiClock;
 
   @override
   void initState() {
     super.initState();
+    _uiClock = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
     _outcomeFx = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 4200),
@@ -82,6 +95,7 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
 
   @override
   void dispose() {
+    _uiClock?.cancel();
     _outcomeFx.dispose();
     super.dispose();
   }
@@ -91,8 +105,21 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
     if (bid.isEmpty) return;
     final lock = ref.read(livePkEndedLockProvider.notifier);
     if (!lock.tryAcquireEndedCelebration(bid)) return;
-    setState(() => _outcomeFxVisible = true);
+    setState(() {
+      _outcomeFxVisible = true;
+      _resultFlashVisible = true;
+    });
     _outcomeFx.forward(from: 0);
+    Future<void>.delayed(const Duration(milliseconds: 2600), () {
+      if (mounted) setState(() => _resultFlashVisible = false);
+    });
+  }
+
+  int _resolveDisplaySeconds(DateTime? endsAt, int fallback) {
+    if (endsAt != null) {
+      return endsAt.difference(DateTime.now()).inSeconds.clamp(0, 86400);
+    }
+    return fallback;
   }
 
   @override
@@ -116,6 +143,7 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
     }
     final ended = isLivePkEndedStatus(pk.status);
     final pkActive = isLivePkActiveStatus(pk.status);
+    final pkStarting = isLivePkStartingStatus(pk.status);
 
     final authUser = ref.read(authControllerProvider).valueOrNull;
     final myUserId = authUser?.id;
@@ -137,6 +165,11 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
     );
     final leftScore = pkScoreFromBattleMap(battleMap, left: true);
     final rightScore = pkScoreFromBattleMap(battleMap, left: false);
+    ref.read(livePkScoreBurstProvider(streamId).notifier).observeScores(
+          left: leftScore,
+          right: rightScore,
+        );
+    final burst = ref.watch(livePkScoreBurstProvider(streamId));
     final secondsLeft = pkBattleSecondsLeftFromMap(battleMap);
     final endsAtRaw = battleMap['endsAt']?.toString();
     final endsAt = endsAtRaw != null && endsAtRaw.isNotEmpty
@@ -192,6 +225,8 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
           rightRemoteMic: remoteMicFor(layout.right.userId),
           ended: ended,
           pkActive: pkActive,
+          pkStarting: pkStarting,
+          burst: burst,
           viewers: viewers,
         );
       },
@@ -221,6 +256,8 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
     required bool rightRemoteMic,
     required bool ended,
     required bool pkActive,
+    required bool pkStarting,
+    required LivePkScoreBurstState burst,
     required List<LiveStreamViewer> viewers,
   }) {
     final leftLeague = _leagueForUser(ref, layout.left.userId);
@@ -253,6 +290,15 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
       leftScore: leftScore,
       rightScore: rightScore,
     );
+    final displaySec = _resolveDisplaySeconds(endsAt, secondsLeft);
+    final localOnLeft = layout.left.isLocalPane;
+    final myScore = localOnLeft ? leftScore : rightScore;
+    final oppScore = localOnLeft ? rightScore : leftScore;
+    final isDraw = ended && leftScore == rightScore;
+    final iWon = ended &&
+        !isDraw &&
+        ((localOnLeft && leftScore > rightScore) ||
+            (!localOnLeft && rightScore > leftScore));
     return AnimatedBuilder(
       animation: _outcomeFx,
       builder: (context, _) {
@@ -504,6 +550,39 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                 onClose: widget.onBack,
                 viewerCount: widget.viewerCount,
                 viewers: viewers,
+              ),
+              Positioned(
+                top: headerH + 8,
+                right: 8,
+                width: MediaQuery.sizeOf(context).width * 0.42,
+                child: LivePkTopSupportersPanel(
+                  sessionKey: streamId,
+                  leftHostLabel: layout.left.label,
+                  rightHostLabel: layout.right.label,
+                  leftHostUserId: layout.left.userId,
+                  rightHostUserId: layout.right.userId,
+                ),
+              ),
+              LivePkScorePopOverlay(
+                burstToken: burst.token,
+                delta: burst.delta,
+                toLeft: burst.toLeft,
+              ),
+              LivePkFinalCountdownOverlay(
+                secondsLeft: displaySec,
+                active: pkActive && !ended,
+              ),
+              LivePkPreparingOverlay(
+                visible: pkStarting && !ended,
+                leftName: layout.left.label,
+                rightName: layout.right.label,
+              ),
+              LivePkResultFlashOverlay(
+                visible: _resultFlashVisible && ended,
+                isDraw: isDraw,
+                iWon: iWon,
+                myScore: myScore,
+                opponentScore: oppScore,
               ),
             ],
           ),

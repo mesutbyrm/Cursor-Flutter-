@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.549+590 (2026-09-17) — Profesyonel canlı PK (davet, hazırlık, sonuç)
+
+- Davet: premium popup (15 sn), PK SAVAŞI sheet — gönderildi + iptal + geri sayım
+- Split PK: `starting` fazında 3-2-1 hazırlık; son 10 sn FINAL overlay; skor +N burst
+- Sonuç: kısa kazan/kaybet/berabere flaşı; top destekçiler paneli; analiz `docs/PK_LIVE_SYSTEM_ANALYSIS.md`
+
 ## 1.0.548+589 (2026-09-17) — PK referans UI 1:1 + izleyici çift yayın
 
 - Split video: chip üst bar altında, VS 68px, ince ayırıcı, pane içi hediye toast
