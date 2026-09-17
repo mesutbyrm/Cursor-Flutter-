@@ -127,7 +127,6 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
     );
 
     final opponentMuted = ref.watch(livePkOpponentMutedProvider(streamId));
-    final interaction = ref.watch(liveRoomInteractionProvider(streamId));
     final viewers = ref.watch(liveStreamViewersProvider(streamId)).valueOrNull ??
         const [];
     final streams = ref.watch(liveStreamsProvider).valueOrNull ?? const [];
