@@ -4,20 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.548+589` |
-| Tarih (UTC) | 2026-09-17 12:05 |
-| Commit | [`f2f932fcf30632fa9b3587783c7dd874d56d8420`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/f2f932fcf30632fa9b3587783c7dd874d56d8420) |
-| İş akışı | [Run 35217435770](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35217435770) |
+| Sürüm | `1.0.549+590` |
+| Tarih (UTC) | 2026-09-17 13:23 |
+| Commit | [`dd57788f1dcd588183094f43397e062672243fe2`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/dd57788f1dcd588183094f43397e062672243fe2) |
+| İş akışı | [Run 35224902155](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35224902155) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.548+589 (2026-09-17) — PK referans UI 1:1 + izleyici çift yayın
+## 1.0.550+591 (2026-09-17) — PK kalan: reconnect, sonuç, dedup, cleanup
 
-- Split video: chip üst bar altında, VS 68px, ince ayırıcı, pane içi hediye toast
-- Skor/pill/konum; sağ yerel yayıncıda mic/kamera rozeti; alt giriş sırası (gönder → gül → hediye)
-- PK izleyici: anchor TRTC odasına `publishLocal: false` + `twoWayVideo` (iki yayıncı ses/görüntü)
-- Her pane TRTC remote `userId` ile bağlanır (sol/sağ ayrı)
+- PK reconnect banner (split + bağlantı overlay PK metni)
+- Sonuç: `winnerId` / `isDraw` öncelikli; bitişte battle 7 sn sonra temizlenir (sonuç UI)
+- SSE `eventId` dedup; foreground’da PK state `refresh`
+- Test: authoritative outcome + event dedup
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
