@@ -4,19 +4,23 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.546+587` |
-| Tarih (UTC) | 2026-09-16 23:18 |
-| Commit | [`7cee8ef89c9381293dd97d71848ce5aa748b8230`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/7cee8ef89c9381293dd97d71848ce5aa748b8230) |
-| İş akışı | [Run 35160279258](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35160279258) |
+| Sürüm | `1.0.547+588` |
+| Tarih (UTC) | 2026-09-17 09:15 |
+| Commit | [`ef564fd133b083cf55226baf2706bfb80d109944`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/ef564fd133b083cf55226baf2706bfb80d109944) |
+| İş akışı | [Run 35202086073](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35202086073) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.546+587 (2026-09-16) — PK sohbet + kamera donması
+## 1.0.547+588 (2026-09-17) — Sesli oda + canlı PK TikTok/Bigo (2b)
 
-- PK sohbet: challenger yayın odasında birleşik SSE/gönderim (`livePkEffectiveChatStreamId`)
-- Sohbet overlay sabit boyut (referans mock: ~%56 genişlik, 118px yükseklik)
-- TRTC PK: zaten anchor odadaysa gereksiz leave/join atlanır (kamera donması)
+- Sesli oda HATA 1: presence iterasyonları kopya liste (`_presenceCopy`, `List.from`)
+- Sesli oda HATA 2–3: pending seat guard + `voiceSeatActionLockProvider` + reaktif auto-seat (mevcut, doğrulandı)
+- Sesli PK HATA 4: `room1`/`room2` eksikse tanılama logu (backend doğrulama gerekir)
+- Canlı PK HATA 1: aktif yayın oturumu + anchor odada gereksiz TRTC rejoin atlama
+- Canlı PK HATA 4: PK API hata mesajı snackbar (mevcut)
+- 2b: `PkStatusPill` skor barı altında; tam ekran `PkWinnerCelebration` canlı yayında yok
+- PK bitti: yarım ekran konfeti + kaybeden taraf %35 karartma (~4 sn), `livePkEndedLockProvider` tek tetik
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
