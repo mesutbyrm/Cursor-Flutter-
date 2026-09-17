@@ -4,21 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.554+595` |
-| Tarih (UTC) | 2026-09-17 21:49 |
-| Commit | [`db712884f2cd03c8beaddb2c3d9f243d14986975`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/db712884f2cd03c8beaddb2c3d9f243d14986975) |
-| İş akışı | [Run 35274668472](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35274668472) |
+| Sürüm | `1.0.555+596` |
+| Tarih (UTC) | 2026-09-17 22:35 |
+| Commit | [`a8ca45c5574bf58cc2bd44eba1471719047a4dac`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/a8ca45c5574bf58cc2bd44eba1471719047a4dac) |
+| İş akışı | [Run 35281465413](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35281465413) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.554+595 (2026-09-17) — UI motion faz 3 (gold satın alma, tarot, banner, yorumlar)
+## 1.0.555+596 (2026-09-17) — PK: TRTC oda, davet 60 sn, sonuç kapanışı
 
-- Üyelik anlık satın alma: gold success overlay (sparkle, performans modunda kapalı)
-- Fal hub kehanet kartı: tarot Y-flip vitrin (dokun)
-- Ana sayfa banner giriş animasyonu
-- Yorumlar sheet: stagger + skeleton; feed load-more skeleton
-- Motion: `CanlifalTarotFlipCard`, `CdsPressableButton` export
+- İki yönlü PK: her iki yayıncı aynı TRTC odasına (host stream / `pkRoomId`); `pkSessionId` battle UUID artık oda olarak kullanılmıyor
+- PK daveti: 60 sn geri sayım; global listener 1 sn poll + yayın odasında SSE bump
+- PK bitiş: sonuç ~4 sn sonra split kapanır, normal yayın TRTC’ye dönülür
+- Split UI: üstte eşit kare video bandı, rakip sessize alma yalnızca yerel playback
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
