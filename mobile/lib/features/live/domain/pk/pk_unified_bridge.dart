@@ -80,6 +80,7 @@ Map<String, dynamic> pkBattleRemoteToBattleMap(
 
   return {
     'id': remote.effectiveId,
+    'pkSessionId': remote.effectiveId,
     'status': remote.status,
     'score1': remote.challengerScore,
     'score2': remote.opponentScore,

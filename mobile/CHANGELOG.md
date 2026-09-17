@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.555+596 (2026-09-17) — PK: TRTC oda, davet 60 sn, sonuç kapanışı
+
+- İki yönlü PK: her iki yayıncı aynı TRTC odasına (host stream / `pkRoomId`); `pkSessionId` battle UUID artık oda olarak kullanılmıyor
+- PK daveti: 60 sn geri sayım; global listener 1 sn poll + yayın odasında SSE bump
+- PK bitiş: sonuç ~4 sn sonra split kapanır, normal yayın TRTC’ye dönülür
+- Split UI: üstte eşit kare video bandı, rakip sessize alma yalnızca yerel playback
+
 ## 1.0.554+595 (2026-09-17) — UI motion faz 3 (gold satın alma, tarot, banner, yorumlar)
 
 - Üyelik anlık satın alma: gold success overlay (sparkle, performans modunda kapalı)

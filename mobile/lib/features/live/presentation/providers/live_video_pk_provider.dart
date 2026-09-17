@@ -166,6 +166,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
   }
 
   /// Skor güncellemesi — tam `refresh` PK ekranını düşürmez.
+  /// Sunucu skor güncellemesi gelene kadar yalnızca görsel burst; otorite sunucuda.
   void applyLocalScoreDelta({required String side, required int amount}) {
     if (amount <= 0) return;
     final b = state.battle;
@@ -274,14 +275,25 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
     final bid = battleId.trim();
     if (bid.isEmpty) return;
     _endedCleanup?.cancel();
-    _endedCleanup = Timer(const Duration(seconds: 7), () {
-      final currentId = state.battle?['id']?.toString() ?? '';
-      if (!isLivePkEndedStatus(state.status) || currentId != bid) return;
-      _eventDedup.clear();
-      _lastIngestFingerprint = null;
-      ref.read(livePkScoreBurstProvider(arg).notifier).reset();
-      state = state.copyWith(clearBattle: true, clearUnifiedMatchId: true);
+    _endedCleanup = Timer(const Duration(seconds: 4), () {
+      dismissEndedOverlay(expectedBattleId: bid);
     });
+  }
+
+  /// PK sonuç ekranından sonra split'i kapatır (sunucu zaten `ended` döndü).
+  void dismissEndedOverlay({String? expectedBattleId}) {
+    final currentId = state.battle?['id']?.toString() ?? '';
+    if (!isLivePkEndedStatus(state.status)) return;
+    if (expectedBattleId != null &&
+        expectedBattleId.trim().isNotEmpty &&
+        currentId != expectedBattleId.trim()) {
+      return;
+    }
+    _endedCleanup?.cancel();
+    _eventDedup.clear();
+    _lastIngestFingerprint = null;
+    ref.read(livePkScoreBurstProvider(arg).notifier).reset();
+    state = state.copyWith(clearBattle: true, clearUnifiedMatchId: true);
   }
 
   Future<void> create({String? opponentStreamId, String? targetStreamId}) async {

@@ -556,7 +556,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     if (_leaving || !_rtcReady) return;
     if (_pkTwoWayRtc) return;
     final pk = ref.read(liveVideoPkProvider(streamId));
-    if (!isLivePkSplitReady(pk.battle, pk.status)) return;
+    if (!livePkHasDualStreams(pk.battle)) return;
+    if (!isLivePkActiveStatus(pk.status) &&
+        !isLivePkStartingStatus(pk.status)) {
+      return;
+    }
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null || _trtcCoordinator == null) return;
     final battle = pk.battle ?? const <String, dynamic>{};
@@ -574,6 +578,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     }
     final asPublisher = widget.session.isHost || _coHostUpgraded;
     try {
+      PkEventLog.log('entering_room', {
+        'trtcRoomId': anchor.trtcRoomId,
+        if (anchor.pkSessionId != null) 'pkSessionId': anchor.pkSessionId,
+      });
       _trtcCoordinator!.setReconnectSuspended(true);
       await _trtcCoordinator!.leave();
       await _trtcCoordinator!.join(
@@ -590,6 +598,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       );
       _pkTwoWayRtc = true;
       _applyRtcPublishPolicy();
+      PkEventLog.connected(roomId: anchor.trtcRoomId, streamId: streamId);
     } catch (e) {
       _pkTwoWayRtc = false;
       if (kDebugMode) debugPrint('[PK] twoWayVideo rejoin failed: $e');
@@ -2661,7 +2670,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         final nowSplit =
             isLivePkBroadcastStage(next.battle, next.status);
         if (nowSplit) {
-          if (!_pkTwoWayRtc) {
+          if (!_pkTwoWayRtc &&
+              (isLivePkActiveStatus(next.status) ||
+                  isLivePkStartingStatus(next.status))) {
             unawaited(_ensurePkTwoWayRtc(streamId));
           }
         } else if (wasSplit && !nowSplit) {

@@ -21,6 +21,7 @@ import 'live_pk_reconnect_banner.dart';
 import '../../../domain/pk/pk_status_helper.dart';
 import 'live_pk_reference_top_bar.dart';
 import '../live_playback_bridge.dart';
+import '../../../../pk/presentation/providers/pk_providers.dart';
 import '../../../../pk/presentation/widgets/pk_battle_visuals.dart';
 import '../../../../voice_hub/presentation/widgets/premium_2026/pk/pk_vs_emblem.dart';
 import 'live_pk_immersive_video_pane.dart';
@@ -116,6 +117,12 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
     Future<void>.delayed(const Duration(milliseconds: 2600), () {
       if (mounted) setState(() => _resultFlashVisible = false);
     });
+    Future<void>.delayed(const Duration(seconds: 4), () {
+      if (!mounted) return;
+      ref
+          .read(liveVideoPkProvider(widget.streamId).notifier)
+          .dismissEndedOverlay(expectedBattleId: bid);
+    });
   }
 
   int _resolveDisplaySeconds(DateTime? endsAt, int fallback) {
@@ -175,9 +182,17 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
     final burst = ref.watch(livePkScoreBurstProvider(streamId));
     final secondsLeft = pkBattleSecondsLeftFromMap(battleMap);
     final endsAtRaw = battleMap['endsAt']?.toString();
-    final endsAt = endsAtRaw != null && endsAtRaw.isNotEmpty
-        ? DateTime.tryParse(endsAtRaw)
-        : null;
+    final skew = ref.read(pkServiceProvider).clockSkew;
+    DateTime? endsAt;
+    if (endsAtRaw != null && endsAtRaw.isNotEmpty) {
+      final parsed = DateTime.tryParse(endsAtRaw);
+      if (parsed != null) {
+        endsAt = parsed.add(skew);
+      }
+    }
+    final opponentUserId = layout.left.isLocalPane
+        ? layout.right.userId
+        : layout.left.userId;
 
     String? playbackFor(String? targetStreamId) {
       final id = targetStreamId?.trim() ?? '';
@@ -218,6 +233,7 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
           layout: layout,
           myUserId: myUserId,
           opponentMuted: opponentMuted,
+          opponentUserId: opponentUserId,
           leftScore: leftScore,
           rightScore: rightScore,
           secondsLeft: secondsLeft,
@@ -238,6 +254,20 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
     );
   }
 
+  bool _remotePlaybackAudible({
+    required LivePkPaneModel pane,
+    required String? opponentUserId,
+    required bool opponentMuted,
+  }) {
+    if (pane.isLocalPane) return true;
+    final opp = opponentUserId?.trim() ?? '';
+    final uid = pane.userId?.trim() ?? '';
+    if (opp.isNotEmpty && uid.isNotEmpty && uid == opp) {
+      return !opponentMuted;
+    }
+    return true;
+  }
+
   Widget _buildStack(
     BuildContext context,
     WidgetRef ref, {
@@ -251,6 +281,7 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
     required LivePkSplitLayout layout,
     String? myUserId,
     required bool opponentMuted,
+    required String? opponentUserId,
     required int leftScore,
     required int rightScore,
     required int secondsLeft,
@@ -305,9 +336,13 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
         return LayoutBuilder(
       builder: (context, constraints) {
         final chromeBottom = LivePkLayoutMetrics.chromeReserve(context);
-        final videoBottom = LivePkLayoutMetrics.videoBottomInset(context);
         final headerH = LivePkLayoutMetrics.headerHeight(context);
         final chipTop = LivePkLayoutMetrics.streamerChipTop(context);
+        final divider = LivePkLayoutMetrics.splitDividerWidth;
+        final paneWidth =
+            (constraints.maxWidth - divider).clamp(0.0, constraints.maxWidth) / 2;
+        final squareSide =
+            paneWidth.clamp(0.0, constraints.maxWidth).toDouble();
 
         return ColoredBox(
           color: Colors.black,
@@ -315,10 +350,10 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
             fit: StackFit.expand,
             children: [
               Positioned(
-                top: 0,
+                top: headerH,
                 left: 0,
                 right: 0,
-                bottom: videoBottom,
+                height: squareSide,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -360,7 +395,11 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                                   : playbackFor(layout.left.streamId),
                               preferRemoteUserId: layout.left.userId,
                               accent: Colors.pinkAccent,
-                              playbackAudible: true,
+                              playbackAudible: _remotePlaybackAudible(
+                                pane: layout.left,
+                                opponentUserId: opponentUserId,
+                                opponentMuted: opponentMuted,
+                              ),
                               bare: true,
                             ),
                           ),
@@ -421,7 +460,11 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                               playbackUrl: playbackFor(layout.right.streamId),
                               accent: Colors.cyanAccent,
                               preferRemoteUserId: layout.right.userId,
-                              playbackAudible: !opponentMuted,
+                              playbackAudible: _remotePlaybackAudible(
+                                pane: layout.right,
+                                opponentUserId: opponentUserId,
+                                opponentMuted: opponentMuted,
+                              ),
                               bare: true,
                             ),
                           ),
@@ -666,8 +709,19 @@ class _PkPane extends StatelessWidget {
             height: double.infinity,
           );
         } else {
-          video = Center(
-            child: Icon(Icons.videocam_rounded, size: 44, color: accent),
+          video = ColoredBox(
+            color: Colors.black,
+            child: Center(
+              child: Text(
+                'Kamera bekleniyor',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.72),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
           );
         }
 

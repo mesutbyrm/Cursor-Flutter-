@@ -38,7 +38,7 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
   @override
   void initState() {
     super.initState();
-    _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+    _pollTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted || _showing) return;
       unawaited(_processPendingInvites());
     });
@@ -101,6 +101,7 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
       return;
     }
     if (isLiveBroadcastRoomActiveForStream(ref, streamId)) {
+      ref.read(livePkInviteSignalProvider.notifier).bump();
       return;
     }
     final inviteId = battle.effectiveId;

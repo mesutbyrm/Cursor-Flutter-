@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-/// Gelen PK daveti — 15 sn geri sayım (sunucu süresi ile kısaltılır), kabul / red.
+/// Gelen PK daveti — 60 sn geri sayım (sunucu `expiresAt` ile kısaltılır), kabul / red.
 Future<bool?> showPkInviteDialog(
   BuildContext context, {
   required String challengerName,
   required String challengerImageUrl,
-  Duration inviteTimeout = const Duration(seconds: 15),
+  Duration inviteTimeout = const Duration(seconds: 60),
 }) {
   return showGeneralDialog<bool>(
     context: context,
