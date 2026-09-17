@@ -4,23 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.547+588` |
-| Tarih (UTC) | 2026-09-17 09:15 |
-| Commit | [`ef564fd133b083cf55226baf2706bfb80d109944`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/ef564fd133b083cf55226baf2706bfb80d109944) |
-| İş akışı | [Run 35202086073](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35202086073) |
+| Sürüm | `1.0.548+589` |
+| Tarih (UTC) | 2026-09-17 12:05 |
+| Commit | [`f2f932fcf30632fa9b3587783c7dd874d56d8420`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/f2f932fcf30632fa9b3587783c7dd874d56d8420) |
+| İş akışı | [Run 35217435770](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35217435770) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.547+588 (2026-09-17) — Sesli oda + canlı PK TikTok/Bigo (2b)
+## 1.0.548+589 (2026-09-17) — PK referans UI 1:1 + izleyici çift yayın
 
-- Sesli oda HATA 1: presence iterasyonları kopya liste (`_presenceCopy`, `List.from`)
-- Sesli oda HATA 2–3: pending seat guard + `voiceSeatActionLockProvider` + reaktif auto-seat (mevcut, doğrulandı)
-- Sesli PK HATA 4: `room1`/`room2` eksikse tanılama logu (backend doğrulama gerekir)
-- Canlı PK HATA 1: aktif yayın oturumu + anchor odada gereksiz TRTC rejoin atlama
-- Canlı PK HATA 4: PK API hata mesajı snackbar (mevcut)
-- 2b: `PkStatusPill` skor barı altında; tam ekran `PkWinnerCelebration` canlı yayında yok
-- PK bitti: yarım ekran konfeti + kaybeden taraf %35 karartma (~4 sn), `livePkEndedLockProvider` tek tetik
+- Split video: chip üst bar altında, VS 68px, ince ayırıcı, pane içi hediye toast
+- Skor/pill/konum; sağ yerel yayıncıda mic/kamera rozeti; alt giriş sırası (gönder → gül → hediye)
+- PK izleyici: anchor TRTC odasına `publishLocal: false` + `twoWayVideo` (iki yayıncı ses/görüntü)
+- Her pane TRTC remote `userId` ile bağlanır (sol/sağ ayrı)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
