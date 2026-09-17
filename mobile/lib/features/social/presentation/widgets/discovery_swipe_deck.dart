@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../../core/motion/canlifal_motion_tokens.dart';
 import '../../../platform_social/presentation/widgets/platform_social_ui_kit.dart';
 import '../../domain/entities/social_discovery_user.dart';
 import 'discovery_dating_profile_card.dart';
@@ -53,7 +54,7 @@ class _DiscoverySwipeDeckState extends State<DiscoverySwipeDeck>
     super.initState();
     _snap = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 240),
+      duration: CanlifalMotionTokens.normal,
     )..addListener(() {
         if (_snapAnim != null) setState(() => _drag = _snapAnim!.value);
       });
@@ -86,7 +87,7 @@ class _DiscoverySwipeDeckState extends State<DiscoverySwipeDeck>
 
   void _animateTo(Offset target, VoidCallback onEnd) {
     _snapAnim = Tween<Offset>(begin: _drag, end: target).animate(
-      CurvedAnimation(parent: _snap, curve: Curves.easeOutCubic),
+      CurvedAnimation(parent: _snap, curve: CanlifalMotionTokens.easeOut),
     );
     _snap.forward(from: 0).whenComplete(() {
       _snap.reset();

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/motion/canlifal_motion_tokens.dart';
+import '../../../../core/motion/canlifal_motion_widgets.dart';
 import '../../../membership/presentation/widgets/membership_pending_payment_banner.dart';
 import '../premium_2026/profile_screen_state.dart';
 import 'profile_hub_error_banner.dart';
@@ -36,15 +38,20 @@ class ProfileHubLayout extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ProfileHubHeader(state: state, onRefresh: onRefresh),
+        CanlifalEntranceFadeSlide(
+          child: ProfileHubHeader(state: state, onRefresh: onRefresh),
+        ),
         const SizedBox(height: 12),
         const ProfileHubErrorBanner(),
         const SizedBox(height: 4),
-        ShortsProfileStatsRow(
-          userId: userId,
-          fallbackFollowers: state.followers,
-          fallbackFollowing: state.following,
-          fallbackLikes: state.stats.likes,
+        CanlifalEntranceFadeSlide(
+          delay: CanlifalMotionTokens.staggerIndex(1, stepMs: 50),
+          child: ShortsProfileStatsRow(
+            userId: userId,
+            fallbackFollowers: state.followers,
+            fallbackFollowing: state.following,
+            fallbackLikes: state.stats.likes,
+          ),
         ),
         const SizedBox(height: 14),
         const MembershipPendingPaymentBanner(),

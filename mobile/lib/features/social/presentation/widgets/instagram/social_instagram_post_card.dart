@@ -1,4 +1,5 @@
 import 'package:canlifal_social/core/design_system/cds_button.dart';
+import 'package:canlifal_social/core/motion/canlifal_motion_widgets.dart';
 import 'package:canlifal_social/core/design_system/cds_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
@@ -47,6 +48,7 @@ class _SocialInstagramPostCardState
     extends ConsumerState<SocialInstagramPostCard> {
   late bool _liked;
   late int _likeCount;
+  var _likeBurst = 0;
 
   @override
   void initState() {
@@ -196,11 +198,9 @@ class _SocialInstagramPostCardState
                 padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
                 child: Row(
                   children: [
-                    _ActionWithCount(
-                      icon: _liked
-                          ? Icons.favorite_rounded
-                          : Icons.favorite_border_rounded,
-                      color: _liked ? AppThemeColors.accentPink : context.colors.onSurface,
+                    _LikeActionRow(
+                      liked: _liked,
+                      burstToken: _likeBurst,
                       count: likeCount,
                       onTap: _toggleLike,
                     ),
@@ -313,9 +313,11 @@ class _SocialInstagramPostCardState
     final prevLiked = _liked;
     final prevCount = _likeCount;
     setState(() {
-      _liked = !_liked;
-      _likeCount += _liked ? 1 : -1;
+      final nextLiked = !_liked;
+      _liked = nextLiked;
+      _likeCount += nextLiked ? 1 : -1;
       if (_likeCount < 0) _likeCount = 0;
+      if (nextLiked) _likeBurst++;
     });
     try {
       final r =
@@ -724,6 +726,54 @@ class _MysticMediaPlaceholder extends StatelessWidget {
         child: Text('🔮', style: TextStyle(fontSize: 48)),
       ),
     );
+  }
+}
+
+class _LikeActionRow extends StatelessWidget {
+  const _LikeActionRow({
+    required this.liked,
+    required this.burstToken,
+    required this.count,
+    required this.onTap,
+  });
+
+  final bool liked;
+  final int burstToken;
+  final int count;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color =
+        liked ? AppThemeColors.accentPink : context.colors.onSurface;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CanlifalBurstIcon(
+          burstToken: burstToken,
+          icon: liked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+          color: color,
+          onTap: onTap,
+        ),
+        if (count > 0) ...[
+          const SizedBox(width: 5),
+          Text(
+            _formatCount(count),
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+              color: context.colors.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  static String _formatCount(int n) {
+    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
+    return '$n';
   }
 }
 

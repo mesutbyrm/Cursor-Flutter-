@@ -6,6 +6,8 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/scroll_perf.dart';
 import '../../../../core/widgets/discover_refresh.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
+import '../../../../core/motion/canlifal_motion_tokens.dart';
+import '../../../../core/motion/canlifal_motion_widgets.dart';
 import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../live/presentation/providers/live_providers.dart';
@@ -134,13 +136,23 @@ class SocialFeedScrollView extends ConsumerWidget {
                     includeRoomStrips: showRoomStrips,
                   );
                   if (postIdx != null) {
-                    return ScrollPerf.item(
-                      SocialCdsPostShell(
-                        child: SocialInstagramPostCard(
-                          post: posts[postIdx],
-                        ),
+                    final card = SocialCdsPostShell(
+                      child: SocialInstagramPostCard(
+                        post: posts[postIdx],
                       ),
                     );
+                    if (postIdx < 8) {
+                      return ScrollPerf.item(
+                        CanlifalEntranceFadeSlide(
+                          delay: CanlifalMotionTokens.staggerIndex(
+                            postIdx,
+                            stepMs: 35,
+                          ),
+                          child: card,
+                        ),
+                      );
+                    }
+                    return ScrollPerf.item(card);
                   }
                   return const RepaintBoundary(
                     child: SocialActiveRooms(embeddedInFeed: true),

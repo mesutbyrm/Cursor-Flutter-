@@ -5,6 +5,7 @@ import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/motion/canlifal_motion_widgets.dart';
 import '../../../../core/membership/membership_capability_keys.dart';
 import '../../../../core/membership/membership_capability_providers.dart';
 import '../../domain/vip_tier.dart';
@@ -75,7 +76,10 @@ class _VipGoldHubPageState extends ConsumerState<VipGoldHubPage> {
                     padding: const EdgeInsets.all(20),
                     child: Column(
                       children: [
-                        _CrownHero(tier: tier),
+                        CanlifalEntranceFadeSlide(
+                          slideY: 0.06,
+                          child: _CrownHero(tier: tier),
+                        ),
                         const SizedBox(height: 16),
                         VipBadge(tier: tier, animate: tier.isVip),
                         const SizedBox(height: 8),

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../../core/motion/canlifal_motion_widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
@@ -192,12 +194,15 @@ class _StatCell extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Column(
           children: [
-            Text(
-              value,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-                fontSize: 17,
+            CanlifalValueBump(
+              token: value,
+              child: Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 17,
+                ),
               ),
             ),
             const SizedBox(height: 4),

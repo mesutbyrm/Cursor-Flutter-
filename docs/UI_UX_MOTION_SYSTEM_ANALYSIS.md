@@ -28,7 +28,14 @@
 4. **Gold ring** — Statik gradient; profil açılışında hafif pulse yok (performans modunda kapalı).
 5. **Hard-coded renkler** — Home approved + premium theme’de; CDS’ye tam taşınmamış (kademeli).
 
-## Uygulama planı (bu dalga)
+## Faz 2 (1.0.553+) — uygulandı
+
+- Profil hub: header + stats entrance; istatistik `CanlifalValueBump`
+- Sosyal feed: ilk 8 gönderi stagger entrance; beğeni `CanlifalBurstIcon`
+- Tanış swipe: snap süresi merkezi motion token
+- Gold hub: crown hero entrance
+
+## Uygulama planı (kalan)
 
 1. `lib/core/motion/canlifal_motion_tokens.dart` — micro/normal/premium süreler
 2. `lib/core/motion/canlifal_motion_widgets.dart` — Pressable, Entrance, Stagger, Gold ring pulse

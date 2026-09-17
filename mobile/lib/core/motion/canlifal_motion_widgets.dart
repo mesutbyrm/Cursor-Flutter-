@@ -114,6 +114,131 @@ class CanlifalNavIcon extends StatelessWidget {
 }
 
 /// Gold profil halkası — tek döngü pulse, sonra durur (FX kapalıysa yok).
+/// Değer değişince kısa scale bump (istatistik satırı).
+class CanlifalValueBump extends StatefulWidget {
+  const CanlifalValueBump({
+    super.key,
+    required this.token,
+    required this.child,
+  });
+
+  final Object token;
+  final Widget child;
+
+  @override
+  State<CanlifalValueBump> createState() => _CanlifalValueBumpState();
+}
+
+class _CanlifalValueBumpState extends State<CanlifalValueBump>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _c;
+  late Animation<double> _scale;
+  Object? _lastToken;
+
+  @override
+  void initState() {
+    super.initState();
+    _lastToken = widget.token;
+    _c = AnimationController(
+      vsync: this,
+      duration: CanlifalMotionTokens.micro,
+    );
+    _scale = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.12), weight: 50),
+      TweenSequenceItem(tween: Tween(begin: 1.12, end: 1.0), weight: 50),
+    ]).animate(CurvedAnimation(parent: _c, curve: CanlifalMotionTokens.spring));
+  }
+
+  @override
+  void didUpdateWidget(covariant CanlifalValueBump oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.token != _lastToken) {
+      _lastToken = widget.token;
+      _c.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(scale: _scale, child: widget.child);
+  }
+}
+
+/// Beğeni / burst — `burstToken` artınca kalp scale.
+class CanlifalBurstIcon extends StatefulWidget {
+  const CanlifalBurstIcon({
+    super.key,
+    required this.burstToken,
+    required this.icon,
+    required this.color,
+    this.size = 24,
+    this.onTap,
+  });
+
+  final int burstToken;
+  final IconData icon;
+  final Color color;
+  final double size;
+  final VoidCallback? onTap;
+
+  @override
+  State<CanlifalBurstIcon> createState() => _CanlifalBurstIconState();
+}
+
+class _CanlifalBurstIconState extends State<CanlifalBurstIcon>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _c;
+  late Animation<double> _scale;
+  var _lastBurst = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _lastBurst = widget.burstToken;
+    _c = AnimationController(
+      vsync: this,
+      duration: CanlifalMotionTokens.microMax,
+    );
+    _scale = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.35), weight: 45),
+      TweenSequenceItem(tween: Tween(begin: 1.35, end: 1.0), weight: 55),
+    ]).animate(CurvedAnimation(parent: _c, curve: CanlifalMotionTokens.spring));
+  }
+
+  @override
+  void didUpdateWidget(covariant CanlifalBurstIcon oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.burstToken > _lastBurst) {
+      _lastBurst = widget.burstToken;
+      _c.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CanlifalPressable(
+      onTap: widget.onTap,
+      scale: CanlifalMotionTokens.pressScale,
+      child: ScaleTransition(
+        scale: _scale,
+        child: Icon(widget.icon, size: widget.size, color: widget.color),
+      ),
+    );
+  }
+}
+
 class CanlifalGoldRingPulse extends ConsumerStatefulWidget {
   const CanlifalGoldRingPulse({
     super.key,
