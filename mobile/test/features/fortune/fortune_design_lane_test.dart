@@ -3,8 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('FortuneLaneMotion aligns with CDS durations', () {
-    expect(FortuneLaneMotion.cardEnter.inMilliseconds, 200);
-    expect(FortuneLaneMotion.standard.inMilliseconds, 300);
-    expect(FortuneLaneMotion.emphasis.inMilliseconds, 400);
+    expect(FortuneLaneMotion.cardEnter.inMilliseconds, 150);
+    expect(FortuneLaneMotion.standard.inMilliseconds, 250);
+    expect(FortuneLaneMotion.emphasis.inMilliseconds, 420);
   });
 }
