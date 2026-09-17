@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.547+588 (2026-09-17) — Sesli oda + canlı PK TikTok/Bigo (2b)
+
+- Sesli oda HATA 1: presence iterasyonları kopya liste (`_presenceCopy`, `List.from`)
+- Sesli oda HATA 2–3: pending seat guard + `voiceSeatActionLockProvider` + reaktif auto-seat (mevcut, doğrulandı)
+- Sesli PK HATA 4: `room1`/`room2` eksikse tanılama logu (backend doğrulama gerekir)
+- Canlı PK HATA 1: aktif yayın oturumu + anchor odada gereksiz TRTC rejoin atlama
+- Canlı PK HATA 4: PK API hata mesajı snackbar (mevcut)
+- 2b: `PkStatusPill` skor barı altında; tam ekran `PkWinnerCelebration` canlı yayında yok
+- PK bitti: yarım ekran konfeti + kaybeden taraf %35 karartma (~4 sn), `livePkEndedLockProvider` tek tetik
+
 ## 1.0.546+587 (2026-09-16) — PK sohbet + kamera donması
 
 - PK sohbet: challenger yayın odasında birleşik SSE/gönderim (`livePkEffectiveChatStreamId`)

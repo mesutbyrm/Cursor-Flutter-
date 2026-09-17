@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 abstract final class LivePkLayoutMetrics {
   static const controlBarHeight = 96.0;
   static const inputBarHeight = 48.0;
-  static const scoreBandHeight = 86.0;
+  static const scoreBandHeight = 102.0;
 
   /// Referans mock — sol alt sohbet (TikTok/Bigo); ekranla ölçeklenmez.
   static const chatOverlayWidthFactor = 0.56;

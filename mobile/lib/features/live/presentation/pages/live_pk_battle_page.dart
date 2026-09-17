@@ -342,9 +342,12 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
     final scoreH = LivePkLayoutMetrics.scoreBandHeight;
     final videoBottom = LivePkLayoutMetrics.videoBottomInset(context);
     final myUserId = ref.watch(authControllerProvider).valueOrNull?.id;
-    final outcomeLabel = livePkOutcomeStatusLabel(
+    final pillMode = livePkStatusPillMode(
       ended: finished,
-      localOnLeft: true,
+      leftScore: leftScore,
+      rightScore: rightScore,
+    );
+    final winnerName = livePkWinnerName(
       leftScore: leftScore,
       rightScore: rightScore,
       leftLabel: leftName,
@@ -505,7 +508,8 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
                       child: LivePkReferenceScoreBar(
                         leftScore: leftScore,
                         rightScore: rightScore,
-                        statusLabel: outcomeLabel,
+                        pillMode: pillMode,
+                        winnerName: winnerName,
                         active: pkActive && !finished,
                         showEndedScores: finished,
                       ),

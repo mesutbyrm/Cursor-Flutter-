@@ -280,7 +280,9 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
   }
 
   void _detectMicChanges(List<ChatRoomPresence> next) {
-    final prev = {for (final p in state.presence) p.id: p.isSpeaking};
+    final prev = {
+      for (final p in List<ChatRoomPresence>.from(state.presence)) p.id: p.isSpeaking,
+    };
     for (final p in next) {
       final was = prev[p.id];
       if (was == null || was == p.isSpeaking) continue;
@@ -862,7 +864,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
   ChatRoomPresence? _resolvePresence(String target) {
     final raw = target.trim().replaceFirst(RegExp(r'^@'), '').toLowerCase();
     if (raw.isEmpty) return null;
-    for (final user in state.presence) {
+    for (final user in List<ChatRoomPresence>.from(state.presence)) {
       final keys = [
         user.id,
         user.name,

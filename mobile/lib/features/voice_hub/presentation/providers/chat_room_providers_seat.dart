@@ -93,7 +93,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     if (_autoSeatContextAttempted == ctx) return;
 
     ChatRoomPresence? self;
-    for (final p in state.presence) {
+    for (final p in _presenceCopy()) {
       if (p.id == user.id) {
         self = p;
         break;
@@ -216,7 +216,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     if (user == null) return null;
 
     ChatRoomPresence? self;
-    for (final p in state.presence) {
+    for (final p in _presenceCopy()) {
       if (p.id == user.id) {
         self = p;
         break;
@@ -243,7 +243,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     if (user == null) return;
 
     ChatRoomPresence? self;
-    for (final p in state.presence) {
+    for (final p in _presenceCopy()) {
       if (p.id == user.id) {
         self = p;
         break;
@@ -262,7 +262,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     if (priority == null) return;
     if (_autoSeatAttempted) {
       ChatRoomPresence? selfNow;
-      for (final p in state.presence) {
+      for (final p in _presenceCopy()) {
         if (p.id == user.id) {
           selfNow = p;
           break;
@@ -307,7 +307,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
         await Future<void>.delayed(Duration(milliseconds: 400 * (attempt + 1)));
       }
     }
-    for (final p in state.presence) {
+    for (final p in _presenceCopy()) {
       if (p.id == user.id && p.seatIndex != null) {
         _autoSeatAttempted = true;
         break;
@@ -343,7 +343,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
   }
 
   bool _isSelfSeated(String userId) {
-    for (final p in state.presence) {
+    for (final p in _presenceCopy()) {
       if (p.id == userId && p.seatIndex != null && p.seatIndex! >= 1) {
         return true;
       }
@@ -399,7 +399,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
   Future<void> _syncSpeakRequestPending() async {
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null || _roomKey.isEmpty) return;
-    for (final p in state.presence) {
+    for (final p in _presenceCopy()) {
       if (p.id == user.id && p.seatIndex != null) {
         ref.read(voiceRoomUiProvider.notifier).setRequestSpeakPending(false);
         return;
@@ -462,7 +462,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
   Future<bool> ensureSelfOnSeatForMic() async {
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) return false;
-    for (final p in state.presence) {
+    for (final p in _presenceCopy()) {
       if (p.id == user.id && p.seatIndex != null) return true;
     }
     final empty = state.seatSlots
@@ -570,7 +570,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     try {
       if (userId == null && selfId != null && selfId.isNotEmpty) {
         ChatRoomPresence? self;
-        for (final p in state.presence) {
+        for (final p in _presenceCopy()) {
           if (p.id == selfId) {
             self = p;
             break;
@@ -659,7 +659,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
 
   Future<String?> clearUserSeat({required String userId}) async {
     final prev = [
-      for (final p in state.presence)
+      for (final p in _presenceCopy())
         if (p.id == userId)
           ChatRoomPresence(
             id: p.id,
@@ -709,7 +709,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null || user.id != userId) return;
     ChatRoomPresence? self;
-    for (final p in state.presence) {
+    for (final p in _presenceCopy()) {
       if (p.id == userId) {
         self = p;
         break;

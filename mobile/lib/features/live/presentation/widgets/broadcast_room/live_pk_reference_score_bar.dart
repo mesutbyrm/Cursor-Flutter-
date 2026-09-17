@@ -1,21 +1,25 @@
 import 'package:flutter/material.dart';
 
 import '../../../../voice_hub/presentation/widgets/premium_2026/pk/pk_animated_score_bar.dart';
+import '../../../domain/pk/live_pk_status_pill_mode.dart';
+import 'pk_status_pill.dart';
 
-/// Referans — skorlar üstte, bar ortada, yüzde + durum altta.
+/// Referans — skorlar üstte, bar ortada, yüzde satırı, altında durum pill.
 class LivePkReferenceScoreBar extends StatelessWidget {
   const LivePkReferenceScoreBar({
     super.key,
     required this.leftScore,
     required this.rightScore,
-    this.statusLabel = 'PK devam ediyor!',
+    this.pillMode = PkStatusPillMode.active,
+    this.winnerName,
     this.active = true,
     this.showEndedScores = false,
   });
 
   final int leftScore;
   final int rightScore;
-  final String statusLabel;
+  final PkStatusPillMode pillMode;
+  final String? winnerName;
   final bool active;
   final bool showEndedScores;
 
@@ -91,26 +95,30 @@ class LivePkReferenceScoreBar extends StatelessWidget {
             children: [
               Text(
                 '$leftPct%',
-                style: TextStyle(
-                  color: const Color(0xFFFF6B9D),
+                style: const TextStyle(
+                  color: Color(0xFFFF6B9D),
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              Expanded(
-                child: Center(
-                  child: _StatusPill(label: statusLabel, highlight: highlight),
-                ),
-              ),
+              const Spacer(),
               Text(
                 '$rightPct%',
-                style: TextStyle(
-                  color: const Color(0xFF64B5F6),
+                style: const TextStyle(
+                  color: Color(0xFF64B5F6),
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 6),
+          Center(
+            child: PkStatusPill(
+              mode: pillMode,
+              winnerName: winnerName,
+              highlight: highlight,
+            ),
           ),
         ],
       ),
@@ -145,40 +153,3 @@ class _ScoreNumber extends StatelessWidget {
   }
 }
 
-class _StatusPill extends StatelessWidget {
-  const _StatusPill({required this.label, this.highlight = false});
-
-  final String label;
-  final bool highlight;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.68),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: highlight
-              ? const Color(0xFFFFD54F).withValues(alpha: 0.85)
-              : Colors.white.withValues(alpha: 0.12),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.bolt_rounded, color: Color(0xFFFFD54F), size: 14),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

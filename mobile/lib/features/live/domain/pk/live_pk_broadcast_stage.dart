@@ -1,3 +1,4 @@
+import 'live_pk_status_pill_mode.dart';
 import 'pk_status_helper.dart';
 
 bool livePkHasDualStreams(Map<String, dynamic>? battle) {
@@ -45,10 +46,39 @@ String livePkOutcomeStatusLabel({
   String? rightLabel,
 }) {
   if (!ended) return 'PK devam ediyor!';
-  if (leftScore == rightScore) return 'BERABERE!';
+  if (leftScore == rightScore) return 'Berabere!';
   final leftWins = leftScore > rightScore;
   final iWon = localOnLeft ? leftWins : !leftWins;
-  if (iWon) return 'KAZANDIN!';
+  if (iWon) return 'Kazandın!';
   final winner = leftWins ? (leftLabel ?? 'Sol') : (rightLabel ?? 'Sağ');
   return '$winner kazandı!';
+}
+
+PkStatusPillMode livePkStatusPillMode({
+  required bool ended,
+  required int leftScore,
+  required int rightScore,
+}) {
+  if (!ended) return PkStatusPillMode.active;
+  if (leftScore == rightScore) return PkStatusPillMode.endedDraw;
+  return PkStatusPillMode.endedWin;
+}
+
+String? livePkWinnerName({
+  required int leftScore,
+  required int rightScore,
+  String? leftLabel,
+  String? rightLabel,
+}) {
+  if (leftScore == rightScore) return null;
+  final leftWins = leftScore > rightScore;
+  return leftWins ? (leftLabel ?? 'Sol') : (rightLabel ?? 'Sağ');
+}
+
+bool livePkLeftPaneWins({
+  required int leftScore,
+  required int rightScore,
+}) {
+  if (leftScore == rightScore) return false;
+  return leftScore > rightScore;
 }

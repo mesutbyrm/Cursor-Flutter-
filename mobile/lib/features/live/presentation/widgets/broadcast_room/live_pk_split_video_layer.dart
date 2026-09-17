@@ -28,6 +28,8 @@ import 'live_pk_pane_gifter_strip.dart';
 import '../../providers/live_stream_viewers_provider.dart';
 import '../../providers/live_host_rank_provider.dart';
 import '../../providers/live_room_interaction_provider.dart';
+import '../../providers/live_pk_ended_lock_provider.dart';
+import 'live_pk_pane_outcome_overlay.dart';
 
 /// PK aktifken tam ekran split: sol yerel/yayıncı, sağ rakip + referans overlay.
 class LivePkSplitVideoLayer extends ConsumerStatefulWidget {
@@ -59,8 +61,40 @@ class LivePkSplitVideoLayer extends ConsumerStatefulWidget {
       _LivePkSplitVideoLayerState();
 }
 
-class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer> {
+class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
+    with SingleTickerProviderStateMixin {
   final _outcomeLatch = LivePkOutcomeLatch();
+  late final AnimationController _outcomeFx;
+  var _outcomeFxVisible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _outcomeFx = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 4200),
+    );
+    _outcomeFx.addStatusListener((status) {
+      if (status == AnimationStatus.completed && mounted) {
+        setState(() => _outcomeFxVisible = false);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _outcomeFx.dispose();
+    super.dispose();
+  }
+
+  void _onPkEndedTransition(String? battleId) {
+    final bid = battleId?.trim() ?? '';
+    if (bid.isEmpty) return;
+    final lock = ref.read(livePkEndedLockProvider.notifier);
+    if (!lock.tryAcquireEndedCelebration(bid)) return;
+    setState(() => _outcomeFxVisible = true);
+    _outcomeFx.forward(from: 0);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,6 +104,14 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer> {
     final rtcReady = widget.rtcReady;
     final pk = ref.watch(liveVideoPkProvider(streamId));
     final battle = pk.battle;
+    ref.listen(liveVideoPkProvider(streamId), (prev, next) {
+      final wasEnded =
+          prev != null && isLivePkEndedStatus(prev.status);
+      final nowEnded = isLivePkEndedStatus(next.status);
+      if (!wasEnded && nowEnded) {
+        _onPkEndedTransition(next.battle?['id']?.toString());
+      }
+    });
     if (battle == null || !isLivePkBroadcastStage(battle, pk.status)) {
       return const ColoredBox(color: Color(0xFF120A1E));
     }
@@ -185,13 +227,31 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer> {
       leftLabel: layout.left.label,
       rightLabel: layout.right.label,
     );
-    final statusLabel = _outcomeLatch.resolve(
+    _outcomeLatch.resolve(
       currentBattleId: battleId,
       ended: ended,
       computedLabel: computedLabel,
     );
-
-    return LayoutBuilder(
+    final pillMode = livePkStatusPillMode(
+      ended: ended,
+      leftScore: leftScore,
+      rightScore: rightScore,
+    );
+    final winnerName = livePkWinnerName(
+      leftScore: leftScore,
+      rightScore: rightScore,
+      leftLabel: layout.left.label,
+      rightLabel: layout.right.label,
+    );
+    final leftWins = livePkLeftPaneWins(
+      leftScore: leftScore,
+      rightScore: rightScore,
+    );
+    return AnimatedBuilder(
+      animation: _outcomeFx,
+      builder: (context, _) {
+        final fxProgress = _outcomeFxVisible ? _outcomeFx.value : 0.0;
+        return LayoutBuilder(
       builder: (context, constraints) {
         final chromeBottom = LivePkLayoutMetrics.chromeReserve(context);
         final scoreH = LivePkLayoutMetrics.scoreBandHeight;
@@ -214,7 +274,10 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer> {
                     Row(
                       children: [
                         Expanded(
-                          child: LivePkImmersiveVideoPane(
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              LivePkImmersiveVideoPane(
                             isLocal: layout.left.isLocalPane,
                             displayName: layout.left.label,
                             avatarUrl: layout.left.avatarUrl,
@@ -247,6 +310,13 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer> {
                               bare: true,
                             ),
                           ),
+                              LivePkPaneOutcomeOverlay(
+                                visible: _outcomeFxVisible && ended,
+                                winnerPane: leftWins,
+                                progress: fxProgress,
+                              ),
+                            ],
+                          ),
                         ),
                         Container(
                           width: 2,
@@ -263,7 +333,10 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer> {
                           ),
                         ),
                         Expanded(
-                          child: LivePkImmersiveVideoPane(
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              LivePkImmersiveVideoPane(
                             isLocal: layout.right.isLocalPane,
                             displayName: layout.right.label,
                             avatarUrl: layout.right.avatarUrl,
@@ -294,6 +367,13 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer> {
                               playbackAudible: !opponentMuted,
                               bare: true,
                             ),
+                          ),
+                              LivePkPaneOutcomeOverlay(
+                                visible: _outcomeFxVisible && ended,
+                                winnerPane: !leftWins && leftScore != rightScore,
+                                progress: fxProgress,
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -395,7 +475,8 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer> {
                     child: LivePkReferenceScoreBar(
                       leftScore: leftScore,
                       rightScore: rightScore,
-                      statusLabel: statusLabel,
+                      pillMode: pillMode,
+                      winnerName: winnerName,
                       active: pkActive,
                       showEndedScores: ended,
                     ),
@@ -422,6 +503,8 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer> {
               ),
             ],
           ),
+        );
+      },
         );
       },
     );
