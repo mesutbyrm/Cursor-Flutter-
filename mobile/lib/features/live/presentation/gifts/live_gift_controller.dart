@@ -107,6 +107,10 @@ class LiveGiftController extends ChangeNotifier {
       }
       if (result.newBalance != null) coinBalance = result.newBalance;
 
+      final ev = result.event;
+      if (ev != null) {
+        _pushNotification(ev);
+      }
       await _sound?.playFor(gift.toEntity());
       return null;
     } finally {
@@ -115,8 +119,22 @@ class LiveGiftController extends ChangeNotifier {
     }
   }
 
+  void ingestLocalEvent(LiveGiftEvent event) {
+    if (!_isDisplayable(event)) return;
+    _pushNotification(event);
+    notifyListeners();
+  }
+
+  void _pushNotification(LiveGiftEvent event) {
+    notifications.add(event);
+    while (notifications.length > 24) {
+      notifications.removeAt(0);
+    }
+  }
+
   void _onIncoming(LiveGiftEvent event) {
     if (!_isDisplayable(event)) return;
+    _pushNotification(event);
     final gross = event.jetonAmount;
     streamerEarnings =
         (streamerEarnings ?? 0) + GiftRevenueDisplay.liveBroadcasterNet(gross);

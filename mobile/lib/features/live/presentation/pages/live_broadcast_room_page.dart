@@ -127,6 +127,8 @@ import '../widgets/broadcast_room/live_broadcast_room_gift_panel_overlay.dart';
 import '../widgets/broadcast_room/live_broadcast_room_host_away_overlay.dart';
 import '../widgets/broadcast_room/live_broadcast_room_video_layer.dart';
 import '../widgets/broadcast_room/live_pk_broadcast_overlay.dart';
+import '../widgets/broadcast_room/live_pk_gift_picker_sheet.dart';
+import '../../domain/pk/live_pk_like_budget.dart';
 import '../widgets/live_gift_sheet.dart';
 import '../widgets/broadcast_room/live_broadcast_room_viewer_rail.dart';
 import 'live_session_phase.dart';
@@ -1899,6 +1901,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   }
 
   var _livePkInviteDialogOpen = false;
+  final _pkLikeBudget = LivePkLikeBudget();
 
   void _maybeShowPkInvite(String streamId, Map<String, dynamic> battle) {
     if (!widget.session.isHost) return;
@@ -1995,19 +1998,46 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     Map<String, dynamic>? battle,
   ) async {
     if (battle == null) return;
-    final battleId = battle['id']?.toString() ?? battle['battleId']?.toString();
+    final pk = ref.read(liveVideoPkProvider(streamId));
+    if (!isLivePkActiveStatus(pk.status) ||
+        isLivePkEndedStatus(pk.status)) {
+      return;
+    }
+    final battleId =
+        battle['id']?.toString() ?? battle['battleId']?.toString() ?? '';
+    if (battleId.isEmpty) return;
+    final userId = ref.read(authControllerProvider).valueOrNull?.id?.trim() ?? '';
+    if (userId.isEmpty) return;
+    const points = 3;
+    if (!_pkLikeBudget.canAward(battleId, userId, points)) return;
     final side = livePkScoreSideForStream(battle: battle, myStreamId: streamId);
     try {
-      ref
-          .read(liveVideoPkProvider(streamId).notifier)
-          .applyLocalScoreDelta(side: side, amount: 3);
       await ref.read(pkBattleRemoteDataSourceProvider).postLivePkScore(
-            amount: 3,
+            amount: points,
             battleId: battleId,
             roomId: streamId,
             side: side,
           );
+      _pkLikeBudget.record(battleId, userId, points);
     } catch (_) {}
+  }
+
+  Future<void> _openPkGiftPicker(
+    BuildContext context, {
+    required String streamId,
+    required LiveBroadcastSession session,
+    Map<String, dynamic>? battle,
+  }) async {
+    final userId = ref.read(authControllerProvider).valueOrNull?.id;
+    await showPkLiveGiftPicker(
+      context,
+      ref,
+      streamId: streamId,
+      battle: battle,
+      myStreamId: streamId,
+      myUserId: userId,
+      amBroadcaster: session.isHost,
+    );
   }
 
   void _onTripleTapSuperLike() {
@@ -3013,19 +3043,43 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               pkState: pkState,
               pkStatus: pkStatus,
               commentsEnabled: broadcastSettings.commentsEnabled,
-              onGift: !s.isHost && broadcastSettings.giftsEnabled && streamId != null
-                  ? () => ref.read(liveGiftControllerProvider).setPanelOpen(true)
+              onGift: broadcastSettings.giftsEnabled && streamId != null
+                  ? () {
+                      if (pkImmersive) {
+                        unawaited(
+                          _openPkGiftPicker(
+                            context,
+                            streamId: streamId!,
+                            session: s,
+                            battle: pkState?.battle,
+                          ),
+                        );
+                      } else if (!s.isHost) {
+                        ref.read(liveGiftControllerProvider).setPanelOpen(true);
+                      }
+                    }
                   : null,
               onTip: !s.isHost && streamId != null
                   ? () {
-                      ref.read(liveGiftControllerProvider).setPanelOpen(true);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Bahşiş jeton hediyesi olarak gönderilir.',
+                      if (pkImmersive) {
+                        unawaited(
+                          _openPkGiftPicker(
+                            context,
+                            streamId: streamId!,
+                            session: s,
+                            battle: pkState?.battle,
                           ),
-                        ),
-                      );
+                        );
+                      } else {
+                        ref.read(liveGiftControllerProvider).setPanelOpen(true);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Bahşiş jeton hediyesi olarak gönderilir.',
+                            ),
+                          ),
+                        );
+                      }
                     }
                   : null,
               onMore: () => unawaited(
@@ -3082,20 +3136,15 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 opponentUserId: pkOpponentUserId,
                 onEndPk: () => unawaited(_endActivePk(streamId!)),
                 onGift: () {
-                  if (broadcastSettings.giftsEnabled) {
-                    if (s.isHost) {
-                      unawaited(
-                        showLiveGiftPicker(
-                          context,
-                          ref,
-                          streamId: streamId!,
-                          receiverName: pkRightName,
-                        ),
-                      );
-                    } else {
-                      ref.read(liveGiftControllerProvider).setPanelOpen(true);
-                    }
-                  }
+                  if (!broadcastSettings.giftsEnabled) return;
+                  unawaited(
+                    _openPkGiftPicker(
+                      context,
+                      streamId: streamId!,
+                      session: s,
+                      battle: pkState?.battle,
+                    ),
+                  );
                 },
                 onSendChat: () {
                   final t = _chat.text.trim();
@@ -3122,7 +3171,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 onResume: () => unawaited(_resumeHostBroadcast()),
                 onEndBroadcast: () => unawaited(_exitBroadcast(context)),
               ),
-            if (giftCtrl.panelOpen && user != null && broadcastSettings.giftsEnabled)
+            if (giftCtrl.panelOpen &&
+                !pkImmersive &&
+                user != null &&
+                broadcastSettings.giftsEnabled)
               LiveBroadcastRoomGiftPanelOverlay(
                 controller: giftCtrl,
                 streamId: widget.session.streamId ?? '',

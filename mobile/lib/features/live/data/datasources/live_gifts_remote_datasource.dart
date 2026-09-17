@@ -127,8 +127,12 @@ class LiveGiftsRemoteDataSource {
         luckyResult: lucky,
       );
     }
-    if (toUserId != null && toUserId.isNotEmpty) {
-      await assertReciprocalGiftAllowed(_dio, toUserId);
+    final recipient = toUserId?.trim() ?? '';
+    final sender = senderId?.trim() ?? '';
+    if (recipient.isNotEmpty &&
+        sender.isNotEmpty &&
+        recipient != sender) {
+      await assertReciprocalGiftAllowed(_dio, recipient);
     }
     final idempotencyKey = newGiftIdempotencyKey();
     final res = await _dio.safePost<dynamic>(

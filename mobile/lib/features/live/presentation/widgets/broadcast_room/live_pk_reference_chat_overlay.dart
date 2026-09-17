@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../domain/pk/live_pk_chat_filter.dart';
 import '../../providers/live_room_providers.dart';
 import 'live_pk_layout_metrics.dart';
 import 'live_room_chat_message.dart';
@@ -22,7 +23,9 @@ class LivePkReferenceChatOverlay extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (!visible || streamId.isEmpty) return const SizedBox.shrink();
     final room = ref.watch(liveRoomProvider(streamId));
-    final messages = room.messages;
+    final messages = room.messages
+        .where(livePkChatMessageVisible)
+        .toList(growable: false);
     if (messages.isEmpty) return const SizedBox.shrink();
 
     final tail = messages.length > 12

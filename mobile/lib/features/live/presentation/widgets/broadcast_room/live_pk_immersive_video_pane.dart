@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'live_pk_streamer_chip.dart';
-
-/// Tek PK video hücresi — cover, gradient, yayıncı chip.
+/// Tek PK video hücresi — cover, gradient, alt-sol profil overlay.
 class LivePkImmersiveVideoPane extends StatelessWidget {
   const LivePkImmersiveVideoPane({
     super.key,
@@ -17,6 +15,7 @@ class LivePkImmersiveVideoPane extends StatelessWidget {
     this.showFollowOnChip = false,
     this.leagueLabel,
     this.footerOverlay,
+    this.profileFooter,
     this.followAccent = const Color(0xFFFF2D7A),
     this.chipTopInset = 8,
     this.showInlineMediaIcons = false,
@@ -34,6 +33,7 @@ class LivePkImmersiveVideoPane extends StatelessWidget {
   final bool showFollowOnChip;
   final String? leagueLabel;
   final Widget? footerOverlay;
+  final Widget? profileFooter;
   final Color followAccent;
   final double chipTopInset;
   final bool showInlineMediaIcons;
@@ -76,20 +76,13 @@ class LivePkImmersiveVideoPane extends StatelessWidget {
               ),
             ),
           ),
-          LivePkStreamerChip(
-            displayName: displayName,
-            avatarUrl: avatarUrl,
-            micOn: micOn,
-            cameraOn: cameraOn,
-            isLocal: isLocal,
-            alignment: chipAlignment,
-            userId: streamerUserId,
-            showFollow: showFollowOnChip,
-            leagueLabel: leagueLabel,
-            followAccent: followAccent,
-            topInset: chipTopInset,
-            showInlineMediaIcons: showInlineMediaIcons,
-          ),
+          if (profileFooter != null)
+            Positioned(
+              left: 6,
+              right: 6,
+              bottom: 6,
+              child: profileFooter!,
+            ),
           if (localMediaCorner != null)
             Positioned(
               top: chipTopInset,

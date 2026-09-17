@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../live/domain/entities/live_gift_event.dart';
+import '../../../live/domain/pk/live_pk_broadcast_stage.dart';
 import '../../../live/presentation/gifts/providers/live_gift_providers.dart';
 import '../../../live/presentation/providers/live_room_providers.dart';
+import '../../../live/presentation/providers/live_video_pk_provider.dart';
 import '../../../voice_hub/presentation/providers/voice_gift_providers.dart';
 import '../../../voice_hub/presentation/gifts/voice_room_gift_orchestrator.dart';
 import '../../../voice_hub/presentation/providers/voice_gift_combo_tracker.dart';
@@ -139,9 +141,14 @@ class _GiftEventListenerState extends ConsumerState<GiftEventListener> {
             );
       }
       if (widget.useLiveRealtime && widget.liveStreamId != null) {
-        ref
-            .read(liveRoomProvider(widget.liveStreamId!).notifier)
-            .appendGiftSystemMessage(event);
+        final liveId = widget.liveStreamId!;
+        final pk = ref.read(liveVideoPkProvider(liveId));
+        final pkChatMute = isLivePkBroadcastStage(pk.battle, pk.status);
+        if (!pkChatMute) {
+          ref
+              .read(liveRoomProvider(liveId).notifier)
+              .appendGiftSystemMessage(event);
+        }
       }
     });
   }

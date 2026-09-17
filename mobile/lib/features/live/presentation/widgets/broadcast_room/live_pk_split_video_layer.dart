@@ -25,13 +25,11 @@ import '../../../../pk/presentation/widgets/pk_battle_visuals.dart';
 import '../../../../voice_hub/presentation/widgets/premium_2026/pk/pk_vs_emblem.dart';
 import 'live_pk_immersive_video_pane.dart';
 import 'live_pk_resolved_timer.dart';
-import 'live_pk_reference_score_bar.dart';
 import 'live_pk_reference_chat_overlay.dart';
 import 'live_pk_pane_gift_toast.dart';
 import 'live_pk_layout_metrics.dart';
-import 'live_pk_pane_gifter_strip.dart';
+import 'live_pk_pane_profile_footer.dart';
 import '../../providers/live_stream_viewers_provider.dart';
-import '../../providers/live_host_rank_provider.dart';
 import '../../providers/live_pk_ended_lock_provider.dart';
 import 'live_pk_pane_outcome_overlay.dart';
 import 'live_pk_preparing_overlay.dart';
@@ -269,8 +267,6 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
     required List<LiveStreamViewer> viewers,
     required LiveSessionPhase sessionPhase,
   }) {
-    final leftLeague = _leagueForUser(ref, layout.left.userId);
-    final rightLeague = _leagueForUser(ref, layout.right.userId);
     final computedLabel = livePkOutcomeStatusLabel(
       ended: ended,
       localOnLeft: layout.left.isLocalPane,
@@ -283,17 +279,6 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
       currentBattleId: battleId,
       ended: ended,
       computedLabel: computedLabel,
-    );
-    final pillMode = livePkStatusPillMode(
-      ended: ended,
-      leftScore: leftScore,
-      rightScore: rightScore,
-    );
-    final winnerName = livePkWinnerName(
-      leftScore: leftScore,
-      rightScore: rightScore,
-      leftLabel: layout.left.label,
-      rightLabel: layout.right.label,
     );
     final leftWins = livePkLeftPaneWins(
       leftScore: leftScore,
@@ -320,7 +305,6 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
         return LayoutBuilder(
       builder: (context, constraints) {
         final chromeBottom = LivePkLayoutMetrics.chromeReserve(context);
-        final scoreH = LivePkLayoutMetrics.scoreBandHeight;
         final videoBottom = LivePkLayoutMetrics.videoBottomInset(context);
         final headerH = LivePkLayoutMetrics.headerHeight(context);
         final chipTop = LivePkLayoutMetrics.streamerChipTop(context);
@@ -348,19 +332,18 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                             isLocal: layout.left.isLocalPane,
                             displayName: layout.left.label,
                             avatarUrl: layout.left.avatarUrl,
-                            streamerUserId: layout.left.userId,
-                            showFollowOnChip: _showPkFollow(
-                              layout.left,
-                              myUserId: myUserId,
-                            ),
-                            leagueLabel: leftLeague,
-                            followAccent: const Color(0xFFFF2D7A),
                             chipTopInset: chipTop,
-                            footerOverlay: LivePkPaneGifterStrip(
-                              sessionKey: streamId,
-                              hostLabel: layout.left.label,
-                              hostUserId: layout.left.userId,
-                              alignLeft: true,
+                            profileFooter: LivePkPaneProfileFooter(
+                              displayName: layout.left.label,
+                              avatarUrl: layout.left.avatarUrl,
+                              userId: layout.left.userId,
+                              pkScore: leftScore,
+                              isLocal: layout.left.isLocalPane,
+                              showFollow: _showPkFollow(
+                                layout.left,
+                                myUserId: myUserId,
+                              ),
+                              followAccent: const Color(0xFFFF2D7A),
                             ),
                             micOn: layout.left.isLocalPane
                                 ? trtc.micOn
@@ -368,7 +351,6 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                             cameraOn: layout.left.isLocalPane
                                 ? trtc.cameraOn
                                 : leftRemoteCam,
-                            chipAlignment: Alignment.topLeft,
                             video: _PkPane(
                               pane: layout.left,
                               trtc: trtc,
@@ -383,6 +365,7 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                             ),
                           ),
                               LivePkPaneGiftToast(
+                                sessionKey: streamId,
                                 hostUserId: layout.left.userId,
                                 hostLabel: layout.left.label,
                               ),
@@ -406,13 +389,6 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                             isLocal: layout.right.isLocalPane,
                             displayName: layout.right.label,
                             avatarUrl: layout.right.avatarUrl,
-                            streamerUserId: layout.right.userId,
-                            showFollowOnChip: _showPkFollow(
-                              layout.right,
-                              myUserId: myUserId,
-                            ),
-                            leagueLabel: rightLeague,
-                            followAccent: const Color(0xFF448AFF),
                             chipTopInset: chipTop,
                             localMediaCorner: layout.right.isLocalPane
                                 ? _PkLocalMediaStatus(
@@ -420,11 +396,17 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                                     cameraOn: trtc.cameraOn,
                                   )
                                 : null,
-                            footerOverlay: LivePkPaneGifterStrip(
-                              sessionKey: streamId,
-                              hostLabel: layout.right.label,
-                              hostUserId: layout.right.userId,
-                              alignLeft: false,
+                            profileFooter: LivePkPaneProfileFooter(
+                              displayName: layout.right.label,
+                              avatarUrl: layout.right.avatarUrl,
+                              userId: layout.right.userId,
+                              pkScore: rightScore,
+                              isLocal: layout.right.isLocalPane,
+                              showFollow: _showPkFollow(
+                                layout.right,
+                                myUserId: myUserId,
+                              ),
+                              followAccent: const Color(0xFF448AFF),
                             ),
                             micOn: layout.right.isLocalPane
                                 ? trtc.micOn
@@ -432,7 +414,6 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                             cameraOn: layout.right.isLocalPane
                                 ? trtc.cameraOn
                                 : rightRemoteCam,
-                            chipAlignment: Alignment.topLeft,
                             video: _PkPane(
                               pane: layout.right,
                               trtc: trtc,
@@ -445,6 +426,7 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                             ),
                           ),
                               LivePkPaneGiftToast(
+                                sessionKey: streamId,
                                 hostUserId: layout.right.userId,
                                 hostLabel: layout.right.label,
                               ),
@@ -521,36 +503,8 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                 ),
               ),
               Positioned(
-                left: 0,
-                right: 0,
-                bottom: chromeBottom,
-                height: scoreH,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
-                      colors: [
-                        Colors.black.withValues(alpha: 0.92),
-                        Colors.black.withValues(alpha: 0.35),
-                      ],
-                    ),
-                  ),
-                  child: Center(
-                    child: LivePkReferenceScoreBar(
-                      leftScore: leftScore,
-                      rightScore: rightScore,
-                      pillMode: pillMode,
-                      winnerName: winnerName,
-                      active: pkActive,
-                      showEndedScores: ended,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
                 left: LivePkLayoutMetrics.chatOverlayLeftPadding,
-                bottom: chromeBottom + scoreH + 6,
+                bottom: chromeBottom + 6,
                 width: MediaQuery.sizeOf(context).width *
                     LivePkLayoutMetrics.chatOverlayWidthFactor,
                 height: LivePkLayoutMetrics.chatOverlayHeight,
@@ -608,12 +562,6 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
         );
       },
     );
-  }
-
-  static String? _leagueForUser(WidgetRef ref, String? userId) {
-    final id = userId?.trim() ?? '';
-    if (id.isEmpty) return null;
-    return ref.watch(liveHostRankProvider(id)).valueOrNull?.leagueLabel;
   }
 
   static bool _showPkFollow(
