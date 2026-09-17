@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.557+598 (2026-09-17) — Ana sayfa motion (aşama 8)
+
+- CANLI rozeti pulse, story gradient glow, bildirim rozeti bump
+- Bölüm scroll-reveal (canlı/sesli/trend/Tanış), Gold hızlı erişim shimmer
+- Alt nav seçili sekme mor glow; bakiye değişiminde value bump
+- Performans modu / sistem reduce motion ile dekoratif FX kapanır
+
 ## 1.0.556+597 (2026-09-17) — Ana sayfa referans UI (canlı/sesli öncelik)
 
 - Bölüm sırası: chip’ler, hero, hızlı erişim (Canlı/Sesli/Tanış/Gold), hikâye, canlı, sesli, popüler yayıncılar
