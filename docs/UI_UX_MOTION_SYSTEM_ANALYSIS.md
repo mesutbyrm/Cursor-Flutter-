@@ -35,13 +35,20 @@
 - Tanış swipe: snap süresi merkezi motion token
 - Gold hub: crown hero entrance
 
+## Faz 3 (1.0.554+) — uygulandı
+
+- Gold üyelik: anlık satın alma sonrası `showCanlifalPurchaseSuccessOverlay` (FX performans modunda sade)
+- Fal hub: «Bugünün Kehaneti» vitrininde `CanlifalTarotFlipCard` (dokun → flip)
+- Ana sayfa banner: `CanlifalEntranceFadeSlide`
+- Sosyal: yorum sheet başlık + ilk 6 yorum stagger; yükleme skeleton; feed load-more skeleton
+- `CdsPressableButton` + tarot/purchase motion export (kademeli CTA entegrasyonu)
+
 ## Uygulama planı (kalan)
 
-1. `lib/core/motion/canlifal_motion_tokens.dart` — micro/normal/premium süreler
-2. `lib/core/motion/canlifal_motion_widgets.dart` — Pressable, Entrance, Stagger, Gold ring pulse
-3. CDS `cds_motion.dart` → token alias
-4. Bottom nav + `CdsButton` + canlı kart press/entrance
-5. Sonraki dalgalar: profil header, tarot flip, tanış swipe polish, gold satın alma hero (işlev aynı)
+1. `CdsPressableButton` — birincil CTA’larda kademeli (Material ripple ile çakışmayan yerler)
+2. Design token migrasyonu — `HomeApprovedDesign` hardcode → CDS
+3. Diğer satın alma yolları (jeton/CFC checkout) — aynı success overlay
+4. Figma MCP + dosya URL varsa: `figma-implement-motion` / `figma-design-to-code` ile piksel hizalama
 
 ## Çakışma / risk
 

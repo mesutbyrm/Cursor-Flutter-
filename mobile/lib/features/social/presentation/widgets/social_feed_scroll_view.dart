@@ -106,14 +106,28 @@ class SocialFeedScrollView extends ConsumerWidget {
                     var slot = i - feedCount;
                     if (loadingMore) {
                       if (slot == 0) {
-                        return const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 20),
-                          child: Center(
-                            child: SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
+                        return Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                          child: Column(
+                            children: [
+                              Row(
+                                children: [
+                                  PremiumSkeleton(
+                                    width: 40,
+                                    height: 40,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  PremiumSkeleton(width: 120, height: 12),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              PremiumSkeleton(
+                                width: double.infinity,
+                                height: 180,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ],
                           ),
                         );
                       }

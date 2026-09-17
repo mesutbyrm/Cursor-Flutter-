@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/design_system/cds_bottom_sheet.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/motion/canlifal_motion_tokens.dart';
+import 'package:canlifal_social/core/motion/canlifal_motion_widgets.dart';
+import 'package:canlifal_social/core/ui/premium/premium_skeleton.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:go_router/go_router.dart';
@@ -146,24 +149,26 @@ class _SocialPostCommentsSheetState
         height: maxH,
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
-              child: Row(
-                children: [
-                  Text(
-                    'Yorumlar',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: context.colors.onSurface,
+            CanlifalEntranceFadeSlide(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+                child: Row(
+                  children: [
+                    Text(
+                      'Yorumlar',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: context.colors.onSurface,
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close_rounded),
-                  ),
-                ],
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+                  ],
+                ),
               ),
             ),
             Expanded(child: _buildCommentsList(context)),
@@ -219,7 +224,38 @@ class _SocialPostCommentsSheetState
   Widget _buildCommentsList(BuildContext context) {
     final commentsAsync = ref.watch(postCommentsProvider(widget.postId));
     return commentsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Column(
+          children: List.generate(
+            4,
+            (i) => Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  PremiumSkeleton(width: 36, height: 36, borderRadius: BorderRadius.circular(18)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        PremiumSkeleton(width: 96, height: 12),
+                        const SizedBox(height: 8),
+                        PremiumSkeleton(
+                          width: double.infinity,
+                          height: 36,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
       error: (e, _) => Center(child: Text(ApiException.userMessage(e))),
       data: (items) {
         if (items.isEmpty) {
@@ -247,7 +283,7 @@ class _SocialPostCommentsSheetState
                 context.push(buildSocialUserProfileRoute(id));
               }
 
-              return Row(
+              final content = Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   GestureDetector(
@@ -283,6 +319,13 @@ class _SocialPostCommentsSheetState
                   ),
                 ],
               );
+              if (i < 6) {
+                return CanlifalEntranceFadeSlide(
+                  delay: CanlifalMotionTokens.staggerIndex(i),
+                  child: content,
+                );
+              }
+              return content;
             },
           ),
         );

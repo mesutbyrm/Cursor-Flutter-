@@ -3,6 +3,7 @@ library;
 
 export 'cds_bottom_sheet.dart';
 export 'cds_button.dart';
+export 'cds_pressable_button.dart';
 export 'cds_card.dart';
 export 'cds_colors.dart';
 export 'cds_dialog.dart';

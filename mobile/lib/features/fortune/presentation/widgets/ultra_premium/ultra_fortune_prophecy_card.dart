@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../../core/motion/canlifal_tarot_flip_card.dart';
 import '../../data/fortune_catalog.dart';
 import '../../data/fortune_type_images.dart';
 import '../fortune_type_cover_image.dart';
@@ -71,49 +72,80 @@ class UltraFortuneProphecyCard extends StatelessWidget {
   }
 }
 
-class _CinematicTarotThumb extends StatelessWidget {
+class _CinematicTarotThumb extends StatefulWidget {
   const _CinematicTarotThumb();
+
+  @override
+  State<_CinematicTarotThumb> createState() => _CinematicTarotThumbState();
+}
+
+class _CinematicTarotThumbState extends State<_CinematicTarotThumb> {
+  var _revealed = false;
 
   @override
   Widget build(BuildContext context) {
     final glow = FortuneTypeImages.glowColor('gunluk-fal');
 
-    return Container(
-      width: 64,
-      height: 88,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: glow.withValues(alpha: 0.4),
-            blurRadius: 16,
-            spreadRadius: 1,
-          ),
-          ...UltraFortuneTokens.goldGlow(),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            FortuneTypeCoverImage(
-              slug: 'gunluk-fal',
-              accent: glow,
-              imageWidth: 400,
-              showOverlay: true,
+    Widget cardFace(Widget child) {
+      return Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: glow.withValues(alpha: 0.4),
+              blurRadius: 16,
+              spreadRadius: 1,
             ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 6,
+            ...UltraFortuneTokens.goldGlow(),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: child,
+        ),
+      );
+    }
+
+    return GestureDetector(
+      onTap: () => setState(() => _revealed = !_revealed),
+      child: CanlifalTarotFlipCard(
+        width: 64,
+        height: 88,
+        flipped: _revealed,
+        front: cardFace(
+          Stack(
+            fit: StackFit.expand,
+            children: [
+              FortuneTypeCoverImage(
+                slug: 'gunluk-fal',
+                accent: glow,
+                imageWidth: 400,
+                showOverlay: true,
+              ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 6,
+                child: Icon(
+                  Icons.style_rounded,
+                  color: Colors.white.withValues(alpha: 0.75),
+                  size: 18,
+                ),
+              ),
+            ],
+          ),
+        ),
+        back: cardFace(
+          ColoredBox(
+            color: const Color(0xFF1A0F2E),
+            child: Center(
               child: Icon(
                 Icons.auto_awesome_rounded,
-                color: UltraFortuneTokens.metallicGold.withValues(alpha: 0.9),
-                size: 16,
+                color: UltraFortuneTokens.metallicGold.withValues(alpha: 0.95),
+                size: 28,
               ),
             ),
-          ],
+          ),
         ),
       ),
     );

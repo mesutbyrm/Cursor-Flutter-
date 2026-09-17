@@ -10,6 +10,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/content/currency_usage_info.dart';
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
+import '../../../../core/motion/canlifal_purchase_success_overlay.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
 import '../../../profile/domain/entities/jeton_package_entity.dart';
@@ -310,8 +311,13 @@ class MembershipPage extends ConsumerWidget {
         await ref.read(membershipControllerProvider.notifier).refresh();
         await refreshMembershipAfterPurchase(ref);
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${tier.title} üyeliği aktif')),
+          final isGold = tier.wireId.toLowerCase().contains('gold') ||
+              tier.title.toLowerCase().contains('gold');
+          await showCanlifalPurchaseSuccessOverlay(
+            context,
+            title: '${tier.title} aktif',
+            subtitle: 'Premium ayrıcalıkların açıldı',
+            gold: isGold,
           );
         }
         return true;

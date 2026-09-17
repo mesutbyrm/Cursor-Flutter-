@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
 
+import '../../../../core/motion/canlifal_motion_tokens.dart';
 import '../ultra_premium/ultra_fortune_liquid_surface.dart';
 import '../ultra_premium/ultra_fortune_tokens.dart';
 
@@ -147,7 +148,7 @@ class _PremiumFortuneLoadingOverlayState extends State<PremiumFortuneLoadingOver
     super.initState();
     _spin = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2400),
+      duration: CanlifalMotionTokens.premiumMax,
     )..repeat();
   }
 

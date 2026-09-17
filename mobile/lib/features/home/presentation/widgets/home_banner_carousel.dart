@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../core/motion/canlifal_motion_tokens.dart';
+import '../../../../core/motion/canlifal_motion_widgets.dart';
 import '../../../../core/navigation/native_site_routes.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../domain/entities/home_banner_entity.dart';
@@ -37,7 +39,9 @@ class _HomeBannerCarouselState extends ConsumerState<HomeBannerCarousel> {
       error: (_, _) => const SizedBox.shrink(),
       data: (items) {
         if (items.isEmpty) return const SizedBox.shrink();
-        return Column(
+        return CanlifalEntranceFadeSlide(
+          delay: CanlifalMotionTokens.staggerIndex(2),
+          child: Column(
           children: [
             SizedBox(
               height: 210,
@@ -71,6 +75,7 @@ class _HomeBannerCarouselState extends ConsumerState<HomeBannerCarousel> {
               ),
             ),
           ],
+        ),
         );
       },
     );

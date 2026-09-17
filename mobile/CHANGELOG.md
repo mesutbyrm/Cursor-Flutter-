@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.554+595 (2026-09-17) — UI motion faz 3 (gold satın alma, tarot, banner, yorumlar)
+
+- Üyelik anlık satın alma: gold success overlay (sparkle, performans modunda kapalı)
+- Fal hub kehanet kartı: tarot Y-flip vitrin (dokun)
+- Ana sayfa banner giriş animasyonu
+- Yorumlar sheet: stagger + skeleton; feed load-more skeleton
+- Motion: `CanlifalTarotFlipCard`, `CdsPressableButton` export
+
 ## 1.0.553+594 (2026-09-17) — UI motion faz 2 (profil, sosyal, tanış, gold)
 
 - Profil hub: header/stats giriş animasyonu; istatistik value bump
