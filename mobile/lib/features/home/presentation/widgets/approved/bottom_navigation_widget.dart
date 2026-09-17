@@ -131,8 +131,18 @@ class _NavItem extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 2),
         decoration: active
             ? BoxDecoration(
-                color: activeColor.withValues(alpha: 0.12),
+                color: activeColor.withValues(alpha: 0.14),
                 borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: activeColor.withValues(alpha: 0.35),
+                    blurRadius: 14,
+                    spreadRadius: 0,
+                  ),
+                ],
+                border: Border.all(
+                  color: activeColor.withValues(alpha: 0.28),
+                ),
               )
             : null,
         child: Column(

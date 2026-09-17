@@ -11,6 +11,7 @@ import '../../../../inbox/presentation/providers/inbox_unread_providers.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
 import '../../theme/home_approved_design.dart';
 import 'home_header_balance_chips.dart';
+import '../home_motion_widgets.dart';
 
 /// Onaylı mockup — logo, arama, bildirim, mesaj, jeton.
 class HomeHeader extends StatelessWidget {
@@ -151,7 +152,7 @@ class _NotificationBadge extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final badgesReady = ref.watch(shellHeaderBadgesEnabledProvider);
     final unread = badgesReady ? ref.watch(unreadNotificationCountProvider) : 0;
-    return _IconBadge(
+    return HomePulsingIconBadge(
       icon: Icons.notifications_rounded,
       badge: unread,
       onTap: () => context.push('/notifications'),
@@ -167,7 +168,7 @@ class _InboxBadge extends ConsumerWidget {
     final badgesReady = ref.watch(shellHeaderBadgesEnabledProvider);
     final unreadInbox =
         badgesReady ? ref.watch(inboxUnreadCountProvider) : 0;
-    return _IconBadge(
+    return HomePulsingIconBadge(
       icon: Icons.inbox_rounded,
       badge: unreadInbox,
       onTap: () => context.push('/messages'),

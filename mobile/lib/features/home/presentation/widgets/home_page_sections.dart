@@ -26,6 +26,7 @@ import '../../../live_psychics/presentation/widgets/psychics_home_section.dart';
 import 'approved/fortune_section.dart';
 import 'approved/gold_section.dart';
 import 'approved/trending_video_section.dart';
+import 'home_motion_widgets.dart';
 
 /// Ana sayfa — referans mockup sırası (canlı/sesli öncelik, fal altta).
 ///
@@ -56,13 +57,13 @@ abstract final class HomePageSections {
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeStoriesSectionDelay,
-          child: LiveBroadcastSection(),
+          child: HomeSectionReveal(child: LiveBroadcastSection()),
         ),
       ),
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeVoiceSectionDelay,
-          child: VoiceRoomSection(),
+          child: HomeSectionReveal(child: VoiceRoomSection()),
         ),
       ),
       const SliverToBoxAdapter(
@@ -76,10 +77,12 @@ abstract final class HomePageSections {
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeTrendingSectionDelay,
-          child: TrendingVideoSection(),
+          child: HomeSectionReveal(child: TrendingVideoSection()),
         ),
       ),
-      const SliverToBoxAdapter(child: HomeDiscoverPremiumBanner()),
+      const SliverToBoxAdapter(
+        child: HomeSectionReveal(child: HomeDiscoverPremiumBanner()),
+      ),
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeBannerDelay,

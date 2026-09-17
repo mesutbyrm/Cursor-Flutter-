@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../../core/motion/canlifal_motion_widgets.dart';
 import '../../theme/home_approved_design.dart';
+import '../home_motion_widgets.dart';
 
 /// Referans — Canlı / Sesli / Tanış / Gold hızlı erişim (4 kare kart).
 class HomeRefQuickAccess extends StatelessWidget {
@@ -51,7 +52,11 @@ class HomeRefQuickAccess extends StatelessWidget {
             Expanded(
               child: CanlifalEntranceFadeSlide(
                 delay: Duration(milliseconds: 40 * i),
-                child: _QuickAccessTile(item: _actions[i]),
+                child: _actions[i].route == '/premium-membership'
+                    ? HomeGoldShimmerBand(
+                        child: _QuickAccessTile(item: _actions[i]),
+                      )
+                    : _QuickAccessTile(item: _actions[i]),
               ),
             ),
           ],

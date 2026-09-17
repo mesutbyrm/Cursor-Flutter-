@@ -13,6 +13,7 @@ import '../../../../social/presentation/providers/social_providers.dart';
 import '../../../../social/presentation/utils/story_navigation.dart';
 import '../../../../social/presentation/widgets/story_create_sheet.dart';
 import '../../theme/home_approved_design.dart';
+import '../home_motion_widgets.dart';
 
 /// Onaylı mockup — yatay hikâye halkaları.
 class StoriesSection extends ConsumerWidget {
@@ -134,22 +135,8 @@ class _OwnStoryChip extends ConsumerWidget {
             Stack(
               alignment: Alignment.center,
               children: [
-                Container(
-                  width: HomeApprovedDesign.storySize + 4,
-                  height: HomeApprovedDesign.storySize + 4,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: hasStories
-                          ? Colors.transparent
-                          : HomeApprovedDesign.border,
-                      width: 2,
-                    ),
-                    gradient: hasStories
-                        ? HomeApprovedDesign.storyRingGradient
-                        : null,
-                  ),
-                  padding: hasStories ? const EdgeInsets.all(2.5) : null,
+                HomeStoryRingPulse(
+                  active: hasStories,
                   child: UserAvatar(url: user?.avatarUrl, radius: 32),
                 ),
                 Positioned(
@@ -208,24 +195,16 @@ class _StoryChip extends StatelessWidget {
               clipBehavior: Clip.none,
               alignment: Alignment.topCenter,
               children: [
-                Container(
-                  width: HomeApprovedDesign.storySize + 4,
-                  height: HomeApprovedDesign.storySize + 4,
-                  padding: const EdgeInsets.all(2.5),
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: HomeApprovedDesign.storyRingGradient,
-                  ),
-                  child: ClipOval(
-                    child: ring.user.avatarUrl != null
-                        ? CanlifalNetworkImage(
-                            url: ring.user.avatarUrl!,
-                            fit: BoxFit.cover,
-                            width: HomeApprovedDesign.storySize,
-                            height: HomeApprovedDesign.storySize,
-                          )
-                        : UserAvatar(url: null, radius: 32),
-                  ),
+                HomeStoryRingPulse(
+                  active: true,
+                  child: ring.user.avatarUrl != null
+                      ? CanlifalNetworkImage(
+                          url: ring.user.avatarUrl!,
+                          fit: BoxFit.cover,
+                          width: HomeApprovedDesign.storySize,
+                          height: HomeApprovedDesign.storySize,
+                        )
+                      : UserAvatar(url: null, radius: 32),
                 ),
               ],
             ),

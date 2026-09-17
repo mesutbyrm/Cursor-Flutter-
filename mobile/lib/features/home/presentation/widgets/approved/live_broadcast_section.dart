@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../../core/motion/canlifal_motion_tokens.dart';
 import '../../../../../core/motion/canlifal_motion_widgets.dart';
 import '../../../../../core/network/api_exception.dart';
-import '../../../../../core/ui/premium/live_badge.dart';
+import '../home_motion_widgets.dart';
 import '../../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../live/domain/entities/live_stream_entity.dart';
 import '../../../../live/presentation/utils/open_live_stream.dart';
@@ -159,7 +159,7 @@ class _LiveCard extends StatelessWidget {
                   const Positioned(
                     top: 8,
                     left: 8,
-                    child: LiveBadge(compact: true),
+                    child: HomePulsingLiveBadge(compact: true),
                   ),
                 Positioned(
                   top: 8,
