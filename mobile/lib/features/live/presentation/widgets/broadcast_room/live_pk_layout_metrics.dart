@@ -22,4 +22,11 @@ abstract final class LivePkLayoutMetrics {
 
   static double headerHeight(BuildContext context) =>
       MediaQuery.paddingOf(context).top + 56;
+
+  /// Yayıncı chip — uygulama üst barının hemen altı (video üzerinde).
+  static double streamerChipTop(BuildContext context) =>
+      headerHeight(context) + 2;
+
+  static const vsEmblemSize = 68.0;
+  static const splitDividerWidth = 1.0;
 }

@@ -144,6 +144,7 @@ class TrtcRoomManager {
     bool audioOnly = false,
     String? expectedAnchorUserId,
     bool twoWayVideo = false,
+    bool? publishLocal,
   }) {
     return _opGate.run(
       () => _joinUnlocked(
@@ -152,6 +153,7 @@ class TrtcRoomManager {
         audioOnly: audioOnly,
         expectedAnchorUserId: expectedAnchorUserId,
         twoWayVideo: twoWayVideo,
+        publishLocal: publishLocal,
       ),
     );
   }
@@ -162,6 +164,7 @@ class TrtcRoomManager {
     bool audioOnly = false,
     String? expectedAnchorUserId,
     bool twoWayVideo = false,
+    bool? publishLocal,
   }) async {
     if (!isSupported) {
       throw StateError('TRTC yalnızca Android/iOS üzerinde desteklenir');
@@ -321,7 +324,8 @@ class TrtcRoomManager {
       _cloud!.setDefaultStreamRecvMode(true, true);
     }
 
-    final publishAsAnchor = isHost || twoWayVideo;
+    final publishAsAnchor =
+        publishLocal ?? (isHost || twoWayVideo);
     final params = TRTCParams(
       sdkAppId: credentials.sdkAppId,
       userId: credentials.userId,

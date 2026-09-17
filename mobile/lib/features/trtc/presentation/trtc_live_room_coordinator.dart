@@ -16,6 +16,7 @@ typedef TrtcJoinRoomFn = Future<void> Function({
   required bool audioOnly,
   String? expectedAnchorUserId,
   bool twoWayVideo,
+  bool? publishLocal,
 });
 
 /// Canlı oda TRTC oturumu — join-room, 10 sn heartbeat, yeniden bağlanma.
@@ -58,6 +59,7 @@ class TrtcLiveRoomCoordinator {
   bool _isHost = false;
   bool _twoWayVideo = false;
   bool _audioOnly = false;
+  bool? _publishLocal;
   String? _expectedAnchorUserId;
 
   LiveJoinRoomResult? joinSnapshot;
@@ -77,6 +79,7 @@ class TrtcLiveRoomCoordinator {
     String? expectedAnchorUserId,
     String? nickname,
     bool useCompoundJoin = true,
+    bool? publishLocal,
   }) async {
     _roomId = roomId.trim();
     _roomType = roomType;
@@ -84,6 +87,7 @@ class TrtcLiveRoomCoordinator {
     _isHost = isHost;
     _twoWayVideo = twoWayVideo;
     _audioOnly = audioOnly;
+    _publishLocal = publishLocal;
     _expectedAnchorUserId = expectedAnchorUserId;
     _rtcRole = isHost ? 'host' : 'audience';
 
@@ -143,6 +147,7 @@ class TrtcLiveRoomCoordinator {
       audioOnly: _audioOnly,
       expectedAnchorUserId: _expectedAnchorUserId,
       twoWayVideo: _twoWayVideo,
+      publishLocal: _publishLocal,
     );
     _micOnBeforeReconnect = _roomManager.micOn;
   }

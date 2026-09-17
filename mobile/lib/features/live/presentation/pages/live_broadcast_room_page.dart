@@ -553,7 +553,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   Future<void> _ensurePkTwoWayRtc(String streamId) async {
     if (_leaving || !_rtcReady) return;
     if (_pkTwoWayRtc) return;
-    if (!widget.session.isHost && !_coHostUpgraded) return;
     final pk = ref.read(liveVideoPkProvider(streamId));
     if (!isLivePkSplitReady(pk.battle, pk.status)) return;
     final user = ref.read(authControllerProvider).valueOrNull;
@@ -571,6 +570,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       _applyRtcPublishPolicy();
       return;
     }
+    final asPublisher = widget.session.isHost || _coHostUpgraded;
     try {
       _trtcCoordinator!.setReconnectSuspended(true);
       await _trtcCoordinator!.leave();
@@ -578,8 +578,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         roomId: anchor.trtcRoomId,
         roomType: 'stream',
         userId: user.id,
-        isHost: anchor.publishAsHost,
+        isHost: asPublisher && anchor.publishAsHost,
         twoWayVideo: true,
+        publishLocal: asPublisher,
         expectedAnchorUserId: anchor.expectedRemoteUserId?.isNotEmpty == true
             ? anchor.expectedRemoteUserId
             : widget.session.hostUserId,
@@ -2599,10 +2600,18 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           }
         }
       });
+      ref.listen(livePkInviteSignalProvider, (_, __) {
+        _applyPkInvites(streamId);
+      });
+    }
+
+    if (hasStream) {
       ref.listen(liveVideoPkProvider(streamId), (prev, next) {
-        final battle = next.battle;
-        if (battle != null) {
-          _maybeShowPkInvite(streamId, battle);
+        if (s.isHost) {
+          final battle = next.battle;
+          if (battle != null) {
+            _maybeShowPkInvite(streamId, battle);
+          }
         }
         final wasSplit = prev != null &&
             isLivePkBroadcastStage(prev.battle, prev.status);
@@ -2617,7 +2626,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         }
       });
       ref.listen(
-        liveVideoPkProvider(streamId).select((s) => s.error),
+        liveVideoPkProvider(streamId).select((st) => st.error),
         (prev, next) {
           final msg = next?.trim() ?? '';
           if (msg.isEmpty || msg == prev?.trim()) return;
@@ -2627,9 +2636,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           );
         },
       );
-      ref.listen(livePkInviteSignalProvider, (_, __) {
-        _applyPkInvites(streamId);
-      });
     }
 
     // Misafir ortak yayın daveti (co-broadcast invite) — izleyici tarafı.

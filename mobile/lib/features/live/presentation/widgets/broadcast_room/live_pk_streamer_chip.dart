@@ -18,6 +18,8 @@ class LivePkStreamerChip extends ConsumerStatefulWidget {
     this.showFollow = false,
     this.leagueLabel,
     this.followAccent = const Color(0xFFFF2D7A),
+    this.showInlineMediaIcons = false,
+    this.topInset = 8,
   });
 
   final String displayName;
@@ -30,6 +32,8 @@ class LivePkStreamerChip extends ConsumerStatefulWidget {
   final bool showFollow;
   final String? leagueLabel;
   final Color followAccent;
+  final bool showInlineMediaIcons;
+  final double topInset;
 
   @override
   ConsumerState<LivePkStreamerChip> createState() => _LivePkStreamerChipState();
@@ -106,7 +110,7 @@ class _LivePkStreamerChipState extends ConsumerState<LivePkStreamerChip> {
         !_following;
 
     return Positioned(
-      top: 8,
+      top: widget.topInset,
       left: left ? 8 : null,
       right: left ? null : 8,
       child: Column(
@@ -140,9 +144,7 @@ class _LivePkStreamerChipState extends ConsumerState<LivePkStreamerChip> {
                   children: [
                     Flexible(
                       child: Text(
-                        widget.isLocal
-                            ? 'Sen · ${widget.displayName}'
-                            : widget.displayName,
+                        widget.displayName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -176,18 +178,22 @@ class _LivePkStreamerChipState extends ConsumerState<LivePkStreamerChip> {
                   ),
                 ),
               ],
-              const SizedBox(width: 6),
-              Icon(
-                widget.micOn ? Icons.mic_rounded : Icons.mic_off_rounded,
-                size: 14,
-                color: widget.micOn ? Colors.white : Colors.redAccent,
-              ),
-              const SizedBox(width: 4),
-              Icon(
-                widget.cameraOn ? Icons.videocam_rounded : Icons.videocam_off_rounded,
-                size: 14,
-                color: widget.cameraOn ? Colors.white : Colors.redAccent,
-              ),
+              if (widget.showInlineMediaIcons) ...[
+                const SizedBox(width: 6),
+                Icon(
+                  widget.micOn ? Icons.mic_rounded : Icons.mic_off_rounded,
+                  size: 14,
+                  color: widget.micOn ? Colors.white : Colors.redAccent,
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  widget.cameraOn
+                      ? Icons.videocam_rounded
+                      : Icons.videocam_off_rounded,
+                  size: 14,
+                  color: widget.cameraOn ? Colors.white : Colors.redAccent,
+                ),
+              ],
               if (showFollowBtn) ...[
                 const SizedBox(width: 6),
                 Material(

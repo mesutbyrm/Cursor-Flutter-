@@ -51,7 +51,7 @@ class _RoundControl extends StatelessWidget {
   Widget build(BuildContext context) {
     final disabled = item.onTap == null;
     final bg = item.danger
-        ? Colors.red.withValues(alpha: 0.55)
+        ? const Color(0xFFE53935)
         : Colors.black.withValues(alpha: 0.45);
     final iconColor = item.active
         ? Colors.white
@@ -83,7 +83,11 @@ class _RoundControl extends StatelessWidget {
                       )
                     : null,
               ),
-              child: Icon(item.icon, color: iconColor, size: 24),
+              child: Icon(
+                item.danger ? Icons.stop_rounded : item.icon,
+                color: item.danger ? Colors.white : iconColor,
+                size: item.danger ? 26 : 24,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
@@ -129,12 +133,6 @@ class LivePkChatInputBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
       child: Row(
         children: [
-          if (onToggleVisibility != null)
-            IconButton(
-              onPressed: onToggleVisibility,
-              icon: const Icon(Icons.expand_more_rounded, color: Colors.white70),
-              tooltip: 'Sohbeti gizle',
-            ),
           Expanded(
             child: Material(
               color: Colors.black.withValues(alpha: 0.42),
@@ -160,6 +158,10 @@ class LivePkChatInputBar extends StatelessWidget {
               ),
             ),
           ),
+          IconButton(
+            onPressed: onSend,
+            icon: const Icon(Icons.send_rounded, color: Colors.white),
+          ),
           if (onQuickRose != null)
             IconButton(
               onPressed: onQuickRose,
@@ -179,10 +181,6 @@ class LivePkChatInputBar extends StatelessWidget {
               tooltip: 'Daha fazla',
               icon: const Icon(Icons.more_horiz_rounded, color: Colors.white70),
             ),
-          IconButton(
-            onPressed: onSend,
-            icon: const Icon(Icons.send_rounded, color: Colors.white),
-          ),
         ],
       ),
     );

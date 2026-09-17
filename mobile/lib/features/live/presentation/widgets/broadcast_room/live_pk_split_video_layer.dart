@@ -22,12 +22,11 @@ import 'live_pk_immersive_video_pane.dart';
 import 'live_pk_resolved_timer.dart';
 import 'live_pk_reference_score_bar.dart';
 import 'live_pk_reference_chat_overlay.dart';
-import 'live_pk_gift_toast_overlay.dart';
+import 'live_pk_pane_gift_toast.dart';
 import 'live_pk_layout_metrics.dart';
 import 'live_pk_pane_gifter_strip.dart';
 import '../../providers/live_stream_viewers_provider.dart';
 import '../../providers/live_host_rank_provider.dart';
-import '../../providers/live_room_interaction_provider.dart';
 import '../../providers/live_pk_ended_lock_provider.dart';
 import 'live_pk_pane_outcome_overlay.dart';
 
@@ -157,12 +156,18 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
     return ValueListenableBuilder<Map<String, bool>>(
       valueListenable: trtc.remoteVideoByUser,
       builder: (context, remoteVideoMap, _) {
-        final oppId = layout.right.userId?.trim() ?? '';
-        final remoteCam =
-            oppId.isEmpty ? true : (remoteVideoMap[oppId] ?? true);
-        final remoteMic = oppId.isEmpty
-            ? true
-            : (trtc.remoteAudioByUser.value[oppId] ?? true);
+        final audioMap = trtc.remoteAudioByUser.value;
+        bool remoteCamFor(String? uid) {
+          final id = uid?.trim() ?? '';
+          if (id.isEmpty) return true;
+          return remoteVideoMap[id] ?? true;
+        }
+
+        bool remoteMicFor(String? uid) {
+          final id = uid?.trim() ?? '';
+          if (id.isEmpty) return true;
+          return audioMap[id] ?? true;
+        }
 
         return _buildStack(
           context,
@@ -182,12 +187,13 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
           secondsLeft: secondsLeft,
           endsAt: endsAt,
           playbackFor: playbackFor,
-          remoteCam: remoteCam,
-          remoteMic: remoteMic,
+          leftRemoteCam: remoteCamFor(layout.left.userId),
+          leftRemoteMic: remoteMicFor(layout.left.userId),
+          rightRemoteCam: remoteCamFor(layout.right.userId),
+          rightRemoteMic: remoteMicFor(layout.right.userId),
           ended: ended,
           pkActive: pkActive,
           viewers: viewers,
-          likeCount: interaction.likeCount,
         );
       },
     );
@@ -210,12 +216,13 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
     required int secondsLeft,
     required DateTime? endsAt,
     required String? Function(String?) playbackFor,
-    required bool remoteCam,
-    required bool remoteMic,
+    required bool leftRemoteCam,
+    required bool leftRemoteMic,
+    required bool rightRemoteCam,
+    required bool rightRemoteMic,
     required bool ended,
     required bool pkActive,
     required List<LiveStreamViewer> viewers,
-    required int likeCount,
   }) {
     final leftLeague = _leagueForUser(ref, layout.left.userId);
     final rightLeague = _leagueForUser(ref, layout.right.userId);
@@ -257,6 +264,7 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
         final scoreH = LivePkLayoutMetrics.scoreBandHeight;
         final videoBottom = LivePkLayoutMetrics.videoBottomInset(context);
         final headerH = LivePkLayoutMetrics.headerHeight(context);
+        final chipTop = LivePkLayoutMetrics.streamerChipTop(context);
 
         return ColoredBox(
           color: Colors.black,
@@ -288,15 +296,19 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                             ),
                             leagueLabel: leftLeague,
                             followAccent: const Color(0xFFFF2D7A),
+                            chipTopInset: chipTop,
                             footerOverlay: LivePkPaneGifterStrip(
                               sessionKey: streamId,
                               hostLabel: layout.left.label,
                               hostUserId: layout.left.userId,
                               alignLeft: true,
                             ),
-                            micOn: layout.left.isLocalPane ? trtc.micOn : remoteMic,
-                            cameraOn:
-                                layout.left.isLocalPane ? trtc.cameraOn : remoteCam,
+                            micOn: layout.left.isLocalPane
+                                ? trtc.micOn
+                                : leftRemoteMic,
+                            cameraOn: layout.left.isLocalPane
+                                ? trtc.cameraOn
+                                : leftRemoteCam,
                             chipAlignment: Alignment.topLeft,
                             video: _PkPane(
                               pane: layout.left,
@@ -305,11 +317,16 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                               playbackUrl: layout.left.isLocalPane
                                   ? null
                                   : playbackFor(layout.left.streamId),
+                              preferRemoteUserId: layout.left.userId,
                               accent: Colors.pinkAccent,
                               playbackAudible: true,
                               bare: true,
                             ),
                           ),
+                              LivePkPaneGiftToast(
+                                hostUserId: layout.left.userId,
+                                hostLabel: layout.left.label,
+                              ),
                               LivePkPaneOutcomeOverlay(
                                 visible: _outcomeFxVisible && ended,
                                 winnerPane: leftWins,
@@ -319,18 +336,8 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                           ),
                         ),
                         Container(
-                          width: 2,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.white.withValues(alpha: 0.05),
-                                Colors.white.withValues(alpha: 0.35),
-                                Colors.white.withValues(alpha: 0.05),
-                              ],
-                            ),
-                          ),
+                          width: LivePkLayoutMetrics.splitDividerWidth,
+                          color: Colors.white.withValues(alpha: 0.22),
                         ),
                         Expanded(
                           child: Stack(
@@ -347,16 +354,26 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                             ),
                             leagueLabel: rightLeague,
                             followAccent: const Color(0xFF448AFF),
+                            chipTopInset: chipTop,
+                            localMediaCorner: layout.right.isLocalPane
+                                ? _PkLocalMediaStatus(
+                                    micOn: trtc.micOn,
+                                    cameraOn: trtc.cameraOn,
+                                  )
+                                : null,
                             footerOverlay: LivePkPaneGifterStrip(
                               sessionKey: streamId,
                               hostLabel: layout.right.label,
                               hostUserId: layout.right.userId,
                               alignLeft: false,
                             ),
-                            micOn: layout.right.isLocalPane ? trtc.micOn : remoteMic,
-                            cameraOn:
-                                layout.right.isLocalPane ? trtc.cameraOn : remoteCam,
-                            chipAlignment: Alignment.topRight,
+                            micOn: layout.right.isLocalPane
+                                ? trtc.micOn
+                                : rightRemoteMic,
+                            cameraOn: layout.right.isLocalPane
+                                ? trtc.cameraOn
+                                : rightRemoteCam,
+                            chipAlignment: Alignment.topLeft,
                             video: _PkPane(
                               pane: layout.right,
                               trtc: trtc,
@@ -368,6 +385,10 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                               bare: true,
                             ),
                           ),
+                              LivePkPaneGiftToast(
+                                hostUserId: layout.right.userId,
+                                hostLabel: layout.right.label,
+                              ),
                               LivePkPaneOutcomeOverlay(
                                 visible: _outcomeFxVisible && ended,
                                 winnerPane: !leftWins && leftScore != rightScore,
@@ -378,14 +399,14 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                         ),
                       ],
                     ),
-                    Center(child: PkVsEmblem(size: 62, pulse: true)),
-                    Positioned(
-                      right: 8,
-                      bottom: 24,
-                      child: _PkLikeRail(count: likeCount),
+                    Center(
+                      child: PkVsEmblem(
+                        size: LivePkLayoutMetrics.vsEmblemSize,
+                        pulse: true,
+                      ),
                     ),
                     Positioned(
-                      top: headerH - 8,
+                      top: headerH + 4,
                       left: 0,
                       right: 0,
                       child: Center(
@@ -437,21 +458,6 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                         ),
                       ),
                     ),
-                    Positioned.fill(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.topCenter,
-                            colors: [
-                              Colors.black.withValues(alpha: 0.55),
-                              Colors.transparent,
-                            ],
-                            stops: const [0, 0.35],
-                          ),
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -494,7 +500,6 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                   visible: widget.chatVisible,
                 ),
               ),
-              LivePkGiftToastOverlay(bottomInset: chromeBottom + scoreH + 8),
               LivePkReferenceTopBar(
                 onBack: widget.onBack,
                 onClose: widget.onBack,
@@ -529,32 +534,37 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
   }
 }
 
-class _PkLikeRail extends StatelessWidget {
-  const _PkLikeRail({required this.count});
+class _PkLocalMediaStatus extends StatelessWidget {
+  const _PkLocalMediaStatus({
+    required this.micOn,
+    required this.cameraOn,
+  });
 
-  final int count;
+  final bool micOn;
+  final bool cameraOn;
 
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.45),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        child: Column(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.favorite_rounded, color: Color(0xFFFF2D7A), size: 22),
-            const SizedBox(height: 4),
-            Text(
-              '$count',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-                fontSize: 12,
-              ),
+            Icon(
+              micOn ? Icons.mic_rounded : Icons.mic_off_rounded,
+              color: Colors.white,
+              size: 16,
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              cameraOn ? Icons.videocam_rounded : Icons.videocam_off_rounded,
+              color: Colors.white,
+              size: 16,
             ),
           ],
         ),
@@ -590,7 +600,9 @@ class _PkPane extends StatelessWidget {
       valueListenable: trtc.remoteUserIdsNotifier,
       builder: (context, remoteIds, _) {
         Widget video;
-        final remoteId = preferRemoteUserId?.trim() ?? '';
+        final remoteId = preferRemoteUserId?.trim() ??
+            pane.userId?.trim() ??
+            '';
         if (pane.isLocalPane && rtcReady) {
           video = TrtcLocalVideoView(manager: trtc);
         } else if (remoteId.isNotEmpty &&
