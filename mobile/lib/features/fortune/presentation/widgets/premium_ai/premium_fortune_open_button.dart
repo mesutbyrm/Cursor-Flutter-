@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
 
-import '../../../../core/motion/canlifal_motion_tokens.dart';
+import '../../../../../core/motion/canlifal_motion_tokens.dart';
 import '../ultra_premium/ultra_fortune_liquid_surface.dart';
 import '../ultra_premium/ultra_fortune_tokens.dart';
 
