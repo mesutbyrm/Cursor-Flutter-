@@ -4,20 +4,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.550+591` |
-| Tarih (UTC) | 2026-09-17 13:46 |
-| Commit | [`99bbbfa7cef786404ff72a509147c531eb481d04`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/99bbbfa7cef786404ff72a509147c531eb481d04) |
-| İş akışı | [Run 35226332893](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35226332893) |
+| Sürüm | `1.0.551+592` |
+| Tarih (UTC) | 2026-09-17 14:58 |
+| Commit | [`9da9693e8caee202ac848b19a85dfde6d1ac8ba3`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/9da9693e8caee202ac848b19a85dfde6d1ac8ba3) |
+| İş akışı | [Run 35235194572](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35235194572) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.550+591 (2026-09-17) — PK kalan: reconnect, sonuç, dedup, cleanup
+## 1.0.551+592 (2026-09-17) — PK TikTok Match: profil, hediye, sohbet
 
-- PK reconnect banner (split + bağlantı overlay PK metni)
-- Sonuç: `winnerId` / `isDraw` öncelikli; bitişte battle 7 sn sonra temizlenir (sonuç UI)
-- SSE `eventId` dedup; foreground’da PK state `refresh`
-- Test: authoritative outcome + event dedup
+- Split PK: profil + PK puanı kamera alt-sol; alt skor bandı kaldırıldı
+- Hediye: `giftSessionProvider` pane toast (gönderen/alıcı); PK hediye sheet (A/B/Kendim, `toUserId` + `pkMatchId`)
+- PK sohbet: PK/hediye sistem satırları filtre; PK sırasında hediye chat’e yazılmaz
+- Self-gift: reciprocal guard sender==receiver atlanır; like PK’da 3 puan/kullanıcı istemci bütçesi
+- Analiz: `docs/PK_TIKTOK_MATCH_ANALYSIS.md`
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
