@@ -84,9 +84,9 @@ class _CanlifalTarotFlipCardState extends State<CanlifalTarotFlipCard>
           ..setEntry(3, 2, 0.001)
           ..rotateY(angle);
         final isUnder = angle >= pi / 2;
-        return Transform(
-          transform: transform,
-          alignment: Alignment.center,
+        final face = SizedBox(
+          width: widget.width,
+          height: widget.height,
           child: isUnder
               ? Transform(
                   transform: Matrix4.identity()..rotateY(pi),
@@ -94,6 +94,11 @@ class _CanlifalTarotFlipCardState extends State<CanlifalTarotFlipCard>
                   child: widget.back,
                 )
               : widget.front,
+        );
+        return Transform(
+          transform: transform,
+          alignment: Alignment.center,
+          child: face,
         );
       },
       child: SizedBox(width: widget.width, height: widget.height),
