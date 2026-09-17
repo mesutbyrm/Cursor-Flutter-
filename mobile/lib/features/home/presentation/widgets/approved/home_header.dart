@@ -6,6 +6,7 @@ import '../../../../../core/bootstrap/shell_header_badges_provider.dart';
 import '../../../../../core/navigation/unread_badge_format.dart';
 import '../../../../../core/widgets/canlifal_logo.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
+import '../../../../feed/presentation/providers/feed_unread_providers.dart';
 import '../../../../inbox/presentation/providers/inbox_unread_providers.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
 import '../../theme/home_approved_design.dart';
@@ -46,6 +47,13 @@ class HomeHeader extends StatelessWidget {
                 color: HomeApprovedDesign.searchFill.withValues(alpha: 0.85),
                 borderRadius:
                     BorderRadius.circular(HomeApprovedDesign.searchRadius),
+                boxShadow: [
+                  BoxShadow(
+                    color: HomeApprovedDesign.purple.withValues(alpha: 0.12),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
                 border: Border.all(
                   color: HomeApprovedDesign.border.withValues(alpha: 0.85),
                 ),
@@ -85,9 +93,11 @@ class _HomeHeaderBadges extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       children: const [
         _DiscoverBadge(),
-        SizedBox(width: 10),
+        SizedBox(width: 8),
+        _NotificationBadge(),
+        SizedBox(width: 8),
         _InboxBadge(),
-        SizedBox(width: 10),
+        SizedBox(width: 8),
         _HomeBalanceChips(),
       ],
     );
@@ -130,6 +140,21 @@ class _DiscoverBadge extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _NotificationBadge extends ConsumerWidget {
+  const _NotificationBadge();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final badgesReady = ref.watch(shellHeaderBadgesEnabledProvider);
+    final unread = badgesReady ? ref.watch(unreadNotificationCountProvider) : 0;
+    return _IconBadge(
+      icon: Icons.notifications_rounded,
+      badge: unread,
+      onTap: () => context.push('/notifications'),
     );
   }
 }

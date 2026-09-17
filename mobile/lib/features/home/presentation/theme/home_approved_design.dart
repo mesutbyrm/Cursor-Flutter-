@@ -19,8 +19,8 @@ abstract final class HomeApprovedDesign {
   static const textMuted = Color(0xFF6B6B7B);
 
   static const hPad = 16.0;
-  static const cardRadius = 14.0;
-  static const searchRadius = 12.0;
+  static const cardRadius = 20.0;
+  static const searchRadius = 20.0;
   static const pillRadius = 20.0;
 
   static const liveCardW = 132.0;

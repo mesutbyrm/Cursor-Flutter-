@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../providers/home_providers.dart';
@@ -16,7 +15,6 @@ class HomeGrowthTeasersSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authControllerProvider).valueOrNull;
-    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final cards = <_GrowthCardData>[];
 
     final tasks = ref.watch(userDailyTasksProvider);
@@ -27,9 +25,9 @@ class HomeGrowthTeasersSection extends ConsumerWidget {
     if (!tasks.hasError || pending > 0) {
       final subtitle = tasks.when(
         loading: () => 'Günlük görevler yükleniyor…',
-        error: (_, _) => 'Görevleri tamamla, $jetonLabel ve XP kazan',
+        error: (_, _) => 'Görev merkezinden ilerlemeni takip et',
         data: (items) {
-          if (items.isEmpty) return 'Görevleri tamamla, $jetonLabel ve XP kazan';
+          if (items.isEmpty) return 'Henüz aktif görev yok';
           if (pending > 0) return '$pending bekleyen görev';
           return 'Tüm görevler tamamlandı 🎉';
         },
@@ -54,7 +52,7 @@ class HomeGrowthTeasersSection extends ConsumerWidget {
             ? value.rewardHint!
             : invited > 0
                 ? '$invited arkadaş davet edildi'
-                : 'Arkadaşlarını davet et, $jetonLabel kazan';
+                : 'Arkadaşlarını davet et';
         cards.add(
           _GrowthCardData(
             emoji: '🎁',
@@ -71,18 +69,11 @@ class HomeGrowthTeasersSection extends ConsumerWidget {
 
       final ads = ref.watch(homeActiveAdsProvider);
       if (ads case AsyncData(:final value) when value.isNotEmpty) {
-        final reward = ref.watch(watchAdCreditProvider);
-        final subtitle = reward.when(
-          loading: () => 'Reklam izle, $jetonLabel kazan',
-          error: (_, _) => 'Günlük reklam ödülü',
-          data: (jeton) => jeton > 0
-              ? 'Bugün +$jeton $jetonLabel kazanabilirsin'
-              : 'Reklam izle, $jetonLabel kazan',
-        );
+        final subtitle = 'Günlük reklam ve ödül merkezi';
         cards.add(
           _GrowthCardData(
             emoji: '📺',
-            title: '$jetonLabel Kazan',
+            title: 'Reklam & Ödüller',
             subtitle: subtitle,
             accent: const Color(0xFFFF8A3D),
             icon: Icons.play_circle_rounded,

@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.556+597 (2026-09-17) — Ana sayfa referans UI (canlı/sesli öncelik)
+
+- Bölüm sırası: chip’ler, hero, hızlı erişim (Canlı/Sesli/Tanış/Gold), hikâye, canlı, sesli, popüler yayıncılar
+- Yeni: kategori chip’leri, premium Tanış banner, yayıncı ol CTA, bildirim rozeti
+- Fal & Gold bölümleri sayfa altına; günlük görev teaser’ında sahte jeton vaadi kaldırıldı
+- Tasarım token: kart/arama radius ~20px
+
 ## 1.0.555+596 (2026-09-17) — PK: TRTC oda, davet 60 sn, sonuç kapanışı
 
 - İki yönlü PK: her iki yayıncı aynı TRTC odasına (host stream / `pkRoomId`); `pkSessionId` battle UUID artık oda olarak kullanılmıyor
