@@ -385,7 +385,7 @@ jobs:
 
       - name: apk-latest yükle (main)
         id: apk_latest_upload
-        timeout-minutes: 20
+        timeout-minutes: 45
         if: >-
           github.ref == 'refs/heads/main' &&
           (github.event_name == 'push' || github.event_name == 'workflow_run')
@@ -399,7 +399,7 @@ jobs:
 
       - name: apk-latest yükle (manuel)
         id: apk_latest_upload_manual
-        timeout-minutes: 20
+        timeout-minutes: 45
         if: github.event_name == 'workflow_dispatch' && inputs.publish_release == true
         working-directory: ${{ github.workspace }}
         env:
