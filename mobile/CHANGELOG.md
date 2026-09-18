@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.559+602 (2026-09-18) — Audit fix plan (PK state)
+
+- PK `refresh`: boş/hatalı yanıtta aktif battle **90 sn stale latch** — single-live düşüşü azaltılır
+- PK çift tık kalp skoru: API hatasında rate-limited snackbar (sessiz yutma kaldırıldı)
+- Unit: `live_pk_refresh_stale_guard_test`
+
 ## 1.0.559+601 (2026-09-18) — Premium UI / motion (CDS)
 
 - Merkezi `canlifal_design_system` + `CdsSkeleton` / shimmer yükleme iskeletleri

@@ -1911,6 +1911,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
 
   var _livePkInviteDialogOpen = false;
   final _pkLikeBudget = LivePkLikeBudget();
+  DateTime? _lastPkHeartScoreErrorSnackAt;
 
   void _maybeShowPkInvite(String streamId, Map<String, dynamic> battle) {
     if (!widget.session.isHost) return;
@@ -2028,7 +2029,19 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
             side: side,
           );
       _pkLikeBudget.record(battleId, userId, points);
-    } catch (_) {}
+    } catch (e) {
+      if (!mounted) return;
+      final now = DateTime.now();
+      if (_lastPkHeartScoreErrorSnackAt != null &&
+          now.difference(_lastPkHeartScoreErrorSnackAt!) <
+              const Duration(seconds: 8)) {
+        return;
+      }
+      _lastPkHeartScoreErrorSnackAt = now;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
+    }
   }
 
   Future<void> _openPkGiftPicker(
