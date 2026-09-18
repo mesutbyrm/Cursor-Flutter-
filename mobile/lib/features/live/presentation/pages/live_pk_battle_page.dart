@@ -18,6 +18,8 @@ import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_gift_explosio
 import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_vs_emblem.dart';
 import '../../domain/pk/live_pk_broadcast_stage.dart';
 import '../../domain/pk/live_pk_chat_stream.dart';
+import '../../domain/pk/live_pk_trtc_anchor.dart';
+import '../../domain/pk/live_pk_trtc_remote_resolver.dart';
 import '../providers/live_pk_ui_providers.dart';
 import '../widgets/broadcast_room/live_pk_immersive_controls.dart';
 import '../widgets/broadcast_room/live_pk_immersive_video_pane.dart';
@@ -122,40 +124,65 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
 
   Future<void> _initTrtcRoom(String streamId) async {
     if (!_trtc.isSupported) return;
-    if (_trtc.inRoom) {
-      if (mounted) setState(() => _trtcReady = true);
-      return;
-    }
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) return;
-    if (!widget.session.isHost) {
+
+    final remoteBattle = ref.read(pkBattleRemoteProvider);
+    final battleMap = <String, dynamic>{
+      if (remoteBattle?.liveStreamId != null)
+        'liveStreamId': remoteBattle!.liveStreamId,
+      if (remoteBattle?.opponentLiveStreamId != null)
+        'opponentLiveStreamId': remoteBattle!.opponentLiveStreamId,
+      if (remoteBattle?.challengerId != null)
+        'challengerId': remoteBattle!.challengerId,
+      if (remoteBattle?.opponentId != null) 'opponentId': remoteBattle!.opponentId,
+      if (widget.opponentStream?.id != null)
+        'opponentStreamId': widget.opponentStream!.id,
+    };
+    final anchor = resolveLivePkTrtcAnchor(
+      battle: battleMap,
+      myStreamId: streamId,
+      myUserId: user.id,
+    );
+    final trtcRoom = anchor.trtcRoomId.isNotEmpty ? anchor.trtcRoomId : streamId;
+    final asPublisher = widget.session.isHost;
+
+    if (_trtc.inRoom &&
+        _trtc.joinedStrRoomId == trtcRoom &&
+        _trtc.isTwoWayVideoMode) {
       if (mounted) setState(() => _trtcReady = true);
       return;
     }
+
     try {
-      _trtcCoordinator = TrtcLiveRoomCoordinator(
+      _trtcCoordinator ??= TrtcLiveRoomCoordinator(
         liveRoom: ref.read(liveRoomRemoteProvider),
         trtcRemote: ref.read(trtcRemoteProvider),
         roomManager: _trtc,
       );
-      final opponentId = widget.opponentStream?.hostUserId?.trim();
+      if (_trtc.inRoom) {
+        await _trtcCoordinator!.leave();
+      }
       await _trtcCoordinator!.join(
-        roomId: streamId,
+        roomId: trtcRoom,
         roomType: 'stream',
         userId: user.id,
-        isHost: true,
+        isHost: asPublisher,
         twoWayVideo: true,
-        expectedAnchorUserId: opponentId?.isNotEmpty == true
-            ? opponentId
-            : widget.session.hostUserId,
+        publishLocal: asPublisher,
+        expectedAnchorUserId: null,
         useCompoundJoin: true,
       );
       if (mounted) setState(() => _trtcReady = true);
     } catch (_) {
-      try {
-        await _trtc.startPreviewOnly();
-        if (mounted) setState(() => _trtcReady = true);
-      } catch (_) {}
+      if (asPublisher) {
+        try {
+          await _trtc.startPreviewOnly();
+          if (mounted) setState(() => _trtcReady = true);
+        } catch (_) {}
+      } else if (mounted) {
+        setState(() => _trtcReady = true);
+      }
     }
   }
 
@@ -707,9 +734,24 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
     return leftScore > rightScore ? PkBattleWinner.left : PkBattleWinner.right;
   }
 
-  Widget _fallbackThumb(String? url) {
+  Widget _fallbackThumb(String? url, {String? message}) {
     if (url != null && url.trim().isNotEmpty) {
       return CanlifalNetworkImage(url: url, fit: BoxFit.cover);
+    }
+    if (message != null && message.isNotEmpty) {
+      return ColoredBox(
+        color: const Color(0xFF120A1E),
+        child: Center(
+          child: Text(
+            message,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      );
     }
     return const ColoredBox(color: Color(0xFF120A1E));
   }
@@ -720,22 +762,35 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
   }) {
     final playback = widget.opponentStream?.playbackUrl;
     final thumb = widget.opponentStream?.thumbnailUrl;
-    return ValueListenableBuilder<List<String>>(
-      valueListenable: _trtc.remoteUserIdsNotifier,
-      builder: (context, remoteIds, _) {
-        final opp = opponentUserId.trim();
-        if (_trtcReady && opp.isNotEmpty && remoteIds.contains(opp)) {
-          return TrtcRemoteVideoView(manager: _trtc, userId: opp);
-        }
-        if (playback != null && playback.trim().isNotEmpty) {
-          return LivePlaybackBridge(
-            key: ValueKey('pk_opp_$opponentMuted'),
-            playbackUrl: playback,
-            thumbnailUrl: thumb,
-            audible: !opponentMuted,
-          );
-        }
-        return _fallbackThumb(thumb);
+    return ValueListenableBuilder<Map<String, bool>>(
+      valueListenable: _trtc.remoteVideoByUser,
+      builder: (context, remoteVideoMap, _) {
+        return ValueListenableBuilder<List<String>>(
+          valueListenable: _trtc.remoteUserIdsNotifier,
+          builder: (context, remoteIds, _) {
+            final resolved = resolveLivePkTrtcRemoteUserId(
+              preferredUserId: opponentUserId,
+              remoteUserIds: remoteIds,
+              localTrtcUserId: _trtc.localTrtcUserId,
+            );
+            if (_trtcReady && resolved != null) {
+              final camOn = remoteVideoMap[resolved] ?? true;
+              if (!camOn) {
+                return _fallbackThumb(thumb, message: 'Kamera kapalı');
+              }
+              return TrtcRemoteVideoView(manager: _trtc, userId: resolved);
+            }
+            if (playback != null && playback.trim().isNotEmpty) {
+              return LivePlaybackBridge(
+                key: ValueKey('pk_opp_$opponentMuted'),
+                playbackUrl: playback,
+                thumbnailUrl: thumb,
+                audible: !opponentMuted,
+              );
+            }
+            return _fallbackThumb(thumb, message: 'Kamera bekleniyor');
+          },
+        );
       },
     );
   }

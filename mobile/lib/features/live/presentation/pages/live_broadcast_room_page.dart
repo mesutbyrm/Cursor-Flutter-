@@ -571,7 +571,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     );
     if (anchor.trtcRoomId.isEmpty) return;
     final mgr = _trtcCoordinator!.roomManager;
-    if (mgr.inRoom && mgr.joinedStrRoomId == anchor.trtcRoomId) {
+    // Aynı TRTC odasında olsak bile `live` modundan PK `videoCall` moduna geçmek
+    // gerekir; aksi halde yayıncı karşı tarafın videosunu alamaz (HATA A).
+    if (mgr.inRoom &&
+        mgr.joinedStrRoomId == anchor.trtcRoomId &&
+        mgr.isTwoWayVideoMode) {
       _pkTwoWayRtc = true;
       _applyRtcPublishPolicy();
       return;
@@ -591,9 +595,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         isHost: asPublisher && anchor.publishAsHost,
         twoWayVideo: true,
         publishLocal: asPublisher,
-        expectedAnchorUserId: anchor.expectedRemoteUserId?.isNotEmpty == true
-            ? anchor.expectedRemoteUserId
-            : widget.session.hostUserId,
+        // PK split: her iki yayıncının stream'i görünsün (izleyici + rakip pane).
+        expectedAnchorUserId: null,
         useCompoundJoin: true,
       );
       _pkTwoWayRtc = true;

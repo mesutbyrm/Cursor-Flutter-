@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.558+599 (2026-09-18) — PK video karşılıklı + sonuç rozeti (3/2b)
+
+- **HATA A:** PK başında aynı TRTC odasında olsak bile `live` → `videoCall` (twoWayVideo) rejoin; karşı taraf `userId` eşlemesi (`resolveLivePkTrtcRemoteUserId`); «Kamera kapalı» / «Kamera bekleniyor» ayrımı
+- **HATA B:** Tam ekran PK sonuç flaşı/konfeti kaldırıldı (`LivePkResultFlashOverlay`, pane outcome); sonuç yalnızca `PkStatusPill` (skor bandı); sesli `PkResultPage` tam ekran kutlama yok
+- **2b:** Yayın odası PK split katmanına `LivePkReferenceScoreBar` (TikTok/Bigo skor bandı)
+- **Canlı HATA 1:** PK twoWay rejoin yalnızca zaten videoCall modundaysa atlanır
+- **Canlı HATA 4 / Sesli 1–4:** Mevcut snackbar, presence kopya, seat lock, room1/room2 tanılama doğrulandı (backend: paylaşılan `pkRoomId` / voice `room1-room2`)
+
 ## 1.0.557+598 (2026-09-17) — Ana sayfa motion (aşama 8)
 
 - CANLI rozeti pulse, story gradient glow, bildirim rozeti bump

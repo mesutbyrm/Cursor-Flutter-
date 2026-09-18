@@ -14,8 +14,9 @@ import '../../providers/live_providers.dart';
 import '../../providers/live_video_pk_provider.dart';
 import '../../../domain/pk/live_pk_broadcast_stage.dart';
 import '../../../domain/pk/live_pk_chat_stream.dart';
-import '../../../domain/pk/live_pk_authoritative_outcome.dart';
 import '../../../domain/pk/live_pk_outcome_latch.dart';
+import '../../../domain/pk/live_pk_trtc_remote_resolver.dart';
+import 'live_pk_reference_score_bar.dart';
 import '../../pages/live_session_phase.dart';
 import 'live_pk_reconnect_banner.dart';
 import '../../../domain/pk/pk_status_helper.dart';
@@ -32,10 +33,8 @@ import 'live_pk_layout_metrics.dart';
 import 'live_pk_pane_profile_footer.dart';
 import '../../providers/live_stream_viewers_provider.dart';
 import '../../providers/live_pk_ended_lock_provider.dart';
-import 'live_pk_pane_outcome_overlay.dart';
 import 'live_pk_preparing_overlay.dart';
 import 'live_pk_final_countdown_overlay.dart';
-import 'live_pk_result_flash_overlay.dart';
 import 'live_pk_score_pop_overlay.dart';
 import 'live_pk_top_supporters_panel.dart';
 import '../../providers/live_pk_score_burst_provider.dart';
@@ -72,12 +71,8 @@ class LivePkSplitVideoLayer extends ConsumerStatefulWidget {
       _LivePkSplitVideoLayerState();
 }
 
-class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
-    with SingleTickerProviderStateMixin {
+class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer> {
   final _outcomeLatch = LivePkOutcomeLatch();
-  late final AnimationController _outcomeFx;
-  var _outcomeFxVisible = false;
-  var _resultFlashVisible = false;
   Timer? _uiClock;
 
   @override
@@ -86,21 +81,11 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
     _uiClock = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() {});
     });
-    _outcomeFx = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 4200),
-    );
-    _outcomeFx.addStatusListener((status) {
-      if (status == AnimationStatus.completed && mounted) {
-        setState(() => _outcomeFxVisible = false);
-      }
-    });
   }
 
   @override
   void dispose() {
     _uiClock?.cancel();
-    _outcomeFx.dispose();
     super.dispose();
   }
 
@@ -109,14 +94,6 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
     if (bid.isEmpty) return;
     final lock = ref.read(livePkEndedLockProvider.notifier);
     if (!lock.tryAcquireEndedCelebration(bid)) return;
-    setState(() {
-      _outcomeFxVisible = true;
-      _resultFlashVisible = true;
-    });
-    _outcomeFx.forward(from: 0);
-    Future<void>.delayed(const Duration(milliseconds: 2600), () {
-      if (mounted) setState(() => _resultFlashVisible = false);
-    });
     Future<void>.delayed(const Duration(seconds: 4), () {
       if (!mounted) return;
       ref
@@ -311,29 +288,19 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
       ended: ended,
       computedLabel: computedLabel,
     );
-    final leftWins = livePkLeftPaneWins(
-      leftScore: leftScore,
-      rightScore: rightScore,
-    );
     final displaySec = _resolveDisplaySeconds(endsAt, secondsLeft);
-    final localOnLeft = layout.left.isLocalPane;
-    final myScore = localOnLeft ? leftScore : rightScore;
-    final oppScore = localOnLeft ? rightScore : leftScore;
-    final outcome = resolveLivePkAuthoritativeOutcome(
-      battle: battleMap,
+    final pillMode = livePkStatusPillMode(
       ended: ended,
-      myUserId: myUserId,
-      localOnLeft: localOnLeft,
       leftScore: leftScore,
       rightScore: rightScore,
     );
-    final isDraw = outcome.isDraw;
-    final iWon = outcome.localWon;
-    return AnimatedBuilder(
-      animation: _outcomeFx,
-      builder: (context, _) {
-        final fxProgress = _outcomeFxVisible ? _outcomeFx.value : 0.0;
-        return LayoutBuilder(
+    final winnerName = livePkWinnerName(
+      leftScore: leftScore,
+      rightScore: rightScore,
+      leftLabel: layout.left.label,
+      rightLabel: layout.right.label,
+    );
+    return LayoutBuilder(
       builder: (context, constraints) {
         final chromeBottom = LivePkLayoutMetrics.chromeReserve(context);
         final headerH = LivePkLayoutMetrics.headerHeight(context);
@@ -394,6 +361,7 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                                   ? null
                                   : playbackFor(layout.left.streamId),
                               preferRemoteUserId: layout.left.userId,
+                              remoteVideoAvailable: leftRemoteCam,
                               accent: Colors.pinkAccent,
                               playbackAudible: _remotePlaybackAudible(
                                 pane: layout.left,
@@ -407,11 +375,6 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                                 sessionKey: streamId,
                                 hostUserId: layout.left.userId,
                                 hostLabel: layout.left.label,
-                              ),
-                              LivePkPaneOutcomeOverlay(
-                                visible: _outcomeFxVisible && ended,
-                                winnerPane: leftWins,
-                                progress: fxProgress,
                               ),
                             ],
                           ),
@@ -460,6 +423,7 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                               playbackUrl: playbackFor(layout.right.streamId),
                               accent: Colors.cyanAccent,
                               preferRemoteUserId: layout.right.userId,
+                              remoteVideoAvailable: rightRemoteCam,
                               playbackAudible: _remotePlaybackAudible(
                                 pane: layout.right,
                                 opponentUserId: opponentUserId,
@@ -472,11 +436,6 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                                 sessionKey: streamId,
                                 hostUserId: layout.right.userId,
                                 hostLabel: layout.right.label,
-                              ),
-                              LivePkPaneOutcomeOverlay(
-                                visible: _outcomeFxVisible && ended,
-                                winnerPane: !leftWins && leftScore != rightScore,
-                                progress: fxProgress,
                               ),
                             ],
                           ),
@@ -588,20 +547,39 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                 leftName: layout.left.label,
                 rightName: layout.right.label,
               ),
-              LivePkResultFlashOverlay(
-                visible: _resultFlashVisible && ended,
-                isDraw: isDraw,
-                iWon: iWon,
-                myScore: myScore,
-                opponentScore: oppScore,
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: chromeBottom,
+                height: LivePkLayoutMetrics.scoreBandHeight,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.92),
+                        Colors.black.withValues(alpha: 0.35),
+                      ],
+                    ),
+                  ),
+                  child: Center(
+                    child: LivePkReferenceScoreBar(
+                      leftScore: leftScore,
+                      rightScore: rightScore,
+                      pillMode: pillMode,
+                      winnerName: winnerName,
+                      active: pkActive && !ended,
+                      showEndedScores: ended,
+                    ),
+                  ),
+                ),
               ),
               LivePkReconnectBanner(
                 visible: sessionPhase == LiveSessionPhase.reconnecting,
               ),
             ],
           ),
-        );
-      },
         );
       },
     );
@@ -667,6 +645,7 @@ class _PkPane extends StatelessWidget {
     required this.accent,
     this.playbackUrl,
     this.preferRemoteUserId,
+    this.remoteVideoAvailable = true,
     this.playbackAudible = false,
     this.bare = false,
   });
@@ -677,8 +656,26 @@ class _PkPane extends StatelessWidget {
   final Color accent;
   final String? playbackUrl;
   final String? preferRemoteUserId;
+  final bool remoteVideoAvailable;
   final bool playbackAudible;
   final bool bare;
+
+  Widget _placeholder(String message) {
+    return ColoredBox(
+      color: Colors.black,
+      child: Center(
+        child: Text(
+          message,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.72),
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -686,15 +683,19 @@ class _PkPane extends StatelessWidget {
       valueListenable: trtc.remoteUserIdsNotifier,
       builder: (context, remoteIds, _) {
         Widget video;
-        final remoteId = preferRemoteUserId?.trim() ??
-            pane.userId?.trim() ??
-            '';
+        final remoteId = resolveLivePkTrtcRemoteUserId(
+          preferredUserId: preferRemoteUserId ?? pane.userId,
+          remoteUserIds: remoteIds,
+          localTrtcUserId: trtc.localTrtcUserId,
+        );
         if (pane.isLocalPane && rtcReady) {
           video = TrtcLocalVideoView(manager: trtc);
-        } else if (remoteId.isNotEmpty &&
-            rtcReady &&
-            remoteIds.contains(remoteId)) {
-          video = TrtcRemoteVideoView(manager: trtc, userId: remoteId);
+        } else if (remoteId != null && rtcReady) {
+          if (!remoteVideoAvailable) {
+            video = _placeholder('Kamera kapalı');
+          } else {
+            video = TrtcRemoteVideoView(manager: trtc, userId: remoteId);
+          }
         } else if (playbackUrl != null && playbackUrl!.trim().isNotEmpty) {
           video = LivePlaybackBridge(
             playbackUrl: playbackUrl,
@@ -709,20 +710,7 @@ class _PkPane extends StatelessWidget {
             height: double.infinity,
           );
         } else {
-          video = ColoredBox(
-            color: Colors.black,
-            child: Center(
-              child: Text(
-                'Kamera bekleniyor',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.72),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          );
+          video = _placeholder('Kamera bekleniyor');
         }
 
         if (bare) return video;

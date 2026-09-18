@@ -70,6 +70,9 @@ class TrtcRoomManager {
   final Set<String> _remoteUserIds = {};
   bool get micOn => _micOn;
   bool get cameraOn => _cameraOn;
+  /// PK / misafir yayını gibi iki yönlü görüşme modu (`TRTCAppScene.videoCall`).
+  bool get isTwoWayVideoMode => _twoWayVideo;
+  String? get localTrtcUserId => _localUserId;
 
   void _trtcLog(String event, [Map<String, Object?> fields = const {}]) {
     _logTrtc(event, fields);
