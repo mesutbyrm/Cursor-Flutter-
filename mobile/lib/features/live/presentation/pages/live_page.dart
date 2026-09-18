@@ -20,6 +20,7 @@ import '../../../../core/performance/lazy_screen_section.dart';
 import '../utils/open_live_stream.dart';
 import '../widgets/live_discover_category_chips.dart';
 import '../widgets/live_stream_list_tile.dart';
+import '../navigation/live_pk_home_transition_bridge.dart';
 import '../../../shorts/presentation/widgets/shorts_hub_strip.dart';
 
 class LivePage extends ConsumerStatefulWidget {
@@ -35,6 +36,7 @@ class _LivePageState extends ConsumerState<LivePage>
   final _liveScroll = ScrollController();
   Timer? _listRefresh;
   Timer? _voiceListRefresh;
+  var _homeTransitionNoted = false;
 
   @override
   void initState() {
@@ -59,6 +61,15 @@ class _LivePageState extends ConsumerState<LivePage>
     _liveScroll.dispose();
     _tab.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_homeTransitionNoted) {
+      _homeTransitionNoted = true;
+      ref.read(livePkHomeTransitionProvider.notifier).noteEnteringLive();
+    }
   }
 
   void _onLiveScroll() {

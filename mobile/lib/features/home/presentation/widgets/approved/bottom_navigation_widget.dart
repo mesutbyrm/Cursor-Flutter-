@@ -71,7 +71,7 @@ class BottomNavigationWidget extends StatelessWidget {
             ),
             _NavItem(
               icon: Icons.mic_rounded,
-              label: 'Yayın',
+              label: 'Canlı',
               active: activeTab == HomeBottomTab.live,
               onTap: onCreate,
               onLongPress: onCreateLongPress,

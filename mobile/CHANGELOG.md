@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.558+599 (2026-09-18) — Ana sayfa 1:1 UI (aşama 4–9 tamamlama)
+
+- Sosyal şerit (son girişler / beğenenler) ana sayfaya bağlandı
+- Alt bölüm: Duyurular (API popups / blog), sosyal medya ikonları, kapanış alıntısı
+- CTA geçiş giriş noktası; Gold ve sesli oda hub için fade-slide router
+- Alt nav etiketi «Canlı»; reklam teaser’ında sahte jeton vaadi yok
+- PK sunum geçiş köprüsü (§33-P) — RTC mantığına dokunulmadı
+
 ## 1.0.557+598 (2026-09-17) — Ana sayfa motion (aşama 8)
 
 - CANLI rozeti pulse, story gradient glow, bildirim rozeti bump
