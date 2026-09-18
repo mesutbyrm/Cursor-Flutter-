@@ -842,7 +842,21 @@ mobile/lib/
 
 **2026-09-18 doğrulama koşusunda eklenen P2 bulguları:**
 
-- **Sayfalama yok — `page: 1` beş yerde sabit:** `social_discovery_providers.dart:23`, `social_providers.dart:44,59`, `user_social_posts_notifier.dart:18,30`. Keşif akışı, sosyal akış ve kullanıcı gönderileri yalnızca 1. sayfayı çekiyor; sonsuz kaydırma fiilen yok. *Çözüm:* mevcut `core/pagination/` altyapısına bağlanmalı, yeni sistem kurulmamalı. *Test:* sayfa 2 isteğini doğrulayan datasource testi.
+- ~~**Sayfalama yok — `page: 1` beş yerde sabit**~~ → **BU BULGU DA YANLIŞTI, 2026-09-18'de düzeltildi.**
+
+  > ### ⚠ Düzeltme: sayfalama üç akışta da mevcut
+  >
+  > `page: 1` geçişleri sayfalı bir akışın **ilk sayfası**; grep bunu "sayfalama yok" sandı. Gerçek durum:
+  >
+  > | Akış | Mekanizma |
+  > |---|---|
+  > | Keşif (`tanis_discover_tab.dart:258`) | `_loadMore()` → `_extraPage++`, `_extraUsers` biriktirme, `_dedupeById` ile birleştirme, `feed.hasMore` kontrolü |
+  > | Sosyal akış (`social_providers.dart`) | `_page`, `_end`, `_loadMoreError`, `hasMore` durum takibi |
+  > | Profil gönderileri (`user_social_posts_notifier.dart:36`) | `loadMore()` → `_page + 1` |
+  >
+  > API de destekliyor: `fetchDiscovery({page, limit})` ve `SocialDiscoveryFeed.total` → `hasMore` türetilebiliyor.
+  >
+  > **Yerine geçen gerçek bulgu:** `tanis_discover_tab.dart:_loadMore()` sayfa numarasını **istekten önce** artırıp hatayı yutuyordu; bir sayfa başarısız olursa o sayfa kalıcı olarak atlanıyor ve oradaki profiller bir daha gösterilmiyordu. Düzeltildi (sayfa yalnızca başarıda ilerletiliyor).
 - **Feed'de sahte kullanıcılar empty-state yerine geçiyor:** `feed_story_strip.dart:23-30` — gerçek gönderi yokken `'Özge'`, `'Ela'`, `'Arda'` adlı var olmayan kullanıcılar `i.pravatar.cc` avatarlarıyla gösteriliyor. Hem sahte veri hem eksik empty-state. *Çözüm:* fallback kaldırılıp gerçek empty-state konmalı. *Test:* `posts: []` ile widget testi.
 - ~~**Hata durumu kapsamı çok düşük:** `ErrorState`/`ErrorView` yalnızca **6 dosyada**…~~ → **BU BULGU YANLIŞTI, 2026-09-18'de düzeltildi.**
 

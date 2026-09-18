@@ -385,6 +385,30 @@ Her aşama sonrası: `flutter test test/features/live/` + analyze.
 - **Plan:** **Ekran ekran**, tek seferde değil: önce keşif → sonra sosyal akış → sonra profil gönderileri.
 - **Risk:** **Orta–yüksek** (üç ekranı birden etkiler). En geç yapılacak P2 maddesi.
 
+> ## ⚠ BULGU YANLIŞTI — sayfalama zaten var (2026-09-18)
+>
+> `page: 1` geçişleri sayfalı bir akışın **ilk sayfası**; grep bunu "sayfalama yok" sandı. Üç akışın üçünde de sayfalama çalışıyor:
+>
+> | Akış | Mekanizma |
+> |---|---|
+> | Keşif — `tanis_discover_tab.dart:258` | `_loadMore()` → `_extraPage++`, `_extraUsers` biriktirme, `_dedupeById` birleştirme, `feed.hasMore` kontrolü, boş sonuçta otomatik sayfa çekme (`_autoPageFetches`) |
+> | Sosyal akış — `social_providers.dart` | `_page`, `_end`, `_loadMoreError`, `hasMore` durum takibi |
+> | Profil gönderileri — `user_social_posts_notifier.dart:36` | `loadMore()` → `_page + 1` |
+>
+> API de destekliyor: `fetchDiscovery({page, limit, …})` + `SocialDiscoveryFeed.total` → `hasMore` türetilebiliyor. "Hazır altyapı yok" uyarısı da kısmen yanlıştı: `core/pagination/paged_result.dart` sade bir DTO ama `core/widgets/lazy_paginated_list_view.dart` **sunucu sayfalaması değil**, zaten yüklenmiş listeyi kademeli gösteren bir performans widget'ı — o yüzden bu iş için uygun değil (bu kısım doğruydu).
+>
+> ### Bunun yerine bulunan gerçek hata
+>
+> `tanis_discover_tab.dart:_loadMore()` sayfa numarasını **istekten önce** artırıp hatayı yutuyordu:
+> ```dart
+> _extraPage++;                       // önce artır
+> final feed = await …fetchDiscovery(page: _extraPage, …);
+> } catch (_) {}                      // hata yut
+> ```
+> 3. sayfa hata alırsa `_extraPage` zaten 3 olduğu için sonraki çağrı 4'ü çekiyor; **3. sayfadaki profiller bir daha hiç gösterilmiyordu.** Artık sayfa yalnızca başarılı istekten sonra ilerletiliyor.
+>
+> Doğrulama: `flutter analyze` **627** (değişmedi) · `flutter test` **1426 geçti / 0 başarısız** (değişmedi).
+
 ### P2-19 — Hata durumu kapsamı çok düşük *(2026-09-18 eklendi)*
 
 - **Ölçüm:** `ErrorState`/`ErrorView` yalnızca **6 dosyada**; `EmptyState` 39, loading göstergesi 192 — toplam **138 sayfaya** karşılık.

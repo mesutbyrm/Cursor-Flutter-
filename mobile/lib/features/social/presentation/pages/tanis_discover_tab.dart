@@ -260,9 +260,12 @@ class _TanisDiscoverTabState extends ConsumerState<TanisDiscoverTab> {
     _loadingMore = true;
     try {
       final filters = ref.read(discoveryFilterProvider);
-      _extraPage++;
+      // Sayfa numarası yalnızca başarıda ilerletilir. Önceden istekten önce
+      // artırılıyordu: bir sayfa hata alırsa sonraki çağrı onu atlıyor ve o
+      // sayfadaki profiller bir daha hiç gösterilmiyordu.
+      final nextPage = _extraPage + 1;
       final feed = await ref.read(socialDiscoveryRemoteProvider).fetchDiscovery(
-            page: _extraPage,
+            page: nextPage,
             minAge: filters.minAge,
             maxAge: filters.maxAge,
             city: filters.city,
@@ -271,6 +274,7 @@ class _TanisDiscoverTabState extends ConsumerState<TanisDiscoverTab> {
             membership: filters.goldOnly ? 'gold' : null,
             interest: filters.interestQuery,
           );
+      _extraPage = nextPage;
       if (feed.users.isNotEmpty) {
         setState(() => _extraUsers.addAll(feed.users));
       }
