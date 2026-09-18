@@ -58,18 +58,24 @@ jobs:
           chmod +x scripts/ci-free-disk-for-ndk.sh
           bash scripts/ci-free-disk-for-ndk.sh
 
-      - name: Setup Android NDK (nttld)
-        uses: nttld/setup-ndk@v1
+      - name: Android NDK cache
+        uses: actions/cache@v4
         with:
-          ndk-version: r27c
+          path: /usr/local/lib/android/sdk/ndk
+          key: android-ndk-v2-${{ runner.os }}-${{ hashFiles('mobile/.flutter-version') }}
+          restore-keys: |
+            android-ndk-v2-${{ runner.os }}-
 
-      - name: Link NDK for Flutter Gradle
+      - name: Install Android NDK (Flutter ndkVersion)
         working-directory: ${{ github.workspace }}
         env:
-          ANDROID_NDK_VERSION: 27.0.12077973
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         run: |
-          chmod +x scripts/ci-link-android-ndk.sh
-          bash scripts/ci-link-android-ndk.sh
+          set -euxo pipefail
+          chmod +x scripts/ci-install-android-ndk.sh scripts/ci-verify-android-ndk.sh
+          bash scripts/ci-install-android-ndk.sh
+          bash scripts/ci-verify-android-ndk.sh
 
       - name: flutter build apk --debug
         env:
