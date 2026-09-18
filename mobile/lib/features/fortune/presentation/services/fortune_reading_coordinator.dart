@@ -56,6 +56,7 @@ class FortuneReadingCoordinator {
       images = await showFortuneImageCaptureSheet(context: context, type: type);
       if (images == null || !images.isValidFor(type)) return null;
     }
+    if (!context.mounted) return null;
 
     final authed = ref.read(authControllerProvider).valueOrNull;
     FortuneAccessGrant? accessGrant;
@@ -97,6 +98,7 @@ class FortuneReadingCoordinator {
         }
       }
     }
+    if (!context.mounted) return null;
 
     final paidWithJeton = accessGrant?.method == FortuneAccessMethod.jeton;
     final skipSecondAd = accessGrant != null &&
@@ -120,6 +122,7 @@ class FortuneReadingCoordinator {
         ? (yesNoChoice ?? _rng.nextBool())
         : yesNoChoice;
     var resolvedBirth = birthDate ?? await _resolveBirthDate(ref, type);
+    if (!context.mounted) return null;
     if (resolvedBirth == null &&
         (type.kind == FortuneSessionKind.numberInput ||
             type.kind == FortuneSessionKind.zodiacWheel ||
@@ -128,6 +131,7 @@ class FortuneReadingCoordinator {
       await showFortuneBirthProfileSheet(context, ref);
       if (!context.mounted) return null;
       resolvedBirth = birthDate ?? await _resolveBirthDate(ref, type);
+      if (!context.mounted) return null;
       if (resolvedBirth == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -138,6 +142,7 @@ class FortuneReadingCoordinator {
       }
     }
     final resolvedBirthTime = await _resolveBirthTime(ref, type);
+    if (!context.mounted) return null;
 
     final imageHint = _imageHint(type, images);
 

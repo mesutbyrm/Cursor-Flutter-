@@ -424,6 +424,16 @@ Her aşama sonrası: `flutter test test/features/live/` + analyze.
 
 - Batch fix: mounted guard; en kritik: live, auth, payment sheets.
 
+> **Kısmi ilerleme — 2026-09-18: 5/30 kapandı.** `fortune_reading_coordinator.dart` (en yoğun dosya, 5 ihlal) → **0 ihlal**. Toplam analyze **657 → 652**, tam olarak −5.
+>
+> **Toplu düzeltme bilinçli olarak yapılmadı** (planın P4-02 uyarısı): her ihlal ayrı bir `await` sınırı ve farklı bir erken-dönüş kararı gerektiriyor. Beş nokta tek tek incelendi; hepsi gerçekti — `showFortuneImageCaptureSheet`, `consumeGrant`, `_resolveBirthDate` (×2) ve `_resolveBirthTime` await'lerinden sonra `context` korumasız kullanılıyordu. Dosyanın mevcut deseni (`if (!context.mounted) return null;`) izlendi.
+>
+> **Test notu:** Bu sınıf için birim testi eklenmedi — "await sırasında widget dispose oldu" senaryosunu kurmak tüm fal akışını sürmeyi gerektiriyor. Regresyon koruması **analyzer'ın kendisi**: kural CI'daki `API + Flutter analyze` işinde koşuyor ve yeni ihlal eklenirse sayı artar.
+>
+> **Kalan 25 ihlal, dosya bazında:** `voice_room_leave_flow` (3), `open_voice_chat_room_flow` (3), `shorts_explore_page` (3), `membership_page` (2), `admin_user_command_actions` (2), ve 13 dosyada 1'er.
+>
+> Doğrulama: `flutter analyze` **652** · `flutter test` **1423 geçti / 0 başarısız** (değişmedi).
+
 ### P3-8 — Notification SSE lifecycle
 
 - Hub + app lifecycle; badge stale fix.
