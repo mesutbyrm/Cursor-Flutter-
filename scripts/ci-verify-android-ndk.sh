@@ -7,13 +7,13 @@ java -version
 
 echo "=== Flutter ==="
 flutter --version
-# Linux desktop eksikleri APK build'i engellemez; yalnızca Android toolchain kontrol edilir.
-flutter doctor -v || true
-if ! flutter doctor -v 2>/dev/null | grep -q 'Android toolchain.*develop for Android devices'; then
+DOCTOR_OUT="$(flutter doctor -v 2>&1 || true)"
+echo "$DOCTOR_OUT"
+if ! echo "$DOCTOR_OUT" | grep -Fq 'Android toolchain - develop for Android devices'; then
   echo "HATA: Android toolchain görünmüyor" >&2
   exit 1
 fi
-if flutter doctor -v 2>/dev/null | grep -q 'Android toolchain.*\[✗\]'; then
+if echo "$DOCTOR_OUT" | grep -F 'Android toolchain - develop for Android devices' | grep -Fq '[✗]'; then
   echo "HATA: Android toolchain başarısız" >&2
   exit 1
 fi
