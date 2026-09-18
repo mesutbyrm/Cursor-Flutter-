@@ -135,8 +135,10 @@ abstract final class VoiceRoomLeaveFlow {
         } catch (_) {}
       }
 
-      navigateAwayFromRoom(context: context);
-      navigated = true;
+      if (context.mounted) {
+        navigateAwayFromRoom(context: context);
+        navigated = true;
+      }
 
       if (leaveSummary != null && leaveSummary.hasData) {
         unawaited(
@@ -152,11 +154,12 @@ abstract final class VoiceRoomLeaveFlow {
         );
       }
     } catch (_) {
-      if (!navigated) {
+      if (!navigated && context.mounted) {
         navigateAwayFromRoom(context: context);
+        navigated = true;
       }
     } finally {
-      if (!navigated) {
+      if (!navigated && context.mounted) {
         navigateAwayFromRoom(context: context);
       }
     }

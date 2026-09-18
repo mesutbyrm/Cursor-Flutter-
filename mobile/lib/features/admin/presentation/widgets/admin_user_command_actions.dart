@@ -372,10 +372,12 @@ abstract final class AdminUserCommandActions {
             animationId: animId,
           );
       onDone();
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Animasyon atandı')),
       );
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(ApiException.userMessage(e))),
       );

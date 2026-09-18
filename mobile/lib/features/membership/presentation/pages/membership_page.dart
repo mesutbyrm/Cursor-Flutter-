@@ -364,6 +364,7 @@ class MembershipPage extends ConsumerWidget {
       paymentMethods,
     );
 
+    if (!context.mounted) return;
     final choice = await showMembershipCheckoutSheet(
       context,
       tier: tier,
@@ -385,6 +386,7 @@ class MembershipPage extends ConsumerWidget {
         );
         if (ok) return;
       }
+      if (!context.mounted) return;
       await openMembershipCfcCheckoutFlow(
         context,
         ref,

@@ -79,7 +79,7 @@ class _ShortsExplorePageState extends ConsumerState<ShortsExplorePage> {
                 onPressed: () async {
                   final service = await Geolocator.isLocationServiceEnabled();
                   if (!service) {
-                    if (context.mounted) {
+                    if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Konum servisi kapalı')),
                       );
@@ -92,7 +92,7 @@ class _ShortsExplorePageState extends ConsumerState<ShortsExplorePage> {
                   }
                   if (perm == LocationPermission.denied ||
                       perm == LocationPermission.deniedForever) {
-                    if (context.mounted) {
+                    if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Konum izni gerekli')),
                       );
@@ -100,12 +100,12 @@ class _ShortsExplorePageState extends ConsumerState<ShortsExplorePage> {
                     return;
                   }
                   final pos = await Geolocator.getCurrentPosition();
-                  if (!context.mounted) return;
+                  if (!mounted) return;
                   final label = await reverseGeocodeLabel(
                     pos.latitude,
                     pos.longitude,
                   );
-                  if (context.mounted) {
+                  if (mounted) {
                     Navigator.pop(
                       context,
                       '__gps__:${pos.latitude},${pos.longitude}:$label',

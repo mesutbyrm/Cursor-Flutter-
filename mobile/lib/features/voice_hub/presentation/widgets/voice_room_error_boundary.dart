@@ -77,6 +77,7 @@ class _VoiceRoomErrorBoundaryState extends ConsumerState<VoiceRoomErrorBoundary>
             .timeout(const Duration(seconds: 8));
       } catch (_) {}
     }
+    if (!mounted) return;
     VoiceRoomLeaveFlow.navigateAwayFromRoom(context: context);
   }
 

@@ -95,6 +95,7 @@ abstract final class VoiceRoomSessionExit {
       } catch (_) {}
     }
 
-    VoiceRoomLeaveFlow.navigateAwayFromRoom(context: context);
+    if (!context.mounted) return;
+  VoiceRoomLeaveFlow.navigateAwayFromRoom(context: context);
   }
 }

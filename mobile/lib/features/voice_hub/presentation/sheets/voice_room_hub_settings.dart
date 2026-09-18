@@ -164,7 +164,8 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
     final err = await ref
         .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
         .setRoomBackground(url);
-    if (!context.mounted) return;
+    // State.context kullanılıyor; koruma State'in kendi `mounted`'ı olmalı.
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(err ?? 'Arka plan güncellendi')),
     );

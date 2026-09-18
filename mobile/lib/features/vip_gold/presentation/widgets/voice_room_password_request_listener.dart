@@ -46,6 +46,8 @@ class _VoiceRoomPasswordRequestListenerState
 
       _showing = true;
       _seen.add(entry.dedupKey);
+      // Döngü: önceki turun dialog await'i sırasında widget dispose olabilir.
+      if (!mounted) return;
       final approved = await showDialog<bool>(
         context: context,
         barrierDismissible: false,

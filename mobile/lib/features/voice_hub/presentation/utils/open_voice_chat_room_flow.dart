@@ -169,12 +169,12 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
   }
 
   if (!context.mounted) {
-    _dismissLoadingDialog(context);
+    _dismissLoadingDialog();
     return;
   }
 
   if (cost > 0 && balance < cost) {
-    _dismissLoadingDialog(context);
+    _dismissLoadingDialog();
     unawaited(
       showInsufficientJetonDialog(
         context,
@@ -495,8 +495,14 @@ void _showLoadingDialog(BuildContext context) {
   );
 }
 
-void _dismissLoadingDialog(BuildContext context) {
-  final nav = Navigator.of(context, rootNavigator: true);
+/// Yükleme dialog'u kök navigator'a basılıyor (`useRootNavigator: true`), bu
+/// yüzden çağıran widget dispose olmuş olsa bile kök anahtarla kapatılabilir.
+/// Önceden çağıranın context'i isteniyordu; o dispose olduğunda dialog ekranda
+/// asılı kalıyordu.
+void _dismissLoadingDialog() {
+  final ctx = rootNavigatorKey.currentContext;
+  if (ctx == null) return;
+  final nav = Navigator.of(ctx, rootNavigator: true);
   if (nav.canPop()) nav.pop();
 }
 
@@ -574,7 +580,7 @@ Future<void> _createAndEnter(
     ref.invalidate(voiceRoomsProvider);
     ref.refreshWalletCache(force: true);
     if (!context.mounted) return;
-    _dismissLoadingDialog(context);
+    _dismissLoadingDialog();
     _showSnackBar(
       context,
       SnackBar(
@@ -595,7 +601,7 @@ Future<void> _createAndEnter(
     );
   } catch (e) {
     if (!context.mounted) return;
-    _dismissLoadingDialog(context);
+    _dismissLoadingDialog();
     final msg = ApiException.userMessage(e);
     final lower = msg.toLowerCase();
     if (lower.contains('zaten') ||
@@ -631,6 +637,7 @@ Future<void> _createAndEnter(
         }
       } catch (_) {}
     }
+    if (!context.mounted) return;
     if (msg.toLowerCase().contains('yetersiz') ||
         msg.toLowerCase().contains('jeton')) {
       unawaited(showInsufficientJetonDialog(context, message: msg, ref: ref));

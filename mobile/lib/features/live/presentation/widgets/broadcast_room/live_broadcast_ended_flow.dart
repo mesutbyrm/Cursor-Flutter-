@@ -72,7 +72,7 @@ Future<void> showLiveBroadcastEndedFlow({
     ),
   );
 
-  if (summary != null && summary.hasData && isHost) {
+  if (summary != null && summary.hasData && isHost && context.mounted) {
     await showSessionGiftSummarySheet(context, summary: summary);
   }
 }

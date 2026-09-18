@@ -242,6 +242,7 @@ class GrowthHubPage extends ConsumerWidget {
         return;
       }
     }
+    if (!context.mounted) return;
     _openTask(context, task.route);
   }
 

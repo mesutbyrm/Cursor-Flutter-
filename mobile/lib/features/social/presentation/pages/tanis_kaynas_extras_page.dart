@@ -62,7 +62,9 @@ class _TanisKaynasExtrasPageState extends ConsumerState<TanisKaynasExtrasPage> {
                               .read(socialDiscoveryRemoteProvider)
                               .searchHashtags(q: q);
                         } catch (_) {}
-                        if (!mounted) return;
+                        // `build` parametresi State.context'i gölgeliyor;
+                        // koruma o BuildContext üzerinden olmalı.
+                        if (!context.mounted) return;
                         applyDiscoveryInterestFilter(
                           context,
                           ref,

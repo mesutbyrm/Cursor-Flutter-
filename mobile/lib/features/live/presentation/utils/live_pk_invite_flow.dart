@@ -128,6 +128,7 @@ Future<void> showLiveStreamPkInviteDialog(
           streamId: streamId,
         );
       }
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('PK kabul edildi — başlıyor')),
       );

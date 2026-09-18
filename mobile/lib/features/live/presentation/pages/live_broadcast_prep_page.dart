@@ -142,6 +142,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
           .read(trtcRemoteProvider)
           .fetchToken(roomId: streamId, role: 'host');
       _navigatedToRoom = true;
+      if (!mounted) return;
       await context.push(
         '/live/room',
         extra: session.copyWith(trtc: cred, hostUserId: user.id),

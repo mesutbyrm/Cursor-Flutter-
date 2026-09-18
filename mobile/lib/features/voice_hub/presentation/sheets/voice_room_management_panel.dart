@@ -631,7 +631,7 @@ class _VoiceRoomManagementPanelState
         ),
       ),
     );
-    if (picked == null) return;
+    if (picked == null || !mounted) return;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(

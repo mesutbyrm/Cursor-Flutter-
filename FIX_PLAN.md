@@ -424,13 +424,24 @@ Her aşama sonrası: `flutter test test/features/live/` + analyze.
 
 - Batch fix: mounted guard; en kritik: live, auth, payment sheets.
 
-> **Kısmi ilerleme — 2026-09-18: 5/30 kapandı.** `fortune_reading_coordinator.dart` (en yoğun dosya, 5 ihlal) → **0 ihlal**. Toplam analyze **657 → 652**, tam olarak −5.
+> ## ✅ TAMAMLANDI — 2026-09-18: **30/30 kapandı**, analyze **657 → 627**
 >
-> **Toplu düzeltme bilinçli olarak yapılmadı** (planın P4-02 uyarısı): her ihlal ayrı bir `await` sınırı ve farklı bir erken-dönüş kararı gerektiriyor. Beş nokta tek tek incelendi; hepsi gerçekti — `showFortuneImageCaptureSheet`, `consumeGrant`, `_resolveBirthDate` (×2) ve `_resolveBirthTime` await'lerinden sonra `context` korumasız kullanılıyordu. Dosyanın mevcut deseni (`if (!context.mounted) return null;`) izlendi.
+> **Analyzer iki farklı hata sınıfı raporluyordu ve doğru düzeltme farklıydı** — toplu otomatik düzeltme bu yüzden yapılmadı:
+>
+> 1. **"guard the use with a 'mounted' check"** → hiç koruma yok. Doğru koruma kapsayan yapıya bağlı: State içi metotta `mounted`, düz fonksiyonda `context.mounted`.
+> 2. **"guarded by an *unrelated* 'mounted' check"** → koruma **var ama yanlış türde**. `State.context` kullanımı `mounted` ile; `build(BuildContext context)` parametresi veya yerel context `context.mounted` ile korunmalı. Bu vakalarda kod "korunmuş" görünüyordu ama yanlış şeyi kontrol ediyordu (`shorts_explore_page`, `voice_room_hub_settings`, `tanis_kaynas_extras_page`).
+>
+> **Yol boyunca bulunan gerçek hata:** `open_voice_chat_room_flow.dart:172` — `if (!context.mounted)` dalının **içinde** `_dismissLoadingDialog(context)` çağrılıyordu; ölü context'le dialog kapatılamaz, yani çağıran dispose olduğunda yükleme dialog'u ekranda asılı kalıyordu. Dialog `useRootNavigator: true` ile basıldığı doğrulanıp helper context'ten bağımsız hale getirildi (kök anahtar üzerinden kapatıyor).
+>
+> Toplam 17 dosya. Erken-dönüş eklenen her nokta tek tek incelendi; hiçbiri davranışı sessizce kısaltmıyor (ekran zaten gitmişse yapılacak iş yok).
+>
+> Doğrulama: `flutter analyze` **627** (−30, başka kural etkilenmedi) · `flutter test` **1423 geçti / 0 başarısız** (değişmedi).
+>
+> **Önceki kısmi adım:** `fortune_reading_coordinator.dart` (5 ihlal) ayrı commit'te kapatılmıştı.
+>
 >
 > **Test notu:** Bu sınıf için birim testi eklenmedi — "await sırasında widget dispose oldu" senaryosunu kurmak tüm fal akışını sürmeyi gerektiriyor. Regresyon koruması **analyzer'ın kendisi**: kural CI'daki `API + Flutter analyze` işinde koşuyor ve yeni ihlal eklenirse sayı artar.
 >
-> **Kalan 25 ihlal, dosya bazında:** `voice_room_leave_flow` (3), `open_voice_chat_room_flow` (3), `shorts_explore_page` (3), `membership_page` (2), `admin_user_command_actions` (2), ve 13 dosyada 1'er.
 >
 > Doğrulama: `flutter analyze` **652** · `flutter test` **1423 geçti / 0 başarısız** (değişmedi).
 

@@ -2225,6 +2225,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
             await action();
             if (!ctx.mounted) return;
             Navigator.pop(ctx);
+            // Sheet kapandı; snackbar sayfanın kendi context'inde gösteriliyor,
+            // bu yüzden koruma State'in `mounted`'ı üzerinden olmalı.
+            if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ok)));
           } catch (e) {
             if (!ctx.mounted) return;

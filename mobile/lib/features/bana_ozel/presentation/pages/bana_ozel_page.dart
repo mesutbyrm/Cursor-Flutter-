@@ -200,6 +200,7 @@ class _BanaOzelPageState extends ConsumerState<BanaOzelPage> {
         await store.recordOpen(slug: item.slug, title: item.nameTr);
         ref.invalidate(banaOzelPreferencesStoreProvider);
       } catch (_) {}
+      if (!mounted) return;
       await context.push('/fortune/bana-ozel/result', extra: result);
     } on BanaOzelInsufficientPayment catch (e) {
       if (!mounted) return;
