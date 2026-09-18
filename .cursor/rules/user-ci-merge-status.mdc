@@ -1,0 +1,18 @@
+---
+description: Her yanıtta CI, merge ve uygulama durumunu göster (kullanıcı zorunlu isteği).
+alwaysApply: true
+---
+
+# CI · Merge · Uygulama — her yanıt
+
+Kullanıcı **her mesajda** CI, merge ve uygulama durumunun görünmesini istiyor.
+
+## Agent yapacakları
+
+1. Yanıt gövdesinde **`## 🔄 CI · Merge · Uygulama`** bölümü olsun (iş yapılmasa bile güncel durum).
+2. Komutlar (tercihen yanıt öncesi çalıştır):
+   - `bash scripts/print-build-status.sh`
+   - `gh run list --repo mesutbyrm/Cursor-Flutter- --limit 6`
+   - `git log origin/main -3 --oneline`
+3. Yazılacaklar: pubspec sürümü, `apk-latest` sürümü (fark varsa uyar), son/main CI sonucu + link, son merge/PR, RELEASE READY, son commit.
+4. Mevcut **📢 Derleme ve özellikler** ve **📲 APK footer** kuralları ile birlikte uygula; bu bölüm onların **üstünde** veya hemen öncesinde olabilir.

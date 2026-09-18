@@ -158,6 +158,24 @@ Kullanıcı mesajlarına cevap verirken **en sonda** şu sabit indirme bağlant�
 
 `main` push sonrası APK derlenmeden önce `scripts/run-acceptance-tests.sh` (20 madde) çalışır. Başarısızsa APK oluşturulmaz. Gerekli GitHub Secrets: `docs/ACCEPTANCE_TESTS.md`.
 
+### CI / merge / uygulama durumu — her yanıtta göster (kullanıcı isteği)
+
+Kullanıcı mesajlarına cevap verirken **ayrı bir bölüm** ekle; push/merge/CI olmasa bile **güncel durumu okuyup yaz** (tahmin etme):
+
+**Bölüm başlığı:** `## 🔄 CI · Merge · Uygulama`
+
+| Satır | Kaynak |
+|-------|--------|
+| **Dal / commit** | `git log origin/main -1 --oneline`, `git status -sb` |
+| **Uygulama sürümü** | `mobile/pubspec.yaml` → `version:` |
+| **RELEASE READY** | `docs/DOCS_RELEASE_INDEX.md` veya `docs/LATEST_APK_BUILD.md` banner |
+| **PR / merge** | `gh pr list` / son merge commit mesajı |
+| **CI (main)** | `gh run list --limit 5` — CI, CodeQL, acceptance, **Build release APK** durumu + run URL |
+| **APK** | `bash scripts/print-build-status.sh` — pubspec vs `apk-latest` sürüm farkını belirt |
+| **Son mobil değişiklik** | `mobile/CHANGELOG.md` üst blok (varsa) |
+
+Push yaptıysan mümkünse `bash scripts/wait-apk-build.sh 900` sonrası bu bölümü güncelle.
+
 ### Kullanıcı bildirimi — APK bitti + özellikler
 
 `main`’e mobil değişiklik push ettiysen oturum sonunda kullanıcıyı bilgilendir:
