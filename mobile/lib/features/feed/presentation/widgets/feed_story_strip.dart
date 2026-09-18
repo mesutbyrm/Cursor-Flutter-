@@ -20,20 +20,16 @@ class FeedStoryStrip extends StatelessWidget {
         out.add(_StoryUser(p.author.display, p.author.avatarUrl));
       }
     }
-    if (out.isEmpty) {
-      return const [
-        _StoryUser('Canlifal', null),
-        _StoryUser('Özge', 'https://i.pravatar.cc/100?u=oz'),
-        _StoryUser('Ela', 'https://i.pravatar.cc/100?u=el'),
-        _StoryUser('Arda', 'https://i.pravatar.cc/100?u=ar'),
-      ];
-    }
     return out.take(16).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     final users = _users();
+    // Gerçek hikâye yokken şerit hiç çizilmez. Önceden burada uydurma
+    // kullanıcılar (pravatar avatarlı) gösteriliyordu; var olmayan kişileri
+    // gerçekmiş gibi sunuyordu.
+    if (users.isEmpty) return const SizedBox.shrink();
     return SizedBox(
       height: 100,
       child: ListView.separated(

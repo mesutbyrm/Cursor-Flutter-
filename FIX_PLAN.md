@@ -445,6 +445,14 @@ Her aşama sonrası: `flutter test test/features/live/` + analyze.
 - **Test:** `posts: []` ile widget testi — sahte isimler render edilmemeli.
 - **Risk:** Çok düşük.
 
+> **Durum: UYGULANDI — 2026-09-18.** Sahte kullanıcı fallback'i kaldırıldı; gerçek hikâye yokken şerit hiç çizilmiyor (`SizedBox.shrink()`).
+>
+> **Plandan sapma — bilinçli:** Plan "metin + hikâye oluşturma çağrısı" diyordu, ancak widget'ta hiç tıklama işleyicisi yok (tamamen dekoratif). CTA eklemek yeni işlevsellik icat etmek olurdu ve navigasyon bağlantısı gerektirirdi — bu ayrı bir ürün kararıdır. 100px yüksekliğindeki yatay bir şeritte metin placeholder'ı da yersiz durur; şeridi gizlemek standart desendir (hikâye yoksa satır gösterilmez).
+>
+> Test: `mobile/test/features/feed/feed_story_strip_empty_test.dart` (4 vaka). **Testin gerçekten koruduğu doğrulandı:** sahte fallback geçici geri konduğunda 1. ve 2. vaka düşüyor (`Found 1 widget with type "ListView"`, beklenen: hiç).
+>
+> Doğrulama: `flutter analyze` **657** (taban çizgisiyle aynı) · `flutter test` **1423 geçti / 0 başarısız** (taban 1419 + 4).
+
 ### P3-11 — Üretim kodunda üçüncü parti placeholder görselleri *(2026-09-18 eklendi)*
 
 - **Dosyalar:** `fortune_type_images.dart:5`, `section_visual_catalog.dart:3`, `discover_live_carousel.dart:124,132,140,412`, `live_background_picker_sheet.dart:25,29,33`
