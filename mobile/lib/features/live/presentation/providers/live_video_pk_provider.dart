@@ -11,6 +11,7 @@ import '../../domain/pk/live_pk_event_dedup.dart';
 import '../../domain/pk/live_pk_ingest.dart';
 import 'live_pk_score_burst_provider.dart';
 import '../../domain/pk/live_pk_broadcast_stage.dart';
+import '../../domain/pk/live_pk_refresh_stale_guard.dart';
 import '../../domain/pk/pk_status_helper.dart';
 import '../../domain/pk/pk_unified_bridge.dart';
 import 'live_pk_action_lock_provider.dart';
@@ -71,7 +72,20 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
   Timer? _poll;
   Timer? _endedCleanup;
   String? _lastIngestFingerprint;
+  DateTime? _lastBattleAuthorityAt;
   final _eventDedup = LivePkEventDedup();
+
+  void _markBattleAuthority() {
+    _lastBattleAuthorityAt = DateTime.now();
+  }
+
+  bool _shouldRetainBattleOnEmptyRefresh() {
+    return shouldRetainPkBattleOnEmptyRefresh(
+      battle: state.battle,
+      status: state.status,
+      lastAuthorityAt: _lastBattleAuthorityAt,
+    );
+  }
 
   @override
   LiveVideoPkState build(String streamId) {
@@ -139,11 +153,15 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
             clearError: true,
           );
           if (isLivePkActiveStatus(remote.status)) {
+            _markBattleAuthority();
             _startPolling();
           } else {
             _stopPolling();
             if (isLivePkEndedStatus(remote.status)) {
               _scheduleEndedCleanup(remote.effectiveId);
+            } else if (isLivePkStartingStatus(remote.status) ||
+                isPkInvitePendingStatus(remote.status)) {
+              _markBattleAuthority();
             }
           }
           return;
@@ -151,16 +169,13 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
       }
     } catch (e) {
       state = state.copyWith(error: '$e');
-      if (isLivePkBroadcastStage(state.battle, state.status)) {
+      if (_shouldRetainBattleOnEmptyRefresh()) {
         return;
       }
     }
 
     _stopPolling();
-    if (isPkInvitePendingStatus(state.status)) {
-      return;
-    }
-    if (isLivePkBroadcastStage(state.battle, state.status)) {
+    if (_shouldRetainBattleOnEmptyRefresh()) {
       return;
     }
     state = state.copyWith(clearBattle: true, clearUnifiedMatchId: true);
@@ -249,6 +264,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
     // Pending davet split ekranı açmaz; yalnızca kabul sonrası aktif senkron.
     final merged = _mergeBattleMap(battle, previous: state.battle);
     if (isPkInvitePendingStatus(status)) {
+      _markBattleAuthority();
       state = state.copyWith(battle: merged, clearError: true);
       syncLivePkHomeTransitionFromBattle(ref, battle: merged, streamId: arg);
       _stopPolling();
@@ -260,10 +276,13 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
       _stopPolling();
       if (isLivePkEndedStatus(status)) {
         _scheduleEndedCleanup(merged['id']?.toString() ?? '');
+      } else if (isLivePkStartingStatus(status)) {
+        _markBattleAuthority();
       }
       return;
     }
     final matchId = merged['id']?.toString() ?? merged['battleId']?.toString();
+    _markBattleAuthority();
     state = state.copyWith(
       battle: merged,
       unifiedMatchId: matchId ?? state.unifiedMatchId,
@@ -296,6 +315,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
     _endedCleanup?.cancel();
     _eventDedup.clear();
     _lastIngestFingerprint = null;
+    _lastBattleAuthorityAt = null;
     ref.read(livePkScoreBurstProvider(arg).notifier).reset();
     state = state.copyWith(clearBattle: true, clearUnifiedMatchId: true);
     ref.read(livePkHomeTransitionProvider.notifier).reset();
