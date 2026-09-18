@@ -395,6 +395,7 @@ jobs:
           RELEASE_TITLE: Canlifal APK ${{ steps.meta.outputs.version }}
           NOTES_PATH: /tmp/release_notes_min.md
           BUILD_SHA: ${{ steps.build_sha.outputs.sha }}
+          APK_RELEASE_DIR: ${{ github.workspace }}
         run: bash scripts/upload-apk-latest-release.sh
 
       - name: apk-latest yükle (manuel)
@@ -407,6 +408,7 @@ jobs:
           RELEASE_TITLE: Canlifal APK ${{ steps.meta.outputs.version }}
           NOTES_PATH: /tmp/release_notes_min.md
           BUILD_SHA: ${{ steps.build_sha.outputs.sha }}
+          APK_RELEASE_DIR: ${{ github.workspace }}
         run: bash scripts/upload-apk-latest-release.sh
 
       - name: Sürüm etiketi (v*)
