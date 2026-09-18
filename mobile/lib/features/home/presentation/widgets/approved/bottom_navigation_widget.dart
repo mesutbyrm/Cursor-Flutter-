@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../core/navigation/unread_badge_format.dart';
 import '../../../../../core/motion/canlifal_motion_tokens.dart';
 import '../../../../../core/motion/canlifal_motion_widgets.dart';
 import '../../../../../core/theme/app_theme_extensions.dart';
@@ -16,6 +17,8 @@ class BottomNavigationWidget extends StatelessWidget {
     required this.onCreate,
     this.onCreateLongPress,
     required this.onFortune,
+    this.onFortuneLongPress,
+    this.inboxUnread = 0,
     required this.onProfile,
   });
 
@@ -25,6 +28,8 @@ class BottomNavigationWidget extends StatelessWidget {
   final VoidCallback onCreate;
   final VoidCallback? onCreateLongPress;
   final VoidCallback onFortune;
+  final VoidCallback? onFortuneLongPress;
+  final int inboxUnread;
   final VoidCallback onProfile;
 
   @override
@@ -78,9 +83,11 @@ class BottomNavigationWidget extends StatelessWidget {
             ),
             _NavItem(
               icon: Icons.auto_awesome_rounded,
-              label: 'Fal & Tarot',
+              label: 'Mesaj/Fal',
               active: activeTab == HomeBottomTab.fortune,
               onTap: onFortune,
+              onLongPress: onFortuneLongPress,
+              badge: inboxUnread,
             ),
             _NavItem(
               icon: Icons.person_rounded,
@@ -104,6 +111,7 @@ class _NavItem extends StatelessWidget {
     required this.active,
     required this.onTap,
     this.onLongPress,
+    this.badge = 0,
   });
 
   final IconData icon;
@@ -111,6 +119,7 @@ class _NavItem extends StatelessWidget {
   final bool active;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
+  final int badge;
 
   @override
   Widget build(BuildContext context) {
@@ -148,11 +157,38 @@ class _NavItem extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CanlifalNavIcon(
-              icon: icon,
-              active: active,
-              activeColor: activeColor,
-              inactiveColor: inactiveColor,
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                CanlifalNavIcon(
+                  icon: icon,
+                  active: active,
+                  activeColor: activeColor,
+                  inactiveColor: inactiveColor,
+                ),
+                if (badge > 0)
+                  Positioned(
+                    right: -4,
+                    top: -2,
+                    child: Container(
+                      constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                      padding: const EdgeInsets.symmetric(horizontal: 3),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: HomeApprovedDesign.liveRed,
+                        borderRadius: BorderRadius.circular(7),
+                      ),
+                      child: Text(
+                        UnreadBadgeFormat.label(badge),
+                        style: const TextStyle(
+                          fontSize: 8,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
             if (active) ...[
               const SizedBox(height: 2),

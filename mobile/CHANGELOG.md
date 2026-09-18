@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.559+600 (2026-09-18) — Ana sayfa kalan maddeler
+
+- Alt nav **Mesaj/Fal** (referans): kısa dokun = `/fortune`, uzun bas = `/messages`, inbox rozeti
+- Sosyal medya: YouTube linki arama sonuçlarına; X/Instagram/Facebook doğrulandı
+- PK sunum köprüsü `liveVideoPkProvider` battle durumu ile senkron (RTC yok)
+- `docs/LATEST_APK_BUILD.md` sürüm hizası
+
 ## 1.0.558+599 (2026-09-18) — Ana sayfa 1:1 UI (aşama 4–9 tamamlama)
 
 - Sosyal şerit (son girişler / beğenenler) ana sayfaya bağlandı

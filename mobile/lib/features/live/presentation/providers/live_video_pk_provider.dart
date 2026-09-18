@@ -17,6 +17,7 @@ import 'live_pk_action_lock_provider.dart';
 import '../../../voice_hub/domain/pk/pk_battle_remote_models.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
 import 'pk_session_phase_provider.dart';
+import '../navigation/live_pk_home_transition_bridge.dart';
 
 class LiveVideoPkState {
   const LiveVideoPkState({
@@ -249,11 +250,13 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
     final merged = _mergeBattleMap(battle, previous: state.battle);
     if (isPkInvitePendingStatus(status)) {
       state = state.copyWith(battle: merged, clearError: true);
+      syncLivePkHomeTransitionFromBattle(ref, battle: merged, streamId: arg);
       _stopPolling();
       return;
     }
     if (!isLivePkActiveStatus(status)) {
       state = state.copyWith(battle: merged, clearError: true);
+      syncLivePkHomeTransitionFromBattle(ref, battle: merged, streamId: arg);
       _stopPolling();
       if (isLivePkEndedStatus(status)) {
         _scheduleEndedCleanup(merged['id']?.toString() ?? '');
@@ -266,6 +269,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
       unifiedMatchId: matchId ?? state.unifiedMatchId,
       clearError: true,
     );
+    syncLivePkHomeTransitionFromBattle(ref, battle: merged, streamId: arg);
     if (state.isUnified && matchId != null && matchId.isNotEmpty) {
       _stopPolling();
     }
@@ -294,6 +298,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
     _lastIngestFingerprint = null;
     ref.read(livePkScoreBurstProvider(arg).notifier).reset();
     state = state.copyWith(clearBattle: true, clearUnifiedMatchId: true);
+    ref.read(livePkHomeTransitionProvider.notifier).reset();
   }
 
   Future<void> create({String? opponentStreamId, String? targetStreamId}) async {

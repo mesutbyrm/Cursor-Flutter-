@@ -154,7 +154,7 @@ abstract final class HomeSiteCatalog {
     HomeSocialChannel(
       id: 'youtube',
       label: 'YouTube',
-      url: 'https://www.youtube.com/@canlifal',
+      url: 'https://www.youtube.com/results?search_query=canlifal',
       icon: Icons.play_circle_outline_rounded,
     ),
     HomeSocialChannel(

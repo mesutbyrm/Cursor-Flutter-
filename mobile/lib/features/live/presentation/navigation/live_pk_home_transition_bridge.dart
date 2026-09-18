@@ -1,5 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/pk/live_pk_broadcast_stage.dart';
+import '../../domain/pk/pk_status_helper.dart';
+
 /// Ana Sayfa → Canlı → PK için sunum geçiş altyapısı (§33-P).
 ///
 /// PK RTC / battle mantığına dokunmaz; yalnızca ileride VS / glow / countdown
@@ -66,3 +69,46 @@ final livePkHomeTransitionProvider =
     NotifierProvider<LivePkHomeTransitionNotifier, LivePkHomeTransitionState>(
   LivePkHomeTransitionNotifier.new,
 );
+
+/// PK battle haritasından sunum fazını günceller (RTC / token yok).
+void syncLivePkHomeTransitionFromBattle(
+  Ref ref, {
+  Map<String, dynamic>? battle,
+  String? streamId,
+}) {
+  syncLivePkHomeTransitionState(
+    ref.read(livePkHomeTransitionProvider.notifier),
+    battle: battle,
+    streamId: streamId,
+  );
+}
+
+void syncLivePkHomeTransitionState(
+  LivePkHomeTransitionNotifier bridge, {
+  Map<String, dynamic>? battle,
+  String? streamId,
+}) {
+  if (battle == null || battle.isEmpty) {
+    bridge.reset();
+    return;
+  }
+  final status = battle['status']?.toString() ?? '';
+  final battleId =
+      battle['id']?.toString() ?? battle['battleId']?.toString();
+  if (streamId != null && streamId.trim().isNotEmpty) {
+    bridge.noteEnteringLive(streamId: streamId.trim());
+  }
+  if (isLivePkEndedStatus(status) ||
+      (status.isEmpty && (battleId == null || battleId.isEmpty))) {
+    bridge.reset();
+    return;
+  }
+  if (isPkInvitePendingStatus(status)) {
+    bridge.noteEnteringPkShell(battleId: battleId);
+    return;
+  }
+  if (isLivePkActiveStatus(status)) {
+    bridge.noteEnteringPkShell(battleId: battleId);
+    bridge.notePkActive();
+  }
+}
