@@ -4,6 +4,7 @@ import { prisma } from "../lib/prisma";
 import { fail, ok } from "../lib/response";
 import { optionalAuth } from "../middleware/optionalAuth";
 import { applyPkGift } from "../lib/pkBattleService";
+import { chargeAndRecordGift } from "../lib/giftCharge";
 import { pushStreamSignal } from "../lib/liveStreamExtrasStore";
 import { getChatRoom, getRoomType } from "../lib/chatRoomStore";
 import {
@@ -194,21 +195,9 @@ export async function sendStreamGift(
   }
 
   const totalCost = gift.price * quantity;
-  let newBalance: number | undefined;
 
-  if (userId) {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) return fail(res, 401, "UNAUTHORIZED", "Kullanıcı bulunamadı");
-    if (user.coins < totalCost) {
-      return fail(res, 402, "INSUFFICIENT_COINS", "Yetersiz jeton");
-    }
-    const updated = await prisma.user.update({
-      where: { id: userId },
-      data: { coins: { decrement: totalCost } },
-    });
-    newBalance = updated.coins;
-  }
-
+  // Salt-okunur hazırlık; jeton düşümünden önce yapılır ki transaction
+  // yalnızca iki yazmayı (düşme + kayıt) kapsasın.
   const combo = await resolveCombo(streamId, userId, gift.id, quantity);
 
   let receiverId: string | null = bodyReceiverId?.trim() || null;
@@ -225,21 +214,35 @@ export async function sendStreamGift(
     receiverId = recv?.id ?? null;
   }
 
-  const event = await prisma.giftEvent.create({
-    data: {
-      giftId: gift.id,
-      senderId: userId ?? null,
-      senderName: senderName ?? "Misafir",
-      receiverId,
-      receiverName: receiverName ?? "Yayıncı",
-      streamId,
-      quantity,
-      coinCost: totalCost,
-      combo,
-      platform,
-    },
-    include: { gift: true },
+  const charge = await chargeAndRecordGift({
+    userId,
+    totalCost,
+    createEvent: (tx) =>
+      tx.giftEvent.create({
+        data: {
+          giftId: gift.id,
+          senderId: userId ?? null,
+          senderName: senderName ?? "Misafir",
+          receiverId,
+          receiverName: receiverName ?? "Yayıncı",
+          streamId,
+          quantity,
+          coinCost: totalCost,
+          combo,
+          platform,
+        },
+        include: { gift: true },
+      }),
   });
+
+  if (!charge.ok) {
+    return charge.reason === "USER_NOT_FOUND"
+      ? fail(res, 401, "UNAUTHORIZED", "Kullanıcı bulunamadı")
+      : fail(res, 402, "INSUFFICIENT_COINS", "Yetersiz jeton");
+  }
+
+  const event = charge.event;
+  const newBalance = charge.newBalance;
 
   const payload = eventPayload(event);
   void giftQueueEnqueue({
@@ -397,21 +400,9 @@ export async function sendRoomGift(
   }
 
   const totalCost = gift.price * quantity;
-  let newBalance: number | undefined;
 
-  if (userId) {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) return fail(res, 401, "UNAUTHORIZED", "Kullanıcı bulunamadı");
-    if (user.coins < totalCost) {
-      return fail(res, 402, "INSUFFICIENT_COINS", "Yetersiz jeton");
-    }
-    const updated = await prisma.user.update({
-      where: { id: userId },
-      data: { coins: { decrement: totalCost } },
-    });
-    newBalance = updated.coins;
-  }
-
+  // Salt-okunur hazırlık; jeton düşümünden önce yapılır ki transaction
+  // yalnızca iki yazmayı (düşme + kayıt) kapsasın.
   const combo = await resolveComboRoom(roomId, userId, gift.id, quantity);
 
   let receiverId: string | null = bodyReceiverId?.trim() || null;
@@ -428,21 +419,35 @@ export async function sendRoomGift(
     receiverId = recv?.id ?? null;
   }
 
-  const event = await prisma.giftEvent.create({
-    data: {
-      giftId: gift.id,
-      senderId: userId ?? null,
-      senderName: senderName ?? "Misafir",
-      receiverId,
-      receiverName: receiverName ?? "Yayıncı",
-      roomId,
-      quantity,
-      coinCost: totalCost,
-      combo,
-      platform,
-    },
-    include: { gift: true },
+  const charge = await chargeAndRecordGift({
+    userId,
+    totalCost,
+    createEvent: (tx) =>
+      tx.giftEvent.create({
+        data: {
+          giftId: gift.id,
+          senderId: userId ?? null,
+          senderName: senderName ?? "Misafir",
+          receiverId,
+          receiverName: receiverName ?? "Yayıncı",
+          roomId,
+          quantity,
+          coinCost: totalCost,
+          combo,
+          platform,
+        },
+        include: { gift: true },
+      }),
   });
+
+  if (!charge.ok) {
+    return charge.reason === "USER_NOT_FOUND"
+      ? fail(res, 401, "UNAUTHORIZED", "Kullanıcı bulunamadı")
+      : fail(res, 402, "INSUFFICIENT_COINS", "Yetersiz jeton");
+  }
+
+  const event = charge.event;
+  const newBalance = charge.newBalance;
 
   const room = getChatRoom(roomId);
   const roomType = room ? getRoomType(room) : "NORMAL";

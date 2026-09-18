@@ -80,13 +80,13 @@ cd mobile && flutter pub get && dart analyze && flutter test
 
 ### P0-2 — Hediye jeton düşümü atomik değil (BACKEND)
 
-> ### ⚠ KAPSAM KARARI GEREKİYOR
+> ### ✅ KAPSAM KARARI VERİLDİ — 2026-09-18
 >
-> Bu planın **Genel kural 4**'ü şöyle: *"Backend değiştirme yok; yalnızca mobil istemci + CI script + dokümantasyon."*
+> Bu planın **Genel kural 4**'ü başlangıçta *"Backend değiştirme yok"* diyordu. Ancak doğrulama koşusunda bulunan **en ciddi kusur backend'deydi** (`api/src/routes/gifts.ts`) ve mobil taraftan düzeltilemez — para bütünlüğü sunucuda sağlanmak zorundadır.
 >
-> Ancak 2026-09-18 doğrulama koşusunda bulunan **en ciddi kusur backend'de** (`api/src/routes/gifts.ts`) ve mobil taraftan düzeltilemez — para bütünlüğü sunucuda sağlanmak zorundadır.
+> **Kullanıcı kararı: backend kapsama alındı.** Genel kural 4 bu madde için geçersizdir.
 >
-> **Karar gerekiyor:** (a) plan kapsamı backend'i içerecek şekilde genişletilsin mi, (b) yoksa bu madde ayrı bir backend iş kalemine mi devredilsin? Karar verilene kadar bu madde **uygulanmayacak**.
+> **Durum: UYGULANDI.** Doğrulama: `npm run typecheck` temiz · `npm test` **59 geçti / 0 başarısız** (taban 53 + 6 yeni test).
 
 | Alan | Değer |
 |------|--------|
