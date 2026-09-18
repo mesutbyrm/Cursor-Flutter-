@@ -499,14 +499,22 @@ jobs:
           ARTIFACT=$(gate "${{ steps.artifact_upload.outcome }}")
           HTTP="${{ steps.apk_http_verify.outputs.http_code || 'SKIP' }}"
           METADATA="${{ steps.apk_http_verify.outputs.metadata || 'SKIP' }}"
+          METADATA_REASON="${{ steps.apk_http_verify.outputs.metadata_reason || '' }}"
           if [[ "$HTTP" != "200" && "${{ steps.apk_http_verify.outcome }}" == "skipped" ]]; then
             HTTP="SKIP"
             METADATA="SKIP"
+            METADATA_REASON=""
           elif [[ "$HTTP" != "200" ]]; then
             METADATA="FAIL"
+            if [[ -z "$METADATA_REASON" ]]; then
+              METADATA_REASON="HTTP download failed (code=${HTTP})"
+            fi
+          elif [[ "$METADATA" == "FAIL" && -z "$METADATA_REASON" ]]; then
+            METADATA_REASON="Release APK metadata or SHA256 mismatch"
           fi
           VERSION="${{ steps.meta.outputs.version_name }}"
           VCODE="${{ steps.meta.outputs.version_code }}"
+          export METADATA_REASON
           bash scripts/ci-release-gate-summary.sh \
             "$BUILD_SHA" "$VERSION" "$VCODE" \
             "$ANALYZE" "$TESTS" "$APK_BUILD" "$SIGNING" "$ARTIFACT" "$HTTP" "$METADATA"

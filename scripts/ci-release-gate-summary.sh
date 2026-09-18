@@ -12,6 +12,7 @@ SIGNING="${7:-UNKNOWN}"
 ARTIFACT="${8:-UNKNOWN}"
 HTTP="${9:-UNKNOWN}"
 METADATA="${10:-UNKNOWN}"
+METADATA_REASON="${METADATA_REASON:-${11:-}}"
 
 pass_count=0
 fail_count=0
@@ -60,6 +61,9 @@ fi
   echo "APK Artifact: $ARTIFACT"
   echo "APK HTTP: $HTTP"
   echo "APK Metadata: $METADATA"
+  if [[ -n "$METADATA_REASON" && "$METADATA" == FAIL ]]; then
+    echo "APK Metadata reason: $METADATA_REASON"
+  fi
   echo ""
   echo "FINAL: $FINAL"
 } | tee /tmp/canlifal-release-gate-summary.txt

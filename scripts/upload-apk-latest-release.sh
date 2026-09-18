@@ -37,6 +37,60 @@ APK_UPLOAD_RETRY_BASE_SEC="${APK_UPLOAD_RETRY_BASE_SEC:-10}"
 # shellcheck disable=SC2034
 declare -A UPLOAD_OUTCOME=()
 
+sha256_file() {
+  sha256sum "$1" | awk '{print $1}'
+}
+
+download_release_asset_bytes() {
+  local asset_name="$1"
+  local dest="$2"
+  local asset_id
+  asset_id=$(gh release view "$TAG" --repo "$REPO" --json assets 2>/dev/null \
+    | python3 -c "
+import json, sys
+name = sys.argv[1]
+data = json.load(sys.stdin)
+for a in data.get('assets') or []:
+    if a.get('name') == name:
+        print(a.get('id') or '')
+        break
+" "$asset_name" 2>/dev/null || true)
+  if [[ -z "$asset_id" ]]; then
+    return 1
+  fi
+  curl -sS -L \
+    -H "Authorization: Bearer ${GH_TOKEN}" \
+    -H "Accept: application/octet-stream" \
+    -o "$dest" \
+    "https://api.github.com/repos/${REPO}/releases/assets/${asset_id}"
+}
+
+remote_asset_matches_local_sha() {
+  local file="$1"
+  local asset_name="$2"
+  local tmp
+  tmp=$(mktemp)
+  if ! download_release_asset_bytes "$asset_name" "$tmp"; then
+    rm -f "$tmp"
+    return 1
+  fi
+  if [[ ! -s "$tmp" ]]; then
+    rm -f "$tmp"
+    return 1
+  fi
+  local local_sha remote_sha
+  local_sha=$(sha256_file "$file")
+  remote_sha=$(sha256_file "$tmp")
+  rm -f "$tmp"
+  if [[ "$local_sha" == "$remote_sha" ]]; then
+    return 0
+  fi
+  echo "Release asset SHA farklı (yeniden yüklenecek): ${asset_name}"
+  echo "  local SHA256=${local_sha}"
+  echo "  remote SHA256=${remote_sha}"
+  return 1
+}
+
 release_asset_size() {
   local asset_name="$1"
   gh release view "$TAG" --repo "$REPO" --json assets 2>/dev/null \
@@ -100,9 +154,12 @@ upload_one_asset() {
   if [[ "${APK_FORCE_UPLOAD:-0}" != "1" ]]; then
     remote_size=$(release_asset_size "$asset_name")
     if [[ -n "$remote_size" && "$remote_size" -gt 0 && "$remote_size" == "$local_size" ]]; then
-      echo "Asset zaten release'ta (boyut eşleşiyor, yükleme atlandı): ${asset_name} (${local_size} bytes)"
-      UPLOAD_OUTCOME["$asset_name"]="ok_existing"
-      return 0
+      if remote_asset_matches_local_sha "$file" "$asset_name"; then
+        echo "Asset zaten release'ta (boyut + SHA256 eşleşiyor, yükleme atlandı): ${asset_name} (${local_size} bytes)"
+        UPLOAD_OUTCOME["$asset_name"]="ok_existing"
+        return 0
+      fi
+      echo "Boyut eşleşiyor ancak içerik (SHA256) farklı — yeniden yüklenecek: ${asset_name}"
     fi
     if [[ -n "$remote_size" && "$remote_size" -gt 0 && "$remote_size" != "$local_size" ]]; then
       echo "Mevcut asset boyutu farklı (remote=${remote_size}, local=${local_size}) — yeniden yüklenecek: ${asset_name}"
@@ -123,8 +180,9 @@ upload_one_asset() {
 
     if [[ "$rc" -eq 0 ]]; then
       remote_size=$(release_asset_size "$asset_name")
-      if [[ -n "$remote_size" && "$remote_size" == "$local_size" ]]; then
-        echo "Asset yüklendi ve doğrulandı: ${asset_name}"
+      if [[ -n "$remote_size" && "$remote_size" == "$local_size" ]] \
+        && remote_asset_matches_local_sha "$file" "$asset_name"; then
+        echo "Asset yüklendi ve doğrulandı (boyut + SHA256): ${asset_name}"
         UPLOAD_OUTCOME["$asset_name"]="ok_uploaded"
         return 0
       fi
