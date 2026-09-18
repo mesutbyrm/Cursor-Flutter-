@@ -4,20 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.559+600` |
-| Tarih (UTC) | 2026-09-18 11:14 |
-| Commit | [`01840b573a9c65d6f8f0813cb5d5435f4519e75f`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/01840b573a9c65d6f8f0813cb5d5435f4519e75f) |
-| İş akışı | [Run 35337081632](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35337081632) |
+| Sürüm | `1.0.559+601` |
+| Tarih (UTC) | 2026-09-18 13:18 |
+| Commit | [`ad8320a6078e3fe80fff0ed5b948aac6ffbbd14d`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/ad8320a6078e3fe80fff0ed5b948aac6ffbbd14d) |
+| İş akışı | [Run 35347167030](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35347167030) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.559+600 (2026-09-18) — Ana sayfa kalan maddeler
+## 1.0.559+601 (2026-09-18) — Premium UI / motion (CDS)
 
-- Alt nav **Mesaj/Fal** (referans): kısa dokun = `/fortune`, uzun bas = `/messages`, inbox rozeti
-- Sosyal medya: YouTube linki arama sonuçlarına; X/Instagram/Facebook doğrulandı
-- PK sunum köprüsü `liveVideoPkProvider` battle durumu ile senkron (RTC yok)
-- `docs/LATEST_APK_BUILD.md` sürüm hizası
+- Merkezi `canlifal_design_system` + `CdsSkeleton` / shimmer yükleme iskeletleri
+- `CdsInlineSpinner` — buton ve genel yüklemede hafif spinner
+- Gold VIP rozetinde FX açıkken subtle shimmer; üyelik kataloğu skeleton
+- `CanlifalFilterChip` — kategori chip basınç animasyonu
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
