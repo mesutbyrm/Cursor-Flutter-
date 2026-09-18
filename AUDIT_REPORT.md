@@ -27,8 +27,10 @@
 | Auth | JWT `Bearer` — `/api/auth/mobile-login`, `/api/auth/mobile-refresh`, `/api/me` |
 | Üretim API | `https://canlifal.com` (`core/config/env.dart`) |
 | Entegrasyon kaynağı | `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9 |
-| `dart analyze` | **660** issue — **0 error**, **0 warning** (tamamı `info` seviyesi) |
+| `dart analyze` | **660** issue — **0 error**, **0 warning** (tamamı `info` seviyesi) · *Flutter 3.47.4 ortamında* |
+| `flutter analyze` (CI pin 3.44.8) | **657** issue — **0 error**, **261 warning**, **396 info** · `lib/` 592 · `test/` 65 · 48,6 sn *(2026-09-18 doğrulama koşusu)* |
 | `flutter test` | **1404** geçti, **2** skipped (~2:21) |
+| `flutter test` (yeniden koşu) | **1408** geçti, **2** skipped, **0 başarısız** (4:20) *(2026-09-18, sürüm 1.0.559+602)* |
 | Integration test | **Yok** (`integration_test` paketi/klasörü bulunamadı) |
 | Release gate (CI) | Dokümantasyonda **FINAL PASS** (eski run referansları) |
 | **RELEASE READY** | **NO** — **Psychic P0** cihaz testi (TRTC T+5s) kapanmadı |
@@ -747,6 +749,7 @@ mobile/lib/
 | ID | Özet |
 |----|------|
 | P0-1 | **Psychic P0 TRTC T+5s A/V donması** — cihaz PASS alınmadı, RELEASE READY NO (`docs/LIVE_PSYCHICS_REMAINING.md` 57–76, `docs/PSYCHIC_P0_START.md` 6–7) |
+| P0-2 | **Hediye gönderiminde atomik olmayan jeton düşümü** — bakiye negatife inebilir, hata durumunda jeton kaybolur, retry'da çift ücret (`api/src/routes/gifts.ts` 199–242) |
 
 **Detay (§29 format):**
 
@@ -760,6 +763,24 @@ mobile/lib/
 - **Risk:** Uygulama store/release engeli.  
 - **Test:** `bash scripts/psychic-p0-checklist.sh`
 
+**[P0] Hediye gönderiminde atomik olmayan jeton düşümü — release bloker**  
+*(Bu bulgu, raporun GIFT AUDIT §312 ve §791'de "audit edilmeli" diye açık bırakılan idempotency sorusunun cevabıdır — backend kodu okunarak doğrulandı.)*
+- **Dosya:** `api/src/routes/gifts.ts`  
+- **Satır:** 199–242  
+- **Problem:** Üç kusur tek blokta: **(1) check-then-act yarışı** — bakiye okuma (200) ile düşme (205) ayrı sorgular, aralarında koşul yok; eşzamanlı iki istek aynı bakiyeyi okuyup ikisi de kontrolü geçer → **bakiye negatife iner**. **(2) Transaction yok** — jeton 205'te düşüyor, `giftEvent` 228'de oluşuyor; arada `resolveCombo` (212) ve alıcı sorgusu (216) var, burada hata olursa **jeton gitti, hediye yok**. **(3) Idempotency yok** — retry/çift dokunuşta ikinci kez tam ücret.  
+- **Neden:** Prisma `decrement` atomikliğinin koşullu güncelleme yerine geçtiği varsayılmış.  
+- **Etkilenen özellik:** Hediye gönderimi (canlı, PK, sesli oda), jeton bakiyesi, `applyPkGift` üzerinden PK skoru.  
+- **Kanıt:** Proje `$transaction`'ı 10 yerde doğru kullanıyor (`lib/pkBattleService.ts:601`, `lib/referralCommissionService.ts:410,478,538`, `lib/voiceRoomRevenue.ts:120,196`, `routes/video_streams.ts:703`, `routes/short_videos.ts:300,313,415`) — **gelir tarafı korunmuş, harcama tarafı korunmamış.**  
+- **Çözüm:** (a) `updateMany({ where: { id, coins: { gte: totalCost } }, … })` + `count === 0` → 402; (b) düşme + `giftEvent.create` + `applyPkGift` tek `$transaction` içinde; (c) `Idempotency-Key` + `giftEvent` unique index. **`emitGiftEvent` / `giftQueueEnqueue` transaction dışında kalmalı** — aksi halde rollback'te hayalet event yayılır.  
+- **Risk:** Düşük–orta; tek endpoint, mevcut sözleşme korunur.  
+- **Test:** Eşzamanlı 2 istekle negatif bakiye üretilemediği; `giftEvent.create` fail ettirilip jetonun iade edildiği; aynı idempotency key ile tek ücret alındığı.
+
+**[P0 yan bulgu] Hediye alıcısı benzersiz olmayan `displayName` ile çözülüyor**  
+- **Dosya:** `api/src/routes/gifts.ts` · **Satır:** 214–226  
+- **Problem:** `findFirst({ OR: [{ username }, { displayName }] })` — `username` benzersiz ama `displayName` değil (`routes/users.ts:36` yalnızca `min(1).max(120)`). Aynı görünen adı taşıyan iki hesapta hediye ve gelir **rastgele/yanlış kullanıcıya** yazılır.  
+- **Çözüm:** Alıcı yalnızca `receiverId` ile çözülmeli; isim gerekiyorsa sadece benzersiz `username`, çoklu eşleşmede 409.  
+- **Test:** Aynı `displayName`'li iki kullanıcı seed'lenip belirsiz alıcıya yazılmadığı doğrulanmalı.
+
 ---
 
 ## P1 ISSUES
@@ -769,6 +790,35 @@ mobile/lib/
 | P1-1 | PK `refresh()` battle clear — dual-stream kaybında single-live UI (`live_video_pk_provider.dart` 152–166) |
 | P1-2 | Monolitik `live_broadcast_room_page.dart` regresyon riski (3209 satır) |
 | P1-3 | Cihaz E2E/integration test eksikliği — kritik akışlar (`LIVE_PSYCHICS_REMAINING.md` 87–91) |
+| P1-4 | **PK stale guard `paused` statüsünü kapsamıyor + 90 sn TTL < 180 sn maç süresi** — P1-1'in kök nedeni (`live_pk_refresh_stale_guard.dart` 12–22) |
+| P1-5 | **Geçici ağ hatası PK battle'ını siliyor** — catch bloğu silme yoluna düşüyor (`live_video_pk_provider.dart` 170–181) |
+| P1-6 | **`pkSessionProvider` `autoDispose`** — izleyici düştüğünde PK state sıfırlanıyor (`pk_session_notifier.dart` 356–359) |
+
+**Detay (§29 format) — P1-4/5/6, P1-1'in kök neden analizidir:**
+
+**[P1-4] PK stale guard kapsam açığı — maç sürerken single-live'a düşüş**  
+- **Dosya:** `mobile/lib/features/live/domain/pk/live_pk_refresh_stale_guard.dart` · **Satır:** 12–22  
+- **Problem:** Guard'ın koruduğu statüler (`pk_status_helper.dart` + `live_pk_broadcast_stage.dart` üzerinden doğrulandı): `pending, invited, created, waiting, active, started, in_progress, running, starting, countdown, preparing, ended, completed, finished, tie, draw, cancelled, canceled`. **`paused` hiçbirinde yok.** Oysa `pk_session_notifier.dart:102-104,245-247` `PkStatus.paused`'ı aktif maç gibi ele alıyor → maç `paused` iken boş refresh gelirse `clearBattle: true` çalışır ve PK ekranı düşer.  
+- **İkinci açık:** `staleTtl` **90 sn**, ancak varsayılan maç süresi `pk_session_notifier.dart:261`'de **180 sn**. 90 sn'yi aşan ağ sorununda maç canlıyken UI düşer.  
+- **Üçüncü açık:** `isLivePkBroadcastStage` koşulsuz korumayı ancak `livePkHasDualStreams` doğruysa verir; SSE'den eksik payload gelip `opponentLiveStreamId` boşalırsa 90 sn TTL yoluna düşülür (P1-1'de gözlenen dual-stream senaryosu budur).  
+- **Neden:** Sorun daha önce fark edilip zaman pencereli yamayla kapatılmış (docstring birebir: *"single-live düşüşünü önler"*); statü listesi genişleyince yama güncellenmemiş.  
+- **Çözüm:** `paused`'ı kapsayan `isLivePkRetainableStatus` tanımlanmalı; TTL `battleEndsAt` üzerinden türetilmeli. Kalıcı çözüm: görünürlük istemci refresh'ine değil **sunucudan gelen açık `ended` olayına** bağlanmalı — yokluk asla "bitti" demek olmamalı.  
+- **Risk:** Orta — guard genişletilirken gerçekten biten maçların takılı kalmaması için `_scheduleEndedCleanup` birlikte doğrulanmalı.  
+- **Test:** Saf fonksiyon, birim testi kolay: `paused` + boş refresh → korunmalı; `active` + 120 sn önce authority + 180 sn maç → korunmalı; gerçek `ended` → silinmeli.
+
+**[P1-5] Geçici ağ hatası PK battle'ını siliyor**  
+- **Dosya:** `mobile/lib/features/live/presentation/providers/live_video_pk_provider.dart` · **Satır:** 170–181  
+- **Problem:** `catch` bloğu hatayı state'e yazıp akışı 177–181'e bırakıyor; guard tutmazsa `clearBattle: true`. Tek bir timeout/500 PK ekranını düşürebiliyor. Hata yolu ile "sunucu battle yok dedi" yolu aynı sonuca bağlanmış — oysa *hata* bilgi yokluğudur, *boş yanıt* bilgidir.  
+- **Çözüm:** `catch` battle'ı asla silmemeli; yalnızca `error` set edip state korunmalı. Silme yalnızca sunucu açıkça "yok/ended" dediğinde.  
+- **Risk:** Düşük (daraltıcı değişiklik).  
+- **Test:** `fetchStreamBattle` throw ederken `state.battle` korunmalı.
+
+**[P1-6] `pkSessionProvider` `autoDispose` — state kaybı**  
+- **Dosya:** `mobile/lib/features/pk/presentation/providers/pk_session_notifier.dart` · **Satır:** 356–359  
+- **Problem:** `NotifierProvider.autoDispose.family` — izleyici kalmadığında state imha olur, sonraki okuma `const PkSessionState()` (battle **yok**) döner. Navigasyon/sheet açılışı izleyicileri anlık düşürürse PK state sıfırlanır. Ayrıca `loadState()` (116–130) ve `_action()` (338–353) `await` sonrası `state` yazıyor, `ref.mounted` kontrolü yok → disposed notifier'a yazma riski.  
+- **Çözüm:** Battle non-null iken `ref.keepAlive()`, `ended`'de bırak; `await` sonrası yazımları `ref.mounted` ile koru.  
+- **Risk:** Düşük–orta (`ended` sonrası serbest bırakma şart, aksi halde sızıntı).  
+- **Test:** İzleyici widget'ı ağaçtan çıkarıp geri ekleyen widget testi.
 
 ---
 
@@ -788,7 +838,15 @@ mobile/lib/
 - Push OneSignal+FCM dual stack (`pubspec.yaml` 55, 63)  
 - Performance live room rebuild (`live_broadcast_room_page.dart` 2622+)  
 - Security admin UI vs server auth  
-- Gift idempotency client audit  
+- Gift idempotency client audit → **CEVAPLANDI: bkz. P0-2** (backend'de transaction ve idempotency yok)  
+
+**2026-09-18 doğrulama koşusunda eklenen P2 bulguları:**
+
+- **Sayfalama yok — `page: 1` beş yerde sabit:** `social_discovery_providers.dart:23`, `social_providers.dart:44,59`, `user_social_posts_notifier.dart:18,30`. Keşif akışı, sosyal akış ve kullanıcı gönderileri yalnızca 1. sayfayı çekiyor; sonsuz kaydırma fiilen yok. *Çözüm:* mevcut `core/pagination/` altyapısına bağlanmalı, yeni sistem kurulmamalı. *Test:* sayfa 2 isteğini doğrulayan datasource testi.
+- **Feed'de sahte kullanıcılar empty-state yerine geçiyor:** `feed_story_strip.dart:23-30` — gerçek gönderi yokken `'Özge'`, `'Ela'`, `'Arda'` adlı var olmayan kullanıcılar `i.pravatar.cc` avatarlarıyla gösteriliyor. Hem sahte veri hem eksik empty-state. *Çözüm:* fallback kaldırılıp gerçek empty-state konmalı. *Test:* `posts: []` ile widget testi.
+- **Hata durumu kapsamı çok düşük:** `ErrorState`/`ErrorView` yalnızca **6 dosyada**, `EmptyState` 39 dosyada, loading göstergesi 192 dosyada — toplam **138 sayfaya** karşılık. Hata durumunda kullanıcı boş ekran veya sonsuz loading görüyor. *Çözüm:* retry aksiyonlu ortak `ErrorState` bileşeni, önce kritik akışlara (auth, live, PK, wallet, chat, discovery).
+- **PK sayacı saniyede bir tüm izleyicileri rebuild ediyor:** `pk_session_notifier.dart:93-114` — `Timer.periodic(1 sn)` her tetiklenmede `state = state.copyWith(...)` yazıyor; `pkSessionProvider`'ı izleyen her widget saniyede bir rebuild oluyor. PK ekranı zaten video + skor + chat + hediye animasyonu taşıyor. *Çözüm:* kalan süre dar kapsamlı ayrı provider'a taşınmalı veya `select` ile daraltılmalı.
+- **Admin rozeti taklit edilebilir (görsel — yetki değil):** `voice_moderation_target_color.dart:22` ve `voice_seat_avatar_frame.dart:31` rütbeyi kısıtsız `nickname`/`name` alanından türetiyor (`voice_staff_rank.dart:15-22`: `%`→admin). `displayName` backend'de karakter kısıtı taşımıyor (`users.ts:36`). **Ölçülü değerlendirme — yetki yükseltmesi DEĞİL:** gerçek yetki kararı `voice_room_permissions.dart:146` üzerinden `user.username` ile veriliyor ve `username` backend'de `^[a-zA-Z0-9_]+$` ile korunuyor (`users.ts:43`). Etki yalnızca rozet rengi ve koltuk çerçevesi → sosyal mühendislik riski. *Çözüm:* bu iki call-site de `user.username` kullanmalı.
 
 ---
 
@@ -801,6 +859,11 @@ mobile/lib/
 - Responsive `use_build_context_synchronously` (30)  
 - Notification SSE lifecycle  
 - Analyze deprecated_member_use (52)  
+
+**2026-09-18 doğrulama koşusunda eklenen P3 bulguları:**
+
+- **`yacht` hediyesi yanlış animasyon gösteriyor — varlık eksik:** `gift_catalog_maps.dart` satır 13/19/24 (`'lottie:yacht'`, `'yacht'`, `'yat'`) üçü de `assets/gifts/lottie/star.json`'a işaret ediyor. `mobile/assets/gifts/lottie/` içeriği doğrulandı: **`car, crown, heart, rose, star`** — `yacht.json` **yok**. Katalogdaki en pahalı hediyelerden biri yıldız animasyonu oynatıyor. *Çözüm:* `yacht.json` eklenmeli; eklenene kadar ayırt edilebilir başka bir varlığa yönlendirilmeli. *Test:* katalogdaki her anahtarın var olan bir asset'e çözüldüğünü doğrulayan birim testi — bu tür sessiz eksikleri kalıcı olarak önler.
+- **Üretim kodunda üçüncü parti placeholder görselleri:** `images.unsplash.com` (27 kullanım) ve `i.pravatar.cc` sabit URL olarak gömülü — `fortune_type_images.dart:5`, `section_visual_catalog.dart:3`, `discover_live_carousel.dart:124,132,140,412`, `live_background_picker_sheet.dart:25,29,33`. SLA'sız üçüncü parti CDN; erişim kesilirse fal kategorileri, ana sayfa görselleri ve canlı arka planları boş kalır. *Çözüm:* kendi CDN/asset'lerine taşınmalı veya backend'den yönetilmeli.
 
 ---
 
@@ -874,12 +937,20 @@ mobile/lib/
 4. **CI cihaz E2E yok** — regresyonlar geç fark edilir  
 5. **Dokümantasyon sürüm drift** — docs `1.0.391+429` vs pubspec `1.0.559+601` (karar karmaşası)  
 6. **Flutter pin drift** — `.flutter-version` 3.44.8 vs ortam 3.47.4  
+7. **P0-2 — hediye jeton düşümü atomik değil** (`gifts.ts` 199–242): gerçek para kaybı ve negatif bakiye üretebilir; finansal doğruluk sürüm öncesi zorunlu  
+8. **P1-4/P1-5 — PK single-live düşüşü**: kullanıcının bildirdiği asıl şikâyet; ana özellik zayıf ağda kullanılamaz hale geliyor  
+9. **P0 yan bulgu — hediye yanlış alıcıya** (`gifts.ts` 214–226): yayıncı gelirini yanlış hesaba yazabilir  
 
 ---
 
 ## RECOMMENDED FIX ORDER
 
 1. **P0** — Psychic TRTC: cihaz repro → hotfix (yalnızca `live_psychics`/`trtc` scope) → P0 PASS kaydı  
+1b. **P0-2** — `gifts.ts` koşullu atomik düşme + `$transaction` + idempotency *(izole, tek endpoint, en yüksek kazanç)*  
+1c. **P0 yan** — hediye alıcı çözümünü `receiverId`/`username` ile sınırla *(aynı dosya, aynı test turu)*  
+1d. **P1-5** — `refresh()` catch bloğu battle'ı silmesin *(tek blok, daraltıcı)*  
+1e. **P1-4** — stale guard `paused` kapsamı + TTL'i maç süresinden türet *(saf fonksiyon, test kolay)*  
+1f. **P1-6** — PK oturumu aktifken `keepAlive` + `ref.mounted` koruması  
 2. **P1** — PK state latch: `live_video_pk_provider.refresh` stale battle koruması + test  
 3. **P1** — `live_broadcast_room_page` kontrollü parçalama (PK/RTC dokunmadan widget extract)  
 4. **P1** — Release metadata: apk-latest CI run doğrula (`scripts/verify-apk-latest-release.sh`)  
@@ -890,6 +961,61 @@ mobile/lib/
 9. **P3** — CDS UI homojenlik ekran sprint (fonksiyon değiştirmeden)  
 10. **P4** — Analyze cleanup batch + deprecated silme (kanıtlı)  
 11. **Docs** — `DOCS_RELEASE_INDEX.md` sürüm senkronu  
+
+---
+
+---
+
+# EK: 2026-09-18 DOĞRULAMA KOŞUSU
+
+Bu bölüm, raporun ilk sürümünden sonra yapılan bağımsız bir doğrulama koşusunun sonuçlarıdır. Amaç, açık bırakılmış soruları kapatmak ve bulguları kanıta bağlamak. **Bu koşuda da hiçbir kaynak dosya değiştirilmedi.**
+
+## Yöntem ve kapsam
+
+**Gerçekten çalıştırıldı:**
+- Flutter **3.44.8** SDK (CI pin'i) kuruldu → `flutter pub get` + `flutter analyze` → **657 bulgu, 0 error**
+- `flutter test` → **1.408 geçti, 2 atlandı, 0 başarısız** (4 dk 20 sn, exit 0)
+- 324.911 satırın tamamında grep taraması (TODO/mock/hardcoded/placeholder/dispose desenleri)
+- Derin kod okuması: PK state zinciri, hediye/para yolu (**backend dahil**), sesli oda rol sistemi, keşif veri akışı
+
+**Yapılmadı — bu raporda iddia edilmiyor:**
+- **Görsel/UI denetimi yapılmadı.** Uygulama çalıştırılmadı, ekran görüntüsü alınmadı, cihazda test edilmedi (ortamda emülatör/cihaz yok). UI/UX, animasyon ve responsive maddeleri **kod seviyesinde** değerlendirildi, görsel olarak değil. Bu bölümler cihaz testi gerektirir.
+- Release/debug build alınmadı, APK üretilmedi.
+- 43 modülün **8'i** derinlemesine okundu; kalanlar yalnızca otomatik tarama kapsamındadır. **Bulgu listesi tüketici değildir.**
+- Backend'in 21.761 satırının tamamı okunmadı — yalnızca para yolu (`gifts.ts`), kullanıcı doğrulama (`users.ts`) ve transaction kullanımı incelendi.
+
+## Doğrulanmış pozitifler — bu alanlarda müdahale gerekmiyor
+
+| Alan | Bulgu |
+|---|---|
+| Teknik borç işaretleri | **0 TODO / FIXME / HACK** (324.911 satırda) — olağandışı temiz |
+| Mock/dummy veri | Kod genelinde **0** — tek istisna `feed_story_strip.dart` (P2'de raporlandı) |
+| Debug çıktısı | **0 ham `print(`** — yalnızca 129 `debugPrint` |
+| Hassas veri loglama | FCM token'ları `substring(0, 12)` ile **maskelenmiş** (`firebase_bootstrap.dart:53,76`); auth loglarında şifre/token yok |
+| İstemci tarafı bakiye | Cüzdan/hediye modüllerinde **yerel bakiye mutasyonu yok**; bakiye sunucuda doğrulanıyor (`gifts.ts:202`) |
+| Dispose hijyeni | 301 `dispose()` / 218 `AnimationController`; 393 `cancel()` / 27 `StreamSubscription` — sistemik sızıntı işareti yok |
+| Bağımlılık temizliği | `socket_io_client` ve `livekit_client` pubspec'ten kaldırılmış, kodda kalıntı yok |
+| Endpoint yönetimi | 212 endpoint tek dosyada merkezî |
+| Tanış & Kaynaş | **Gerçek backend'e bağlı** (`SocialDiscoveryRemoteDataSource`); filtreler sunucuya iletiliyor — mock sistem **değil** |
+| Transaction bilinci | `$transaction` 10 yerde doğru kullanılıyor — eksik olan yalnızca `gifts.ts` (P0-2) |
+| Test süiti sağlığı | **1.408 testin tamamı geçiyor** — güvenilir regresyon ağı |
+| Derleme sağlığı | `flutter analyze` **0 error** |
+
+## PK çoklu source-of-truth — yapısal kök neden (refactor, EN SONA)
+
+`pk_session_notifier.dart:229-259` (`_applyBattle`) state'i ikinci bir provider'a aynalıyor:
+
+```dart
+if (arg.kind == PkContextKind.live) {
+  ref.read(liveVideoPkProvider(arg.contextId).notifier).applyRemoteBattle(…);
+} else {
+  ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(remote);
+}
+```
+
+PK durumu **üç yerde** yaşıyor: `pkSessionProvider.state`, `liveVideoPkProvider.state`, `pkBattleRemoteProvider.state`. Üstelik `liveVideoPkProvider`'ın **kendi bağımsız `refresh()` ve 15 sn polling'i** var (`live_video_pk_provider.dart:100-111`) — yani ayna kaynağından bağımsız güncellenip **sapabiliyor**. P1-4/P1-5'in etkisini büyüten yapısal neden budur.
+
+**Neden en sona bırakıldı:** PK'nın tüm görünürlük mantığı bu iki provider'a bağlı; risk **yüksek**. Önce P1-4/P1-5/P1-6 (düşük riskli, semptomu durdurur) uygulanmalı, refactor ancak karakterizasyon testleri yazıldıktan sonra, izole bir adımda yapılmalı. Kullanıcının 19. ve 20. kuralları (önce mevcut mimariyi çıkar, tek seferde rastgele değiştirme) doğrudan bu maddeye işaret ediyor.
 
 ---
 

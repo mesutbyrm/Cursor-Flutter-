@@ -79,13 +79,35 @@ class PkSessionState {
 class PkSessionNotifier
     extends AutoDisposeFamilyNotifier<PkSessionState, PkSessionArgs> {
   Timer? _tick;
+  KeepAliveLink? _liveLink;
+  bool _disposed = false;
 
   @override
   PkSessionState build(PkSessionArgs arg) {
-    ref.onDispose(() => _tick?.cancel());
+    ref.onDispose(() {
+      _disposed = true;
+      _tick?.cancel();
+      _releaseLive();
+    });
     Future.microtask(loadState);
     _startTicker();
     return const PkSessionState();
+  }
+
+  /// Süren bir maç varken provider'ı canlı tutar.
+  ///
+  /// Bu provider `autoDispose`: izleyici kalmadığı an state imha olur ve
+  /// sonraki okuma `const PkSessionState()` (battle **yok**) döner. Navigasyon
+  /// ya da sheet/dialog açılışı izleyicileri bir kare için düşürürse PK state
+  /// sıfırlanıyordu. Maç bitince link bırakılır — aksi halde sızıntı olur.
+  void _retainLive() {
+    _liveLink ??= ref.keepAlive();
+  }
+
+  void _releaseLive() {
+    final link = _liveLink;
+    _liveLink = null;
+    link?.close();
   }
 
   PkService get _api => ref.read(pkServiceProvider);
@@ -119,9 +141,11 @@ class PkSessionNotifier
     state = state.copyWith(loading: true, clearError: true);
     try {
       final battle = await _api.getState(id);
+      if (_disposed) return;
       _applyBattle(battle);
       state = state.copyWith(loading: false, clearError: true);
     } catch (e) {
+      if (_disposed) return;
       state = state.copyWith(
         loading: false,
         error: e is PkException ? e.message : '$e',
@@ -142,6 +166,7 @@ class PkSessionNotifier
       final bundle = arg.kind == PkContextKind.live
           ? await _api.streamCandidates(id)
           : await _api.roomCandidates(id);
+      if (_disposed) return;
       var candidates = bundle.candidates
           .where((c) => c.contextId.isNotEmpty && c.contextId != id)
           .toList();
@@ -206,10 +231,11 @@ class PkSessionNotifier
         clearError: true,
       );
     } catch (e) {
+      PkEventLog.error('load_candidates', e);
+      if (_disposed) return;
       state = state.copyWith(
         error: e is PkException ? e.message : '$e',
       );
-      PkEventLog.error('load_candidates', e);
     }
   }
 
@@ -228,6 +254,7 @@ class PkSessionNotifier
 
   void _applyBattle(PkBattle? battle) {
     if (battle == null || battle.id.isEmpty) {
+      _releaseLive();
       state = state.copyWith(clearBattle: true);
       if (arg.kind == PkContextKind.live) {
         ref.read(liveVideoPkProvider(arg.contextId).notifier).refresh();
@@ -235,6 +262,11 @@ class PkSessionNotifier
         ref.read(pkBattleRemoteProvider.notifier).clear();
       }
       return;
+    }
+    if (battle.status.isTerminal) {
+      _releaseLive();
+    } else {
+      _retainLive();
     }
     final skew = _api.clockSkew;
     state = state.copyWith(
@@ -288,9 +320,11 @@ class PkSessionNotifier
         targetRoomId: target,
         durationSeconds: durationSeconds,
       );
+      if (_disposed) return;
       _applyBattle(battle);
       state = state.copyWith(loading: false);
     } on PkException catch (e) {
+      if (_disposed) return;
       if (e.statusCode == 429 || e.errorCode == 'RATE_LIMITED') {
         state = state.copyWith(
           loading: false,
@@ -305,6 +339,7 @@ class PkSessionNotifier
       }
       state = state.copyWith(loading: false, error: e.message);
     } catch (e) {
+      if (_disposed) return;
       state = state.copyWith(loading: false, error: '$e');
     }
   }
@@ -339,15 +374,18 @@ class PkSessionNotifier
     state = state.copyWith(loading: true, clearError: true);
     try {
       final battle = await call();
+      if (_disposed) return;
       _applyBattle(battle);
       state = state.copyWith(loading: false);
     } on PkException catch (e) {
+      if (_disposed) return;
       if (e.message.contains('PK durumu değişti')) {
         await loadState();
         return;
       }
       state = state.copyWith(loading: false, error: e.message);
     } catch (e) {
+      if (_disposed) return;
       state = state.copyWith(loading: false, error: '$e');
     }
   }

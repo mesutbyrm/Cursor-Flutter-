@@ -64,4 +64,90 @@ void main() {
       isTrue,
     );
   });
+
+  // `paused` bitmiş değil devam eden bir maçtır (`PkStatus.isLive`,
+  // pk_models.dart). Guard bunu kapsamadığı için duraklatılmış maç boş
+  // refresh'te siliniyordu — `active` ile aynı şekilde korunmalı.
+  group('paused', () {
+    test('retains paused battle within TTL when refresh empty', () {
+      expect(
+        shouldRetainPkBattleOnEmptyRefresh(
+          battle: const {'status': 'paused', 'id': 'pk-3'},
+          status: 'paused',
+          lastAuthorityAt: now.subtract(const Duration(seconds: 10)),
+          now: now,
+        ),
+        isTrue,
+      );
+    });
+
+    test('retains paused battle with dual streams within TTL', () {
+      expect(
+        shouldRetainPkBattleOnEmptyRefresh(
+          battle: const {
+            'status': 'paused',
+            'id': 'pk-3',
+            'liveStreamId': 's-host',
+            'opponentLiveStreamId': 's-opp',
+          },
+          status: 'paused',
+          lastAuthorityAt: now.subtract(const Duration(seconds: 10)),
+          now: now,
+        ),
+        isTrue,
+      );
+    });
+
+    // Sınırı belgeler: paused, active ile aynı TTL davranışına tabidir.
+    test('does not retain paused battle after TTL', () {
+      expect(
+        shouldRetainPkBattleOnEmptyRefresh(
+          battle: const {'status': 'paused', 'id': 'pk-3'},
+          status: 'paused',
+          lastAuthorityAt: now.subtract(const Duration(seconds: 120)),
+          now: now,
+        ),
+        isFalse,
+      );
+    });
+
+    test('still clears genuinely ended battle', () {
+      expect(
+        shouldRetainPkBattleOnEmptyRefresh(
+          battle: const {'status': 'completed', 'id': 'pk-3'},
+          status: 'completed',
+          lastAuthorityAt: now.subtract(const Duration(seconds: 10)),
+          now: now,
+        ),
+        isFalse,
+      );
+    });
+  });
+
+  // Tek bir geçici ağ hatası PK ekranını single-live moda düşürüyordu:
+  // hata yolu ile "sunucu battle yok dedi" yolu aynı sonuca bağlanmıştı.
+  // Hata bilgi yokluğudur; yalnızca sunucu açıkça bildirdiğinde silinir.
+  group('pkRefreshErrorMeansBattleGone', () {
+    test('404 and 410 mean the battle is really gone', () {
+      expect(pkRefreshErrorMeansBattleGone(404), isTrue);
+      expect(pkRefreshErrorMeansBattleGone(410), isTrue);
+    });
+
+    test('network failure (no status code) is not proof of a finished battle', () {
+      expect(pkRefreshErrorMeansBattleGone(null), isFalse);
+    });
+
+    test('server-side failures are not proof of a finished battle', () {
+      expect(pkRefreshErrorMeansBattleGone(500), isFalse);
+      expect(pkRefreshErrorMeansBattleGone(502), isFalse);
+      expect(pkRefreshErrorMeansBattleGone(503), isFalse);
+      expect(pkRefreshErrorMeansBattleGone(504), isFalse);
+    });
+
+    test('auth and rate-limit failures are not proof of a finished battle', () {
+      expect(pkRefreshErrorMeansBattleGone(401), isFalse);
+      expect(pkRefreshErrorMeansBattleGone(403), isFalse);
+      expect(pkRefreshErrorMeansBattleGone(429), isFalse);
+    });
+  });
 }
