@@ -1,0 +1,896 @@
+# Canlifal Mobile — Tam Uygulama Audit Raporu (Aşama 1)
+
+**Tarih:** 2026-09-18  
+**Repo:** `mesutbyrm/Cursor-Flutter-` · uygulama: `mobile/` (`canlifal_social`)  
+**Sürüm (pubspec):** `1.0.559+601`  
+**Talimat:** `5_TAM_UYGULAMA_AUDIT_TALIMATI` — **yalnızca analiz; kod değişikliği yok**
+
+---
+
+## PROJECT SUMMARY
+
+| Alan | Değer |
+|------|--------|
+| Flutter (CI pin) | `mobile/.flutter-version` → **3.44.8** |
+| Flutter (bu ortam) | **3.47.4** stable (pin ile uyumsuzluk riski) |
+| Dart SDK | `>=3.8.0 <4.0.0` |
+| Paket | `canlifal_social` |
+| `lib/` Dart dosyası | **5818** |
+| Feature modülü | **43** (`mobile/lib/features/*`) |
+| Presentation sayfa | **~135** (`*/presentation/pages/*.dart`) |
+| Router | `app_router.dart` **1512** satır, **~296** route tanımı |
+| API sabitleri | `api_endpoints.dart` **1097** satır |
+| State yönetimi | **Riverpod** (birincil) + sınırlı **flutter_bloc** (sesli oda müzik vb.) |
+| HTTP | **Dio** + retry, cache, 401 refresh koordinatörü, `flutter_secure_storage` |
+| RTC | **Tencent TRTC** (`tencent_rtc_sdk`, yerel path override) |
+| Gerçek zamanlı | **SSE** (Socket.IO değil); merkezi `SseConnectionHub` |
+| Auth | JWT `Bearer` — `/api/auth/mobile-login`, `/api/auth/mobile-refresh`, `/api/me` |
+| Üretim API | `https://canlifal.com` (`core/config/env.dart`) |
+| Entegrasyon kaynağı | `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9 |
+| `dart analyze` | **660** issue — **0 error**, **0 warning** (tamamı `info` seviyesi) |
+| `flutter test` | **1404** geçti, **2** skipped (~2:21) |
+| Integration test | **Yok** (`integration_test` paketi/klasörü bulunamadı) |
+| Release gate (CI) | Dokümantasyonda **FINAL PASS** (eski run referansları) |
+| **RELEASE READY** | **NO** — **Psychic P0** cihaz testi (TRTC T+5s) kapanmadı |
+
+**Öne çıkan riskler:** Canlı falcı TRTC donması (P0 cihaz bloker); PK state’in geçici API/SSE tutarsızlığında düşmesi ihtimali; analyze/info birikimi (`use_build_context_synchronously`); dokümantasyon sürüm drift’i; monolitik yayın odası dosyası bakım riski.
+
+---
+
+## ARCHITECTURE
+
+**Katmanlar (feature-first Clean Architecture eğilimi):**
+
+```
+mobile/lib/
+├── app/                 # router, tema girişi
+├── core/                # network, auth, design_system, motion, SSE, config
+└── features/<feature>/
+    ├── data/            # datasources, repositories impl, DTO
+    ├── domain/          # entities, repository interfaces
+    └── presentation/    # pages, widgets, providers
+```
+
+**Navigasyon:** `go_router` — `app/router/app_router.dart` (auth redirect, derin link, admin, fal, live, sosyal, inbox, vb.).
+
+**Ağ:** Tek ana `Dio` (`dio_provider.dart`) — `ApiVersionInterceptor`, `BackendRoutingInterceptor`, `ApiRetryInterceptor`, Bearer enjeksiyonu, `AuthTokenRefreshCoordinator` ile 401 → refresh.
+
+**SSE:** `core/network/sse/base_sse_service.dart` — exponential backoff, Last-Event-ID, heartbeat; `sse_connection_hub.dart` oda/yayın başına lease/refcount.
+
+**RTC:** Live video (`live/`), sesli oda (`voice_hub/`), canlı falcı (`live_psychics/` + `trtc/`) — TRTC token uçları kılavuz ile hizalı olmalı.
+
+**Çift state riski (bilinçli köprüler):** PK için `liveVideoPkProvider` + `pk_battle_remote_provider` (voice_hub) + `livePkHomeTransitionProvider` (sunum); feed/social için deprecated `feed_providers` → `socialNotifierProvider` birleşimi devam ediyor.
+
+---
+
+## FEATURE MAP
+
+| Modül | Rol | Ana giriş |
+|-------|-----|-----------|
+| `auth` | Giriş, OTP, oturum | `auth_flow_app`, `auth_repository_impl` |
+| `shell` | Alt sekmeler | `main_shell_page.dart` |
+| `home` | Ana hub | `home/` |
+| `fortune` | Fal/tarot/günlük fal | `fortune_*_page.dart` |
+| `live_psychics` | Canlı falcı TRTC | `live_psychics/` |
+| `live` | Video yayın, PK UI, izleyici | `live_broadcast_room_page.dart` (3209 satır) |
+| `voice_hub` | Sesli sohbet odaları, PK remote | `voice_hub/` |
+| `pk` | PK yardımcı domain (ayrı feature klasörü) | test + modeller |
+| `social` + `feed` | Sosyal akış + Tanış & Kaynaş | `social_page`, `tanis_kaynas_page` |
+| `messages` + `inbox` | DM, gelen kutusu | `chat_page`, `inbox_page` |
+| `profile` | Profil, ayarlar | `profile/` |
+| `wallet` + `membership` + `vip_gold` | Jeton/CFC/Gold | `wallet/`, `membership_page` |
+| `gifts` + `gift_box` | Hediye gönderimi, koleksiyon | `gift_hub_page` |
+| `notifications` | Push + in-app | FCM + OneSignal |
+| `games`, `shorts`, `cfc_arena`, … | Oyun, kısa video, arena | ilgili hub sayfaları |
+| `admin` + `admin_web` | Mobil admin panelleri | yetki `/api/me/admin-capabilities` |
+
+---
+
+## API MAP
+
+**Kaynak:** `mobile/lib/core/network/api_endpoints.dart` (canlifal.com hizalı sabitler).
+
+| Grup | Örnek uçlar |
+|------|-------------|
+| Auth | `/api/auth/mobile-login`, `mobile-refresh`, `mobile-register`, OTP, sessions |
+| User / Me | `/api/me`, `/api/me/membership`, `/api/mobile/user-profile/{id}` |
+| Sosyal / Discovery | `/api/social/posts`, `/api/social/discovery`, `/api/social/actions` |
+| Mesajlar | `/api/messages`, `/api/messages/{userId}`, `messages/request` |
+| Chat odası (sesli) | `/api/chat/rooms/*`, presence, voice, music |
+| Video yayın | `/api/video-streams/*`, SSE `.../stream` |
+| PK | `/api/pk/*`, `pkMatchStream(matchId)` |
+| Fal / Falcı | `/api/fortune-tellers/*`, `/api/room/{sessionId}`, SSE stream |
+| Hediye | `/api/gifts/*`, battles, missions, insights |
+| Cüzdan / ödeme | payment interceptor + profile deprecated payment paths |
+| Bildirim | `/api/notifications/stream` |
+| TRTC / Agora | token uçları (kılavuz §9 — live vs psychic ayrımı) |
+| Admin | `/api/admin/*` (mobilde yetkili kullanıcı) |
+
+**Uyumluluk notu:** `@Deprecated` işaretli uçlar hâlâ kodda (ör. `meGiftsReceived`, eski chat music pause/resume, `messagesConversations`).
+
+---
+
+## REALTIME MAP
+
+| Kanal | Transport | Dosya / servis |
+|-------|-----------|----------------|
+| Sesli oda olayları | SSE | `chat_room_sse_service.dart`, hub lease |
+| Video yayın (chat, hediye, izleyici) | SSE | `video_stream_sse_service.dart` |
+| PK maçı | SSE | `ApiEndpoints.pkMatchStream` |
+| Fal falcı bekleyen | SSE | `fortune-tellers/sessions/stream` |
+| Fal oda | SSE | `liveFortuneRoom(sessionId)/stream` |
+| Bildirimler | SSE | `notificationsStream` |
+| DM (hazırlık) | SSE | `messages/conversations/{id}/stream` |
+| Kısa video | SSE | `short-videos/{id}/stream` |
+| Ses/görüntü | TRTC | `tencent_rtc_sdk`, `TrtcRoomManager` (psychic) |
+| Yeniden bağlanma | Politika | `sse_reconnect_policy.dart`, max deneme kılavuz §5–6 |
+| Connectivity | Trigger | `connectivity_sse_reconnect_provider.dart` |
+
+**Lifecycle:** `sse_hub_lifecycle.dart` — arka plan/ön plan SSE yönetimi.
+
+---
+
+## AUTH AUDIT
+
+**Durum:** JWT + secure storage + refresh koordinatörü mevcut; çoklu sosyal giriş (Google/Apple/TikTok) endpoint sabitleri tanımlı.
+
+### Bulgular
+
+#### [P2] Auth verify-device dokümantasyon çelişkisi
+- **Dosya:** `mobile/lib/core/network/api_endpoints.dart`
+- **Satır:** 39–40
+- **Problem:** `authVerifyDevice` için GET vs POST çelişkisi yorumda belirtilmiş; mobil çağrı yanlış metot kullanıyorsa sessiz hata.
+- **Neden:** Üretim dokümanları arası tutarsızlık.
+- **Etkilenen özellik:** Cihaz doğrulama / reclaim akışı.
+- **Çözüm:** Kılavuz §9 ile tek metot doğrula; integration test veya contract test.
+- **Risk:** Orta — edge cihaz senaryoları.
+- **Test:** Staging’de verify-device happy path.
+
+#### [P3] Deprecated auth gateway sınıfı
+- **Dosya:** `mobile/lib/features/auth/presentation/auth_flow_app.dart`
+- **Satır:** 113
+- **Problem:** `@Deprecated('AuthGatewayHost kullanın')` — eski giriş noktası hâlâ referans alınabilir.
+- **Neden:** Migrasyon tamamlanmamış.
+- **Etkilenen özellik:** Auth bootstrap.
+- **Çözüm:** Referans taraması; kaldır veya tek host’a yönlendir.
+- **Risk:** Düşük.
+- **Test:** `flutter test test/features/auth/` (mevcut suite).
+
+#### [P4] Session cookie + Bearer bir arada
+- **Dosya:** `mobile/lib/core/network/dio_provider.dart`
+- **Satır:** 69, 86–94
+- **Problem:** Cookie jar + Bearer — web parity; mobilde gereksiz karmaşıklık.
+- **Neden:** Tarihsel web API uyumu.
+- **Etkilenen özellik:** Auth (nadiren çift kimlik).
+- **Çözüm:** Mobil-only build’de cookie opsiyonel (değişiklik planlı).
+- **Risk:** Düşük.
+- **Test:** Login → `/api/me` yalnız Bearer.
+
+---
+
+## LIVE AUDIT
+
+**Kapsam:** Yayın başlatma, oda, SSE, TRTC (yayın), izleyici etkileşim, co-host, fal entegrasyonu.
+
+### Bulgular
+
+#### [P0] Canlı falcı TRTC — T+5s A/V donması (cihaz bloker)
+- **Dosya:** `docs/LIVE_PSYCHICS_REMAINING.md`, `docs/PSYCHIC_P0_START.md`
+- **Satır:** 57–76 (LIVE_PSYCHICS), 6–7 (P0_START)
+- **Problem:** **Psychic P0 PASS** alınmadı; RELEASE READY NO.
+- **Neden:** Geçmiş bug T+5s’de donma; kodda Faz 2 TRTC düzeltmeleri var ama cihaz doğrulaması eksik.
+- **Etkilenen özellik:** Canlı falcı görüntülü görüşme.
+- **Çözüm:** İki cihaz checklist; gerekirse `live_psychics/` TRTC rejoin/gate hotfix.
+- **Risk:** Kritik — release engeli.
+- **Test:** `bash scripts/psychic-p0-checklist.sh`, logcat T+5s.
+
+#### [P1] Monolitik yayın odası bakım ve regresyon riski
+- **Dosya:** `mobile/lib/features/live/presentation/pages/live_broadcast_room_page.dart`
+- **Satır:** 1–3209 (tüm dosya)
+- **Problem:** Tek dosyada RTC, PK, co-guest, SSE, hediye, fal bildirimi — değişiklik yan etkisi yüksek.
+- **Neden:** Organik büyüme.
+- **Etkilenen özellik:** Tüm canlı yayın.
+- **Çözüm:** Parçalı widget/provider extract (fix planında kontrollü).
+- **Risk:** Yüksek regresyon PK/RTC.
+- **Test:** Mevcut `live_*` unit/widget testleri + cihaz smoke.
+
+#### [P2] SSE kopması sonrası kullanıcı geri bildirimi
+- **Dosya:** `mobile/lib/features/live/presentation/pages/live_broadcast_room_page.dart`
+- **Satır:** 2727–2728 (`sseConnected` dinleyicisi)
+- **Problem:** Bağlantı değişimi işleniyor; tüm edge case’lerde sonsuz loading önlenmiş mi tam cihaz kanıtı yok.
+- **Neden:** Ağ/SSE race.
+- **Etkilenen özellik:** Canlı yorum/hediye senkronu.
+- **Çözüm:** Banner + retry pattern’i psychic modülü ile hizala.
+- **Risk:** Orta.
+- **Test:** Uçak modu 30s manuel (PSYCHIC doc §5 benzeri).
+
+#### [P3] Debug event logları (release’te kDebugMode guard’lı)
+- **Dosya:** `mobile/lib/core/network/live_event_log.dart`, `live_debug_log.dart`
+- **Satır:** ~10–22
+- **Problem:** `[LIVE]` debugPrint — production’da kapalı ama payment/psychic logları benzer.
+- **Neden:** Teşhis.
+- **Etkilenen özellik:** Gizlilik (düşük).
+- **Çözüm:** Merkezi log seviyesi; hassas alan maskeleme audit’i.
+- **Risk:** Düşük.
+- **Test:** Release build logcat taraması.
+
+---
+
+## PK AUDIT
+
+**State:** `liveVideoPkProvider(streamId)` birincil battle map; `pk_battle_remote_provider`; sunum: `livePkHomeTransitionProvider`; dedup: `LivePkEventDedup`.
+
+### Bulgular
+
+#### [P1] `refresh()` battle temizleme — geçici API hatası + eksik dual-stream alanları
+- **Dosya:** `mobile/lib/features/live/presentation/providers/live_video_pk_provider.dart`
+- **Satır:** 152–166
+- **Problem:** `fetchStreamBattle` null/bitti ve `isLivePkBroadcastStage` false ise `clearBattle: true` — eksik `opponentStreamId` ile stage false olup PK UI single-live’a düşebilir.
+- **Neden:** `isLivePkBroadcastStage` dual-stream alanlarına bağlı (`live_pk_broadcast_stage.dart` 4–19).
+- **Etkilenen özellik:** PK split ekran; audit talimatındaki “like sonrası PK kaybolması” sınıfı.
+- **Çözüm:** Aktif PK latch (status + battleId TTL); refresh hata durumunda stale battle koru; SSE otoritesi.
+- **Risk:** Yüksek — canlı yayında görünür glitch.
+- **Test:** `live_video_pk_provider_test`, senaryo: partial JSON refresh.
+
+#### [P2] PK like/heart — ayrı kod yolu (iyi) ama sessiz hata yutma
+- **Dosya:** `mobile/lib/features/live/presentation/pages/live_broadcast_room_page.dart`
+- **Satır:** 1992–2031
+- **Problem:** PK aktifken double-tap `_postPkHeartScore`; catch `(_) {}` hata göstermiyor.
+- **Neden:** UX gürültüsü engelleme.
+- **Etkilenen özellik:** PK skor / like.
+- **Çözüm:** Sınırlı retry veya snackbar (rate limited).
+- **Risk:** Orta — skor senkron kaybı.
+- **Test:** Mock API fail → UI feedback.
+
+#### [P2] 15s polling yedek — SSE birincil değilse gecikme
+- **Dosya:** `mobile/lib/features/live/presentation/providers/live_video_pk_provider.dart`
+- **Satır:** 86–96
+- **Problem:** Timer.periodic 15s — SSE kaçırılırsa skor gecikmesi.
+- **Neden:** Yedek mekanizma.
+- **Etkilenen özellik:** PK skor güncelliği.
+- **Çözüm:** Unified PK SSE aboneliği doğrula; polling yalnızca SSE down iken.
+- **Risk:** Orta.
+- **Test:** SSE kapalı simülasyon.
+
+#### [P4] Çok sayıda PK unit test (güçlü yan)
+- **Dosya:** `mobile/test/features/live/live_video_pk_provider_test.dart` (+ ~20 PK test dosyası)
+- **Satır:** —
+- **Problem:** Yok — olumlu bulgu.
+- **Neden:** —
+- **Etkilenen özellik:** PK regresyon koruması.
+- **Çözüm:** E2E cihaz PK smoke ekle (fix planı).
+- **Risk:** —
+- **Test:** Mevcut suite yeşil.
+
+---
+
+## VOICE ROOM AUDIT
+
+**Kapsam:** Keşif, join/leave, roller, müzik, PK (sesli), TRTC/Agora geçiş artefaktları.
+
+### Bulgular
+
+#### [P2] Deprecated yönetim panelleri — çift UI yolu
+- **Dosya:** `mobile/lib/features/voice_hub/presentation/sheets/voice_room_hub_settings.dart`, `voice_room_sheets.dart`
+- **Satır:** 41–42, 67–68
+- **Problem:** `@Deprecated('Use showVoiceRoomManagementPanel')` — admin/normal oda karışıklığı riski.
+- **Neden:** UI konsolidasyonu yarım.
+- **Etkilenen özellik:** Oda admin/moderator deneyimi.
+- **Çözüm:** Tek panel; eski sheet referanslarını kaldır.
+- **Risk:** Orta — yanlış rol UI.
+- **Test:** Admin hesap manuel oda ayarları.
+
+#### [P2] VoiceTrtcException rename geçişi
+- **Dosya:** `mobile/lib/features/voice_hub/presentation/audio/voice_trtc_exception.dart`
+- **Satır:** 19
+- **Problem:** `VoiceAgoraException` deprecated alias.
+- **Neden:** Agora → TRTC migrasyonu.
+- **Etkilenen özellik:** Sesli oda hata mesajları.
+- **Çözüm:** Tüm catch bloklarını yeni tipe güncelle.
+- **Risk:** Düşük-orta.
+- **Test:** `voice_hub` test klasörü.
+
+#### [P3] Oda müziği deprecated stream URL
+- **Dosya:** `mobile/lib/features/voice_hub/music/data/datasources/room_music_remote_datasource.dart`
+- **Satır:** 53–54
+- **Problem:** Eski IFrame/stream URL yolu işaretli deprecated.
+- **Neden:** Oynatma mimarisi değişti.
+- **Etkilenen özellik:** Oda müziği.
+- **Çözüm:** Ölü kodu kaldır veya feature flag.
+- **Risk:** Düşük.
+- **Test:** Music bloc testleri.
+
+---
+
+## GIFT AUDIT
+
+### Bulgular
+
+#### [P2] Canlı + PK + voice hediye yolları — merkezi repo tek ama çok giriş noktası
+- **Dosya:** `mobile/lib/features/gifts/data/gift_repository.dart`, live broadcast gift picker
+- **Satır:** —
+- **Problem:** Aynı işlem farklı UI’lardan; duplicate transaction guard sunucuya bağlı — client idempotency anahtarı audit edilmeli.
+- **Neden:** Feature dağılımı.
+- **Etkilenen özellik:** Hediye, jeton düşümü.
+- **Çözüm:** Gönderim API body kılavuz §9 ile tekrar doğrula; client requestId.
+- **Risk:** Orta — çift harcama (sunucu reddederse OK).
+- **Test:** `live_pk_gift_stabilize_test.dart`.
+
+#### [P3] Self-gift — kod taramasında açık bypass bulunamadı
+- **Dosya:** `mobile/lib/features/gifts/` (grep selfGift)
+- **Satır:** —
+- **Problem:** Audit talimatı self-gift gereksinimini doğrulamak istiyor; mobilde açık `selfGift` handler yok — ürün kuralı backend’de doğrulanmalı.
+- **Neden:** —
+- **Etkilenen özellik:** Hediye kuralları.
+- **Çözüm:** UI’da alıcı seçimi + API hata mesajı testi.
+- **Risk:** Bilinmiyor.
+- **Test:** Manuel self-send denemesi.
+
+---
+
+## WALLET / COIN AUDIT
+
+### Bulgular
+
+#### [P2] Deprecated payment API yolları profil datasource’da
+- **Dosya:** `mobile/lib/features/profile/data/datasources/profile_remote_datasource.dart`
+- **Satır:** 28, 497, 687, 878
+- **Problem:** `_deprecatedPaymentApiPath` hâlâ kullanılıyor.
+- **Neden:** Eski `/api/payment/*` mirror.
+- **Etkilenen özellik:** Jeton satın alma / talep.
+- **Çözüm:** Kılavuzdaki güncel cüzdan uçlarına migrate.
+- **Risk:** Orta — prod 404/uyumsuz response.
+- **Test:** Wallet repository integration mock.
+
+#### [P3] Client-side balance manipülasyonu grep’i negatif
+- **Dosya:** `mobile/lib/features/wallet/`
+- **Satır:** —
+- **Problem:** Bulunamadı — olumlu (balance set eden local hack yok).
+- **Neden:** —
+- **Etkilenen özellik:** Güvenlik.
+- **Çözüm:** Sunucu otoritesi korunmalı (devam).
+- **Risk:** Düşük.
+- **Test:** Mevcut wallet testleri.
+
+---
+
+## GOLD AUDIT
+
+### Bulgular
+
+#### [P2] Premium yalnızca UI kilidi değil — membership API
+- **Dosya:** `mobile/lib/features/membership/presentation/pages/membership_page.dart`, `ApiEndpoints.meMembership`
+- **Satır:** 45–59 (page), endpoints 54–56
+- **Problem:** Gold rozet/limit UI var; discovery Gold limitleri backend doğrulaması ile eşleşmeli (Tam audit cihaz gerektirir).
+- **Neden:** Client/server parity.
+- **Etkilenen özellik:** Tanış & Kaynaş limit, Gold badge.
+- **Çözüm:** Discovery action 403 handling + upgrade CTA testi.
+- **Risk:** Orta — premium bypass algısı.
+- **Test:** Gold’suz hesapla super-like limit.
+
+#### [P3] CDS skeleton membership catalog (olumlu)
+- **Dosya:** `mobile/lib/features/membership/presentation/pages/membership_page.dart`
+- **Satır:** 59
+- **Problem:** Yok — loading state iyileştirilmiş.
+- **Neden:** —
+- **Etkilenen özellik:** Gold satın alma UX.
+- **Çözüm:** —
+- **Risk:** —
+- **Test:** Widget test (varsa genişlet).
+
+---
+
+## CHAT AUDIT
+
+### Bulgular
+
+#### [P2] REST + SSE + eski conversations API bir arada
+- **Dosya:** `mobile/lib/core/network/api_endpoints.dart`
+- **Satır:** 74–81, 1011–1013
+- **Problem:** `messages` vs `messagesConversations` + DM SSE “üretim hazır olduğunda” yorumu.
+- **Neden:** Migrasyon.
+- **Etkilenen özellik:** DM gerçek zamanlı, unread.
+- **Çözüm:** Tek liste kaynağı; SSE lease inbox’ta doğrula.
+- **Risk:** Orta — duplicate message/list stale.
+- **Test:** `messages` provider testleri.
+
+#### [P3] Match chat entegrasyonu Tanış modülüne bağlı
+- **Dosya:** `mobile/lib/features/social/presentation/pages/tanis_kaynas_page.dart`
+- **Satır:** 61 (`conversationsProvider` invalidate)
+- **Problem:** Keşif yenileme sohbet listesini invalid ediyor — doğru ama race yoğun refresh’te flicker olabilir.
+- **Neden:** Pull-to-refresh kapsamı geniş.
+- **Etkilenen özellik:** Match → chat geçişi.
+- **Çözüm:** Hedefli invalidate.
+- **Risk:** Düşük.
+- **Test:** Manuel match sonrası inbox.
+
+---
+
+## SOCIAL AUDIT
+
+### Bulgular
+
+#### [P3] Feed/Social notifier birleşimi — deprecated katman
+- **Dosya:** `mobile/lib/features/feed/presentation/providers/feed_providers.dart`
+- **Satır:** 19–20, 120, 124
+- **Problem:** `@Deprecated('Use socialNotifierProvider')` — çift provider tüketimi riski.
+- **Neden:** Feed → social merge.
+- **Etkilenen özellik:** Sosyal akış, pagination.
+- **Çözüm:** Tüm `feed*` referanslarını social’a taşı.
+- **Risk:** Orta UI tutarsızlık.
+- **Test:** Social widget testleri.
+
+#### [P3] Fake local post yolu kapalı (olumlu)
+- **Dosya:** `mobile/lib/features/social/presentation/providers/social_providers.dart`
+- **Satır:** 157–159
+- **Problem:** Deprecated fake post — implementasyon enjekte etmiyor.
+- **Neden:** Audit kuralı mock yasağı.
+- **Etkilenen özellik:** Gönderi oluşturma.
+- **Çözüm:** Deprecated metodu kaldır.
+- **Risk:** Düşük.
+- **Test:** POST `/api/social/posts` mock test.
+
+#### [P3] Sosyal layout — CDS responsive kullanımı
+- **Dosya:** `mobile/lib/features/social/presentation/pages/social_page.dart`
+- **Satır:** 6 (`cds_responsive.dart`)
+- **Problem:** Talimattaki “gereksiz kenar boşluğu” için statik kanıt yok; padding 16–32 tab’larda standart — küçük ekran cihaz testi önerilir.
+- **Neden:** —
+- **Etkilenen özellik:** Feed genişliği.
+- **Çözüm:** `CdsResponsive` max width audit cihazda.
+- **Risk:** Düşük görsel.
+- **Test:** 360dp emulator screenshot.
+
+---
+
+## TANIS & KAYNAS AUDIT
+
+**API:** `/api/social/discovery`, actions, konum `Geolocator`.
+
+### Bulgular
+
+#### [P2] Konum izni / servis kapalı edge case
+- **Dosya:** `mobile/lib/features/social/presentation/pages/tanis_kaynas_page.dart`
+- **Satır:** 79–80
+- **Problem:** `Geolocator.isLocationServiceEnabled()` — reddedilmiş izinde kullanıcı akışı snackbar/error ile tam mı (dosya devamında).
+- **Neden:** Platform permission.
+- **Etkilenen özellik:** Mesafe filtresi, keşif.
+- **Çözüm:** Empty/error state standardize.
+- **Risk:** Orta.
+- **Test:** İzin reddi manuel.
+
+#### [P2] Duplicate like engeli — sunucu otoritesi
+- **Dosya:** `mobile/lib/features/social/presentation/providers/social_discovery_providers.dart` (actions)
+- **Satır:** —
+- **Problem:** Client-side optimistic UI varsa çift tık race — kod incelemesi fix planda derinleşmeli.
+- **Neden:** Network latency.
+- **Etkilenen özellik:** Like/super-like.
+- **Çözüm:** Action lock + 409 handling.
+- **Risk:** Orta.
+- **Test:** Hızlı çift swipe simülasyonu.
+
+#### [P4] Mock/dummy keşif verisi yok (olumlu)
+- **Dosya:** `tanis_discover_tab.dart` + discovery providers
+- **Satır:** —
+- **Problem:** API tabanlı — talimatla uyumlu.
+- **Neden:** —
+- **Etkilenen özellik:** —
+- **Çözüm:** —
+- **Risk:** —
+- **Test:** —
+
+---
+
+## FORTUNE / TAROT AUDIT
+
+### Bulgular
+
+#### [P2] Geniş route yüzeyi — fal animasyon shell
+- **Dosya:** `mobile/lib/app/router/app_router.dart`, `fortune_animation_route_shell.dart`
+- **Satır:** router import 17–25, 50–52
+- **Problem:** Çok sayfa (intro, session, result, tarot hub) — loading/empty/error her birinde ayrı audit gerekir.
+- **Neden:** Ürün zenginliği.
+- **Etkilenen özellik:** Fal satın alma, jeton.
+- **Çözüm:** Ekran envanteri checklist (fix planı).
+- **Risk:** Orta — jeton düşümü hatası P1 olabilir.
+- **Test:** `fortune` test klasörü.
+
+#### [P3] Mobil fortune menu endpoint
+- **Dosya:** `api_endpoints.dart`
+- **Satır:** 47
+- **Problem:** `mobileFortuneMenu` — offline cache policy doğrulanmalı.
+- **Neden:** Ana sayfa menü.
+- **Etkilenen özellik:** Fal kategorileri.
+- **Çözüm:** ApiCachePolicy inceleme.
+- **Risk:** Düşük.
+- **Test:** Offline açılış.
+
+---
+
+## PROFILE AUDIT
+
+### Bulgular
+
+#### [P3] Deprecated timeline widget
+- **Dosya:** `mobile/lib/features/profile/presentation/widgets/user_posts_timeline.dart`
+- **Satır:** 28
+- **Problem:** `@Deprecated('Use UserPostsTimelineSliver')`.
+- **Neden:** Scroll performansı.
+- **Etkilenen özellik:** Profil gönderileri.
+- **Çözüm:** Eski widget referanslarını kaldır.
+- **Risk:** Düşük.
+- **Test:** Profil scroll test.
+
+#### [P2] Kendi vs başka profil ayrımı
+- **Dosya:** `profile_repository`, `mobileUserProfile` endpoint
+- **Satır:** —
+- **Problem:** Çoklu route (`/profile`, `/user/:id`) — yetkisiz alan gizleme backend’e bağlı; tam manuel doğrulama pending.
+- **Neden:** —
+- **Etkilenen özellik:** Privacy, block.
+- **Çözüm:** Block/report entegrasyon testi.
+- **Risk:** Orta.
+- **Test:** Block sonrası profil görünürlüğü.
+
+---
+
+## NOTIFICATION AUDIT
+
+### Bulgular
+
+#### [P2] OneSignal + FCM çift stack
+- **Dosya:** `pubspec.yaml` (firebase_messaging, onesignal_flutter)
+- **Satır:** 55, 63
+- **Problem:** İki push kanalı — deep link routing tutarlılığı karmaşık.
+- **Neden:** Migrasyon/geçmiş.
+- **Etkilenen özellik:** Push → ekran (PK, match, psychic).
+- **Çözüm:** Tekincil kaynak deprecate planı; push payload testleri genişlet (`psychic_flow_push_test` iyi örnek).
+- **Risk:** Orta — çift bildirim veya kaçan deep link.
+- **Test:** Push action bridge testleri.
+
+#### [P3] SSE notifications stream
+- **Dosya:** `api_endpoints.dart`
+- **Satır:** 1019
+- **Problem:** In-app unread SSE — app lifecycle ile hub sync.
+- **Neden:** Realtime badge.
+- **Etkilenen özellik:** Bildirim rozeti.
+- **Çözüm:** Background hub lifecycle test.
+- **Risk:** Düşük.
+- **Test:** SSE reconnect test (`sse_20_cycle_test.dart`).
+
+---
+
+## UI/UX AUDIT
+
+### Bulgular
+
+#### [P3] Design system mevcut ama ekranlar arası homojenlik tam değil
+- **Dosya:** `mobile/lib/core/design_system/`, `core/theme/`, `platform_social_ui_kit.dart`
+- **Satır:** —
+- **Problem:** CDS + CanlifalMotion + legacy `app_theme_extensions` bir arada — bazı hub’lar farklı spacing/radius.
+- **Neden:** Kademeli premium redesign.
+- **Etkilenen özellik:** Görsel bütünlük.
+- **Çözüm:** Ekran envanteri → CDS token zorunluluğu (talimat §16).
+- **Risk:** Düşük işlevsel.
+- **Test:** Görsel regresyon (manuel).
+
+#### [P3] Dark mode
+- **Dosya:** `core/theme/app_theme*.dart`
+- **Satır:** —
+- **Problem:** Tema dosyaları var; tüm 135 sayfada kontrast/gradient okunabilirlik cihaz audit’i yapılmadı.
+- **Neden:** Kapsam.
+- **Etkilenen özellik:** Erişilebilirlik.
+- **Çözüm:** Kritik ekranlar önce (live, PK, chat).
+- **Risk:** Düşük.
+- **Test:** Dark theme screenshot set.
+
+---
+
+## ANIMATION AUDIT
+
+### Bulgular
+
+#### [P3] flutter_animate + lottie + custom motion tokens
+- **Dosya:** `core/motion/canlifal_motion*.dart`, `pubspec.yaml` 37–39
+- **Satır:** —
+- **Problem:** Aşırı animasyon → rebuild maliyeti; live/PK’da ayrı profil gerekir.
+- **Neden:** Premium hedef.
+- **Etkilenen özellik:** FPS canlı yayın.
+- **Çözüm:** RepaintBoundary audit; PK sırasında ağır animasyon kısıtı.
+- **Risk:** Orta performans.
+- **Test:** DevTools timeline (cihaz).
+
+#### [P4] PK home transition bridge — sunum only (olumlu ayrım)
+- **Dosya:** `live_pk_home_transition_bridge.dart`
+- **Satır:** 6–9
+- **Problem:** Yok — RTC’ye dokunmuyor.
+- **Neden:** —
+- **Etkilenen özellik:** Ana sayfa → PK geçişi.
+- **Çözüm:** —
+- **Risk:** —
+- **Test:** `live_pk_home_transition_bridge_test.dart`.
+
+---
+
+## PERFORMANCE AUDIT
+
+### Bulgular
+
+#### [P2] `live_broadcast_room_page` rebuild yüzeyi
+- **Dosya:** `live_broadcast_room_page.dart`
+- **Satır:** 2622 (`ref.watch(liveVideoPkProvider)`)
+- **Problem:** Çoklu `ref.listen/watch` — yanlış select kullanımı jank yapabilir.
+- **Neden:** Tek stateful mega-widget.
+- **Etkilenen özellik:** Canlı/PK FPS.
+- **Çözüm:** Provider select granularization; split widgets.
+- **Risk:** Orta.
+- **Test:** Profile mode frame timing.
+
+#### [P3] Json isolate transformer
+- **Dosya:** `dio_provider.dart`
+- **Satır:** 61–63
+- **Problem:** Büyük JSON isolate — olumlu; threshold yanlışsa overhead.
+- **Neden:** Performans optimizasyonu.
+- **Etkilenen özellik:** Feed/live listeleri.
+- **Çözüm:** Metrik toplama.
+- **Risk:** Düşük.
+- **Test:** `list_perf_nested_grid_test.dart` (mevcut).
+
+#### [P4] Image caching
+- **Dosya:** `cached_network_image`, `flutter_cache_manager`
+- **Satır:** pubspec 28, 36
+- **Problem:** Standart stack — video/shorts bellek ayrı audit.
+- **Neden:** —
+- **Etkilenen özellik:** Feed, profil.
+- **Çözüm:** Shorts player dispose audit.
+- **Risk:** Düşük.
+- **Test:** Memory profiler.
+
+---
+
+## SECURITY AUDIT
+
+### Bulgular
+
+#### [P2] Token storage — secure storage (olumlu temel)
+- **Dosya:** `core/network/token_storage.dart`, `dio_provider.dart`
+- **Satır:** 86–91
+- **Problem:** Bearer peek/read — standart; log interceptors hassas header loglamamalı.
+- **Neden:** —
+- **Etkilenen özellik:** Oturum güvenliği.
+- **Çözüm:** ApiMonitor redaction review.
+- **Risk:** Orta if logs leak.
+- **Test:** Release log audit.
+
+#### [P2] Admin mobil paneller
+- **Dosya:** `features/admin/`, `ApiEndpoints.meAdminCapabilities`
+- **Satır:** —
+- **Problem:** Client-side admin UI — sunucu yetkisi olmadan işlem yapılamamalı (doğrulanmalı).
+- **Neden:** Admin feature set.
+- **Etkilenen özellik:** Moderasyon.
+- **Çözüm:** 403 handling standardı.
+- **Risk:** Yüksek if API güvenli değilse (backend sorumluluğu).
+- **Test:** Non-admin hesap admin route deep link.
+
+#### [P3] Bot account guard PK
+- **Dosya:** `live_video_pk_provider.dart`
+- **Satır:** 305–309
+- **Problem:** Bot hesap PK başlatamaz — olumlu.
+- **Neden:** Abuse önleme.
+- **Etkilenen özellik:** PK.
+- **Çözüm:** —
+- **Risk:** —
+- **Test:** Bot flag unit test.
+
+---
+
+## RESPONSIVE AUDIT
+
+### Bulgular
+
+#### [P3] `use_build_context_synchronously` — 30 info
+- **Dosya:** çoklu (analyze)
+- **Satır:** —
+- **Problem:** Async gap sonrası context — nadiren crash veya yanlış navigator.
+- **Neden:** Async UI pattern.
+- **Etkilenen özellik:** Çeşitli sayfalar.
+- **Çözüm:** `mounted` / `ref.context` guard refactor (P4 batch).
+- **Risk:** Orta tail crash.
+- **Test:** Analyze rule sıfırlama hedefi.
+
+#### [P3] Safe area / bottom nav
+- **Dosya:** `main_shell_page.dart`, shell feature
+- **Satır:** —
+- **Problem:** Gesture nav cihazlarda tab overlap manuel test edilmedi (Cloud emülatör yok).
+- **Neden:** Ortam kısıtı.
+- **Etkilenen özellik:** Alt navigasyon.
+- **Çözüm:** Cihaz matrisi P1 checklist.
+- **Risk:** Düşük-orta.
+- **Test:** P1 device script.
+
+---
+
+## TEST AUDIT
+
+| Metrik | Sonuç |
+|--------|--------|
+| Unit/widget | **1404** pass, **2** skip |
+| PK coverage | **36+** dosya |
+| Psychic | parser, TRTC freeze unit, widget sheets |
+| Integration | **Eksik** |
+| CI acceptance | `scripts/run-acceptance-tests.sh` (API gate; cihaz yok) |
+
+### Bulgular
+
+#### [P1] Cihaz E2E boşluğu — kritik akışlar
+- **Dosya:** `docs/LIVE_PSYCHICS_REMAINING.md`
+- **Satır:** 87–91
+- **Problem:** Flutter integration/driver test yok; Psychic/Live/PK yalnızca manuel.
+- **Neden:** CI emülatör politikası.
+- **Etkilenen özellik:** Release güveni.
+- **Çözüm:** Smoke script genişletme veya Firebase Test Lab (fix plan).
+- **Risk:** Yüksek.
+- **Test:** P0/P1 checklist zorunlu.
+
+#### [P4] Analyze info gürültüsü — 660 issue
+- **Dosya:** tüm proje
+- **Satır:** —
+- **Problem:** 146 unused_import, 134 unnecessary_underscores — CI’da fail etmiyor.
+- **Neden:** Lint seviyesi info.
+- **Etkilenen özellik:** Geliştirici hızı.
+- **Çözüm:** Aşamalı cleanup sprint.
+- **Risk:** Düşük.
+- **Test:** `dart analyze` trend.
+
+---
+
+## P0 ISSUES
+
+| ID | Özet |
+|----|------|
+| P0-1 | **Psychic P0 TRTC T+5s A/V donması** — cihaz PASS alınmadı, RELEASE READY NO (`docs/LIVE_PSYCHICS_REMAINING.md` 57–76, `docs/PSYCHIC_P0_START.md` 6–7) |
+
+**Detay (§29 format):**
+
+**[P0] Psychic TRTC donması — release bloker**  
+- **Dosya:** `docs/LIVE_PSYCHICS_REMAINING.md`  
+- **Satır:** 57–76  
+- **Problem:** Canlı falcı görüşmesinde T+5s kritik noktada A/V donması geçmişte repro edildi; P0 kapanmadı.  
+- **Neden:** TRTC oda yaşam döngüsü / token / rejoin race (kod düzeltmeleri var, cihaz kanıtı yok).  
+- **Etkilenen özellik:** Canlı falcı modülü, release.  
+- **Çözüm:** İki cihaz checklist PASS veya FAIL logcat ile hotfix.  
+- **Risk:** Uygulama store/release engeli.  
+- **Test:** `bash scripts/psychic-p0-checklist.sh`
+
+---
+
+## P1 ISSUES
+
+| ID | Özet |
+|----|------|
+| P1-1 | PK `refresh()` battle clear — dual-stream kaybında single-live UI (`live_video_pk_provider.dart` 152–166) |
+| P1-2 | Monolitik `live_broadcast_room_page.dart` regresyon riski (3209 satır) |
+| P1-3 | Cihaz E2E/integration test eksikliği — kritik akışlar (`LIVE_PSYCHICS_REMAINING.md` 87–91) |
+
+---
+
+## P2 ISSUES
+
+- Auth verify-device metot belirsizliği (`api_endpoints.dart` 39–40)  
+- Live SSE edge / loading (`live_broadcast_room_page.dart` 2727+)  
+- PK heart score silent catch (`live_broadcast_room_page.dart` 2031)  
+- PK 15s polling gecikmesi (`live_video_pk_provider.dart` 86–96)  
+- Voice deprecated admin sheets (`voice_room_hub_settings.dart` 41–42)  
+- Wallet deprecated payment paths (`profile_remote_datasource.dart` 28, 497+)  
+- Gold/discovery server parity (membership + discovery actions)  
+- Chat REST/SSE/conversations migrasyonu (`api_endpoints.dart` 74–81, 1011–1013)  
+- Tanış konum/duplicate like race (`tanis_kaynas_page.dart` 79+)  
+- Fortune geniş route/jeton akışları  
+- Profile block/privacy manuel gap  
+- Push OneSignal+FCM dual stack (`pubspec.yaml` 55, 63)  
+- Performance live room rebuild (`live_broadcast_room_page.dart` 2622+)  
+- Security admin UI vs server auth  
+- Gift idempotency client audit  
+
+---
+
+## P3 ISSUES
+
+- Deprecated auth gateway, feed/social duplicate providers  
+- Social padding/responsive cihaz doğrulama  
+- UI/UX CDS homojenlik, dark mode tam tarama  
+- Animation FPS live/PK  
+- Responsive `use_build_context_synchronously` (30)  
+- Notification SSE lifecycle  
+- Analyze deprecated_member_use (52)  
+
+---
+
+## P4 ISSUES
+
+- 660 analyze info (unused_import, unnecessary_underscores, …)  
+- Deprecated API sabitleri ve voice/music dead paths  
+- Cookie jar + Bearer birlikteliği  
+- Json cache/image standard cleanup  
+- PK zengin unit testleri (olumlu — bakım)  
+
+---
+
+## DUPLICATE CODE
+
+| Alan | Açıklama |
+|------|----------|
+| Feed vs Social | `feed_providers.dart` ve `social_providers.dart` — aynı akış notifier’ına merge ediliyor, deprecated katman sürüyor |
+| PK remote | `voice_hub/pk_battle_remote_*` + `live/live_video_pk_provider` — bilinçli köprü, duplicate fetch riski polling+SSE ile |
+| Payment paths | Profile `_deprecatedPaymentApiPath` vs wallet modülü |
+| Theme/UI | `app_theme_extensions` vs `core/design_system/cds.dart` |
+| RTC exception | `VoiceAgoraException` vs `VoiceTrtcException` |
+
+---
+
+## UNUSED CODE
+
+| Tür | Kanıt |
+|-----|--------|
+| Analyze `unused_import` | **146** info |
+| Analyze `unused_element` | **23** info |
+| Analyze `unused_field` | **7** info |
+| Deprecated API/constants | `api_endpoints.dart` pause/resume music, eski gifts path |
+| Dead social fake post | Deprecated metod, boş gövde (`social_providers.dart` 157–159) |
+
+*Not: Dosya silme audit aşamasında yapılmadı — kullanım taraması fix planda.*
+
+---
+
+## MISSING FEATURES
+
+| Beklenti (talimat) | Durum |
+|--------------------|--------|
+| Integration test suite | **Eksik** |
+| Tek premium design system tüm ekranlarda | **Kısmen** (CDS var, full rollout yok) |
+| Psychic P0 cihaz sign-off | **Eksik** |
+| Play Store AAB/keystore (release) | Dokümantasyonda kullanıcı adımı — **agent prep tamam, yükleme yok** |
+| DM SSE tam prod parity | Endpoint yorumu “hazır olduğunda” — **doğrulama gerek** |
+| iOS hedef | Proje Android odaklı CI |
+
+---
+
+## BROKEN FLOWS
+
+| Akış | Durum | Kanıt |
+|------|--------|--------|
+| Canlı falcı TRTC T+5s | **Şüpheli / FAIL bekleniyor** | P0 docs, kullanıcı PASS yazmadı |
+| PK → single-live glitch | **Potansiyel** | `refresh()` clear battle mantığı |
+| APK apk-latest metadata | **CI geçmişte FAIL** | SHA256/skip upload — script düzeltmeleri main’de; yeni run doğrulama önerilir |
+| Release READY | **Kapalı** | `AGENTS.md`, `DOCS_RELEASE_INDEX.md` |
+
+*Mock/dummy keşif akışı tespit edilmedi — sosyal keşif API tabanlı.*
+
+---
+
+## RELEASE BLOCKERS
+
+1. **Psychic P0 PASS** (TRTC T+5s) — zorunlu manuel  
+2. **RELEASE READY: NO** resmi bayrak  
+3. **Play Console** yükleme / keystore — kullanıcı adımları (`docs/KALAN_ISLER.md`)  
+4. **CI cihaz E2E yok** — regresyonlar geç fark edilir  
+5. **Dokümantasyon sürüm drift** — docs `1.0.391+429` vs pubspec `1.0.559+601` (karar karmaşası)  
+6. **Flutter pin drift** — `.flutter-version` 3.44.8 vs ortam 3.47.4  
+
+---
+
+## RECOMMENDED FIX ORDER
+
+1. **P0** — Psychic TRTC: cihaz repro → hotfix (yalnızca `live_psychics`/`trtc` scope) → P0 PASS kaydı  
+2. **P1** — PK state latch: `live_video_pk_provider.refresh` stale battle koruması + test  
+3. **P1** — `live_broadcast_room_page` kontrollü parçalama (PK/RTC dokunmadan widget extract)  
+4. **P1** — Release metadata: apk-latest CI run doğrula (`scripts/verify-apk-latest-release.sh`)  
+5. **P2** — Wallet/payment path migration kılavuz §9  
+6. **P2** — Chat/DM SSE tek kaynak  
+7. **P2** — Tanış action lock + Gold limit API hata UX  
+8. **P2** — Push/deep link birleştirme test matrisi  
+9. **P3** — CDS UI homojenlik ekran sprint (fonksiyon değiştirmeden)  
+10. **P4** — Analyze cleanup batch + deprecated silme (kanıtlı)  
+11. **Docs** — `DOCS_RELEASE_INDEX.md` sürüm senkronu  
+
+---
+
+*Sonraki aşama (kullanıcı onayı sonrası): `FIX_PLAN.md` — bu raporda kod değişikliği yapılmamıştır.*
