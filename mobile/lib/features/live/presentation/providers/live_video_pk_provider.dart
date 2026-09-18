@@ -167,11 +167,18 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
           return;
         }
       }
-    } catch (e) {
+    } on ApiException catch (e) {
       state = state.copyWith(error: '$e');
-      if (_shouldRetainBattleOnEmptyRefresh()) {
+      // Sunucu battle'ın yokluğunu açıkça bildirmedikçe hata bir bilgi
+      // yokluğudur; mevcut battle korunur ve polling sürer ki bağlantı
+      // dönünce kendiliğinden toparlasın. 404/410'da eski akışa (guard +
+      // temizlik) devam edilir.
+      if (!pkRefreshErrorMeansBattleGone(e.statusCode)) {
         return;
       }
+    } catch (e) {
+      state = state.copyWith(error: '$e');
+      return;
     }
 
     _stopPolling();
