@@ -89,6 +89,20 @@ assert_apk_metadata "$LOCAL_APK" "Local build"
 
 download_release_asset() {
   local dest="$1"
+  local dir
+  dir=$(dirname "$dest")
+  mkdir -p "$dir"
+  rm -f "$dest"
+  if [[ -n "${GH_TOKEN:-${TOKEN:-}}" ]] && command -v gh >/dev/null 2>&1; then
+    export GH_TOKEN="${GH_TOKEN:-${TOKEN}}"
+    if gh release download apk-latest --repo "$REPO" \
+      -p "canlifal-mobile-release.apk" -D "$dir" --clobber 2>/dev/null \
+      && [[ -f "$dir/canlifal-mobile-release.apk" ]]; then
+      mv -f "$dir/canlifal-mobile-release.apk" "$dest"
+      echo "GitHub release download (gh): canlifal-mobile-release.apk"
+      return 0
+    fi
+  fi
   local auth=()
   if [[ -n "$TOKEN" ]]; then
     auth=(-H "Authorization: Bearer ${TOKEN}")

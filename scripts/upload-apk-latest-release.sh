@@ -41,11 +41,9 @@ sha256_file() {
   sha256sum "$1" | awk '{print $1}'
 }
 
-download_release_asset_bytes() {
+release_asset_id() {
   local asset_name="$1"
-  local dest="$2"
-  local asset_id
-  asset_id=$(gh release view "$TAG" --repo "$REPO" --json assets 2>/dev/null \
+  gh release view "$TAG" --repo "$REPO" --json assets 2>/dev/null \
     | python3 -c "
 import json, sys
 name = sys.argv[1]
@@ -54,15 +52,42 @@ for a in data.get('assets') or []:
     if a.get('name') == name:
         print(a.get('id') or '')
         break
-" "$asset_name" 2>/dev/null || true)
+" "$asset_name" 2>/dev/null || true
+}
+
+delete_release_asset() {
+  local asset_name="$1"
+  local asset_id
+  asset_id=$(release_asset_id "$asset_name")
   if [[ -z "$asset_id" ]]; then
+    return 0
+  fi
+  echo "Mevcut release asset siliniyor: ${asset_name} (id=${asset_id})"
+  gh api -X DELETE "repos/${REPO}/releases/assets/${asset_id}" >/dev/null
+}
+
+download_release_asset_bytes() {
+  local asset_name="$1"
+  local dest="$2"
+  local dir file
+  dir=$(dirname "$dest")
+  file=$(basename "$dest")
+  mkdir -p "$dir"
+  rm -f "$dest"
+  if ! gh release download "$TAG" --repo "$REPO" -p "$asset_name" -D "$dir" --clobber 2>/dev/null; then
     return 1
   fi
-  curl -sS -L \
-    -H "Authorization: Bearer ${GH_TOKEN}" \
-    -H "Accept: application/octet-stream" \
-    -o "$dest" \
-    "https://api.github.com/repos/${REPO}/releases/assets/${asset_id}"
+  if [[ -f "$dir/$asset_name" ]]; then
+    mv -f "$dir/$asset_name" "$dest"
+  fi
+  if [[ ! -s "$dest" ]]; then
+    return 1
+  fi
+  # APK (zip) magic
+  if [[ "$(head -c 2 "$dest" || true)" != "PK" ]]; then
+    echo "::warning::İndirilen dosya APK imzası taşımıyor: ${asset_name}"
+    return 1
+  fi
 }
 
 remote_asset_matches_local_sha() {
@@ -166,6 +191,15 @@ upload_one_asset() {
     fi
   fi
 
+  local needs_replace=1
+  if [[ "${UPLOAD_OUTCOME[$asset_name]:-}" == ok_existing ]]; then
+    needs_replace=0
+  fi
+  if (( needs_replace == 1 )); then
+    delete_release_asset "$asset_name"
+    sleep 3
+  fi
+
   local attempt=1
   local delay="$APK_UPLOAD_RETRY_BASE_SEC"
   local max="$APK_UPLOAD_RETRIES"
@@ -179,14 +213,26 @@ upload_one_asset() {
     set -e
 
     if [[ "$rc" -eq 0 ]]; then
-      remote_size=$(release_asset_size "$asset_name")
-      if [[ -n "$remote_size" && "$remote_size" == "$local_size" ]] \
-        && remote_asset_matches_local_sha "$file" "$asset_name"; then
+      local verify_attempt=1
+      local verified=0
+      while (( verify_attempt <= 8 )); do
+        sleep $(( verify_attempt * 5 ))
+        remote_size=$(release_asset_size "$asset_name")
+        if [[ -n "$remote_size" && "$remote_size" == "$local_size" ]] \
+          && remote_asset_matches_local_sha "$file" "$asset_name"; then
+          verified=1
+          break
+        fi
+        echo "Post-upload doğrulama ${verify_attempt}/8 (boyut=${remote_size:-?}, beklenen=${local_size})..."
+        verify_attempt=$((verify_attempt + 1))
+      done
+      if (( verified == 1 )); then
         echo "Asset yüklendi ve doğrulandı (boyut + SHA256): ${asset_name}"
         UPLOAD_OUTCOME["$asset_name"]="ok_uploaded"
         return 0
       fi
-      echo "::warning::Upload exit 0 ama release boyutu eşleşmedi (remote=${remote_size:-?}, local=${local_size})"
+      echo "::warning::Upload exit 0 ama release SHA256/boyut doğrulanamadı (remote=${remote_size:-?}, local=${local_size})"
+      delete_release_asset "$asset_name"
       rc=1
     elif [[ "$rc" -eq 124 ]]; then
       echo "::warning::Upload zaman aşımı (${APK_UPLOAD_ATTEMPT_TIMEOUT}): ${asset_name}"
