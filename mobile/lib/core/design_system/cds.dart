@@ -14,6 +14,7 @@ export 'cds_radius.dart';
 export 'cds_shadows.dart';
 export 'cds_spacing.dart';
 export 'cds_states.dart';
+export 'cds_skeleton.dart';
 export 'cds_typography.dart';
 export 'cds_responsive.dart';
 export '../motion/canlifal_motion.dart';

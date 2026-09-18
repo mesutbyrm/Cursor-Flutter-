@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'cds_colors.dart';
 import 'cds_spacing.dart';
+import 'cds_states.dart';
 
 enum CdsButtonVariant { primary, secondary, ghost, danger }
 
@@ -27,11 +28,7 @@ class CdsButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final child = loading
-        ? const SizedBox(
-            width: 22,
-            height: 22,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          )
+        ? const CdsInlineSpinner(size: 22)
         : Row(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,

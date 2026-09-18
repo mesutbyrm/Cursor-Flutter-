@@ -239,6 +239,71 @@ class _CanlifalBurstIconState extends State<CanlifalBurstIcon>
   }
 }
 
+/// Kategori / filtre chip — basınç + seçim scale.
+class CanlifalFilterChip extends StatelessWidget {
+  const CanlifalFilterChip({
+    super.key,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.icon,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return CanlifalPressable(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: CanlifalMotionTokens.micro,
+        curve: CanlifalMotionTokens.easeOut,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999),
+          color: selected
+              ? cs.primary.withValues(alpha: 0.22)
+              : cs.surfaceContainerHighest.withValues(alpha: 0.65),
+          border: Border.all(
+            color: selected
+                ? cs.primary.withValues(alpha: 0.55)
+                : cs.outlineVariant.withValues(alpha: 0.5),
+          ),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: cs.primary.withValues(alpha: 0.25),
+                    blurRadius: 12,
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 16, color: selected ? cs.primary : cs.onSurfaceVariant),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                color: selected ? cs.onSurface : cs.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class CanlifalGoldRingPulse extends ConsumerStatefulWidget {
   const CanlifalGoldRingPulse({
     super.key,

@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.559+601 (2026-09-18) — Premium UI / motion (CDS)
+
+- Merkezi `canlifal_design_system` + `CdsSkeleton` / shimmer yükleme iskeletleri
+- `CdsInlineSpinner` — buton ve genel yüklemede hafif spinner
+- Gold VIP rozetinde FX açıkken subtle shimmer; üyelik kataloğu skeleton
+- `CanlifalFilterChip` — kategori chip basınç animasyonu
+
 ## 1.0.559+600 (2026-09-18) — Ana sayfa kalan maddeler
 
 - Alt nav **Mesaj/Fal** (referans): kısa dokun = `/fortune`, uzun bas = `/messages`, inbox rozeti

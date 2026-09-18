@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../core/design_system/cds_skeleton.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/content/currency_usage_info.dart';
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
@@ -55,12 +56,7 @@ class MembershipPage extends ConsumerWidget {
           const _MembershipBackdrop(),
           SafeArea(
             child: catalogAsync.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: MembershipCatalogData.gold,
-                ),
-              ),
+              loading: () => CdsSkeleton.membershipCatalog(),
               error: (e, _) => Center(
                 child: Padding(
                   padding: padding,

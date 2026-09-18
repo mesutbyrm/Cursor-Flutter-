@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/design_system/cds_fx.dart';
 import '../../../vip_gold/domain/vip_tier.dart';
 import '../../../vip_gold/presentation/widgets/vip_badge.dart';
 import '../premium_2026/profile_membership_helpers.dart';
@@ -21,9 +22,11 @@ class UserProfileMembershipBadge extends ConsumerWidget {
       data: (ext) {
         final info = resolveProfileMembership(rawMembership: ext.vipLevel);
         if (!info.hasPaidTier) return const SizedBox.shrink();
+        final fx = ref.watch(cdsFxProvider);
+        final shimmer = info.tier.isVip && !fx.decorativeDisabled;
         return Padding(
           padding: const EdgeInsets.only(left: 6),
-          child: VipBadge(tier: info.tier, compact: false),
+          child: VipBadge(tier: info.tier, compact: false, animate: shimmer),
         );
       },
     );
