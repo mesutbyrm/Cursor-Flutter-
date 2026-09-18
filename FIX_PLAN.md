@@ -123,7 +123,11 @@ cd mobile && flutter pub get && dart analyze && flutter test
 
 ### P0-3 — Hediye alıcısı benzersiz olmayan `displayName` ile çözülüyor (BACKEND)
 
-**Aynı kapsam kararına tabi (bkz. P0-2).**
+> **Durum: UYGULANDI — 2026-09-18.** Planın önerdiği güvenli ara adım seçildi: `displayName` yolu **kaldırılmadı**, yalnızca belirsizlikte reddediliyor. Bu sayede üretimde `receiverName` oranını ölçmeye gerek kalmadan uygulanabildi — davranış yalnızca mevcut kodun zaten yanlış olduğu (çok eşleşmeli) durumda değişiyor.
+>
+> `resolveGiftReceiverId()` (`api/src/lib/giftCharge.ts`): benzersiz `username` tercih edilir; `displayName` yalnızca **tek** eşleşmede kabul edilir; belirsizlikte alıcı boş bırakılır (hediye yine kaydedilir, gelir yanlış hesaba yazılmaz). Her iki handler da bu yardımcıyı kullanıyor.
+>
+> Doğrulama: `npm run typecheck` temiz · `npm test` **65 geçti / 0 başarısız** (taban 59 + 6 yeni test).
 
 - **Dosya:** `api/src/routes/gifts.ts:214–226` ve `sendRoomGift` içindeki eşdeğeri (~419)
 - **Problem:** `findFirst({ OR: [{ username }, { displayName }] })` — `username` benzersiz ama **`displayName` değil** (`api/src/routes/users.ts:36` yalnızca `min(1).max(120)`). Çoklu eşleşmede rastgele kullanıcı seçiliyor → hediye ve gelir **yanlış kişiye** yazılabilir.

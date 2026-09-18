@@ -1,7 +1,12 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import type { Prisma } from "@prisma/client";
-import { chargeAndRecordGift, type GiftChargeDb } from "./giftCharge.js";
+import {
+  chargeAndRecordGift,
+  resolveGiftReceiverId,
+  type GiftChargeDb,
+  type GiftReceiverDb,
+} from "./giftCharge.js";
 
 type UserRow = { id: string; coins: number };
 
@@ -152,5 +157,84 @@ describe("chargeAndRecordGift", () => {
     if (res.ok) assert.equal(res.newBalance, undefined);
     assert.equal(calls.updateMany, 0, "misafirde düşme denenmemeli");
     assert.equal(calls.createEvent, 1);
+  });
+});
+
+type PersonRow = { id: string; username: string | null; displayName: string | null };
+
+function fakeReceiverDb(rows: PersonRow[]): GiftReceiverDb {
+  return {
+    user: {
+      async findMany(args: {
+        where: { OR: Array<{ username?: string; displayName?: string }> };
+        select: { id: true; username: true };
+        take: number;
+      }) {
+        const hits = rows.filter((r) =>
+          args.where.OR.some(
+            (w) =>
+              (w.username !== undefined && r.username === w.username) ||
+              (w.displayName !== undefined && r.displayName === w.displayName),
+          ),
+        );
+        return hits
+          .slice(0, args.take)
+          .map((r) => ({ id: r.id, username: r.username }));
+      },
+    },
+  };
+}
+
+describe("resolveGiftReceiverId", () => {
+  it("açık receiverId her şeyin önünde gelir", async () => {
+    const db = fakeReceiverDb([{ id: "u9", username: "baska", displayName: null }]);
+    const id = await resolveGiftReceiverId({
+      receiverId: "  u1  ",
+      receiverName: "Mesut",
+      db,
+    });
+    assert.equal(id, "u1");
+  });
+
+  it("benzersiz username ile çözer (@ öneki yok sayılır)", async () => {
+    const db = fakeReceiverDb([
+      { id: "u1", username: "mesut", displayName: "Bir Ad" },
+      { id: "u2", username: "baska", displayName: "mesut" },
+    ]);
+    const id = await resolveGiftReceiverId({ receiverName: "@mesut", db });
+    assert.equal(id, "u1", "displayName eşleşmesi değil, username kazanmalı");
+  });
+
+  it("tek displayName eşleşmesini kabul eder", async () => {
+    const db = fakeReceiverDb([
+      { id: "u1", username: "abc", displayName: "Yıldız" },
+    ]);
+    const id = await resolveGiftReceiverId({ receiverName: "Yıldız", db });
+    assert.equal(id, "u1");
+  });
+
+  // Asıl kusur: displayName benzersiz değil, findFirst rastgele birini seçip
+  // hediyeyi ve geliri yanlış kullanıcıya yazabiliyordu.
+  it("aynı displayName'e sahip iki kullanıcıda alıcı seçmez", async () => {
+    const db = fakeReceiverDb([
+      { id: "u1", username: "a", displayName: "Yıldız" },
+      { id: "u2", username: "b", displayName: "Yıldız" },
+    ]);
+    const id = await resolveGiftReceiverId({ receiverName: "Yıldız", db });
+    assert.equal(id, null, "belirsizlikte rastgele kullanıcı seçilmemeli");
+  });
+
+  it("eşleşme yoksa null döner", async () => {
+    const db = fakeReceiverDb([]);
+    const id = await resolveGiftReceiverId({ receiverName: "Kimse", db });
+    assert.equal(id, null);
+  });
+
+  it("varsayılan 'Yayıncı' adı için arama yapılmaz", async () => {
+    const db = fakeReceiverDb([
+      { id: "u1", username: "yayinci", displayName: "Yayıncı" },
+    ]);
+    const id = await resolveGiftReceiverId({ receiverName: "Yayıncı", db });
+    assert.equal(id, null);
   });
 });

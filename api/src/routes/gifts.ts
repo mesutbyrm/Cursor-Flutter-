@@ -4,7 +4,7 @@ import { prisma } from "../lib/prisma";
 import { fail, ok } from "../lib/response";
 import { optionalAuth } from "../middleware/optionalAuth";
 import { applyPkGift } from "../lib/pkBattleService";
-import { chargeAndRecordGift } from "../lib/giftCharge";
+import { chargeAndRecordGift, resolveGiftReceiverId } from "../lib/giftCharge";
 import { pushStreamSignal } from "../lib/liveStreamExtrasStore";
 import { getChatRoom, getRoomType } from "../lib/chatRoomStore";
 import {
@@ -200,19 +200,10 @@ export async function sendStreamGift(
   // yalnızca iki yazmayı (düşme + kayıt) kapsasın.
   const combo = await resolveCombo(streamId, userId, gift.id, quantity);
 
-  let receiverId: string | null = bodyReceiverId?.trim() || null;
-  if (!receiverId && receiverName && receiverName !== "Yayıncı") {
-    const recv = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { username: receiverName.replace(/^@/, "") },
-          { displayName: receiverName },
-        ],
-      },
-      select: { id: true },
-    });
-    receiverId = recv?.id ?? null;
-  }
+  const receiverId = await resolveGiftReceiverId({
+    receiverId: bodyReceiverId,
+    receiverName,
+  });
 
   const charge = await chargeAndRecordGift({
     userId,
@@ -405,19 +396,10 @@ export async function sendRoomGift(
   // yalnızca iki yazmayı (düşme + kayıt) kapsasın.
   const combo = await resolveComboRoom(roomId, userId, gift.id, quantity);
 
-  let receiverId: string | null = bodyReceiverId?.trim() || null;
-  if (!receiverId && receiverName && receiverName !== "Yayıncı") {
-    const recv = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { username: receiverName.replace(/^@/, "") },
-          { displayName: receiverName },
-        ],
-      },
-      select: { id: true },
-    });
-    receiverId = recv?.id ?? null;
-  }
+  const receiverId = await resolveGiftReceiverId({
+    receiverId: bodyReceiverId,
+    receiverName,
+  });
 
   const charge = await chargeAndRecordGift({
     userId,

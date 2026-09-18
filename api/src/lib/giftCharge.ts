@@ -10,6 +10,56 @@ export type GiftChargeDb = {
   $transaction<R>(fn: (tx: Prisma.TransactionClient) => Promise<R>): Promise<R>;
 };
 
+/** Alıcı aramasında kullanılan dar arayüz — testte sahte istemci için. */
+export type GiftReceiverDb = {
+  user: {
+    findMany(args: {
+      where: { OR: Array<{ username?: string; displayName?: string }> };
+      select: { id: true; username: true };
+      take: number;
+    }): Promise<Array<{ id: string; username: string | null }>>;
+  };
+};
+
+/**
+ * Hediye alıcısını çözer.
+ *
+ * Önceden `findFirst({ OR: [{ username }, { displayName }] })` kullanılıyordu.
+ * `username` benzersizdir ama **`displayName` değildir**; aynı görünen adı
+ * taşıyan birden fazla hesap varsa `findFirst` rastgele birini seçiyor ve
+ * hediye ile gelir **yanlış kullanıcıya** yazılabiliyordu.
+ *
+ * Artık: benzersiz `username` eşleşmesi tercih edilir; `displayName` yalnızca
+ * **tek** eşleşme varsa kabul edilir. Belirsizlikte alıcı boş bırakılır —
+ * hediye yine kaydedilir, ama gelir yanlış hesaba yazılmaz.
+ */
+export async function resolveGiftReceiverId(params: {
+  receiverId?: string | null;
+  receiverName?: string | null;
+  db?: GiftReceiverDb;
+}): Promise<string | null> {
+  const explicit = params.receiverId?.trim();
+  if (explicit) return explicit;
+
+  const name = params.receiverName?.trim();
+  if (!name || name === "Yayıncı") return null;
+
+  const client = params.db ?? (prisma as unknown as GiftReceiverDb);
+  const username = name.replace(/^@/, "");
+
+  // take: 2 — tek eşleşme mi yoksa belirsizlik mi olduğunu ayırt etmeye yeter.
+  const rows = await client.user.findMany({
+    where: { OR: [{ username }, { displayName: name }] },
+    select: { id: true, username: true },
+    take: 2,
+  });
+
+  const byUsername = rows.find((r) => r.username === username);
+  if (byUsername) return byUsername.id;
+
+  return rows.length === 1 ? rows[0].id : null;
+}
+
 /**
  * Jeton düşümü ile hediye kaydını tek transaction içinde yürütür.
  *
