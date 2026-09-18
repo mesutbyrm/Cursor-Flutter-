@@ -5,19 +5,18 @@
 | Alan | Değer |
 |------|--------|
 | Sürüm | `1.0.559+601` |
-| Tarih (UTC) | 2026-09-18 13:18 |
-| Commit | [`ad8320a6078e3fe80fff0ed5b948aac6ffbbd14d`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/ad8320a6078e3fe80fff0ed5b948aac6ffbbd14d) |
-| İş akışı | [Run 35347167030](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35347167030) |
+| Tarih (UTC) | 2026-09-18 14:28 |
+| Commit | [`1153d108d0f3a18bfcbf46690e5082e07c84089e`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/1153d108d0f3a18bfcbf46690e5082e07c84089e) |
+| İş akışı | [Run 35354891260](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35354891260) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.559+601 (2026-09-18) — Premium UI / motion (CDS)
+## 1.0.559+602 (2026-09-18) — Audit fix plan (PK state)
 
-- Merkezi `canlifal_design_system` + `CdsSkeleton` / shimmer yükleme iskeletleri
-- `CdsInlineSpinner` — buton ve genel yüklemede hafif spinner
-- Gold VIP rozetinde FX açıkken subtle shimmer; üyelik kataloğu skeleton
-- `CanlifalFilterChip` — kategori chip basınç animasyonu
+- PK `refresh`: boş/hatalı yanıtta aktif battle **90 sn stale latch** — single-live düşüşü azaltılır
+- PK çift tık kalp skoru: API hatasında rate-limited snackbar (sessiz yutma kaldırıldı)
+- Unit: `live_pk_refresh_stale_guard_test`
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
