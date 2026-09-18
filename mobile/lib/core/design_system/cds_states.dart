@@ -137,10 +137,10 @@ abstract final class CdsError {
     required Object error,
     VoidCallback? onRetry,
   }) {
-    return AppErrorView(
-      message: error.toString(),
-      onRetry: onRetry,
-    );
+    // `error.toString()` kullanıcıya ham DioException/stack metni gösteriyordu.
+    // `fromError` ApiException.userMessage'a gider — o helper zaten "ham
+    // DioException veya toString göstermez" sözleşmesini taşıyor.
+    return AppErrorView.fromError(error, onRetry: onRetry);
   }
 
   static Widget inline(BuildContext context, String message) {

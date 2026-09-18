@@ -392,6 +392,30 @@ Her aşama sonrası: `flutter test test/features/live/` + analyze.
 - **Plan:** Retry aksiyonlu ortak `ErrorState` bileşeni; **önce yalnızca kritik akışlara** bağlanır (auth, live, PK, wallet, chat, discovery). Tüm ekranlara yayılım ayrı iş kalemi.
 - **Risk:** Düşük, artımlı.
 
+> ## ⚠ BULGU YANLIŞTI — düzeltildi ve yerine gerçek bulgu kondu (2026-09-18)
+>
+> **Ölçüm hatalıydı.** Yalnızca `ErrorState`/`ErrorView` adlandırması arandı; kod tabanı hata durumlarını `AppErrorView`, `CdsError`, `DiscoverEmptyInline`, `PremiumEmptyHint`, `psychic_async_views` vb. ile ele alıyor.
+>
+> **Gerçek ölçüm:** `error:` dalı olan **210** yer · gizleyen **46** (%22) · anlamlı gösterim kullanan **53 dosya**.
+>
+> **Ortak bileşen zaten vardı:** `core/widgets/app_error_view.dart` → `AppErrorView` (başlık, ikon, `onRetry` butonu, `compact`, ve `AppErrorView.fromError`). Planın "ortak bileşen oluştur" adımı **gereksizdi** — yenisini yazmak talimatın 13. kuralını (ikinci sistem kurma) ihlal ederdi.
+>
+> **Gizleyen 46 dalın çoğu bilinçli:** rozet / "top hediye" / üyelik etiketi gibi ikincil bölümlerde hata anında koca bir hata bloğu göstermek yanlış olur. `economy_wallet_transactions_section.dart` docstring'i birebir *"yalnızca `/api/user/wallet` başarılıysa görünür"* diyor. Bunları toplu çevirmek gürültü üretirdi; dokunulmadı.
+>
+> ### Bunun yerine yapılanlar
+>
+> **1. Gerçek hata — `CdsError.view` ham hata metnini kullanıcıya sızdırıyordu** (`core/design_system/cds_states.dart:140`):
+> ```dart
+> AppErrorView(message: error.toString(), …)   // "ApiException(402): …", "DioException […]"
+> ```
+> `AppErrorView.fromError` zaten `ApiException.userMessage`'a gidiyor ve o helper'ın sözleşmesi birebir *"ham DioException veya `toString` göstermez"*. Tasarım sistemi tam da engellemek için yazılmış helper'ı atlıyordu. Düzeltildi.
+>
+> **Test kanıtı:** `test/core/cds_error_view_message_test.dart` (3 vaka). Eski kodla 2. vaka şunu buluyor: *"Found 1 widget with text containing **DioException**"* — sızıntı gerçekti.
+>
+> **2. Sayfa seviyesinde tek gerçek boşluk:** `profile_broadcaster_stats_page.dart:36` — sayfanın **birincil** içeriği hem loading hem error'da gizleniyordu; istatistikler yüklenmezse kullanıcı boş sayfa görüp nedenini anlayamıyordu. `AppErrorView.fromError` + `onRetry` bağlandı. Diğer sayfa seviyesi gizlemeler incelendi ve ikincil panel oldukları için bırakıldı (`referral_earnings_page:70` ana kazanç kutularının altındaki ek panel, vb.).
+>
+> Doğrulama: `flutter analyze` **627** (değişmedi) · `flutter test` **1426 geçti / 0 başarısız** (taban 1423 + 3).
+
 ---
 
 ## P3 — UI/UX

@@ -3,6 +3,7 @@ import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/providers/platform_stats_providers.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
@@ -33,7 +34,13 @@ class ProfileBroadcasterStatsPage extends ConsumerWidget {
             children: [
               mine.when(
                 loading: () => const SizedBox.shrink(),
-                error: (_, _) => const SizedBox.shrink(),
+                // Sayfanın birincil içeriği; hata gizlenirse kullanıcı boş
+                // ekran görüp neden olduğunu anlayamıyordu.
+                error: (e, _) => AppErrorView.fromError(
+                  e,
+                  compact: true,
+                  onRetry: () => ref.invalidate(profileStatsProvider),
+                ),
                 data: (s) => ProfileGlass(
                   padding: const EdgeInsets.all(16),
                   child: Column(

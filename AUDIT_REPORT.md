@@ -844,7 +844,17 @@ mobile/lib/
 
 - **Sayfalama yok — `page: 1` beş yerde sabit:** `social_discovery_providers.dart:23`, `social_providers.dart:44,59`, `user_social_posts_notifier.dart:18,30`. Keşif akışı, sosyal akış ve kullanıcı gönderileri yalnızca 1. sayfayı çekiyor; sonsuz kaydırma fiilen yok. *Çözüm:* mevcut `core/pagination/` altyapısına bağlanmalı, yeni sistem kurulmamalı. *Test:* sayfa 2 isteğini doğrulayan datasource testi.
 - **Feed'de sahte kullanıcılar empty-state yerine geçiyor:** `feed_story_strip.dart:23-30` — gerçek gönderi yokken `'Özge'`, `'Ela'`, `'Arda'` adlı var olmayan kullanıcılar `i.pravatar.cc` avatarlarıyla gösteriliyor. Hem sahte veri hem eksik empty-state. *Çözüm:* fallback kaldırılıp gerçek empty-state konmalı. *Test:* `posts: []` ile widget testi.
-- **Hata durumu kapsamı çok düşük:** `ErrorState`/`ErrorView` yalnızca **6 dosyada**, `EmptyState` 39 dosyada, loading göstergesi 192 dosyada — toplam **138 sayfaya** karşılık. Hata durumunda kullanıcı boş ekran veya sonsuz loading görüyor. *Çözüm:* retry aksiyonlu ortak `ErrorState` bileşeni, önce kritik akışlara (auth, live, PK, wallet, chat, discovery).
+- ~~**Hata durumu kapsamı çok düşük:** `ErrorState`/`ErrorView` yalnızca **6 dosyada**…~~ → **BU BULGU YANLIŞTI, 2026-09-18'de düzeltildi.**
+
+  > ### ⚠ Düzeltme: bulgu hatalıydı
+  >
+  > Ölçüm yalnızca `ErrorState`/`ErrorView` **adlandırmasını** aradı; kod tabanı hata durumlarını başka bileşenlerle ele alıyor: `AppErrorView` (`core/widgets/app_error_view.dart`), `CdsError` (tasarım sistemi), `DiscoverEmptyInline`, `PremiumEmptyHint`, `psychic_async_views`, `platform_social_ui_kit`, `game_center_widgets`.
+  >
+  > **Gerçek ölçüm:** `error:` dalı olan **210** yer · bunlardan gizleyen (`SizedBox.shrink`) **46** (%22) · anlamlı hata gösterimi kullanan **53 dosya**. Kapsam iddia edildiği gibi kritik değil.
+  >
+  > Gizleyen 46 dalın çoğu **bilinçli**: rozet, "top hediye", üyelik etiketi gibi ikincil bölümlerde hata anında koca bir hata bloğu göstermek yanlış olurdu. Örnek: `economy_wallet_transactions_section.dart` docstring'i birebir *"yalnızca `/api/user/wallet` başarılıysa görünür"* diyor — tasarım kararı.
+  >
+  > **Yerine geçen gerçek bulgu (aşağıda P0/P2'ye eklendi):** tasarım sisteminin `CdsError.view`'i kullanıcıya **ham `error.toString()`** gösteriyordu.
 - **PK sayacı saniyede bir tüm izleyicileri rebuild ediyor:** `pk_session_notifier.dart:93-114` — `Timer.periodic(1 sn)` her tetiklenmede `state = state.copyWith(...)` yazıyor; `pkSessionProvider`'ı izleyen her widget saniyede bir rebuild oluyor. PK ekranı zaten video + skor + chat + hediye animasyonu taşıyor. *Çözüm:* kalan süre dar kapsamlı ayrı provider'a taşınmalı veya `select` ile daraltılmalı.
 - **Admin rozeti taklit edilebilir (görsel — yetki değil):** `voice_moderation_target_color.dart:22` ve `voice_seat_avatar_frame.dart:31` rütbeyi kısıtsız `nickname`/`name` alanından türetiyor (`voice_staff_rank.dart:15-22`: `%`→admin). `displayName` backend'de karakter kısıtı taşımıyor (`users.ts:36`). **Ölçülü değerlendirme — yetki yükseltmesi DEĞİL:** gerçek yetki kararı `voice_room_permissions.dart:146` üzerinden `user.username` ile veriliyor ve `username` backend'de `^[a-zA-Z0-9_]+$` ile korunuyor (`users.ts:43`). Etki yalnızca rozet rengi ve koltuk çerçevesi → sosyal mühendislik riski. *Çözüm:* bu iki call-site de `user.username` kullanmalı.
 
