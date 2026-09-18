@@ -1,5 +1,6 @@
 # Sürüm notları — canlifal_social
 
+<<<<<<< HEAD
 ## 1.0.778+834 (2026-10-12) — Bekleyen dal birleştirmeleri (P0 ses + erken audio leave)
 
 - **Psychic P0 hotfix dalı:** main ile birleştirildi — sesli odadan çıkışta erken TRTC/audio leave (400 ms); mevcut falcı/SSE düzeltmeleri korundu
@@ -1685,6 +1686,15 @@ Mobilin çağırdığı 475 uç backend kaynağıyla (yol, metot, gövde, eylem 
 - CTA geçiş giriş noktası; Gold ve sesli oda hub için fade-slide router
 - Alt nav etiketi «Canlı»; reklam teaser’ında sahte jeton vaadi yok
 - PK sunum geçiş köprüsü (§33-P) — RTC mantığına dokunulmadı
+=======
+## 1.0.558+599 (2026-09-18) — PK video karşılıklı + sonuç rozeti (3/2b)
+
+- **HATA A:** PK başında aynı TRTC odasında olsak bile `live` → `videoCall` (twoWayVideo) rejoin; karşı taraf `userId` eşlemesi (`resolveLivePkTrtcRemoteUserId`); «Kamera kapalı» / «Kamera bekleniyor» ayrımı
+- **HATA B:** Tam ekran PK sonuç flaşı/konfeti kaldırıldı (`LivePkResultFlashOverlay`, pane outcome); sonuç yalnızca `PkStatusPill` (skor bandı); sesli `PkResultPage` tam ekran kutlama yok
+- **2b:** Yayın odası PK split katmanına `LivePkReferenceScoreBar` (TikTok/Bigo skor bandı)
+- **Canlı HATA 1:** PK twoWay rejoin yalnızca zaten videoCall modundaysa atlanır
+- **Canlı HATA 4 / Sesli 1–4:** Mevcut snackbar, presence kopya, seat lock, room1/room2 tanılama doğrulandı (backend: paylaşılan `pkRoomId` / voice `room1-room2`)
+>>>>>>> 2a6831d93 (fix(pk): twoWay TRTC rejoin, remote video map, inline result pill)
 
 ## 1.0.557+598 (2026-09-17) — Ana sayfa motion (aşama 8)
 
