@@ -3,6 +3,9 @@
 # nttld + yanlış sürüm symlink'i (27.0 → 27.3 uyarısı) kullanılmaz.
 set -euo pipefail
 
+# GHA runner'da kalmış eski NDK path (silinmiş 27.x symlink) yeni kurulumu bozmasın.
+unset ANDROID_NDK_HOME ANDROID_NDK_ROOT ANDROID_NDK_VERSION || true
+
 resolve_android_sdk() {
   if [ -n "${ANDROID_HOME:-}" ] && [ -d "$ANDROID_HOME" ]; then
     echo "$ANDROID_HOME"
@@ -130,14 +133,21 @@ fi
 export ANDROID_NDK_HOME="$NDK_PATH"
 export ANDROID_NDK_ROOT="$NDK_PATH"
 
+ENV_FILE="${CI_ANDROID_NDK_ENV_FILE:-${GITHUB_WORKSPACE:-/tmp}/.ci-android-ndk.env}"
+mkdir -p "$(dirname "$ENV_FILE")"
+cat >"$ENV_FILE" <<EOF
+ANDROID_HOME=$ANDROID_SDK
+ANDROID_SDK_ROOT=$ANDROID_SDK
+ANDROID_NDK_HOME=$NDK_PATH
+ANDROID_NDK_ROOT=$NDK_PATH
+ANDROID_NDK_VERSION=$NDK_VER
+EOF
+
 if [ -n "${GITHUB_ENV:-}" ]; then
-  {
-    echo "ANDROID_HOME=$ANDROID_SDK"
-    echo "ANDROID_SDK_ROOT=$ANDROID_SDK"
-    echo "ANDROID_NDK_HOME=$NDK_PATH"
-    echo "ANDROID_NDK_ROOT=$NDK_PATH"
-    echo "ANDROID_NDK_VERSION=$NDK_VER"
-  } >>"$GITHUB_ENV"
+  while IFS= read -r line; do
+    echo "$line" >>"$GITHUB_ENV"
+  done <"$ENV_FILE"
 fi
 
 echo "NDK hazır: ANDROID_NDK_HOME=$ANDROID_NDK_HOME"
+echo "NDK env dosyası: $ENV_FILE"
