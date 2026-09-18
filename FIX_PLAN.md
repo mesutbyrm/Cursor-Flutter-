@@ -78,6 +78,61 @@ cd mobile && flutter pub get && dart analyze && flutter test
 
 ---
 
+### P0-2 — Hediye jeton düşümü atomik değil (BACKEND)
+
+> ### ⚠ KAPSAM KARARI GEREKİYOR
+>
+> Bu planın **Genel kural 4**'ü şöyle: *"Backend değiştirme yok; yalnızca mobil istemci + CI script + dokümantasyon."*
+>
+> Ancak 2026-09-18 doğrulama koşusunda bulunan **en ciddi kusur backend'de** (`api/src/routes/gifts.ts`) ve mobil taraftan düzeltilemez — para bütünlüğü sunucuda sağlanmak zorundadır.
+>
+> **Karar gerekiyor:** (a) plan kapsamı backend'i içerecek şekilde genişletilsin mi, (b) yoksa bu madde ayrı bir backend iş kalemine mi devredilsin? Karar verilene kadar bu madde **uygulanmayacak**.
+
+| Alan | Değer |
+|------|--------|
+| Audit | `AUDIT_REPORT.md` → P0-2 + P0 yan bulgu |
+| Dosya | `api/src/routes/gifts.ts` — `sendStreamGift` (163–290) **ve** `sendRoomGift` (366–508) |
+| Sahip | Backend (kapsam kararı sonrası) |
+
+**Önce arandı (kullanım araştırması tamamlandı):**
+
+| Soru | Cevap |
+|---|---|
+| Kaç handler? | **İki, birebir aynı kusur.** Yalnızca birini düzeltmek yarım çözüm — ortak yardımcıya (`api/src/lib/giftCharge.ts`) çıkarılmalı |
+| Yanıt sözleşmesi | `{...payload, newBalance, balance, coinBalance, streamerBalance, pkBattle}` — **korunmalı**, istemci değişmemeli |
+| Transaction dışında kalacaklar | `giftQueueEnqueue` (245), `emitGiftEvent` (251), `applyPkGift` (253), `emitPkBattleEvent`/`emitPkStreamSignal` (264–267), `processLiveGiftReferral` (270) |
+| İstemci yolları | `chat_room_gifts_remote_datasource.dart:67`, `shorts_repository_impl.dart:227`, `LiveFieldApiRemoteDataSource…gifts.sendGift` |
+| Proje deseni biliyor mu? | Evet — `$transaction` 10 yerde kullanılıyor (`pkBattleService.ts:601`, `referralCommissionService.ts:410,478,538`, `voiceRoomRevenue.ts:120,196`, `video_streams.ts:703`, `short_videos.ts:300,313,415`). **Gelir tarafı korunmuş, harcama tarafı korunmamış.** |
+
+**Üç kusur:**
+1. **Check-then-act yarışı** — bakiye okuma (200) ile düşme (205) ayrı sorgular, aralarında koşul yok → eşzamanlı istekler bakiyeyi **negatife indirebilir**
+2. **Transaction yok** — jeton 205'te düşüyor, `giftEvent` 228'de oluşuyor; arada hata → **jeton gitti, hediye yok**
+3. **Idempotency yok** — retry/çift dokunuşta çift ücret *(mevcut planın P2-14 maddesiyle aynı konu — oraya bağlanmalı)*
+
+**Plan**
+1. Koşullu atomik düşme: `updateMany({ where: { id, coins: { gte: totalCost } }, data: { coins: { decrement: totalCost } } })` → `count === 0` ise 402.
+2. Transaction sınırı **yalnızca** düşme + `giftEvent.create`; yan etkiler commit sonrası (aksi halde rollback'te hayalet event yayılır).
+3. Ortak yardımcıya çıkar — iki handler'da aynı hatayı tekrar etme riskini kalıcı kapat.
+4. `newBalance` artık `updateMany`'den gelmiyor; sözleşmeyi bozmadan ayrıca okunmalı.
+
+**Test:** (a) `Promise.all` ile eşzamanlı iki istek → negatif bakiye yok, biri 402; (b) `giftEvent.create` fail → jeton iade; (c) yanıt alanları değişmemiş.
+
+**Risk:** Orta — en büyük tehlike yan etkileri transaction içine almak. **Rollback:** tek dosya + yardımcı, istemci değişmediği için `git revert` güvenli.
+
+---
+
+### P0-3 — Hediye alıcısı benzersiz olmayan `displayName` ile çözülüyor (BACKEND)
+
+**Aynı kapsam kararına tabi (bkz. P0-2).**
+
+- **Dosya:** `api/src/routes/gifts.ts:214–226` ve `sendRoomGift` içindeki eşdeğeri (~419)
+- **Problem:** `findFirst({ OR: [{ username }, { displayName }] })` — `username` benzersiz ama **`displayName` değil** (`api/src/routes/users.ts:36` yalnızca `min(1).max(120)`). Çoklu eşleşmede rastgele kullanıcı seçiliyor → hediye ve gelir **yanlış kişiye** yazılabilir.
+- **Plan:** Alıcı öncelikle `receiverId`; isimle çözüm gerekiyorsa yalnızca `username`; belirsizlikte 409.
+- **⚠ Uygulamadan önce ölçüm gerekli:** Üretimde isteklerin ne kadarı `receiverName` ile geliyor? İstemcilerin `receiverId` göndermediği bir yol varsa hediye alıcısız kalır. Ölçüm yapılmadan `displayName` yolu tamamen kapatılmamalı — ara adım: **loglama + belirsizlikte reddetme**.
+- **Test:** Aynı `displayName`'li iki kullanıcı seed'le → belirsiz alıcıya yazılmamalı.
+
+---
+
 ## P1 — Yüksek
 
 ### P1-1 — PK battle stale latch (`refresh()` clearBattle)
@@ -105,6 +160,41 @@ cd mobile && flutter pub get && dart analyze && flutter test
 **Test:** `flutter test test/features/live/live_video_pk_provider_test.dart` + PK paketi smoke.
 
 **Risk:** Orta-yüksek — PK UI takılı kalabilir; TTL + ended status ile sınırla.
+
+---
+
+#### 🔎 2026-09-18 doğrulama koşusu — P1-1'in kök nedeni ve latch tasarımını etkileyen üç bulgu
+
+Yukarıdaki latch planı doğru yönde, ancak kod okumasında **latch'in zaten var olduğu** ve eksik kapsadığı tespit edildi. Latch'i sıfırdan yazmak yerine mevcut olanı genişletmek gerekiyor (talimat §13 — ikinci sistem kurma).
+
+**Mevcut latch:** `mobile/lib/features/live/domain/pk/live_pk_refresh_stale_guard.dart` → `shouldRetainPkBattleOnEmptyRefresh()`, `staleTtl = 90 sn`. Tek çağıran: `live_video_pk_provider.dart:82-88`.
+
+**(a) `paused` statüsü hiçbir yerde kapsanmıyor — net eksik**
+Guard'ın koruduğu statüler (`pk_status_helper.dart` + `live_pk_broadcast_stage.dart`): `pending, invited, created, waiting, active, started, in_progress, running, starting, countdown, preparing, ended, completed, finished, tie, draw, cancelled, canceled`. **`paused` yok.** Oysa `pk_session_notifier.dart:102-104,245-247` `PkStatus.paused`'ı aktif maç gibi ele alıyor → maç duraklatılmışken boş refresh gelirse battle siliniyor. Bu düzeltme **ürün kararından bağımsız olarak gerekli**.
+
+**(b) TTL maç süresinden kısa**
+`staleTtl` **90 sn**, varsayılan maç süresi `pk_session_notifier.dart:261` → **180 sn**. 90 sn'yi aşan ağ sorununda maç canlıyken UI düşüyor. TTL `battleEndsAt` üzerinden türetilmeli.
+
+**(c) Hata yolu ile "battle yok" yolu aynı sonuca bağlanmış**
+`live_video_pk_provider.dart:170-181` — `catch` bloğu hatayı yazıp silme yoluna düşüyor. Tek bir timeout/500 PK ekranını düşürebiliyor. *Hata* bilgi yokluğudur, *boş yanıt* bilgidir; ayrılmalı. **Bu, üç düzeltme içinde en düşük riskli olanı ve önce yapılmalı** — tek başına "tek timeout PK'yı düşürüyor" senaryosunu kapatır.
+
+> ### ⚠ Bu madde mevcut bir test beklentisini değiştirmek zorunda — önce ürün kararı gerekiyor
+>
+> `mobile/test/features/live/live_pk_refresh_stale_guard_test.dart` **zaten var** (4 test) ve 2. vakası şunu **kasıtlı olarak** kodluyor:
+>
+> `does not retain active battle after TTL when dual streams missing` → active + 120 sn + dual stream yok → **`isFalse`**
+>
+> Yani düşme davranışı "unutulmuş" değil, **bilinçli alınmış bir karar**. Latch'i genişletmek bu testi değiştirmeyi gerektirir. Uygulamadan önce cevaplanmalı:
+>
+> **"Aktif bir PK maçında sunucudan 90+ sn doğrulama gelmiyorsa ve elde çift yayın kimliği yoksa — PK ekranı kalmalı mı, düşmeli mi?"**
+>
+> Bu mühendislik değil **ürün** kararıdır: yanlış pozitif (bitmiş maç ekranda takılı) ↔ yanlış negatif (süren maç ekrandan düşer). `paused` düzeltmesi (a) bu karardan bağımsız ilerleyebilir.
+
+**Önerilen alt sıra:** (c) catch ayrımı → (a) `paused` kapsamı → (b) TTL türetme → ardından P1-1'in `_mergeBattleMap` maddesi.
+
+**Ek test vakaları:** `paused` + boş refresh → korunmalı · `active` + 120 sn authority + 180 sn maç → korunmalı · gerçek `ended` → **silinmeli** (regresyon koruması).
+
+**Ek madde — `pkSessionProvider` `autoDispose` state kaybı:** `pk_session_notifier.dart:356-359` `NotifierProvider.autoDispose.family` kullanıyor; izleyici kalmadığında state imha olup `const PkSessionState()` (battle yok) dönüyor. Navigasyon/sheet açılışı izleyicileri anlık düşürürse PK state sıfırlanır — latch'ten bağımsız **ikinci bir düşme yolu**. Ayrıca `loadState()` (116-130) ve `_action()` (338-353) `await` sonrası `state` yazıyor, `ref.mounted` kontrolü yok. *Çözüm:* battle non-null iken `ref.keepAlive()`, `ended`'de bırak (bırakılmazsa sızıntı — testle kanıtlanmalı).
 
 ---
 
@@ -257,6 +347,41 @@ Her aşama sonrası: `flutter test test/features/live/` + analyze.
 
 ---
 
+### P2-16 — PK sayacı saniyede bir tüm ekranı rebuild ediyor *(2026-09-18 eklendi)*
+
+- **Dosya:** `mobile/lib/features/pk/presentation/providers/pk_session_notifier.dart:93–114`
+- **Problem:** `Timer.periodic(1 sn)` her tetiklenmede `state = state.copyWith(...)` yazıyor → `pkSessionProvider`'ı izleyen **her** widget saniyede bir rebuild oluyor. PK ekranı zaten video + skor + chat + hediye animasyonu taşıyor; 60 FPS hedefiyle doğrudan çelişiyor. *(P2-13 "live room select daraltma" ile aynı amaç, farklı dosya — birlikte planlanabilir.)*
+- **Plan:** Kalan süre dar kapsamlı ayrı provider/`ValueNotifier`'a taşınır; yalnızca sayaç widget'ı dinler. Alternatif: `select` ile daraltma.
+- **Test:** Rebuild sayacı ile widget testi.
+- **Risk:** Düşük. **Sıra notu:** P1-1'in `keepAlive` maddesiyle aynı dosyaya dokunuyor — ondan sonra yapılmalı.
+
+### P2-17 — Sesli oda rütbesi kısıtsız `nickname`'den türetiliyor *(2026-09-18 eklendi)*
+
+- **Dosyalar:** `voice_moderation_target_color.dart:22`, `voice_seat_avatar_frame.dart:31`
+- **Problem:** Rütbe kullanıcı adının ilk karakterinden türetiliyor (`voice_staff_rank.dart:15-22`: `%`→admin, `~`→founder, `@`→op). Bu iki call-site kısıtsız `nickname ?? name` geçiyor; `displayName` backend'de karakter kısıtı taşımıyor (`users.ts:36`) → kullanıcı `%Mesut` yazıp **admin rozeti** gösterebilir.
+- **⚠ Ölçülü değerlendirme — yetki yükseltmesi DEĞİL:** Gerçek yetki kararı `voice_room_permissions.dart:146` üzerinden güvenli `user.username` ile veriliyor ve `username` backend'de `^[a-zA-Z0-9_]+$` ile korunuyor (`users.ts:43`). Etki yalnızca **rozet rengi ve koltuk çerçevesi** → sosyal mühendislik riski, yetki kaybı değil. Bu nedenle P2, P0 değil.
+- **Plan:** Bu iki call-site de `user.username` kullanmalı; `nickname`/`displayName` hiçbir rol türetmesine girmemeli.
+- **Test:** `displayName = '%Sahte'` → rütbe `none`.
+- **Risk:** Çok düşük.
+
+### P2-18 — Sayfalama yok: `page: 1` beş yerde sabit *(2026-09-18 eklendi)*
+
+- **Dosyalar:** `social_discovery_providers.dart:23`, `social_providers.dart:44,59`, `user_social_posts_notifier.dart:18,30`
+- **Problem:** Keşif akışı, sosyal akış ve kullanıcı gönderileri **yalnızca 1. sayfayı** çekiyor; sonsuz kaydırma fiilen yok.
+- **⚠ Kullanım araştırması uyarısı:** `core/pagination/` yalnızca `paged_result.dart` içeriyor — **hazır altyapı yok.** Bu madde "mevcut altyapıyı bağla" değil, **tasarım gerektiren** bir iş. Talimat §13 gereği paralel yeni bir sayfalama katmanı yazılmamalı; önce `paged_result.dart` incelenip yetersizse genişletilmeli.
+- **Ek karmaşıklık:** Bu provider'lar `autoDispose FutureProvider` — sayfalama eklenince liste state'i ve scroll pozisyonu yönetimi de değişir.
+- **Plan:** **Ekran ekran**, tek seferde değil: önce keşif → sonra sosyal akış → sonra profil gönderileri.
+- **Risk:** **Orta–yüksek** (üç ekranı birden etkiler). En geç yapılacak P2 maddesi.
+
+### P2-19 — Hata durumu kapsamı çok düşük *(2026-09-18 eklendi)*
+
+- **Ölçüm:** `ErrorState`/`ErrorView` yalnızca **6 dosyada**; `EmptyState` 39, loading göstergesi 192 — toplam **138 sayfaya** karşılık.
+- **Problem:** Loading yaygın, error neredeyse yok → hata durumunda kullanıcı boş ekran veya sonsuz loading görüyor (talimat §25'in en zayıf ayağı). P2-2 (Live SSE UX) bu sorunun tek bir ekrandaki görünümü; bu madde genel çözüm.
+- **Plan:** Retry aksiyonlu ortak `ErrorState` bileşeni; **önce yalnızca kritik akışlara** bağlanır (auth, live, PK, wallet, chat, discovery). Tüm ekranlara yayılım ayrı iş kalemi.
+- **Risk:** Düşük, artımlı.
+
+---
+
 ## P3 — UI/UX
 
 ### P3-1 — Feed → social provider migrasyonu
@@ -290,6 +415,30 @@ Her aşama sonrası: `flutter test test/features/live/` + analyze.
 ### P3-8 — Notification SSE lifecycle
 
 - Hub + app lifecycle; badge stale fix.
+
+---
+
+### P3-9 — `yacht` hediyesi yanlış animasyon gösteriyor, varlık eksik *(2026-09-18 eklendi)*
+
+- **Dosya:** `mobile/lib/features/gifts/data/gift_catalog_maps.dart:13,19,24` (`'lottie:yacht'`, `'yacht'`, `'yat'`)
+- **Problem:** Üç anahtar da `assets/gifts/lottie/star.json`'a işaret ediyor. `mobile/assets/gifts/lottie/` içeriği doğrulandı: **`car, crown, heart, rose, star`** — `yacht.json` **yok**. Katalogdaki en pahalı hediyelerden biri yıldız animasyonu oynatıyor; kullanıcı ödediği hediyeyi ayırt edemiyor.
+- **Plan:** (a) `yacht.json` varlığı eklenir — **bu adım dışarıdan tasarım varlığı bekler**; (b) varlık gelene kadar ayırt edilebilir başka bir animasyona yönlendirilir; (c) **kalıcı koruma:** katalogdaki her anahtarın var olan bir asset'e çözüldüğünü doğrulayan birim testi — bu tür sessiz eksikleri bir daha oluşmadan yakalar.
+- **Risk:** Yok (varlık + test ekleme).
+
+### P3-10 — Feed'de sahte kullanıcılar empty-state yerine geçiyor *(2026-09-18 eklendi)*
+
+- **Dosya:** `mobile/lib/features/feed/presentation/widgets/feed_story_strip.dart:23–30`
+- **Problem:** Gerçek gönderi yokken var olmayan `'Özge'`, `'Ela'`, `'Arda'` kullanıcıları `i.pravatar.cc` avatarlarıyla gösteriliyor. Hem talimatın yasakladığı **sahte veri** hem **eksik empty-state** — boşluk uydurma insanlarla doldurulmuş. *(P4-5 "social fake post deprecated metod" farklı bir konu; bu madde hikâye şeridi fallback'i.)*
+- **Plan:** Fallback kaldırılır, gerçek empty-state konur (metin + hikâye oluşturma çağrısı).
+- **Test:** `posts: []` ile widget testi — sahte isimler render edilmemeli.
+- **Risk:** Çok düşük.
+
+### P3-11 — Üretim kodunda üçüncü parti placeholder görselleri *(2026-09-18 eklendi)*
+
+- **Dosyalar:** `fortune_type_images.dart:5`, `section_visual_catalog.dart:3`, `discover_live_carousel.dart:124,132,140,412`, `live_background_picker_sheet.dart:25,29,33`
+- **Problem:** `images.unsplash.com` (27 kullanım) ve `i.pravatar.cc` sabit URL olarak gömülü. SLA'sız üçüncü parti CDN; erişim kesilirse fal kategorileri, ana sayfa görselleri ve canlı arka planları boş kalır.
+- **Plan:** Kendi CDN/asset'lerine taşınır veya backend'den yönetilir. **Ürün/tasarım kararı gerektirir** (hangi görseller kullanılacak) — saf mühendislik değil.
+- **Risk:** Düşük.
 
 ---
 
@@ -338,10 +487,11 @@ Her aşama sonrası: `flutter test test/features/live/` + analyze.
 Agent bir sonraki turda **sırayla**:
 
 1. P0-1 → kullanıcı sonucu beklenir veya FAIL hotfix  
-2. P1-1 → P1-4  
-3. P2-* (önce 6, 8, 3, 4 — kullanıcı görünür bug’lar)  
-4. P3/P4 batch’ler  
-5. **`RELEASE_AUDIT.md`** (madde 33) — tüm düzeltmeler bittikten sonra
+2. **P0-2 / P0-3 → yalnızca backend kapsam kararı verildiyse** (bkz. P0-2 uyarısı; verilmediyse ayrı iş kalemine devredilir)  
+3. P1-1 → önerilen alt sıra: **(c) catch ayrımı → (a) `paused` kapsamı → (b) TTL türetme → `keepAlive`** · ardından P1-2 → P1-4  
+4. P2-* (önce 6, 8, 3, 4 — kullanıcı görünür bug’lar), sonra 16 → 17 → 19 → **18 en son** (orta–yüksek riskli)  
+5. P3/P4 batch’ler — P3-9/P3-10 erken alınabilir (risk yok/çok düşük)  
+6. **`RELEASE_AUDIT.md`** (madde 33) — tüm düzeltmeler bittikten sonra
 
 Her commit sonrası:
 
@@ -349,6 +499,23 @@ Her commit sonrası:
 cd mobile && dart analyze && flutter test
 # mobile/ veya workflow değiştiyse: git push origin main && bash scripts/wait-apk-build.sh 900
 ```
+
+**Taban çizgisi (2026-09-18, Flutter 3.44.8 = CI pin'i ile ölçüldü):**
+
+| Kontrol | Değer |
+|---|---|
+| `flutter analyze` | **657 bulgu, 0 error** (261 warning, 396 info · `lib/` 592, `test/` 65) |
+| `flutter test` | **1.408 geçti, 2 atlandı, 0 başarısız** (4:20) |
+
+Bir adım bu taban çizgisini bozarsa **geri alınır** ve daha güvenli çözüm üretilir (talimat §32). Not: mevcut doğrulama komutu `dart analyze` kullanıyor; CI pin'i `flutter analyze` ile ölçüm yapıldığında sayılar farklı çıkar (660 info vs 657/0-error) — kıyaslama aynı araçla yapılmalı.
+
+**Uygulamadan önce cevaplanması gereken sorular:**
+
+1. **Backend kapsamı** — P0-2/P0-3 bu planın kapsamına alınsın mı? (Genel kural 4 şu an backend'i dışlıyor; en ciddi kusur backend'de.)
+2. **P1-1 ürün kararı** — aktif PK'da 90+ sn doğrulama yoksa ve çift yayın kimliği elde yoksa PK ekranı kalmalı mı, düşmeli mi? (Mevcut test "düşmeli" diyor; kullanıcı şikâyeti "kalmalı" diyor.)
+3. **P0-3 ölçümü** — üretimde hediye isteklerinin ne kadarı `receiverId` yerine `receiverName` ile geliyor?
+4. **P2-14/P0-2 idempotency kapsamı** — yalnızca backend mi (geriye dönük uyumlu, yarım fayda), yoksa istemciler de anahtar gönderecek mi?
+5. **P3-9 varlık** — `yacht.json` tasarım varlığı sağlanabilir mi, yoksa geçici yönlendirme mi?
 
 ---
 
