@@ -64,4 +64,63 @@ void main() {
       isTrue,
     );
   });
+
+  // `paused` bitmiş değil devam eden bir maçtır (`PkStatus.isLive`,
+  // pk_models.dart). Guard bunu kapsamadığı için duraklatılmış maç boş
+  // refresh'te siliniyordu — `active` ile aynı şekilde korunmalı.
+  group('paused', () {
+    test('retains paused battle within TTL when refresh empty', () {
+      expect(
+        shouldRetainPkBattleOnEmptyRefresh(
+          battle: const {'status': 'paused', 'id': 'pk-3'},
+          status: 'paused',
+          lastAuthorityAt: now.subtract(const Duration(seconds: 10)),
+          now: now,
+        ),
+        isTrue,
+      );
+    });
+
+    test('retains paused battle with dual streams within TTL', () {
+      expect(
+        shouldRetainPkBattleOnEmptyRefresh(
+          battle: const {
+            'status': 'paused',
+            'id': 'pk-3',
+            'liveStreamId': 's-host',
+            'opponentLiveStreamId': 's-opp',
+          },
+          status: 'paused',
+          lastAuthorityAt: now.subtract(const Duration(seconds: 10)),
+          now: now,
+        ),
+        isTrue,
+      );
+    });
+
+    // Sınırı belgeler: paused, active ile aynı TTL davranışına tabidir.
+    test('does not retain paused battle after TTL', () {
+      expect(
+        shouldRetainPkBattleOnEmptyRefresh(
+          battle: const {'status': 'paused', 'id': 'pk-3'},
+          status: 'paused',
+          lastAuthorityAt: now.subtract(const Duration(seconds: 120)),
+          now: now,
+        ),
+        isFalse,
+      );
+    });
+
+    test('still clears genuinely ended battle', () {
+      expect(
+        shouldRetainPkBattleOnEmptyRefresh(
+          battle: const {'status': 'completed', 'id': 'pk-3'},
+          status: 'completed',
+          lastAuthorityAt: now.subtract(const Duration(seconds: 10)),
+          now: now,
+        ),
+        isFalse,
+      );
+    });
+  });
 }

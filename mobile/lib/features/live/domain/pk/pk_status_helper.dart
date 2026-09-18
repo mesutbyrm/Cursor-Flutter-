@@ -23,6 +23,12 @@ bool isLivePkStartingStatus(String? status) {
   return s == 'starting' || s == 'countdown' || s == 'preparing';
 }
 
+/// Geçici olarak duraklatılmış maç — bitmiş değil, devam eden sayılır.
+/// `PkStatus.paused` ve `PkStatus.isLive` ile hizalıdır (`pk_models.dart`).
+bool isLivePkPausedStatus(String? status) {
+  return normalizePkStatus(status) == 'paused';
+}
+
 /// Aktif PK için iki yayın kimliği gerekli (erken split TRTC çökmesini önler).
 bool isLivePkSplitReady(Map<String, dynamic>? battle, String? status) {
   if (battle == null || !isLivePkActiveStatus(status)) return false;

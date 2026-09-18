@@ -13,7 +13,9 @@ bool shouldRetainPkBattleOnEmptyRefresh({
   final clock = now ?? DateTime.now();
   if (isPkInvitePendingStatus(status)) return true;
   if (isLivePkBroadcastStage(battle, status)) return true;
-  if (isLivePkActiveStatus(status) || isLivePkStartingStatus(status)) {
+  if (isLivePkActiveStatus(status) ||
+      isLivePkStartingStatus(status) ||
+      isLivePkPausedStatus(status)) {
     if (lastAuthorityAt != null &&
         clock.difference(lastAuthorityAt) < staleTtl) {
       return true;
