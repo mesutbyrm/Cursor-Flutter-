@@ -200,6 +200,14 @@ Guard'ın koruduğu statüler (`pk_status_helper.dart` + `live_pk_broadcast_stag
 
 **Ek madde — `pkSessionProvider` `autoDispose` state kaybı:** `pk_session_notifier.dart:356-359` `NotifierProvider.autoDispose.family` kullanıyor; izleyici kalmadığında state imha olup `const PkSessionState()` (battle yok) dönüyor. Navigasyon/sheet açılışı izleyicileri anlık düşürürse PK state sıfırlanır — latch'ten bağımsız **ikinci bir düşme yolu**. Ayrıca `loadState()` (116-130) ve `_action()` (338-353) `await` sonrası `state` yazıyor, `ref.mounted` kontrolü yok. *Çözüm:* battle non-null iken `ref.keepAlive()`, `ended`'de bırak (bırakılmazsa sızıntı — testle kanıtlanmalı).
 
+> **Durum: UYGULANDI + TEST EDİLDİ — 2026-09-18.** Düzeltme `691200a8`'de yapıldı; o commit'te kendi testinin olmadığı açıkça belirtilmişti. Boşluk `mobile/test/features/pk/pk_session_keep_alive_test.dart` ile kapatıldı (`pkServiceProvider` sahte servisle, `pkBattleRemoteProvider` yutucu stub ile override ediliyor; 3 vaka: süren maçta korunma, bitmiş maçta bırakma, battle yokken tutmama).
+>
+> **Testin gerçekten koruduğu doğrulandı:** `_retainLive()` geçici olarak devre dışı bırakıldığında 1. vaka bug'ın semptomuyla düşüyor — `Expected: 'pk-1', Actual: <null>`. Sonrasında kod geri yüklendi.
+>
+> Not: `ref.mounted` riverpod **2.6.1'de public değil** (3.0'da geldi); planda öngörülen `ref.mounted` yerine `onDispose`'da set edilen `_disposed` bayrağı kullanıldı.
+>
+> Doğrulama: `flutter analyze` **657** (taban çizgisiyle aynı, 0 error) · `flutter test` **1419 geçti / 0 başarısız** (taban 1416 + 3 yeni).
+
 ---
 
 ### P1-2 — `live_broadcast_room_page` kontrollü parçalama
