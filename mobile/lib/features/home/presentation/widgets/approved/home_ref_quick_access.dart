@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-
+import '../../navigation/home_cta_navigation.dart';
 import '../../../../../core/motion/canlifal_motion_widgets.dart';
 import '../../theme/home_approved_design.dart';
 import '../home_motion_widgets.dart';
@@ -88,7 +87,7 @@ class _QuickAccessTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CanlifalPressable(
-      onTap: () => context.push(item.route),
+      onTap: () => pushFromHomeCta(context, item.route),
       child: AspectRatio(
         aspectRatio: 1,
         child: DecoratedBox(

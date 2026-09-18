@@ -1,12 +1,27 @@
 # Sürüm notları — canlifal_social
 
-## 1.0.558+599 (2026-09-18) — PK video karşılıklı + sonuç rozeti (3/2b)
+## 1.0.560+601 (2026-09-18) — PK video karşılıklı + sonuç rozeti (3/2b)
 
 - **HATA A:** PK başında aynı TRTC odasında olsak bile `live` → `videoCall` (twoWayVideo) rejoin; karşı taraf `userId` eşlemesi (`resolveLivePkTrtcRemoteUserId`); «Kamera kapalı» / «Kamera bekleniyor» ayrımı
 - **HATA B:** Tam ekran PK sonuç flaşı/konfeti kaldırıldı (`LivePkResultFlashOverlay`, pane outcome); sonuç yalnızca `PkStatusPill` (skor bandı); sesli `PkResultPage` tam ekran kutlama yok
 - **2b:** Yayın odası PK split katmanına `LivePkReferenceScoreBar` (TikTok/Bigo skor bandı)
 - **Canlı HATA 1:** PK twoWay rejoin yalnızca zaten videoCall modundaysa atlanır
 - **Canlı HATA 4 / Sesli 1–4:** Mevcut snackbar, presence kopya, seat lock, room1/room2 tanılama doğrulandı (backend: paylaşılan `pkRoomId` / voice `room1-room2`)
+
+## 1.0.559+600 (2026-09-18) — Ana sayfa kalan maddeler
+
+- Alt nav **Mesaj/Fal** (referans): kısa dokun = `/fortune`, uzun bas = `/messages`, inbox rozeti
+- Sosyal medya: YouTube linki arama sonuçlarına; X/Instagram/Facebook doğrulandı
+- PK sunum köprüsü `liveVideoPkProvider` battle durumu ile senkron (RTC yok)
+- `docs/LATEST_APK_BUILD.md` sürüm hizası
+
+## 1.0.558+599 (2026-09-18) — Ana sayfa 1:1 UI (aşama 4–9 tamamlama)
+
+- Sosyal şerit (son girişler / beğenenler) ana sayfaya bağlandı
+- Alt bölüm: Duyurular (API popups / blog), sosyal medya ikonları, kapanış alıntısı
+- CTA geçiş giriş noktası; Gold ve sesli oda hub için fade-slide router
+- Alt nav etiketi «Canlı»; reklam teaser’ında sahte jeton vaadi yok
+- PK sunum geçiş köprüsü (§33-P) — RTC mantığına dokunulmadı
 
 ## 1.0.557+598 (2026-09-17) — Ana sayfa motion (aşama 8)
 

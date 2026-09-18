@@ -7,6 +7,7 @@ import '../../../core/bootstrap/shell_prefetch.dart';
 import '../../../core/widgets/exit_confirm_dialog.dart';
 import 'shell_ui.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
+import '../../inbox/presentation/providers/inbox_unread_providers.dart';
 import '../../messages/presentation/providers/messages_providers.dart';
 import '../../notifications/presentation/providers/notification_event_gate_provider.dart';
 import '../../home/presentation/widgets/approved/bottom_navigation_widget.dart';
@@ -97,6 +98,8 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
       });
     }
 
+    final inboxUnread = ref.watch(inboxUnreadCountProvider);
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
@@ -122,6 +125,9 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
           onCreate: () => _onYayinTap(context),
           onCreateLongPress: () => _onYayinLongPress(context),
           onFortune: () => _goBranch(3),
+          onFortuneLongPress: () =>
+              GoRouter.of(context).push('/messages'),
+          inboxUnread: inboxUnread,
           onProfile: () => _goBranch(4),
         ),
       ),

@@ -35,6 +35,21 @@ class HomeFanClubItem {
   final int? memberCount;
 }
 
+/// Resmi sosyal kanallar — üretim site schema (`sameAs`) ile uyumlu.
+class HomeSocialChannel {
+  const HomeSocialChannel({
+    required this.id,
+    required this.label,
+    required this.url,
+    required this.icon,
+  });
+
+  final String id;
+  final String label;
+  final String url;
+  final IconData icon;
+}
+
 abstract final class HomeSiteCatalog {
   static const discoverTiles = <HomeDiscoverTile>[
     HomeDiscoverTile(
@@ -120,6 +135,33 @@ abstract final class HomeSiteCatalog {
       imageUrl: 'https://canlifal.com/favicon.ico',
       route: '/fan-club-hub',
       memberCount: 6100,
+    ),
+  ];
+
+  static const socialChannels = <HomeSocialChannel>[
+    HomeSocialChannel(
+      id: 'instagram',
+      label: 'Instagram',
+      url: 'https://www.instagram.com/canlifal',
+      icon: Icons.camera_alt_outlined,
+    ),
+    HomeSocialChannel(
+      id: 'tiktok',
+      label: 'TikTok',
+      url: 'https://www.tiktok.com/@canlifal',
+      icon: Icons.music_note_rounded,
+    ),
+    HomeSocialChannel(
+      id: 'youtube',
+      label: 'YouTube',
+      url: 'https://www.youtube.com/results?search_query=canlifal',
+      icon: Icons.play_circle_outline_rounded,
+    ),
+    HomeSocialChannel(
+      id: 'x',
+      label: 'X',
+      url: 'https://twitter.com/canlifal',
+      icon: Icons.tag_rounded,
     ),
   ];
 }

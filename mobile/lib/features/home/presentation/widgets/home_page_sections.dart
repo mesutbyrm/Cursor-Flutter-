@@ -17,7 +17,9 @@ import 'home_discover_premium_banner.dart';
 import 'home_fortune_request_types_section.dart';
 import 'home_games_section.dart';
 import 'home_growth_teasers_section.dart';
+import 'home_footer_section.dart';
 import 'home_online_fal_section.dart';
+import 'home_social_strip_section.dart';
 import 'home_promo_popup_banner.dart';
 import 'home_viewport_section.dart';
 import 'home_advisors_row.dart';
@@ -82,6 +84,12 @@ abstract final class HomePageSections {
       ),
       const SliverToBoxAdapter(
         child: HomeSectionReveal(child: HomeDiscoverPremiumBanner()),
+      ),
+      const SliverToBoxAdapter(
+        child: HomeDeferredSection(
+          delay: StartupPerf.homeTrendingSectionDelay,
+          child: HomeSectionReveal(child: HomeSocialStripSection()),
+        ),
       ),
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
@@ -164,6 +172,12 @@ abstract final class HomePageSections {
             estimatedHeight: 160,
             child: HomeHoroscopeSection(),
           ),
+        ),
+      ),
+      const SliverToBoxAdapter(
+        child: HomeDeferredSection(
+          delay: StartupPerf.homeGameSectionDelay,
+          child: HomeSectionReveal(child: HomeFooterSection()),
         ),
       ),
       SliverToBoxAdapter(child: SizedBox(height: 72 + bottomInset)),

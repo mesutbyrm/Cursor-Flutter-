@@ -69,11 +69,11 @@ class HomeGrowthTeasersSection extends ConsumerWidget {
 
       final ads = ref.watch(homeActiveAdsProvider);
       if (ads case AsyncData(:final value) when value.isNotEmpty) {
-        final subtitle = 'Günlük reklam ve ödül merkezi';
+        const subtitle = 'Sponsorlu içerik ve kampanyalar';
         cards.add(
           _GrowthCardData(
             emoji: '📺',
-            title: 'Reklam & Ödüller',
+            title: 'Reklam Merkezi',
             subtitle: subtitle,
             accent: const Color(0xFFFF8A3D),
             icon: Icons.play_circle_rounded,
@@ -89,7 +89,7 @@ class HomeGrowthTeasersSection extends ConsumerWidget {
       children: [
         HomeSectionTitle(
           emoji: '✨',
-          title: 'Büyüme & Ödüller',
+          title: 'Büyüme & Görevler',
           actionLabel: 'Merkez >',
           onAction: () => context.push('/profile/growth'),
         ),

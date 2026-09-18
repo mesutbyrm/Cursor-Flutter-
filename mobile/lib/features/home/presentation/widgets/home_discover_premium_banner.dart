@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-
 import '../../../../core/motion/canlifal_motion_widgets.dart';
+import '../navigation/home_cta_navigation.dart';
 import '../theme/home_approved_design.dart';
 
 /// Referans — Tanış & Kaynaş geniş premium banner.
@@ -18,7 +17,7 @@ class HomeDiscoverPremiumBanner extends StatelessWidget {
         16,
       ),
       child: CanlifalPressable(
-        onTap: () => context.push('/social/tanis-kaynas'),
+        onTap: () => pushFromHomeCta(context, '/social/tanis-kaynas'),
         child: DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),

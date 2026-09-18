@@ -655,7 +655,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/premium-membership',
-        builder: (context, state) => const PremiumMembershipPage(),
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const PremiumMembershipPage(),
+        ),
       ),
       GoRoute(
         path: '/admin',
@@ -1414,7 +1417,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/voice-rooms',
-        pageBuilder: (context, state) => AppPageTransitions.none(
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
           child: const VoiceRoomsHubPage(),
         ),
