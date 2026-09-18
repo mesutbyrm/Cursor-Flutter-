@@ -182,6 +182,24 @@ Guard'ın koruduğu statüler (`pk_status_helper.dart` + `live_pk_broadcast_stag
 **(c) Hata yolu ile "battle yok" yolu aynı sonuca bağlanmış**
 `live_video_pk_provider.dart:170-181` — `catch` bloğu hatayı yazıp silme yoluna düşüyor. Tek bir timeout/500 PK ekranını düşürebiliyor. *Hata* bilgi yokluğudur, *boş yanıt* bilgidir; ayrılmalı. **Bu, üç düzeltme içinde en düşük riskli olanı ve önce yapılmalı** — tek başına "tek timeout PK'yı düşürüyor" senaryosunu kapatır.
 
+> ### ✅ ÜRÜN KARARI VERİLDİ VE UYGULANDI — 2026-09-18
+>
+> **Karar: "PK ekranı kalsın."** Sunucudan doğrulama gelmemesi "maç bitti" bilgisi değildir; zayıf ağda maç sürerken ekranın düşmesi, bitmiş bir maçın birkaç saniye fazla durmasından çok daha kötü.
+>
+> **Uygulama:** 90 saniyelik istemci sayacı (`staleTtl` + `lastAuthorityAt`) tamamen kaldırıldı. Aktif/starting/paused maçta boş veya hatalı refresh artık battle'ı **silmiyor**.
+>
+> **Sonsuza kadar takılı kalmama güvencesi:** tek çıkış maçın kendi bitiş zamanı (`endsAt`) — istemci sayacı değil, sunucudan gelen gerçek. `_ensurePkEndsAt` bu alanı her başarılı yenilemede garanti ediyor (sunucu göndermezse `startedAt + duration`'dan türetiyor). `endsAt + 2 dk` geçtiyse sunucunun artık doğrulama göndermeyeceği kabul edilir; `endsAt` bilinmiyorsa koruma tarafında kalınır.
+>
+> **Temizlik:** `_lastBattleAuthorityAt` alanı ve `_markBattleAuthority()` metodu artık okunmadığından provider'dan kaldırıldı (5 çağrı yeri dahil). Davranış-nötr ölü kod temizliği.
+>
+> **Test:** Dosya yeni karara göre yeniden yazıldı (14 vaka). Eski testin *"does not retain active battle after TTL when dual streams missing" → `isFalse`* beklentisi **kasıtlı tersine çevrildi** — o vaka tam da şikâyet edilen düşüşü kodluyordu.
+>
+> Doğrulama: `flutter analyze` **627** (değişmedi) · `flutter test` **1428 geçti / 0 başarısız**.
+>
+> ---
+>
+> <details><summary>Karar öncesi analiz (arşiv)</summary>
+>
 > ### ⚠ Bu madde mevcut bir test beklentisini değiştirmek zorunda — önce ürün kararı gerekiyor
 >
 > `mobile/test/features/live/live_pk_refresh_stale_guard_test.dart` **zaten var** (4 test) ve 2. vakası şunu **kasıtlı olarak** kodluyor:
@@ -193,8 +211,10 @@ Guard'ın koruduğu statüler (`pk_status_helper.dart` + `live_pk_broadcast_stag
 > **"Aktif bir PK maçında sunucudan 90+ sn doğrulama gelmiyorsa ve elde çift yayın kimliği yoksa — PK ekranı kalmalı mı, düşmeli mi?"**
 >
 > Bu mühendislik değil **ürün** kararıdır: yanlış pozitif (bitmiş maç ekranda takılı) ↔ yanlış negatif (süren maç ekrandan düşer). `paused` düzeltmesi (a) bu karardan bağımsız ilerleyebilir.
+>
+> </details>
 
-**Önerilen alt sıra:** (c) catch ayrımı → (a) `paused` kapsamı → (b) TTL türetme → ardından P1-1'in `_mergeBattleMap` maddesi.
+**Önerilen alt sıra:** (c) catch ayrımı → (a) `paused` kapsamı → (b) TTL türetme → ardından P1-1'in `_mergeBattleMap` maddesi. **Üçü de uygulandı** (`955d3c9d`, `04deb6a6` ve bu commit).
 
 **Ek test vakaları:** `paused` + boş refresh → korunmalı · `active` + 120 sn authority + 180 sn maç → korunmalı · gerçek `ended` → **silinmeli** (regresyon koruması).
 
