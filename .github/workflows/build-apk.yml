@@ -43,9 +43,9 @@ permissions:
   statuses: write
 
 concurrency:
-  group: build-apk-${{ github.ref }}
-  # Yalnızca ardışık main push iptal eder; manuel RE-RUN devam eden push derlemesini kesmez.
-  cancel-in-progress: ${{ github.event_name == 'push' }}
+  # apk-latest release asset yarışını önle (aynı tag'e eşzamanlı upload/delete).
+  group: apk-latest-release
+  cancel-in-progress: false
 
 jobs:
   build:

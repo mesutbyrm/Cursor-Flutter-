@@ -58,7 +58,30 @@ release_database_id() {
   release_json | python3 -c "import json,sys; print(json.load(sys.stdin).get('databaseId') or '')" 2>/dev/null || true
 }
 
-release_asset_id() {
+# GitHub REST DELETE/GET asset uçları sayısal asset id ister (apiUrl son segmenti).
+# gh release view --json assets → "id" alanı GraphQL node_id'dir (RA_kw…); REST için kullanılmaz.
+release_asset_rest_id() {
+  local asset_name="$1"
+  release_json | python3 -c "
+import json, re, sys
+name = sys.argv[1]
+data = json.load(sys.stdin)
+for a in data.get('assets') or []:
+    if a.get('name') != name:
+        continue
+    api = a.get('apiUrl') or ''
+    m = re.search(r'/releases/assets/(\d+)\s*$', api)
+    if m:
+        print(m.group(1))
+        break
+    legacy = str(a.get('id') or '')
+    if legacy.isdigit():
+        print(legacy)
+        break
+" "$asset_name" 2>/dev/null || true
+}
+
+release_asset_node_id() {
   local asset_name="$1"
   release_json | python3 -c "
 import json, sys
@@ -102,36 +125,81 @@ delete_release_asset() {
   local asset_name="$1"
   local asset_id="$2"
   if [[ -z "$asset_id" ]]; then
-    asset_id=$(release_asset_id "$asset_name")
+    asset_id=$(release_asset_rest_id "$asset_name")
   fi
   if [[ -z "$asset_id" ]]; then
     echo "Silinecek asset yok (zaten yok): ${asset_name}"
     return 0
   fi
-  echo "Mevcut release asset siliniyor: ${asset_name} (id=${asset_id}, tag=${TAG})"
-  local log rc
+  local node_id
+  node_id=$(release_asset_node_id "$asset_name")
+  echo "Mevcut release asset siliniyor: ${asset_name} (rest_asset_id=${asset_id}, node_id=${node_id:-n/a}, tag=${TAG}, repo=${REPO})"
+  local body log http
+  body=$(mktemp)
   log=$(mktemp)
   set +e
-  gh api -X DELETE "repos/${REPO}/releases/assets/${asset_id}" >"$log" 2>&1
-  rc=$?
+  http=$(curl -sS -X DELETE \
+    -H "Authorization: Bearer ${GH_TOKEN}" \
+    -H "Accept: application/vnd.github+json" \
+    -H "X-GitHub-Api-Version: 2022-11-28" \
+    -o "$body" \
+    -w '%{http_code}' \
+    "https://api.github.com/repos/${REPO}/releases/assets/${asset_id}" 2>"$log")
+  local curl_rc=$?
   set -e
-  if [[ "$rc" -ne 0 ]]; then
-    echo "::error::Asset silinemedi: ${asset_name} (tag=${TAG}, asset_id=${asset_id}, exit=${rc})"
-    redact_log <"$log" | head -40
-    rm -f "$log"
+  if [[ "$curl_rc" -ne 0 ]]; then
+    echo "::error::DELETE curl hatası: ${asset_name} (rest_asset_id=${asset_id}, tag=${TAG}, curl_rc=${curl_rc})"
+    redact_log <"$log" | head -20
+    redact_log <"$body" | head -40
+    rm -f "$body" "$log"
     return 1
   fi
-  rm -f "$log"
+  case "$http" in
+    204|200)
+      echo "DELETE başarılı HTTP ${http}: ${asset_name} (rest_asset_id=${asset_id})"
+      ;;
+    404)
+      echo "DELETE HTTP 404 — asset zaten yok (idempotent OK): ${asset_name}"
+      rm -f "$body" "$log"
+      return 0
+      ;;
+    401)
+      echo "::error::DELETE HTTP 401 — kimlik doğrulama hatası. GH_TOKEN/GITHUB_TOKEN geçerli mi? (asset=${asset_name})"
+      redact_log <"$body" | head -40
+      rm -f "$body" "$log"
+      return 1
+      ;;
+    403)
+      echo "::error::DELETE HTTP 403 — release asset silme yetkisi yok. Workflow permissions: contents: write; PAT için repo scope gerekir. (asset=${asset_name}, rest_asset_id=${asset_id})"
+      redact_log <"$body" | head -40
+      rm -f "$body" "$log"
+      return 1
+      ;;
+    422)
+      echo "::error::DELETE HTTP 422 — geçersiz istek (muhtelen yanlış asset id). rest_asset_id=${asset_id} node_id=${node_id:-n/a}"
+      redact_log <"$body" | head -40
+      rm -f "$body" "$log"
+      return 1
+      ;;
+    *)
+      echo "::error::DELETE HTTP ${http}: ${asset_name} (rest_asset_id=${asset_id}, tag=${TAG})"
+      redact_log <"$log" | head -20
+      redact_log <"$body" | head -40
+      rm -f "$body" "$log"
+      return 1
+      ;;
+  esac
+  rm -f "$body" "$log"
   local wait=1
   while (( wait <= 12 )); do
     sleep 2
-    if [[ -z "$(release_asset_id "$asset_name")" ]]; then
+    if [[ -z "$(release_asset_rest_id "$asset_name")" ]]; then
       echo "Asset silindi ve API'de görünmüyor: ${asset_name}"
       return 0
     fi
     wait=$((wait + 1))
   done
-  echo "::error::Asset silindi denendi ancak API hâlâ listeliyor: ${asset_name} (tag=${TAG})"
+  echo "::error::DELETE HTTP ${http} sonrası asset hâlâ listeleniyor: ${asset_name} (tag=${TAG})"
   return 1
 }
 
@@ -139,7 +207,7 @@ download_release_asset_via_api() {
   local asset_name="$1"
   local dest="$2"
   local asset_id
-  asset_id=$(release_asset_id "$asset_name")
+  asset_id=$(release_asset_rest_id "$asset_name")
   if [[ -z "$asset_id" ]]; then
     echo "download: asset id bulunamadı (${asset_name})"
     return 1
@@ -320,7 +388,7 @@ upload_one_asset() {
     echo "Yükleme ${attempt}/${max}: ${asset_name} (${local_size} bytes, tag=${TAG})"
 
     local existing_id
-    existing_id=$(release_asset_id "$asset_name")
+    existing_id=$(release_asset_rest_id "$asset_name")
     if [[ -n "$existing_id" ]]; then
       if ! delete_release_asset "$asset_name" "$existing_id"; then
         UPLOAD_LAST_ERROR["$asset_name"]="delete failed asset_id=${existing_id}"
