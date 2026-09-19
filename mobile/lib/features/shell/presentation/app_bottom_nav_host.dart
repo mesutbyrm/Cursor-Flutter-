@@ -7,7 +7,6 @@ import '../../../core/theme/app_theme_extensions.dart';
 import '../../../core/ui/responsive/responsive_layout.dart';
 import 'shell_ui.dart';
 import '../../home/presentation/widgets/approved/bottom_navigation_widget.dart';
-import '../../inbox/presentation/providers/inbox_unread_providers.dart';
 
 /// Sesli sohbet odası (RTC) dışındaki sayfalarda alt navigasyon.
 class AppBottomNavHost extends ConsumerWidget {
@@ -90,7 +89,6 @@ class AppBottomNavHost extends ConsumerWidget {
     if (!showNav) return child;
 
     final tab = activeTabFor(location);
-    final inboxUnread = ref.watch(inboxUnreadCountProvider);
     final width = MediaQuery.sizeOf(context).width;
     final useRail = width >= ResponsiveLayout.wideBreakpoint;
 
@@ -173,8 +171,6 @@ class AppBottomNavHost extends ConsumerWidget {
             onCreateLongPress: () =>
                 AppBottomNavHost.showCreateSheet(context, router),
             onFortune: () => router.go('/fortune'),
-            onFortuneLongPress: () => router.push('/messages'),
-            inboxUnread: inboxUnread,
             onProfile: () => router.go('/profile'),
           ),
         ],

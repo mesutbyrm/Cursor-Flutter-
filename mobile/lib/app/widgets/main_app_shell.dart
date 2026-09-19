@@ -36,6 +36,7 @@ import '../../core/sse_client_provider.dart';
 import '../../core/widgets/offline_status_banner.dart';
 import '../../features/gifts/presentation/providers/gift_catalog_version_watcher.dart';
 import '../../features/notifications/presentation/widgets/notifications_realtime_listener.dart';
+import '../../features/inbox/presentation/widgets/global_in_app_banner_host.dart';
 import '../../features/platform/presentation/widgets/app_popups_listener.dart';
 
 /// MaterialApp.router [builder] içeriği — [ListenableBuilder] kullanmaz.
@@ -172,6 +173,7 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
                       children: [
                         body,
                         if (!isAuthRoute) const VoiceRoomGlobalRankBanner(),
+                        if (!isAuthRoute) const GlobalInAppBannerHost(),
                       ],
                     ),
                   ),

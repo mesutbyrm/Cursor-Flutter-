@@ -14,6 +14,7 @@ import '../../../messages/presentation/widgets/conversations_list_sliver.dart';
 import '../../../notifications/presentation/providers/notifications_list_notifier.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';
 import '../../domain/inbox_tab.dart';
+import '../providers/inbox_unread_providers.dart';
 import '../widgets/inbox_all_feed_sliver.dart';
 import '../widgets/inbox_system_notifications_panel.dart';
 
@@ -187,8 +188,9 @@ class _InboxPageState extends ConsumerState<InboxPage> {
         ),
         if (_tab == InboxTab.all) ...[
           SliverToBoxAdapter(
-            child: InboxSystemPinnedTile(
-              onTap: () => _selectTab(InboxTab.system),
+            child: _InboxSectionCards(
+              onMessages: () => _selectTab(InboxTab.messages),
+              onSystem: () => _selectTab(InboxTab.system),
             ),
           ),
           InboxAllFeedSliver(query: _query, unreadOnly: _unreadOnly),
@@ -344,6 +346,131 @@ class _InboxSearchPanel extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+/// Gelen kutusu üst kartları — Mesajlar (okunmamış sayısı) ve Sistem Bildirimleri
+/// (okunmamış sayısı). Kartlardan birine dokununca ilgili bölüm açılır.
+class _InboxSectionCards extends ConsumerWidget {
+  const _InboxSectionCards({
+    required this.onMessages,
+    required this.onSystem,
+  });
+
+  final VoidCallback onMessages;
+  final VoidCallback onSystem;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final messages = ref.watch(inboxMessagesUnreadCountProvider);
+    final system = ref.watch(inboxSystemUnreadCountProvider);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: _InboxSectionCard(
+              icon: Icons.forum_rounded,
+              title: 'Mesajlar',
+              count: messages,
+              color: AppThemeColors.accentCyan,
+              onTap: onMessages,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _InboxSectionCard(
+              icon: Icons.notifications_rounded,
+              title: 'Sistem Bildirimleri',
+              count: system,
+              color: AppThemeColors.accentPurple,
+              onTap: onSystem,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InboxSectionCard extends StatelessWidget {
+  const _InboxSectionCard({
+    required this.icon,
+    required this.title,
+    required this.count,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final int count;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.055),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: color.withValues(alpha: 0.35)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: color, size: 22),
+                const Spacer(),
+                // Okunmamış sayısı — bölümün üstünde.
+                Container(
+                  constraints: const BoxConstraints(minWidth: 22),
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: count > 0
+                        ? color
+                        : Colors.white.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    count > 99 ? '99+' : '$count',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              count > 0 ? '$count okunmamış' : 'Tümü okundu',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.6),
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -20,6 +20,7 @@ import '../../../social/presentation/services/social_fortune_feed_sync.dart';
 import '../providers/notification_event_gate_provider.dart';
 import '../providers/notifications_list_notifier.dart';
 import '../providers/notifications_providers.dart';
+import '../../../inbox/presentation/providers/in_app_banner_provider.dart';
 import '../../../profile/presentation/widgets/jeton_payment_realtime_notifications.dart';
 
 final notificationsSseServiceProvider = Provider<NotificationsSseService>((ref) {
@@ -78,6 +79,33 @@ class _NotificationsRealtimeListenerState
     ref.invalidate(notificationsUnreadApiProvider);
     handleNotificationGiftForGlobalOverlay(ref, notification);
     final type = notification.type?.toLowerCase() ?? '';
+
+    // Uygulama içi banner — mesaj veya sistem bildirimi hangi ekranda olursa
+    // olsun ekranın üstünden düşer. Açık olan DM için mesaj banner'ı bastırılır.
+    final isMessageType = type.contains('message') ||
+        type.contains('chat') ||
+        type.contains('dm');
+    final sender = notification.senderId?.trim() ?? '';
+    final openDm = ref.read(openDmConversationIdProvider);
+    final suppress = isMessageType && sender.isNotEmpty && sender == openDm;
+    if (!suppress) {
+      final target = notification.targetPath?.trim() ?? '';
+      final route = isMessageType
+          ? (sender.isNotEmpty ? '/chat/$sender' : '/messages')
+          : (target.isNotEmpty ? target : '/notifications');
+      ref.read(inAppBannerProvider.notifier).show(
+            InAppBannerEvent(
+              key: notification.id,
+              title: notification.title,
+              body: notification.body ?? '',
+              kind: isMessageType
+                  ? InAppBannerKind.message
+                  : InAppBannerKind.system,
+              route: route,
+              avatarUrl: notification.imageUrl,
+            ),
+          );
+    }
     if (isJetonPaymentResultNotificationType(type)) {
       unawaited(handleJetonPaymentResultNotification(ref, notification));
     }
