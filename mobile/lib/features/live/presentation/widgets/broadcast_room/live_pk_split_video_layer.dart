@@ -341,8 +341,18 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
         final divider = LivePkLayoutMetrics.splitDividerWidth;
         final paneWidth =
             (constraints.maxWidth - divider).clamp(0.0, constraints.maxWidth) / 2;
-        final squareSide =
-            paneWidth.clamp(0.0, constraints.maxWidth).toDouble();
+        // Video, başlık ile alt şerit (skor bandı + kontroller + giriş) arasındaki
+        // tüm dikey alanı doldurur — referans tasarımdaki uzun dikey paneller.
+        // Önceki davranış panelleri kare (paneWidth) yapıyordu; bu, ekranın alt
+        // yarısını boş siyah bırakıyordu.
+        final availableVideoHeight =
+            (constraints.maxHeight -
+                    headerH -
+                    LivePkLayoutMetrics.videoBottomInset(context))
+                .clamp(0.0, constraints.maxHeight)
+                .toDouble();
+        final videoHeight =
+            availableVideoHeight < paneWidth ? paneWidth : availableVideoHeight;
 
         return ColoredBox(
           color: Colors.black,
@@ -353,7 +363,7 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                 top: headerH,
                 left: 0,
                 right: 0,
-                height: squareSide,
+                height: videoHeight,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [

@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.562+605 (2026-09-19) — PK split video yüksekliği düzeltmesi
+
+- Canlı PK ekranı: split video artık başlık ile alt şerit (skor/kontrol/giriş) arasındaki **tüm dikey alanı** dolduruyor
+- Önceki hata: paneller ekran genişliğinin yarısı kadar **kare** yapılıyordu; ekranın alt yarısı boş siyah kalıyordu (`videoBottomInset` metriği kullanılmıyordu)
+- VS amblemi ve yayıncı chip/footer'ları uzun panellerde doğru konumlanıyor
+
 ## 1.0.561+604 (2026-09-19) — PK UI + audit düzeltmeleri (release APK)
 
 - Canlı 1v1 PK ekranı referans tasarım: `PkBattleScreen` (split video, VS, skor barı, sohbet, kontrol çubuğu)
