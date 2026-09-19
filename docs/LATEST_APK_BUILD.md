@@ -4,22 +4,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.565+608` |
-| Tarih (UTC) | 2026-09-19 13:46 |
-| Commit | [`8be95b65fc360842644158e6f04be71368934384`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/8be95b65fc360842644158e6f04be71368934384) |
-| İş akışı | [Run 35445760876](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35445760876) |
+| Sürüm | `1.0.566+609` |
+| Tarih (UTC) | 2026-09-19 15:37 |
+| Commit | [`d7b0d20cb9a3bc72786c97c4512f0d44510994c1`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/d7b0d20cb9a3bc72786c97c4512f0d44510994c1) |
+| İş akışı | [Run 35451323669](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35451323669) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.565+608 (2026-09-19) — Hediye gösterimi TikTok/Bigo tarzı (alttan ≤%50, tam ekran yok)
+## 1.0.566+609 (2026-09-19) — PK ekran düzeni + çıkış + hediye boyutu
 
-- **Hediyeler artık tam ekran açılmıyor.** `GiftEngineOverlay` backend `fullScreen`/`isFullScreen` bayrağını yok sayıp tüm hediyeleri **alttan-hizalı banda** alıyor (koltuk efektleri hariç, onlar küçük/konumlu kalır)
-- Hediye animasyonu **ekranın en fazla ~%48'i** ile sınırlı (responsive, sabit px değil); canlı yayın görüntüsü, sesli oda koltukları ve PK skoru üstte açık kalır
-- Sahne bandı alttan başlar: `GiftStageMetrics` topInset %50–52, alt chrome (kontroller/giriş) korunur
-- Video hediyelerinde **progress bar / seekbar / kontrol yok** (ham `VideoPlayer`, `looping:false`); ses ayrı `playActiveGiftSound` ile çalınır, video muted
-- Alttan yukarı yumuşak giriş (fade + slideY + scale)
-- Değişmeyen (zaten spec'e uygun): FIFO animasyon kuyruğu, event-bazlı **puan (animasyondan bağımsız)**, ses, duplicate koruması (`CdsFullscreenGiftGate` + `seenEventIds`), oda/PK temizliği, TRTC/SSE/jeton/PK-skor/backend contract
+- **Geri tuşu kaldırıldı**, PK sayacı başlığa taşındı; ayrı yayıncı bandı kaldırıldı → **video en üstten başlıyor** (boyut korundu)
+- Alt profillerde tekrar eden **"X PK" yazısı kaldırıldı** (skor zaten skor barında); profil tek yerde
+- **PK bitince çıkış:** host'a "PK'yi Kapat" butonu — `forceExitPk` ile split ekranı koşulsuz kapatıp normal yayına döner (takılı kalmaya son)
+- **Hediye büyütüldü** (~%60'a kadar); başlık, skor barı ve "Gönder"/mesaj kutusu açık kalır
+- Bilinen kalan (davranışsal, SSE/sunucu bağlı, inceleniyor): PK puanının anlık iki-taraflı yansıması, taraf titremesi (challenger/rakip çözümü), FORBIDDEN, sohbet mesajının ekrana düşmesi
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
