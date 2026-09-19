@@ -4,21 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.572+615` |
-| Tarih (UTC) | 2026-09-19 21:00 |
-| Commit | [`f11b73e774455d9f57d4e6ae90fb43ca12176e0b`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/f11b73e774455d9f57d4e6ae90fb43ca12176e0b) |
-| İş akışı | [Run 35467441652](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35467441652) |
+| Sürüm | `1.0.575+618` |
+| Tarih (UTC) | 2026-09-19 21:48 |
+| Commit | [`893b0e82e3000347382935d07a54e6b8581d6d30`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/893b0e82e3000347382935d07a54e6b8581d6d30) |
+| İş akışı | [Run 35469957545](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35469957545) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.574+617 (2026-09-19) — Bildirim/mesaj birleşik + uygulama içi banner
+## 1.0.575+618 (2026-09-19) — Jeton talebi: admin banner → onay alanına yönlendirme
 
-- **Alt menü:** "Mesaj/Fal" sekmesi **"Fal & Tarot"** oldu ve üzerindeki bildirim rozeti kaldırıldı (bildirim/mesaj artık yalnızca Gelen Kutusu'nda)
-- **Gelen Kutusu üst kartları:** "Tümü" görünümüne iki kart eklendi — **Mesajlar** (okunmamış mesaj sayısı) ve **Sistem Bildirimleri** (okunmamış sistem sayısı); her karta dokununca ilgili bölüm açılır. Mesajlar ve sistem bildirimleri tek yerde, ayrı bölümlerde
-- **Uygulama içi banner (yeni):** mesaj veya sistem bildirimi geldiğinde kullanıcı **hangi ekranda olursa olsun** ekranın üstünden düşen banner gösterilir; dokununca ilgili sohbet/bildirim açılır, yukarı kaydırınca kapanır, 4 sn sonra otomatik kaybolur. Açık olan DM için o kişinin mesaj banner'ı bastırılır
-- Banner, bildirim SSE'sinden (`NotificationsRealtimeListener`) beslenir; yinelenen bildirim iki kez düşmez
-- **Not (mesaj iletimi):** istemci DM'i kılavuzda **belgelenmemiş** `POST /api/messages/{peerId}` `{content}` ucuna gönderiyor; conversation id sunucu peer nesnesini döndürdüğünde peer userId'ye çözülüyor. "Karşıya ulaşmıyor" sorunu bu uç/gövde doğru olduğunda **sunucu iletimine** bağlıdır — körlemesine uç değişimi tüm DM'leri kırma riski taşıdığından yapılmadı; sunucu sözleşmesi netleşince hizalanır
+- **Jeton/CFC satın alma talebi admine anında banner olarak düşer:** uygulama içi banner artık ödeme-talebi bildirimlerini (`jeton_payment_request`/`cfc_payment_request`/`payment_request`) de gösteriyor; admin hangi ekranda olursa olsun üstten iner
+- **Tıklayınca doğru alana gider:** banner artık kanonik `navigateFromNotification` yönlendirmesini kullanıyor → ödeme talebi admin için **`/admin?focusRequest={id}`** (AdminHubPage ilgili talebi vurgular); mesajlar sohbete, diğerleri kendi hedefine
+- Onay→yükleme akışı zaten mobil admin panelinde mevcut: `admin_credit_sheet` jeton/CFC yükler, bekleyen ödemeler + onay/red mevcut. Banner bu akışı gerçek zamanlı tetikler
+- **Sunucu tarafı (mobil dışı):** ödeme-talebi bildiriminin admine gönderilmesi, telefon kilitliyken **sesli push** (OneSignal kanal/ses) ve onayda bakiyenin **sunucuda** alıcıya işlenmesi canlifal.com tarafındadır; mobil istemci bildirimi gösterir, onay alanına götürür ve kredi ucunu çağırır
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
