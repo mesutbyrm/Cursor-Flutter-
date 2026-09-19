@@ -10,6 +10,8 @@ import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
+import '../../../../core/membership/membership_capability_providers.dart';
+import '../../../vip_gold/domain/vip_tier.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../providers/chat_room_providers.dart';
@@ -462,7 +464,10 @@ class _VoiceRoomBackgroundSheetState
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
-    final canUpload = ref.watch(staffAccessProvider).isSiteAdmin;
+    // Kendi arka planını yükleme: site admin veya Gold+ üyelik.
+    final isAdmin = ref.watch(staffAccessProvider).isSiteAdmin;
+    final tier = ref.watch(membershipCapabilitiesSyncProvider).effectiveTier;
+    final canUpload = isAdmin || tier.isAtLeast(VipTier.gold);
     return DraggableScrollableSheet(
       initialChildSize: 0.55,
       minChildSize: 0.35,
@@ -481,8 +486,8 @@ class _VoiceRoomBackgroundSheetState
             const SizedBox(height: 8),
             Text(
               canUpload
-                  ? 'Hazır arka planlardan seçin veya yükleyin.'
-                  : 'Admin tarafından yüklenen arka planlardan seçin.',
+                  ? 'Hazır arka planlardan seçin veya kendi görselinizi yükleyin.'
+                  : 'Hazır arka planlardan seçin. Kendi görselinizi yüklemek için Gold üyelik gerekir.',
               style: TextStyle(
                 color: context.colors.onSurfaceMuted,
                 fontSize: 13,

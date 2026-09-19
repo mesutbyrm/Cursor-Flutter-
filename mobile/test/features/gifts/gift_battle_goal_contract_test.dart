@@ -74,5 +74,43 @@ void main() {
       ).withResolvedDeadline(now: created);
       expect(goal.endsAt, created.add(const Duration(minutes: 10)));
     });
+
+    test('süresi dolan hedef artık aktif değil (her girişte gösterilmez)', () {
+      final expired = GiftGoal(
+        id: 'g3',
+        title: 'Süresi doldu',
+        targetAmount: 5000,
+        currentAmount: 100,
+        status: 'active',
+        endsAt: DateTime.now().subtract(const Duration(minutes: 1)),
+      );
+      expect(expired.isExpired, isTrue);
+      expect(expired.isActive, isFalse);
+    });
+
+    test('süresi devam eden hedef aktif kalır', () {
+      final live = GiftGoal(
+        id: 'g4',
+        title: 'Devam ediyor',
+        targetAmount: 5000,
+        currentAmount: 100,
+        status: 'active',
+        endsAt: DateTime.now().add(const Duration(minutes: 5)),
+      );
+      expect(live.isExpired, isFalse);
+      expect(live.isActive, isTrue);
+    });
+
+    test('süresiz (endsAt yok) hedef aktif kalır', () {
+      final noDeadline = GiftGoal(
+        id: 'g5',
+        title: 'Süresiz',
+        targetAmount: 5000,
+        currentAmount: 100,
+        status: 'active',
+      );
+      expect(noDeadline.isExpired, isFalse);
+      expect(noDeadline.isActive, isTrue);
+    });
   });
 }

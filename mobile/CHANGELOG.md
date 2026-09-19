@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.569+612 (2026-09-19) — Hediye hedefi süresi + Gold arkaplan yükleme
+
+- **Hediye hedefi süre bitince gizleniyor:** `GiftGoal.isActive` artık `endsAt` süresini de kontrol ediyor (`isExpired`); süresi dolan hedef önizlemede/odaya girişte tekrar gösterilmiyor
+- **Arkaplan kendi görselini yükleme Gold+ üyeliğe açıldı:** eskiden yalnızca site admin yükleyebiliyordu; artık site admin **veya Gold+ üye** yükleyebilir (hazır görseller herkese açık)
+- Unit: `gift_battle_goal_contract_test` (+3 vaka: süresi dolan/devam eden/süresiz hedef)
+
 ## 1.0.568+611 (2026-09-19) — Sesli oda: maksimum kullanıcı ≥150
 
 - Maksimum kullanıcı seçenekleri **en düşük 150** (150/200/300/500/1000); hem oda açma hem oda yönetimi

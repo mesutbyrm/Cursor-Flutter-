@@ -95,7 +95,16 @@ class GiftGoal {
   bool get isCompleted =>
       status.toLowerCase() == 'completed' || currentAmount >= targetAmount;
 
-  bool get isActive => !isCompleted && status.toLowerCase() != 'ended';
+  /// Süre doldu mu? `endsAt` geçmişteyse hedefin süresi bitmiştir.
+  bool get isExpired {
+    final e = endsAt;
+    return e != null && e.isBefore(DateTime.now());
+  }
+
+  /// Aktif = tamamlanmamış, `ended` değil VE süresi dolmamış. Süre bitince
+  /// (endsAt geçmişte) hedef artık gösterilmez — her girişte tekrar çıkmaz.
+  bool get isActive =>
+      !isCompleted && status.toLowerCase() != 'ended' && !isExpired;
 
   Duration? get remainingTime {
     if (endsAt == null) return null;
