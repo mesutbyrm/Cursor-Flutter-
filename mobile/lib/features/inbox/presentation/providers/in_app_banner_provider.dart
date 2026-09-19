@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../notifications/domain/entities/app_notification_entity.dart';
+
 /// Uygulama içi (foreground) bildirim türü.
 enum InAppBannerKind { message, system }
 
@@ -12,6 +14,8 @@ class InAppBannerEvent {
     required this.kind,
     required this.route,
     this.avatarUrl,
+    this.notification,
+    this.staffCanManagePayments = false,
   });
 
   /// Yinelenen bildirimleri engellemek için benzersiz anahtar (bildirim id vb.).
@@ -20,9 +24,16 @@ class InAppBannerEvent {
   final String body;
   final InAppBannerKind kind;
 
-  /// Dokununca gidilecek rota (mesaj → /messages, sistem → /notifications).
+  /// Dokununca gidilecek yedek rota (mesaj → /chat/{peer} veya /messages).
   final String route;
   final String? avatarUrl;
+
+  /// Varsa kanonik bildirim yönlendirmesi için kaynak bildirim. Ödeme talebi
+  /// gibi tiplerde admin onay alanına (`/admin?focusRequest=`) gider.
+  final AppNotificationEntity? notification;
+
+  /// Bildirim yönlendirmesinde ödeme talepleri admin alanına gitsin mi.
+  final bool staffCanManagePayments;
 }
 
 /// Herhangi bir ekranda gösterilecek tek aktif uygulama içi bildirim.

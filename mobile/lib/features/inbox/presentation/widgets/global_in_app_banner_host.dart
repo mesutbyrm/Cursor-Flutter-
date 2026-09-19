@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/router/app_router.dart';
 import '../../../../core/theme/app_theme_colors.dart';
+import '../../../notifications/domain/notification_action.dart';
 import '../providers/in_app_banner_provider.dart';
 
 /// Uygulama içi bildirim host'u — mesaj veya sistem bildirimi geldiğinde
@@ -61,7 +62,18 @@ class _GlobalInAppBannerHostState extends ConsumerState<GlobalInAppBannerHost>
 
   void _openAndHide(InAppBannerEvent event) {
     _hide();
-    ref.read(goRouterProvider).push(event.route);
+    final router = ref.read(goRouterProvider);
+    final n = event.notification;
+    if (n != null) {
+      // Kanonik yönlendirme — ödeme talebi admin onay alanına gider.
+      navigateFromNotification(
+        router,
+        n,
+        staffCanManagePayments: event.staffCanManagePayments,
+      );
+      return;
+    }
+    router.push(event.route);
   }
 
   @override

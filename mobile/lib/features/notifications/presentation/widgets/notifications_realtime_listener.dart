@@ -21,6 +21,7 @@ import '../providers/notification_event_gate_provider.dart';
 import '../providers/notifications_list_notifier.dart';
 import '../providers/notifications_providers.dart';
 import '../../../inbox/presentation/providers/in_app_banner_provider.dart';
+import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../../profile/presentation/widgets/jeton_payment_realtime_notifications.dart';
 
 final notificationsSseServiceProvider = Provider<NotificationsSseService>((ref) {
@@ -93,6 +94,8 @@ class _NotificationsRealtimeListenerState
       final route = isMessageType
           ? (sender.isNotEmpty ? '/chat/$sender' : '/messages')
           : (target.isNotEmpty ? target : '/notifications');
+      final canManagePayments =
+          ref.read(staffAccessProvider).canManagePayments;
       ref.read(inAppBannerProvider.notifier).show(
             InAppBannerEvent(
               key: notification.id,
@@ -103,6 +106,10 @@ class _NotificationsRealtimeListenerState
                   : InAppBannerKind.system,
               route: route,
               avatarUrl: notification.imageUrl,
+              // Sistem bildirimleri (ödeme talebi vb.) kanonik yönlendirmeyle
+              // admin onay alanına gitsin; mesajlar sohbete.
+              notification: isMessageType ? null : notification,
+              staffCanManagePayments: canManagePayments,
             ),
           );
     }

@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.575+618 (2026-09-19) — Jeton talebi: admin banner → onay alanına yönlendirme
+
+- **Jeton/CFC satın alma talebi admine anında banner olarak düşer:** uygulama içi banner artık ödeme-talebi bildirimlerini (`jeton_payment_request`/`cfc_payment_request`/`payment_request`) de gösteriyor; admin hangi ekranda olursa olsun üstten iner
+- **Tıklayınca doğru alana gider:** banner artık kanonik `navigateFromNotification` yönlendirmesini kullanıyor → ödeme talebi admin için **`/admin?focusRequest={id}`** (AdminHubPage ilgili talebi vurgular); mesajlar sohbete, diğerleri kendi hedefine
+- Onay→yükleme akışı zaten mobil admin panelinde mevcut: `admin_credit_sheet` jeton/CFC yükler, bekleyen ödemeler + onay/red mevcut. Banner bu akışı gerçek zamanlı tetikler
+- **Sunucu tarafı (mobil dışı):** ödeme-talebi bildiriminin admine gönderilmesi, telefon kilitliyken **sesli push** (OneSignal kanal/ses) ve onayda bakiyenin **sunucuda** alıcıya işlenmesi canlifal.com tarafındadır; mobil istemci bildirimi gösterir, onay alanına götürür ve kredi ucunu çağırır
+
 ## 1.0.574+617 (2026-09-19) — Bildirim/mesaj birleşik + uygulama içi banner
 
 - **Alt menü:** "Mesaj/Fal" sekmesi **"Fal & Tarot"** oldu ve üzerindeki bildirim rozeti kaldırıldı (bildirim/mesaj artık yalnızca Gelen Kutusu'nda)
