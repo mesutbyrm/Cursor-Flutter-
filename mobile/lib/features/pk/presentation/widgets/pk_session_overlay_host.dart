@@ -30,6 +30,14 @@ class _PkSessionOverlayHostState extends ConsumerState<PkSessionOverlayHost> {
 
   @override
   Widget build(BuildContext context) {
+    // Canlı yayın PK'sinde tam ekran geri sayım / sonuç diyalogları
+    // `LivePkSplitVideoLayer` içinde inline olarak gösteriliyor
+    // (LivePkPreparingOverlay / LivePkResultFlashOverlay). Buradaki
+    // showDialog tabanlı overlay'ler onlarla çakışıyor ve sonuç diyaloğu
+    // ekranda takılı kalabiliyordu. Bu yüzden canlı akışta devre dışı.
+    if (widget.args.kind == PkContextKind.live) {
+      return widget.child;
+    }
     ref.listen<PkSessionState>(pkSessionProvider(widget.args), (prev, next) {
       final battle = next.battle;
       if (battle == null) {

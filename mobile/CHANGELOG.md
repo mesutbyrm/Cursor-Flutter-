@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.564+607 (2026-09-19) — PK düzeltmeleri (skor tarafı, video boyutu, takılı sonuç)
+
+- **Skor doğru tarafta:** Skor barı/footer artık sabit score1=sol yerine panel düzenine göre eşleniyor; rakip yayıncıysanız beğeni/hediye artık karşı tarafa değil kendi tarafınıza işleniyor
+- **Video %15 küçültüldü** (alttan yukarı) — skor barı ve sohbete daha çok yer
+- **Takılı "kazandı" ekranı kaldırıldı:** Canlı PK'de tam ekran `PkResultOverlay` diyaloğu devre dışı; sonuç yalnızca inline `LivePkResultFlashOverlay` ile ~2.6 sn gösterilip kayboluyor, ardından normal ekrana dönülüyor (tekrar PK başlat / bitir)
+
 ## 1.0.563+606 (2026-09-19) — PK ekranı referans düzen (yayıncı bandı + skor barı)
 
 - Başlığın altına **yayıncı bandı** eklendi: [sol yayıncı kartı | PK sayacı | sağ yayıncı kartı] — avatar, isim, doğrulama, 🔥 takipçi, **+ Takip et**

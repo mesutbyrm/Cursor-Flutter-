@@ -174,8 +174,35 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
       battle: battleMap,
       myStreamId: streamId,
     );
-    final leftScore = pkScoreFromBattleMap(battleMap, left: true);
-    final rightScore = pkScoreFromBattleMap(battleMap, left: false);
+    // score1 daima challenger (hostStream) tarafı, score2 rakip taraftır.
+    // Panel düzeni ise (resolveLivePkSplitLayout) yerel yayıncı rakipse
+    // onu SOLA koyabiliyor. Skoru sabit score1=sol yerine panelin gerçek
+    // tarafına eşliyoruz; aksi halde beğeni/hediye "karşı tarafa" düşüyor.
+    final score1 = pkScoreFromBattleMap(battleMap, left: true);
+    final score2 = pkScoreFromBattleMap(battleMap, left: false);
+    final hostStreamForScore =
+        (battleMap['liveStreamId'] ?? battleMap['hostStreamId'])
+                ?.toString()
+                .trim() ??
+            '';
+    final challengerIdForScore =
+        (battleMap['challengerId'] ?? battleMap['hostUserId'])
+                ?.toString()
+                .trim() ??
+            '';
+    final leftSid = (layout.left.streamId ?? '').trim();
+    final leftUid = (layout.left.userId ?? '').trim();
+    // Sol panel challenger (score1) mı yoksa rakip (score2) mı?
+    bool leftIsChallenger;
+    if (hostStreamForScore.isNotEmpty && leftSid.isNotEmpty) {
+      leftIsChallenger = leftSid == hostStreamForScore;
+    } else if (challengerIdForScore.isNotEmpty && leftUid.isNotEmpty) {
+      leftIsChallenger = leftUid == challengerIdForScore;
+    } else {
+      leftIsChallenger = true; // varsayılan: score1 = sol
+    }
+    final leftScore = leftIsChallenger ? score1 : score2;
+    final rightScore = leftIsChallenger ? score2 : score1;
     ref.read(livePkScoreBurstProvider(streamId).notifier).observeScores(
           left: leftScore,
           right: rightScore,
@@ -355,8 +382,10 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                     LivePkLayoutMetrics.videoBottomInset(context))
                 .clamp(0.0, constraints.maxHeight)
                 .toDouble();
-        final videoHeight =
+        // Kullanıcı isteği: video %15 daha küçük (alttan yukarı).
+        final filledVideoHeight =
             availableVideoHeight < paneWidth ? paneWidth : availableVideoHeight;
+        final videoHeight = filledVideoHeight * 0.85;
         final scoreBarTop = videoTop + videoHeight;
 
         return ColoredBox(
