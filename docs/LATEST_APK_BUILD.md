@@ -4,22 +4,19 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.561+604` |
-| Tarih (UTC) | 2026-09-19 02:07 |
-| Commit | [`f4ec6c72380b35199363be046a2b89c5de80df1a`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/f4ec6c72380b35199363be046a2b89c5de80df1a) |
-| İş akışı | [Run 35413514437](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35413514437) |
+| Sürüm | `1.0.562+605` |
+| Tarih (UTC) | 2026-09-19 05:27 |
+| Commit | [`1c66e06fcd4717b53344c3a43e62b652712c91f6`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/1c66e06fcd4717b53344c3a43e62b652712c91f6) |
+| İş akışı | [Run 35423074855](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35423074855) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.561+604 (2026-09-19) — PK UI + audit düzeltmeleri (release APK)
+## 1.0.562+605 (2026-09-19) — PK split video yüksekliği düzeltmesi
 
-- Canlı 1v1 PK ekranı referans tasarım: `PkBattleScreen` (split video, VS, skor barı, sohbet, kontrol çubuğu)
-- PK: süren maçta provider **keepAlive**; geçici ağ hatasında ekran düşmez; stale guard; 90 sn istemci sayacı kaldırıldı
-- PK: boş/hatalı `refresh` **90 sn stale latch**; kalp skoru API hatasında rate-limited snackbar; "PK zaten bitmiş" ham exception sızmasın
-- Hediye: rastgele alıcı kaldırıldı; jeton + hediye kaydı tek transaction
-- Keşif sayfalama; feed hikâye şeridinde uydurma kullanıcı yok
-- Fal/UI: korumasız **BuildContext** ve `CdsError` sızıntı düzeltmeleri
+- Canlı PK ekranı: split video artık başlık ile alt şerit (skor/kontrol/giriş) arasındaki **tüm dikey alanı** dolduruyor
+- Önceki hata: paneller ekran genişliğinin yarısı kadar **kare** yapılıyordu; ekranın alt yarısı boş siyah kalıyordu (`videoBottomInset` metriği kullanılmıyordu)
+- VS amblemi ve yayıncı chip/footer'ları uzun panellerde doğru konumlanıyor
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
