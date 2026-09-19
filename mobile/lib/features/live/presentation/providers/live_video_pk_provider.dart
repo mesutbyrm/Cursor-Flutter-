@@ -9,6 +9,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/pk/live_pk_invite_helper.dart';
 import '../../domain/pk/live_pk_event_dedup.dart';
 import '../../domain/pk/live_pk_ingest.dart';
+import '../../domain/pk/pk_action_error.dart';
 import 'live_pk_score_burst_provider.dart';
 import '../../domain/pk/live_pk_broadcast_stage.dart';
 import '../../domain/pk/live_pk_refresh_stale_guard.dart';
@@ -158,7 +159,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
         }
       }
     } on ApiException catch (e) {
-      state = state.copyWith(error: '$e');
+      state = state.copyWith(error: ApiException.userMessage(e));
       // Sunucu battle'ın yokluğunu açıkça bildirmedikçe hata bir bilgi
       // yokluğudur; mevcut battle korunur ve polling sürer ki bağlantı
       // dönünce kendiliğinden toparlasın. 404/410'da eski akışa (guard +
@@ -167,7 +168,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
         return;
       }
     } catch (e) {
-      state = state.copyWith(error: '$e');
+      state = state.copyWith(error: ApiException.userMessage(e));
       return;
     }
 
@@ -419,7 +420,19 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
       state = state.copyWith(loading: false, error: 'PK işlemi başarısız');
     } catch (e) {
       ref.read(pkSessionPhaseProvider.notifier).reset();
-      state = state.copyWith(loading: false, error: '$e');
+      // Süre dolduğunda sunucu maçı kendisi bitiriyor; kullanıcı bu sırada
+      // "PK'yi Bitir"e basarsa "PK zaten bitmiş" dönüyordu. İstenen sonuç
+      // zaten sağlandığı için bu bir hata değil — sessizce senkron ol.
+      if (pkActionErrorMeansAlreadySettled(e)) {
+        state = state.copyWith(loading: false, clearError: true);
+        await refresh();
+        return;
+      }
+      // Ham `'$e'` kullanıcıya "ApiException(400): ..." gösteriyordu.
+      state = state.copyWith(
+        loading: false,
+        error: ApiException.userMessage(e),
+      );
     } finally {
       lock.release(battleId, action);
     }

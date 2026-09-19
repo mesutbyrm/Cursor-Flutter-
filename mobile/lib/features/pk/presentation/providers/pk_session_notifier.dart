@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/pk_event_log.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/presentation/providers/live_pk_streams_provider.dart';
 import '../../../live/presentation/providers/live_providers.dart';
+import '../../../live/domain/pk/pk_action_error.dart';
 import '../../../live/presentation/providers/live_video_pk_provider.dart';
 import '../../../voice_hub/domain/pk/pk_opponent_room_filter.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
@@ -148,7 +150,7 @@ class PkSessionNotifier
       if (_disposed) return;
       state = state.copyWith(
         loading: false,
-        error: e is PkException ? e.message : '$e',
+        error: e is PkException ? e.message : ApiException.userMessage(e),
       );
     }
   }
@@ -234,7 +236,7 @@ class PkSessionNotifier
       PkEventLog.error('load_candidates', e);
       if (_disposed) return;
       state = state.copyWith(
-        error: e is PkException ? e.message : '$e',
+        error: e is PkException ? e.message : ApiException.userMessage(e),
       );
     }
   }
@@ -340,7 +342,7 @@ class PkSessionNotifier
       state = state.copyWith(loading: false, error: e.message);
     } catch (e) {
       if (_disposed) return;
-      state = state.copyWith(loading: false, error: '$e');
+      state = state.copyWith(loading: false, error: ApiException.userMessage(e));
     }
   }
 
@@ -379,14 +381,20 @@ class PkSessionNotifier
       state = state.copyWith(loading: false);
     } on PkException catch (e) {
       if (_disposed) return;
-      if (e.message.contains('PK durumu değişti')) {
+      // Sunucu istenen sonucu zaten uygulamışsa (süre dolunca maçı kendisi
+      // bitirir) bu bir hata değil; sessizce senkron ol.
+      if (pkActionErrorMeansAlreadySettled(e.message)) {
         await loadState();
         return;
       }
       state = state.copyWith(loading: false, error: e.message);
     } catch (e) {
       if (_disposed) return;
-      state = state.copyWith(loading: false, error: '$e');
+      if (pkActionErrorMeansAlreadySettled(e)) {
+        await loadState();
+        return;
+      }
+      state = state.copyWith(loading: false, error: ApiException.userMessage(e));
     }
   }
 }
