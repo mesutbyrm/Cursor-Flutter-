@@ -18,7 +18,6 @@ import '../../../live/presentation/providers/live_providers.dart';
 import '../../../pk/presentation/providers/pk_feature_enabled_provider.dart';
 import '../../../pk/presentation/widgets/pk_start_sheet.dart';
 import 'voice_in_room_pk_sheet.dart';
-import '../../../vip_gold/domain/voice_room_access.dart';
 import '../../../gifts/presentation/providers/gift_battle_providers.dart';
 import '../../../gifts/presentation/providers/gift_goal_providers.dart';
 import '../../domain/entities/chat_room_presence.dart';
@@ -875,7 +874,7 @@ class _VoiceRoomManagementPanelState
             leading: const Icon(Icons.groups_rounded),
             title: const Text('Maksimum kullanıcı'),
             subtitle: Text(
-              '${_live.roomMaxUsers ?? room.maxUsers ?? 15} kişi',
+              '${_live.roomMaxUsers ?? room.maxUsers ?? 150} kişi',
             ),
             onTap: _pickMaxUsers,
           ),
@@ -1156,8 +1155,9 @@ class _VoiceRoomManagementPanelState
   }
 
   Future<void> _pickMaxUsers() async {
-    final current = _live.roomMaxUsers ?? room.maxUsers ?? 15;
-    final options = const [15, 25, 50, 100];
+    final current = _live.roomMaxUsers ?? room.maxUsers ?? 150;
+    // Kullanıcı isteği: en düşük 150, üstü seçilebilir.
+    final options = const [150, 200, 300, 500, 1000];
     final picked = await showDialog<int>(
       context: context,
       builder: (ctx) => SimpleDialog(

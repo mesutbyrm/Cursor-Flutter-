@@ -201,7 +201,7 @@ class _OpenRoomSetup {
     required this.roomName,
     this.backgroundUrl,
     this.seatCount = 8,
-    this.maxUsers = 15,
+    this.maxUsers = 150,
     this.category = kDefaultVoiceRoomCategory,
   });
 
@@ -231,7 +231,7 @@ class _OpenRoomSetupSheetState extends State<_OpenRoomSetupSheet> {
   String? _selectedBg;
   var _loadingBg = true;
   int _seatCount = 8;
-  int _maxUsers = 15;
+  int _maxUsers = 150;
   String _category = kDefaultVoiceRoomCategory;
 
   @override
@@ -427,7 +427,7 @@ class _OpenRoomSetupSheetState extends State<_OpenRoomSetupSheet> {
             const SizedBox(height: 12),
             _capacityChips(
               label: 'Maksimum kullanıcı',
-              options: const [15, 25, 50, 100],
+              options: const [150, 200, 300, 500, 1000],
               value: _maxUsers,
               onSelected: (v) => _maxUsers = v,
             ),

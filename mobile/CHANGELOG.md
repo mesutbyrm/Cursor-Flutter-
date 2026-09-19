@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.568+611 (2026-09-19) — Sesli oda: maksimum kullanıcı ≥150
+
+- Maksimum kullanıcı seçenekleri **en düşük 150** (150/200/300/500/1000); hem oda açma hem oda yönetimi
+- Varsayılan maksimum kullanıcı 150; varsayılan koltuk sayısı zaten 8
+- İnceleme notu: PK daveti gönderimi istemcide doğru uca gidiyor (`POST /api/chat/rooms/{oda}/pk` + rakip oda hedefi); karşı tarafa iletim ve oda kilidi "sahibe istek" akışı sunucu (canlifal.com) tarafına bağlı
+
 ## 1.0.567+610 (2026-09-19) — PK taraf titremesi düzeltildi
 
 - **Taraf titremesi giderildi:** `resolveLivePkSplitLayout` içindeki `iAmChallenger`, battle verisi (hostStream/challengerId) geç geldiği için ilk karelerde ters karar veriyordu; kartlar/footer'lar ve skor sol↔sağ atlıyordu
