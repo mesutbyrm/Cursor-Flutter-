@@ -4,21 +4,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.563+606` |
-| Tarih (UTC) | 2026-09-19 12:35 |
-| Commit | [`466b03d328fc252da24bb224770f32413cca40e7`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/466b03d328fc252da24bb224770f32413cca40e7) |
-| İş akışı | [Run 35442422606](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35442422606) |
+| Sürüm | `1.0.564+607` |
+| Tarih (UTC) | 2026-09-19 13:23 |
+| Commit | [`6a86a94bf7c3b64557141955717f65deef99916d`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/6a86a94bf7c3b64557141955717f65deef99916d) |
+| İş akışı | [Run 35444741492](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35444741492) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.563+606 (2026-09-19) — PK ekranı referans düzen (yayıncı bandı + skor barı)
+## 1.0.565+608 (2026-09-19) — Hediye gösterimi TikTok/Bigo tarzı (alttan ≤%50, tam ekran yok)
 
-- Başlığın altına **yayıncı bandı** eklendi: [sol yayıncı kartı | PK sayacı | sağ yayıncı kartı] — avatar, isim, doğrulama, 🔥 takipçi, **+ Takip et**
-- Ortadaki eski yüzen sayaç rozeti banda taşındı; VS amblemi video ortasında kaldı
-- Video altına **kırmızı/mavi bölünmüş skor barı** eklendi: skorlar + yüzde + "PK devam ediyor" durum pili
-- Sohbet, skor barının üstüne (video alt-sol) alındı — çakışma yok
-- `LivePkReferenceStreamerCard` / `LivePkReferenceStreamerBand` / `LivePkReferenceScoreBar` widget'ları
+- **Hediyeler artık tam ekran açılmıyor.** `GiftEngineOverlay` backend `fullScreen`/`isFullScreen` bayrağını yok sayıp tüm hediyeleri **alttan-hizalı banda** alıyor (koltuk efektleri hariç, onlar küçük/konumlu kalır)
+- Hediye animasyonu **ekranın en fazla ~%48'i** ile sınırlı (responsive, sabit px değil); canlı yayın görüntüsü, sesli oda koltukları ve PK skoru üstte açık kalır
+- Sahne bandı alttan başlar: `GiftStageMetrics` topInset %50–52, alt chrome (kontroller/giriş) korunur
+- Video hediyelerinde **progress bar / seekbar / kontrol yok** (ham `VideoPlayer`, `looping:false`); ses ayrı `playActiveGiftSound` ile çalınır, video muted
+- Alttan yukarı yumuşak giriş (fade + slideY + scale)
+- Değişmeyen (zaten spec'e uygun): FIFO animasyon kuyruğu, event-bazlı **puan (animasyondan bağımsız)**, ses, duplicate koruması (`CdsFullscreenGiftGate` + `seenEventIds`), oda/PK temizliği, TRTC/SSE/jeton/PK-skor/backend contract
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
