@@ -292,7 +292,11 @@ class PkSessionNotifier
     }
   }
 
-  Future<void> create(String targetContextId, {int durationSeconds = 180}) async {
+  Future<void> create(
+    String targetContextId, {
+    int durationSeconds = 180,
+    String? targetUserId,
+  }) async {
     if (state.isRateLimited) return;
     final target = targetContextId.trim();
     if (target.isEmpty) return;
@@ -316,6 +320,19 @@ class PkSessionNotifier
       targetId: target,
     );
     state = state.copyWith(loading: true, clearError: true);
+
+    // Sesli oda PK daveti kılavuz §9.3 `POST /api/chat/rooms/{roomId}/pk`
+    // üzerinden gider — alıcı da bu ucu (ve /api/pk/me/invites) pollar. Canlı
+    // yayın PK'sı ayrı uçta kalır (aşağıdaki _api.create).
+    if (arg.kind == PkContextKind.voice) {
+      await _createVoiceInvite(
+        target,
+        durationSeconds: durationSeconds,
+        targetUserId: targetUserId,
+      );
+      return;
+    }
+
     try {
       final battle = await _api.create(
         roomId: arg.contextId,
@@ -340,6 +357,56 @@ class PkSessionNotifier
         return;
       }
       state = state.copyWith(loading: false, error: e.message);
+    } catch (e) {
+      if (_disposed) return;
+      state = state.copyWith(loading: false, error: ApiException.userMessage(e));
+    }
+  }
+
+  /// Sesli oda daveti — chat-room PK ucu (kılavuz §9.3). Dönen `PkBattleRemote`
+  /// hem `pkBattleRemoteProvider`'a işlenir (inviteRoom içinde) hem de sheet'in
+  /// `PkBattle` state'ine köprülenir ki "İSTEK GÖNDERİLDİ" paneli görünsün.
+  Future<void> _createVoiceInvite(
+    String targetRoomId, {
+    required int durationSeconds,
+    String? targetUserId,
+  }) async {
+    try {
+      final remote = await ref.read(pkBattleRemoteProvider.notifier).inviteRoom(
+            roomId: arg.contextId,
+            opponentRoomId: targetRoomId,
+            guestUserId: targetUserId?.trim() ?? '',
+            durationSeconds: durationSeconds,
+          );
+      if (_disposed) return;
+      if (remote == null || remote.effectiveId.isEmpty) {
+        state = state.copyWith(
+          loading: false,
+          error: 'PK daveti gönderilemedi, tekrar deneyin',
+        );
+        return;
+      }
+      final battle = pkRemoteToBattle(remote);
+      if (battle.status.isTerminal) {
+        _releaseLive();
+      } else {
+        _retainLive();
+      }
+      state = state.copyWith(battle: battle, loading: false, clearError: true);
+    } on ApiException catch (e) {
+      if (_disposed) return;
+      if (e.statusCode == 429) {
+        state = state.copyWith(
+          loading: false,
+          rateLimitUntil: DateTime.now().add(const Duration(seconds: 30)),
+          error: 'Çok fazla istek — lütfen biraz bekleyin',
+        );
+        return;
+      }
+      state = state.copyWith(
+        loading: false,
+        error: ApiException.userMessage(e),
+      );
     } catch (e) {
       if (_disposed) return;
       state = state.copyWith(loading: false, error: ApiException.userMessage(e));

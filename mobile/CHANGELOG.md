@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.571+614 (2026-09-19) — Sesli oda PK daveti doğru uca gidiyor (davet artık ulaşıyor)
+
+- **Kök neden:** sesli oda "PK isteği gönder" daveti yanlış uca (`POST /api/live/pk`) gidiyordu; alıcı taraf ise kılavuz §9.3 ucunu (`GET /api/chat/rooms/{id}/pk` + `/api/pk/me/invites`) polluyordu → davet karşı odanın görmediği depoya yazılıyor, hiç ulaşmıyordu
+- **Düzeltme:** voice PK gönderimi artık kılavuz §9.3 `POST /api/chat/rooms/{roomId}/pk` (`{guestUserId, durationSec}`) üzerinden gidiyor; `/api/live/pk` yalnızca bu uç sunucuda **404/405** ise son çare yedek
+- Rakip oda sahibinin `userId`'si `guestUserId` olarak iletiliyor; gönderen tarafta "PK İSTEĞİ GÖNDERİLDİ" paneli için `PkBattleRemote → PkBattle` köprüsü (`pkRemoteToBattle`) eklendi
+- Kapsam yalnızca **sesli oda** PK gönderimi; canlı yayın PK yolu (`/api/video-streams/pk`) ve skor/kabul akışları değişmedi
+- Unit: `pk_remote_to_battle_bridge_test` (+2), `voice_pk_invite_bodies_test` korunuyor
+
 ## 1.0.570+613 (2026-09-19) — Canlı falcı: T+5s uzak render takılması yedeği (C1)
 
 - **T+5s donması için güvenli istemci yedeği:** falcı 1:1 görüşmesinde karşı taraf odaya girdiği hâlde uzak video hâlâ gelmiyorsa, **odadan çıkış / yeniden giriş YAPMADAN** uzak view en fazla iki kez yeniden abone ediliyor (`resubscribeRemoteView`) — donmuş yüzey yeniden bağlanıyor

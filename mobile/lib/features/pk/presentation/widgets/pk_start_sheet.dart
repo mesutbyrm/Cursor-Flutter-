@@ -230,7 +230,7 @@ class _PkStartSheetState extends ConsumerState<_PkStartSheet> {
     setState(() => _invitingTargetId = c.contextId);
     await ref
         .read(pkSessionProvider(widget.args).notifier)
-        .create(c.contextId, durationSeconds: _duration);
+        .create(c.contextId, durationSeconds: _duration, targetUserId: c.userId);
     if (!mounted) return;
     setState(() => _invitingTargetId = null);
     final err = ref.read(pkSessionProvider(widget.args)).error;

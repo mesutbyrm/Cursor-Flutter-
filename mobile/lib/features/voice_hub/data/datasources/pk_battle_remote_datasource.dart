@@ -331,33 +331,11 @@ class PkBattleRemoteDataSource {
       throw const ApiException('PK daveti için rakip oda seçilmeli');
     }
     final duration = durationSeconds.clamp(60, 3600);
-    for (final key in _roomKeyCandidates(roomId, alternateRoomId)) {
-      try {
-        final fieldBattle = await _liveFieldPk.pkAction(
-          action: 'create',
-          roomId: key,
-          targetRoomId: oppRoom,
-          guestUserId: guestUserId,
-          durationSeconds: duration,
-        );
-        if (fieldBattle != null && fieldBattle.id.isNotEmpty) {
-          final battle = _parseBattle({
-            'id': fieldBattle.id,
-            'status': fieldBattle.status ?? 'pending',
-            'duration': fieldBattle.durationSeconds ?? duration,
-            'score1': fieldBattle.room1Score,
-            'score2': fieldBattle.room2Score,
-            'voiceRoomId': key,
-            'opponentVoiceRoomId': oppRoom,
-          });
-          if (battle != null) return battle;
-        }
-      } on ApiException catch (e) {
-        if (e.statusCode != 404 && e.statusCode != 405 && e.statusCode != 409) {
-          rethrow;
-        }
-      }
-    }
+
+    // Kılavuz §9.3: sesli oda PK daveti önce `POST /api/chat/rooms/{roomId}/pk`.
+    // Alıcı da bu ucu (ve /api/pk/me/invites) pollar; `/api/live/pk` yalnızca bu
+    // uç sunucuda yoksa (404/405) son çare yedektir — aksi halde davet karşı
+    // tarafın görmediği bir depoya yazılıyordu.
     final bodies = voicePkInviteRequestBodies(
       opponentRoomId: oppRoom,
       guestUserId: guestUserId,
@@ -365,6 +343,7 @@ class PkBattleRemoteDataSource {
     );
 
     ApiException? lastError;
+    var chatRoomEndpointMissing = false;
     for (final body in bodies) {
       try {
         final battle = await _postPkAction(
@@ -375,10 +354,49 @@ class PkBattleRemoteDataSource {
         if (battle != null) return battle;
       } on ApiException catch (e) {
         lastError = e;
+        // Gövde şekli reddedildiyse sıradaki şekli dene.
         if (e.statusCode == 400 || e.statusCode == 422) continue;
+        // Uç tamamen yoksa `/api/live/pk` yedeğine düş; iş hataları (403/409)
+        // doğrudan yukarı fırlar.
+        if (e.statusCode == 404 || e.statusCode == 405) {
+          chatRoomEndpointMissing = true;
+          break;
+        }
         rethrow;
       }
     }
+
+    if (chatRoomEndpointMissing) {
+      for (final key in _roomKeyCandidates(roomId, alternateRoomId)) {
+        try {
+          final fieldBattle = await _liveFieldPk.pkAction(
+            action: 'create',
+            roomId: key,
+            targetRoomId: oppRoom,
+            guestUserId: guestUserId,
+            durationSeconds: duration,
+          );
+          if (fieldBattle != null && fieldBattle.id.isNotEmpty) {
+            final battle = _parseBattle({
+              'id': fieldBattle.id,
+              'status': fieldBattle.status ?? 'pending',
+              'duration': fieldBattle.durationSeconds ?? duration,
+              'score1': fieldBattle.room1Score,
+              'score2': fieldBattle.room2Score,
+              'voiceRoomId': key,
+              'opponentVoiceRoomId': oppRoom,
+            });
+            if (battle != null) return battle;
+          }
+        } on ApiException catch (e) {
+          lastError = e;
+          if (e.statusCode != 404 && e.statusCode != 405 && e.statusCode != 409) {
+            rethrow;
+          }
+        }
+      }
+    }
+
     if (lastError != null) throw lastError;
     return null;
   }

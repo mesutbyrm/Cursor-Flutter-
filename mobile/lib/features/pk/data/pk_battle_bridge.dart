@@ -17,6 +17,34 @@ Map<String, dynamic> pkBattleToLiveMap(
   );
 }
 
+/// `PkBattleRemote` (chat-room/voice PK datasource) → sheet'in `PkBattle`'ı.
+/// Sesli oda daveti kılavuz §9.3 `POST /api/chat/rooms/{id}/pk` üzerinden gider;
+/// dönen model `PkBattleRemote`, sheet ise `PkBattle` beklediği için köprü.
+PkBattle pkRemoteToBattle(PkBattleRemote r) {
+  final u1 = r.challenger;
+  final u2 = r.opponent;
+  return PkBattle(
+    id: r.effectiveId,
+    status: PkStatus.parse(r.status),
+    room1Id: r.voiceRoomId ?? r.liveStreamId ?? '',
+    room2Id: r.opponentVoiceRoomId ?? r.opponentLiveStreamId ?? '',
+    user1Id: r.challengerId ?? u1?.userId ?? '',
+    user2Id: r.opponentId ?? r.targetUserId ?? r.guestUserId ?? u2?.userId ?? '',
+    score1: r.challengerScore,
+    score2: r.opponentScore,
+    duration: r.durationSeconds,
+    startedAt: r.startedAt?.toIso8601String() ?? '',
+    endsAt: r.endsAt?.toIso8601String() ?? '',
+    winnerId: r.winnerId ?? '',
+    user1: u1 != null
+        ? PkParticipant(id: u1.userId, name: u1.displayName ?? '')
+        : null,
+    user2: u2 != null
+        ? PkParticipant(id: u2.userId, name: u2.displayName ?? '')
+        : null,
+  );
+}
+
 PkBattleRemote pkBattleToRemote(PkBattle battle) {
   final endsAt = DateTime.tryParse(battle.endsAt);
   final startedAt = DateTime.tryParse(battle.startedAt);
