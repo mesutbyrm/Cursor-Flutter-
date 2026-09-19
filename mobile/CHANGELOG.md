@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.563+606 (2026-09-19) — PK ekranı referans düzen (yayıncı bandı + skor barı)
+
+- Başlığın altına **yayıncı bandı** eklendi: [sol yayıncı kartı | PK sayacı | sağ yayıncı kartı] — avatar, isim, doğrulama, 🔥 takipçi, **+ Takip et**
+- Ortadaki eski yüzen sayaç rozeti banda taşındı; VS amblemi video ortasında kaldı
+- Video altına **kırmızı/mavi bölünmüş skor barı** eklendi: skorlar + yüzde + "PK devam ediyor" durum pili
+- Sohbet, skor barının üstüne (video alt-sol) alındı — çakışma yok
+- `LivePkReferenceStreamerCard` / `LivePkReferenceStreamerBand` / `LivePkReferenceScoreBar` widget'ları
+
 ## 1.0.562+605 (2026-09-19) — PK split video yüksekliği düzeltmesi
 
 - Canlı PK ekranı: split video artık başlık ile alt şerit (skor/kontrol/giriş) arasındaki **tüm dikey alanı** dolduruyor
