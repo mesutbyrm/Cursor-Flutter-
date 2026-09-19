@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.561+604 (2026-09-19) — PK UI + audit düzeltmeleri (release APK)
+
+- Canlı 1v1 PK ekranı referans tasarım: `PkBattleScreen` (split video, VS, skor barı, sohbet, kontrol çubuğu)
+- PK: süren maçta provider **keepAlive**; geçici ağ hatasında ekran düşmez; stale guard; 90 sn istemci sayacı kaldırıldı
+- PK: boş/hatalı `refresh` **90 sn stale latch**; kalp skoru API hatasında rate-limited snackbar; "PK zaten bitmiş" ham exception sızmasın
+- Hediye: rastgele alıcı kaldırıldı; jeton + hediye kaydı tek transaction
+- Keşif sayfalama; feed hikâye şeridinde uydurma kullanıcı yok
+- Fal/UI: korumasız **BuildContext** ve `CdsError` sızıntı düzeltmeleri
+
 ## 1.0.560+603 (2026-09-19) — PK ekranı yeni tasarım
 
 - Canlı 1v1 PK ekranı referans tasarıma göre yeniden kuruldu: `PkBattleScreen`
