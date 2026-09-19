@@ -242,6 +242,115 @@ void main() {
     });
   });
 
+  group('remote video watchdog (T+5s render stall recovery)', () {
+    PsychicTrtcConnection connected() {
+      final conn = PsychicTrtcConnection();
+      conn.tryBeginJoin();
+      conn.markConnected(
+        sessionId: 's1',
+        tokenRequestRoomId: 's1',
+        joinedTrtcRoomId: 'fortune_room_s1',
+        joinedUserId: 'u1',
+      );
+      return conn;
+    }
+
+    test('resubscribe when in room, peer present, no remote video yet', () {
+      expect(
+        connected().shouldResubscribeRemoteView(
+          inRoom: true,
+          peerPresent: true,
+          remoteVideoSeen: false,
+          attempts: 0,
+          maxAttempts: 2,
+        ),
+        isTrue,
+      );
+    });
+
+    test('no resubscribe once remote video is seen', () {
+      expect(
+        connected().shouldResubscribeRemoteView(
+          inRoom: true,
+          peerPresent: true,
+          remoteVideoSeen: true,
+          attempts: 0,
+          maxAttempts: 2,
+        ),
+        isFalse,
+      );
+    });
+
+    test('no resubscribe when peer not yet in room', () {
+      expect(
+        connected().shouldResubscribeRemoteView(
+          inRoom: true,
+          peerPresent: false,
+          remoteVideoSeen: false,
+          attempts: 0,
+          maxAttempts: 2,
+        ),
+        isFalse,
+      );
+    });
+
+    test('resubscribe attempts are capped', () {
+      expect(
+        connected().shouldResubscribeRemoteView(
+          inRoom: true,
+          peerPresent: true,
+          remoteVideoSeen: false,
+          attempts: 2,
+          maxAttempts: 2,
+        ),
+        isFalse,
+      );
+    });
+
+    test('no resubscribe while reconnecting / leaving / disposed', () {
+      final reconnecting = connected();
+      reconnecting.tryBeginReconnect(
+        PsychicTrtcReconnectReason.connectionLost,
+        inRoom: true,
+      );
+      expect(
+        reconnecting.shouldResubscribeRemoteView(
+          inRoom: true,
+          peerPresent: true,
+          remoteVideoSeen: false,
+          attempts: 0,
+          maxAttempts: 2,
+        ),
+        isFalse,
+      );
+
+      final leaving = connected();
+      leaving.tryBeginLeave();
+      expect(
+        leaving.shouldResubscribeRemoteView(
+          inRoom: true,
+          peerPresent: true,
+          remoteVideoSeen: false,
+          attempts: 0,
+          maxAttempts: 2,
+        ),
+        isFalse,
+      );
+
+      final disposed = connected()..markDisposed();
+      expect(
+        disposed.shouldResubscribeRemoteView(
+          inRoom: true,
+          peerPresent: true,
+          remoteVideoSeen: false,
+          attempts: 0,
+          maxAttempts: 2,
+        ),
+        isFalse,
+      );
+    });
+  });
+
   group('PsychicTrtcListenerBind duplicate prevention', () {
     test('attach once, second attach is no-op', () {
       final bind = PsychicTrtcListenerBind();

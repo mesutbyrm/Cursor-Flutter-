@@ -169,6 +169,25 @@ class PsychicTrtcConnection {
     phase = PsychicTrtcPhase.disposed;
   }
 
+  /// T+5s render takılması yedeği — uzak view'i tek seferlik yeniden abone
+  /// etmeye değer mi? Odadayız + bağlıyız + karşı taraf odada + uzak video
+  /// henüz görülmedi + deneme hakkı kaldı. Odadan çıkış / yeniden giriş YOK;
+  /// bu yalnızca donmuş yüzeyi yeniden bağlar (alias-drift rejoin değil).
+  bool shouldResubscribeRemoteView({
+    required bool inRoom,
+    required bool peerPresent,
+    required bool remoteVideoSeen,
+    required int attempts,
+    required int maxAttempts,
+  }) {
+    if (isTerminal || _joinInFlight || _reconnectInFlight || _leaveInFlight) {
+      return false;
+    }
+    if (phase != PsychicTrtcPhase.connected) return false;
+    if (!inRoom || !peerPresent || remoteVideoSeen) return false;
+    return attempts < maxAttempts;
+  }
+
   /// Psychic A → B: eski kilitli oda/token bu oturuma ait değil.
   bool isForeignSession(String nextSessionId) {
     final current = sessionId?.trim() ?? '';

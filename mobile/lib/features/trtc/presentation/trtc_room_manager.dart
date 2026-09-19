@@ -533,6 +533,23 @@ class TrtcRoomManager {
     _remoteViewBindings.remove(userId);
   }
 
+  /// Uzak render takıldığında GÜVENLİ kurtarma — odadan çıkış / yeniden giriş
+  /// YOK. Yalnızca mevcut view binding'i için `stopRemoteView` + `startRemoteView`
+  /// tekrar çağrılır (donmuş yüzeyi yeniden bağlar). Binding yoksa no-op.
+  /// Not: 1:1 falcı görüşmesinde T+5s render takılması için yedek; alias-drift
+  /// yeniden giriş bug'ını geri getirmez.
+  bool resubscribeRemoteView(String userId) {
+    if (_audioOnly) return false;
+    if (_cloud == null || !_inRoom) return false;
+    final viewId = _remoteViewBindings[userId];
+    if (viewId == null) return false;
+    _cloud!.stopRemoteView(userId, TRTCVideoStreamType.big);
+    _cloud!.startRemoteView(userId, TRTCVideoStreamType.big, viewId);
+    _cloud!.muteRemoteAudio(userId, false);
+    _trtcLog('remote_video_resubscribe', {'userId': userId, 'viewId': viewId});
+    return true;
+  }
+
   void setMicEnabled(bool enabled) {
     if (!_inRoom && !_previewOnly) return;
     if (enabled) {

@@ -184,6 +184,10 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   Timer? _sseAutoRetryTimer;
   var _sseAutoRetryCount = 0;
   static const _maxSseAutoRetry = 3;
+  Timer? _remoteVideoWatchdog;
+  var _resubscribeAttempts = 0;
+  static const _maxResubscribeAttempts = 2;
+  static const _remoteVideoWatchdogInterval = Duration(seconds: 5);
   Timer? _tipThankYouDismissTimer;
   Timer? _tipReceivedDismissTimer;
   static const _tipOverlayDismissDuration = Duration(seconds: 3);
@@ -207,6 +211,10 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       if (_disposed) return;
       final map = Map<String, bool>.from(_trtc.remoteVideoByUser.value);
       state = state.copyWith(remoteCamera: map);
+      // Uzak video geldi → render takılması yedeği artık gereksiz.
+      if (map.values.any((available) => available)) {
+        _stopRemoteVideoWatchdog();
+      }
       for (final entry in map.entries) {
         PsychicEventLog.remoteVideo(
           sessionId: session.sessionId,
@@ -239,6 +247,68 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     if (_remoteAudioListener != null) {
       _trtc.remoteAudioByUser.removeListener(_remoteAudioListener!);
     }
+  }
+
+  /// T+5s render takılması yedeği. Bağlantı kurulduktan sonra, karşı taraf
+  /// odaya girmişken uzak video hâlâ gelmiyorsa, odaya dokunmadan (exitRoom /
+  /// rejoin YOK) uzak view'i en fazla iki kez yeniden abone eder. Uzak video
+  /// göründüğünde kendini durdurur.
+  void _startRemoteVideoWatchdog() {
+    _remoteVideoWatchdog?.cancel();
+    _resubscribeAttempts = 0;
+    _remoteVideoWatchdog =
+        Timer.periodic(_remoteVideoWatchdogInterval, (_) => _checkRemoteVideoStall());
+  }
+
+  void _stopRemoteVideoWatchdog() {
+    _remoteVideoWatchdog?.cancel();
+    _remoteVideoWatchdog = null;
+  }
+
+  String? _currentRemotePeerId() {
+    final anchor = _trtc.remoteAnchorUserId?.trim();
+    if (anchor != null && anchor.isNotEmpty) return anchor;
+    final ids = _trtc.remoteUserIdsNotifier.value;
+    return ids.isNotEmpty ? ids.first : null;
+  }
+
+  void _checkRemoteVideoStall() {
+    if (_disposed || state.leaving) {
+      _stopRemoteVideoWatchdog();
+      return;
+    }
+    final peer = _currentRemotePeerId();
+    final remoteVideoSeen =
+        peer != null && (_trtc.remoteVideoByUser.value[peer] ?? false);
+    if (remoteVideoSeen || _resubscribeAttempts >= _maxResubscribeAttempts) {
+      _stopRemoteVideoWatchdog();
+      return;
+    }
+    if (peer == null) return;
+    final shouldResub = _trtcConn.shouldResubscribeRemoteView(
+      inRoom: _trtc.inRoom,
+      peerPresent: true,
+      remoteVideoSeen: remoteVideoSeen,
+      attempts: _resubscribeAttempts,
+      maxAttempts: _maxResubscribeAttempts,
+    );
+    if (!shouldResub) return;
+    final applied = _trtc.resubscribeRemoteView(peer);
+    if (!applied) return;
+    _resubscribeAttempts++;
+    PsychicEventLog.trtcState(
+      sessionId: session.sessionId,
+      connectionState: 'remote_video_resubscribe',
+      roomId: _trtcConn.tokenRequestRoomId,
+      trtcRoomId: _trtcConn.joinedTrtcRoomId,
+      userId: peer,
+      inRoom: _trtc.inRoom,
+    );
+    PsychicRtcSessionReport.record('remote_video_resubscribe', {
+      'sessionId': session.sessionId,
+      'peerId': peer,
+      'attempt': _resubscribeAttempts,
+    });
   }
 
   TrtcRoomManager get trtc => _trtc;
@@ -861,6 +931,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
           clearRtcError: true,
         );
         _setPhase(PsychicSessionPhase.connected);
+        _startRemoteVideoWatchdog();
         return;
       }
 
@@ -950,6 +1021,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
         clearRtcError: true,
       );
       _setPhase(PsychicSessionPhase.connected);
+      _startRemoteVideoWatchdog();
       unawaited(_broadcastMediaState());
       if (!session.isClient && !state.timerStarted) {
         unawaited(_ensureTimerStarted());
@@ -1215,6 +1287,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     if (state.leaving) return;
     _setPhase(PsychicSessionPhase.ending);
     state = state.copyWith(leaving: true);
+    _stopRemoteVideoWatchdog();
     _detachRemoteMediaListeners();
     _trtc.setMicEnabled(false);
     _trtc.setCameraEnabled(false);
@@ -1357,6 +1430,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   void dispose() {
     _disposed = true;
     _trtcConn.markDisposed();
+    _stopRemoteVideoWatchdog();
     _detachRemoteMediaListeners();
     _tick?.cancel();
     _chatPoll?.cancel();

@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.570+613 (2026-09-19) — Canlı falcı: T+5s uzak render takılması yedeği (C1)
+
+- **T+5s donması için güvenli istemci yedeği:** falcı 1:1 görüşmesinde karşı taraf odaya girdiği hâlde uzak video hâlâ gelmiyorsa, **odadan çıkış / yeniden giriş YAPMADAN** uzak view en fazla iki kez yeniden abone ediliyor (`resubscribeRemoteView`) — donmuş yüzey yeniden bağlanıyor
+- Watchdog yalnızca `live_psychics` oturumunda çalışır; uzak video görülünce/ayrılışta durur; alias-drift yeniden giriş bug'ını (1.0.371'de düzeltildi) geri getirmez
+- Kök neden (SSE/oda `roomId` alias'ında yeniden giriş) zaten kapalı; bu ekleme render takılmasına karşı ek emniyet — **P0 kapanışı için iki cihazda `Psychic P0 PASS` doğrulaması gerekir**
+- Unit: `psychic_trtc_freeze_test` (+5 vaka: yeniden abone kararı, cap, reconnect/leave/dispose koruması)
+
 ## 1.0.569+612 (2026-09-19) — Hediye hedefi süresi + Gold arkaplan yükleme
 
 - **Hediye hedefi süre bitince gizleniyor:** `GiftGoal.isActive` artık `endsAt` süresini de kontrol ediyor (`isExpired`); süresi dolan hedef önizlemede/odaya girişte tekrar gösterilmiyor
