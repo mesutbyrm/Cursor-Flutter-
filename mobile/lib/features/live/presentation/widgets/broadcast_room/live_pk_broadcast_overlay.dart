@@ -136,6 +136,17 @@ class LivePkBroadcastOverlay extends ConsumerWidget {
                   danger: true,
                   onTap: onEndPk,
                 ),
+              // PK bittiğinde (aktif değil) host'un çıkış yolu — split ekranı
+              // koşulsuz kapatıp normal yayına döner (takılı kalmaya son).
+              if (isHost && !pkRunning)
+                LivePkControlItem(
+                  icon: Icons.close_rounded,
+                  label: "PK'yi Kapat",
+                  danger: true,
+                  onTap: () => ref
+                      .read(liveVideoPkProvider(streamId).notifier)
+                      .forceExitPk(),
+                ),
             ],
           ),
         ),

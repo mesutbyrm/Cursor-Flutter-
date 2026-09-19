@@ -11,12 +11,16 @@ class LivePkReferenceTopBar extends StatelessWidget {
     this.onClose,
     this.viewerCount = 0,
     this.viewers = const [],
+    this.centerTimer,
   });
 
   final VoidCallback? onBack;
   final VoidCallback? onClose;
   final int viewerCount;
   final List<LiveStreamViewer> viewers;
+
+  /// Başlık ortasında gösterilecek PK sayaç rozeti (opsiyonel).
+  final Widget? centerTimer;
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +57,10 @@ class LivePkReferenceTopBar extends StatelessWidget {
               else
                 const SizedBox(width: 4),
               _BrandMark(),
+              if (centerTimer != null) ...[
+                const Spacer(),
+                centerTimer!,
+              ],
               const Spacer(),
               LivePkViewerStrip(
                 viewers: viewers,

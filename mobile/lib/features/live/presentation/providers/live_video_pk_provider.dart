@@ -297,6 +297,18 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
     });
   }
 
+  /// Koşulsuz çıkış — PK bittiğinde host "PK'yi Kapat"a basınca split ekranı
+  /// her durumda temizlenir ve normal yayına dönülür (takılı kalmaya son).
+  void forceExitPk() {
+    _stopPolling();
+    _endedCleanup?.cancel();
+    _eventDedup.clear();
+    _lastIngestFingerprint = null;
+    ref.read(livePkScoreBurstProvider(arg).notifier).reset();
+    state = state.copyWith(clearBattle: true, clearUnifiedMatchId: true);
+    ref.read(livePkHomeTransitionProvider.notifier).reset();
+  }
+
   /// PK sonuç ekranından sonra split'i kapatır (sunucu zaten `ended` döndü).
   void dismissEndedOverlay({String? expectedBattleId}) {
     final currentId = state.battle?['id']?.toString() ?? '';

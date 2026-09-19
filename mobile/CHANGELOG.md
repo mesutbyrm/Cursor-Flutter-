@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.566+609 (2026-09-19) — PK ekran düzeni + çıkış + hediye boyutu
+
+- **Geri tuşu kaldırıldı**, PK sayacı başlığa taşındı; ayrı yayıncı bandı kaldırıldı → **video en üstten başlıyor** (boyut korundu)
+- Alt profillerde tekrar eden **"X PK" yazısı kaldırıldı** (skor zaten skor barında); profil tek yerde
+- **PK bitince çıkış:** host'a "PK'yi Kapat" butonu — `forceExitPk` ile split ekranı koşulsuz kapatıp normal yayına döner (takılı kalmaya son)
+- **Hediye büyütüldü** (~%60'a kadar); başlık, skor barı ve "Gönder"/mesaj kutusu açık kalır
+- Bilinen kalan (davranışsal, SSE/sunucu bağlı, inceleniyor): PK puanının anlık iki-taraflı yansıması, taraf titremesi (challenger/rakip çözümü), FORBIDDEN, sohbet mesajının ekrana düşmesi
+
 ## 1.0.565+608 (2026-09-19) — Hediye gösterimi TikTok/Bigo tarzı (alttan ≤%50, tam ekran yok)
 
 - **Hediyeler artık tam ekran açılmıyor.** `GiftEngineOverlay` backend `fullScreen`/`isFullScreen` bayrağını yok sayıp tüm hediyeleri **alttan-hizalı banda** alıyor (koltuk efektleri hariç, onlar küçük/konumlu kalır)

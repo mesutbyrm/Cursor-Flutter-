@@ -14,6 +14,7 @@ class LivePkPaneProfileFooter extends ConsumerStatefulWidget {
     this.pkScore = 0,
     this.isLocal = false,
     this.showFollow = false,
+    this.showScore = true,
     this.followAccent = const Color(0xFFFF2D7A),
   });
 
@@ -23,6 +24,7 @@ class LivePkPaneProfileFooter extends ConsumerStatefulWidget {
   final int pkScore;
   final bool isLocal;
   final bool showFollow;
+  final bool showScore;
   final Color followAccent;
 
   @override
@@ -160,22 +162,26 @@ class _LivePkPaneProfileFooterState extends ConsumerState<LivePkPaneProfileFoote
                 ),
               ],
             ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.bolt_rounded, color: Color(0xFFFFD54F), size: 14),
-                const SizedBox(width: 4),
-                Text(
-                  '${_fmtScore(widget.pkScore)} PK',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 12,
+            // "X PK" yazısı kaldırıldı — skor zaten skor barında görünüyor.
+            if (widget.showScore) ...[
+              const SizedBox(height: 4),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.bolt_rounded,
+                      color: Color(0xFFFFD54F), size: 14),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${_fmtScore(widget.pkScore)} PK',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 12,
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

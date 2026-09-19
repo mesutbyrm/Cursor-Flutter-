@@ -368,10 +368,9 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
         final divider = LivePkLayoutMetrics.splitDividerWidth;
         final paneWidth =
             (constraints.maxWidth - divider).clamp(0.0, constraints.maxWidth) / 2;
-        // Referans düzen: başlığın hemen altında yayıncı bandı
-        // [sol kart | PK sayacı | sağ kart]. Video bunun altından başlar.
-        const bandHeight = 62.0;
-        final videoTop = headerH + bandHeight;
+        // Video başlığın hemen altından (en üstten) başlar; ayrı yayıncı
+        // bandı kaldırıldı (sayaç başlığa taşındı, profiller pane altında).
+        final videoTop = headerH;
         // Video, band ile alt şerit (skor barı + kontroller + giriş) arasındaki
         // tüm dikey alanı doldurur — referans tasarımdaki uzun dikey paneller.
         // Önceki davranış panelleri kare (paneWidth) yapıyordu; bu, ekranın alt
@@ -422,6 +421,7 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                                 layout.left,
                                 myUserId: myUserId,
                               ),
+                              showScore: false,
                               followAccent: const Color(0xFFFF2D7A),
                             ),
                             micOn: layout.left.isLocalPane
@@ -489,6 +489,7 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                                 layout.right,
                                 myUserId: myUserId,
                               ),
+                              showScore: false,
                               followAccent: const Color(0xFF448AFF),
                             ),
                             micOn: layout.right.isLocalPane
@@ -536,81 +537,6 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                   ],
                 ),
               ),
-              // Referans yayıncı bandı: [sol kart | PK sayacı | sağ kart].
-              Positioned(
-                top: headerH,
-                left: 0,
-                right: 0,
-                height: bandHeight,
-                child: Center(
-                  child: LivePkReferenceStreamerBand(
-                    leftCard: LivePkReferenceStreamerCard(
-                      displayName: layout.left.label,
-                      avatarUrl: layout.left.avatarUrl,
-                      userId: layout.left.userId,
-                      isLocal: layout.left.isLocalPane,
-                      showFollow: _showPkFollow(layout.left, myUserId: myUserId),
-                      accent: const Color(0xFFFF2D6B),
-                    ),
-                    centerTimer: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.6),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: const Color(0xFFFFD24A).withValues(alpha: 0.7),
-                          width: 1.2,
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 5,
-                        ),
-                        child: ended
-                            ? const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.bolt_rounded,
-                                      color: Color(0xFFFFD54F), size: 16),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'PK',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                  SizedBox(width: 6),
-                                  PkBattleTimerBadge(
-                                    secondsLeft: 0,
-                                    flashThreshold: 10,
-                                  ),
-                                ],
-                              )
-                            : LivePkResolvedTimer(
-                                remote: null,
-                                fallbackSeconds: secondsLeft,
-                                endsAt: endsAt,
-                                countdownActive: true,
-                                centered: true,
-                                onExpired:
-                                    session.isHost ? widget.onEndPk : null,
-                              ),
-                      ),
-                    ),
-                    rightCard: LivePkReferenceStreamerCard(
-                      displayName: layout.right.label,
-                      avatarUrl: layout.right.avatarUrl,
-                      userId: layout.right.userId,
-                      isLocal: layout.right.isLocalPane,
-                      showFollow:
-                          _showPkFollow(layout.right, myUserId: myUserId),
-                      accent: const Color(0xFF2E9BFF),
-                    ),
-                  ),
-                ),
-              ),
               // Referans skor barı — video ile alt kontroller arasında.
               Positioned(
                 top: scoreBarTop,
@@ -635,10 +561,50 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                 ),
               ),
               LivePkReferenceTopBar(
-                onBack: widget.onBack,
+                // Geri tuşu kaldırıldı; kapatma (X) korunuyor.
+                onBack: null,
                 onClose: widget.onBack,
                 viewerCount: widget.viewerCount,
                 viewers: viewers,
+                centerTimer: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: const Color(0xFFFFD24A).withValues(alpha: 0.7),
+                      width: 1.1,
+                    ),
+                  ),
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    child: ended
+                        ? const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.bolt_rounded,
+                                  color: Color(0xFFFFD54F), size: 15),
+                              SizedBox(width: 4),
+                              Text('PK',
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 12)),
+                              SizedBox(width: 6),
+                              PkBattleTimerBadge(
+                                  secondsLeft: 0, flashThreshold: 10),
+                            ],
+                          )
+                        : LivePkResolvedTimer(
+                            remote: null,
+                            fallbackSeconds: secondsLeft,
+                            endsAt: endsAt,
+                            countdownActive: true,
+                            centered: true,
+                            onExpired: session.isHost ? widget.onEndPk : null,
+                          ),
+                  ),
+                ),
               ),
               Positioned(
                 top: headerH + 8,
