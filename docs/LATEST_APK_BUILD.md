@@ -4,19 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.568+611` |
-| Tarih (UTC) | 2026-09-19 16:34 |
-| Commit | [`b982df1fcadb735ca4dbe8805d702d24ec962813`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/b982df1fcadb735ca4dbe8805d702d24ec962813) |
-| İş akışı | [Run 35454432526](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35454432526) |
+| Sürüm | `1.0.569+612` |
+| Tarih (UTC) | 2026-09-19 16:53 |
+| Commit | [`3331503c3d94ec8b2e6ec7a3ed9a669ed7b60d9d`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/3331503c3d94ec8b2e6ec7a3ed9a669ed7b60d9d) |
+| İş akışı | [Run 35455000076](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35455000076) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.569+612 (2026-09-19) — Hediye hedefi süresi + Gold arkaplan yükleme
+## 1.0.570+613 (2026-09-19) — Canlı falcı: T+5s uzak render takılması yedeği (C1)
 
-- **Hediye hedefi süre bitince gizleniyor:** `GiftGoal.isActive` artık `endsAt` süresini de kontrol ediyor (`isExpired`); süresi dolan hedef önizlemede/odaya girişte tekrar gösterilmiyor
-- **Arkaplan kendi görselini yükleme Gold+ üyeliğe açıldı:** eskiden yalnızca site admin yükleyebiliyordu; artık site admin **veya Gold+ üye** yükleyebilir (hazır görseller herkese açık)
-- Unit: `gift_battle_goal_contract_test` (+3 vaka: süresi dolan/devam eden/süresiz hedef)
+- **T+5s donması için güvenli istemci yedeği:** falcı 1:1 görüşmesinde karşı taraf odaya girdiği hâlde uzak video hâlâ gelmiyorsa, **odadan çıkış / yeniden giriş YAPMADAN** uzak view en fazla iki kez yeniden abone ediliyor (`resubscribeRemoteView`) — donmuş yüzey yeniden bağlanıyor
+- Watchdog yalnızca `live_psychics` oturumunda çalışır; uzak video görülünce/ayrılışta durur; alias-drift yeniden giriş bug'ını (1.0.371'de düzeltildi) geri getirmez
+- Kök neden (SSE/oda `roomId` alias'ında yeniden giriş) zaten kapalı; bu ekleme render takılmasına karşı ek emniyet — **P0 kapanışı için iki cihazda `Psychic P0 PASS` doğrulaması gerekir**
+- Unit: `psychic_trtc_freeze_test` (+5 vaka: yeniden abone kararı, cap, reconnect/leave/dispose koruması)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
