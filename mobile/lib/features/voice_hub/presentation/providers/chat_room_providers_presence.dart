@@ -580,6 +580,25 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         unawaited(_presenceHeartbeatTick());
       },
     );
+    _startNetworkRecoveryWatch();
+  }
+
+  /// Ağ geri geldiğinde sesli TRTC kanalı sessizce düşmüşse yeniden bağlan.
+  /// TRTC `onConnectionLost` WiFi↔mobil data geçişinde her zaman tetiklenmez;
+  /// bu, "sürekli odadan/koltuktan kopma" için istemci-tarafı yedektir. Koltuk
+  /// (presence) sunucu durumu olduğundan TRTC yeniden bağlanması koltuğu düşürmez;
+  /// ek olarak bir presence heartbeat tetiklenir ki sunucu düşürmesin.
+  void _startNetworkRecoveryWatch() {
+    unawaited(_networkRecoverySub?.cancel());
+    _networkRecoverySub =
+        ref.read(connectivityServiceProvider).onlineStream.listen((online) {
+      if (!online || !_sessionActive || !state.selfInRoom) return;
+      final coordinator = ref.read(voiceRoomAudioCoordinatorProvider);
+      if (coordinator.isReconnecting) return;
+      VoiceRoomDebugLog.log('audio.trtc.network_recovery', {'room': _roomKey});
+      unawaited(coordinator.ensureConnected());
+      if (_presenceJoined) unawaited(_presenceHeartbeatTick());
+    });
   }
 
   void _announceSelfLeave() {

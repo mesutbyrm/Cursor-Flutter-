@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.572+615 (2026-09-19) — Sesli oda: ağ değişiminde sessiz kopmaya karşı yeniden bağlanma
+
+- **Sürekli odadan/koltuktan kopma:** sesli oda yalnızca TRTC `onConnectionLost`'a güveniyordu; WiFi↔mobil data geçişinde bu callback her zaman tetiklenmediği için ses sessizce donup toparlanamıyordu
+- **Düzeltme:** oturum boyunca `connectivityService.onlineStream` dinleniyor; ağ geri gelince ve TRTC kanalı düşmüşse **tek uçuşlu** yeniden bağlanma (`ensureConnected`) + bir presence heartbeat tetikleniyor. Koltuk sunucu (presence) durumu olduğundan TRTC yeniden bağlanması koltuğu düşürmez
+- Falcı tarafındaki kanıtlı `_watchNetwork` deseni sesli odaya taşındı; yeniden bağlanma askıya alınmışsa/zaten sürüyorsa çalışmaz (fırtına yok)
+- Not — diğer maddeler istemcide zaten tam: **VIP şifre kapısı** (`voice_room_gated_entry`), **koltuk sayısı seçimi** (oda açma + yönetim, 8–15), **yetkiliye giriş anında oto-koltuk** (`_tryAutoPrivilegedSeat` + reaktif + host reconcile) kod tarafında mevcut ve bağlı; bu akışların cihazda çalışmaması durumunda kalan bağımlılık sunucu (oda listesinde kilit bayrağı, koltuk atama yetkisi, SSE yayını) tarafındadır
+
 ## 1.0.571+614 (2026-09-19) — Sesli oda PK daveti doğru uca gidiyor (davet artık ulaşıyor)
 
 - **Kök neden:** sesli oda "PK isteği gönder" daveti yanlış uca (`POST /api/live/pk`) gidiyordu; alıcı taraf ise kılavuz §9.3 ucunu (`GET /api/chat/rooms/{id}/pk` + `/api/pk/me/invites`) polluyordu → davet karşı odanın görmediği depoya yazılıyor, hiç ulaşmıyordu

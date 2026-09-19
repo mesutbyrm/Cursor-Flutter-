@@ -52,6 +52,17 @@ class VoiceRoomAudioCoordinator {
     };
   }
 
+  /// Ağ geri geldiğinde (WiFi↔mobil data) çağrılır. TRTC `onConnectionLost`
+  /// her zaman tetiklenmediği için sessiz kopmaya karşı yedek: yalnızca odada
+  /// olmamız beklenirken kanal düşmüşse tek uçuşlu yeniden bağlanır.
+  Future<void> ensureConnected() async {
+    if (_reconnectSuspended || _reconnecting) return;
+    final channel = _lastRoomId?.trim();
+    if (channel == null || channel.isEmpty) return;
+    if (_trtc.inChannel) return;
+    await _reconnectVoice();
+  }
+
   Future<void> _reconnectVoice() async {
     if (_reconnectSuspended || _reconnecting) return;
     final channel = _lastRoomId?.trim();

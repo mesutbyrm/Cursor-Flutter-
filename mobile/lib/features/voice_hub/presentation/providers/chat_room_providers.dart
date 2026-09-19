@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/auth/staff_roles.dart';
+import '../../../../core/network/connectivity/connectivity_service.dart';
 import '../../../../core/auth/bot_account_guard.dart';
 import '../../../../core/auth/bot_account_provider.dart';
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
@@ -468,6 +469,8 @@ class VoiceRoomLiveController
   DateTime? _lastHostReconcileAttemptAt;
   String? _autoSeatContextAttempted;
   Timer? _autoSeatDebounce;
+  /// Ağ geri gelince (WiFi↔mobil data) sesli TRTC sessizce düşmüşse yeniden bağlan.
+  StreamSubscription<bool>? _networkRecoverySub;
   final Set<String> _knownPresenceIds = {};
   /// Oturumda duyurulan girişler — aynı kullanıcı iki kez gösterilmez.
   final Set<String> _sessionAnnouncedJoinUserIds = {};
@@ -1008,6 +1011,8 @@ class VoiceRoomLiveController
     _rankingRefreshDebounce?.cancel();
     _roomSongBlocSyncTimer?.cancel();
     _autoSeatDebounce?.cancel();
+    unawaited(_networkRecoverySub?.cancel());
+    _networkRecoverySub = null;
   }
 
   /// Odadan çıkış — TRTC/ses kesilir, ardından backend leave, sonra SSE/state.
