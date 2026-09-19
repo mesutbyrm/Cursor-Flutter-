@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../live/domain/entities/live_gift_event.dart';
@@ -118,7 +120,11 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
     final comboAllowed = giftMeta?.comboEnabled ?? true;
     final size = MediaQuery.sizeOf(context);
     final shortest = size.shortestSide;
-    final giftSize = config.priority.sizeFactor(shortest);
+    // Hediye asla tam ekran olmaz — boyut ekranın ~%48'i ile sınırlı.
+    final giftSize = math.min(
+      config.priority.sizeFactor(shortest),
+      GiftStageMetrics.maxGiftHeight(context),
+    );
 
     return IgnorePointer(
       child: RepaintBoundary(
@@ -157,22 +163,29 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
       size: giftSize,
     );
 
-    return switch (config.displayArea) {
-      GiftEngineDisplayArea.fullScreen => Positioned.fill(child: child),
-      GiftEngineDisplayArea.center => GiftStageBand(
-          stage: widget.stage,
-          child: Center(child: child),
-        ),
-      GiftEngineDisplayArea.top => GiftStageBand(
-          stage: widget.stage,
-          child: Align(alignment: Alignment.topCenter, child: child),
-        ),
-      GiftEngineDisplayArea.bottom => GiftStageBand(
-          stage: widget.stage,
-          child: Align(alignment: Alignment.bottomCenter, child: child),
-        ),
-      GiftEngineDisplayArea.seat => _seatPositioned(context, seatIndex, child),
-    };
+    // Koltuk efektleri küçük ve konumlu — dokunmuyoruz.
+    if (config.displayArea == GiftEngineDisplayArea.seat) {
+      return _seatPositioned(context, seatIndex, child);
+    }
+
+    // Tüm diğer hediyeler (fullScreen dahil) alttan-hizalı banda alınır;
+    // hiçbir hediye tam ekran açılmaz. Alttan yukarı yumuşak giriş.
+    return GiftStageBand(
+      stage: widget.stage,
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: child
+            .animate(key: ValueKey('gift-enter-${event.id}'))
+            .fadeIn(duration: 220.ms)
+            .slideY(begin: 0.28, end: 0, duration: 320.ms, curve: Curves.easeOutCubic)
+            .scale(
+              begin: const Offset(0.9, 0.9),
+              end: const Offset(1, 1),
+              duration: 320.ms,
+              curve: Curves.easeOutBack,
+            ),
+      ),
+    );
   }
 
   Widget _seatPositioned(BuildContext context, int? seatIndex, Widget child) {
@@ -239,28 +252,13 @@ class _GiftEngineAnimation extends StatelessWidget {
       );
     }
 
-    final fit = config.isFullScreen ||
-            config.displayArea == GiftEngineDisplayArea.fullScreen ||
-            spec.mediaType.isVideo
-        ? BoxFit.cover
-        : BoxFit.contain;
-
-    final mediaHeight = config.isFullScreen ||
-            config.displayArea == GiftEngineDisplayArea.fullScreen ||
-            spec.mediaType.isVideo
-        ? null
-        : size;
-    final mediaWidth = config.isFullScreen ||
-            config.displayArea == GiftEngineDisplayArea.fullScreen ||
-            spec.mediaType.isVideo
-        ? null
-        : size;
-
+    // Hediye asla tam ekran değil: `size` ile sınırlı, kırpmasız `contain`.
+    // (Eski `fullScreen`/`cover` yolu kaldırıldı; video da banda sığar.)
     return GiftMediaWidget(
       spec: spec,
-      width: mediaWidth,
-      height: mediaHeight,
-      fit: fit,
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
       fallbackEmoji: emoji,
       looping: false,
     );

@@ -19,17 +19,24 @@ abstract final class GiftStageMetrics {
     BuildContext context, {
     required GiftStageContext stage,
   }) {
+    // Hediye bandı alttan başlar, ekranın en fazla ~%50'sine çıkar.
+    // topInset yüksek tutularak (ekranın alt yarısı) yayın görüntüsü /
+    // koltuklar / PK skoru üstte açık kalır (TikTok/Bigo hissi).
     final topInset = switch (stage) {
-      GiftStageContext.voiceRoom => 0.34,
-      GiftStageContext.liveStream => 0.30,
+      GiftStageContext.voiceRoom => 0.52,
+      GiftStageContext.liveStream => 0.50,
     };
     final bottomInset = switch (stage) {
-      GiftStageContext.voiceRoom => 168.0,
-      GiftStageContext.liveStream => 210.0,
+      GiftStageContext.voiceRoom => 150.0,
+      GiftStageContext.liveStream => 176.0,
     };
     final h = MediaQuery.sizeOf(context).height;
     return EdgeInsets.fromLTRB(12, h * topInset, 12, bottomInset);
   }
+
+  /// Hediye animasyonunun tavan yüksekliği — ekranın en fazla ~%48'i.
+  static double maxGiftHeight(BuildContext context) =>
+      MediaQuery.sizeOf(context).height * 0.48;
 
   static double giftSizeFor(BoxConstraints constraints) {
     final w = constraints.maxWidth;
