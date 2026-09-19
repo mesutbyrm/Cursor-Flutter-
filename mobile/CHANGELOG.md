@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.560+603 (2026-09-19) — PK ekranı yeni tasarım
+
+- Canlı 1v1 PK ekranı referans tasarıma göre yeniden kuruldu: `PkBattleScreen`
+- Üst başlık (oda + izleyici sırası), iki yayıncı kartı + ortada PK sayacı
+- Split video + `VS` amblemi, Lig rozeti, hediye akışı, destekçi avatarları
+- Kırmızı/mavi bölünmüş skor barı + yüzde + "PK devam ediyor" durum pili
+- Sohbet listesi (VIP vurgulu satır), yüzen kalpler, Gönder butonu
+- 5'li kontrol çubuğu (Mikrofon/Kamera/Sessize al/Sohbet/PK'yi Bitir)
+- Mesaj satırı + Gül / Hediye / Daha fazla hızlı aksiyonları
+
 ## 1.0.559+602 (2026-09-18) — Audit fix plan (PK state)
 
 - PK `refresh`: boş/hatalı yanıtta aktif battle **90 sn stale latch** — single-live düşüşü azaltılır
