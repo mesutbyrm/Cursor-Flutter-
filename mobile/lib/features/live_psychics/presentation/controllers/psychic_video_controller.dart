@@ -20,6 +20,7 @@ import 'package:canlifal_social/features/trtc/presentation/trtc_room_manager.dar
 import 'package:canlifal_social/core/network/connectivity/connectivity_service.dart';
 import 'package:canlifal_social/features/live_psychics/domain/psychic_session_phase.dart';
 import 'package:canlifal_social/features/live_psychics/domain/psychic_trtc_connection.dart';
+import 'package:canlifal_social/features/live_psychics/domain/psychic_timer_handshake.dart';
 import 'package:canlifal_social/features/live_psychics/domain/psychic_trtc_identity.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_extend_sheet.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_tip_sheet.dart';
@@ -62,6 +63,8 @@ class PsychicVideoState {
     this.sseFailed = false,
     this.remoteCamera = const {},
     this.remoteMicrophone = const {},
+    this.timerStartRequestSent = false,
+    this.timerStartPrompt = false,
   });
 
   final PsychicSessionPhase phase;
@@ -88,6 +91,10 @@ class PsychicVideoState {
   final Map<String, bool> remoteCamera;
   /// Uzak katılımcı mikrofon durumu — userId → açık mı (yerel mikrofondan bağımsız).
   final Map<String, bool> remoteMicrophone;
+  /// Falcı: danışana süre başlatma isteği gönderildi mi (onay bekleniyor).
+  final bool timerStartRequestSent;
+  /// Danışan: falcının süre başlatma isteği geldi — onay istemi gösterilmeli.
+  final bool timerStartPrompt;
 
   String get timerLabel {
     final m = remaining.inMinutes.remainder(60).toString().padLeft(2, '0');
@@ -121,6 +128,8 @@ class PsychicVideoState {
     bool? sseFailed,
     Map<String, bool>? remoteCamera,
     Map<String, bool>? remoteMicrophone,
+    bool? timerStartRequestSent,
+    bool? timerStartPrompt,
   }) {
     return PsychicVideoState(
       phase: phase ?? this.phase,
@@ -150,6 +159,9 @@ class PsychicVideoState {
       sseFailed: sseFailed ?? this.sseFailed,
       remoteCamera: remoteCamera ?? this.remoteCamera,
       remoteMicrophone: remoteMicrophone ?? this.remoteMicrophone,
+      timerStartRequestSent:
+          timerStartRequestSent ?? this.timerStartRequestSent,
+      timerStartPrompt: timerStartPrompt ?? this.timerStartPrompt,
     );
   }
 }
@@ -196,6 +208,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
 
   VoidCallback? _remoteVideoListener;
   VoidCallback? _remoteAudioListener;
+  VoidCallback? _remotePresenceListener;
 
   void _setPhase(PsychicSessionPhase next) {
     final from = state.phase;
@@ -235,8 +248,15 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
         );
       }
     };
+    _remotePresenceListener ??= () {
+      if (_disposed || state.leaving) return;
+      // Karşı taraf (danışan) odaya girdi → falcı süre isteği gönderebilir.
+      _maybeSendTimerStartRequest();
+    };
     _trtc.remoteVideoByUser.addListener(_remoteVideoListener!);
     _trtc.remoteAudioByUser.addListener(_remoteAudioListener!);
+    _trtc.remoteAnchorUserIdNotifier.addListener(_remotePresenceListener!);
+    _trtc.remoteUserIdsNotifier.addListener(_remotePresenceListener!);
   }
 
   void _detachRemoteMediaListeners() {
@@ -247,6 +267,85 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     if (_remoteAudioListener != null) {
       _trtc.remoteAudioByUser.removeListener(_remoteAudioListener!);
     }
+    if (_remotePresenceListener != null) {
+      _trtc.remoteAnchorUserIdNotifier.removeListener(_remotePresenceListener!);
+      _trtc.remoteUserIdsNotifier.removeListener(_remotePresenceListener!);
+    }
+  }
+
+  bool get _peerPresentInRoom {
+    if (_trtc.remoteAnchorUserId?.trim().isNotEmpty ?? false) return true;
+    return _trtc.remoteUserIdsNotifier.value.isNotEmpty;
+  }
+
+  /// Falcı: danışan odaya girmişken ve süre başlamamışken süre başlatma isteği
+  /// gönderir (bir kez). Süre/ücret ancak danışan onaylayınca başlar.
+  void _maybeSendTimerStartRequest() {
+    if (_disposed || state.leaving) return;
+    if (!PsychicTimerHandshake.tellerShouldSendRequest(
+      isClient: session.isClient,
+      timerStarted: state.timerStarted,
+      requestAlreadySent: state.timerStartRequestSent,
+      peerPresent: _peerPresentInRoom,
+    )) {
+      return;
+    }
+    state = state.copyWith(timerStartRequestSent: true);
+    final peerId = session.remotePeerIdFor(room: state.room);
+    unawaited(
+      ref.read(livePsychicsRepositoryProvider).sendRoomSignal(
+            sessionId: session.sessionId,
+            type: PsychicTimerHandshake.signalRequest,
+            data: const {'action': 'timer_start_request'},
+            receiverId: peerId.isNotEmpty ? peerId : null,
+          ),
+    );
+    PsychicEventLog.trtcState(
+      sessionId: session.sessionId,
+      connectionState: 'timer_start_request_sent',
+      roomId: _trtcConn.tokenRequestRoomId,
+      trtcRoomId: _trtcConn.joinedTrtcRoomId,
+      userId: _trtcConn.joinedUserId,
+      inRoom: _trtc.inRoom,
+    );
+  }
+
+  void dismissTimerStartPrompt() {
+    if (!_disposed && state.timerStartPrompt) {
+      state = state.copyWith(timerStartPrompt: false);
+    }
+  }
+
+  /// Süre başlamadan önce her iki tarafta A/V susturulur (gizlenir). Karşı
+  /// tarafın sesi de duyulmaz; UI uzak videoyu gizler. Onaydan sonra açılır.
+  void _gateMediaUntilTimerStart() {
+    if (!PsychicTimerHandshake.shouldGateMedia(timerStarted: state.timerStarted)) {
+      return;
+    }
+    _trtc.setMicEnabled(false);
+    _trtc.setCameraEnabled(false);
+    _trtc.setAllRemoteAudioMuted(true);
+  }
+
+  /// Danışan onayı: falcıya `timer_start_accept` sinyali yollar.
+  Future<void> acceptTimerStart() async {
+    if (_disposed || state.leaving || !session.isClient) return;
+    state = state.copyWith(timerStartPrompt: false);
+    final peerId = session.remotePeerIdFor(room: state.room);
+    await ref.read(livePsychicsRepositoryProvider).sendRoomSignal(
+          sessionId: session.sessionId,
+          type: PsychicTimerHandshake.signalAccept,
+          data: const {'action': 'timer_start_accept'},
+          receiverId: peerId.isNotEmpty ? peerId : null,
+        );
+    PsychicEventLog.trtcState(
+      sessionId: session.sessionId,
+      connectionState: 'timer_start_accept_sent',
+      roomId: _trtcConn.tokenRequestRoomId,
+      trtcRoomId: _trtcConn.joinedTrtcRoomId,
+      userId: _trtcConn.joinedUserId,
+      inRoom: _trtc.inRoom,
+    );
   }
 
   /// T+5s render takılması yedeği. Bağlantı kurulduktan sonra, karşı taraf
@@ -413,13 +512,23 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     });
   }
 
-  /// Falcı manuel olarak süreyi başlatır (kılavuz §11.1).
+  /// Falcı manuel olarak süreyi başlatır (kılavuz §11.1) — acil yedek.
   Future<bool> startTimer() async {
     if (_disposed || state.leaving || state.timerStarted || session.isClient) {
       return false;
     }
     await _ensureTimerStarted();
     return state.timerStarted;
+  }
+
+  /// Falcı: danışana süre başlatma isteğini (yeniden) gönderir. Süre ancak
+  /// danışan onayladığında başlar.
+  void requestTimerStart() {
+    if (_disposed || state.leaving || session.isClient || state.timerStarted) {
+      return;
+    }
+    state = state.copyWith(timerStartRequestSent: false);
+    _maybeSendTimerStartRequest();
   }
 
   Future<void> _ensureTimerStarted() async {
@@ -467,13 +576,16 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   void _scheduleSignalPoll() {
     _signalPoll?.cancel();
     if (_disposed) return;
-    // SSE bağlıyken oturum sonu / bahşiş SSE'den gelir; sinyal poll yalnızca
-    // media_state (RTC) için yedek — daha seyrek.
-    final interval = state.sseConnected
-        ? (session.isClient
-            ? const Duration(seconds: 30)
-            : const Duration(seconds: 8))
-        : const Duration(seconds: 2);
+    // Süre başlamadan önce süre-el-sıkışması sinyalleri (request/accept) hızlı
+    // ulaşmalı → 2 sn. Süre başladıktan sonra sinyal poll yalnızca media_state
+    // (RTC) için yedek olduğundan seyrekleşir (SSE bağlıysa).
+    final interval = !state.timerStarted
+        ? const Duration(seconds: 2)
+        : state.sseConnected
+            ? (session.isClient
+                ? const Duration(seconds: 30)
+                : const Duration(seconds: 8))
+            : const Duration(seconds: 2);
     _signalPoll = Timer.periodic(interval, (_) {
       unawaited(_pollRoomSignals());
     });
@@ -507,6 +619,14 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       }
       if (type.contains('media_state') || type.contains('rtc_state')) {
         _onPeerMediaSignal(sig);
+        continue;
+      }
+      if (type.contains(PsychicTimerHandshake.signalRequest)) {
+        _onTimerStartRequestSignal();
+        continue;
+      }
+      if (type.contains(PsychicTimerHandshake.signalAccept)) {
+        _onTimerStartAcceptSignal();
         continue;
       }
       if (!session.isClient &&
@@ -556,6 +676,31 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       'cameraEnabled': data['cameraEnabled'] ?? data['cameraOn'],
       'micEnabled': data['micEnabled'] ?? data['micOn'],
     });
+  }
+
+  /// Danışan: falcının süre başlatma isteği geldi → onay istemi göster.
+  void _onTimerStartRequestSignal() {
+    if (_disposed || state.leaving) return;
+    if (!PsychicTimerHandshake.clientShouldPrompt(
+      isClient: session.isClient,
+      timerStarted: state.timerStarted,
+      promptAlreadyShown: state.timerStartPrompt,
+    )) {
+      return;
+    }
+    state = state.copyWith(timerStartPrompt: true);
+  }
+
+  /// Falcı: danışan onayladı → süreyi (ve ücreti) başlat.
+  void _onTimerStartAcceptSignal() {
+    if (_disposed || state.leaving) return;
+    if (!PsychicTimerHandshake.tellerShouldStartTimer(
+      isClient: session.isClient,
+      timerStarted: state.timerStarted,
+    )) {
+      return;
+    }
+    unawaited(_ensureTimerStarted());
   }
 
   Future<void> _broadcastMediaState() async {
@@ -622,6 +767,11 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       waitingForTimer: waitingForTimer,
       remaining: remaining,
     );
+
+    // SSE yoksa da süre başlangıcını yakala → A/V aç, handshake temizle.
+    if (timerStarted && !wasTimerStarted) {
+      unawaited(_onTimerStartedFromServer());
+    }
 
     if (room.tellerUserId != null || room.clientId != null) {
       session = session.copyWith(
@@ -836,12 +986,21 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
 
   Future<void> _onTimerStartedFromServer() async {
     if (_disposed || state.leaving) return;
+    // Onay sonrası: A/V açılır, karşı tarafın sesi duyulur, handshake temizlenir.
+    _trtc.setAllRemoteAudioMuted(false);
     if (!_trtc.micOn) {
       _trtc.setMicEnabled(true);
     }
     if (!_trtc.cameraOn) {
       _trtc.setCameraEnabled(true);
     }
+    if (state.timerStartPrompt || state.timerStartRequestSent) {
+      state = state.copyWith(
+        timerStartPrompt: false,
+        timerStartRequestSent: false,
+      );
+    }
+    _scheduleSignalPoll();
     unawaited(_broadcastMediaState());
   }
 
@@ -932,6 +1091,8 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
         );
         _setPhase(PsychicSessionPhase.connected);
         _startRemoteVideoWatchdog();
+        _gateMediaUntilTimerStart();
+        _maybeSendTimerStartRequest();
         return;
       }
 
@@ -1022,10 +1183,11 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       );
       _setPhase(PsychicSessionPhase.connected);
       _startRemoteVideoWatchdog();
+      // Süre el sıkışması: süre/ücret başlamadan önce A/V susturulur; falcı
+      // danışan geldiğinde başlatma isteği gönderir (otomatik başlatma YOK).
+      _gateMediaUntilTimerStart();
       unawaited(_broadcastMediaState());
-      if (!session.isClient && !state.timerStarted) {
-        unawaited(_ensureTimerStarted());
-      }
+      _maybeSendTimerStartRequest();
     } catch (e) {
       PsychicEventLog.error('join', e, sessionId: session.sessionId);
       PsychicEventLog.trtcState(

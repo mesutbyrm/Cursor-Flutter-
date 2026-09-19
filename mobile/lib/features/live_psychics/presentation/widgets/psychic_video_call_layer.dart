@@ -67,7 +67,8 @@ class PsychicVideoCallLayer extends StatelessWidget {
       valueListenable: ctrl.trtc.remoteAnchorUserIdNotifier,
       builder: (context, remoteUserId, _) {
         final uid = remoteUserId?.trim();
-        final hasRemote = uid != null && uid.isNotEmpty;
+        // Süre (onay) başlamadan önce A/V gizli: uzak video gösterilmez.
+        final hasRemote = uid != null && uid.isNotEmpty && state.timerStarted;
         return Stack(
           fit: StackFit.expand,
           children: [

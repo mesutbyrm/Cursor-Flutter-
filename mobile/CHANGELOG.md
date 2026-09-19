@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.573+616 (2026-09-19) — Canlı falcı: süre el sıkışması (zaman kaybı önlendi)
+
+- **Zaman kaybı düzeltildi:** falcı kabul edip odaya girer girmez timer/ücret otomatik başlıyordu; kullanıcı henüz bağlanmamışken süre işliyordu. Otomatik başlatma kaldırıldı
+- **Süre el sıkışması:** iki taraf da TRTC odasına bağlanınca falcı, kullanıcıya **süre başlatma isteği** gönderir (`timer_start_request`); kullanıcı **"Görüşmeyi Başlat"** ile onaylayınca (`timer_start_accept`) falcı `start_timer` çağırır → süre/ücret ancak o an başlar
+- **Onaya kadar A/V gizli:** el sıkışması tamamlanana kadar her iki tarafta mikrofon/kamera kapalı, karşı tarafın sesi susturulmuş ve uzak video gizli; onaydan sonra otomatik açılır
+- Süre başlamadan sinyal poll'u 2 sn'ye çekildi (istek/onay anında ulaşsın); falcıda "Başlat" butonu **"Süre iste"** oldu; kullanıcıya modal onay istemi eklendi
+- Bahşiş: falcıya gelen "size bahşiş attı" + tutar popup'ı zaten mevcut (`tipReceivedAmount`); kullanıcıya "gönderildi" + tutar popup'ı da mevcut. İkisi de korunuyor
+- Kapsam yalnızca `live_psychics`; TRTC join parametreleri, jeton düşümü sözleşmesi ve PK/voice akışları değişmedi
+- Unit: `psychic_timer_handshake_test` (+13); `psychic_trtc_freeze` (19) ve `psychic_video_state` korunuyor
+- **Not:** süre/ücret sunucuda `start_timer` yerine kabulden başlıyorsa backend'in de bu handshake'e hizalanması gerekir; iki cihazda doğrulama şart
+
 ## 1.0.572+615 (2026-09-19) — Sesli oda: ağ değişiminde sessiz kopmaya karşı yeniden bağlanma
 
 - **Sürekli odadan/koltuktan kopma:** sesli oda yalnızca TRTC `onConnectionLost`'a güveniyordu; WiFi↔mobil data geçişinde bu callback her zaman tetiklenmediği için ses sessizce donup toparlanamıyordu

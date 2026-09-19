@@ -166,10 +166,12 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                 ctrl: ctrl,
               ),
             ),
-            if (state.waitingForTimer)
+            // Danışan onay istemi hazır değilken bekleme perdesi (A/V gizli).
+            if (!state.timerStarted &&
+                !(state.timerStartPrompt && session.isClient))
               Positioned.fill(
                 child: ColoredBox(
-                  color: Colors.black.withValues(alpha: 0.55),
+                  color: Colors.black.withValues(alpha: 0.75),
                   child: Center(
                     child: ProfileGlass(
                       padding: const EdgeInsets.symmetric(
@@ -183,7 +185,12 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                           const CircularProgressIndicator(),
                           const SizedBox(height: 16),
                           Text(
-                            'Falcı hazırlanıyor…',
+                            session.isClient
+                                ? 'Falcıya bağlanılıyor…'
+                                : (state.timerStartRequestSent
+                                    ? 'Kullanıcının onayı bekleniyor…'
+                                    : 'Kullanıcı bekleniyor…'),
+                            textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.9),
                               fontWeight: FontWeight.w800,
@@ -191,9 +198,13 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'Süre falcı başlattığında sayılacak',
+                            session.isClient
+                                ? 'İki taraf hazır olunca süre başlatma isteği gelecek. Onaylayana kadar süre ve ücret başlamaz.'
+                                : 'İki taraf da bağlanınca kullanıcıya süre başlatma isteği gider; kullanıcı onaylayınca süre başlar.',
+                            textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 12,
+                              height: 1.4,
                               color: Colors.white.withValues(alpha: 0.65),
                             ),
                           ),
@@ -203,7 +214,68 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                   ),
                 ),
               ),
-            if (state.rtcReady && session.isClient)
+            // Danışan: falcı süre başlatma isteği gönderdi → onay istemi.
+            if (state.timerStartPrompt && session.isClient && !state.timerStarted)
+              Positioned.fill(
+                child: ColoredBox(
+                  color: Colors.black.withValues(alpha: 0.8),
+                  child: Center(
+                    child: ProfileGlass(
+                      padding: const EdgeInsets.fromLTRB(24, 26, 24, 22),
+                      borderRadius: 24,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('⏱️', style: TextStyle(fontSize: 36)),
+                          const SizedBox(height: 10),
+                          Text(
+                            '${psychic.name} görüşmeye hazır',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 18,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Onayladığınızda görüntü ve ses açılır, süre ve ücret başlar.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 13,
+                              height: 1.4,
+                              color: Colors.white.withValues(alpha: 0.75),
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton(
+                              onPressed: () => unawaited(ctrl.acceptTimerStart()),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: AppThemeColors.accentPurple,
+                                minimumSize: const Size.fromHeight(48),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                              child: const Text(
+                                'Görüşmeyi Başlat',
+                                style: TextStyle(fontWeight: FontWeight.w900),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          TextButton(
+                            onPressed: ctrl.dismissTimerStartPrompt,
+                            child: const Text('Biraz bekle'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            if (state.rtcReady && session.isClient && state.timerStarted)
               Positioned(
                 top: MediaQuery.paddingOf(context).top + 72 + 140 - 28,
                 right: 16,
@@ -499,39 +571,38 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      _ControlBtn(
-                        icon: ctrl.micOn
-                            ? Icons.mic_rounded
-                            : Icons.mic_off_rounded,
-                        label: 'Mik',
-                        onTap: ctrl.toggleMic,
-                      ),
-                      _ControlBtn(
-                        icon: ctrl.cameraOn
-                            ? Icons.videocam_rounded
-                            : Icons.videocam_off_rounded,
-                        label: 'Kamera',
-                        onTap: ctrl.toggleCamera,
-                      ),
+                      if (state.timerStarted) ...[
+                        _ControlBtn(
+                          icon: ctrl.micOn
+                              ? Icons.mic_rounded
+                              : Icons.mic_off_rounded,
+                          label: 'Mik',
+                          onTap: ctrl.toggleMic,
+                        ),
+                        _ControlBtn(
+                          icon: ctrl.cameraOn
+                              ? Icons.videocam_rounded
+                              : Icons.videocam_off_rounded,
+                          label: 'Kamera',
+                          onTap: ctrl.toggleCamera,
+                        ),
+                      ],
                       if (!session.isClient && !state.timerStarted)
                         _ControlBtn(
                           icon: Icons.play_arrow_rounded,
-                          label: 'Başlat',
-                          onTap: () async {
-                            final ok = await ctrl.startTimer();
-                            if (!context.mounted) return;
+                          label: 'Süre iste',
+                          onTap: () {
+                            ctrl.requestTimerStart();
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
+                              const SnackBar(
                                 content: Text(
-                                  ok
-                                      ? 'Seans süresi başlatıldı'
-                                      : 'Süre başlatılamadı',
+                                  'Kullanıcıya süre başlatma isteği gönderildi',
                                 ),
                               ),
                             );
                           },
                         ),
-                      if (!session.isClient)
+                      if (!session.isClient && state.timerStarted)
                         _ControlBtn(
                           icon: Icons.schedule_rounded,
                           label: 'Süre ekle',
@@ -551,7 +622,7 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                             );
                           },
                         ),
-                      if (session.isClient) ...[
+                      if (session.isClient && state.timerStarted) ...[
                         _ControlBtn(
                           icon: Icons.card_giftcard_rounded,
                           label: 'Bahşiş',
