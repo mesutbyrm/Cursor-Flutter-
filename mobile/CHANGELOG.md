@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.567+610 (2026-09-19) — PK taraf titremesi düzeltildi
+
+- **Taraf titremesi giderildi:** `resolveLivePkSplitLayout` içindeki `iAmChallenger`, battle verisi (hostStream/challengerId) geç geldiği için ilk karelerde ters karar veriyordu; kartlar/footer'lar ve skor sol↔sağ atlıyordu
+- Taraf kararı bir kez **güvenle** belirlenince (`resolveIAmChallengerConfident`) battleId başına **kilitleniyor**; sonraki karelerde değişmiyor
+- Bu, yanlış-tarafa atfedilen aksiyondan kaynaklanan **FORBIDDEN**'ı da azaltır
+- Unit: `live_pk_side_resolver_test` (+3 vaka)
+
 ## 1.0.566+609 (2026-09-19) — PK ekran düzeni + çıkış + hediye boyutu
 
 - **Geri tuşu kaldırıldı**, PK sayacı başlığa taşındı; ayrı yayıncı bandı kaldırıldı → **video en üstten başlıyor** (boyut korundu)

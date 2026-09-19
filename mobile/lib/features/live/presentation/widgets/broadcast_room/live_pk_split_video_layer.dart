@@ -76,6 +76,9 @@ class LivePkSplitVideoLayer extends ConsumerStatefulWidget {
 class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
     with SingleTickerProviderStateMixin {
   final _outcomeLatch = LivePkOutcomeLatch();
+  // battleId → kararlı iAmChallenger. Bir kez güvenle belirlenince kilitlenir;
+  // sonraki karelerde taraf (sol/sağ) değişmez → titreme önlenir.
+  final _iAmChallengerLatch = <String, bool>{};
   late final AnimationController _outcomeFx;
   var _outcomeFxVisible = false;
   var _resultFlashVisible = false;
@@ -158,11 +161,29 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
 
     final authUser = ref.read(authControllerProvider).valueOrNull;
     final myUserId = authUser?.id;
+    // Taraf kilidi: challenger/opponent kararı bir kez güvenle belirlenince
+    // battleId başına kilitlenir; battle verisi geç geldiğinde sol/sağ
+    // yer değiştirip ekranın titremesi engellenir.
+    final latchBattleId =
+        battle['id']?.toString() ?? battle['battleId']?.toString() ?? '';
+    final confidentChallenger = resolveIAmChallengerConfident(
+      battle: battle,
+      myStreamId: streamId,
+      myUserId: myUserId ?? session.hostUserId,
+    );
+    if (latchBattleId.isNotEmpty &&
+        confidentChallenger != null &&
+        !_iAmChallengerLatch.containsKey(latchBattleId)) {
+      _iAmChallengerLatch[latchBattleId] = confidentChallenger;
+    }
     final layout = resolveLivePkSplitLayout(
       battle: battle,
       myStreamId: streamId,
       myUserId: myUserId ?? session.hostUserId,
       amBroadcaster: session.isHost,
+      iAmChallengerOverride: latchBattleId.isNotEmpty
+          ? _iAmChallengerLatch[latchBattleId]
+          : confidentChallenger,
     );
 
     final opponentMuted = ref.watch(livePkOpponentMutedProvider(streamId));

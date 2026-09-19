@@ -22,11 +22,36 @@ class LivePkSplitLayout {
   final LivePkPaneModel right;
 }
 
+/// `iAmChallenger` yalnızca güvenle belirlenebiliyorsa döner (aksi halde null).
+/// Battle verisi (hostStream / challengerId) parça parça geldiği için, bu
+/// değer bilinene kadar taraf kararı ertelenmeli; aksi halde ekran titrer.
+bool? resolveIAmChallengerConfident({
+  required Map<String, dynamic>? battle,
+  required String myStreamId,
+  String? myUserId,
+}) {
+  final b = battle ?? const <String, dynamic>{};
+  final sid = myStreamId.trim();
+  final uid = myUserId?.trim() ?? '';
+  final hostStream =
+      (b['liveStreamId'] ?? b['hostStreamId'])?.toString().trim() ?? '';
+  final challengerId =
+      (b['challengerId'] ?? b['hostUserId'])?.toString().trim() ?? '';
+  if (sid.isNotEmpty && hostStream.isNotEmpty) {
+    return sid == hostStream;
+  }
+  if (uid.isNotEmpty && challengerId.isNotEmpty) {
+    return uid == challengerId;
+  }
+  return null;
+}
+
 LivePkSplitLayout resolveLivePkSplitLayout({
   required Map<String, dynamic>? battle,
   required String myStreamId,
   String? myUserId,
   required bool amBroadcaster,
+  bool? iAmChallengerOverride,
 }) {
   final b = battle ?? const <String, dynamic>{};
   final sid = myStreamId.trim();
@@ -55,7 +80,10 @@ LivePkSplitLayout resolveLivePkSplitLayout({
   final opponentAvatar = b['opponentAvatar']?.toString();
 
   var iAmChallenger = false;
-  if (sid.isNotEmpty && hostStream.isNotEmpty && sid == hostStream) {
+  if (iAmChallengerOverride != null) {
+    // Çağıran taraf kararlı (kilitlenmiş) değeri geçti — titremeyi önler.
+    iAmChallenger = iAmChallengerOverride;
+  } else if (sid.isNotEmpty && hostStream.isNotEmpty && sid == hostStream) {
     iAmChallenger = true;
   } else if (uid.isNotEmpty && challengerId != null && uid == challengerId) {
     iAmChallenger = true;

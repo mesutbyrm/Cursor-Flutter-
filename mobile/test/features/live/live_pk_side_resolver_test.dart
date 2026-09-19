@@ -56,4 +56,56 @@ void main() {
     expect(layout.left.streamId, 'stream-a');
     expect(layout.right.streamId, 'stream-b');
   });
+
+  group('taraf kilidi (titreme önleme)', () {
+    test('hostStream/challengerId yokken confident null döner', () {
+      expect(
+        resolveIAmChallengerConfident(
+          battle: const {'leftName': 'A', 'rightName': 'B'},
+          myStreamId: 'stream-a',
+          myUserId: 'user-a',
+        ),
+        isNull,
+      );
+    });
+
+    test('hostStream bilindiğinde stream ile güvenle çözülür', () {
+      expect(
+        resolveIAmChallengerConfident(
+          battle: const {'liveStreamId': 'stream-a'},
+          myStreamId: 'stream-a',
+          myUserId: 'user-a',
+        ),
+        isTrue,
+      );
+      expect(
+        resolveIAmChallengerConfident(
+          battle: const {'liveStreamId': 'stream-a'},
+          myStreamId: 'stream-b',
+          myUserId: 'user-b',
+        ),
+        isFalse,
+      );
+    });
+
+    test('override kararsız veriye rağmen tarafı sabitler', () {
+      // Battle verisi eksik (hostStream yok) — normalde challenger değil sayılıp
+      // etiketler ters yerleşirdi. Kilitli override ile Admin solda kalır.
+      final layout = resolveLivePkSplitLayout(
+        battle: const {
+          'opponentLiveStreamId': 'stream-b',
+          'leftName': 'Admin',
+          'rightName': 'Rival',
+          'opponentId': 'user-b',
+        },
+        myStreamId: 'stream-a',
+        myUserId: 'user-a',
+        amBroadcaster: true,
+        iAmChallengerOverride: true,
+      );
+      expect(layout.left.isLocalPane, isTrue);
+      expect(layout.left.label, 'Admin');
+      expect(layout.right.label, 'Rival');
+    });
+  });
 }
