@@ -4,20 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.570+613` |
-| Tarih (UTC) | 2026-09-19 17:16 |
-| Commit | [`43932bb68351169cb84010c7a54a75ca2f85f277`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/43932bb68351169cb84010c7a54a75ca2f85f277) |
-| İş akışı | [Run 35455726744](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35455726744) |
+| Sürüm | `1.0.571+614` |
+| Tarih (UTC) | 2026-09-19 20:39 |
+| Commit | [`ffaccc504c7e4700b40142a87f8838b0c715e1e1`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/ffaccc504c7e4700b40142a87f8838b0c715e1e1) |
+| İş akışı | [Run 35467113669](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35467113669) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.570+613 (2026-09-19) — Canlı falcı: T+5s uzak render takılması yedeği (C1)
+## 1.0.572+615 (2026-09-19) — Sesli oda: ağ değişiminde sessiz kopmaya karşı yeniden bağlanma
 
-- **T+5s donması için güvenli istemci yedeği:** falcı 1:1 görüşmesinde karşı taraf odaya girdiği hâlde uzak video hâlâ gelmiyorsa, **odadan çıkış / yeniden giriş YAPMADAN** uzak view en fazla iki kez yeniden abone ediliyor (`resubscribeRemoteView`) — donmuş yüzey yeniden bağlanıyor
-- Watchdog yalnızca `live_psychics` oturumunda çalışır; uzak video görülünce/ayrılışta durur; alias-drift yeniden giriş bug'ını (1.0.371'de düzeltildi) geri getirmez
-- Kök neden (SSE/oda `roomId` alias'ında yeniden giriş) zaten kapalı; bu ekleme render takılmasına karşı ek emniyet — **P0 kapanışı için iki cihazda `Psychic P0 PASS` doğrulaması gerekir**
-- Unit: `psychic_trtc_freeze_test` (+5 vaka: yeniden abone kararı, cap, reconnect/leave/dispose koruması)
+- **Sürekli odadan/koltuktan kopma:** sesli oda yalnızca TRTC `onConnectionLost`'a güveniyordu; WiFi↔mobil data geçişinde bu callback her zaman tetiklenmediği için ses sessizce donup toparlanamıyordu
+- **Düzeltme:** oturum boyunca `connectivityService.onlineStream` dinleniyor; ağ geri gelince ve TRTC kanalı düşmüşse **tek uçuşlu** yeniden bağlanma (`ensureConnected`) + bir presence heartbeat tetikleniyor. Koltuk sunucu (presence) durumu olduğundan TRTC yeniden bağlanması koltuğu düşürmez
+- Falcı tarafındaki kanıtlı `_watchNetwork` deseni sesli odaya taşındı; yeniden bağlanma askıya alınmışsa/zaten sürüyorsa çalışmaz (fırtına yok)
+- Not — diğer maddeler istemcide zaten tam: **VIP şifre kapısı** (`voice_room_gated_entry`), **koltuk sayısı seçimi** (oda açma + yönetim, 8–15), **yetkiliye giriş anında oto-koltuk** (`_tryAutoPrivilegedSeat` + reaktif + host reconcile) kod tarafında mevcut ve bağlı; bu akışların cihazda çalışmaması durumunda kalan bağımlılık sunucu (oda listesinde kilit bayrağı, koltuk atama yetkisi, SSE yayını) tarafındadır
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
