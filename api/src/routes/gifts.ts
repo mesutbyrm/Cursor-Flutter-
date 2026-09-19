@@ -158,6 +158,10 @@ const sendSchema = z.object({
   receiverName: z.string().max(64).optional(),
   receiverId: z.string().min(1).optional(),
   platform: z.enum(["mobile", "web", "flutter"]).default("mobile"),
+  /// Tekrar-koruma: ağ zaman aşımında retry ya da çift dokunuş aynı anahtarla
+  /// gelir ve ikinci kez ücret alınmaz. İsteğe bağlı — göndermeyen istemciler
+  /// eskisi gibi çalışır.
+  idempotencyKey: z.string().min(8).max(128).optional(),
 });
 
 /** POST /api/video-streams/:streamId/gifts */
@@ -178,6 +182,7 @@ export async function sendStreamGift(
     receiverName,
     receiverId: bodyReceiverId,
     platform,
+    idempotencyKey,
   } = parsed.data;
   const giftPlatform = platform === "flutter" ? "mobile" : platform;
 
@@ -208,6 +213,12 @@ export async function sendStreamGift(
   const charge = await chargeAndRecordGift({
     userId,
     totalCost,
+    idempotencyKey,
+    findExisting: (tx) =>
+      tx.giftEvent.findFirst({
+        where: { senderId: userId, idempotencyKey },
+        include: { gift: true },
+      }),
     createEvent: (tx) =>
       tx.giftEvent.create({
         data: {
@@ -221,6 +232,7 @@ export async function sendStreamGift(
           coinCost: totalCost,
           combo,
           platform,
+          idempotencyKey,
         },
         include: { gift: true },
       }),
@@ -234,6 +246,21 @@ export async function sendStreamGift(
 
   const event = charge.event;
   const newBalance = charge.newBalance;
+
+  // Tekrar gelen istek: kayıt zaten var, jeton düşülmedi. Yan etkiler
+  // (olay yayını, kuyruk, PK skoru, referans payı) YENİDEN çalıştırılmaz —
+  // aksi halde retry PK skorunu iki kez uygular ve olayı iki kez yayar.
+  if (charge.replayed) {
+    return res.status(200).json({
+      ...eventPayload(event),
+      newBalance,
+      balance: newBalance,
+      coinBalance: newBalance,
+      streamerBalance: totalCost,
+      pkBattle: null,
+      replayed: true,
+    });
+  }
 
   const payload = eventPayload(event);
   void giftQueueEnqueue({
@@ -374,6 +401,7 @@ export async function sendRoomGift(
     receiverName,
     receiverId: bodyReceiverId,
     platform,
+    idempotencyKey,
   } = parsed.data;
   const giftPlatform = platform === "flutter" ? "mobile" : platform;
 
@@ -404,6 +432,12 @@ export async function sendRoomGift(
   const charge = await chargeAndRecordGift({
     userId,
     totalCost,
+    idempotencyKey,
+    findExisting: (tx) =>
+      tx.giftEvent.findFirst({
+        where: { senderId: userId, idempotencyKey },
+        include: { gift: true },
+      }),
     createEvent: (tx) =>
       tx.giftEvent.create({
         data: {
@@ -417,6 +451,7 @@ export async function sendRoomGift(
           coinCost: totalCost,
           combo,
           platform,
+          idempotencyKey,
         },
         include: { gift: true },
       }),
@@ -430,6 +465,22 @@ export async function sendRoomGift(
 
   const event = charge.event;
   const newBalance = charge.newBalance;
+
+  // Tekrar gelen istek: yan etkiler (gelir paylaşımı, olay yayını, kuyruk,
+  // PK skoru) YENİDEN çalıştırılmaz.
+  if (charge.replayed) {
+    return res.status(200).json({
+      ...eventPayload(event),
+      newBalance,
+      balance: newBalance,
+      coinBalance: newBalance,
+      pkBattle: null,
+      revenue: giftSplitPayload(
+        calculateGiftSplit(totalCost, "NORMAL", await getVoiceRoomSettings()),
+      ),
+      replayed: true,
+    });
+  }
 
   const room = getChatRoom(roomId);
   const roomType = room ? getRoomType(room) : "NORMAL";

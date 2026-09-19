@@ -237,8 +237,14 @@ model GiftEvent {
   ownerGross    Int?
   ownerNet      Int?
   siteAmount    Int?
+  /// İstemci üretimi tekrar-koruma anahtarı. Ağ zaman aşımında yapılan retry
+  /// ya da çift dokunuş aynı anahtarla gelir ve ikinci kez ücret alınmaz.
+  /// Nullable: mevcut kayıtlar ve anahtar göndermeyen istemciler etkilenmez
+  /// (Postgres'te NULL'lar unique index'te çakışmaz).
+  idempotencyKey String?
   createdAt    DateTime @default(now())
 
+  @@unique([senderId, idempotencyKey])
   @@index([streamId, createdAt])
   @@index([roomId, createdAt])
   @@index([senderId, createdAt])

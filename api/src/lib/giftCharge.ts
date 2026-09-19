@@ -2,7 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
 
 export type GiftChargeResult<T> =
-  | { ok: true; event: T; newBalance?: number }
+  | { ok: true; event: T; newBalance?: number; replayed?: boolean }
   | { ok: false; reason: "USER_NOT_FOUND" | "INSUFFICIENT_COINS" };
 
 /** Transaction yürütücüsü — testte sahte istemci geçirebilmek için dar tutuldu. */
@@ -79,10 +79,23 @@ export async function chargeAndRecordGift<T>(params: {
   userId?: string | null;
   totalCost: number;
   createEvent: (tx: Prisma.TransactionClient) => Promise<T>;
+  /**
+   * Tekrar-koruma anahtarı. Verildiğinde aynı anahtarla gelen ikinci istek
+   * yeniden ücretlendirilmez; ilk kayıt döndürülür (`replayed: true`).
+   *
+   * **Dağıtım notu:** `idempotencyKey` kolonuna yalnızca bu alan doluyken
+   * dokunulur. Anahtar göndermeyen istemciler için hiçbir sorgu kolonu
+   * referans almaz, bu yüzden bu kod migration'dan önce dağıtılsa da
+   * kırılmaz.
+   */
+  idempotencyKey?: string | null;
+  /** Yalnızca `idempotencyKey` verildiğinde çağrılır. */
+  findExisting?: (tx: Prisma.TransactionClient) => Promise<T | null>;
   /** Yalnızca test içindir; üretimde varsayılan Prisma istemcisi kullanılır. */
   db?: GiftChargeDb;
 }): Promise<GiftChargeResult<T>> {
-  const { userId, totalCost, createEvent, db } = params;
+  const { userId, totalCost, createEvent, idempotencyKey, findExisting, db } =
+    params;
   // PrismaClient.$transaction aşırı yüklü olduğu için dar `GiftChargeDb` tipiyle
   // doğrudan birleşemiyor; callback formu çalışma zamanında birebir uyuyor.
   const client: GiftChargeDb = db ?? (prisma as unknown as GiftChargeDb);
@@ -90,6 +103,23 @@ export async function chargeAndRecordGift<T>(params: {
   return client.$transaction(async (tx) => {
     if (!userId) {
       return { ok: true as const, event: await createEvent(tx) };
+    }
+
+    // Tekrar gelen istek: jeton düşmeden ilk kaydı döndür.
+    if (idempotencyKey && findExisting) {
+      const prior = await findExisting(tx);
+      if (prior) {
+        const current = await tx.user.findUnique({
+          where: { id: userId },
+          select: { coins: true },
+        });
+        return {
+          ok: true as const,
+          event: prior,
+          newBalance: current?.coins,
+          replayed: true,
+        };
+      }
     }
 
     const charged = await tx.user.updateMany({

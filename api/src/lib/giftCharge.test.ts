@@ -238,3 +238,91 @@ describe("resolveGiftReceiverId", () => {
     assert.equal(id, null);
   });
 });
+
+describe("chargeAndRecordGift — tekrar koruma (idempotency)", () => {
+  it("aynı anahtarla ikinci istek yeniden ücretlendirilmez", async () => {
+    const { db, rows, calls } = fakeDb([{ id: "u1", coins: 100 }]);
+    const stored: Array<{ id: string }> = [];
+
+    const send = () =>
+      chargeAndRecordGift({
+        userId: "u1",
+        totalCost: 40,
+        idempotencyKey: "req-abc-123",
+        findExisting: async () => stored.at(0) ?? null,
+        createEvent: async () => {
+          calls.createEvent += 1;
+          const ev = { id: "evt-1" };
+          stored.push(ev);
+          return ev;
+        },
+        db,
+      });
+
+    const first = await send();
+    const second = await send();
+
+    assert.equal(first.ok, true);
+    assert.equal(second.ok, true);
+    if (first.ok) assert.notEqual(first.replayed, true);
+    if (second.ok) {
+      assert.equal(second.replayed, true, "ikinci istek tekrar olarak işaretlenmeli");
+      assert.deepEqual(second.event, { id: "evt-1" }, "ilk kayıt döndürülmeli");
+    }
+    assert.equal(rows[0].coins, 60, "yalnızca bir kez düşülmeli");
+    assert.equal(calls.createEvent, 1, "tek kayıt oluşmalı");
+  });
+
+  it("anahtar yoksa eski davranış korunur (her istek ücretlendirilir)", async () => {
+    const { db, rows, calls } = fakeDb([{ id: "u1", coins: 100 }]);
+    const createEvent = createEventStub(calls);
+
+    await chargeAndRecordGift({ userId: "u1", totalCost: 30, createEvent, db });
+    await chargeAndRecordGift({ userId: "u1", totalCost: 30, createEvent, db });
+
+    assert.equal(rows[0].coins, 40, "iki ayrı gönderim iki kez düşmeli");
+    assert.equal(calls.createEvent, 2);
+  });
+
+  // Dağıtım güvenliği: idempotencyKey kolonuna yalnızca anahtar doluyken
+  // dokunulur. Anahtar göndermeyen istemciler için hiçbir sorgu kolonu
+  // referans almaz, bu yüzden kod migration'dan önce dağıtılsa da kırılmaz.
+  it("anahtar yokken findExisting hiç çağrılmaz", async () => {
+    const { db, calls } = fakeDb([{ id: "u1", coins: 100 }]);
+    let lookups = 0;
+
+    await chargeAndRecordGift({
+      userId: "u1",
+      totalCost: 10,
+      findExisting: async () => {
+        lookups += 1;
+        return null;
+      },
+      createEvent: createEventStub(calls),
+      db,
+    });
+
+    assert.equal(lookups, 0, "kolon sorgusu yapılmamalı");
+  });
+
+  it("misafir gönderiminde anahtar verilse de tekrar kontrolü yapılmaz", async () => {
+    const { db, calls } = fakeDb([]);
+    let lookups = 0;
+
+    const res = await chargeAndRecordGift({
+      userId: null,
+      totalCost: 10,
+      idempotencyKey: "req-xyz-999",
+      findExisting: async () => {
+        lookups += 1;
+        return null;
+      },
+      createEvent: createEventStub(calls),
+      db,
+    });
+
+    assert.equal(res.ok, true);
+    assert.equal(lookups, 0, "misafirde sender bazlı tekrar kontrolü anlamsız");
+    assert.equal(calls.createEvent, 1);
+  });
+});
