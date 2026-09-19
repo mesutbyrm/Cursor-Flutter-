@@ -4,19 +4,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.562+605` |
-| Tarih (UTC) | 2026-09-19 05:27 |
-| Commit | [`1c66e06fcd4717b53344c3a43e62b652712c91f6`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/1c66e06fcd4717b53344c3a43e62b652712c91f6) |
-| İş akışı | [Run 35423074855](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35423074855) |
+| Sürüm | `1.0.563+606` |
+| Tarih (UTC) | 2026-09-19 12:35 |
+| Commit | [`466b03d328fc252da24bb224770f32413cca40e7`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/466b03d328fc252da24bb224770f32413cca40e7) |
+| İş akışı | [Run 35442422606](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35442422606) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.562+605 (2026-09-19) — PK split video yüksekliği düzeltmesi
+## 1.0.563+606 (2026-09-19) — PK ekranı referans düzen (yayıncı bandı + skor barı)
 
-- Canlı PK ekranı: split video artık başlık ile alt şerit (skor/kontrol/giriş) arasındaki **tüm dikey alanı** dolduruyor
-- Önceki hata: paneller ekran genişliğinin yarısı kadar **kare** yapılıyordu; ekranın alt yarısı boş siyah kalıyordu (`videoBottomInset` metriği kullanılmıyordu)
-- VS amblemi ve yayıncı chip/footer'ları uzun panellerde doğru konumlanıyor
+- Başlığın altına **yayıncı bandı** eklendi: [sol yayıncı kartı | PK sayacı | sağ yayıncı kartı] — avatar, isim, doğrulama, 🔥 takipçi, **+ Takip et**
+- Ortadaki eski yüzen sayaç rozeti banda taşındı; VS amblemi video ortasında kaldı
+- Video altına **kırmızı/mavi bölünmüş skor barı** eklendi: skorlar + yüzde + "PK devam ediyor" durum pili
+- Sohbet, skor barının üstüne (video alt-sol) alındı — çakışma yok
+- `LivePkReferenceStreamerCard` / `LivePkReferenceStreamerBand` / `LivePkReferenceScoreBar` widget'ları
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
