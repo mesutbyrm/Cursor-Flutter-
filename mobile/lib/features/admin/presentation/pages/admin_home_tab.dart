@@ -14,6 +14,10 @@ import '../providers/admin_moderation_providers.dart';
 import '../providers/admin_activity_monitoring_providers.dart';
 import '../providers/admin_fraud_detection_providers.dart';
 import '../providers/staff_access_provider.dart';
+import '../providers/admin_live_broadcasts_providers.dart';
+import '../providers/admin_system_health_providers.dart';
+import '../providers/admin_team_management_providers.dart';
+import '../providers/admin_system_config_providers.dart';
 
 /// Admin giriş sekmesi — bildirimler + hızlı işlemler birleşti.
 class AdminHomeTab extends ConsumerStatefulWidget {
@@ -78,6 +82,9 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
     final moderationCount = ref.watch(adminModerationQueueCountProvider);
     final activityMonitoringCount = ref.watch(adminActivityMonitoringCountProvider);
     final fraudAlertCount = ref.watch(adminFraudAlertCountProvider);
+    final activeBroadcastCount = ref.watch(adminActiveBroadcastCountProvider);
+    final systemHealthAsync = ref.watch(adminSystemHealthProvider);
+    final teamMembersAsync = ref.watch(adminTeamMembersProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -174,6 +181,87 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
             // Hızlı İstatistikler
             _SectionTitle('📊 Bugün'),
             _QuickStatsGrid(badges: badges),
+            const SizedBox(height: 24),
+
+            // Sistem & Yayınlar
+            _SectionTitle('🎥 Sistem & Yayınlar'),
+            SizedBox(
+              height: 100,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  _NotificationCard(
+                    icon: Icons.live_tv_rounded,
+                    label: 'Aktif Yayınlar',
+                    count: activeBroadcastCount,
+                    color: AppThemeColors.accentPink,
+                    onTap: () => context.push('/admin/live-broadcasts-control'),
+                  ),
+                  const SizedBox(width: 12),
+                  systemHealthAsync.when(
+                    data: (health) {
+                      final status = calculateHealthStatus(health);
+                      final statusColor = _getHealthColor(status);
+                      return _NotificationCard(
+                        icon: Icons.monitor_heart_rounded,
+                        label: 'Sistem Sağlığı',
+                        count: 0,
+                        color: statusColor,
+                        onTap: () => context.push('/admin/system-health'),
+                      );
+                    },
+                    loading: () => _NotificationCard(
+                      icon: Icons.monitor_heart_rounded,
+                      label: 'Sistem Sağlığı',
+                      count: 0,
+                      color: AppThemeColors.accentCyan,
+                      onTap: () => context.push('/admin/system-health'),
+                    ),
+                    error: (_, __) => _NotificationCard(
+                      icon: Icons.monitor_heart_rounded,
+                      label: 'Sistem Sağlığı',
+                      count: 0,
+                      color: AppThemeColors.accentCyan,
+                      onTap: () => context.push('/admin/system-health'),
+                    ),
+                  ),
+                  if (access.isFounder) ...[
+                    const SizedBox(width: 12),
+                    teamMembersAsync.when(
+                      data: (members) => _NotificationCard(
+                        icon: Icons.people_rounded,
+                        label: 'Takım Üyeleri',
+                        count: members.length,
+                        color: AppThemeColors.accentCyan,
+                        onTap: () => context.push('/admin/team-management'),
+                      ),
+                      loading: () => _NotificationCard(
+                        icon: Icons.people_rounded,
+                        label: 'Takım Üyeleri',
+                        count: 0,
+                        color: AppThemeColors.accentCyan,
+                        onTap: () => context.push('/admin/team-management'),
+                      ),
+                      error: (_, __) => _NotificationCard(
+                        icon: Icons.people_rounded,
+                        label: 'Takım Üyeleri',
+                        count: 0,
+                        color: AppThemeColors.accentCyan,
+                        onTap: () => context.push('/admin/team-management'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    _NotificationCard(
+                      icon: Icons.settings_rounded,
+                      label: 'Sistem Yapı',
+                      count: 0,
+                      color: AppThemeColors.accentPink,
+                      onTap: () => context.push('/admin/system-config'),
+                    ),
+                  ],
+                ],
+              ),
+            ),
             const SizedBox(height: 24),
 
             // Hızlı İşlemler
@@ -471,5 +559,20 @@ class _ActionButton extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+Color _getHealthColor(HealthStatus status) {
+  switch (status) {
+    case HealthStatus.excellent:
+      return AppThemeColors.accentCyan;
+    case HealthStatus.good:
+      return Colors.green;
+    case HealthStatus.fair:
+      return AppThemeColors.accentPink;
+    case HealthStatus.poor:
+      return Colors.orange;
+    case HealthStatus.critical:
+      return AppThemeColors.liveRed;
   }
 }

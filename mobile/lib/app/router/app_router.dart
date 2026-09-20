@@ -52,6 +52,10 @@ import '../../features/admin/presentation/pages/admin_voice_rooms_page.dart';
 import '../../features/admin/presentation/pages/admin_voice_room_finance_page.dart';
 import '../../features/admin/presentation/pages/admin_sub_pages.dart';
 import '../../features/admin/presentation/pages/admin_user_command_center_page.dart';
+import '../../features/admin/presentation/pages/admin_live_broadcasts_control_page.dart';
+import '../../features/admin/presentation/pages/admin_system_health_page.dart';
+import '../../features/admin/presentation/pages/admin_team_management_page.dart';
+import '../../features/admin/presentation/pages/admin_system_config_page.dart';
 import '../../features/admin_web/presentation/pages/admin_web_panel_page.dart';
 import '../../features/fortune/presentation/pages/fortune_tarot_hub_page.dart';
 import '../../features/fortune/presentation/pages/fortune_types_all_page.dart';
@@ -714,6 +718,22 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin/voice-finance',
         builder: (context, state) => const AdminVoiceRoomFinancePage(),
+      ),
+      GoRoute(
+        path: '/admin/live-broadcasts-control',
+        builder: (context, state) => const AdminLiveBroadcastsControlPage(),
+      ),
+      GoRoute(
+        path: '/admin/system-health',
+        builder: (context, state) => const AdminSystemHealthPage(),
+      ),
+      GoRoute(
+        path: '/admin/team-management',
+        builder: (context, state) => const AdminTeamManagementPage(),
+      ),
+      GoRoute(
+        path: '/admin/system-config',
+        builder: (context, state) => const AdminSystemConfigPage(),
       ),
       GoRoute(
         path: '/admin/panel',
