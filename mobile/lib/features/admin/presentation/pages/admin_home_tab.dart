@@ -551,6 +551,16 @@ class _QuickActionsGrid extends StatelessWidget {
             onTap: () => context.push('/admin/voice-rooms'),
           ),
         ],
+        _ActionButton(
+          icon: Icons.tune_rounded,
+          label: 'Tercihler',
+          onTap: () => context.push('/admin/preferences'),
+        ),
+        _ActionButton(
+          icon: Icons.notifications_active_rounded,
+          label: 'Bildirimler',
+          onTap: () => context.push('/admin/notification-manager'),
+        ),
       ],
     );
   }
