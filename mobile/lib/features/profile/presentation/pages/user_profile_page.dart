@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/auth/staff_roles.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/scroll_perf.dart';
 import '../../../../core/ui/premium_2026/premium_2026.dart';
@@ -64,6 +65,24 @@ class UserProfilePage extends ConsumerWidget {
           action: () => context.pop(),
         ),
         data: (user) {
+          // Kurucu / Admin → özel (altın/mor) kapak + avatar çerçevesi.
+          final isFounder =
+              StaffRoles.isFounderUser(role: user.role, username: user.username);
+          final isAdmin = !isFounder &&
+              StaffRoles.isSiteAdminUser(
+                role: user.role,
+                username: user.username,
+              );
+          final honorCover = isFounder
+              ? const [Color(0xFF3A2A00), Color(0xFFB8860B), Color(0xFFFFD54F)]
+              : isAdmin
+                  ? const [Color(0xFF1E1246), Color(0xFF6D28D9), Color(0xFFA78BFA)]
+                  : null;
+          final honorRing = isFounder
+              ? const [Color(0xFFFFD54F), Color(0xFFFF8A00)]
+              : isAdmin
+                  ? const [Color(0xFF8B5CF6), Color(0xFF6366F1)]
+                  : null;
           return CustomScrollView(
             physics: PremiumMotion.listPhysics,
             scrollCacheExtent:
@@ -87,13 +106,14 @@ class UserProfilePage extends ConsumerWidget {
                                 gradient: LinearGradient(
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
-                                  colors: [
-                                    const Color(0xFF2A1248),
-                                    AppThemeColors.accentPurple
-                                        .withValues(alpha: 0.7),
-                                    AppThemeColors.accentPink
-                                        .withValues(alpha: 0.45),
-                                  ],
+                                  colors: honorCover ??
+                                      [
+                                        const Color(0xFF2A1248),
+                                        AppThemeColors.accentPurple
+                                            .withValues(alpha: 0.7),
+                                        AppThemeColors.accentPink
+                                            .withValues(alpha: 0.45),
+                                      ],
                                 ),
                               ),
                             ),
@@ -105,7 +125,19 @@ class UserProfilePage extends ConsumerWidget {
                             padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              gradient: context.colors.brandGradient,
+                              gradient: honorRing != null
+                                  ? LinearGradient(colors: honorRing)
+                                  : context.colors.brandGradient,
+                              boxShadow: honorRing != null
+                                  ? [
+                                      BoxShadow(
+                                        color: honorRing.first
+                                            .withValues(alpha: 0.55),
+                                        blurRadius: 18,
+                                        spreadRadius: 1,
+                                      ),
+                                    ]
+                                  : null,
                             ),
                             child: Container(
                               padding: const EdgeInsets.all(3),

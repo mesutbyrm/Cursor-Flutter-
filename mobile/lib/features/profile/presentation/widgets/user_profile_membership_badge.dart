@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/design_system/cds_fx.dart';
 import '../../../vip_gold/domain/vip_tier.dart';
@@ -26,7 +27,12 @@ class UserProfileMembershipBadge extends ConsumerWidget {
         final shimmer = info.tier.isVip && !fx.decorativeDisabled;
         return Padding(
           padding: const EdgeInsets.only(left: 6),
-          child: VipBadge(tier: info.tier, compact: false, animate: shimmer),
+          // Rozete dokununca üyelik sayfası — ziyaretçi de aynı ayrıcalığı alabilsin.
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => context.push('/premium-membership'),
+            child: VipBadge(tier: info.tier, compact: false, animate: shimmer),
+          ),
         );
       },
     );

@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.582+625 (2026-09-20) — Profil: rozet→üyelik + kurucu/admin özel çerçeve
+
+- **Üyelik rozetine dokununca** üyelik sayfası açılıyor (`/premium-membership`) — ziyaretçi aynı ayrıcalığı hızlı alabilsin
+- **Kurucu / Admin özel görünüm:** ziyaret profilinde kapak gradyanı ve avatar çerçevesi role göre değişiyor — **Kurucu: altın**, **Admin: mor** (parlayan halka gölgesi). Normal kullanıcıda varsayılan görünüm
+- Tamamen istemci tarafı; yeni backend çağrısı yok
+
 ## 1.0.581+624 (2026-09-20) — Profil: üyelik upsell + kurucu/admin onur şeridi
 
 - **Gold/ücretli üyenin profilinde üyelik çağrısı:** ziyaretçi (kendisi değilse) ücretli üyeye (Gold/Diamond/SVIP) sahip bir profile girince "Sen de {tier} üye ol" kartı görünür → `/premium-membership`. Üyesiz profillerde ve kendi profilinde görünmez
