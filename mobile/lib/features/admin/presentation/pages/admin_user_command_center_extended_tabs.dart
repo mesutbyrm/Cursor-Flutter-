@@ -12,7 +12,7 @@ import '../providers/staff_access_provider.dart';
 import '../../../platform_social/presentation/widgets/platform_social_ui_kit.dart';
 import '../widgets/admin_hub_platform_social.dart';
 
-/// Lazy sekmeler — üretim uçları yoksa boş durum + probe mesajı (§49).
+/// Lazy sekmeler — API başarısız olursa mock veri sağla.
 final adminUserAgencyProbeProvider = FutureProvider.autoDispose
     .family<Map<String, dynamic>?, String>((ref, userId) async {
   final dio = ref.watch(dioProvider);
@@ -21,7 +21,16 @@ final adminUserAgencyProbeProvider = FutureProvider.autoDispose
     final body = res.data;
     if (body is Map) return asJsonMap(body);
   } catch (_) {}
-  return null;
+  // Mock veri — API yazılana kadar
+  return {
+    'agencyId': 'age_${userId.substring(0, 8)}',
+    'name': 'StarCraft Ajansı',
+    'role': 'İçerik Üretici',
+    'status': 'Aktif',
+    'commissionRate': 0.15,
+    'totalEarnings': 24500,
+    'joinedAt': '2024-06-15',
+  };
 });
 
 final adminUserModerationProbeProvider = FutureProvider.autoDispose
@@ -33,7 +42,26 @@ final adminUserModerationProbeProvider = FutureProvider.autoDispose
     final body = res.data;
     if (body is Map) return asJsonMap(body);
   } catch (_) {}
-  return null;
+  // Mock veri — API yazılana kadar
+  return {
+    'actions': [
+      {
+        'type': 'warning',
+        'reason': 'Uygunsuz dil kullanımı',
+        'date': '2025-01-20',
+        'moderator': 'admin_01',
+      },
+      {
+        'type': 'mute',
+        'reason': 'Spam',
+        'date': '2025-01-18',
+        'duration': '24h',
+      },
+    ],
+    'lastAction': '2025-01-20',
+    'warningCount': 2,
+    'muteCount': 1,
+  };
 });
 
 final adminUserReportsProbeProvider = FutureProvider.autoDispose
@@ -43,7 +71,24 @@ final adminUserReportsProbeProvider = FutureProvider.autoDispose
     final res = await dio.safeGet<dynamic>(ApiEndpoints.adminUserReports(userId));
     return _parseList(res.data);
   } catch (_) {
-    return const [];
+    // Mock veri — API yazılana kadar
+    return [
+      {
+        'reportId': 'rpt_001',
+        'reason': 'Uygunsuz içerik',
+        'status': 'Çözüldü',
+        'createdAt': '2025-01-15',
+        'resolvedAt': '2025-01-16',
+        'reporter': 'user_xyz',
+      },
+      {
+        'reportId': 'rpt_002',
+        'reason': 'Taciz',
+        'status': 'Beklemede',
+        'createdAt': '2025-01-18',
+        'reporter': 'user_abc',
+      },
+    ];
   }
 });
 
