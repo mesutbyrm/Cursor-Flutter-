@@ -56,6 +56,7 @@ import '../../features/admin/presentation/pages/admin_live_broadcasts_control_pa
 import '../../features/admin/presentation/pages/admin_system_health_page.dart';
 import '../../features/admin/presentation/pages/admin_team_management_page.dart';
 import '../../features/admin/presentation/pages/admin_system_config_page.dart';
+import '../../features/admin/presentation/pages/admin_advanced_reporting_page.dart';
 import '../../features/admin_web/presentation/pages/admin_web_panel_page.dart';
 import '../../features/fortune/presentation/pages/fortune_tarot_hub_page.dart';
 import '../../features/fortune/presentation/pages/fortune_types_all_page.dart';
@@ -734,6 +735,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin/system-config',
         builder: (context, state) => const AdminSystemConfigPage(),
+      ),
+      GoRoute(
+        path: '/admin/advanced-reporting',
+        builder: (context, state) => const AdminAdvancedReportingPage(),
       ),
       GoRoute(
         path: '/admin/panel',

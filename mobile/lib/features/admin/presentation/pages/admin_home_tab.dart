@@ -18,6 +18,7 @@ import '../providers/admin_live_broadcasts_providers.dart';
 import '../providers/admin_system_health_providers.dart';
 import '../providers/admin_team_management_providers.dart';
 import '../providers/admin_system_config_providers.dart';
+import '../providers/admin_advanced_reporting_providers.dart';
 
 /// Admin giriş sekmesi — bildirimler + hızlı işlemler birleşti.
 class AdminHomeTab extends ConsumerStatefulWidget {
@@ -85,6 +86,7 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
     final activeBroadcastCount = ref.watch(adminActiveBroadcastCountProvider);
     final systemHealthAsync = ref.watch(adminSystemHealthProvider);
     final teamMembersAsync = ref.watch(adminTeamMembersProvider);
+    final reportCountAsync = ref.watch(adminReportCountProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -257,6 +259,14 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
                       count: 0,
                       color: AppThemeColors.accentPink,
                       onTap: () => context.push('/admin/system-config'),
+                    ),
+                    const SizedBox(width: 12),
+                    _NotificationCard(
+                      icon: Icons.assessment_rounded,
+                      label: 'Raporlama',
+                      count: reportCountAsync,
+                      color: AppThemeColors.accentCyan,
+                      onTap: () => context.push('/admin/advanced-reporting'),
                     ),
                   ],
                 ],
