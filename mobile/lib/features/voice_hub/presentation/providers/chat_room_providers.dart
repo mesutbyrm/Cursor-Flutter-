@@ -1162,8 +1162,7 @@ class VoiceRoomLiveController
         },
         () async {
           VoiceEventLog.leaveSuccess(roomId: roomKey);
-          final remaining = state.hubOnlineCount ?? state.presence.length;
-          _syncDiscoverPresenceCount(remaining);
+          unawaited(_refreshDiscoverCountAfterLeave(roomKey));
           unawaited(
             ref.read(voiceRoomsListNotifierProvider.notifier).refresh(),
           );

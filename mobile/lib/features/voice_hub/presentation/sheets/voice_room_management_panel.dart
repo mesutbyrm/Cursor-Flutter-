@@ -15,6 +15,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
+import '../../../live/presentation/providers/voice_rooms_list_notifier.dart';
 import '../../../pk/presentation/providers/pk_feature_enabled_provider.dart';
 import '../../../pk/presentation/widgets/pk_start_sheet.dart';
 import 'voice_in_room_pk_sheet.dart';
@@ -859,7 +860,12 @@ class _VoiceRoomManagementPanelState
                 setState(() {});
                 return;
               }
+              ref.invalidate(voiceRoomByIdProvider(_liveRoomKey));
+              unawaited(
+                ref.read(voiceRoomsListNotifierProvider.notifier).refresh(),
+              );
               await _snack(v ? 'Oda kilitlendi' : 'Oda kilidi kaldırıldı');
+              if (mounted) setState(() {});
             },
           ),
           ListTile(

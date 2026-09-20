@@ -4,7 +4,7 @@ import '../../../live/domain/entities/voice_room_entity.dart';
 import 'voice_room_seat_layout.dart';
 
 /// Üretim sesli oda koltuk kapasitesi — backend `seatCount` / `GET /seats`.
-const int kDefaultVoiceSeatCount = 8;
+const int kDefaultVoiceSeatCount = 9;
 const int kMinVoiceSeatCount = 1;
 const int kMaxVoiceSeatCount = 15;
 /// Koltuk haritası (0 tabanlı slot dizisi) — admin koltuğu dahil üst sınır.

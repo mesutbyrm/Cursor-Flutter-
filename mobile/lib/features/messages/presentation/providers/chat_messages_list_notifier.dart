@@ -119,6 +119,28 @@ class ChatMessagesListNotifier
     } catch (_) {}
   }
 
+  void _markLocalOptimisticDelivered(String optimisticId) {
+    final latest = state.valueOrNull;
+    if (latest == null) return;
+    var touched = false;
+    final all = latest.all.map((m) {
+      if (m.id != optimisticId) return m;
+      touched = true;
+      return MessageEntity(
+        id: m.id,
+        text: m.text,
+        isMine: m.isMine,
+        createdAt: m.createdAt,
+        deliveryStatus: MessageDeliveryStatus.delivered,
+        replyTo: m.replyTo,
+        forwardedFrom: m.forwardedFrom,
+        rawText: m.rawText,
+      );
+    }).toList();
+    if (!touched) return;
+    state = AsyncValue.data(latest.copyWith(all: all));
+  }
+
   Future<void> sendMessage({
     required String text,
     String? currentUserId,
@@ -160,7 +182,9 @@ class ChatMessagesListNotifier
             forward: forward,
             forwardFrom: forwardFrom,
           );
+      _markLocalOptimisticDelivered(optimisticId);
       await refresh(silent: true, forceRefresh: true);
+      _markLocalOptimisticDelivered(optimisticId);
     } catch (e, st) {
       final latest = state.valueOrNull;
       if (latest != null) {

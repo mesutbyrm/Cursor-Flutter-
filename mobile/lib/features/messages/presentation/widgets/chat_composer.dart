@@ -30,6 +30,7 @@ class ChatComposer extends ConsumerWidget {
     required this.sending,
     this.onChanged,
     this.onAction,
+    this.tightBottomInset = false,
   });
 
   final TextEditingController controller;
@@ -37,6 +38,8 @@ class ChatComposer extends ConsumerWidget {
   final bool sending;
   final ValueChanged<String>? onChanged;
   final ValueChanged<DmComposerAction>? onAction;
+  /// Sohbet tam ekran (/chat) — alt navbar yokken fazla boşluk bırakma.
+  final bool tightBottomInset;
 
   void _showEmojiPicker(BuildContext context) {
     const emojis = [
@@ -195,8 +198,11 @@ class ChatComposer extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return SafeArea(
       top: false,
+      minimum: tightBottomInset
+          ? const EdgeInsets.only(bottom: 4)
+          : EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        padding: EdgeInsets.fromLTRB(12, 0, 12, tightBottomInset ? 6 : 12),
         child: Row(
           children: [
             Semantics(

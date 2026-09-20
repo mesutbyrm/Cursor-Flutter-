@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/sse/base_sse_service.dart';
 import '../../../../core/network/sse/sse_reconnect_policy.dart';
@@ -22,6 +23,9 @@ class MessageSseService extends BaseSseService {
   @override
   String streamPath() {
     final id = _conversationId ?? '';
+    if (Env.useMobileAuth) {
+      return ApiEndpoints.messagesStreamWithUser(id);
+    }
     return ApiEndpoints.conversationStream(id);
   }
 

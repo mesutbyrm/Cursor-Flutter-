@@ -1135,7 +1135,10 @@ class ChatRoomRemoteDataSource {
         data['description'] = desc;
         data['desc'] = desc;
       }
-      if (isLocked != null) data['isLocked'] = isLocked;
+      if (isLocked != null) {
+        data['isLocked'] = isLocked;
+        data['locked'] = isLocked;
+      }
       if (maxUsers != null && maxUsers > 0) data['maxUsers'] = maxUsers;
       if (seatCount != null && seatCount > 0) data['seatCount'] = seatCount;
       if (rules != null) {

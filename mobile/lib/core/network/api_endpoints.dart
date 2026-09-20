@@ -1008,7 +1008,11 @@ abstract final class ApiEndpoints {
   static String conversationMessages(String id) =>
       '/api/messages/conversations/$id/messages';
 
-  /// DM SSE (üretim hazır olduğunda) — `GET .../stream`.
+  /// DM SSE — canlifal.com mobil: `GET /api/messages/{userId}/stream`.
+  static String messagesStreamWithUser(String userId) =>
+      '/api/messages/$userId/stream';
+
+  /// Eski konuşma SSE (self-hosted).
   static String conversationStream(String id) =>
       '/api/messages/conversations/$id/stream';
 

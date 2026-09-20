@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.585+628 (2026-09-20) — DM gerçek zamanlı + sesli oda presence
+
+- **DM:** SSE yolu düzeltildi (`/api/messages/{userId}/stream`); gönderilen mesaj saat ikonunda takılı kalmaz; sohbet poll sıklaştırıldı
+- **Sohbet:** composer alt boşluğu `/chat` için sıkılaştırıldı
+- **Sesli oda:** ana sayfa oda kartları SSE ile güncel kişi sayısı; çıkışta sayaç sunucudan yenilenir; giriş duyuruları artık ana sayfa kayan şeridine düşmez (yalnızca oda içi)
+- **Oda yönetimi:** kilit PATCH `locked` + `isLocked`; varsayılan **9 koltuk** (yeni oda)
+
 ## 1.0.584+627 (2026-09-20) — Gelen kutusu, sohbet, ana sayfa, ödeme
 
 - **Gelen kutusu:** varsayılan sekme **Mesajlar**; sistem sekmesinde yalnızca platform bildirimleri (DM önizlemeleri mesajlar sekmesinde)

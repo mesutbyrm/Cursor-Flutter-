@@ -27,6 +27,12 @@ class VoiceRoomSection extends ConsumerStatefulWidget {
   ConsumerState<VoiceRoomSection> createState() => _VoiceRoomSectionState();
 }
 
+int _voiceOnline(VoiceRoomEntity room, VoiceRoomsPresenceState presence) {
+  final sse = presence.countFor(room);
+  final api = room.displayOnline;
+  return sse > api ? sse : api;
+}
+
 class _VoiceRoomSectionState extends ConsumerState<VoiceRoomSection> {
   var _prefetched = false;
   var _presenceSynced = false;
@@ -61,6 +67,7 @@ class _VoiceRoomSectionState extends ConsumerState<VoiceRoomSection> {
   @override
   Widget build(BuildContext context) {
     final rooms = ref.watch(homeLiveVoiceRoomsProvider);
+    final presence = ref.watch(voiceRoomsPresenceProvider);
 
     if (rooms.isLoading && !rooms.hasValue) {
       return _sectionShell(
@@ -113,7 +120,11 @@ class _VoiceRoomSectionState extends ConsumerState<VoiceRoomSection> {
           itemCount: sorted.length,
           separatorBuilder: (_, _) => const SizedBox(width: 12),
           itemBuilder: (context, i) {
-            final room = sorted[i];
+            final base = sorted[i];
+            final liveCount = _voiceOnline(base, presence);
+            final room = liveCount != base.displayOnline
+                ? base.copyWith(onlineCount: liveCount, userCount: liveCount)
+                : base;
             return DiscoverPremiumRoomCard(
               room: room,
               width: VoiceRoomSection._cardW,

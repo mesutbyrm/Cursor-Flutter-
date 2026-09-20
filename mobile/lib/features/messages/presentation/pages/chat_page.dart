@@ -102,8 +102,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
   void _startMessagePoll() {
     _poll?.cancel();
     final interval = _dmSseActive
-        ? const Duration(seconds: 15)
-        : const Duration(seconds: 8);
+        ? const Duration(seconds: 8)
+        : const Duration(seconds: 4);
     _poll = Timer.periodic(interval, (_) {
       if (!mounted) return;
       ref
@@ -527,6 +527,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
               controller: _text,
               onSend: _sendMessage,
               onAction: _handleComposerAction,
+              tightBottomInset: true,
             ),
           ],
         ),

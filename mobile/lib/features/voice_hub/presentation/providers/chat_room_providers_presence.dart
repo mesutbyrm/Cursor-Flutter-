@@ -147,12 +147,6 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         user: userRef,
       );
       _pushEnterExitBanner('👋 $name → $_roomLabelForBanner odasına giriş yaptı');
-      if (staffLine.isNotEmpty) {
-        ref.read(staffEntranceMarqueeProvider.notifier).enqueue(
-              staffLine,
-              roomName: _roomMeta.nameTr,
-            );
-      }
       return;
     }
     final isGoldOrVip = VoiceOfficialJoin.isEntranceWorthy(
@@ -172,23 +166,6 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     );
     final banner = '👋 $name → $_roomLabelForBanner odasına giriş yaptı';
     _pushEnterExitBanner(banner);
-    if (VoiceOfficialJoin.isEntranceWorthy(
-      content: line,
-      membership: user.membership,
-      chatRole: user.chatRole,
-    )) {
-      final tierBanner = VoiceStaffChatStyle.formatTierEntranceLine(
-        displayName: name,
-        user: userRef,
-        section: 'sesli odaya',
-      );
-      if (tierBanner.isNotEmpty) {
-        ref.read(staffEntranceMarqueeProvider.notifier).enqueue(
-              tierBanner,
-              roomName: _roomMeta.nameTr,
-            );
-      }
-    }
   }
 
   void _showStaffEnterBanner(String name, {ChatRoomUserRef? user}) {
@@ -527,6 +504,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       unawaited(refreshServerPermissions());
       unawaited(_broadcastStaffEntryIfNeeded());
       unawaited(_fetchAndApplySeats());
+      unawaited(_refreshHubOnlineCountFromServer());
       _autoSeatAttempted = false;
       unawaited(_tryAutoPrivilegedSeat());
       schedulePrivilegedSeatAttempts();
@@ -973,5 +951,32 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     if (changed) {
       state = state.copyWith(presence: updated);
     }
+  }
+
+  /// Odadan çıkınca keşfet/ana sayfa sayacını sunucudan güncelle (0'a düşürme hatası).
+  Future<void> _refreshDiscoverCountAfterLeave(String roomKey) async {
+    if (roomKey.isEmpty) return;
+    final keys = <String>{
+      roomKey,
+      _presenceApiKey,
+      _presenceAlternateKey ?? '',
+      _roomMeta.slug,
+    }.where((k) => k.trim().isNotEmpty);
+    for (final key in keys) {
+      try {
+        final snapshot = await ref.read(chatRoomRemoteProvider).fetchRoomState(
+              key,
+              alternateKey: _presenceAlternateKey,
+            );
+        final count = snapshot.onlineCount;
+        if (count != null && count >= 0) {
+          _syncDiscoverPresenceCount(count);
+          return;
+        }
+      } catch (_) {}
+    }
+    unawaited(
+      ref.read(voiceRoomsListNotifierProvider.notifier).refresh(),
+    );
   }
 }

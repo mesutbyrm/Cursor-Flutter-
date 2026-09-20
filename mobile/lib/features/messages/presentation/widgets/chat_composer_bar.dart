@@ -10,12 +10,14 @@ class ChatComposerBar extends StatefulWidget {
     required this.onSend,
     this.onChanged,
     this.onAction,
+    this.tightBottomInset = false,
   });
 
   final TextEditingController controller;
   final Future<void> Function(String text) onSend;
   final ValueChanged<String>? onChanged;
   final ValueChanged<DmComposerAction>? onAction;
+  final bool tightBottomInset;
 
   @override
   State<ChatComposerBar> createState() => _ChatComposerBarState();
@@ -43,6 +45,7 @@ class _ChatComposerBarState extends State<ChatComposerBar> {
       onSend: _handleSend,
       onChanged: widget.onChanged,
       onAction: widget.onAction,
+      tightBottomInset: widget.tightBottomInset,
     );
   }
 }

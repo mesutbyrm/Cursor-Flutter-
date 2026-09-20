@@ -200,7 +200,7 @@ class _OpenRoomSetup {
   const _OpenRoomSetup({
     required this.roomName,
     this.backgroundUrl,
-    this.seatCount = 8,
+    this.seatCount = 9,
     this.maxUsers = 150,
     this.category = kDefaultVoiceRoomCategory,
   });
@@ -230,7 +230,7 @@ class _OpenRoomSetupSheetState extends State<_OpenRoomSetupSheet> {
   List<String> _backgrounds = const [];
   String? _selectedBg;
   var _loadingBg = true;
-  int _seatCount = 8;
+  int _seatCount = 9;
   int _maxUsers = 150;
   String _category = kDefaultVoiceRoomCategory;
 
