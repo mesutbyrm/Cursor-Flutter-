@@ -672,6 +672,64 @@ class _QuickActions extends StatelessWidget {
             ),
           ],
         ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => context.push('/canli-falcilar/customers'),
+                icon: const Icon(Icons.people_outline_rounded, size: 18),
+                label: const Text('Müşteriler'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => context.push('/canli-falcilar/sessions'),
+                icon: const Icon(Icons.history_outlined, size: 18),
+                label: const Text('Seanslar'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => context.push('/canli-falcilar/campaigns'),
+                icon: const Icon(Icons.local_offer_outlined, size: 18),
+                label: const Text('Kampanyalar'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Bildirim ayarları yakında eklenecek')),
+                ),
+                icon: const Icon(Icons.notifications_outline_rounded, size: 18),
+                label: const Text('Bildirimler'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                ),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
