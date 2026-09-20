@@ -11,6 +11,8 @@ import '../../data/services/admin_payments_sse_service.dart';
 import '../providers/admin_providers.dart';
 import '../providers/admin_panel_providers.dart';
 import '../providers/admin_moderation_providers.dart';
+import '../providers/admin_activity_monitoring_providers.dart';
+import '../providers/admin_fraud_detection_providers.dart';
 import '../providers/staff_access_provider.dart';
 
 /// Admin giriş sekmesi — bildirimler + hızlı işlemler birleşti.
@@ -74,6 +76,8 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
     final badges = ref.watch(adminPanelBadgeCountsProvider).valueOrNull;
     final pendingCount = ref.watch(adminPendingPaymentsCountProvider);
     final moderationCount = ref.watch(adminModerationQueueCountProvider);
+    final activityMonitoringCount = ref.watch(adminActivityMonitoringCountProvider);
+    final fraudAlertCount = ref.watch(adminFraudAlertCountProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -109,7 +113,7 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
             // Bekleyen işlemler
-            if (pendingCount > 0 || moderationCount > 0) ...[
+            if (pendingCount > 0 || moderationCount > 0 || activityMonitoringCount > 0 || fraudAlertCount > 0) ...[
               _SectionTitle('🔴 Bekleyen İşlemler'),
               SizedBox(
                 height: 100,
@@ -139,6 +143,26 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
                         count: moderationCount,
                         color: AppThemeColors.liveRed,
                         onTap: () => context.push('/admin/moderation'),
+                      ),
+                    ],
+                    if (activityMonitoringCount > 0) ...[
+                      const SizedBox(width: 12),
+                      _NotificationCard(
+                        icon: Icons.warning_rounded,
+                        label: 'Activity Monitor',
+                        count: activityMonitoringCount,
+                        color: AppThemeColors.accentCyan,
+                        onTap: () => context.push('/admin/activity-monitoring'),
+                      ),
+                    ],
+                    if (fraudAlertCount > 0) ...[
+                      const SizedBox(width: 12),
+                      _NotificationCard(
+                        icon: Icons.security_rounded,
+                        label: 'Fraud Alerts',
+                        count: fraudAlertCount,
+                        color: AppThemeColors.liveRed,
+                        onTap: () => context.push('/admin/fraud-detection'),
                       ),
                     ],
                   ],

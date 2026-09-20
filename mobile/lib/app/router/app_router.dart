@@ -41,6 +41,10 @@ import '../../features/admin/presentation/pages/admin_gift_collection_hub_page.d
 import '../../features/admin/presentation/pages/admin_hub_page.dart';
 import '../../features/admin/presentation/pages/admin_home_tab.dart';
 import '../../features/admin/presentation/pages/admin_moderation_queue_page.dart';
+import '../../features/admin/presentation/pages/admin_activity_monitoring_page.dart';
+import '../../features/admin/presentation/pages/admin_activity_log_page.dart';
+import '../../features/admin/presentation/pages/admin_fraud_detection_page.dart';
+import '../../features/admin/presentation/pages/admin_bulk_operations_page.dart';
 import '../../features/admin/presentation/pages/admin_membership_management_page.dart';
 import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
 import '../../features/admin/presentation/pages/admin_live_streams_page.dart';
@@ -678,6 +682,22 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin/moderation',
         builder: (context, state) => const AdminModerationQueuePage(),
+      ),
+      GoRoute(
+        path: '/admin/activity-monitoring',
+        builder: (context, state) => const AdminActivityMonitoringPage(),
+      ),
+      GoRoute(
+        path: '/admin/activity-log',
+        builder: (context, state) => const AdminActivityLogPage(),
+      ),
+      GoRoute(
+        path: '/admin/fraud-detection',
+        builder: (context, state) => const AdminFraudDetectionPage(),
+      ),
+      GoRoute(
+        path: '/admin/bulk-operations',
+        builder: (context, state) => const AdminBulkOperationsPage(),
       ),
       GoRoute(
         path: '/admin/dashboard',

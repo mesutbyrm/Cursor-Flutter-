@@ -20,6 +20,7 @@ class StaffAccess {
     required this.canViewReports,
     required this.canManageNotifications,
     required this.isSupportStaff,
+    required this.canViewActivityLog,
     this.siteRole,
     this.username,
     this.isFounder = false,
@@ -48,6 +49,8 @@ class StaffAccess {
   final bool canManageNotifications;
   /// Destek / yardım rolü.
   final bool isSupportStaff;
+  /// Aktivite günlüğü — yönetim denetimi.
+  final bool canViewActivityLog;
   final String? siteRole;
   final String? username;
   /// Kurucu (yonetici) — admin atama/çıkarma dahil tam yetki.
@@ -91,6 +94,7 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
       canViewReports: false,
       canManageNotifications: false,
       isSupportStaff: false,
+      canViewActivityLog: false,
     );
   }
 
@@ -129,6 +133,7 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
       canViewReports: true,
       canManageNotifications: true,
       isSupportStaff: false,
+      canViewActivityLog: true,
       siteRole: siteRole?.trim().isNotEmpty == true ? siteRole : 'admin',
       username: username,
       isFounder: usernameIsFounder,
@@ -214,6 +219,7 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
   final canViewReports = canManagePayments || canModerate;
   final canManageNotifications = canManagePayments;
   final isSupportStaff = StaffRoles.isSupportRole(effectiveRole);
+  final canViewActivityLog = isStaffMember || isSiteAdmin;
 
   return StaffAccess(
     canManagePayments: canManagePayments,
@@ -229,6 +235,7 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
     canViewReports: canViewReports,
     canManageNotifications: canManageNotifications,
     isSupportStaff: isSupportStaff,
+    canViewActivityLog: canViewActivityLog,
     siteRole: effectiveRole,
     username: username,
     isFounder: isFounder,
