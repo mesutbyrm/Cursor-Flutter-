@@ -4,20 +4,19 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.581+624` |
-| Tarih (UTC) | 2026-09-20 03:50 |
-| Commit | [`e4b7f763b7b9fa3866e926eb638186b9bc5d6223`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/e4b7f763b7b9fa3866e926eb638186b9bc5d6223) |
-| İş akışı | [Run 35486370417](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35486370417) |
+| Sürüm | `1.0.582+625` |
+| Tarih (UTC) | 2026-09-20 10:38 |
+| Commit | [`ee3d099c3e851dac440ee73cd23c6ff186358707`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/ee3d099c3e851dac440ee73cd23c6ff186358707) |
+| İş akışı | [Run 35504534614](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35504534614) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.581+624 (2026-09-20) — Profil: üyelik upsell + kurucu/admin onur şeridi
+## 1.0.582+625 (2026-09-20) — Profil: rozet→üyelik + kurucu/admin özel çerçeve
 
-- **Gold/ücretli üyenin profilinde üyelik çağrısı:** ziyaretçi (kendisi değilse) ücretli üyeye (Gold/Diamond/SVIP) sahip bir profile girince "Sen de {tier} üye ol" kartı görünür → `/premium-membership`. Üyesiz profillerde ve kendi profilinde görünmez
-- **Kurucu / Admin onur şeridi:** ziyaret edilen profilde ad altında gradient onur şeridi (👑 KURUCU / 🛡️ ADMİN) — kurucu>admin önceliği; ikisi de değilse görünmez
-- Kaynak: mevcut `userProfileExtendedProvider(userId)` (vipLevel) + `StaffRoles` rol tespiti; yeni backend çağrısı yok
-- Ziyaret profili düzeni: ad + onur şeridi → istatistik → aksiyonlar → Hakkında → Bilgiler kartı → **üyelik upsell** → Shorts → paylaşımlar
+- **Üyelik rozetine dokununca** üyelik sayfası açılıyor (`/premium-membership`) — ziyaretçi aynı ayrıcalığı hızlı alabilsin
+- **Kurucu / Admin özel görünüm:** ziyaret profilinde kapak gradyanı ve avatar çerçevesi role göre değişiyor — **Kurucu: altın**, **Admin: mor** (parlayan halka gölgesi). Normal kullanıcıda varsayılan görünüm
+- Tamamen istemci tarafı; yeni backend çağrısı yok
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
