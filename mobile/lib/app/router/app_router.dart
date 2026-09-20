@@ -39,6 +39,7 @@ import '../../features/admin/domain/admin_site_animation.dart';
 import '../../features/admin/presentation/pages/admin_voice_room_backgrounds_page.dart';
 import '../../features/admin/presentation/pages/admin_gift_collection_hub_page.dart';
 import '../../features/admin/presentation/pages/admin_hub_page.dart';
+import '../../features/admin/presentation/pages/admin_home_tab.dart';
 import '../../features/admin/presentation/pages/admin_membership_management_page.dart';
 import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
 import '../../features/admin/presentation/pages/admin_live_streams_page.dart';
@@ -668,6 +669,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           final focus = state.uri.queryParameters['focusRequest'];
           return AdminHubPage(focusRequestId: focus);
         },
+      ),
+      GoRoute(
+        path: '/admin/home',
+        builder: (context, state) => const AdminHomeTab(),
       ),
       GoRoute(
         path: '/admin/dashboard',

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/motion/canlifal_motion_tokens.dart';
 import '../../../../core/motion/canlifal_motion_widgets.dart';
 import '../../../membership/presentation/widgets/membership_pending_payment_banner.dart';
+import '../../../admin/presentation/widgets/admin_profile_toolbar.dart';
 import '../premium_2026/profile_screen_state.dart';
 import 'profile_hub_error_banner.dart';
 import 'profile_hub_header.dart';
@@ -13,7 +15,7 @@ import '../../../shorts/presentation/widgets/shorts_profile_content.dart';
 ///
 /// Rol çözümü [ProfileScreenState] + `showAdmin` / `showStaff` / `showPublisher` bayraklarından gelir;
 /// client tarafında sahte rol üretilmez.
-class ProfileHubLayout extends StatelessWidget {
+class ProfileHubLayout extends ConsumerWidget {
   const ProfileHubLayout({
     super.key,
     required this.state,
@@ -34,10 +36,11 @@ class ProfileHubLayout extends StatelessWidget {
   final VoidCallback? onLogout;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (showAdmin) AdminProfileToolbar(user: state.user),
         CanlifalEntranceFadeSlide(
           child: ProfileHubHeader(state: state, onRefresh: onRefresh),
         ),
