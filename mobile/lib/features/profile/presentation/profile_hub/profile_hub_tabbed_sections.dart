@@ -16,6 +16,7 @@ import '../providers/profile_activity_notifier.dart';
 import '../providers/profile_hub_providers.dart';
 import 'profile_hub_about_stats_row.dart';
 import 'profile_hub_badges_section.dart';
+import 'profile_hub_completion_card.dart';
 import 'profile_hub_currency_card.dart';
 import 'profile_hub_membership_badges_section.dart';
 import 'profile_hub_membership_section.dart';
@@ -100,6 +101,9 @@ class _ProfileHubTabbedSectionsState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Profil eksikse en üstte "Profilini Tamamla" (kırmızı eksik sayısı);
+        // profil tamsa hiç görünmez.
+        const ProfileHubCompletionCard(),
         ProfileHubSummaryCard(state: widget.state)
             .animate()
             .fadeIn(duration: 280.ms)

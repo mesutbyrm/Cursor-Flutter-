@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.579+622 (2026-09-20) — Profil: eksiklik göstergesi (kırmızı sayı) + düzen
+
+- **Profilini Tamamla kartı:** kendi profilinde eksik alan varsa **en üstte** (önce görünmesi gereken) kırmızı **eksik sayısı** + %tamamlanma çubuğu + eksik alan çipleri (Profil fotoğrafı, Görünen ad, Hakkında, Şehir, Burç, Favori takım) gösterilir; dokununca **Profil Düzenle**'ye gider. Profil tamsa hiç görünmez
+- Görünen ad kullanıcı adıyla aynıysa (varsayılan) eksik sayılır
+- Düzen: kendi profil zaten bölümlere ayrılmış akordeon (Bakiye&Üyelik / İstatistikler&Sosyal / Yayın&Ses / Ayarlar&Güvenlik) — aşağı sürüklenme yok; eksiklik kartı en öne alındı
+- Ziyaret edilen profil zaten sosyal-medya tarzı (avatar/kapak, doğrulama+üyelik rozeti, istatistik, takip/canlı/mesaj, hakkında, Shorts sekmeleri, paylaşım akışı)
+- Unit: `profile_completeness_test` (7 vaka)
+- Not: bu turda kendi profil hub'ında kırık/çalışmayan bir bölüm tespit edilmedi; belirli bir bozuk alan varsa hedefli düzeltilir. Ziyaret profilinde platform-özel zenginleştirme (başkası için rozet/seviye/hediye) ayrı adım
+
 ## 1.0.578+621 (2026-09-20) — Sesli oda PK: koltuk düşme koruması (B)
 
 - **"İstek atınca karşı taraf/kendim koltuktan düşüyor, kayboluyor" için savunmacı guard:** PK **aktif/pending** iken sunucu koltuk bilgisi taşımayan ("lighter") bir presence snapshot yollarsa, mevcut koltuklar **korunuyor** — kullanıcılar koltuktan düşüp kaybolmuyor
