@@ -4,20 +4,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.585+628` |
-| Tarih (UTC) | 2026-09-20 15:35 |
-| Commit | [`8970e73858dcdc5ead345bcddab309980b09ea15`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/8970e73858dcdc5ead345bcddab309980b09ea15) |
-| İş akışı | [Run 35519043286](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35519043286) |
+| Sürüm | `1.0.586+630` |
+| Tarih (UTC) | 2026-09-20 21:59 |
+| Commit | [`f274403d0d8bfdf3b502d4577061c0cb363649b7`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/f274403d0d8bfdf3b502d4577061c0cb363649b7) |
+| İş akışı | [Run 35539446169](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35539446169) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.585+628 (2026-09-20) — DM gerçek zamanlı + sesli oda presence
+## 1.0.586+629 (2026-09-20) — Ödeme, DM, sesli oda, profil, canlı falcı
 
-- **DM:** SSE yolu düzeltildi (`/api/messages/{userId}/stream`); gönderilen mesaj saat ikonunda takılı kalmaz; sohbet poll sıklaştırıldı
-- **Sohbet:** composer alt boşluğu `/chat` için sıkılaştırıldı
-- **Sesli oda:** ana sayfa oda kartları SSE ile güncel kişi sayısı; çıkışta sayaç sunucudan yenilenir; giriş duyuruları artık ana sayfa kayan şeridine düşmez (yalnızca oda içi)
-- **Oda yönetimi:** kilit PATCH `locked` + `isLocked`; varsayılan **9 koltuk** (yeni oda)
+- **Jeton / Gold:** mağaza açılışında tüm bekleyen ödeme talepleri iptal; üyelik satın almadan önce temizlik
+- **DM:** SSE olayı sohbet listesine anında eklenir; gelen kutusu mesaj akışı senkron
+- **Sesli oda:** odaya girmeden “içerideymiş” gösterimi düzeltildi; hayalet online sayısı; site geneli giriş duyurusu kaldırıldı
+- **Profil kaydet:** avatar ayrı yükleme + sayfa kapanışı donma düzeltmesi
+- **Canlı falcı:** yayıncı canlıdayken gelen seans istekleri susturulur; profilde “Canlı yayında” uyarısı
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
