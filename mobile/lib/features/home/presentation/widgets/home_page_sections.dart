@@ -48,6 +48,12 @@ abstract final class HomePageSections {
           child: HomeBannerCarousel(),
         ),
       ),
+      const SliverToBoxAdapter(
+        child: HomeDeferredSection(
+          delay: StartupPerf.homeStoriesSectionDelay,
+          child: HomeSectionReveal(child: LiveBroadcastSection()),
+        ),
+      ),
       const SliverToBoxAdapter(child: HomeRefQuickAccess()),
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
@@ -55,13 +61,7 @@ abstract final class HomePageSections {
           child: StoriesSection(),
         ),
       ),
-      // Aşama 2 — canlı + sesli (öncelik)
-      const SliverToBoxAdapter(
-        child: HomeDeferredSection(
-          delay: StartupPerf.homeStoriesSectionDelay,
-          child: HomeSectionReveal(child: LiveBroadcastSection()),
-        ),
-      ),
+      // Aşama 2 — sesli (canlı vitrin yukarı taşındı)
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeVoiceSectionDelay,

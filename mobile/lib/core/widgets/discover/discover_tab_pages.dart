@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../navigation/overlay_bottom_nav_inset.dart';
 
 import '../discover_refresh.dart';
 import '../../../features/feed/presentation/widgets/discover/discover_background.dart';
@@ -130,7 +133,10 @@ class DiscoverTabScrollPage extends StatelessWidget {
         ...slivers,
         SliverToBoxAdapter(
           child: SizedBox(
-            height: MediaQuery.paddingOf(context).bottom + 100,
+            height: OverlayBottomNavInset.forPath(
+              context,
+              GoRouterState.of(context).uri.path,
+            ),
           ),
         ),
       ],

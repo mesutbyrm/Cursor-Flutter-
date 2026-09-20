@@ -51,6 +51,16 @@ class _InboxPageState extends ConsumerState<InboxPage> {
       ref.read(conversationsListNotifierProvider.future),
       ref.read(notificationsListNotifierProvider.future),
     ]);
+    ref.invalidate(notificationsUnreadApiProvider);
+  }
+
+  Future<void> _markAllInboxRead() async {
+    await markAllMessagesRead(ref);
+    await markAllNotificationsRead(ref);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Gelen kutusu okundu olarak işaretlendi')),
+    );
   }
 
   void _onScroll() {
@@ -111,6 +121,11 @@ class _InboxPageState extends ConsumerState<InboxPage> {
         onRefresh: _refresh,
         actions: [
           DiscoverIconButton(
+            icon: Icons.done_all_rounded,
+            tooltip: 'Tümünü oku',
+            onPressed: () => unawaited(_markAllInboxRead()),
+          ),
+          DiscoverIconButton(
             icon: Icons.forum_outlined,
             tooltip: 'Mesajlar',
             onPressed: () => _selectTab(InboxTab.messages),
@@ -146,6 +161,12 @@ class _InboxPageState extends ConsumerState<InboxPage> {
             icon: Icons.done_all_rounded,
             tooltip: 'Tümünü oku',
             onPressed: () => unawaited(_markAllMessagesRead()),
+          ),
+        if (_tab == InboxTab.all)
+          DiscoverIconButton(
+            icon: Icons.done_all_rounded,
+            tooltip: 'Tümünü oku',
+            onPressed: () => unawaited(_markAllInboxRead()),
           ),
         DiscoverIconButton(
           icon: Icons.edit_square,

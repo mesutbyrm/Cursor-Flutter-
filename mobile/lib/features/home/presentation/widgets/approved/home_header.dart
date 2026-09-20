@@ -6,7 +6,7 @@ import '../../../../../core/bootstrap/shell_header_badges_provider.dart';
 import '../../../../../core/navigation/unread_badge_format.dart';
 import '../../../../../core/widgets/canlifal_logo.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
-import '../../../../feed/presentation/providers/feed_unread_providers.dart';
+import '../../../../inbox/presentation/inbox_routes.dart';
 import '../../../../inbox/presentation/providers/inbox_unread_providers.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
 import '../../theme/home_approved_design.dart';
@@ -93,11 +93,7 @@ class _HomeHeaderBadges extends ConsumerWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: const [
-        _DiscoverBadge(),
-        SizedBox(width: 8),
-        _NotificationBadge(),
-        SizedBox(width: 8),
-        _InboxBadge(),
+        _UnifiedInboxBadge(),
         SizedBox(width: 8),
         _HomeBalanceChips(),
       ],
@@ -105,63 +101,9 @@ class _HomeHeaderBadges extends ConsumerWidget {
   }
 }
 
-class _DiscoverBadge extends StatelessWidget {
-  const _DiscoverBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => context.push('/shorts'),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: HomeApprovedDesign.surface.withValues(alpha: 0.92),
-          borderRadius: BorderRadius.circular(HomeApprovedDesign.pillRadius),
-          border: Border.all(
-            color: HomeApprovedDesign.border.withValues(alpha: 0.9),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.explore_rounded,
-              size: 16,
-              color: HomeApprovedDesign.purple.withValues(alpha: 0.95),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              'Keşfet',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: HomeApprovedDesign.textPrimary.withValues(alpha: 0.95),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _NotificationBadge extends ConsumerWidget {
-  const _NotificationBadge();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final badgesReady = ref.watch(shellHeaderBadgesEnabledProvider);
-    final unread = badgesReady ? ref.watch(unreadNotificationCountProvider) : 0;
-    return HomePulsingIconBadge(
-      icon: Icons.notifications_rounded,
-      badge: unread,
-      onTap: () => context.push('/notifications'),
-    );
-  }
-}
-
-class _InboxBadge extends ConsumerWidget {
-  const _InboxBadge();
+/// Mesaj + sistem bildirimi — tek gelen kutusu girişi.
+class _UnifiedInboxBadge extends ConsumerWidget {
+  const _UnifiedInboxBadge();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -169,9 +111,9 @@ class _InboxBadge extends ConsumerWidget {
     final unreadInbox =
         badgesReady ? ref.watch(inboxUnreadCountProvider) : 0;
     return HomePulsingIconBadge(
-      icon: Icons.inbox_rounded,
+      icon: Icons.mail_rounded,
       badge: unreadInbox,
-      onTap: () => context.push('/messages'),
+      onTap: () => InboxRoutes.open(context),
     );
   }
 }

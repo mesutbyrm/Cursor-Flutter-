@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/membership/membership_capability_keys.dart';
 import '../../../../core/membership/membership_capability_providers.dart';
+import '../../../../core/navigation/overlay_bottom_nav_inset.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/token_storage.dart';
@@ -75,6 +76,9 @@ class _ChatPageState extends ConsumerState<ChatPage>
       if (!mounted) return;
       ref.read(openDmConversationIdProvider.notifier).state =
           widget.conversationId;
+      ref
+          .read(conversationsListNotifierProvider.notifier)
+          .markConversationReadLocally(widget.conversationId);
       _loadPeerMeta();
       ref
           .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
@@ -206,21 +210,32 @@ class _ChatPageState extends ConsumerState<ChatPage>
   }
 
   Future<void> _sendMessage(String text) async {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return;
     final userId = ref.read(authControllerProvider).valueOrNull?.id;
     final reply = _replyTarget;
     final forward = _forwardTarget;
-    await ref
-        .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
-        .sendMessage(
-          text: text,
-          currentUserId: userId,
-          replyId: reply?.id,
-          replyText: reply?.text,
-          forward: forward != null,
-          forwardFrom: forward != null
-              ? (forward.isMine ? 'Siz' : (_peerName ?? 'Kullanıcı'))
-              : null,
+    try {
+      await ref
+          .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
+          .sendMessage(
+            text: trimmed,
+            currentUserId: userId,
+            replyId: reply?.id,
+            replyText: reply?.text,
+            forward: forward != null,
+            forwardFrom: forward != null
+                ? (forward.isMine ? 'Siz' : (_peerName ?? 'Kullanıcı'))
+                : null,
+          );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
         );
+      }
+      return;
+    }
     _text.clear();
     setState(() {
       _replyTarget = null;
@@ -228,6 +243,9 @@ class _ChatPageState extends ConsumerState<ChatPage>
     });
     await DmMessageSoundService.instance.playOutgoing();
     ref.invalidate(conversationsProvider);
+    ref
+        .read(conversationsListNotifierProvider.notifier)
+        .markConversationReadLocally(widget.conversationId);
     _scrollToEnd();
   }
 
@@ -387,6 +405,9 @@ class _ChatPageState extends ConsumerState<ChatPage>
 
     ref.listen(conversationsListNotifierProvider, (_, __) => _loadPeerMeta());
 
+    final location = GoRouterState.of(context).uri.path;
+    final bottomNavInset = OverlayBottomNavInset.forPath(context, location);
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       resizeToAvoidBottomInset: true,
@@ -506,10 +527,13 @@ class _ChatPageState extends ConsumerState<ChatPage>
                 message: _replyTarget!,
                 onClear: () => setState(() => _replyTarget = null),
               ),
-            ChatComposerBar(
-              controller: _text,
-              onSend: _sendMessage,
-              onAction: _handleComposerAction,
+            Padding(
+              padding: EdgeInsets.only(bottom: bottomNavInset),
+              child: ChatComposerBar(
+                controller: _text,
+                onSend: _sendMessage,
+                onAction: _handleComposerAction,
+              ),
             ),
           ],
         ),

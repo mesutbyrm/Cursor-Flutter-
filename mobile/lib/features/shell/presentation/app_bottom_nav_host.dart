@@ -72,7 +72,8 @@ class AppBottomNavHost extends ConsumerWidget {
     }
     if (path.startsWith('/messages') ||
         path.startsWith('/notifications') ||
-        path.startsWith('/content-hub')) {
+        path.startsWith('/content-hub') ||
+        path.startsWith('/chat/')) {
       return HomeBottomTab.home;
     }
     return HomeBottomTab.home;

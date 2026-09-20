@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../live_psychics/presentation/controllers/psychics_list_controller.dart';
 import '../../theme/home_approved_design.dart';
 
-/// Referans — "Sende Yayıncı Ol!" CTA şeridi.
-class HomeBecomeBroadcasterBanner extends StatelessWidget {
+/// Referans — "Sende Yayıncı Ol!" CTA şeridi (onaylı yayıncı/falcıda gizlenir).
+class HomeBecomeBroadcasterBanner extends ConsumerWidget {
   const HomeBecomeBroadcasterBanner({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final approved = ref.watch(approvedPsychicProvider);
+    if (approved.isApprovedTeller) {
+      return const SizedBox.shrink();
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         HomeApprovedDesign.hPad,

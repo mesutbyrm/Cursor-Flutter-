@@ -90,8 +90,35 @@ class ConversationsListNotifier extends AsyncNotifier<ConversationsListState> {
   void markAllReadLocally() {
     final cur = state.valueOrNull;
     if (cur == null) return;
-    final cleared = [
+    state = AsyncValue.data(cur.copyWith(all: _zeroUnread(cur.all)));
+  }
+
+  void markConversationReadLocally(String conversationId) {
+    final cur = state.valueOrNull;
+    if (cur == null) return;
+    final id = conversationId.trim();
+    if (id.isEmpty) return;
+    final updated = [
       for (final c in cur.all)
+        if (c.id == id)
+          ConversationEntity(
+            id: c.id,
+            title: c.title,
+            subtitle: c.subtitle,
+            avatarUrl: c.avatarUrl,
+            unreadCount: 0,
+            isOnline: c.isOnline,
+            lastMessageAt: c.lastMessageAt,
+          )
+        else
+          c,
+    ];
+    state = AsyncValue.data(cur.copyWith(all: updated));
+  }
+
+  static List<ConversationEntity> _zeroUnread(List<ConversationEntity> all) {
+    return [
+      for (final c in all)
         ConversationEntity(
           id: c.id,
           title: c.title,
@@ -102,7 +129,6 @@ class ConversationsListNotifier extends AsyncNotifier<ConversationsListState> {
           lastMessageAt: c.lastMessageAt,
         ),
     ];
-    state = AsyncValue.data(cur.copyWith(all: cleared));
   }
 }
 

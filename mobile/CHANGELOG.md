@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.583+626 (2026-09-20) — Ana sayfa + gelen kutusu UX
+
+- Ana sayfa üst bar: **tek gelen kutusu** ikonu (mesaj + sistem bildirimi); ayrı zil kaldırıldı; üst **Keşfet** pill kaldırıldı
+- Canlı yayın vitrini, hızlı erişim **Canlı Yayın** kutusunun yerine taşındı (Sesli / Tanış / Gold kaldı)
+- **Sende Yayıncı Ol** şeridi onaylı falcı/yayıncıda gizlenir
+- Gelen kutusu / sohbet: alt **navbar** için composer boşluğu; mesaj gönderme hataları snackbar
+- Sohbet açılınca okunmamış rozet düşer; **Tümünü oku** mesaj + sistem sayaçlarını sıfırlar
+
 ## 1.0.582+625 (2026-09-20) — Profil: rozet→üyelik + kurucu/admin özel çerçeve
 
 - **Üyelik rozetine dokununca** üyelik sayfası açılıyor (`/premium-membership`) — ziyaretçi aynı ayrıcalığı hızlı alabilsin
