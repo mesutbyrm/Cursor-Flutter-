@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.581+624 (2026-09-20) — Profil: üyelik upsell + kurucu/admin onur şeridi
+
+- **Gold/ücretli üyenin profilinde üyelik çağrısı:** ziyaretçi (kendisi değilse) ücretli üyeye (Gold/Diamond/SVIP) sahip bir profile girince "Sen de {tier} üye ol" kartı görünür → `/premium-membership`. Üyesiz profillerde ve kendi profilinde görünmez
+- **Kurucu / Admin onur şeridi:** ziyaret edilen profilde ad altında gradient onur şeridi (👑 KURUCU / 🛡️ ADMİN) — kurucu>admin önceliği; ikisi de değilse görünmez
+- Kaynak: mevcut `userProfileExtendedProvider(userId)` (vipLevel) + `StaffRoles` rol tespiti; yeni backend çağrısı yok
+- Ziyaret profili düzeni: ad + onur şeridi → istatistik → aksiyonlar → Hakkında → Bilgiler kartı → **üyelik upsell** → Shorts → paylaşımlar
+
 ## 1.0.580+623 (2026-09-20) — Ziyaret profili zenginleştirme
 
 - **Ziyaret edilen profile "Bilgiler" kartı eklendi:** başka kullanıcının profilinde artık **çevrimiçi durumu, şehir, burç, favori takım, VIP seviye, günlük seri, katılma tarihi** çip/rozet olarak zengin şekilde gösteriliyor (veri varsa; hiç yoksa kart görünmez)
