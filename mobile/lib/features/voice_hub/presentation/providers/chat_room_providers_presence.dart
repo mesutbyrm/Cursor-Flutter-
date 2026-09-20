@@ -253,10 +253,19 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       incoming: incoming,
     );
     _purgeExpiredPendingSeatActions();
-    final guarded = guardPresenceAgainstPendingSeatActions(
+    final pendingGuarded = guardPresenceAgainstPendingSeatActions(
       merged: replaced,
       previous: previous,
       pendingByUser: _pendingSeatByUser,
+    );
+    // PK sırasında koltuk düşme koruması: PK aktif/pending iken sunucu koltuk
+    // bilgisi taşımayan ("lighter") bir presence snapshot yollarsa mevcut
+    // koltuklar korunur — kullanıcılar koltuktan düşüp kaybolmaz. Bu koruma
+    // YALNIZCA PK sırasında ve tüm snapshot koltuksuzken devreye girer; normal
+    // koltuk kalkma/oturma (snapshot koltuk taşıyorsa) etkilenmez.
+    final guarded = _preserveSeatsDuringPk(
+      merged: pendingGuarded,
+      previous: previous,
     );
     _confirmPendingSeatFromSnapshot(guarded);
     VoiceRoomDebugLog.presenceUpdate(
@@ -277,6 +286,49 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     _scheduleReactivePrivilegedAutoSeat();
     _maybeReconcileHostSeatIfNeeded();
     return guarded;
+  }
+
+  /// PK aktif/pending iken koltuksuz snapshot mevcut koltukları düşürmesin.
+  List<ChatRoomPresence> _preserveSeatsDuringPk({
+    required List<ChatRoomPresence> merged,
+    required List<ChatRoomPresence> previous,
+  }) {
+    final battle = ref.read(pkBattleRemoteProvider);
+    final pkActive = battle != null &&
+        !battle.isEnded &&
+        (battle.isActive || battle.isPending);
+    if (!pkActive) return merged;
+
+    final incomingHasSeats = merged.any((p) => (p.seatIndex ?? -1) >= 0);
+    if (incomingHasSeats) return merged;
+    final prevSeatById = <String, int>{
+      for (final p in previous)
+        if ((p.seatIndex ?? -1) >= 0) p.id: p.seatIndex!,
+    };
+    if (prevSeatById.isEmpty) return merged;
+
+    VoiceRoomDebugLog.log('presence.pk_seat_preserved', {
+      'room': _roomKey,
+      'seats': prevSeatById.length,
+    });
+    return [
+      for (final p in merged)
+        prevSeatById.containsKey(p.id)
+            ? ChatRoomPresence(
+                id: p.id,
+                name: p.name,
+                nickname: p.nickname,
+                image: p.image,
+                chatRole: p.chatRole,
+                roleSymbol: p.roleSymbol,
+                membership: p.membership,
+                seatIndex: prevSeatById[p.id],
+                isSpeaking: p.isSpeaking,
+                isMuted: p.isMuted,
+                micOn: p.micOn,
+              )
+            : p,
+    ];
   }
 
   void _detectMicChanges(List<ChatRoomPresence> next) {

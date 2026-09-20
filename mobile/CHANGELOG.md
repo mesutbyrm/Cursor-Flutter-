@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.578+621 (2026-09-20) — Sesli oda PK: koltuk düşme koruması (B)
+
+- **"İstek atınca karşı taraf/kendim koltuktan düşüyor, kayboluyor" için savunmacı guard:** PK **aktif/pending** iken sunucu koltuk bilgisi taşımayan ("lighter") bir presence snapshot yollarsa, mevcut koltuklar **korunuyor** — kullanıcılar koltuktan düşüp kaybolmuyor
+- Koruma yalnızca **PK sırasında** ve **tüm snapshot koltuksuzken** devreye girer; normal koltuk kalkma/oturma (snapshot koltuk taşıyorsa) aynen uygulanır — genel presence sözleşmesi değişmedi (`presence_canonical` ve testleri korundu)
+- Guard `chat_room_providers_presence._preserveSeatsDuringPk` içinde; tetiklendiğinde `presence.pk_seat_preserved` teşhis logu düşer
+- **Not:** kesin kök neden (sunucunun PK'de koltuksuz snapshot yollaması) hâlâ backend'de; bu istemci koruması semptomu (koltuk düşmesi) engeller. Cihazda PK atarak doğrula
+
 ## 1.0.577+620 (2026-09-20) — Sesli oda PK: katılımcılar yenilemeden görünsün
 
 - **"PK ekranında kimse görünmüyor, ancak yenileyince görünüyor" düzeltildi:** PK sayfası açılırken görsel shell, global senkron (`voiceRoomByIdProvider`) ilk karede gecikince oda bağlamı olmadan besleniyordu → oyuncular boş kalıyordu. Sayfa artık **kendi odasının bağlamıyla** (`applyRemoteBattleForVoiceRoom(battle, room)`) shell'i doğrudan dolduruyor; katılımcılar yenileme gerektirmeden görünür
