@@ -97,6 +97,15 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
     final battle = ref.read(pkBattleRemoteProvider);
     if (battle == null || battle.isEnded) return;
 
+    // Görsel shell'i BU odanın bağlamıyla doğrudan besle. Global senkron
+    // (voiceRoomByIdProvider) ilk açılışta gecikirse katılımcılar boş kalıp
+    // ancak yenilemede görünüyordu; sayfa kendi odasını bildiği için hemen dolar.
+    if (pkBattleBelongsToRoom(battle, r)) {
+      ref
+          .read(pkBattleProvider.notifier)
+          .applyRemoteBattleForVoiceRoom(battle, r);
+    }
+
     if (battle.isPending && !battle.isActive) {
       final userId = ref.read(authControllerProvider).valueOrNull?.id;
       final isTarget = isPkInviteTarget(battle, r, userId: userId);

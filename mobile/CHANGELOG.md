@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.577+620 (2026-09-20) — Sesli oda PK: katılımcılar yenilemeden görünsün
+
+- **"PK ekranında kimse görünmüyor, ancak yenileyince görünüyor" düzeltildi:** PK sayfası açılırken görsel shell, global senkron (`voiceRoomByIdProvider`) ilk karede gecikince oda bağlamı olmadan besleniyordu → oyuncular boş kalıyordu. Sayfa artık **kendi odasının bağlamıyla** (`applyRemoteBattleForVoiceRoom(battle, room)`) shell'i doğrudan dolduruyor; katılımcılar yenileme gerektirmeden görünür
+- **Devam eden (bu turda kapatılmadı):** "istek atınca karşı taraf/kendi odam donuyor, koltuktan düşüyor" — kod izinde odanın PK SSE işleyicisi (`onPk`/`ingestSseBattle`) presence veya koltuğa dokunmuyor; net bir istemci kök nedeni bulunamadı. Muhtemel neden sunucunun PK başlangıcında oda presence'ını sıfırlaması ya da TRTC seviyesi — kesin tanı için cihaz logcat'i gerekiyor. Riskli/kör değişiklik yapılmadı
+
 ## 1.0.576+619 (2026-09-20) — Hediye tam ekran + ses; VIP şifre kapısı zorlaması
 
 - **Hediyeler tekrar tam ekran + sesli:** önceki "alttan-hizalı küçük band" davranışı geri alındı. `fullScreen` alanındaki hediyeler (video/premium; backend bunları fullScreen'e yükseltir) artık canlı yayın + sesli odada **ekranı doldurur** (`BoxFit.cover`), ses çağrısı korunuyor. Diğer küçük alan efektleri sınırlı kalır
