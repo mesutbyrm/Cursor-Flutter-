@@ -4,20 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.576+619` |
-| Tarih (UTC) | 2026-09-20 03:08 |
-| Commit | [`ea8152ccea0696491271c63f42e69f58c7290128`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/ea8152ccea0696491271c63f42e69f58c7290128) |
-| İş akışı | [Run 35484972266](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35484972266) |
+| Sürüm | `1.0.579+622` |
+| Tarih (UTC) | 2026-09-20 03:30 |
+| Commit | [`48d2d77a6b6c14983a248d4bd15e29c180bc293a`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/48d2d77a6b6c14983a248d4bd15e29c180bc293a) |
+| İş akışı | [Run 35485821186](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35485821186) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.580+623 (2026-09-20) — Ziyaret profili zenginleştirme
+## 1.0.581+624 (2026-09-20) — Profil: üyelik upsell + kurucu/admin onur şeridi
 
-- **Ziyaret edilen profile "Bilgiler" kartı eklendi:** başka kullanıcının profilinde artık **çevrimiçi durumu, şehir, burç, favori takım, VIP seviye, günlük seri, katılma tarihi** çip/rozet olarak zengin şekilde gösteriliyor (veri varsa; hiç yoksa kart görünmez)
-- Kaynak: mevcut `userProfileExtendedProvider(userId)` (per-user, doğrulanmış); yeni backend çağrısı yok
-- Ziyaret profili artık: avatar/kapak + doğrulama/üyelik rozeti + istatistik + Takip/Canlı/Mesaj + Hakkında + **Bilgiler kartı** + Shorts sekmeleri + paylaşım akışı
-- Not: seviye/aldığı-gönderdiği hediye/rozet listeleri şu an yalnızca kendi profilinde (self-only provider); başkası için bunlar backend'de per-user uç gerektirir
+- **Gold/ücretli üyenin profilinde üyelik çağrısı:** ziyaretçi (kendisi değilse) ücretli üyeye (Gold/Diamond/SVIP) sahip bir profile girince "Sen de {tier} üye ol" kartı görünür → `/premium-membership`. Üyesiz profillerde ve kendi profilinde görünmez
+- **Kurucu / Admin onur şeridi:** ziyaret edilen profilde ad altında gradient onur şeridi (👑 KURUCU / 🛡️ ADMİN) — kurucu>admin önceliği; ikisi de değilse görünmez
+- Kaynak: mevcut `userProfileExtendedProvider(userId)` (vipLevel) + `StaffRoles` rol tespiti; yeni backend çağrısı yok
+- Ziyaret profili düzeni: ad + onur şeridi → istatistik → aksiyonlar → Hakkında → Bilgiler kartı → **üyelik upsell** → Shorts → paylaşımlar
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
