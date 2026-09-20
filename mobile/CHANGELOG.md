@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.586+630 (2026-09-20) — Admin paneli: Denetim, oturum, güvenlik, özellikler, e-posta
+
+- **Denetim günlüğü:** site admin tarafından tüm işlemlerin denetim kaydı (admin adı, işlem türü, hedef, zaman, IP, durum)
+- **Oturum yönetimi:** aktif kullanıcı oturumları, cihaz türü (mobil/web), çevrimiçi durumu, konum, giriş saati
+- **Güvenlik panosu:** etkin uyarılar (Kritik/Yüksek/Orta), engellenen IP listesi, 24-saatlik güvenlik istatistikleri, öneriler
+- **Özellik bayrakları:** dinamik özellik kontrolü, A/B testleri, beta özellikler (ses odaları, canlı yayın, hediye, üyelik, fal, video, sosyal, doğrulama vb.)
+- **E-posta şablonları:** sistem bildirimleri ve müşteri iletişimi için şablon yönetimi (kimlik doğrulama, finansman, hizmet, uyarı, pazarlama)
+
 ## 1.0.586+629 (2026-09-20) — Ödeme, DM, sesli oda, profil, canlı falcı
 
 - **Jeton / Gold:** mağaza açılışında tüm bekleyen ödeme talepleri iptal; üyelik satın almadan önce temizlik
