@@ -22,7 +22,12 @@ abstract final class VoiceRoomSessionExit {
     return lower.contains('kapatıldı') ||
         lower.contains('yasakland') ||
         lower.contains('room closed') ||
-        lower.contains('banned');
+        lower.contains('banned') ||
+        // Yanlış oda şifresi → kullanıcı odada tutulmaz, çıkarılır.
+        (lower.contains('şifre') &&
+            (lower.contains('hatalı') || lower.contains('giremez'))) ||
+        lower.contains('wrong password') ||
+        lower.contains('invalid password');
   }
 
   static String? detectExitMessage({

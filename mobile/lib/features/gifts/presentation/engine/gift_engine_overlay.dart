@@ -120,11 +120,16 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
     final comboAllowed = giftMeta?.comboEnabled ?? true;
     final size = MediaQuery.sizeOf(context);
     final shortest = size.shortestSide;
-    // Hediye asla tam ekran olmaz — boyut ekranın ~%48'i ile sınırlı.
-    final giftSize = math.min(
-      config.priority.sizeFactor(shortest),
-      GiftStageMetrics.maxGiftHeight(context),
-    );
+    // Tam ekran hediye (canlı yayın + sesli oda): ekranı doldurur; diğer
+    // alanlar (center vb.) sınırlı boyutta kalır.
+    final isFullScreen =
+        config.displayArea == GiftEngineDisplayArea.fullScreen;
+    final giftSize = isFullScreen
+        ? size.longestSide
+        : math.min(
+            config.priority.sizeFactor(shortest),
+            GiftStageMetrics.maxGiftHeight(context),
+          );
 
     return IgnorePointer(
       child: RepaintBoundary(
@@ -157,10 +162,13 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
     required double giftSize,
     int? seatIndex,
   }) {
+    final isFullScreen =
+        config.displayArea == GiftEngineDisplayArea.fullScreen;
     final child = _GiftEngineAnimation(
       event: event,
       config: config,
       size: giftSize,
+      fullScreen: isFullScreen,
     );
 
     // Koltuk efektleri küçük ve konumlu — dokunmuyoruz.
@@ -168,8 +176,22 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
       return _seatPositioned(context, seatIndex, child);
     }
 
-    // Tüm diğer hediyeler (fullScreen dahil) alttan-hizalı banda alınır;
-    // hiçbir hediye tam ekran açılmaz. Alttan yukarı yumuşak giriş.
+    // Tam ekran hediye — ekranı doldurur (canlı yayın + sesli oda), yumuşak fade.
+    if (isFullScreen) {
+      return Positioned.fill(
+        child: child
+            .animate(key: ValueKey('gift-enter-${event.id}'))
+            .fadeIn(duration: 200.ms)
+            .scale(
+              begin: const Offset(0.96, 0.96),
+              end: const Offset(1, 1),
+              duration: 300.ms,
+              curve: Curves.easeOutCubic,
+            ),
+      );
+    }
+
+    // Diğer alanlar (center vb.) — alttan-hizalı banda alınır, sınırlı boyut.
     return GiftStageBand(
       stage: widget.stage,
       child: Align(
@@ -211,15 +233,19 @@ class _GiftEngineAnimation extends StatelessWidget {
     required this.event,
     required this.config,
     required this.size,
+    this.fullScreen = false,
   });
 
   final LiveGiftEvent event;
   final GiftEngineConfig config;
   final double size;
+  final bool fullScreen;
 
   @override
   Widget build(BuildContext context) {
     final emoji = event.giftIcon ?? '🎁';
+    // Tam ekran hediye kırparak (cover) ekranı doldurur; diğerleri contain.
+    final fit = fullScreen ? BoxFit.cover : BoxFit.contain;
 
     if (config.animationType == GiftEngineAnimationType.particle) {
       return FloatingGiftParticles(
@@ -236,7 +262,7 @@ class _GiftEngineAnimation extends StatelessWidget {
         event: event,
         size: size,
         preferPremiumVisual: false,
-        fit: BoxFit.contain,
+        fit: fit,
       );
     }
 
@@ -252,13 +278,12 @@ class _GiftEngineAnimation extends StatelessWidget {
       );
     }
 
-    // Hediye asla tam ekran değil: `size` ile sınırlı, kırpmasız `contain`.
-    // (Eski `fullScreen`/`cover` yolu kaldırıldı; video da banda sığar.)
+    // Tam ekran: ekranı dolduran `cover`; diğer alanlar `size` ile sınırlı `contain`.
     return GiftMediaWidget(
       spec: spec,
-      width: size,
-      height: size,
-      fit: BoxFit.contain,
+      width: fullScreen ? double.infinity : size,
+      height: fullScreen ? double.infinity : size,
+      fit: fit,
       fallbackEmoji: emoji,
       looping: false,
     );

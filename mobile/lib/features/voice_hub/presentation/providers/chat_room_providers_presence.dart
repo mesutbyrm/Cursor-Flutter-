@@ -447,6 +447,9 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
             seatIndex: joinSeat,
           );
       ref.read(pendingRoomPasswordProvider.notifier).clear(_roomKey);
+      // Şifreli odaya doğru şifreyle giriş başarılı → bu oturum için kilidi aç
+      // (yanlış şifre join'i buraya ulaşamaz; terminal hata ile çıkarılır).
+      ref.read(vipUnlockedRoomsProvider.notifier).unlock(_roomKey);
       VoiceRoomDebugLog.log('api.presence.join.ok', {
         'count': joined.length,
         'roomId': _roomKey,

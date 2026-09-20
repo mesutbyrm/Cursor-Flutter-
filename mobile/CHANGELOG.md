@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.576+619 (2026-09-20) — Hediye tam ekran + ses; VIP şifre kapısı zorlaması
+
+- **Hediyeler tekrar tam ekran + sesli:** önceki "alttan-hizalı küçük band" davranışı geri alındı. `fullScreen` alanındaki hediyeler (video/premium; backend bunları fullScreen'e yükseltir) artık canlı yayın + sesli odada **ekranı doldurur** (`BoxFit.cover`), ses çağrısı korunuyor. Diğer küçük alan efektleri sınırlı kalır
+- **VIP şifre kapısı artık zorluyor:** yanlış oda şifresi girildiğinde kullanıcı odada tutulmuyordu (yalnızca uyarı). Artık:
+  - Şifre istemi girişte odayı optimistik "unlocked" yapmıyor; kilit yalnızca **doğru şifreyle join başarılı** olunca açılıyor (yanlış şifre bir daha kapıyı atlatamaz)
+  - Yanlış şifre join hatası artık **terminal hata** sayılıp kullanıcıyı odadan çıkarıyor (`VoiceRoomSessionExit`)
+  - **Not:** gerçek doğrulama sunucudadır — sunucu yanlış şifreyi reddettiğinde bu akış kullanıcıyı çıkarır; sunucu her şifreyi kabul ediyorsa mobil ayırt edemez (backend zorlaması şart)
+
 ## 1.0.575+618 (2026-09-19) — Jeton talebi: admin banner → onay alanına yönlendirme
 
 - **Jeton/CFC satın alma talebi admine anında banner olarak düşer:** uygulama içi banner artık ödeme-talebi bildirimlerini (`jeton_payment_request`/`cfc_payment_request`/`payment_request`) de gösteriyor; admin hangi ekranda olursa olsun üstten iner

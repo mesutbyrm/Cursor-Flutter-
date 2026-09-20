@@ -31,8 +31,11 @@ Future<bool> showVipLockedRoomSheet(
   );
   final pass = result?.trim() ?? '';
   if (pass.isEmpty) return false;
+  // Şifre yalnızca beklemeye alınır; sunucu join sırasında doğrular. Oda,
+  // yalnızca doğru şifreyle join BAŞARILI olduğunda "unlocked" işaretlenir
+  // (yanlış şifre bir daha kapıyı atlatmasın). Yanlış şifrede kullanıcı
+  // odadan çıkarılır (VoiceRoomSessionExit terminal hata).
   ref.read(pendingRoomPasswordProvider.notifier).setPassword(room.apiRoomKey, pass);
-  ref.read(vipUnlockedRoomsProvider.notifier).unlock(room.apiRoomKey);
   return true;
 }
 
