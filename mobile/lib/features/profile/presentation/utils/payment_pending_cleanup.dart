@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../notifications/presentation/providers/notifications_list_notifier.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';
 import '../providers/payment_requests_notifier.dart';
 
