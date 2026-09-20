@@ -1936,7 +1936,7 @@ class VoiceRoomLiveController
             : (room.backgroundImageUrl?.trim().isNotEmpty == true)
             ? room.backgroundImageUrl
             : state.backgroundUrl,
-        selfInRoom: state.selfInRoom || presence.isNotEmpty,
+        selfInRoom: _selfListedIn(presence) || state.selfInRoom,
       );
       if (playDjInBackground) {
         if (!_skipRemoteMusicSync) {

@@ -502,7 +502,6 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
           .setPresence(joined: true, count: merged.length);
       _startPresenceHeartbeat();
       unawaited(refreshServerPermissions());
-      unawaited(_broadcastStaffEntryIfNeeded());
       unawaited(_fetchAndApplySeats());
       unawaited(_refreshHubOnlineCountFromServer());
       _autoSeatAttempted = false;

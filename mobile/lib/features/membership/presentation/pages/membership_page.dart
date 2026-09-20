@@ -35,6 +35,7 @@ import '../widgets/membership_checkout_footer_hint.dart';
 import '../widgets/membership_payment_methods_summary.dart';
 import '../widgets/support_footer.dart';
 import '../widgets/token_package_card.dart';
+import '../../../profile/presentation/utils/payment_pending_cleanup.dart';
 
 /// Pixel-perfect Üyelikler sayfası (Material 3 · Canlifal premium).
 class MembershipPage extends ConsumerWidget {
@@ -297,6 +298,8 @@ class MembershipPage extends ConsumerWidget {
     void onPurchaseDone() {
       ref.invalidate(paymentRequestsNotifierProvider);
     }
+
+    await ref.read(paymentRequestsNotifierProvider.notifier).cancelAllPending();
 
     Future<bool> tryInstantPurchase({String? paymentMethod}) async {
       try {
@@ -888,13 +891,15 @@ class _PremiumMembershipPageState extends ConsumerState<PremiumMembershipPage> {
   @override
   void initState() {
     super.initState();
-    final plan = widget.initialPlan?.trim();
-    if (plan == null || plan.isEmpty) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final tier = membershipTierFromPlanSlug(plan);
-      if (tier != null) {
-        ref.read(membershipControllerProvider.notifier).selectTier(tier);
+      unawaited(cleanupStalePaymentRequests(ref));
+      final plan = widget.initialPlan?.trim();
+      if (plan != null && plan.isNotEmpty) {
+        final tier = membershipTierFromPlanSlug(plan);
+        if (tier != null) {
+          ref.read(membershipControllerProvider.notifier).selectTier(tier);
+        }
       }
     });
   }

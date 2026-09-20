@@ -65,7 +65,9 @@ class VoiceRoomEntity extends Equatable {
   /// Liste kartları — API bazen boş odada `onlineCount: 1` döndürür (hayalet).
   int get displayOnline {
     final primary = onlineCount > 0 ? onlineCount : userCount;
-    if (primary == 1 && onlineCount == 1 && userCount <= 0) return 0;
+    if (primary <= 0) return 0;
+    // API hayalet "1 kişi" — gerçek katılımcı yoksa kartta 0 göster.
+    if (primary == 1 && userCount <= 0 && onlineCount <= 1) return 0;
     return primary;
   }
 

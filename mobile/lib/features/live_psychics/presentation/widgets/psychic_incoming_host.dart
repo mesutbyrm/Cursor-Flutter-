@@ -25,6 +25,7 @@ import 'package:canlifal_social/features/live_psychics/presentation/providers/li
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_live_event_bus.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_push_payload.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_cancel_signal.dart';
+import 'package:canlifal_social/features/live/presentation/providers/live_active_broadcast_provider.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_incoming_call_dialog.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_status.dart';
 
@@ -240,6 +241,12 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
   void _onSseRequest(PsychicRequestEntity req) {
     if (!mounted || !_mayRunTellerBackgroundSync()) return;
     if (!req.isPending) return;
+    final liveStreamId = ref.read(liveActiveBroadcastStreamIdProvider);
+    if (_isFortuneTeller &&
+        liveStreamId != null &&
+        liveStreamId.trim().isNotEmpty) {
+      return;
+    }
     final bus = ref.read(psychicLiveEventBusProvider);
     if (!bus.isClosed) bus.add(req);
     final uid = ref.read(authControllerProvider).valueOrNull?.id;
@@ -260,6 +267,12 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
 
   Future<void> _pollApi() async {
     if (!mounted || _presenting || !_mayRunTellerBackgroundSync()) return;
+    final liveStreamId = ref.read(liveActiveBroadcastStreamIdProvider);
+    if (_isFortuneTeller &&
+        liveStreamId != null &&
+        liveStreamId.trim().isNotEmpty) {
+      return;
+    }
 
     if (_tellerProfileId == null) {
       await _ensureTellerProfile();

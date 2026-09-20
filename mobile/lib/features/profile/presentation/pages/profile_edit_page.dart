@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
@@ -93,34 +95,61 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
   Future<void> _save() async {
     setState(() => _saving = true);
     try {
-      final avatar = _localAvatarDataUrl ??
-          (_avatarUrlCtrl.text.trim().isEmpty
-              ? null
-              : _avatarUrlCtrl.text.trim());
+      String? avatarUrl = _avatarUrlCtrl.text.trim().isEmpty
+          ? null
+          : _avatarUrlCtrl.text.trim();
+      if (_localAvatarDataUrl != null && _localAvatarDataUrl!.startsWith('data:')) {
+        final comma = _localAvatarDataUrl!.indexOf(',');
+        if (comma > 0) {
+          final raw = base64Decode(_localAvatarDataUrl!.substring(comma + 1));
+          if (raw.length > 400_000) {
+            throw const ApiException(
+              'Görsel çok büyük; daha küçük bir fotoğraf seçin.',
+            );
+          }
+          final tmp = File(
+            '${Directory.systemTemp.path}/avatar_${DateTime.now().millisecondsSinceEpoch}.jpg',
+          );
+          await tmp.writeAsBytes(raw, flush: true);
+          avatarUrl = await ref
+              .read(profileAvatarServiceProvider)
+              .uploadAvatarFile(tmp);
+          await ref.read(profileAvatarServiceProvider).saveAvatarUrl(avatarUrl);
+          try {
+            await tmp.delete();
+          } catch (_) {}
+        }
+      }
+
       await ref.read(profileRepositoryProvider).updateMe(
             displayName: _displayCtrl.text.trim(),
             username: _usernameCtrl.text.trim(),
             bio: _bioCtrl.text.trim(),
-            avatarUrl: avatar,
+            avatarUrl: avatarUrl,
             favoriteTeam: _favoriteTeam,
           );
       try {
         await ref.read(profileRemoteProvider).updateProfile(
               displayName: _displayCtrl.text.trim(),
               bio: _bioCtrl.text.trim(),
-              avatarUrl: avatar,
+              avatarUrl: avatarUrl,
               city: _cityCtrl.text.trim().isEmpty ? null : _cityCtrl.text.trim(),
               zodiacSign:
                   _zodiacCtrl.text.trim().isEmpty ? null : _zodiacCtrl.text.trim(),
               favoriteTeam: _favoriteTeam,
             );
       } catch (_) {}
-      await ref.read(authControllerProvider.notifier).refreshMe(force: true);
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+      unawaited(
+        ref.read(authControllerProvider.notifier).refreshMe(force: true).timeout(
+              const Duration(seconds: 12),
+              onTimeout: () => null,
+            ),
+      );
       ref.invalidate(profileExtendedProvider);
       ref.invalidate(profileUserStatisticsProvider);
       ref.invalidate(walletBalancesProvider);
-      if (!mounted) return;
-      Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

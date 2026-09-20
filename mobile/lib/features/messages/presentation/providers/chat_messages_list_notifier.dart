@@ -7,6 +7,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/message_entities.dart';
 import '../../domain/utils/dm_message_codec.dart';
 import '../../domain/utils/dm_message_dedupe.dart';
+import '../../data/services/message_sse_service.dart';
 import 'messages_providers.dart';
 
 /// Sohbet: en yeni mesajlar önce gösterilir; yukarı kaydırınca eski mesajlar yüklenir.
@@ -117,6 +118,44 @@ class ChatMessagesListNotifier
             currentUserId: userId,
           );
     } catch (_) {}
+  }
+
+  void ingestFromSse(MessageSseEvent event, {required String? currentUserId}) {
+    final content = event.content?.trim();
+    if (content == null || content.isEmpty) return;
+    final id = event.messageId?.trim();
+    if (id != null && id.isNotEmpty) {
+      final cur = state.valueOrNull;
+      if (cur != null && cur.all.any((m) => m.id == id)) return;
+    }
+    final uid = currentUserId ?? '';
+    final sender = event.senderId?.trim() ?? '';
+    final isMine = sender.isNotEmpty && uid.isNotEmpty && sender == uid;
+    final parsed = DmMessageCodec.parseDisplay(content);
+    final entity = MessageEntity(
+      id: id?.isNotEmpty == true ? id! : 'sse-${DateTime.now().microsecondsSinceEpoch}',
+      text: parsed.displayText,
+      isMine: isMine,
+      createdAt: DateTime.now(),
+      deliveryStatus: MessageDeliveryStatus.delivered,
+      replyTo: parsed.reply,
+      forwardedFrom: parsed.forwardedFrom,
+      rawText: content,
+    );
+    final cur = state.valueOrNull;
+    if (cur == null) {
+      state = AsyncValue.data(
+        ChatMessagesListState(all: [entity], visibleCount: 1),
+      );
+      return;
+    }
+    final merged = DmMessageDedupe.merge(
+      remote: [...cur.all, entity],
+      localOptimistic: const [],
+    );
+    state = AsyncValue.data(
+      cur.copyWith(all: merged, visibleCount: merged.length),
+    );
   }
 
   void _markLocalOptimisticDelivered(String optimisticId) {

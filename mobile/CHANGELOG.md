@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.586+629 (2026-09-20) — Ödeme, DM, sesli oda, profil, canlı falcı
+
+- **Jeton / Gold:** mağaza açılışında tüm bekleyen ödeme talepleri iptal; üyelik satın almadan önce temizlik
+- **DM:** SSE olayı sohbet listesine anında eklenir; gelen kutusu mesaj akışı senkron
+- **Sesli oda:** odaya girmeden “içerideymiş” gösterimi düzeltildi; hayalet online sayısı; site geneli giriş duyurusu kaldırıldı
+- **Profil kaydet:** avatar ayrı yükleme + sayfa kapanışı donma düzeltmesi
+- **Canlı falcı:** yayıncı canlıdayken gelen seans istekleri susturulur; profilde “Canlı yayında” uyarısı
+
 ## 1.0.585+628 (2026-09-20) — DM gerçek zamanlı + sesli oda presence
 
 - **DM:** SSE yolu düzeltildi (`/api/messages/{userId}/stream`); gönderilen mesaj saat ikonunda takılı kalmaz; sohbet poll sıklaştırıldı

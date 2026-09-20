@@ -29,8 +29,8 @@ class VoiceRoomSection extends ConsumerStatefulWidget {
 
 int _voiceOnline(VoiceRoomEntity room, VoiceRoomsPresenceState presence) {
   final sse = presence.countFor(room);
-  final api = room.displayOnline;
-  return sse > api ? sse : api;
+  if (sse > 0) return sse;
+  return room.displayOnline;
 }
 
 class _VoiceRoomSectionState extends ConsumerState<VoiceRoomSection> {

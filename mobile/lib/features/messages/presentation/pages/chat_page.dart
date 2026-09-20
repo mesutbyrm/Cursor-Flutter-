@@ -121,8 +121,16 @@ class _ChatPageState extends ConsumerState<ChatPage>
                 accessToken: storage.readAccess,
                 refreshTokens: () =>
                     tryRefreshAccessToken(ref.read(dioProvider), storage),
-                onEvent: (_) {
+                onEvent: (event) {
                   if (!mounted) return;
+                  final uid =
+                      ref.read(authControllerProvider).valueOrNull?.id;
+                  ref
+                      .read(
+                        chatMessagesListNotifierProvider(widget.conversationId)
+                            .notifier,
+                      )
+                      .ingestFromSse(event, currentUserId: uid);
                   ref
                       .read(
                         chatMessagesListNotifierProvider(widget.conversationId)

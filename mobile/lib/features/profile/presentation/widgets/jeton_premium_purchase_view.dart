@@ -24,6 +24,7 @@ import '../../../notifications/presentation/providers/notifications_providers.da
 import '../../../membership/presentation/widgets/membership_pending_payment_banner.dart';
 import '../../../membership/presentation/widgets/membership_store_teaser_banner.dart';
 import '../premium_2026/profile_membership_helpers.dart';
+import '../utils/payment_pending_cleanup.dart';
 import '../../../membership/presentation/widgets/membership_store_teaser_banner.dart';
 import '../../data/jeton_packages_catalog.dart';
 import '../../data/jeton_payment_request.dart';
@@ -74,15 +75,7 @@ class _JetonPremiumPurchaseViewState
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref.read(walletBalancesProvider.notifier).refresh(force: true);
-      unawaited(
-        ref.read(paymentRequestsNotifierProvider.notifier).refresh().then(
-          (_) async {
-            await ref
-                .read(paymentRequestsNotifierProvider.notifier)
-                .cancelExpiredPending();
-          },
-        ),
-      );
+      unawaited(cleanupStalePaymentRequests(ref));
       ref.invalidate(paymentMethodsProvider);
     });
   }

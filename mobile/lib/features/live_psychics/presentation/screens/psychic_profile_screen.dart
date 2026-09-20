@@ -62,11 +62,16 @@ class PsychicProfileScreen extends ConsumerWidget {
                   if (psychic == null) {
                     return const Center(child: Text('Falcı bulunamadı.'));
                   }
+                  final selfId =
+                      ref.watch(authControllerProvider).valueOrNull?.id;
                   return _ProfileBody(
                     psychic: psychic,
                     balance: balance,
                     isStaff: isStaff,
                     booking: booking,
+                    isSelf: selfId != null &&
+                        psychic.userId != null &&
+                        selfId == psychic.userId,
                     onBook: () => _book(context, ref, psychic, balance, isStaff),
                     onTip: () => _tip(context, ref, psychic, balance, isStaff),
                   );
@@ -121,6 +126,16 @@ class PsychicProfileScreen extends ConsumerWidget {
     if (!psychic.isOnline) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Falcı şu an çevrimdışı.')),
+      );
+      return;
+    }
+    if (psychic.hasLiveBroadcast) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Falcı şu an canlı yayında — yayın bitince randevu alabilirsiniz.',
+          ),
+        ),
       );
       return;
     }
@@ -227,6 +242,7 @@ class _ProfileBody extends ConsumerWidget {
     required this.balance,
     required this.isStaff,
     required this.booking,
+    required this.isSelf,
     required this.onBook,
     required this.onTip,
   });
@@ -235,6 +251,7 @@ class _ProfileBody extends ConsumerWidget {
   final int balance;
   final bool isStaff;
   final bool booking;
+  final bool isSelf;
   final VoidCallback onBook;
   final VoidCallback onTip;
 
@@ -245,6 +262,7 @@ class _ProfileBody extends ConsumerWidget {
     final giftsAsync = ref.watch(psychicGiftsProvider(psychic.id));
     final fortuneTypes = psychicFortuneTypesForPsychic(psychic.specialties);
     final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+    final onLiveBroadcast = psychic.hasLiveBroadcast && psychic.isOnline;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
@@ -367,10 +385,45 @@ class _ProfileBody extends ConsumerWidget {
             ),
           ),
         const SizedBox(height: 16),
+        if (onLiveBroadcast) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppThemeColors.liveRed.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: AppThemeColors.liveRed.withValues(alpha: 0.45),
+              ),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.videocam_rounded, color: AppThemeColors.liveRed),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Canlı yayında — seans isteği şu an kapalı. Yayın bitince randevu açılır.',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
         SizedBox(
           width: double.infinity,
           child: FilledButton.icon(
-            onPressed: psychic.isOnline && !booking ? onBook : null,
+            onPressed: !isSelf &&
+                    psychic.isOnline &&
+                    !onLiveBroadcast &&
+                    !booking
+                ? onBook
+                : null,
             style: FilledButton.styleFrom(
               backgroundColor: AppThemeColors.accentPurple,
               minimumSize: const Size.fromHeight(50),
@@ -387,9 +440,19 @@ class _ProfileBody extends ConsumerWidget {
                       color: Colors.white,
                     ),
                   )
-                : const Icon(Icons.calendar_month_rounded),
+                : Icon(
+                    onLiveBroadcast
+                        ? Icons.live_tv_rounded
+                        : Icons.calendar_month_rounded,
+                  ),
             label: Text(
-              booking ? 'İstek gönderiliyor…' : 'Randevu Al',
+              isSelf
+                  ? 'Kendi profiliniz'
+                  : onLiveBroadcast
+                      ? 'Canlı yayında'
+                      : booking
+                          ? 'İstek gönderiliyor…'
+                          : 'Randevu Al',
               style: const TextStyle(fontWeight: FontWeight.w800),
             ),
           ),
