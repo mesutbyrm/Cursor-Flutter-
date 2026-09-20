@@ -4,21 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.584+627` |
-| Tarih (UTC) | 2026-09-20 14:48 |
-| Commit | [`e78d57d937c0fd4fad340ce29295059b5b5e3bb9`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/e78d57d937c0fd4fad340ce29295059b5b5e3bb9) |
-| İş akışı | [Run 35516655313](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35516655313) |
+| Sürüm | `1.0.585+628` |
+| Tarih (UTC) | 2026-09-20 15:35 |
+| Commit | [`8970e73858dcdc5ead345bcddab309980b09ea15`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/8970e73858dcdc5ead345bcddab309980b09ea15) |
+| İş akışı | [Run 35519043286](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35519043286) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.584+627 (2026-09-20) — Gelen kutusu, sohbet, ana sayfa, ödeme
+## 1.0.585+628 (2026-09-20) — DM gerçek zamanlı + sesli oda presence
 
-- **Gelen kutusu:** varsayılan sekme **Mesajlar**; sistem sekmesinde yalnızca platform bildirimleri (DM önizlemeleri mesajlar sekmesinde)
-- **Sohbet:** mesaj önizleme metni düzeltildi; composer alt boşluk / çift inset kaldırıldı; `/chat/` alt navbar gizlenir
-- **Ana sayfa:** hızlı erişime **Keşfet** geri eklendi; **Online fal** bölümü kaldırıldı; popüler falcı avatar URL eşlemesi; Gold/SVIP vitrin görselleri ve plan deep-link (`?plan=`)
-- **Üyelik:** anında satın alma hata durumunda checkout’a düşme; Gold kartından doğru plan seçimi
-- **Jeton/CFC:** süresi dolmuş / tarihsiz bekleyen talepler otomatik iptal; checkout öncesi temizlik
+- **DM:** SSE yolu düzeltildi (`/api/messages/{userId}/stream`); gönderilen mesaj saat ikonunda takılı kalmaz; sohbet poll sıklaştırıldı
+- **Sohbet:** composer alt boşluğu `/chat` için sıkılaştırıldı
+- **Sesli oda:** ana sayfa oda kartları SSE ile güncel kişi sayısı; çıkışta sayaç sunucudan yenilenir; giriş duyuruları artık ana sayfa kayan şeridine düşmez (yalnızca oda içi)
+- **Oda yönetimi:** kilit PATCH `locked` + `isLocked`; varsayılan **9 koltuk** (yeni oda)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
