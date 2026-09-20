@@ -15,6 +15,7 @@ import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../providers/profile_providers.dart';
 import '../widgets/premium/profile_glass.dart';
 import '../widgets/user_profile_membership_badge.dart';
+import '../widgets/user_profile_info_card.dart';
 import '../../../shorts/presentation/providers/shorts_providers.dart';
 import '../../../shorts/presentation/widgets/shorts_profile_content.dart';
 import '../widgets/user_posts_timeline.dart';
@@ -264,6 +265,9 @@ class UserProfilePage extends ConsumerWidget {
                         ),
                       ),
                     ],
+                    // Zengin bilgi kartı — şehir, burç, favori takım, katılma,
+                    // çevrimiçi, günlük seri, VIP (veri varsa görünür).
+                    UserProfileInfoCard(userId: userId),
                     const SizedBox(height: 22),
                     ShortsProfileTabs(
                       userId: userId,

@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.580+623 (2026-09-20) — Ziyaret profili zenginleştirme
+
+- **Ziyaret edilen profile "Bilgiler" kartı eklendi:** başka kullanıcının profilinde artık **çevrimiçi durumu, şehir, burç, favori takım, VIP seviye, günlük seri, katılma tarihi** çip/rozet olarak zengin şekilde gösteriliyor (veri varsa; hiç yoksa kart görünmez)
+- Kaynak: mevcut `userProfileExtendedProvider(userId)` (per-user, doğrulanmış); yeni backend çağrısı yok
+- Ziyaret profili artık: avatar/kapak + doğrulama/üyelik rozeti + istatistik + Takip/Canlı/Mesaj + Hakkında + **Bilgiler kartı** + Shorts sekmeleri + paylaşım akışı
+- Not: seviye/aldığı-gönderdiği hediye/rozet listeleri şu an yalnızca kendi profilinde (self-only provider); başkası için bunlar backend'de per-user uç gerektirir
+
 ## 1.0.579+622 (2026-09-20) — Profil: eksiklik göstergesi (kırmızı sayı) + düzen
 
 - **Profilini Tamamla kartı:** kendi profilinde eksik alan varsa **en üstte** (önce görünmesi gereken) kırmızı **eksik sayısı** + %tamamlanma çubuğu + eksik alan çipleri (Profil fotoğrafı, Görünen ad, Hakkında, Şehir, Burç, Favori takım) gösterilir; dokununca **Profil Düzenle**'ye gider. Profil tamsa hiç görünmez
