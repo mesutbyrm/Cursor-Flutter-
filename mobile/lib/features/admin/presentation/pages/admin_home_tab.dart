@@ -10,6 +10,7 @@ import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../data/services/admin_payments_sse_service.dart';
 import '../providers/admin_providers.dart';
 import '../providers/admin_panel_providers.dart';
+import '../providers/admin_moderation_providers.dart';
 import '../providers/staff_access_provider.dart';
 
 /// Admin giriş sekmesi — bildirimler + hızlı işlemler birleşti.
@@ -72,6 +73,7 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
 
     final badges = ref.watch(adminPanelBadgeCountsProvider).valueOrNull;
     final pendingCount = ref.watch(adminPendingPaymentsCountProvider);
+    final moderationCount = ref.watch(adminModerationQueueCountProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -107,7 +109,7 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
             // Bekleyen işlemler
-            if (pendingCount > 0) ...[
+            if (pendingCount > 0 || moderationCount > 0) ...[
               _SectionTitle('🔴 Bekleyen İşlemler'),
               SizedBox(
                 height: 100,
@@ -129,6 +131,16 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
                       color: AppThemeColors.accentCyan,
                       onTap: () => context.push('/admin'),
                     ),
+                    if (moderationCount > 0) ...[
+                      const SizedBox(width: 12),
+                      _NotificationCard(
+                        icon: Icons.flag_rounded,
+                        label: 'Moderation',
+                        count: moderationCount,
+                        color: AppThemeColors.liveRed,
+                        onTap: () => context.push('/admin/moderation'),
+                      ),
+                    ],
                   ],
                 ),
               ),

@@ -40,6 +40,7 @@ import '../../features/admin/presentation/pages/admin_voice_room_backgrounds_pag
 import '../../features/admin/presentation/pages/admin_gift_collection_hub_page.dart';
 import '../../features/admin/presentation/pages/admin_hub_page.dart';
 import '../../features/admin/presentation/pages/admin_home_tab.dart';
+import '../../features/admin/presentation/pages/admin_moderation_queue_page.dart';
 import '../../features/admin/presentation/pages/admin_membership_management_page.dart';
 import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
 import '../../features/admin/presentation/pages/admin_live_streams_page.dart';
@@ -673,6 +674,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin/home',
         builder: (context, state) => const AdminHomeTab(),
+      ),
+      GoRoute(
+        path: '/admin/moderation',
+        builder: (context, state) => const AdminModerationQueuePage(),
       ),
       GoRoute(
         path: '/admin/dashboard',
