@@ -717,11 +717,37 @@ class _QuickActions extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Bildirim ayarları yakında eklenecek')),
-                ),
+                onPressed: () => context.push('/canli-falcilar/settings/notifications'),
                 icon: const Icon(Icons.notifications_outline_rounded, size: 18),
                 label: const Text('Bildirimler'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => context.push('/canli-falcilar/metrics'),
+                icon: const Icon(Icons.trending_up_rounded, size: 18),
+                label: const Text('Metrikler'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => context.push('/canli-falcilar/badges'),
+                icon: const Icon(Icons.emoji_events_outlined, size: 18),
+                label: const Text('Rozetler'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.white,
                   side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
