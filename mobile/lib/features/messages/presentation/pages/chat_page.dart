@@ -7,7 +7,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/membership/membership_capability_keys.dart';
 import '../../../../core/membership/membership_capability_providers.dart';
-import '../../../../core/navigation/overlay_bottom_nav_inset.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/token_storage.dart';
@@ -405,9 +404,6 @@ class _ChatPageState extends ConsumerState<ChatPage>
 
     ref.listen(conversationsListNotifierProvider, (_, __) => _loadPeerMeta());
 
-    final location = GoRouterState.of(context).uri.path;
-    final bottomNavInset = OverlayBottomNavInset.forPath(context, location);
-
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       resizeToAvoidBottomInset: true,
@@ -527,13 +523,10 @@ class _ChatPageState extends ConsumerState<ChatPage>
                 message: _replyTarget!,
                 onClear: () => setState(() => _replyTarget = null),
               ),
-            Padding(
-              padding: EdgeInsets.only(bottom: bottomNavInset),
-              child: ChatComposerBar(
-                controller: _text,
-                onSend: _sendMessage,
-                onAction: _handleComposerAction,
-              ),
+            ChatComposerBar(
+              controller: _text,
+              onSend: _sendMessage,
+              onAction: _handleComposerAction,
             ),
           ],
         ),

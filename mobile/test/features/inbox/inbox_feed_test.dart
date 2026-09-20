@@ -20,7 +20,8 @@ void main() {
       expect(InboxTab.fromQuery('sistem'), InboxTab.system);
       expect(InboxTab.fromQuery('notifications'), InboxTab.system);
       expect(InboxTab.fromQuery('messages'), InboxTab.messages);
-      expect(InboxTab.fromQuery(null), InboxTab.all);
+      expect(InboxTab.fromQuery(null), InboxTab.messages);
+      expect(InboxTab.fromQuery('all'), InboxTab.all);
     });
   });
 
@@ -50,6 +51,32 @@ void main() {
       expect(feed, hasLength(2));
       expect(feed.first, isA<InboxSystemEntry>());
       expect(feed.last, isA<InboxDmEntry>());
+    });
+
+    test('excludes dm-like notifications from merged feed', () {
+      final feed = mergeInboxFeed(
+        conversations: const [
+          ConversationEntity(id: 'u1', title: 'Ali'),
+        ],
+        notifications: [
+          const AppNotificationEntity(
+            id: 'n-dm',
+            title: 'Yeni mesaj',
+            type: 'chat_message',
+          ),
+          AppNotificationEntity(
+            id: 'n-sys',
+            title: 'Canlı',
+            type: 'live_stream',
+            createdAt: DateTime(2026, 1, 3),
+          ),
+        ],
+      );
+      expect(feed, hasLength(2));
+      expect(
+        feed.whereType<InboxSystemEntry>().map((e) => e.notification.id),
+        ['n-sys'],
+      );
     });
   });
 

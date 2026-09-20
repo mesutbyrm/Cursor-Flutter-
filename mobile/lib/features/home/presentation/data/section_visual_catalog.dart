@@ -45,6 +45,8 @@ abstract final class SectionVisualCatalog {
       'premium' => 'yildiz-haritasi',
       'gold' => 'katina',
       'diamond' => 'cin-fali',
+      'svip' => 'melek-kartlari',
+      'super_vip' => 'melek-kartlari',
       _ => 'tarot',
     };
   }
@@ -85,6 +87,8 @@ abstract final class SectionVisualCatalog {
       'gold' => '1610374471067-ba344bb6bc42', // gold particles
       'diamond' => '1518709268805-4e9042af2176', // crystal purple
       'premium' => '1557683316-973673baf926', // sapphire nebula
+      'svip' => '1579546929518-9fa396ef48de', // sparkle crown
+      'super_vip' => '1579546929518-9fa396ef48de',
       _ => '1528454864517-dd3fba88b7fa',
     };
     return _url(id, width: width, crop: 'center');

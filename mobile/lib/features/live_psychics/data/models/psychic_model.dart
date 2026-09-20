@@ -76,8 +76,15 @@ abstract final class PsychicModel {
             'image',
             'photoUrl',
             'profileImage',
+            'profileImageUrl',
           ]) ??
-          str(user, ['avatarUrl', 'image', 'avatar']),
+          str(user, [
+            'avatarUrl',
+            'image',
+            'avatar',
+            'profileImageUrl',
+            'profileImage',
+          ]),
       isOnline: online,
       rating: _dbl(m, ['rating', 'score', 'averageRating']) != 0
           ? _dbl(m, ['rating', 'score', 'averageRating'])

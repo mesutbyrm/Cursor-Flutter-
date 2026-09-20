@@ -474,6 +474,9 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
   }
 
   Future<void> _submitRequest({String? extraReceiptRef}) async {
+    await ref
+        .read(paymentRequestsNotifierProvider.notifier)
+        .cancelExpiredPending();
     String? uploaded;
     if (_receiptImagePath != null && _receiptImagePath!.isNotEmpty) {
       uploaded = await _uploadReceiptIfNeeded();

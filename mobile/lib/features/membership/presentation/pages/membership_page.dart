@@ -326,7 +326,7 @@ class MembershipPage extends ConsumerWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(e.message)),
           );
-          return true;
+          return false;
         }
         if (e.message.contains('Yetersiz jeton') ||
             e.message.toLowerCase().contains('insufficient_jeton')) {
@@ -873,7 +873,47 @@ class _UpgradeBanner extends ConsumerWidget {
   }
 }
 
-/// Geriye uyumluluk — eski route aynı sayfayı açar.
-class PremiumMembershipPage extends MembershipPage {
-  const PremiumMembershipPage({super.key});
+/// `/premium-membership` — isteğe bağlı `?plan=` ile kademe seçimi.
+class PremiumMembershipPage extends ConsumerStatefulWidget {
+  const PremiumMembershipPage({super.key, this.initialPlan});
+
+  final String? initialPlan;
+
+  @override
+  ConsumerState<PremiumMembershipPage> createState() =>
+      _PremiumMembershipPageState();
+}
+
+class _PremiumMembershipPageState extends ConsumerState<PremiumMembershipPage> {
+  @override
+  void initState() {
+    super.initState();
+    final plan = widget.initialPlan?.trim();
+    if (plan == null || plan.isEmpty) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final tier = membershipTierFromPlanSlug(plan);
+      if (tier != null) {
+        ref.read(membershipControllerProvider.notifier).selectTier(tier);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => const MembershipPage();
+}
+
+MembershipTierId? membershipTierFromPlanSlug(String plan) {
+  final p = plan.toLowerCase();
+  if (p.contains('svip')) return MembershipTierId.svip;
+  if (p.contains('diamond')) return MembershipTierId.diamond;
+  if (p.contains('premium') || p.contains('platinum')) {
+    return MembershipTierId.premium;
+  }
+  if (p.contains('gold')) return MembershipTierId.gold;
+  if (p.contains('basic')) return MembershipTierId.basic;
+  for (final id in MembershipTierId.values) {
+    if (p == id.name) return id;
+  }
+  return null;
 }

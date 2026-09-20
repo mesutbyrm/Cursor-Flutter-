@@ -509,8 +509,21 @@ class HomeRemoteDataSource {
           _str(user, ['displayName', 'name', 'username']) ??
           'Falcı',
       category: _advisorCategory(m),
-      avatarUrl: _str(m, ['avatarUrl', 'image', 'avatar', 'photoUrl']) ??
-          _str(user, ['avatarUrl', 'image', 'avatar']),
+      avatarUrl: _str(m, [
+            'avatarUrl',
+            'image',
+            'avatar',
+            'photoUrl',
+            'profileImageUrl',
+            'profileImage',
+          ]) ??
+          _str(user, [
+            'avatarUrl',
+            'image',
+            'avatar',
+            'profileImageUrl',
+            'profileImage',
+          ]),
       isOnline: online,
       rating: _dbl(m, ['rating', 'score', 'averageRating']) != 0
           ? _dbl(m, ['rating', 'score', 'averageRating'])

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../../core/economy/presentation/providers/economy_providers.dart';
+import '../../../../membership/data/membership_catalog_fallback.dart';
 import '../../../../membership/domain/membership_package_entity.dart';
 import '../../../../membership/presentation/pages/premium_membership_page.dart';
 import '../../data/section_visual_catalog.dart';
@@ -19,44 +20,8 @@ class GoldSection extends ConsumerWidget {
   static const _cardH = 200.0;
   static const _gap = 12.0;
 
-  static const _fallbackPackages = [
-    MembershipPackageEntity(
-      id: 'basic',
-      planId: 'basic',
-      title: 'Basic',
-      durationDays: 30,
-      priceJeton: 1000,
-      bonusJeton: 250,
-      falDiscountPercent: 0,
-    ),
-    MembershipPackageEntity(
-      id: 'premium',
-      planId: 'premium',
-      title: 'Premium',
-      durationDays: 30,
-      priceJeton: 3000,
-      bonusJeton: 3500,
-      falDiscountPercent: 0,
-    ),
-    MembershipPackageEntity(
-      id: 'gold',
-      planId: 'gold',
-      title: 'Gold',
-      durationDays: 30,
-      priceJeton: 2000,
-      bonusJeton: 1500,
-      falDiscountPercent: 0,
-    ),
-    MembershipPackageEntity(
-      id: 'diamond',
-      planId: 'diamond',
-      title: 'Diamond',
-      durationDays: 30,
-      priceJeton: 5000,
-      bonusJeton: 7500,
-      falDiscountPercent: 0,
-    ),
-  ];
+  static List<MembershipPackageEntity> get _fallbackPackages =>
+      fallbackMembershipPackages();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -138,7 +103,11 @@ class GoldSection extends ConsumerWidget {
                 height: _cardH,
                 accentColor: theme.accent,
                 shimmer: theme.shimmer,
-                onTap: () => context.push('/premium-membership'),
+                onTap: () {
+                  final plan =
+                      pkg.planId.isNotEmpty ? pkg.planId : pkg.id;
+                  context.push('/premium-membership?plan=$plan');
+                },
               );
             },
           ),
@@ -162,6 +131,7 @@ _TierTheme _tierTheme(MembershipPackageEntity pkg) {
     'premium' => const _TierTheme(accent: Color(0xFF38BDF8)),
     'gold' => const _TierTheme(accent: Color(0xFFFFD700)),
     'diamond' => const _TierTheme(accent: Color(0xFFA855F7)),
+    'svip' => const _TierTheme(accent: Color(0xFFFF2D7A), shimmer: true),
     _ => const _TierTheme(accent: Color(0xFFA020F0)),
   };
 }

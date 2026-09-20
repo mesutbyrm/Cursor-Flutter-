@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.584+627 (2026-09-20) — Gelen kutusu, sohbet, ana sayfa, ödeme
+
+- **Gelen kutusu:** varsayılan sekme **Mesajlar**; sistem sekmesinde yalnızca platform bildirimleri (DM önizlemeleri mesajlar sekmesinde)
+- **Sohbet:** mesaj önizleme metni düzeltildi; composer alt boşluk / çift inset kaldırıldı; `/chat/` alt navbar gizlenir
+- **Ana sayfa:** hızlı erişime **Keşfet** geri eklendi; **Online fal** bölümü kaldırıldı; popüler falcı avatar URL eşlemesi; Gold/SVIP vitrin görselleri ve plan deep-link (`?plan=`)
+- **Üyelik:** anında satın alma hata durumunda checkout’a düşme; Gold kartından doğru plan seçimi
+- **Jeton/CFC:** süresi dolmuş / tarihsiz bekleyen talepler otomatik iptal; checkout öncesi temizlik
+
 ## 1.0.583+626 (2026-09-20) — Ana sayfa + gelen kutusu UX
 
 - Ana sayfa üst bar: **tek gelen kutusu** ikonu (mesaj + sistem bildirimi); ayrı zil kaldırıldı; üst **Keşfet** pill kaldırıldı

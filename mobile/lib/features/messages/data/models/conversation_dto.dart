@@ -2,6 +2,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../../core/util/json_util.dart';
 import '../../domain/entities/message_entities.dart';
+import '../../domain/utils/conversation_preview_text.dart';
 
 part 'conversation_dto.freezed.dart';
 
@@ -24,12 +25,17 @@ abstract class ConversationDto with _$ConversationDto {
     final peerMap = peer is Map ? asJsonMap(peer) : <String, dynamic>{};
     final peerId = pick(peerMap, ['id', 'userId'])?.toString() ?? '';
 
-    var subtitle = pick(json, ['lastMessage', 'preview', 'subtitle'])?.toString();
+    var subtitle = conversationPreviewText(
+      pick(json, ['lastMessage', 'preview', 'subtitle'])?.toString(),
+    );
     DateTime? lastMessageAt;
     final lastMsg = pick(json, ['lastMessage']);
     if (lastMsg is Map) {
       final lm = asJsonMap(lastMsg);
-      subtitle = pick(lm, ['content', 'text'])?.toString() ?? subtitle;
+      subtitle = conversationPreviewText(
+            pick(lm, ['content', 'text', 'body', 'message'])?.toString(),
+          ) ??
+          subtitle;
       lastMessageAt = DateTime.tryParse(
         pick(lm, ['createdAt', 'created_at', 'timestamp'])?.toString() ?? '',
       );
@@ -48,6 +54,9 @@ abstract class ConversationDto with _$ConversationDto {
         'avatarUrl',
         'avatar_url',
         'photoUrl',
+        'profileImageUrl',
+        'profileImage',
+        'avatar',
       ]) as String?,
       unreadCount: asInt(pick(json, ['unreadCount', 'unread', 'badge'])),
       isOnline: asBool(pick(json, ['isOnline', 'online', 'is_online'])),

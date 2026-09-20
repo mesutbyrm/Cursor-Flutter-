@@ -18,7 +18,6 @@ import 'home_fortune_request_types_section.dart';
 import 'home_games_section.dart';
 import 'home_growth_teasers_section.dart';
 import 'home_footer_section.dart';
-import 'home_online_fal_section.dart';
 import 'home_social_strip_section.dart';
 import 'home_promo_popup_banner.dart';
 import 'home_viewport_section.dart';
@@ -132,15 +131,6 @@ abstract final class HomePageSections {
         child: HomeDeferredSection(
           delay: StartupPerf.homeFortuneSectionDelay,
           child: HomeFortuneRequestTypesSection(),
-        ),
-      ),
-      SliverToBoxAdapter(
-        child: HomeDeferredSection(
-          delay: StartupPerf.homeFortuneSectionDelay,
-          child: HomeViewportSection(
-            estimatedHeight: 140,
-            child: HomeOnlineFalSection(),
-          ),
         ),
       ),
       const SliverToBoxAdapter(

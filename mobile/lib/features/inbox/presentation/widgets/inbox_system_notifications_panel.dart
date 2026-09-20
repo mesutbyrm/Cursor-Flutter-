@@ -25,6 +25,7 @@ import '../../../notifications/presentation/providers/notifications_list_notifie
 import '../../../notifications/presentation/providers/notifications_providers.dart';
 import '../../../notifications/presentation/widgets/notification_permission_banner.dart';
 import '../../../voice_hub/presentation/utils/voice_room_session_utils.dart';
+import '../../domain/inbox_notification_filters.dart';
 import '../utils/inbox_notification_visual.dart';
 
 /// Sistem bildirimleri listesi — canlı yayın, sesli oda, kazanç vb.
@@ -150,15 +151,20 @@ class _InboxSystemNotificationsPanelState
               action: _refresh,
             ),
             data: (state) {
-              if (state.all.isEmpty) {
+              final systemOnly = filterSystemNotifications(state.all);
+              if (systemOnly.isEmpty) {
                 return const DiscoverEmptyState(
                   icon: Icons.notifications_none_rounded,
                   message:
                       'Henüz sistem bildirimin yok.\nCanlı yayın, sesli oda, kazanç ve diğer uyarılar burada görünür.',
                 );
               }
+              final filteredState = NotificationsListState(
+                all: systemOnly,
+                visibleCount: systemOnly.length.clamp(0, state.visibleCount),
+              );
               return _InboxSystemListView(
-                state: state,
+                state: filteredState,
                 fmt: fmt,
                 scrollController: _scroll,
                 padding: widget.padding,

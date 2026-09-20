@@ -657,7 +657,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/premium-membership',
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
-          child: const PremiumMembershipPage(),
+          child: PremiumMembershipPage(
+            initialPlan: state.uri.queryParameters['plan'],
+          ),
         ),
       ),
       GoRoute(

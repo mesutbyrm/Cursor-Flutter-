@@ -10,6 +10,12 @@ class HomeRefQuickAccess extends StatelessWidget {
 
   static const _actions = <_QuickAccessItem>[
     _QuickAccessItem(
+      label: 'Keşfet',
+      icon: Icons.explore_rounded,
+      route: '/shorts',
+      colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
+    ),
+    _QuickAccessItem(
       label: 'Sesli Oda',
       icon: Icons.mic_rounded,
       route: '/voice-rooms',

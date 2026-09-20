@@ -64,8 +64,11 @@ class CfcPaymentRequestEntity {
   }
 
   bool get shouldAutoCancel {
+    if (!isPending) return false;
+    final created = createdDate;
+    if (created == null) return true;
     final left = timeLeft;
-    return isPending && left != null && left.inMilliseconds <= 0;
+    return left != null && left.inMilliseconds <= 0;
   }
 
   bool get isCfc => requestType != 'jeton';

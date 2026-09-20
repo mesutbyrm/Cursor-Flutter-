@@ -1,5 +1,6 @@
 import '../../messages/domain/entities/message_entities.dart';
 import '../../notifications/domain/entities/app_notification_entity.dart';
+import 'inbox_notification_filters.dart';
 
 /// Birleşik gelen kutusu satırı — DM veya sistem bildirimi.
 sealed class InboxFeedEntry {
@@ -40,9 +41,10 @@ List<InboxFeedEntry> mergeInboxFeed({
   required List<ConversationEntity> conversations,
   required List<AppNotificationEntity> notifications,
 }) {
+  final systemRows = filterSystemNotifications(notifications);
   final out = <InboxFeedEntry>[
     for (final c in conversations) InboxDmEntry(c),
-    for (final n in notifications) InboxSystemEntry(n),
+    for (final n in systemRows) InboxSystemEntry(n),
   ]..sort((a, b) => b.sortTime.compareTo(a.sortTime));
   return out;
 }

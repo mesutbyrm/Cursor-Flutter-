@@ -22,7 +22,7 @@ import '../widgets/inbox_system_notifications_panel.dart';
 class InboxPage extends ConsumerStatefulWidget {
   const InboxPage({
     super.key,
-    this.initialTab = InboxTab.all,
+    this.initialTab = InboxTab.messages,
   });
 
   final InboxTab initialTab;

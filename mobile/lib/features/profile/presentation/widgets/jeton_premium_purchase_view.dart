@@ -74,7 +74,15 @@ class _JetonPremiumPurchaseViewState
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref.read(walletBalancesProvider.notifier).refresh(force: true);
-      ref.read(paymentRequestsNotifierProvider.notifier).refresh();
+      unawaited(
+        ref.read(paymentRequestsNotifierProvider.notifier).refresh().then(
+          (_) async {
+            await ref
+                .read(paymentRequestsNotifierProvider.notifier)
+                .cancelExpiredPending();
+          },
+        ),
+      );
       ref.invalidate(paymentMethodsProvider);
     });
   }
