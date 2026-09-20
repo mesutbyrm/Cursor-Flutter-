@@ -59,6 +59,11 @@ import '../../features/admin/presentation/pages/admin_system_config_page.dart';
 import '../../features/admin/presentation/pages/admin_advanced_reporting_page.dart';
 import '../../features/admin/presentation/pages/admin_preferences_page.dart';
 import '../../features/admin/presentation/pages/admin_notification_manager_page.dart';
+import '../../features/admin/presentation/pages/admin_audit_logs_page.dart';
+import '../../features/admin/presentation/pages/admin_user_sessions_page.dart';
+import '../../features/admin/presentation/pages/admin_security_dashboard_page.dart';
+import '../../features/admin/presentation/pages/admin_feature_flags_page.dart';
+import '../../features/admin/presentation/pages/admin_email_templates_page.dart';
 import '../../features/admin_web/presentation/pages/admin_web_panel_page.dart';
 import '../../features/fortune/presentation/pages/fortune_tarot_hub_page.dart';
 import '../../features/fortune/presentation/pages/fortune_types_all_page.dart';
@@ -1146,6 +1151,41 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
           child: const AdminNotificationManagerPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/admin/audit-logs',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const AdminAuditLogsPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/admin/user-sessions',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const AdminUserSessionsPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/admin/security',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const AdminSecurityDashboardPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/admin/feature-flags',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const AdminFeatureFlagsPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/admin/email-templates',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const AdminEmailTemplatesPage(),
         ),
       ),
       GoRoute(

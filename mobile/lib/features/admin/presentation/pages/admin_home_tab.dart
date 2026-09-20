@@ -561,6 +561,31 @@ class _QuickActionsGrid extends StatelessWidget {
           label: 'Bildirimler',
           onTap: () => context.push('/admin/notification-manager'),
         ),
+        _ActionButton(
+          icon: Icons.assignment_rounded,
+          label: 'Denetim Günlüğü',
+          onTap: () => context.push('/admin/audit-logs'),
+        ),
+        _ActionButton(
+          icon: Icons.devices_rounded,
+          label: 'Oturumlar',
+          onTap: () => context.push('/admin/user-sessions'),
+        ),
+        _ActionButton(
+          icon: Icons.security_rounded,
+          label: 'Güvenlik',
+          onTap: () => context.push('/admin/security'),
+        ),
+        _ActionButton(
+          icon: Icons.toggle_on_rounded,
+          label: 'Özellik Bayrakları',
+          onTap: () => context.push('/admin/feature-flags'),
+        ),
+        _ActionButton(
+          icon: Icons.mail_rounded,
+          label: 'E-posta Şablonları',
+          onTap: () => context.push('/admin/email-templates'),
+        ),
       ],
     );
   }
