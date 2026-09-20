@@ -481,12 +481,12 @@ class _QuickActionsGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GridView.count(
-      crossAxisCount: 2,
+      crossAxisCount: 3,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       mainAxisSpacing: 10,
       crossAxisSpacing: 10,
-      childAspectRatio: 1.3,
+      childAspectRatio: 1.1,
       children: [
         _ActionButton(
           icon: Icons.person_add_rounded,
@@ -497,6 +497,26 @@ class _QuickActionsGrid extends StatelessWidget {
           icon: Icons.manage_accounts_rounded,
           label: 'Kullanıcı Yönet',
           onTap: () => context.push('/admin/users'),
+        ),
+        _ActionButton(
+          icon: Icons.dashboard_rounded,
+          label: 'Dashboard',
+          onTap: () => context.push('/admin/dashboard'),
+        ),
+        _ActionButton(
+          icon: Icons.flag_rounded,
+          label: 'Moderation',
+          onTap: () => context.push('/admin/moderation'),
+        ),
+        _ActionButton(
+          icon: Icons.history_rounded,
+          label: 'Activity Log',
+          onTap: () => context.push('/admin/activity-log'),
+        ),
+        _ActionButton(
+          icon: Icons.trending_up_rounded,
+          label: 'Bulk Ops',
+          onTap: () => context.push('/admin/bulk-operations'),
         ),
         if (access.canManageGifts) ...[
           _ActionButton(
@@ -509,6 +529,11 @@ class _QuickActionsGrid extends StatelessWidget {
             label: 'Efektler',
             onTap: () => context.push('/admin/site-animations'),
           ),
+          _ActionButton(
+            icon: Icons.vpn_key_rounded,
+            label: 'API Keys',
+            onTap: () => context.push('/admin/system-config'),
+          ),
         ] else ...[
           _ActionButton(
             icon: Icons.settings_rounded,
@@ -516,9 +541,14 @@ class _QuickActionsGrid extends StatelessWidget {
             onTap: () => context.push('/admin/panel'),
           ),
           _ActionButton(
-            icon: Icons.dashboard_rounded,
-            label: 'Dashboard',
-            onTap: () => context.push('/admin/dashboard'),
+            icon: Icons.people_rounded,
+            label: 'Üyelik Yönet',
+            onTap: () => context.push('/admin/membership-management'),
+          ),
+          _ActionButton(
+            icon: Icons.phone_in_talk_rounded,
+            label: 'Sesli Odalar',
+            onTap: () => context.push('/admin/voice-rooms'),
           ),
         ],
       ],
