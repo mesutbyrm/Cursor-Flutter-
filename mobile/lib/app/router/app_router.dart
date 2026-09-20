@@ -175,6 +175,8 @@ import '../../features/live_psychics/presentation/screens/psychics_list_screen.d
 import '../../features/live_psychics/presentation/screens/psychic_analytics_screen.dart';
 import '../../features/live_psychics/presentation/screens/psychic_earnings_screen.dart';
 import '../../features/live_psychics/presentation/screens/psychic_profile_edit_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_schedule_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_reviews_screen.dart';
 import '../../features/agency/presentation/pages/agency_applications_page.dart';
 import '../../features/agency/presentation/pages/agency_dashboard_screen.dart';
 import '../../features/cfc_arena/presentation/pages/cfc_arena_contest_page.dart';
@@ -1480,6 +1482,20 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
                   key: state.pageKey,
                   child: const PsychicProfileEditScreen(),
+                ),
+              ),
+              GoRoute(
+                path: 'schedule',
+                pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+                  key: state.pageKey,
+                  child: const PsychicScheduleScreen(),
+                ),
+              ),
+              GoRoute(
+                path: 'reviews',
+                pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+                  key: state.pageKey,
+                  child: const PsychicReviewsScreen(),
                 ),
               ),
             ],
