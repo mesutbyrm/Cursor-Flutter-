@@ -147,7 +147,7 @@ final aiCopilotSuggestionsProvider = FutureProvider.family<
 class GenerateSuggestionNotifier extends StateNotifier<AsyncValue<AICopilotSuggestion>> {
   final AICopilotService _service;
 
-  GenerateSuggestionNotifier(this._service) : super(const AsyncValue.data(null as dynamic));
+  GenerateSuggestionNotifier(this._service) : super(const AsyncValue.data(null));
 
   Future<void> generate({
     required String prompt,

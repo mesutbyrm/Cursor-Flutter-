@@ -76,9 +76,9 @@ class ShareSettingsScreen extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Varsayılan Gizlilik: ${settings.defaultPrivacy}',
-                              style: TextStyle(fontSize: 13),
+                              style: const TextStyle(fontSize: 13),
                             ),
                             const SizedBox(height: 8),
                             SwitchListTile(
