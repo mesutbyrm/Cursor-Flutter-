@@ -1100,6 +1100,108 @@ abstract final class ApiEndpoints {
 
   static const userMeStreamStatsEngagement = '/api/users/me/stream-stats/engagement';
 
+  // --- Yüksek Öncelik: Yayın Açma Kampanyaları ---
+  static String videoStreamCampaignStart(String streamId) =>
+      '/api/video-streams/$streamId/campaign/start';
+
+  static const userCampaignsActive = '/api/users/me/campaigns/active';
+
+  static String videoStreamCampaignCheckEligibility(String streamId) =>
+      '/api/video-streams/$streamId/campaign/check-eligibility';
+
+  static String videoStreamCampaignClaimReward(String streamId, String campaignId) =>
+      '/api/video-streams/$streamId/campaign/$campaignId/claim-reward';
+
+  static const userDailyBonus = '/api/users/me/daily-bonus';
+
+  static const userDailyBonusClaim = '/api/users/me/daily-bonus/claim';
+
+  static const userDailyBonusStatus = '/api/users/me/daily-bonus/status';
+
+  // --- Yüksek Öncelik: PK Savaşı İleri Özellikleri ---
+  static String pkBattleRewardsCalculate(String battleId) =>
+      '/api/pk-battles/$battleId/rewards/calculate';
+
+  static String pkBattleRewardsCreate(String battleId) =>
+      '/api/pk-battles/$battleId/rewards';
+
+  static String pkBattleRewardsDistribute(String battleId) =>
+      '/api/pk-battles/$battleId/rewards/distribute';
+
+  static String pkBattleEffectsCreate(String battleId) =>
+      '/api/pk-battles/$battleId/effects';
+
+  static String pkBattleEffectsList(String battleId) =>
+      '/api/pk-battles/$battleId/effects';
+
+  static String pkBattleSponsorshipsCreate(String battleId) =>
+      '/api/pk-battles/$battleId/sponsorships';
+
+  static String pkBattleSponsorshipsList(String battleId) =>
+      '/api/pk-battles/$battleId/sponsorships';
+
+  static String pkBattleSponsorshipDistributeRewards(String battleId) =>
+      '/api/pk-battles/$battleId/sponsorships/distribute-rewards';
+
+  // --- Yüksek Öncelik: Hediye Sistemi İleri Özellikleri ---
+  static const giftsCreateCombo = '/api/gifts/combos';
+
+  static const giftsDetectCombo = '/api/gifts/detect-combo';
+
+  static const giftsActiveCombos = '/api/gifts/combos/active';
+
+  static const giftBoxesCreate = '/api/gifts/boxes';
+
+  static String giftBoxOpen(String boxId) =>
+      '/api/gifts/boxes/$boxId/open';
+
+  static String videoStreamGiftBoxes(String streamId) =>
+      '/api/video-streams/$streamId/gift-boxes';
+
+  static String giftBoxStats(String boxId) =>
+      '/api/gifts/boxes/$boxId/stats';
+
+  static const giftsEffectsCreate = '/api/gifts/effects';
+
+  static String giftEffects(String giftId) =>
+      '/api/gifts/$giftId/effects';
+
+  static const giftsEffectsExclusive = '/api/gifts/effects/exclusive';
+
+  static const giftsEffectsPremium = '/api/gifts/effects/premium';
+
+  // --- Yüksek Öncelik: Yayım İçi Üyelik & Token İndirim ---
+  static String videoStreamMembershipOffers(String streamId) =>
+      '/api/video-streams/$streamId/membership-offers';
+
+  static String videoStreamMembershipOffersActive(String streamId) =>
+      '/api/video-streams/$streamId/membership-offers/active';
+
+  static String membershipOfferPurchase(String offerId) =>
+      '/api/membership-offers/$offerId/purchase';
+
+  static String membershipOfferStats(String offerId) =>
+      '/api/membership-offers/$offerId/stats';
+
+  static String videoStreamTokenPackages(String streamId) =>
+      '/api/video-streams/$streamId/token-packages';
+
+  static String tokenPackageValue(String packageId) =>
+      '/api/token-packages/$packageId/value';
+
+  static String tokenPackagePurchase(String packageId) =>
+      '/api/token-packages/$packageId/purchase';
+
+  static const userStreamRewards = '/api/users/me/stream-rewards';
+
+  static const userStreamRewardsTotal = '/api/users/me/stream-rewards/total';
+
+  static String streamRewardClaim(String rewardId) =>
+      '/api/stream-rewards/$rewardId/claim';
+
+  static String streamRewardGiftToHost(String rewardId, String hostId) =>
+      '/api/stream-rewards/$rewardId/gift-to-host/$hostId';
+
   /// Public hediye JSON kataloğu. Production `/api/gifts` sayfa route'udur.
   static const giftsCatalog = giftsTypes;
 

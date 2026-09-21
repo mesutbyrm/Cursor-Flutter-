@@ -138,6 +138,11 @@ model User {
   hostRecordings StreamRecording[] @relation("HostRecordings")
   hostStreamStats HostStreamStats? @relation("HostStreamStats")
 
+  streamCampaigns StreamLaunchCampaign[] @relation("StreamCampaigns")
+  dailyStreamBonus DailyStreamBonus? @relation("DailyStreamBonus")
+  pkSponsors PkBattleSponsor[] @relation("PkSponsors")
+  streamPurchaseRewards StreamPurchaseReward[] @relation("StreamPurchaseRewards")
+
   @@index([referredByUserId])
   @@index([referralCode])
 }
@@ -2273,4 +2278,247 @@ model HostStreamStats {
   @@index([totalRevenue])
   @@index([totalGiftsReceived])
   @@map("host_stream_stats")
+}
+
+// === YÜKSEK ÖNCELIK ÖZELLIKLER ===
+
+// 1. YAYIN AÇMA KAMPANYALARI
+model StreamLaunchCampaign {
+  id String @id @default(cuid())
+  hostId String
+  host User @relation("StreamCampaigns", fields: [hostId], references: [id], onDelete: Cascade)
+
+  campaignType String
+  title String
+  description String?
+
+  rewardType String
+  rewardValue Int
+  rewardMultiplier Float @default(1.0)
+
+  minViewers Int @default(0)
+  minDuration Int @default(0)
+  targetGiftAmount Int @default(0)
+
+  status String @default("active")
+  startedAt DateTime
+  endsAt DateTime?
+  claimedRewardAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([hostId, status])
+  @@index([rewardType])
+  @@map("stream_launch_campaigns")
+}
+
+model DailyStreamBonus {
+  id String @id @default(cuid())
+  hostId String @unique
+  host User @relation("DailyStreamBonus", fields: [hostId], references: [id], onDelete: Cascade)
+
+  streakDays Int @default(0)
+  lastStreamDate DateTime?
+
+  totalBonusEarned Int @default(0)
+  bonusPerStream Int @default(100)
+  streakMultiplier Float @default(1.0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("daily_stream_bonuses")
+}
+
+// 2. PK SAVAŞI İLERİ ÖZELLIKLERI
+model PkBattleReward {
+  id String @id @default(cuid())
+  battleId String @unique
+
+  winnerRewardTokens Int @default(0)
+  winnerRewardCfc Int @default(0)
+  loserConsolationTokens Int @default(0)
+
+  totalViewersCost Int @default(0)
+  totalGiftsCost Int @default(0)
+
+  distributedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@map("pk_battle_rewards")
+}
+
+model PkBattleEffect {
+  id String @id @default(cuid())
+  battleId String
+
+  winnerId String
+  loserId String
+
+  effectType String
+  intensity String @default("normal")
+  durationSeconds Int @default(5)
+
+  soundEnabled Boolean @default(true)
+  particleCount Int @default(100)
+
+  createdAt DateTime @default(now())
+
+  @@index([battleId])
+  @@map("pk_battle_effects")
+}
+
+model PkBattleSponsor {
+  id String @id @default(cuid())
+  battleId String
+  sponsorId String
+  sponsor User @relation("PkSponsors", fields: [sponsorId], references: [id], onDelete: Cascade)
+
+  sponsoredTeamId String
+  sponsorshipAmount Int
+  rewardShare Float @default(0.1)
+
+  sponsorshipMessage String?
+  isHighlighted Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([battleId])
+  @@index([sponsorId])
+  @@map("pk_battle_sponsors")
+}
+
+// 3. HEDİYE SİSTEM İLERİ ÖZELLIKLERI
+model GiftCombo {
+  id String @id @default(cuid())
+
+  name String
+  description String?
+
+  requiredGiftIds String[]
+  comboEffectType String
+
+  bonusMultiplier Float @default(1.5)
+  extraTokenReward Int @default(0)
+  exclusiveEmoji String?
+
+  isLimited Boolean @default(false)
+  limitEndDate DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([comboEffectType])
+  @@map("gift_combos")
+}
+
+model GiftBox {
+  id String @id @default(cuid())
+  streamId String
+  hostId String
+
+  name String
+  description String?
+
+  possibleGifts String[]
+  boxPrice Int
+  expectedValue Int
+  rarity String
+
+  animation String?
+  unboxEffect String
+
+  totalBoxesSold Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([streamId, rarity])
+  @@map("gift_boxes")
+}
+
+model AnimatedGiftEffect {
+  id String @id @default(cuid())
+  giftId String
+
+  effectName String
+  effectType String
+
+  duration Int @default(3000)
+  animationUrl String
+  soundUrl String?
+
+  particleType String?
+  particleColor String?
+
+  isExclusive Boolean @default(false)
+  requiresPremium Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@unique([giftId, effectType])
+  @@map("animated_gift_effects")
+}
+
+// 4. YAYIM İÇİ ÜYELİK & TOKEN İNDİRİM
+model LiveStreamMembershipOffer {
+  id String @id @default(cuid())
+  streamId String
+  hostId String
+
+  membershipType String
+  basePriceTokens Int
+  discountPercent Int @default(0)
+
+  discountStartsAt DateTime
+  discountEndsAt DateTime?
+
+  limitPerStream Int?
+  soldCount Int @default(0)
+
+  offerMessage String?
+  badgeForPurchasers String?
+
+  createdAt DateTime @default(now())
+
+  @@index([streamId])
+  @@map("live_stream_membership_offers")
+}
+
+model LiveStreamTokenPackage {
+  id String @id @default(cuid())
+  streamId String
+  hostId String
+
+  packageName String
+  tokenAmount Int
+  baseCost Int
+  discountedCost Int
+  bonusTokens Int @default(0)
+
+  bonusMessage String?
+  limitPerStream Int?
+  soldCount Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([streamId, tokenAmount])
+  @@map("live_stream_token_packages")
+}
+
+model StreamPurchaseReward {
+  id String @id @default(cuid())
+  purchaseId String
+  userId String
+  user User @relation("StreamPurchaseRewards", fields: [userId], references: [id], onDelete: Cascade)
+
+  rewardType String
+  rewardValue String
+
+  giftedToStreamHostId String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("stream_purchase_rewards")
 }
