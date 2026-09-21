@@ -797,6 +797,23 @@ class _QuickActions extends StatelessWidget {
             ),
           ],
         ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () =>
+                    context.push('/canli-falcilar/message-templates'),
+                icon: const Icon(Icons.mail_outline_rounded, size: 18),
+                label: const Text('Mesaj Şablonları'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                ),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }

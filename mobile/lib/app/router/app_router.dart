@@ -167,6 +167,7 @@ import '../../features/live_psychics/presentation/screens/psychic_gamification_s
 import '../../features/live_psychics/presentation/screens/psychic_referral_program_screen.dart';
 import '../../features/live_psychics/presentation/screens/psychic_customer_chemistry_screen.dart';
 import '../../features/live_psychics/presentation/screens/psychic_notifications_settings_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_message_templates_screen.dart';
 import '../../features/agency/presentation/pages/agency_applications_page.dart';
 import '../../features/agency/presentation/pages/agency_dashboard_screen.dart';
 import '../../features/cfc_arena/presentation/pages/cfc_arena_contest_page.dart';
@@ -1538,6 +1539,20 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
               key: state.pageKey,
               child: const PsychicNotificationsSettingsScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'message-templates',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicMessageTemplatesScreen(),
             ),
           ),
           GoRoute(
