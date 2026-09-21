@@ -121,6 +121,11 @@ model User {
   userVoiceStats UserVoiceStats?
   roomLeaderboards RoomLeaderboard[]
 
+  roomActivityLogs RoomActivityLog[]
+  roomVisits RoomVisit[]
+  roomFavorites RoomFavorite[]
+  userBadges UserBadge[]
+
   @@index([referredByUserId])
   @@index([referralCode])
 }
@@ -1728,4 +1733,145 @@ model AgoraToken {
   @@index([channelName, createdAt])
   @@index([tokenExpiration])
   @@map("agora_tokens")
+}
+
+/// Feature 45: Oda Bilgi Sistemi
+model RoomInfo {
+  id String @id @default(cuid())
+  roomId String @unique
+  
+  category String?
+  topic String?
+  tags String[]
+  description String?
+  isVerified Boolean @default(false)
+  verifiedAt DateTime?
+  
+  totalVisits Int @default(0)
+  totalFavorites Int @default(0)
+  averageRating Float @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([roomId])
+  @@index([isVerified])
+  @@index([category])
+  @@map("room_info")
+}
+
+/// Feature 46: Gizlilik Seviyeleri
+model RoomPrivacy {
+  id String @id @default(cuid())
+  roomId String @unique
+  
+  privacyLevel String @default("public")
+  password String?
+  allowedUserIds String[]
+  blockedUserIds String[]
+  
+  isPasswordProtected Boolean @default(false)
+  inviteOnly Boolean @default(false)
+  friendsOnly Boolean @default(false)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([roomId])
+  @@index([privacyLevel])
+  @@map("room_privacy")
+}
+
+/// Feature 47: Oda Aktivite Logları
+model RoomActivityLog {
+  id String @id @default(cuid())
+  roomId String
+  userId String?
+  user User? @relation("RoomActivityLogs", fields: [userId], references: [id], onDelete: SetNull)
+  
+  action String
+  details String?
+  metadata Json?
+  
+  createdAt DateTime @default(now())
+  
+  @@index([roomId, createdAt])
+  @@index([userId, createdAt])
+  @@index([action])
+  @@map("room_activity_logs")
+}
+
+/// Feature 48: Oda Ziyaret Tarihi
+model RoomVisit {
+  id String @id @default(cuid())
+  roomId String
+  userId String
+  user User @relation("RoomVisits", fields: [userId], references: [id], onDelete: Cascade)
+  
+  visitedAt DateTime @default(now())
+  durationSeconds Int @default(0)
+  
+  @@unique([roomId, userId, visitedAt])
+  @@index([roomId, visitedAt])
+  @@index([userId, visitedAt])
+  @@map("room_visits")
+}
+
+/// Feature 48: Oda Favorileri
+model RoomFavorite {
+  id String @id @default(cuid())
+  roomId String
+  userId String
+  user User @relation("RoomFavorites", fields: [userId], references: [id], onDelete: Cascade)
+  
+  rating Int?
+  notes String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([roomId, userId])
+  @@index([roomId])
+  @@index([userId, createdAt])
+  @@map("room_favorites")
+}
+
+/// Feature 49: Oda Başarıları/Rozetleri
+model RoomAchievement {
+  id String @id @default(cuid())
+  roomId String
+  
+  name String
+  description String?
+  icon String?
+  
+  triggerType String
+  triggerValue Int
+  
+  isActive Boolean @default(true)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([roomId, isActive])
+  @@map("room_achievements")
+}
+
+/// Kullanıcı Rozet Ödülü
+model UserBadge {
+  id String @id @default(cuid())
+  userId String
+  user User @relation("UserBadges", fields: [userId], references: [id], onDelete: Cascade)
+  
+  badgeType String
+  badgeName String
+  badgeIcon String?
+  badgeDescription String?
+  
+  earnedAt DateTime @default(now())
+  
+  @@unique([userId, badgeType])
+  @@index([userId, earnedAt])
+  @@index([badgeType])
+  @@map("user_badges")
 }

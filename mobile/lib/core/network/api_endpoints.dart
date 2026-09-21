@@ -755,6 +755,38 @@ abstract final class ApiEndpoints {
   static String agoraTokenChannel(String channelName) => '/api/agora/token/$channelName';
   static String agoraTokenRevoke(String tokenId) => '/api/agora/token/$tokenId';
 
+  /// Oda Bilgi Sistemi (kategori, etiket, doğrulama).
+  static String roomInfo(String roomId) => '/api/rooms/$roomId/info';
+  static String roomVerify(String roomId) => '/api/rooms/$roomId/verify';
+  static const roomSearchByCategory = '/api/rooms/search/category';
+  static const roomSearchByTag = '/api/rooms/search/tag';
+  static const roomsVerified = '/api/rooms/verified';
+
+  /// Oda Gizlilik Seviyeleri (public, invite-only, password, friends-only).
+  static String roomPrivacy(String roomId) => '/api/rooms/$roomId/privacy';
+  static String roomVerifyAccess(String roomId) => '/api/rooms/$roomId/verify-access';
+  static String roomAllowUser(String roomId, String userId) => '/api/rooms/$roomId/allow-user/$userId';
+  static String roomBlockUser(String roomId, String userId) => '/api/rooms/$roomId/block-user/$userId';
+
+  /// Oda Aktivite Logları (olay izleme).
+  static String roomActivity(String roomId) => '/api/rooms/$roomId/activity';
+  static String roomActivityStats(String roomId) => '/api/rooms/$roomId/activity/stats';
+  static String roomActivityByAction(String roomId, String action) => '/api/rooms/$roomId/activity/$action';
+
+  /// Oda Ziyaret Tarihi & Favoriler.
+  static const userRoomHistory = '/api/user/room-history';
+  static const userFavorites = '/api/user/favorites';
+  static const userMostVisitedRooms = '/api/user/most-visited-rooms';
+  static String roomVisit(String roomId) => '/api/rooms/$roomId/visit';
+  static String roomFavorite(String roomId) => '/api/rooms/$roomId/favorite';
+  static String roomVisitorStats(String roomId) => '/api/rooms/$roomId/visitor-stats';
+
+  /// Oda Başarıları/Rozetleri.
+  static const userBadges = '/api/user/badges';
+  static String roomAchievements(String roomId) => '/api/rooms/$roomId/achievements';
+  static String roomAchievementsStats(String roomId) => '/api/rooms/$roomId/achievements/stats';
+  static String roomCheckAchievements(String roomId) => '/api/rooms/$roomId/check-achievements';
+
   /// Canlı oda yaşam döngüsü — compound katılım, heartbeat, ayrılma.
   static const liveCreateRoom = '/api/live/create-room';
   static const liveJoinRoom = '/api/live/join-room';
