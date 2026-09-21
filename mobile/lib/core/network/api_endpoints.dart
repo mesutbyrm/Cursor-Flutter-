@@ -1046,7 +1046,7 @@ abstract final class ApiEndpoints {
   static String videoStreamAchievementsCheck(String streamId) =>
       '/api/video-streams/$streamId/achievements/check';
 
-  static String userAchievements(String userId) =>
+  static String userAchievementsDetail(String userId) =>
       '/api/users/$userId/achievements';
 
   static String videoStreamAchievements(String streamId) =>
@@ -1062,7 +1062,7 @@ abstract final class ApiEndpoints {
   static String streamRecordingEnd(String recordingId) =>
       '/api/video-streams/recording/$recordingId/end';
 
-  static String userRecordings(String userId) => '/api/users/$userId/recordings';
+  static String userRecordingsDetail(String userId) => '/api/users/$userId/recordings';
 
   static const recordingsPublic = '/api/recordings/public';
 
@@ -1411,8 +1411,6 @@ abstract final class ApiEndpoints {
   static const dailyMissions = '/api/daily-missions';
   static const leaderboards = '/api/leaderboards';
   static const leaderboard = '/api/leaderboard';
-
-  static const userFavorites = '/api/user/favorites';
 
   static String userFavoriteDelete(String id) => '/api/user/favorites/$id';
 
