@@ -706,6 +706,40 @@ class _QuickActions extends StatelessWidget {
             ),
           ],
         ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () =>
+                    context.push('/canli-falcilar/ratings'),
+                icon: const Icon(Icons.star_rate_rounded, size: 18),
+                label: const Text('Puanlamalarım'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Kimya Uyumlu Müşteriler (Hazırlanıyor)'),
+                    duration: Duration(seconds: 2),
+                  ),
+                ),
+                icon: const Icon(Icons.favorite_outline, size: 18),
+                label: const Text('Kimya Uyumu'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                ),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
