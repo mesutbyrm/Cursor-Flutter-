@@ -1042,6 +1042,64 @@ abstract final class ApiEndpoints {
 
   static const videoStreamsTrendingRecommended = '/api/video-streams/trending/recommended';
 
+  // --- Yayın başarıları & rozetler ---
+  static String videoStreamAchievementsCheck(String streamId) =>
+      '/api/video-streams/$streamId/achievements/check';
+
+  static String userAchievements(String userId) =>
+      '/api/users/$userId/achievements';
+
+  static String videoStreamAchievements(String streamId) =>
+      '/api/video-streams/$streamId/achievements';
+
+  static String userAchievementsStats(String userId) =>
+      '/api/users/$userId/achievements/stats';
+
+  // --- Yayın kayıt & replay ---
+  static String videoStreamRecordingStart(String streamId) =>
+      '/api/video-streams/$streamId/recording/start';
+
+  static String streamRecordingEnd(String recordingId) =>
+      '/api/video-streams/recording/$recordingId/end';
+
+  static String userRecordings(String userId) => '/api/users/$userId/recordings';
+
+  static const recordingsPublic = '/api/recordings/public';
+
+  static String userRecordingsStats(String userId) =>
+      '/api/users/$userId/recordings/stats';
+
+  static String recordingVisibility(String recordingId) =>
+      '/api/recordings/$recordingId/visibility';
+
+  static String recordingView(String recordingId) =>
+      '/api/recordings/$recordingId/view';
+
+  static String recordingArchive(String recordingId) =>
+      '/api/recordings/$recordingId/archive';
+
+  static const recordingsCleanupExpired = '/api/recordings/cleanup-expired';
+
+  static String userRecordingsSearch(String userId) =>
+      '/api/users/$userId/recordings/search';
+
+  // --- Host sosyal analytics ---
+  static const userMeStreamStats = '/api/users/me/stream-stats';
+
+  static String userStreamStats(String userId) =>
+      '/api/users/$userId/stream-stats';
+
+  static const userMeStreamStatsIncrement = '/api/users/me/stream-stats/increment';
+
+  static const streamStatsLeaderboard = '/api/stream-stats/leaderboard';
+
+  static String userStreamStatsRank(String userId) =>
+      '/api/users/$userId/stream-stats/rank';
+
+  static const userMeStreamStatsMonthly = '/api/users/me/stream-stats/monthly';
+
+  static const userMeStreamStatsEngagement = '/api/users/me/stream-stats/engagement';
+
   /// Public hediye JSON kataloğu. Production `/api/gifts` sayfa route'udur.
   static const giftsCatalog = giftsTypes;
 

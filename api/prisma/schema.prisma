@@ -134,6 +134,9 @@ model User {
   streamReportedMessages ReportedStreamMessage[] @relation("StreamReportedMessages")
   streamMessageReports ReportedStreamMessage[] @relation("StreamMessageReporters")
   streamVipViewers StreamVipViewer[]
+  streamAchievements StreamAchievement[] @relation("StreamAchievements")
+  hostRecordings StreamRecording[] @relation("HostRecordings")
+  hostStreamStats HostStreamStats? @relation("HostStreamStats")
 
   @@index([referredByUserId])
   @@index([referralCode])
@@ -2174,4 +2177,100 @@ model StreamTrendingData {
   @@index([trendingScore])
   @@index([recordedAt])
   @@map("stream_trending_data")
+}
+
+model StreamAchievement {
+  id String @id @default(cuid())
+  streamId String
+  hostId String
+  host User @relation("StreamAchievements", fields: [hostId], references: [id], onDelete: Cascade)
+
+  name String
+  icon String?
+  description String?
+
+  triggerType String
+  triggerValue Int
+
+  badge String?
+  rarity String @default("common")
+
+  unlockedAt DateTime?
+  awardedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([streamId, hostId, triggerType])
+  @@index([hostId, unlockedAt])
+  @@index([streamId])
+  @@index([triggerType])
+  @@map("stream_achievements")
+}
+
+model StreamRecording {
+  id String @id @default(cuid())
+  streamId String
+  hostId String
+  host User @relation("HostRecordings", fields: [hostId], references: [id], onDelete: Cascade)
+
+  recordingUrl String
+  thumbnailUrl String?
+  duration Int
+  fileSize Int
+
+  isPublic Boolean @default(false)
+  viewCount Int @default(0)
+
+  title String?
+  description String?
+  tags String[]
+
+  startedAt DateTime
+  endedAt DateTime?
+
+  expiresAt DateTime?
+  isArchived Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([streamId])
+  @@index([hostId, createdAt])
+  @@index([isPublic])
+  @@index([expiresAt])
+  @@map("stream_recordings")
+}
+
+model HostStreamStats {
+  id String @id @default(cuid())
+  hostId String @unique
+  host User @relation("HostStreamStats", fields: [hostId], references: [id], onDelete: Cascade)
+
+  totalLiveStreams Int @default(0)
+  totalViewerMinutes Int @default(0)
+  totalGiftsReceived Int @default(0)
+  totalRevenue Int @default(0)
+  totalTips Int @default(0)
+
+  averageViewersPerStream Int @default(0)
+  averageStreamDuration Int @default(0)
+  averageEngagementScore Float @default(0)
+
+  peakViewersAllTime Int @default(0)
+  peakViewersMonth Int @default(0)
+
+  followerGainFromStreams Int @default(0)
+  unfollowFromStreams Int @default(0)
+
+  lastStreamAt DateTime?
+  streakDays Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([totalViewerMinutes])
+  @@index([totalRevenue])
+  @@index([totalGiftsReceived])
+  @@map("host_stream_stats")
 }
