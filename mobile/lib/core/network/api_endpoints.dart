@@ -917,6 +917,40 @@ abstract final class ApiEndpoints {
   static String videoStreamAutoClose(String streamId) =>
       '/api/video-streams/$streamId/auto-close';
 
+  // --- Canlı yayın analytics & insights ---
+  static String videoStreamAnalytics(String streamId) =>
+      '/api/video-streams/$streamId/analytics';
+
+  static String videoStreamSessionStart(String streamId) =>
+      '/api/video-streams/$streamId/session/start';
+
+  static String videoStreamSessionEnd(String streamId, String sessionId) =>
+      '/api/video-streams/$streamId/session/$sessionId/end';
+
+  static String videoStreamViewerSessions(String streamId) =>
+      '/api/video-streams/$streamId/viewer-sessions';
+
+  static String videoStreamAnalyticsGift(String streamId) =>
+      '/api/video-streams/$streamId/analytics/gift';
+
+  static String videoStreamAnalyticsMessage(String streamId) =>
+      '/api/video-streams/$streamId/analytics/message';
+
+  static String videoStreamAnalyticsLike(String streamId) =>
+      '/api/video-streams/$streamId/analytics/like';
+
+  static String videoStreamStats(String streamId) =>
+      '/api/video-streams/$streamId/stats';
+
+  static String videoStreamTopGifters(String streamId) =>
+      '/api/video-streams/$streamId/top-gifters';
+
+  static String videoStreamDemographics(String streamId) =>
+      '/api/video-streams/$streamId/demographics';
+
+  static String videoStreamPerformanceReport(String streamId) =>
+      '/api/video-streams/$streamId/performance-report';
+
   /// Public hediye JSON kataloğu. Production `/api/gifts` sayfa route'udur.
   static const giftsCatalog = giftsTypes;
 

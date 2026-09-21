@@ -128,6 +128,8 @@ model User {
 
   roomRecordings RoomRecording[]
 
+  streamViewerSessions StreamViewerSession[]
+
   @@index([referredByUserId])
   @@index([referralCode])
 }
@@ -1964,4 +1966,87 @@ model RoomInsight {
   @@index([roomId, createdAt])
   @@index([insightType])
   @@map("room_insights")
+}
+
+/// Feature 52: Canlı Yayın Analytics
+model LiveStreamAnalytics {
+  id String @id @default(cuid())
+  streamId String @unique
+  
+  totalViewers Int @default(0)
+  peakViewers Int @default(0)
+  averageViewers Int @default(0)
+  
+  totalMinutesWatched Int @default(0)
+  averageWatchDuration Int @default(0)
+  
+  totalMessagesCount Int @default(0)
+  totalGiftsCount Int @default(0)
+  totalGiftValue Int @default(0)
+  
+  engagementScore Float @default(0)
+  retentionRate Float @default(0)
+  
+  topGiftersCount Int @default(0)
+  topSpenders String[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([streamId, updatedAt])
+  @@index([totalViewers])
+  @@index([engagementScore])
+  @@map("live_stream_analytics")
+}
+
+/// Canlı Yayın Viewer Oturumu
+model StreamViewerSession {
+  id String @id @default(cuid())
+  streamId String
+  userId String
+  user User @relation("StreamViewerSessions", fields: [userId], references: [id], onDelete: Cascade)
+  
+  joinedAt DateTime @default(now())
+  leftAt DateTime?
+  watchDurationSeconds Int @default(0)
+  
+  isGifter Boolean @default(false)
+  giftCount Int @default(0)
+  totalGiftValue Int @default(0)
+  
+  messageCount Int @default(0)
+  likeCount Int @default(0)
+  
+  deviceType String?
+  country String?
+  appVersion String?
+  
+  @@unique([streamId, userId, joinedAt])
+  @@index([streamId, joinedAt])
+  @@index([userId, joinedAt])
+  @@index([isGifter])
+  @@map("stream_viewer_sessions")
+}
+
+/// Stream Viewer Demographics
+model StreamViewerDemographics {
+  id String @id @default(cuid())
+  streamId String
+  
+  ageRange String?
+  country String?
+  deviceType String?
+  appVersion String?
+  
+  totalViewers Int @default(0)
+  totalWatchMinutes Int @default(0)
+  avgWatchDuration Int @default(0)
+  
+  engagementRate Float @default(0)
+  
+  createdAt DateTime @default(now())
+  
+  @@index([streamId, createdAt])
+  @@index([country])
+  @@map("stream_viewer_demographics")
 }
