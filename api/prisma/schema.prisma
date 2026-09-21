@@ -129,6 +129,11 @@ model User {
   roomRecordings RoomRecording[]
 
   streamViewerSessions StreamViewerSession[]
+  streamModerationActionsTarget StreamModerationLog[] @relation("StreamModerationsTarget")
+  streamModerationActionsMod StreamModerationLog[] @relation("StreamModerationsModerator")
+  streamReportedMessages ReportedStreamMessage[] @relation("StreamReportedMessages")
+  streamMessageReports ReportedStreamMessage[] @relation("StreamMessageReporters")
+  streamVipViewers StreamVipViewer[]
 
   @@index([referredByUserId])
   @@index([referralCode])
@@ -2032,21 +2037,141 @@ model StreamViewerSession {
 model StreamViewerDemographics {
   id String @id @default(cuid())
   streamId String
-  
+
   ageRange String?
   country String?
   deviceType String?
   appVersion String?
-  
+
   totalViewers Int @default(0)
   totalWatchMinutes Int @default(0)
   avgWatchDuration Int @default(0)
-  
+
   engagementRate Float @default(0)
-  
+
   createdAt DateTime @default(now())
-  
+
   @@index([streamId, createdAt])
   @@index([country])
   @@map("stream_viewer_demographics")
+}
+
+model StreamModerationLog {
+  id String @id @default(cuid())
+  streamId String
+
+  action String
+  targetUserId String
+  targetUser User @relation("StreamModerationsTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+
+  moderatorId String?
+  moderator User? @relation("StreamModerationsModerator", fields: [moderatorId], references: [id], onDelete: SetNull)
+
+  reason String?
+  duration Int?
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([streamId, createdAt])
+  @@index([targetUserId])
+  @@index([action])
+  @@map("stream_moderation_logs")
+}
+
+model ChatFilter {
+  id String @id @default(cuid())
+  streamId String @unique
+
+  bannedWords String[]
+  autoModEnabled Boolean @default(true)
+
+  reportedMessagesCount Int @default(0)
+  deletedMessagesCount Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("chat_filters")
+}
+
+model ReportedStreamMessage {
+  id String @id @default(cuid())
+  streamId String
+  messageId String
+  userId String
+  user User @relation("StreamReportedMessages", fields: [userId], references: [id], onDelete: Cascade)
+
+  reportReason String
+  reportedByUserId String
+  reportedBy User @relation("StreamMessageReporters", fields: [reportedByUserId], references: [id], onDelete: Cascade)
+
+  isModerationRejected Boolean @default(false)
+  moderationRejectionReason String?
+
+  createdAt DateTime @default(now())
+
+  @@index([streamId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("reported_stream_messages")
+}
+
+model StreamQualityMetrics {
+  id String @id @default(cuid())
+  streamId String
+  userId String?
+
+  bitrate Int
+  fps Int
+  resolution String
+  encoder String?
+
+  packetLoss Float
+  latency Int
+  bufferCount Int
+
+  recordedAt DateTime @default(now())
+
+  @@index([streamId, recordedAt])
+  @@index([userId])
+  @@map("stream_quality_metrics")
+}
+
+model StreamVipViewer {
+  id String @id @default(cuid())
+  streamId String
+  userId String
+  user User @relation("StreamVipViewers", fields: [userId], references: [id], onDelete: Cascade)
+
+  tier String
+  privileges String[]
+
+  addedAt DateTime @default(now())
+  expiresAt DateTime?
+
+  @@unique([streamId, userId])
+  @@index([streamId])
+  @@map("stream_vip_viewers")
+}
+
+model StreamTrendingData {
+  id String @id @default(cuid())
+  streamId String
+
+  viewerCount Int @default(0)
+  giftCount Int @default(0)
+  messageCount Int @default(0)
+  engagementScore Float @default(0)
+
+  trendingScore Float @default(0)
+  trendingRank Int?
+
+  period String @default("24h")
+  recordedAt DateTime @default(now())
+
+  @@index([streamId, period, recordedAt])
+  @@index([trendingScore])
+  @@index([recordedAt])
+  @@map("stream_trending_data")
 }

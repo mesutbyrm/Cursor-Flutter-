@@ -951,6 +951,97 @@ abstract final class ApiEndpoints {
   static String videoStreamPerformanceReport(String streamId) =>
       '/api/video-streams/$streamId/performance-report';
 
+  // --- Canlı yayın moderation & chat filtreleme ---
+  static String videoStreamModerationAction(String streamId) =>
+      '/api/video-streams/$streamId/moderation/action';
+
+  static String videoStreamModerationLogs(String streamId) =>
+      '/api/video-streams/$streamId/moderation/logs';
+
+  static String videoStreamModerationStats(String streamId) =>
+      '/api/video-streams/$streamId/moderation/stats';
+
+  static String videoStreamModerationUserHistory(
+          String streamId, String userId) =>
+      '/api/video-streams/$streamId/moderation/user/$userId/history';
+
+  // --- Chat filtreleme ---
+  static String videoStreamChatFilter(String streamId) =>
+      '/api/video-streams/$streamId/chat-filter';
+
+  static String videoStreamChatFilterBannedWord(String streamId) =>
+      '/api/video-streams/$streamId/chat-filter/banned-word';
+
+  static String videoStreamChatFilterRemoveBannedWord(
+          String streamId, String word) =>
+      '/api/video-streams/$streamId/chat-filter/banned-word/$word';
+
+  static String videoStreamChatFilterCheckMessage(String streamId) =>
+      '/api/video-streams/$streamId/chat-filter/check-message';
+
+  static String videoStreamChatFilterReportMessage(String streamId) =>
+      '/api/video-streams/$streamId/chat-filter/report-message';
+
+  static String videoStreamChatFilterReportedMessages(String streamId) =>
+      '/api/video-streams/$streamId/chat-filter/reported-messages';
+
+  static String videoStreamChatFilterRejectReport(String streamId, String reportId) =>
+      '/api/video-streams/$streamId/chat-filter/report/$reportId/reject';
+
+  // --- Kalite monitoring ---
+  static String videoStreamQualityMetrics(String streamId) =>
+      '/api/video-streams/$streamId/quality/metrics';
+
+  static String videoStreamQualityAverage(String streamId) =>
+      '/api/video-streams/$streamId/quality/average';
+
+  static String videoStreamQualityScore(String streamId) =>
+      '/api/video-streams/$streamId/quality/score';
+
+  static String videoStreamQualityUserReport(String streamId, String userId) =>
+      '/api/video-streams/$streamId/quality/user/$userId';
+
+  // --- VIP izleyici ---
+  static String videoStreamVipAdd(String streamId) =>
+      '/api/video-streams/$streamId/vip/add';
+
+  static String videoStreamVipRemove(String streamId, String userId) =>
+      '/api/video-streams/$streamId/vip/$userId';
+
+  static String videoStreamVipList(String streamId) =>
+      '/api/video-streams/$streamId/vip/list';
+
+  static String videoStreamVipPrivileges(String streamId, String userId) =>
+      '/api/video-streams/$streamId/vip/$userId/privileges';
+
+  static String videoStreamVipStatus(String streamId, String userId) =>
+      '/api/video-streams/$streamId/vip/$userId/status';
+
+  static String videoStreamVipStats(String streamId) =>
+      '/api/video-streams/$streamId/vip/stats';
+
+  static String videoStreamVipExtend(String streamId, String userId) =>
+      '/api/video-streams/$streamId/vip/$userId/extend';
+
+  // --- Trending & keşif ---
+  static String videoStreamTrendingRecord(String streamId) =>
+      '/api/video-streams/$streamId/trending/record';
+
+  static const videoStreamsTrending = '/api/video-streams/trending';
+
+  static String videoStreamTrendingData(String streamId) =>
+      '/api/video-streams/$streamId/trending/data';
+
+  static String videoStreamTrendingRank(String streamId) =>
+      '/api/video-streams/$streamId/trending/rank';
+
+  static const videoStreamsTrendingTop = '/api/video-streams/trending/top';
+
+  static String videoStreamTrendingTrend(String streamId) =>
+      '/api/video-streams/$streamId/trending/trend';
+
+  static const videoStreamsTrendingRecommended = '/api/video-streams/trending/recommended';
+
   /// Public hediye JSON kataloğu. Production `/api/gifts` sayfa route'udur.
   static const giftsCatalog = giftsTypes;
 
