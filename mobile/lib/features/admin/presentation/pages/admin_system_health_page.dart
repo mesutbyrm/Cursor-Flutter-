@@ -165,7 +165,7 @@ class AdminSystemHealthPage extends ConsumerWidget {
                                 child: _StatBox(
                                   label: 'Aktif Kullanıcı',
                                   value: '${health.activeUsers}',
-                                  icon: Icons.person_check_rounded,
+                                  icon: Icons.how_to_reg_rounded,
                                   color: AppThemeColors.accentCyan,
                                 ),
                               ),

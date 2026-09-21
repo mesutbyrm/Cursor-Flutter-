@@ -309,7 +309,7 @@ class _SessionCard extends StatelessWidget {
           const SizedBox(height: 4),
           Row(
             children: [
-              Icon(Icons.ip, size: 14, color: Colors.white.withValues(alpha: 0.5)),
+              Icon(Icons.language_rounded, size: 14, color: Colors.white.withValues(alpha: 0.5)),
               const SizedBox(width: 4),
               Text(
                 session['ipAddress']?.toString() ?? '—',

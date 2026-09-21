@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.587+631 (2026-09-21) — APK derleme düzeltmeleri
+
+- **CI / analyze:** admin paneli ve falcı paneli derleme hataları giderildi (ikon adları, `StaffAccess.canViewActivityLog`, API anahtarı widget adı)
+- **Önceki sürüm özellikleri korunur:** bekleyen ödeme temizliği, DM SSE, sesli oda hayalet presence, profil kaydet, canlı falcı yayın modu, genişletilmiş admin/falcı ekranları
+
 ## 1.0.586+630 (2026-09-20) — Admin paneli: Denetim, oturum, güvenlik, özellikler, e-posta
 
 - **Denetim günlüğü:** site admin tarafından tüm işlemlerin denetim kaydı (admin adı, işlem türü, hedef, zaman, IP, durum)

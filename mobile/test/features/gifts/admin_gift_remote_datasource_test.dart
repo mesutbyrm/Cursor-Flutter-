@@ -230,6 +230,7 @@ void main() {
               canViewReports: true,
               canManageNotifications: true,
               isSupportStaff: false,
+              canViewActivityLog: true,
               siteRole: 'admin',
             ),
           ),

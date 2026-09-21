@@ -718,7 +718,7 @@ class _QuickActions extends StatelessWidget {
             Expanded(
               child: OutlinedButton.icon(
                 onPressed: () => context.push('/canli-falcilar/settings/notifications'),
-                icon: const Icon(Icons.notifications_outline_rounded, size: 18),
+                icon: const Icon(Icons.notifications_outlined, size: 18),
                 label: const Text('Bildirimler'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.white,

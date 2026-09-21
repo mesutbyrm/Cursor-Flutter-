@@ -51,6 +51,7 @@ class AdminRolePermissionsMatrix extends StatelessWidget {
     canViewReports: true,
     canManageNotifications: true,
     isSupportStaff: false,
+    canViewActivityLog: true,
     isFounder: true,
   );
 
@@ -68,6 +69,7 @@ class AdminRolePermissionsMatrix extends StatelessWidget {
     canViewReports: true,
     canManageNotifications: true,
     isSupportStaff: false,
+    canViewActivityLog: true,
   );
 
   static StaffAccess _payment = const StaffAccess(
@@ -84,6 +86,7 @@ class AdminRolePermissionsMatrix extends StatelessWidget {
     canViewReports: true,
     canManageNotifications: true,
     isSupportStaff: false,
+    canViewActivityLog: true,
   );
 
   static StaffAccess _moderator = const StaffAccess(
@@ -100,6 +103,7 @@ class AdminRolePermissionsMatrix extends StatelessWidget {
     canViewReports: true,
     canManageNotifications: false,
     isSupportStaff: false,
+    canViewActivityLog: true,
   );
 
   static StaffAccess _support = const StaffAccess(
@@ -116,6 +120,7 @@ class AdminRolePermissionsMatrix extends StatelessWidget {
     canViewReports: false,
     canManageNotifications: false,
     isSupportStaff: true,
+    canViewActivityLog: true,
   );
 
   @override

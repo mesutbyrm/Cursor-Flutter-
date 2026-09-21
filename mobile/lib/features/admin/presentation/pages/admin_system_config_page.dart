@@ -202,7 +202,7 @@ class AdminSystemConfigPage extends ConsumerWidget {
                         }
                         return Column(
                           children: keys.map((key) {
-                            return _ApiKeyCard(key: key);
+                            return _ApiKeyCard(apiKey: key);
                           }).toList(),
                         );
                       },
@@ -426,16 +426,16 @@ class _FeatureFlagCard extends StatelessWidget {
 }
 
 class _ApiKeyCard extends StatelessWidget {
-  const _ApiKeyCard({required this.key});
+  const _ApiKeyCard({required this.apiKey});
 
-  final Map<String, dynamic> key;
+  final Map<String, dynamic> apiKey;
 
   @override
   Widget build(BuildContext context) {
-    final name = key['name'] as String?;
-    final keyId = key['key_id'] as String?;
-    final createdAt = key['created_at'] as String?;
-    final lastUsed = key['last_used'] as String?;
+    final name = apiKey['name'] as String?;
+    final keyId = apiKey['key_id'] as String?;
+    final createdAt = apiKey['created_at'] as String?;
+    final lastUsed = apiKey['last_used'] as String?;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
