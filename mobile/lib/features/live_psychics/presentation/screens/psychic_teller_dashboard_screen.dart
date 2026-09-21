@@ -676,6 +676,40 @@ class _QuickActions extends StatelessWidget {
             ),
           ],
         ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () =>
+                    context.push('/canli-falcilar/sessions'),
+                icon: const Icon(Icons.history_outlined, size: 18),
+                label: const Text('Seanslar'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('İstatistikler (Hazırlanıyor)'),
+                    duration: Duration(seconds: 2),
+                  ),
+                ),
+                icon: const Icon(Icons.trending_up_rounded, size: 18),
+                label: const Text('İstatistikler'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                ),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
