@@ -664,12 +664,8 @@ class _QuickActions extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Flash Sales (Hazırlanıyor)'),
-                    duration: Duration(seconds: 2),
-                  ),
-                ),
+                onPressed: () =>
+                    context.push('/canli-falcilar/flash-sales'),
                 icon: const Icon(Icons.local_offer_outlined, size: 18),
                 label: const Text('Flash Sale'),
                 style: OutlinedButton.styleFrom(
