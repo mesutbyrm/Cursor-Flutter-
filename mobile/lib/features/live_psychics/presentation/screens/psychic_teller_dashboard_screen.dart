@@ -932,6 +932,19 @@ class _QuickActions extends StatelessWidget {
                 ),
               ),
             ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () =>
+                    context.push('/canli-falcilar/customer-ltv-optimization'),
+                icon: const Icon(Icons.psychology_rounded, size: 18),
+                label: const Text('LTV Optimizasyonu'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                ),
+              ),
+            ),
           ],
         ),
       ],
