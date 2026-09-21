@@ -962,6 +962,19 @@ class _QuickActions extends StatelessWidget {
                 ),
               ),
             ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () =>
+                    context.push('/canli-falcilar/social-media-planner'),
+                icon: const Icon(Icons.photo_library_rounded, size: 18),
+                label: const Text('Sosyal Medya'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                ),
+              ),
+            ),
           ],
         ),
       ],
