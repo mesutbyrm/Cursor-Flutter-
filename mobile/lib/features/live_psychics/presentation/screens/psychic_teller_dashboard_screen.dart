@@ -1092,6 +1092,66 @@ class _QuickActions extends StatelessWidget {
             ),
           ],
         ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () =>
+                    context.push('/canli-falcilar/tax-reporting'),
+                icon: const Icon(Icons.receipt_rounded, size: 18),
+                label: const Text('Vergi Raporları'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () =>
+                    context.push('/canli-falcilar/session-recording'),
+                icon: const Icon(Icons.videocam_rounded, size: 18),
+                label: const Text('Seans Kayıtları'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () =>
+                    context.push('/canli-falcilar/benchmarking'),
+                icon: const Icon(Icons.leaderboard_rounded, size: 18),
+                label: const Text('Performans Karşılaştırması'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () =>
+                    context.push('/canli-falcilar/behavior-analytics'),
+                icon: const Icon(Icons.analytics_rounded, size: 18),
+                label: const Text('Davranış Analizi'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                ),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
