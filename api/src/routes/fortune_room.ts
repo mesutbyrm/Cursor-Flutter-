@@ -119,7 +119,8 @@ fortuneRoomRouter.patch("/:sessionId", requireAuth, (req, res) => {
     return fail(res, 400, "BAD_REQUEST", result.error);
   }
   const payload = fortuneSessionRoomPayload(result.session, req.userId!);
-  emitFortuneRoomSse(result.session.id, "timer_started", payload);
+  const eventType = action === "timer" || action.includes("extend") ? "timer_started" : "room_update";
+  emitFortuneRoomSse(result.session.id, eventType, payload);
   return ok(res, payload);
 });
 
