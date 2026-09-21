@@ -1,6 +1,6 @@
 # GitHub Temizlik Raporu
 
-Oluşturulma: 2026-09-14 09:20 UTC
+Oluşturulma: 2026-09-21 09:22 UTC
 Mod: APPLIED
 Repo: `mesutbyrm/Cursor-Flutter-`
 Base: `main`
@@ -11,7 +11,7 @@ Base: `main`
 |--------|------|
 | Kapatılan PR | 0 |
 | Silinen remote dal | 0 |
-| Kalan açık PR | 2 |
+| Kalan açık PR | 0 |
 | Korunan / aktif dal | 0 |
 
 ## Kapatılan PR'lar
@@ -30,8 +30,7 @@ Base: `main`
 
 | PR | Head | Base | Not |
 |----|------|------|-----|
-| #356 | dependabot/npm_and_yarn/api/npm_and_yarn-ec809458b8 | main | draft=false | chore(deps): bump the npm_and_yarn group across 2 directories with 9 updates |
-| #356 | dependabot/npm_and_yarn/api/npm_and_yarn-ec809458b8 | main | draft=false | chore(deps): bump the npm_and_yarn group across 2 directories with 9 updates |
+| — | — | — | — |
 
 ## Aktif / korunan dallar
 
