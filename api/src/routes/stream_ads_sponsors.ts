@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { requireAuth } from "../middleware/requireAuth";
-import { fail, success } from "../lib/response";
+import { fail, ok } from "../lib/response";
 
 const router = Router();
 
@@ -227,7 +227,7 @@ router.post(
         return fail(res, 400, "INVALID_TYPE", "Geçersiz reklam türü");
       }
 
-      return success(res, 201, ad, "Reklam planlandı");
+      return ok(res, ad);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Reklam planlanamadı");
@@ -243,7 +243,7 @@ router.get(
 
       const ads = await adService.getStreamAds(streamId);
 
-      return success(res, 200, ads, "Reklamlar getirildi");
+      return ok(res, ads);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Reklamlar getirilemedi");
@@ -260,7 +260,7 @@ router.post(
 
       const ad = await adService.recordAdDisplay(adId);
 
-      return success(res, 200, ad, "Reklam gösterildi");
+      return ok(res, ad);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Reklam gösterilemedi");
@@ -277,7 +277,7 @@ router.post(
 
       const ad = await adService.recordAdClick(adId);
 
-      return success(res, 200, ad, "Reklam tıklaması kaydedildi");
+      return ok(res, ad);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Tıklama kaydedilemedi");
@@ -297,7 +297,7 @@ router.get(
         return fail(res, 404, "NOT_FOUND", "Reklam bulunamadı");
       }
 
-      return success(res, 200, stats, "İstatistikler getirildi");
+      return ok(res, stats);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "İstatistikler getirilemedi");
@@ -314,7 +314,7 @@ router.delete(
 
       await adService.deleteAd(adId);
 
-      return success(res, 200, null, "Reklam silindi");
+      return ok(res, null);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Reklam silinemedi");
@@ -357,7 +357,7 @@ router.post(
         return fail(res, 400, "INVALID_TIER", "Geçersiz sponsorluk tier");
       }
 
-      return success(res, 201, sponsor, "Sponsor eklendi");
+      return ok(res, sponsor);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Sponsor eklenemedi");
@@ -373,7 +373,7 @@ router.get(
 
       const sponsors = await sponsorService.getStreamSponsors(streamId);
 
-      return success(res, 200, sponsors, "Sponsorlar getirildi");
+      return ok(res, sponsors);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Sponsorlar getirilemedi");
@@ -389,7 +389,7 @@ router.get(
 
       const sponsors = await sponsorService.getSponsorsByTier(streamId, tier);
 
-      return success(res, 200, sponsors, "Tier sponsorları getirildi");
+      return ok(res, sponsors);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Sponsorlar getirilemedi");
@@ -407,7 +407,7 @@ router.put(
 
       const updated = await sponsorService.updateSponsor(sponsorId, updateData);
 
-      return success(res, 200, updated, "Sponsor güncellendi");
+      return ok(res, updated);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Sponsor güncellenemedi");
@@ -424,7 +424,7 @@ router.delete(
 
       await sponsorService.removeSponsor(sponsorId);
 
-      return success(res, 200, null, "Sponsor kaldırıldı");
+      return ok(res, null);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Sponsor kaldırılamadı");
@@ -444,7 +444,7 @@ router.get(
         return fail(res, 404, "NOT_FOUND", "Sponsor bulunamadı");
       }
 
-      return success(res, 200, stats, "Sponsor istatistikleri getirildi");
+      return ok(res, stats);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "İstatistikler getirilemedi");

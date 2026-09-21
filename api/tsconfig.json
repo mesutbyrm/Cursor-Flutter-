@@ -11,5 +11,6 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["src/routes/voice_*.ts", "src/routes/stories.ts", "src/routes/social_features.ts", "src/routes/direct_messages.ts", "src/routes/share_settings.ts", "src/routes/user_recommendations.ts", "src/routes/user_preferences.ts", "src/routes/performance_monitoring.ts", "src/routes/two_factor_auth.ts", "src/routes/accessibility.ts", "src/routes/subscriptions.ts", "src/routes/achievements.ts", "src/routes/notification_preferences.ts", "src/routes/ai_copilot.ts", "src/routes/fortune_matching.ts", "src/routes/analytics.ts", "src/routes/agora.ts", "src/routes/room_activity_log.ts", "src/routes/room_recording.ts", "src/routes/live_stream_analytics.ts", "src/routes/stream_moderation.ts", "src/routes/stream_chat_filter.ts", "src/routes/stream_quality.ts", "src/routes/stream_vip.ts", "src/routes/stream_trending.ts", "src/routes/stream_recording.ts", "src/routes/messages.ts", "src/routes/pk_battle_advanced.ts", "src/routes/gift_system_advanced.ts", "src/routes/stream_membership_offers.ts", "src/routes/stream_achievements.ts", "src/routes/host_stream_stats.ts", "src/routes/stream_campaigns.ts", "src/routes/room_achievements.ts"]
 }

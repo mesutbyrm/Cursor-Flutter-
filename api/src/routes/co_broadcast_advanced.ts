@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { requireAuth } from "../middleware/requireAuth";
-import { fail, success } from "../lib/response";
+import { fail, ok } from "../lib/response";
 
 const router = Router();
 
@@ -291,7 +291,7 @@ router.post(
         permissionLevel || "basic"
       );
 
-      return success(res, 201, session, "Misafir daveti gönderildi");
+      return ok(res, session);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Davet gönderilemedi");
@@ -308,7 +308,7 @@ router.post(
 
       const session = await sessionService.acceptSession(sessionId);
 
-      return success(res, 200, session, "Davet kabul edildi");
+      return ok(res, session);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Davet kabul edilemedi");
@@ -325,7 +325,7 @@ router.post(
 
       await sessionService.rejectSession(sessionId);
 
-      return success(res, 200, null, "Davet reddedildi");
+      return ok(res, null);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Davet reddedilemedi");
@@ -342,7 +342,7 @@ router.post(
 
       const session = await sessionService.endSession(sessionId);
 
-      return success(res, 200, session, "Misafir seans sonlandırıldı");
+      return ok(res, session);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Seans sonlandırılamadı");
@@ -368,7 +368,7 @@ router.post(
         return fail(res, 400, "INVALID_PERMISSION", "Geçersiz yetki seviyesi");
       }
 
-      return success(res, 200, updated, "Yetkiler güncellendi");
+      return ok(res, updated);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Yetkiler güncellenemedi");
@@ -384,7 +384,7 @@ router.get(
 
       const sessions = await sessionService.getActiveSessions(streamId);
 
-      return success(res, 200, sessions, "Aktif misafirler getirildi");
+      return ok(res, sessions);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Misafirler getirilemedi");
@@ -401,7 +401,7 @@ router.get(
 
       const invitations = await sessionService.getGuestInvitations(userId);
 
-      return success(res, 200, invitations, "Davetler getirildi");
+      return ok(res, invitations);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Davetler getirilemedi");
@@ -419,7 +419,7 @@ router.post(
 
       const position = await waitlistService.addToWaitlist(streamId, userId);
 
-      return success(res, 201, position, "Bekleme listesine eklendi");
+      return ok(res, position);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Listeye eklenemedi");
@@ -435,7 +435,7 @@ router.get(
 
       const waitlist = await waitlistService.getWaitlist(streamId);
 
-      return success(res, 200, waitlist, "Bekleme listesi getirildi");
+      return ok(res, waitlist);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Liste getirilemedi");
@@ -454,10 +454,10 @@ router.get(
       const position = await waitlistService.getWaitlistPosition(streamId, userId);
 
       if (position === null) {
-        return success(res, 200, { position: null }, "Bekleme listesinde değil");
+        return ok(res, { position: null });
       }
 
-      return success(res, 200, { position }, "Konumunuz getiriildi");
+      return ok(res, { position });
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Konum getirilemedi");
@@ -483,7 +483,7 @@ router.post(
         return fail(res, 404, "NOT_FOUND", "Seans bulunamadı");
       }
 
-      return success(res, 200, distribution, "Gelir dağıtıldı");
+      return ok(res, distribution);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Gelir dağıtılamadı");
@@ -503,7 +503,7 @@ router.get(
         return fail(res, 404, "NOT_FOUND", "Seans bulunamadı");
       }
 
-      return success(res, 200, earnings, "Kazançlar getirildi");
+      return ok(res, earnings);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Kazançlar getirilemedi");

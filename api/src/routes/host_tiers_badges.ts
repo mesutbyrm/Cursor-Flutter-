@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { requireAuth } from "../middleware/requireAuth";
-import { fail, success } from "../lib/response";
+import { fail, ok } from "../lib/response";
 
 const router = Router();
 
@@ -278,7 +278,7 @@ router.get(
       const tier = await tierService.getOrCreateTier(hostId);
       const benefits = await tierService.getTierBenefits(tier.tier);
 
-      return success(res, 200, { ...tier, benefits }, "Tier bilgisi getirildi");
+      return ok(res, { ...tier, benefits });
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Tier bilgisi getirilemedi");
@@ -313,7 +313,7 @@ router.post(
         return fail(res, 404, "NOT_FOUND", "Tier bulunamadı");
       }
 
-      return success(res, 200, result, "Tier istatistikleri güncellendi");
+      return ok(res, result);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "İstatistikler güncellenemedi");
@@ -333,7 +333,7 @@ router.get(
         return fail(res, 404, "NOT_FOUND", "Tier bulunamadı");
       }
 
-      return success(res, 200, tier, "Tier bilgisi getirildi");
+      return ok(res, tier);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Tier bilgisi getirilemedi");
@@ -350,7 +350,7 @@ router.get(
 
       const leaderboard = await tierService.getTierLeaderboard(tier, limit);
 
-      return success(res, 200, leaderboard, "Tier leaderboard getirildi");
+      return ok(res, leaderboard);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Leaderboard getirilemedi");
@@ -366,7 +366,7 @@ router.get(
 
       const leaderboard = await tierService.getAllTierLeaderboard(limit);
 
-      return success(res, 200, leaderboard, "Genel leaderboard getirildi");
+      return ok(res, leaderboard);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Leaderboard getirilemedi");
@@ -392,7 +392,7 @@ router.post(
         return fail(res, 400, "INVALID_BADGE", "Geçersiz badge türü");
       }
 
-      return success(res, 201, badge, "Badge açıldı");
+      return ok(res, badge);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Badge açılamadı");
@@ -409,7 +409,7 @@ router.get(
 
       const badges = await badgeService.getHostBadges(hostId);
 
-      return success(res, 200, badges, "Rozetler getirildi");
+      return ok(res, badges);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Rozetler getirilemedi");
@@ -425,7 +425,7 @@ router.get(
 
       const badges = await badgeService.getHostBadges(userId);
 
-      return success(res, 200, badges, "Rozetler getirildi");
+      return ok(res, badges);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Rozetler getirilemedi");
@@ -456,7 +456,7 @@ router.post(
         interactionCount || 0
       );
 
-      return success(res, 200, { eligibleBadges: eligible }, "Uygun rozetler kontrol edildi");
+      return ok(res, { eligibleBadges: eligible });
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Kontrol edilemedi");
@@ -470,7 +470,7 @@ router.get(
     try {
       const definitions = await badgeService.getBadgeDefinitions();
 
-      return success(res, 200, definitions, "Badge tanımları getirildi");
+      return ok(res, definitions);
     } catch (e) {
       console.error(e);
       return fail(res, 500, "ERROR", "Tanımlar getirilemedi");
