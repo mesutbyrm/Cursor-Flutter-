@@ -605,8 +605,9 @@ class _QuickActions extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: () => context.push('/profile/earnings'),
-                icon: const Icon(Icons.payments_outlined, size: 18),
+                onPressed: () =>
+                    context.push('/canli-falcilar/earnings-analytics'),
+                icon: const Icon(Icons.bar_chart_rounded, size: 18),
                 label: const Text('Kazançlar'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.white,
