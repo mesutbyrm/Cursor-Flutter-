@@ -724,14 +724,10 @@ class _QuickActions extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Kimya Uyumlu Müşteriler (Hazırlanıyor)'),
-                    duration: Duration(seconds: 2),
-                  ),
-                ),
-                icon: const Icon(Icons.favorite_outline, size: 18),
-                label: const Text('Kimya Uyumu'),
+                onPressed: () =>
+                    context.push('/canli-falcilar/availability'),
+                icon: const Icon(Icons.calendar_month_outlined, size: 18),
+                label: const Text('Müsaitlik'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.white,
                   side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
