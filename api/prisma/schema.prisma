@@ -88,6 +88,33 @@ model User {
   // Feature 40: Sesli Fal
   voiceFortunes VoiceFortune[]
 
+  // Phase 3 relations (26-36)
+  following UserFollow[] @relation("UserFollowingRel")
+  followers UserFollow[] @relation("UserFollowersRel")
+  blocking UserBlock[] @relation("UserBlockingRel")
+  blocked UserBlock[] @relation("UserBlockedRel")
+
+  dmConversationsAsP1 DirectMessageConversation[] @relation("DMConvPart1")
+  dmConversationsAsP2 DirectMessageConversation[] @relation("DMConvPart2")
+  directMessages DirectMessage[]
+
+  stories UserStory[]
+  storyViews StoryView[]
+  storyReactions StoryReaction[]
+
+  shareSettings ShareSettings?
+  recommendationsReceived UserRecommendation[] @relation("UserRecommendationsReceived")
+  recommendationsMade UserRecommendation[] @relation("UserRecommendationsMade")
+
+  preferences UserPreferences?
+  animationConfig AnimationConfig?
+  performanceMetrics PerformanceMetrics[]
+
+  twoFactorAuth TwoFactorAuth?
+  twoFactorSessions TwoFactorSession[]
+
+  accessibilitySettings AccessibilitySettings?
+
   @@index([referredByUserId])
   @@index([referralCode])
 }
@@ -1294,4 +1321,292 @@ model VoiceProcessingJob {
   completedAt DateTime?
 
   @@index([status])
+}
+
+/// Feature 26: Kullanıcı Takip Sistemi
+model UserFollow {
+  id String @id @default(cuid())
+  followerId String
+  follower User @relation("UserFollowingRel", fields: [followerId], references: [id], onDelete: Cascade)
+
+  followingId String
+  following User @relation("UserFollowersRel", fields: [followingId], references: [id], onDelete: Cascade)
+
+  followedAt DateTime @default(now())
+  notificationsEnabled Boolean @default(true)
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+/// Feature 27: Bloke Sistemi
+model UserBlock {
+  id String @id @default(cuid())
+  blockerId String
+  blocker User @relation("UserBlockingRel", fields: [blockerId], references: [id], onDelete: Cascade)
+
+  blockedId String
+  blocked User @relation("UserBlockedRel", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  reason String?
+  blockedAt DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([blockerId])
+  @@index([blockedId])
+}
+
+/// Feature 28: Direkt Mesajlar
+model DirectMessage {
+  id String @id @default(cuid())
+  conversationId String
+  conversation DirectMessageConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  senderId String
+  sender User @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  content String
+  mediaUrl String?
+  mediaType String?
+
+  read Boolean @default(false)
+  readAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+}
+
+/// Feature 28: DM Sohbetleri
+model DirectMessageConversation {
+  id String @id @default(cuid())
+  participant1Id String
+  participant1 User @relation("DMConvPart1", fields: [participant1Id], references: [id], onDelete: Cascade)
+
+  participant2Id String
+  participant2 User @relation("DMConvPart2", fields: [participant2Id], references: [id], onDelete: Cascade)
+
+  lastMessage String?
+  lastMessageAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages DirectMessage[]
+
+  @@unique([participant1Id, participant2Id])
+  @@index([participant1Id])
+  @@index([participant2Id])
+}
+
+/// Feature 29: Story Sistemi
+model UserStory {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  content String
+  mediaUrl String?
+  mediaType String @default("image")
+
+  viewCount Int @default(0)
+  likeCount Int @default(0)
+
+  expiresAt DateTime
+  viewedBy String[] @default([])
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([expiresAt])
+}
+
+/// Feature 29: Story Görüşleri
+model StoryView {
+  id String @id @default(cuid())
+  storyId String
+  story UserStory @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  viewedAt DateTime @default(now())
+
+  @@unique([storyId, userId])
+  @@index([userId, viewedAt])
+}
+
+/// Feature 30: Story Reaksiyonları
+model StoryReaction {
+  id String @id @default(cuid())
+  storyId String
+  story UserStory @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  emoji String @default("❤️")
+  createdAt DateTime @default(now())
+
+  @@unique([storyId, userId])
+}
+
+/// Feature 31: Paylaşım Kontrol Listesi
+model ShareSettings {
+  id String @id @default(cuid())
+  userId String @unique
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  shareToInstagram Boolean @default(false)
+  shareTiktok Boolean @default(false)
+  shareToTwitter Boolean @default(false)
+  shareToFacebook Boolean @default(false)
+  shareToWhatsapp Boolean @default(false)
+
+  defaultPrivacy String @default("public")
+  allowComments Boolean @default(true)
+  allowShares Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Feature 32: Kullanıcı Önerileri
+model UserRecommendation {
+  id String @id @default(cuid())
+  userId String
+  user User @relation("UserRecommendationsReceived", fields: [userId], references: [id], onDelete: Cascade)
+
+  recommendedUserId String
+  recommendedUser User @relation("UserRecommendationsMade", fields: [recommendedUserId], references: [id], onDelete: Cascade)
+
+  reason String
+  score Float @default(0.5)
+
+  interactionCount Int @default(0)
+  lastInteractionAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, recommendedUserId])
+  @@index([userId, score])
+}
+
+/// Feature 33: Tercih Ayarları (Dark Mode, vb.)
+model UserPreferences {
+  id String @id @default(cuid())
+  userId String @unique
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  theme String @default("light")
+  accentColor String @default("cyan")
+  fontSize String @default("medium")
+  animationsEnabled Boolean @default(true)
+  soundEnabled Boolean @default(true)
+  hapticEnabled Boolean @default(true)
+
+  language String @default("tr")
+  timeFormat String @default("24h")
+  dateFormat String @default("dd.MM.yyyy")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Feature 33: Animasyon Konfigürasyonu
+model AnimationConfig {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  pageTransitionDuration Int @default(300)
+  cardFlipDuration Int @default(500)
+  scrollAnimationEnabled Boolean @default(true)
+  parallaxEnabled Boolean @default(true)
+  lightEffectsEnabled Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId])
+}
+
+/// Feature 34: Performans İzleme
+model PerformanceMetrics {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  appOpenTime Int
+  pageLoadTime Int
+  apiResponseTime Int
+
+  batteryUsage Int
+  dataUsage Int
+  memoryUsage Int
+
+  crashCount Int @default(0)
+  lastCrashAt DateTime?
+
+  recordedAt DateTime @default(now())
+
+  @@index([userId, recordedAt])
+}
+
+/// Feature 35: İki Faktörlü Doğrulama
+model TwoFactorAuth {
+  id String @id @default(cuid())
+  userId String @unique
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  enabled Boolean @default(false)
+  method String @default("authenticator")
+
+  secret String?
+  backupCodes String[]
+
+  verifiedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Feature 35: 2FA Oturum Devam Ettirme
+model TwoFactorSession {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  token String @unique
+  code String?
+  verified Boolean @default(false)
+
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId, expiresAt])
+}
+
+/// Feature 36: Erişilebilirlik Ayarları
+model AccessibilitySettings {
+  id String @id @default(cuid())
+  userId String @unique
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  screenReaderEnabled Boolean @default(false)
+  highContrastEnabled Boolean @default(false)
+  largeTextEnabled Boolean @default(false)
+  boldTextEnabled Boolean @default(false)
+
+  reduceMotionEnabled Boolean @default(false)
+  captionsEnabled Boolean @default(false)
+  audioDescriptionEnabled Boolean @default(false)
+
+  keyboardNavigationEnabled Boolean @default(true)
+  focusIndicatorVisible Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
