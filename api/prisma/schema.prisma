@@ -59,6 +59,19 @@ model User {
   referralCommissionsEarned ReferralCommissionLedger[] @relation("ReferrerCommissions")
   referralCommissionsSource ReferralCommissionLedger[] @relation("ReferredCommissions")
 
+  // Feature 42: Abonelik
+  subscription Subscription?
+  paymentMethods PaymentMethod[]
+
+  // Feature 43: Serileri ve Başarılar
+  streak UserStreak?
+  achievements UserAchievement[]
+  level UserLevel?
+
+  // Feature 44: Bildirimler
+  notificationPreferences NotificationPreference?
+  notifications Notification[]
+
   @@index([referredByUserId])
   @@index([referralCode])
 }
@@ -825,4 +838,253 @@ model SiteAnimationUserAssignment {
   @@unique([userId, slot])
   @@index([userId])
   @@map("site_animation_user_assignments")
+}
+
+/// Feature 42: Abonelik Planları
+model SubscriptionPlan {
+  id String @id @default(cuid())
+  planId String @unique
+  name String
+  description String
+  monthlyPrice Float
+  yearlyPrice Float
+  yearlyDiscount Float @default(0)
+
+  features String[]
+  limits Json
+
+  stripePriceIdMonthly String?
+  stripePriceIdYearly String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([planId])
+}
+
+/// Feature 42: Kullanıcı Abonelikleri
+model Subscription {
+  id String @id @default(cuid())
+  userId String @unique
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  planId String
+  status String @default("active")
+  billingCycle String @default("monthly")
+
+  currentPeriodStart DateTime
+  currentPeriodEnd DateTime
+
+  price Float
+  currency String @default("usd")
+
+  paymentMethodId String?
+  stripeSubscriptionId String? @unique
+
+  autoRenew Boolean @default(true)
+  cancelledAt DateTime?
+
+  trialStart DateTime?
+  trialEnd DateTime?
+
+  monthlyReadingsUsed Int @default(0)
+  monthlyVoiceReadingsUsed Int @default(0)
+  monthlyAISessionsUsed Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, currentPeriodEnd])
+}
+
+/// Feature 42: Ödeme Yöntemleri
+model PaymentMethod {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type String
+  stripePaymentMethodId String @unique
+
+  brand String?
+  last4 String?
+  expiryMonth Int?
+  expiryYear Int?
+
+  isDefault Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+/// Feature 43: Fal Serileri
+model UserStreak {
+  id String @id @default(cuid())
+  userId String @unique
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  currentStreak Int @default(0)
+  bestStreak Int @default(0)
+  bestStreakStart DateTime?
+  bestStreakEnd DateTime?
+
+  lastReadingDate DateTime?
+  totalReadingsInStreak Int @default(0)
+  streakBrokenDate DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Feature 43: Başarılar Tanımı
+model Achievement {
+  id String @id @default(cuid())
+  achievementId String @unique
+  title String
+  description String
+  icon String
+  rarity String @default("common")
+  points Int
+
+  unlockedCount Int @default(0)
+
+  createdAt DateTime @default(now())
+}
+
+/// Feature 43: Kullanıcı Başarıları
+model UserAchievement {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  achievementId String
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  progress Int @default(0)
+  maxProgress Int @default(1)
+
+  unlockedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, achievementId])
+  @@index([userId, unlockedAt])
+}
+
+/// Feature 43: Kullanıcı Seviyeleri
+model UserLevel {
+  id String @id @default(cuid())
+  userId String @unique
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  level Int @default(1)
+  currentXP Int @default(0)
+  totalXP Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Feature 44: Bildirim Tercihleri
+model NotificationPreference {
+  id String @id @default(cuid())
+  userId String @unique
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  dailyReminderEnabled Boolean @default(true)
+  dailyReminderTime String @default("09:00")
+  dailyReminderTimezone String @default("UTC")
+
+  streakReminderEnabled Boolean @default(true)
+  streakReminderTime String @default("20:00")
+
+  achievementsEnabled Boolean @default(true)
+  socialEnabled Boolean @default(true)
+  socialLikesEnabled Boolean @default(true)
+  socialCommentsEnabled Boolean @default(true)
+  socialSharesEnabled Boolean @default(true)
+
+  featuresEnabled Boolean @default(true)
+  subscriptionEnabled Boolean @default(true)
+
+  quietHoursEnabled Boolean @default(true)
+  quietHoursStart String @default("22:00")
+  quietHoursEnd String @default("08:00")
+
+  pushEnabled Boolean @default(true)
+  emailEnabled Boolean @default(false)
+  inAppEnabled Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Feature 44: Bildirimler
+model Notification {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type String
+  title String
+  message String
+  icon String?
+
+  actionUrl String?
+  actionType String?
+
+  read Boolean @default(false)
+  readAt DateTime?
+
+  channels String[]
+  sentAt DateTime @default(now())
+  expiresAt DateTime?
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, read])
+  @@index([type])
+}
+
+/// Feature 44: Bildirim Şablonları
+model NotificationTemplate {
+  id String @id @default(cuid())
+  type String @unique
+
+  title String
+  messageTemplate String
+  icon String
+
+  defaultEnabled Boolean @default(true)
+  priority String @default("normal")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Feature 44: Bildirim Kaydı
+model NotificationLog {
+  id String @id @default(cuid())
+  notificationId String
+  userId String
+
+  type String
+  status String
+
+  channel String
+  provider String?
+  providerMessageId String?
+
+  error String?
+
+  sentAt DateTime @default(now())
+
+  @@index([userId, sentAt])
+  @@index([status])
 }
