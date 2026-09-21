@@ -679,7 +679,7 @@ class _CampaignsTab extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      campaign['name'],
+                      campaign['name'] as String,
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -690,13 +690,13 @@ class _CampaignsTab extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: campaign['status'] == 'Aktif'
+                      color: (campaign['status'] as String?) == 'Aktif'
                           ? Colors.green.withValues(alpha: 0.2)
                           : Colors.grey.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      campaign['status'],
+                      campaign['status'] as String,
                       style: TextStyle(
                         fontSize: 10,
                         color: campaign['status'] == 'Aktif'
@@ -716,7 +716,7 @@ class _CampaignsTab extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          campaign['target'],
+                          campaign['target'] as String,
                           style: TextStyle(
                             fontSize: 11,
                             color: Colors.white70,
@@ -732,7 +732,7 @@ class _CampaignsTab extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            campaign['offer'],
+                            campaign['offer'] as String,
                             style: const TextStyle(
                               fontSize: 10,
                               color: AppThemeColors.accentCyan,

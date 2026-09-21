@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_theme_colors.dart';
+import '../../../../core/theme/app_theme_colors.dart';
 
 /// Bahşiş alındı bildirimi — Pop-up, animasyonlu, teşekkür mesajı gönderme
 class PsychicTipNotificationPopup extends StatefulWidget {

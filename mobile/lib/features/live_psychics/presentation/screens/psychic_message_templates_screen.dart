@@ -369,7 +369,7 @@ class _TemplatesTabState extends State<_TemplatesTab> {
             ),
             child: Text(
               template['content'],
-              style: const TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.87)),
+              style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.87)),
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
             ),
@@ -510,7 +510,7 @@ class _CategoriesTabState extends State<_CategoriesTab> {
                 Expanded(
                   child: Text(
                     tip,
-                    style: const TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.87)),
+                    style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.87)),
                   ),
                 ),
               ],

@@ -130,7 +130,7 @@ class PsychicSessionTimerDisplay extends StatelessWidget {
             const SizedBox(height: 12),
             FilledButton.icon(
               onPressed: onExtendPressed,
-              icon: const Icon(Icons.addAlarm, size: 16),
+              icon: const Icon(Icons.alarm, size: 16),
               label: const Text('Uzat'),
               style: FilledButton.styleFrom(
                 backgroundColor: Colors.orange,

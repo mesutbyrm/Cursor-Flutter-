@@ -622,7 +622,7 @@ class _PsychicAvailabilityCalendarScreenState
                 children: [
                   Text(
                     '${slot.startTime} - ${slot.endTime}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
                       color: Colors.white.withOpacity(0.87),

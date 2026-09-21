@@ -463,7 +463,7 @@ class _ReviewsTabState extends State<_ReviewsTab> {
           const SizedBox(height: 10),
           Text(
             review['comment'],
-            style: const TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.87)),
+            style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.87)),
           ),
           if (review['hasResponse']) ...[
             const SizedBox(height: 12),
@@ -494,7 +494,7 @@ class _ReviewsTabState extends State<_ReviewsTab> {
                   const SizedBox(height: 6),
                   Text(
                     review['responseText'],
-                    style: const TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.87)),
+                    style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.87)),
                   ),
                 ],
               ),
@@ -706,7 +706,7 @@ class _StatisticsTab extends StatelessWidget {
               children: [
                 Text(
                   category,
-                  style: const TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.87)),
+                  style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.87)),
                 ),
                 Row(
                   children: [
@@ -750,14 +750,14 @@ class _StatisticsTab extends StatelessWidget {
             children: [
               Icon(Icons.trending_up_rounded, color: Colors.green, size: 18),
               const SizedBox(width: 8),
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Bu ayın puanı geçen aya göre artışta',
                   style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.87)),
                 ),
               ),
               Text(
-                stats['trend'],
+                stats['trend'] as String,
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -896,7 +896,7 @@ class _ResponsesTabState extends State<_ResponsesTab> {
             ),
             child: Text(
               response['originalReview'],
-              style: const TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.87)),
+              style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.87)),
             ),
           ),
           const SizedBox(height: 12),
@@ -920,7 +920,7 @@ class _ResponsesTabState extends State<_ResponsesTab> {
             ),
             child: Text(
               response['yourResponse'],
-              style: const TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.87)),
+              style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.87)),
             ),
           ),
           const SizedBox(height: 12),

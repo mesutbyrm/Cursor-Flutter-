@@ -604,7 +604,7 @@ class _CompatibilityAnalysisTab extends ConsumerWidget {
             children: [
               Text(
                 type,
-                style: const TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.87)),
+                style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.87)),
               ),
               Text(
                 '$percentage%',

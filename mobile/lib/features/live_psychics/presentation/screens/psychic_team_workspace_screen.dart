@@ -538,7 +538,7 @@ class _CollaborationTab extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        note['author'],
+                        note['author'] as String,
                         style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
@@ -554,7 +554,7 @@ class _CollaborationTab extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          note['type'],
+                          note['type'] as String,
                           style: TextStyle(
                             fontSize: 10,
                             color: _getNoteTypeColor(note['type'] as String),
@@ -565,7 +565,7 @@ class _CollaborationTab extends ConsumerWidget {
                     ],
                   ),
                   Text(
-                    note['time'],
+                    note['time'] as String,
                     style: TextStyle(
                       fontSize: 10,
                       color: Colors.white54,
@@ -575,7 +575,7 @@ class _CollaborationTab extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                note['message'],
+                note['message'] as String,
                 style: const TextStyle(
                   fontSize: 12,
                   color: Colors.white,

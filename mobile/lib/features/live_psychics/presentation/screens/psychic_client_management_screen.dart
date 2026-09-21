@@ -587,7 +587,7 @@ class _FeedbackTab extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        feedback['customer'],
+                        feedback['customer'] as String,
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
@@ -617,7 +617,7 @@ class _FeedbackTab extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      feedback['type'],
+                      feedback['type'] as String,
                       style: TextStyle(
                         fontSize: 10,
                         color: _getFeedbackColor(feedback['type'] as String),
@@ -629,7 +629,7 @@ class _FeedbackTab extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                feedback['message'],
+                feedback['message'] as String,
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.white,
@@ -641,7 +641,7 @@ class _FeedbackTab extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    feedback['date'],
+                    feedback['date'] as String,
                     style: TextStyle(
                       fontSize: 10,
                       color: Colors.white54,

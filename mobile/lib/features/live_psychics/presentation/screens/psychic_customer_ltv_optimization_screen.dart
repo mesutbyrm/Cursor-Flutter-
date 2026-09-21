@@ -98,7 +98,7 @@ class _SegmentsTab extends StatelessWidget {
         'totalLtv': '₺10,200',
         'churnRisk': 'Düşük',
         'color': Color(0xFFFFD54F),
-        'icon': Icons.starBorder,
+        'icon': Icons.star_outline_rounded,
       },
       {
         'name': 'Premium Üyeler',

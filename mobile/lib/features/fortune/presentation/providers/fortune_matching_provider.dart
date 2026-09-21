@@ -157,7 +157,7 @@ final fortuneMatchDetailProvider = FutureProvider.family<FortuneMatch, String>(
 class CreateMatchNotifier extends StateNotifier<AsyncValue<FortuneMatch>> {
   final FortuneMatchingService _service;
 
-  CreateMatchNotifier(this._service) : super(const AsyncValue.data(null));
+  CreateMatchNotifier(this._service) : super(const AsyncValue.loading());
 
   Future<void> create({
     required String userId2,

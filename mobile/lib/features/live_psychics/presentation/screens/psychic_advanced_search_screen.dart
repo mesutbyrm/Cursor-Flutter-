@@ -747,7 +747,7 @@ class _SavedFiltersTab extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      filter['name'],
+                      filter['name'] as String,
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -755,7 +755,7 @@ class _SavedFiltersTab extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      filter['filters'],
+                      filter['filters'] as String,
                       style: TextStyle(
                         fontSize: 11,
                         color: Colors.white70,

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme_colors.dart';
-import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 
 /// Seans paketleri — Falcı: "3 seans %15 indirim" yaratabilir, müşteri: paketli satın alabilir
@@ -15,7 +14,8 @@ class PsychicPackageManagementScreen extends ConsumerStatefulWidget {
 }
 
 class _PsychicPackageManagementScreenState
-    extends ConsumerState<PsychicPackageManagementScreen> {
+    extends ConsumerState<PsychicPackageManagementScreen> with TickerProviderStateMixin {
+  late TabController _tabController;
   final List<Map<String, dynamic>> packages = [
     {
       'id': 'pkg_001',
@@ -65,6 +65,18 @@ class _PsychicPackageManagementScreenState
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final activePackages =
         packages.where((p) => p['status'] == 'active').toList();
@@ -84,9 +96,19 @@ class _PsychicPackageManagementScreenState
         ],
       ),
       body: DiscoverBackground(
-        child: DiscoverTabLayout(
-          tabs: const ['Aktif', 'Sonlandırılmış'],
+        child: Column(
           children: [
+            TabBar(
+              controller: _tabController,
+              tabs: const [
+                Tab(text: 'Aktif'),
+                Tab(text: 'Sonlandırılmış'),
+              ],
+            ),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
             // Aktif Paketler
             if (activePackages.isEmpty)
               Padding(
@@ -159,10 +181,14 @@ class _PsychicPackageManagementScreenState
                   return _PackageCard(
                     package: pkg,
                     isEnded: true,
+                    onEdit: () => _showEditPackageDialog(pkg),
                     onReactivate: () => _reactivatePackage(pkg['id']),
                   );
                 },
               ),
+                ],
+              ),
+            ),
           ],
         ),
       ),

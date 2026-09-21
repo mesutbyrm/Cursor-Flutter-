@@ -506,7 +506,7 @@ class _TrendsTab extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      trend['title'],
+                      trend['title'] as String,
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -514,7 +514,7 @@ class _TrendsTab extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      trend['description'],
+                      trend['description'] as String,
                       style: TextStyle(
                         fontSize: 11,
                         color: Colors.white70,
@@ -532,7 +532,7 @@ class _TrendsTab extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  trend['trend'],
+                  trend['trend'] as String,
                   style: TextStyle(
                     fontSize: 10,
                     color: _getTrendColor(trend['trend'] as String),

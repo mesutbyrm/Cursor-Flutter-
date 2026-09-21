@@ -747,7 +747,7 @@ class _RecommendationsTab extends StatelessWidget {
                 'title': 'Pazarlama Kampanyası',
                 'desc': 'Düşük günlerde promosyon yaparak talep 2-3 katlı artırabilirsiniz.',
                 'impact': '+₺3,500 Aylık Potansiyel',
-                'icon': Icons.volumeUp,
+                'icon': Icons.volume_up_rounded,
               },
             ].map((rec) {
               return Padding(

@@ -102,7 +102,7 @@ class _CampaignsTab extends StatelessWidget {
         'ctr': '32%',
         'conversions': 18,
         'revenue': '₺1,530',
-        'icon': Icons.flash,
+        'icon': Icons.flash_on_rounded,
       },
       {
         'name': 'Premium Upgrade Önerisi',

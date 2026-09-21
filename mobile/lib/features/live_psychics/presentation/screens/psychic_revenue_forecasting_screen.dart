@@ -402,8 +402,7 @@ class _TrendChartPainter extends CustomPainter {
 
     final avgPaint = Paint()
       ..color = Colors.white.withValues(alpha: 0.3)
-      ..strokeWidth = 2
-      ..strokeDashPattern = [5, 5];
+      ..strokeWidth = 2;
 
     final gridPaint = Paint()
       ..color = Colors.white.withValues(alpha: 0.05)

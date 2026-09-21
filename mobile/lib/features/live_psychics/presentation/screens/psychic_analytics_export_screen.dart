@@ -597,7 +597,7 @@ class _ExportHistoryTab extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          item['type'],
+                          item['type'] as String,
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
@@ -610,15 +610,15 @@ class _ExportHistoryTab extends ConsumerWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: _getFormatColor(item['format'])
+                                color: _getFormatColor(item['format'] as String)
                                     .withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
-                                item['format'],
+                                item['format'] as String,
                                 style: TextStyle(
                                   fontSize: 10,
-                                  color: _getFormatColor(item['format']),
+                                  color: _getFormatColor(item['format'] as String),
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -666,7 +666,7 @@ class _ExportHistoryTab extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      item['status'],
+                      item['status'] as String,
                       style: const TextStyle(
                         fontSize: 10,
                         color: Colors.green,

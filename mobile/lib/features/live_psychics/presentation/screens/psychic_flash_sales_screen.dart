@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme_colors.dart';
-import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 
 /// Flash Sales — Belirli saatlerde indirimli seans sunma
@@ -15,7 +14,8 @@ class PsychicFlashSalesScreen extends ConsumerStatefulWidget {
 }
 
 class _PsychicFlashSalesScreenState
-    extends ConsumerState<PsychicFlashSalesScreen> {
+    extends ConsumerState<PsychicFlashSalesScreen> with TickerProviderStateMixin {
+  late TabController _tabController;
   final List<Map<String, dynamic>> flashSales = [
     {
       'id': 'flash_001',
@@ -84,6 +84,18 @@ class _PsychicFlashSalesScreenState
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final activeSales = flashSales.where((s) => s['status'] == 'active').toList();
     final fullSales = flashSales.where((s) => s['status'] == 'full').toList();
@@ -102,9 +114,20 @@ class _PsychicFlashSalesScreenState
         ],
       ),
       body: DiscoverBackground(
-        child: DiscoverTabLayout(
-          tabs: const ['Aktif', 'Dolu', 'Taslak'],
+        child: Column(
           children: [
+            TabBar(
+              controller: _tabController,
+              tabs: const [
+                Tab(text: 'Aktif'),
+                Tab(text: 'Dolu'),
+                Tab(text: 'Taslak'),
+              ],
+            ),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
             // Aktif Flash Sales
             if (activeSales.isEmpty)
               Padding(
@@ -219,6 +242,9 @@ class _PsychicFlashSalesScreenState
                   );
                 },
               ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
