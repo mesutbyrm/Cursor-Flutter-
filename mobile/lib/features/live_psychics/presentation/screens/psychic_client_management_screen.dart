@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/ui/premium_2026/cosmic_galaxy_background.dart';
-import 'package:canlifal_social/core/widgets/discover_background.dart';
+import '../../../feed/presentation/widgets/discover/discover_background.dart';
 
 class PsychicClientManagementScreen extends ConsumerStatefulWidget {
   const PsychicClientManagementScreen({Key? key}) : super(key: key);

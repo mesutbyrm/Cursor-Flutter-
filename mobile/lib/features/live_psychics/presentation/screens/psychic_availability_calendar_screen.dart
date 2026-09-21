@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/ui/premium_2026/cosmic_galaxy_background.dart';
-import 'package:canlifal_social/core/widgets/discover_background.dart';
+import '../../../feed/presentation/widgets/discover/discover_background.dart';
 
 class PsychicAvailabilityCalendarScreen extends ConsumerStatefulWidget {
   const PsychicAvailabilityCalendarScreen({Key? key}) : super(key: key);
@@ -157,7 +157,7 @@ class _PsychicAvailabilityCalendarScreenState
                           Text(
                             '$day',
                             style: TextStyle(
-                              color: isSelected ? Colors.black : Colors.white87,
+                              color: isSelected ? Colors.black : Colors.white.withOpacity(0.87),
                               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                               fontSize: 13,
                             ),
@@ -625,7 +625,7 @@ class _PsychicAvailabilityCalendarScreenState
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
-                      color: Colors.white87,
+                      color: Colors.white.withOpacity(0.87),
                     ),
                   ),
                   Text(

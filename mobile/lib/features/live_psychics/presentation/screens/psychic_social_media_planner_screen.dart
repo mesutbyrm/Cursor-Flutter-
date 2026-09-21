@@ -322,7 +322,7 @@ class _LibraryTab extends StatelessWidget {
         'description': 'Günlük tarot okuma içeriği',
         'hashtags': '#tarot #falokuma #gününtarotu',
         'uses': 24,
-        'icon': Icons.cards_rounded,
+        'icon': Icons.creditCard,
       },
       {
         'title': 'Müşteri Başarı Hikâyesi',
@@ -343,7 +343,7 @@ class _LibraryTab extends StatelessWidget {
         'description': 'Promosyon ve teklif reklamları',
         'hashtags': '#kampanya #teklif #indirim',
         'uses': 12,
-        'icon': Icons.megaphone_rounded,
+        'icon': Icons.volumeUp,
       },
       {
         'title': 'Q&A Seansı',

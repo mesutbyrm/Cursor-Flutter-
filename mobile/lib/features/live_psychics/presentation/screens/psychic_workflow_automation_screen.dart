@@ -97,7 +97,7 @@ class _PsychicWorkflowAutomationScreenState
                                 color: Colors.orange.withValues(alpha: 0.2),
                               ),
                               child: const Icon(
-                                Icons.automation_rounded,
+                                Icons.buildCircle,
                                 color: Colors.orange,
                                 size: 18,
                               ),

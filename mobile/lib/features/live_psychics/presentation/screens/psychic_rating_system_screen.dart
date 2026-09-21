@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/ui/premium_2026/cosmic_galaxy_background.dart';
-import 'package:canlifal_social/core/widgets/discover_background.dart';
+import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import 'package:canlifal_social/core/widgets/discover_tab_layout.dart';
 
 class PsychicRatingSystemScreen extends ConsumerStatefulWidget {
@@ -463,7 +463,7 @@ class _ReviewsTabState extends State<_ReviewsTab> {
           const SizedBox(height: 10),
           Text(
             review['comment'],
-            style: const TextStyle(fontSize: 13, color: Colors.white87),
+            style: const TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.87)),
           ),
           if (review['hasResponse']) ...[
             const SizedBox(height: 12),
@@ -494,7 +494,7 @@ class _ReviewsTabState extends State<_ReviewsTab> {
                   const SizedBox(height: 6),
                   Text(
                     review['responseText'],
-                    style: const TextStyle(fontSize: 12, color: Colors.white87),
+                    style: const TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.87)),
                   ),
                 ],
               ),
@@ -706,7 +706,7 @@ class _StatisticsTab extends StatelessWidget {
               children: [
                 Text(
                   category,
-                  style: const TextStyle(fontSize: 12, color: Colors.white87),
+                  style: const TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.87)),
                 ),
                 Row(
                   children: [
@@ -753,7 +753,7 @@ class _StatisticsTab extends StatelessWidget {
               const Expanded(
                 child: Text(
                   'Bu ayın puanı geçen aya göre artışta',
-                  style: TextStyle(fontSize: 12, color: Colors.white87),
+                  style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.87)),
                 ),
               ),
               Text(
@@ -896,7 +896,7 @@ class _ResponsesTabState extends State<_ResponsesTab> {
             ),
             child: Text(
               response['originalReview'],
-              style: const TextStyle(fontSize: 12, color: Colors.white87),
+              style: const TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.87)),
             ),
           ),
           const SizedBox(height: 12),
@@ -920,7 +920,7 @@ class _ResponsesTabState extends State<_ResponsesTab> {
             ),
             child: Text(
               response['yourResponse'],
-              style: const TextStyle(fontSize: 12, color: Colors.white87),
+              style: const TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.87)),
             ),
           ),
           const SizedBox(height: 12),
