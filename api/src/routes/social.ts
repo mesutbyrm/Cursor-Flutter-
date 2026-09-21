@@ -12,7 +12,9 @@ import {
   appendTellerChatMessage,
   respondFortuneSession,
   setTellerOnlineStatus,
+  fortuneSessionRoomPayload,
 } from "../lib/liveStreamExtrasStore";
+import { emitFortuneRoomSse } from "./fortune_room";
 import { prisma } from "../lib/prisma";
 import { fail, ok } from "../lib/response";
 import { requireAuth } from "../middleware/requireAuth";
@@ -531,6 +533,8 @@ socialRouter.patch(
     }
     const session = result.session;
     const role = fortuneSessionRoleForUser(session, req.userId!);
+    const payload = fortuneSessionRoomPayload(session, req.userId!);
+    emitFortuneRoomSse(session.id, "room_update", payload);
     return ok(res, {
       session,
       sessionId: session.id,

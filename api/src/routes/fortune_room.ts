@@ -13,7 +13,7 @@ import {
 import { fail, ok } from "../lib/response";
 import { requireAuth } from "../middleware/requireAuth";
 
-const fortuneRoomSubscribers = new Map<string, Set<import("express").Response>>();
+export const fortuneRoomSubscribers = new Map<string, Set<import("express").Response>>();
 
 function subscribeFortuneRoomSse(sessionId: string, res: import("express").Response) {
   const key = sessionId.trim();
@@ -33,7 +33,7 @@ function unsubscribeFortuneRoomSse(sessionId: string, res: import("express").Res
   if (set.size === 0) fortuneRoomSubscribers.delete(key);
 }
 
-function emitFortuneRoomSse(sessionId: string, event: string, payload: Record<string, unknown>) {
+export function emitFortuneRoomSse(sessionId: string, event: string, payload: Record<string, unknown>) {
   const set = fortuneRoomSubscribers.get(sessionId.trim());
   if (!set || set.size === 0) return;
   const line = `event: ${event}\ndata: ${JSON.stringify(payload)}\n\n`;

@@ -306,6 +306,8 @@ export function respondFortuneSession(
   if (action === "accept") {
     row.tellerResponse = "accepted";
     row.status = "active";
+    row.timerStarted = true;
+    row.timerStartedAt = new Date().toISOString();
   } else if (action === "hold") {
     row.tellerResponse = "held";
     row.status = "pending";
