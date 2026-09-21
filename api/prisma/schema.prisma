@@ -117,6 +117,9 @@ model User {
 
   voiceSessions VoiceSession[]
   agoraTokens AgoraToken[]
+  voiceRoomRoles VoiceRoomRole[]
+  userVoiceStats UserVoiceStats?
+  roomLeaderboards RoomLeaderboard[]
 
   @@index([referredByUserId])
   @@index([referralCode])
@@ -704,6 +707,71 @@ model VoiceRoom {
   @@index([roomType, isActive])
   @@index([ownerId])
   @@map("voice_rooms")
+}
+
+/// Sesli oda kullanıcı rolleri: owner, moderator, speaker, listener
+model VoiceRoomRole {
+  id String @id @default(cuid())
+  roomId String
+  userId String
+  user User @relation("VoiceRoomRoles", fields: [userId], references: [id], onDelete: Cascade)
+
+  role String @default("listener")  // "owner" | "moderator" | "speaker" | "listener"
+  permissions String[]  // ["mute_others", "kick", "manage_queue", "manage_roles"]
+  assignedAt DateTime @default(now())
+  assignedBy String?  // Kimse tarafından atanmış
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([roomId, userId])
+  @@index([roomId, role])
+  @@index([userId, createdAt])
+  @@map("voice_room_roles")
+}
+
+/// Kullanıcı sesli oda istatistikleri
+model UserVoiceStats {
+  id String @id @default(cuid())
+  userId String
+  user User @relation("UserVoiceStats", fields: [userId], references: [id], onDelete: Cascade)
+
+  totalMinutesSpeaking Int @default(0)  // Toplam konuşma dakikası
+  totalMinutesListening Int @default(0)  // Toplam dinleme dakikası
+  totalRoomsJoined Int @default(0)  // Katıldığı oda sayısı
+  favoriteRoomId String?  // En sık ziyaret edilen oda
+
+  engagementScore Int @default(0)  // Katılım puanı (algoritma tabanlı)
+  lastActivityAt DateTime?  // Son aktivite zamanı
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId])
+  @@map("user_voice_stats")
+}
+
+/// Oda leaderboard: Konuşan kullanıcıları sırala
+model RoomLeaderboard {
+  id String @id @default(cuid())
+  roomId String
+  userId String
+  user User @relation("RoomLeaderboards", fields: [userId], references: [id], onDelete: Cascade)
+
+  speakingDuration Int @default(0)  // Dakika
+  messagesCount Int @default(0)
+  giftsReceived Int @default(0)
+  rank Int  // Oda içindeki sıra
+  weeklyRank Int?  // Haftalık sıra
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([roomId, userId])
+  @@index([roomId, rank])
+  @@index([roomId, weeklyRank])
+  @@index([userId, createdAt])
+  @@map("room_leaderboards")
 }
 
 /// Sesli oda gelir ayarları (admin paneli).
