@@ -115,6 +115,9 @@ model User {
 
   accessibilitySettings AccessibilitySettings?
 
+  voiceSessions VoiceSession[]
+  agoraTokens AgoraToken[]
+
   @@index([referredByUserId])
   @@index([referralCode])
 }
@@ -1609,4 +1612,52 @@ model AccessibilitySettings {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/// Voice Session: Sesli oda oturum kaydı
+model VoiceSession {
+  id String @id @default(cuid())
+  roomId String
+  userId String
+  user User @relation("VoiceSessions", fields: [userId], references: [id], onDelete: Cascade)
+
+  joinedAt DateTime @default(now())
+  leftAt DateTime?
+
+  speakingTime Int @default(0)
+  audioLevel Float @default(0)
+
+  isSpeaking Boolean @default(false)
+  micEnabled Boolean @default(false)
+  seatNumber Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([roomId, userId])
+  @@index([roomId, joinedAt])
+  @@index([userId, createdAt])
+  @@map("voice_sessions")
+}
+
+/// Agora RTC Token: Agora gerçek zamanlı iletişim token'ları
+model AgoraToken {
+  id String @id @default(cuid())
+  userId String
+  user User @relation("AgoraTokens", fields: [userId], references: [id], onDelete: Cascade)
+
+  channelName String
+  token String @unique
+  tokenExpiration DateTime
+
+  agoraUid Int?
+  sessionId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([channelName, createdAt])
+  @@index([tokenExpiration])
+  @@map("agora_tokens")
 }

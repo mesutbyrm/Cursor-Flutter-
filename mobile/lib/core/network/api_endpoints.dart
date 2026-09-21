@@ -750,6 +750,11 @@ abstract final class ApiEndpoints {
   /// Tencent TRTC token (POST: roomId, role?) — önerilen.
   static const trtcToken = '/api/trtc/token';
 
+  /// Agora RTC token (POST: channelName, agoraUid?) — gerçek zamanlı ses/video.
+  static const agoraToken = '/api/agora/token';
+  static String agoraTokenChannel(String channelName) => '/api/agora/token/$channelName';
+  static String agoraTokenRevoke(String tokenId) => '/api/agora/token/$tokenId';
+
   /// Canlı oda yaşam döngüsü — compound katılım, heartbeat, ayrılma.
   static const liveCreateRoom = '/api/live/create-room';
   static const liveJoinRoom = '/api/live/join-room';

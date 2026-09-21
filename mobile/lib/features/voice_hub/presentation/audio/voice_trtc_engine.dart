@@ -5,15 +5,18 @@ import '../../../trtc/domain/entities/trtc_credentials.dart';
 import '../../../trtc/presentation/trtc_room_manager.dart';
 import '../../data/services/voice_room_debug_log.dart';
 import 'voice_trtc_exception.dart';
+import 'voice_audio_level_monitor.dart';
 
 /// Sesli sohbet — Tencent TRTC (`POST /api/trtc/token`).
 class VoiceTrtcEngine {
   VoiceTrtcEngine({TrtcRemoteDataSource? tokenSource})
       : _tokenSource = tokenSource,
-        _manager = TrtcRoomManager();
+        _manager = TrtcRoomManager(),
+        _audioMonitor = VoiceAudioLevelMonitor();
 
   final TrtcRemoteDataSource? _tokenSource;
   final TrtcRoomManager _manager;
+  final VoiceAudioLevelMonitor _audioMonitor;
 
   var _inRoom = false;
   var _micOn = true;
@@ -26,6 +29,7 @@ class VoiceTrtcEngine {
   bool get inChannel => _inRoom;
   bool get micOn => _micOn;
   TrtcCredentials? get lastCredentials => _lastCredentials;
+  VoiceAudioLevelMonitor get audioMonitor => _audioMonitor;
 
   static Future<bool> requestMicrophonePermission() =>
       TrtcRoomManager.requestPermissions(video: false);
@@ -190,6 +194,63 @@ class VoiceTrtcEngine {
     _manager.setAllRemoteAudioMuted(muted);
   }
 
+  /// Ses seviyesi monitörünü başlat (gerçek zamanlı izleme)
+  void startAudioMonitoring() {
+    _audioMonitor.startMonitoring();
+    VoiceRoomDebugLog.log('audio.monitoring.start', {
+      'roomId': _roomId,
+    });
+  }
+
+  /// Ses seviyesi monitörünü durdur
+  void stopAudioMonitoring() {
+    _audioMonitor.stopMonitoring();
+    VoiceRoomDebugLog.log('audio.monitoring.stop', {
+      'roomId': _roomId,
+    });
+  }
+
+  /// Kullanıcının ses seviyesi örneği kaydet
+  void recordAudioLevel(String userId, double level) {
+    try {
+      _audioMonitor.recordAudioLevel(userId, level);
+    } catch (e) {
+      VoiceRoomDebugLog.log('audio.level.record.error', {
+        'userId': userId,
+        'level': level,
+        'error': e.toString(),
+      });
+    }
+  }
+
+  /// Belirli bir kullanıcının ses metriklerini al
+  UserAudioMetrics? getAudioMetrics(String userId) {
+    return _audioMonitor.getMetrics(userId);
+  }
+
+  /// Tüm kullanıcıların ses metriklerini al
+  Map<String, UserAudioMetrics> getAllAudioMetrics() {
+    return _audioMonitor.getAllMetrics();
+  }
+
+  /// Oda-genelinde ses istatistiklerini al
+  Map<String, dynamic> getRoomAudioStatistics() {
+    return _audioMonitor.getRoomStatistics();
+  }
+
+  /// En çok konuşan kullanıcıları al
+  List<UserAudioMetrics> getTopSpeakers({int limit = 5}) {
+    return _audioMonitor.getTopSpeakers(limit: limit);
+  }
+
+  /// En yüksek ses seviyesine sahip kullanıcıları al
+  List<UserAudioMetrics> getHighestAudioLevelUsers({int limit = 5}) {
+    return _audioMonitor.getHighestAudioLevelUsers(limit: limit);
+  }
+
+  /// Ses seviyesi metrik akışını al (gerçek zamanlı)
+  Stream<UserAudioMetrics> get audioMetricsStream => _audioMonitor.metricsStream;
+
   Future<void> leave() async {
     try {
       await _manager.leave();
@@ -199,10 +260,13 @@ class VoiceTrtcEngine {
     _publishMic = false;
     _roomId = '';
     _lastCredentials = null;
+    // Ayrılırken metrikler sıfırla
+    _audioMonitor.resetAllMetrics();
   }
 
   Future<void> dispose() async {
     await leave();
+    _audioMonitor.dispose();
     _manager.dispose();
   }
 }
