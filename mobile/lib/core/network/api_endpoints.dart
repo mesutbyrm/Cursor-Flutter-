@@ -787,6 +787,23 @@ abstract final class ApiEndpoints {
   static String roomAchievementsStats(String roomId) => '/api/rooms/$roomId/achievements/stats';
   static String roomCheckAchievements(String roomId) => '/api/rooms/$roomId/check-achievements';
 
+  /// Oda Kayıt & Arşiv.
+  static String roomRecordingStart(String roomId) => '/api/rooms/$roomId/recording/start';
+  static String roomRecordingEnd(String recordingId) => '/api/recordings/$recordingId/end';
+  static String roomRecordings(String roomId) => '/api/rooms/$roomId/recordings';
+  static const userRecordings = '/api/user/recordings';
+  static String recordingDetails(String recordingId) => '/api/recordings/$recordingId';
+  static String roomRecordingStats(String roomId) => '/api/rooms/$roomId/recordings/stats';
+
+  /// Gelişmiş Analitik.
+  static String roomAnalytics(String roomId) => '/api/rooms/$roomId/analytics';
+  static String roomAnalyticsUpdate(String roomId) => '/api/rooms/$roomId/analytics/update';
+  static String roomAnalyticsInsights(String roomId) => '/api/rooms/$roomId/insights';
+  static String roomAnalyticsGenerateInsights(String roomId) => '/api/rooms/$roomId/analytics/generate-insights';
+  static String roomPerformanceReport(String roomId) => '/api/rooms/$roomId/performance-report';
+  static String roomTrendAnalysis(String roomId) => '/api/rooms/$roomId/trend-analysis';
+  static const analyticsCompareRooms = '/api/analytics/compare-rooms';
+
   /// Canlı oda yaşam döngüsü — compound katılım, heartbeat, ayrılma.
   static const liveCreateRoom = '/api/live/create-room';
   static const liveJoinRoom = '/api/live/join-room';

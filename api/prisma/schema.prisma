@@ -126,6 +126,8 @@ model User {
   roomFavorites RoomFavorite[]
   userBadges UserBadge[]
 
+  roomRecordings RoomRecording[]
+
   @@index([referredByUserId])
   @@index([referralCode])
 }
@@ -1874,4 +1876,92 @@ model UserBadge {
   @@index([userId, earnedAt])
   @@index([badgeType])
   @@map("user_badges")
+}
+
+/// Feature 50: Oda Kayıt & Arşiv
+model RoomRecording {
+  id String @id @default(cuid())
+  roomId String
+  userId String?
+  user User? @relation("RoomRecordings", fields: [userId], references: [id], onDelete: SetNull)
+  
+  title String?
+  description String?
+  recordingUrl String
+  duration Int
+  fileSize Int
+  
+  isPublic Boolean @default(false)
+  isArchived Boolean @default(false)
+  
+  startedAt DateTime
+  endedAt DateTime?
+  
+  metadata Json?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([roomId, createdAt])
+  @@index([userId])
+  @@index([isArchived])
+  @@map("room_recordings")
+}
+
+/// Feature 51: Gelişmiş Analitik
+model AdvancedRoomAnalytics {
+  id String @id @default(cuid())
+  roomId String @unique
+  
+  totalSessions Int @default(0)
+  totalUniqueUsers Int @default(0)
+  totalDurationMinutes Int @default(0)
+  
+  averageSessionDuration Int @default(0)
+  averageUsersPerSession Int @default(0)
+  
+  peakHourTime String?
+  peakHourUserCount Int @default(0)
+  
+  engagementScore Float @default(0)
+  retentionRate Float @default(0)
+  
+  mostActiveDay String?
+  mostActiveDayUserCount Int @default(0)
+  
+  weeklyActiveUsers Int @default(0)
+  monthlyActiveUsers Int @default(0)
+  
+  totalMessagesCount Int @default(0)
+  totalGiftsCount Int @default(0)
+  totalGiftValue Int @default(0)
+  
+  metadata Json?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([roomId, updatedAt])
+  @@map("advanced_room_analytics")
+}
+
+/// Oda İçgörüleri (Trend, Anomali)
+model RoomInsight {
+  id String @id @default(cuid())
+  roomId String
+  
+  insightType String
+  title String
+  description String?
+  value Float?
+  trend String?
+  recommendation String?
+  
+  isActive Boolean @default(true)
+  
+  createdAt DateTime @default(now())
+  
+  @@index([roomId, createdAt])
+  @@index([insightType])
+  @@map("room_insights")
 }
