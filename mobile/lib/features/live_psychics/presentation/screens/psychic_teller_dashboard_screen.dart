@@ -755,12 +755,8 @@ class _QuickActions extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Arkadaş Davet Sistemi (Hazırlanıyor)'),
-                    duration: Duration(seconds: 2),
-                  ),
-                ),
+                onPressed: () =>
+                    context.push('/canli-falcilar/referral'),
                 icon: const Icon(Icons.people_alt_outlined, size: 18),
                 label: const Text('Referral'),
                 style: OutlinedButton.styleFrom(
