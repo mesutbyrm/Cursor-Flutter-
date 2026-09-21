@@ -72,6 +72,22 @@ model User {
   notificationPreferences NotificationPreference?
   notifications Notification[]
 
+  // Feature 37: AI Copilot
+  aiCopilotSuggestions AICopilot[]
+  aiCopilotHistory AICopilotHistory[]
+
+  // Feature 38: Fal Eşleştirme
+  matchesAsUser1 FortuneMatch[] @relation("FortuneMatchUser1")
+  matchesAsUser2 FortuneMatch[] @relation("FortuneMatchUser2")
+  matchViews FortuneMatchView[]
+
+  // Feature 39: Analitik
+  analytics UserAnalytics?
+  analyticsSnapshots AnalyticsSnapshot[]
+
+  // Feature 40: Sesli Fal
+  voiceFortunes VoiceFortune[]
+
   @@index([referredByUserId])
   @@index([referralCode])
 }
@@ -96,6 +112,10 @@ model UserFortune {
   commentsCount  Int      @default(0)
   createdAt      DateTime @default(now())
   socialPosts    SocialFortunePost[]
+
+  // Phase 2 relations
+  aiCopilots AICopilot[]
+  voiceFortunes VoiceFortune[]
 
   @@index([userId, createdAt])
 }
@@ -1086,5 +1106,192 @@ model NotificationLog {
   sentAt DateTime @default(now())
 
   @@index([userId, sentAt])
+  @@index([status])
+}
+
+/// Feature 37: AI Copilot — Yapay zeka destekli fal önerileri
+model AICopilot {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fortuneId String?
+  fortune UserFortune? @relation(fields: [fortuneId], references: [id], onDelete: SetNull)
+
+  prompt String
+  suggestion String
+  confidenceScore Float @default(0.0)
+  analysisType String @default("general")
+
+  context Json?
+  metadata Json?
+
+  liked Boolean @default(false)
+  rating Int? @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([confidenceScore])
+}
+
+/// Feature 37: AI Yazma Geçmişi
+model AICopilotHistory {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  copilotId String
+  copilot AICopilot @relation(fields: [copilotId], references: [id], onDelete: Cascade)
+
+  action String
+  timestamp DateTime @default(now())
+
+  @@index([userId, timestamp])
+}
+
+/// Feature 38: Fal Eşleştirme — Kullanıcı uyumu analizi
+model FortuneMatch {
+  id String @id @default(cuid())
+  userId1 String
+  user1 User @relation("FortuneMatchUser1", fields: [userId1], references: [id], onDelete: Cascade)
+
+  userId2 String
+  user2 User @relation("FortuneMatchUser2", fields: [userId2], references: [id], onDelete: Cascade)
+
+  fortuneId1 String?
+  fortuneId2 String?
+
+  compatibilityScore Float @default(0.0)
+  matchType String @default("general")
+  analysis String?
+
+  insights Json?
+  recommendations String[]
+
+  shared Boolean @default(false)
+  sharedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId1, userId2])
+  @@index([userId1, compatibilityScore])
+  @@index([userId2])
+}
+
+/// Feature 38: Eşleştirme Görünüm Geçmişi
+model FortuneMatchView {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  matchId String
+  match FortuneMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  viewedAt DateTime @default(now())
+
+  @@index([userId, viewedAt])
+}
+
+/// Feature 39: Analitik Dashboard — Kullanıcı metrikleri
+model UserAnalytics {
+  id String @id @default(cuid())
+  userId String @unique
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  totalReadings Int @default(0)
+  totalVoiceReadings Int @default(0)
+  totalMatches Int @default(0)
+  totalShares Int @default(0)
+
+  averageReadingTime Int @default(0)
+  longestStreak Int @default(0)
+  currentStreak Int @default(0)
+
+  preferredCategory String?
+  mostUsedReadingType String?
+
+  engagementScore Float @default(0.0)
+  retentionScore Float @default(0.0)
+
+  lastReadingAt DateTime?
+  lastActiveAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Feature 39: Analitik Anlık Bilgiler
+model AnalyticsSnapshot {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  period String @default("daily")
+  date DateTime
+
+  readingCount Int @default(0)
+  voiceReadingCount Int @default(0)
+  matchCount Int @default(0)
+  shareCount Int @default(0)
+
+  screenViews Int @default(0)
+  sessionDuration Int @default(0)
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, date, period])
+  @@index([userId, date])
+}
+
+/// Feature 40: Sesli Fal — Ses kaydı ve transkripsiyon
+model VoiceFortune {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  audioUrl String
+  duration Int
+  transcription String?
+  transcriptionLanguage String @default("tr")
+
+  confidenceScore Float?
+
+  fortune UserFortune? @relation(fields: [fortuneId], references: [id], onDelete: SetNull)
+  fortuneId String?
+
+  processingStatus String @default("pending")
+  processingError String?
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+  processedAt DateTime?
+
+  @@index([userId, createdAt])
+  @@index([processingStatus])
+}
+
+/// Feature 40: Ses İşleme İşi
+model VoiceProcessingJob {
+  id String @id @default(cuid())
+  voiceFortuneId String @unique
+  voiceFortune VoiceFortune @relation(fields: [voiceFortuneId], references: [id], onDelete: Cascade)
+
+  status String @default("queued")
+  progress Int @default(0)
+
+  provider String @default("openai")
+  providerJobId String?
+
+  error String?
+  retryCount Int @default(0)
+
+  startedAt DateTime?
+  completedAt DateTime?
+
   @@index([status])
 }
