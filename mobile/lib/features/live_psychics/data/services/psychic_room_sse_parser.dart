@@ -111,12 +111,14 @@ PsychicRoomSseEvent? parseSessionRoomSsePayload(
     final eventId = merged['id']?.toString() ??
         merged['eventId']?.toString() ??
         merged['messageId']?.toString() ??
-        merged['tipId']?.toString();
+        merged['tipId']?.toString() ??
+        merged['giftId']?.toString();
+    final fromName = merged['senderName']?.toString() ??
+        merged['clientName']?.toString() ??
+        merged['fromName']?.toString();
     return PsychicRoomSseTip(
       amount: amount,
-      fromName: merged['senderName']?.toString() ??
-          merged['clientName']?.toString() ??
-          merged['fromName']?.toString(),
+      fromName: fromName,
       eventId: eventId,
     );
   }

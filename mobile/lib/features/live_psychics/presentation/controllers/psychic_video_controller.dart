@@ -610,8 +610,11 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     final signals = await repo.fetchRoomSignals(session.sessionId);
     if (_disposed) return;
     for (final sig in signals) {
+      // Signal ID: backend tarafından sağlanan 'id' veya timestamp + type + index oluştur.
       final id = sig['id']?.toString() ??
-          '${sig['type']}_${sig['createdAt'] ?? sig['timestamp']}';
+          sig['signalId']?.toString() ??
+          sig['eventId']?.toString() ??
+          '${sig['type']}_${sig['createdAt'] ?? sig['timestamp'] ?? ''}';
       if (id.isEmpty || !_seenSignalIds.add(id)) continue;
       final type = (sig['type'] ?? '').toString().toLowerCase();
       if (type.contains('session_end') || type.contains('end_session')) {
@@ -869,7 +872,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
             _onTipReceived(
               amount,
               fromName,
-              eventId: eventId ?? 'sse-tip-$amount-${fromName ?? ''}',
+              eventId: eventId,
             );
           },
           onSignal: (type, data) {
@@ -900,11 +903,15 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     if (id != null && id.isNotEmpty) {
       if (!_seenTipEventIds.add(id)) return;
     } else {
+      // Fallback eventId: timestamp + miktar + göndericiye bağlı tekil ID.
       final now = DateTime.now();
+      final nowMs = now.millisecondsSinceEpoch;
+      final fromNameNorm = (fromName ?? '').replaceAll(RegExp(r'\s+'), '').toLowerCase();
+      final fallbackId = 'tip-$nowMs-$amount-$fromNameNorm';
+      if (!_seenTipEventIds.add(fallbackId)) return;
       final last = _lastTipReceivedPopupAt;
       if (last != null &&
-          now.difference(last) < const Duration(seconds: 6) &&
-          state.tipReceivedAmount == amount) {
+          now.difference(last) < const Duration(seconds: 2)) {
         _scheduleTipReceivedDismiss();
         return;
       }

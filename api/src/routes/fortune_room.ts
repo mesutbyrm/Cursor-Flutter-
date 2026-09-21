@@ -174,6 +174,19 @@ fortuneRoomRouter.post("/:sessionId/tip", requireAuth, (req, res) => {
   if (!result.ok) {
     return fail(res, 400, "BAD_REQUEST", result.error);
   }
+  // SSE: Tip hediyesi — falcıya bildirim
+  const tipEventId = `tip-${req.params.sessionId}-${Date.now()}-${Math.random()}`;
+  emitFortuneRoomSse(req.params.sessionId, "tip", {
+    id: tipEventId,
+    eventId: tipEventId,
+    amount,
+    jeton: amount,
+    tipAmount: amount,
+    senderName: req.body?.senderName ?? "Danışan",
+    fromName: req.body?.senderName ?? "Danışan",
+    timestamp: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+  });
   return ok(res, {
     tipsTotal: result.tipsTotal,
     session: fortuneSessionRoomPayload(result.session, req.userId!),
@@ -247,7 +260,11 @@ fortuneRoomRouter.post("/:sessionId/signal", requireAuth, (req, res) => {
     return fail(res, 400, "VALIDATION_ERROR", "Signal type gerekli");
   }
 
+  // Sinyal ID — SSE ve storage'da deduplication için.
+  const signalId = `signal-${session.id}-${Date.now()}-${Math.random()}`;
   const payload = {
+    id: signalId,
+    signalId,
     type: type.trim(),
     senderId,
     ...(data && { data }),
