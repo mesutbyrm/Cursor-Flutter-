@@ -44,6 +44,16 @@ class PsychicRoomSseTip extends PsychicRoomSseEvent {
   final String? eventId;
 }
 
+class PsychicRoomSseSignal extends PsychicRoomSseEvent {
+  const PsychicRoomSseSignal({
+    required this.type,
+    this.data,
+  });
+
+  final String type;
+  final Map<String, dynamic>? data;
+}
+
 Map<String, dynamic> _mergeSsePayload(Map<String, dynamic> map) {
   final merged = Map<String, dynamic>.from(map);
   for (final key in ['data', 'payload', 'body']) {
@@ -109,6 +119,30 @@ PsychicRoomSseEvent? parseSessionRoomSsePayload(
           merged['fromName']?.toString(),
       eventId: eventId,
     );
+  }
+  if (type == 'signal') {
+    final signalType = merged['type']?.toString() ?? '';
+    final signalData = merged['data'] as Map<String, dynamic>? ?? {};
+
+    // Timer başlatma isteği sinyali — danışan tarafında prompt göster
+    if (signalType == 'timer_start_request' && !session.isClient) {
+      // Falcı tarafında — danışanın kabul beklemesi
+      return PsychicRoomSseSignal(
+        type: signalType,
+        data: signalData,
+      );
+    }
+
+    // Timer başlatma onayı — falcı tarafında süre başlat
+    if (signalType == 'timer_start_accept' && session.isClient) {
+      // Danışan tarafında — falcıya onay yolladı
+      return PsychicRoomSseSignal(
+        type: signalType,
+        data: signalData,
+      );
+    }
+
+    return null;
   }
   if (type == 'timer_started' || type == 'time_extended') {
     return PsychicRoomSseRoomUpdate(

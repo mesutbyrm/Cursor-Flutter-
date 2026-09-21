@@ -226,3 +226,34 @@ fortuneRoomRouter.get("/:sessionId/stream", requireAuth, async (req, res) => {
     res.end();
   });
 });
+
+fortuneRoomRouter.post("/:sessionId/signal", requireAuth, (req, res) => {
+  const session = getFortuneSession(req.params.sessionId);
+  if (!session) {
+    return fail(res, 404, "NOT_FOUND", "Oturum bulunamadı");
+  }
+  const senderId = req.userId!;
+  if (session.clientId !== senderId && session.tellerUserId !== senderId && session.tellerId !== senderId) {
+    return fail(res, 403, "FORBIDDEN", "Yetki yok");
+  }
+
+  const { type, data, receiverId } = req.body as {
+    type?: string;
+    data?: Record<string, unknown>;
+    receiverId?: string;
+  };
+
+  if (!type || type.trim().length === 0) {
+    return fail(res, 400, "VALIDATION_ERROR", "Signal type gerekli");
+  }
+
+  const payload = {
+    type: type.trim(),
+    senderId,
+    ...(data && { data }),
+    timestamp: new Date().toISOString(),
+  };
+
+  emitFortuneRoomSse(session.id, "signal", payload);
+  return ok(res, { success: true });
+});

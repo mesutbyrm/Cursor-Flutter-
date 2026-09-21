@@ -32,6 +32,7 @@ class PsychicRoomSseService {
   void Function(PsychicRoomEntity room)? _onRoomUpdate;
   void Function(PsychicSessionStatus status)? _onSessionEnded;
   void Function(int amount, String? fromName, String? eventId)? _onTipReceived;
+  void Function(String type, Map<String, dynamic>? data)? _onSignal;
   void Function()? _onFailed;
   var _stopped = false;
   var _reconnectAttempt = 0;
@@ -46,6 +47,7 @@ class PsychicRoomSseService {
     void Function(PsychicRoomEntity room)? onRoomUpdate,
     void Function(PsychicSessionStatus status)? onSessionEnded,
     void Function(int amount, String? fromName, String? eventId)? onTipReceived,
+    void Function(String type, Map<String, dynamic>? data)? onSignal,
     void Function()? onFailed,
   }) async {
     final id = sessionId.trim();
@@ -60,6 +62,7 @@ class PsychicRoomSseService {
     _onRoomUpdate = onRoomUpdate;
     _onSessionEnded = onSessionEnded;
     _onTipReceived = onTipReceived;
+    _onSignal = onSignal;
     _onFailed = onFailed;
     await _openStream();
   }
@@ -179,6 +182,8 @@ class PsychicRoomSseService {
           _onMessage?.call(message);
         case PsychicRoomSseTip(:final amount, :final fromName, :final eventId):
           _onTipReceived?.call(amount, fromName, eventId);
+        case PsychicRoomSseSignal(:final type, :final data):
+          _onSignal?.call(type, data);
       }
     } catch (_) {}
   }

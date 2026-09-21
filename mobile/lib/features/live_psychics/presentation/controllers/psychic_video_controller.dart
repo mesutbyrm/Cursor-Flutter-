@@ -871,7 +871,26 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
               eventId: eventId ?? 'sse-tip-$amount-${fromName ?? ''}',
             );
           },
+          onSignal: (type, data) {
+            if (_disposed || state.leaving) return;
+            _handleSseSignal(type, data);
+          },
         );
+  }
+
+  void _handleSseSignal(String type, Map<String, dynamic>? data) {
+    // Falcı tarafında: danışan "seans başlaması için süre başlat" isteğini yolladı
+    if (type == PsychicTimerHandshake.signalAccept && !session.isClient) {
+      state = state.copyWith(timerStartPrompt: false);
+      requestTimerStart();
+      return;
+    }
+
+    // Danışan tarafında: falcı "seans başlaması için süre başlat" isteğini yolladı
+    if (type == PsychicTimerHandshake.signalRequest && session.isClient) {
+      state = state.copyWith(timerStartPrompt: true);
+      return;
+    }
   }
 
   void _onTipReceived(int amount, String? fromName, {String? eventId}) {
