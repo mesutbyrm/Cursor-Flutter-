@@ -449,7 +449,7 @@ export function patchFortuneSessionRoom(
     return { ok: false as const, error: "Yetki yok" };
   }
   const act = action.trim().toLowerCase();
-  if (act === "start_timer" || act === "start") {
+  if (act === "start_timer" || act === "start" || act === "accept") {
     row.status = "active";
     row.timerStarted = true;
     row.timerStartedAt = new Date().toISOString();
