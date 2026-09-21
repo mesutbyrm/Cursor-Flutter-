@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
-import '../../../../core/network/dio_instance.dart';
+import '../../../../core/network/dio_provider.dart';
 
 // Models
 class UserStreak {
