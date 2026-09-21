@@ -785,14 +785,10 @@ class _QuickActions extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Gelişmiş Arama (Hazırlanıyor)'),
-                    duration: Duration(seconds: 2),
-                  ),
-                ),
-                icon: const Icon(Icons.tune_outlined, size: 18),
-                label: const Text('İleri Ara'),
+                onPressed: () =>
+                    context.push('/canli-falcilar/notifications'),
+                icon: const Icon(Icons.notifications_outlined, size: 18),
+                label: const Text('Bildirimler'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.white,
                   side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
