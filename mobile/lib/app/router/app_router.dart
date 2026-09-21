@@ -190,6 +190,8 @@ import '../../features/live_psychics/presentation/screens/psychic_tax_reporting_
 import '../../features/live_psychics/presentation/screens/psychic_session_recording_screen.dart';
 import '../../features/live_psychics/presentation/screens/psychic_benchmarking_screen.dart';
 import '../../features/live_psychics/presentation/screens/psychic_behavior_analytics_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_workflow_automation_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_compliance_legal_screen.dart';
 import '../../features/agency/presentation/pages/agency_applications_page.dart';
 import '../../features/agency/presentation/pages/agency_dashboard_screen.dart';
 import '../../features/cfc_arena/presentation/pages/cfc_arena_contest_page.dart';
@@ -1883,6 +1885,34 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
               key: state.pageKey,
               child: const PsychicBehaviorAnalyticsScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'workflow-automation',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicWorkflowAutomationScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'compliance-legal',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicComplianceLegalScreen(),
             ),
           ),
           GoRoute(
