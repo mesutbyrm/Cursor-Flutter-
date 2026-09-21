@@ -872,6 +872,19 @@ class _QuickActions extends StatelessWidget {
                 ),
               ),
             ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () =>
+                    context.push('/canli-falcilar/team-workspace'),
+                icon: const Icon(Icons.groups_rounded, size: 18),
+                label: const Text('Takım Çalışması'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                ),
+              ),
+            ),
           ],
         ),
       ],
