@@ -1202,6 +1202,103 @@ abstract final class ApiEndpoints {
   static String streamRewardGiftToHost(String rewardId, String hostId) =>
       '/api/stream-rewards/$rewardId/gift-to-host/$hostId';
 
+  // --- Orta Öncelik: Co-Broadcast İleri Özellikleri ---
+  static String videoStreamCoBroadcastInviteGuest(String streamId) =>
+      '/api/video-streams/$streamId/co-broadcast/invite-guest';
+
+  static String coBroadcastSessionAccept(String streamId, String sessionId) =>
+      '/api/video-streams/$streamId/co-broadcast/guest/$sessionId/accept';
+
+  static String coBroadcastSessionReject(String streamId, String sessionId) =>
+      '/api/video-streams/$streamId/co-broadcast/guest/$sessionId/reject';
+
+  static String coBroadcastSessionEnd(String streamId, String sessionId) =>
+      '/api/video-streams/$streamId/co-broadcast/guest/$sessionId/end';
+
+  static String coBroadcastSessionPermissions(String streamId, String sessionId) =>
+      '/api/video-streams/$streamId/co-broadcast/guest/$sessionId/permissions';
+
+  static String videoStreamCoBroadcastActive(String streamId) =>
+      '/api/video-streams/$streamId/co-broadcast/active';
+
+  static const userCoBroadcastInvitations = '/api/users/me/co-broadcast/invitations';
+
+  static String videoStreamCoBroadcastWaitlistAdd(String streamId) =>
+      '/api/video-streams/$streamId/co-broadcast/waitlist/add';
+
+  static String videoStreamCoBroadcastWaitlist(String streamId) =>
+      '/api/video-streams/$streamId/co-broadcast/waitlist';
+
+  static String userCoBroadcastWaitlistPosition(String streamId) =>
+      '/api/users/me/co-broadcast/waitlist-position/$streamId';
+
+  static String videoStreamCoBroadcastDistributeRevenue(String streamId) =>
+      '/api/video-streams/$streamId/co-broadcast/distribute-revenue';
+
+  static String coBroadcastSessionEarnings(String sessionId) =>
+      '/api/co-broadcast-sessions/$sessionId/earnings';
+
+  // --- Orta Öncelik: Reklam & Sponsor Sistemi ---
+  static String videoStreamAdsSchedule(String streamId) =>
+      '/api/video-streams/$streamId/ads/schedule';
+
+  static String videoStreamAdsList(String streamId) =>
+      '/api/video-streams/$streamId/ads';
+
+  static String streamAdDisplay(String adId) =>
+      '/api/stream-ads/$adId/display';
+
+  static String streamAdClick(String adId) =>
+      '/api/stream-ads/$adId/click';
+
+  static String streamAdStats(String adId) =>
+      '/api/stream-ads/$adId/stats';
+
+  static String streamAdDelete(String adId) =>
+      '/api/stream-ads/$adId';
+
+  static String videoStreamSponsorsAdd(String streamId) =>
+      '/api/video-streams/$streamId/sponsors';
+
+  static String videoStreamSponsorsList(String streamId) =>
+      '/api/video-streams/$streamId/sponsors';
+
+  static String videoStreamSponsorsByTier(String streamId, String tier) =>
+      '/api/video-streams/$streamId/sponsors/tier/$tier';
+
+  static String streamSponsorUpdate(String sponsorId) =>
+      '/api/stream-sponsors/$sponsorId';
+
+  static String streamSponsorDelete(String sponsorId) =>
+      '/api/stream-sponsors/$sponsorId';
+
+  static String streamSponsorStats(String sponsorId) =>
+      '/api/stream-sponsors/$sponsorId/stats';
+
+  // --- Orta Öncelik: Host Tier & Badges Sistemi ---
+  static const userBroadcasterTier = '/api/users/me/broadcaster-tier';
+
+  static const userBroadcasterTierUpdateStats = '/api/users/me/broadcaster-tier/update-stats';
+
+  static String userBroadcasterTierPublic(String userId) =>
+      '/api/users/$userId/broadcaster-tier';
+
+  static String broadcasterLeaderboardByTier(String tier) =>
+      '/api/broadcasters/leaderboard/by-tier/$tier';
+
+  static const broadcasterLeaderboardAll = '/api/broadcasters/leaderboard/all';
+
+  static const userBadgesUnlock = '/api/users/me/badges/unlock';
+
+  static const userBadgesList = '/api/users/me/badges';
+
+  static String userBadgesPublic(String userId) =>
+      '/api/users/$userId/badges';
+
+  static const userBadgesCheckEligibility = '/api/users/me/badges/check-eligibility';
+
+  static const badgesDefinitions = '/api/badges/definitions';
+
   /// Public hediye JSON kataloğu. Production `/api/gifts` sayfa route'udur.
   static const giftsCatalog = giftsTypes;
 

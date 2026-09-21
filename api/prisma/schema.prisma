@@ -143,6 +143,16 @@ model User {
   pkSponsors PkBattleSponsor[] @relation("PkSponsors")
   streamPurchaseRewards StreamPurchaseReward[] @relation("StreamPurchaseRewards")
 
+  coBroadcastHosting CoBroadcastSession[] @relation("CoBroadcastHost")
+  coBroadcastGuesting CoBroadcastSession[] @relation("CoBroadcastGuests")
+  coBroadcastWaitlist CoBroadcastWaitlist[] @relation("CoBroadcastWaitlist")
+
+  streamAds StreamAdPlacement[] @relation("StreamAds")
+  streamSponsors StreamSponsor[] @relation("StreamSponsors")
+
+  broadcasterTier HostBroadcasterTier? @relation("BroadcasterTier")
+  achievementBadges HostAchievementBadge[] @relation("HostAchievementBadges")
+
   @@index([referredByUserId])
   @@index([referralCode])
 }
@@ -2521,4 +2531,149 @@ model StreamPurchaseReward {
 
   @@index([userId])
   @@map("stream_purchase_rewards")
+}
+
+// === ORTA ÖNCELIK: CO-BROADCAST İLERİ ÖZELLİKLERİ ===
+
+model CoBroadcastSession {
+  id String @id @default(cuid())
+  streamId String
+  hostId String
+  host User @relation("CoBroadcastHost", fields: [hostId], references: [id], onDelete: Cascade)
+
+  guestId String
+  guest User @relation("CoBroadcastGuests", fields: [guestId], references: [id], onDelete: Cascade)
+
+  status String @default("pending")
+  permissionLevel String @default("basic")
+
+  revenueSharePercent Float @default(20.0)
+  earnedAmount Int @default(0)
+
+  startedAt DateTime
+  endedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([streamId, guestId])
+  @@index([hostId])
+  @@index([guestId])
+  @@index([status])
+  @@map("co_broadcast_sessions")
+}
+
+model CoBroadcastWaitlist {
+  id String @id @default(cuid())
+  streamId String
+  waitlistUserId String
+  user User @relation("CoBroadcastWaitlist", fields: [waitlistUserId], references: [id], onDelete: Cascade)
+
+  position Int
+  addedAt DateTime @default(now())
+  acceptedAt DateTime?
+
+  @@unique([streamId, waitlistUserId])
+  @@index([streamId, position])
+  @@map("co_broadcast_waitlists")
+}
+
+// === ORTA ÖNCELIK: REKLAM & SPONSOR SİSTEMİ ===
+
+model StreamAdPlacement {
+  id String @id @default(cuid())
+  streamId String
+  hostId String
+  host User @relation("StreamAds", fields: [hostId], references: [id], onDelete: Cascade)
+
+  adType String
+  adContent String
+  adImageUrl String?
+  adVideoUrl String?
+
+  advertiserName String
+  advertiserLogoUrl String?
+  advertiserLink String?
+
+  displayPosition String @default("bottom")
+  displayDuration Int @default(5)
+
+  scheduledAt DateTime
+  displayedAt DateTime?
+  clickCount Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([streamId])
+  @@index([hostId])
+  @@index([scheduledAt])
+  @@map("stream_ad_placements")
+}
+
+model StreamSponsor {
+  id String @id @default(cuid())
+  streamId String
+  hostId String
+  host User @relation("StreamSponsors", fields: [hostId], references: [id], onDelete: Cascade)
+
+  sponsorName String
+  sponsorLogoUrl String?
+  sponsorMessage String?
+
+  sponsorshipTier String
+  sponsorshipAmount Int
+
+  startDate DateTime
+  endDate DateTime?
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([streamId])
+  @@index([hostId])
+  @@map("stream_sponsors")
+}
+
+// === ORTA ÖNCELIK: HOST TİER & ROZETLER SİSTEMİ ===
+
+model HostBroadcasterTier {
+  id String @id @default(cuid())
+  hostId String @unique
+  host User @relation("BroadcasterTier", fields: [hostId], references: [id], onDelete: Cascade)
+
+  tier String @default("bronze")
+  totalStreamHours Int @default(0)
+  totalFollowers Int @default(0)
+  totalEarnings Int @default(0)
+
+  specialBadgeColor String?
+  tierBenefits String[]
+
+  upgradedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tier])
+  @@map("host_broadcaster_tiers")
+}
+
+model HostAchievementBadge {
+  id String @id @default(cuid())
+  hostId String
+  host User @relation("HostAchievementBadges", fields: [hostId], references: [id], onDelete: Cascade)
+
+  badgeType String
+  badgeName String
+  badgeIcon String
+  badgeColor String?
+  description String?
+
+  unlockedAt DateTime @default(now())
+
+  @@unique([hostId, badgeType])
+  @@index([hostId])
+  @@map("host_achievement_badges")
 }
