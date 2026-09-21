@@ -750,6 +750,60 @@ abstract final class ApiEndpoints {
   /// Tencent TRTC token (POST: roomId, role?) — önerilen.
   static const trtcToken = '/api/trtc/token';
 
+  /// Agora RTC token (POST: channelName, agoraUid?) — gerçek zamanlı ses/video.
+  static const agoraToken = '/api/agora/token';
+  static String agoraTokenChannel(String channelName) => '/api/agora/token/$channelName';
+  static String agoraTokenRevoke(String tokenId) => '/api/agora/token/$tokenId';
+
+  /// Oda Bilgi Sistemi (kategori, etiket, doğrulama).
+  static String roomInfo(String roomId) => '/api/rooms/$roomId/info';
+  static String roomVerify(String roomId) => '/api/rooms/$roomId/verify';
+  static const roomSearchByCategory = '/api/rooms/search/category';
+  static const roomSearchByTag = '/api/rooms/search/tag';
+  static const roomsVerified = '/api/rooms/verified';
+
+  /// Oda Gizlilik Seviyeleri (public, invite-only, password, friends-only).
+  static String roomPrivacy(String roomId) => '/api/rooms/$roomId/privacy';
+  static String roomVerifyAccess(String roomId) => '/api/rooms/$roomId/verify-access';
+  static String roomAllowUser(String roomId, String userId) => '/api/rooms/$roomId/allow-user/$userId';
+  static String roomBlockUser(String roomId, String userId) => '/api/rooms/$roomId/block-user/$userId';
+
+  /// Oda Aktivite Logları (olay izleme).
+  static String roomActivity(String roomId) => '/api/rooms/$roomId/activity';
+  static String roomActivityStats(String roomId) => '/api/rooms/$roomId/activity/stats';
+  static String roomActivityByAction(String roomId, String action) => '/api/rooms/$roomId/activity/$action';
+
+  /// Oda Ziyaret Tarihi & Favoriler.
+  static const userRoomHistory = '/api/user/room-history';
+  static const userFavorites = '/api/user/favorites';
+  static const userMostVisitedRooms = '/api/user/most-visited-rooms';
+  static String roomVisit(String roomId) => '/api/rooms/$roomId/visit';
+  static String roomFavorite(String roomId) => '/api/rooms/$roomId/favorite';
+  static String roomVisitorStats(String roomId) => '/api/rooms/$roomId/visitor-stats';
+
+  /// Oda Başarıları/Rozetleri.
+  static const userBadges = '/api/user/badges';
+  static String roomAchievements(String roomId) => '/api/rooms/$roomId/achievements';
+  static String roomAchievementsStats(String roomId) => '/api/rooms/$roomId/achievements/stats';
+  static String roomCheckAchievements(String roomId) => '/api/rooms/$roomId/check-achievements';
+
+  /// Oda Kayıt & Arşiv.
+  static String roomRecordingStart(String roomId) => '/api/rooms/$roomId/recording/start';
+  static String roomRecordingEnd(String recordingId) => '/api/recordings/$recordingId/end';
+  static String roomRecordings(String roomId) => '/api/rooms/$roomId/recordings';
+  static const userRecordings = '/api/user/recordings';
+  static String recordingDetails(String recordingId) => '/api/recordings/$recordingId';
+  static String roomRecordingStats(String roomId) => '/api/rooms/$roomId/recordings/stats';
+
+  /// Gelişmiş Analitik.
+  static String roomAnalytics(String roomId) => '/api/rooms/$roomId/analytics';
+  static String roomAnalyticsUpdate(String roomId) => '/api/rooms/$roomId/analytics/update';
+  static String roomAnalyticsInsights(String roomId) => '/api/rooms/$roomId/insights';
+  static String roomAnalyticsGenerateInsights(String roomId) => '/api/rooms/$roomId/analytics/generate-insights';
+  static String roomPerformanceReport(String roomId) => '/api/rooms/$roomId/performance-report';
+  static String roomTrendAnalysis(String roomId) => '/api/rooms/$roomId/trend-analysis';
+  static const analyticsCompareRooms = '/api/analytics/compare-rooms';
+
   /// Canlı oda yaşam döngüsü — compound katılım, heartbeat, ayrılma.
   static const liveCreateRoom = '/api/live/create-room';
   static const liveJoinRoom = '/api/live/join-room';
@@ -862,6 +916,388 @@ abstract final class ApiEndpoints {
 
   static String videoStreamAutoClose(String streamId) =>
       '/api/video-streams/$streamId/auto-close';
+
+  // --- Canlı yayın analytics & insights ---
+  static String videoStreamAnalytics(String streamId) =>
+      '/api/video-streams/$streamId/analytics';
+
+  static String videoStreamSessionStart(String streamId) =>
+      '/api/video-streams/$streamId/session/start';
+
+  static String videoStreamSessionEnd(String streamId, String sessionId) =>
+      '/api/video-streams/$streamId/session/$sessionId/end';
+
+  static String videoStreamViewerSessions(String streamId) =>
+      '/api/video-streams/$streamId/viewer-sessions';
+
+  static String videoStreamAnalyticsGift(String streamId) =>
+      '/api/video-streams/$streamId/analytics/gift';
+
+  static String videoStreamAnalyticsMessage(String streamId) =>
+      '/api/video-streams/$streamId/analytics/message';
+
+  static String videoStreamAnalyticsLike(String streamId) =>
+      '/api/video-streams/$streamId/analytics/like';
+
+  static String videoStreamStats(String streamId) =>
+      '/api/video-streams/$streamId/stats';
+
+  static String videoStreamTopGifters(String streamId) =>
+      '/api/video-streams/$streamId/top-gifters';
+
+  static String videoStreamDemographics(String streamId) =>
+      '/api/video-streams/$streamId/demographics';
+
+  static String videoStreamPerformanceReport(String streamId) =>
+      '/api/video-streams/$streamId/performance-report';
+
+  // --- Canlı yayın moderation & chat filtreleme ---
+  static String videoStreamModerationAction(String streamId) =>
+      '/api/video-streams/$streamId/moderation/action';
+
+  static String videoStreamModerationLogs(String streamId) =>
+      '/api/video-streams/$streamId/moderation/logs';
+
+  static String videoStreamModerationStats(String streamId) =>
+      '/api/video-streams/$streamId/moderation/stats';
+
+  static String videoStreamModerationUserHistory(
+          String streamId, String userId) =>
+      '/api/video-streams/$streamId/moderation/user/$userId/history';
+
+  // --- Chat filtreleme ---
+  static String videoStreamChatFilter(String streamId) =>
+      '/api/video-streams/$streamId/chat-filter';
+
+  static String videoStreamChatFilterBannedWord(String streamId) =>
+      '/api/video-streams/$streamId/chat-filter/banned-word';
+
+  static String videoStreamChatFilterRemoveBannedWord(
+          String streamId, String word) =>
+      '/api/video-streams/$streamId/chat-filter/banned-word/$word';
+
+  static String videoStreamChatFilterCheckMessage(String streamId) =>
+      '/api/video-streams/$streamId/chat-filter/check-message';
+
+  static String videoStreamChatFilterReportMessage(String streamId) =>
+      '/api/video-streams/$streamId/chat-filter/report-message';
+
+  static String videoStreamChatFilterReportedMessages(String streamId) =>
+      '/api/video-streams/$streamId/chat-filter/reported-messages';
+
+  static String videoStreamChatFilterRejectReport(String streamId, String reportId) =>
+      '/api/video-streams/$streamId/chat-filter/report/$reportId/reject';
+
+  // --- Kalite monitoring ---
+  static String videoStreamQualityMetrics(String streamId) =>
+      '/api/video-streams/$streamId/quality/metrics';
+
+  static String videoStreamQualityAverage(String streamId) =>
+      '/api/video-streams/$streamId/quality/average';
+
+  static String videoStreamQualityScore(String streamId) =>
+      '/api/video-streams/$streamId/quality/score';
+
+  static String videoStreamQualityUserReport(String streamId, String userId) =>
+      '/api/video-streams/$streamId/quality/user/$userId';
+
+  // --- VIP izleyici ---
+  static String videoStreamVipAdd(String streamId) =>
+      '/api/video-streams/$streamId/vip/add';
+
+  static String videoStreamVipRemove(String streamId, String userId) =>
+      '/api/video-streams/$streamId/vip/$userId';
+
+  static String videoStreamVipList(String streamId) =>
+      '/api/video-streams/$streamId/vip/list';
+
+  static String videoStreamVipPrivileges(String streamId, String userId) =>
+      '/api/video-streams/$streamId/vip/$userId/privileges';
+
+  static String videoStreamVipStatus(String streamId, String userId) =>
+      '/api/video-streams/$streamId/vip/$userId/status';
+
+  static String videoStreamVipStats(String streamId) =>
+      '/api/video-streams/$streamId/vip/stats';
+
+  static String videoStreamVipExtend(String streamId, String userId) =>
+      '/api/video-streams/$streamId/vip/$userId/extend';
+
+  // --- Trending & keşif ---
+  static String videoStreamTrendingRecord(String streamId) =>
+      '/api/video-streams/$streamId/trending/record';
+
+  static const videoStreamsTrending = '/api/video-streams/trending';
+
+  static String videoStreamTrendingData(String streamId) =>
+      '/api/video-streams/$streamId/trending/data';
+
+  static String videoStreamTrendingRank(String streamId) =>
+      '/api/video-streams/$streamId/trending/rank';
+
+  static const videoStreamsTrendingTop = '/api/video-streams/trending/top';
+
+  static String videoStreamTrendingTrend(String streamId) =>
+      '/api/video-streams/$streamId/trending/trend';
+
+  static const videoStreamsTrendingRecommended = '/api/video-streams/trending/recommended';
+
+  // --- Yayın başarıları & rozetler ---
+  static String videoStreamAchievementsCheck(String streamId) =>
+      '/api/video-streams/$streamId/achievements/check';
+
+  static String userAchievements(String userId) =>
+      '/api/users/$userId/achievements';
+
+  static String videoStreamAchievements(String streamId) =>
+      '/api/video-streams/$streamId/achievements';
+
+  static String userAchievementsStats(String userId) =>
+      '/api/users/$userId/achievements/stats';
+
+  // --- Yayın kayıt & replay ---
+  static String videoStreamRecordingStart(String streamId) =>
+      '/api/video-streams/$streamId/recording/start';
+
+  static String streamRecordingEnd(String recordingId) =>
+      '/api/video-streams/recording/$recordingId/end';
+
+  static String userRecordings(String userId) => '/api/users/$userId/recordings';
+
+  static const recordingsPublic = '/api/recordings/public';
+
+  static String userRecordingsStats(String userId) =>
+      '/api/users/$userId/recordings/stats';
+
+  static String recordingVisibility(String recordingId) =>
+      '/api/recordings/$recordingId/visibility';
+
+  static String recordingView(String recordingId) =>
+      '/api/recordings/$recordingId/view';
+
+  static String recordingArchive(String recordingId) =>
+      '/api/recordings/$recordingId/archive';
+
+  static const recordingsCleanupExpired = '/api/recordings/cleanup-expired';
+
+  static String userRecordingsSearch(String userId) =>
+      '/api/users/$userId/recordings/search';
+
+  // --- Host sosyal analytics ---
+  static const userMeStreamStats = '/api/users/me/stream-stats';
+
+  static String userStreamStats(String userId) =>
+      '/api/users/$userId/stream-stats';
+
+  static const userMeStreamStatsIncrement = '/api/users/me/stream-stats/increment';
+
+  static const streamStatsLeaderboard = '/api/stream-stats/leaderboard';
+
+  static String userStreamStatsRank(String userId) =>
+      '/api/users/$userId/stream-stats/rank';
+
+  static const userMeStreamStatsMonthly = '/api/users/me/stream-stats/monthly';
+
+  static const userMeStreamStatsEngagement = '/api/users/me/stream-stats/engagement';
+
+  // --- Yüksek Öncelik: Yayın Açma Kampanyaları ---
+  static String videoStreamCampaignStart(String streamId) =>
+      '/api/video-streams/$streamId/campaign/start';
+
+  static const userCampaignsActive = '/api/users/me/campaigns/active';
+
+  static String videoStreamCampaignCheckEligibility(String streamId) =>
+      '/api/video-streams/$streamId/campaign/check-eligibility';
+
+  static String videoStreamCampaignClaimReward(String streamId, String campaignId) =>
+      '/api/video-streams/$streamId/campaign/$campaignId/claim-reward';
+
+  static const userDailyBonus = '/api/users/me/daily-bonus';
+
+  static const userDailyBonusClaim = '/api/users/me/daily-bonus/claim';
+
+  static const userDailyBonusStatus = '/api/users/me/daily-bonus/status';
+
+  // --- Yüksek Öncelik: PK Savaşı İleri Özellikleri ---
+  static String pkBattleRewardsCalculate(String battleId) =>
+      '/api/pk-battles/$battleId/rewards/calculate';
+
+  static String pkBattleRewardsCreate(String battleId) =>
+      '/api/pk-battles/$battleId/rewards';
+
+  static String pkBattleRewardsDistribute(String battleId) =>
+      '/api/pk-battles/$battleId/rewards/distribute';
+
+  static String pkBattleEffectsCreate(String battleId) =>
+      '/api/pk-battles/$battleId/effects';
+
+  static String pkBattleEffectsList(String battleId) =>
+      '/api/pk-battles/$battleId/effects';
+
+  static String pkBattleSponsorshipsCreate(String battleId) =>
+      '/api/pk-battles/$battleId/sponsorships';
+
+  static String pkBattleSponsorshipsList(String battleId) =>
+      '/api/pk-battles/$battleId/sponsorships';
+
+  static String pkBattleSponsorshipDistributeRewards(String battleId) =>
+      '/api/pk-battles/$battleId/sponsorships/distribute-rewards';
+
+  // --- Yüksek Öncelik: Hediye Sistemi İleri Özellikleri ---
+  static const giftsCreateCombo = '/api/gifts/combos';
+
+  static const giftsDetectCombo = '/api/gifts/detect-combo';
+
+  static const giftsActiveCombos = '/api/gifts/combos/active';
+
+  static const giftBoxesCreate = '/api/gifts/boxes';
+
+  static String giftBoxOpen(String boxId) =>
+      '/api/gifts/boxes/$boxId/open';
+
+  static String videoStreamGiftBoxes(String streamId) =>
+      '/api/video-streams/$streamId/gift-boxes';
+
+  static String giftBoxStats(String boxId) =>
+      '/api/gifts/boxes/$boxId/stats';
+
+  static const giftsEffectsCreate = '/api/gifts/effects';
+
+  static String giftEffects(String giftId) =>
+      '/api/gifts/$giftId/effects';
+
+  static const giftsEffectsExclusive = '/api/gifts/effects/exclusive';
+
+  static const giftsEffectsPremium = '/api/gifts/effects/premium';
+
+  // --- Yüksek Öncelik: Yayım İçi Üyelik & Token İndirim ---
+  static String videoStreamMembershipOffers(String streamId) =>
+      '/api/video-streams/$streamId/membership-offers';
+
+  static String videoStreamMembershipOffersActive(String streamId) =>
+      '/api/video-streams/$streamId/membership-offers/active';
+
+  static String membershipOfferPurchase(String offerId) =>
+      '/api/membership-offers/$offerId/purchase';
+
+  static String membershipOfferStats(String offerId) =>
+      '/api/membership-offers/$offerId/stats';
+
+  static String videoStreamTokenPackages(String streamId) =>
+      '/api/video-streams/$streamId/token-packages';
+
+  static String tokenPackageValue(String packageId) =>
+      '/api/token-packages/$packageId/value';
+
+  static String tokenPackagePurchase(String packageId) =>
+      '/api/token-packages/$packageId/purchase';
+
+  static const userStreamRewards = '/api/users/me/stream-rewards';
+
+  static const userStreamRewardsTotal = '/api/users/me/stream-rewards/total';
+
+  static String streamRewardClaim(String rewardId) =>
+      '/api/stream-rewards/$rewardId/claim';
+
+  static String streamRewardGiftToHost(String rewardId, String hostId) =>
+      '/api/stream-rewards/$rewardId/gift-to-host/$hostId';
+
+  // --- Orta Öncelik: Co-Broadcast İleri Özellikleri ---
+  static String videoStreamCoBroadcastInviteGuest(String streamId) =>
+      '/api/video-streams/$streamId/co-broadcast/invite-guest';
+
+  static String coBroadcastSessionAccept(String streamId, String sessionId) =>
+      '/api/video-streams/$streamId/co-broadcast/guest/$sessionId/accept';
+
+  static String coBroadcastSessionReject(String streamId, String sessionId) =>
+      '/api/video-streams/$streamId/co-broadcast/guest/$sessionId/reject';
+
+  static String coBroadcastSessionEnd(String streamId, String sessionId) =>
+      '/api/video-streams/$streamId/co-broadcast/guest/$sessionId/end';
+
+  static String coBroadcastSessionPermissions(String streamId, String sessionId) =>
+      '/api/video-streams/$streamId/co-broadcast/guest/$sessionId/permissions';
+
+  static String videoStreamCoBroadcastActive(String streamId) =>
+      '/api/video-streams/$streamId/co-broadcast/active';
+
+  static const userCoBroadcastInvitations = '/api/users/me/co-broadcast/invitations';
+
+  static String videoStreamCoBroadcastWaitlistAdd(String streamId) =>
+      '/api/video-streams/$streamId/co-broadcast/waitlist/add';
+
+  static String videoStreamCoBroadcastWaitlist(String streamId) =>
+      '/api/video-streams/$streamId/co-broadcast/waitlist';
+
+  static String userCoBroadcastWaitlistPosition(String streamId) =>
+      '/api/users/me/co-broadcast/waitlist-position/$streamId';
+
+  static String videoStreamCoBroadcastDistributeRevenue(String streamId) =>
+      '/api/video-streams/$streamId/co-broadcast/distribute-revenue';
+
+  static String coBroadcastSessionEarnings(String sessionId) =>
+      '/api/co-broadcast-sessions/$sessionId/earnings';
+
+  // --- Orta Öncelik: Reklam & Sponsor Sistemi ---
+  static String videoStreamAdsSchedule(String streamId) =>
+      '/api/video-streams/$streamId/ads/schedule';
+
+  static String videoStreamAdsList(String streamId) =>
+      '/api/video-streams/$streamId/ads';
+
+  static String streamAdDisplay(String adId) =>
+      '/api/stream-ads/$adId/display';
+
+  static String streamAdClick(String adId) =>
+      '/api/stream-ads/$adId/click';
+
+  static String streamAdStats(String adId) =>
+      '/api/stream-ads/$adId/stats';
+
+  static String streamAdDelete(String adId) =>
+      '/api/stream-ads/$adId';
+
+  static String videoStreamSponsorsAdd(String streamId) =>
+      '/api/video-streams/$streamId/sponsors';
+
+  static String videoStreamSponsorsList(String streamId) =>
+      '/api/video-streams/$streamId/sponsors';
+
+  static String videoStreamSponsorsByTier(String streamId, String tier) =>
+      '/api/video-streams/$streamId/sponsors/tier/$tier';
+
+  static String streamSponsorUpdate(String sponsorId) =>
+      '/api/stream-sponsors/$sponsorId';
+
+  static String streamSponsorDelete(String sponsorId) =>
+      '/api/stream-sponsors/$sponsorId';
+
+  static String streamSponsorStats(String sponsorId) =>
+      '/api/stream-sponsors/$sponsorId/stats';
+
+  // --- Orta Öncelik: Host Tier & Badges Sistemi ---
+  static const userBroadcasterTier = '/api/users/me/broadcaster-tier';
+
+  static const userBroadcasterTierUpdateStats = '/api/users/me/broadcaster-tier/update-stats';
+
+  static String userBroadcasterTierPublic(String userId) =>
+      '/api/users/$userId/broadcaster-tier';
+
+  static String broadcasterLeaderboardByTier(String tier) =>
+      '/api/broadcasters/leaderboard/by-tier/$tier';
+
+  static const broadcasterLeaderboardAll = '/api/broadcasters/leaderboard/all';
+
+  static const userBadgesUnlock = '/api/users/me/badges/unlock';
+
+  static const userBadgesList = '/api/users/me/badges';
+
+  static String userBadgesPublic(String userId) =>
+      '/api/users/$userId/badges';
+
+  static const userBadgesCheckEligibility = '/api/users/me/badges/check-eligibility';
+
+  static const badgesDefinitions = '/api/badges/definitions';
 
   /// Public hediye JSON kataloğu. Production `/api/gifts` sayfa route'udur.
   static const giftsCatalog = giftsTypes;

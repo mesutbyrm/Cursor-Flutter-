@@ -184,6 +184,41 @@ import '../../features/live_psychics/presentation/screens/psychic_notification_s
 import '../../features/live_psychics/presentation/screens/psychic_metrics_screen.dart';
 import '../../features/live_psychics/presentation/screens/psychic_badges_screen.dart';
 import '../../features/live_psychics/presentation/screens/psychic_messaging_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_package_management_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_followers_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_flash_sales_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_rating_system_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_availability_calendar_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_earnings_analytics_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_gamification_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_referral_program_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_customer_chemistry_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_notifications_settings_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_message_templates_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_advanced_search_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_analytics_export_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_session_automation_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_client_management_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_team_workspace_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_retention_analytics_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_performance_insights_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_revenue_forecasting_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_customer_ltv_optimization_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_campaign_management_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_social_media_planner_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_ai_chatbot_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_withdrawal_management_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_feedback_management_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_churn_analysis_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_pricing_optimization_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_scheduling_optimization_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_growth_metrics_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_tax_reporting_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_session_recording_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_benchmarking_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_behavior_analytics_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_workflow_automation_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_compliance_legal_screen.dart';
 import '../../features/agency/presentation/pages/agency_applications_page.dart';
 import '../../features/agency/presentation/pages/agency_dashboard_screen.dart';
 import '../../features/cfc_arena/presentation/pages/cfc_arena_contest_page.dart';
@@ -1468,6 +1503,538 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
               key: state.pageKey,
               child: const PsychicApplyScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'packages',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicPackageManagementScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'customers',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicCustomersScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'followers',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicFollowersScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'flash-sales',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicFlashSalesScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'sessions',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicSessionsScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'badges',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicBadgesScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'ratings',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicRatingSystemScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'availability',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicAvailabilityCalendarScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'earnings-analytics',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicEarningsAnalyticsScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'gamification',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicGamificationScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'referral',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicReferralProgramScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'customer-chemistry',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicCustomerChemistryScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'notifications',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicNotificationsSettingsScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'message-templates',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicMessageTemplatesScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'advanced-search',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicAdvancedSearchScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'analytics-export',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicAnalyticsExportScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'session-automation',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicSessionAutomationScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'client-management',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicClientManagementScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'team-workspace',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicTeamWorkspaceScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'retention-analytics',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicRetentionAnalyticsScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'performance-insights',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicPerformanceInsightsScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'revenue-forecasting',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicRevenueForcastingScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'customer-ltv-optimization',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicCustomerLtvOptimizationScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'campaign-management',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicCampaignManagementScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'social-media-planner',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicSocialMediaPlannerScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'ai-chatbot',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicAiChatbotScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'withdrawal-management',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicWithdrawalManagementScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'feedback-management',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicFeedbackManagementScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'churn-analysis',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicChurnAnalysisScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'pricing-optimization',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicPricingOptimizationScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'scheduling-optimization',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicSchedulingOptimizationScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'growth-metrics',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicGrowthMetricsScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'tax-reporting',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicTaxReportingScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'session-recording',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicSessionRecordingScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'benchmarking',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicBenchmarkingScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'behavior-analytics',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicBehaviorAnalyticsScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'workflow-automation',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicWorkflowAutomationScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'compliance-legal',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicComplianceLegalScreen(),
             ),
           ),
           GoRoute(

@@ -66,9 +66,17 @@ export type ChatRoomMessageRow = {
 export type ChatPresenceRow = ChatRoomUser & {
   seatIndex?: number | null;
   isSpeaking?: boolean;
+  audioLevel?: number; // 0-1 aralığı
+  micEnabled?: boolean;
   joinedAt: number;
   /** Son presence heartbeat (ms) — ghost kullanıcı temizliği */
   lastHeartbeatAt?: number;
+};
+
+/** Enhanced Presence: Ses seviyesi ve konuşma durumu takibi */
+export type EnhancedPresence = ChatPresenceRow & {
+  speakingDuration?: number; // ms cinsinden
+  lastSpokensAt?: number;
 };
 
 export type ChatRoomRow = {

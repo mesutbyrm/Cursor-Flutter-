@@ -59,6 +59,100 @@ model User {
   referralCommissionsEarned ReferralCommissionLedger[] @relation("ReferrerCommissions")
   referralCommissionsSource ReferralCommissionLedger[] @relation("ReferredCommissions")
 
+  // Feature 42: Abonelik
+  subscription Subscription?
+  paymentMethods PaymentMethod[]
+
+  // Feature 43: Serileri ve Başarılar
+  streak UserStreak?
+  achievements UserAchievement[]
+  level UserLevel?
+
+  // Feature 44: Bildirimler
+  notificationPreferences NotificationPreference?
+  notifications Notification[]
+
+  // Feature 37: AI Copilot
+  aiCopilotSuggestions AICopilot[]
+  aiCopilotHistory AICopilotHistory[]
+
+  // Feature 38: Fal Eşleştirme
+  matchesAsUser1 FortuneMatch[] @relation("FortuneMatchUser1")
+  matchesAsUser2 FortuneMatch[] @relation("FortuneMatchUser2")
+  matchViews FortuneMatchView[]
+
+  // Feature 39: Analitik
+  analytics UserAnalytics?
+  analyticsSnapshots AnalyticsSnapshot[]
+
+  // Feature 40: Sesli Fal
+  voiceFortunes VoiceFortune[]
+
+  // Phase 3 relations (26-36)
+  following UserFollow[] @relation("UserFollowingRel")
+  followers UserFollow[] @relation("UserFollowersRel")
+  blocking UserBlock[] @relation("UserBlockingRel")
+  blocked UserBlock[] @relation("UserBlockedRel")
+
+  dmConversationsAsP1 DirectMessageConversation[] @relation("DMConvPart1")
+  dmConversationsAsP2 DirectMessageConversation[] @relation("DMConvPart2")
+  directMessages DirectMessage[]
+
+  stories UserStory[]
+  storyViews StoryView[]
+  storyReactions StoryReaction[]
+
+  shareSettings ShareSettings?
+  recommendationsReceived UserRecommendation[] @relation("UserRecommendationsReceived")
+  recommendationsMade UserRecommendation[] @relation("UserRecommendationsMade")
+
+  preferences UserPreferences?
+  animationConfig AnimationConfig?
+  performanceMetrics PerformanceMetrics[]
+
+  twoFactorAuth TwoFactorAuth?
+  twoFactorSessions TwoFactorSession[]
+
+  accessibilitySettings AccessibilitySettings?
+
+  voiceSessions VoiceSession[]
+  agoraTokens AgoraToken[]
+  voiceRoomRoles VoiceRoomRole[]
+  userVoiceStats UserVoiceStats?
+  roomLeaderboards RoomLeaderboard[]
+
+  roomActivityLogs RoomActivityLog[]
+  roomVisits RoomVisit[]
+  roomFavorites RoomFavorite[]
+  userBadges UserBadge[]
+
+  roomRecordings RoomRecording[]
+
+  streamViewerSessions StreamViewerSession[]
+  streamModerationActionsTarget StreamModerationLog[] @relation("StreamModerationsTarget")
+  streamModerationActionsMod StreamModerationLog[] @relation("StreamModerationsModerator")
+  streamReportedMessages ReportedStreamMessage[] @relation("StreamReportedMessages")
+  streamMessageReports ReportedStreamMessage[] @relation("StreamMessageReporters")
+  streamVipViewers StreamVipViewer[]
+  streamAchievements StreamAchievement[] @relation("StreamAchievements")
+  hostRecordings StreamRecording[] @relation("HostRecordings")
+  hostStreamStats HostStreamStats? @relation("HostStreamStats")
+
+  streamCampaigns StreamLaunchCampaign[] @relation("StreamCampaigns")
+  dailyStreamBonus DailyStreamBonus? @relation("DailyStreamBonus")
+  pkSponsors PkBattleSponsor[] @relation("PkSponsors")
+  streamPurchaseRewards StreamPurchaseReward[] @relation("StreamPurchaseRewards")
+
+  coBroadcastHosting CoBroadcastSession[] @relation("CoBroadcastHost")
+  coBroadcastGuesting CoBroadcastSession[] @relation("CoBroadcastGuests")
+  coBroadcastWaitlist CoBroadcastWaitlist[] @relation("CoBroadcastWaitlist")
+
+  streamAds StreamAdPlacement[] @relation("StreamAds")
+  streamSponsors StreamSponsor[] @relation("StreamSponsors")
+
+  broadcasterTier HostBroadcasterTier? @relation("BroadcasterTier")
+  achievementBadges HostAchievementBadge[] @relation("HostAchievementBadges")
+
   @@index([referredByUserId])
   @@index([referralCode])
 }
@@ -83,6 +177,10 @@ model UserFortune {
   commentsCount  Int      @default(0)
   createdAt      DateTime @default(now())
   socialPosts    SocialFortunePost[]
+
+  // Phase 2 relations
+  aiCopilots AICopilot[]
+  voiceFortunes VoiceFortune[]
 
   @@index([userId, createdAt])
 }
@@ -649,6 +747,71 @@ model VoiceRoom {
   @@map("voice_rooms")
 }
 
+/// Sesli oda kullanıcı rolleri: owner, moderator, speaker, listener
+model VoiceRoomRole {
+  id String @id @default(cuid())
+  roomId String
+  userId String
+  user User @relation("VoiceRoomRoles", fields: [userId], references: [id], onDelete: Cascade)
+
+  role String @default("listener")  // "owner" | "moderator" | "speaker" | "listener"
+  permissions String[]  // ["mute_others", "kick", "manage_queue", "manage_roles"]
+  assignedAt DateTime @default(now())
+  assignedBy String?  // Kimse tarafından atanmış
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([roomId, userId])
+  @@index([roomId, role])
+  @@index([userId, createdAt])
+  @@map("voice_room_roles")
+}
+
+/// Kullanıcı sesli oda istatistikleri
+model UserVoiceStats {
+  id String @id @default(cuid())
+  userId String
+  user User @relation("UserVoiceStats", fields: [userId], references: [id], onDelete: Cascade)
+
+  totalMinutesSpeaking Int @default(0)  // Toplam konuşma dakikası
+  totalMinutesListening Int @default(0)  // Toplam dinleme dakikası
+  totalRoomsJoined Int @default(0)  // Katıldığı oda sayısı
+  favoriteRoomId String?  // En sık ziyaret edilen oda
+
+  engagementScore Int @default(0)  // Katılım puanı (algoritma tabanlı)
+  lastActivityAt DateTime?  // Son aktivite zamanı
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId])
+  @@map("user_voice_stats")
+}
+
+/// Oda leaderboard: Konuşan kullanıcıları sırala
+model RoomLeaderboard {
+  id String @id @default(cuid())
+  roomId String
+  userId String
+  user User @relation("RoomLeaderboards", fields: [userId], references: [id], onDelete: Cascade)
+
+  speakingDuration Int @default(0)  // Dakika
+  messagesCount Int @default(0)
+  giftsReceived Int @default(0)
+  rank Int  // Oda içindeki sıra
+  weeklyRank Int?  // Haftalık sıra
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([roomId, userId])
+  @@index([roomId, rank])
+  @@index([roomId, weeklyRank])
+  @@index([userId, createdAt])
+  @@map("room_leaderboards")
+}
+
 /// Sesli oda gelir ayarları (admin paneli).
 model VoiceRoomSettings {
   id                     String   @id @default("default")
@@ -831,4 +994,1692 @@ model SiteAnimationUserAssignment {
   @@unique([userId, slot])
   @@index([userId])
   @@map("site_animation_user_assignments")
+}
+
+/// Feature 42: Abonelik Planları
+model SubscriptionPlan {
+  id String @id @default(cuid())
+  planId String @unique
+  name String
+  description String
+  monthlyPrice Float
+  yearlyPrice Float
+  yearlyDiscount Float @default(0)
+
+  features String[]
+  limits Json
+
+  stripePriceIdMonthly String?
+  stripePriceIdYearly String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([planId])
+}
+
+/// Feature 42: Kullanıcı Abonelikleri
+model Subscription {
+  id String @id @default(cuid())
+  userId String @unique
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  planId String
+  status String @default("active")
+  billingCycle String @default("monthly")
+
+  currentPeriodStart DateTime
+  currentPeriodEnd DateTime
+
+  price Float
+  currency String @default("usd")
+
+  paymentMethodId String?
+  stripeSubscriptionId String? @unique
+
+  autoRenew Boolean @default(true)
+  cancelledAt DateTime?
+
+  trialStart DateTime?
+  trialEnd DateTime?
+
+  monthlyReadingsUsed Int @default(0)
+  monthlyVoiceReadingsUsed Int @default(0)
+  monthlyAISessionsUsed Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, currentPeriodEnd])
+}
+
+/// Feature 42: Ödeme Yöntemleri
+model PaymentMethod {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type String
+  stripePaymentMethodId String @unique
+
+  brand String?
+  last4 String?
+  expiryMonth Int?
+  expiryYear Int?
+
+  isDefault Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+/// Feature 43: Fal Serileri
+model UserStreak {
+  id String @id @default(cuid())
+  userId String @unique
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  currentStreak Int @default(0)
+  bestStreak Int @default(0)
+  bestStreakStart DateTime?
+  bestStreakEnd DateTime?
+
+  lastReadingDate DateTime?
+  totalReadingsInStreak Int @default(0)
+  streakBrokenDate DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Feature 43: Başarılar Tanımı
+model Achievement {
+  id String @id @default(cuid())
+  achievementId String @unique
+  title String
+  description String
+  icon String
+  rarity String @default("common")
+  points Int
+
+  unlockedCount Int @default(0)
+
+  createdAt DateTime @default(now())
+}
+
+/// Feature 43: Kullanıcı Başarıları
+model UserAchievement {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  achievementId String
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  progress Int @default(0)
+  maxProgress Int @default(1)
+
+  unlockedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, achievementId])
+  @@index([userId, unlockedAt])
+}
+
+/// Feature 43: Kullanıcı Seviyeleri
+model UserLevel {
+  id String @id @default(cuid())
+  userId String @unique
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  level Int @default(1)
+  currentXP Int @default(0)
+  totalXP Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Feature 44: Bildirim Tercihleri
+model NotificationPreference {
+  id String @id @default(cuid())
+  userId String @unique
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  dailyReminderEnabled Boolean @default(true)
+  dailyReminderTime String @default("09:00")
+  dailyReminderTimezone String @default("UTC")
+
+  streakReminderEnabled Boolean @default(true)
+  streakReminderTime String @default("20:00")
+
+  achievementsEnabled Boolean @default(true)
+  socialEnabled Boolean @default(true)
+  socialLikesEnabled Boolean @default(true)
+  socialCommentsEnabled Boolean @default(true)
+  socialSharesEnabled Boolean @default(true)
+
+  featuresEnabled Boolean @default(true)
+  subscriptionEnabled Boolean @default(true)
+
+  quietHoursEnabled Boolean @default(true)
+  quietHoursStart String @default("22:00")
+  quietHoursEnd String @default("08:00")
+
+  pushEnabled Boolean @default(true)
+  emailEnabled Boolean @default(false)
+  inAppEnabled Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Feature 44: Bildirimler
+model Notification {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type String
+  title String
+  message String
+  icon String?
+
+  actionUrl String?
+  actionType String?
+
+  read Boolean @default(false)
+  readAt DateTime?
+
+  channels String[]
+  sentAt DateTime @default(now())
+  expiresAt DateTime?
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, read])
+  @@index([type])
+}
+
+/// Feature 44: Bildirim Şablonları
+model NotificationTemplate {
+  id String @id @default(cuid())
+  type String @unique
+
+  title String
+  messageTemplate String
+  icon String
+
+  defaultEnabled Boolean @default(true)
+  priority String @default("normal")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Feature 44: Bildirim Kaydı
+model NotificationLog {
+  id String @id @default(cuid())
+  notificationId String
+  userId String
+
+  type String
+  status String
+
+  channel String
+  provider String?
+  providerMessageId String?
+
+  error String?
+
+  sentAt DateTime @default(now())
+
+  @@index([userId, sentAt])
+  @@index([status])
+}
+
+/// Feature 37: AI Copilot — Yapay zeka destekli fal önerileri
+model AICopilot {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fortuneId String?
+  fortune UserFortune? @relation(fields: [fortuneId], references: [id], onDelete: SetNull)
+
+  prompt String
+  suggestion String
+  confidenceScore Float @default(0.0)
+  analysisType String @default("general")
+
+  context Json?
+  metadata Json?
+
+  liked Boolean @default(false)
+  rating Int? @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([confidenceScore])
+}
+
+/// Feature 37: AI Yazma Geçmişi
+model AICopilotHistory {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  copilotId String
+  copilot AICopilot @relation(fields: [copilotId], references: [id], onDelete: Cascade)
+
+  action String
+  timestamp DateTime @default(now())
+
+  @@index([userId, timestamp])
+}
+
+/// Feature 38: Fal Eşleştirme — Kullanıcı uyumu analizi
+model FortuneMatch {
+  id String @id @default(cuid())
+  userId1 String
+  user1 User @relation("FortuneMatchUser1", fields: [userId1], references: [id], onDelete: Cascade)
+
+  userId2 String
+  user2 User @relation("FortuneMatchUser2", fields: [userId2], references: [id], onDelete: Cascade)
+
+  fortuneId1 String?
+  fortuneId2 String?
+
+  compatibilityScore Float @default(0.0)
+  matchType String @default("general")
+  analysis String?
+
+  insights Json?
+  recommendations String[]
+
+  shared Boolean @default(false)
+  sharedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId1, userId2])
+  @@index([userId1, compatibilityScore])
+  @@index([userId2])
+}
+
+/// Feature 38: Eşleştirme Görünüm Geçmişi
+model FortuneMatchView {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  matchId String
+  match FortuneMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  viewedAt DateTime @default(now())
+
+  @@index([userId, viewedAt])
+}
+
+/// Feature 39: Analitik Dashboard — Kullanıcı metrikleri
+model UserAnalytics {
+  id String @id @default(cuid())
+  userId String @unique
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  totalReadings Int @default(0)
+  totalVoiceReadings Int @default(0)
+  totalMatches Int @default(0)
+  totalShares Int @default(0)
+
+  averageReadingTime Int @default(0)
+  longestStreak Int @default(0)
+  currentStreak Int @default(0)
+
+  preferredCategory String?
+  mostUsedReadingType String?
+
+  engagementScore Float @default(0.0)
+  retentionScore Float @default(0.0)
+
+  lastReadingAt DateTime?
+  lastActiveAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Feature 39: Analitik Anlık Bilgiler
+model AnalyticsSnapshot {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  period String @default("daily")
+  date DateTime
+
+  readingCount Int @default(0)
+  voiceReadingCount Int @default(0)
+  matchCount Int @default(0)
+  shareCount Int @default(0)
+
+  screenViews Int @default(0)
+  sessionDuration Int @default(0)
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, date, period])
+  @@index([userId, date])
+}
+
+/// Feature 40: Sesli Fal — Ses kaydı ve transkripsiyon
+model VoiceFortune {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  audioUrl String
+  duration Int
+  transcription String?
+  transcriptionLanguage String @default("tr")
+
+  confidenceScore Float?
+
+  fortune UserFortune? @relation(fields: [fortuneId], references: [id], onDelete: SetNull)
+  fortuneId String?
+
+  processingStatus String @default("pending")
+  processingError String?
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+  processedAt DateTime?
+
+  @@index([userId, createdAt])
+  @@index([processingStatus])
+}
+
+/// Feature 40: Ses İşleme İşi
+model VoiceProcessingJob {
+  id String @id @default(cuid())
+  voiceFortuneId String @unique
+  voiceFortune VoiceFortune @relation(fields: [voiceFortuneId], references: [id], onDelete: Cascade)
+
+  status String @default("queued")
+  progress Int @default(0)
+
+  provider String @default("openai")
+  providerJobId String?
+
+  error String?
+  retryCount Int @default(0)
+
+  startedAt DateTime?
+  completedAt DateTime?
+
+  @@index([status])
+}
+
+/// Feature 26: Kullanıcı Takip Sistemi
+model UserFollow {
+  id String @id @default(cuid())
+  followerId String
+  follower User @relation("UserFollowingRel", fields: [followerId], references: [id], onDelete: Cascade)
+
+  followingId String
+  following User @relation("UserFollowersRel", fields: [followingId], references: [id], onDelete: Cascade)
+
+  followedAt DateTime @default(now())
+  notificationsEnabled Boolean @default(true)
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+/// Feature 27: Bloke Sistemi
+model UserBlock {
+  id String @id @default(cuid())
+  blockerId String
+  blocker User @relation("UserBlockingRel", fields: [blockerId], references: [id], onDelete: Cascade)
+
+  blockedId String
+  blocked User @relation("UserBlockedRel", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  reason String?
+  blockedAt DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([blockerId])
+  @@index([blockedId])
+}
+
+/// Feature 28: Direkt Mesajlar
+model DirectMessage {
+  id String @id @default(cuid())
+  conversationId String
+  conversation DirectMessageConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  senderId String
+  sender User @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  content String
+  mediaUrl String?
+  mediaType String?
+
+  read Boolean @default(false)
+  readAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+}
+
+/// Feature 28: DM Sohbetleri
+model DirectMessageConversation {
+  id String @id @default(cuid())
+  participant1Id String
+  participant1 User @relation("DMConvPart1", fields: [participant1Id], references: [id], onDelete: Cascade)
+
+  participant2Id String
+  participant2 User @relation("DMConvPart2", fields: [participant2Id], references: [id], onDelete: Cascade)
+
+  lastMessage String?
+  lastMessageAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages DirectMessage[]
+
+  @@unique([participant1Id, participant2Id])
+  @@index([participant1Id])
+  @@index([participant2Id])
+}
+
+/// Feature 29: Story Sistemi
+model UserStory {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  content String
+  mediaUrl String?
+  mediaType String @default("image")
+
+  viewCount Int @default(0)
+  likeCount Int @default(0)
+
+  expiresAt DateTime
+  viewedBy String[] @default([])
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([expiresAt])
+}
+
+/// Feature 29: Story Görüşleri
+model StoryView {
+  id String @id @default(cuid())
+  storyId String
+  story UserStory @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  viewedAt DateTime @default(now())
+
+  @@unique([storyId, userId])
+  @@index([userId, viewedAt])
+}
+
+/// Feature 30: Story Reaksiyonları
+model StoryReaction {
+  id String @id @default(cuid())
+  storyId String
+  story UserStory @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  emoji String @default("❤️")
+  createdAt DateTime @default(now())
+
+  @@unique([storyId, userId])
+}
+
+/// Feature 31: Paylaşım Kontrol Listesi
+model ShareSettings {
+  id String @id @default(cuid())
+  userId String @unique
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  shareToInstagram Boolean @default(false)
+  shareTiktok Boolean @default(false)
+  shareToTwitter Boolean @default(false)
+  shareToFacebook Boolean @default(false)
+  shareToWhatsapp Boolean @default(false)
+
+  defaultPrivacy String @default("public")
+  allowComments Boolean @default(true)
+  allowShares Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Feature 32: Kullanıcı Önerileri
+model UserRecommendation {
+  id String @id @default(cuid())
+  userId String
+  user User @relation("UserRecommendationsReceived", fields: [userId], references: [id], onDelete: Cascade)
+
+  recommendedUserId String
+  recommendedUser User @relation("UserRecommendationsMade", fields: [recommendedUserId], references: [id], onDelete: Cascade)
+
+  reason String
+  score Float @default(0.5)
+
+  interactionCount Int @default(0)
+  lastInteractionAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, recommendedUserId])
+  @@index([userId, score])
+}
+
+/// Feature 33: Tercih Ayarları (Dark Mode, vb.)
+model UserPreferences {
+  id String @id @default(cuid())
+  userId String @unique
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  theme String @default("light")
+  accentColor String @default("cyan")
+  fontSize String @default("medium")
+  animationsEnabled Boolean @default(true)
+  soundEnabled Boolean @default(true)
+  hapticEnabled Boolean @default(true)
+
+  language String @default("tr")
+  timeFormat String @default("24h")
+  dateFormat String @default("dd.MM.yyyy")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Feature 33: Animasyon Konfigürasyonu
+model AnimationConfig {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  pageTransitionDuration Int @default(300)
+  cardFlipDuration Int @default(500)
+  scrollAnimationEnabled Boolean @default(true)
+  parallaxEnabled Boolean @default(true)
+  lightEffectsEnabled Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId])
+}
+
+/// Feature 34: Performans İzleme
+model PerformanceMetrics {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  appOpenTime Int
+  pageLoadTime Int
+  apiResponseTime Int
+
+  batteryUsage Int
+  dataUsage Int
+  memoryUsage Int
+
+  crashCount Int @default(0)
+  lastCrashAt DateTime?
+
+  recordedAt DateTime @default(now())
+
+  @@index([userId, recordedAt])
+}
+
+/// Feature 35: İki Faktörlü Doğrulama
+model TwoFactorAuth {
+  id String @id @default(cuid())
+  userId String @unique
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  enabled Boolean @default(false)
+  method String @default("authenticator")
+
+  secret String?
+  backupCodes String[]
+
+  verifiedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Feature 35: 2FA Oturum Devam Ettirme
+model TwoFactorSession {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  token String @unique
+  code String?
+  verified Boolean @default(false)
+
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId, expiresAt])
+}
+
+/// Feature 36: Erişilebilirlik Ayarları
+model AccessibilitySettings {
+  id String @id @default(cuid())
+  userId String @unique
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  screenReaderEnabled Boolean @default(false)
+  highContrastEnabled Boolean @default(false)
+  largeTextEnabled Boolean @default(false)
+  boldTextEnabled Boolean @default(false)
+
+  reduceMotionEnabled Boolean @default(false)
+  captionsEnabled Boolean @default(false)
+  audioDescriptionEnabled Boolean @default(false)
+
+  keyboardNavigationEnabled Boolean @default(true)
+  focusIndicatorVisible Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Voice Session: Sesli oda oturum kaydı
+model VoiceSession {
+  id String @id @default(cuid())
+  roomId String
+  userId String
+  user User @relation("VoiceSessions", fields: [userId], references: [id], onDelete: Cascade)
+
+  joinedAt DateTime @default(now())
+  leftAt DateTime?
+
+  speakingTime Int @default(0)
+  audioLevel Float @default(0)
+
+  isSpeaking Boolean @default(false)
+  micEnabled Boolean @default(false)
+  seatNumber Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([roomId, userId])
+  @@index([roomId, joinedAt])
+  @@index([userId, createdAt])
+  @@map("voice_sessions")
+}
+
+/// Agora RTC Token: Agora gerçek zamanlı iletişim token'ları
+model AgoraToken {
+  id String @id @default(cuid())
+  userId String
+  user User @relation("AgoraTokens", fields: [userId], references: [id], onDelete: Cascade)
+
+  channelName String
+  token String @unique
+  tokenExpiration DateTime
+
+  agoraUid Int?
+  sessionId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([channelName, createdAt])
+  @@index([tokenExpiration])
+  @@map("agora_tokens")
+}
+
+/// Feature 45: Oda Bilgi Sistemi
+model RoomInfo {
+  id String @id @default(cuid())
+  roomId String @unique
+  
+  category String?
+  topic String?
+  tags String[]
+  description String?
+  isVerified Boolean @default(false)
+  verifiedAt DateTime?
+  
+  totalVisits Int @default(0)
+  totalFavorites Int @default(0)
+  averageRating Float @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([roomId])
+  @@index([isVerified])
+  @@index([category])
+  @@map("room_info")
+}
+
+/// Feature 46: Gizlilik Seviyeleri
+model RoomPrivacy {
+  id String @id @default(cuid())
+  roomId String @unique
+  
+  privacyLevel String @default("public")
+  password String?
+  allowedUserIds String[]
+  blockedUserIds String[]
+  
+  isPasswordProtected Boolean @default(false)
+  inviteOnly Boolean @default(false)
+  friendsOnly Boolean @default(false)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([roomId])
+  @@index([privacyLevel])
+  @@map("room_privacy")
+}
+
+/// Feature 47: Oda Aktivite Logları
+model RoomActivityLog {
+  id String @id @default(cuid())
+  roomId String
+  userId String?
+  user User? @relation("RoomActivityLogs", fields: [userId], references: [id], onDelete: SetNull)
+  
+  action String
+  details String?
+  metadata Json?
+  
+  createdAt DateTime @default(now())
+  
+  @@index([roomId, createdAt])
+  @@index([userId, createdAt])
+  @@index([action])
+  @@map("room_activity_logs")
+}
+
+/// Feature 48: Oda Ziyaret Tarihi
+model RoomVisit {
+  id String @id @default(cuid())
+  roomId String
+  userId String
+  user User @relation("RoomVisits", fields: [userId], references: [id], onDelete: Cascade)
+  
+  visitedAt DateTime @default(now())
+  durationSeconds Int @default(0)
+  
+  @@unique([roomId, userId, visitedAt])
+  @@index([roomId, visitedAt])
+  @@index([userId, visitedAt])
+  @@map("room_visits")
+}
+
+/// Feature 48: Oda Favorileri
+model RoomFavorite {
+  id String @id @default(cuid())
+  roomId String
+  userId String
+  user User @relation("RoomFavorites", fields: [userId], references: [id], onDelete: Cascade)
+  
+  rating Int?
+  notes String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([roomId, userId])
+  @@index([roomId])
+  @@index([userId, createdAt])
+  @@map("room_favorites")
+}
+
+/// Feature 49: Oda Başarıları/Rozetleri
+model RoomAchievement {
+  id String @id @default(cuid())
+  roomId String
+  
+  name String
+  description String?
+  icon String?
+  
+  triggerType String
+  triggerValue Int
+  
+  isActive Boolean @default(true)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([roomId, isActive])
+  @@map("room_achievements")
+}
+
+/// Kullanıcı Rozet Ödülü
+model UserBadge {
+  id String @id @default(cuid())
+  userId String
+  user User @relation("UserBadges", fields: [userId], references: [id], onDelete: Cascade)
+  
+  badgeType String
+  badgeName String
+  badgeIcon String?
+  badgeDescription String?
+  
+  earnedAt DateTime @default(now())
+  
+  @@unique([userId, badgeType])
+  @@index([userId, earnedAt])
+  @@index([badgeType])
+  @@map("user_badges")
+}
+
+/// Feature 50: Oda Kayıt & Arşiv
+model RoomRecording {
+  id String @id @default(cuid())
+  roomId String
+  userId String?
+  user User? @relation("RoomRecordings", fields: [userId], references: [id], onDelete: SetNull)
+  
+  title String?
+  description String?
+  recordingUrl String
+  duration Int
+  fileSize Int
+  
+  isPublic Boolean @default(false)
+  isArchived Boolean @default(false)
+  
+  startedAt DateTime
+  endedAt DateTime?
+  
+  metadata Json?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([roomId, createdAt])
+  @@index([userId])
+  @@index([isArchived])
+  @@map("room_recordings")
+}
+
+/// Feature 51: Gelişmiş Analitik
+model AdvancedRoomAnalytics {
+  id String @id @default(cuid())
+  roomId String @unique
+  
+  totalSessions Int @default(0)
+  totalUniqueUsers Int @default(0)
+  totalDurationMinutes Int @default(0)
+  
+  averageSessionDuration Int @default(0)
+  averageUsersPerSession Int @default(0)
+  
+  peakHourTime String?
+  peakHourUserCount Int @default(0)
+  
+  engagementScore Float @default(0)
+  retentionRate Float @default(0)
+  
+  mostActiveDay String?
+  mostActiveDayUserCount Int @default(0)
+  
+  weeklyActiveUsers Int @default(0)
+  monthlyActiveUsers Int @default(0)
+  
+  totalMessagesCount Int @default(0)
+  totalGiftsCount Int @default(0)
+  totalGiftValue Int @default(0)
+  
+  metadata Json?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([roomId, updatedAt])
+  @@map("advanced_room_analytics")
+}
+
+/// Oda İçgörüleri (Trend, Anomali)
+model RoomInsight {
+  id String @id @default(cuid())
+  roomId String
+  
+  insightType String
+  title String
+  description String?
+  value Float?
+  trend String?
+  recommendation String?
+  
+  isActive Boolean @default(true)
+  
+  createdAt DateTime @default(now())
+  
+  @@index([roomId, createdAt])
+  @@index([insightType])
+  @@map("room_insights")
+}
+
+/// Feature 52: Canlı Yayın Analytics
+model LiveStreamAnalytics {
+  id String @id @default(cuid())
+  streamId String @unique
+  
+  totalViewers Int @default(0)
+  peakViewers Int @default(0)
+  averageViewers Int @default(0)
+  
+  totalMinutesWatched Int @default(0)
+  averageWatchDuration Int @default(0)
+  
+  totalMessagesCount Int @default(0)
+  totalGiftsCount Int @default(0)
+  totalGiftValue Int @default(0)
+  
+  engagementScore Float @default(0)
+  retentionRate Float @default(0)
+  
+  topGiftersCount Int @default(0)
+  topSpenders String[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([streamId, updatedAt])
+  @@index([totalViewers])
+  @@index([engagementScore])
+  @@map("live_stream_analytics")
+}
+
+/// Canlı Yayın Viewer Oturumu
+model StreamViewerSession {
+  id String @id @default(cuid())
+  streamId String
+  userId String
+  user User @relation("StreamViewerSessions", fields: [userId], references: [id], onDelete: Cascade)
+  
+  joinedAt DateTime @default(now())
+  leftAt DateTime?
+  watchDurationSeconds Int @default(0)
+  
+  isGifter Boolean @default(false)
+  giftCount Int @default(0)
+  totalGiftValue Int @default(0)
+  
+  messageCount Int @default(0)
+  likeCount Int @default(0)
+  
+  deviceType String?
+  country String?
+  appVersion String?
+  
+  @@unique([streamId, userId, joinedAt])
+  @@index([streamId, joinedAt])
+  @@index([userId, joinedAt])
+  @@index([isGifter])
+  @@map("stream_viewer_sessions")
+}
+
+/// Stream Viewer Demographics
+model StreamViewerDemographics {
+  id String @id @default(cuid())
+  streamId String
+
+  ageRange String?
+  country String?
+  deviceType String?
+  appVersion String?
+
+  totalViewers Int @default(0)
+  totalWatchMinutes Int @default(0)
+  avgWatchDuration Int @default(0)
+
+  engagementRate Float @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([streamId, createdAt])
+  @@index([country])
+  @@map("stream_viewer_demographics")
+}
+
+model StreamModerationLog {
+  id String @id @default(cuid())
+  streamId String
+
+  action String
+  targetUserId String
+  targetUser User @relation("StreamModerationsTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+
+  moderatorId String?
+  moderator User? @relation("StreamModerationsModerator", fields: [moderatorId], references: [id], onDelete: SetNull)
+
+  reason String?
+  duration Int?
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([streamId, createdAt])
+  @@index([targetUserId])
+  @@index([action])
+  @@map("stream_moderation_logs")
+}
+
+model ChatFilter {
+  id String @id @default(cuid())
+  streamId String @unique
+
+  bannedWords String[]
+  autoModEnabled Boolean @default(true)
+
+  reportedMessagesCount Int @default(0)
+  deletedMessagesCount Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("chat_filters")
+}
+
+model ReportedStreamMessage {
+  id String @id @default(cuid())
+  streamId String
+  messageId String
+  userId String
+  user User @relation("StreamReportedMessages", fields: [userId], references: [id], onDelete: Cascade)
+
+  reportReason String
+  reportedByUserId String
+  reportedBy User @relation("StreamMessageReporters", fields: [reportedByUserId], references: [id], onDelete: Cascade)
+
+  isModerationRejected Boolean @default(false)
+  moderationRejectionReason String?
+
+  createdAt DateTime @default(now())
+
+  @@index([streamId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("reported_stream_messages")
+}
+
+model StreamQualityMetrics {
+  id String @id @default(cuid())
+  streamId String
+  userId String?
+
+  bitrate Int
+  fps Int
+  resolution String
+  encoder String?
+
+  packetLoss Float
+  latency Int
+  bufferCount Int
+
+  recordedAt DateTime @default(now())
+
+  @@index([streamId, recordedAt])
+  @@index([userId])
+  @@map("stream_quality_metrics")
+}
+
+model StreamVipViewer {
+  id String @id @default(cuid())
+  streamId String
+  userId String
+  user User @relation("StreamVipViewers", fields: [userId], references: [id], onDelete: Cascade)
+
+  tier String
+  privileges String[]
+
+  addedAt DateTime @default(now())
+  expiresAt DateTime?
+
+  @@unique([streamId, userId])
+  @@index([streamId])
+  @@map("stream_vip_viewers")
+}
+
+model StreamTrendingData {
+  id String @id @default(cuid())
+  streamId String
+
+  viewerCount Int @default(0)
+  giftCount Int @default(0)
+  messageCount Int @default(0)
+  engagementScore Float @default(0)
+
+  trendingScore Float @default(0)
+  trendingRank Int?
+
+  period String @default("24h")
+  recordedAt DateTime @default(now())
+
+  @@index([streamId, period, recordedAt])
+  @@index([trendingScore])
+  @@index([recordedAt])
+  @@map("stream_trending_data")
+}
+
+model StreamAchievement {
+  id String @id @default(cuid())
+  streamId String
+  hostId String
+  host User @relation("StreamAchievements", fields: [hostId], references: [id], onDelete: Cascade)
+
+  name String
+  icon String?
+  description String?
+
+  triggerType String
+  triggerValue Int
+
+  badge String?
+  rarity String @default("common")
+
+  unlockedAt DateTime?
+  awardedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([streamId, hostId, triggerType])
+  @@index([hostId, unlockedAt])
+  @@index([streamId])
+  @@index([triggerType])
+  @@map("stream_achievements")
+}
+
+model StreamRecording {
+  id String @id @default(cuid())
+  streamId String
+  hostId String
+  host User @relation("HostRecordings", fields: [hostId], references: [id], onDelete: Cascade)
+
+  recordingUrl String
+  thumbnailUrl String?
+  duration Int
+  fileSize Int
+
+  isPublic Boolean @default(false)
+  viewCount Int @default(0)
+
+  title String?
+  description String?
+  tags String[]
+
+  startedAt DateTime
+  endedAt DateTime?
+
+  expiresAt DateTime?
+  isArchived Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([streamId])
+  @@index([hostId, createdAt])
+  @@index([isPublic])
+  @@index([expiresAt])
+  @@map("stream_recordings")
+}
+
+model HostStreamStats {
+  id String @id @default(cuid())
+  hostId String @unique
+  host User @relation("HostStreamStats", fields: [hostId], references: [id], onDelete: Cascade)
+
+  totalLiveStreams Int @default(0)
+  totalViewerMinutes Int @default(0)
+  totalGiftsReceived Int @default(0)
+  totalRevenue Int @default(0)
+  totalTips Int @default(0)
+
+  averageViewersPerStream Int @default(0)
+  averageStreamDuration Int @default(0)
+  averageEngagementScore Float @default(0)
+
+  peakViewersAllTime Int @default(0)
+  peakViewersMonth Int @default(0)
+
+  followerGainFromStreams Int @default(0)
+  unfollowFromStreams Int @default(0)
+
+  lastStreamAt DateTime?
+  streakDays Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([totalViewerMinutes])
+  @@index([totalRevenue])
+  @@index([totalGiftsReceived])
+  @@map("host_stream_stats")
+}
+
+// === YÜKSEK ÖNCELIK ÖZELLIKLER ===
+
+// 1. YAYIN AÇMA KAMPANYALARI
+model StreamLaunchCampaign {
+  id String @id @default(cuid())
+  hostId String
+  host User @relation("StreamCampaigns", fields: [hostId], references: [id], onDelete: Cascade)
+
+  campaignType String
+  title String
+  description String?
+
+  rewardType String
+  rewardValue Int
+  rewardMultiplier Float @default(1.0)
+
+  minViewers Int @default(0)
+  minDuration Int @default(0)
+  targetGiftAmount Int @default(0)
+
+  status String @default("active")
+  startedAt DateTime
+  endsAt DateTime?
+  claimedRewardAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([hostId, status])
+  @@index([rewardType])
+  @@map("stream_launch_campaigns")
+}
+
+model DailyStreamBonus {
+  id String @id @default(cuid())
+  hostId String @unique
+  host User @relation("DailyStreamBonus", fields: [hostId], references: [id], onDelete: Cascade)
+
+  streakDays Int @default(0)
+  lastStreamDate DateTime?
+
+  totalBonusEarned Int @default(0)
+  bonusPerStream Int @default(100)
+  streakMultiplier Float @default(1.0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("daily_stream_bonuses")
+}
+
+// 2. PK SAVAŞI İLERİ ÖZELLIKLERI
+model PkBattleReward {
+  id String @id @default(cuid())
+  battleId String @unique
+
+  winnerRewardTokens Int @default(0)
+  winnerRewardCfc Int @default(0)
+  loserConsolationTokens Int @default(0)
+
+  totalViewersCost Int @default(0)
+  totalGiftsCost Int @default(0)
+
+  distributedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@map("pk_battle_rewards")
+}
+
+model PkBattleEffect {
+  id String @id @default(cuid())
+  battleId String
+
+  winnerId String
+  loserId String
+
+  effectType String
+  intensity String @default("normal")
+  durationSeconds Int @default(5)
+
+  soundEnabled Boolean @default(true)
+  particleCount Int @default(100)
+
+  createdAt DateTime @default(now())
+
+  @@index([battleId])
+  @@map("pk_battle_effects")
+}
+
+model PkBattleSponsor {
+  id String @id @default(cuid())
+  battleId String
+  sponsorId String
+  sponsor User @relation("PkSponsors", fields: [sponsorId], references: [id], onDelete: Cascade)
+
+  sponsoredTeamId String
+  sponsorshipAmount Int
+  rewardShare Float @default(0.1)
+
+  sponsorshipMessage String?
+  isHighlighted Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([battleId])
+  @@index([sponsorId])
+  @@map("pk_battle_sponsors")
+}
+
+// 3. HEDİYE SİSTEM İLERİ ÖZELLIKLERI
+model GiftCombo {
+  id String @id @default(cuid())
+
+  name String
+  description String?
+
+  requiredGiftIds String[]
+  comboEffectType String
+
+  bonusMultiplier Float @default(1.5)
+  extraTokenReward Int @default(0)
+  exclusiveEmoji String?
+
+  isLimited Boolean @default(false)
+  limitEndDate DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([comboEffectType])
+  @@map("gift_combos")
+}
+
+model GiftBox {
+  id String @id @default(cuid())
+  streamId String
+  hostId String
+
+  name String
+  description String?
+
+  possibleGifts String[]
+  boxPrice Int
+  expectedValue Int
+  rarity String
+
+  animation String?
+  unboxEffect String
+
+  totalBoxesSold Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([streamId, rarity])
+  @@map("gift_boxes")
+}
+
+model AnimatedGiftEffect {
+  id String @id @default(cuid())
+  giftId String
+
+  effectName String
+  effectType String
+
+  duration Int @default(3000)
+  animationUrl String
+  soundUrl String?
+
+  particleType String?
+  particleColor String?
+
+  isExclusive Boolean @default(false)
+  requiresPremium Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@unique([giftId, effectType])
+  @@map("animated_gift_effects")
+}
+
+// 4. YAYIM İÇİ ÜYELİK & TOKEN İNDİRİM
+model LiveStreamMembershipOffer {
+  id String @id @default(cuid())
+  streamId String
+  hostId String
+
+  membershipType String
+  basePriceTokens Int
+  discountPercent Int @default(0)
+
+  discountStartsAt DateTime
+  discountEndsAt DateTime?
+
+  limitPerStream Int?
+  soldCount Int @default(0)
+
+  offerMessage String?
+  badgeForPurchasers String?
+
+  createdAt DateTime @default(now())
+
+  @@index([streamId])
+  @@map("live_stream_membership_offers")
+}
+
+model LiveStreamTokenPackage {
+  id String @id @default(cuid())
+  streamId String
+  hostId String
+
+  packageName String
+  tokenAmount Int
+  baseCost Int
+  discountedCost Int
+  bonusTokens Int @default(0)
+
+  bonusMessage String?
+  limitPerStream Int?
+  soldCount Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([streamId, tokenAmount])
+  @@map("live_stream_token_packages")
+}
+
+model StreamPurchaseReward {
+  id String @id @default(cuid())
+  purchaseId String
+  userId String
+  user User @relation("StreamPurchaseRewards", fields: [userId], references: [id], onDelete: Cascade)
+
+  rewardType String
+  rewardValue String
+
+  giftedToStreamHostId String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("stream_purchase_rewards")
+}
+
+// === ORTA ÖNCELIK: CO-BROADCAST İLERİ ÖZELLİKLERİ ===
+
+model CoBroadcastSession {
+  id String @id @default(cuid())
+  streamId String
+  hostId String
+  host User @relation("CoBroadcastHost", fields: [hostId], references: [id], onDelete: Cascade)
+
+  guestId String
+  guest User @relation("CoBroadcastGuests", fields: [guestId], references: [id], onDelete: Cascade)
+
+  status String @default("pending")
+  permissionLevel String @default("basic")
+
+  revenueSharePercent Float @default(20.0)
+  earnedAmount Int @default(0)
+
+  startedAt DateTime
+  endedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([streamId, guestId])
+  @@index([hostId])
+  @@index([guestId])
+  @@index([status])
+  @@map("co_broadcast_sessions")
+}
+
+model CoBroadcastWaitlist {
+  id String @id @default(cuid())
+  streamId String
+  waitlistUserId String
+  user User @relation("CoBroadcastWaitlist", fields: [waitlistUserId], references: [id], onDelete: Cascade)
+
+  position Int
+  addedAt DateTime @default(now())
+  acceptedAt DateTime?
+
+  @@unique([streamId, waitlistUserId])
+  @@index([streamId, position])
+  @@map("co_broadcast_waitlists")
+}
+
+// === ORTA ÖNCELIK: REKLAM & SPONSOR SİSTEMİ ===
+
+model StreamAdPlacement {
+  id String @id @default(cuid())
+  streamId String
+  hostId String
+  host User @relation("StreamAds", fields: [hostId], references: [id], onDelete: Cascade)
+
+  adType String
+  adContent String
+  adImageUrl String?
+  adVideoUrl String?
+
+  advertiserName String
+  advertiserLogoUrl String?
+  advertiserLink String?
+
+  displayPosition String @default("bottom")
+  displayDuration Int @default(5)
+
+  scheduledAt DateTime
+  displayedAt DateTime?
+  clickCount Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([streamId])
+  @@index([hostId])
+  @@index([scheduledAt])
+  @@map("stream_ad_placements")
+}
+
+model StreamSponsor {
+  id String @id @default(cuid())
+  streamId String
+  hostId String
+  host User @relation("StreamSponsors", fields: [hostId], references: [id], onDelete: Cascade)
+
+  sponsorName String
+  sponsorLogoUrl String?
+  sponsorMessage String?
+
+  sponsorshipTier String
+  sponsorshipAmount Int
+
+  startDate DateTime
+  endDate DateTime?
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([streamId])
+  @@index([hostId])
+  @@map("stream_sponsors")
+}
+
+// === ORTA ÖNCELIK: HOST TİER & ROZETLER SİSTEMİ ===
+
+model HostBroadcasterTier {
+  id String @id @default(cuid())
+  hostId String @unique
+  host User @relation("BroadcasterTier", fields: [hostId], references: [id], onDelete: Cascade)
+
+  tier String @default("bronze")
+  totalStreamHours Int @default(0)
+  totalFollowers Int @default(0)
+  totalEarnings Int @default(0)
+
+  specialBadgeColor String?
+  tierBenefits String[]
+
+  upgradedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tier])
+  @@map("host_broadcaster_tiers")
+}
+
+model HostAchievementBadge {
+  id String @id @default(cuid())
+  hostId String
+  host User @relation("HostAchievementBadges", fields: [hostId], references: [id], onDelete: Cascade)
+
+  badgeType String
+  badgeName String
+  badgeIcon String
+  badgeColor String?
+  description String?
+
+  unlockedAt DateTime @default(now())
+
+  @@unique([hostId, badgeType])
+  @@index([hostId])
+  @@map("host_achievement_badges")
 }
