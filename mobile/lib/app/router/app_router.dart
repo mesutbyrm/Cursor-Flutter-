@@ -185,6 +185,7 @@ import '../../features/live_psychics/presentation/screens/psychic_feedback_manag
 import '../../features/live_psychics/presentation/screens/psychic_churn_analysis_screen.dart';
 import '../../features/live_psychics/presentation/screens/psychic_pricing_optimization_screen.dart';
 import '../../features/live_psychics/presentation/screens/psychic_scheduling_optimization_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_growth_metrics_screen.dart';
 import '../../features/agency/presentation/pages/agency_applications_page.dart';
 import '../../features/agency/presentation/pages/agency_dashboard_screen.dart';
 import '../../features/cfc_arena/presentation/pages/cfc_arena_contest_page.dart';
@@ -1808,6 +1809,20 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
               key: state.pageKey,
               child: const PsychicSchedulingOptimizationScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'growth-metrics',
+            redirect: (context, state) async {
+              final approved = await readApprovedTellerState();
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicGrowthMetricsScreen(),
             ),
           ),
           GoRoute(
