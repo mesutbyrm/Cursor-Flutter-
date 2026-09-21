@@ -579,11 +579,12 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     // Süre başlamadan önce süre-el-sıkışması sinyalleri (request/accept) hızlı
     // ulaşmalı → 2 sn. Süre başladıktan sonra sinyal poll yalnızca media_state
     // (RTC) için yedek olduğundan seyrekleşir (SSE bağlıysa).
+    // FIX: Danışan poll interval 30s → 10s (hediye gecikme azaltma)
     final interval = !state.timerStarted
         ? const Duration(seconds: 2)
         : state.sseConnected
             ? (session.isClient
-                ? const Duration(seconds: 30)
+                ? const Duration(seconds: 10)
                 : const Duration(seconds: 8))
             : const Duration(seconds: 2);
     _signalPoll = Timer.periodic(interval, (_) {
