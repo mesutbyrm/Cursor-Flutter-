@@ -449,7 +449,7 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
             (s) => {...s, req.sessionId},
           );
       if (navCtx.mounted) {
-        await navCtx.push(
+        navCtx.pushReplacement(
           '/canli-falcilar/${psychic.id}/session',
           extra: session,
         );

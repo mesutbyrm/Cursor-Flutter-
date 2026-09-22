@@ -48,4 +48,24 @@ abstract final class PsychicTimerHandshake {
 
   /// Süre başlamadan önce yerel/uzak A/V susturulup gizlenmeli mi?
   static bool shouldGateMedia({required bool timerStarted}) => !timerStarted;
+
+  /// GET/POST `/api/room/signal` — `type` kökte veya `data.action` içinde olabilir.
+  static bool signalMatches(Map<String, dynamic> sig, String needle) {
+    final n = needle.trim().toLowerCase();
+    if (n.isEmpty) return false;
+    final parts = <String>[
+      sig['type']?.toString() ?? '',
+      sig['signalType']?.toString() ?? '',
+      sig['event']?.toString() ?? '',
+    ];
+    for (final key in ['data', 'payload', 'body']) {
+      final nested = sig[key];
+      if (nested is Map) {
+        final m = Map<String, dynamic>.from(nested);
+        parts.add(m['type']?.toString() ?? '');
+        parts.add(m['action']?.toString() ?? '');
+      }
+    }
+    return parts.join(' ').toLowerCase().contains(n);
+  }
 }

@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.588+632 (2026-09-22) — Canlı falcı seans: video + süre başlatma
+
+- **TRTC oda:** token isteği artık `trtcRoomId` / sunucu `roomId` ile hizalı; yanlış odada tek başına kalma düzeltildi
+- **Süre el sıkışması:** sinyal eşleme (`data.action`); falcı isteği yeniden deneme; danışan onayı sonrası `start_timer` tekrar denemesi; danışan süre başlayana kadar oda durumu poll
+- **Falcı kabul:** oturum ekranına `pushReplacement` — gelen çağrı ekranına geri dönüş kalktı
+
 ## 1.0.587+631 (2026-09-21) — APK derleme düzeltmeleri
 
 - **CI / analyze:** admin paneli ve falcı paneli derleme hataları giderildi (ikon adları, `StaffAccess.canViewActivityLog`, API anahtarı widget adı)

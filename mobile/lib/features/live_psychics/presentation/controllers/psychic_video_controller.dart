@@ -189,6 +189,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   Timer? _ping;
   Timer? _roomPoll;
   Timer? _signalPoll;
+  DateTime? _lastTimerStartRequestAt;
   var _disposed = false;
   var _remoteEndHandled = false;
   final _seenSignalIds = <String>{};
@@ -282,14 +283,24 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   /// gönderir (bir kez). Süre/ücret ancak danışan onaylayınca başlar.
   void _maybeSendTimerStartRequest() {
     if (_disposed || state.leaving) return;
+    var requestSent = state.timerStartRequestSent;
+    if (requestSent &&
+        !state.timerStarted &&
+        _lastTimerStartRequestAt != null &&
+        DateTime.now().difference(_lastTimerStartRequestAt!) >
+            const Duration(seconds: 14)) {
+      requestSent = false;
+      state = state.copyWith(timerStartRequestSent: false);
+    }
     if (!PsychicTimerHandshake.tellerShouldSendRequest(
       isClient: session.isClient,
       timerStarted: state.timerStarted,
-      requestAlreadySent: state.timerStartRequestSent,
+      requestAlreadySent: requestSent,
       peerPresent: _peerPresentInRoom,
     )) {
       return;
     }
+    _lastTimerStartRequestAt = DateTime.now();
     state = state.copyWith(timerStartRequestSent: true);
     final peerId = session.remotePeerIdFor(room: state.room);
     unawaited(
@@ -346,6 +357,11 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       userId: _trtcConn.joinedUserId,
       inRoom: _trtc.inRoom,
     );
+    for (var i = 0; i < 20 && !_disposed && !state.leaving; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 800));
+      await _syncRoomInfo();
+      if (state.timerStarted) return;
+    }
   }
 
   /// T+5s render takılması yedeği. Bağlantı kurulduktan sonra, karşı taraf
@@ -625,12 +641,18 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
         _onPeerMediaSignal(sig);
         continue;
       }
-      if (type.contains(PsychicTimerHandshake.signalRequest)) {
+      if (PsychicTimerHandshake.signalMatches(
+        sig,
+        PsychicTimerHandshake.signalRequest,
+      )) {
         _onTimerStartRequestSignal();
         continue;
       }
-      if (type.contains(PsychicTimerHandshake.signalAccept)) {
-        _onTimerStartAcceptSignal();
+      if (PsychicTimerHandshake.signalMatches(
+        sig,
+        PsychicTimerHandshake.signalAccept,
+      )) {
+        unawaited(_onTimerStartAcceptSignal());
         continue;
       }
       if (!session.isClient &&
@@ -696,7 +718,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   }
 
   /// Falcı: danışan onayladı → süreyi (ve ücreti) başlat.
-  void _onTimerStartAcceptSignal() {
+  Future<void> _onTimerStartAcceptSignal() async {
     if (_disposed || state.leaving) return;
     if (!PsychicTimerHandshake.tellerShouldStartTimer(
       isClient: session.isClient,
@@ -704,7 +726,13 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     )) {
       return;
     }
-    unawaited(_ensureTimerStarted());
+    for (var attempt = 0; attempt < 4; attempt++) {
+      await _ensureTimerStarted();
+      if (_disposed || state.timerStarted) return;
+      await _syncRoomInfo();
+      if (state.timerStarted) return;
+      await Future<void>.delayed(const Duration(milliseconds: 700));
+    }
   }
 
   Future<void> _broadcastMediaState() async {
@@ -777,10 +805,15 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       unawaited(_onTimerStartedFromServer());
     }
 
-    if (room.tellerUserId != null || room.clientId != null) {
+    if (room.tellerUserId != null ||
+        room.clientId != null ||
+        (room.roomId?.trim().isNotEmpty ?? false)) {
       session = session.copyWith(
         tellerUserId: room.tellerUserId ?? session.tellerUserId,
         clientId: room.clientId ?? session.clientId,
+        trtcRoomIdOverride: room.roomId?.trim().isNotEmpty == true
+            ? room.roomId
+            : session.trtcRoomIdOverride,
       );
       unawaited(PsychicSessionStore.save(session));
     }
@@ -1073,13 +1106,25 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   String _tokenRequestRoomId() {
     final locked = _trtcConn.tokenRequestRoomId?.trim();
     if (locked != null && locked.isNotEmpty) return locked;
-    return session.sessionId.trim();
+    return session.trtcRoomId.trim();
   }
 
   Future<void> _joinTrtc({required UserEntity user}) async {
     if (!_trtcConn.tryBeginJoin()) return;
     _setPhase(PsychicSessionPhase.joining);
     final requestRoomId = _tokenRequestRoomId();
+    if (_trtc.inRoom) {
+      final joined = _trtc.joinedStrRoomId;
+      if (joined != null &&
+          joined.isNotEmpty &&
+          !PsychicTrtcIdentity.sameChannel(
+            joined,
+            requestRoomId,
+            sessionId: session.sessionId,
+          )) {
+        await _trtc.leave();
+      }
+    }
     if (requestRoomId.isEmpty) {
       _trtcConn.markJoinFailed();
       state = state.copyWith(rtcError: 'Oda bilgisi alınamadı. Tekrar deneyin.');
