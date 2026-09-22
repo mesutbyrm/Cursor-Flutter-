@@ -199,8 +199,6 @@ class LiveBroadcastRoomChromeColumn extends ConsumerWidget {
               isHost: s.isHost,
               trtc: s.isHost ? trtc : null,
               commentsEnabled: commentsEnabled,
-              chatVisible: chatVisible,
-              onToggleChat: () => onChatVisibleChanged(!chatVisible),
               onGift: onGift,
               onTip: onTip,
               onMore: onMore,
