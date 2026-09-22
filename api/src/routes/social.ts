@@ -535,14 +535,7 @@ socialRouter.patch(
     const role = fortuneSessionRoleForUser(session, req.userId!);
     const payload = fortuneSessionRoomPayload(session, req.userId!);
     emitFortuneRoomSse(session.id, "room_update", payload);
-    return ok(res, {
-      session,
-      sessionId: session.id,
-      status: session.status,
-      tellerResponse: session.tellerResponse,
-      role,
-      isClient: role === "client",
-    });
+    return ok(res, { ...payload, role, isClient: role === "client" });
   },
 );
 
