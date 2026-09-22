@@ -1490,25 +1490,18 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                 final giftsOn = ref.watch(
                   voiceRoomUiProvider.select((s) => s.giftAnimationsEnabled),
                 );
-                return Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Positioned.fill(
-                      child: IgnorePointer(
-                        child: GiftEngineOverlay(
-                          event: activeGift,
-                          enabled: giftsOn,
-                          stage: GiftStageContext.voiceRoom,
-                          sessionKey: sessionKey,
-                          onFinished: (id) {
-                            ref
-                                .read(giftSessionProvider(sessionKey).notifier)
-                                .dequeueAnimation(id);
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
+                return IgnorePointer(
+                  child: GiftEngineOverlay(
+                    event: activeGift,
+                    enabled: giftsOn,
+                    stage: GiftStageContext.voiceRoom,
+                    sessionKey: sessionKey,
+                    onFinished: (id) {
+                      ref
+                          .read(giftSessionProvider(sessionKey).notifier)
+                          .dequeueAnimation(id);
+                    },
+                  ),
                 );
               },
             ),
