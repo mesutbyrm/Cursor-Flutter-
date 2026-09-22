@@ -761,8 +761,17 @@ class _TrtcRemoteVideoViewState extends State<TrtcRemoteVideoView> {
   Widget build(BuildContext context) {
     return TRTCCloudVideoView(
       key: ValueKey('remote-${widget.userId}'),
-      onViewCreated: (viewId) =>
-          widget.manager.startRemoteView(widget.userId, viewId),
+      onViewCreated: (viewId) {
+        widget.manager.startRemoteView(widget.userId, viewId);
+        // Video zaten available ise (timer başlamadan geldiyse), resubscribe et.
+        // Bu race condition'da: onUserVideoAvailable → view henüz yok;
+        // sonra timer start → view oluşturuluyor → subscribe olmalı.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && widget.manager.remoteVideoByUser.value[widget.userId] == true) {
+            widget.manager.resubscribeRemoteView(widget.userId);
+          }
+        });
+      },
     );
   }
 }
