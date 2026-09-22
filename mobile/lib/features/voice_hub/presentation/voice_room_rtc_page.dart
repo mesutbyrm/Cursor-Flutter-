@@ -1713,43 +1713,16 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           canControlMusic: canControlMusic,
                           canCloseMusic: canCloseMusic,
                         ),
-                        Consumer(
-                          builder: (context, ref, _) {
-                            final banner = ref.watch(
-                              voiceRoomLiveProvider(_liveRoomKey).select(
-                                (s) => s.enterBanner,
-                              ),
-                            );
-                            return VoiceRoomStaffJoinBanner(
-                              enterBanner: banner,
-                            );
-                          },
+                        _VoiceRoomStaffBannerWidget(
+                          liveRoomKey: _liveRoomKey,
                         ),
                         VoicePkInviteBanner(
                           room: room,
                           liveKey: _liveRoomKey,
                           isOwner: isOwner,
                         ),
-                        Consumer(
-                          builder: (context, ref, _) {
-                            final ann = ref.watch(
-                              voiceRoomLiveProvider(_liveRoomKey).select(
-                                (s) => s.moderatorAnnouncement,
-                              ),
-                            );
-                            if (ann?.trim().isNotEmpty != true) {
-                              return const SizedBox.shrink();
-                            }
-                            return VoiceRoomDuyuruTicker(
-                              key: ValueKey(ann),
-                              text: ann!,
-                              onScrollComplete: () => ref
-                                  .read(
-                                    voiceRoomLiveProvider(_liveRoomKey).notifier,
-                                  )
-                                  .clearModeratorAnnouncement(),
-                            );
-                          },
+                        _VoiceRoomModeratorAnnouncementWidget(
+                          liveRoomKey: _liveRoomKey,
                         ),
                         const Padding(
                           padding: EdgeInsets.symmetric(
@@ -1804,55 +1777,17 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             child: Stack(
                               fit: StackFit.expand,
                               children: [
-                                Consumer(
-                              builder: (context, ref, _) {
-                                final chat = ref.watch(
-                                  voiceRoomLiveProvider(_liveRoomKey).select(
-                                    (s) => (
-                                      messages: s.messages,
-                                      pinned: s.pinnedAnnouncement,
-                                      typing: s.isAnyoneTyping,
-                                      typingUsers: s.typingUsers,
-                                    ),
-                                  ),
-                                );
-                                return Column(
-                                  children: [
-                                    Expanded(
-                                      child: VoiceWebChatOverlay(
-                                        messages: chat.messages,
-                                        hideOfficialJoinInChat: false,
-                                        maxHeight: chatH,
-                                        embedded: true,
-                                        welcomeMarquee: null,
-                                        roomName: room.nameTr,
-                                        pinnedAnnouncement: chat.pinned,
-                                        scrollController: _chatScrollCtrl,
-                                        scrollToLatest: _scrollChatToLatest,
-                                        onUserTap: (id, name, msg) =>
-                                            _openUserFromChat(
-                                          id,
-                                          name,
-                                          msg,
-                                          room: room,
-                                          live: ref.read(
-                                            voiceRoomLiveProvider(_liveRoomKey),
-                                          ),
-                                          perms: perms,
-                                          isOwner: isOwner,
-                                        ),
-                                        onReplyToMessage: _replyToMessage,
-                                        reportContextLabel: room.displayTitle,
-                                      ),
-                                    ),
-                                    if (chat.typing)
-                                      VoiceRoomTypingIndicator(
-                                        userNames: chat.typingUsers,
-                                      ),
-                                  ],
-                                );
-                              },
-                            ),
+                                _VoiceRoomChatSection(
+                                  liveRoomKey: _liveRoomKey,
+                                  room: room,
+                                  chatH: chatH,
+                                  perms: perms,
+                                  isOwner: isOwner,
+                                  scrollCtrl: _chatScrollCtrl,
+                                  scrollToLatest: _scrollChatToLatest,
+                                  onUserTap: _openUserFromChat,
+                                  onReplyToMessage: _replyToMessage,
+                                ),
                                 VoiceRoomConnectionOverlays(
                                   roomKey: _liveRoomKey,
                                   onMentionTap: _insertMentionFromNotice,
@@ -2146,6 +2081,129 @@ class _VoiceRoomRtcSeatStage extends ConsumerWidget {
       trtcReady: audioReady,
       selfUserId: selfUserId,
       remoteTrtcUserId: remoteTrtcUserId,
+    );
+  }
+}
+
+/// Chat mesajları + typing indicator overlay — parent rebuild'den bağımsız rebuild.
+class _VoiceRoomChatSection extends ConsumerWidget {
+  const _VoiceRoomChatSection({
+    required this.liveRoomKey,
+    required this.room,
+    required this.chatH,
+    required this.perms,
+    required this.isOwner,
+    required this.scrollCtrl,
+    required this.scrollToLatest,
+    required this.onUserTap,
+    required this.onReplyToMessage,
+  });
+
+  final String liveRoomKey;
+  final VoiceRoomEntity room;
+  final double chatH;
+  final VoiceRoomPermissions perms;
+  final bool isOwner;
+  final ScrollController scrollCtrl;
+  final bool scrollToLatest;
+  final void Function(String, String, ChatRoomMessage, {required VoiceRoomEntity room, required VoiceRoomLiveState live, required VoiceRoomPermissions perms, required bool isOwner}) onUserTap;
+  final void Function(ChatRoomMessage) onReplyToMessage;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final chat = ref.watch(
+      voiceRoomLiveProvider(liveRoomKey).select(
+        (s) => (
+          messages: s.messages,
+          pinned: s.pinnedAnnouncement,
+          typing: s.isAnyoneTyping,
+          typingUsers: s.typingUsers,
+        ),
+      ),
+    );
+
+    return Column(
+      children: [
+        Expanded(
+          child: VoiceWebChatOverlay(
+            messages: chat.messages,
+            hideOfficialJoinInChat: false,
+            maxHeight: chatH,
+            embedded: true,
+            welcomeMarquee: null,
+            roomName: room.nameTr,
+            pinnedAnnouncement: chat.pinned,
+            scrollController: scrollCtrl,
+            scrollToLatest: scrollToLatest,
+            onUserTap: (id, name, msg) => onUserTap(
+              id,
+              name,
+              msg,
+              room: room,
+              live: ref.read(voiceRoomLiveProvider(liveRoomKey)),
+              perms: perms,
+              isOwner: isOwner,
+            ),
+            onReplyToMessage: onReplyToMessage,
+            reportContextLabel: room.displayTitle,
+          ),
+        ),
+        if (chat.typing)
+          VoiceRoomTypingIndicator(
+            userNames: chat.typingUsers,
+          ),
+      ],
+    );
+  }
+}
+
+/// Staff join banner — enter banner state'ine tepki verir, parent rebuild'den bağımsız.
+class _VoiceRoomStaffBannerWidget extends ConsumerWidget {
+  const _VoiceRoomStaffBannerWidget({
+    required this.liveRoomKey,
+  });
+
+  final String liveRoomKey;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final banner = ref.watch(
+      voiceRoomLiveProvider(liveRoomKey).select(
+        (s) => s.enterBanner,
+      ),
+    );
+    return VoiceRoomStaffJoinBanner(
+      enterBanner: banner,
+    );
+  }
+}
+
+/// Moderator duyurusu ticker — announcement state'ine tepki verir, parent rebuild'den bağımsız.
+class _VoiceRoomModeratorAnnouncementWidget extends ConsumerWidget {
+  const _VoiceRoomModeratorAnnouncementWidget({
+    required this.liveRoomKey,
+  });
+
+  final String liveRoomKey;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ann = ref.watch(
+      voiceRoomLiveProvider(liveRoomKey).select(
+        (s) => s.moderatorAnnouncement,
+      ),
+    );
+    if (ann?.trim().isNotEmpty != true) {
+      return const SizedBox.shrink();
+    }
+    return VoiceRoomDuyuruTicker(
+      key: ValueKey(ann),
+      text: ann!,
+      onScrollComplete: () => ref
+          .read(
+            voiceRoomLiveProvider(liveRoomKey).notifier,
+          )
+          .clearModeratorAnnouncement(),
     );
   }
 }
