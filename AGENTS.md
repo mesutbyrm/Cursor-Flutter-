@@ -116,6 +116,7 @@ Agent P2 prep bitti. **Kalan:** cihaz P0→P1, keystore/AAB, Play Console. Mobil
 | Önkoşul (APK, giriş, jeton) | `bash scripts/psychic-p0-prereqs.sh` |
 | Admin jeton | `bash scripts/admin-jeton-cheatsheet.sh` |
 | Derleme durumu | `bash scripts/print-build-status.sh` |
+| **CI kısa (her yanıt)** | `bash scripts/print-ci-status.sh` |
 
 Rehber: [`docs/KALAN_ISLER.md`](docs/KALAN_ISLER.md) · [`docs/PSYCHIC_P0_START.md`](docs/PSYCHIC_P0_START.md)
 
@@ -170,7 +171,7 @@ Kullanıcı mesajlarına cevap verirken **ayrı bir bölüm** ekle; push/merge/C
 | **Uygulama sürümü** | `mobile/pubspec.yaml` → `version:` |
 | **RELEASE READY** | `docs/DOCS_RELEASE_INDEX.md` veya `docs/LATEST_APK_BUILD.md` banner |
 | **PR / merge** | `gh pr list` / son merge commit mesajı |
-| **CI (main)** | `gh run list --limit 5` — CI, CodeQL, acceptance, **Build release APK** durumu + run URL |
+| **CI (main)** | `bash scripts/print-ci-status.sh` (tercih) veya `gh run list --workflow=build-apk.yml --branch=main --limit=1` |
 | **APK** | `bash scripts/print-build-status.sh` — pubspec vs `apk-latest` sürüm farkını belirt |
 | **Son mobil değişiklik** | `mobile/CHANGELOG.md` üst blok (varsa) |
 

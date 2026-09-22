@@ -5,7 +5,12 @@ alwaysApply: true
 
 # APK indirme — yanıt sonu (zorunlu)
 
-Kullanıcıya **her** yanıtın **en sonunda** (kısa bir bölüm olarak) şu bilgiyi ekle:
+Kullanıcıya **her** yanıtın **en sonunda** (kısa bir bölüm olarak) şu bilgiyi ekle. **CI satırı zorunlu** (`bash scripts/print-ci-status.sh` ile doğrula):
+
+- **CI:** son main **Build release APK** → `completed/success` | `in_progress` | `failure` | `skipped` + run URL
+- **Workflow:** https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml
+
+APK footer (her yanıt):
 
 ## 📲 Canlifal APK
 

@@ -5,13 +5,24 @@ alwaysApply: true
 
 # Kullanıcı bildirimi — APK ve özellikler (zorunlu)
 
-Kullanıcı isteği: **Her oturumda** APK derlemesi bittiğinde ve **işlenen özellikler** eklendiğinde bilgilendirilsin.
+Kullanıcı isteği: **Her kullanıcı yanıtında** CI durumu görünsün; APK/özellik özeti push ve oturum sonunda da güncellensin.
 
-## Ne zaman bildir
+## Ne zaman bildir (tam blok)
 
 1. `main`’e `mobile/` veya APK workflow değişikliği **push** ettiysen
 2. Kullanıcıya yeni özellik / düzeltme **özetlediğinde**
 3. Oturum **kapanmadan önce** (son kullanıcı mesajında)
+
+## CI — her yanıt (zorunlu)
+
+Push/merge olmasa bile **her** cevapta şu bölümü ekle (tahmin etme; komut çalıştır):
+
+### 🔄 CI · Merge · Uygulama
+
+1. `bash scripts/print-ci-status.sh` (kısa) — yetmezse `bash scripts/print-build-status.sh`
+2. İsteğe bağlı: `git log origin/main -1 --oneline`, `git status -sb`
+3. Yaz: kaynak sürüm (`pubspec`), `apk-latest` sürümü, son **Build release APK** run **status/conclusion** + **run URL**, [workflow linki](https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml)
+4. `pubspec` ≠ `apk-latest` ise farkı açıkça belirt (CI devam ediyor / `[skip ci]` / henüz release güncellenmedi)
 
 ## Agent yapacakları
 
