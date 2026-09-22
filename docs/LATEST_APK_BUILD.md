@@ -4,19 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.589+633` |
-| Tarih (UTC) | 2026-09-22 12:51 |
-| Commit | [`8d8fd4da41419416cc349934c534def35dddfb39`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/8d8fd4da41419416cc349934c534def35dddfb39) |
-| İş akışı | [Run 35727478770](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35727478770) |
+| Sürüm | `1.0.590+634` |
+| Tarih (UTC) | 2026-09-22 13:24 |
+| Commit | [`f7497ee235ec872b301077280eb947898039388a`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/f7497ee235ec872b301077280eb947898039388a) |
+| İş akışı | [Run 35730985146](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35730985146) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.589+633 (2026-09-22) — Falcı & admin araç kataloğu (görünür UI)
+## 1.0.591+635 (2026-09-22) — Canlı falcı: kabul senkronu + süre isteği SSE
 
-- **Falcı hub:** `/canli-falcilar/dashboard/tools` — 50+ ekran (P0/P1/Pro), arama, kategori listesi; panelde ve canlı falcılar listesinde “Tüm araçlar” CTA
-- **Admin katalog:** `/admin/tools` — Claude modülleri tek listede; admin ana sekme banner + profil toolbar linki
-- **Yetki:** moderatör / staff admin ana sekmeyi finans yetkisi olmadan görebilir (`canAccessAdminHome`)
+- **Danışan bekleme:** kabul sonrası `fetchActiveSessions` / oda durumu ile REQUESTING ekranından çıkış; oturuma geçiş
+- **Süre el sıkışması:** oda SSE `signal` olayında iç `type`/`action` ayrıştırma; falcı tarafında `timer_start_accept` artık yanlışlıkla tekrar istek atmaz
+- **Falcı panel kabul:** oturuma `pushReplacement`, kuyruk temizliği; derleme için eksik importlar eklendi
+- **Durum eşleme:** `ready` / `live` / `in_progress` gibi API durumları aktif sayılır
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
