@@ -978,10 +978,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     List<ChatRoomPresence> presence, {
     ChatRoomMyPermissions? server,
   }) {
-    final presenceCopy = List<ChatRoomPresence>.from(presence);
     ChatRoomPresence? self;
     if (user != null) {
-      for (final p in presenceCopy) {
+      for (final p in presence) {
         if (p.id == user.id) {
           self = p;
           break;
