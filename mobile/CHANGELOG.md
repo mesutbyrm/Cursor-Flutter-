@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.592+636 (2026-09-22) — Canlı fal: süre isteği sinyal formatı (üretim)
+
+- **POST/GET `/api/room/signal`:** üretim alanları `signalType` + `signalData` (mobilde `type`/`data` ile birlikte gönderilir)
+- **Poll:** gelen sinyaller normalize edilir; danışanda **Görüşmeyi Başlat** istemi tetiklenir
+- **SSE:** `event: signal` ve `timer_start_*` kök tipleri doğru ayrıştırılır
+- **Süre iste:** falcı **Süre iste** ile peer TRTC olmasa da isteği yeniden gönderebilir
+
 ## 1.0.591+635 (2026-09-22) — Canlı falcı: kabul senkronu + süre isteği SSE
 
 - **Danışan bekleme:** kabul sonrası `fetchActiveSessions` / oda durumu ile REQUESTING ekranından çıkış; oturuma geçiş

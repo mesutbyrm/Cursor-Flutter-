@@ -14,6 +14,7 @@ import '../../domain/entities/psychic_request_entity.dart';
 import '../../domain/entities/psychic_review_entity.dart';
 import '../../domain/entities/psychic_room_entity.dart';
 import '../../domain/entities/psychic_session_history_entity.dart';
+import '../../domain/psychic_room_signal_normalize.dart';
 import '../../domain/repositories/live_psychics_repository.dart';
 import '../models/psychic_model.dart';
 
@@ -750,17 +751,21 @@ class LivePsychicsRemoteDataSource {
         ApiEndpoints.liveFortuneRoomSignalQuery(key),
       );
       final body = res.data;
+      List<Map<String, dynamic>> rows = const [];
       if (body is List) {
-        return body.whereType<Map>().map((e) => asJsonMap(e)).toList();
-      }
-      if (body is Map) {
+        rows = body.whereType<Map>().map((e) => asJsonMap(e)).toList();
+      } else if (body is Map) {
         final map = asJsonMap(body);
         final raw = map['signals'] ?? map['items'] ?? map['data'];
         if (raw is List) {
-          return raw.whereType<Map>().map((e) => asJsonMap(e)).toList();
+          rows = raw.whereType<Map>().map((e) => asJsonMap(e)).toList();
+        } else if (map['type'] != null || map['signalType'] != null) {
+          rows = [map];
         }
-        if (map['type'] != null) return [map];
       }
+      return rows
+          .map(normalizePsychicRoomSignalMap)
+          .toList(growable: false);
     } catch (_) {}
     return const [];
   }
@@ -785,13 +790,19 @@ class LivePsychicsRemoteDataSource {
   }) async {
     final key = sessionId.trim();
     if (key.isEmpty || type.trim().isEmpty) return;
+    final signalType = type.trim();
+    final signalData = data ?? const <String, dynamic>{};
     try {
       await _dio.safePost<dynamic>(
         ApiEndpoints.liveFortuneRoomSignal,
         data: {
           'sessionId': key,
-          'type': type.trim(),
-          if (data != null && data.isNotEmpty) 'data': data,
+          'type': signalType,
+          'signalType': signalType,
+          if (signalData.isNotEmpty) ...{
+            'data': signalData,
+            'signalData': signalData,
+          },
           if (receiverId != null && receiverId.trim().isNotEmpty)
             'receiverId': receiverId.trim(),
         },

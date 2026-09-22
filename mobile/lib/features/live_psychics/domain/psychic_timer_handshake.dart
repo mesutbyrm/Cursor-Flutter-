@@ -58,12 +58,15 @@ abstract final class PsychicTimerHandshake {
       sig['signalType']?.toString() ?? '',
       sig['event']?.toString() ?? '',
     ];
-    for (final key in ['data', 'payload', 'body']) {
+    for (final key in ['data', 'signalData', 'payload', 'body']) {
       final nested = sig[key];
       if (nested is Map) {
         final m = Map<String, dynamic>.from(nested);
         parts.add(m['type']?.toString() ?? '');
         parts.add(m['action']?.toString() ?? '');
+        parts.add(m['signalType']?.toString() ?? '');
+      } else if (nested is String && nested.trim().isNotEmpty) {
+        parts.add(nested);
       }
     }
     return parts.join(' ').toLowerCase().contains(n);

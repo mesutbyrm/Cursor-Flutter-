@@ -106,6 +106,21 @@ void main() {
       expect(tip.fromName, 'Ayşe');
     });
 
+    test('production signalType on SSE event signal', () {
+      final event = parseSessionRoomSsePayload(
+        {
+          'signalType': 'timer_start_request',
+          'signalData': {'action': 'timer_start_request'},
+        },
+        eventName: 'signal',
+        sessionId: 'sess_prod_sig',
+      );
+
+      expect(event, isA<PsychicRoomSseSignal>());
+      final sig = event as PsychicRoomSseSignal;
+      expect(sig.type, 'timer_start_request');
+    });
+
     test('signal envelope exposes inner timer action', () {
       final event = parseSessionRoomSsePayload(
         {

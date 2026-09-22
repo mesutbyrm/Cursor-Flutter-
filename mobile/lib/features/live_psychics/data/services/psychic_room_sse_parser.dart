@@ -1,5 +1,6 @@
 import '../../domain/entities/psychic_room_entity.dart';
 import '../../domain/entities/psychic_session_status.dart';
+import '../../domain/psychic_room_signal_normalize.dart';
 import '../../domain/session_room_sse_event.dart';
 import '../models/psychic_model.dart';
 
@@ -72,10 +73,15 @@ PsychicRoomSseEvent? parseSessionRoomSsePayload(
   String? myUserId,
 }) {
   final merged = _mergeSsePayload(map);
-  final rootExplicit =
-      (map['type'] ?? eventName ?? '').toString().trim().toLowerCase();
+  final eventLower = (eventName ?? '').trim().toLowerCase();
+  final rootExplicit = (map['type'] ?? map['signalType'] ?? eventName ?? '')
+      .toString()
+      .trim()
+      .toLowerCase();
   // Nested `data` merge can overwrite outer `type: signal` with inner action names.
-  final type = rootExplicit == 'signal'
+  final type = rootExplicit == 'signal' ||
+          eventLower == 'signal' ||
+          isPsychicTimerHandshakeSignalType(rootExplicit)
       ? 'signal'
       : (inferSessionRoomSseEventType(merged, eventName: eventName) ?? '');
   if (type == 'connected') {
@@ -128,18 +134,25 @@ PsychicRoomSseEvent? parseSessionRoomSsePayload(
     );
   }
   if (type == 'signal') {
-    final nested = map['data'] is Map
-        ? Map<String, dynamic>.from(map['data'] as Map)
-        : merged;
-    final signalType = (nested['type'] ??
-            nested['action'] ??
-            nested['signalType'] ??
-            map['signalType'] ??
-            '')
-        .toString();
-    final signalData = nested['data'] is Map
-        ? Map<String, dynamic>.from(nested['data'] as Map)
-        : nested;
+    final norm = normalizePsychicRoomSignalMap(map);
+    var signalType = (norm['type'] ?? norm['signalType'] ?? '').toString();
+    Map<String, dynamic>? signalData = norm['data'] is Map
+        ? Map<String, dynamic>.from(norm['data'] as Map)
+        : null;
+    if (signalType == 'signal' || !isPsychicTimerHandshakeSignalType(signalType)) {
+      final nested = map['data'] is Map
+          ? Map<String, dynamic>.from(map['data'] as Map)
+          : map['signalData'] is Map
+              ? Map<String, dynamic>.from(map['signalData'] as Map)
+              : merged;
+      final inner = (nested['type'] ??
+              nested['action'] ??
+              nested['signalType'] ??
+              '')
+          .toString();
+      if (inner.isNotEmpty) signalType = inner;
+      signalData ??= nested;
+    }
     return PsychicRoomSseSignal(
       type: signalType,
       data: signalData,

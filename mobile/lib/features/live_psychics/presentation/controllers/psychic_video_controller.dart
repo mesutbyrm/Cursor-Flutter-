@@ -281,7 +281,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
 
   /// Falcı: danışan odaya girmişken ve süre başlamamışken süre başlatma isteği
   /// gönderir (bir kez). Süre/ücret ancak danışan onaylayınca başlar.
-  void _maybeSendTimerStartRequest() {
+  void _maybeSendTimerStartRequest({bool force = false}) {
     if (_disposed || state.leaving) return;
     var requestSent = state.timerStartRequestSent;
     if (requestSent &&
@@ -292,13 +292,21 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       requestSent = false;
       state = state.copyWith(timerStartRequestSent: false);
     }
-    if (!PsychicTimerHandshake.tellerShouldSendRequest(
-      isClient: session.isClient,
-      timerStarted: state.timerStarted,
-      requestAlreadySent: requestSent,
-      peerPresent: _peerPresentInRoom,
-    )) {
+    if (!force &&
+        !PsychicTimerHandshake.tellerShouldSendRequest(
+          isClient: session.isClient,
+          timerStarted: state.timerStarted,
+          requestAlreadySent: requestSent,
+          peerPresent: _peerPresentInRoom,
+        )) {
       return;
+    }
+    if (force &&
+        (session.isClient || state.timerStarted || state.leaving)) {
+      return;
+    }
+    if (force && requestSent) {
+      requestSent = false;
     }
     _lastTimerStartRequestAt = DateTime.now();
     state = state.copyWith(timerStartRequestSent: true);
@@ -544,7 +552,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       return;
     }
     state = state.copyWith(timerStartRequestSent: false);
-    _maybeSendTimerStartRequest();
+    _maybeSendTimerStartRequest(force: true);
   }
 
   Future<void> _ensureTimerStarted() async {
