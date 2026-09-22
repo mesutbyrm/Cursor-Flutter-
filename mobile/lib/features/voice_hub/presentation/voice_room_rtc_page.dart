@@ -2042,19 +2042,22 @@ class _VoiceRoomRtcSeatStage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(voiceRoomSpeakingSignatureProvider(liveRoomKey));
     final seatSlice = ref.watch(voiceRoomSeatSliceProvider(liveRoomKey));
     final speakingIds = <String>{
       for (final p in seatSlice.presence)
         if (p.isSpeaking) p.id,
     };
-    final live = ref.watch(voiceRoomLiveProvider(liveRoomKey));
+    final configuredSeatCount = ref.watch(
+      voiceRoomLiveProvider(liveRoomKey).select(
+        (s) => s.roomSeatCount,
+      ),
+    );
     return VoiceWebOwnerStage(
       roomKey: liveRoomKey,
       room: room,
       seatSlots: seatSlice.seatSlots,
       presence: seatSlice.presence,
-      configuredSeatCount: live.roomSeatCount ?? room.seatCount,
+      configuredSeatCount: configuredSeatCount ?? room.seatCount,
       djUserIds: mergedDjIds,
       speakingUserIds: speakingIds,
       onUserTap: onUserTap,
