@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.593+638 (2026-09-22) — CI: push invite analyze düzeltmesi
+
+- **Release gate:** `push_lifecycle_listener` nullable `invite` — flutter analyze 5 hata giderildi (APK CI yeşil)
+
 ## 1.0.593+637 (2026-09-22) — Canlı fal: gecikme ve senkron iyileştirmesi
 
 - **Falcı kabul popup:** push sonrası profil + gelen istek API ile zenginleştirme; anında poll + popup; yedek poll 2–3 sn

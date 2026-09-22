@@ -181,8 +181,9 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener>
   }
 
   Future<void> _handleFortuneInvitePush(Map<String, dynamic> data) async {
-    var invite = parsePsychicIncomingLoose(data);
-    if (invite == null) return;
+    final parsed = parsePsychicIncomingLoose(data);
+    if (parsed == null) return;
+    var invite = parsed;
 
     if (!ref.read(approvedPsychicProvider).checked) {
       await ref.read(approvedPsychicProvider.notifier).refresh();
