@@ -18,7 +18,7 @@ class AdminProfileToolbar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final access = ref.watch(staffAccessProvider);
 
-    if (!access.canManagePayments) {
+    if (!access.canAccessAdminHome) {
       return const SizedBox.shrink();
     }
 
@@ -88,6 +88,12 @@ class AdminProfileToolbar extends ConsumerWidget {
                   icon: Icons.settings_rounded,
                   label: 'Panel',
                   onTap: () => context.push('/admin/panel'),
+                ),
+                const SizedBox(width: 8),
+                _ToolButton(
+                  icon: Icons.apps_rounded,
+                  label: 'Tüm araçlar',
+                  onTap: () => context.push('/admin/tools'),
                 ),
               ],
             ),

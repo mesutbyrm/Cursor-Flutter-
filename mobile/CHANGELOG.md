@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.589+633 (2026-09-22) — Falcı & admin araç kataloğu (görünür UI)
+
+- **Falcı hub:** `/canli-falcilar/dashboard/tools` — 50+ ekran (P0/P1/Pro), arama, kategori listesi; panelde ve canlı falcılar listesinde “Tüm araçlar” CTA
+- **Admin katalog:** `/admin/tools` — Claude modülleri tek listede; admin ana sekme banner + profil toolbar linki
+- **Yetki:** moderatör / staff admin ana sekmeyi finans yetkisi olmadan görebilir (`canAccessAdminHome`)
+
 ## 1.0.588+632 (2026-09-22) — Canlı falcı seans: video + süre başlatma
 
 - **TRTC oda:** token isteği artık `trtcRoomId` / sunucu `roomId` ile hizalı; yanlış odada tek başına kalma düzeltildi

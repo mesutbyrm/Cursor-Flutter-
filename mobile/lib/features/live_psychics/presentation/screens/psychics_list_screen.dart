@@ -33,12 +33,18 @@ class PsychicsListScreen extends ConsumerWidget {
         title: const Text('Canlı Falcılar'),
         backgroundColor: Colors.transparent,
         actions: [
-          if (approved.$1)
+          if (approved.$1) ...[
             TextButton.icon(
-                      onPressed: () => context.push('/canli-falcilar/dashboard'),
+              onPressed: () => context.push('/canli-falcilar/dashboard/tools'),
+              icon: const Icon(Icons.apps_rounded, color: Colors.white),
+              label: const Text('Tüm araçlar'),
+            ),
+            TextButton.icon(
+              onPressed: () => context.push('/canli-falcilar/dashboard'),
               icon: const Icon(Icons.dashboard_outlined, color: Colors.white),
-              label: const Text('Falcı Paneli'),
-            )
+              label: const Text('Panel'),
+            ),
+          ]
           else if (ref.watch(
                 authControllerProvider.select((a) => a.valueOrNull != null),
               ))
