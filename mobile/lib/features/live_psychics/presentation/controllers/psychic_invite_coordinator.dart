@@ -8,7 +8,8 @@ class PsychicInviteCoordinator {
   static String? _lastPresentRequestId;
   static DateTime? _lastPresentRequestAt;
 
-  static const _dedupeWindow = Duration(seconds: 20);
+  static const _dedupeWindow = Duration(seconds: 3);
+  static const _shownDebounceWindow = Duration(seconds: 8);
 
   static void requestPresent({String? sessionId}) {
     if (sessionId != null && sessionId.isNotEmpty) {
@@ -27,7 +28,7 @@ class PsychicInviteCoordinator {
   static bool shouldDebounceShown(String sessionId) {
     if (sessionId.isEmpty) return false;
     if (_lastShownSessionId != sessionId || _lastShownAt == null) return false;
-    return DateTime.now().difference(_lastShownAt!) < _dedupeWindow;
+    return DateTime.now().difference(_lastShownAt!) < _shownDebounceWindow;
   }
 
   static void markDialogShown(String sessionId) {

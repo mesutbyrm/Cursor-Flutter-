@@ -253,6 +253,10 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       if (_disposed || state.leaving) return;
       // Karşı taraf (danışan) odaya girdi → falcı süre isteği gönderebilir.
       _maybeSendTimerStartRequest();
+      if (!state.timerStarted) {
+        unawaited(_pollRoomSignals());
+        unawaited(_syncRoomInfo());
+      }
     };
     _trtc.remoteVideoByUser.addListener(_remoteVideoListener!);
     _trtc.remoteAudioByUser.addListener(_remoteAudioListener!);
@@ -605,7 +609,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     // (RTC) için yedek olduğundan seyrekleşir (SSE bağlıysa).
     // FIX: Danışan poll interval 30s → 10s (hediye gecikme azaltma)
     final interval = !state.timerStarted
-        ? const Duration(seconds: 2)
+        ? const Duration(milliseconds: 900)
         : state.sseConnected
             ? (session.isClient
                 ? const Duration(seconds: 10)
@@ -613,19 +617,31 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
             : const Duration(seconds: 2);
     _signalPoll = Timer.periodic(interval, (_) {
       unawaited(_pollRoomSignals());
+      if (!state.timerStarted) {
+        unawaited(_syncRoomInfo());
+      }
     });
     unawaited(_pollRoomSignals());
+    if (!state.timerStarted) {
+      unawaited(_syncRoomInfo());
+    }
   }
 
   void _scheduleRoomPoll() {
     _roomPoll?.cancel();
-    if (_disposed || state.sseConnected) return;
-    final interval = state.sseConnected
-        ? const Duration(seconds: 20)
-        : const Duration(seconds: 3);
+    if (_disposed) return;
+    if (state.timerStarted && state.sseConnected) return;
+    final interval = !state.timerStarted
+        ? const Duration(seconds: 2)
+        : state.sseConnected
+            ? const Duration(seconds: 20)
+            : const Duration(seconds: 3);
     _roomPoll = Timer.periodic(interval, (_) {
       unawaited(_syncRoomInfo());
     });
+    if (!state.timerStarted) {
+      unawaited(_syncRoomInfo());
+    }
   }
 
   Future<void> _pollRoomSignals() async {

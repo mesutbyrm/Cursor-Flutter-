@@ -87,7 +87,7 @@ class PsychicTellerDashboardController
   void _schedulePoll() {
     _poll?.cancel();
     // PsychicIncomingHost SSE + event bus gerçek zamanlı; HTTP yalnızca yedek.
-    _poll = Timer.periodic(const Duration(seconds: 20), (_) => _pollRequests());
+    _poll = Timer.periodic(const Duration(seconds: 5), (_) => _pollRequests());
   }
 
   void _onLiveRequest(PsychicRequestEntity req) {

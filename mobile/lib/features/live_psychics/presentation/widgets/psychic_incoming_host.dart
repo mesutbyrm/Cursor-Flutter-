@@ -95,13 +95,17 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
       setState(() => _inviteUiReady = true);
       PsychicInviteCoordinator.onRequestPresent = () {
         if (!mounted) return;
+        void present() {
+          unawaited(_pollApi());
+          unawaited(_tryPresentNext());
+        }
         if (!_inviteUiReady) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) unawaited(_tryPresentNext());
+            if (mounted) present();
           });
           return;
         }
-        unawaited(_tryPresentNext());
+        present();
       };
       unawaited(_tryPresentNext());
       unawaited(_bootstrap());
@@ -162,8 +166,8 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
     if (!_mayRunTellerBackgroundSync()) return;
     final sseActive = _sseService?.isStreamActive == true;
     final interval = sseActive
-        ? const Duration(seconds: 10)
-        : const Duration(seconds: 3);
+        ? const Duration(seconds: 3)
+        : const Duration(seconds: 2);
     _poll = Timer.periodic(interval, (_) => _pollApi());
     unawaited(_pollApi());
   }

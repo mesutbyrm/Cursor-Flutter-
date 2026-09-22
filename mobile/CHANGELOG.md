@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.593+637 (2026-09-22) — Canlı fal: gecikme ve senkron iyileştirmesi
+
+- **Falcı kabul popup:** push sonrası profil + gelen istek API ile zenginleştirme; anında poll + popup; yedek poll 2–3 sn
+- **Danışan bekleme:** kabul algılama 500 ms burst + 1 sn poll
+- **Süre el sıkışması:** sinyal/oda poll ~0,9–2 sn (SSE kaçsa bile `timerStarted` yakalanır); peer bağlanınca ek senkron
+- **UI:** danışanda falcı TRTC’de görününce “Falcı bağlandı, süre isteği bekleniyor” metni
+
 ## 1.0.592+636 (2026-09-22) — Canlı fal: süre isteği sinyal formatı (üretim)
 
 - **POST/GET `/api/room/signal`:** üretim alanları `signalType` + `signalData` (mobilde `type`/`data` ile birlikte gönderilir)

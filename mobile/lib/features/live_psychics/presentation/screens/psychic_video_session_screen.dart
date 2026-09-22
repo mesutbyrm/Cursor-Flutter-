@@ -65,6 +65,9 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
     final chat = ref.watch(_psychicSessionChatProvider(session));
     final psychic = session.psychic;
     final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
+    final clientPeerLive = session.isClient &&
+        (state.remoteCamera.values.any((v) => v) ||
+            state.remoteMicrophone.values.any((v) => v));
 
     ref.listen(psychicVideoControllerProvider(session), (prev, next) {
       if (next.timeUpPending && session.isClient) {
@@ -186,7 +189,9 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                           const SizedBox(height: 16),
                           Text(
                             session.isClient
-                                ? 'Falcıya bağlanılıyor…'
+                                ? (clientPeerLive
+                                    ? 'Falcı bağlandı. Süre isteği bekleniyor…'
+                                    : 'Falcıya bağlanılıyor…')
                                 : (state.timerStartRequestSent
                                     ? 'Kullanıcının onayı bekleniyor…'
                                     : 'Kullanıcı bekleniyor…'),
@@ -199,7 +204,9 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                           const SizedBox(height: 6),
                           Text(
                             session.isClient
-                                ? 'İki taraf hazır olunca süre başlatma isteği gelecek. Onaylayana kadar süre ve ücret başlamaz.'
+                                ? (clientPeerLive
+                                    ? 'Falcı süre başlatma isteği gönderince onaylayın; onaydan sonra görüntü, ses, süre ve ücret başlar.'
+                                    : 'İki taraf hazır olunca süre başlatma isteği gelecek. Onaylayana kadar süre ve ücret başlamaz.')
                                 : 'İki taraf da bağlanınca kullanıcıya süre başlatma isteği gider; kullanıcı onaylayınca süre başlar.',
                             textAlign: TextAlign.center,
                             style: TextStyle(

@@ -65,25 +65,7 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener>
         authenticated: () => ref.read(authControllerProvider).valueOrNull != null,
         onReceived: _onPushReceived,
         onFortuneInviteData: (data) {
-          final invite = parsePsychicIncomingLoose(data);
-          if (invite == null) return;
-          final uid = ref.read(authControllerProvider).valueOrNull?.id;
-          final approved = ref.read(approvedPsychicProvider);
-          final decision = evaluatePsychicIncomingInvite(
-            authUserId: uid,
-            invite: invite,
-            tellerProfileId: approved.profile?.id,
-            isFortuneTeller:
-                approved.profile != null && approved.profile!.isUsable,
-          );
-          ref.read(psychicInviteDiagnosticProvider.notifier).record(
-                sessionId: invite.sessionId,
-                decision: decision,
-                source: 'push',
-              );
-          if (!decision.present) return;
-          ref.read(psychicIncomingQueueProvider.notifier).enqueue(invite);
-          PsychicInviteCoordinator.requestPresent(sessionId: invite.sessionId);
+          unawaited(_handleFortuneInvitePush(data));
         },
         onSessionCancelledData: (cancelled) {
           ref
@@ -196,6 +178,47 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener>
         }
       },
     );
+  }
+
+  Future<void> _handleFortuneInvitePush(Map<String, dynamic> data) async {
+    var invite = parsePsychicIncomingLoose(data);
+    if (invite == null) return;
+
+    if (!ref.read(approvedPsychicProvider).checked) {
+      await ref.read(approvedPsychicProvider.notifier).refresh();
+    }
+
+    final uid = ref.read(authControllerProvider).valueOrNull?.id;
+    var approved = ref.read(approvedPsychicProvider);
+    try {
+      final incoming = await ref.read(livePsychicsRepositoryProvider).fetchIncomingRequests(
+            currentUserId: uid,
+            tellerProfileId: approved.profile?.id,
+          );
+      for (final req in incoming) {
+        if (req.sessionId == invite.sessionId) {
+          invite = req;
+          break;
+        }
+      }
+    } catch (_) {}
+
+    approved = ref.read(approvedPsychicProvider);
+    final decision = evaluatePsychicIncomingInvite(
+      authUserId: uid,
+      invite: invite,
+      tellerProfileId: approved.profile?.id,
+      isFortuneTeller:
+          approved.profile != null && approved.profile!.isUsable,
+    );
+    ref.read(psychicInviteDiagnosticProvider.notifier).record(
+          sessionId: invite.sessionId,
+          decision: decision,
+          source: 'push',
+        );
+    if (!decision.present) return;
+    ref.read(psychicIncomingQueueProvider.notifier).enqueue(invite);
+    PsychicInviteCoordinator.requestPresent(sessionId: invite.sessionId);
   }
 
   Future<void> _pollAdminPayments() async {
