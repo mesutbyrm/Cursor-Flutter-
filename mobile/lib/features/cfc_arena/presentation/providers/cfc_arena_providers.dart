@@ -1,25 +1,21 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/network/api_endpoints.dart';
-import '../../../../core/network/dio_provider.dart';
-import '../../../../core/util/json_util.dart';
+import '../../domain/cfc_arena_context.dart';
+import '../../domain/cfc_arena_contest_filters.dart';
+import '../../data/cfc_arena_repository.dart';
 
 final cfcArenaContestsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final dio = ref.watch(dioProvider);
-  try {
-    final res = await dio.safeGet<dynamic>(ApiEndpoints.cfcArena);
-    final body = res.data;
-    if (body is List) {
-      return body.whereType<Map>().map((e) => asJsonMap(e)).toList();
-    }
-    if (body is Map) {
-      final map = asJsonMap(body);
-      final list = map['contests'] ?? map['items'] ?? map['data'];
-      if (list is List) {
-        return list.whereType<Map>().map((e) => asJsonMap(e)).toList();
-      }
-    }
-  } catch (_) {}
-  return const [];
+  return ref.read(cfcArenaRepositoryProvider).fetchPublicContests();
+});
+
+final adminCfcArenaContestsProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  return ref.read(cfcArenaRepositoryProvider).fetchAdminContests();
+});
+
+final cfcArenaContestsForSurfaceProvider = FutureProvider.autoDispose
+    .family<List<Map<String, dynamic>>, CfcArenaSurface>((ref, surface) async {
+  final all = await ref.watch(cfcArenaContestsProvider.future);
+  return filterContestsForSurface(all, surface);
 });

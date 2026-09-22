@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.590+634 (2026-09-22) — Sezon yarışması: admin + oda banner
+
+- **Admin:** `/admin/cfc-arena` — sezon yarışması oluşturma, durum (active/pause/complete), liste
+- **Canlı yayın & sesli oda:** aktif öne çıkan/sezon yarışması banner’ı; **Katıl** → `/api/cfc-arena/join`
+- **API parse:** üretim `data.contests` yanıtı — CFC Arena hub artık boş kalmaz
+
 ## 1.0.589+633 (2026-09-22) — Falcı & admin araç kataloğu (görünür UI)
 
 - **Falcı hub:** `/canli-falcilar/dashboard/tools` — 50+ ekran (P0/P1/Pro), arama, kategori listesi; panelde ve canlı falcılar listesinde “Tüm araçlar” CTA

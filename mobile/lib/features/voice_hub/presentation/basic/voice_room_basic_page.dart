@@ -87,6 +87,8 @@ import '../../../gifts/presentation/widgets/gift_battle_strip.dart';
 import '../../../gifts/presentation/widgets/first_gifter_badge.dart';
 import '../../../gifts/presentation/widgets/gift_goal_bar.dart';
 import '../../../visual_fx/presentation/widgets/fx_big_gift_banner.dart';
+import '../../../cfc_arena/presentation/widgets/cfc_arena_room_banner.dart';
+import '../../../cfc_arena/domain/cfc_arena_context.dart';
 
 /// Aşama 1 — oda listesi, giriş/çıkış, mikrofon, hoparlör, katılımcılar, oda sahibi.
 class VoiceRoomBasicPage extends ConsumerStatefulWidget {
@@ -871,6 +873,10 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                   ),
                   onCoinsTap: () => openJetonStore(context, ref: ref),
                   onRankTap: () => showVoiceRoomRankingSheet(context, ref),
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 10),
+                  child: CfcArenaRoomBanner(surface: CfcArenaSurface.voiceRoom),
                 ),
                 if (live.roomMuted)
                   _Banner(message: 'Oda susturulmuş (yalnızca yetkililer konuşabilir)'),

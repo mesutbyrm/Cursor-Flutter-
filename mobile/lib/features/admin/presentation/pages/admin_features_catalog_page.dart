@@ -219,6 +219,27 @@ List<AdminCatalogSection> adminFeaturesCatalog(StaffAccess access) {
       ],
     ),
     AdminCatalogSection(
+      title: 'Yarışmalar & CFC Arena',
+      items: [
+        AdminCatalogItem(
+          title: 'Sezon yarışmaları',
+          subtitle: 'Oluştur, yayına al, oda banner',
+          icon: Icons.emoji_events_rounded,
+          route: '/admin/cfc-arena',
+          visible: access.isSiteAdmin ||
+              access.isFounder ||
+              access.canManagePayments,
+        ),
+        AdminCatalogItem(
+          title: 'CFC Arena (kullanıcı)',
+          subtitle: 'Aktif yarışma listesi',
+          icon: Icons.leaderboard_rounded,
+          route: '/cfc-arena',
+          visible: true,
+        ),
+      ],
+    ),
+    AdminCatalogSection(
       title: 'Sistem & kurucu',
       items: [
         AdminCatalogItem(

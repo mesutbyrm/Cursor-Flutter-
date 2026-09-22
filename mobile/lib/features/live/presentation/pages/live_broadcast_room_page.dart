@@ -30,6 +30,8 @@ import '../../../live_psychics/presentation/controllers/psychic_flow.dart';
 import '../../../live_psychics/presentation/providers/live_psychics_providers.dart';
 import '../../../live_psychics/presentation/widgets/psychic_booking_sheet.dart';
 import '../../../live_psychics/presentation/widgets/psychic_fortune_types.dart';
+import '../../../cfc_arena/domain/cfc_arena_context.dart';
+import '../../../cfc_arena/presentation/widgets/cfc_arena_room_banner.dart';
 import '../../../voice_hub/presentation/coordinators/room_leave_coordinator.dart';
 import '../../../pk/presentation/providers/pk_feature_enabled_provider.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
@@ -2929,6 +2931,15 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 child: const ColoredBox(color: Colors.black),
               ),
             const LiveImmersiveScrim(),
+            if (hasStream && !pkImmersive)
+              Positioned(
+                top: top + 48,
+                left: 10,
+                right: 10,
+                child: const CfcArenaRoomBanner(
+                  surface: CfcArenaSurface.liveBroadcast,
+                ),
+              ),
             LiveFloatingHeartsOverlay(
               key: _heartsKey,
               burstToken: interaction.heartBurstToken,

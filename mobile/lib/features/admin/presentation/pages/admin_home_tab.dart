@@ -658,6 +658,11 @@ class _QuickActionsGrid extends StatelessWidget {
           label: 'E-posta Şablonları',
           onTap: () => context.push('/admin/email-templates'),
         ),
+        _ActionButton(
+          icon: Icons.emoji_events_rounded,
+          label: 'Sezon yarışması',
+          onTap: () => context.push('/admin/cfc-arena'),
+        ),
       ],
     );
   }
