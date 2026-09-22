@@ -117,23 +117,49 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
 
   Future<void> _checkStatus() async {
     if (state.closed) return;
-    final status = await ref
-        .read(livePsychicsRepositoryProvider)
-        .fetchSessionStatus(session.sessionId);
-    if (status == null) return;
+    final repo = ref.read(livePsychicsRepositoryProvider);
 
-    if (status.status == PsychicSessionStatus.rejected ||
-        status.status == PsychicSessionStatus.cancelled ||
-        status.status == PsychicSessionStatus.ended) {
-      await _onRejected();
+    final status = await repo.fetchSessionStatus(session.sessionId);
+    if (status != null) {
+      if (status.status == PsychicSessionStatus.rejected ||
+          status.status == PsychicSessionStatus.cancelled ||
+          status.status == PsychicSessionStatus.ended) {
+        await _onRejected();
+        return;
+      }
+      if (status.status == PsychicSessionStatus.expired) {
+        await _onExpired();
+        return;
+      }
+      if (status.status.isActive) {
+        await _onAccepted(status);
+        return;
+      }
+    }
+
+    final actives = await repo.fetchActiveSessions();
+    final activeMine = actives
+        .where((s) => s.sessionId == session.sessionId)
+        .toList(growable: false);
+    if (activeMine.isNotEmpty) {
+      await _onAccepted(activeMine.first);
       return;
     }
-    if (status.status == PsychicSessionStatus.expired) {
-      await _onExpired();
-      return;
-    }
-    if (status.status.isActive) {
-      await _onAccepted(status);
+
+    final room = await repo.fetchRoom(session.sessionId);
+    if (room != null &&
+        room.status != PsychicSessionStatus.pending &&
+        !room.status.isTerminal) {
+      await _onAccepted(
+        PsychicSessionStatusResult(
+          sessionId: session.sessionId,
+          status: PsychicSessionStatus.active,
+          isClient: true,
+          tellerUserId: room.tellerUserId,
+          trtcRoomId: room.roomId,
+          durationMinutes: room.maxMinutes,
+        ),
+      );
     }
   }
 

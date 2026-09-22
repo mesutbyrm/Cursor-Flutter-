@@ -916,16 +916,29 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   }
 
   void _handleSseSignal(String type, Map<String, dynamic>? data) {
-    // Falcı tarafında: danışan "seans başlaması için süre başlat" isteğini yolladı
-    if (type == PsychicTimerHandshake.signalAccept && !session.isClient) {
-      state = state.copyWith(timerStartPrompt: false);
-      requestTimerStart();
+    final sig = <String, dynamic>{'type': type};
+    if (data != null && data.isNotEmpty) {
+      sig['data'] = data;
+    }
+
+    if (PsychicTimerHandshake.signalMatches(
+      sig,
+      PsychicTimerHandshake.signalAccept,
+    )) {
+      if (!session.isClient) {
+        state = state.copyWith(timerStartPrompt: false);
+        unawaited(_onTimerStartAcceptSignal());
+      }
       return;
     }
 
-    // Danışan tarafında: falcı "seans başlaması için süre başlat" isteğini yolladı
-    if (type == PsychicTimerHandshake.signalRequest && session.isClient) {
-      state = state.copyWith(timerStartPrompt: true);
+    if (PsychicTimerHandshake.signalMatches(
+      sig,
+      PsychicTimerHandshake.signalRequest,
+    )) {
+      if (session.isClient) {
+        _onTimerStartRequestSignal();
+      }
       return;
     }
   }

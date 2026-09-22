@@ -11,7 +11,15 @@ enum PsychicSessionStatus {
   static PsychicSessionStatus fromApi(String? raw, {String? tellerResponse}) {
     final status = (raw ?? '').toLowerCase();
     final response = (tellerResponse ?? '').toLowerCase();
-    if (response == 'accepted' || status == 'active' || status == 'accepted') {
+    if (response == 'accepted' ||
+        response == 'accept' ||
+        status == 'active' ||
+        status == 'accepted' ||
+        status == 'ready' ||
+        status == 'live' ||
+        status == 'in_progress' ||
+        status == 'ongoing' ||
+        status == 'connected') {
       return PsychicSessionStatus.active;
     }
     if (response == 'rejected' ||

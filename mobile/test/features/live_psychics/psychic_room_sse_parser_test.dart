@@ -106,6 +106,23 @@ void main() {
       expect(tip.fromName, 'Ayşe');
     });
 
+    test('signal envelope exposes inner timer action', () {
+      final event = parseSessionRoomSsePayload(
+        {
+          'type': 'signal',
+          'data': {
+            'type': 'timer_start_request',
+            'action': 'timer_start_request',
+          },
+        },
+        sessionId: 'sess_sig',
+      );
+
+      expect(event, isA<PsychicRoomSseSignal>());
+      final sig = event as PsychicRoomSseSignal;
+      expect(sig.type, 'timer_start_request');
+    });
+
     test('tip without type but nested data amount', () {
       final event = parseSessionRoomSsePayload(
         {

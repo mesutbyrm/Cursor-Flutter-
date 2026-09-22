@@ -13,7 +13,9 @@ import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/ui/premium_2026/cosmic_galaxy_background.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_entity.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_request_entity.dart';
+import 'package:canlifal_social/features/live_psychics/data/services/psychic_session_store.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_entity.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychic_incoming_controller.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychics_list_controller.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_live_event_bus.dart';
@@ -252,8 +254,14 @@ class PsychicTellerDashboardController
       clearProcessing: true,
     );
 
+    await PsychicSessionStore.save(session);
+    ref.read(psychicDismissedSessionsProvider.notifier).update(
+          (s) => {...s, req.sessionId},
+        );
+    ref.read(psychicIncomingQueueProvider.notifier).remove(req.sessionId);
+
     if (context.mounted) {
-      await context.push(
+      context.pushReplacement(
         '/canli-falcilar/${psychic.id}/session',
         extra: session,
       );

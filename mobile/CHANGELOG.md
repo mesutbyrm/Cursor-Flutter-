@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.591+635 (2026-09-22) — Canlı falcı: kabul senkronu + süre isteği SSE
+
+- **Danışan bekleme:** kabul sonrası `fetchActiveSessions` / oda durumu ile REQUESTING ekranından çıkış; oturuma geçiş
+- **Süre el sıkışması:** oda SSE `signal` olayında iç `type`/`action` ayrıştırma; falcı tarafında `timer_start_accept` artık yanlışlıkla tekrar istek atmaz
+- **Falcı panel kabul:** oturuma `pushReplacement`, kuyruk temizliği; derleme için eksik importlar eklendi
+- **Durum eşleme:** `ready` / `live` / `in_progress` gibi API durumları aktif sayılır
+
 ## 1.0.590+634 (2026-09-22) — Sezon yarışması: admin + oda banner
 
 - **Admin:** `/admin/cfc-arena` — sezon yarışması oluşturma, durum (active/pause/complete), liste

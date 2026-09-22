@@ -72,7 +72,12 @@ PsychicRoomSseEvent? parseSessionRoomSsePayload(
   String? myUserId,
 }) {
   final merged = _mergeSsePayload(map);
-  final type = inferSessionRoomSseEventType(merged, eventName: eventName) ?? '';
+  final rootExplicit =
+      (map['type'] ?? eventName ?? '').toString().trim().toLowerCase();
+  // Nested `data` merge can overwrite outer `type: signal` with inner action names.
+  final type = rootExplicit == 'signal'
+      ? 'signal'
+      : (inferSessionRoomSseEventType(merged, eventName: eventName) ?? '');
   if (type == 'connected') {
     return PsychicRoomSseConnected(
       PsychicModel.roomFromJson(map, fallbackId: sessionId),
@@ -123,8 +128,18 @@ PsychicRoomSseEvent? parseSessionRoomSsePayload(
     );
   }
   if (type == 'signal') {
-    final signalType = merged['type']?.toString() ?? '';
-    final signalData = merged['data'] as Map<String, dynamic>? ?? {};
+    final nested = map['data'] is Map
+        ? Map<String, dynamic>.from(map['data'] as Map)
+        : merged;
+    final signalType = (nested['type'] ??
+            nested['action'] ??
+            nested['signalType'] ??
+            map['signalType'] ??
+            '')
+        .toString();
+    final signalData = nested['data'] is Map
+        ? Map<String, dynamic>.from(nested['data'] as Map)
+        : nested;
     return PsychicRoomSseSignal(
       type: signalType,
       data: signalData,
