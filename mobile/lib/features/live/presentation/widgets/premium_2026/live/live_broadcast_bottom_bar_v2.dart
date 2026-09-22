@@ -143,7 +143,7 @@ class _LiveBroadcastBottomBarV2State extends State<LiveBroadcastBottomBarV2> {
                     _ActionIconButton(
                       icon: Icons.apps_rounded,
                       label: 'Daha fazla',
-                      onTap: widget.onMore,
+                      onTap: widget.onMore!,
                     ),
                 ],
               ),
