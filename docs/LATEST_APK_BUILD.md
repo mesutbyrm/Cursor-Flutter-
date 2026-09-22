@@ -4,18 +4,19 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.587+631` |
-| Tarih (UTC) | 2026-09-22 09:36 |
-| Commit | [`0c89297529ddb6d077d058d2aa1d20c6b0af7a3a`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/0c89297529ddb6d077d058d2aa1d20c6b0af7a3a) |
-| İş akışı | [Run 35709439240](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35709439240) |
+| Sürüm | `1.0.588+632` |
+| Tarih (UTC) | 2026-09-22 11:15 |
+| Commit | [`a52a31e7fe732c0bf137873ac3742355baf92b46`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/a52a31e7fe732c0bf137873ac3742355baf92b46) |
+| İş akışı | [Run 35718688462](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35718688462) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.587+631 (2026-09-21) — APK derleme düzeltmeleri
+## 1.0.588+632 (2026-09-22) — Canlı falcı seans: video + süre başlatma
 
-- **CI / analyze:** admin paneli ve falcı paneli derleme hataları giderildi (ikon adları, `StaffAccess.canViewActivityLog`, API anahtarı widget adı)
-- **Önceki sürüm özellikleri korunur:** bekleyen ödeme temizliği, DM SSE, sesli oda hayalet presence, profil kaydet, canlı falcı yayın modu, genişletilmiş admin/falcı ekranları
+- **TRTC oda:** token isteği artık `trtcRoomId` / sunucu `roomId` ile hizalı; yanlış odada tek başına kalma düzeltildi
+- **Süre el sıkışması:** sinyal eşleme (`data.action`); falcı isteği yeniden deneme; danışan onayı sonrası `start_timer` tekrar denemesi; danışan süre başlayana kadar oda durumu poll
+- **Falcı kabul:** oturum ekranına `pushReplacement` — gelen çağrı ekranına geri dönüş kalktı
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
