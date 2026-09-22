@@ -41,7 +41,10 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      unawaited(_connectSse());
+      final access = ref.read(staffAccessProvider);
+      if (access.canManagePayments) {
+        unawaited(_connectSse());
+      }
     });
   }
 
@@ -74,12 +77,16 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
   @override
   Widget build(BuildContext context) {
     final access = ref.watch(staffAccessProvider);
-    if (!access.canManagePayments) {
+    if (!access.canAccessAdminHome) {
       return const SizedBox.shrink();
     }
 
-    final badges = ref.watch(adminPanelBadgeCountsProvider).valueOrNull;
-    final pendingCount = ref.watch(adminPendingPaymentsCountProvider);
+    final showFinance = access.canManagePayments;
+    final badges = showFinance
+        ? ref.watch(adminPanelBadgeCountsProvider).valueOrNull
+        : null;
+    final pendingCount =
+        showFinance ? ref.watch(adminPendingPaymentsCountProvider) : 0;
     final moderationCount = ref.watch(adminModerationQueueCountProvider);
     final activityMonitoringCount = ref.watch(adminActivityMonitoringCountProvider);
     final fraudAlertCount = ref.watch(adminFraudAlertCountProvider);
@@ -121,6 +128,8 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
+            _AllToolsBanner(onTap: () => context.push('/admin/tools')),
+            const SizedBox(height: 20),
             // Bekleyen işlemler
             if (pendingCount > 0 || moderationCount > 0 || activityMonitoringCount > 0 || fraudAlertCount > 0) ...[
               _SectionTitle('🔴 Bekleyen İşlemler'),
@@ -181,9 +190,11 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
             ],
 
             // Hızlı İstatistikler
-            _SectionTitle('📊 Bugün'),
-            _QuickStatsGrid(badges: badges),
-            const SizedBox(height: 24),
+            if (showFinance) ...[
+              _SectionTitle('📊 Bugün'),
+              _QuickStatsGrid(badges: badges),
+              const SizedBox(height: 24),
+            ],
 
             // Sistem & Yayınlar
             _SectionTitle('🎥 Sistem & Yayınlar'),
@@ -281,6 +292,67 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AllToolsBanner extends StatelessWidget {
+  const _AllToolsBanner({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppThemeColors.accentPurple.withValues(alpha: 0.15),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: AppThemeColors.accentCyan.withValues(alpha: 0.35),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.apps_rounded,
+                color: AppThemeColors.accentPink,
+                size: 32,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Tüm admin araçları',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 16,
+                        color: context.colors.onSurface,
+                      ),
+                    ),
+                    Text(
+                      'Claude ile eklenen modüller — arama ile keşfet',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: context.colors.onSurfaceMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.arrow_forward_rounded, color: context.colors.onSurface),
+            ],
+          ),
         ),
       ),
     );

@@ -64,6 +64,7 @@ import '../../features/admin/presentation/pages/admin_user_sessions_page.dart';
 import '../../features/admin/presentation/pages/admin_security_dashboard_page.dart';
 import '../../features/admin/presentation/pages/admin_feature_flags_page.dart';
 import '../../features/admin/presentation/pages/admin_email_templates_page.dart';
+import '../../features/admin/presentation/pages/admin_features_catalog_page.dart';
 import '../../features/admin_web/presentation/pages/admin_web_panel_page.dart';
 import '../../features/fortune/presentation/pages/fortune_tarot_hub_page.dart';
 import '../../features/fortune/presentation/pages/fortune_types_all_page.dart';
@@ -170,6 +171,7 @@ import '../../features/live_psychics/presentation/screens/psychic_session_route.
 import '../../features/live_psychics/presentation/screens/psychic_apply_screen.dart';
 import '../../features/live_psychics/presentation/screens/psychic_become_teller_page.dart';
 import '../../features/live_psychics/presentation/screens/psychic_teller_dashboard_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_teller_features_hub_screen.dart';
 import '../../features/live_psychics/presentation/screens/psychic_profile_screen.dart';
 import '../../features/live_psychics/presentation/screens/psychics_list_screen.dart';
 import '../../features/live_psychics/presentation/screens/psychic_analytics_screen.dart';
@@ -737,6 +739,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin/home',
         builder: (context, state) => const AdminHomeTab(),
+      ),
+      GoRoute(
+        path: '/admin/tools',
+        builder: (context, state) => const AdminFeaturesCatalogPage(),
       ),
       GoRoute(
         path: '/admin/moderation',
@@ -2051,6 +2057,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               child: const PsychicTellerDashboardScreen(),
             ),
             routes: [
+              GoRoute(
+                path: 'tools',
+                pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+                  key: state.pageKey,
+                  child: const PsychicTellerFeaturesHubScreen(),
+                ),
+              ),
               GoRoute(
                 path: 'profile-edit',
                 pageBuilder: (context, state) => AppPageTransitions.fadeSlide(

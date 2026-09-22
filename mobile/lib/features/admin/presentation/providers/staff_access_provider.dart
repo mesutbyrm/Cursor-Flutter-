@@ -63,6 +63,23 @@ class StaffAccess {
   bool get showStaffProfileEntry =>
       isStaffMember && !hasFullAdminDashboard && (canModerate || isSupportStaff);
 
+  /// Admin ana sekme / araç kataloğu — finans yetkisi olmayan moderatörler dahil.
+  bool get canAccessAdminHome =>
+      showAdminPanel ||
+      (isStaffMember &&
+          (canManagePayments ||
+              canModerate ||
+              canManageUsers ||
+              canViewReports ||
+              canManageLiveStreams ||
+              canManageVoiceRooms ||
+              canManageGifts ||
+              canManageSiteAnimations ||
+              canManageNotifications ||
+              canViewActivityLog ||
+              isSupportStaff ||
+              isSiteAdmin));
+
   /// Profil / panel başlığı — kullanıcı adı öncelikli (`admin` → Site Admin, `yonetici` → Kurucu).
   String get roleLabel {
     final u = username?.toLowerCase().trim() ?? '';

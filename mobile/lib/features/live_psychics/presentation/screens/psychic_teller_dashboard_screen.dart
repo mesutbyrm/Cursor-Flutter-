@@ -589,6 +589,61 @@ class _QuickActions extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        Material(
+          color: AppThemeColors.accentPink.withValues(alpha: 0.22),
+          borderRadius: BorderRadius.circular(14),
+          child: InkWell(
+            onTap: () => context.push('/canli-falcilar/dashboard/tools'),
+            borderRadius: BorderRadius.circular(14),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: AppThemeColors.accentCyan.withValues(alpha: 0.45),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.apps_rounded,
+                    color: AppThemeColors.accentCyan,
+                    size: 28,
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Tüm falcı araçları',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 15,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          '50+ ekran — Claude Pro modülleri dahil',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white70,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_rounded,
+                    color: Colors.white.withValues(alpha: 0.7),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
         Row(
           children: [
             Expanded(
