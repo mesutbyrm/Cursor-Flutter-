@@ -4,20 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.591+635` |
-| Tarih (UTC) | 2026-09-22 13:45 |
-| Commit | [`75cad44b53416b9168e7593475c4e4dec52e7d87`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/75cad44b53416b9168e7593475c4e4dec52e7d87) |
-| İş akışı | [Run 35732929672](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35732929672) |
+| Sürüm | `1.0.592+636` |
+| Tarih (UTC) | 2026-09-22 17:00 |
+| Commit | [`8e7b4a35742833dcfb2fda468a63fc2ad02f0d88`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/8e7b4a35742833dcfb2fda468a63fc2ad02f0d88) |
+| İş akışı | [Run 35756067212](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35756067212) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.591+635 (2026-09-22) — Canlı falcı: kabul senkronu + süre isteği SSE
+## 1.0.592+636 (2026-09-22) — Canlı fal: süre isteği sinyal formatı (üretim)
 
-- **Danışan bekleme:** kabul sonrası `fetchActiveSessions` / oda durumu ile REQUESTING ekranından çıkış; oturuma geçiş
-- **Süre el sıkışması:** oda SSE `signal` olayında iç `type`/`action` ayrıştırma; falcı tarafında `timer_start_accept` artık yanlışlıkla tekrar istek atmaz
-- **Falcı panel kabul:** oturuma `pushReplacement`, kuyruk temizliği; derleme için eksik importlar eklendi
-- **Durum eşleme:** `ready` / `live` / `in_progress` gibi API durumları aktif sayılır
+- **POST/GET `/api/room/signal`:** üretim alanları `signalType` + `signalData` (mobilde `type`/`data` ile birlikte gönderilir)
+- **Poll:** gelen sinyaller normalize edilir; danışanda **Görüşmeyi Başlat** istemi tetiklenir
+- **SSE:** `event: signal` ve `timer_start_*` kök tipleri doğru ayrıştırılır
+- **Süre iste:** falcı **Süre iste** ile peer TRTC olmasa da isteği yeniden gönderebilir
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
