@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../trtc/presentation/trtc_room_manager.dart';
-import '../premium_2026/live_premium_2026.dart';
+import '../premium_2026/live/live_broadcast_bottom_bar_v2.dart';
 
 /// Alt kontrol çubuğu — klavye padding ile.
 class LiveBroadcastRoomBottomChrome extends StatelessWidget {
@@ -44,13 +44,11 @@ class LiveBroadcastRoomBottomChrome extends StatelessWidget {
       padding: EdgeInsets.only(
         bottom: MediaQuery.viewInsetsOf(context).bottom,
       ),
-      child: LivePremiumBottomBar(
+      child: LiveBroadcastBottomBarV2(
         chatController: chatController,
         isHost: isHost,
         trtc: trtc,
         commentsEnabled: commentsEnabled,
-        chatVisible: chatVisible,
-        onToggleChat: onToggleChat,
         onGift: onGift,
         onTip: onTip,
         onMore: onMore,
