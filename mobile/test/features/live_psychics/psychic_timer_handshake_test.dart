@@ -143,6 +143,35 @@ void main() {
     });
   });
 
+  group('PsychicTimerHandshake.signalMatches', () {
+    test('matches root type and nested action', () {
+      expect(
+        PsychicTimerHandshake.signalMatches(
+          {'type': 'timer_start_request'},
+          PsychicTimerHandshake.signalRequest,
+        ),
+        isTrue,
+      );
+      expect(
+        PsychicTimerHandshake.signalMatches(
+          {
+            'type': 'room_signal',
+            'data': {'action': 'timer_start_accept'},
+          },
+          PsychicTimerHandshake.signalAccept,
+        ),
+        isTrue,
+      );
+      expect(
+        PsychicTimerHandshake.signalMatches(
+          {'type': 'tip'},
+          PsychicTimerHandshake.signalRequest,
+        ),
+        isFalse,
+      );
+    });
+  });
+
   group('signal type names are distinct and non-overlapping', () {
     test('request/accept do not substring-collide', () {
       expect(
