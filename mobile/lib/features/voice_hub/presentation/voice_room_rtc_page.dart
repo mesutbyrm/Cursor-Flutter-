@@ -61,7 +61,6 @@ import '../music/presentation/widgets/room_song_mini_player.dart';
 import 'sheets/voice_room_hub_settings.dart';
 import 'providers/pk_battle_remote_provider.dart';
 import '../domain/pk/pk_duration_options.dart';
-import '../domain/pk/pk_opponent_room_filter.dart';
 import 'utils/voice_room_image_prefetch.dart';
 import 'utils/voice_room_seat_capacity.dart';
 import 'providers/voice_gift_providers.dart';
@@ -69,10 +68,8 @@ import 'providers/voice_room_audio_providers.dart';
 import 'providers/voice_session_phase_provider.dart';
 import '../domain/voice/voice_session_phase.dart';
 import 'providers/voice_room_diagnostic_provider.dart';
-import 'providers/voice_room_sse_provider.dart';
 import 'providers/voice_room_ui_provider.dart';
 import 'sheets/voice_room_management_panel.dart';
-import 'sheets/voice_room_moderation_sheet.dart';
 import 'sheets/voice_room_sheets.dart';
 import 'utils/voice_music_access.dart';
 import 'utils/voice_room_pending_music_search_flow.dart';
@@ -146,7 +143,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   var _leaveSessionStarted = false;
   var _forcedExitHandled = false;
   var _musicSearchOpen = false;
-  LiveGiftEvent? _fullscreenGift;
   final _messageFocus = FocusNode();
   var _showVipEntrance = false;
   var _vipEntrancePlayed = false;
@@ -1048,11 +1044,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     }
   }
 
-  void _openActivePk(VoiceRoomEntity room) {
-    final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
-    context.push('/voice-room/$key/pk', extra: room);
-  }
-
   Future<void> _pickBackground(BuildContext context, VoiceRoomEntity room) async {
     await showVoiceRoomBackgroundSheet(context, ref, room: room);
   }
@@ -1416,15 +1407,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       room: room,
       presence: live.presence,
     );
-    final canRequestMusic = VoiceMusicAccess.canRequestSongs(
-      dj: live.dj,
-      perms: perms,
-      jetonBalance: ref.read(
-        walletBalancesProvider.select((a) => a.valueOrNull?.jeton ?? 0),
-      ),
-    );
     final showMusicRequestFab = live.dj.musicEnabled;
-    final audioRequestCost = VoiceMusicAccess.audioRequestCost(live.dj);
     final isOwner = perms.isRoomOwner || perms.isSiteAdmin;
     final isDj = perms.canManageDj ||
         live.dj.canPlayMusic ||
