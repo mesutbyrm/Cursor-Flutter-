@@ -617,15 +617,9 @@ socialRouter.post(
       return fail(res, 400, "BAD_REQUEST", result.error);
     }
     const session = result.session;
-    const role = fortuneSessionRoleForUser(session, req.userId!);
-    return ok(res, {
-      session,
-      sessionId: session.id,
-      status: session.status,
-      tellerResponse: session.tellerResponse,
-      role,
-      isClient: role === "client",
-    });
+    const payload = fortuneSessionRoomPayload(session, req.userId!);
+    emitFortuneRoomSse(session.id, "room_update", payload);
+    return ok(res, { ...payload, role: payload.role, isClient: payload.isClient });
   },
 );
 
