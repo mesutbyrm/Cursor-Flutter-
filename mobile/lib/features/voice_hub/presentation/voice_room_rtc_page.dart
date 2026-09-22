@@ -1938,7 +1938,9 @@ class _VoiceRoomRtcDiagnosticBanner extends ConsumerWidget {
     if (diagnostic.uiBuildError == null) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: VoiceRoomDiagnosticCard(state: diagnostic),
+      child: VoiceRoomDiagnosticCard(
+        state: diagnostic,
+      ),
     );
   }
 }
@@ -1986,13 +1988,15 @@ class _VoiceRoomRtcVipEntrance extends ConsumerWidget {
         ? user.displayName!.trim()
         : user.username;
     final cosmetic = ref.watch(resolvedEntranceEffectProvider);
-    final settings = ref.watch(entranceEffectSettingsProvider);
     final allowed = ref.watch(entranceEffectAllowedProvider);
     if (cosmetic == null && !allowed) {
       WidgetsBinding.instance.addPostFrameCallback((_) => onFinished());
       return const SizedBox.shrink();
     }
-    final theme = settings.teamColorsEnabled
+    final teamColorsEnabled = ref.watch(
+      entranceEffectSettingsProvider.select((s) => s.teamColorsEnabled),
+    );
+    final theme = teamColorsEnabled
         ? ref.watch(myEntranceThemeProvider)
         : EntranceTheme.turkey;
     if (cosmetic != null) {
