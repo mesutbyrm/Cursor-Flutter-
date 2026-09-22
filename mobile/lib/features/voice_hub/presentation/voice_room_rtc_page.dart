@@ -192,7 +192,268 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       if (user != null) _maybeShowEntrance(user);
       unawaited(_joinAudioBackground());
       _prefetchRoomImages();
+      _setupRoomListeners();
     });
+  }
+
+  void _setupRoomListeners() {
+    ref.listenManual(
+      voiceRoomLiveProvider(_liveRoomKey).select(voiceRoomExitSignalsSlice),
+      (prev, next) {
+        if (!mounted) return;
+        final exitMsg = VoiceRoomSessionExit.detectExitFromSignals(
+          prev: prev,
+          next: next,
+        );
+        if (exitMsg != null && !_forcedExitHandled && !_leaving) {
+          _forcedExitHandled = true;
+          unawaited(
+            VoiceRoomSessionExit.handleForcedExit(
+              context: context,
+              ref: ref,
+              liveKey: _liveRoomKey,
+              message: exitMsg,
+            ),
+          );
+        }
+      },
+    );
+
+    ref.listenManual(
+      voiceRoomLiveProvider(_liveRoomKey).select((s) => s.error),
+      (prev, next) {
+        if (next != null && next != prev && mounted) {
+          showJetonAwareError(context, next, ref: ref);
+          ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).clearError();
+        }
+      },
+    );
+
+    ref.listenManual(
+      voiceRoomLiveProvider(_liveRoomKey).select((s) => s.openCommandsPanel),
+      (prev, next) {
+        if (!next || (prev ?? false) || !mounted) return;
+        ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).clearOpenCommandsPanel();
+        unawaited(
+          showVoiceRoomCommandsPanel(
+            context,
+            ref,
+            room: _effectiveRoom(),
+            perms: _permsFromLive(_effectiveRoom()),
+            isOwner: _permsFromLive(_effectiveRoom()).isRoomOwner,
+          ),
+        );
+      },
+    );
+
+    ref.listenManual(
+      voiceRoomLiveProvider(_liveRoomKey).select(voiceRoomMusicSearchRequestSlice),
+      (prev, next) {
+        final q = next.query;
+        if (q == null || q == prev?.query || !mounted || _musicSearchOpen) return;
+        _musicSearchOpen = true;
+        final dj = ref.read(voiceRoomLiveProvider(_liveRoomKey)).dj;
+        unawaited(
+          runVoiceRoomPendingMusicSearchFlow(
+            context: context,
+            ref: ref,
+            liveRoomKey: _liveRoomKey,
+            query: q,
+            skipPayment: next.skipPayment,
+            dj: dj,
+          ).whenComplete(() => _musicSearchOpen = false),
+        );
+      },
+    );
+
+    ref.listenManual(
+      voiceRoomLiveProvider(_liveRoomKey).select(voiceRoomModerationSignalsSlice),
+      (prev, next) {
+        if (!mounted) return;
+        if (next.moderationToast != null &&
+            next.moderationToast != prev?.moderationToast) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(next.moderationToast!),
+              duration: const Duration(seconds: 5),
+              backgroundColor: const Color(0xFF22C55E),
+            ),
+          );
+        }
+        if (next.kickStrikeWarning != null &&
+            next.kickStrikeWarning != prev?.kickStrikeWarning) {
+          final strikeCount = next.kickStrikeCount.clamp(1, 3);
+          final strikeColor = KickStrikeUi.colorFor(strikeCount);
+          unawaited(
+            showDialog<void>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                backgroundColor: const Color(0xFF1A1028),
+                title: Text(
+                  KickStrikeUi.titleFor(strikeCount),
+                  style: TextStyle(
+                    color: strikeColor,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                content: Text(
+                  next.kickStrikeWarning!,
+                  style: const TextStyle(color: Colors.white70, height: 1.35),
+                ),
+                actions: [
+                  FilledButton(
+                    style: FilledButton.styleFrom(backgroundColor: strikeColor),
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Tamam'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+      },
+    );
+
+    ref.listenManual(
+      voiceRoomLiveProvider(_liveRoomKey).select(voiceRoomDjPlaybackSignalsSlice),
+      (prev, next) {
+        _handleMusicAutoMute(prev, next);
+      },
+    );
+
+    ref.listenManual(
+      voiceRoomSeatSliceProvider(_liveRoomKey),
+      (prev, next) {
+        if (!_audioReady || !mounted) return;
+        final userNow = ref.read(authControllerProvider).valueOrNull;
+        if (userNow == null) return;
+        final liveNow = ref.read(voiceRoomLiveProvider(_liveRoomKey));
+        final speakPerms = _perms(
+          userNow,
+          next.presence,
+          server: liveNow.serverPermissions,
+        );
+        final canSpeakNow = VoiceRoomSpeakAccess.canSpeak(
+          user: userNow,
+          perms: speakPerms,
+          room: _effectiveRoom(),
+          presence: next.presence,
+        );
+        if (!canSpeakNow && !_isMicMuted) {
+          _audio?.setMicEnabled(false);
+          setState(() => _isMicMuted = true);
+        } else if (canSpeakNow) {
+          unawaited(_maybeAutoOpenMic());
+        }
+      },
+    );
+
+    ref.listenManual(
+      voiceRoomUiProvider.select((s) => s.autoOpenMic),
+      (prev, next) {
+        if (next && !(prev ?? false)) {
+          unawaited(_maybeAutoOpenMic());
+        }
+      },
+    );
+
+    ref.listenManual(
+      voiceRoomUiProvider.select(
+        (s) => (s.headphonesOn, s.backgroundMusicEnabled),
+      ),
+      (prev, next) {
+        if (prev == null) return;
+        if (prev.$2 != next.$2) {
+          unawaited(
+            ref
+                .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
+                .applyAudioOutputGate(
+                  speakerOn: next.$1 && next.$2,
+                ),
+          );
+        }
+        if (prev.$1 != next.$1 && _audioReady) {
+          _audio?.setHeadphonesOn(next.$1);
+        }
+      },
+    );
+
+    ref.listenManual(authControllerProvider, (prev, next) {
+      final wasGuest = prev?.valueOrNull == null;
+      final nowUser = next.valueOrNull;
+      if (wasGuest && nowUser != null && _loginError != null && !_audioReady) {
+        unawaited(_joinAudioBackground());
+      }
+    });
+
+    ref.listenManual(voiceRoomsProvider, (prev, next) {
+      final synced = _roomSynced(next.valueOrNull);
+      if (synced.apiRoomKey.isEmpty) return;
+      final hadKey = _roomSynced(prev?.valueOrNull).apiRoomKey.isNotEmpty;
+      if (!hadKey && !_audioReady && !_leaving) {
+        unawaited(_joinAudioBackground());
+      }
+      if (_liveRoomKey.isNotEmpty) {
+        ref
+            .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
+            .syncSseRoomKeyFromCatalog();
+      }
+    });
+  }
+
+  VoiceRoomPermissions _permsFromLive(VoiceRoomEntity room) {
+    final user = ref.read(authControllerProvider).valueOrNull;
+    final live = ref.read(voiceRoomLiveProvider(_liveRoomKey));
+    return _perms(user, live.presence, server: live.serverPermissions);
+  }
+
+  void _handleMusicAutoMute(
+    ({bool? playing, String? nowPlayingVideoId})? prev,
+    ({bool playing, String? nowPlayingVideoId}) next,
+  ) {
+    final isOwner = _permsFromLive(_effectiveRoom()).isRoomOwner ||
+        _permsFromLive(_effectiveRoom()).isSiteAdmin;
+
+    final wasPlaying =
+        (prev?.playing ?? false) && prev?.nowPlayingVideoId != null;
+    final nowPlaying = next.playing && next.nowPlayingVideoId != null;
+
+    if (!wasPlaying && nowPlaying && !isOwner && _audioReady) {
+      if (!_isMicMuted) {
+        _audio?.setMicEnabled(false);
+        if (mounted) {
+          setState(() {
+            _isMicMuted = true;
+            _micAutoMutedByMusic = true;
+          });
+        }
+      }
+    } else if (wasPlaying && !nowPlaying && _micAutoMutedByMusic) {
+      final userNow = ref.read(authControllerProvider).valueOrNull;
+      final roomNow = _effectiveRoom();
+      final liveNow = ref.read(voiceRoomLiveProvider(_liveRoomKey));
+      final speakPerms = _perms(
+        userNow,
+        liveNow.presence,
+        server: liveNow.serverPermissions,
+      );
+      if (VoiceRoomSpeakAccess.canSpeak(
+        user: userNow,
+        perms: speakPerms,
+        room: roomNow,
+        presence: liveNow.presence,
+      )) {
+        _audio?.setMicEnabled(true);
+        if (mounted) {
+          setState(() {
+            _isMicMuted = false;
+            _micAutoMutedByMusic = false;
+          });
+        }
+      } else if (mounted) {
+        setState(() => _micAutoMutedByMusic = false);
+      }
+    }
   }
 
   VoiceRoomEntity _roomSynced(List<VoiceRoomEntity>? rooms) {
@@ -1191,246 +1452,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       ...room.djUserIds,
       ...live.dj.djUsers.map((u) => u.id),
     }.toList();
-    ref.listen(
-      voiceRoomLiveProvider(_liveRoomKey).select(voiceRoomExitSignalsSlice),
-      (prev, next) {
-        if (!mounted) return;
-        final exitMsg = VoiceRoomSessionExit.detectExitFromSignals(
-          prev: prev,
-          next: next,
-        );
-        if (exitMsg != null && !_forcedExitHandled && !_leaving) {
-          _forcedExitHandled = true;
-          unawaited(
-            VoiceRoomSessionExit.handleForcedExit(
-              context: context,
-              ref: ref,
-              liveKey: _liveRoomKey,
-              message: exitMsg,
-            ),
-          );
-        }
-      },
-    );
-
-    ref.listen(
-      voiceRoomLiveProvider(_liveRoomKey).select((s) => s.error),
-      (prev, next) {
-        if (next != null && next != prev && mounted) {
-          showJetonAwareError(context, next, ref: ref);
-          ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).clearError();
-        }
-      },
-    );
-
-    ref.listen(
-      voiceRoomLiveProvider(_liveRoomKey).select((s) => s.openCommandsPanel),
-      (prev, next) {
-        if (!next || (prev ?? false) || !mounted) return;
-        ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).clearOpenCommandsPanel();
-        unawaited(
-          showVoiceRoomCommandsPanel(
-            context,
-            ref,
-            room: room,
-            perms: perms,
-            isOwner: isOwner,
-          ),
-        );
-      },
-    );
-
-    ref.listen(
-      voiceRoomLiveProvider(_liveRoomKey).select(voiceRoomMusicSearchRequestSlice),
-      (prev, next) {
-        final q = next.query;
-        if (q == null || q == prev?.query || !mounted || _musicSearchOpen) return;
-        _musicSearchOpen = true;
-        final dj = ref.read(voiceRoomLiveProvider(_liveRoomKey)).dj;
-        unawaited(
-          runVoiceRoomPendingMusicSearchFlow(
-            context: context,
-            ref: ref,
-            liveRoomKey: _liveRoomKey,
-            query: q,
-            skipPayment: next.skipPayment,
-            dj: dj,
-          ).whenComplete(() => _musicSearchOpen = false),
-        );
-      },
-    );
-
-    ref.listen(
-      voiceRoomLiveProvider(_liveRoomKey).select(voiceRoomModerationSignalsSlice),
-      (prev, next) {
-        if (!mounted) return;
-        if (next.moderationToast != null &&
-            next.moderationToast != prev?.moderationToast) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(next.moderationToast!),
-              duration: const Duration(seconds: 5),
-              backgroundColor: const Color(0xFF22C55E),
-            ),
-          );
-        }
-        if (next.kickStrikeWarning != null &&
-            next.kickStrikeWarning != prev?.kickStrikeWarning) {
-          final strikeCount = next.kickStrikeCount.clamp(1, 3);
-          final strikeColor = KickStrikeUi.colorFor(strikeCount);
-          unawaited(
-            showDialog<void>(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                backgroundColor: const Color(0xFF1A1028),
-                title: Text(
-                  KickStrikeUi.titleFor(strikeCount),
-                  style: TextStyle(
-                    color: strikeColor,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                content: Text(
-                  next.kickStrikeWarning!,
-                  style: const TextStyle(color: Colors.white70, height: 1.35),
-                ),
-                actions: [
-                  FilledButton(
-                    style: FilledButton.styleFrom(backgroundColor: strikeColor),
-                    onPressed: () => Navigator.pop(ctx),
-                    child: const Text('Tamam'),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-      },
-    );
-
-    ref.listen(
-      voiceRoomLiveProvider(_liveRoomKey).select(voiceRoomDjPlaybackSignalsSlice),
-      (prev, next) {
-        final wasPlaying =
-            (prev?.playing ?? false) && prev?.nowPlayingVideoId != null;
-        final nowPlaying = next.playing && next.nowPlayingVideoId != null;
-        if (!wasPlaying && nowPlaying && !isOwner && _audioReady) {
-          if (!_isMicMuted) {
-            _audio?.setMicEnabled(false);
-            if (mounted) {
-              setState(() {
-                _isMicMuted = true;
-                _micAutoMutedByMusic = true;
-              });
-            }
-          }
-        } else if (wasPlaying && !nowPlaying && _micAutoMutedByMusic) {
-          final userNow = ref.read(authControllerProvider).valueOrNull;
-          final roomNow = _effectiveRoom();
-          final liveNow = ref.read(voiceRoomLiveProvider(_liveRoomKey));
-          final speakPerms = _perms(
-            userNow,
-            liveNow.presence,
-            server: liveNow.serverPermissions,
-          );
-          if (VoiceRoomSpeakAccess.canSpeak(
-            user: userNow,
-            perms: speakPerms,
-            room: roomNow,
-            presence: liveNow.presence,
-          )) {
-            _audio?.setMicEnabled(true);
-            if (mounted) {
-              setState(() {
-                _isMicMuted = false;
-                _micAutoMutedByMusic = false;
-              });
-            }
-          } else if (mounted) {
-            setState(() => _micAutoMutedByMusic = false);
-          }
-        }
-      },
-    );
-
-    ref.listen(
-      voiceRoomSeatSliceProvider(_liveRoomKey),
-      (prev, next) {
-        if (!_audioReady || !mounted) return;
-        final userNow = ref.read(authControllerProvider).valueOrNull;
-        if (userNow == null) return;
-        final liveNow = ref.read(voiceRoomLiveProvider(_liveRoomKey));
-        final speakPerms = _perms(
-          userNow,
-          next.presence,
-          server: liveNow.serverPermissions,
-        );
-        final canSpeakNow = VoiceRoomSpeakAccess.canSpeak(
-          user: userNow,
-          perms: speakPerms,
-          room: _effectiveRoom(),
-          presence: next.presence,
-        );
-        if (!canSpeakNow && !_isMicMuted) {
-          _audio?.setMicEnabled(false);
-          setState(() => _isMicMuted = true);
-        } else if (canSpeakNow) {
-          unawaited(_maybeAutoOpenMic());
-        }
-      },
-    );
-
-    ref.listen(
-      voiceRoomUiProvider.select((s) => s.autoOpenMic),
-      (prev, next) {
-        if (next && !(prev ?? false)) {
-          unawaited(_maybeAutoOpenMic());
-        }
-      },
-    );
-
-    ref.listen(
-      voiceRoomUiProvider.select(
-        (s) => (s.headphonesOn, s.backgroundMusicEnabled),
-      ),
-      (prev, next) {
-        if (prev == null) return;
-        if (prev.$2 != next.$2) {
-          unawaited(
-            ref
-                .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
-                .applyAudioOutputGate(
-                  speakerOn: next.$1 && next.$2,
-                ),
-          );
-        }
-        if (prev.$1 != next.$1 && _audioReady) {
-          _audio?.setHeadphonesOn(next.$1);
-        }
-      },
-    );
-
-    ref.listen(authControllerProvider, (prev, next) {
-      final wasGuest = prev?.valueOrNull == null;
-      final nowUser = next.valueOrNull;
-      if (wasGuest && nowUser != null && _loginError != null && !_audioReady) {
-        unawaited(_joinAudioBackground());
-      }
-    });
-
-    ref.listen(voiceRoomsProvider, (prev, next) {
-      final synced = _roomSynced(next.valueOrNull);
-      if (synced.apiRoomKey.isEmpty) return;
-      final hadKey = _roomSynced(prev?.valueOrNull).apiRoomKey.isNotEmpty;
-      if (!hadKey && !_audioReady && !_leaving) {
-        unawaited(_joinAudioBackground());
-      }
-      if (_liveRoomKey.isNotEmpty) {
-        ref
-            .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
-            .syncSseRoomKeyFromCatalog();
-      }
-    });
 
     final pkArgs = PkSessionArgs(contextId: sessionKey, kind: PkContextKind.voice);
 
