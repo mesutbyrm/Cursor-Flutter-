@@ -1108,6 +1108,7 @@ class VoiceRoomLiveController
           _presenceJoined = false;
           _voiceJoined = false;
           state = state.copyWith(
+            messages: const [],
             presence: const [],
             seatSlots: const [],
             typingUsers: const [],

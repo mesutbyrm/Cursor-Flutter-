@@ -11,8 +11,6 @@ class LiveBroadcastRoomBottomChrome extends StatelessWidget {
     required this.isHost,
     required this.trtc,
     required this.commentsEnabled,
-    required this.chatVisible,
-    required this.onToggleChat,
     required this.onGift,
     required this.onTip,
     required this.onMore,
@@ -26,8 +24,6 @@ class LiveBroadcastRoomBottomChrome extends StatelessWidget {
   final bool isHost;
   final TrtcRoomManager? trtc;
   final bool commentsEnabled;
-  final bool chatVisible;
-  final VoidCallback onToggleChat;
   final VoidCallback? onGift;
   final VoidCallback? onTip;
   final VoidCallback onMore;
