@@ -112,8 +112,9 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     String? opponentRoomId,
     int durationSeconds = 180,
   }) async {
-    final stale = state;
-    if (stale != null && stale.isEnded) clear();
+    // PK daveti göndermeden önce oda durumunu temizle (pending savaşları sonlandır).
+    // Bu, presence state karmaşasını ve dönen çift daveti (duplicate invites) engeller.
+    await prepareRoomForInvite(roomId: roomId, alternateRoomId: alternateRoomId);
 
     final battle = await _api.inviteVoiceRoom(
       roomId: roomId,
@@ -137,6 +138,19 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     required String opponentStreamId,
     int durationSeconds = pkDefaultDurationSeconds,
   }) async {
+    // Stale PK savaşlarını temizle (pending durumundakiler de dahil).
+    // Bu, stream'de presence state karmaşasını ve çift daveti engeller.
+    final stale = state;
+    if (stale != null && !stale.isEnded) {
+      try {
+        await end(
+          stale.id,
+          streamId: streamId,
+        ).timeout(const Duration(seconds: 5));
+      } catch (_) {}
+      clear();
+    }
+
     final battle = await _api.streamPkAction(
       streamId: streamId,
       action: 'create',
