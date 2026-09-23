@@ -91,11 +91,19 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
       return true;
     }
     try {
-      await end(
-        battle.id,
-        roomId: roomId,
-        alternateRoomId: alternateRoomId,
-      ).timeout(const Duration(seconds: 8));
+      if (battle.isPending) {
+        await cancel(
+          battle.id,
+          roomId: roomId,
+          alternateRoomId: alternateRoomId,
+        ).timeout(const Duration(seconds: 8));
+      } else {
+        await end(
+          battle.id,
+          roomId: roomId,
+          alternateRoomId: alternateRoomId,
+        ).timeout(const Duration(seconds: 8));
+      }
     } catch (_) {}
     clear();
     ref.read(pkSessionPhaseProvider.notifier).reset();

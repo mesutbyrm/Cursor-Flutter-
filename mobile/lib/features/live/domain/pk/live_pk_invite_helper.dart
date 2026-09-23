@@ -99,6 +99,12 @@ bool isLivePkInviteRecipientMap(
 /// Canlı yayın PK kaydı mı (sesli oda PK değil).
 bool isLiveStreamPkBattle(PkBattleRemote battle) {
   final t = battle.battleType.toLowerCase();
+  if (t.contains('voice') ||
+      t.contains('room_user') ||
+      t == 'voice_room' ||
+      t.contains('chat_room')) {
+    return false;
+  }
   if (t.contains('live') ||
       t.contains('stream') ||
       t.contains('video')) {
@@ -106,7 +112,12 @@ bool isLiveStreamPkBattle(PkBattleRemote battle) {
   }
   final host = battle.liveStreamId?.trim() ?? '';
   final opp = battle.opponentLiveStreamId?.trim() ?? '';
-  return host.isNotEmpty || opp.isNotEmpty;
+  if (host.isEmpty && opp.isEmpty) return false;
+  // Sesli oda PK üretimi stream1Id/stream2Id kullanır — voiceRoomId doluysa canlı değil.
+  final v1 = battle.voiceRoomId?.trim() ?? '';
+  final v2 = battle.opponentVoiceRoomId?.trim() ?? '';
+  if (v1.isNotEmpty || v2.isNotEmpty) return false;
+  return true;
 }
 
 /// PK kaydı bu canlı yayına ait mi.

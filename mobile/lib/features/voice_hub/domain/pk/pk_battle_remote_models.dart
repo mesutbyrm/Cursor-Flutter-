@@ -146,19 +146,30 @@ class PkBattleRemote extends Equatable {
     final id = rawId.isNotEmpty ? rawId : (invite ?? '');
     var status = (normalized['status']?.toString() ?? 'pending').toLowerCase();
     final battleType = normalized['battleType']?.toString() ?? 'voice_room';
-    final liveStreamId = normalized['liveStreamId']?.toString().trim() ?? '';
-    final opponentLiveStreamId = (normalized['opponentLiveStreamId'] ??
-            normalized['opponentStreamId'] ??
-            normalized['targetStreamId'])
-        ?.toString()
-        .trim() ??
-        '';
-    final parsedLiveStreamId = (normalized['liveStreamId'] ??
-            normalized['hostStreamId'] ??
-            normalized['streamId'])
-        ?.toString()
-        .trim() ??
-        '';
+    final scope = normalized['scope']?.toString().toLowerCase() ?? '';
+    final isVoiceScope = battleType.contains('voice') ||
+        battleType.contains('room_user') ||
+        scope.contains('room_user') ||
+        scope.contains('voice');
+    final liveStreamId = isVoiceScope
+        ? ''
+        : normalized['liveStreamId']?.toString().trim() ?? '';
+    final opponentLiveStreamId = isVoiceScope
+        ? ''
+        : (normalized['opponentLiveStreamId'] ??
+                normalized['opponentStreamId'] ??
+                normalized['targetStreamId'])
+            ?.toString()
+            .trim() ??
+            '';
+    final parsedLiveStreamId = isVoiceScope
+        ? ''
+        : (normalized['liveStreamId'] ??
+                normalized['hostStreamId'] ??
+                normalized['streamId'])
+            ?.toString()
+            .trim() ??
+            '';
     final isLiveStreamPk = battleType.contains('live') ||
         parsedLiveStreamId.isNotEmpty ||
         liveStreamId.isNotEmpty ||

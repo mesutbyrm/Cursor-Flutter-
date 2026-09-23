@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.597+642 (2026-09-23) — Odalar arası PK: davet + oda kopması
+
+- **Sesli PK sınıflandırma:** `stream1Id/stream2Id` artık canlı yayın PK sanılmıyor; davet ingest ve popup hedefi düzeldi
+- **Davet dinleyici:** Yanlış `owned.first` popup kaldırıldı; yalnızca gerçek hedef oda + `isPkInviteTarget`; rakip oda poll’u kaldırıldı
+- **Oda girişi:** PK poll presence sonrası 2 sn gecikmeli; SSE oda anahtarı yalnızca cuid yükseltmede yenilenir
+- **Davet gönder:** Eski pending için `cancel`; aday/host sorguda slug yedek anahtarı
+
 ## 1.0.596+641 (2026-09-23) — PK aday listesi + oda içi takım PK
 
 - **Odalar arası PK listesi:** `rooms`/`items` zarfı ve `voiceRoomId` alanları; yükleme göstergesi aday listesini gizlemez

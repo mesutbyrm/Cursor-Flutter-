@@ -178,9 +178,18 @@ class PkSessionNotifier
       'userId': userId,
     });
     try {
+      String? hostAlt;
+      if (arg.kind == PkContextKind.voice) {
+        final hostRoom = ref.read(voiceRoomByIdProvider(id)).valueOrNull;
+        if (hostRoom != null &&
+            hostRoom.slug.isNotEmpty &&
+            hostRoom.slug != id) {
+          hostAlt = hostRoom.slug;
+        }
+      }
       final bundle = arg.kind == PkContextKind.live
           ? await _api.streamCandidates(id)
-          : await _api.roomCandidates(id);
+          : await _api.roomCandidates(id, alternateRoomId: hostAlt);
       if (_disposed) return;
       var candidates = bundle.candidates
           .where((c) => c.contextId.isNotEmpty && c.contextId != id)
@@ -386,8 +395,16 @@ class PkSessionNotifier
     String? targetUserId,
   }) async {
     try {
+      final hostRoom =
+          ref.read(voiceRoomByIdProvider(arg.contextId)).valueOrNull;
+      final hostAlt = hostRoom != null &&
+              hostRoom.slug.isNotEmpty &&
+              hostRoom.slug != arg.contextId
+          ? hostRoom.slug
+          : null;
       final remote = await ref.read(pkBattleRemoteProvider.notifier).inviteRoom(
             roomId: arg.contextId,
+            alternateRoomId: hostAlt,
             opponentRoomId: targetRoomId,
             guestUserId: targetUserId?.trim() ?? '',
             durationSeconds: durationSeconds,

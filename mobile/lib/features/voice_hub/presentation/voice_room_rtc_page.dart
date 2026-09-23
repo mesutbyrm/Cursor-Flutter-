@@ -390,9 +390,15 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         unawaited(_joinAudioBackground());
       }
       if (_liveRoomKey.isNotEmpty) {
-        ref
-            .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
-            .syncSseRoomKeyFromCatalog();
+        final canonical = synced.apiRoomKey;
+        final prevSynced = _roomSynced(prev?.valueOrNull).apiRoomKey;
+        if (canonical != prevSynced &&
+            canonical.length >= 18 &&
+            canonical.length > _liveRoomKey.length) {
+          ref
+              .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
+              .syncSseRoomKeyFromCatalog();
+        }
       }
     });
   }

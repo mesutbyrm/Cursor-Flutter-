@@ -11,7 +11,6 @@ import '../../../live/presentation/providers/live_providers.dart';
 import '../../data/datasources/pk_battle_remote_datasource.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
 import '../../domain/pk/pk_opponent_room_filter.dart';
-import '../providers/chat_room_providers.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_room_session_registry.dart';
 import '../utils/pk_invite_dialog_helper.dart';
@@ -64,39 +63,23 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
     if (_showing) return;
 
     if (battle.isPending) {
-      var room = resolvePkInviteTargetRoom(ref, battle, user.id);
-      if (room == null &&
-          battle.voiceRoomId?.trim().isEmpty == true &&
-          battle.opponentVoiceRoomId?.trim().isEmpty == true) {
-        PkEventLog.error(
-          'invite_missing_rooms',
-          'PK davetinde room1/room2 (voiceRoomId) yok — backend response doğrulanmalı',
-        );
-      }
+      final room = resolvePkInviteTargetRoom(ref, battle, user.id);
       if (room == null) {
-        final owned = ref.read(myOwnedVoiceRoomsProvider);
-        if (owned.isNotEmpty) {
-          room = owned.first;
-        } else {
-          final all = ref.read(voiceRoomsProvider).valueOrNull ?? const [];
-          for (final r in all) {
-            if (isUserOwnedVoiceRoom(
-              r,
-              userId: user.id,
-              username: user.username,
-            )) {
-              room = r;
-              break;
-            }
-          }
+        if (battle.voiceRoomId?.trim().isEmpty == true &&
+            battle.opponentVoiceRoomId?.trim().isEmpty == true) {
+          PkEventLog.error(
+            'invite_missing_rooms',
+            'PK davetinde room1/room2 (voiceRoomId) yok — backend response doğrulanmalı',
+          );
         }
+        return;
       }
-      if (room != null) {
-        final inviteId = battle.effectiveId;
-        if (inviteId.isNotEmpty) {
-          PkEventLog.incomingRequest(inviteId: inviteId);
-          unawaited(_showInviteDialog(battle, room));
-        }
+      if (!isPkInviteTarget(battle, room, userId: user.id)) return;
+      if (isPkChallengerRoom(battle, room)) return;
+      final inviteId = battle.effectiveId;
+      if (inviteId.isNotEmpty) {
+        PkEventLog.incomingRequest(inviteId: inviteId);
+        unawaited(_showInviteDialog(battle, room));
       }
       return;
     }
@@ -174,44 +157,42 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
     if (user == null) return;
     try {
       final api = ref.read(pkBattleRemoteDataSourceProvider);
-      await ref.read(voiceRoomsProvider.future);
+      final roomsAsync = ref.read(voiceRoomsProvider);
+      if (!roomsAsync.hasValue) {
+        await ref.read(voiceRoomsProvider.future);
+      }
 
-      // Sesli oda PK — games backend `GET /api/chat/rooms/{id}/pk` (unified /api/pk/* yok).
       final activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
-
-      // Aktif oda — SSE bağlı görünse bile REST yedek (handler wipe / kaçırılan event).
+      VoiceRoomEntity? activeRoom;
       if (activeKey.isNotEmpty) {
-        final roomBattle = await api.fetchRoomBattle(activeKey);
+        activeRoom = ref.read(voiceRoomByIdProvider(activeKey)).valueOrNull;
+      }
+
+      if (activeKey.isNotEmpty) {
+        final alt = activeRoom != null &&
+                activeRoom.slug.isNotEmpty &&
+                activeRoom.slug != activeKey
+            ? activeRoom.slug
+            : null;
+        final roomBattle = await api.fetchRoomBattle(
+          activeKey,
+          alternateRoomId: alt,
+        );
         if (roomBattle != null && !roomBattle.isEnded) {
           ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(roomBattle);
           _onBattleUpdate(roomBattle);
-          if (roomBattle.isPending || roomBattle.isActive) return;
+          if (roomBattle.isPending) return;
         }
       }
 
-      // Sahip olunan tüm odalar — başka odadayken SSE kaçırsa bile yakala.
       await _pollOwnedRooms(user.id, user.username, activeKey, api);
 
-      // Rakip odada pending görünmeyebilir — kullanıcıya yönelik davet listesi.
       final invites = await api.fetchMyInvites();
       for (final battle in invites) {
         if (battle.isEnded || !battle.isPending) continue;
         ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(battle);
         _onBattleUpdate(battle);
         if (battle.isPending) return;
-      }
-
-      final oppRoomId = ref.read(pkBattleRemoteProvider)?.opponentVoiceRoomId
-              ?.trim() ??
-          '';
-      if (oppRoomId.isNotEmpty && activeKey != oppRoomId) {
-        final oppBattle = await api.fetchRoomBattle(oppRoomId);
-        if (oppBattle != null &&
-            !oppBattle.isEnded &&
-            oppBattle.isPending) {
-          ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(oppBattle);
-          _onBattleUpdate(oppBattle);
-        }
       }
     } catch (e, st) {
       PkEventLog.apiFailure(

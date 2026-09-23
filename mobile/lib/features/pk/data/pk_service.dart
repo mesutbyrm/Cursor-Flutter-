@@ -144,12 +144,42 @@ class PkService {
     return _parseCandidates(res.data, fromStream: true);
   }
 
-  Future<PkCandidatesBundle> roomCandidates(String roomId) async {
-    final res = await _dio.safeGet<dynamic>(
-      ApiEndpoints.chatRoomPkCandidates,
-      query: {'roomId': roomId.trim()},
-    );
-    return _parseCandidates(res.data, fromStream: false);
+  Future<PkCandidatesBundle> roomCandidates(
+    String roomId, {
+    String? alternateRoomId,
+  }) async {
+    ApiException? lastError;
+    for (final key in _roomQueryKeys(roomId, alternateRoomId)) {
+      try {
+        final res = await _dio.safeGet<dynamic>(
+          ApiEndpoints.chatRoomPkCandidates,
+          query: {'roomId': key},
+        );
+        final bundle = _parseCandidates(res.data, fromStream: false);
+        if (bundle.candidates.isNotEmpty || bundle.selfBusy) {
+          return bundle;
+        }
+        if (bundle.total > 0) return bundle;
+      } on ApiException catch (e) {
+        lastError = e;
+        if (e.statusCode == 404) continue;
+        rethrow;
+      }
+    }
+    if (lastError != null && lastError.statusCode != 404) throw lastError;
+    return const PkCandidatesBundle(candidates: []);
+  }
+
+  List<String> _roomQueryKeys(String primary, String? alternate) {
+    final keys = <String>[];
+    void add(String? v) {
+      final k = v?.trim() ?? '';
+      if (k.isNotEmpty && !keys.contains(k)) keys.add(k);
+    }
+
+    add(primary);
+    add(alternate);
+    return keys;
   }
 
   PkCandidatesBundle _parseCandidates(dynamic body, {required bool fromStream}) {
