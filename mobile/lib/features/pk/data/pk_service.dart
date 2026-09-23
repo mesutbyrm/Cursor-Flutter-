@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../../../core/network/api_endpoints.dart';
+import '../../../core/network/api_exception.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../../core/util/json_util.dart';
 import '../../live/data/datasources/live_field/live_field_api_util.dart';
