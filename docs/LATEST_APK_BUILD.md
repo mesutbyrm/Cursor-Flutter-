@@ -4,19 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.596+641` |
-| Tarih (UTC) | 2026-09-23 21:01 |
-| Commit | [`7c9593e696a32b5a0a5043b339ceedd243d20947`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/7c9593e696a32b5a0a5043b339ceedd243d20947) |
-| İş akışı | [Run 35917579345](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35917579345) |
+| Sürüm | `1.0.597+642` |
+| Tarih (UTC) | 2026-09-23 21:54 |
+| Commit | [`d83885d430b9dc980ff95e3df11d591f2ad5c4f5`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/d83885d430b9dc980ff95e3df11d591f2ad5c4f5) |
+| İş akışı | [Run 35923422967](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35923422967) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.596+641 (2026-09-23) — PK aday listesi + oda içi takım PK
+## 1.0.597+642 (2026-09-23) — Odalar arası PK: davet + oda kopması
 
-- **Odalar arası PK listesi:** `rooms`/`items` zarfı ve `voiceRoomId` alanları; yükleme göstergesi aday listesini gizlemez
-- **Oda içi PK:** `create_user` yanıtı `PkBattleRemote` ile ayrıştırılır; presence `userId` canonical; oturum SSE senkronu
-- **Davet poll:** Yanlış odanın daveti artık `me/invites` ilk kaydından alınmaz
+- **Sesli PK sınıflandırma:** `stream1Id/stream2Id` artık canlı yayın PK sanılmıyor; davet ingest ve popup hedefi düzeldi
+- **Davet dinleyici:** Yanlış `owned.first` popup kaldırıldı; yalnızca gerçek hedef oda + `isPkInviteTarget`; rakip oda poll’u kaldırıldı
+- **Oda girişi:** PK poll presence sonrası 2 sn gecikmeli; SSE oda anahtarı yalnızca cuid yükseltmede yenilenir
+- **Davet gönder:** Eski pending için `cancel`; aday/host sorguda slug yedek anahtarı
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
