@@ -512,22 +512,15 @@ abstract final class ApiEndpoints {
       '/api/chat/rooms/$roomId/report';
 
   /// Üretim PK — `GET/POST /api/chat/rooms/{roomId}/pk`
-  /// POST body: `{ guestUserId, durationSec }` → pending davet.
-  /// GET (public, poll): `{ roomId, activeBattle, pendingInvite }`.
+  /// KANONİK endpoint — tüm PK aksiyonları (create, accept, reject, cancel, start, end, pause, resume)
+  /// POST body: `{ action, battleId?, guestUserId?, durationSec?, side1UserIds?, side2UserIds?, ... }`
+  /// GET (public, poll): `{ activeBattle, pendingInvite }` veya `null`.
+  /// Kılavuz §2.2–2.5 (FLUTTER_ENTegrasyon_KILAVUZU.md).
   static String chatRoomPk(String roomId) => '/api/chat/rooms/$roomId/pk';
 
-  /// PK skor güncelleme — `POST /api/chat/rooms/{roomId}/pk/score`.
+  /// PK skor güncelleme — `POST /api/chat/rooms/{roomId}/pk/score` — yalnızca admin.
   static String chatRoomPkScore(String roomId) =>
       '/api/chat/rooms/$roomId/pk/score';
-
-  /// Davete yanıt — `POST /api/chat/rooms/{roomId}/pk/{inviteId}/respond`
-  /// body: `{ action: "accept" | "reject" }`.
-  static String chatRoomPkRespond(String roomId, String inviteId) =>
-      '/api/chat/rooms/$roomId/pk/$inviteId/respond';
-
-  /// Savaşı erken bitir — `POST /api/chat/rooms/{roomId}/pk/{battleId}/end`.
-  static String chatRoomPkEnd(String roomId, String battleId) =>
-      '/api/chat/rooms/$roomId/pk/$battleId/end';
 
   /// Geriye dönük alias (`pk-battle` üretimde 404).
   static String chatRoomPkBattle(String roomId) => chatRoomPk(roomId);
@@ -546,8 +539,6 @@ abstract final class ApiEndpoints {
 
   static const videoStreamPkScore = '/api/video-streams/pk/score';
 
-  static const pkHistory = '/api/pk/history';
-
   /// Birleşik PK (Faz 1–3) — ana backend (`canlifal.com`).
   static const pkActive = '/api/pk/active';
 
@@ -559,31 +550,17 @@ abstract final class ApiEndpoints {
   static const liveGuest = '/api/live/guest';
   static const liveGuestList = '/api/live/guest/list';
 
-  static const pkRequest = '/api/pk/request';
-  static const pkRoom = '/api/pk/room';
-  static const pkMeHistory = '/api/pk/me/history';
-  static const pkMeStats = '/api/pk/me/stats';
+  /// Bekleyen davetler — kılavuz §2.7 (FLUTTER_ENTegrasyon_KILAVUZU.md).
   static const pkMeInvites = '/api/pk/me/invites';
-  static const pkMeMatches = '/api/pk/me/matches';
+
+  /// PK liderlik tablosu.
   static const pkLeaderboard = '/api/pk/leaderboard';
 
+  /// PK maç detayı — kılavuz §2.8.
   static String pkMatch(String matchId) => '/api/pk/$matchId';
+
+  /// PK maç özel SSE — kılavuz §2.8.
   static String pkMatchStream(String matchId) => '/api/pk/$matchId/stream';
-  static String pkMatchRespond(String matchId) => '/api/pk/$matchId/respond';
-  static String pkMatchCancel(String matchId) => '/api/pk/$matchId/cancel';
-  static String pkMatchEnd(String matchId) => '/api/pk/$matchId/end';
-  static String pkMatchStart(String matchId) => '/api/pk/$matchId/start';
-  static String pkMatchSeatsJoin(String matchId) => '/api/pk/$matchId/seats/join';
-  static String pkMatchSeatsLeave(String matchId) => '/api/pk/$matchId/seats/leave';
-  static String pkMatchSeatsKick(String matchId) => '/api/pk/$matchId/seats/kick';
-  static String pkMatchEvents(String matchId) => '/api/pk/$matchId/events';
-  static String pkStatsUser(String userId) => '/api/pk/stats/$userId';
-  static const pkAdminBan = '/api/pk/admin/ban';
-  static String pkAdminUnban(String userId) => '/api/pk/admin/unban/$userId';
-  static const pkAdminBans = '/api/pk/admin/bans';
-  static String pkAdminForceEnd(String matchId) => '/api/pk/admin/$matchId/force-end';
-  static String pkAdminForceKick(String matchId, String userId) =>
-      '/api/pk/admin/$matchId/force-kick/$userId';
 
   /// Merkezi PK daveti — oda uçları 404 ise fallback.
   static const musicSearch = '/api/music/search';
