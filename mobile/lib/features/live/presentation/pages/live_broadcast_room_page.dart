@@ -3092,7 +3092,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                             battle: pkState?.battle,
                           ),
                         );
-                      } else if (!s.isHost) {
+                      } else {
                         ref.read(liveGiftControllerProvider).setPanelOpen(true);
                       }
                     }
@@ -3230,7 +3230,56 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     if (!hasStream) return liveTree;
     return PkSessionOverlayHost(
       args: PkSessionArgs(contextId: streamId!, kind: PkContextKind.live),
-      child: liveTree,
+      child: _LiveBroadcastListenerTree(
+        streamId: streamId!,
+        child: liveTree,
+      ),
     );
+  }
+}
+
+/// Cascading listener'ları optimize etmek için extracted widget
+class _LiveBroadcastListenerTree extends ConsumerWidget {
+  const _LiveBroadcastListenerTree({
+    required this.streamId,
+    required this.child,
+  });
+
+  final String streamId;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(giftSessionProvider(streamId), (prev, next) {
+      final ev = next.latestEvent;
+      if (ev == null || ev == prev?.latestEvent) return;
+      ref.read(liveGiftLeaderboardProvider(streamId).notifier).record(ev);
+      if (ev.jetonAmount >= 1000) {
+        ref.read(staffEntranceMarqueeProvider.notifier).enqueueBigGift(
+          senderName: ev.senderName,
+          receiverName: ev.receiverName,
+          jeton: ev.jetonAmount,
+          giftName: ev.giftName,
+        );
+        dispatchSiteAnimationGiftFromLiveEvent(ref, ev);
+      }
+      final battle = ref.read(liveVideoPkProvider(streamId)).battle;
+      if (battle != null && battle['status'] == 'active') {
+        unawaited(
+          ref.read(liveVideoPkProvider(streamId).notifier).refresh(),
+        );
+      }
+    });
+
+    ref.listen(liveVideoPkProvider(streamId).select((st) => st.error),
+        (prev, next) {
+      final msg = next?.trim() ?? '';
+      if (msg.isEmpty || msg == prev?.trim()) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg)),
+      );
+    });
+
+    return child;
   }
 }
