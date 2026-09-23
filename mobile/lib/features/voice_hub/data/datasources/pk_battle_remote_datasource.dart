@@ -14,6 +14,35 @@ int pkDurationMinutesFromSeconds(int durationSeconds) {
   return (sec / 60).ceil().clamp(1, 60);
 }
 
+/// Sesli oda PK daveti — `POST /api/chat/rooms/{roomId}/pk` action:create.
+List<Map<String, dynamic>> voicePkInviteRequestBodies({
+  required String opponentRoomId,
+  String guestUserId = '',
+  required int durationSeconds,
+}) {
+  final opp = opponentRoomId.trim();
+  final duration = durationSeconds.clamp(60, 600);
+  final guest = guestUserId.trim();
+
+  final primary = <String, dynamic>{
+    'action': 'create',
+    'targetRoomId': opp,
+    'duration': duration,
+  };
+
+  if (guest.isNotEmpty) {
+    return [
+      primary,
+      {
+        'action': 'create',
+        'guestUserId': guest,
+        'durationSec': duration,
+      },
+    ];
+  }
+
+  return [primary];
+}
 
 /// Canlı PK create gövdeleri — kılavuz §9.4 önce, sonra action tabanlı yedekler.
 List<Map<String, dynamic>> livePkCreateRequestBodies({
@@ -213,6 +242,7 @@ class PkBattleRemoteDataSource {
     for (final key in _roomKeyCandidates(roomId, alternateRoomId)) {
       try {
         final res = await _dio.safeGet<dynamic>(ApiEndpoints.chatRoomPk(key));
+        if (res.data == null) return null;
         final battle = _parseBattle(res.data);
         if (battle != null && !battle.isEnded) return battle;
       } on ApiException catch (e) {
@@ -244,20 +274,36 @@ class PkBattleRemoteDataSource {
     return _parseBattle(res.data);
   }
 
-  /// Sesli oda PK geçmişi — spec'te tanımlı endpoint yok; empty döner.
-  /// Canlı yayın PK için live backend'den çekilir.
   Future<List<PkBattleRemote>> fetchHistory({
     String? battleType,
     int limit = 20,
   }) async {
-    return const [];
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.chatRoomPkList,
+        query: {
+          'status': 'ended,finished',
+          if (battleType != null && battleType.isNotEmpty)
+            'battleType': battleType,
+          'limit': '$limit',
+        },
+      );
+      final map = _unwrap(res.data);
+      final list = map?['items'] ??
+          map?['battles'] ??
+          map?['matches'] ??
+          (res.data is List ? res.data : null);
+      return asJsonList(list)
+          .map((e) => PkBattleRemote.fromJson(e))
+          .where((b) => b.id.isNotEmpty)
+          .toList();
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) return const [];
+      rethrow;
+    }
   }
 
-  /// `POST /api/chat/rooms/{myRoomId}/pk`
-  /// Kılavuz §9.3: `{ guestUserId, durationSec }` — takım PK için guestUserId boş olabilir.
-  ///
-  /// DÜZELTME (2026-09-23): Sesli oda PK daveti, oda içinde yapılır — opponentRoomId
-  /// kullanılmaz. Çoklu gövde denemesi yerine API spec'e uygun minimal payload gönder.
+  /// `POST /api/chat/rooms/{myRoomId}/pk` — oda↔oda PK daveti.
   Future<PkBattleRemote?> inviteVoiceRoom({
     required String roomId,
     String? alternateRoomId,
@@ -265,31 +311,39 @@ class PkBattleRemoteDataSource {
     String? opponentRoomId,
     int durationSeconds = 180,
   }) async {
-    final duration = durationSeconds.clamp(60, 3600);
-    final guest = guestUserId.trim();
-
-    // API spec (kılavuz §9.3): POST /api/chat/rooms/{roomId}/pk
-    // Body: { guestUserId, durationSec }
-    // NOT: opponentRoomId, targetRoomId, action, vb.
-    //
-    // Takım PK: guestUserId boş olabilir (tüm oda üyeleri katıl)
-    // Birebir PK: guestUserId seçili kullanıcı ID
-    final body = {
-      'durationSec': duration,
-      if (guest.isNotEmpty) 'guestUserId': guest,
-    };
-
-    try {
-      final battle = await _postPkAction(
-        roomId: roomId,
-        alternateRoomId: alternateRoomId,
-        body: body,
-      );
-      if (battle != null) return battle;
-    } on ApiException catch (e) {
-      // API'de gövde şekli hatası → yedek gövdeler yok, doğrudan rethrow
-      rethrow;
+    final oppRoom = opponentRoomId?.trim() ?? '';
+    if (oppRoom.isEmpty) {
+      throw const ApiException('PK daveti için rakip oda seçilmeli');
     }
+    final bodies = voicePkInviteRequestBodies(
+      opponentRoomId: oppRoom,
+      guestUserId: guestUserId,
+      durationSeconds: durationSeconds,
+    );
+
+    ApiException? lastError;
+    for (final body in bodies) {
+      try {
+        final battle = await _postPkAction(
+          roomId: roomId,
+          alternateRoomId: alternateRoomId,
+          body: body,
+        );
+        if (battle != null) return battle;
+      } on ApiException catch (e) {
+        lastError = e;
+        if (e.statusCode == 400 || e.statusCode == 422) continue;
+        if (e.statusCode == 429) {
+          throw ApiException(
+            'Çok hızlı denediniz, biraz bekleyin.',
+            statusCode: 429,
+          );
+        }
+        rethrow;
+      }
+    }
+
+    if (lastError != null) throw lastError;
     return null;
   }
 
@@ -337,11 +391,23 @@ class PkBattleRemoteDataSource {
     String? alternateRoomId,
     required String action,
   }) async {
-    return await _postPkAction(
-      roomId: roomId,
-      alternateRoomId: alternateRoomId,
-      body: {'action': action, 'battleId': inviteId},
-    );
+    try {
+      final battle = await _postPkAction(
+        roomId: roomId,
+        alternateRoomId: alternateRoomId,
+        body: {'action': action, 'battleId': inviteId, 'matchId': inviteId},
+      );
+      if (battle != null) return battle;
+    } on ApiException catch (e) {
+      if (e.statusCode == 429) {
+        throw ApiException(
+          'Çok hızlı denediniz, biraz bekleyin.',
+          statusCode: 429,
+        );
+      }
+      rethrow;
+    }
+    throw ApiException('PK daveti yanıtlanamadı ($action)');
   }
 
   /// `POST /api/chat/rooms/{roomId}/pk` — `{ action:'end', battleId }`.
@@ -353,7 +419,7 @@ class PkBattleRemoteDataSource {
       _postPkAction(
         roomId: roomId,
         alternateRoomId: alternateRoomId,
-        body: {'action': 'end', 'battleId': battleId},
+        body: {'action': 'end', 'battleId': battleId, 'matchId': battleId},
       );
 
   /// `POST /api/chat/rooms/{roomId}/pk` — `{ action:'pause'|'resume', battleId }`.
@@ -532,6 +598,7 @@ class PkBattleRemoteDataSource {
       final res = await _dio.safeGet<dynamic>(
         ApiEndpoints.pkMeInvites,
         forceRefresh: true,
+        query: {'direction': 'incoming'},
       );
       final map = _unwrap(res.data);
       final list = map?['items'] ??

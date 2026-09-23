@@ -518,12 +518,15 @@ abstract final class ApiEndpoints {
   /// Kılavuz §2.2–2.5 (FLUTTER_ENTegrasyon_KILAVUZU.md).
   static String chatRoomPk(String roomId) => '/api/chat/rooms/$roomId/pk';
 
-  /// PK skor güncelleme — `POST /api/chat/rooms/{roomId}/pk/score` — yalnızca admin.
+  /// PK skor — yalnızca admin (`POST` istemci çağırmamalı; hediye skoru otomatik).
   static String chatRoomPkScore(String roomId) =>
       '/api/chat/rooms/$roomId/pk/score';
 
   /// Geriye dönük alias (`pk-battle` üretimde 404).
   static String chatRoomPkBattle(String roomId) => chatRoomPk(roomId);
+
+  /// Oda PK listesi — `GET ?status=pending,active`.
+  static const chatRoomPkList = '/api/chat/rooms/pk-list';
 
   static String videoStreamPkBattle(String streamId) =>
       '/api/video-streams/$streamId/pk-battle';
@@ -539,10 +542,10 @@ abstract final class ApiEndpoints {
 
   static const videoStreamPkScore = '/api/video-streams/pk/score';
 
-  /// Birleşik PK (Faz 1–3) — ana backend (`canlifal.com`).
+  /// Birleşik PK — ana backend (`canlifal.com`).
   static const pkActive = '/api/pk/active';
 
-  /// Canlı PK (prod `/api/live/pk/*`) — games backend; `/api/pk/active` yedeği.
+  /// Canlı PK — `GET/POST /api/live/pk/*`.
   static const livePkActive = '/api/live/pk/active';
 
   /// Çoklu yayın misafir listesi (public) — `?streamId=` opsiyonel.
@@ -550,39 +553,11 @@ abstract final class ApiEndpoints {
   static const liveGuest = '/api/live/guest';
   static const liveGuestList = '/api/live/guest/list';
 
-  /// Bekleyen davetler — kılavuz §2.7 (FLUTTER_ENTegrasyon_KILAVUZU.md).
+  /// Bekleyen davetler — kılavuz §2.7.
   static const pkMeInvites = '/api/pk/me/invites';
-
-  /// PK liderlik tablosu.
   static const pkLeaderboard = '/api/pk/leaderboard';
-
-  /// PK maç detayı — kılavuz §2.8.
   static String pkMatch(String matchId) => '/api/pk/$matchId';
-
-  /// PK maç özel SSE — kılavuz §2.8.
   static String pkMatchStream(String matchId) => '/api/pk/$matchId/stream';
-
-  // Canlı yayın PK uçları (pk_room_remote_datasource)
-  static const pkRequest = '/api/pk/request';
-  static const pkRoom = '/api/pk/room';
-  static const pkMeHistory = '/api/pk/me/history';
-  static const pkMeStats = '/api/pk/me/stats';
-  static const pkMeMatches = '/api/pk/me/matches';
-  static String pkMatchRespond(String matchId) => '/api/pk/$matchId/respond';
-  static String pkMatchCancel(String matchId) => '/api/pk/$matchId/cancel';
-  static String pkMatchEnd(String matchId) => '/api/pk/$matchId/end';
-  static String pkMatchStart(String matchId) => '/api/pk/$matchId/start';
-  static String pkMatchSeatsJoin(String matchId) => '/api/pk/$matchId/seats/join';
-  static String pkMatchSeatsLeave(String matchId) => '/api/pk/$matchId/seats/leave';
-  static String pkMatchSeatsKick(String matchId) => '/api/pk/$matchId/seats/kick';
-  static String pkMatchEvents(String matchId) => '/api/pk/$matchId/events';
-  static String pkStatsUser(String userId) => '/api/pk/stats/$userId';
-  static const pkAdminBan = '/api/pk/admin/ban';
-  static String pkAdminUnban(String userId) => '/api/pk/admin/unban/$userId';
-  static const pkAdminBans = '/api/pk/admin/bans';
-  static String pkAdminForceEnd(String matchId) => '/api/pk/admin/$matchId/force-end';
-  static String pkAdminForceKick(String matchId, String userId) =>
-      '/api/pk/admin/$matchId/force-kick/$userId';
 
   /// Merkezi PK daveti — oda uçları 404 ise fallback.
   static const musicSearch = '/api/music/search';

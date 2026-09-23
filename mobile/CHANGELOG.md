@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.594+639 (2026-09-23) — Sesli oda PK davet akışı (kanonik API)
+
+- **PK:** Tüm sesli oda mutasyonları `POST /api/chat/rooms/{roomId}/pk` (`action` + `targetRoomId` / `battleId`); 404 veren sahte alt yollar kaldırıldı
+- **Davet:** Pop-up 60 sn geri sayım; kabul/red doğrudan oda PK ucu; `GET /api/pk/me/invites?direction=incoming`
+- **Presence:** Heartbeat boş gövde (koltuk index gönderilmez); aday listede görünürlük korunur
+- **Canlı PK:** İstemci yalnızca `/api/video-streams/pk`, `/api/live/pk`, `/api/pk/{id}` okuma uçları
+
 ## 1.0.593+638 (2026-09-22) — CI: push invite analyze düzeltmesi
 
 - **Release gate:** `push_lifecycle_listener` nullable `invite` — flutter analyze 5 hata giderildi (APK CI yeşil)

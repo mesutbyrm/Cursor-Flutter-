@@ -188,25 +188,8 @@ final adminUserDetailProvider = FutureProvider.autoDispose
     } catch (_) {}
   }
 
-  var pkBanned = false;
-  if (access.canModerate || access.canManageUsers) {
-    try {
-      final dio = ref.watch(dioProvider);
-      final res = await dio.safeGet<dynamic>(ApiEndpoints.pkAdminBans);
-      dynamic raw = res.data;
-      if (raw is Map) {
-        raw = asJsonMap(raw)['bans'] ?? asJsonMap(raw)['items'];
-      }
-      if (raw is List) {
-        pkBanned = raw.any((e) {
-          if (e is! Map) return false;
-          final m = asJsonMap(e);
-          final uid = pick(m, ['userId', 'uid'])?.toString();
-          return uid == userId;
-        });
-      }
-    } catch (_) {}
-  }
+  // Üretimde mobil PK admin ban ucu yok; yasak durumu API'den okunmuyor.
+  const pkBanned = false;
 
   Map<String, String?> animationSlots = {};
   if (access.canManageSiteAnimations) {

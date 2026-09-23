@@ -111,7 +111,7 @@ class ChatRoomRemoteDataSource {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _dio.safePost<dynamic>(
         presencePath(key),
-        data: const {'action': 'heartbeat'},
+        data: const <String, dynamic>{},
       );
     });
   }

@@ -29,6 +29,8 @@ class PkBattleRemote extends Equatable {
     this.recentGifts = const [],
     this.endsAt,
     this.startedAt,
+    this.expiresAt,
+    this.inviteTimeoutSeconds = 0,
   });
 
   final String id;
@@ -55,6 +57,9 @@ class PkBattleRemote extends Equatable {
   final List<PkGiftRemote> recentGifts;
   final DateTime? endsAt;
   final DateTime? startedAt;
+  /// Davet otomatik kapanma (genelde 60 sn).
+  final DateTime? expiresAt;
+  final int inviteTimeoutSeconds;
 
   /// Sunucu `endsAt` / `startedAt` varsa öncelikli geri sayım.
   int resolvedSecondsLeft({DateTime? now}) {
@@ -128,10 +133,13 @@ class PkBattleRemote extends Equatable {
         status = 'active';
       }
     }
-    final endsAt = _parseDate(json['endsAt'] ?? json['endAt']);
+    final endsAt = _parseDate(json['endsAt'] ?? json['endAt'] ?? json['endTime']);
     final startedAt = _parseDate(
       json['startedAt'] ?? json['startAt'] ?? json['started_at'],
     );
+    final expiresAt = _parseDate(json['expiresAt']);
+    final inviteTimeoutSeconds =
+        _int(json['timeoutSeconds'], fallback: 0);
     var secondsLeft = _int(json['secondsLeft'], fallback: 300);
     if (endsAt != null) {
       final left = endsAt.toUtc().difference(DateTime.now().toUtc()).inSeconds;
@@ -203,7 +211,22 @@ class PkBattleRemote extends Equatable {
           : const [],
       endsAt: endsAt,
       startedAt: startedAt,
+      expiresAt: expiresAt,
+      inviteTimeoutSeconds: inviteTimeoutSeconds,
     );
+  }
+
+  Duration inviteCountdown({DateTime? now}) {
+    final t = (now ?? DateTime.now()).toUtc();
+    if (expiresAt != null) {
+      final left = expiresAt!.toUtc().difference(t);
+      if (left.isNegative) return Duration.zero;
+      return left;
+    }
+    if (inviteTimeoutSeconds > 0) {
+      return Duration(seconds: inviteTimeoutSeconds.clamp(1, 120));
+    }
+    return const Duration(seconds: 60);
   }
 
   static DateTime? _parseDate(dynamic raw) {
