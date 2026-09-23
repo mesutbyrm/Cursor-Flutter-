@@ -4,20 +4,19 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.594+639` |
-| Tarih (UTC) | 2026-09-23 19:13 |
-| Commit | [`73485622282b9cd5fdcea7fd1fed60ee25ab5829`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/73485622282b9cd5fdcea7fd1fed60ee25ab5829) |
-| İş akışı | [Run 35905526844](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35905526844) |
+| Sürüm | `1.0.595+640` |
+| Tarih (UTC) | 2026-09-23 20:11 |
+| Commit | [`b6f0b0a33a000a5a6210eec32ada73c0d42d8a95`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/b6f0b0a33a000a5a6210eec32ada73c0d42d8a95) |
+| İş akışı | [Run 35912081446](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/35912081446) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.594+639 (2026-09-23) — Sesli oda PK davet akışı (kanonik API)
+## 1.0.595+640 (2026-09-23) — Sesli oda PK: davet karşı tarafa ulaşsın
 
-- **PK:** Tüm sesli oda mutasyonları `POST /api/chat/rooms/{roomId}/pk` (`action` + `targetRoomId` / `battleId`); 404 veren sahte alt yollar kaldırıldı
-- **Davet:** Pop-up 60 sn geri sayım; kabul/red doğrudan oda PK ucu; `GET /api/pk/me/invites?direction=incoming`
-- **Presence:** Heartbeat boş gövde (koltuk index gönderilmez); aday listede görünürlük korunur
-- **Canlı PK:** İstemci yalnızca `/api/video-streams/pk`, `/api/live/pk`, `/api/pk/{id}` okuma uçları
+- **PK alan eşlemesi:** `stream1Id`/`stream2Id`, `room1Id`/`room2Id`, `me/invites` zarfı — hedef oda ve pop-up eşlemesi düzeltildi
+- **SSE:** `type:pk` ve `room_event` pk_invite oda anahtarı uyuşmazsa davet yine işlenir; odaya girişte davet poll tetiklenir
+- **Sesli PK oturumu:** kabul/red/iptal artık `/api/live/pk` değil oda PK ucu üzerinden
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
