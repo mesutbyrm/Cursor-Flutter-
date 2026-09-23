@@ -318,7 +318,10 @@ class PkBattleRemoteDataSource {
   }
 
   /// `POST /api/chat/rooms/{myRoomId}/pk`
-  /// Kılavuz §9.3: `{ guestUserId, durationSec }` — yedek: `action:create` + `targetRoomId`.
+  /// Kılavuz §9.3: `{ guestUserId, durationSec }` — takım PK için guestUserId boş olabilir.
+  ///
+  /// DÜZELTME (2026-09-23): Sesli oda PK daveti, oda içinde yapılır — opponentRoomId
+  /// kullanılmaz. Çoklu gövde denemesi yerine API spec'e uygun minimal payload gönder.
   Future<PkBattleRemote?> inviteVoiceRoom({
     required String roomId,
     String? alternateRoomId,
@@ -326,78 +329,31 @@ class PkBattleRemoteDataSource {
     String? opponentRoomId,
     int durationSeconds = 180,
   }) async {
-    final oppRoom = opponentRoomId?.trim() ?? '';
-    if (oppRoom.isEmpty) {
-      throw const ApiException('PK daveti için rakip oda seçilmeli');
-    }
     final duration = durationSeconds.clamp(60, 3600);
+    final guest = guestUserId.trim();
 
-    // Kılavuz §9.3: sesli oda PK daveti önce `POST /api/chat/rooms/{roomId}/pk`.
-    // Alıcı da bu ucu (ve /api/pk/me/invites) pollar; `/api/live/pk` yalnızca bu
-    // uç sunucuda yoksa (404/405) son çare yedektir — aksi halde davet karşı
-    // tarafın görmediği bir depoya yazılıyordu.
-    final bodies = voicePkInviteRequestBodies(
-      opponentRoomId: oppRoom,
-      guestUserId: guestUserId,
-      durationSeconds: duration,
-    );
+    // API spec (kılavuz §9.3): POST /api/chat/rooms/{roomId}/pk
+    // Body: { guestUserId, durationSec }
+    // NOT: opponentRoomId, targetRoomId, action, vb.
+    //
+    // Takım PK: guestUserId boş olabilir (tüm oda üyeleri katıl)
+    // Birebir PK: guestUserId seçili kullanıcı ID
+    final body = {
+      'durationSec': duration,
+      if (guest.isNotEmpty) 'guestUserId': guest,
+    };
 
-    ApiException? lastError;
-    var chatRoomEndpointMissing = false;
-    for (final body in bodies) {
-      try {
-        final battle = await _postPkAction(
-          roomId: roomId,
-          alternateRoomId: alternateRoomId,
-          body: body,
-        );
-        if (battle != null) return battle;
-      } on ApiException catch (e) {
-        lastError = e;
-        // Gövde şekli reddedildiyse sıradaki şekli dene.
-        if (e.statusCode == 400 || e.statusCode == 422) continue;
-        // Uç tamamen yoksa `/api/live/pk` yedeğine düş; iş hataları (403/409)
-        // doğrudan yukarı fırlar.
-        if (e.statusCode == 404 || e.statusCode == 405) {
-          chatRoomEndpointMissing = true;
-          break;
-        }
-        rethrow;
-      }
+    try {
+      final battle = await _postPkAction(
+        roomId: roomId,
+        alternateRoomId: alternateRoomId,
+        body: body,
+      );
+      if (battle != null) return battle;
+    } on ApiException catch (e) {
+      // API'de gövde şekli hatası → yedek gövdeler yok, doğrudan rethrow
+      rethrow;
     }
-
-    if (chatRoomEndpointMissing) {
-      for (final key in _roomKeyCandidates(roomId, alternateRoomId)) {
-        try {
-          final fieldBattle = await _liveFieldPk.pkAction(
-            action: 'create',
-            roomId: key,
-            targetRoomId: oppRoom,
-            guestUserId: guestUserId,
-            durationSeconds: duration,
-          );
-          if (fieldBattle != null && fieldBattle.id.isNotEmpty) {
-            final battle = _parseBattle({
-              'id': fieldBattle.id,
-              'status': fieldBattle.status ?? 'pending',
-              'duration': fieldBattle.durationSeconds ?? duration,
-              'score1': fieldBattle.room1Score,
-              'score2': fieldBattle.room2Score,
-              'voiceRoomId': key,
-              'opponentVoiceRoomId': oppRoom,
-            });
-            if (battle != null) return battle;
-          }
-        } on ApiException catch (e) {
-          lastError = e;
-          if (e.statusCode != 404 && e.statusCode != 405 && e.statusCode != 409) {
-            rethrow;
-          }
-        }
-      }
-    }
-
-    if (lastError != null) throw lastError;
     return null;
   }
 

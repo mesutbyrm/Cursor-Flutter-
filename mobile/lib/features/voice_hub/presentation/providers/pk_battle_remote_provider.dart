@@ -43,7 +43,10 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     if (battle == null || !battle.isActive) return;
     final roomId = _pollRoomId?.trim() ?? '';
     if (roomId.isEmpty) return;
-    _activePoll = Timer.periodic(const Duration(seconds: 4), (_) {
+    // DÜZELTME (2026-09-23): Polling interval 4s → 1s for active PK battles.
+    // SSE event deduplication ve gecikmeler nedeniyle client side timer drift oluşuyor.
+    // Maksimum 1 saniye gecikmesi ile server state'i taraflar arasında senkronize tut.
+    _activePoll = Timer.periodic(const Duration(seconds: 1), (_) {
       unawaited(loadRoomBattle(roomId, alternateRoomId: _pollAltRoomId));
     });
   }
