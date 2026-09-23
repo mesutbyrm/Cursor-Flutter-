@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.596+641 (2026-09-23) — PK aday listesi + oda içi takım PK
+
+- **Odalar arası PK listesi:** `rooms`/`items` zarfı ve `voiceRoomId` alanları; yükleme göstergesi aday listesini gizlemez
+- **Oda içi PK:** `create_user` yanıtı `PkBattleRemote` ile ayrıştırılır; presence `userId` canonical; oturum SSE senkronu
+- **Davet poll:** Yanlış odanın daveti artık `me/invites` ilk kaydından alınmaz
+
 ## 1.0.595+640 (2026-09-23) — Sesli oda PK: davet karşı tarafa ulaşsın
 
 - **PK alan eşlemesi:** `stream1Id`/`stream2Id`, `room1Id`/`room2Id`, `me/invites` zarfı — hedef oda ve pop-up eşlemesi düzeltildi

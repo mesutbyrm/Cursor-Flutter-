@@ -103,6 +103,72 @@ Map<String, dynamic> livePkCreateRequestBody({
   };
 }
 
+Map<String, dynamic>? unwrapPkHttpBody(dynamic body) {
+  if (body is Map<String, dynamic>) {
+    if (body['success'] == true && body['data'] != null) {
+      final data = body['data'];
+      if (data is Map<String, dynamic>) return data;
+      if (data is Map) return Map<String, dynamic>.from(data);
+    }
+    return body;
+  }
+  if (body is Map) return Map<String, dynamic>.from(body);
+  return null;
+}
+
+/// GET/POST PK yanıtı — `activeBattle`, `pendingInvite`, zarfsız battle.
+PkBattleRemote? parsePkBattleHttpBody(dynamic body) {
+  final map = unwrapPkHttpBody(body);
+  if (map == null) return null;
+  final hasWrapper =
+      map.containsKey('activeBattle') || map.containsKey('pendingInvite');
+  dynamic raw;
+  if (hasWrapper) {
+    final pendingRaw = map['pendingInvite'];
+    final activeRaw = map['activeBattle'];
+    if (pendingRaw is Map) {
+      final pending = PkBattleRemote.fromJson(
+        Map<String, dynamic>.from(pendingRaw),
+      );
+      if (pending.isPending && pending.effectiveId.isNotEmpty) {
+        raw = pendingRaw;
+      }
+    }
+    raw ??= activeRaw ??
+        map['battle'] ??
+        map['pk'] ??
+        map['match'] ??
+        map['full'];
+  } else {
+    raw = map['battle'] ??
+        map['pk'] ??
+        map['match'] ??
+        map['full'] ??
+        map;
+  }
+  if (raw != null && raw is Map) {
+    final battle =
+        PkBattleRemote.fromJson(Map<String, dynamic>.from(raw));
+    if (battle.effectiveId.isNotEmpty) return battle;
+  }
+  final status = map['status']?.toString();
+  final id = (map['id'] ??
+          map['pkBattleId'] ??
+          map['inviteId'] ??
+          map['battleId'] ??
+          map['matchId'])
+      ?.toString()
+      .trim();
+  if (id != null && id.isNotEmpty) {
+    return PkBattleRemote.fromJson({
+      ...map,
+      'id': id,
+      'status': status ?? map['status'] ?? 'pending',
+    });
+  }
+  return null;
+}
+
 class PkBattleRemoteDataSource {
   PkBattleRemoteDataSource(this._dio);
 
@@ -110,75 +176,40 @@ class PkBattleRemoteDataSource {
 
   LiveFieldPkApi get _liveFieldPk => LiveFieldPkApi(_dio);
 
-  Map<String, dynamic>? _unwrap(dynamic body) {
-    if (body is Map<String, dynamic>) {
-      if (body['success'] == true && body['data'] != null) {
-        final data = body['data'];
-        if (data is Map<String, dynamic>) return data;
-        if (data is Map) return Map<String, dynamic>.from(data);
-      }
-      return body;
-    }
-    if (body is Map) return Map<String, dynamic>.from(body);
-    return null;
-  }
+  Map<String, dynamic>? _unwrap(dynamic body) => unwrapPkHttpBody(body);
 
   @visibleForTesting
   PkBattleRemote? parseBattleForTest(dynamic body) => _parseBattle(body);
 
-  PkBattleRemote? _parseBattle(dynamic body) {
-    final map = _unwrap(body);
-    if (map == null) return null;
-    // Yeni kontrat: GET → { activeBattle, pendingInvite }; accept → { battle };
-    // invite POST → davetin kendisi (inviteId, status:pending).
-    final hasWrapper =
-        map.containsKey('activeBattle') || map.containsKey('pendingInvite');
-    dynamic raw;
-    if (hasWrapper) {
-      final pendingRaw = map['pendingInvite'];
-      final activeRaw = map['activeBattle'];
-      if (pendingRaw is Map) {
-        final pending = PkBattleRemote.fromJson(
-          Map<String, dynamic>.from(pendingRaw),
-        );
-        if (pending.isPending && pending.effectiveId.isNotEmpty) {
-          raw = pendingRaw;
-        }
-      }
-      raw ??= activeRaw ??
-          map['battle'] ??
-          map['pk'] ??
-          map['match'] ??
-          map['full'];
-    } else {
-      raw = map['battle'] ??
-          map['pk'] ??
-          map['match'] ??
-          map['full'] ??
-          map;
+  PkBattleRemote? _parseBattle(dynamic body) => parsePkBattleHttpBody(body);
+
+  /// Oda içi takım PK — `create_user` (davet yok, geri sayım ile başlar).
+  Future<PkBattleRemote?> createUserInRoomPk({
+    required String roomId,
+    String? alternateRoomId,
+    required List<String> side1UserIds,
+    required List<String> side2UserIds,
+    int durationSeconds = 180,
+    int countdownSec = 5,
+  }) async {
+    final s1 =
+        side1UserIds.where((id) => id.trim().isNotEmpty).take(4).toList();
+    final s2 =
+        side2UserIds.where((id) => id.trim().isNotEmpty).take(4).toList();
+    if (s1.isEmpty || s2.isEmpty) {
+      throw const ApiException('PK için her iki tarafta en az bir kullanıcı gerekli');
     }
-    if (raw != null && raw is Map) {
-      final battle =
-          PkBattleRemote.fromJson(Map<String, dynamic>.from(raw));
-      if (battle.effectiveId.isNotEmpty) return battle;
-    }
-    // Kısmi yanıt: { success, status, inviteId } veya üst düzey battle alanları.
-    final status = map['status']?.toString();
-    final id = (map['id'] ??
-            map['pkBattleId'] ??
-            map['inviteId'] ??
-            map['battleId'] ??
-            map['matchId'])
-        ?.toString()
-        .trim();
-    if (id != null && id.isNotEmpty) {
-      return PkBattleRemote.fromJson({
-        ...map,
-        'id': id,
-        'status': status ?? map['status'] ?? 'pending',
-      });
-    }
-    return null;
+    return _postPkAction(
+      roomId: roomId,
+      alternateRoomId: alternateRoomId,
+      body: {
+        'action': 'create_user',
+        'side1UserIds': s1,
+        'side2UserIds': s2,
+        'duration': durationSeconds.clamp(60, 600),
+        'countdownSec': countdownSec.clamp(0, 30),
+      },
+    );
   }
 
   /// Tüm sesli oda PK aksiyonları tek uca gider: `POST /api/chat/rooms/{roomId}/pk`.

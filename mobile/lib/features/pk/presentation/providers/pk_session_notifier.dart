@@ -93,7 +93,7 @@ class PkSessionNotifier
       _tick?.cancel();
       _releaseLive();
     });
-    Future.microtask(loadState);
+    Future.microtask(() => loadState(showLoading: false));
     _startTicker();
     return const PkSessionState();
   }
@@ -139,10 +139,12 @@ class PkSessionNotifier
     });
   }
 
-  Future<void> loadState() async {
+  Future<void> loadState({bool showLoading = true}) async {
     final id = arg.contextId.trim();
     if (id.isEmpty) return;
-    state = state.copyWith(loading: true, clearError: true);
+    if (showLoading) {
+      state = state.copyWith(loading: true, clearError: true);
+    }
     try {
       if (arg.kind == PkContextKind.voice) {
         final api = ref.read(pkBattleRemoteDataSourceProvider);
@@ -241,6 +243,7 @@ class PkSessionNotifier
       state = state.copyWith(
         candidates: candidates,
         selfBusy: bundle.selfBusy,
+        loading: false,
         clearError: true,
       );
     } catch (e) {
@@ -500,7 +503,7 @@ class PkSessionNotifier
       final chall = inv.voiceRoomId?.trim() ?? '';
       if (chall.isNotEmpty && chall == roomKey) return inv;
     }
-    return invites.isNotEmpty ? invites.first : null;
+    return null;
   }
 
   Future<void> _voicePkAction(

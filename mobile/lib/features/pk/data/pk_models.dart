@@ -197,18 +197,40 @@ class PkCandidate {
   }
 
   factory PkCandidate.fromRoomJson(Map<String, dynamic> json) {
+    final owner = json['owner'];
+    final ownerMap = owner is Map ? asJsonMap(owner) : null;
     return PkCandidate(
       contextId: (json['roomId'] ??
               json['targetRoomId'] ??
+              json['voiceRoomId'] ??
+              json['hostRoomId'] ??
               json['streamId'] ??
+              json['stream1Id'] ??
               json['id'])
           ?.toString() ??
           '',
-      userId: json['ownerId']?.toString() ?? json['userId']?.toString() ?? '',
-      name: json['name']?.toString() ?? json['title']?.toString() ?? '',
-      image: json['image']?.toString() ?? '',
-      title: json['title']?.toString() ?? '',
-      viewers: asInt(json['listeners'] ?? json['viewers']),
+      userId: json['ownerId']?.toString() ??
+          json['userId']?.toString() ??
+          ownerMap?['id']?.toString() ??
+          ownerMap?['userId']?.toString() ??
+          '',
+      name: json['name']?.toString() ??
+          json['title']?.toString() ??
+          json['roomName']?.toString() ??
+          ownerMap?['name']?.toString() ??
+          ownerMap?['displayName']?.toString() ??
+          '',
+      image: json['image']?.toString() ??
+          json['avatar']?.toString() ??
+          ownerMap?['avatar']?.toString() ??
+          '',
+      title: json['title']?.toString() ?? json['roomName']?.toString() ?? '',
+      viewers: asInt(
+        json['listeners'] ??
+            json['viewers'] ??
+            json['onlineCount'] ??
+            json['userCount'],
+      ),
     );
   }
 }

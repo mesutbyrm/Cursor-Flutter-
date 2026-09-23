@@ -15,6 +15,7 @@ import '../../domain/voice_room_background_catalog.dart';
 import '../../domain/entities/chat_room_dj_state.dart';
 import '../../domain/entities/chat_room_message.dart';
 import '../../domain/entities/chat_room_presence.dart';
+import '../../domain/presence_canonical.dart';
 import '../services/voice_room_debug_log.dart';
 import '../services/voice_room_music_pipeline_log.dart';
 import '../youtube_music_search_cache.dart';
@@ -173,7 +174,14 @@ class ChatRoomRemoteDataSource {
     }
     if (raw is! List) return const [];
     return raw
-        .map((e) => ChatRoomPresence.fromJson(asJsonMap(e)))
+        .map((e) {
+          final map = asJsonMap(e);
+          final canonical = canonicalPresenceIdFromJson(map);
+          if (canonical.isNotEmpty && map['id']?.toString() != canonical) {
+            map['id'] = canonical;
+          }
+          return ChatRoomPresence.fromJson(map);
+        })
         .where((u) => u.id.isNotEmpty)
         .toList();
   }

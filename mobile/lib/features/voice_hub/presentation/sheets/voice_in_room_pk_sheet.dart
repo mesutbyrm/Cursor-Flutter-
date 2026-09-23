@@ -4,9 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
-import '../../../pk/presentation/providers/pk_providers.dart';
 import '../../../pk/presentation/providers/pk_session_notifier.dart';
 import '../../domain/entities/chat_room_presence.dart';
+import '../../domain/presence_canonical.dart';
+import '../providers/pk_battle_remote_provider.dart';
 import '../../domain/pk/pk_duration_options.dart';
 import '../widgets/premium_2026/pk/pk_duration_picker.dart';
 
@@ -22,6 +23,21 @@ Future<void> showVoiceInRoomPkSheet(
   final self = ref.read(authControllerProvider).valueOrNull;
   if (self == null) return;
   final users = presence
+      .map(
+        (p) => ChatRoomPresence(
+          id: canonicalPresenceId(p),
+          name: p.name,
+          nickname: p.nickname,
+          image: p.image,
+          chatRole: p.chatRole,
+          roleSymbol: p.roleSymbol,
+          membership: p.membership,
+          seatIndex: p.seatIndex,
+          isSpeaking: p.isSpeaking,
+          isMuted: p.isMuted,
+          micOn: p.micOn,
+        ),
+      )
       .where((p) => p.id.trim().isNotEmpty)
       .toList(growable: false);
   if (users.length < 2) {
@@ -105,19 +121,32 @@ class _VoiceInRoomPkSheetState extends ConsumerState<_VoiceInRoomPkSheet> {
     }
     setState(() => _busy = true);
     try {
-      await ref.read(pkServiceProvider).createUserRoomPk(
+      final remote = await ref
+          .read(pkBattleRemoteDataSourceProvider)
+          .createUserInRoomPk(
             roomId: _roomKey,
+            alternateRoomId: widget.room.slug,
             side1UserIds: _side1.toList(),
             side2UserIds: _side2.toList(),
             durationSeconds: _duration,
           );
-      await ref.read(pkSessionProvider(
-        PkSessionArgs(contextId: _roomKey, kind: PkContextKind.voice),
-      ).notifier).loadState();
+      if (remote == null || remote.effectiveId.isEmpty) {
+        throw const ApiException('Oda içi PK başlatılamadı');
+      }
+      ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(remote);
+      await ref
+          .read(pkSessionProvider(
+            PkSessionArgs(contextId: _roomKey, kind: PkContextKind.voice),
+          ).notifier)
+          .loadState(showLoading: false);
       if (!mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Oda içi PK başlatıldı')),
+        const SnackBar(
+          content: Text(
+            'Oda içi PK başladı — takımlar geri sayım sonrası aktif olur',
+          ),
+        ),
       );
     } catch (e) {
       if (!mounted) return;

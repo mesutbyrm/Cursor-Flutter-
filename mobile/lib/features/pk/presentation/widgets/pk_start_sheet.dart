@@ -110,7 +110,9 @@ class _PkStartSheetState extends ConsumerState<_PkStartSheet> {
                     ),
                   ),
                 ),
-                if (session.loading)
+                if (session.loading &&
+                    session.candidates.isEmpty &&
+                    session.battle == null)
                   const SizedBox(
                     width: 22,
                     height: 22,
@@ -173,7 +175,8 @@ class _PkStartSheetState extends ConsumerState<_PkStartSheet> {
                     ),
                     const SizedBox(height: 12),
                     const Text(
-                      'Şu an PK yapılabilecek kimse yok',
+                      'Şu an PK yapılabilecek aktif oda yok.\n'
+                      'Rakip oda sahibinin son 2 dakikada odada olması gerekir.',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Colors.white54),
                     ),
