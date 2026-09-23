@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.598+643 (2026-09-23) — Backend PK sözleşmesi hizalama
+
+- **Backend referans (`full-source` / `pk-state.ts`):** `scope: room` sesli PK; `stream1Id/stream2Id` oda kimliği
+- **Sesli PK state:** `GET /api/chat/rooms/{id}/pk` slug yedek anahtarı; `me/invites` zarfında `data[]` listesi
+- **Davet poll:** Giden pending varken diğer odalar + `me/invites` poll’u kesilmez
+- **Kabul/red:** Oda PK ucu 404/400 ise `POST /api/live/pk` birleşik yedek (PK_ENTEGRASYON)
+
 ## 1.0.597+642 (2026-09-23) — Odalar arası PK: davet + oda kopması
 
 - **Sesli PK sınıflandırma:** `stream1Id/stream2Id` artık canlı yayın PK sanılmıyor; davet ingest ve popup hedefi düzeldi

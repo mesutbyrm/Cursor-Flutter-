@@ -16,6 +16,16 @@ KURALLAR:
 
 Kaynak: Abacus.ai Flutter entegrasyon paketi.
 
+## GitHub `mesutbyrm/canlifal` — `full-source` dalı
+
+Özel depo bu ortamdan klonlanamaz; mobil hizalama **`backend-reference/canlifal_flutter_paketi/`** ile yapılır:
+
+- `kaynak/lib/pk-state.ts` — `stream1Id/stream2Id` sesli odada `roomId`
+- `kaynak/lib/voice-room-events.ts` — SSE `room_event` → `pk_invite` / `pk_requested`
+- `BOLUM22_MULTIGUEST_PK_GIFTBOX.md`, `voice_room_api.md`, `canlifal_pk_flutter.zip` → `PK_ENTEGRASYON.md`
+
+Üretim uçları değiştirilmez: sesli PK `POST/GET /api/chat/rooms/{roomId}/pk`, adaylar `GET /api/chat/rooms/pk/candidates?roomId=`, davet poll `GET /api/pk/me/invites?direction=incoming`.
+
 ## İlişkili kanonik dosyalar (repoda)
 
 | Amaç | Yol |

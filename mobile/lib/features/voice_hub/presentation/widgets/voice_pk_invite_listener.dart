@@ -181,7 +181,6 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
         if (roomBattle != null && !roomBattle.isEnded) {
           ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(roomBattle);
           _onBattleUpdate(roomBattle);
-          if (roomBattle.isPending) return;
         }
       }
 

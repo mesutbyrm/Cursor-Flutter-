@@ -148,8 +148,21 @@ class PkSessionNotifier
     try {
       if (arg.kind == PkContextKind.voice) {
         final api = ref.read(pkBattleRemoteDataSourceProvider);
-        var remote = await api.fetchRoomBattle(id);
-        remote ??= await _firstVoiceInviteForRoom(api, id);
+        final hostRoom = ref.read(voiceRoomByIdProvider(id)).valueOrNull;
+        final hostAlt = hostRoom != null &&
+                hostRoom.slug.isNotEmpty &&
+                hostRoom.slug != id
+            ? hostRoom.slug
+            : null;
+        var remote = await api.fetchRoomBattle(
+          id,
+          alternateRoomId: hostAlt,
+        );
+        remote ??= await _firstVoiceInviteForRoom(
+          api,
+          id,
+          alternateRoomId: hostAlt,
+        );
         if (_disposed) return;
         _applyBattle(remote != null ? pkRemoteToBattle(remote) : null);
         state = state.copyWith(loading: false, clearError: true);
@@ -508,17 +521,28 @@ class PkSessionNotifier
 
   Future<PkBattleRemote?> _firstVoiceInviteForRoom(
     PkBattleRemoteDataSource api,
-    String roomKey,
-  ) async {
+    String roomKey, {
+    String? alternateRoomId,
+  }) async {
+    final keys = <String>{
+      roomKey.trim(),
+      if (alternateRoomId != null && alternateRoomId.trim().isNotEmpty)
+        alternateRoomId.trim(),
+    };
+    bool matchesRoom(String? raw) {
+      final v = raw?.trim() ?? '';
+      if (v.isEmpty) return false;
+      for (final k in keys) {
+        if (k == v || k.endsWith(v) || v.endsWith(k)) return true;
+      }
+      return false;
+    }
+
     final invites = await api.fetchMyInvites();
     for (final inv in invites) {
       if (!inv.isPending) continue;
-      final opp = inv.opponentVoiceRoomId?.trim() ?? '';
-      if (opp.isNotEmpty && (opp == roomKey || roomKey.endsWith(opp))) {
-        return inv;
-      }
-      final chall = inv.voiceRoomId?.trim() ?? '';
-      if (chall.isNotEmpty && chall == roomKey) return inv;
+      if (matchesRoom(inv.opponentVoiceRoomId)) return inv;
+      if (matchesRoom(inv.voiceRoomId)) return inv;
     }
     return null;
   }

@@ -149,6 +149,7 @@ class PkBattleRemote extends Equatable {
     final scope = normalized['scope']?.toString().toLowerCase() ?? '';
     final isVoiceScope = battleType.contains('voice') ||
         battleType.contains('room_user') ||
+        scope == 'room' ||
         scope.contains('room_user') ||
         scope.contains('voice');
     final liveStreamId = isVoiceScope

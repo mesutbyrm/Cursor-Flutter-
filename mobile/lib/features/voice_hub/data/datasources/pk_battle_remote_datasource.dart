@@ -436,9 +436,39 @@ class PkBattleRemoteDataSource {
           statusCode: 429,
         );
       }
+      final fallback = await _respondInviteViaLivePk(
+        inviteId: inviteId,
+        action: action,
+        primaryError: e,
+      );
+      if (fallback != null) return fallback;
       rethrow;
     }
     throw ApiException('PK daveti yanıtlanamadı ($action)');
+  }
+
+  /// BÖLÜM 22 / PK_ENTEGRASYON — birleşik `POST /api/live/pk` accept/reject yedeği.
+  Future<PkBattleRemote?> _respondInviteViaLivePk({
+    required String inviteId,
+    required String action,
+    required ApiException primaryError,
+  }) async {
+    final code = primaryError.statusCode ?? 0;
+    if (code != 404 && code != 400 && code != 405) return null;
+    try {
+      final res = await _dio.safePost<dynamic>(
+        ApiEndpoints.livePk,
+        data: {
+          'action': action,
+          'battleId': inviteId,
+          'pkBattleId': inviteId,
+          'matchId': inviteId,
+        },
+      );
+      return _parseBattle(res.data);
+    } on ApiException {
+      return null;
+    }
   }
 
   /// `POST /api/chat/rooms/{roomId}/pk` — `{ action:'end', battleId }`.
@@ -632,9 +662,11 @@ class PkBattleRemoteDataSource {
         query: {'direction': 'incoming'},
       );
       final map = _unwrap(res.data);
+      final top = res.data is Map ? asJsonMap(res.data) : null;
       final list = map?['items'] ??
           map?['invites'] ??
           map?['pending'] ??
+          (top?['data'] is List ? top!['data'] : null) ??
           map?['data'] ??
           (res.data is List ? res.data : null) ??
           res.data;

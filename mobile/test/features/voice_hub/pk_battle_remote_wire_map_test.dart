@@ -19,6 +19,19 @@ void main() {
     expect(battle.isPending, isTrue);
   });
 
+  test('fromJson treats scope room as voice PK (stream ids are room ids)', () {
+    final battle = PkBattleRemote.fromJson({
+      'id': 'pk-scope',
+      'status': 'pending',
+      'scope': 'room',
+      'stream1Id': 'room-a',
+      'stream2Id': 'room-b',
+    });
+    expect(battle.voiceRoomId, 'room-a');
+    expect(battle.opponentVoiceRoomId, 'room-b');
+    expect(battle.liveStreamId, isEmpty);
+  });
+
   test('fromJson maps me/invites envelope fields', () {
     final battle = PkBattleRemote.fromJson({
       'battleId': 'pk-99',
