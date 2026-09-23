@@ -562,6 +562,28 @@ abstract final class ApiEndpoints {
   /// PK maç özel SSE — kılavuz §2.8.
   static String pkMatchStream(String matchId) => '/api/pk/$matchId/stream';
 
+  // Canlı yayın PK uçları (pk_room_remote_datasource)
+  static const pkRequest = '/api/pk/request';
+  static const pkRoom = '/api/pk/room';
+  static const pkMeHistory = '/api/pk/me/history';
+  static const pkMeStats = '/api/pk/me/stats';
+  static const pkMeMatches = '/api/pk/me/matches';
+  static String pkMatchRespond(String matchId) => '/api/pk/$matchId/respond';
+  static String pkMatchCancel(String matchId) => '/api/pk/$matchId/cancel';
+  static String pkMatchEnd(String matchId) => '/api/pk/$matchId/end';
+  static String pkMatchStart(String matchId) => '/api/pk/$matchId/start';
+  static String pkMatchSeatsJoin(String matchId) => '/api/pk/$matchId/seats/join';
+  static String pkMatchSeatsLeave(String matchId) => '/api/pk/$matchId/seats/leave';
+  static String pkMatchSeatsKick(String matchId) => '/api/pk/$matchId/seats/kick';
+  static String pkMatchEvents(String matchId) => '/api/pk/$matchId/events';
+  static String pkStatsUser(String userId) => '/api/pk/stats/$userId';
+  static const pkAdminBan = '/api/pk/admin/ban';
+  static String pkAdminUnban(String userId) => '/api/pk/admin/unban/$userId';
+  static const pkAdminBans = '/api/pk/admin/bans';
+  static String pkAdminForceEnd(String matchId) => '/api/pk/admin/$matchId/force-end';
+  static String pkAdminForceKick(String matchId, String userId) =>
+      '/api/pk/admin/$matchId/force-kick/$userId';
+
   /// Merkezi PK daveti — oda uçları 404 ise fallback.
   static const musicSearch = '/api/music/search';
 
