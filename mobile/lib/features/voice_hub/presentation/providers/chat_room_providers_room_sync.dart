@@ -101,7 +101,9 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       raw = payload;
     }
     if (raw == null) return false;
-    final battle = PkBattleRemote.fromJson(raw);
+    final battle = PkBattleRemote.fromJson(
+      PkBattleRemote.normalizeWireMap({...raw, ...payload}),
+    );
     if (battle.effectiveId.isEmpty) return false;
     ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(battle);
     ref.read(livePkInviteSignalProvider.notifier).bump();
@@ -151,6 +153,17 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
   void _handleRoomEvent(Map<String, dynamic> payload) {
     if (!_acceptSseEvent(payload)) return;
     _markSseActivity();
+    final event = (payload['event'] ?? payload['type'] ?? '')
+        .toString()
+        .toLowerCase()
+        .trim();
+    final isPkInviteEvent = event == 'pk_invite' ||
+        event == 'pkinvite' ||
+        event == 'pk_requested' ||
+        event == 'pkrequest';
+    if (isPkInviteEvent) {
+      if (_tryApplyPkRoomEvent(payload)) return;
+    }
     if (!roomEventMatchesActiveRoom(
       payload,
       _roomKey,
@@ -158,10 +171,6 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     )) {
       return;
     }
-    final event = (payload['event'] ?? payload['type'] ?? '')
-        .toString()
-        .toLowerCase()
-        .trim();
     VoiceRoomDebugLog.log('sse.room_event', {
       'room': _roomKey,
       'event': event,

@@ -501,6 +501,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
           .read(voiceRoomDiagnosticProvider.notifier)
           .setPresence(joined: true, count: merged.length);
       _startPresenceHeartbeat();
+      ref.read(livePkInviteSignalProvider.notifier).bump();
       unawaited(refreshServerPermissions());
       unawaited(_fetchAndApplySeats());
       unawaited(_refreshHubOnlineCountFromServer());

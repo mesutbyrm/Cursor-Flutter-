@@ -376,15 +376,33 @@ class ChatRoomSseService extends BaseSseService {
         map['inviteId'] != null ||
         map['battleId'] != null ||
         map['status'] != null) {
-      raw = map;
+      raw = Map<String, dynamic>.from(map);
     }
     if (raw == null) return;
+    raw = PkBattleRemote.normalizeWireMap({
+      ...raw,
+      ...map,
+      if (map['battleId'] != null) 'battleId': map['battleId'],
+      if (map['room1Id'] != null) 'room1Id': map['room1Id'],
+      if (map['room2Id'] != null) 'room2Id': map['room2Id'],
+      if (map['eventType'] != null && raw['status'] == null)
+        'status': _pkStatusFromEventType(map['eventType']?.toString()),
+    });
     final battle = PkBattleRemote.fromJson(raw);
     if (battle.effectiveId.isEmpty) return;
     final event = map['event']?.toString() ??
         map['type']?.toString() ??
         'pk';
     _onPk?.call(battle, event);
+  }
+
+  static String? _pkStatusFromEventType(String? eventType) {
+    final e = eventType?.toUpperCase().trim() ?? '';
+    if (e.contains('REJECT')) return 'rejected';
+    if (e.contains('CANCEL')) return 'cancelled';
+    if (e.contains('STARTED') && !e.contains('STARTING')) return 'active';
+    if (e.contains('STARTING') || e.contains('REQUEST')) return 'pending';
+    return null;
   }
 
   ChatRoomMessage? _parseMessage(Map<String, dynamic> map) {

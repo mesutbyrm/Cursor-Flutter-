@@ -609,9 +609,27 @@ class PkBattleRemoteDataSource {
           res.data;
       final out = <PkBattleRemote>[];
       for (final raw in asJsonList(list)) {
-        final battle = _parseBattle(raw) ??
-            PkBattleRemote.fromJson(Map<String, dynamic>.from(raw));
-        if (battle.effectiveId.isNotEmpty) out.add(battle);
+        if (raw is! Map) continue;
+        final envelope = Map<String, dynamic>.from(raw);
+        if (envelope['incoming'] == false) continue;
+        final nested = envelope['battle'];
+        final merged = PkBattleRemote.normalizeWireMap({
+          if (nested is Map) ...Map<String, dynamic>.from(nested),
+          ...envelope,
+          'id': envelope['battleId'] ??
+              (nested is Map ? asJsonMap(nested)['id'] : null) ??
+              envelope['id'],
+          'status': (nested is Map
+                  ? asJsonMap(nested)['status']
+                  : null) ??
+              envelope['status'] ??
+              'pending',
+        });
+        final battle =
+            _parseBattle(merged) ?? PkBattleRemote.fromJson(merged);
+        if (battle.effectiveId.isNotEmpty && battle.isPending) {
+          out.add(battle);
+        }
       }
       return out;
     } on ApiException catch (e) {

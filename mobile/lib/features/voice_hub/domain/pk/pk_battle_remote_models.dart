@@ -83,6 +83,47 @@ class PkBattleRemote extends Equatable {
       status == 'completed' ||
       status == 'canceled';
 
+  /// Üretim PK/SSE alan adlarını tek modele indirger (`stream1Id`, `room1`, …).
+  static Map<String, dynamic> normalizeWireMap(Map<String, dynamic> json) {
+    final out = Map<String, dynamic>.from(json);
+    String? nestedRoomId(dynamic raw) {
+      if (raw is Map) {
+        final m = Map<String, dynamic>.from(raw);
+        return (m['id'] ?? m['roomId'])?.toString();
+      }
+      return raw?.toString();
+    }
+
+    void setIfEmpty(String key, dynamic value) {
+      final v = value?.toString().trim() ?? '';
+      if (v.isEmpty) return;
+      final cur = out[key]?.toString().trim() ?? '';
+      if (cur.isEmpty) out[key] = v;
+    }
+
+    setIfEmpty('voiceRoomId', json['stream1Id']);
+    setIfEmpty('voiceRoomId', json['room1Id']);
+    setIfEmpty('voiceRoomId', json['challengerRoomId']);
+    setIfEmpty('voiceRoomId', nestedRoomId(json['room1']));
+
+    setIfEmpty('opponentVoiceRoomId', json['stream2Id']);
+    setIfEmpty('opponentVoiceRoomId', json['room2Id']);
+    setIfEmpty('opponentVoiceRoomId', json['opponentRoomId']);
+    setIfEmpty('opponentVoiceRoomId', json['targetRoomId']);
+    setIfEmpty('opponentVoiceRoomId', nestedRoomId(json['room2']));
+
+    setIfEmpty('challengerId', json['user1Id']);
+    setIfEmpty('challengerId', json['challengerId']);
+    setIfEmpty('opponentId', json['user2Id']);
+    setIfEmpty('opponentId', json['opponentId']);
+
+    final battleId = (json['battleId'] ?? json['matchId'])?.toString().trim();
+    if (battleId != null && battleId.isNotEmpty) {
+      setIfEmpty('id', battleId);
+    }
+    return out;
+  }
+
   /// API yanıtında `inviteId` ayrı gelebilir — respond path için.
   String get effectiveId {
     final inv = inviteId?.trim() ?? '';
@@ -91,29 +132,30 @@ class PkBattleRemote extends Equatable {
   }
 
   factory PkBattleRemote.fromJson(Map<String, dynamic> json) {
-    final giftsRaw = json['recentGifts'];
-    final invite = json['inviteId']?.toString().trim();
+    final normalized = normalizeWireMap(json);
+    final giftsRaw = normalized['recentGifts'];
+    final invite = normalized['inviteId']?.toString().trim();
     // API dokümanı §8: yanıtta `pkBattleId` birincil kimlik olabilir.
-    final rawId = (json['id'] ??
-            json['pkBattleId'] ??
-            json['battleId'] ??
-            json['inviteId'])
+    final rawId = (normalized['id'] ??
+            normalized['pkBattleId'] ??
+            normalized['battleId'] ??
+            normalized['inviteId'])
         ?.toString()
         .trim() ??
         '';
     final id = rawId.isNotEmpty ? rawId : (invite ?? '');
-    var status = (json['status']?.toString() ?? 'pending').toLowerCase();
-    final battleType = json['battleType']?.toString() ?? 'voice_room';
-    final liveStreamId = json['liveStreamId']?.toString().trim() ?? '';
-    final opponentLiveStreamId = (json['opponentLiveStreamId'] ??
-            json['opponentStreamId'] ??
-            json['targetStreamId'])
+    var status = (normalized['status']?.toString() ?? 'pending').toLowerCase();
+    final battleType = normalized['battleType']?.toString() ?? 'voice_room';
+    final liveStreamId = normalized['liveStreamId']?.toString().trim() ?? '';
+    final opponentLiveStreamId = (normalized['opponentLiveStreamId'] ??
+            normalized['opponentStreamId'] ??
+            normalized['targetStreamId'])
         ?.toString()
         .trim() ??
         '';
-    final parsedLiveStreamId = (json['liveStreamId'] ??
-            json['hostStreamId'] ??
-            json['streamId'])
+    final parsedLiveStreamId = (normalized['liveStreamId'] ??
+            normalized['hostStreamId'] ??
+            normalized['streamId'])
         ?.toString()
         .trim() ??
         '';
@@ -133,19 +175,26 @@ class PkBattleRemote extends Equatable {
         status = 'active';
       }
     }
-    final endsAt = _parseDate(json['endsAt'] ?? json['endAt'] ?? json['endTime']);
-    final startedAt = _parseDate(
-      json['startedAt'] ?? json['startAt'] ?? json['started_at'],
+    final endsAt = _parseDate(
+      normalized['endsAt'] ?? normalized['endAt'] ?? normalized['endTime'],
     );
-    final expiresAt = _parseDate(json['expiresAt']);
+    final startedAt = _parseDate(
+      normalized['startedAt'] ??
+          normalized['startAt'] ??
+          normalized['started_at'],
+    );
+    final expiresAt = _parseDate(normalized['expiresAt']);
     final inviteTimeoutSeconds =
-        _int(json['timeoutSeconds'], fallback: 0);
-    var secondsLeft = _int(json['secondsLeft'], fallback: 300);
+        _int(normalized['timeoutSeconds'], fallback: 0);
+    var secondsLeft = _int(normalized['secondsLeft'], fallback: 300);
     if (endsAt != null) {
       final left = endsAt.toUtc().difference(DateTime.now().toUtc()).inSeconds;
       if (left >= 0) secondsLeft = left;
     } else if (startedAt != null) {
-      final duration = _int(json['durationSeconds'] ?? json['duration'], fallback: 180);
+      final duration = _int(
+        normalized['durationSeconds'] ?? normalized['duration'],
+        fallback: 180,
+      );
       final elapsed =
           DateTime.now().toUtc().difference(startedAt.toUtc()).inSeconds;
       secondsLeft = (duration - elapsed).clamp(0, duration);
@@ -155,52 +204,44 @@ class PkBattleRemote extends Equatable {
       inviteId: invite?.isNotEmpty == true ? invite : null,
       battleType: battleType,
       status: status,
-      challengerScore: _int(json['challengerScore'] ?? json['leftScore']),
-      opponentScore: _int(json['opponentScore'] ?? json['rightScore']),
+      challengerScore: _int(
+        normalized['challengerScore'] ?? normalized['leftScore'] ?? normalized['score1'],
+      ),
+      opponentScore: _int(
+        normalized['opponentScore'] ?? normalized['rightScore'] ?? normalized['score2'],
+      ),
       secondsLeft: secondsLeft,
       durationSeconds: _int(
-        json['durationSeconds'] ?? json['duration'],
+        normalized['durationSeconds'] ?? normalized['duration'],
         fallback: 180,
       ),
-      targetScore: _int(json['targetScore'], fallback: 150000),
-      voiceRoomId: (json['voiceRoomId'] ??
-              json['challengerRoomId'] ??
-              json['roomId'] ??
-              json['room1Id'] ??
-              json['room1'])
-          ?.toString(),
-      opponentVoiceRoomId: (json['opponentVoiceRoomId'] ??
-              json['targetRoomId'] ??
-              json['opponentRoomId'] ??
-              json['guestRoomId'] ??
-              json['room2Id'] ??
-              json['room2'] ??
-              (json['opponentRoom'] is Map
-                  ? (json['opponentRoom'] as Map)['roomId']
-                  : null))
-          ?.toString(),
+      targetScore: _int(normalized['targetScore'], fallback: 150000),
+      voiceRoomId: normalized['voiceRoomId']?.toString(),
+      opponentVoiceRoomId: normalized['opponentVoiceRoomId']?.toString(),
       liveStreamId:
           parsedLiveStreamId.isNotEmpty ? parsedLiveStreamId : liveStreamId,
       opponentLiveStreamId:
           opponentLiveStreamId.isNotEmpty ? opponentLiveStreamId : null,
-      challengerId: (json['challengerId'] ?? json['hostUserId'])?.toString(),
-      opponentId: (json['opponentId'] ?? json['opponentUserId'])?.toString(),
-      targetUserId: json['targetUserId']?.toString(),
-      guestUserId: json['guestUserId']?.toString(),
-      winnerId: json['winnerId']?.toString(),
-      challenger: json['challenger'] is Map
+      challengerId:
+          (normalized['challengerId'] ?? normalized['hostUserId'])?.toString(),
+      opponentId:
+          (normalized['opponentId'] ?? normalized['opponentUserId'])?.toString(),
+      targetUserId: normalized['targetUserId']?.toString(),
+      guestUserId: normalized['guestUserId']?.toString(),
+      winnerId: normalized['winnerId']?.toString(),
+      challenger: normalized['challenger'] is Map
           ? PkParticipantRemote.fromJson(
-              Map<String, dynamic>.from(json['challenger'] as Map),
+              Map<String, dynamic>.from(normalized['challenger'] as Map),
             )
           : null,
-      opponent: json['opponent'] is Map
+      opponent: normalized['opponent'] is Map
           ? PkParticipantRemote.fromJson(
-              Map<String, dynamic>.from(json['opponent'] as Map),
+              Map<String, dynamic>.from(normalized['opponent'] as Map),
             )
           : null,
-      result: json['result'] is Map
+      result: normalized['result'] is Map
           ? PkResultRemote.fromJson(
-              Map<String, dynamic>.from(json['result'] as Map),
+              Map<String, dynamic>.from(normalized['result'] as Map),
             )
           : null,
       recentGifts: giftsRaw is List

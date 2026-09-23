@@ -10,6 +10,8 @@ import '../../../live/presentation/providers/live_providers.dart';
 import '../../../live/domain/pk/pk_action_error.dart';
 import '../../../live/presentation/providers/live_video_pk_provider.dart';
 import '../../../voice_hub/domain/pk/pk_opponent_room_filter.dart';
+import '../../../voice_hub/data/datasources/pk_battle_remote_datasource.dart';
+import '../../../voice_hub/domain/pk/pk_battle_remote_models.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
 import '../../../live/presentation/providers/voice_rooms_list_notifier.dart';
 import '../../data/pk_battle_bridge.dart';
@@ -142,6 +144,15 @@ class PkSessionNotifier
     if (id.isEmpty) return;
     state = state.copyWith(loading: true, clearError: true);
     try {
+      if (arg.kind == PkContextKind.voice) {
+        final api = ref.read(pkBattleRemoteDataSourceProvider);
+        var remote = await api.fetchRoomBattle(id);
+        remote ??= await _firstVoiceInviteForRoom(api, id);
+        if (_disposed) return;
+        _applyBattle(remote != null ? pkRemoteToBattle(remote) : null);
+        state = state.copyWith(loading: false, clearError: true);
+        return;
+      }
       final battle = await _api.getState(id);
       if (_disposed) return;
       _applyBattle(battle);
@@ -416,18 +427,45 @@ class PkSessionNotifier
   Future<void> accept() async {
     final id = state.battle?.id;
     if (id == null || id.isEmpty) return;
+    if (arg.kind == PkContextKind.voice) {
+      await _voicePkAction(
+        () => ref.read(pkBattleRemoteProvider.notifier).accept(
+              id,
+              roomId: arg.contextId,
+            ),
+      );
+      return;
+    }
     await _action(() => _api.accept(id));
   }
 
   Future<void> reject() async {
     final id = state.battle?.id;
     if (id == null || id.isEmpty) return;
+    if (arg.kind == PkContextKind.voice) {
+      await _voicePkAction(
+        () => ref.read(pkBattleRemoteProvider.notifier).reject(
+              id,
+              roomId: arg.contextId,
+            ),
+      );
+      return;
+    }
     await _action(() => _api.reject(id));
   }
 
   Future<void> cancel() async {
     final id = state.battle?.id;
     if (id == null || id.isEmpty) return;
+    if (arg.kind == PkContextKind.voice) {
+      await _voicePkAction(
+        () => ref.read(pkBattleRemoteProvider.notifier).cancel(
+              id,
+              roomId: arg.contextId,
+            ),
+      );
+      return;
+    }
     await _action(() => _api.cancel(id));
   }
 
@@ -436,7 +474,58 @@ class PkSessionNotifier
     if (id == null || id.isEmpty) return;
     final status = state.battle?.status;
     if (status == PkStatus.pending) return;
+    if (arg.kind == PkContextKind.voice) {
+      await _voicePkAction(
+        () => ref.read(pkBattleRemoteProvider.notifier).end(
+              id,
+              roomId: arg.contextId,
+            ),
+      );
+      return;
+    }
     await _action(() => _api.end(id));
+  }
+
+  Future<PkBattleRemote?> _firstVoiceInviteForRoom(
+    PkBattleRemoteDataSource api,
+    String roomKey,
+  ) async {
+    final invites = await api.fetchMyInvites();
+    for (final inv in invites) {
+      if (!inv.isPending) continue;
+      final opp = inv.opponentVoiceRoomId?.trim() ?? '';
+      if (opp.isNotEmpty && (opp == roomKey || roomKey.endsWith(opp))) {
+        return inv;
+      }
+      final chall = inv.voiceRoomId?.trim() ?? '';
+      if (chall.isNotEmpty && chall == roomKey) return inv;
+    }
+    return invites.isNotEmpty ? invites.first : null;
+  }
+
+  Future<void> _voicePkAction(
+    Future<PkBattleRemote?> Function() call,
+  ) async {
+    state = state.copyWith(loading: true, clearError: true);
+    try {
+      final remote = await call();
+      if (_disposed) return;
+      if (remote != null) {
+        _applyBattle(pkRemoteToBattle(remote));
+      } else {
+        await loadState();
+      }
+      state = state.copyWith(loading: false);
+    } on ApiException catch (e) {
+      if (_disposed) return;
+      state = state.copyWith(
+        loading: false,
+        error: ApiException.userMessage(e),
+      );
+    } catch (e) {
+      if (_disposed) return;
+      state = state.copyWith(loading: false, error: ApiException.userMessage(e));
+    }
   }
 
   Future<void> _action(Future<PkBattle> Function() call) async {

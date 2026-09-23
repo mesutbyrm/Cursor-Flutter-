@@ -236,6 +236,25 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     return battle;
   }
 
+  Future<PkBattleRemote?> cancel(
+    String battleId, {
+    required String roomId,
+    String? alternateRoomId,
+  }) async {
+    final battle = await _api.cancelBattle(
+      battleId,
+      roomId: roomId,
+      alternateRoomId: alternateRoomId,
+    );
+    if (battle != null) {
+      _apply(battle, 'pk:cancel');
+    } else {
+      clear();
+      ref.read(pkSessionPhaseProvider.notifier).reset();
+    }
+    return battle;
+  }
+
   Future<PkBattleRemote?> pause(
     String battleId, {
     required String roomId,

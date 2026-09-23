@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.595+640 (2026-09-23) — Sesli oda PK: davet karşı tarafa ulaşsın
+
+- **PK alan eşlemesi:** `stream1Id`/`stream2Id`, `room1Id`/`room2Id`, `me/invites` zarfı — hedef oda ve pop-up eşlemesi düzeltildi
+- **SSE:** `type:pk` ve `room_event` pk_invite oda anahtarı uyuşmazsa davet yine işlenir; odaya girişte davet poll tetiklenir
+- **Sesli PK oturumu:** kabul/red/iptal artık `/api/live/pk` değil oda PK ucu üzerinden
+
 ## 1.0.594+639 (2026-09-23) — Sesli oda PK davet akışı (kanonik API)
 
 - **PK:** Tüm sesli oda mutasyonları `POST /api/chat/rooms/{roomId}/pk` (`action` + `targetRoomId` / `battleId`); 404 veren sahte alt yollar kaldırıldı
