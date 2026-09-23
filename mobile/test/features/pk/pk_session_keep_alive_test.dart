@@ -9,6 +9,7 @@ import 'package:canlifal_social/features/pk/presentation/providers/pk_session_no
 import 'package:canlifal_social/features/voice_hub/data/datasources/pk_battle_remote_datasource.dart';
 import 'package:canlifal_social/features/voice_hub/domain/pk/pk_battle_remote_models.dart';
 import 'package:canlifal_social/features/voice_hub/presentation/providers/pk_battle_remote_provider.dart';
+import 'package:canlifal_social/features/live/presentation/providers/live_providers.dart';
 
 /// `pkSessionProvider` autoDispose'dur: izleyici kalmadığında state imha olur
 /// ve sonraki okuma boş bir PkSessionState döner. Navigasyon ya da sheet
@@ -16,6 +17,8 @@ import 'package:canlifal_social/features/voice_hub/presentation/providers/pk_bat
 /// sıfırlanıyordu. Süren maçta `keepAlive` ile korunuyor; maç bitince link
 /// bırakılıyor (aksi halde sızıntı olur).
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   PkSessionArgs args() =>
       const PkSessionArgs(contextId: 'room-1', kind: PkContextKind.voice);
 
@@ -41,6 +44,7 @@ void main() {
         pkServiceProvider.overrideWithValue(_FakePkService(null)),
         pkBattleRemoteDataSourceProvider.overrideWithValue(remoteApi),
         pkBattleRemoteProvider.overrideWith(_StubRemoteController.new),
+        voiceRoomByIdProvider.overrideWith((ref, id) async => null),
       ],
     );
     addTearDown(container.dispose);
