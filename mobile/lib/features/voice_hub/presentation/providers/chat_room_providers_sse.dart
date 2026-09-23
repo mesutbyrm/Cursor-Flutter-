@@ -220,8 +220,11 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             if (VoiceRoomBasicMode.enabled && !VoiceRoomBasicMode.premiumEnabled) {
               return;
             }
+            // DÜZELTME (2026-09-23): PK event deduplication — status değişiklikleri
+            // ve yeni battles'ı (create events) hiçbir zaman filterlemiyoruz.
+            // Deduplication yalnızca aynı battle state için exact duplicates'ı filtreler.
             final dedupeId =
-                '${battle.effectiveId}:${battle.status}:${battle.challengerScore}:${battle.opponentScore}';
+                '${battle.effectiveId}:${battle.status}:${battle.challengerScore}:${battle.opponentScore}:${battle.secondsLeft ?? 0}';
             if (!_sse._acceptSseEvent({'eventId': dedupeId})) return;
             ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(battle);
             ref.read(pkSessionProvider(
