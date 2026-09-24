@@ -344,11 +344,11 @@ idle
 - [x] Network recovery → onNetworkStateChange(bool)
 - [ ] Auto-seat → seat take manager (partial - foundation ready)
 
-### Phase 3: State Sync Refactor (3-4 saat)
-- [ ] Presence merge logic → manager
-- [ ] Seat sync logic → manager
-- [ ] Poll refresh → manager backup (SSE down case)
-- [ ] Error recovery → manager
+### Phase 3: State Sync Refactor ✅ (2026-09-24)
+- [x] Presence merge logic → manager (sync in poll refresh)
+- [x] Seat sync logic → manager (applyServerEvent for fetch/refresh)
+- [x] Poll refresh → manager canonical state (8s polling)
+- [x] Error recovery → manager event stream (state transitions + logging)
 
 ### Phase 4: Testing + Debug (2-3 saat)
 - [ ] Unit tests: state transitions, atomicity
@@ -375,19 +375,22 @@ idle
 
 ## 7. PROGRESS & NEXT STEPS
 
-### ✅ Completed (Phase 1-2)
+### ✅ Completed (Phase 1-3)
 1. **room_session_manager.dart** → RoomSessionManager sınıfı ✅
 2. **chat_room_providers.dart** → Manager initialization + callbacks ✅
 3. **chat_room_providers_entry.dart** → Manager.join() integration in entry flows ✅
 4. **chat_room_providers_sse.dart** → SSE event sync + reconnect handling ✅
 5. **chat_room_providers_presence.dart** → Network state change handling ✅
+6. **Seat fetch/refresh** → Manager sync for all seat updates ✅
+7. **Poll refresh** → 8s polling syncs manager canonical state ✅
+8. **Error recovery** → Manager event stream for debugging ✅
 
-### 📋 Next (Phase 3-5)
-1. **Seat sync** → Integrate manager.applyServerEvent() for seat updates
-2. **State merge refactor** → Move merge logic toward manager
-3. **Unit tests** → Atomicity, idempotency, concurrent operations
-4. **Real device testing** → P0/P1 validation with network failures
-5. **PK integration** → Wire PK match state to manager events
+### 📋 Next (Phase 4-5)
+1. **Unit tests** → Atomicity, idempotency, concurrent operations
+2. **Real device testing** → P0/P1 validation with network failures, SSE reconnect
+3. **PK integration** → Wire PK match state to manager events
+4. **Performance** → Verify no excessive state updates or memory leaks
+5. **APK build** → Test on real device with network disruptions
 
 ---
 
