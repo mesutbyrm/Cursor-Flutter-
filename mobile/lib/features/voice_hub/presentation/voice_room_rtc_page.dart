@@ -98,6 +98,9 @@ import 'widgets/premium_2026/voice_cosmic_background.dart';
 import 'widgets/voice_room/voice_room_music_background_layer.dart';
 import 'sheets/voice_room_commands_panel.dart';
 import 'widgets/premium_2026/voice_room_persistent_duyuru.dart';
+import '../../live/presentation/providers/weekly_broadcaster_competition_provider.dart';
+import '../../live/presentation/providers/weekly_broadcaster_visibility_provider.dart';
+import '../../live/presentation/widgets/weekly_broadcaster_competition_card.dart';
 import '../../visual_fx/presentation/widgets/fx_voice_room_overlay_host.dart';
 import '../../gifts/presentation/sync/gift_event_listener.dart';
 import 'widgets/voice_room/voice_room_duyuru_ticker.dart';
@@ -1870,6 +1873,44 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                     canStopMusic: canCloseMusic,
                   ),
                 ),
+              ),
+            if (!keyboardOpen)
+              Consumer(
+                builder: (context, ref, _) {
+                  final visible = ref.watch(
+                    weeklyBroadcasterCompetitionVisibleProvider,
+                  );
+                  if (!visible) return const SizedBox.shrink();
+
+                  final competition = ref.watch(
+                    weeklyBroadcasterCompetitionProvider,
+                  );
+
+                  return competition.when(
+                    loading: () => const SizedBox.shrink(),
+                    error: (_, __) => const SizedBox.shrink(),
+                    data: (comp) {
+                      if (comp == null || comp.participants.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+
+                      final bottomOffset = showMusicRequestFab ? 278 : 118;
+
+                      return Align(
+                        alignment: Alignment.bottomRight,
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                            bottom: bottomOffset.toDouble(),
+                            right: 4,
+                          ),
+                          child: WeeklyBroadcasterCompetitionCard(
+                            competition: comp,
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
             if (_liveRoomKey.isNotEmpty)
               VoiceRoomVideoCloseBar(roomKey: _liveRoomKey),

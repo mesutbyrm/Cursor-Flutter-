@@ -556,6 +556,11 @@ abstract final class ApiEndpoints {
   /// Bekleyen davetler — kılavuz §2.7.
   static const pkMeInvites = '/api/pk/me/invites';
   static const pkLeaderboard = '/api/pk/leaderboard';
+
+  /// Haftalık yayıncı yarışması.
+  static const weeklyBroadcasterCompetition = '/api/broadcasters/weekly-competition';
+
+  /// PK maç detayı — kılavuz §2.8.
   static String pkMatch(String matchId) => '/api/pk/$matchId';
   static String pkMatchStream(String matchId) => '/api/pk/$matchId/stream';
 
