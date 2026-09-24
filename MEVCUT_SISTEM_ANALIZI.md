@@ -338,11 +338,11 @@ idle
 - [ ] Lifecycle events (Future<Stream<RoomSessionEvent>>)
 - [ ] Timeout ve retry policies
 
-### Phase 2: Integration (2-3 saat)
-- [ ] VoiceRoomLiveController → use RoomSessionManager
-- [ ] SSE events → onSseEvent(payload)
-- [ ] Network recovery → onNetworkStateChange(bool)
-- [ ] Auto-seat → seat take manager
+### Phase 2: Integration ✅ (2026-09-24)
+- [x] VoiceRoomLiveController → use RoomSessionManager
+- [x] SSE events → onSseEvent(payload)
+- [x] Network recovery → onNetworkStateChange(bool)
+- [ ] Auto-seat → seat take manager (partial - foundation ready)
 
 ### Phase 3: State Sync Refactor (3-4 saat)
 - [ ] Presence merge logic → manager
@@ -373,12 +373,21 @@ idle
 
 ---
 
-## 7. IMMEDIATE NEXT STEPS
+## 7. PROGRESS & NEXT STEPS
 
-1. **architecture/room_session_manager.dart** → `RoomSessionManager` sınıfı
-2. **providers/chat_room_providers.dart** → Manager injection
-3. **test/features/voice_hub/room_session_manager_test.dart** → Atomicity tests
-4. **Parallel:** PK system ile integration planning
+### ✅ Completed (Phase 1-2)
+1. **room_session_manager.dart** → RoomSessionManager sınıfı ✅
+2. **chat_room_providers.dart** → Manager initialization + callbacks ✅
+3. **chat_room_providers_entry.dart** → Manager.join() integration in entry flows ✅
+4. **chat_room_providers_sse.dart** → SSE event sync + reconnect handling ✅
+5. **chat_room_providers_presence.dart** → Network state change handling ✅
+
+### 📋 Next (Phase 3-5)
+1. **Seat sync** → Integrate manager.applyServerEvent() for seat updates
+2. **State merge refactor** → Move merge logic toward manager
+3. **Unit tests** → Atomicity, idempotency, concurrent operations
+4. **Real device testing** → P0/P1 validation with network failures
+5. **PK integration** → Wire PK match state to manager events
 
 ---
 
