@@ -70,3 +70,14 @@ Sonraki: `bash scripts/p1-go.sh` · `docs/P1_DEVICE_START.md`
 
 Sonraki: `bash scripts/p1-go.sh` · `docs/P1_DEVICE_START.md`
 
+## 2026-09-24 18:02 UTC — P1 Platform **FAIL**
+
+| Alan | Değer |
+|------|--------|
+| Sürüm | `1.0.598+644` |
+| Faz | P1 Platform |
+| Sonuç | **FAIL** |
+| Not | PK isteği sesli odalarda atılmıyor (hotfix gerekli) |
+
+Agent: hotfix gerekir — logcat / ekran kaydı ekleyin.
+
