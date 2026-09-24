@@ -60,3 +60,13 @@ Doğrula: `bash scripts/p0-go.sh`
 
 Sonraki: `bash scripts/p1-go.sh` · `docs/P1_DEVICE_START.md`
 
+## 2026-09-24 17:39 UTC — Psychic P0 **PASS**
+
+| Alan | Değer |
+|------|--------|
+| Sürüm | `1.0.598+644` |
+| Faz | Psychic P0 |
+| Sonuç | **PASS** |
+
+Sonraki: `bash scripts/p1-go.sh` · `docs/P1_DEVICE_START.md`
+
