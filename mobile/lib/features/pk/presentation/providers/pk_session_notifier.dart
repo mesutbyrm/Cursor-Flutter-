@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/pk_event_log.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../voice_hub/presentation/providers/chat_room_providers.dart';
 import '../../../live/presentation/providers/live_pk_streams_provider.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../../live/domain/pk/pk_action_error.dart';
@@ -18,6 +19,7 @@ import '../../data/pk_battle_bridge.dart';
 import '../../data/pk_exception.dart';
 import '../../data/pk_models.dart';
 import '../../data/pk_service.dart';
+import '../../../../../../features/voice_hub/presentation/coordinators/room_session_manager.dart';
 import 'pk_providers.dart';
 
 enum PkContextKind { live, voice }
@@ -85,6 +87,7 @@ class PkSessionNotifier
   Timer? _tick;
   KeepAliveLink? _liveLink;
   bool _disposed = false;
+  StreamSubscription<RoomSessionEvent>? _roomSessionEventSub;
 
   @override
   PkSessionState build(PkSessionArgs arg) {
@@ -92,9 +95,16 @@ class PkSessionNotifier
       _disposed = true;
       _tick?.cancel();
       _releaseLive();
+      _roomSessionEventSub?.cancel();
     });
     Future.microtask(() => loadState(showLoading: false));
     _startTicker();
+
+    // Sesli oda context'te room session events'i dinle
+    if (arg.kind == PkContextKind.voice) {
+      _subscribeToRoomSessionEvents(arg.contextId);
+    }
+
     return const PkSessionState();
   }
 
@@ -115,6 +125,84 @@ class PkSessionNotifier
   }
 
   PkService get _api => ref.read(pkServiceProvider);
+
+  /// Sesli oda PK context'te room session events'ini dinle.
+  /// State transition veya error'lar PK match state'ine etki edebilir.
+  void _subscribeToRoomSessionEvents(String roomId) {
+    final chatRoomNotifier = ref.read(voiceRoomLiveProvider(roomId).notifier);
+    final manager = chatRoomNotifier.roomSessionManager;
+    if (manager == null) return;
+
+    _roomSessionEventSub = manager.events.listen((event) {
+      if (_disposed) return;
+      if (event is RoomSessionStateChanged) {
+        // State transition — PK invite/battle validity check
+        _validatePkStateForRoomSession(event.current);
+      } else if (event is RoomPresenceUpdated) {
+        // Presence değişti — opponent user presence'ı check et
+        _validatePkOpponentPresence();
+      }
+    });
+  }
+
+  /// Room session state değişince PK state'ini doğrula.
+  /// Örn: leaving state'e girince pending PK iptal edilmeli.
+  void _validatePkStateForRoomSession(RoomSessionState roomState) {
+    final battle = state.battle;
+    if (battle == null || battle.id.isEmpty) return;
+
+    // Oda leaving/idle'a girince aktif PK iptal et
+    if ((roomState == RoomSessionState.leaving ||
+         roomState == RoomSessionState.idle) &&
+        (battle.status == PkStatus.pending ||
+         battle.status == PkStatus.active)) {
+      state = state.copyWith(clearBattle: true);
+      _releaseLive();
+    }
+    // Reconnecting state — PK timing'e dikkat et
+    else if (roomState == RoomSessionState.reconnecting &&
+             battle.status == PkStatus.active) {
+      // SSE disconnect sırasında battle state refresh edeceğiz
+      Future.microtask(() => loadState());
+    }
+  }
+
+  /// Opponent user presence check — PK match sırasında opponent oda'dan çıktıysa
+  /// battle state'i invalidate et.
+  void _validatePkOpponentPresence() {
+    final battle = state.battle;
+    if (battle == null ||
+        battle.id.isEmpty ||
+        battle.status != PkStatus.active) {
+      return;
+    }
+
+    final chatRoomNotifier = ref.read(voiceRoomLiveProvider(arg.contextId).notifier);
+    final manager = chatRoomNotifier.roomSessionManager;
+    if (manager == null) return;
+
+    // Opponent user presence'ını check et
+    final opponentUserId = battle.user2Id;
+    final opponentPresent = manager.presence
+        .any((p) => p.id == opponentUserId);
+
+    if (!opponentPresent && battle.status == PkStatus.active) {
+      // Opponent oda'dan çıktı — state refresh et
+      Future.microtask(() => loadState());
+    }
+  }
+
+  /// Voice room PK daveti öncesi room session state'i check et.
+  /// Oda joined state'de değilse invite gönderilemez.
+  bool _isVoiceRoomReadyForPk() {
+    if (arg.kind != PkContextKind.voice) return true;
+
+    final chatRoomNotifier = ref.read(voiceRoomLiveProvider(arg.contextId).notifier);
+    final manager = chatRoomNotifier.roomSessionManager;
+    if (manager == null) return true; // Manager yok — fallback izin ver
+
+    return manager.state == RoomSessionState.joined;
+  }
 
   void _startTicker() {
     _tick?.cancel();
@@ -405,11 +493,22 @@ class PkSessionNotifier
   /// Sesli oda daveti — chat-room PK ucu (kılavuz §9.3). Dönen `PkBattleRemote`
   /// hem `pkBattleRemoteProvider`'a işlenir (inviteRoom içinde) hem de sheet'in
   /// `PkBattle` state'ine köprülenir ki "İSTEK GÖNDERİLDİ" paneli görünsün.
+  ///
+  /// Oda joined state'de değilse invite gönderilemez (RoomSessionManager check).
   Future<void> _createVoiceInvite(
     String targetRoomId, {
     required int durationSeconds,
     String? targetUserId,
   }) async {
+    // Room session state check — RoomSessionManager entegrasyonu
+    if (!_isVoiceRoomReadyForPk()) {
+      state = state.copyWith(
+        loading: false,
+        error: 'Oda henüz hazır değil, lütfen bekleyin',
+      );
+      return;
+    }
+
     try {
       final hostRoom =
           ref.read(voiceRoomByIdProvider(arg.contextId)).valueOrNull;
