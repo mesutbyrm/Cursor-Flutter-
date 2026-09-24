@@ -90,7 +90,7 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             if (!state.selfInRoom || !_sse._presenceJoined) {
               unawaited(_sse._roomSessionManager?.join(
                 onError: (reason) {
-                  VoiceRoomDebugLog.log('room_manager.join_sse_reconnect', reason);
+                  VoiceRoomDebugLog.log('room_manager.join_sse_reconnect', {'reason': reason});
                 },
               ) ?? _sse._joinPresence());
             }
@@ -103,9 +103,8 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
                   payload: {'type': 'sse_reconnected'},
                 );
               }
-            } catch (e) {
+            } catch (_) {
               // Ignore errors from disposed manager
-              debugPrint('SSE reconnect sync error: $e');
             }
             unawaited(_sse._refreshSeatsFromBackend());
             // İlk giriş snapshot'ı zaten yüklendi; yeniden bağlantıda tam resync.
@@ -217,9 +216,8 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
                 payload: {'type': 'presence'},
                 presenceUpdate: merged,
               );
-            } catch (e) {
+            } catch (_) {
               // Ignore errors from disposed manager
-              debugPrint('SSE presence sync error: $e');
             }
             ref.read(voiceRoomDiagnosticProvider.notifier).setSse(true);
             ref

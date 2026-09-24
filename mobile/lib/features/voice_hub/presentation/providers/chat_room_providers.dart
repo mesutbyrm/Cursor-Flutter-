@@ -503,6 +503,8 @@ class VoiceRoomLiveController
   RoomSessionManager? _roomSessionManager;
   StreamSubscription<RoomSessionEvent>? _roomSessionEventSub;
 
+  RoomSessionManager? get roomSessionManager => _roomSessionManager;
+
   /// Aynı SSE eventId iki kez işlenmesin (hediye, koltuk, PK vb.).
   bool _acceptSseEvent(Map<String, dynamic> payload) {
     final id = payload['eventId']?.toString() ??
@@ -1982,9 +1984,8 @@ class VoiceRoomLiveController
             payload: {'type': 'poll_refresh'},
             presenceUpdate: presence,
           );
-        } catch (e) {
+        } catch (_) {
           // Ignore errors from disposed manager
-          debugPrint('Poll refresh sync error: $e');
         }
       }
       if (playDjInBackground) {
