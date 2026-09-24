@@ -501,6 +501,7 @@ class VoiceRoomLiveController
   final VoiceRoomSseEventDedupe _sseEventDedupe = VoiceRoomSseEventDedupe();
   final VoiceRoomChatFloodGuard _chatFloodGuard = VoiceRoomChatFloodGuard();
   RoomSessionManager? _roomSessionManager;
+  StreamSubscription<RoomSessionEvent>? _roomSessionEventSub;
 
   /// Aynı SSE eventId iki kez işlenmesin (hediye, koltuk, PK vb.).
   bool _acceptSseEvent(Map<String, dynamic> payload) {
@@ -774,10 +775,28 @@ class VoiceRoomLiveController
         onLeavePresence: _leavePresenceForManager,
         onHeartbeat: _presenceHeartbeatForManager,
       );
+
+      // Subscribe to manager events for error handling + state transitions
+      _roomSessionEventSub = _roomSessionManager!.events.listen((event) {
+        if (event is RoomSessionError) {
+          VoiceRoomDebugLog.log('room_manager.error', {
+            'message': event.message,
+            'code': event.code,
+            'retriable': event.retriable,
+          });
+        } else if (event is RoomSessionStateChanged) {
+          VoiceRoomDebugLog.log('room_manager.state_changed', {
+            'previous': event.previous.toString(),
+            'current': event.current.toString(),
+            'reason': event.reason,
+          });
+        }
+      });
     }
 
     ref.onDispose(() {
       _sseEventDedupe.clear();
+      _roomSessionEventSub?.cancel();
       _roomSessionManager?.dispose();
       if (_sessionActive) {
         VoiceRoomDebugLog.roomLeave(roomId: _roomKey, source: 'dispose');
@@ -1955,6 +1974,14 @@ class VoiceRoomLiveController
             : state.backgroundUrl,
         selfInRoom: _selfListedIn(presence) || state.selfInRoom,
       );
+      // Manager canonical state sync — poll refresh
+      if (presence.isNotEmpty) {
+        _roomSessionManager?.applyServerEvent(
+          eventType: 'poll_refresh',
+          payload: {'type': 'poll_refresh'},
+          presenceUpdate: presence,
+        );
+      }
       if (playDjInBackground) {
         if (!_skipRemoteMusicSync) {
           unawaited(_playDjInBackground(dj));

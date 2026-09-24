@@ -65,6 +65,13 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
           seats,
         );
         state = state.copyWith(seatSlots: seats, presence: nextPresence);
+        // Manager canonical state sync
+        _roomSessionManager?.applyServerEvent(
+          eventType: 'api_seats_fetch',
+          payload: {'type': 'seats_fetched'},
+          presenceUpdate: nextPresence,
+          seatsUpdate: seats,
+        );
       }
       VoiceRoomDebugLog.log('api.seats.ok', {
         'room': _roomKey,
@@ -653,6 +660,13 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
         mergedSlots,
       );
       state = state.copyWith(seatSlots: mergedSlots, presence: nextPresence);
+      // Manager canonical state sync
+      _roomSessionManager?.applyServerEvent(
+        eventType: 'sse_seat_update',
+        payload: {'type': 'seat_refresh'},
+        presenceUpdate: nextPresence,
+        seatsUpdate: mergedSlots,
+      );
       VoiceRoomDebugLog.log('sse.seat_update.refresh', {
         'room': _roomKey,
         'count': seats.length,
