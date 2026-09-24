@@ -25,6 +25,7 @@ final pkMatchSseServiceProvider = Provider<PkMatchSseService>((ref) {
 class PkRoomController extends AutoDisposeFamilyNotifier<PkRoomMatch?, String> {
   Timer? _pollTimer;
   PkMatchSseService? _sse;
+  DateTime? _lastSseUpdate;
 
   @override
   PkRoomMatch? build(String matchId) {
@@ -62,6 +63,7 @@ class PkRoomController extends AutoDisposeFamilyNotifier<PkRoomMatch?, String> {
     if (event.match != null) {
       if (_isDuplicate(event.match!)) return;
       state = event.match;
+      _lastSseUpdate = DateTime.now();
       if (event.match!.isCompleted) {
         _pollTimer?.cancel();
       }
@@ -72,6 +74,13 @@ class PkRoomController extends AutoDisposeFamilyNotifier<PkRoomMatch?, String> {
   }
 
   Future<void> _tick() async {
+    // Adım 6 (2026-09-24): SSE event'i geç ise poll skip et (2s ihtiyat).
+    final lastSse = _lastSseUpdate;
+    if (lastSse != null &&
+        DateTime.now().difference(lastSse) < const Duration(seconds: 2)) {
+      return;
+    }
+
     try {
       final next = await ref.read(pkRoomRemoteProvider).getMatch(arg);
       if (next == null) return;
