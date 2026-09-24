@@ -1,0 +1,386 @@
+# Canlifal Flutter — Ses Odası, Koltuk ve PK Sistemi Analiz
+
+**Tarih:** 2026-09-24  
+**Fokus:** Mevcut mimari sorunları ve çözüm planı
+
+---
+
+## 1. MEVCUT SISTEM YAPISI
+
+### 1.1 Ana Bileşenler
+
+```
+VoiceRoomLiveController
+├─ VoiceRoomSseMixin (SSE aboneliği)
+├─ VoiceRoomPresenceEngine (Join/Leave/Heartbeat)
+├─ VoiceRoomSeatControls (Koltuk yönetimi)
+└─ VoiceRoomDjSyncMixin (DJ/Müzik)
+
+State Management:
+- Riverpod: voiceRoomLiveProvider (family, auto-dispose)
+- Notifier: AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
+- State: presence, seatSlots, loading, error, sseConnected, ...
+```
+
+### 1.2 Oda Yaşam Döngüsü (Teorik)
+
+```
+1. Oda Açılış (voice_room_rtc_page.dart)
+   ├─ initState() → build() notifier
+   ├─ VoiceRoomAudioCoordinator._joinRoom()
+   └─ SSE + API bootstrap başla
+
+2. SSE Bağlantı (chat_room_providers_sse.dart: onConnected)
+   ├─ _joinPresence() çağır
+   ├─ _fetchAndApplySeats() çağır
+   └─ state = state.copyWith(sseConnected: true)
+
+3. Presence Katılım (_joinPresence → _joinPresenceAttempt)
+   ├─ POST /presence/join
+   ├─ Heartbeat Timer başlat (15s aralık)
+   ├─ _presenceJoined = true
+
+4. Heartbeat (_presenceHeartbeatTick, 15s periyot)
+   ├─ POST /presence/heartbeat
+   ├─ state sync (poll yalnızca SSE disconnect'te)
+
+5. Koltuk Oturma (_tryAutoPrivilegedSeat → POST /seats/take)
+   ├─ Pending claim register
+   ├─ Backend cevab await
+   ├─ state.seatSlots güncelle
+
+6. Oda Ayrılış (_leaveRoom → _leavePresenceWithSeatClear)
+   ├─ Heartbeat iptal
+   ├─ POST /presence/leave
+   ├─ SSE releaseVoiceRoom(roomKey)
+   ├─ clearVoiceRoomLiveSession(ref)
+
+7. Temizlik
+   ├─ state = null (auto-dispose)
+   └─ Diğer gift/session provider'lar invalidate
+```
+
+---
+
+## 2. BULDUĞUM 7 KRITIK SORUN
+
+### ❌ SORUN 1: Presence Join İdempotent Değil
+
+**Dosya:** `chat_room_providers_presence.dart:409-457`
+
+```dart
+Future<void> _joinPresence() async {
+  // Problem: _presenceJoined check yok
+  // Paralel çağrılar yapılabilir (SSE connect + entry + network recovery)
+  
+  if (state.sseConnected && !_presenceJoined) {
+    // SSE reconnect sırasında
+    unawaited(_joinPresence());  // ← Multiple call possible
+  }
+}
+```
+
+**Sonuç:**
+- POST /presence/join **2+ kez gönderilir**
+- Backend state karışıyor (duplicate presence)
+- Koltuk state senkronizasyonunda boşluk
+
+---
+
+### ❌ SORUN 2: Seat State - Presence State Senkronizasyonunda Boşluk
+
+**Dosya:** `chat_room_providers_seat.dart:43-60`
+
+Seat slot ve presence entry ayrı update edilir:
+- `presence[].seatIndex` ve `seatSlots[]` tutarlılığı garanti yok
+- SSE seat event ve presence event sırası rastgele
+- Backend GET /state vs GET /seats sırası karışık
+- Kullanıcı "koltukta" ama presence listesinde "boş" olabilir
+
+**Sonuç:**
+- UI koltuk animasyonu sıkışıyor
+- Koltuktan düşme → otomatik geri oturma döngüsü
+
+---
+
+### ❌ SORUN 3: Otomatik Koltuk (Auto-Seat) Kontrol Eksik
+
+**Dosya:** `chat_room_providers_seat.dart:76-135`
+
+```dart
+void _scheduleReactivePrivilegedAutoSeat() {
+  if (!_sessionActive || !state.selfInRoom) return;
+  // Problem: state.selfInRoom = true ama user henüz presence'e eklenmemiş
+  
+  await _evaluateReactivePrivilegedAutoSeat();  // ← Çok erken çalışabilir
+}
+
+// Heartbeat döngüsü:
+_presenceHeartbeatTick() {
+  // Problem: auto-seat retry yok
+  // Eğer POST /seats/take fail olduysa, 15s boyunca retry yok
+  // Host koltukta oturmamış kalıyor
+}
+```
+
+**Sonuç:**
+- Host/Mod koltukta oturmamış kalmış olabilir
+- Oda açılışında koltuk dağılması rasgele
+- Network lag'de auto-seat fail'i unnoticed
+
+---
+
+### ❌ SORUN 4: SSE Snapshot Timing - API Snapshot Race
+
+**Dosya:** `chat_room_providers_room_sync.dart:8-14`
+
+```dart
+Future<void> _loadBackendSnapshot() async {
+  // Sıra: GET /state → GET /seats → SSE subscribe
+  await _fetchAndApplyRoomState();    // State + presence
+  await _fetchAndApplySeats();        // Seats
+  state = state.copyWith(backendSyncReady: true);
+  
+  // Problem: SSE connect arada kalıyor
+  // SSE event geldiyse state eski versiyle merge
+}
+```
+
+**Sonuç:**
+- GET /seats ve SSE between eventler kaybolabilir
+- Koltuk state "geriye gidiyor" görülebilir
+
+---
+
+### ❌ SORUN 5: Oda Çıkış Sırasında State Temizliği Kısmi
+
+**Dosya:** `voice_room_session_registry.dart:40-64`
+
+```dart
+void clearVoiceRoomLiveSession(Ref ref, String liveKey) {
+  // Temizlenen: gift session, seat gift totals
+  // Temizlenmeyen:
+  // - voiceRoomLiveProvider state (auto-dispose) ✓
+  // - presence snapshot
+  // - pending seat claims
+  // - known presence IDs
+  // - SSE event dedup cache
+}
+```
+
+**Sonuç:**
+- "Yanlış odada görünüyor" problemi
+- Eski oda verisi next app launch'a sızmış olabilir
+- PK match history karışıyor
+
+---
+
+### ❌ SORUN 6: Network Recovery State Reset Tam Değil
+
+**Dosya:** `chat_room_providers.dart:472`
+
+```dart
+StreamSubscription<bool>? _networkRecoverySub;
+
+// Network düştü/geldi sırasında:
+// Problem: presence state reset yok
+// Problem: heartbeat state reset yok
+// Problem: pending seat claims temizlenmez
+// TRTC disconnected ama presence joined kalmış
+```
+
+**Sonuç:**
+- Network switch (WiFi → mobil) sırasında ghost presence
+- "Kullanıcı iki yerde" görülür
+- Seat claim "takılıp" kalır
+
+---
+
+### ❌ SORUN 7: PK Display Backend Event - Frontend State Mismatch
+
+**Dosya:** `mobile/lib/features/pk/presentation/providers/pk_session_notifier.dart`
+
+```dart
+// Backend → Flutter PK event akışı:
+// 1. POST /api/live/pk (create) → success
+// 2. Backend PK match başlat
+// 3. SSE pk_event (payload boş veya geç gelir)
+// 4. Frontend state update gecikmeli
+
+// Problem: Event timing kesin değil
+// Problem: Error feedback eksik (fixed ✓ v1.0.598)
+// Problem: Fallback candidates whitespace check (fixed ✓)
+// Problem: PK match state display race condition
+```
+
+**Sonuç:**
+- "İstek gönderildi" ama PK panel açılmıyor
+- "Şu an PK yapılabilecek oda yok" hatası
+- Backend'de match başladı, Flutter'da görünmüyor
+
+---
+
+## 3. ROOT CAUSE ANALYSIS
+
+### Mimari Sorunlar
+
+1. **State Merging Yapısı Fragmented**
+   - Presence engine + seat controls + SSE events ayrı çalışıyor
+   - Canonical state kaynağı yok (source of truth)
+   - Merge logic'ler birçok yerde tekrarlı
+
+2. **Concurrency Control Eksik**
+   - `_presenceJoined`, `_voiceJoined`, `_sessionActive` flags
+   - Mutex/lock mekanizması yok
+   - Race condition possible (join vs SSE vs poll)
+
+3. **Idempotency Garantisi Yok**
+   - Presence join: POST idempotent değil
+   - Seat take: POST retry eksik
+   - SSE event dedup eksik (partial)
+
+4. **Oda Cleanup Stratejisi Eksik**
+   - Temp state (pending claims, known IDs) scope clear
+   - Boş oda (last user left) state reset yok
+   - App navigation sırasında partial cleanup
+
+---
+
+## 4. ÇÖZÜM MİMARİSİ (HIGH LEVEL)
+
+### 4.1 Centralized Room Session Manager
+
+```dart
+class RoomSessionManager {
+  /// State machine: idle → joining → joined → reconnecting → leaving → cleaned
+  late SessionState _state = SessionState.idle;
+  
+  /// Mutex: concurrent join/leave/reconnect operations bloke
+  final _operationLock = RoomSessionLock();
+  
+  /// Canonical presence list ve seat slots
+  late List<ChatRoomPresence> _canonicalPresence = [];
+  late List<VoiceRoomSeatSlot> _canonicalSeats = [];
+  
+  /// Operation timeouts ve retry policies
+  final _config = RoomSessionConfig(
+    presenceJoinTimeout: Duration(seconds: 10),
+    heartbeatInterval: Duration(seconds: 15),
+    seatTakeRetryLimit: 3,
+  );
+  
+  /// Lifecycle events — UI layer subscribe
+  late final Stream<RoomSessionEvent> events;
+  
+  // Public APIs:
+  Future<void> joinRoom(String roomId, String userId);
+  Future<void> takeSeat(int seatIndex);
+  Future<void> leaveSeat();
+  Future<void> leaveRoom({bool force = false});
+  Future<void> onSseEvent(Map<String, dynamic> payload);
+  Future<void> onNetworkStateChange(bool online);
+  void dispose();
+}
+```
+
+### 4.2 State Machine Durumları
+
+```
+idle
+├─→ joining (POST /presence/join in-flight)
+│    ├─ OK ─→ joined
+│    └─ FAIL ─→ idle (retry pause)
+│
+├─→ joined (presence active, heartbeat running)
+│    ├─ Network down ─→ reconnecting
+│    ├─ TRTC ready ─→ voice_active (sub-state)
+│    ├─ leaveRoom() ─→ leaving
+│    └─ SSE error ─→ reconnecting
+│
+├─→ reconnecting (network restored, presence refresh)
+│    ├─ OK ─→ joined
+│    └─ FAIL ─→ reconnecting (backoff retry)
+│
+└─→ leaving (POST /presence/leave in-flight)
+     ├─ OK ─→ idle (clean)
+     └─ TIMEOUT ─→ idle (force clean)
+```
+
+### 4.3 Atomicity Guarantees
+
+1. **Join atomic:**
+   - Lock acquire
+   - POST /presence/join
+   - State update (presence list + heartbeat start)
+   - Lock release
+
+2. **Seat take atomic:**
+   - Check: _canonicalPresence[self].seatIndex == null
+   - POST /seats/take with idempotency key
+   - Wait SSE seat_updated event OR timeout
+   - Verify: seatSlots[index].userId == self
+
+3. **Leave atomic:**
+   - Lock acquire
+   - Heartbeat cancel
+   - POST /presence/leave
+   - Clear canonical state
+   - SSE release
+   - Lock release
+
+---
+
+## 5. IMPLEMENTATION ROADMAP
+
+### Phase 1: Centralized Manager (2-3 saat)
+- [ ] RoomSessionManager class oluştur
+- [ ] State machine + lock mekanizması
+- [ ] Lifecycle events (Future<Stream<RoomSessionEvent>>)
+- [ ] Timeout ve retry policies
+
+### Phase 2: Integration (2-3 saat)
+- [ ] VoiceRoomLiveController → use RoomSessionManager
+- [ ] SSE events → onSseEvent(payload)
+- [ ] Network recovery → onNetworkStateChange(bool)
+- [ ] Auto-seat → seat take manager
+
+### Phase 3: State Sync Refactor (3-4 saat)
+- [ ] Presence merge logic → manager
+- [ ] Seat sync logic → manager
+- [ ] Poll refresh → manager backup (SSE down case)
+- [ ] Error recovery → manager
+
+### Phase 4: Testing + Debug (2-3 saat)
+- [ ] Unit tests: state transitions, atomicity
+- [ ] Integration tests: join/leave/reconnect
+- [ ] Real device P0/P1 validation
+- [ ] Network failure scenarios
+
+### Phase 5: PK System Integration (1-2 saat)
+- [ ] PK match request → room session check
+- [ ] PK match state sync → manager
+- [ ] PK display → manager event subscription
+
+---
+
+## 6. KALAN RISKLER VE NOTLAR
+
+- **TRTC Bağlantısı:** Room session manager presenceden bağımsız olarak kalabilir (ayrı Thread/Isolate)
+- **SSE vs Polling:** SSE down iken poll refresh → manager polling mode'a geç
+- **App Navigation:** Route change sırasında room exit cleanup timing
+- **Memory Leak:** Disposed room manager event listeners kapatılıyor mu?
+- **PK Concurrency:** Simultaneous PK matches same room'da state collision
+
+---
+
+## 7. IMMEDIATE NEXT STEPS
+
+1. **architecture/room_session_manager.dart** → `RoomSessionManager` sınıfı
+2. **providers/chat_room_providers.dart** → Manager injection
+3. **test/features/voice_hub/room_session_manager_test.dart** → Atomicity tests
+4. **Parallel:** PK system ile integration planning
+
+---
+
+**Analiz Bitişi:** Mevcut sistemde **7 yapısal sorun** ve **4 mimari sorun** tespit edildi.
+Çözüm: Centralized **RoomSessionManager** ile state consistency ve idempotency garantisi.
