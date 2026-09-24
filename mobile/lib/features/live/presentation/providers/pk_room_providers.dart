@@ -95,9 +95,9 @@ class PkRoomController extends AutoDisposeFamilyNotifier<PkRoomMatch?, String> {
     return cur != null &&
         cur.id == next.id &&
         cur.status == next.status &&
-        cur.score1 == next.score1 &&
-        cur.score2 == next.score2 &&
-        cur.secondsLeft == next.secondsLeft;
+        cur.leftScore == next.leftScore &&
+        cur.rightScore == next.rightScore &&
+        cur.remainingSec == next.remainingSec;
   }
 
   void adopt(PkRoomMatch match) {
