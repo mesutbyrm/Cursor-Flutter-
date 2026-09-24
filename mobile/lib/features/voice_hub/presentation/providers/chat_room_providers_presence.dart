@@ -411,7 +411,8 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       state = state.copyWith(loading: false, error: 'Geçersiz oda kimliği');
       return;
     }
-    if (_presenceJoined && state.selfInRoom) {
+    // Idempotent: Prevent parallel join attempts (SSE reconnect + poll + etc.)
+    if (_presenceJoined || state.selfInRoom) {
       VoiceRoomDebugLog.roomJoin(
         roomId: _roomKey,
         source: 'presence',
@@ -744,6 +745,11 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       VoiceRoomDebugLog.log('api.presence.heartbeat.fail', {
         'error': e.toString(),
       });
+      // Heartbeat failure → trigger rejoin attempt
+      if (_presenceJoined && _sessionActive) {
+        _presenceJoined = false;
+        unawaited(_joinPresence());
+      }
     }
     final last = _lastSseEventAt;
     final sseSilent = last == null ||

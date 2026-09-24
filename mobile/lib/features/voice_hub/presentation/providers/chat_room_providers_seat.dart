@@ -8,8 +8,36 @@ part of 'chat_room_providers.dart';
 /// `part of` — aynı kütüphane; private erişim ve davranış birebir korunur.
 extension VoiceRoomSeatControls on VoiceRoomLiveController {
   void _purgeExpiredPendingSeatActions() {
-    _pendingSeatByUser.removeWhere((_, action) => !action.active);
-    _pendingSeatClaims.removeWhere((_, claim) => !claim.active);
+    final expired = <String, String>{}; // userId → reason
+
+    // Expired user-level actions
+    _pendingSeatByUser.removeWhere((userId, action) {
+      final isExpired = !action.active;
+      if (isExpired) {
+        expired[userId] = 'Pending seat action expired (${action.kind})';
+      }
+      return isExpired;
+    });
+
+    // Expired claims
+    _pendingSeatClaims.removeWhere((seatIndex, claim) {
+      final isExpired = !claim.active;
+      if (isExpired) {
+        expired[claim.userId] = 'Seat claim expired (seat $seatIndex)';
+      }
+      return isExpired;
+    });
+
+    // Debug log expired actions
+    if (expired.isNotEmpty) {
+      for (final entry in expired.entries) {
+        VoiceRoomDebugLog.log('seat.pending_expired', {
+          'userId': entry.key,
+          'reason': entry.value,
+          'room': _roomKey,
+        });
+      }
+    }
   }
 
   void _registerPendingSeatTake(String userId, int seatIndex) {
