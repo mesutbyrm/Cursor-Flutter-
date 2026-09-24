@@ -46,7 +46,11 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
       await _ensureRoomsCatalogForCanonicalKey();
       await _fetchAndApplyRoomState();
       await Future.wait<void>([
-        _joinPresence(),
+        _roomSessionManager?.join(
+          onError: (reason) {
+            VoiceRoomDebugLog.log('room_manager.join', reason);
+          },
+        ) ?? _joinPresence(),
         refreshServerPermissions(),
       ], eagerError: false);
       _startSse();
@@ -90,7 +94,11 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
     if (_roomKey.isEmpty) return;
     try {
       if (!skipPresence) {
-        await _joinPresence();
+        await _roomSessionManager?.join(
+          onError: (reason) {
+            VoiceRoomDebugLog.log('room_manager.join_parallel', reason);
+          },
+        ) ?? _joinPresence();
       }
       await Future.wait<void>([
         _loadInitialMessages(),

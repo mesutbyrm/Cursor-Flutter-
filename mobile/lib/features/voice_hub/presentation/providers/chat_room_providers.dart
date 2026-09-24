@@ -107,6 +107,7 @@ import '../services/voice_room_dj_player.dart';
 import '../services/voice_room_sse_audio_player.dart';
 import '../services/room_music_service.dart';
 import '../coordinators/room_leave_coordinator.dart';
+import '../coordinators/room_session_manager.dart';
 import '../services/voice_room_music_control_delegate.dart';
 import '../../video/domain/youtube_video_id.dart';
 import '../../video/presentation/room_video_controller.dart';
@@ -499,6 +500,7 @@ class VoiceRoomLiveController
   int _peakViewerCount = 0;
   final VoiceRoomSseEventDedupe _sseEventDedupe = VoiceRoomSseEventDedupe();
   final VoiceRoomChatFloodGuard _chatFloodGuard = VoiceRoomChatFloodGuard();
+  RoomSessionManager? _roomSessionManager;
 
   /// Aynı SSE eventId iki kez işlenmesin (hediye, koltuk, PK vb.).
   bool _acceptSseEvent(Map<String, dynamic> payload) {
@@ -761,8 +763,22 @@ class VoiceRoomLiveController
       }
     });
     _roomKeepAliveLink = ref.keepAlive();
+
+    // Initialize RoomSessionManager
+    final auth = ref.read(authControllerProvider).valueOrNull;
+    if (auth != null && _roomKey.isNotEmpty) {
+      _roomSessionManager = RoomSessionManager(
+        roomId: _roomKey,
+        userId: auth.id,
+        onJoinPresence: _joinPresenceForManager,
+        onLeavePresence: _leavePresenceForManager,
+        onHeartbeat: _presenceHeartbeatForManager,
+      );
+    }
+
     ref.onDispose(() {
       _sseEventDedupe.clear();
+      _roomSessionManager?.dispose();
       if (_sessionActive) {
         VoiceRoomDebugLog.roomLeave(roomId: _roomKey, source: 'dispose');
       }
