@@ -70,7 +70,7 @@ void main() {
 
     test('Leave from joined state', () async {
       final states = <RoomSessionState>[];
-      manager.events.listen((event) {
+      final subscription = manager.events.listen((event) {
         if (event is RoomSessionStateChanged) {
           states.add(event.current);
         }
@@ -83,6 +83,7 @@ void main() {
 
       expect(states, [RoomSessionState.leaving, RoomSessionState.idle]);
       expect(manager.state, RoomSessionState.idle);
+      subscription.cancel();
     });
 
     test('Leave is idempotent — multiple calls safe', () async {
@@ -113,7 +114,7 @@ void main() {
 
     test('Network offline: joined → reconnecting', () async {
       final states = <RoomSessionState>[];
-      manager.events.listen((event) {
+      final subscription = manager.events.listen((event) {
         if (event is RoomSessionStateChanged) {
           states.add(event.current);
         }
@@ -126,11 +127,12 @@ void main() {
 
       expect(manager.state, RoomSessionState.reconnecting);
       expect(states, contains(RoomSessionState.reconnecting));
+      subscription.cancel();
     });
 
     test('Presence update from SSE', () async {
       final updates = <RoomPresenceUpdated>[];
-      manager.events.listen((event) {
+      final subscription = manager.events.listen((event) {
         if (event is RoomPresenceUpdated) {
           updates.add(event);
         }
@@ -158,6 +160,7 @@ void main() {
       expect(updates, hasLength(1));
       expect(manager.presence, hasLength(2));
       expect(manager.presence[0].id, 'user-1');
+      subscription.cancel();
     });
 
     test('Leave clears canonical state', () async {
@@ -215,7 +218,7 @@ void main() {
           }
         },
       );
-      manager.events.listen((event) {
+      final subscription = manager.events.listen((event) {
         if (event is RoomSessionStateChanged) {
           states.add(event.current);
         }
@@ -228,11 +231,12 @@ void main() {
       await manager.heartbeat(onError: (_) {});
       expect(manager.state, RoomSessionState.reconnecting);
       expect(states, contains(RoomSessionState.reconnecting));
+      subscription.cancel();
     });
 
     test('SSE reconnect signal returns to joined state', () async {
       final states = <RoomSessionState>[];
-      manager.events.listen((event) {
+      final subscription = manager.events.listen((event) {
         if (event is RoomSessionStateChanged) {
           states.add(event.current);
         }
@@ -253,6 +257,7 @@ void main() {
 
       expect(manager.state, RoomSessionState.joined);
       expect(states, contains(RoomSessionState.joined));
+      subscription.cancel();
     });
 
     test('Seat update preserves presence state', () async {
@@ -284,7 +289,7 @@ void main() {
 
     test('Multiple events maintain consistency', () async {
       final eventLog = <String>[];
-      manager.events.listen((event) {
+      final subscription = manager.events.listen((event) {
         if (event is RoomPresenceUpdated) {
           eventLog.add('presence_${event.source}');
         } else if (event is RoomSeatsUpdated) {
@@ -323,6 +328,7 @@ void main() {
         'seats_sse_seat',
         'presence_poll_refresh',
       ]);
+      subscription.cancel();
     });
 
     test('Network recovery: offline → online → rejoined', () async {
@@ -366,7 +372,7 @@ void main() {
         onLeavePresence: () async {},
         onHeartbeat: () async {},
       );
-      manager.events.listen((event) {
+      final subscription = manager.events.listen((event) {
         if (event is RoomSessionError) {
           errors.add(event);
         }
@@ -376,6 +382,7 @@ void main() {
 
       // Error should be logged
       expect(manager.state, RoomSessionState.failed);
+      subscription.cancel();
     });
 
     test('Concurrent join/leave safety', () async {
