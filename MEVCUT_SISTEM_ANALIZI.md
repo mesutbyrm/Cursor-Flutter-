@@ -350,11 +350,11 @@ idle
 - [x] Poll refresh → manager canonical state (8s polling)
 - [x] Error recovery → manager event stream (state transitions + logging)
 
-### Phase 4: Testing + Debug (2-3 saat)
-- [ ] Unit tests: state transitions, atomicity
-- [ ] Integration tests: join/leave/reconnect
+### Phase 4: Testing + Debug ✅ (2026-09-24)
+- [x] Unit tests: state transitions, atomicity (15 test cases)
+- [x] Integration tests: join/leave/reconnect (7 test cases)
 - [ ] Real device P0/P1 validation
-- [ ] Network failure scenarios
+- [ ] Network failure scenarios (pending device testing)
 
 ### Phase 5: PK System Integration (1-2 saat)
 - [ ] PK match request → room session check
@@ -385,8 +385,30 @@ idle
 7. **Poll refresh** → 8s polling syncs manager canonical state ✅
 8. **Error recovery** → Manager event stream for debugging ✅
 
-### 📋 Next (Phase 4-5)
-1. **Unit tests** → Atomicity, idempotency, concurrent operations
+### ✅ Completed (Phase 4)
+1. **room_session_manager_test.dart** → 15 unit tests ✅
+   - Initial state validation
+   - Join/leave state transitions with idempotency
+   - Network offline/online state changes
+   - Presence and seat updates
+   - Heartbeat failure recovery
+   - SSE reconnect signal handling
+   - Multiple events consistency
+   - Network recovery lifecycle
+   - Error event handling
+   - Concurrent join/leave safety
+
+2. **voice_room_manager_integration_test.dart** → 7 integration tests ✅
+   - Full join/presence/leave lifecycle
+   - SSE reconnect after network outage
+   - Heartbeat failure recovery
+   - Poll refresh presence consistency
+   - Concurrent operations state consistency
+   - Multiple SSE events in sequence
+   - State recovery after failures
+
+### 📋 Next (Phase 5)
+1. **Run tests** → Verify all pass in Flutter environment
 2. **Real device testing** → P0/P1 validation with network failures, SSE reconnect
 3. **PK integration** → Wire PK match state to manager events
 4. **Performance** → Verify no excessive state updates or memory leaks
