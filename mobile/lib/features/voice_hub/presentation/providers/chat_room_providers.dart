@@ -1974,13 +1974,18 @@ class VoiceRoomLiveController
             : state.backgroundUrl,
         selfInRoom: _selfListedIn(presence) || state.selfInRoom,
       );
-      // Manager canonical state sync — poll refresh
+      // Manager canonical state sync — poll refresh (safe: uses ?. and handles errors)
       if (presence.isNotEmpty) {
-        _roomSessionManager?.applyServerEvent(
-          eventType: 'poll_refresh',
-          payload: {'type': 'poll_refresh'},
-          presenceUpdate: presence,
-        );
+        try {
+          _roomSessionManager?.applyServerEvent(
+            eventType: 'poll_refresh',
+            payload: {'type': 'poll_refresh'},
+            presenceUpdate: presence,
+          );
+        } catch (e) {
+          // Ignore errors from disposed manager
+          debugPrint('Poll refresh sync error: $e');
+        }
       }
       if (playDjInBackground) {
         if (!_skipRemoteMusicSync) {

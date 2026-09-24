@@ -95,11 +95,17 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
               ) ?? _sse._joinPresence());
             }
             // Signal manager that SSE reconnected
-            if (_sse._roomSessionManager != null && state.backendSyncReady) {
-              _sse._roomSessionManager!.applyServerEvent(
-                eventType: 'sse_connected',
-                payload: {'type': 'sse_reconnected'},
-              );
+            // Manager canonical state sync on SSE reconnect (safe: checks null and handles closed)
+            try {
+              if (state.backendSyncReady) {
+                _sse._roomSessionManager?.applyServerEvent(
+                  eventType: 'sse_connected',
+                  payload: {'type': 'sse_reconnected'},
+                );
+              }
+            } catch (e) {
+              // Ignore errors from disposed manager
+              debugPrint('SSE reconnect sync error: $e');
             }
             unawaited(_sse._refreshSeatsFromBackend());
             // İlk giriş snapshot'ı zaten yüklendi; yeniden bağlantıda tam resync.
@@ -204,13 +210,16 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
               hubOnlineCount: merged.length,
               clearError: true,
             );
-            // Manager canonical state sync
-            if (_sse._roomSessionManager != null) {
-              _sse._roomSessionManager!.applyServerEvent(
+            // Manager canonical state sync (safe: checks null and handles closed controller)
+            try {
+              _sse._roomSessionManager?.applyServerEvent(
                 eventType: 'sse_presence',
                 payload: {'type': 'presence'},
                 presenceUpdate: merged,
               );
+            } catch (e) {
+              // Ignore errors from disposed manager
+              debugPrint('SSE presence sync error: $e');
             }
             ref.read(voiceRoomDiagnosticProvider.notifier).setSse(true);
             ref

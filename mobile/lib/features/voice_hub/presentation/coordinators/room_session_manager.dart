@@ -234,32 +234,41 @@ class RoomSessionManager {
   }) {
     if (_state == RoomSessionState.idle) return;
 
-    // Canonical update
-    if (presenceUpdate != null) {
-      _canonicalPresence = presenceUpdate;
-      _syncPresenceIds();
-      _eventController.add(
-        RoomPresenceUpdated(
-          presence: List.unmodifiable(_canonicalPresence),
-          source: eventType,
-        ),
-      );
-    }
+    try {
+      // Canonical update
+      if (presenceUpdate != null) {
+        _canonicalPresence = presenceUpdate;
+        _syncPresenceIds();
+        if (!_eventController.isClosed) {
+          _eventController.add(
+            RoomPresenceUpdated(
+              presence: List.unmodifiable(_canonicalPresence),
+              source: eventType,
+            ),
+          );
+        }
+      }
 
-    if (seatsUpdate != null) {
-      _canonicalSeats = seatsUpdate;
-      _eventController.add(
-        RoomSeatsUpdated(
-          seats: List.unmodifiable(_canonicalSeats),
-          source: eventType,
-        ),
-      );
-    }
+      if (seatsUpdate != null) {
+        _canonicalSeats = seatsUpdate;
+        if (!_eventController.isClosed) {
+          _eventController.add(
+            RoomSeatsUpdated(
+              seats: List.unmodifiable(_canonicalSeats),
+              source: eventType,
+            ),
+          );
+        }
+      }
 
-    // SSE reconnect success → joined state'e dön
-    if (eventType == 'sse_connected' && _state == RoomSessionState.reconnecting) {
-      _setState(RoomSessionState.joined, 'SSE reconnected');
-      _reconnectBackoffMs = 100; // Reset backoff
+      // SSE reconnect success → joined state'e dön
+      if (eventType == 'sse_connected' && _state == RoomSessionState.reconnecting) {
+        _setState(RoomSessionState.joined, 'SSE reconnected');
+        _reconnectBackoffMs = 100; // Reset backoff
+      }
+    } catch (e) {
+      // Handle: "Cannot add new events after calling close"
+      debugPrint('applyServerEvent error (likely after dispose): $e');
     }
   }
 
@@ -287,13 +296,20 @@ class RoomSessionManager {
     if (_state == next) return;
     final prev = _state;
     _state = next;
-    _eventController.add(
-      RoomSessionStateChanged(
-        previous: prev,
-        current: next,
-        reason: reason,
-      ),
-    );
+    try {
+      if (!_eventController.isClosed) {
+        _eventController.add(
+          RoomSessionStateChanged(
+            previous: prev,
+            current: next,
+            reason: reason,
+          ),
+        );
+      }
+    } catch (e) {
+      // Handle: "Cannot add new events after calling close"
+      debugPrint('_setState error (likely after dispose): $e');
+    }
   }
 
   void _startHeartbeat() {
