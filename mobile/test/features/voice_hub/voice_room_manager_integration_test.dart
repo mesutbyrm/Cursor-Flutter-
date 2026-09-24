@@ -241,49 +241,45 @@ void main() {
     test('Multiple SSE events in sequence', () async {
       await manager.join(onError: (_) {});
 
-      // Sequence of events as they might arrive from real SSE
-      final events = [
-        ('sse_presence', [
+      // Event 1: First presence update
+      manager.applyServerEvent(
+        eventType: 'sse_presence',
+        payload: {},
+        presenceUpdate: [
           ChatRoomPresence(id: 'user-1', name: 'Alice', seatIndex: 0),
-        ]),
-        ('sse_presence', [
+        ],
+      );
+
+      // Event 2: Add more presence
+      manager.applyServerEvent(
+        eventType: 'sse_presence',
+        payload: {},
+        presenceUpdate: [
           ChatRoomPresence(id: 'user-1', name: 'Alice', seatIndex: 0),
           ChatRoomPresence(id: 'user-2', name: 'Bob', seatIndex: 1),
-        ]),
-        ('sse_seat', [
+        ],
+      );
+
+      // Event 3: Seat update
+      manager.applyServerEvent(
+        eventType: 'sse_seat',
+        payload: {},
+        seatsUpdate: [
           VoiceRoomSeatSlot(index: 0, userId: 'user-1'),
           VoiceRoomSeatSlot(index: 1, userId: 'user-2'),
-        ]),
-        ('sse_presence', [
+        ],
+      );
+
+      // Event 4: More presence
+      manager.applyServerEvent(
+        eventType: 'sse_presence',
+        payload: {},
+        presenceUpdate: [
           ChatRoomPresence(id: 'user-1', name: 'Alice', seatIndex: 0),
           ChatRoomPresence(id: 'user-2', name: 'Bob', seatIndex: 1),
           ChatRoomPresence(id: 'user-3', name: 'Charlie', seatIndex: 2),
-        ]),
-      ];
-
-      for (final (type, presence) in events.skip(0).take(2)) {
-        manager.applyServerEvent(
-          eventType: type,
-          payload: {},
-          presenceUpdate: presence.isEmpty ? null : presence,
-        );
-      }
-
-      for (final (type, seats) in events.skip(2).take(1)) {
-        manager.applyServerEvent(
-          eventType: type,
-          payload: {},
-          seatsUpdate: seats.isEmpty ? null : seats as List<VoiceRoomSeatSlot>,
-        );
-      }
-
-      for (final (type, presence) in events.skip(3).take(1)) {
-        manager.applyServerEvent(
-          eventType: type,
-          payload: {},
-          presenceUpdate: presence.isEmpty ? null : presence,
-        );
-      }
+        ],
+      );
 
       // Final state should be consistent
       expect(manager.presence, hasLength(3));
