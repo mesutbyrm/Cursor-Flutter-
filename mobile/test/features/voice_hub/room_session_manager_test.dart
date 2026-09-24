@@ -29,7 +29,7 @@ void main() {
 
     test('Join transition: idle → joining → joined', () async {
       final states = <RoomSessionState>[];
-      manager.events.listen((event) {
+      final subscription = manager.events.listen((event) {
         if (event is RoomSessionStateChanged) {
           states.add(event.current);
         }
@@ -39,6 +39,8 @@ void main() {
 
       expect(states, [RoomSessionState.joining, RoomSessionState.joined]);
       expect(manager.state, RoomSessionState.joined);
+
+      subscription.cancel();
     });
 
     test('Join is idempotent — concurrent calls are blocked', () async {

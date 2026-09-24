@@ -120,7 +120,7 @@ class RoomSessionManager {
   final Set<String> _knownPresenceIds = {};
 
   /// Events
-  late final StreamController<RoomSessionEvent> _eventController =
+  final StreamController<RoomSessionEvent> _eventController =
       StreamController<RoomSessionEvent>.broadcast();
 
   Stream<RoomSessionEvent> get events => _eventController.stream;
