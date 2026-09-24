@@ -205,7 +205,7 @@ class PkSessionNotifier
           : await _api.roomCandidates(id, alternateRoomId: hostAlt);
       if (_disposed) return;
       var candidates = bundle.candidates
-          .where((c) => c.contextId.isNotEmpty && c.contextId != id)
+          .where((c) => c.contextId.trim().isNotEmpty && c.contextId != id)
           .toList();
       if (candidates.isEmpty && arg.kind == PkContextKind.live) {
         await ref
@@ -225,7 +225,7 @@ class PkSessionNotifier
                 viewers: s.viewerCount,
               ),
             )
-            .where((c) => c.contextId.isNotEmpty)
+            .where((c) => c.contextId.trim().isNotEmpty)
             .toList();
         PkEventLog.log('pk_candidates_fallback_streams', {
           'count': candidates.length,
@@ -252,7 +252,7 @@ class PkSessionNotifier
                 viewers: r.displayOnline,
               ),
             )
-            .where((c) => c.contextId.isNotEmpty)
+            .where((c) => c.contextId.trim().isNotEmpty)
             .toList();
         PkEventLog.log('pk_candidates_fallback_voice_rooms', {
           'count': candidates.length,
@@ -335,7 +335,10 @@ class PkSessionNotifier
   }) async {
     if (state.isRateLimited) return;
     final target = targetContextId.trim();
-    if (target.isEmpty) return;
+    if (target.isEmpty) {
+      state = state.copyWith(error: 'Rakip oda seçilmesi gerekli');
+      return;
+    }
     final pending = state.battle;
     if (pending != null &&
         pending.status == PkStatus.pending &&

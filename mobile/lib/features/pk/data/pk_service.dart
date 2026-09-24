@@ -218,7 +218,7 @@ class PkService {
         .map((e) => fromStream
             ? PkCandidate.fromStreamJson(asJsonMap(e))
             : PkCandidate.fromRoomJson(asJsonMap(e)))
-        .where((c) => c.contextId.isNotEmpty)
+        .where((c) => c.contextId.trim().isNotEmpty)
         .toList();
     return PkCandidatesBundle(
       candidates: items,
