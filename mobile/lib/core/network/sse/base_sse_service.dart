@@ -235,6 +235,9 @@ abstract class BaseSseService {
           );
           return;
         }
+        _reconnectAttempt = 0;
+        await _openStream();
+        return;
       }
       status.emit(
         SseConnectionStatus(

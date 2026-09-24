@@ -158,7 +158,6 @@ import '../../features/live/domain/entities/voice_room_entity.dart';
 import '../../features/live/presentation/pages/live_pk_battle_page.dart';
 import '../../features/trtc/presentation/trtc_room_manager.dart';
 import '../../features/live/presentation/pages/live_pk_invite_page.dart';
-import '../../features/voice_hub/presentation/pages/pk_history_page.dart';
 import '../../features/voice_hub/presentation/pages/pk_invite_page.dart';
 import '../../features/voice_hub/presentation/pages/pk_result_page.dart';
 import '../../features/voice_hub/presentation/pages/voice_pk_battle_page.dart';
@@ -2290,13 +2289,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             opponentStream: opponent,
             sharedTrtc: sharedTrtc,
           );
-        },
-      ),
-      GoRoute(
-        path: '/pk/history',
-        builder: (context, state) {
-          final type = state.uri.queryParameters['type'];
-          return PkHistoryPage(battleType: type);
         },
       ),
       GoRoute(

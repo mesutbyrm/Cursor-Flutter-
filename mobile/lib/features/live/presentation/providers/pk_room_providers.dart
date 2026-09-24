@@ -60,6 +60,7 @@ class PkRoomController extends AutoDisposeFamilyNotifier<PkRoomMatch?, String> {
 
   void _onSse(PkMatchSseEvent event) {
     if (event.match != null) {
+      if (_isDuplicate(event.match!)) return;
       state = event.match;
       if (event.match!.isCompleted) {
         _pollTimer?.cancel();
@@ -74,9 +75,20 @@ class PkRoomController extends AutoDisposeFamilyNotifier<PkRoomMatch?, String> {
     try {
       final next = await ref.read(pkRoomRemoteProvider).getMatch(arg);
       if (next == null) return;
+      if (_isDuplicate(next)) return;
       state = next;
       if (next.isCompleted) _pollTimer?.cancel();
     } catch (_) {}
+  }
+
+  bool _isDuplicate(PkRoomMatch next) {
+    final cur = state;
+    return cur != null &&
+        cur.id == next.id &&
+        cur.status == next.status &&
+        cur.score1 == next.score1 &&
+        cur.score2 == next.score2 &&
+        cur.secondsLeft == next.secondsLeft;
   }
 
   void adopt(PkRoomMatch match) {
