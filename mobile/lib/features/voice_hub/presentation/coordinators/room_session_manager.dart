@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/voice_room_seat_slot.dart';
@@ -190,8 +189,7 @@ class RoomSessionManager {
           onError(e.toString());
           return;
         }
-        // Force: ignore error
-        debugPrint('Room leave error (forced): $e');
+        // Force: ignore error silently
       }
 
       _setState(RoomSessionState.idle, 'Left successfully');
@@ -266,9 +264,8 @@ class RoomSessionManager {
         _setState(RoomSessionState.joined, 'SSE reconnected');
         _reconnectBackoffMs = 100; // Reset backoff
       }
-    } catch (e) {
-      // Handle: "Cannot add new events after calling close"
-      debugPrint('applyServerEvent error (likely after dispose): $e');
+    } catch (_) {
+      // Handle: "Cannot add new events after calling close" after dispose
     }
   }
 
@@ -306,9 +303,8 @@ class RoomSessionManager {
           ),
         );
       }
-    } catch (e) {
-      // Handle: "Cannot add new events after calling close"
-      debugPrint('_setState error (likely after dispose): $e');
+    } catch (_) {
+      // Handle: "Cannot add new events after calling close" after dispose
     }
   }
 
@@ -318,8 +314,8 @@ class RoomSessionManager {
       const Duration(seconds: 15),
       (_) async {
         await heartbeat(
-          onError: (reason) {
-            debugPrint('Heartbeat error: $reason');
+          onError: (_) {
+            // Heartbeat error will trigger reconnect internally
           },
         );
       },
@@ -341,10 +337,9 @@ class RoomSessionManager {
       _reconnectBackoffMs = (_reconnectBackoffMs * 2).clamp(0, 30000);
 
       await join(
-        onError: (reason) {
-          debugPrint('Reconnect error: $reason');
+        onError: (_) {
           if (_state == RoomSessionState.reconnecting) {
-            _scheduleReconnect(); // Retry
+            _scheduleReconnect(); // Retry with backoff
           }
         },
       );
