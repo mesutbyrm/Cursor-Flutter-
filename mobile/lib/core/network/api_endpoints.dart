@@ -538,6 +538,9 @@ abstract final class ApiEndpoints {
 
   static const chatRoomPkCandidates = '/api/chat/rooms/pk/candidates';
 
+  /// Admin — PK ban listesi.
+  static const pkAdminBans = '/api/admin/pk/bans';
+
   static const videoStreamPkList = '/api/video-streams/pk/list';
 
   static const videoStreamPkScore = '/api/video-streams/pk/score';

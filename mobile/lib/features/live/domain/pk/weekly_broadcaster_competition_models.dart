@@ -46,13 +46,13 @@ class WeeklyBroadcasterCompetition {
   factory WeeklyBroadcasterCompetition.fromJson(Map<String, dynamic> json) {
     final participantsJson = json['participants'] is List
         ? (json['participants'] as List<dynamic>)
-            .map((e) => e is Map ? asJsonMap(e) : e as Map)
+            .map((e) => e is Map ? asJsonMap(e) : <String, dynamic>{})
             .toList()
         : <Map<String, dynamic>>[];
 
     final winnersJson = json['winners'] is List
         ? (json['winners'] as List<dynamic>)
-            .map((e) => e is Map ? asJsonMap(e) : e as Map)
+            .map((e) => e is Map ? asJsonMap(e) : <String, dynamic>{})
             .toList()
         : <Map<String, dynamic>>[];
 
