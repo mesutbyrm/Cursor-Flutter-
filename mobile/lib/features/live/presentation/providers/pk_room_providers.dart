@@ -25,6 +25,7 @@ final pkMatchSseServiceProvider = Provider<PkMatchSseService>((ref) {
 class PkRoomController extends AutoDisposeFamilyNotifier<PkRoomMatch?, String> {
   Timer? _pollTimer;
   PkMatchSseService? _sse;
+  DateTime? _lastSseUpdate;
 
   @override
   PkRoomMatch? build(String matchId) {
@@ -60,7 +61,9 @@ class PkRoomController extends AutoDisposeFamilyNotifier<PkRoomMatch?, String> {
 
   void _onSse(PkMatchSseEvent event) {
     if (event.match != null) {
+      if (_isDuplicate(event.match!)) return;
       state = event.match;
+      _lastSseUpdate = DateTime.now();
       if (event.match!.isCompleted) {
         _pollTimer?.cancel();
       }
@@ -71,12 +74,30 @@ class PkRoomController extends AutoDisposeFamilyNotifier<PkRoomMatch?, String> {
   }
 
   Future<void> _tick() async {
+    // Adım 6 (2026-09-24): SSE event'i geç ise poll skip et (2s ihtiyat).
+    final lastSse = _lastSseUpdate;
+    if (lastSse != null &&
+        DateTime.now().difference(lastSse) < const Duration(seconds: 2)) {
+      return;
+    }
+
     try {
       final next = await ref.read(pkRoomRemoteProvider).getMatch(arg);
       if (next == null) return;
+      if (_isDuplicate(next)) return;
       state = next;
       if (next.isCompleted) _pollTimer?.cancel();
     } catch (_) {}
+  }
+
+  bool _isDuplicate(PkRoomMatch next) {
+    final cur = state;
+    return cur != null &&
+        cur.id == next.id &&
+        cur.status == next.status &&
+        cur.leftScore == next.leftScore &&
+        cur.rightScore == next.rightScore &&
+        cur.remainingSec == next.remainingSec;
   }
 
   void adopt(PkRoomMatch match) {
@@ -136,12 +157,38 @@ final pkBansProvider =
 
 typedef PkLeaderboardKey = ({String period, String metric});
 
+// Adım 13 (2026-09-24): Leaderboard cache — TTL 5 min.
+class _PkLeaderboardCache {
+  _PkLeaderboardCache(this.data, this.fetchedAt);
+  final List<PkLeaderboardEntry> data;
+  final DateTime fetchedAt;
+
+  bool isExpired() =>
+      DateTime.now().difference(fetchedAt) > const Duration(minutes: 5);
+}
+
 final pkLeaderboardProvider = FutureProvider.autoDispose
-    .family<List<PkLeaderboardEntry>, PkLeaderboardKey>((ref, key) {
-  return ref
+    .family<List<PkLeaderboardEntry>, PkLeaderboardKey>((ref, key) async {
+  final lastCache =
+      ref.watch(pkLeaderboardCacheProvider(key));
+  if (lastCache != null && !lastCache.isExpired()) {
+    return lastCache.data;
+  }
+
+  final data = await ref
       .read(pkRoomRemoteProvider)
       .leaderboard(period: key.period, metric: key.metric);
+
+  ref.read(pkLeaderboardCacheProvider(key).notifier).state =
+      _PkLeaderboardCache(data, DateTime.now());
+
+  return data;
 });
+
+final pkLeaderboardCacheProvider = StateProvider.autoDispose
+    .family<_PkLeaderboardCache?, PkLeaderboardKey>(
+  (ref, key) => null,
+);
 
 final pkStatsProvider =
     FutureProvider.autoDispose.family<PkStats, String?>((ref, userId) {

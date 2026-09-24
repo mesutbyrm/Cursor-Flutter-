@@ -98,6 +98,9 @@ import '../providers/co_broadcast_provider.dart';
 import '../providers/pending_co_broadcast_join_provider.dart';
 import '../providers/live_beauty_provider.dart';
 import '../providers/live_guest_grid_provider.dart';
+import '../providers/weekly_broadcaster_competition_provider.dart';
+import '../providers/weekly_broadcaster_visibility_provider.dart';
+import '../widgets/weekly_broadcaster_competition_card.dart';
 import '../providers/live_gift_leaderboard_provider.dart';
 import '../providers/live_room_interaction_provider.dart'
     show LiveRoomInteractionNotifier, LiveRoomInteractionState, liveRoomInteractionProvider;
@@ -2998,6 +3001,39 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                     unawaited(showLiveStarTournamentSheet(context, ref)),
                 hostRank: hostRank,
                 tournamentsAsync: tournamentsAsync,
+              ),
+            if (hasStream && !pkImmersive)
+              Consumer(
+                builder: (context, ref, _) {
+                  final visible = ref.watch(
+                    weeklyBroadcasterCompetitionVisibleProvider,
+                  );
+                  if (!visible) return const SizedBox.shrink();
+
+                  final competition = ref.watch(
+                    weeklyBroadcasterCompetitionProvider,
+                  );
+
+                  return competition.when(
+                    loading: () => const SizedBox.shrink(),
+                    error: (_, __) => const SizedBox.shrink(),
+                    data: (comp) {
+                      if (comp == null || comp.participants.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+
+                      return Positioned(
+                        top: top + 48,
+                        right: 10,
+                        child: WeeklyBroadcasterCompetitionCard(
+                          competition: comp,
+                          maxHeight: 280,
+                          maxWidth: 200,
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
             LiveBroadcastRoomChromeColumn(
               topInset: top,

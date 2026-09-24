@@ -17,12 +17,6 @@ class PkResultPage extends ConsumerWidget {
       backgroundColor: Colors.black,
       appBar: AppBar(
         title: const Text('PK Sonucu'),
-        actions: [
-          TextButton(
-            onPressed: () => context.push('/pk/history'),
-            child: const Text('Geçmiş'),
-          ),
-        ],
       ),
       body: pk.isFinished
           ? PkWinnerCelebration(
