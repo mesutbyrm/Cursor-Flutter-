@@ -29,7 +29,7 @@ void main() {
       // Log all manager events
       manager.events.listen((event) {
         if (event is RoomSessionStateChanged) {
-          eventLog.add('room.state.${event.current}');
+          eventLog.add('room.state.${event.current.name}');
         } else if (event is RoomPresenceUpdated) {
           eventLog.add('room.presence.${event.source}');
         }
