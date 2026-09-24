@@ -157,12 +157,38 @@ final pkBansProvider =
 
 typedef PkLeaderboardKey = ({String period, String metric});
 
+// Adım 13 (2026-09-24): Leaderboard cache — TTL 5 min.
+class _PkLeaderboardCache {
+  _PkLeaderboardCache(this.data, this.fetchedAt);
+  final List<PkLeaderboardEntry> data;
+  final DateTime fetchedAt;
+
+  bool isExpired() =>
+      DateTime.now().difference(fetchedAt) > const Duration(minutes: 5);
+}
+
 final pkLeaderboardProvider = FutureProvider.autoDispose
-    .family<List<PkLeaderboardEntry>, PkLeaderboardKey>((ref, key) {
-  return ref
+    .family<List<PkLeaderboardEntry>, PkLeaderboardKey>((ref, key) async {
+  final lastCache =
+      ref.watch(pkLeaderboardCacheProvider(key));
+  if (lastCache != null && !lastCache.isExpired()) {
+    return lastCache.data;
+  }
+
+  final data = await ref
       .read(pkRoomRemoteProvider)
       .leaderboard(period: key.period, metric: key.metric);
+
+  ref.read(pkLeaderboardCacheProvider(key).notifier).state =
+      _PkLeaderboardCache(data, DateTime.now());
+
+  return data;
 });
+
+final pkLeaderboardCacheProvider = StateProvider.autoDispose
+    .family<_PkLeaderboardCache?, PkLeaderboardKey>(
+  (ref, key) => null,
+);
 
 final pkStatsProvider =
     FutureProvider.autoDispose.family<PkStats, String?>((ref, userId) {
