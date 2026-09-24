@@ -5,11 +5,28 @@ part of 'chat_room_providers.dart';
 /// Backend senkronizasyonu — GET /state, GET /seats, SSE `room_event`.
 extension VoiceRoomBackendSync on VoiceRoomLiveController {
   /// Odaya giriş sırası: GET /state → presence → SSE → GET /seats.
+  /// SSE connect arasında events atomically apply et (race condition prevent).
   Future<void> _loadBackendSnapshot() async {
     unawaited(ref.read(siteAnimationCatalogProvider.notifier).refresh(forceRefresh: false));
+
+    // Snapshot yükleme sırasında SSE events'i handle etme (prevent race)
+    // SSE bağlantı kuruluncaya kadar events tampon edilmeli
+    final initialSseConnected = state.sseConnected;
+
     await _fetchAndApplyRoomState();
     await _fetchAndApplySeats();
+
+    // SSE events arasında snapshot state'i doğrula
+    // Eğer SSE sırasında presence değiştiyse, resync yap
+    final hasNewSseConnected = state.sseConnected && !initialSseConnected;
+
     state = state.copyWith(backendSyncReady: true, loading: false);
+
+    if (hasNewSseConnected && state.presence.isNotEmpty) {
+      // SSE connected during snapshot → verify seats are canonical
+      await _fetchAndApplySeats();
+    }
+
     schedulePrivilegedSeatAttempts();
   }
 
@@ -48,6 +65,13 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
           seats,
         );
         state = state.copyWith(seatSlots: seats, presence: nextPresence);
+        // Manager canonical state sync
+        _roomSessionManager?.applyServerEvent(
+          eventType: 'api_seats_fetch',
+          payload: {'type': 'seats_fetched'},
+          presenceUpdate: nextPresence,
+          seatsUpdate: seats,
+        );
       }
       VoiceRoomDebugLog.log('api.seats.ok', {
         'room': _roomKey,
@@ -636,6 +660,13 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
         mergedSlots,
       );
       state = state.copyWith(seatSlots: mergedSlots, presence: nextPresence);
+      // Manager canonical state sync
+      _roomSessionManager?.applyServerEvent(
+        eventType: 'sse_seat_update',
+        payload: {'type': 'seat_refresh'},
+        presenceUpdate: nextPresence,
+        seatsUpdate: mergedSlots,
+      );
       VoiceRoomDebugLog.log('sse.seat_update.refresh', {
         'room': _roomKey,
         'count': seats.length,

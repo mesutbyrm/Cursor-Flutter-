@@ -37,6 +37,29 @@ export PATH
 
 log "Canlifal ortam güncellemesi (Cursor)"
 
+# Flutter SDK kurulu değilse kontrol et ve yükle
+if ! command -v flutter >/dev/null 2>&1; then
+  log "Flutter SDK yükleniyor..."
+  if [ -x "$(command -v git)" ] && [ -x "$(command -v curl)" ]; then
+    FLUTTER_VERSION="$(cat "$ROOT/mobile/.flutter-version" 2>/dev/null || echo 'stable')"
+    FLUTTER_DIR="${HOME}/flutter"
+
+    # Eğer Flutter repo varsa, sadece upgrade et
+    if [ -d "$FLUTTER_DIR/.git" ]; then
+      run_step "Flutter upgrade" 300 bash -c "cd '$FLUTTER_DIR' && git fetch && git checkout $FLUTTER_VERSION"
+    else
+      # Yoksa clone et
+      run_step "Flutter clone" 300 bash -c "git clone -b $FLUTTER_VERSION --depth 1 https://github.com/flutter/flutter.git '$FLUTTER_DIR' 2>/dev/null || true"
+    fi
+
+    # PATH'e ekle
+    export PATH="$FLUTTER_DIR/bin:$PATH"
+  else
+    warn "Flutter SDK kurulumu için git ve curl gerekli — atlandı"
+    FAILED=$((FAILED + 1))
+  fi
+fi
+
 if [ -f "$ROOT/mobile/pubspec.yaml" ] && command -v flutter >/dev/null 2>&1; then
   run_step "Flutter pub get" 90 bash -c "cd '$ROOT/mobile' && flutter pub get"
 else

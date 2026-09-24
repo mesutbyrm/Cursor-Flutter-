@@ -88,7 +88,23 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             }
             ref.read(voiceRoomGiftRealtimeProvider).setSseActive(true);
             if (!state.selfInRoom || !_sse._presenceJoined) {
-              unawaited(_sse._joinPresence());
+              unawaited(_sse._roomSessionManager?.join(
+                onError: (reason) {
+                  VoiceRoomDebugLog.log('room_manager.join_sse_reconnect', {'reason': reason});
+                },
+              ) ?? _sse._joinPresence());
+            }
+            // Signal manager that SSE reconnected
+            // Manager canonical state sync on SSE reconnect (safe: checks null and handles closed)
+            try {
+              if (state.backendSyncReady) {
+                _sse._roomSessionManager?.applyServerEvent(
+                  eventType: 'sse_connected',
+                  payload: {'type': 'sse_reconnected'},
+                );
+              }
+            } catch (_) {
+              // Ignore errors from disposed manager
             }
             unawaited(_sse._refreshSeatsFromBackend());
             // İlk giriş snapshot'ı zaten yüklendi; yeniden bağlantıda tam resync.
@@ -193,6 +209,16 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
               hubOnlineCount: merged.length,
               clearError: true,
             );
+            // Manager canonical state sync (safe: checks null and handles closed controller)
+            try {
+              _sse._roomSessionManager?.applyServerEvent(
+                eventType: 'sse_presence',
+                payload: {'type': 'presence'},
+                presenceUpdate: merged,
+              );
+            } catch (_) {
+              // Ignore errors from disposed manager
+            }
             ref.read(voiceRoomDiagnosticProvider.notifier).setSse(true);
             ref
                 .read(voiceRoomDiagnosticProvider.notifier)

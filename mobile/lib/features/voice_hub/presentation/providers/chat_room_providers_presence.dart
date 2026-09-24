@@ -411,7 +411,8 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       state = state.copyWith(loading: false, error: 'Geçersiz oda kimliği');
       return;
     }
-    if (_presenceJoined && state.selfInRoom) {
+    // Idempotent: Prevent parallel join attempts (SSE reconnect + poll + etc.)
+    if (_presenceJoined || state.selfInRoom) {
       VoiceRoomDebugLog.roomJoin(
         roomId: _roomKey,
         source: 'presence',
@@ -628,6 +629,9 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     unawaited(_networkRecoverySub?.cancel());
     _networkRecoverySub =
         ref.read(connectivityServiceProvider).onlineStream.listen((online) {
+      // Notify manager of network state change
+      _roomSessionManager?.onNetworkStateChanged(online);
+
       if (!online || !_sessionActive || !state.selfInRoom) return;
       final coordinator = ref.read(voiceRoomAudioCoordinatorProvider);
       if (coordinator.isReconnecting) return;
@@ -744,6 +748,11 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       VoiceRoomDebugLog.log('api.presence.heartbeat.fail', {
         'error': e.toString(),
       });
+      // Heartbeat failure → trigger rejoin attempt
+      if (_presenceJoined && _sessionActive) {
+        _presenceJoined = false;
+        unawaited(_joinPresence());
+      }
     }
     final last = _lastSseEventAt;
     final sseSilent = last == null ||
@@ -981,5 +990,20 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     unawaited(
       ref.read(voiceRoomsListNotifierProvider.notifier).refresh(),
     );
+  }
+
+  /// RoomSessionManager callback — presence join işlemi
+  Future<void> _joinPresenceForManager() async {
+    return _joinPresenceAttempt();
+  }
+
+  /// RoomSessionManager callback — presence leave işlemi
+  Future<void> _leavePresenceForManager() async {
+    return _leavePresence(force: false);
+  }
+
+  /// RoomSessionManager callback — presence heartbeat
+  Future<void> _presenceHeartbeatForManager() async {
+    return _presenceHeartbeatTick();
   }
 }
