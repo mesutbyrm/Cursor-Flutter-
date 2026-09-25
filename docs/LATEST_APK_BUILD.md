@@ -4,22 +4,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.599+649` |
-| Tarih (UTC) | 2026-09-25 14:58 |
-| Commit | [`30b12b3ead8bb862603c27fd78dd929843ff26b0`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/30b12b3ead8bb862603c27fd78dd929843ff26b0) |
-| İş akışı | [Run 36148889731](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36148889731) |
+| Sürüm | `1.0.599+650` |
+| Tarih (UTC) | 2026-09-25 15:43 |
+| Commit | [`88b51cdc09fb9ef517743a0e06641a1c2c2acbec`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/88b51cdc09fb9ef517743a0e06641a1c2c2acbec) |
+| İş akışı | [Run 36153864424](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36153864424) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.599+648 (2026-09-25) — Sesli oda presence yaşam döngüsü (Aşama 1)
+## 1.0.599+650 (2026-09-25) — Sesli oda backend sözleşmesi (2. dalga)
 
-- **Aktif oda kaydı** yalnızca backend `presence join` onayından sonra (`registerVoiceRoomLiveSession`)
-- **Sahte odadayım:** SSE/join listesine kendini ekleme yalnızca `_presenceJoined` iken
-- **Çift heartbeat/join:** `RoomSessionManager.delegateLifecycleToHost` — API tek kaynak (`VoiceRoomLiveController`)
-- **Heartbeat yeniden join:** koltuk talebi olmadan presence yenileme (`rejoinAfterHeartbeat`)
-- **SSE selfInRoom:** backend join onayı olmadan `selfInRoom` korunmaz
-- **Leave:** presence leave sonrası aktif oda registry + manager `syncHostLeft`
+- **selfInRoom:** yalnızca backend join onayı + presence listesi (`resolveSelfInRoomFromBackend`)
+- **GET /state:** join öncesi sahte “odadayım” kapatıldı
+- **Leave:** önce `DELETE .../presence` (voice_room_api.md)
+- **Cold start:** kayıtlı oda için auth sonrası stale presence leave
+- **TRTC:** `backendSyncReady` için 8 sn bekleme
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
