@@ -491,11 +491,10 @@ class PkSessionNotifier
     );
     state = state.copyWith(loading: true, clearError: true);
 
-    // Sesli oda PK daveti kılavuz §9.3 `POST /api/chat/rooms/{roomId}/pk`
-    // üzerinden gider — alıcı da bu ucu (ve /api/pk/me/invites) pollar. Canlı
-    // yayın PK'sı ayrı uçta kalır (aşağıdaki _api.create).
+    // Sesli oda PK daveti kılavuz §9.3 — polling ve SSE'ye güven, retry ekle.
+    // `voiceRoomByIdProvider` üzerinde hazır kontrol mevcut.
     if (arg.kind == PkContextKind.voice) {
-      await _createVoiceInvite(
+      await _createVoiceInviteWithRetry(
         target,
         durationSeconds: durationSeconds,
         targetUserId: targetUserId,
@@ -530,6 +529,53 @@ class PkSessionNotifier
     } catch (e) {
       if (_disposed) return;
       state = state.copyWith(loading: false, error: ApiException.userMessage(e));
+    }
+  }
+
+  /// Sesli oda daveti — retry mekanizmasıyla.
+  /// Sunucu tarafından SSE event gelmezse, opponent'in poll loop'u yaklar.
+  Future<void> _createVoiceInviteWithRetry(
+    String targetRoomId, {
+    required int durationSeconds,
+    String? targetUserId,
+  }) async {
+    var retryCount = 0;
+    const maxRetries = 2;
+
+    while (retryCount <= maxRetries) {
+      try {
+        await _createVoiceInvite(
+          targetRoomId,
+          durationSeconds: durationSeconds,
+          targetUserId: targetUserId,
+        );
+        return;
+      } on ApiException catch (e) {
+        if (_disposed) return;
+        retryCount++;
+        if (e.statusCode == 429 || retryCount > maxRetries) {
+          if (e.statusCode == 429) {
+            state = state.copyWith(
+              loading: false,
+              rateLimitUntil: DateTime.now().add(const Duration(seconds: 30)),
+              error: e.message,
+            );
+          } else {
+            state = state.copyWith(loading: false, error: e.message);
+          }
+          return;
+        }
+        // Retry'dan önce biraz bekle (exponential backoff: 1s, 2s)
+        await Future.delayed(Duration(seconds: retryCount));
+      } catch (e) {
+        if (_disposed) return;
+        retryCount++;
+        if (retryCount > maxRetries) {
+          state = state.copyWith(loading: false, error: ApiException.userMessage(e));
+          return;
+        }
+        await Future.delayed(Duration(seconds: retryCount));
+      }
     }
   }
 
