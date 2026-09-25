@@ -376,6 +376,35 @@ class PkSessionNotifier
     }
   }
 
+  /// PK daveti gönder — delivery manager'dan.
+  Future<void> sendInvite({
+    required String targetContextId,
+    int durationSeconds = 180,
+  }) async {
+    if (_deliveryManager == null) return;
+    if (!_isVoiceRoomReadyForPk()) {
+      state = state.copyWith(error: 'Oda hazır değil');
+      return;
+    }
+
+    state = state.copyWith(loading: true);
+    try {
+      final battle = await _deliveryManager!.sendInvite(
+        contextId: arg.contextId,
+        targetContextId: targetContextId,
+        contextKind: arg.kind.name,
+        durationSeconds: durationSeconds,
+      );
+      _applyBattle(battle);
+    } catch (e) {
+      state = state.copyWith(
+        error: e is ApiException ? e.message : e.toString(),
+      );
+    } finally {
+      if (!_disposed) state = state.copyWith(loading: false);
+    }
+  }
+
   void ingestFromSse(Map<String, dynamic> payload) {
     try {
       final battle = PkBattle.fromJson(payload);
