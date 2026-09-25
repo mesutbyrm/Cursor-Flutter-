@@ -153,7 +153,7 @@ void main() {
       );
       manager.events.listen((event) {
         if (event is RoomSessionStateChanged) {
-          eventLog.add('state.${event.current}');
+          eventLog.add('state.${event.current.name}');
         }
       });
 

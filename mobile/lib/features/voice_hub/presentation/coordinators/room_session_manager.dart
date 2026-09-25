@@ -120,7 +120,7 @@ class RoomSessionManager {
 
   /// Events
   final StreamController<RoomSessionEvent> _eventController =
-      StreamController<RoomSessionEvent>.broadcast();
+      StreamController<RoomSessionEvent>.broadcast(sync: true);
 
   Stream<RoomSessionEvent> get events => _eventController.stream;
 
@@ -136,15 +136,14 @@ class RoomSessionManager {
   }) async {
     await _lock.acquire();
     try {
-      // Zaten joining/joined/reconnecting ise skip
-      if (_state != RoomSessionState.idle &&
-          _state != RoomSessionState.failed) {
-        if (_state == RoomSessionState.joined) {
-          return; // Already in room
-        }
-        // Anderen durumda zaten bir işlem var, çıkış yap
-        return;
+      if (_state == RoomSessionState.joined) {
+        return; // Already in room
       }
+      if (_state == RoomSessionState.joining ||
+          _state == RoomSessionState.leaving) {
+        return; // Concurrent join/leave in progress
+      }
+      // idle, failed, reconnecting → (re)join presence
 
       _setState(RoomSessionState.joining, 'User initiated join');
 
