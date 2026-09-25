@@ -11,6 +11,14 @@ bool shouldAugmentPresenceWithSelf({
   return !members.any((p) => p.id == selfId);
 }
 
+/// Backend join onayı + presence listesinde self → UI `selfInRoom`.
+bool resolveSelfInRoomFromBackend({
+  required bool backendJoinAcknowledged,
+  required bool listedInPresence,
+}) {
+  return backendJoinAcknowledged && listedInPresence;
+}
+
 List<ChatRoomPresence> augmentPresenceWithSelf({
   required bool backendJoinAcknowledged,
   required List<ChatRoomPresence> members,

@@ -498,6 +498,12 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         _presenceApiKey,
         aliases: _roomKeyAliases,
       );
+      unawaited(
+        VoiceRoomPresencePersistence.recordJoin(
+          roomId: _presenceApiKey,
+          alternateRoomId: _presenceAlternateKey,
+        ),
+      );
       _roomSessionManager?.syncHostJoined(reason: 'Backend presence join');
       final merged = _ensureSelfInPresenceList(
         _mergePresenceStable(joined, source: 'join'),
@@ -623,6 +629,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
           );
     } catch (_) {}
     _roomSessionManager?.syncHostLeft(reason: 'Backend presence leave');
+    unawaited(VoiceRoomPresencePersistence.clear());
     if (ref.read(voiceRoomActiveLiveKeyProvider) == _presenceApiKey) {
       clearVoiceRoomLiveSession(ref, _roomKey);
     }

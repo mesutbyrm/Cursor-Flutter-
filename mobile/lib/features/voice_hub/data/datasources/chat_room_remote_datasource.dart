@@ -600,18 +600,24 @@ class ChatRoomRemoteDataSource {
 
   Future<void> leavePresence(String roomKey, {String? alternateKey}) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      // Kılavuz §9.3 — canonical leave önce.
+      // Backend voice_room_api.md — önce DELETE .../presence, sonra POST action leave.
       try {
-        await _dio.safePost<dynamic>(
-          presencePath(key),
-          data: const {'action': 'leave'},
-        );
+        await _dio.safeDelete<dynamic>(presencePath(key));
         return;
       } on ApiException catch (e) {
         if (e.statusCode != 404 && e.statusCode != 405) rethrow;
       } catch (_) {}
       try {
         await _dio.safeDelete<dynamic>('${presencePath(key)}?leave=1');
+        return;
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      } catch (_) {}
+      try {
+        await _dio.safePost<dynamic>(
+          presencePath(key),
+          data: const {'action': 'leave'},
+        );
         return;
       } on ApiException catch (e) {
         if (e.statusCode != 404 && e.statusCode != 405) rethrow;

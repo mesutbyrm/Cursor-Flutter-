@@ -39,6 +39,30 @@ void main() {
       expect(out.any((p) => p.id == 'u1'), isTrue);
     });
 
+    test('selfInRoom requires join ack and list membership', () {
+      expect(
+        resolveSelfInRoomFromBackend(
+          backendJoinAcknowledged: false,
+          listedInPresence: true,
+        ),
+        isFalse,
+      );
+      expect(
+        resolveSelfInRoomFromBackend(
+          backendJoinAcknowledged: true,
+          listedInPresence: true,
+        ),
+        isTrue,
+      );
+      expect(
+        resolveSelfInRoomFromBackend(
+          backendJoinAcknowledged: true,
+          listedInPresence: false,
+        ),
+        isFalse,
+      );
+    });
+
     test('does not duplicate self when already listed', () {
       final members = [ChatRoomPresence(id: 'u1', name: 'Me')];
       final out = augmentPresenceWithSelf(

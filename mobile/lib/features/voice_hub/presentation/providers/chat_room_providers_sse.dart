@@ -197,9 +197,10 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             _sse._syncPresenceJoinAnnouncements(merged);
             final wasSse = state.sseConnected;
             final listed = _sse._selfListedIn(merged);
-            final selfInRoom = _sse._presenceJoined
-                ? listed
-                : (listed && state.selfInRoom);
+            final selfInRoom = resolveSelfInRoomFromBackend(
+              backendJoinAcknowledged: _sse._presenceJoined,
+              listedInPresence: listed,
+            );
             if (_sse._presenceJoined && !listed && merged.isNotEmpty) {
               VoiceRoomDebugLog.log('presence.self_not_in_sse_list', {
                 'room': roomKey,

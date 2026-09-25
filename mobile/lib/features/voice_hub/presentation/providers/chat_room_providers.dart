@@ -109,6 +109,7 @@ import '../services/room_music_service.dart';
 import '../coordinators/room_leave_coordinator.dart';
 import '../coordinators/room_session_manager.dart';
 import '../utils/voice_room_presence_self_sync.dart';
+import '../utils/voice_room_presence_persistence.dart';
 import '../services/voice_room_music_control_delegate.dart';
 import '../../video/domain/youtube_video_id.dart';
 import '../../video/presentation/room_video_controller.dart';

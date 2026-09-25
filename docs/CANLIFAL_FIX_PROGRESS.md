@@ -1,45 +1,88 @@
 # Canlifal — tam sistem düzeltme ilerlemesi
 
-Güncelleme: 2026-09-25 · APK hedefi: `1.0.599+648`
+Güncelleme: 2026-09-25 · Dal: `main` (henüz **APK istenmedi** — CI yeşil olunca sizin onayınızla derlenir)
 
-## Aşama 1 — Sesli oda bağlantı / presence (tamamlandı — kod + test)
+## Backend erişimi
 
-### Kök nedenler
+| Kaynak | Durum |
+|--------|--------|
+| GitHub `mesutbyrm/canlifal` | **404** (bu ortamda private / erişim yok) |
+| `backend-reference/canlifal_flutter_paketi/` | **Tek sözleşme kaynağı** (`voice_room_api.md`, `pk-state.ts`, `presence-engine.ts`, OpenAPI) |
+| Üretim | `https://canlifal.com` — kılavuz §9 |
 
-| Sorun | Kök neden |
-|--------|-----------|
-| Ana sayfada “odadayım” / yanlış PK hedefi | `registerVoiceRoomLiveSession` join **başlamadan** çağrılıyordu |
-| Hiç join olmadan listede görünme | `_ensureSelfInPresenceList` backend onayı olmadan self ekliyordu |
-| Koltuktan düşüp tekrar oturma | Heartbeat fail → tam `joinPresence` + `peekJoinSeatIndex` / auto-seat |
-| Çift join / yarış | `RoomSessionManager.join` + `_joinPresence` paralel; manager ikinci heartbeat |
-| Leave sonrası hayalet oda | Aktif oda registry leave sonrası temizlenmiyordu |
+Backend kodu repoda değiştirilmedi (mobil istemci repo).
 
-### Değişen dosyalar
+---
 
-- `room_session_manager.dart` — `delegateLifecycleToHost`, `syncHostJoined` / `syncHostLeft`
-- `chat_room_providers_entry.dart` — tek join yolu `_joinPresence()`
-- `chat_room_providers_presence.dart` — join/leave/sync, rejoin, registry zamanlaması
-- `chat_room_providers_sse.dart` — SSE reconnect join, `selfInRoom` kuralları
-- `voice_room_presence_self_sync.dart` + test
+## Aşama 1 — Sesli oda (2. dalga, backend hizalı)
 
-### Backend
+### Kök nedenler (kullanıcı “Aşama 1 olmadı” geri bildirimi sonrası)
 
-Değişiklik yok (mevcut `POST .../presence` `{action: join|leave}` sözleşmesi).
+| Belirti | Kök neden |
+|---------|-----------|
+| Uygulama açılışında odadayım | Sunucuda kalan presence; istemci `GET /state` ile `selfInRoom=true` yapıyordu |
+| Ana sayfada oda / PK hedefi | Aktif oda kaydı join öncesi (648’de kısmen düzeltildi) |
+| Sahip TRTC kopması | TRTC, `backendSyncReady` beklemeden (1,5 sn) bağlanıyordu |
+| Leave sonrası hayalet | Leave sırası: backend **DELETE** `/presence` önce değildi |
+| Heartbeat → koltuk zıplama | 648: rejoin without seat |
 
-### Testler
+### Yapılan değişiklikler (650 dalı)
 
-- `voice_room_presence_self_sync_test.dart` — 3/3 PASS
-- `voice_room_manager_integration_test.dart` — PASS
-- `pk_session_integration_test.dart` — PASS
+- `resolveSelfInRoomFromBackend` — `selfInRoom` yalnızca `_presenceJoined && listede`
+- `GET /state` snapshot artık join onayı olmadan `selfInRoom` açmıyor
+- `leavePresence`: **DELETE** → POST `action: leave` (voice_room_api.md §2)
+- `VoiceRoomPresencePersistence` + `clearStaleVoicePresenceOnAuth` — girişte sunucuda kalan oda leave
+- TRTC bekleme: 8 sn (`voice_room_rtc_page.dart`)
+- Önceki 648: delegateLifecycle, rejoin, registry zamanlaması
 
-### Aşama 1 — cihaz / üretim
+### Test
 
-- TRTC + gerçek oda sahibi kopması: cihaz P0 gerekli
-- Uygulama açılışında sunucuda kalan presence: backend’de “aktif oda” tek uç yok; leave yalnızca dispose/leave akışında
+- `voice_room_presence_self_sync_test.dart` — 4 test PASS
+- `voice_hub/` — 210+ test PASS (yerel)
 
-## Aşama 2–5 — bekleyen (sıradaki)
+### Cihazda doğrulanmadı
 
-- PK davet teslimi / takım PK (poll + SSE zinciri doğrulama)
-- Canlı fal seans süresi / mesaj (psychic modül)
-- Oturum özeti / Gold / hediye kutusu / sezon — backend rapor uçları ile eşleme
-- Performans profili (startup route observer mevcut)
+- Gerçek oda sahibi TRTC, cross-room PK, arka plan 45 sn leave — **P0 cihaz gerekli**
+
+---
+
+## Aşama 2 — PK (mevcut kod + backend)
+
+- Sözleşme: `pk-state.ts`, `POST/GET .../pk`, SSE `room_event` / `pk_invite`
+- Mobil: `pk_battle_remote_*`, `voice_pk_invite_listener`, poll 2 sn
+- **Eksik doğrulama:** iki cihaz / iki oda ile uçtan uca (CI yok)
+
+---
+
+## Aşama 2 — Canlı fal
+
+- Süre: `psychic_video_controller` → `room.remainingSeconds` (backend) öncelikli
+- Mesaj / istek: `livePsychicsRepository` + SSE — cihaz testi yok
+
+---
+
+## Aşama 3 — Finans / Gold
+
+- Oturum özeti: `SessionGiftSummaryBuilder` — provider verisi; tam muhasebe için backend özet uçları (`/api/room/.../summary` vb.) kullanılmalı
+- Gold jeton: `membership_page.dart` — yeterli jeton → `POST /memberships/purchase` (paymentMethod opsiyonel); CFC → `paymentMethod: cfc`
+
+---
+
+## Aşama 4 — Hediye kutusu / sezon
+
+- Backend ref: `gift-box.ts`, `BOLUM22_*` — mobil modüller var; UI/backend probe ile hizalanmadı (bu oturumda kod taraması yapıldı, tam UI rewrite yok)
+
+---
+
+## Aşama 5 — Performans
+
+- `StartupPerf`, deferred bootstrap mevcut; yeni profil ölçümü bu oturumda koşturulmadı
+
+---
+
+## Sonraki adımlar (önerilen sıra)
+
+1. Cihazda Aşama 1 checklist (sahip oda, leave, cold start)
+2. İki telefon PK davet zinciri
+3. Falcı seans süre eşleşmesi
+4. Backend repo erişimi açılırsa route.ts ile otomatik diff

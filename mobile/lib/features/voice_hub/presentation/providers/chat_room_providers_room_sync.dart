@@ -95,7 +95,10 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       ownerId: snapshot.ownerId,
       roomTrtc: snapshot.trtc,
       serverPermissions: snapshot.me ?? state.serverPermissions,
-      selfInRoom: _selfListedIn(mergedPresence),
+      selfInRoom: resolveSelfInRoomFromBackend(
+        backendJoinAcknowledged: _presenceJoined,
+        listedInPresence: _selfListedIn(mergedPresence),
+      ),
       clearError: true,
       roomSeatCount: snapshot.seatCount ?? state.roomSeatCount,
       roomMaxUsers: snapshot.maxUsers ?? state.roomMaxUsers,

@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.599+650 (2026-09-25) — Sesli oda backend sözleşmesi (2. dalga)
+
+- **selfInRoom:** yalnızca backend join onayı + presence listesi (`resolveSelfInRoomFromBackend`)
+- **GET /state:** join öncesi sahte “odadayım” kapatıldı
+- **Leave:** önce `DELETE .../presence` (voice_room_api.md)
+- **Cold start:** kayıtlı oda için auth sonrası stale presence leave
+- **TRTC:** `backendSyncReady` için 8 sn bekleme
+
+## 1.0.599+649 (2026-09-25) — Analyze düzeltmesi (canMutate)
+
+- CI: `chat_room_providers_presence` — `_sessionActive` guard (undefined `canMutate`)
+
 ## 1.0.599+648 (2026-09-25) — Sesli oda presence yaşam döngüsü (Aşama 1)
 
 - **Aktif oda kaydı** yalnızca backend `presence join` onayından sonra (`registerVoiceRoomLiveSession`)

@@ -24,6 +24,7 @@ import '../../../fortune/data/fortune_birth_profile_store.dart';
 import '../../../fortune/presentation/providers/fortune_birth_profile_provider.dart';
 import '../../../profile/presentation/providers/profile_hub_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../../voice_hub/presentation/utils/voice_room_stale_session_guard.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/navigation/post_login_navigation.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
@@ -117,6 +118,7 @@ class AuthController extends AsyncNotifier<UserEntity?> {
 
   /// Açılış sonrası profil birleştirme + push kaydı — kritik yolu bloklamaz.
   Future<void> _enrichUserAfterBoot(UserEntity base) async {
+    unawaited(clearStaleVoicePresenceOnAuth(ref));
     try {
       final enriched = await _withSiteProfile(base);
       if (enriched != null && state.valueOrNull?.id == enriched.id) {
@@ -257,6 +259,7 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     );
     await ref.read(sessionUserCacheProvider).write(user);
     invalidateAuthenticatedShellData(ref, skipPresenceHeartbeat: true);
+    unawaited(clearStaleVoicePresenceOnAuth(ref));
     unawaited(OneSignalBootstrap.login(user.id));
     unawaited(
       Future<void>.delayed(const Duration(seconds: 2), () {
