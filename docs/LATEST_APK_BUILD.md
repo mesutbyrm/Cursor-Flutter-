@@ -4,29 +4,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.599+647` |
-| Tarih (UTC) | 2026-09-25 13:32 |
-| Commit | [`60e1c45949e884169967f003f7a297102cc7e83d`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/60e1c45949e884169967f003f7a297102cc7e83d) |
-| İş akışı | [Run 36138692000](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36138692000) |
+| Sürüm | `1.0.599+649` |
+| Tarih (UTC) | 2026-09-25 14:58 |
+| Commit | [`30b12b3ead8bb862603c27fd78dd929843ff26b0`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/30b12b3ead8bb862603c27fd78dd929843ff26b0) |
+| İş akışı | [Run 36148889731](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36148889731) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.599+646 (2026-09-25) — Birleşik release (PK + sesli oda oturumu)
+## 1.0.599+648 (2026-09-25) — Sesli oda presence yaşam döngüsü (Aşama 1)
 
-**PK (594–645, backend hizalı)**
-- Sesli PK: `POST/GET /api/chat/rooms/{id}/pk`, adaylar, `me/invites`, SSE `pk_invite`
-- `stream1Id/stream2Id` oda kimliği; davet poll; kabul/red `/api/live/pk` yedek
-- `serverNow` ile geri sayım; slug yedek anahtarı; oda içi `create_user` PK
-
-**Sesli oda (Claude / RoomSessionManager)**
-- Merkezi `RoomSessionManager` — join/presence/SSE senkronu, yarış koşulu korumaları
-- PK oturumu yalnızca aktif oda controller varken oda olaylarına bağlanır (gereksiz join yok)
-- Dispose sonrası event stream korumaları; presence/koltuk hızlı düzeltmeleri
-
-**Canlı fal / diğer**
-- Falcı kabul popup ve senkron iyileştirmeleri (önceki 593 dalı)
-- CI test düzeltmeleri (`pk_session_keep_alive`, entegrasyon testleri)
+- **Aktif oda kaydı** yalnızca backend `presence join` onayından sonra (`registerVoiceRoomLiveSession`)
+- **Sahte odadayım:** SSE/join listesine kendini ekleme yalnızca `_presenceJoined` iken
+- **Çift heartbeat/join:** `RoomSessionManager.delegateLifecycleToHost` — API tek kaynak (`VoiceRoomLiveController`)
+- **Heartbeat yeniden join:** koltuk talebi olmadan presence yenileme (`rejoinAfterHeartbeat`)
+- **SSE selfInRoom:** backend join onayı olmadan `selfInRoom` korunmaz
+- **Leave:** presence leave sonrası aktif oda registry + manager `syncHostLeft`
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
