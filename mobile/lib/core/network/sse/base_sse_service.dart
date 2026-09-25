@@ -27,6 +27,7 @@ abstract class BaseSseService {
   var _reconnectAttempt = 0;
   String? _lastEventId;
   DateTime? _lastEventAt;
+  var _openingStream = false;
 
   /// Son SSE `id:` — reconnect'te Last-Event-ID olarak gönderilir.
   String? get lastEventId => _lastEventId;
@@ -87,6 +88,7 @@ abstract class BaseSseService {
   Future<void> disconnect() async {
     _stopped = true;
     _paused = false;
+    _openingStream = false;
     _accessToken = null;
     _refreshTokens = null;
     await _closeStreamOnly();
@@ -127,8 +129,11 @@ abstract class BaseSseService {
   }
 
   Future<void> _openStream() async {
-    await _closeStreamOnly();
-    if (_stopped || _paused) return;
+    if (_openingStream) return;
+    _openingStream = true;
+    try {
+      await _closeStreamOnly();
+      if (_stopped || _paused) return;
 
     status.emit(
       SseConnectionStatus(
@@ -257,6 +262,8 @@ abstract class BaseSseService {
         ),
       );
       _scheduleReconnect();
+    } finally {
+      _openingStream = false;
     }
   }
 
