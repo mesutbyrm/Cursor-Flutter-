@@ -64,7 +64,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         if (n.isNotEmpty) _lastKnownPresenceNames[p.id] = n;
       }
       // Immediately update local presence state (no delay)
-      if (state.canMutate) {
+      if (_sessionActive) {
         state = state.copyWith(presence: merged);
       }
       return;
