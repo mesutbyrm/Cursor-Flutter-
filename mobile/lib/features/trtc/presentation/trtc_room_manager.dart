@@ -346,6 +346,23 @@ class TrtcRoomManager {
       'audioOnly': audioOnly,
       'role': publishAsAnchor ? 'anchor' : 'audience',
     });
+
+    // Hardware encoding — T+5s freeze düzeltme: enterRoom öncesi encoder parametreleri.
+    if (!audioOnly && publishAsAnchor) {
+      final encParam = TRTCVideoEncParam(
+        videoResolution: TRTCVideoResolution.res_640_360,
+        videoResolutionMode: TRTCVideoResolutionMode.portrait,
+        videoFps: 24,
+        videoBitrate: 800,
+        minVideoBitrate: 480,
+        enableAdjustRes: true,
+      );
+      _cloud!.setVideoEncoderParam(encParam);
+      _cloud!.setNetworkQosParam(
+        TRTCNetworkQosParam(preference: TRTCVideoQosPreference.smooth),
+      );
+    }
+
     _cloud!.enterRoom(params, scene);
 
     final enterResult = await _enterRoomCompleter!.future.timeout(
