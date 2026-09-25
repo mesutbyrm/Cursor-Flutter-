@@ -3,10 +3,10 @@ import 'dart:math';
 
 /// SSE yeniden bağlanma politikası — tüm stream servisleri için ortak.
 ///
-/// Gecikme dizisi: 100ms → 200ms → 500ms → 1s → 3s → 5s (maksimum) + %30 jitter.
-/// P0: T+5s donma sorunu çözmek için ilk reconnect'leri hızlandır.
+/// Gecikme dizisi: 0ms → 100ms → 300ms → 800ms → 2s → 5s (maksimum) + %10 jitter.
+/// P0: Connection drops sorununu çöz — aggressive reconnect.
 abstract final class SseReconnectPolicy {
-  static const _delaysSec = [0, 0, 1, 2, 3, 5];
+  static const _delaysSec = [0, 0, 1, 1, 2, 5];
   static const maxDelay = Duration(seconds: 30);
   /// Kılavuz §6: maksimum 20 deneme; sonrası failed.
   static const maxAttempts = 20;
@@ -15,7 +15,8 @@ abstract final class SseReconnectPolicy {
   static Duration delayForAttempt(int attempt) {
     final idx = (attempt - 1).clamp(0, _delaysSec.length - 1);
     final base = Duration(seconds: _delaysSec[idx]);
-    final jitterMs = (base.inMilliseconds * 0.3 * _rng.nextDouble()).round();
+    // Azaltılmış jitter: 30% → 10% (reconnect'leri tahmin edilebilir hale getir)
+    final jitterMs = (base.inMilliseconds * 0.1 * _rng.nextDouble()).round();
     return base + Duration(milliseconds: jitterMs);
   }
 
