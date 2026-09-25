@@ -92,3 +92,14 @@ Agent: hotfix gerekir — logcat / ekran kaydı ekleyin.
 
 Agent: hotfix gerekir — logcat / ekran kaydı ekleyin.
 
+## 2026-09-25 18:25 UTC — Psychic P0 **FAIL**
+
+| Alan | Değer |
+|------|--------|
+| Sürüm | `1.0.599+647` |
+| Faz | Psychic P0 |
+| Sonuç | **FAIL** |
+| Not | sesli odalarda pk isteği atılmıyor, müzik isterken müzik isteyen kullanıcı donuyor, odaya giren yetkili direk koltuğa oturmuyor, T+5 donması, sse bağlantı kesintisi, ses video gecikmesi, ok istategi ulaşmadı, logcat çıktısı alamıyorum telefonla yapıyorum |
+
+Agent: hotfix gerekir — logcat / ekran kaydı ekleyin.
+
