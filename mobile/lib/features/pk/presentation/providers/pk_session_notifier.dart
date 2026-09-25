@@ -394,6 +394,9 @@ class PkSessionNotifier
     } else {
       _retainLive();
     }
+    if (battle.serverNow.trim().isNotEmpty) {
+      _api.syncServerNow(battle.serverNow);
+    }
     final skew = _api.clockSkew;
     state = state.copyWith(
       battle: battle,

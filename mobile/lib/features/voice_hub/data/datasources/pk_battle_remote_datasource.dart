@@ -116,6 +116,18 @@ Map<String, dynamic>? unwrapPkHttpBody(dynamic body) {
   return null;
 }
 
+Map<String, dynamic> _pkBattleJsonWithEnvelope(
+  Map<String, dynamic> envelope,
+  Map<String, dynamic> battleJson,
+) {
+  final merged = Map<String, dynamic>.from(battleJson);
+  final sn = envelope['serverNow']?.toString();
+  if (sn != null && sn.isNotEmpty && (merged['serverNow']?.toString().isEmpty ?? true)) {
+    merged['serverNow'] = sn;
+  }
+  return merged;
+}
+
 /// GET/POST PK yanıtı — `activeBattle`, `pendingInvite`, zarfsız battle.
 PkBattleRemote? parsePkBattleHttpBody(dynamic body) {
   final map = unwrapPkHttpBody(body);
@@ -147,8 +159,9 @@ PkBattleRemote? parsePkBattleHttpBody(dynamic body) {
         map;
   }
   if (raw != null && raw is Map) {
-    final battle =
-        PkBattleRemote.fromJson(Map<String, dynamic>.from(raw));
+    final battle = PkBattleRemote.fromJson(
+      _pkBattleJsonWithEnvelope(map, Map<String, dynamic>.from(raw)),
+    );
     if (battle.effectiveId.isNotEmpty) return battle;
   }
   final status = map['status']?.toString();
@@ -160,11 +173,13 @@ PkBattleRemote? parsePkBattleHttpBody(dynamic body) {
       ?.toString()
       .trim();
   if (id != null && id.isNotEmpty) {
-    return PkBattleRemote.fromJson({
-      ...map,
-      'id': id,
-      'status': status ?? map['status'] ?? 'pending',
-    });
+    return PkBattleRemote.fromJson(
+      _pkBattleJsonWithEnvelope(map, {
+        ...map,
+        'id': id,
+        'status': status ?? map['status'] ?? 'pending',
+      }),
+    );
   }
   return null;
 }
@@ -672,8 +687,8 @@ class PkBattleRemoteDataSource {
           res.data;
       final out = <PkBattleRemote>[];
       for (final raw in asJsonList(list)) {
-        if (raw is! Map) continue;
-        final envelope = Map<String, dynamic>.from(raw);
+        final envelope = asJsonMap(raw);
+        if (envelope.isEmpty) continue;
         if (envelope['incoming'] == false) continue;
         final nested = envelope['battle'];
         final merged = PkBattleRemote.normalizeWireMap({

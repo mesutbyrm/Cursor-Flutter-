@@ -42,6 +42,7 @@ PkBattle pkRemoteToBattle(PkBattleRemote r) {
     user2: u2 != null
         ? PkParticipant(id: u2.userId, name: u2.displayName ?? '')
         : null,
+    serverNow: r.serverNow ?? '',
   );
 }
 

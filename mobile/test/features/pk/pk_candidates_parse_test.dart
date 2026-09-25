@@ -16,6 +16,20 @@ void main() {
     expect(c.viewers, 2);
   });
 
+  test('parsePkBattleHttpBody merges envelope serverNow', () {
+    final battle = parsePkBattleHttpBody({
+      'activeBattle': {
+        'id': 'pk-sn',
+        'status': 'active',
+        'stream1Id': 'room-a',
+        'stream2Id': 'room-b',
+        'endsAt': '2030-01-01T00:03:00.000Z',
+      },
+      'serverNow': '2030-01-01T00:00:00.000Z',
+    });
+    expect(battle?.serverNow, '2030-01-01T00:00:00.000Z');
+  });
+
   test('parsePkBattleHttpBody create_user starting battle', () {
     final battle = parsePkBattleHttpBody({
       'id': 'pk-99',

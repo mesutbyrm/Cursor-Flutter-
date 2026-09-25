@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.598+645 (2026-09-23) — PK serverNow senkronu
+
+- **Sesli PK süre:** `GET /api/chat/rooms/{id}/pk` zarfındaki `serverNow` → geri sayım (`endsAt − serverNow`)
+
 ## 1.0.598+643 (2026-09-23) — Backend PK sözleşmesi hizalama
 
 - **Backend referans (`full-source` / `pk-state.ts`):** `scope: room` sesli PK; `stream1Id/stream2Id` oda kimliği

@@ -31,6 +31,7 @@ class PkBattleRemote extends Equatable {
     this.startedAt,
     this.expiresAt,
     this.inviteTimeoutSeconds = 0,
+    this.serverNow,
   });
 
   final String id;
@@ -60,6 +61,8 @@ class PkBattleRemote extends Equatable {
   /// Davet otomatik kapanma (genelde 60 sn).
   final DateTime? expiresAt;
   final int inviteTimeoutSeconds;
+  /// PK_ENTEGRASYON — `endsAt − serverNow` geri sayımı için (oda GET /pk).
+  final String? serverNow;
 
   /// Sunucu `endsAt` / `startedAt` varsa öncelikli geri sayım.
   int resolvedSecondsLeft({DateTime? now}) {
@@ -266,6 +269,7 @@ class PkBattleRemote extends Equatable {
       startedAt: startedAt,
       expiresAt: expiresAt,
       inviteTimeoutSeconds: inviteTimeoutSeconds,
+      serverNow: normalized['serverNow']?.toString(),
     );
   }
 

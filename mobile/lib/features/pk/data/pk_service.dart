@@ -27,6 +27,9 @@ class PkService {
     _clockSkew = server.difference(DateTime.now());
   }
 
+  /// Sesli oda `GET /api/chat/rooms/{id}/pk` ve SSE `serverNow` alanı.
+  void syncServerNow(String? serverNow) => _applyServerNow(serverNow);
+
   Future<PkBattle?> getState(String contextId) async {
     final id = contextId.trim();
     if (id.isEmpty) return null;
