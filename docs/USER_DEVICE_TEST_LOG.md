@@ -81,3 +81,14 @@ Sonraki: `bash scripts/p1-go.sh` · `docs/P1_DEVICE_START.md`
 
 Agent: hotfix gerekir — logcat / ekran kaydı ekleyin.
 
+## 2026-09-25 12:45 UTC — Psychic P0 **FAIL**
+
+| Alan | Değer |
+|------|--------|
+| Sürüm | `1.0.599+647` |
+| Faz | Psychic P0 |
+| Sonuç | **FAIL** |
+| Not | T+5s donma, geç bağlanma, session isteği geç gitmesi, kabul sonrası geç başlaması, mesajlar ulaşmıyor, timeout kaldır ve hemen başlasın |
+
+Agent: hotfix gerekir — logcat / ekran kaydı ekleyin.
+
