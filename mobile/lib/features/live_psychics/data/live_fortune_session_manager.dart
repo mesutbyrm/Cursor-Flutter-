@@ -1,6 +1,6 @@
 import 'dart:async';
 import '../../../core/network/api_exception.dart';
-import '../../live/data/datasources/live_field/live_session_repository.dart';
+import '../presentation/providers/live_psychics_providers.dart' show LiveSessionRepository;
 
 /// Falcı sesyon yönetimi — SSE stream + session lifecycle.
 ///
