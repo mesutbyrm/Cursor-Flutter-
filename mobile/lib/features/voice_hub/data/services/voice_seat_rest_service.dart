@@ -15,12 +15,20 @@ class VoiceSeatRestService {
   final Map<String, _SeatPendingState> _pendingSeat = {};
 
   /// Koltuk değiştir — local update + retry system.
+  /// Duplicate işlemleri prevent et.
   Future<void> swapSeat(
     String roomId,
     int seatIndex, {
     String? userId,
   }) async {
     final uid = userId?.trim() ?? '';
+
+    // Zaten pending ise çıkıl (duplicate prevention)
+    if (_pendingSeat.containsKey(uid)) {
+      VoiceRoomDebugLog.log('seat.swap_skipped_pending', {'userId': uid});
+      return;
+    }
+
     _registerPending(uid, seatIndex, 'swap');
 
     try {

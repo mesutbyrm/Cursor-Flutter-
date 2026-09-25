@@ -60,8 +60,8 @@ class LiveFortuneSessionManager {
 
       return sessionId;
     } on ApiException catch (e) {
-      // Retry 2x with exponential backoff
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Retry immediately (no delay) for fast reconnect
+      await Future.delayed(const Duration(milliseconds: 50));
 
       try {
         final sessionId = await _repo.createSession(
@@ -191,10 +191,10 @@ class LiveFortuneSessionManager {
     }
   }
 
-  /// Polling fallback — her 10 saniye.
+  /// Polling fallback — her 3 saniye (fast sync).
   void _startPolling() {
     _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
+    _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
       try {
         final sessions = await _repo.getIncomingSessions();
 
