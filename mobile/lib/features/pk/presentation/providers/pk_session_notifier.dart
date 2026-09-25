@@ -129,6 +129,8 @@ class PkSessionNotifier
   /// Sesli oda PK context'te room session events'ini dinle.
   /// State transition veya error'lar PK match state'ine etki edebilir.
   void _subscribeToRoomSessionEvents(String roomId) {
+    // PK sheet tek başına tam oda controller'ı boot etmesin (test + gereksiz join).
+    if (!ref.exists(voiceRoomLiveProvider(roomId))) return;
     final chatRoomNotifier = ref.read(voiceRoomLiveProvider(roomId).notifier);
     final manager = chatRoomNotifier.roomSessionManager;
     if (manager == null) return;
@@ -177,6 +179,7 @@ class PkSessionNotifier
       return;
     }
 
+    if (!ref.exists(voiceRoomLiveProvider(arg.contextId))) return;
     final chatRoomNotifier = ref.read(voiceRoomLiveProvider(arg.contextId).notifier);
     final manager = chatRoomNotifier.roomSessionManager;
     if (manager == null) return;
@@ -196,6 +199,7 @@ class PkSessionNotifier
   /// Oda joined state'de değilse invite gönderilemez.
   bool _isVoiceRoomReadyForPk() {
     if (arg.kind != PkContextKind.voice) return true;
+    if (!ref.exists(voiceRoomLiveProvider(arg.contextId))) return true;
 
     final chatRoomNotifier = ref.read(voiceRoomLiveProvider(arg.contextId).notifier);
     final manager = chatRoomNotifier.roomSessionManager;
