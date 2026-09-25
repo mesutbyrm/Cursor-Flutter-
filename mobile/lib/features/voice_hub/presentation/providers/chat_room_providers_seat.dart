@@ -28,6 +28,10 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
       return isExpired;
     });
 
+    // Sync cleanup with REST service
+    final seatService = ref.read(voiceSeatRestServiceProvider);
+    seatService.purgeExpiredPending();
+
     // Debug log expired actions
     if (expired.isNotEmpty) {
       for (final entry in expired.entries) {

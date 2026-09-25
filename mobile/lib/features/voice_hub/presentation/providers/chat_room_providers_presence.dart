@@ -246,9 +246,6 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     );
     _confirmPendingSeatFromSnapshot(guarded);
 
-    // Host offline detection — oda sahibi çevrim dışı ise host koltuk boşalt
-    _clearHostSeatIfOffline(guarded);
-
     VoiceRoomDebugLog.presenceUpdate(
       roomId: _roomKey,
       previousCount: previous.length,
@@ -1012,36 +1009,4 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
   }
 
   /// Host offline detection — oda sahibi çevrim dışı ise host koltuk boşalt
-  void _clearHostSeatIfOffline(List<ChatRoomPresence> presence) {
-    final ownerId = (state.ownerId ?? _roomMeta.ownerId ?? '').trim();
-    if (ownerId.isEmpty) return;
-
-    // Host'u bul (seatIndex 1 ve owner)
-    ChatRoomPresence? host;
-    for (final p in presence) {
-      if (p.id == ownerId && p.seatIndex == 1) {
-        host = p;
-        break;
-      }
-    }
-
-    if (host == null) return;
-
-    // Host offline ise koltuk boşalt ve güncellenmiş presence döndür
-    if (!host.isOnline) {
-      final updated = presence
-          .map((p) => p.id == ownerId && p.seatIndex == 1
-              ? p.copyWith(seatIndex: null)
-              : p)
-          .toList();
-
-      // State'i güncelle
-      state = state.copyWith(presence: updated);
-
-      VoiceRoomDebugLog.log('presence.host_offline_seat_cleared', {
-        'ownerId': ownerId,
-        'room': _roomKey,
-      });
-    }
-  }
 }

@@ -135,102 +135,89 @@ abstract class BaseSseService {
       await _closeStreamOnly();
       if (_stopped || _paused) return;
 
-    status.emit(
-      SseConnectionStatus(
-        phase: _reconnectAttempt > 0
-            ? SseConnectionPhase.reconnecting
-            : SseConnectionPhase.connecting,
-        attempt: _reconnectAttempt,
-      ),
-    );
-
-    final token = _accessToken != null ? await _accessToken!() : null;
-    if (requiresAuth && (token == null || token.trim().isEmpty)) {
-      _scheduleReconnect();
-      return;
-    }
-
-    final headers = <String, dynamic>{
-      'Accept': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-    };
-    if (token != null && token.trim().isNotEmpty) {
-      headers['Authorization'] = 'Bearer ${token.trim()}';
-    }
-    final lastId = _lastEventId?.trim();
-    if (lastId != null && lastId.isNotEmpty) {
-      headers['Last-Event-ID'] = lastId;
-    }
-
-    _dio = connectionDio();
-    _cancel = CancelToken();
-    try {
-      final res = await _dio!.get<ResponseBody>(
-        streamPath(),
-        options: Options(
-          responseType: ResponseType.stream,
-          headers: headers,
+      status.emit(
+        SseConnectionStatus(
+          phase: _reconnectAttempt > 0
+              ? SseConnectionPhase.reconnecting
+              : SseConnectionPhase.connecting,
+          attempt: _reconnectAttempt,
         ),
-        cancelToken: _cancel,
       );
-      final byteStream = res.data?.stream;
-      if (byteStream == null) {
+
+      final token = _accessToken != null ? await _accessToken!() : null;
+      if (requiresAuth && (token == null || token.trim().isEmpty)) {
         _scheduleReconnect();
         return;
       }
 
-      _reconnectAttempt = 0;
-      _lastEventAt = DateTime.now();
-      _startHeartbeatWatchdog();
-      onStreamOpened();
-      status.emit(
-        const SseConnectionStatus(phase: SseConnectionPhase.connected),
-      );
-
-      final buffer = StringBuffer();
-      _bytesSub = byteStream.listen(
-        (chunk) {
-          _lastEventAt = DateTime.now();
-          buffer.write(utf8.decode(chunk, allowMalformed: true));
-          drainSseBuffer(buffer, (block) {
-            final eventId = parseSseEventId(block);
-            if (eventId != null && eventId.isNotEmpty) {
-              _lastEventId = eventId;
-            }
-            onSseBlock(block);
-          });
-        },
-        onError: (Object e) {
-          status.emit(
-            SseConnectionStatus(
-              phase: SseConnectionPhase.reconnecting,
-              attempt: _reconnectAttempt,
-              lastError: e,
-            ),
-          );
-          _scheduleReconnect();
-        },
-        onDone: () => _scheduleReconnect(),
-        cancelOnError: false,
-      );
-    } on DioException catch (e) {
-      if (kDebugMode) debugPrint('$runtimeType SSE: $e');
-      final statusCode = e.response?.statusCode;
-      if (!shouldReconnectOnHttpError(statusCode)) {
-        _stopped = true;
-        status.emit(
-          SseConnectionStatus(
-            phase: SseConnectionPhase.failed,
-            attempt: _reconnectAttempt,
-            lastError: e,
-          ),
-        );
-        return;
+      final headers = <String, dynamic>{
+        'Accept': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+      };
+      if (token != null && token.trim().isNotEmpty) {
+        headers['Authorization'] = 'Bearer ${token.trim()}';
       }
-      // Kılavuz §6: 401 → refresh sonra yeniden bağlan.
-      if (e.response?.statusCode == 401 && _refreshTokens != null) {
-        final ok = await _refreshTokens!.call();
-        if (!ok) {
+      final lastId = _lastEventId?.trim();
+      if (lastId != null && lastId.isNotEmpty) {
+        headers['Last-Event-ID'] = lastId;
+      }
+
+      _dio = connectionDio();
+      _cancel = CancelToken();
+      try {
+        final res = await _dio!.get<ResponseBody>(
+          streamPath(),
+          options: Options(
+            responseType: ResponseType.stream,
+            headers: headers,
+          ),
+          cancelToken: _cancel,
+        );
+        final byteStream = res.data?.stream;
+        if (byteStream == null) {
+          _scheduleReconnect();
+          return;
+        }
+
+        _reconnectAttempt = 0;
+        _lastEventAt = DateTime.now();
+        _startHeartbeatWatchdog();
+        onStreamOpened();
+        status.emit(
+          const SseConnectionStatus(phase: SseConnectionPhase.connected),
+        );
+
+        final buffer = StringBuffer();
+        _bytesSub = byteStream.listen(
+          (chunk) {
+            _lastEventAt = DateTime.now();
+            buffer.write(utf8.decode(chunk, allowMalformed: true));
+            drainSseBuffer(buffer, (block) {
+              final eventId = parseSseEventId(block);
+              if (eventId != null && eventId.isNotEmpty) {
+                _lastEventId = eventId;
+              }
+              onSseBlock(block);
+            });
+          },
+          onError: (Object e) {
+            status.emit(
+              SseConnectionStatus(
+                phase: SseConnectionPhase.reconnecting,
+                attempt: _reconnectAttempt,
+                lastError: e,
+              ),
+            );
+            _scheduleReconnect();
+          },
+          onDone: () => _scheduleReconnect(),
+          cancelOnError: false,
+        );
+      } on DioException catch (e) {
+        if (kDebugMode) debugPrint('$runtimeType SSE: $e');
+        final statusCode = e.response?.statusCode;
+        if (!shouldReconnectOnHttpError(statusCode)) {
+          _stopped = true;
           status.emit(
             SseConnectionStatus(
               phase: SseConnectionPhase.failed,
@@ -240,28 +227,42 @@ abstract class BaseSseService {
           );
           return;
         }
-        _reconnectAttempt = 0;
-        await _openStream();
-        return;
+        // Kılavuz §6: 401 → refresh sonra yeniden bağlan.
+        if (e.response?.statusCode == 401 && _refreshTokens != null) {
+          final ok = await _refreshTokens!.call();
+          if (!ok) {
+            status.emit(
+              SseConnectionStatus(
+                phase: SseConnectionPhase.failed,
+                attempt: _reconnectAttempt,
+                lastError: e,
+              ),
+            );
+            return;
+          }
+          _reconnectAttempt = 0;
+          await _openStream();
+          return;
+        }
+        status.emit(
+          SseConnectionStatus(
+            phase: SseConnectionPhase.reconnecting,
+            attempt: _reconnectAttempt,
+            lastError: e,
+          ),
+        );
+        _scheduleReconnect();
+      } catch (e) {
+        if (kDebugMode) debugPrint('$runtimeType SSE: $e');
+        status.emit(
+          SseConnectionStatus(
+            phase: SseConnectionPhase.reconnecting,
+            attempt: _reconnectAttempt,
+            lastError: e,
+          ),
+        );
+        _scheduleReconnect();
       }
-      status.emit(
-        SseConnectionStatus(
-          phase: SseConnectionPhase.reconnecting,
-          attempt: _reconnectAttempt,
-          lastError: e,
-        ),
-      );
-      _scheduleReconnect();
-    } catch (e) {
-      if (kDebugMode) debugPrint('$runtimeType SSE: $e');
-      status.emit(
-        SseConnectionStatus(
-          phase: SseConnectionPhase.reconnecting,
-          attempt: _reconnectAttempt,
-          lastError: e,
-        ),
-      );
-      _scheduleReconnect();
     } finally {
       _openingStream = false;
     }
