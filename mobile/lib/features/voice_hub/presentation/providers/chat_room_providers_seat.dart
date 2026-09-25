@@ -69,6 +69,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
   }
 
   void _confirmPendingSeatFromSnapshot(List<ChatRoomPresence> merged) {
+    final seatService = ref.read(voiceSeatRestServiceProvider);
     for (final row in merged) {
       final id = row.id.trim();
       if (id.isEmpty) continue;
@@ -77,10 +78,12 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
       switch (pending.kind) {
         case VoiceSeatPendingKind.take:
           if (pending.seatIndex != null && row.seatIndex == pending.seatIndex) {
+            seatService.confirmFromPresence(id, row.seatIndex);
             _clearPendingSeatForUser(id);
           }
         case VoiceSeatPendingKind.leave:
           if (row.seatIndex == null) {
+            seatService.confirmFromPresence(id, null);
             _clearPendingSeatForUser(id);
           }
       }

@@ -19,6 +19,7 @@ import '../../data/pk_battle_bridge.dart';
 import '../../data/pk_exception.dart';
 import '../../data/pk_models.dart';
 import '../../data/pk_service.dart';
+import '../../data/pk_delivery_manager.dart';
 import '../../../../../../features/voice_hub/presentation/coordinators/room_session_manager.dart';
 import 'pk_providers.dart';
 
@@ -88,6 +89,7 @@ class PkSessionNotifier
   KeepAliveLink? _liveLink;
   bool _disposed = false;
   StreamSubscription<RoomSessionEvent>? _roomSessionEventSub;
+  PkDeliveryManager? _deliveryManager;
 
   @override
   PkSessionState build(PkSessionArgs arg) {
@@ -96,7 +98,12 @@ class PkSessionNotifier
       _tick?.cancel();
       _releaseLive();
       _roomSessionEventSub?.cancel();
+      _deliveryManager?.dispose();
     });
+
+    // Initialize delivery manager
+    _deliveryManager = PkDeliveryManager(_api);
+
     Future.microtask(() => loadState(showLoading: false));
     _startTicker();
 
@@ -540,6 +547,7 @@ class PkSessionNotifier
         return;
       }
       final battle = pkRemoteToBattle(remote);
+      _deliveryManager?.confirmFromSse(battle.id, battle);
       if (battle.status.isTerminal) {
         _releaseLive();
       } else {
