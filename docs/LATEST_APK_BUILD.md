@@ -4,20 +4,29 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.598+644` |
-| Tarih (UTC) | 2026-09-24 21:37 |
-| Commit | [`88a238f60f93964fef0e73f390b363f97d32973d`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/88a238f60f93964fef0e73f390b363f97d32973d) |
-| İş akışı | [Run 36060440886](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36060440886) |
+| Sürüm | `1.0.599+647` |
+| Tarih (UTC) | 2026-09-25 08:18 |
+| Commit | [`3ad529f6f85d2ef0afd7396e5e3bdffdbbcfac44`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/3ad529f6f85d2ef0afd7396e5e3bdffdbbcfac44) |
+| İş akışı | [Run 36110476720](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36110476720) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.598+643 (2026-09-23) — Backend PK sözleşmesi hizalama
+## 1.0.599+646 (2026-09-25) — Birleşik release (PK + sesli oda oturumu)
 
-- **Backend referans (`full-source` / `pk-state.ts`):** `scope: room` sesli PK; `stream1Id/stream2Id` oda kimliği
-- **Sesli PK state:** `GET /api/chat/rooms/{id}/pk` slug yedek anahtarı; `me/invites` zarfında `data[]` listesi
-- **Davet poll:** Giden pending varken diğer odalar + `me/invites` poll’u kesilmez
-- **Kabul/red:** Oda PK ucu 404/400 ise `POST /api/live/pk` birleşik yedek (PK_ENTEGRASYON)
+**PK (594–645, backend hizalı)**
+- Sesli PK: `POST/GET /api/chat/rooms/{id}/pk`, adaylar, `me/invites`, SSE `pk_invite`
+- `stream1Id/stream2Id` oda kimliği; davet poll; kabul/red `/api/live/pk` yedek
+- `serverNow` ile geri sayım; slug yedek anahtarı; oda içi `create_user` PK
+
+**Sesli oda (Claude / RoomSessionManager)**
+- Merkezi `RoomSessionManager` — join/presence/SSE senkronu, yarış koşulu korumaları
+- PK oturumu yalnızca aktif oda controller varken oda olaylarına bağlanır (gereksiz join yok)
+- Dispose sonrası event stream korumaları; presence/koltuk hızlı düzeltmeleri
+
+**Canlı fal / diğer**
+- Falcı kabul popup ve senkron iyileştirmeleri (önceki 593 dalı)
+- CI test düzeltmeleri (`pk_session_keep_alive`, entegrasyon testleri)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
