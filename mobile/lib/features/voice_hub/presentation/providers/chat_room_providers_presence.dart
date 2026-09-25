@@ -411,13 +411,13 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     } catch (_) {}
   }
 
-  Future<void> _joinPresence() async {
+  Future<void> _joinPresence({bool rejoinAfterHeartbeat = false}) async {
     if (_roomKey.isEmpty) {
       state = state.copyWith(loading: false, error: 'Geçersiz oda kimliği');
       return;
     }
     // Idempotent: Prevent parallel join attempts (SSE reconnect + poll + etc.)
-    if (_presenceJoined || state.selfInRoom) {
+    if (!rejoinAfterHeartbeat && (_presenceJoined || state.selfInRoom)) {
       VoiceRoomDebugLog.roomJoin(
         roomId: _roomKey,
         source: 'presence',
@@ -432,7 +432,9 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         await Future<void>.delayed(Duration(milliseconds: 500 * attempt));
       }
       try {
-        await _joinPresenceAttempt();
+        await _joinPresenceAttempt(
+          allowSeatClaim: !rejoinAfterHeartbeat,
+        );
         return;
       } on Object catch (e) {
         lastError = e;
@@ -461,7 +463,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         msg.contains('bağlantınızı kontrol');
   }
 
-  Future<void> _joinPresenceAttempt() async {
+  Future<void> _joinPresenceAttempt({bool allowSeatClaim = true}) async {
     final token = await ref.read(tokenStorageProvider).readAccess();
       final hasJwt = token != null && token.isNotEmpty;
       VoiceRoomDebugLog.jwtStatus(hasToken: hasJwt, tokenLength: token?.length);
@@ -473,7 +475,8 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       final pendingPass = ref
           .read(pendingRoomPasswordProvider.notifier)
           .peek(_roomKey);
-      final joinSeat = peekJoinSeatIndexForPrivilegedUser();
+      final joinSeat =
+          allowSeatClaim ? peekJoinSeatIndexForPrivilegedUser() : null;
       final joined = await ref.read(chatRoomRemoteProvider).joinPresence(
             _presenceApiKey,
             alternateKey: _presenceAlternateKey,
@@ -490,6 +493,12 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         'roomId': _roomKey,
       });
       _presenceJoined = true;
+      registerVoiceRoomLiveSession(
+        ref,
+        _presenceApiKey,
+        aliases: _roomKeyAliases,
+      );
+      _roomSessionManager?.syncHostJoined(reason: 'Backend presence join');
       final merged = _ensureSelfInPresenceList(
         _mergePresenceStable(joined, source: 'join'),
       );
@@ -514,9 +523,11 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       unawaited(refreshServerPermissions());
       unawaited(_fetchAndApplySeats());
       unawaited(_refreshHubOnlineCountFromServer());
-      _autoSeatAttempted = false;
-      unawaited(_tryAutoPrivilegedSeat());
-      schedulePrivilegedSeatAttempts();
+      if (allowSeatClaim) {
+        _autoSeatAttempted = false;
+        unawaited(_tryAutoPrivilegedSeat());
+        schedulePrivilegedSeatAttempts();
+      }
   }
 
   List<ChatRoomPresence> _ensureSelfInPresenceList(
@@ -524,17 +535,17 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
   ) {
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) return merged;
-    if (merged.any((p) => p.id == user.id)) return merged;
     final nick = _effectiveNickname(user) ?? user.displayName ?? user.username;
-    return [
-      ...merged,
-      ChatRoomPresence(
+    return augmentPresenceWithSelf(
+      backendJoinAcknowledged: _presenceJoined,
+      members: merged,
+      self: ChatRoomPresence(
         id: user.id,
         name: nick,
         nickname: nick,
         chatRole: user.role,
       ),
-    ];
+    );
   }
 
   void _handlePresenceJoinFailure(Object e) {
@@ -611,6 +622,10 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
             alternateKey: _presenceAlternateKey,
           );
     } catch (_) {}
+    _roomSessionManager?.syncHostLeft(reason: 'Backend presence leave');
+    if (ref.read(voiceRoomActiveLiveKeyProvider) == _presenceApiKey) {
+      clearVoiceRoomLiveSession(ref, _roomKey);
+    }
   }
 
   void _startPresenceHeartbeat() {
@@ -753,10 +768,10 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       VoiceRoomDebugLog.log('api.presence.heartbeat.fail', {
         'error': e.toString(),
       });
-      // Heartbeat failure → trigger rejoin attempt
+      // Heartbeat failure → presence yeniden doğrula (koltuk talebi yok)
       if (_presenceJoined && _sessionActive) {
         _presenceJoined = false;
-        unawaited(_joinPresence());
+        unawaited(_joinPresence(rejoinAfterHeartbeat: true));
       }
     }
     final last = _lastSseEventAt;
@@ -999,7 +1014,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
 
   /// RoomSessionManager callback — presence join işlemi
   Future<void> _joinPresenceForManager() async {
-    return _joinPresenceAttempt();
+    return _joinPresence();
   }
 
   /// RoomSessionManager callback — presence leave işlemi

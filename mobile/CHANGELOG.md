@@ -1,5 +1,19 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.599+648 (2026-09-25) — Sesli oda presence yaşam döngüsü (Aşama 1)
+
+- **Aktif oda kaydı** yalnızca backend `presence join` onayından sonra (`registerVoiceRoomLiveSession`)
+- **Sahte odadayım:** SSE/join listesine kendini ekleme yalnızca `_presenceJoined` iken
+- **Çift heartbeat/join:** `RoomSessionManager.delegateLifecycleToHost` — API tek kaynak (`VoiceRoomLiveController`)
+- **Heartbeat yeniden join:** koltuk talebi olmadan presence yenileme (`rejoinAfterHeartbeat`)
+- **SSE selfInRoom:** backend join onayı olmadan `selfInRoom` korunmaz
+- **Leave:** presence leave sonrası aktif oda registry + manager `syncHostLeft`
+
+## 1.0.599+647 (2026-09-25) — CI / RoomSessionManager
+
+- **RoomSessionManager:** Olay akışı `sync: true`; `reconnecting` durumundan yeniden join
+- **Entegrasyon testleri:** PK + sesli oda oturumu (Claude birleşimi) yeşil — APK CI kapısı
+
 ## 1.0.599+646 (2026-09-25) — Birleşik release (PK + sesli oda oturumu)
 
 **PK (594–645, backend hizalı)**

@@ -88,11 +88,7 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             }
             ref.read(voiceRoomGiftRealtimeProvider).setSseActive(true);
             if (!state.selfInRoom || !_sse._presenceJoined) {
-              unawaited(_sse._roomSessionManager?.join(
-                onError: (reason) {
-                  VoiceRoomDebugLog.log('room_manager.join_sse_reconnect', {'reason': reason});
-                },
-              ) ?? _sse._joinPresence());
+              unawaited(_sse._joinPresence());
             }
             // Signal manager that SSE reconnected
             // Manager canonical state sync on SSE reconnect (safe: checks null and handles closed)
@@ -201,11 +197,18 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             _sse._syncPresenceJoinAnnouncements(merged);
             final wasSse = state.sseConnected;
             final listed = _sse._selfListedIn(merged);
+            final selfInRoom = _sse._presenceJoined
+                ? listed
+                : (listed && state.selfInRoom);
+            if (_sse._presenceJoined && !listed && merged.isNotEmpty) {
+              VoiceRoomDebugLog.log('presence.self_not_in_sse_list', {
+                'room': roomKey,
+              });
+            }
             state = state.copyWith(
               presence: merged,
               sseConnected: true,
-              selfInRoom: listed ||
-                  (state.selfInRoom && _sse._presenceJoined && merged.isNotEmpty),
+              selfInRoom: selfInRoom,
               hubOnlineCount: merged.length,
               clearError: true,
             );

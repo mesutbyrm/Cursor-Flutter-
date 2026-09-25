@@ -20,7 +20,6 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
     if (_roomKey.isNotEmpty) {
       ref.read(siteAnimationProvider(_roomKey).notifier).clearQueue();
     }
-    registerVoiceRoomLiveSession(ref, _presenceApiKey, aliases: _roomKeyAliases);
     VoiceEventLog.joinStart(roomId: _roomKey);
     ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
           VoiceSessionPhase.joining,
@@ -46,11 +45,7 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
       await _ensureRoomsCatalogForCanonicalKey();
       await _fetchAndApplyRoomState();
       await Future.wait<void>([
-        _roomSessionManager?.join(
-          onError: (reason) {
-            VoiceRoomDebugLog.log('room_manager.join', {'reason': reason});
-          },
-        ) ?? _joinPresence(),
+        _joinPresence(),
         refreshServerPermissions(),
       ], eagerError: false);
       _startSse();
@@ -94,12 +89,7 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
     if (_roomKey.isEmpty) return;
     try {
       if (!skipPresence) {
-        final joinFuture = _roomSessionManager?.join(
-          onError: (reason) {
-            VoiceRoomDebugLog.log('room_manager.join_parallel', {'reason': reason});
-          },
-        ) ?? _joinPresence();
-        await joinFuture;
+        await _joinPresence();
       }
       await Future.wait<void>([
         _loadInitialMessages(),

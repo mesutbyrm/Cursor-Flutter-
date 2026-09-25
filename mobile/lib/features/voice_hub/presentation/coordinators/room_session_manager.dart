@@ -96,10 +96,15 @@ class RoomSessionManager {
     this.onJoinPresence,
     this.onLeavePresence,
     this.onHeartbeat,
+    this.delegateLifecycleToHost = false,
   });
 
   final String roomId;
   final String userId;
+
+  /// [VoiceRoomLiveController] kendi presence/TRTC/heartbeat'ini yönetir;
+  /// true iken manager yalnızca durum + SSE canonical güncellemesi yapar.
+  final bool delegateLifecycleToHost;
 
   /// API callbacks (set after initialization)
   Future<void> Function()? onJoinPresence;
@@ -130,10 +135,28 @@ class RoomSessionManager {
 
   List<VoiceRoomSeatSlot> get seats => List.unmodifiable(_canonicalSeats);
 
+  /// Host (VoiceRoomLiveController) backend join onayladığında çağır.
+  void syncHostJoined({String reason = 'Host confirmed join'}) {
+    _reconnectBackoffMs = 100;
+    _setState(RoomSessionState.joined, reason);
+    if (!delegateLifecycleToHost) {
+      _startHeartbeat();
+    }
+  }
+
+  /// Host leave tamamlandığında çağır.
+  void syncHostLeft({String reason = 'Host confirmed leave'}) {
+    _cancelHeartbeat();
+    _cancelReconnect();
+    _setState(RoomSessionState.idle, reason);
+    _clearCanonicalState();
+  }
+
   /// Presence join — idempotent, concurrent calls bloke
   Future<void> join({
     required void Function(String reason) onError,
   }) async {
+    if (delegateLifecycleToHost) return;
     await _lock.acquire();
     try {
       if (_state == RoomSessionState.joined) {
@@ -171,6 +194,10 @@ class RoomSessionManager {
     required void Function(String reason) onError,
     bool force = false,
   }) async {
+    if (delegateLifecycleToHost) {
+      syncHostLeft(reason: 'Delegated leave');
+      return;
+    }
     await _lock.acquire();
     try {
       if (_state == RoomSessionState.idle || _state == RoomSessionState.leaving) {
