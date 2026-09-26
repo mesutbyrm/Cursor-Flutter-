@@ -55,7 +55,7 @@ void main() {
   group('ChatRoomRemoteDataSource.leavePresence', () {
     test('reports success when the server accepts a variant', () async {
       final ds = ChatRoomRemoteDataSource(
-        _dioWithAdapter(_FakeAdapter((_, __, ___) async => _json(200, {}))),
+        _dioWithAdapter(_FakeAdapter((_, _, _) async => _json(200, {}))),
       );
 
       expect(await ds.leavePresence('room-a'), isTrue);
@@ -66,7 +66,7 @@ void main() {
       var calls = 0;
       final ds = ChatRoomRemoteDataSource(
         _dioWithAdapter(
-          _FakeAdapter((_, __, ___) async {
+          _FakeAdapter((_, _, _) async {
             calls++;
             return _json(404, {'error': 'not found'});
           }),
