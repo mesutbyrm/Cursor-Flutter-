@@ -44,17 +44,22 @@ class WeeklyBroadcasterCompetition {
   });
 
   factory WeeklyBroadcasterCompetition.fromJson(Map<String, dynamic> json) {
-    final participantsJson = json['participants'] is List
-        ? (json['participants'] as List<dynamic>)
-            .map((e) => e is Map ? asJsonMap(e) : <String, dynamic>{})
-            .toList()
-        : <Map<String, dynamic>>[];
+    // Sunucu katılımcı listesini farklı adlarla dönebiliyor; yalnızca
+    // `participants` aranırsa liste boş kalıp tablo hiç dolmuyordu.
+    final participantsJson = asJsonList(
+      pick(json, [
+        'participants',
+        'entries',
+        'leaderboard',
+        'rankings',
+        'standings',
+        'items',
+      ]),
+    );
 
-    final winnersJson = json['winners'] is List
-        ? (json['winners'] as List<dynamic>)
-            .map((e) => e is Map ? asJsonMap(e) : <String, dynamic>{})
-            .toList()
-        : <Map<String, dynamic>>[];
+    final winnersJson = asJsonList(
+      pick(json, ['winners', 'topWinners', 'awarded']),
+    );
 
     return WeeklyBroadcasterCompetition(
       week: asInt(pick(json, ['week', 'weekNumber'])),

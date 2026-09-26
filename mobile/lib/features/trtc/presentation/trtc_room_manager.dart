@@ -347,6 +347,14 @@ class TrtcRoomManager {
       'role': publishAsAnchor ? 'anchor' : 'audience',
     });
 
+    // QoS — akıcılık (düşük gecikme) önceliği her sahnede geçerli olmalı.
+    // Önceden yalnızca video yayıncısına uygulanıyordu; sesli oda ve izleyici
+    // tarafı SDK varsayılanı olan netlik önceliğinde kalıp dar bantta
+    // tamponlama yüzünden ses/görüntü gecikmesi biriktiriyordu.
+    _cloud!.setNetworkQosParam(
+      TRTCNetworkQosParam(preference: TRTCVideoQosPreference.smooth),
+    );
+
     // Hardware encoding — T+5s freeze düzeltme: enterRoom öncesi encoder parametreleri.
     if (!audioOnly && publishAsAnchor) {
       final encParam = TRTCVideoEncParam(
@@ -358,9 +366,6 @@ class TrtcRoomManager {
         enableAdjustRes: true,
       );
       _cloud!.setVideoEncoderParam(encParam);
-      _cloud!.setNetworkQosParam(
-        TRTCNetworkQosParam(preference: TRTCVideoQosPreference.smooth),
-      );
     }
 
     _cloud!.enterRoom(params, scene);
