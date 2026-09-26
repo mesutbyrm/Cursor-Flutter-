@@ -40,6 +40,9 @@ class StaffEntranceMarqueeNotifier extends Notifier<StaffEntranceMarqueeState> {
     if (line.isEmpty) return;
     final key = VoiceOfficialJoin.entranceDedupeKey(line, roomName: roomName);
     if (!_seen.add(key)) return;
+    while (_seen.length > 400) {
+      _seen.remove(_seen.first);
+    }
     _clearTimer?.cancel();
     state = StaffEntranceMarqueeState(message: line);
     _clearTimer = Timer(const Duration(seconds: 12), () {
@@ -75,6 +78,12 @@ class StaffEntranceMarqueeNotifier extends Notifier<StaffEntranceMarqueeState> {
   void clear() {
     _clearTimer?.cancel();
     state = const StaffEntranceMarqueeState();
+  }
+
+  /// Oturum değişimi — önceki kullanıcının görülmüş duyuruları taşınmaz.
+  void resetSession() {
+    _seen.clear();
+    clear();
   }
 }
 

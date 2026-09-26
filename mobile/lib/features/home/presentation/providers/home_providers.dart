@@ -46,8 +46,6 @@ import '../../../platform/data/models/fortune_request_type.dart';
 import '../../../voice_hub/domain/voice_official_join.dart';
 import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
 import '../../../gifts/domain/homepage_gift_ticker.dart';
-import '../../../gifts/presentation/global/global_gift_notification.dart';
-import '../../../gifts/presentation/global/global_gift_overlay_notifier.dart';
 import '../../../vip_gold/domain/voice_room_access.dart';
 
 void _keepHomeCacheAlive(Ref ref) => ref.keepAlive();
@@ -124,22 +122,15 @@ final homeBannersProvider = FutureProvider<List<HomeBannerEntity>>((ref) async {
 });
 
 /// `GET /api/homepage-ticker` — hediye satırları ana şeritte yok.
+///
+/// Yalnızca ana sayfa şeridinin göstereceği satırları döner. Kayan şerit ve
+/// hediye overlay'i `GlobalSiteMarqueeListener` sahiplenir; burada tekrar
+/// kuyruğa basılsaydı bu provider her invalidate edildiğinde aynı duyuru
+/// ikinci kez işlenmiş olurdu.
 final homeTickerProvider = FutureProvider<List<String>>((ref) async {
   _keepHomeCacheAlive(ref);
   final lines = await ref.watch(homeRemoteProvider).fetchHomepageTicker();
-  final news = HomepageGiftTicker.newsLines(lines);
-  final marquee = ref.read(staffEntranceMarqueeProvider.notifier);
-  for (final line in news) {
-    marquee.enqueue(line);
-  }
-  final gifts = ref.read(homepageGiftTickerGateProvider).takeNewGiftAnnouncements(
-        lines,
-      );
-  final overlay = ref.read(globalGiftOverlayProvider.notifier);
-  for (final gift in gifts) {
-    overlay.enqueue(GlobalGiftNotification.fromTicker(gift));
-  }
-  return news;
+  return HomepageGiftTicker.newsLines(lines);
 });
 
 final homeFortuneCardsProvider =
