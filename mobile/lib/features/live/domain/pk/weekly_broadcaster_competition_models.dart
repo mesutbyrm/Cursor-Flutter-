@@ -40,6 +40,8 @@ class WeeklyBroadcasterCompetition {
     required this.week,
     required this.participants,
     required this.winners,
+    this.title,
+    this.startsAt,
     this.endsAt,
   });
 
@@ -77,14 +79,62 @@ class WeeklyBroadcasterCompetition {
           i + 1,
         ),
       ),
-      endsAt: json['endsAt'] != null
-          ? DateTime.tryParse(json['endsAt'].toString())
-          : null,
+      title: pick(json, ['title', 'name', 'competitionName'])?.toString(),
+      startsAt: _parseDate(pick(json, ['startsAt', 'startAt', 'startDate'])),
+      endsAt: _parseDate(
+        pick(json, ['endsAt', 'endAt', 'endDate', 'finishesAt']),
+      ),
     );
+  }
+
+  static DateTime? _parseDate(dynamic raw) {
+    if (raw == null) return null;
+    return DateTime.tryParse(raw.toString());
   }
 
   final int week;
   final List<WeeklyBroadcasterCompetitionParticipant> participants;
   final List<WeeklyBroadcasterCompetitionParticipant> winners;
+  final String? title;
+  final DateTime? startsAt;
   final DateTime? endsAt;
+
+  String get displayTitle {
+    final t = title?.trim() ?? '';
+    if (t.isNotEmpty) return t;
+    return week > 0 ? '$week. Hafta Yarışması' : 'Haftalık Yarışma';
+  }
+
+  /// Yarışma durumu — sunucu tarih vermediyse `running` varsayılır.
+  WeeklyCompetitionPhase phaseAt(DateTime now) {
+    final start = startsAt;
+    if (start != null && now.isBefore(start)) {
+      return WeeklyCompetitionPhase.upcoming;
+    }
+    final end = endsAt;
+    if (end != null && !now.isBefore(end)) {
+      return WeeklyCompetitionPhase.finished;
+    }
+    return WeeklyCompetitionPhase.running;
+  }
+
+  /// Kalan süre — bitiş yoksa veya geçtiyse null.
+  Duration? remainingAt(DateTime now) {
+    final end = endsAt;
+    if (end == null) return null;
+    final left = end.difference(now);
+    return left.isNegative ? null : left;
+  }
+
+  /// Kullanıcının kendi satırı — sıralama ve puanı göstermek için.
+  WeeklyBroadcasterCompetitionParticipant? entryFor(String? userId) {
+    final id = userId?.trim() ?? '';
+    if (id.isEmpty) return null;
+    for (final p in participants) {
+      if (p.userId == id) return p;
+    }
+    return null;
+  }
 }
+
+enum WeeklyCompetitionPhase { upcoming, running, finished }

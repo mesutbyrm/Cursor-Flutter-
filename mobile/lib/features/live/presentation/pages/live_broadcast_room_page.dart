@@ -3033,8 +3033,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                         right: 10,
                         child: WeeklyBroadcasterCompetitionCard(
                           competition: comp,
-                          maxHeight: 280,
-                          maxWidth: 200,
+                          maxWidth: 190,
                         ),
                       );
                     },
