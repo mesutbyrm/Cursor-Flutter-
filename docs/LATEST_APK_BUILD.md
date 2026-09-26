@@ -4,10 +4,10 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.601+652` |
-| Tarih (UTC) | 2026-09-26 19:57 |
-| Commit | [`24d3441d82148f82e148395bd777650bcd4a499e`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/24d3441d82148f82e148395bd777650bcd4a499e) |
-| İş akışı | [Run 36266764925](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36266764925) |
+| Sürüm | `1.0.602+653` |
+| Tarih (UTC) | 2026-09-26 20:16 |
+| Commit | [`8059c4126cbd30fd2e8ffafb43d53cae975d49b1`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/8059c4126cbd30fd2e8ffafb43d53cae975d49b1) |
+| İş akışı | [Run 36267096202](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36267096202) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
