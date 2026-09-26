@@ -42,7 +42,9 @@ class _VoiceRoomSectionState extends ConsumerState<VoiceRoomSection> {
     _presenceSynced = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ref.read(voiceRoomsPresenceProvider.notifier).mergeTrackRooms(
+      ref
+          .read(voiceRoomsPresenceProvider.notifier)
+          .mergeTrackRooms(
             rooms.take(VoiceRoomsPresenceNotifier.homeTrackedRooms).toList(),
           );
     });
@@ -77,7 +79,9 @@ class _VoiceRoomSectionState extends ConsumerState<VoiceRoomSection> {
           height: VoiceRoomSection._cardH,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
+            padding: const EdgeInsets.symmetric(
+              horizontal: HomeApprovedDesign.hPad,
+            ),
             itemCount: 2,
             separatorBuilder: (_, _) => const SizedBox(width: 12),
             itemBuilder: (_, _) => const PremiumSkeleton(
@@ -113,7 +117,9 @@ class _VoiceRoomSectionState extends ConsumerState<VoiceRoomSection> {
         height: VoiceRoomSection._cardH,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
+          padding: const EdgeInsets.symmetric(
+            horizontal: HomeApprovedDesign.hPad,
+          ),
           physics: const BouncingScrollPhysics(
             parent: AlwaysScrollableScrollPhysics(),
           ),
@@ -186,11 +192,12 @@ class _VoiceRoomSectionState extends ConsumerState<VoiceRoomSection> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  message ??
-                      'Henüz oda yok. İlk sesli sohbet odanızı açın.',
+                  message ?? 'Henüz oda yok. İlk sesli sohbet odanızı açın.',
                   style: TextStyle(
                     fontSize: 13,
-                    color: HomeApprovedDesign.textMuted.withValues(alpha: 0.9),
+                    color: HomeApprovedDesign.textMutedOf(
+                      context,
+                    ).withValues(alpha: 0.9),
                   ),
                 ),
                 if (empty || message != null) ...[
@@ -199,7 +206,9 @@ class _VoiceRoomSectionState extends ConsumerState<VoiceRoomSection> {
                     onPressed: empty
                         ? () => showOpenVoiceChatRoomFlow(context, ref)
                         : () => ref.invalidate(homeVoiceRoomsProvider),
-                    icon: Icon(empty ? Icons.mic_rounded : Icons.refresh_rounded),
+                    icon: Icon(
+                      empty ? Icons.mic_rounded : Icons.refresh_rounded,
+                    ),
                     label: Text(
                       empty
                           ? 'Sesli Oda Aç · ${LiveRemoteDataSource.openRoomJetonCost(vip: false)} $jetonLabel'

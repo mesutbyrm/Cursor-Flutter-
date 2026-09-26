@@ -31,12 +31,13 @@ class HomeBecomeBroadcasterBanner extends ConsumerWidget {
           child: Ink(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              borderRadius:
-                  BorderRadius.circular(HomeApprovedDesign.cardRadius),
+              borderRadius: BorderRadius.circular(
+                HomeApprovedDesign.cardRadius,
+              ),
               gradient: LinearGradient(
                 colors: [
                   HomeApprovedDesign.gold.withValues(alpha: 0.22),
-                  HomeApprovedDesign.surface,
+                  HomeApprovedDesign.surfaceOf(context),
                 ],
               ),
               border: Border.all(
@@ -51,7 +52,7 @@ class HomeBecomeBroadcasterBanner extends ConsumerWidget {
                   size: 28,
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -60,14 +61,14 @@ class HomeBecomeBroadcasterBanner extends ConsumerWidget {
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w900,
-                          color: HomeApprovedDesign.textPrimary,
+                          color: HomeApprovedDesign.textPrimaryOf(context),
                         ),
                       ),
                       Text(
                         'Canlı yayın aç, topluluk kur',
                         style: TextStyle(
                           fontSize: 11,
-                          color: HomeApprovedDesign.textSecondary,
+                          color: HomeApprovedDesign.textSecondaryOf(context),
                         ),
                       ),
                     ],

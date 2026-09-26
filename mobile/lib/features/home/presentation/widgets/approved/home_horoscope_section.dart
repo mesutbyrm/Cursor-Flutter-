@@ -18,19 +18,19 @@ class HomeHoroscopeSection extends ConsumerWidget {
 
   static const signs =
       <(String name, String glyph, Color primary, Color secondary)>[
-    ('Koç', '♈', Color(0xFFE53935), Color(0xFFFF8A80)),
-    ('Boğa', '♉', Color(0xFF43A047), Color(0xFFA5D6A7)),
-    ('İkizler', '♊', Color(0xFF1E88E5), Color(0xFF90CAF9)),
-    ('Yengeç', '♋', Color(0xFF8E24AA), Color(0xFFCE93D8)),
-    ('Aslan', '♌', Color(0xFFF4511E), Color(0xFFFFAB91)),
-    ('Başak', '♍', Color(0xFF6D4C41), Color(0xFFBCAAA4)),
-    ('Terazi', '♎', Color(0xFFEC407A), Color(0xFFF48FB1)),
-    ('Akrep', '♏', Color(0xFF5E35B1), Color(0xFFB39DDB)),
-    ('Yay', '♐', Color(0xFF00897B), Color(0xFF80CBC4)),
-    ('Oğlak', '♑', Color(0xFF546E7A), Color(0xFFB0BEC5)),
-    ('Kova', '♒', Color(0xFF039BE5), Color(0xFF81D4FA)),
-    ('Balık', '♓', Color(0xFF3949AB), Color(0xFF9FA8DA)),
-  ];
+        ('Koç', '♈', Color(0xFFE53935), Color(0xFFFF8A80)),
+        ('Boğa', '♉', Color(0xFF43A047), Color(0xFFA5D6A7)),
+        ('İkizler', '♊', Color(0xFF1E88E5), Color(0xFF90CAF9)),
+        ('Yengeç', '♋', Color(0xFF8E24AA), Color(0xFFCE93D8)),
+        ('Aslan', '♌', Color(0xFFF4511E), Color(0xFFFFAB91)),
+        ('Başak', '♍', Color(0xFF6D4C41), Color(0xFFBCAAA4)),
+        ('Terazi', '♎', Color(0xFFEC407A), Color(0xFFF48FB1)),
+        ('Akrep', '♏', Color(0xFF5E35B1), Color(0xFFB39DDB)),
+        ('Yay', '♐', Color(0xFF00897B), Color(0xFF80CBC4)),
+        ('Oğlak', '♑', Color(0xFF546E7A), Color(0xFFB0BEC5)),
+        ('Kova', '♒', Color(0xFF039BE5), Color(0xFF81D4FA)),
+        ('Balık', '♓', Color(0xFF3949AB), Color(0xFF9FA8DA)),
+      ];
 
   static String? _matchUserSign(String? raw) {
     final value = raw?.trim().toLowerCase();
@@ -186,7 +186,7 @@ class _SignChip extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                   color: highlighted
                       ? HomePremiumDesign.accent
-                      : HomeApprovedDesign.textSecondary,
+                      : HomeApprovedDesign.textSecondaryOf(context),
                 ),
               ),
             ],

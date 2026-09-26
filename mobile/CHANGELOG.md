@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.606+657 (2026-09-26) — UI yenileme: tasarım sistemi + ana sayfa/alt navigasyon
+
+- **Tasarım sistemi:** tek marka paleti (derin siyah + antrasit, mor + turkuaz); 5 çakışan palet tek kaynağa bağlandı; Material 3 bileşen temaları
+- **Font:** Plus Jakarta Sans + Playfair Display artık pakette (önceden hiç yüklenmiyordu); gerçek kalın ağırlıklar
+- **Açık tema düzeltmesi:** ana sayfa bölüm başlıkları ve 26 bölüm beyaz zeminde görünmüyordu
+- **Kontrast:** buton metinleri WCAG AA (>= 4.5:1)
+- **Alt navigasyon:** esnek sütunlar (320 px'te kesilme yok), hap gösterge, ortada "Canlı" butonu, TalkBack desteği
+- **Ana sayfa başlığı:** temaya duyarlı arama çubuğu, 40 px gelen kutusu butonu; ölü kod silindi
+- **Hareket:** yumuşak sayfa geçişi; skeleton "animasyonları azalt" ayarına uyar
+
 ## 1.0.605+656 (2026-09-26) — SSE 401, misafir global, sohbet kuyruk
 
 - **Video SSE:** 401 → JWT refresh + yeniden bağlan; bağlantıda mesaj resync + bekleyen gönderim kuyruğu (canlı)

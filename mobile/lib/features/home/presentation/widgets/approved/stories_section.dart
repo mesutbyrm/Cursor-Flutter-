@@ -28,7 +28,9 @@ class StoriesSection extends ConsumerWidget {
       loading: () => SizedBox(
         height: HomeApprovedDesign.storySize + 36,
         child: LazyHorizontalListView(
-          padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
+          padding: const EdgeInsets.symmetric(
+            horizontal: HomeApprovedDesign.hPad,
+          ),
           itemCount: 5,
           itemBuilder: (_, __) => Padding(
             padding: const EdgeInsets.only(right: 12),
@@ -39,8 +41,12 @@ class StoriesSection extends ConsumerWidget {
                   height: HomeApprovedDesign.storySize + 4,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: HomeApprovedDesign.surface.withValues(alpha: 0.55),
-                    border: Border.all(color: HomeApprovedDesign.border),
+                    color: HomeApprovedDesign.surfaceOf(
+                      context,
+                    ).withValues(alpha: 0.55),
+                    border: Border.all(
+                      color: HomeApprovedDesign.borderOf(context),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -48,7 +54,9 @@ class StoriesSection extends ConsumerWidget {
                   width: 48,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: HomeApprovedDesign.surface.withValues(alpha: 0.4),
+                    color: HomeApprovedDesign.surfaceOf(
+                      context,
+                    ).withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -75,12 +83,13 @@ class StoriesSection extends ConsumerWidget {
             )
             .toList();
         final ownRing = rings.where((r) => r.isOwn).firstOrNull;
-        final others =
-            withStories.where((r) => !r.isOwn).toList();
+        final others = withStories.where((r) => !r.isOwn).toList();
         return SizedBox(
           height: HomeApprovedDesign.storySize + 36,
           child: LazyHorizontalListView(
-            padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
+            padding: const EdgeInsets.symmetric(
+              horizontal: HomeApprovedDesign.hPad,
+            ),
             itemCount: 1 + others.length,
             itemBuilder: (context, index) {
               if (index == 0) {
@@ -155,11 +164,14 @@ class _OwnStoryChip extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Senin Hikayen',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 10, color: HomeApprovedDesign.textSecondary),
+              style: TextStyle(
+                fontSize: 10,
+                color: HomeApprovedDesign.textSecondaryOf(context),
+              ),
             ),
           ],
         ),
@@ -213,9 +225,9 @@ class _StoryChip extends StatelessWidget {
               name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 10,
-                color: HomeApprovedDesign.textSecondary,
+                color: HomeApprovedDesign.textSecondaryOf(context),
               ),
             ),
           ],

@@ -56,7 +56,7 @@ class _SectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: HomeApprovedDesign.surface,
+      color: HomeApprovedDesign.surfaceOf(context),
       borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
       child: InkWell(
         onTap: () => _open(context),
@@ -66,11 +66,11 @@ class _SectionCard extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
-            border: Border.all(color: HomeApprovedDesign.border),
+            border: Border.all(color: HomeApprovedDesign.borderOf(context)),
             gradient: LinearGradient(
               colors: [
                 HomeApprovedDesign.purple.withValues(alpha: 0.18),
-                HomeApprovedDesign.surface,
+                HomeApprovedDesign.surfaceOf(context),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -100,10 +100,10 @@ class _SectionCard extends StatelessWidget {
                 section.title,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w900,
-                  color: HomeApprovedDesign.textPrimary,
+                  color: HomeApprovedDesign.textPrimaryOf(context),
                 ),
               ),
               if (section.subtitle?.trim().isNotEmpty == true) ...[
@@ -112,9 +112,9 @@ class _SectionCard extends StatelessWidget {
                   section.subtitle!,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
-                    color: HomeApprovedDesign.textSecondary,
+                    color: HomeApprovedDesign.textSecondaryOf(context),
                   ),
                 ),
               ],

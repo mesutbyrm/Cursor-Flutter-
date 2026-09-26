@@ -3,16 +3,18 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import 'home_approved_design.dart';
+import '../../../../core/theme/app_theme_extensions.dart';
+import '../../../../core/theme/canlifal_brand_colors.dart';
 
 /// Ana sayfa V1 premium tasarım token'ları (2026).
 abstract final class HomePremiumDesign {
-  static const background = Color(0xFF070A12);
-  static const surface = Color(0xFF111827);
-  static const surfaceElevated = Color(0xFF1A2234);
+  static const background = CanlifalBrandColors.ink;
+  static const surface = CanlifalBrandColors.anthracite;
+  static const surfaceElevated = CanlifalBrandColors.anthraciteRaised;
   static const glassFill = Color(0x14FFFFFF);
-  static const glassBorder = Color(0x28FFFFFF);
-  static const accent = Color(0xFF8B5CF6);
-  static const accentMuted = Color(0xFF6D28D9);
+  static const glassBorder = Color(0x1FFFFFFF);
+  static const accent = CanlifalBrandColors.violet;
+  static const accentMuted = CanlifalBrandColors.violetDeep;
 
   static const sectionTitleSize = 20.0;
   static const cardTitleSize = 15.0;
@@ -29,11 +31,7 @@ abstract final class HomePremiumDesign {
     return BoxDecoration(
       borderRadius: BorderRadius.circular(radius),
       color: tint ?? surface,
-      border: border ??
-          Border.all(
-            color: glassBorder,
-            width: 1,
-          ),
+      border: border ?? Border.all(color: glassBorder, width: 1),
       boxShadow: [
         BoxShadow(
           color: Colors.black.withValues(alpha: 0.28),
@@ -41,6 +39,21 @@ abstract final class HomePremiumDesign {
           offset: const Offset(0, 6),
         ),
       ],
+    );
+  }
+
+  /// [glassCard]'ın temaya duyarlı hali — açık temada beyaz kart + ince kenar.
+  static BoxDecoration glassCardOf(
+    BuildContext context, {
+    double radius = cardRadius,
+  }) {
+    if (context.isDarkTheme) return glassCard(radius: radius);
+    final c = context.colors;
+    return BoxDecoration(
+      borderRadius: BorderRadius.circular(radius),
+      color: c.surface,
+      border: Border.all(color: c.outlineVariant),
+      boxShadow: c.cardShadow,
     );
   }
 
@@ -69,6 +82,6 @@ abstract final class HomePremiumDesign {
   static TextStyle actionLabelStyle = TextStyle(
     fontSize: secondarySize,
     fontWeight: FontWeight.w700,
-    color: accent.withValues(alpha: 0.95),
+    color: CanlifalBrandColors.violetBright,
   );
 }

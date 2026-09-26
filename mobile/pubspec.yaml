@@ -2,7 +2,7 @@ name: canlifal_social
 description: Canlifal — modern sosyal medya istemcisi (REST + JWT, Clean Architecture).
 publish_to: 'none'
 
-version: 1.0.605+656
+version: 1.0.606+657
 
 environment:
   sdk: '>=3.8.0 <4.0.0'
@@ -89,9 +89,25 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - assets/google_fonts/
     - assets/splash/
     - assets/brand/
     - assets/fortune/
     - assets/gifts/lottie/
     - assets/gifts/svga/
     - assets/gifts/sounds/
+  # Tek aile + gerçek ağırlık dosyaları: TextStyle(fontWeight: w800) sahte
+  # kalın yerine ExtraBold dosyasını kullanır. google_fonts API'si de aynı
+  # dosyaları assets/google_fonts/ üzerinden bulur.
+  fonts:
+    - family: PlusJakartaSans
+      fonts:
+        - asset: assets/google_fonts/PlusJakartaSans-Regular.ttf
+        - asset: assets/google_fonts/PlusJakartaSans-Medium.ttf
+          weight: 500
+        - asset: assets/google_fonts/PlusJakartaSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/google_fonts/PlusJakartaSans-Bold.ttf
+          weight: 700
+        - asset: assets/google_fonts/PlusJakartaSans-ExtraBold.ttf
+          weight: 800

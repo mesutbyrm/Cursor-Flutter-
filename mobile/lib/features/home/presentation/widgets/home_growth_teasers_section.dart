@@ -18,7 +18,8 @@ class HomeGrowthTeasersSection extends ConsumerWidget {
     final cards = <_GrowthCardData>[];
 
     final tasks = ref.watch(userDailyTasksProvider);
-    final pending = tasks.valueOrNull
+    final pending =
+        tasks.valueOrNull
             ?.where((t) => !t.completed && t.current < t.target)
             .length ??
         0;
@@ -51,8 +52,8 @@ class HomeGrowthTeasersSection extends ConsumerWidget {
         final subtitle = value.rewardHint?.trim().isNotEmpty == true
             ? value.rewardHint!
             : invited > 0
-                ? '$invited arkadaş davet edildi'
-                : 'Arkadaşlarını davet et';
+            ? '$invited arkadaş davet edildi'
+            : 'Arkadaşlarını davet et';
         cards.add(
           _GrowthCardData(
             emoji: '🎁',
@@ -136,7 +137,7 @@ class _GrowthCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: HomeApprovedDesign.surface,
+      color: HomeApprovedDesign.surfaceOf(context),
       borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
       child: InkWell(
         onTap: () => context.push(data.route),
@@ -146,11 +147,11 @@ class _GrowthCard extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
-            border: Border.all(color: HomeApprovedDesign.border),
+            border: Border.all(color: HomeApprovedDesign.borderOf(context)),
             gradient: LinearGradient(
               colors: [
                 data.accent.withValues(alpha: 0.18),
-                HomeApprovedDesign.surface,
+                HomeApprovedDesign.surfaceOf(context),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -171,10 +172,10 @@ class _GrowthCard extends StatelessWidget {
                 data.title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w900,
-                  color: HomeApprovedDesign.textPrimary,
+                  color: HomeApprovedDesign.textPrimaryOf(context),
                 ),
               ),
               const SizedBox(height: 2),
@@ -182,9 +183,9 @@ class _GrowthCard extends StatelessWidget {
                 data.subtitle,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10,
-                  color: HomeApprovedDesign.textSecondary,
+                  color: HomeApprovedDesign.textSecondaryOf(context),
                 ),
               ),
             ],

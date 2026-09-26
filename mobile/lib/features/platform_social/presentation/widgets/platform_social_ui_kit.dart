@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/canlifal_brand_colors.dart';
 
 /// Profesyonel sosyal platform — ortak görsel dil (Tanış, Ajans, CFC Arena).
 abstract final class PlatformSocialPalette {
-  static const bgTop = Color(0xFF0B0F1E);
-  static const bgBottom = Color(0xFF15102B);
-  static const card = Color(0xFF1A1F35);
-  static const cardBorder = Color(0x33FFFFFF);
-  static const accent = Color(0xFFB832FF);
-  static const accentSecondary = Color(0xFF448AFF);
+  static const bgTop = CanlifalBrandColors.ink;
+  static const bgBottom = Color(0xFF13111B);
+  static const card = CanlifalBrandColors.anthraciteRaised;
+  static const cardBorder = Color(0x1FFFFFFF);
+  static const accent = CanlifalBrandColors.violet;
+  static const accentSecondary = CanlifalBrandColors.turquoise;
   static const gold = Color(0xFFFFD54F);
   static const success = Color(0xFF4ADE80);
   static const danger = Color(0xFFFF6B6B);
@@ -22,7 +23,7 @@ abstract final class PlatformSocialPalette {
   static const heroGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF2A1B5E), Color(0xFF0F2847)],
+    colors: [Color(0xFF271B4A), Color(0xFF0F2A2C)],
   );
 }
 

@@ -16,11 +16,11 @@ class HomePlatformStatsSection extends ConsumerStatefulWidget {
       _HomePlatformStatsSectionState();
 }
 
-class _HomePlatformStatsSectionState extends ConsumerState<HomePlatformStatsSection> {
+class _HomePlatformStatsSectionState
+    extends ConsumerState<HomePlatformStatsSection> {
   var _expanded = false;
 
-  static String _format(int n) =>
-      NumberFormat.compact(locale: 'tr').format(n);
+  static String _format(int n) => NumberFormat.compact(locale: 'tr').format(n);
 
   @override
   Widget build(BuildContext context) {
@@ -29,9 +29,8 @@ class _HomePlatformStatsSectionState extends ConsumerState<HomePlatformStatsSect
       loading: () => const SizedBox(height: 4),
       error: (_, _) => const SizedBox.shrink(),
       data: (data) {
-        final hasStrip = data.onlineUsers > 0 ||
-            data.onLive > 0 ||
-            data.inVoiceChat > 0;
+        final hasStrip =
+            data.onlineUsers > 0 || data.onLive > 0 || data.inVoiceChat > 0;
         final extraTiles = _extraTilesFor(data);
         if (!hasStrip && extraTiles.isEmpty) return const SizedBox.shrink();
 
@@ -88,12 +87,12 @@ class _HomePlatformStatsSectionState extends ConsumerState<HomePlatformStatsSect
                 ),
                 child: Row(
                   children: [
-                    const Text(
+                    Text(
                       '📊 Canlı İstatistikler',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
-                        color: HomeApprovedDesign.textPrimary,
+                        color: HomeApprovedDesign.textPrimaryOf(context),
                       ),
                     ),
                     const Spacer(),
@@ -114,7 +113,8 @@ class _HomePlatformStatsSectionState extends ConsumerState<HomePlatformStatsSect
                       ),
                     ),
                     TextButton(
-                      onPressed: () => context.push('/profile/broadcaster-stats'),
+                      onPressed: () =>
+                          context.push('/profile/broadcaster-stats'),
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         minimumSize: Size.zero,
@@ -249,10 +249,10 @@ class _StripPill extends StatelessWidget {
                 ),
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
-                    color: HomeApprovedDesign.textSecondary,
+                    color: HomeApprovedDesign.textSecondaryOf(context),
                   ),
                 ),
               ],
@@ -311,10 +311,10 @@ class _GridTile extends StatelessWidget {
                 ),
                 Text(
                   tile.label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
-                    color: HomeApprovedDesign.textSecondary,
+                    color: HomeApprovedDesign.textSecondaryOf(context),
                   ),
                 ),
               ],

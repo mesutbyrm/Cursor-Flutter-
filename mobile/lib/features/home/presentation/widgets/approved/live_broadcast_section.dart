@@ -110,10 +110,7 @@ class LiveBroadcastSection extends ConsumerWidget {
 }
 
 class _LiveCard extends StatelessWidget {
-  const _LiveCard({
-    required this.stream,
-    required this.onTap,
-  });
+  const _LiveCard({required this.stream, required this.onTap});
 
   final LiveStreamEntity stream;
   final VoidCallback onTap;
@@ -129,11 +126,13 @@ class _LiveCard extends StatelessWidget {
           height: HomeApprovedDesign.liveCardH,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
-            boxShadow: stream.isLive ? const [HomeApprovedDesign.liveGlow] : null,
+            boxShadow: stream.isLive
+                ? const [HomeApprovedDesign.liveGlow]
+                : null,
             border: Border.all(
               color: stream.isLive
                   ? HomeApprovedDesign.purple.withValues(alpha: 0.35)
-                  : HomeApprovedDesign.border,
+                  : HomeApprovedDesign.borderOf(context),
             ),
           ),
           child: ClipRRect(

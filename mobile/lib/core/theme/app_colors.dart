@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_theme_colors.dart';
+import 'canlifal_brand_colors.dart';
 
 /// Marka ve semantik renkler — yüzey/metin için [AppThemeColors] / `context.colors`.
 abstract final class AppColors {
@@ -14,16 +15,16 @@ abstract final class AppColors {
   static const Color warning = Color(0xFFFFB347);
 
   // Geriye dönük koyu sabitler (yeni kod: context.colors)
-  static const Color background = Color(0xFF0B0B1E);
-  static const Color backgroundElevated = Color(0xFF12121F);
-  static const Color surface = Color(0xFF14141C);
-  static const Color surfaceElevated = Color(0xFF1C1C26);
-  static const Color surfaceGlass = Color(0xCC12121F);
+  static const Color background = CanlifalBrandColors.ink;
+  static const Color backgroundElevated = CanlifalBrandColors.anthracite;
+  static const Color surface = CanlifalBrandColors.anthracite;
+  static const Color surfaceElevated = CanlifalBrandColors.anthraciteRaised;
+  static const Color surfaceGlass = Color(0xCC121218);
   static const Color bgPurpleGlow = Color(0xFF1A0F3D);
   static const Color bgBlueGlow = Color(0xFF0A1A2E);
-  static const Color textPrimary = Color(0xFFFFFFFF);
-  static const Color textSecondary = Color(0xFFB8B8C8);
-  static const Color textMuted = Color(0xFF6E6E82);
+  static const Color textPrimary = CanlifalBrandColors.textPrimary;
+  static const Color textSecondary = CanlifalBrandColors.textSecondary;
+  static const Color textMuted = CanlifalBrandColors.textMuted;
 
   static const LinearGradient brandGradient = LinearGradient(
     colors: [accentPink, accentPurple],

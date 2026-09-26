@@ -35,9 +35,12 @@ class HomePopularBroadcastersSection extends ConsumerWidget {
           itemBuilder: (_, __) => Container(
             width: _cardW,
             decoration: BoxDecoration(
-              color: HomeApprovedDesign.surface.withValues(alpha: 0.5),
-              borderRadius:
-                  BorderRadius.circular(HomeApprovedDesign.cardRadius),
+              color: HomeApprovedDesign.surfaceOf(
+                context,
+              ).withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(
+                HomeApprovedDesign.cardRadius,
+              ),
             ),
           ),
         ),
@@ -75,8 +78,7 @@ class HomePopularBroadcastersSection extends ConsumerWidget {
           ? s.hostUserId!.trim()
           : s.streamerName ?? s.id;
       final existing = byHost[key];
-      if (existing == null ||
-          (s.viewerCount) > (existing.viewerCount)) {
+      if (existing == null || (s.viewerCount) > (existing.viewerCount)) {
         byHost[key] = s;
       }
     }
@@ -87,10 +89,7 @@ class HomePopularBroadcastersSection extends ConsumerWidget {
 }
 
 class _BroadcasterCard extends StatelessWidget {
-  const _BroadcasterCard({
-    required this.stream,
-    required this.onTap,
-  });
+  const _BroadcasterCard({required this.stream, required this.onTap});
 
   final LiveStreamEntity stream;
   final VoidCallback onTap;
@@ -153,17 +152,20 @@ class _BroadcasterCard extends StatelessWidget {
                     ),
                   )
                 else
-                  const CircleAvatar(radius: 14, child: Icon(Icons.person, size: 16)),
+                  const CircleAvatar(
+                    radius: 14,
+                    child: Icon(Icons.person, size: 16),
+                  ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     stream.streamerName ?? 'Yayıncı',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
-                      color: HomeApprovedDesign.textPrimary,
+                      color: HomeApprovedDesign.textPrimaryOf(context),
                     ),
                   ),
                 ),

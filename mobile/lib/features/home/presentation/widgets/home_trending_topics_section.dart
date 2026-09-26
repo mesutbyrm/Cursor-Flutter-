@@ -55,7 +55,7 @@ class _TopicChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: HomeApprovedDesign.surface,
+      color: HomeApprovedDesign.surfaceOf(context),
       borderRadius: BorderRadius.circular(HomeApprovedDesign.pillRadius),
       child: InkWell(
         onTap: () {
@@ -71,7 +71,7 @@ class _TopicChip extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(HomeApprovedDesign.pillRadius),
-            border: Border.all(color: HomeApprovedDesign.border),
+            border: Border.all(color: HomeApprovedDesign.borderOf(context)),
             gradient: LinearGradient(
               colors: [
                 HomeApprovedDesign.pink.withValues(alpha: 0.12),
@@ -84,20 +84,20 @@ class _TopicChip extends StatelessWidget {
             children: [
               Text(
                 topic.tag,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
-                  color: HomeApprovedDesign.textPrimary,
+                  color: HomeApprovedDesign.textPrimaryOf(context),
                 ),
               ),
               if (topic.viewsLabel != null) ...[
                 const SizedBox(width: 6),
                 Text(
                   topic.viewsLabel!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color: HomeApprovedDesign.textSecondary,
+                    color: HomeApprovedDesign.textSecondaryOf(context),
                   ),
                 ),
               ],

@@ -16,7 +16,19 @@ class NoBarrierPageTransitionsBuilder extends PageTransitionsBuilder {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    return FadeTransition(opacity: animation, child: child);
+    // drive() dinleyici eklemez; CurvedAnimation her build'de ekler.
+    return FadeTransition(
+      opacity: animation.drive(CurveTween(curve: Curves.easeOutCubic)),
+      child: SlideTransition(
+        position: animation.drive(
+          Tween<Offset>(
+            begin: const Offset(0, 0.02),
+            end: Offset.zero,
+          ).chain(CurveTween(curve: Curves.easeOutCubic)),
+        ),
+        child: child,
+      ),
+    );
   }
 }
 
@@ -27,10 +39,7 @@ abstract final class AppPageTransitions {
     required LocalKey? key,
     required Widget child,
   }) {
-    return NoTransitionPage<T>(
-      key: key,
-      child: child,
-    );
+    return NoTransitionPage<T>(key: key, child: child);
   }
 
   static CustomTransitionPage<T> fadeSlide<T>({
@@ -80,7 +89,10 @@ abstract final class AppPageTransitions {
         final begin = axis == Axis.horizontal
             ? const Offset(0.08, 0)
             : const Offset(0, 0.06);
-        final offset = Tween<Offset>(begin: begin, end: Offset.zero).animate(curved);
+        final offset = Tween<Offset>(
+          begin: begin,
+          end: Offset.zero,
+        ).animate(curved);
         return FadeTransition(
           opacity: curved,
           child: SlideTransition(position: offset, child: child),

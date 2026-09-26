@@ -63,23 +63,24 @@ class _CelebrityCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fans = item.memberCount;
-    final fanLabel =
-        fans != null ? NumberFormat.compact(locale: 'tr').format(fans) : null;
+    final fanLabel = fans != null
+        ? NumberFormat.compact(locale: 'tr').format(fans)
+        : null;
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 132,
         decoration: BoxDecoration(
-          color: HomeApprovedDesign.surface,
+          color: HomeApprovedDesign.surfaceOf(context),
           borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
-          border: Border.all(color: HomeApprovedDesign.border),
+          border: Border.all(color: HomeApprovedDesign.borderOf(context)),
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
               HomeApprovedDesign.gold.withValues(alpha: 0.28),
-              HomeApprovedDesign.surface,
+              HomeApprovedDesign.surfaceOf(context),
             ],
           ),
         ),
@@ -97,7 +98,7 @@ class _CelebrityCard extends StatelessWidget {
                         fit: BoxFit.cover,
                       )
                     : ColoredBox(
-                        color: HomeApprovedDesign.border,
+                        color: HomeApprovedDesign.borderOf(context),
                         child: Icon(
                           Icons.star_rounded,
                           size: 40,
@@ -115,10 +116,10 @@ class _CelebrityCard extends StatelessWidget {
                     item.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
-                      color: HomeApprovedDesign.textPrimary,
+                      color: HomeApprovedDesign.textPrimaryOf(context),
                     ),
                   ),
                   if (item.subtitle != null) ...[
@@ -127,9 +128,9 @@ class _CelebrityCard extends StatelessWidget {
                       item.subtitle!,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 9,
-                        color: HomeApprovedDesign.textSecondary,
+                        color: HomeApprovedDesign.textSecondaryOf(context),
                       ),
                     ),
                   ],
@@ -145,10 +146,10 @@ class _CelebrityCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           fanLabel,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
-                            color: HomeApprovedDesign.textSecondary,
+                            color: HomeApprovedDesign.textSecondaryOf(context),
                           ),
                         ),
                       ],

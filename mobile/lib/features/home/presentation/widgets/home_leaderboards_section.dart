@@ -23,7 +23,8 @@ class HomeLeaderboardsSection extends ConsumerStatefulWidget {
       _HomeLeaderboardsSectionState();
 }
 
-class _HomeLeaderboardsSectionState extends ConsumerState<HomeLeaderboardsSection> {
+class _HomeLeaderboardsSectionState
+    extends ConsumerState<HomeLeaderboardsSection> {
   _LeaderboardTab? _selectedTab;
 
   static String _formatCompact(int n) =>
@@ -85,7 +86,9 @@ class _HomeLeaderboardsSectionState extends ConsumerState<HomeLeaderboardsSectio
           onAction: openFull,
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
+          padding: const EdgeInsets.symmetric(
+            horizontal: HomeApprovedDesign.hPad,
+          ),
           child: Row(
             children: [
               for (final t in tabs) ...[
@@ -108,11 +111,13 @@ class _HomeLeaderboardsSectionState extends ConsumerState<HomeLeaderboardsSectio
           height: 92,
           child: switch (tab) {
             _LeaderboardTab.gift => _GiftRow(
-                entries: giftData.take(3).toList(),
-                jetonLabel: jetonLabel,
-              ),
+              entries: giftData.take(3).toList(),
+              jetonLabel: jetonLabel,
+            ),
             _LeaderboardTab.pk => _PkRow(entries: pkData.take(3).toList()),
-            _LeaderboardTab.agency => _AgencyRow(entries: agencyData.take(3).toList()),
+            _LeaderboardTab.agency => _AgencyRow(
+              entries: agencyData.take(3).toList(),
+            ),
           },
         ),
       ],
@@ -136,7 +141,7 @@ class _TabChip extends StatelessWidget {
     return Material(
       color: selected
           ? HomeApprovedDesign.purple.withValues(alpha: 0.18)
-          : HomeApprovedDesign.surface,
+          : HomeApprovedDesign.surfaceOf(context),
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: onTap,
@@ -148,7 +153,7 @@ class _TabChip extends StatelessWidget {
             border: Border.all(
               color: selected
                   ? HomeApprovedDesign.purple.withValues(alpha: 0.5)
-                  : HomeApprovedDesign.border,
+                  : HomeApprovedDesign.borderOf(context),
             ),
           ),
           child: Text(
@@ -158,7 +163,7 @@ class _TabChip extends StatelessWidget {
               fontWeight: FontWeight.w700,
               color: selected
                   ? HomeApprovedDesign.purple
-                  : HomeApprovedDesign.textMuted,
+                  : HomeApprovedDesign.textMutedOf(context),
             ),
           ),
         ),
@@ -239,8 +244,8 @@ class _AgencyRow extends StatelessWidget {
         final scoreLabel = entry.score > 0
             ? '${_HomeLeaderboardsSectionState._formatCompact(entry.score)} puan'
             : entry.memberCount != null
-                ? '${entry.memberCount} üye'
-                : 'Ajans';
+            ? '${entry.memberCount} üye'
+            : 'Ajans';
         return _AgencyCard(
           rank: i + 1,
           name: entry.name,
@@ -280,7 +285,7 @@ class _RankCard extends StatelessWidget {
     };
 
     return Material(
-      color: HomeApprovedDesign.surface,
+      color: HomeApprovedDesign.surfaceOf(context),
       borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
       child: InkWell(
         onTap: onTap,
@@ -290,11 +295,11 @@ class _RankCard extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
-            border: Border.all(color: HomeApprovedDesign.border),
+            border: Border.all(color: HomeApprovedDesign.borderOf(context)),
             gradient: LinearGradient(
               colors: [
                 accent.withValues(alpha: rank == 1 ? 0.22 : 0.1),
-                HomeApprovedDesign.surface,
+                HomeApprovedDesign.surfaceOf(context),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -322,7 +327,7 @@ class _RankCard extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 16,
-                    backgroundColor: HomeApprovedDesign.border,
+                    backgroundColor: HomeApprovedDesign.borderOf(context),
                     backgroundImage: avatarUrl != null && avatarUrl!.isNotEmpty
                         ? canlifalImageProvider(avatarUrl!)
                         : null,
@@ -342,10 +347,10 @@ class _RankCard extends StatelessWidget {
                       name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
-                        color: HomeApprovedDesign.textPrimary,
+                        color: HomeApprovedDesign.textPrimaryOf(context),
                       ),
                     ),
                   ),
@@ -384,7 +389,7 @@ class _AgencyCard extends StatelessWidget {
     };
 
     return Material(
-      color: HomeApprovedDesign.surface,
+      color: HomeApprovedDesign.surfaceOf(context),
       borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
       child: InkWell(
         onTap: onTap,
@@ -394,11 +399,13 @@ class _AgencyCard extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
-            border: Border.all(color: HomeApprovedDesign.border),
+            border: Border.all(color: HomeApprovedDesign.borderOf(context)),
             gradient: LinearGradient(
               colors: [
-                const Color(0xFF06B6D4).withValues(alpha: rank == 1 ? 0.2 : 0.1),
-                HomeApprovedDesign.surface,
+                const Color(
+                  0xFF06B6D4,
+                ).withValues(alpha: rank == 1 ? 0.2 : 0.1),
+                HomeApprovedDesign.surfaceOf(context),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -436,8 +443,11 @@ class _AgencyCard extends StatelessWidget {
                         : Container(
                             width: 32,
                             height: 32,
-                            color: HomeApprovedDesign.border,
-                            child: const Icon(Icons.apartment_rounded, size: 18),
+                            color: HomeApprovedDesign.borderOf(context),
+                            child: const Icon(
+                              Icons.apartment_rounded,
+                              size: 18,
+                            ),
                           ),
                   ),
                   const SizedBox(width: 8),
@@ -446,10 +456,10 @@ class _AgencyCard extends StatelessWidget {
                       name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
-                        color: HomeApprovedDesign.textPrimary,
+                        color: HomeApprovedDesign.textPrimaryOf(context),
                       ),
                     ),
                   ),

@@ -3,12 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../../core/bootstrap/shell_header_badges_provider.dart';
-import '../../../../../core/navigation/unread_badge_format.dart';
+import '../../../../../core/motion/canlifal_motion_widgets.dart';
+import '../../../../../core/theme/app_theme_extensions.dart';
 import '../../../../../core/widgets/canlifal_logo.dart';
-import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../inbox/presentation/inbox_routes.dart';
 import '../../../../inbox/presentation/providers/inbox_unread_providers.dart';
-import '../../../../profile/presentation/providers/profile_providers.dart';
 import '../../theme/home_approved_design.dart';
 import 'home_header_balance_chips.dart';
 import '../home_motion_widgets.dart';
@@ -39,46 +38,64 @@ class HomeHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          GestureDetector(
-            onTap: () => context.push('/search'),
-            child: Container(
-              height: 44,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(
-                color: HomeApprovedDesign.searchFill.withValues(alpha: 0.85),
-                borderRadius:
-                    BorderRadius.circular(HomeApprovedDesign.searchRadius),
-                boxShadow: [
-                  BoxShadow(
-                    color: HomeApprovedDesign.purple.withValues(alpha: 0.12),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+          const _HomeSearchBar(),
+        ],
+      ),
+    );
+  }
+}
+
+/// Arama girişi — dokununca arama sayfasını açar.
+class _HomeSearchBar extends StatelessWidget {
+  const _HomeSearchBar();
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = context.isDarkTheme;
+    final colors = context.colors;
+    final muted = colors.onSurfaceMuted;
+    return Semantics(
+      button: true,
+      label: 'Ara',
+      onTap: () => context.push('/search'),
+      excludeSemantics: true,
+      child: CanlifalPressable(
+        scale: 0.98,
+        onTap: () => context.push('/search'),
+        child: Container(
+          height: 46,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: dark ? HomeApprovedDesign.searchFill : colors.surface,
+            borderRadius: BorderRadius.circular(
+              HomeApprovedDesign.searchRadius,
+            ),
+            border: Border.all(
+              color: dark
+                  ? Colors.white.withValues(alpha: 0.07)
+                  : colors.outlineVariant,
+            ),
+            boxShadow: dark ? null : colors.cardShadow,
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.search_rounded, size: 21, color: muted),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Kişi, oda veya içerik ara...',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: muted,
                   ),
-                ],
-                border: Border.all(
-                  color: HomeApprovedDesign.border.withValues(alpha: 0.85),
                 ),
               ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.search_rounded,
-                    size: 20,
-                    color: HomeApprovedDesign.textMuted.withValues(alpha: 0.9),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'Kişi, oda veya içerik ara...',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: HomeApprovedDesign.textMuted.withValues(alpha: 0.95),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -108,8 +125,7 @@ class _UnifiedInboxBadge extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final badgesReady = ref.watch(shellHeaderBadgesEnabledProvider);
-    final unreadInbox =
-        badgesReady ? ref.watch(inboxUnreadCountProvider) : 0;
+    final unreadInbox = badgesReady ? ref.watch(inboxUnreadCountProvider) : 0;
     return HomePulsingIconBadge(
       icon: Icons.mail_rounded,
       badge: unreadInbox,
@@ -125,126 +141,5 @@ class _HomeBalanceChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const HomeHeaderBalanceChips();
-  }
-}
-
-class _IconBadge extends StatelessWidget {
-  const _IconBadge({
-    required this.icon,
-    required this.onTap,
-    this.badge = 0,
-  });
-
-  final IconData icon;
-  final int badge;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Icon(icon, size: 24, color: HomeApprovedDesign.textPrimary),
-          if (badge > 0)
-            Positioned(
-              right: -5,
-              top: -4,
-              child: Container(
-                constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                height: 16,
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: HomeApprovedDesign.liveRed,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  UnreadBadgeFormat.label(badge),
-                  style: const TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CoinPill extends StatelessWidget {
-  const _CoinPill({
-    required this.balance,
-    required this.onTap,
-    required this.onAdd,
-  });
-
-  final int balance;
-  final VoidCallback onTap;
-  final VoidCallback onAdd;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 34,
-        padding: const EdgeInsets.only(left: 8, right: 4),
-        decoration: BoxDecoration(
-          color: HomeApprovedDesign.surface.withValues(alpha: 0.92),
-          borderRadius: BorderRadius.circular(HomeApprovedDesign.pillRadius),
-          border: Border.all(
-            color: HomeApprovedDesign.border.withValues(alpha: 0.9),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.monetization_on_rounded,
-              size: 18,
-              color: HomeApprovedDesign.gold,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              _formatBalance(balance),
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: HomeApprovedDesign.textPrimary,
-              ),
-            ),
-            const SizedBox(width: 4),
-            GestureDetector(
-              onTap: onAdd,
-              child: Container(
-                width: 24,
-                height: 24,
-                decoration: const BoxDecoration(
-                  color: HomeApprovedDesign.purple,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.add, size: 16, color: Colors.white),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  static String _formatBalance(int n) {
-    final s = n.toString();
-    if (s.length <= 3) return s;
-    final buf = StringBuffer();
-    for (var i = 0; i < s.length; i++) {
-      if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
-      buf.write(s[i]);
-    }
-    return buf.toString();
   }
 }

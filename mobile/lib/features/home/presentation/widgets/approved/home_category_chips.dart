@@ -11,7 +11,11 @@ class HomeCategoryChips extends StatelessWidget {
     _ChipItem(label: 'Keşfet', route: '/feed', icon: Icons.explore_rounded),
     _ChipItem(label: 'Canlı', route: '/live', icon: Icons.videocam_rounded),
     _ChipItem(label: 'Sesli', route: '/voice-rooms', icon: Icons.mic_rounded),
-    _ChipItem(label: 'Fal', route: '/fortune', icon: Icons.auto_awesome_rounded),
+    _ChipItem(
+      label: 'Fal',
+      route: '/fortune',
+      icon: Icons.auto_awesome_rounded,
+    ),
     _ChipItem(
       label: 'Tanış',
       route: '/social/tanis-kaynas',
@@ -26,7 +30,9 @@ class HomeCategoryChips extends StatelessWidget {
       height: 40,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
+        padding: const EdgeInsets.symmetric(
+          horizontal: HomeApprovedDesign.hPad,
+        ),
         itemCount: _items.length,
         separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, i) {
@@ -100,11 +106,13 @@ class _CategoryChip extends StatelessWidget {
                 : null,
             color: active
                 ? null
-                : HomeApprovedDesign.surface.withValues(alpha: 0.72),
+                : HomeApprovedDesign.surfaceOf(context).withValues(alpha: 0.72),
             border: Border.all(
               color: active
                   ? HomeApprovedDesign.purple.withValues(alpha: 0.5)
-                  : HomeApprovedDesign.border.withValues(alpha: 0.85),
+                  : HomeApprovedDesign.borderOf(
+                      context,
+                    ).withValues(alpha: 0.85),
             ),
             boxShadow: active
                 ? [
@@ -124,7 +132,7 @@ class _CategoryChip extends StatelessWidget {
                 size: 16,
                 color: active
                     ? Colors.white
-                    : HomeApprovedDesign.textSecondary,
+                    : HomeApprovedDesign.textSecondaryOf(context),
               ),
               const SizedBox(width: 6),
               Text(
@@ -134,7 +142,9 @@ class _CategoryChip extends StatelessWidget {
                   fontWeight: FontWeight.w800,
                   color: active
                       ? Colors.white
-                      : HomeApprovedDesign.textPrimary.withValues(alpha: 0.9),
+                      : HomeApprovedDesign.textPrimaryOf(
+                          context,
+                        ).withValues(alpha: 0.9),
                 ),
               ),
             ],

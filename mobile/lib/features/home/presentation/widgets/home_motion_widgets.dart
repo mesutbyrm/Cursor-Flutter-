@@ -5,6 +5,7 @@ import '../../../../core/design_system/cds_fx.dart';
 import '../../../../core/navigation/unread_badge_format.dart';
 import '../../../../core/motion/canlifal_motion_tokens.dart';
 import '../../../../core/motion/canlifal_motion_widgets.dart';
+import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/ui/premium/live_badge.dart';
 import '../theme/home_approved_design.dart';
 
@@ -198,33 +199,65 @@ class _HomePulsingIconBadgeState extends ConsumerState<HomePulsingIconBadge>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    final dark = context.isDarkTheme;
+    return Semantics(
+      button: true,
+      label: widget.badge > 0
+          ? 'Gelen kutusu, ${widget.badge} okunmamış'
+          : 'Gelen kutusu',
       onTap: widget.onTap,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Icon(widget.icon, size: 24, color: HomeApprovedDesign.textPrimary),
-          if (widget.badge > 0)
-            Positioned(
-              right: -5,
-              top: -4,
-              child: ScaleTransition(
-                scale: TweenSequence<double>([
-                  TweenSequenceItem(
-                    tween: Tween(begin: 1.0, end: 1.22),
-                    weight: 50,
-                  ),
-                  TweenSequenceItem(
-                    tween: Tween(begin: 1.22, end: 1.0),
-                    weight: 50,
-                  ),
-                ]).animate(
-                  CurvedAnimation(parent: _c, curve: CanlifalMotionTokens.spring),
+      excludeSemantics: true,
+      child: CanlifalPressable(
+        onTap: widget.onTap,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: dark
+                    ? HomeApprovedDesign.searchFill
+                    : context.colors.surface,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: dark
+                      ? Colors.white.withValues(alpha: 0.07)
+                      : context.colors.outlineVariant,
                 ),
-                child: _BadgeDot(count: widget.badge),
+              ),
+              child: Icon(
+                widget.icon,
+                size: 20,
+                color: context.colors.onSurface,
               ),
             ),
-        ],
+            if (widget.badge > 0)
+              Positioned(
+                right: -3,
+                top: -3,
+                child: ScaleTransition(
+                  scale:
+                      TweenSequence<double>([
+                        TweenSequenceItem(
+                          tween: Tween(begin: 1.0, end: 1.22),
+                          weight: 50,
+                        ),
+                        TweenSequenceItem(
+                          tween: Tween(begin: 1.22, end: 1.0),
+                          weight: 50,
+                        ),
+                      ]).animate(
+                        CurvedAnimation(
+                          parent: _c,
+                          curve: CanlifalMotionTokens.spring,
+                        ),
+                      ),
+                  child: _BadgeDot(count: widget.badge),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

@@ -23,7 +23,7 @@ class MoreFortunesButton extends StatelessWidget {
         4,
       ),
       child: Material(
-        color: HomeApprovedDesign.surface,
+        color: HomeApprovedDesign.surfaceOf(context),
         borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
         child: InkWell(
           onTap: () => context.push('/fortune/types'),
@@ -32,25 +32,27 @@ class MoreFortunesButton extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 14),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
-              border: Border.all(color: HomeApprovedDesign.border),
+              borderRadius: BorderRadius.circular(
+                HomeApprovedDesign.cardRadius,
+              ),
+              border: Border.all(color: HomeApprovedDesign.borderOf(context)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
-                    color: HomeApprovedDesign.textPrimary,
+                    color: HomeApprovedDesign.textPrimaryOf(context),
                   ),
                 ),
                 const SizedBox(width: 6),
-                const Icon(
+                Icon(
                   Icons.chevron_right_rounded,
                   size: 20,
-                  color: HomeApprovedDesign.textSecondary,
+                  color: HomeApprovedDesign.textSecondaryOf(context),
                 ),
               ],
             ),

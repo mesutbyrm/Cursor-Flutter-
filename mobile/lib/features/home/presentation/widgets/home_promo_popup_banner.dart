@@ -43,7 +43,7 @@ class _PromoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final image = popup.imageUrl?.trim();
     return Material(
-      color: HomeApprovedDesign.surface,
+      color: HomeApprovedDesign.surfaceOf(context),
       borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -55,7 +55,7 @@ class _PromoCard extends StatelessWidget {
         },
         child: Container(
           decoration: BoxDecoration(
-            border: Border.all(color: HomeApprovedDesign.border),
+            border: Border.all(color: HomeApprovedDesign.borderOf(context)),
             gradient: LinearGradient(
               colors: [
                 HomeApprovedDesign.purple.withValues(alpha: 0.2),
@@ -81,10 +81,10 @@ class _PromoCard extends StatelessWidget {
                         popup.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w900,
-                          color: HomeApprovedDesign.textPrimary,
+                          color: HomeApprovedDesign.textPrimaryOf(context),
                         ),
                       ),
                       if (popup.message?.trim().isNotEmpty == true) ...[
@@ -93,9 +93,9 @@ class _PromoCard extends StatelessWidget {
                           popup.message!,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
-                            color: HomeApprovedDesign.textSecondary,
+                            color: HomeApprovedDesign.textSecondaryOf(context),
                           ),
                         ),
                       ],
@@ -114,11 +114,11 @@ class _PromoCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(right: 8),
                 child: Icon(
                   Icons.chevron_right_rounded,
-                  color: HomeApprovedDesign.textMuted,
+                  color: HomeApprovedDesign.textMutedOf(context),
                 ),
               ),
             ],

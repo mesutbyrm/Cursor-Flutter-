@@ -25,10 +25,7 @@ class HomeFooterSection extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (rows.isNotEmpty) ...[
-          const HomeSectionTitle(
-            emoji: '📣',
-            title: 'Duyurular',
-          ),
+          const HomeSectionTitle(emoji: '📣', title: 'Duyurular'),
           for (final row in rows)
             Padding(
               padding: const EdgeInsets.symmetric(
@@ -114,7 +111,7 @@ class _AnnouncementRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: HomeApprovedDesign.surface,
+      color: HomeApprovedDesign.surfaceOf(context),
       borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
       child: InkWell(
         onTap: () => onTap(context),
@@ -123,7 +120,7 @@ class _AnnouncementRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
-            border: Border.all(color: HomeApprovedDesign.border),
+            border: Border.all(color: HomeApprovedDesign.borderOf(context)),
           ),
           child: Row(
             children: [
@@ -134,17 +131,17 @@ class _AnnouncementRow extends StatelessWidget {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: HomeApprovedDesign.textPrimary,
+                    color: HomeApprovedDesign.textPrimaryOf(context),
                   ),
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
                 size: 20,
-                color: HomeApprovedDesign.textMuted,
+                color: HomeApprovedDesign.textMutedOf(context),
               ),
             ],
           ),
@@ -161,24 +158,27 @@ class _SocialMediaRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const HomeSectionTitle(
-          emoji: '🌐',
-          title: 'Sosyal Medyada Biz',
-        ),
+        const HomeSectionTitle(emoji: '🌐', title: 'Sosyal Medyada Biz'),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
+          padding: const EdgeInsets.symmetric(
+            horizontal: HomeApprovedDesign.hPad,
+          ),
           child: Text(
             'Topluluğumuza katıl, güncellemeleri kaçırma.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 12,
-              color: HomeApprovedDesign.textSecondary.withValues(alpha: 0.95),
+              color: HomeApprovedDesign.textSecondaryOf(
+                context,
+              ).withValues(alpha: 0.95),
             ),
           ),
         ),
         const SizedBox(height: 12),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
+          padding: const EdgeInsets.symmetric(
+            horizontal: HomeApprovedDesign.hPad,
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -200,7 +200,7 @@ class _SocialIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: HomeApprovedDesign.surface,
+      color: HomeApprovedDesign.surfaceOf(context),
       shape: const CircleBorder(),
       child: InkWell(
         customBorder: const CircleBorder(),
@@ -215,7 +215,7 @@ class _SocialIconButton extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: HomeApprovedDesign.border),
+            border: Border.all(color: HomeApprovedDesign.borderOf(context)),
             gradient: LinearGradient(
               colors: [
                 HomeApprovedDesign.purple.withValues(alpha: 0.25),
@@ -225,7 +225,7 @@ class _SocialIconButton extends StatelessWidget {
           ),
           child: Icon(
             channel.icon,
-            color: HomeApprovedDesign.textPrimary,
+            color: HomeApprovedDesign.textPrimaryOf(context),
             size: 22,
           ),
         ),
@@ -255,9 +255,7 @@ class _ClosingQuote extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          const Center(
-            child: CanlifalWordmark(fontSize: 20, compact: true),
-          ),
+          const Center(child: CanlifalWordmark(fontSize: 20, compact: true)),
         ],
       ),
     );

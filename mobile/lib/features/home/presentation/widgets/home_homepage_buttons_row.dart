@@ -19,7 +19,9 @@ class HomeHomepageButtonsRow extends ConsumerWidget {
       error: (_, _) => const SizedBox.shrink(),
       data: (items) {
         if (items.isEmpty) return const SizedBox.shrink();
-        final overflow = items.length > 3 ? items.sublist(3) : const <HomePageButtonEntity>[];
+        final overflow = items.length > 3
+            ? items.sublist(3)
+            : const <HomePageButtonEntity>[];
         if (overflow.isEmpty) return const SizedBox.shrink();
         return Padding(
           padding: const EdgeInsets.fromLTRB(
@@ -51,7 +53,7 @@ class _ButtonChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: HomeApprovedDesign.surface,
+      color: HomeApprovedDesign.surfaceOf(context),
       borderRadius: BorderRadius.circular(HomeApprovedDesign.pillRadius),
       child: InkWell(
         onTap: () => navigateHomePageButton(context, button),
@@ -60,7 +62,7 @@ class _ButtonChip extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(HomeApprovedDesign.pillRadius),
-            border: Border.all(color: HomeApprovedDesign.border),
+            border: Border.all(color: HomeApprovedDesign.borderOf(context)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -84,10 +86,10 @@ class _ButtonChip extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 button.label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
-                  color: HomeApprovedDesign.textPrimary,
+                  color: HomeApprovedDesign.textPrimaryOf(context),
                 ),
               ),
             ],

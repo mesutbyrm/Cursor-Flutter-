@@ -22,7 +22,8 @@ class HomeSocialStripSection extends ConsumerStatefulWidget {
       _HomeSocialStripSectionState();
 }
 
-class _HomeSocialStripSectionState extends ConsumerState<HomeSocialStripSection> {
+class _HomeSocialStripSectionState
+    extends ConsumerState<HomeSocialStripSection> {
   _SocialTab? _selectedTab;
 
   _SocialTab _resolveTab(List<_SocialTab> tabs) {
@@ -38,7 +39,8 @@ class _HomeSocialStripSectionState extends ConsumerState<HomeSocialStripSection>
     final stats = ref.watch(platformStatsProvider);
     final likers = user != null ? ref.watch(homeUserLikersProvider) : null;
 
-    final logins = stats.valueOrNull?.recentLogins ?? const <RecentLoginEntity>[];
+    final logins =
+        stats.valueOrNull?.recentLogins ?? const <RecentLoginEntity>[];
     final likerItems = likers?.valueOrNull ?? const <HomeUserLikerEntity>[];
 
     final hasLogins = logins.isNotEmpty;
@@ -77,21 +79,25 @@ class _HomeSocialStripSectionState extends ConsumerState<HomeSocialStripSection>
         ),
         if (showTabs)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
+            padding: const EdgeInsets.symmetric(
+              horizontal: HomeApprovedDesign.hPad,
+            ),
             child: Row(
               children: [
                 if (hasLogins)
                   _TabChip(
                     label: 'Son Girişler',
                     selected: tab == _SocialTab.recentLogins,
-                    onTap: () => setState(() => _selectedTab = _SocialTab.recentLogins),
+                    onTap: () =>
+                        setState(() => _selectedTab = _SocialTab.recentLogins),
                   ),
                 if (hasLogins && hasLikers) const SizedBox(width: 8),
                 if (hasLikers)
                   _TabChip(
                     label: 'Beğenenler',
                     selected: tab == _SocialTab.likers,
-                    onTap: () => setState(() => _selectedTab = _SocialTab.likers),
+                    onTap: () =>
+                        setState(() => _selectedTab = _SocialTab.likers),
                   ),
               ],
             ),
@@ -124,7 +130,7 @@ class _TabChip extends StatelessWidget {
     return Material(
       color: selected
           ? HomeApprovedDesign.pink.withValues(alpha: 0.16)
-          : HomeApprovedDesign.surface,
+          : HomeApprovedDesign.surfaceOf(context),
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: onTap,
@@ -136,7 +142,7 @@ class _TabChip extends StatelessWidget {
             border: Border.all(
               color: selected
                   ? HomeApprovedDesign.pink.withValues(alpha: 0.5)
-                  : HomeApprovedDesign.border,
+                  : HomeApprovedDesign.borderOf(context),
             ),
           ),
           child: Text(
@@ -146,7 +152,7 @@ class _TabChip extends StatelessWidget {
               fontWeight: FontWeight.w700,
               color: selected
                   ? HomeApprovedDesign.pink
-                  : HomeApprovedDesign.textMuted,
+                  : HomeApprovedDesign.textMutedOf(context),
             ),
           ),
         ),
@@ -228,19 +234,19 @@ class _LoginChip extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
-                color: HomeApprovedDesign.textPrimary,
+                color: HomeApprovedDesign.textPrimaryOf(context),
               ),
             ),
             Text(
               login.timeLabel,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 9,
-                color: HomeApprovedDesign.textMuted,
+                color: HomeApprovedDesign.textMutedOf(context),
               ),
             ),
           ],
@@ -283,10 +289,10 @@ class _LikerChip extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
-                color: HomeApprovedDesign.textPrimary,
+                color: HomeApprovedDesign.textPrimaryOf(context),
               ),
             ),
             if (liker.timeLabel?.trim().isNotEmpty == true)
@@ -294,9 +300,9 @@ class _LikerChip extends StatelessWidget {
                 liker.timeLabel!,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 9,
-                  color: HomeApprovedDesign.textMuted,
+                  color: HomeApprovedDesign.textMutedOf(context),
                 ),
               ),
           ],

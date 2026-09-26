@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_spacing.dart';
+import 'canlifal_brand_colors.dart';
 import 'app_theme_colors.dart';
 
 /// Material 3 ThemeExtension — premium gradient / glow / layout token'ları.
@@ -27,19 +28,13 @@ class CanlifalTokens extends ThemeExtension<CanlifalTokens> {
   final double radiusChip;
 
   static const dark = CanlifalTokens(
-    brandGradient: LinearGradient(
-      colors: [AppThemeColors.accentPink, AppThemeColors.accentPurple],
-    ),
-    fabGradient: LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [Color(0xFFFF4EC8), Color(0xFFD52DFF)],
-    ),
+    brandGradient: CanlifalBrandColors.primaryGradient,
+    fabGradient: CanlifalBrandColors.primaryGradient,
     coinGradient: LinearGradient(
-      colors: [Color(0xFF2A1548), Color(0xFF1A0F32)],
+      colors: [Color(0xFF1F1A2C), Color(0xFF15121D)],
     ),
-    navBarBackground: Color(0x8C1E1E36),
-    glassBorder: Color(0x40B832FF),
+    navBarBackground: Color(0xF50C0C11),
+    glassBorder: Color(0x1FFFFFFF),
     liveBadgeColor: AppThemeColors.liveRed,
     radiusCard: AppSpacing.radiusLg,
     radiusChip: AppSpacing.radiusMd,
@@ -47,18 +42,20 @@ class CanlifalTokens extends ThemeExtension<CanlifalTokens> {
 
   static const light = CanlifalTokens(
     brandGradient: LinearGradient(
-      colors: [Color(0xFFE91E63), Color(0xFF9C27B0)],
-    ),
-    fabGradient: LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
-      colors: [Color(0xFFFF4EC8), Color(0xFFD52DFF)],
+      colors: [
+        CanlifalBrandColors.violet,
+        CanlifalBrandColors.violetStrong,
+        CanlifalBrandColors.violetDeep,
+      ],
     ),
+    fabGradient: CanlifalBrandColors.primaryGradient,
     coinGradient: LinearGradient(
-      colors: [Color(0xFFF3E8FF), Color(0xFFE8DEF8)],
+      colors: [Color(0xFFF3EEFF), Color(0xFFE9E2FB)],
     ),
-    navBarBackground: Color(0xF5FFFFFF),
-    glassBorder: Color(0x339C27B0),
+    navBarBackground: Color(0xF7FFFFFF),
+    glassBorder: Color(0x1F7C3AED),
     liveBadgeColor: Color(0xFFE53935),
     radiusCard: AppSpacing.radiusLg,
     radiusChip: AppSpacing.radiusMd,

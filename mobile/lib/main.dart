@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -74,7 +75,14 @@ Future<void> main() async {
     );
   };
 
+  // Fontlar assets/google_fonts/ altında paketli; ağdan indirme kapalı.
   GoogleFonts.config.allowRuntimeFetching = false;
+  LicenseRegistry.addLicense(() async* {
+    for (final file in const ['OFL.txt', 'OFL-PlayfairDisplay.txt']) {
+      final license = await rootBundle.loadString('assets/google_fonts/$file');
+      yield LicenseEntryWithLineBreaks(const ['google_fonts'], license);
+    }
+  });
   AppPerfMetrics.end('cold_start');
 
   runZonedGuarded(

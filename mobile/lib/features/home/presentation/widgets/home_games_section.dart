@@ -59,7 +59,8 @@ class HomeGamesSection extends ConsumerWidget {
           ),
           error: (_, _) => const SizedBox.shrink(),
           data: (gameItems) {
-            final rewardItems = rewards.valueOrNull ?? const <DailyRewardEntity>[];
+            final rewardItems =
+                rewards.valueOrNull ?? const <DailyRewardEntity>[];
             final merged = <_GameTile>[
               ...gameItems.map(
                 (g) => _GameTile(
@@ -112,9 +113,11 @@ class HomeGamesSection extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
+          padding: const EdgeInsets.symmetric(
+            horizontal: HomeApprovedDesign.hPad,
+          ),
           child: Material(
-            color: HomeApprovedDesign.surface,
+            color: HomeApprovedDesign.surfaceOf(context),
             borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
@@ -122,8 +125,12 @@ class HomeGamesSection extends ConsumerWidget {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
-                  border: Border.all(color: HomeApprovedDesign.border),
+                  borderRadius: BorderRadius.circular(
+                    HomeApprovedDesign.cardRadius,
+                  ),
+                  border: Border.all(
+                    color: HomeApprovedDesign.borderOf(context),
+                  ),
                   gradient: LinearGradient(
                     colors: [
                       HomeApprovedDesign.purple.withValues(alpha: 0.22),
@@ -155,12 +162,12 @@ class HomeGamesSection extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'Oyun Merkezi',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w900,
-                              color: HomeApprovedDesign.textPrimary,
+                              color: HomeApprovedDesign.textPrimaryOf(context),
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -170,18 +177,20 @@ class HomeGamesSection extends ConsumerWidget {
                               loading: () => 'Yakında yeni oyunlar',
                               error: (_, _) => 'Liderlik tablosu ve ödüller',
                             ),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
-                              color: HomeApprovedDesign.textSecondary,
+                              color: HomeApprovedDesign.textSecondaryOf(
+                                context,
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const Icon(
+                    Icon(
                       Icons.arrow_forward_ios_rounded,
                       size: 16,
-                      color: HomeApprovedDesign.textMuted,
+                      color: HomeApprovedDesign.textMutedOf(context),
                     ),
                   ],
                 ),

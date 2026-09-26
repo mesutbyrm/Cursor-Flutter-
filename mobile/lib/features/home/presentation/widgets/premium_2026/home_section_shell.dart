@@ -107,8 +107,8 @@ class _InlineState extends StatelessWidget {
         12,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: HomePremiumDesign.glassCard(
-        tint: HomePremiumDesign.surface,
+      decoration: HomePremiumDesign.glassCardOf(
+        context,
         radius: HomePremiumDesign.chipRadius,
       ),
       child: Row(
@@ -117,7 +117,9 @@ class _InlineState extends StatelessWidget {
             Icon(
               icon,
               size: 20,
-              color: HomeApprovedDesign.textMuted.withValues(alpha: 0.9),
+              color: HomeApprovedDesign.textMutedOf(
+                context,
+              ).withValues(alpha: 0.9),
             ),
           if (icon != null) const SizedBox(width: 10),
           Expanded(
@@ -125,7 +127,7 @@ class _InlineState extends StatelessWidget {
               message,
               style: TextStyle(
                 fontSize: HomePremiumDesign.secondarySize,
-                color: HomeApprovedDesign.textSecondary,
+                color: HomeApprovedDesign.textSecondaryOf(context),
                 height: 1.25,
               ),
             ),
@@ -142,7 +144,9 @@ class _InlineState extends StatelessWidget {
               ),
               child: Text(
                 actionLabel!,
-                style: HomePremiumDesign.actionLabelStyle.copyWith(fontSize: 11),
+                style: HomePremiumDesign.actionLabelStyle.copyWith(
+                  fontSize: 11,
+                ),
               ),
             ),
           ],
@@ -151,7 +155,10 @@ class _InlineState extends StatelessWidget {
     );
 
     if (height != null) {
-      return SizedBox(height: height, child: Center(child: body));
+      return SizedBox(
+        height: height,
+        child: Center(child: body),
+      );
     }
     return body;
   }

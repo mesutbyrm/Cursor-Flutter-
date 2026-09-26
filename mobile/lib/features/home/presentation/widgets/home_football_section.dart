@@ -58,7 +58,7 @@ class _MatchCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: HomeApprovedDesign.surface,
+      color: HomeApprovedDesign.surfaceOf(context),
       borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
       child: InkWell(
         onTap: onTap,
@@ -68,7 +68,7 @@ class _MatchCard extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
-            border: Border.all(color: HomeApprovedDesign.border),
+            border: Border.all(color: HomeApprovedDesign.borderOf(context)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,10 +78,10 @@ class _MatchCard extends StatelessWidget {
                   match.league!,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
-                    color: HomeApprovedDesign.textMuted,
+                    color: HomeApprovedDesign.textMutedOf(context),
                   ),
                 ),
               const Spacer(),
@@ -92,10 +92,10 @@ class _MatchCard extends StatelessWidget {
                       match.homeTeam,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
-                        color: HomeApprovedDesign.textPrimary,
+                        color: HomeApprovedDesign.textPrimaryOf(context),
                       ),
                     ),
                   ),
@@ -116,10 +116,10 @@ class _MatchCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.end,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
-                        color: HomeApprovedDesign.textPrimary,
+                        color: HomeApprovedDesign.textPrimaryOf(context),
                       ),
                     ),
                   ),

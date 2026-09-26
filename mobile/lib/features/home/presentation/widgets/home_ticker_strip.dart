@@ -84,10 +84,10 @@ class _HomeTickerStripState extends ConsumerState<HomeTickerStrip> {
                       key: ValueKey(line),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: HomeApprovedDesign.textSecondary,
+                        color: HomeApprovedDesign.textSecondaryOf(context),
                       ),
                     ),
                   ),

@@ -59,9 +59,9 @@ class _BlogCard extends StatelessWidget {
       child: Container(
         width: 220,
         decoration: BoxDecoration(
-          color: HomeApprovedDesign.surface,
+          color: HomeApprovedDesign.surfaceOf(context),
           borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
-          border: Border.all(color: HomeApprovedDesign.border),
+          border: Border.all(color: HomeApprovedDesign.borderOf(context)),
         ),
         clipBehavior: Clip.antiAlias,
         child: Row(
@@ -94,10 +94,10 @@ class _BlogCard extends StatelessWidget {
                       post.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
-                        color: HomeApprovedDesign.textPrimary,
+                        color: HomeApprovedDesign.textPrimaryOf(context),
                         height: 1.25,
                       ),
                     ),
@@ -107,9 +107,9 @@ class _BlogCard extends StatelessWidget {
                         post.excerpt!,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 10,
-                          color: HomeApprovedDesign.textSecondary,
+                          color: HomeApprovedDesign.textSecondaryOf(context),
                           height: 1.3,
                         ),
                       ),

@@ -15,7 +15,7 @@ Future<void> showHomeHoroscopeDailySheet(
 }) {
   return showModalBottomSheet<void>(
     context: context,
-    backgroundColor: HomeApprovedDesign.surface,
+    backgroundColor: HomeApprovedDesign.surfaceOf(context),
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
@@ -50,9 +50,7 @@ class _HoroscopeSheetState extends ConsumerState<_HoroscopeSheet> {
   @override
   void initState() {
     super.initState();
-    _future = ref
-        .read(homeRemoteProvider)
-        .fetchDailyHoroscope(widget.apiSign);
+    _future = ref.read(homeRemoteProvider).fetchDailyHoroscope(widget.apiSign);
   }
 
   @override
@@ -69,7 +67,7 @@ class _HoroscopeSheetState extends ConsumerState<_HoroscopeSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: HomeApprovedDesign.border,
+                  color: HomeApprovedDesign.borderOf(context),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -82,10 +80,10 @@ class _HoroscopeSheetState extends ConsumerState<_HoroscopeSheet> {
                 Expanded(
                   child: Text(
                     '${widget.signName} — Günlük Burç',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
-                      color: HomeApprovedDesign.textPrimary,
+                      color: HomeApprovedDesign.textPrimaryOf(context),
                     ),
                   ),
                 ),
@@ -103,21 +101,21 @@ class _HoroscopeSheetState extends ConsumerState<_HoroscopeSheet> {
                 }
                 final text = snap.data?.trim();
                 if (text == null || text.isEmpty) {
-                  return const Text(
+                  return Text(
                     'Günlük yorum şu an yüklenemedi. Detaylı burç falına geçebilirsin.',
                     style: TextStyle(
                       fontSize: 14,
                       height: 1.45,
-                      color: HomeApprovedDesign.textSecondary,
+                      color: HomeApprovedDesign.textSecondaryOf(context),
                     ),
                   );
                 }
                 return Text(
                   text,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     height: 1.5,
-                    color: HomeApprovedDesign.textPrimary,
+                    color: HomeApprovedDesign.textPrimaryOf(context),
                   ),
                 );
               },

@@ -163,11 +163,10 @@ class _ActionChip extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(HomePremiumDesign.chipRadius),
         child: Ink(
-          decoration: HomePremiumDesign.glassCard(
-            tint: HomePremiumDesign.surface,
+          decoration: HomePremiumDesign.glassCardOf(
+            context,
             radius: HomePremiumDesign.chipRadius,
-            border: Border.all(color: accent.withValues(alpha: 0.35)),
-          ),
+          ).copyWith(border: Border.all(color: accent.withValues(alpha: 0.35))),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
             child: Column(
@@ -189,8 +188,8 @@ class _ActionChip extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: HomeApprovedDesign.textPrimary,
+                  style: TextStyle(
+                    color: HomeApprovedDesign.textPrimaryOf(context),
                     fontWeight: FontWeight.w700,
                     fontSize: 11,
                   ),

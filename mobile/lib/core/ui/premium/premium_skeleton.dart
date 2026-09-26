@@ -21,19 +21,26 @@ class PremiumSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final box = Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
-        borderRadius: borderRadius ?? BorderRadius.circular(AppSpacing.radiusMd),
+        borderRadius:
+            borderRadius ?? BorderRadius.circular(AppSpacing.radiusMd),
         color: context.colors.surfaceElevated,
       ),
-    )
-        .animate(onPlay: (c) => c.repeat())
-        .shimmer(
-          duration: 1400.ms,
-          color: AppThemeColors.accentPurple.withValues(alpha: 0.12),
-        );
+    );
+    if (MediaQuery.disableAnimationsOf(context)) return box;
+    return RepaintBoundary(
+      child: box
+          .animate(onPlay: (c) => c.repeat())
+          .shimmer(
+            duration: 1400.ms,
+            color: context.isDarkTheme
+                ? Colors.white.withValues(alpha: 0.06)
+                : AppThemeColors.accentPurple.withValues(alpha: 0.08),
+          ),
+    );
   }
 }
 

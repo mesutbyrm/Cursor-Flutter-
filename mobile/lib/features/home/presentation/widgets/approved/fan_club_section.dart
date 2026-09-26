@@ -34,7 +34,9 @@ class FanClubSection extends ConsumerWidget {
           height: 168,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
+            padding: const EdgeInsets.symmetric(
+              horizontal: HomeApprovedDesign.hPad,
+            ),
             itemCount: items.length,
             separatorBuilder: (_, _) => const SizedBox(width: 10),
             itemBuilder: (_, i) {
@@ -60,23 +62,24 @@ class _FanClubCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final members = item.memberCount;
-    final memberLabel =
-        members != null ? NumberFormat.compact(locale: 'tr').format(members) : null;
+    final memberLabel = members != null
+        ? NumberFormat.compact(locale: 'tr').format(members)
+        : null;
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 132,
         decoration: BoxDecoration(
-          color: HomeApprovedDesign.surface,
+          color: HomeApprovedDesign.surfaceOf(context),
           borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
-          border: Border.all(color: HomeApprovedDesign.border),
+          border: Border.all(color: HomeApprovedDesign.borderOf(context)),
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
               HomeApprovedDesign.purple.withValues(alpha: 0.28),
-              HomeApprovedDesign.surface,
+              HomeApprovedDesign.surfaceOf(context),
             ],
           ),
         ),
@@ -94,7 +97,7 @@ class _FanClubCard extends StatelessWidget {
                         fit: BoxFit.cover,
                       )
                     : ColoredBox(
-                        color: HomeApprovedDesign.border,
+                        color: HomeApprovedDesign.borderOf(context),
                         child: Icon(
                           Icons.groups_rounded,
                           size: 40,
@@ -112,10 +115,10 @@ class _FanClubCard extends StatelessWidget {
                     item.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
-                      color: HomeApprovedDesign.textPrimary,
+                      color: HomeApprovedDesign.textPrimaryOf(context),
                     ),
                   ),
                   if (item.subtitle != null) ...[
@@ -124,9 +127,9 @@ class _FanClubCard extends StatelessWidget {
                       item.subtitle!,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 9,
-                        color: HomeApprovedDesign.textSecondary,
+                        color: HomeApprovedDesign.textSecondaryOf(context),
                       ),
                     ),
                   ],
@@ -142,10 +145,10 @@ class _FanClubCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           memberLabel,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
-                            color: HomeApprovedDesign.textSecondary,
+                            color: HomeApprovedDesign.textSecondaryOf(context),
                           ),
                         ),
                       ],
