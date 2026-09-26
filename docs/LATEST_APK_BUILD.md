@@ -4,21 +4,17 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.599+650` |
-| Tarih (UTC) | 2026-09-26 17:54 |
-| Commit | [`e31df32a2a72c1f62f7a9df362b17f569378c7df`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/e31df32a2a72c1f62f7a9df362b17f569378c7df) |
-| İş akışı | [Run 36259555436](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36259555436) |
+| Sürüm | `1.0.601+652` |
+| Tarih (UTC) | 2026-09-26 19:57 |
+| Commit | [`24d3441d82148f82e148395bd777650bcd4a499e`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/24d3441d82148f82e148395bd777650bcd4a499e) |
+| İş akışı | [Run 36266764925](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36266764925) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.599+650 (2026-09-25) — Sesli oda backend sözleşmesi (2. dalga)
+## 1.0.602+653 (2026-09-26) — CI import düzeltmesi
 
-- **selfInRoom:** yalnızca backend join onayı + presence listesi (`resolveSelfInRoomFromBackend`)
-- **GET /state:** join öncesi sahte “odadayım” kapatıldı
-- **Leave:** önce `DELETE .../presence` (voice_room_api.md)
-- **Cold start:** kayıtlı oda için auth sonrası stale presence leave
-- **TRTC:** `backendSyncReady` için 8 sn bekleme
+- **Analyze:** `voice_room_rtc_page` yarışma rail import yolu; `ApiException` package import
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
