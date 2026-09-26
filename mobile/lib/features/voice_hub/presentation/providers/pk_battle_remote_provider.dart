@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/pk_event_log.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -90,15 +91,14 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
       clear();
       return true;
     }
+    if (battle.isActive && !battle.isEnded) {
+      // Aktif PK'yı davet öncesi uzaktan bitirmek her iki odada koltuk/presence
+      // dalgalanması yaratıyordu; yeni davet sunucuda reddedilirse kullanıcıya iletilir.
+      return false;
+    }
     try {
       if (battle.isPending) {
         await cancel(
-          battle.id,
-          roomId: roomId,
-          alternateRoomId: alternateRoomId,
-        ).timeout(const Duration(seconds: 8));
-      } else {
-        await end(
           battle.id,
           roomId: roomId,
           alternateRoomId: alternateRoomId,
@@ -123,9 +123,21 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     String? opponentRoomId,
     int durationSeconds = 180,
   }) async {
-    // PK daveti göndermeden önce oda durumunu temizle (pending savaşları sonlandır).
-    // Bu, presence state karmaşasını ve dönen çift daveti (duplicate invites) engeller.
-    await prepareRoomForInvite(roomId: roomId, alternateRoomId: alternateRoomId);
+    // PK daveti göndermeden önce askıda PK temizlenir; aktif PK uzaktan bitirilmez (koltuk dalgası).
+    final ready = await prepareRoomForInvite(
+      roomId: roomId,
+      alternateRoomId: alternateRoomId,
+    );
+    if (!ready) {
+      PkEventLog.error(
+        'invite_blocked_active_pk',
+        'Oda $roomId — aktif PK varken yeni davet engellendi',
+      );
+      throw const ApiException(
+        'Bu odada devam eden PK var. Yeni davet için önce mevcut PK\'yı bitirin.',
+        statusCode: 409,
+      );
+    }
 
     final battle = await _api.inviteVoiceRoom(
       roomId: roomId,

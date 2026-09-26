@@ -87,9 +87,7 @@ import '../../../gifts/presentation/widgets/gift_battle_strip.dart';
 import '../../../gifts/presentation/widgets/first_gifter_badge.dart';
 import '../../../gifts/presentation/widgets/gift_goal_bar.dart';
 import '../../../visual_fx/presentation/widgets/fx_big_gift_banner.dart';
-import '../../../cfc_arena/presentation/widgets/cfc_arena_room_banner.dart';
-import '../../../live/presentation/widgets/weekly_broadcaster_competition_slot.dart';
-import '../../../cfc_arena/domain/cfc_arena_context.dart';
+import '../widgets/voice_room/voice_room_competition_rail_slot.dart';
 
 /// Aşama 1 — oda listesi, giriş/çıkış, mikrofon, hoparlör, katılımcılar, oda sahibi.
 class VoiceRoomBasicPage extends ConsumerStatefulWidget {
@@ -1028,15 +1026,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
               // Yarışma kutuları Ayarlar/Müzik'in üstünde; eskiden sezon
               // yarışması ekranın üstünde tam genişlik şerit olarak duruyor,
               // haftalık yarışma ise bu sayfada hiç görünmüyordu.
-              topSlot: const Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  CfcArenaRoomBanner(surface: CfcArenaSurface.voiceRoom),
-                  SizedBox(height: 8),
-                  WeeklyBroadcasterCompetitionSlot(),
-                ],
-              ),
+              topSlot: const VoiceRoomCompetitionRailSlot(),
             ),
             if (!keyboardOpen && showMusicRequestFab)
               Align(

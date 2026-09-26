@@ -98,7 +98,6 @@ import 'widgets/premium_2026/voice_cosmic_background.dart';
 import 'widgets/voice_room/voice_room_music_background_layer.dart';
 import 'sheets/voice_room_commands_panel.dart';
 import 'widgets/premium_2026/voice_room_persistent_duyuru.dart';
-import '../../live/presentation/widgets/weekly_broadcaster_competition_slot.dart';
 import '../../visual_fx/presentation/widgets/fx_voice_room_overlay_host.dart';
 import '../../gifts/presentation/sync/gift_event_listener.dart';
 import 'widgets/voice_room/voice_room_duyuru_ticker.dart';
@@ -114,8 +113,7 @@ import 'widgets/voice_room/voice_room_side_action_rail.dart';
 import 'widgets/voice_room/voice_room_bottom_dock.dart';
 import 'widgets/voice_room/voice_room_video_close_bar.dart';
 import 'widgets/voice_room_error_boundary.dart';
-import '../../cfc_arena/domain/cfc_arena_context.dart';
-import '../../cfc_arena/presentation/widgets/cfc_arena_room_banner.dart';
+import '../widgets/voice_room/voice_room_competition_rail_slot.dart';
 import 'sheets/voice_youtube_song_sheet.dart';
 import 'widgets/premium_2026/voice_pk_invite_banner.dart';
 import 'widgets/voice_room_privileged_auto_seat_listener.dart';
@@ -1861,15 +1859,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                   : null,
               showMusic: showMusicRequestFab,
               // Yarışma kutuları Ayarlar/Müzik'in üstünde durur.
-              topSlot: const Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  CfcArenaRoomBanner(surface: CfcArenaSurface.voiceRoom),
-                  SizedBox(height: 8),
-                  WeeklyBroadcasterCompetitionSlot(),
-                ],
-              ),
+              topSlot: const VoiceRoomCompetitionRailSlot(),
             ),
             if (!keyboardOpen && showMusicRequestFab)
               Align(

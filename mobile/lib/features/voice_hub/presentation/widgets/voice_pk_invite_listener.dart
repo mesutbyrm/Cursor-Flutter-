@@ -117,6 +117,7 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
     String userId,
     String? username,
     String activeKey,
+    VoiceRoomEntity? activeRoom,
     PkBattleRemoteDataSource api,
   ) async {
     final owned = ref.read(myOwnedVoiceRoomsProvider);
@@ -144,10 +145,27 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
         alternateRoomId: room.slug != key ? room.slug : null,
       );
       if (battle != null && !battle.isEnded) {
-        ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(battle);
+        _ingestBattleIfRelevant(battle, activeKey, activeRoom, userId);
         _onBattleUpdate(battle);
         if (battle.isPending || battle.isActive) return;
       }
+    }
+  }
+
+  void _ingestBattleIfRelevant(
+    PkBattleRemote battle,
+    String activeKey,
+    VoiceRoomEntity? activeRoom,
+    String userId,
+  ) {
+    if (activeKey.isEmpty || activeRoom == null) {
+      ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(battle);
+      return;
+    }
+    if (pkBattleBelongsToRoom(battle, activeRoom) ||
+        (battle.isPending &&
+            isPkInviteTarget(battle, activeRoom, userId: userId))) {
+      ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(battle);
     }
   }
 
@@ -179,17 +197,33 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
           alternateRoomId: alt,
         );
         if (roomBattle != null && !roomBattle.isEnded) {
-          ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(roomBattle);
+          _ingestBattleIfRelevant(
+            roomBattle,
+            activeKey,
+            activeRoom,
+            user.id,
+          );
           _onBattleUpdate(roomBattle);
         }
       }
 
-      await _pollOwnedRooms(user.id, user.username, activeKey, api);
+      await _pollOwnedRooms(
+        user.id,
+        user.username,
+        activeKey,
+        activeRoom,
+        api,
+      );
 
       final invites = await api.fetchMyInvites();
       for (final battle in invites) {
         if (battle.isEnded || !battle.isPending) continue;
-        ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(battle);
+        _ingestBattleIfRelevant(
+          battle,
+          activeKey,
+          activeRoom,
+          user.id,
+        );
         _onBattleUpdate(battle);
         if (battle.isPending) return;
       }

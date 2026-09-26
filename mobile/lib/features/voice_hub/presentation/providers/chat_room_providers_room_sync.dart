@@ -476,6 +476,10 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
   }
 
   void _applyRoomEventSeatChanged(Map<String, dynamic> payload) {
+    if (_shouldPauseSeatSyncForPk()) {
+      VoiceRoomDebugLog.log('sse.seat_changed.skip_pk', {'room': _roomKey});
+      return;
+    }
     final userId = payload['userId']?.toString();
     if (userId == null || userId.isEmpty) return;
     final newSeat = _parseEventInt(payload['seatIndex']);
@@ -505,7 +509,6 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       occupantImage: payload['image']?.toString(),
     );
     state = state.copyWith(presence: nextPresence, seatSlots: nextSeats);
-    unawaited(_tryAutoPrivilegedSeat());
     _dispatchSiteAnimation('seat_changed', payload);
   }
 
@@ -631,10 +634,23 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
 
   /// PART4 SSE `seat_update` — koltuk listesini backend'den yeniler (300 ms debounce).
   void _scheduleSeatsRefreshFromBackend() {
+    if (_shouldPauseSeatSyncForPk()) {
+      VoiceRoomDebugLog.log('sse.seat_update.skip_pk', {'room': _roomKey});
+      return;
+    }
     _seatRefreshDebounce?.cancel();
     _seatRefreshDebounce = Timer(const Duration(milliseconds: 300), () {
+      if (_shouldPauseSeatSyncForPk()) return;
       unawaited(_refreshSeatsFromBackend());
     });
+  }
+
+  /// Oda↔oda PK daveti/savaşı sırasında GET /seats ile koltuk sıfırlamasını durdur.
+  bool _shouldPauseSeatSyncForPk() {
+    final battle = ref.read(pkBattleRemoteProvider);
+    if (battle == null || battle.isEnded) return false;
+    if (!battle.isPending && !battle.isActive) return false;
+    return pkBattleBelongsToRoom(battle, _roomMeta);
   }
 
   Future<void> _refreshSeatsFromBackend() async {

@@ -45,7 +45,7 @@ class VoiceRoomSideActionRail extends StatelessWidget {
               if (hasButtons) const SizedBox(height: 12),
             ],
             if (onSettings != null)
-              _SideActionButton(
+              VoiceRoomRailIconButton(
                 icon: Icons.settings_rounded,
                 label: 'Ayarlar',
                 color: VoiceRoomTokens.neonBlue,
@@ -54,7 +54,7 @@ class VoiceRoomSideActionRail extends StatelessWidget {
             if (onSettings != null && showMusic && onMusic != null)
               const SizedBox(height: 12),
             if (showMusic && onMusic != null)
-              _SideActionButton(
+              VoiceRoomRailIconButton(
                 icon: Icons.library_music_rounded,
                 label: 'Müzik',
                 color: VoiceRoomTokens.gold,
@@ -67,8 +67,9 @@ class VoiceRoomSideActionRail extends StatelessWidget {
   }
 }
 
-class _SideActionButton extends StatelessWidget {
-  const _SideActionButton({
+/// Sağ kenar kısayol düğmesi (Ayarlar, Müzik, yarışmalar).
+class VoiceRoomRailIconButton extends StatelessWidget {
+  const VoiceRoomRailIconButton({
     required this.icon,
     required this.label,
     required this.color,

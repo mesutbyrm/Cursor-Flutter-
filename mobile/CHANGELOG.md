@@ -1,5 +1,19 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.601+652 (2026-09-26) — PK davet koltuk + yarışma rail
+
+- **PK davet:** aktif PK uzaktan bitirilmez; PK sırasında GET /seats koltuk senkronu duraklatılır
+- **PK poll:** yalnızca aktif odaya ait savaş global state'e yazılır
+- **Yarışmalar:** sezon + haftalık — Ayarlar/Müzik ile aynı sağ rail kutusu; dokununca içerik/sheet
+
+## 1.0.600+651 (2026-09-26) — Sesli oda / PK / canlı fal UX
+
+- **Phantom presence:** SSE oda güncellemeleri `SelfPresenceTracker` ile hizalandı
+- **Koltuk:** yetkili otomatik oturma kapatıldı; heartbeat 5xx’te gereksiz rejoin yok
+- **Gold giriş:** kendi takım banner’ı `myEntranceThemeProvider` ile
+- **PK UI:** canlı split video üstten; WhatsApp tarzı mesaj çubuğu (yayın + sesli PK)
+- **Canlı fal:** mesaj gövdesi yedek alanı; kamera çevirme önce kamerayı açar
+
 ## 1.0.599+650 (2026-09-25) — Sesli oda backend sözleşmesi (2. dalga)
 
 - **selfInRoom:** yalnızca backend join onayı + presence listesi (`resolveSelfInRoomFromBackend`)
