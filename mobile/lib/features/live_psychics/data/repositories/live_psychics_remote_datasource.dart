@@ -903,7 +903,7 @@ class LivePsychicsRemoteDataSource {
     try {
       await _dio.safePost<dynamic>(
         ApiEndpoints.liveFortuneRoomMessages(key),
-        data: {'content': message},
+        data: {'content': message, 'message': message},
       );
       return true;
     } catch (_) {

@@ -2044,7 +2044,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     if (battleId.isEmpty) return;
     final userId = ref.read(authControllerProvider).valueOrNull?.id.trim() ?? '';
     if (userId.isEmpty) return;
-    const points = 3;
+    const points = 1;
     if (!_pkLikeBudget.canAward(battleId, userId, points)) return;
     final side = livePkScoreSideForStream(battle: battle, myStreamId: streamId);
     try {

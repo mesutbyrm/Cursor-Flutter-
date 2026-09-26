@@ -478,6 +478,20 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         msg.contains('bağlantınızı kontrol');
   }
 
+  bool _shouldRejoinPresenceAfterHeartbeatFailure(Object e) {
+    if (e is ApiException) {
+      final code = e.statusCode;
+      if (code == 401 || code == 403 || code == 404 || code == 410) {
+        return true;
+      }
+      if (code != null && code >= 500) return false;
+    }
+    final msg = ApiException.userMessage(e).toLowerCase();
+    return msg.contains('odada değil') ||
+        msg.contains('not in room') ||
+        (msg.contains('presence') && msg.contains('bulunamad'));
+  }
+
   Future<void> _joinPresenceAttempt({bool allowSeatClaim = true}) async {
     final token = await ref.read(tokenStorageProvider).readAccess();
       final hasJwt = token != null && token.isNotEmpty;
@@ -832,8 +846,10 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       VoiceRoomDebugLog.log('api.presence.heartbeat.fail', {
         'error': e.toString(),
       });
-      // Heartbeat failure → presence yeniden doğrula (koltuk talebi yok)
-      if (_presenceJoined && _sessionActive) {
+      // Geçici ağ/5xx hatalarında yeniden join döngüsü koltuk düşürüyordu.
+      if (_presenceJoined &&
+          _sessionActive &&
+          _shouldRejoinPresenceAfterHeartbeatFailure(e)) {
         _presenceJoined = false;
         unawaited(_joinPresence(rejoinAfterHeartbeat: true));
       }
@@ -938,13 +954,19 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     )) {
       return;
     }
-    final theme = settings.teamColorsEnabled
-        ? entranceThemeFromUserJson({
-            'favoriteTeam': user.favoriteTeam,
-            if (user.teamRaw != null) 'team': user.teamRaw,
-            'membership': user.membership,
-          })
-        : EntranceTheme.turkey;
+    final selfId = ref.read(authControllerProvider).valueOrNull?.id;
+    final EntranceTheme theme;
+    if (!settings.teamColorsEnabled) {
+      theme = EntranceTheme.turkey;
+    } else if (selfId != null && selfId == user.id) {
+      theme = ref.read(myEntranceThemeProvider);
+    } else {
+      theme = entranceThemeFromUserJson({
+        'favoriteTeam': user.favoriteTeam,
+        if (user.teamRaw != null) 'team': user.teamRaw,
+        'membership': user.membership,
+      });
+    }
     final roomKey = _roomKey;
     if (roomKey.isEmpty) return;
     ref.read(voiceRoomGoldEntranceProvider(roomKey).notifier).show(

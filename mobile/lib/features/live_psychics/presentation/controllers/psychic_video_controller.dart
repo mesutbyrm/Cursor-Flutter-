@@ -1391,13 +1391,16 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   Future<void> sendChat(String text) async {
     final t = text.trim();
     if (t.isEmpty || state.sendingChat) return;
-    state = state.copyWith(sendingChat: true);
+    state = state.copyWith(sendingChat: true, clearRtcError: true);
     try {
       final ok = await ref
           .read(livePsychicsRepositoryProvider)
           .sendMessage(session.sessionId, t);
       if (!ok && !_disposed) {
-        state = state.copyWith(sendingChat: false);
+        state = state.copyWith(
+          sendingChat: false,
+          rtcError: 'Mesaj gönderilemedi. Bağlantınızı kontrol edin.',
+        );
         return;
       }
       unawaited(_pollChat());
@@ -1543,7 +1546,14 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     unawaited(_broadcastMediaState());
   }
 
-  void switchCamera() => _trtc.switchCamera();
+  void switchCamera() {
+    if (!_trtc.cameraOn) {
+      _trtc.setCameraEnabled(true);
+      PsychicEventLog.localVideo(enabled: true, sessionId: session.sessionId);
+    }
+    _trtc.switchCamera();
+    state = state.copyWith(localPreviewKey: state.localPreviewKey + 1);
+  }
 
   Future<void> retryRoomSse() async {
     if (_disposed || state.leaving) return;

@@ -130,57 +130,85 @@ class LivePkChatInputBar extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!visible) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Expanded(
-            child: Material(
-              color: Colors.black.withValues(alpha: 0.42),
-              borderRadius: BorderRadius.circular(24),
-              child: TextField(
-                controller: controller,
-                style: const TextStyle(color: Colors.white, fontSize: 14),
-                decoration: InputDecoration(
-                  hintText: 'Mesajını yaz...',
-                  hintStyle: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.45),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: const Color(0xFF1C1C1E).withValues(alpha: 0.88),
+                borderRadius: BorderRadius.circular(26),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: controller,
+                      minLines: 1,
+                      maxLines: 4,
+                      style: const TextStyle(color: Colors.white, fontSize: 15),
+                      decoration: InputDecoration(
+                        hintText: 'Mesaj',
+                        hintStyle: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.42),
+                          fontSize: 15,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 11,
+                        ),
+                      ),
+                      textInputAction: TextInputAction.send,
+                      onSubmitted: (_) => onSend(),
+                    ),
                   ),
-                  prefixIcon: Icon(
-                    Icons.emoji_emotions_outlined,
-                    color: Colors.white.withValues(alpha: 0.55),
-                    size: 22,
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6, bottom: 6, top: 6),
+                    child: Material(
+                      color: const Color(0xFF25D366),
+                      shape: const CircleBorder(),
+                      clipBehavior: Clip.antiAlias,
+                      child: InkWell(
+                        onTap: onSend,
+                        child: const SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: Icon(
+                            Icons.send_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                  border: InputBorder.none,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                ),
-                onSubmitted: (_) => onSend(),
+                ],
               ),
             ),
           ),
-          IconButton(
-            onPressed: onSend,
-            icon: const Icon(Icons.send_rounded, color: Colors.white),
-          ),
-          if (onQuickRose != null)
-            IconButton(
-              onPressed: onQuickRose,
-              tooltip: 'Gül',
-              icon: const Text('🌹', style: TextStyle(fontSize: 20)),
+          if (onGift != null) ...[
+            const SizedBox(width: 8),
+            Material(
+              color: Colors.black.withValues(alpha: 0.45),
+              shape: const CircleBorder(),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: onGift,
+                child: const SizedBox(
+                  width: 44,
+                  height: 44,
+                  child: Icon(
+                    Icons.card_giftcard_rounded,
+                    color: Color(0xFFFFD54F),
+                    size: 22,
+                  ),
+                ),
+              ),
             ),
-          if (onGift != null)
-            IconButton(
-              onPressed: onGift,
-              tooltip: 'Hediye',
-              icon: const Icon(Icons.card_giftcard_rounded,
-                  color: Color(0xFFFFD54F)),
-            ),
-          if (onMore != null)
-            IconButton(
-              onPressed: onMore,
-              tooltip: 'Daha fazla',
-              icon: const Icon(Icons.more_horiz_rounded, color: Colors.white70),
-            ),
+          ],
         ],
       ),
     );

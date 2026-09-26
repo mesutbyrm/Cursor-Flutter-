@@ -438,13 +438,7 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                 if (_chatOpen)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                    child: SizedBox(
-                      height: 44,
-                      child: _PkQuickChat(
-                        room: widget.room,
-                        onSent: () => setState(() => _chatOpen = false),
-                      ),
-                    ),
+                    child: _PkQuickChat(room: widget.room),
                   ),
               ],
             ),
@@ -551,10 +545,9 @@ class _PkHeader extends StatelessWidget {
 }
 
 class _PkQuickChat extends ConsumerStatefulWidget {
-  const _PkQuickChat({required this.room, required this.onSent});
+  const _PkQuickChat({required this.room});
 
   final VoiceRoomEntity room;
-  final VoidCallback onSent;
 
   @override
   ConsumerState<_PkQuickChat> createState() => _PkQuickChatState();
@@ -571,38 +564,55 @@ class _PkQuickChatState extends ConsumerState<_PkQuickChat> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: TextField(
-            controller: _ctrl,
-            style: const TextStyle(fontSize: 14),
-            decoration: InputDecoration(
-              hintText: 'Mesaj yaz…',
-              filled: true,
-              fillColor: Colors.white10,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide.none,
+    Future<void> send() async {
+      final t = _ctrl.text.trim();
+      if (t.isEmpty) return;
+      _ctrl.clear();
+      await ref
+          .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
+          .sendMessage(t);
+    }
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C1C1E).withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _ctrl,
+              style: const TextStyle(color: Colors.white, fontSize: 15),
+              decoration: const InputDecoration(
+                hintText: 'Mesaj',
+                hintStyle: TextStyle(color: Colors.white54),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+              textInputAction: TextInputAction.send,
+              onSubmitted: (_) => send(),
             ),
           ),
-        ),
-        const SizedBox(width: 8),
-        IconButton.filled(
-          onPressed: () async {
-            final t = _ctrl.text;
-            if (t.trim().isEmpty) return;
-            _ctrl.clear();
-            await ref
-                .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
-                .sendMessage(t);
-            widget.onSent();
-          },
-          icon: const Icon(Icons.send_rounded),
-        ),
-      ],
+          Padding(
+            padding: const EdgeInsets.only(right: 6, top: 6, bottom: 6),
+            child: Material(
+              color: const Color(0xFF25D366),
+              shape: const CircleBorder(),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: send,
+                child: const SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

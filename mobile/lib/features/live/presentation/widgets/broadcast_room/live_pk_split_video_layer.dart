@@ -384,8 +384,9 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
         final fxProgress = _outcomeFxVisible ? _outcomeFx.value : 0.0;
         return LayoutBuilder(
       builder: (context, constraints) {
-        final headerH = LivePkLayoutMetrics.headerHeight(context);
-        final chipTop = LivePkLayoutMetrics.streamerChipTop(context);
+        final safeTop = MediaQuery.paddingOf(context).top;
+        final headerH = safeTop + 52;
+        final chipTop = safeTop + 54;
         final divider = LivePkLayoutMetrics.splitDividerWidth;
         final paneWidth =
             (constraints.maxWidth - divider).clamp(0.0, constraints.maxWidth) / 2;
@@ -405,7 +406,7 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
         // Kullanıcı isteği: video %15 daha küçük (alttan yukarı).
         final filledVideoHeight =
             availableVideoHeight < paneWidth ? paneWidth : availableVideoHeight;
-        final videoHeight = filledVideoHeight * 0.85;
+        final videoHeight = filledVideoHeight * 0.72;
         final scoreBarTop = videoTop + videoHeight;
 
         return ColoredBox(

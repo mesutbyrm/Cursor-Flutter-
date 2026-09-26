@@ -25,6 +25,7 @@ import '../../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../../../vip_gold/presentation/providers/entrance_effect_settings_provider.dart';
 import '../../../vip_gold/presentation/providers/entrance_effect_gate_provider.dart';
 import '../../../vip_gold/domain/entrance_theme.dart';
+import '../../../vip_gold/presentation/providers/user_room_profile_provider.dart';
 import '../../../vip_gold/domain/vip_tier.dart';
 import 'voice_room_gold_entrance_provider.dart';
 import '../../../vip_gold/presentation/providers/voice_room_password_request_provider.dart';
@@ -551,6 +552,19 @@ class VoiceRoomLiveController
     return members.any((p) => p.id == selfId);
   }
 
+  /// SSE/poll yanıtlarında sahte "odadayım" ve sayaç sıfırlanmasını önler.
+  bool _resolveSelfInRoom(
+    List<ChatRoomPresence> merged, {
+    bool snapshotHasMembers = true,
+  }) {
+    return _selfPresenceTracker.resolve(
+      previous: state.selfInRoom,
+      backendJoinAcknowledged: _presenceJoined,
+      listedInPresence: _selfListedIn(merged),
+      snapshotHasMembers: snapshotHasMembers,
+    );
+  }
+
   /// SSE / moderation payload — isim önce, kullanıcı adı yedek.
   String _displayNameFromPayload(Map<String, dynamic> payload) {
     final user = payload['user'];
@@ -1034,11 +1048,14 @@ class VoiceRoomLiveController
       state = state.copyWith(
         presence: merged,
         sseConnected: true,
-        selfInRoom: _selfListedIn(merged),
+        selfInRoom: _resolveSelfInRoom(merged, snapshotHasMembers: true),
       );
       ref
           .read(voiceRoomDiagnosticProvider.notifier)
-          .setPresence(joined: true, count: merged.length);
+          .setPresence(
+            joined: state.selfInRoom,
+            count: merged.length,
+          );
       _patchHubOnlineCountFromPayload(payload, fallback: merged.length);
     }
 
@@ -1585,12 +1602,12 @@ class VoiceRoomLiveController
     state = state.copyWith(
       presence: merged,
       sseConnected: true,
-      selfInRoom: _selfListedIn(merged),
+      selfInRoom: _resolveSelfInRoom(merged, snapshotHasMembers: true),
       hubOnlineCount: merged.length,
     );
     ref
         .read(voiceRoomDiagnosticProvider.notifier)
-        .setPresence(joined: true, count: merged.length);
+        .setPresence(joined: state.selfInRoom, count: merged.length);
     _patchHubOnlineCountFromPayload(payload, fallback: merged.length);
   }
 
@@ -1641,12 +1658,15 @@ class VoiceRoomLiveController
     _lastKnownPresenceNames.remove(userId);
     state = state.copyWith(
       presence: remaining,
-      selfInRoom: _selfListedIn(remaining),
+      selfInRoom: _resolveSelfInRoom(
+        remaining,
+        snapshotHasMembers: remaining.isNotEmpty,
+      ),
     );
     _patchHubOnlineCountFromPayload(payload, fallback: remaining.length);
     ref
         .read(voiceRoomDiagnosticProvider.notifier)
-        .setPresence(joined: true, count: remaining.length);
+        .setPresence(joined: state.selfInRoom, count: remaining.length);
     VoiceRoomDebugLog.log('sse.user_left', {'userId': userId});
     _clearSeatForUser(userId);
   }
@@ -1732,12 +1752,12 @@ class VoiceRoomLiveController
     final merged = _mergePresenceStable(current, source: 'socket_snapshot');
     state = state.copyWith(
       presence: merged,
-      selfInRoom: _selfListedIn(merged),
+      selfInRoom: _resolveSelfInRoom(merged, snapshotHasMembers: merged.isNotEmpty),
       hubOnlineCount: merged.length,
     );
     ref
         .read(voiceRoomDiagnosticProvider.notifier)
-        .setPresence(joined: true, count: merged.length);
+        .setPresence(joined: state.selfInRoom, count: merged.length);
   }
 
   void _schedulePoll({bool? sseConnected, bool? musicActive}) {
@@ -2021,7 +2041,10 @@ class VoiceRoomLiveController
             : (room.backgroundImageUrl?.trim().isNotEmpty == true)
             ? room.backgroundImageUrl
             : state.backgroundUrl,
-        selfInRoom: _selfListedIn(presence) || state.selfInRoom,
+        selfInRoom: _resolveSelfInRoom(
+          presence,
+          snapshotHasMembers: presence.isNotEmpty,
+        ),
       );
       // Manager canonical state sync — poll refresh (safe: uses ?. and handles errors)
       if (presence.isNotEmpty) {
@@ -3423,7 +3446,7 @@ class VoiceRoomLiveController
       final merged = _mergePresenceStable(list, source: 'join');
       state = state.copyWith(
         presence: merged,
-        selfInRoom: _selfListedIn(merged),
+        selfInRoom: _resolveSelfInRoom(merged, snapshotHasMembers: merged.isNotEmpty),
         hubOnlineCount: merged.length,
         clearError: true,
       );

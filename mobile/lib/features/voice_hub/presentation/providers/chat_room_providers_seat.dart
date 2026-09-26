@@ -266,7 +266,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     );
   }
 
-  /// Presence `join` body — yetkili kullanıcı için boş koltuk tahmini.
+  /// Presence `join` body — yalnızca zaten oturulan koltuk korunur (otomatik oturma yok).
   int? peekJoinSeatIndexForPrivilegedUser() {
     if (_roomKey.isEmpty) return null;
     final user = ref.read(authControllerProvider).valueOrNull;
@@ -281,123 +281,15 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     }
     final existing = self?.seatIndex;
     if (existing != null && existing >= 1) return existing;
-
-    final priority = _privilegedRolePriority(
-      user,
-      state.serverPermissions,
-      self,
-    );
-    if (priority == null) return null;
-    return _pickAutoSeatIndex(
-      myPriority: priority,
-      presence: state.presence,
-    );
+    return null;
   }
 
   Future<void> _tryAutoPrivilegedSeat() async {
-    if (_roomKey.isEmpty || !state.selfInRoom) return;
-    final user = ref.read(authControllerProvider).valueOrNull;
-    if (user == null) return;
-
-    ChatRoomPresence? self;
-    for (final p in _presenceCopy()) {
-      if (p.id == user.id) {
-        self = p;
-        break;
-      }
-    }
-    if (self?.seatIndex != null) {
-      _autoSeatAttempted = true;
-      return;
-    }
-
-    final priority = _privilegedRolePriority(
-      user,
-      state.serverPermissions,
-      self,
-    );
-    if (priority == null) return;
-    if (_autoSeatAttempted) {
-      ChatRoomPresence? selfNow;
-      for (final p in _presenceCopy()) {
-        if (p.id == user.id) {
-          selfNow = p;
-          break;
-        }
-      }
-      if (selfNow?.seatIndex != null) return;
-      _autoSeatAttempted = false;
-    }
-
-    final seatIndex = _pickAutoSeatIndex(
-      myPriority: priority,
-      presence: state.presence,
-    );
-    if (seatIndex == null) return;
-
-    VoiceRoomDebugLog.log('seat.auto_join', {
-      'room': _roomKey,
-      'seat': seatIndex,
-      'priority': priority,
-    });
-    for (var attempt = 0; attempt < 3; attempt++) {
-      try {
-        final err = await assignSeat(seatIndex: seatIndex);
-        if (err == null) {
-          _autoSeatAttempted = true;
-          return;
-        }
-        await ref.read(chatRoomRemoteProvider).joinSeat(
-              roomKey: _roomKey,
-              alternateKey: _musicAlternateKey,
-              seatIndex: seatIndex,
-            );
-        await _refreshSeatsFromBackend();
-        _autoSeatAttempted = true;
-        return;
-      } catch (_) {
-        final err = await assignSeat(seatIndex: seatIndex);
-        if (err == null) {
-          _autoSeatAttempted = true;
-          return;
-        }
-        await Future<void>.delayed(Duration(milliseconds: 400 * (attempt + 1)));
-      }
-    }
-    for (final p in _presenceCopy()) {
-      if (p.id == user.id && p.seatIndex != null) {
-        _autoSeatAttempted = true;
-        break;
-      }
-    }
-    if (self?.seatIndex == null) {
-      _autoSeatAttempted = false;
-    }
+    // Yetkili/moderatör girişinde otomatik koltuk kapalı — manuel oturma.
   }
 
-  /// Giriş / yetki gecikmesinde koltuğa oturmayı birkaç kez dene (Clubhouse tarzı).
-  void schedulePrivilegedSeatAttempts() {
-    unawaited(() async {
-      for (var attempt = 0; attempt < 8; attempt++) {
-        if (!state.selfInRoom || _roomKey.isEmpty) return;
-        final user = ref.read(authControllerProvider).valueOrNull;
-        if (user == null) return;
-        if (_isSelfSeated(user.id)) return;
-
-        _autoSeatAttempted = false;
-        await _tryAutoPrivilegedSeat();
-        if (_isSelfSeated(user.id)) return;
-
-        // Erken dönem: permissions ve seats yenile (attempt 0, 2, 4, 6)
-        if (attempt == 0 || attempt == 2 || attempt == 4 || attempt == 6) {
-          await refreshServerPermissions();
-          await _fetchAndApplySeats();
-        }
-        // Progressif back-off: 100ms → 400ms → 700ms → ...
-        await Future<void>.delayed(Duration(milliseconds: 100 + attempt * 150));
-      }
-    }());
-  }
+  /// Eski otomatik koltuk denemeleri devre dışı (kullanıcı manuel oturur).
+  void schedulePrivilegedSeatAttempts() {}
 
   bool _isSelfSeated(String userId) {
     for (final p in _presenceCopy()) {
