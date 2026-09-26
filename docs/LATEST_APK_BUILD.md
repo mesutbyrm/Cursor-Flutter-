@@ -4,17 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.602+653` |
-| Tarih (UTC) | 2026-09-26 20:16 |
-| Commit | [`8059c4126cbd30fd2e8ffafb43d53cae975d49b1`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/8059c4126cbd30fd2e8ffafb43d53cae975d49b1) |
-| İş akışı | [Run 36267096202](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36267096202) |
+| Sürüm | `1.0.603+654` |
+| Tarih (UTC) | 2026-09-26 21:23 |
+| Commit | [`0ec45692e46d866dbc01fa3b03a8964267be6794`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/0ec45692e46d866dbc01fa3b03a8964267be6794) |
+| İş akışı | [Run 36271680628](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36271680628) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.602+653 (2026-09-26) — CI import düzeltmesi
+## 1.0.605+656 (2026-09-26) — SSE 401, misafir global, sohbet kuyruk
 
-- **Analyze:** `voice_room_rtc_page` yarışma rail import yolu; `ApiException` package import
+- **Video SSE:** 401 → JWT refresh + yeniden bağlan; bağlantıda mesaj resync + bekleyen gönderim kuyruğu (canlı)
+- **Sesli SSE:** yeniden bağlanınca sohbet resync; ağ/5xx’te mesaj kuyruğu + flush
+- **Misafir (yayıncı):** `LiveHostGuestJoinRequestListener` — yayın odası dışında poll + onay dialog
+- **Misafir sinyali:** `liveGuestJoinSignalProvider` (SSE guest event)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
