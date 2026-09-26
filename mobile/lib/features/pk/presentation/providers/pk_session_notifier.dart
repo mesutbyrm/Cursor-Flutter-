@@ -426,6 +426,17 @@ class PkSessionNotifier
     }
   }
 
+  /// Sonuç ekranı kapatıldı — biten PK durumu temizlenir.
+  ///
+  /// Rövanş istemeyen taraf normal yayınına döner ve biten savaşın skorları
+  /// bir sonraki oturuma taşınmaz. Yalnızca terminal durumdaki savaş silinir;
+  /// devam eden bir PK yanlışlıkla kapatılmaz.
+  void dismissFinishedBattle() {
+    final battle = state.battle;
+    if (battle == null || !battle.status.isTerminal) return;
+    _applyBattle(null);
+  }
+
   void _applyBattle(PkBattle? battle) {
     if (battle == null || battle.id.isEmpty) {
       _releaseLive();
