@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.604+655 (2026-09-26) — Daha fazla hub + yarışma rail + PK sohbet
+
+- **Canlı Daha fazla:** kutucuk hub, bekleyen fal/konuk şeridi, kontrol merkezi alt grid; rozet sayacı
+- **Yarışmalar:** sezon/haftalık sağ rail (Ayarlar stili); üst köşe banner kartları kaldırıldı
+- **PK/canlı chat:** birleşik `livePkEffectiveChatStreamId` ile mesaj listesi + gönderim (split PK)
+- **Sesli chat:** POST boş gövdede optimistic + kısa mesaj refresh
+
 ## 1.0.603+654 (2026-09-26) — Chat + PK davet (odada) + misafir poll + lig
 
 - **Canlı chat:** POST gövdesi geniş parse; optimistic mesaj korunur + kısa refresh
