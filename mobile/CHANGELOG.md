@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.605+656 (2026-09-26) — SSE 401, misafir global, sohbet kuyruk
+
+- **Video SSE:** 401 → JWT refresh + yeniden bağlan; bağlantıda mesaj resync + bekleyen gönderim kuyruğu (canlı)
+- **Sesli SSE:** yeniden bağlanınca sohbet resync; ağ/5xx’te mesaj kuyruğu + flush
+- **Misafir (yayıncı):** `LiveHostGuestJoinRequestListener` — yayın odası dışında poll + onay dialog
+- **Misafir sinyali:** `liveGuestJoinSignalProvider` (SSE guest event)
+
 ## 1.0.604+655 (2026-09-26) — Daha fazla hub + yarışma rail + PK sohbet
 
 - **Canlı Daha fazla:** kutucuk hub, bekleyen fal/konuk şeridi, kontrol merkezi alt grid; rozet sayacı

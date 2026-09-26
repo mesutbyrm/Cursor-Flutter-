@@ -522,6 +522,7 @@ class VoiceRoomLiveController
   int _peakViewerCount = 0;
   final VoiceRoomSseEventDedupe _sseEventDedupe = VoiceRoomSseEventDedupe();
   final VoiceRoomChatFloodGuard _chatFloodGuard = VoiceRoomChatFloodGuard();
+  final List<String> _pendingOutboundChat = [];
   RoomSessionManager? _roomSessionManager;
   StreamSubscription<RoomSessionEvent>? _roomSessionEventSub;
 
@@ -2914,12 +2915,43 @@ class VoiceRoomLiveController
         canModerate: perms.canModerate || perms.isRoomOwner,
       );
     } catch (e) {
+      if (_shouldQueueOutboundChat(e) && !trimmed.startsWith('!')) {
+        _pendingOutboundChat.add(trimmed);
+        state = state.copyWith(clearError: true);
+        unawaited(_flushPendingOutboundChat());
+        return;
+      }
       state = state.copyWith(
         messages: optimistic != null
             ? state.messages.where((m) => m.id != optimisticId).toList()
             : state.messages,
         error: ApiException.userMessage(e),
       );
+    }
+  }
+
+  bool _shouldQueueOutboundChat(Object e) {
+    if (e is TimeoutException) return true;
+    if (e is DioException &&
+        (e.type == DioExceptionType.connectionError ||
+            e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.receiveTimeout ||
+            e.type == DioExceptionType.sendTimeout)) {
+      return true;
+    }
+    if (e is ApiException) {
+      final code = e.statusCode;
+      return code == null || code >= 500;
+    }
+    return false;
+  }
+
+  Future<void> _flushPendingOutboundChat() async {
+    if (_pendingOutboundChat.isEmpty) return;
+    final batch = [..._pendingOutboundChat];
+    _pendingOutboundChat.clear();
+    for (final text in batch) {
+      await sendMessage(text);
     }
   }
 

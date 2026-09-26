@@ -45,6 +45,7 @@ class VideoStreamSseService {
 
   String? _streamId;
   Future<String?> Function()? _accessToken;
+  Future<bool> Function()? _refreshTokens;
   var _stopped = false;
   var _paused = false;
   var _reconnectAttempt = 0;
@@ -81,6 +82,7 @@ class VideoStreamSseService {
   Future<void> connect({
     required String streamId,
     required Future<String?> Function() accessToken,
+    Future<bool> Function()? refreshTokens,
     void Function()? onConnected,
     void Function(int viewerCount)? onViewerCount,
     void Function(LiveStreamChatMessage message)? onMessage,
@@ -102,6 +104,7 @@ class VideoStreamSseService {
     _paused = false;
     _streamId = id;
     _accessToken = accessToken;
+    _refreshTokens = refreshTokens;
     _onConnected = onConnected;
     _onViewerCount = onViewerCount;
     _onMessage = onMessage;
@@ -171,6 +174,23 @@ class VideoStreamSseService {
         onDone: () => _scheduleReconnect(),
         cancelOnError: false,
       );
+      _onConnected?.call();
+    } on DioException catch (e) {
+      final code = e.response?.statusCode;
+      if (code == 401 && _refreshTokens != null) {
+        final ok = await _refreshTokens!();
+        if (ok) {
+          _reconnectAttempt = 0;
+          await _openStream();
+          return;
+        }
+        if (kDebugMode) {
+          debugPrint('Video stream SSE: auth refresh failed');
+        }
+        return;
+      }
+      if (kDebugMode) debugPrint('Video stream SSE: $e');
+      _scheduleReconnect();
     } catch (e) {
       if (kDebugMode) debugPrint('Video stream SSE: $e');
       _scheduleReconnect();
@@ -414,6 +434,7 @@ class VideoStreamSseService {
     _paused = false;
     _streamId = null;
     _accessToken = null;
+    _refreshTokens = null;
     _onConnected = null;
     _onViewerCount = null;
     _onMessage = null;

@@ -254,10 +254,29 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
     unawaited(_loadGiftLeaderboard());
   }
 
+  /// SSE yeniden bağlandığında sohbet + koltuk, presence, PK senkronu.
+  Future<void> resyncChatMessagesAfterSse() async {
+    if (_roomKey.isEmpty || !_sessionActive) return;
+    try {
+      final since = _lastMessageAt?.toUtc().toIso8601String();
+      final bundle = await ref.read(chatRoomRemoteProvider).fetchMessages(
+            _roomKey,
+            since: since,
+          );
+      state = state.copyWith(
+        messages: _filterClearedMessages(
+          _mergeMessages(state.messages, bundle.messages),
+        ),
+      );
+      unawaited(_flushPendingOutboundChat());
+    } catch (_) {}
+  }
+
   /// SSE yeniden bağlandığında koltuk, presence, PK ve yetkileri senkronize et.
   Future<void> resyncAfterSseReconnect() async {
     if (_roomKey.isEmpty || !_sessionActive) return;
     VoiceEventLog.socketReconnected(roomId: _roomKey);
+    unawaited(resyncChatMessagesAfterSse());
     try {
       await Future.wait<void>([
         refreshServerPermissions(),

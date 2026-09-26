@@ -1,9 +1,12 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/config/env.dart';
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/live_debug_log.dart';
 import '../../../../core/network/live_event_log.dart';
 import '../../../../core/performance/network_perf.dart';
@@ -47,6 +50,7 @@ import 'live_pk_streams_provider.dart';
 import 'live_co_broadcast_invite_signal_provider.dart';
 import 'live_co_guest_camera_signal_provider.dart';
 import 'live_pk_invite_signal_provider.dart';
+import 'live_guest_join_signal_provider.dart';
 
 class LiveRoomState {
   const LiveRoomState({
@@ -109,6 +113,7 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
   var _swipeSuspended = false;
   var _liveEffectsArmed = false;
   int? _liveRealtimeEffectsEpochMs;
+  final List<({String text, String selfName})> _pendingOutbound = [];
 
   /// Idempotent çıkış — SSE, socket, hediye poll ve backend leave.
   Future<void> tearDownSession() async {
@@ -208,10 +213,22 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
     final hub = ref.read(sseConnectionHubProvider);
     hub.attachVideoStream(streamId);
     final sse = hub.videoStream(streamId);
+    final refreshDio = Dio(
+      BaseOptions(
+        baseUrl: Env.apiBaseUrl,
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 20),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      ),
+    );
 
     sse.connect(
       streamId: streamId,
       accessToken: storage.readAccess,
+      refreshTokens: () => tryRefreshAccessToken(refreshDio, storage),
       onConnected: () {
         state = state.copyWith(sseConnected: true);
         ref.read(liveGiftRealtimeProvider).setSseActive(true);
@@ -222,6 +239,7 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
           _liveEffectsArmed = true;
           _liveRealtimeEffectsEpochMs = DateTime.now().millisecondsSinceEpoch;
         }
+        unawaited(_resyncAfterSseReconnect(streamId));
       },
       onViewerCount: (count) {
         if (count >= 0) state = state.copyWith(viewerCount: count);
@@ -417,6 +435,11 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
       ref.read(liveCoBroadcastInviteSignalProvider.notifier).bump();
     }
     await ref.read(coBroadcastProvider.notifier).refreshStream(streamId);
+    if (type.contains('request') ||
+        type.contains('join') ||
+        type.contains('guest')) {
+      bumpLiveGuestJoinSignalReader(ref);
+    }
     final co = ref.read(coBroadcastProvider).coBroadcasters;
     if (type.contains('left')) {
       ref.read(liveGuestGridProvider.notifier).syncCoBroadcasters(co);
@@ -430,6 +453,41 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
     ref.read(liveGuestGridProvider.notifier)
       ..setLayout(layout)
       ..syncCoBroadcasters(co);
+  }
+
+  Future<void> _resyncAfterSseReconnect(String streamId) async {
+    try {
+      final list =
+          await ref.read(liveRemoteProvider).fetchStreamMessages(streamId);
+      _mergeMessages(list);
+    } catch (_) {}
+    await _flushPendingOutbound();
+  }
+
+  bool _shouldQueueOutboundSend(Object e) {
+    if (e is TimeoutException) return true;
+    if (e is DioException &&
+        (e.type == DioExceptionType.connectionError ||
+            e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.receiveTimeout ||
+            e.type == DioExceptionType.sendTimeout)) {
+      return true;
+    }
+    if (e is ApiException) {
+      final code = e.statusCode;
+      return code == null || code >= 500;
+    }
+    return false;
+  }
+
+  Future<void> _flushPendingOutbound() async {
+    if (_pendingOutbound.isEmpty || state.sending) return;
+    final batch = [..._pendingOutbound];
+    _pendingOutbound.clear();
+    for (final item in batch) {
+      if (state.streamEnded) break;
+      await sendMessage(item.text, selfName: item.selfName);
+    }
   }
 
   void _mergeMessages(List<LiveStreamChatMessage> incoming) {
@@ -532,6 +590,12 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
       LiveChatGuard.markSent(trimmed);
       state = state.copyWith(messages: list, sending: false);
     } catch (e) {
+      if (_shouldQueueOutboundSend(e)) {
+        _pendingOutbound.add((text: trimmed, selfName: selfName));
+        state = state.copyWith(sending: false, clearError: true);
+        unawaited(_flushPendingOutbound());
+        return;
+      }
       state = state.copyWith(
         sending: false,
         messages: state.messages.where((m) => m.id != optimisticId).toList(),

@@ -13,6 +13,7 @@ import '../../features/live_psychics/presentation/widgets/psychic_session_ended_
 import '../../features/profile/presentation/widgets/jeton_payment_status_listener.dart';
 import '../../features/shell/presentation/app_bottom_nav_host.dart';
 import '../../features/live/presentation/widgets/live_co_broadcast_invite_listener.dart';
+import '../../features/live/presentation/widgets/live_host_guest_join_request_listener.dart';
 import '../../features/live/presentation/widgets/host_broadcast_recovery_host.dart';
 import '../../features/live/presentation/widgets/live_pk_invite_listener.dart';
 import '../../features/voice_hub/presentation/widgets/voice_pk_invite_listener.dart';
@@ -150,6 +151,7 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
       body = HostBroadcastRecoveryHost(child: body);
       body = LivePkInviteListener(child: body);
       body = LiveCoBroadcastInviteListener(child: body);
+      body = LiveHostGuestJoinRequestListener(child: body);
       body = VoicePkInviteListener(child: body);
       body = VoiceSpeakRequestListener(child: body);
       body = VoiceRoomPasswordRequestListener(child: body);
