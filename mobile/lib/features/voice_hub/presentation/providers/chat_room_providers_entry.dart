@@ -94,6 +94,15 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
     try {
       await _leaveStalePreviousRoom();
       await _ensureRoomsCatalogForCanonicalKey();
+      // Oturum anahtarı presence onayından **önce** yazılır. `VoicePkInviteListener`
+      // aktif oda PK'sını bu anahtarla yokluyor; kayıt yalnızca join başarılı
+      // olunca yapıldığı için join yavaşladığında ya da düştüğünde odadaki
+      // diğer kullanıcı başlayan PK'yı hiç görmüyordu.
+      registerVoiceRoomLiveSession(
+        ref,
+        _presenceApiKey,
+        aliases: _roomKeyAliases,
+      );
       await _fetchAndApplyRoomState();
       await Future.wait<void>([
         _joinPresence(),

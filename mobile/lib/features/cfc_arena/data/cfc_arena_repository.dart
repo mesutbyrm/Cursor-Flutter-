@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_endpoints.dart';
 import '../../../core/network/dio_provider.dart';
+import '../domain/cfc_arena_contest_detail.dart';
 import '../domain/cfc_arena_contest_filters.dart';
 
 final cfcArenaRepositoryProvider = Provider<CfcArenaRepository>((ref) {
@@ -26,6 +27,15 @@ class CfcArenaRepository {
 
   Future<void> adminMutate(Map<String, dynamic> body) async {
     await _dio.safePost<dynamic>(ApiEndpoints.adminCfcArena, data: body);
+  }
+
+  /// `GET /api/cfc-arena/{id}` — yarışma + `leaderboard` (katılımcı ve puan).
+  Future<CfcArenaContestDetail> fetchContestDetail(String contestId) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.cfcArenaContest(contestId),
+      forceRefresh: true,
+    );
+    return CfcArenaContestDetail.parse(res.data);
   }
 
   Future<void> joinContest(String contestId) async {

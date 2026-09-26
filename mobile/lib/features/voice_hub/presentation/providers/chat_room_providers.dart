@@ -1155,7 +1155,7 @@ class VoiceRoomLiveController
         () async {
           final backendLeave = _leavePresenceWithSeatClear(force: forcePresenceLeave)
               .timeout(const Duration(seconds: 4))
-              .catchError((_) {});
+              .catchError((_) => false);
           if (awaitBackend) {
             await backendLeave;
           } else {
@@ -1281,7 +1281,7 @@ class VoiceRoomLiveController
     try {
       await _leavePresenceWithSeatClear()
           .timeout(const Duration(seconds: 5))
-          .catchError((_) {});
+          .catchError((_) => false);
     } catch (_) {}
     unawaited(_leaveVoiceSession());
   }
