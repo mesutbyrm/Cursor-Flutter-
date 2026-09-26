@@ -4,40 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
-import '../../../../core/util/json_util.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../platform_social/presentation/widgets/platform_social_ui_kit.dart';
-
-final cfcContestScoresProvider = FutureProvider.autoDispose
-    .family<List<Map<String, dynamic>>, String>((ref, contestId) async {
-  final dio = ref.watch(dioProvider);
-  try {
-    final res =
-        await dio.safeGet<dynamic>(ApiEndpoints.cfcArenaContestScores(contestId));
-    final body = res.data;
-    if (body is Map) {
-      final items = body['items'] ?? body['data'];
-      if (items is List) {
-        return items.whereType<Map>().map((e) => asJsonMap(e)).toList();
-      }
-    }
-  } catch (_) {}
-  return const [];
-});
-
-final cfcContestDetailProvider = FutureProvider.autoDispose
-    .family<Map<String, dynamic>?, String>((ref, contestId) async {
-  final dio = ref.watch(dioProvider);
-  try {
-    final res = await dio.safeGet<dynamic>(ApiEndpoints.cfcArenaContest(contestId));
-    final body = res.data;
-    if (body is Map) {
-      final map = asJsonMap(body);
-      if (map['contest'] is Map) return asJsonMap(map['contest']);
-      return map;
-    }
-  } catch (_) {}
-  return null;
-});
+import '../providers/cfc_arena_providers.dart';
 
 class CfcArenaContestPage extends ConsumerStatefulWidget {
   const CfcArenaContestPage({super.key, required this.contestId});
@@ -53,8 +22,8 @@ class _CfcArenaContestPageState extends ConsumerState<CfcArenaContestPage> {
 
   @override
   Widget build(BuildContext context) {
-    final async = ref.watch(cfcContestDetailProvider(widget.contestId));
-    final scores = ref.watch(cfcContestScoresProvider(widget.contestId));
+    final async = ref.watch(cfcArenaContestDetailProvider(widget.contestId));
+    final myId = ref.watch(authControllerProvider).valueOrNull?.id;
     return PlatformSocialScaffold(
       title: 'Yarışma detayı',
       subtitle: 'Canlı sıralama ve skor geçmişi',
@@ -64,17 +33,19 @@ class _CfcArenaContestPageState extends ConsumerState<CfcArenaContestPage> {
           icon: Icons.error_outline,
           message: ApiException.userMessage(e),
         ),
-        data: (c) {
-          if (c == null) {
+        data: (detail) {
+          if (detail.isEmpty) {
             return const PlatformSocialEmptyState(
               icon: Icons.search_off_rounded,
               message: 'Yarışma bulunamadı',
             );
           }
+          final c = detail.contest;
           final name = (c['name'] ?? 'Yarışma').toString();
           final status = (c['status'] ?? '').toString();
           final desc = (c['description'] ?? '').toString();
-          final participants = _participants(c);
+          final participants = detail.ranked;
+          final joined = detail.hasJoined(myId);
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
             children: [
@@ -111,12 +82,21 @@ class _CfcArenaContestPageState extends ConsumerState<CfcArenaContestPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              PlatformSocialPrimaryButton(
-                label: 'Yarışmaya katıl',
-                icon: Icons.emoji_events_outlined,
-                loading: _joining,
-                onPressed: () => _join(context),
-              ),
+              if (!joined)
+                PlatformSocialPrimaryButton(
+                  label: 'Yarışmaya katıl',
+                  icon: Icons.emoji_events_outlined,
+                  loading: _joining,
+                  onPressed: () => _join(context),
+                )
+              else
+                PlatformSocialStatusPill(
+                  label: detail.rankFor(myId) != null
+                      ? '${detail.rankFor(myId)}. sıradasın'
+                      : 'Yarışmadasın',
+                  icon: Icons.check_circle_rounded,
+                  tone: PlatformSocialPillTone.gold,
+                ),
               const SizedBox(height: 24),
               PlatformSocialSectionTitle(
                 'Sıralama',
@@ -136,81 +116,20 @@ class _CfcArenaContestPageState extends ConsumerState<CfcArenaContestPage> {
               else
                 ...participants.asMap().entries.map((e) {
                   final p = e.value;
-                  final rank = e.key + 1;
+                  final rank = p.rank ?? (e.key + 1);
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: PlatformSocialRankTile(
                       rank: rank,
                       highlight: rank <= 3,
-                      title: (p['userId'] ?? p['displayName'] ?? 'Katılımcı')
-                          .toString(),
-                      subtitle: 'Aktif',
-                      score: '${pick(p, ['score']) ?? 0} p',
+                      title: p.name,
+                      subtitle: myId != null && p.userId == myId
+                          ? 'Sen'
+                          : 'Katılımcı',
+                      score: '${p.score} p',
                     ),
                   );
                 }),
-              const SizedBox(height: 20),
-              const PlatformSocialSectionTitle('Son skor kayıtları'),
-              scores.when(
-                loading: () => const LinearProgressIndicator(),
-                error: (_, __) => const SizedBox.shrink(),
-                data: (logs) {
-                  if (logs.isEmpty) {
-                    return const Text(
-                      'Skor kaydı yok.',
-                      style: TextStyle(color: PlatformSocialPalette.textMuted),
-                    );
-                  }
-                  return Column(
-                    children: logs.take(8).map((log) {
-                      final metric = (log['metric'] ?? 'Skor').toString();
-                      final delta = pick(log, ['delta']);
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: PlatformSocialGlassCard(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      metric,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    Text(
-                                      (log['reason'] ?? '').toString(),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        color: PlatformSocialPalette.textMuted,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Text(
-                                '+$delta',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  color: PlatformSocialPalette.success,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  );
-                },
-              ),
             ],
           );
         },
@@ -230,8 +149,8 @@ class _CfcArenaContestPageState extends ConsumerState<CfcArenaContestPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Yarışmaya katıldınız')),
         );
-        ref.invalidate(cfcContestDetailProvider(widget.contestId));
-        ref.invalidate(cfcContestScoresProvider(widget.contestId));
+        ref.invalidate(cfcArenaContestDetailProvider(widget.contestId));
+        ref.invalidate(cfcArenaContestsProvider);
       }
     } catch (e) {
       if (context.mounted) {
@@ -244,9 +163,4 @@ class _CfcArenaContestPageState extends ConsumerState<CfcArenaContestPage> {
     }
   }
 
-  static List<Map<String, dynamic>> _participants(Map<String, dynamic> c) {
-    final raw = c['participants'];
-    if (raw is! List) return const [];
-    return raw.whereType<Map>().map((e) => asJsonMap(e)).toList();
-  }
 }

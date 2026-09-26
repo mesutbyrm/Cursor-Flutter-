@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/network/pk_event_log.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../live/presentation/providers/live_pk_invite_signal_provider.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../pk/presentation/providers/pk_session_notifier.dart';
 import '../../domain/entities/chat_room_presence.dart';
@@ -120,7 +122,10 @@ class _VoiceInRoomPkSheetState extends ConsumerState<_VoiceInRoomPkSheet> {
       return;
     }
     setState(() => _busy = true);
+    PkEventLog.requestStart(roomId: _roomKey);
     try {
+      // Zaman aşımı olmadan istek asılı kalabiliyor ve sayfa sonsuza kadar
+      // dönüyordu; kullanıcı ne başladığını ne de hatayı görebiliyordu.
       final remote = await ref
           .read(pkBattleRemoteDataSourceProvider)
           .createUserInRoomPk(
@@ -129,11 +134,24 @@ class _VoiceInRoomPkSheetState extends ConsumerState<_VoiceInRoomPkSheet> {
             side1UserIds: _side1.toList(),
             side2UserIds: _side2.toList(),
             durationSeconds: _duration,
+          )
+          .timeout(
+            const Duration(seconds: 20),
+            onTimeout: () => throw const ApiException(
+              'Sunucu PK isteğine yanıt vermedi. Bağlantınızı kontrol edip '
+              'tekrar deneyin.',
+            ),
           );
       if (remote == null || remote.effectiveId.isEmpty) {
-        throw const ApiException('Oda içi PK başlatılamadı');
+        throw const ApiException(
+          'Sunucu PK kaydı döndürmedi — oda içi PK başlatılamadı.',
+        );
       }
+      PkEventLog.requestSuccess(battleId: remote.effectiveId);
       ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(remote);
+      // Karşı taraf PK'yı 2 sn'lik yoklamayla öğreniyor; sinyal ile hemen
+      // yoklanmasını tetikle (sesli oda SSE'si games backend PK'sını taşımıyor).
+      ref.read(livePkInviteSignalProvider.notifier).bump();
       await ref
           .read(pkSessionProvider(
             PkSessionArgs(contextId: _roomKey, kind: PkContextKind.voice),
@@ -149,9 +167,13 @@ class _VoiceInRoomPkSheetState extends ConsumerState<_VoiceInRoomPkSheet> {
         ),
       );
     } catch (e) {
+      PkEventLog.error('create_user', e);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ApiException.userMessage(e))),
+        SnackBar(
+          content: Text(ApiException.userMessage(e)),
+          duration: const Duration(seconds: 6),
+        ),
       );
     } finally {
       if (mounted) setState(() => _busy = false);

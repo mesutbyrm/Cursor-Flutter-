@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/datasources/live_stream_extras_datasource.dart';
+import '../../domain/live_guest_request_result.dart';
 import '../../domain/repositories/live_guest_repository.dart';
 import 'live_namespace_providers.dart';
 import 'live_providers.dart';
@@ -78,8 +79,35 @@ class CoBroadcastNotifier extends Notifier<CoBroadcastState> {
     await refresh();
   }
 
-  Future<void> requestJoin(String streamId) async {
-    await _guest.postCoBroadcastCompat(streamId: streamId, action: 'request');
+  /// Yayına katılma (misafirlik) isteği.
+  ///
+  /// `/api/live/guest` 2xx dönüp isteği kaydetmeyebiliyor; bu durumda
+  /// yayıncının okuduğu `/api/video-streams/{id}/co-broadcast` ucuna da
+  /// yazılır. Hiçbiri kaydı onaylamazsa sonuç [LiveGuestRequestOutcome.unconfirmed]
+  /// olur ve arayüz "gönderildi" demez.
+  Future<LiveGuestRequestOutcome> requestJoin(String streamId) async {
+    final primary = await _guest.postCoBroadcastCompat(
+      streamId: streamId,
+      action: 'request',
+    );
+    if (isGuestRequestAcknowledged(primary)) {
+      await refreshStream(streamId);
+      return LiveGuestRequestOutcome.acknowledged;
+    }
+
+    Map<String, dynamic>? fallback;
+    try {
+      fallback = await _remote.coBroadcastAction(
+        streamId: streamId,
+        action: 'request',
+      );
+    } catch (_) {
+      fallback = null;
+    }
+    await refreshStream(streamId);
+    return isGuestRequestAcknowledged(fallback)
+        ? LiveGuestRequestOutcome.acknowledged
+        : LiveGuestRequestOutcome.unconfirmed;
   }
 
   Future<void> approveRequest({

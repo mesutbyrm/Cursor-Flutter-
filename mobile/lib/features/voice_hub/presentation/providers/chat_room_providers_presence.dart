@@ -490,8 +490,15 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       final pendingPass = ref
           .read(pendingRoomPasswordProvider.notifier)
           .peek(_roomKey);
-      final joinSeat =
-          allowSeatClaim ? peekJoinSeatIndexForPrivilegedUser() : null;
+      // Heartbeat sonrası yeniden katılımda koltuk talebi kapalıydı; sunucu
+      // presence kaydını düşürdüyse kullanıcı odaya geri giriyor ama koltuğu
+      // boş kalıyordu. Son doğrulanmış koltuk biliniyorsa geri istenir.
+      final joinSeat = allowSeatClaim
+          ? peekJoinSeatIndexForPrivilegedUser()
+          : resolveRejoinSeatIndex(
+              currentSeatIndex: _currentSelfSeatIndex(),
+              lastConfirmedSeatIndex: _lastConfirmedSelfSeatIndex,
+            );
       final joined = await ref.read(chatRoomRemoteProvider).joinPresence(
             _presenceApiKey,
             alternateKey: _presenceAlternateKey,
@@ -508,6 +515,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         'roomId': _roomKey,
       });
       _presenceJoined = true;
+      _selfPresenceTracker.reset();
       registerVoiceRoomLiveSession(
         ref,
         _presenceApiKey,
@@ -629,26 +637,51 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       );
   }
 
-  Future<void> _leavePresence({bool force = false}) async {
-    if (_roomKey.isEmpty) return;
+  /// Sunucudaki presence kaydını düşür.
+  ///
+  /// Dönüş: çıkış sunucu tarafından kabul edildi mi.
+  ///
+  /// İki kritik nokta:
+  /// * İstemci [_presenceRemote] üzerinden okunur — bu metot `ref.onDispose`
+  ///   içinden ateşle-unut çağrıldığında `ref.read` fırlatıyor ve istek hiç
+  ///   gönderilmiyordu.
+  /// * Kalıcı kayıt yalnızca çıkış **kabul edilince** silinir. Önceden
+  ///   başarısız çıkışta da siliniyordu; böylece açılıştaki temizlik muhafızı
+  ///   yeniden deneyecek bir kayıt bulamıyor ve kullanıcı sunucuda odada
+  ///   kalmaya devam ediyordu.
+  Future<bool> _leavePresence({bool force = false}) async {
+    if (_roomKey.isEmpty) return false;
     // selfInRoom=true means join was acknowledged by backend; even if the
     // _presenceJoined flag wasn't set yet (race during room switch), still
     // send leave to avoid the user appearing in the old room.
-    if (!force && !_presenceJoined && !state.selfInRoom) return;
+    if (!force && !_presenceJoined && !state.selfInRoom) return false;
     _presenceJoined = false;
     _presenceHeartbeat?.cancel();
     _presenceHeartbeat = null;
+    final apiKey = _presenceApiKey;
+    final alternateKey = _presenceAlternateKey;
+    final remote = _presenceRemote;
+    var cleared = false;
     try {
-      await ref.read(chatRoomRemoteProvider).leavePresence(
-            _presenceApiKey,
-            alternateKey: _presenceAlternateKey,
-          );
-    } catch (_) {}
-    _roomSessionManager?.syncHostLeft(reason: 'Backend presence leave');
-    unawaited(VoiceRoomPresencePersistence.clear());
-    if (ref.read(voiceRoomActiveLiveKeyProvider) == _presenceApiKey) {
-      clearVoiceRoomLiveSession(ref, _roomKey);
+      cleared = await remote.leavePresence(apiKey, alternateKey: alternateKey);
+    } catch (_) {
+      cleared = false;
     }
+    VoiceRoomDebugLog.log('api.presence.leave', {
+      'room': apiKey,
+      'accepted': cleared,
+    });
+    _roomSessionManager?.syncHostLeft(reason: 'Backend presence leave');
+    if (cleared) {
+      unawaited(VoiceRoomPresencePersistence.clearRoom(apiKey));
+    }
+    // Dispose sonrası `ref` kullanılamaz; çıkış isteği zaten gönderildi.
+    try {
+      if (ref.read(voiceRoomActiveLiveKeyProvider) == apiKey) {
+        clearVoiceRoomLiveSession(ref, _roomKey);
+      }
+    } catch (_) {}
+    return cleared;
   }
 
   void _startPresenceHeartbeat() {
@@ -723,19 +756,25 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     _knownPresenceIds.remove(userId);
   }
 
-  Future<void> _leavePresenceWithSeatClear({bool force = false}) async {
-    final userId = ref.read(authControllerProvider).valueOrNull?.id;
+  Future<bool> _leavePresenceWithSeatClear({bool force = false}) async {
+    String? userId;
+    try {
+      userId = ref.read(authControllerProvider).valueOrNull?.id;
+    } catch (_) {
+      userId = null;
+    }
+    final remote = _presenceRemote;
     if (userId != null && userId.isNotEmpty) {
       _clearSeatForUser(userId);
       try {
-        await ref.read(chatRoomRemoteProvider).clearSeat(
-              roomKey: _roomKey,
-              alternateKey: _musicAlternateKey,
-              userId: userId,
-            );
+        await remote.clearSeat(
+          roomKey: _roomKey,
+          alternateKey: _musicAlternateKey,
+          userId: userId,
+        );
       } catch (_) {}
     }
-    await _leavePresence(force: force);
+    return _leavePresence(force: force);
   }
 
   void _pushEnterExitBanner(String line) {
@@ -777,6 +816,8 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
   Future<void> _presenceHeartbeatTick() async {
     if (_roomKey.isEmpty) return;
     _presenceHeartbeatCount++;
+    // Heartbeat düşerse aynı koltuğa geri dönebilmek için önce hatırla.
+    _rememberSelfSeatIfSeated();
     try {
       VoiceEventLog.heartbeat(roomId: _roomKey);
       VoiceRoomDebugLog.log('api.presence.heartbeat', {
@@ -1042,7 +1083,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
 
   /// RoomSessionManager callback — presence leave işlemi
   Future<void> _leavePresenceForManager() async {
-    return _leavePresence(force: false);
+    await _leavePresence(force: false);
   }
 
   /// RoomSessionManager callback — presence heartbeat

@@ -78,6 +78,7 @@ import '../../domain/pk/pk_unified_bridge.dart';
 import '../../domain/live_co_broadcast_constants.dart';
 import '../../domain/live_guest_layout_resolver.dart';
 import '../../domain/live_guest_list_snapshot.dart';
+import '../../domain/live_guest_request_result.dart';
 import '../providers/live_namespace_providers.dart';
 import '../../domain/utils/live_fortune_type_slug.dart';
 import '../../domain/utils/co_guest_camera_signal_util.dart';
@@ -1680,11 +1681,25 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       return;
     }
     try {
-      await ref.read(coBroadcastProvider.notifier).requestJoin(streamId);
+      final outcome =
+          await ref.read(coBroadcastProvider.notifier).requestJoin(streamId);
       if (!mounted) return;
-      setState(() => _joinRequestPending = true);
+      if (outcome == LiveGuestRequestOutcome.acknowledged) {
+        setState(() => _joinRequestPending = true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Yayına katılma isteği gönderildi')),
+        );
+        return;
+      }
+      // Sunucu kaydı onaylamadı — "gönderildi" demek yanlış olurdu.
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Yayına katılma isteği gönderildi')),
+        const SnackBar(
+          content: Text(
+            'İstek sunucuya ulaştı ama yayıncının listesine düşmedi. '
+            'Tekrar deneyin; sorun sürerse yayıncıdan davet isteyin.',
+          ),
+          duration: Duration(seconds: 6),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
@@ -2941,9 +2956,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               ),
             const LiveImmersiveScrim(),
             if (hasStream && !pkImmersive)
+              // Sağ üst köşe — eskiden tam genişlik şerit olarak keşfet ve
+              // süre alanının üstünü kapatıyordu.
               Positioned(
                 top: top + 48,
-                left: 10,
                 right: 10,
                 child: const CfcArenaRoomBanner(
                   surface: CfcArenaSurface.liveBroadcast,

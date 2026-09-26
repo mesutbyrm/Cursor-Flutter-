@@ -7,6 +7,28 @@ part of 'chat_room_providers.dart';
 /// Sesli oda koltuk/mikrofon-sırası API'si — [VoiceRoomLiveController]'dan ayrıldı.
 /// `part of` — aynı kütüphane; private erişim ve davranış birebir korunur.
 extension VoiceRoomSeatControls on VoiceRoomLiveController {
+  /// Kullanıcının o anki koltuk numarası — koltuk haritası, yoksa presence.
+  int? _currentSelfSeatIndex() {
+    final userId = ref.read(authControllerProvider).valueOrNull?.id;
+    if (userId == null || userId.isEmpty) return null;
+    for (final slot in state.seatSlots) {
+      if (slot.userId == userId && slot.index >= 1) return slot.index;
+    }
+    for (final p in _presenceCopy()) {
+      if (p.id != userId) continue;
+      final seat = p.seatIndex;
+      if (seat != null && seat >= 1) return seat;
+    }
+    return null;
+  }
+
+  /// Koltuk her doğrulandığında hatırlanır; heartbeat sonrası yeniden
+  /// katılımda aynı koltuk geri istenir.
+  void _rememberSelfSeatIfSeated() {
+    final seat = _currentSelfSeatIndex();
+    if (seat != null) _lastConfirmedSelfSeatIndex = seat;
+  }
+
   void _purgeExpiredPendingSeatActions() {
     final expired = <String, String>{}; // userId → reason
 

@@ -605,7 +605,29 @@ class ChatRoomRemoteDataSource {
   /// varyantlar sessizce yutulduğu için başarısız bir çıkış da başarılı
   /// sayılıyor ve sunucuda kalan hayalet üyelik bir daha denenmiyordu.
   Future<bool> leavePresence(String roomKey, {String? alternateKey}) async {
-    return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+    // `_withRoomKeyFallback` yalnızca istisna fırlatıldığında alternatif
+    // anahtarı dener. Tüm varyantlar 404/405 döndüğünde bu metot fırlatmayıp
+    // `false` döndüğü için alternatif anahtar hiç denenmiyordu; route anahtarı
+    // ile canonical cuid farklı olan odalarda çıkış sessizce düşüyordu.
+    final candidates = <String>[roomKey.trim()];
+    final alt = alternateKey?.trim() ?? '';
+    if (alt.isNotEmpty && alt != roomKey.trim()) candidates.add(alt);
+
+    Object? lastError;
+    for (final candidate in candidates) {
+      if (candidate.isEmpty) continue;
+      try {
+        if (await _leavePresenceOnce(candidate)) return true;
+      } on Object catch (e) {
+        lastError = e;
+      }
+    }
+    if (lastError != null && candidates.length == 1) throw lastError;
+    return false;
+  }
+
+  Future<bool> _leavePresenceOnce(String roomKey) async {
+    return _withRoomKeyFallback(roomKey, null, (key) async {
       // Backend voice_room_api.md — önce DELETE .../presence, sonra POST action leave.
       try {
         await _dio.safeDelete<dynamic>(presencePath(key));

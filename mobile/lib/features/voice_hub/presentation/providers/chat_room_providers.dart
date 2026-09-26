@@ -437,6 +437,24 @@ class VoiceRoomLiveController
     extends AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
     with VoiceRoomDjSyncMixin, VoiceRoomSseMixin {
   Timer? _poll;
+
+  /// Dispose sonrası da kullanılabilen presence istemcisi.
+  ///
+  /// `ref.read`, provider dispose edildikten sonra fırlatır. Odadan çıkış
+  /// `ref.onDispose` içinde ateşle-unut başlatıldığı için `await`'ten sonra
+  /// gelen `ref.read(chatRoomRemoteProvider)` patlıyor, hata `catch (_) {}`
+  /// tarafından yutuluyor ve **leave isteği hiç gönderilmiyordu** — sunucuda
+  /// kalan kayıt yüzünden kullanıcı girmediği odada görünmeye devam ediyordu.
+  /// Kaynak kök `Provider` olduğundan örnek dispose'tan sonra da geçerlidir;
+  /// build sırasında bir kez yakalanır.
+  ChatRoomRemoteDataSource? _presenceRemoteRef;
+
+  /// `selfInRoom` — tek bir eksik sunucu anlık görüntüsünde düşürülmez.
+  final _selfPresenceTracker = SelfPresenceTracker();
+
+  /// Kullanıcının sunucu tarafından doğrulanmış son koltuğu; heartbeat sonrası
+  /// yeniden katılımda geri istenir (koltuktan düşme onarımı).
+  int? _lastConfirmedSelfSeatIndex;
   Timer? _presenceHeartbeat;
   var _presenceHeartbeatCount = 0;
   Timer? _typingStopTimer;
@@ -633,6 +651,10 @@ class VoiceRoomLiveController
   }
 
   /// Presence join/leave/heartbeat — canonical cuid (slug 404 önlenir).
+  /// Dispose'tan sonra da güvenli presence istemcisi (bkz. [_presenceRemoteRef]).
+  ChatRoomRemoteDataSource get _presenceRemote =>
+      _presenceRemoteRef ?? (_presenceRemoteRef = ref.read(chatRoomRemoteProvider))!;
+
   String get _presenceApiKey => _settingsRoomKey;
 
   String? get _presenceAlternateKey {
@@ -758,6 +780,8 @@ class VoiceRoomLiveController
   @override
   VoiceRoomLiveState build(String roomKey) {
     final room = _roomMeta;
+    // Çıkış yolu dispose sonrasına sarkabildiği için istemci burada yakalanır.
+    _presenceRemoteRef = ref.read(chatRoomRemoteProvider);
     ref.listen(staffAccessProvider, (prev, next) {
       if (!state.selfInRoom) return;
       final wasPrivileged =
@@ -1131,7 +1155,7 @@ class VoiceRoomLiveController
         () async {
           final backendLeave = _leavePresenceWithSeatClear(force: forcePresenceLeave)
               .timeout(const Duration(seconds: 4))
-              .catchError((_) {});
+              .catchError((_) => false);
           if (awaitBackend) {
             await backendLeave;
           } else {
@@ -1257,7 +1281,7 @@ class VoiceRoomLiveController
     try {
       await _leavePresenceWithSeatClear()
           .timeout(const Duration(seconds: 5))
-          .catchError((_) {});
+          .catchError((_) => false);
     } catch (_) {}
     unawaited(_leaveVoiceSession());
   }
@@ -1295,7 +1319,8 @@ class VoiceRoomLiveController
     if (_roomKey.isEmpty || !_voiceJoined) return;
     _voiceJoined = false;
     try {
-      await ref.read(chatRoomRemoteProvider).leaveVoiceSession(_roomKey);
+      // dispose sonrası da çağrılabildiği için ref yerine yakalanan istemci.
+      await _presenceRemote.leaveVoiceSession(_roomKey);
       VoiceRoomDebugLog.log('api.voice.leave.ok', {'room': _roomKey});
     } catch (_) {}
   }
