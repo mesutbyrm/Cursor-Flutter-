@@ -511,10 +511,12 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
             streamId: arg,
             content: trimmed,
           );
-      var list = [...state.messages]..removeWhere((m) => m.id == optimisticId);
+      var list = [...state.messages];
+      final optimistic = list.where((m) => m.id == optimisticId).firstOrNull;
+      list.removeWhere((m) => m.id == optimisticId);
       // SSE, gönderilen mesajı biz cevabı almadan geri yollamış olabilir; bu
       // durumda _seenIds zaten içeriyor olur — ikinci kez eklemeyelim.
-      if (sent != null && _seenIds.add(sent.id)) {
+      if (sent != null && sent.id.isNotEmpty && _seenIds.add(sent.id)) {
         list.add(
           LiveRoomChatMessage(
             id: sent.id,
@@ -522,6 +524,10 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
             text: LiveChatGuard.sanitizeForDisplay(sent.content),
           ),
         );
+      } else if (optimistic != null) {
+        // POST 200 ama gövde parse edilemedi — optimistic satırı koru (SSE ile birleşir).
+        list.add(optimistic);
+        unawaited(_refreshMessagesAfterSend());
       }
       LiveChatGuard.markSent(trimmed);
       state = state.copyWith(messages: list, sending: false);
@@ -532,6 +538,14 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
         error: ApiException.userMessage(e),
       );
     }
+  }
+
+  Future<void> _refreshMessagesAfterSend() async {
+    try {
+      final list =
+          await ref.read(liveRemoteProvider).fetchStreamMessages(arg);
+      _mergeMessages(list);
+    } catch (_) {}
   }
 
   void setViewerCount(int count) {

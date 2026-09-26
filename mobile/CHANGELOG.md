@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.603+654 (2026-09-26) — Chat + PK davet (odada) + misafir poll + lig
+
+- **Canlı chat:** POST gövdesi geniş parse; optimistic mesaj korunur + kısa refresh
+- **Sesli PK:** odadayken GET /pk pending daveti alıcıya (eksik opponentVoiceRoomId)
+- **Misafir:** yayıncı guest list poll 3–4 sn
+- **Canlı:** Sohbeti gizle kaldırıldı; lig 1–5 skor+ sıra birleşimi; hediyede lig yenileme
+
 ## 1.0.602+653 (2026-09-26) — CI import düzeltmesi
 
 - **Analyze:** `voice_room_rtc_page` yarışma rail import yolu; `ApiException` package import

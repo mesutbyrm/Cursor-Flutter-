@@ -671,10 +671,25 @@ class LiveRemoteDataSource {
     final body = res.data;
     if (body is Map) {
       final map = Map<String, dynamic>.from(body);
-      final raw = map['message'] ?? map['data'];
-      if (raw is Map) {
+      if (map['success'] == true && map['data'] is Map) {
         return LiveStreamChatMessage.fromJson(
+          Map<String, dynamic>.from(map['data'] as Map),
+        );
+      }
+      final raw = map['message'] ?? map['data'] ?? map['chatMessage'];
+      if (raw is Map) {
+        final parsed = LiveStreamChatMessage.fromJson(
           Map<String, dynamic>.from(raw),
+        );
+        if (parsed.id.isNotEmpty || parsed.content.isNotEmpty) return parsed;
+      }
+      final text = map['content']?.toString() ?? map['text']?.toString() ?? '';
+      if (text.trim().isNotEmpty) {
+        return LiveStreamChatMessage(
+          id: map['id']?.toString() ??
+              'rest-${DateTime.now().millisecondsSinceEpoch}',
+          content: text.trim(),
+          createdAt: DateTime.now(),
         );
       }
     }

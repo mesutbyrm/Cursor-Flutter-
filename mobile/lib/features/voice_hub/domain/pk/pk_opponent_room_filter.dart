@@ -104,6 +104,22 @@ bool isPkInviteTarget(
   return false;
 }
 
+/// Aktif odadayken GET /pk ile gelen pending davet — sunucu `opponentVoiceRoomId`
+/// yazmasa bile bu odada değilseniz meydan okuyan taraf değilseniz alıcısınız.
+bool isPkInviteRecipientInActiveRoom(
+  PkBattleRemote battle,
+  VoiceRoomEntity? activeRoom, {
+  String? userId,
+}) {
+  if (!battle.isPending || activeRoom == null) return false;
+  if (isPkChallengerRoom(battle, activeRoom)) return false;
+  if (isPkInviteTarget(battle, activeRoom, userId: userId)) return true;
+  if (pkBattleBelongsToRoom(battle, activeRoom)) return true;
+  final ownerId = activeRoom.ownerId?.trim() ?? '';
+  final uid = userId?.trim() ?? '';
+  return uid.isNotEmpty && ownerId.isNotEmpty && uid == ownerId;
+}
+
 /// Menüde PK savaş ekranına gitmek için gerçekten aktif savaş var mı?
 bool isPkBattleLive(PkBattleRemote? battle) =>
     battle != null && battle.isActive && !battle.isEnded;

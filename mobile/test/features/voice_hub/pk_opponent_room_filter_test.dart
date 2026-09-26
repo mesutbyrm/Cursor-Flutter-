@@ -120,6 +120,28 @@ void main() {
     );
   });
 
+  test('isPkInviteRecipientInActiveRoom when opponentVoiceRoomId missing', () {
+    const battle = PkBattleRemote(
+      id: 'pk-scoped',
+      battleType: 'voice_room',
+      status: 'pending',
+      challengerScore: 0,
+      opponentScore: 0,
+      secondsLeft: 300,
+      durationSeconds: 180,
+      targetScore: 1000,
+      voiceRoomId: 'room-a',
+    );
+    expect(
+      isPkInviteRecipientInActiveRoom(battle, eligible, userId: 'owner-b'),
+      isTrue,
+    );
+    expect(
+      isPkInviteRecipientInActiveRoom(battle, self, userId: 'owner-a'),
+      isFalse,
+    );
+  });
+
   test('isPkInviteTarget matches opponentVoiceRoomId', () {
     const battle = PkBattleRemote(
       id: 'pk4',

@@ -378,6 +378,15 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
         if (pkBattleBelongsToRoom(battle, room)) return true;
         if (battle.isPending &&
             user != null &&
+            isPkInviteRecipientInActiveRoom(
+              battle,
+              room,
+              userId: user.id,
+            )) {
+          return true;
+        }
+        if (battle.isPending &&
+            user != null &&
             isPkInviteTarget(battle, room, userId: user.id)) {
           return true;
         }

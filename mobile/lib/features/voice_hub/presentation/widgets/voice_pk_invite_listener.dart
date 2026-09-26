@@ -63,7 +63,20 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
     if (_showing) return;
 
     if (battle.isPending) {
-      final room = resolvePkInviteTargetRoom(ref, battle, user.id);
+      var room = resolvePkInviteTargetRoom(ref, battle, user.id);
+      final activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
+      VoiceRoomEntity? activeRoom;
+      if (activeKey.isNotEmpty) {
+        activeRoom = ref.read(voiceRoomByIdProvider(activeKey)).valueOrNull;
+      }
+      if (room == null &&
+          isPkInviteRecipientInActiveRoom(
+            battle,
+            activeRoom,
+            userId: user.id,
+          )) {
+        room = activeRoom;
+      }
       if (room == null) {
         if (battle.voiceRoomId?.trim().isEmpty == true &&
             battle.opponentVoiceRoomId?.trim().isEmpty == true) {
@@ -74,7 +87,9 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
         }
         return;
       }
-      if (!isPkInviteTarget(battle, room, userId: user.id)) return;
+      final recipient = isPkInviteTarget(battle, room, userId: user.id) ||
+          isPkInviteRecipientInActiveRoom(battle, room, userId: user.id);
+      if (!recipient) return;
       if (isPkChallengerRoom(battle, room)) return;
       final inviteId = battle.effectiveId;
       if (inviteId.isNotEmpty) {
@@ -197,12 +212,20 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
           alternateRoomId: alt,
         );
         if (roomBattle != null && !roomBattle.isEnded) {
-          _ingestBattleIfRelevant(
-            roomBattle,
-            activeKey,
-            activeRoom,
-            user.id,
-          );
+          if (activeRoom != null &&
+              roomBattle.isPending &&
+              !isPkChallengerRoom(roomBattle, activeRoom)) {
+            ref
+                .read(pkBattleRemoteProvider.notifier)
+                .ingestSseBattle(roomBattle);
+          } else {
+            _ingestBattleIfRelevant(
+              roomBattle,
+              activeKey,
+              activeRoom,
+              user.id,
+            );
+          }
           _onBattleUpdate(roomBattle);
         }
       }

@@ -1417,8 +1417,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     // istek olayı yayınlarsa SSE yolu zaten anında çalışır; bu yoklama
     // güvenilir bir yedek olacak kadar sık kalmalı.
     final interval = _liveSseConnected
-        ? const Duration(seconds: 10)
-        : const Duration(seconds: 8);
+        ? const Duration(seconds: 4)
+        : const Duration(seconds: 3);
     _guestJoinPoll = Timer.periodic(interval, (_) {
       if (!mounted) return;
       unawaited(
@@ -3289,6 +3289,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       args: PkSessionArgs(contextId: streamId!, kind: PkContextKind.live),
       child: _LiveBroadcastListenerTree(
         streamId: streamId!,
+        hostUserId: s.hostUserId,
         child: liveTree,
       ),
     );
@@ -3299,10 +3300,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
 class _LiveBroadcastListenerTree extends ConsumerWidget {
   const _LiveBroadcastListenerTree({
     required this.streamId,
+    this.hostUserId,
     required this.child,
   });
 
   final String streamId;
+  final String? hostUserId;
   final Widget child;
 
   @override
@@ -3325,6 +3328,10 @@ class _LiveBroadcastListenerTree extends ConsumerWidget {
         unawaited(
           ref.read(liveVideoPkProvider(streamId).notifier).refresh(),
         );
+      }
+      final hostId = hostUserId?.trim() ?? '';
+      if (hostId.isNotEmpty) {
+        ref.invalidate(liveHostRankProvider(hostId));
       }
     });
 
