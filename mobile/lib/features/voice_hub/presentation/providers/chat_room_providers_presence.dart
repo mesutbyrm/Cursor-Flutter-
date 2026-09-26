@@ -502,6 +502,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         VoiceRoomPresencePersistence.recordJoin(
           roomId: _presenceApiKey,
           alternateRoomId: _presenceAlternateKey,
+          userId: user?.id,
         ),
       );
       _roomSessionManager?.syncHostJoined(reason: 'Backend presence join');

@@ -4,6 +4,38 @@ part of 'chat_room_providers.dart';
 
 /// Oda girişi, bootstrap ve ilk yükleme — [VoiceRoomLiveController]'dan ayrıldı.
 extension VoiceRoomEntryControls on VoiceRoomLiveController {
+  /// Başka bir odada aktif kayıt varsa yeni odaya katılmadan önce onu sunucudan
+  /// düşür.
+  ///
+  /// Oda değiştirirken eski provider'ın dispose'u çıkışı ateşle-unut olarak
+  /// gönderiyor; sıralama garanti olmadığı için sunucu join(B)'yi leave(A)'dan
+  /// önce işleyebiliyor ve kullanıcı iki odada birden görünüyordu. Temiz
+  /// çıkışta kayıt zaten temizlendiğinden bu adım yalnızca kopuk geçişlerde
+  /// (deep link, geri tuşu, listeden başka odaya atlama) devreye girer.
+  Future<void> _leaveStalePreviousRoom() async {
+    final previous = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
+    if (previous.isEmpty) return;
+    if (previous == _presenceApiKey) return;
+    if (_roomKeyAliases.any((k) => k.trim() == previous)) return;
+
+    VoiceRoomDebugLog.log('room.switch.leave_previous', {
+      'previous': previous,
+      'next': _presenceApiKey,
+    });
+    try {
+      await ref
+          .read(chatRoomRemoteProvider)
+          .leavePresence(previous)
+          .timeout(const Duration(seconds: 3));
+    } catch (_) {}
+
+    final stillActive = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
+    if (stillActive == previous) {
+      ref.read(voiceRoomActiveLiveKeyProvider.notifier).state = null;
+      ref.read(voiceRoomActiveKeyAliasesProvider.notifier).state = const {};
+    }
+  }
+
   /// Contract: auth → state → presence → SSE → messages → seats → TRTC.
   Future<void> _beginRoomSession() async {
     if (_entryBegun) return;
@@ -42,6 +74,7 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
     );
 
     try {
+      await _leaveStalePreviousRoom();
       await _ensureRoomsCatalogForCanonicalKey();
       await _fetchAndApplyRoomState();
       await Future.wait<void>([
