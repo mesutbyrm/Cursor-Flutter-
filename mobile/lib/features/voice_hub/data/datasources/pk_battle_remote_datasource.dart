@@ -32,6 +32,19 @@ List<Map<String, dynamic>> voicePkInviteRequestBodies({
 
   if (guest.isNotEmpty) {
     return [
+      // Hedef kullanıcı biliniyorsa ilk gövde her iki alanı da taşır: oda
+      // tabanlı (games) backend `targetRoomId`'yi, kılavuz §9.3 uyumlu backend
+      // `guestUserId`'yi okur. Yalnızca `targetRoomId` gönderildiğinde ikinci
+      // tip backend daveti bir alıcıya bağlayamıyor; istek 200 dönüyor ama
+      // karşı kullanıcıya hiç ulaşmıyordu. Alan tanınmazsa 400/422 ile
+      // aşağıdaki tekil gövdelere düşülür.
+      {
+        'action': 'create',
+        'targetRoomId': opp,
+        'guestUserId': guest,
+        'duration': duration,
+        'durationSec': duration,
+      },
       primary,
       {
         'action': 'create',

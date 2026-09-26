@@ -15,6 +15,21 @@ void main() {
     expect(bodies.last['guestUserId'], 'user-guest');
   });
 
+  test('first body carries both targetRoomId and guestUserId so either backend '
+      'can bind the invite to a recipient', () {
+    final bodies = voicePkInviteRequestBodies(
+      opponentRoomId: 'room-b',
+      guestUserId: 'user-guest',
+      durationSeconds: 180,
+    );
+    expect(bodies.first['targetRoomId'], 'room-b');
+    expect(bodies.first['guestUserId'], 'user-guest');
+    expect(bodies.first['durationSec'], 180);
+    // Tekil gövdeler yedek olarak korunur.
+    expect(bodies.any((b) => !b.containsKey('guestUserId')), isTrue);
+    expect(bodies.any((b) => !b.containsKey('targetRoomId')), isTrue);
+  });
+
   test('voicePkInviteRequestBodies works without guestUserId', () {
     final bodies = voicePkInviteRequestBodies(
       opponentRoomId: 'room-b',

@@ -179,7 +179,7 @@ class VideoStreamSseService {
 
   void _scheduleReconnect() {
     if (_stopped || _paused || _streamId == null) return;
-    if (_reconnectAttempt >= SseReconnectPolicy.maxAttempts) return;
+    if (SseReconnectPolicy.shouldGiveUp(_reconnectAttempt)) return;
     _reconnectTimer?.cancel();
     _reconnectAttempt++;
     final delay = SseReconnectPolicy.delayForAttempt(_reconnectAttempt);
