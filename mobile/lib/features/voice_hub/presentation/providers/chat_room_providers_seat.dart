@@ -356,7 +356,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
   /// Giriş / yetki gecikmesinde koltuğa oturmayı birkaç kez dene (Clubhouse tarzı).
   void schedulePrivilegedSeatAttempts() {
     unawaited(() async {
-      for (var attempt = 0; attempt < 6; attempt++) {
+      for (var attempt = 0; attempt < 8; attempt++) {
         if (!state.selfInRoom || _roomKey.isEmpty) return;
         final user = ref.read(authControllerProvider).valueOrNull;
         if (user == null) return;
@@ -366,13 +366,13 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
         await _tryAutoPrivilegedSeat();
         if (_isSelfSeated(user.id)) return;
 
-        if (attempt == 1 || attempt == 3) {
+        // Erken dönem: permissions ve seats yenile (attempt 0, 2, 4, 6)
+        if (attempt == 0 || attempt == 2 || attempt == 4 || attempt == 6) {
           await refreshServerPermissions();
-        }
-        if (attempt == 2 || attempt == 4) {
           await _fetchAndApplySeats();
         }
-        await Future<void>.delayed(Duration(milliseconds: 200 + attempt * 180));
+        // Progressif back-off: 100ms → 400ms → 700ms → ...
+        await Future<void>.delayed(Duration(milliseconds: 100 + attempt * 150));
       }
     }());
   }

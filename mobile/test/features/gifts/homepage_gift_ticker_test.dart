@@ -11,6 +11,7 @@ import 'package:canlifal_social/features/home/data/homepage_ticker_parser.dart';
 import 'package:canlifal_social/features/home/presentation/providers/home_providers.dart';
 import 'package:canlifal_social/features/home/presentation/widgets/home_ticker_strip.dart';
 import 'package:canlifal_social/features/voice_hub/domain/voice_official_join.dart';
+import 'package:canlifal_social/features/voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
 
 void main() {
   const screenshot =
@@ -91,6 +92,113 @@ void main() {
       expect(second, hasLength(1));
       expect(second.single.senderName, 'Ali');
       expect(second.single.receiverName, 'veli');
+    });
+  });
+
+  group('homepage ticker news gate', () {
+    const entrance = 'Admin admin sesli odasına giriş yaptı';
+    const other = 'Moderatör ayse lobi odasına giriş yaptı';
+
+    test('first poll seeds backlog so login shows no stale entrance', () {
+      final gate = HomepageGiftTickerGate();
+      expect(
+        gate.takeNewNewsLines([entrance, other], source: 'ticker'),
+        isEmpty,
+      );
+    });
+
+    test('repeated poll with unchanged backlog stays silent', () {
+      final gate = HomepageGiftTickerGate();
+      gate.takeNewNewsLines([entrance], source: 'ticker');
+      for (var poll = 0; poll < 5; poll++) {
+        expect(
+          gate.takeNewNewsLines([entrance], source: 'ticker'),
+          isEmpty,
+          reason: 'poll $poll replayed an old announcement',
+        );
+      }
+    });
+
+    test('genuinely new announcement is emitted exactly once', () {
+      final gate = HomepageGiftTickerGate();
+      gate.takeNewNewsLines([entrance], source: 'ticker');
+      expect(
+        gate.takeNewNewsLines([entrance, other], source: 'ticker'),
+        [other],
+      );
+      expect(
+        gate.takeNewNewsLines([entrance, other], source: 'ticker'),
+        isEmpty,
+      );
+    });
+
+    test('gift lines never leak into the news channel', () {
+      final gate = HomepageGiftTickerGate();
+      gate.takeNewNewsLines([entrance], source: 'ticker');
+      expect(
+        gate.takeNewNewsLines([entrance, screenshot], source: 'ticker'),
+        isEmpty,
+      );
+    });
+
+    test('each source seeds independently', () {
+      final gate = HomepageGiftTickerGate();
+      expect(gate.takeNewNewsLines([entrance], source: 'a'), isEmpty);
+      expect(gate.takeNewNewsLines([entrance], source: 'b'), isEmpty);
+      expect(gate.takeNewNewsLines([entrance, other], source: 'a'), [other]);
+    });
+
+    test('resetNewsSource re-seeds after background, no catch-up burst', () {
+      final gate = HomepageGiftTickerGate();
+      gate.takeNewNewsLines([entrance], source: 'ticker');
+      gate.resetNewsSource('ticker');
+      expect(
+        gate.takeNewNewsLines([entrance, other], source: 'ticker'),
+        isEmpty,
+      );
+    });
+
+    test('reset clears news and gift state on account switch', () {
+      final gate = HomepageGiftTickerGate();
+      gate.takeNewNewsLines([entrance], source: 'ticker');
+      gate.takeNewGiftAnnouncements([screenshot]);
+      gate.reset();
+      expect(gate.seeded, isFalse);
+      expect(
+        gate.takeNewNewsLines([entrance], source: 'ticker'),
+        isEmpty,
+        reason: 'new session must re-seed instead of replaying',
+      );
+    });
+  });
+
+  group('staff entrance marquee session', () {
+    const entrance = 'Admin admin sesli odasına giriş yaptı';
+
+    test('same announcement is shown once per session', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(staffEntranceMarqueeProvider.notifier);
+
+      notifier.enqueue(entrance);
+      expect(container.read(staffEntranceMarqueeProvider).message, isNotNull);
+
+      notifier.clear();
+      notifier.enqueue(entrance);
+      expect(container.read(staffEntranceMarqueeProvider).message, isNull);
+    });
+
+    test('resetSession stops carrying seen lines into the next account', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(staffEntranceMarqueeProvider.notifier);
+
+      notifier.enqueue(entrance);
+      notifier.resetSession();
+      expect(container.read(staffEntranceMarqueeProvider).message, isNull);
+
+      notifier.enqueue(entrance);
+      expect(container.read(staffEntranceMarqueeProvider).message, isNotNull);
     });
   });
 

@@ -99,6 +99,50 @@ class HomepageGiftTickerGate {
   final _seen = <String>{};
   var seeded = false;
 
+  /// Duyuru (hediye dışı) satırları — çağrı yeri başına ayrı seed tutulur ki
+  /// bir kaynağın ilk poll'ü diğerinin geçmişini "yeni" göstermesin.
+  final _newsSeen = <String, Set<String>>{};
+
+  /// Hediye dışı ticker satırları. `/api/homepage-ticker` sunucuda birikmiş
+  /// duyuru geçmişini her poll'de yeniden döndürür; ilk çağrı bu geçmişi
+  /// işaretleyip boş döner, sonraki çağrılarda yalnızca yeni satırlar gelir.
+  /// Aksi halde eski "… odasına giriş yaptı" satırları her poll'de canlı
+  /// olaymış gibi tekrar gösterilir.
+  List<String> takeNewNewsLines(
+    Iterable<String> lines, {
+    required String source,
+  }) {
+    final news = HomepageGiftTicker.newsLines(lines);
+    final seen = _newsSeen[source];
+    if (seen == null) {
+      _newsSeen[source] = {for (final line in news) _key(line)};
+      return const [];
+    }
+    final fresh = <String>[];
+    for (final line in news) {
+      if (!seen.add(_key(line))) continue;
+      fresh.add(line);
+    }
+    while (seen.length > 400) {
+      seen.remove(seen.first);
+    }
+    return fresh;
+  }
+
+  /// Kaynağı yeniden seed'e zorlar. Uygulama arka plandayken kaçırılan
+  /// duyurular dönüşte canlı olay gibi toplu gösterilmesin diye kullanılır.
+  void resetNewsSource(String source) {
+    _newsSeen.remove(source);
+  }
+
+  /// Oturum değişimi — önceki kullanıcının görülmüş satırları yeni oturuma
+  /// taşınmaz ve yeni oturumun ilk poll'ü yeniden seed edilir.
+  void reset() {
+    _seen.clear();
+    seeded = false;
+    _newsSeen.clear();
+  }
+
   List<TickerGiftAnnouncement> takeNewGiftAnnouncements(Iterable<String> lines) {
     final gifts = HomepageGiftTicker.giftLines(lines);
     if (!seeded) {

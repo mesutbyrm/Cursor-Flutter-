@@ -203,7 +203,7 @@ class PkSessionNotifier
   }
 
   /// Voice room PK daveti öncesi room session state'i check et.
-  /// Oda joined state'de değilse invite gönderilemez.
+  /// Oda joined state'de değilse invite gönderilebilir ama retry yapılır.
   bool _isVoiceRoomReadyForPk() {
     if (arg.kind != PkContextKind.voice) return true;
     if (!ref.exists(voiceRoomLiveProvider(arg.contextId))) return true;
@@ -212,7 +212,15 @@ class PkSessionNotifier
     final manager = chatRoomNotifier.roomSessionManager;
     if (manager == null) return true; // Manager yok — fallback izin ver
 
-    return manager.state == RoomSessionState.joined;
+    // Joined state değilse warning log — ancak engelleme.
+    final state = manager.state;
+    if (state != RoomSessionState.joined) {
+      PkEventLog.log('pk_room_not_ready_for_invite', {
+        'roomId': arg.contextId,
+        'state': state.toString(),
+      });
+    }
+    return true;
   }
 
   void _startTicker() {
