@@ -596,6 +596,18 @@ class VoiceRoomLiveController
     return slug;
   }
 
+  /// SSE geri çağrısı hâlâ bağlı olduğumuz odaya mı ait?
+  ///
+  /// Hub servisi oda anahtarı başına paylaşıldığı ve geri çağrılar bağlanma
+  /// anındaki anahtarı kapattığı için, oda değişiminden veya anahtar
+  /// yükseltmesinden sonra eski akıştan gelen bir olay yeni odanın state'ine
+  /// yazabiliyordu.
+  bool _isSseEventForAttachedRoom(String eventRoomKey) {
+    final attached = _sseAttachedRoomKey?.trim();
+    if (attached == null || attached.isEmpty) return false;
+    return attached == eventRoomKey.trim();
+  }
+
   /// SSE aboneliğinin bağlı olduğu oda anahtarı (release için).
   String get _sseReleaseKey {
     final attached = _sseAttachedRoomKey?.trim();
@@ -1091,6 +1103,13 @@ class VoiceRoomLiveController
     final canStopMusic = _canStopMusic();
     final keepAliveLink = _roomKeepAliveLink;
     final djSnapshot = state.dj;
+    // SSE lease anahtarı adımlar başlamadan yakalanır: aşağıdaki temizlik adımı
+    // `_sseAttachedRoomKey`'i null'lıyor ve `_sseReleaseKey` o noktadan sonra
+    // anahtarı katalogdan yeniden türetiyor. Route anahtarı ile canonical cuid
+    // farklı olduğunda (kısmi route → cuid yükseltmesi) yanlış anahtar serbest
+    // bırakılıyor, gerçek lease açık kalıyor ve eski odanın SSE akışı
+    // kapanmıyordu.
+    final sseReleaseKey = _sseReleaseKey;
 
     VoiceEventLog.leaveStart(roomId: roomKey);
     ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
@@ -1162,7 +1181,7 @@ class VoiceRoomLiveController
           );
         },
         () async {
-          ref.read(sseConnectionHubProvider).forceReleaseVoiceRoom(_sseReleaseKey);
+          ref.read(sseConnectionHubProvider).forceReleaseVoiceRoom(sseReleaseKey);
           ref.read(voiceRoomGiftRealtimeProvider).stop();
           ref.read(voiceRoomGiftRealtimeProvider).setSseActive(false);
           ref.read(voiceRoomGiftRealtimeProvider).resetDedupeState();

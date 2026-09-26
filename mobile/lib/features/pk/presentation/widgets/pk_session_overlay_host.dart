@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/pk_models.dart';
+import '../../domain/pk_rematch.dart';
 import '../providers/pk_session_notifier.dart';
 import 'pk_countdown_overlay.dart';
 import 'pk_result_overlay.dart';
@@ -27,6 +28,28 @@ class PkSessionOverlayHost extends ConsumerStatefulWidget {
 class _PkSessionOverlayHostState extends ConsumerState<PkSessionOverlayHost> {
   PkStatus? _lastStatus;
   String? _lastBattleId;
+
+  /// Rövanş — biten savaş temizlenir, ardından aynı rakibe yeni davet gider.
+  /// Yeni savaş ayrı bir id ile açılır; eski skorlar taşınmaz.
+  Future<void> _requestRematch(PkRematchTarget target) async {
+    final notifier = ref.read(pkSessionProvider(widget.args).notifier);
+    notifier.dismissFinishedBattle();
+    await notifier.create(
+      target.contextId,
+      targetUserId: target.userId.isEmpty ? null : target.userId,
+    );
+    if (!mounted) return;
+    final error = ref.read(pkSessionProvider(widget.args)).error;
+    if (error != null && error.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error)),
+      );
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Rövanş isteği gönderildi')),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,11 +83,19 @@ class _PkSessionOverlayHostState extends ConsumerState<PkSessionOverlayHost> {
             : battle.winnerId == battle.user1Id
                 ? (battle.user1?.name ?? 'Kazanan')
                 : (battle.user2?.name ?? 'Kazanan');
+        final rematch = resolvePkRematchTarget(
+          battle: battle,
+          myContextId: widget.args.contextId,
+        );
         unawaited(
           showPkResultOverlay(
             context,
             battle: battle,
             winnerName: winner,
+            onRematch: rematch == null ? null : () => _requestRematch(rematch),
+            onDismiss: () => ref
+                .read(pkSessionProvider(widget.args).notifier)
+                .dismissFinishedBattle(),
           ),
         );
       }

@@ -344,6 +344,16 @@ class VideoStreamSseService {
       case 'cobroadcast_invite':
       case 'guest_invite':
       case 'guestinvite':
+      // İzleyici → yayıncı katılma isteği. Tanınan bir tip yokken yayıncı
+      // isteği yalnızca yavaş yoklamada görüyordu; bu adlar tanınmayan bir
+      // sunucuda sessizce göz ardı edilir, tanındığında istek anında düşer.
+      case 'guest_request':
+      case 'guestrequest':
+      case 'guest_join_request':
+      case 'co_broadcast_request':
+      case 'cobroadcast_request':
+      case 'join_request':
+      case 'joinrequest':
         _onGuest?.call(map);
         return;
       case 'co_guest_camera':

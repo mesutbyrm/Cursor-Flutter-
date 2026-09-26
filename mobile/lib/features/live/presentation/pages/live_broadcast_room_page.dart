@@ -1409,8 +1409,14 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
 
   void _startHostGuestPoll(String streamId) {
     _guestJoinPoll?.cancel();
+    // SSE bağlıyken 60 sn'ye çıkmak, akışın izleyici katılma isteğini de
+    // taşıdığını varsayıyordu; oysa tanınan misafir olayları yalnızca
+    // katılma/ayrılma/davet. İstek yayıncıya ancak bir dakika sonra
+    // ulaşabiliyor, kullanıcı gözünde hiç gitmemiş oluyordu. Sunucu bir
+    // istek olayı yayınlarsa SSE yolu zaten anında çalışır; bu yoklama
+    // güvenilir bir yedek olacak kadar sık kalmalı.
     final interval = _liveSseConnected
-        ? const Duration(seconds: 60)
+        ? const Duration(seconds: 10)
         : const Duration(seconds: 8);
     _guestJoinPoll = Timer.periodic(interval, (_) {
       if (!mounted) return;
@@ -3027,8 +3033,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                         right: 10,
                         child: WeeklyBroadcasterCompetitionCard(
                           competition: comp,
-                          maxHeight: 280,
-                          maxWidth: 200,
+                          maxWidth: 190,
                         ),
                       );
                     },

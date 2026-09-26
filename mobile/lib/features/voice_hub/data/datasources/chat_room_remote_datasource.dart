@@ -598,18 +598,24 @@ class ChatRoomRemoteDataSource {
     });
   }
 
-  Future<void> leavePresence(String roomKey, {String? alternateKey}) async {
-    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+  /// `true` — varyantlardan biri sunucu tarafından kabul edildi.
+  ///
+  /// Hiçbir varyant tutmazsa fırlatmak yerine `false` döner; çağıran böylece
+  /// temizliğin gerçekten yapılıp yapılmadığını ayırt edebilir. Önceden tüm
+  /// varyantlar sessizce yutulduğu için başarısız bir çıkış da başarılı
+  /// sayılıyor ve sunucuda kalan hayalet üyelik bir daha denenmiyordu.
+  Future<bool> leavePresence(String roomKey, {String? alternateKey}) async {
+    return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       // Backend voice_room_api.md — önce DELETE .../presence, sonra POST action leave.
       try {
         await _dio.safeDelete<dynamic>(presencePath(key));
-        return;
+        return true;
       } on ApiException catch (e) {
         if (e.statusCode != 404 && e.statusCode != 405) rethrow;
       } catch (_) {}
       try {
         await _dio.safeDelete<dynamic>('${presencePath(key)}?leave=1');
-        return;
+        return true;
       } on ApiException catch (e) {
         if (e.statusCode != 404 && e.statusCode != 405) rethrow;
       } catch (_) {}
@@ -618,7 +624,7 @@ class ChatRoomRemoteDataSource {
           presencePath(key),
           data: const {'action': 'leave'},
         );
-        return;
+        return true;
       } on ApiException catch (e) {
         if (e.statusCode != 404 && e.statusCode != 405) rethrow;
       } catch (_) {}
@@ -627,7 +633,9 @@ class ChatRoomRemoteDataSource {
           presencePath(key),
           data: const {'type': 'leave'},
         );
+        return true;
       } catch (_) {}
+      return false;
     });
   }
 

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/sse/sse_hub_provider.dart';
@@ -246,16 +247,22 @@ class VoiceRoomsPresenceNotifier extends Notifier<VoiceRoomsPresenceState> {
     final roomId =
         (map['roomId'] ?? map['roomKey'] ?? fallbackRoomId).toString().trim();
     if (roomId.isEmpty) return null;
-    final online = _parseOnlineCount(map);
+    final online = parseOnlineCount(map);
     if (online == null) return null;
     return (roomId: roomId, onlineUsers: online);
   }
 
-  int? _parseOnlineCount(Map<String, dynamic> map) {
+  @visibleForTesting
+  static int? parseOnlineCount(Map<String, dynamic> map) {
     final direct = map['onlineUsers'] ?? map['onlineCount'] ?? map['count'];
     if (direct is num) return direct.toInt();
     final users = map['users'] ?? map['presence'] ?? map['members'];
-    if (users is List) return users.length;
+    // Boş liste sayacı sıfırlamaz. Sunucu geçici olarak katılımcı taşımayan
+    // bir snapshot yollayabiliyor; oda içi merge mantığı bu durumda önceki
+    // listeyi koruyor (`sse.keep_empty_snapshot`) ama sayaç tarafında aynı
+    // koruma yoktu ve dolu oda birkaç saniye sonra 0 görünüyordu. Sayı
+    // yalnızca sunucu açıkça bir alanda bildirdiğinde sıfıra inebilir.
+    if (users is List && users.isNotEmpty) return users.length;
     return null;
   }
 

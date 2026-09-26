@@ -1,70 +1,56 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../voice_hub/presentation/theme/voice_room_tokens.dart';
 import '../../domain/pk/weekly_broadcaster_competition_models.dart';
+import 'weekly_competition_detail_sheet.dart';
 
-/// Haftalık yayıncı yarışması kartı — sağ altta, kapatılabilir.
-class WeeklyBroadcasterCompetitionCard extends ConsumerStatefulWidget {
+/// Haftalık yayıncı yarışması kutusu — kompakt özet, dokununca detay açılır.
+///
+/// Sıralamanın tamamı kutuda değil [showWeeklyCompetitionDetailSheet] içinde
+/// gösterilir; kutu küçük ekranlarda oda kontrollerinin üzerine taşmamalı.
+class WeeklyBroadcasterCompetitionCard extends StatefulWidget {
   const WeeklyBroadcasterCompetitionCard({
-    Key? key,
+    super.key,
     required this.competition,
-    this.maxHeight = 280,
-    this.maxWidth = 200,
-  }) : super(key: key);
+    this.maxWidth = 190,
+  });
 
   final WeeklyBroadcasterCompetition competition;
-  final double maxHeight;
   final double maxWidth;
 
   @override
-  ConsumerState<WeeklyBroadcasterCompetitionCard> createState() =>
+  State<WeeklyBroadcasterCompetitionCard> createState() =>
       _WeeklyBroadcasterCompetitionCardState();
 }
 
 class _WeeklyBroadcasterCompetitionCardState
-    extends ConsumerState<WeeklyBroadcasterCompetitionCard> {
+    extends State<WeeklyBroadcasterCompetitionCard> {
   bool _collapsed = false;
+
+  void _openDetail() => showWeeklyCompetitionDetailSheet(context);
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     if (_collapsed) {
-      return SizedBox(
-        width: widget.maxWidth,
+      return Semantics(
+        button: true,
+        label: 'Haftalık yarışmayı göster',
         child: GestureDetector(
           onTap: () => setState(() => _collapsed = false),
           child: Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: const Color(0xFF2A1B4D).withValues(alpha: 0.85),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.5),
-                width: 1,
-              ),
+              color: scheme.surfaceContainerHighest.withValues(alpha: 0.92),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: scheme.outlineVariant),
             ),
-            child: Column(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.expand_less,
-                  color: VoiceRoomTokens.neonPurple,
-                  size: 20,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '📊',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Haftalık',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.white70,
-                        fontSize: 10,
-                      ),
-                  textAlign: TextAlign.center,
-                ),
+                const Text('🏆'),
+                const SizedBox(width: 6),
+                Icon(Icons.expand_less, size: 16, color: scheme.onSurfaceVariant),
               ],
             ),
           ),
@@ -72,170 +58,132 @@ class _WeeklyBroadcasterCompetitionCardState
       );
     }
 
+    final now = DateTime.now();
+    final phase = widget.competition.phaseAt(now);
+
     return Container(
       width: widget.maxWidth,
-      constraints: BoxConstraints(maxHeight: widget.maxHeight),
       decoration: BoxDecoration(
-        color: const Color(0xFF2A1B4D).withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.6),
-          width: 1,
-        ),
+        color: scheme.surface.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: scheme.outlineVariant),
       ),
-      child: Column(
-        children: [
-          _buildHeader(),
-          Expanded(
-            child: _buildContent(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.3),
-            width: 1,
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: _openDetail,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '🏆 Haftalık',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: VoiceRoomTokens.neonPurple,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '🏆 ${widget.competition.displayTitle}',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
+                    ),
+                    GestureDetector(
+                      onTap: () => setState(() => _collapsed = true),
+                      behavior: HitTestBehavior.opaque,
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Icon(
+                          Icons.expand_more,
+                          size: 18,
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 6),
+                _PhaseLine(phase: phase),
+                const SizedBox(height: 6),
                 Text(
-                  'Yarışma',
+                  _summaryLine(widget.competition, now, phase),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.white70,
-                        fontSize: 10,
+                        color: scheme.onSurfaceVariant,
                       ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.tonal(
+                    onPressed: _openDetail,
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    child: const Text('Sıralamayı gör'),
+                  ),
                 ),
               ],
             ),
           ),
-          GestureDetector(
-            onTap: () => setState(() => _collapsed = true),
-            child: Icon(
-              Icons.expand_more,
-              color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.7),
-              size: 20,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildContent() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (widget.competition.winners.isNotEmpty) ...[
-            Text(
-              'Kazananlar',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: VoiceRoomTokens.neonPurple,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 6),
-            ..._buildWinners(),
-            const SizedBox(height: 12),
-          ],
-          Text(
-            'Top Katılımcılar',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.white70,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-          const SizedBox(height: 6),
-          ..._buildTopParticipants(),
-        ],
-      ),
+  static String _summaryLine(
+    WeeklyBroadcasterCompetition competition,
+    DateTime now,
+    WeeklyCompetitionPhase phase,
+  ) {
+    final count = '👥 ${competition.participants.length}';
+    if (phase == WeeklyCompetitionPhase.finished) return count;
+    final left = competition.remainingAt(now);
+    if (left == null) return count;
+    final label = left.inDays >= 1
+        ? '${left.inDays}g'
+        : left.inHours >= 1
+            ? '${left.inHours}s'
+            : '${left.inMinutes}dk';
+    return '$count  ·  ⏱ $label';
+  }
+}
+
+class _PhaseLine extends StatelessWidget {
+  const _PhaseLine({required this.phase});
+
+  final WeeklyCompetitionPhase phase;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final (label, color) = switch (phase) {
+      WeeklyCompetitionPhase.upcoming => ('Yakında', scheme.tertiary),
+      WeeklyCompetitionPhase.running => ('Devam ediyor', scheme.primary),
+      WeeklyCompetitionPhase.finished => ('Sona erdi', scheme.outline),
+    };
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 7,
+          height: 7,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: Theme.of(context)
+              .textTheme
+              .labelSmall
+              ?.copyWith(color: color, fontWeight: FontWeight.w600),
+        ),
+      ],
     );
-  }
-
-  List<Widget> _buildWinners() {
-    return widget.competition.winners.take(3).map((winner) {
-      final medals = ['🥇', '🥈', '🥉'];
-      final medal = (winner.rank > 0 && winner.rank <= 3)
-          ? medals[winner.rank - 1]
-          : '⭐';
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 6),
-        child: Text(
-          '$medal ${winner.displayName ?? 'Anonymous'}\n   ${winner.score} puan',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.white,
-                fontSize: 9,
-                height: 1.3,
-              ),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-      );
-    }).toList();
-  }
-
-  List<Widget> _buildTopParticipants() {
-    return widget.competition.participants.take(5).map((participant) {
-      final rank = participant.rank;
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 4),
-        child: Row(
-          children: [
-            Text(
-              '#$rank',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: VoiceRoomTokens.neonPurple,
-                    fontSize: 8,
-                  ),
-            ),
-            const SizedBox(width: 4),
-            Expanded(
-              child: Text(
-                participant.displayName ?? 'Anonymous',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white70,
-                      fontSize: 8,
-                    ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              '${participant.score}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: VoiceRoomTokens.neonPurple,
-                    fontSize: 8,
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-          ],
-        ),
-      );
-    }).toList();
   }
 }
