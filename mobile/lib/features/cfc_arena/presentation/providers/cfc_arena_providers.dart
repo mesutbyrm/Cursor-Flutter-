@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/cfc_arena_context.dart';
+import '../../domain/cfc_arena_contest_detail.dart';
 import '../../domain/cfc_arena_contest_filters.dart';
 import '../../data/cfc_arena_repository.dart';
 
@@ -18,4 +19,12 @@ final cfcArenaContestsForSurfaceProvider = FutureProvider.autoDispose
     .family<List<Map<String, dynamic>>, CfcArenaSurface>((ref, surface) async {
   final all = await ref.watch(cfcArenaContestsProvider.future);
   return filterContestsForSurface(all, surface);
+});
+
+/// Yarışma detayı — katılımcılar ve puanlar (`data.leaderboard`).
+final cfcArenaContestDetailProvider = FutureProvider.autoDispose
+    .family<CfcArenaContestDetail, String>((ref, contestId) async {
+  final id = contestId.trim();
+  if (id.isEmpty) return const CfcArenaContestDetail();
+  return ref.read(cfcArenaRepositoryProvider).fetchContestDetail(id);
 });

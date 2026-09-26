@@ -11,6 +11,7 @@ class VoiceRoomSideActionRail extends StatelessWidget {
     this.showMusic = true,
     /// Dikey hizalama: -1 üst, 0 orta, 1 alt. Web gibi hafif aşağıda.
     this.verticalAlignment = 0.12,
+    this.topSlot,
   });
 
   final VoidCallback? onSettings;
@@ -18,9 +19,14 @@ class VoiceRoomSideActionRail extends StatelessWidget {
   final bool showMusic;
   final double verticalAlignment;
 
+  /// Ayarlar/Müzik düğmelerinin **üstünde** duran ek kutu (sezon yarışması).
+  final Widget? topSlot;
+
   @override
   Widget build(BuildContext context) {
-    if (onSettings == null && (!showMusic || onMusic == null)) {
+    final hasButtons =
+        onSettings != null || (showMusic && onMusic != null);
+    if (!hasButtons && topSlot == null) {
       return const SizedBox.shrink();
     }
 
@@ -32,7 +38,12 @@ class VoiceRoomSideActionRail extends StatelessWidget {
         alignment: Alignment(1, verticalAlignment.clamp(-1.0, 1.0)),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
+            if (topSlot != null) ...[
+              topSlot!,
+              if (hasButtons) const SizedBox(height: 12),
+            ],
             if (onSettings != null)
               _SideActionButton(
                 icon: Icons.settings_rounded,
