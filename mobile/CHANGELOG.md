@@ -2,7 +2,7 @@
 
 ## 1.0.601+652 (2026-09-26) — PK davet koltuk + yarışma rail
 
-- **PK davet:** aktif PK uzaktan bitirilmez; PK sırasında GET /seats koltuk senkronu duraklatılır
+- **PK davet:** aktif PK uzaktan bitirilmez; aktif PK varken yeni davet 409 mesajı; PK sırasında GET /seats + SSE `seat_changed` duraklatılır
 - **PK poll:** yalnızca aktif odaya ait savaş global state'e yazılır
 - **Yarışmalar:** sezon + haftalık — Ayarlar/Müzik ile aynı sağ rail kutusu; dokununca içerik/sheet
 
