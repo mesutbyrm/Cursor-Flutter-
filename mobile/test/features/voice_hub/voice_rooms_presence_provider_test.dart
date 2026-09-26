@@ -32,6 +32,58 @@ void main() {
       );
     });
 
+    test('an explicit server count is authoritative, zero included', () {
+      expect(
+        VoiceRoomsPresenceNotifier.parseOnlineCount({'onlineUsers': 7}),
+        7,
+      );
+      expect(
+        VoiceRoomsPresenceNotifier.parseOnlineCount({'onlineCount': 0}),
+        0,
+      );
+    });
+
+    test('a non-empty user list is counted', () {
+      expect(
+        VoiceRoomsPresenceNotifier.parseOnlineCount({
+          'users': [
+            {'id': 'a'},
+            {'id': 'b'},
+          ],
+        }),
+        2,
+      );
+    });
+
+    test('an empty user list does not zero a populated room', () {
+      expect(
+        VoiceRoomsPresenceNotifier.parseOnlineCount({'users': <dynamic>[]}),
+        isNull,
+        reason: 'a seatless/empty snapshot must leave the previous count alone',
+      );
+      expect(
+        VoiceRoomsPresenceNotifier.parseOnlineCount({'presence': <dynamic>[]}),
+        isNull,
+      );
+    });
+
+    test('an empty list still yields zero when the server also states it', () {
+      expect(
+        VoiceRoomsPresenceNotifier.parseOnlineCount({
+          'onlineUsers': 0,
+          'users': <dynamic>[],
+        }),
+        0,
+      );
+    });
+
+    test('payload without any count signal returns null', () {
+      expect(
+        VoiceRoomsPresenceNotifier.parseOnlineCount({'userId': 'x'}),
+        isNull,
+      );
+    });
+
     test('homeTrackedRooms is lower than maxTrackedRooms', () {
       expect(
         VoiceRoomsPresenceNotifier.homeTrackedRooms,

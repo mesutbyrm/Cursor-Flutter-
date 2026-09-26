@@ -279,7 +279,22 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     final pkActive = battle != null &&
         !battle.isEnded &&
         (battle.isActive || battle.isPending);
-    if (!pkActive) return merged;
+    if (!pkActive) {
+      // PK dışında koruma uygulanmıyor: `seatIndex` alanı "koltuk bilgisi yok"
+      // ile "koltukta değil" durumunu ayırt etmediği için koruma genişletilirse
+      // herkes kalktığında koltuklar kalıcı donabilir. Bu log, koltukların
+      // düştüğü şikayetinde asıl nedenin koltuksuz snapshot olup olmadığını
+      // cihaz kaydından doğrulamak için.
+      final prevSeated = previous.where((p) => (p.seatIndex ?? -1) >= 0).length;
+      if (prevSeated > 0 && !merged.any((p) => (p.seatIndex ?? -1) >= 0)) {
+        VoiceRoomDebugLog.log('presence.seatless_snapshot', {
+          'room': _roomKey,
+          'previousSeated': prevSeated,
+          'incoming': merged.length,
+        });
+      }
+      return merged;
+    }
 
     final incomingHasSeats = merged.any((p) => (p.seatIndex ?? -1) >= 0);
     if (incomingHasSeats) return merged;
