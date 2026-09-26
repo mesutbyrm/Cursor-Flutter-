@@ -5,7 +5,7 @@ import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../cfc_arena/data/cfc_arena_repository.dart';
 import '../../../../cfc_arena/domain/cfc_arena_contest_filters.dart';
 import '../../../../cfc_arena/domain/cfc_arena_context.dart';
-import '../../../../core/network/api_exception.dart';
+import 'package:canlifal_social/core/network/api_exception.dart';
 import '../../../../cfc_arena/presentation/providers/cfc_arena_providers.dart';
 import '../../../../cfc_arena/presentation/widgets/cfc_arena_contest_sheet.dart';
 import '../../../../cfc_arena/presentation/widgets/cfc_arena_room_banner.dart';
