@@ -157,6 +157,7 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             );
           },
           onMessage: (msg) {
+            if (!_sse._isSseEventForAttachedRoom(roomKey)) return;
             if (msg.kind == ChatMessageKind.systemJoin) {
               _sse._pushBasicChatEvent(msg);
               _sse._handleSystemJoinEntrance(msg);
@@ -190,6 +191,7 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             }
           },
           onPresence: (users) {
+            if (!_sse._isSseEventForAttachedRoom(roomKey)) return;
             final merged = _sse._ensureSelfInPresenceList(
               _sse._mergePresenceStable(users, source: 'sse'),
             );
@@ -232,10 +234,20 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
               _sse._poll?.cancel();
             }
           },
-          onUserJoin: _sse._handleSseUserJoin,
-          onUserLeave: _sse._handleSseUserLeave,
-          onRoomEvent: _sse._handleRoomEvent,
+          onUserJoin: (payload) {
+            if (!_sse._isSseEventForAttachedRoom(roomKey)) return;
+            _sse._handleSseUserJoin(payload);
+          },
+          onUserLeave: (payload) {
+            if (!_sse._isSseEventForAttachedRoom(roomKey)) return;
+            _sse._handleSseUserLeave(payload);
+          },
+          onRoomEvent: (payload) {
+            if (!_sse._isSseEventForAttachedRoom(roomKey)) return;
+            _sse._handleRoomEvent(payload);
+          },
           onTyping: (users) {
+            if (!_sse._isSseEventForAttachedRoom(roomKey)) return;
             state = state.copyWith(typingUsers: users);
           },
           onFortuneRequest: (payload) {
@@ -247,6 +259,7 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             ref.read(voiceSpeakRequestSignalProvider.notifier).bump();
           },
           onPk: (battle, event) {
+            if (!_sse._isSseEventForAttachedRoom(roomKey)) return;
             if (VoiceRoomBasicMode.enabled && !VoiceRoomBasicMode.premiumEnabled) {
               return;
             }
