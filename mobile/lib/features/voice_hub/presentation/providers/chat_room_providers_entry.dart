@@ -22,12 +22,28 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
       'previous': previous,
       'next': _presenceApiKey,
     });
+    var cleared = false;
     try {
-      await ref
+      cleared = await ref
           .read(chatRoomRemoteProvider)
           .leavePresence(previous)
           .timeout(const Duration(seconds: 3));
-    } catch (_) {}
+    } catch (_) {
+      cleared = false;
+    }
+    if (cleared) {
+      await VoiceRoomPresencePersistence.clearRoom(previous);
+    } else {
+      // Çıkış kabul edilmedi: kayıt korunur ki açılıştaki temizlik muhafızı
+      // yeniden denesin. Aksi halde kullanıcı eski odada asılı kalıyordu.
+      VoiceRoomDebugLog.log('room.switch.leave_previous.failed', {
+        'previous': previous,
+      });
+      await VoiceRoomPresencePersistence.recordJoin(
+        roomId: previous,
+        userId: ref.read(authControllerProvider).valueOrNull?.id,
+      );
+    }
 
     final stillActive = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
     if (stillActive == previous) {
@@ -46,6 +62,8 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
     _sessionActive = true;
     _entrancesArmed = false;
     _realtimeEffectsEpochMs = null;
+    _selfPresenceTracker.reset();
+    _lastConfirmedSelfSeatIndex = null;
     _knownPresenceIds.clear();
     _lastKnownPresenceNames.clear();
     _shownEntranceKeys.clear();
