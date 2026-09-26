@@ -67,7 +67,7 @@ class ProfileHubQuickMenu extends ConsumerWidget {
     ];
 
     return SizedBox(
-      height: 78,
+      height: ProfileActionTile.compactHeight,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: items.length,
@@ -75,8 +75,9 @@ class ProfileHubQuickMenu extends ConsumerWidget {
         itemBuilder: (context, i) {
           final item = items[i];
           return SizedBox(
-            width: 72,
+            width: 78,
             child: ProfileActionTile(
+              compact: true,
               icon: item.icon,
               label: item.label,
               onTap: item.onTap,

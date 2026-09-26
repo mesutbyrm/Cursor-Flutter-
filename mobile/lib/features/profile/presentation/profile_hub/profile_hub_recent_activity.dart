@@ -68,16 +68,16 @@ class _ActivityTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: ProfilePremiumTheme.deepBg.withValues(alpha: 0.45),
+        color: ProfilePremiumTheme.surfaceOf(context, darkAlpha: 0.45),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        border: Border.all(color: ProfilePremiumTheme.insetOf(context, darkAlpha: 0.06)),
       ),
       child: Row(
         children: [
           Icon(
             Icons.history_rounded,
             size: 18,
-            color: Colors.white.withValues(alpha: 0.6),
+            color: ProfilePremiumTheme.textSecondaryOf(context),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -88,10 +88,10 @@ class _ActivityTile extends StatelessWidget {
                   item.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 13,
-                    color: Colors.white,
+                    color: ProfilePremiumTheme.textOf(context),
                   ),
                 ),
                 if (item.subtitle != null && item.subtitle!.isNotEmpty)
@@ -101,7 +101,7 @@ class _ActivityTile extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 11,
-                      color: Colors.white.withValues(alpha: 0.5),
+                      color: ProfilePremiumTheme.textMutedOf(context),
                     ),
                   ),
               ],
@@ -112,7 +112,7 @@ class _ActivityTile extends StatelessWidget {
               time,
               style: TextStyle(
                 fontSize: 10,
-                color: Colors.white.withValues(alpha: 0.45),
+                color: ProfilePremiumTheme.textMutedOf(context),
               ),
             ),
         ],

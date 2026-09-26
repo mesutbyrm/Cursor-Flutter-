@@ -12,6 +12,7 @@ import '../../domain/entities/short_video_entity.dart';
 import '../../domain/repositories/shorts_repository.dart';
 import '../providers/shorts_providers.dart';
 import '../utils/shorts_count_format.dart';
+import '../../../profile/presentation/premium_2026/profile_theme.dart';
 
 /// Doğrulanmış hesap rozeti — yalnızca `isVerified == true` iken gösterilir.
 class ShortsVerifiedBadge extends StatelessWidget {
@@ -169,7 +170,7 @@ class ShortsProfileStatsRow extends ConsumerWidget {
     return Container(
       width: 1,
       height: 44,
-      color: Colors.white.withValues(alpha: 0.12),
+      color: ProfilePremiumTheme.insetOf(context, darkAlpha: 0.12),
     );
   }
 }
@@ -198,8 +199,8 @@ class _StatCell extends StatelessWidget {
               token: value,
               child: Text(
                 value,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: ProfilePremiumTheme.textOf(context),
                   fontWeight: FontWeight.w900,
                   fontSize: 17,
                 ),
@@ -209,7 +210,7 @@ class _StatCell extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.55),
+                color: ProfilePremiumTheme.textMutedOf(context),
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
               ),
@@ -281,19 +282,20 @@ class _ShortsProfileTabsState extends ConsumerState<ShortsProfileTabs>
         if (widget.sectionTitle != null) ...[
           Text(
             widget.sectionTitle!,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w800,
               fontSize: 16,
-              color: Colors.white,
+              color: ProfilePremiumTheme.textOf(context),
             ),
           ),
           const SizedBox(height: 10),
         ],
         TabBar(
           controller: _tabs,
-          indicatorColor: const Color(0xFFFF4081),
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white54,
+          indicatorColor: ProfilePremiumTheme.accentOf(context),
+          labelColor: ProfilePremiumTheme.textOf(context),
+          dividerColor: Colors.transparent,
+          unselectedLabelColor: ProfilePremiumTheme.textMutedOf(context),
           tabs: tabs,
         ),
         const SizedBox(height: 10),
@@ -335,7 +337,7 @@ class ShortsProfileVideoGrid extends ConsumerWidget {
       error: (_, _) => Center(
         child: Text(
           'Videolar yüklenemedi',
-          style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+          style: TextStyle(color: ProfilePremiumTheme.textSecondaryOf(context)),
         ),
       ),
       data: (list) {
@@ -343,7 +345,7 @@ class ShortsProfileVideoGrid extends ConsumerWidget {
           return Center(
             child: Text(
               _emptyLabel(tab),
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.55)),
+              style: TextStyle(color: ProfilePremiumTheme.textMutedOf(context)),
             ),
           );
         }

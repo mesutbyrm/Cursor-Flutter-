@@ -11,6 +11,7 @@ import '../../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../../../admin/presentation/widgets/admin_user_hub_launcher.dart';
 import '../../providers/live_stream_viewers_provider.dart';
 import 'live_moderation_sheet.dart';
+import '../../../../social/presentation/utils/social_user_profile_route.dart';
 
 Future<void> showLiveViewersSheet(
   BuildContext context,
@@ -166,8 +167,10 @@ class _ViewerTile extends ConsumerWidget {
       onTap: viewer.id.isEmpty
           ? null
           : () {
+              // Sayfa kapanınca bu context ağaçtan çıkar; router'ı önce al.
+              final router = GoRouter.of(context);
               Navigator.pop(context);
-              context.push('/profile/${viewer.id}');
+              router.push(buildSocialUserProfileRoute(viewer.id));
             },
     );
   }

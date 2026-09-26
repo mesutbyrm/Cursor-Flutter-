@@ -36,7 +36,7 @@ class ProfileHubCompletionCard extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Material(
-        color: ProfilePremiumTheme.deepBg.withValues(alpha: 0.55),
+        color: ProfilePremiumTheme.surfaceOf(context, darkAlpha: 0.55),
         borderRadius: BorderRadius.circular(ProfilePremiumTheme.radiusLg),
         child: InkWell(
           borderRadius: BorderRadius.circular(ProfilePremiumTheme.radiusLg),
@@ -64,19 +64,19 @@ class ProfileHubCompletionCard extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'Profilini Tamamla',
                             style: TextStyle(
                               fontWeight: FontWeight.w800,
                               fontSize: 15,
-                              color: Colors.white,
+                              color: ProfilePremiumTheme.textOf(context),
                             ),
                           ),
                           Text(
                             '%$percent tamamlandı · ${missing.length} eksik',
                             style: TextStyle(
                               fontSize: 11,
-                              color: Colors.white.withValues(alpha: 0.6),
+                              color: ProfilePremiumTheme.textSecondaryOf(context),
                             ),
                           ),
                         ],
@@ -95,16 +95,16 @@ class ProfileHubCompletionCard extends ConsumerWidget {
                       ),
                       child: Text(
                         '${missing.length}',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: ProfilePremiumTheme.textOf(context),
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                     ),
-                    const Icon(
+                    Icon(
                       Icons.chevron_right_rounded,
-                      color: Colors.white54,
+                      color: ProfilePremiumTheme.textMutedOf(context),
                     ),
                   ],
                 ),
@@ -114,7 +114,7 @@ class ProfileHubCompletionCard extends ConsumerWidget {
                   child: LinearProgressIndicator(
                     value: percent / 100,
                     minHeight: 6,
-                    backgroundColor: Colors.white.withValues(alpha: 0.08),
+                    backgroundColor: ProfilePremiumTheme.insetOf(context, darkAlpha: 0.08),
                     valueColor: const AlwaysStoppedAnimation(
                       AppThemeColors.accentPink,
                     ),
@@ -132,7 +132,7 @@ class ProfileHubCompletionCard extends ConsumerWidget {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.06),
+                          color: ProfilePremiumTheme.insetOf(context, darkAlpha: 0.06),
                           borderRadius: BorderRadius.circular(999),
                           border: Border.all(
                             color: AppThemeColors.liveRed.withValues(alpha: 0.4),
@@ -149,10 +149,10 @@ class ProfileHubCompletionCard extends ConsumerWidget {
                             const SizedBox(width: 4),
                             Text(
                               item.label,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white,
+                                color: ProfilePremiumTheme.textOf(context),
                               ),
                             ),
                           ],

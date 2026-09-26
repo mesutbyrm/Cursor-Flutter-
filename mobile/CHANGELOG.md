@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.608+659 (2026-09-27) — UI yenileme Aşama 3: profil + kullanıcı kartları
+
+- **Taşma hatası:** profildeki hızlı menü kutucukları (Cüzdanım, Jeton Geçmişim, Hediye Geçmişim…) ~390 dp ekranlarda 30 px taşıyordu; sıkı kutucuk + doğru satır yüksekliği
+- **Kırık gezinme:** takipçi/takip listesinde ve canlı yayın izleyici listesinde kişiye dokununca var olmayan `/profile/<id>` rotası açılıyordu → `/user/<id>`; izleyici listesi kapanmış sayfanın context'iyle gezinmiyor
+- **Takip butonu:** anında tepki, istek sürerken kilit (çift istek yok), hata olursa geri alma + bildirim (önceden hata sessizce yutuluyordu)
+- **Açık tema:** profil sayfası baştan sona okunur (istatistikler, tamamlama, özet, seviye, sekmeli bölümler, içerik sekmeleri); "Takibi bırak" ve "Profilimi düzenle" butonları beyaz metin gösteriyordu
+- **Profil başlığı:** ad ve kullanıcı adı kapağın altında; Düzenle / QR Kodum / Ayarlar tam genişlik buton satırı
+- **Takipçi listesi:** iskelet yükleme, yeniden denemeli hata, aşağı çekip yenileme, yalnızca çevrimiçiyse yeşil nokta
+
 ## 1.0.607+658 (2026-09-27) — UI yenileme Aşama 2: sosyal akış + hikâyeler
 
 - **Hikâye izleyici hataları:** basılı tutup bırakınca hikâye baştan başlıyordu; videoda duraklat/devam çift dinleyici ekleyip hikâye atlatabiliyordu; ilerleme her 50 ms'de tüm sayfayı yeniden çiziyordu; görsel yüklenmeden süre işliyordu

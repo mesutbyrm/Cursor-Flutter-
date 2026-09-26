@@ -85,11 +85,11 @@ class _AboutCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Hakkımda',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: ProfilePremiumTheme.textOf(context),
                     fontWeight: FontWeight.w900,
                     fontSize: 15,
                   ),
@@ -108,7 +108,7 @@ class _AboutCard extends StatelessWidget {
               Text(
                 user.bio!,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.75),
+                  color: ProfilePremiumTheme.textSecondaryOf(context),
                   fontSize: 12,
                   height: 1.4,
                 ),
@@ -248,11 +248,11 @@ class _StatisticsCard extends ConsumerWidget {
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   'İstatistiklerim',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: ProfilePremiumTheme.textOf(context),
                     fontWeight: FontWeight.w900,
                     fontSize: 15,
                   ),
@@ -276,7 +276,7 @@ class _StatisticsCard extends ConsumerWidget {
             Text(
               sectionSubtitle,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.5),
+                color: ProfilePremiumTheme.textMutedOf(context),
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 height: 1.25,
@@ -292,13 +292,13 @@ class _StatisticsCard extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(vertical: 5),
                 child: Row(
                   children: [
-                    Icon(row.icon, size: 16, color: Colors.white54),
+                    Icon(row.icon, size: 16, color: ProfilePremiumTheme.textMutedOf(context)),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         row.label,
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.65),
+                          color: ProfilePremiumTheme.textSecondaryOf(context),
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -306,8 +306,8 @@ class _StatisticsCard extends ConsumerWidget {
                     ),
                     Text(
                       row.value,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: ProfilePremiumTheme.textOf(context),
                         fontWeight: FontWeight.w900,
                         fontSize: 13,
                       ),
@@ -333,13 +333,13 @@ class _InfoRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: Colors.white54),
+          Icon(icon, size: 16, color: ProfilePremiumTheme.textMutedOf(context)),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               text,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.7),
+                color: ProfilePremiumTheme.textSecondaryOf(context),
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),

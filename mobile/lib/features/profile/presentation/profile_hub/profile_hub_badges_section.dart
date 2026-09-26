@@ -38,11 +38,11 @@ class ProfileHubBadgesSection extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Son Rozetlerim',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: ProfilePremiumTheme.textOf(context),
                         fontWeight: FontWeight.w900,
                         fontSize: 15,
                       ),
@@ -70,9 +70,9 @@ class ProfileHubBadgesSection extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.05),
+                    color: ProfilePremiumTheme.insetOf(context, darkAlpha: 0.05),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: ProfilePremiumTheme.glassBorder),
+                    border: Border.all(color: ProfilePremiumTheme.borderOf(context)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -80,7 +80,7 @@ class ProfileHubBadgesSection extends ConsumerWidget {
                       Text(
                         'Sonraki Rozet',
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.55),
+                          color: ProfilePremiumTheme.textMutedOf(context),
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
                         ),
@@ -88,8 +88,8 @@ class ProfileHubBadgesSection extends ConsumerWidget {
                       const SizedBox(height: 6),
                       Text(
                         next.title,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: ProfilePremiumTheme.textOf(context),
                           fontWeight: FontWeight.w900,
                           fontSize: 13,
                         ),
@@ -101,7 +101,7 @@ class ProfileHubBadgesSection extends ConsumerWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.6),
+                            color: ProfilePremiumTheme.textSecondaryOf(context),
                             fontSize: 11,
                           ),
                         ),
@@ -113,7 +113,7 @@ class ProfileHubBadgesSection extends ConsumerWidget {
                           child: LinearProgressIndicator(
                             value: (next.progress! / 100).clamp(0.0, 1.0),
                             minHeight: 5,
-                            backgroundColor: Colors.white.withValues(alpha: 0.1),
+                            backgroundColor: ProfilePremiumTheme.insetOf(context, darkAlpha: 0.1),
                             color: ProfilePremiumTheme.neonPurple,
                           ),
                         ),
@@ -121,7 +121,7 @@ class ProfileHubBadgesSection extends ConsumerWidget {
                         Text(
                           '${next.progress} / 100',
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.45),
+                            color: ProfilePremiumTheme.textMutedOf(context),
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
                           ),
@@ -174,7 +174,7 @@ class _BadgeChip extends StatelessWidget {
           textAlign: TextAlign.center,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.75),
+            color: ProfilePremiumTheme.textSecondaryOf(context),
             fontSize: 9,
             fontWeight: FontWeight.w700,
           ),

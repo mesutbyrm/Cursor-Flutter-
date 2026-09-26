@@ -49,7 +49,7 @@ class ProfileHubSummaryCard extends ConsumerWidget {
     }
 
     return Material(
-      color: ProfilePremiumTheme.deepBg.withValues(alpha: 0.55),
+      color: ProfilePremiumTheme.surfaceOf(context, darkAlpha: 0.55),
       borderRadius: BorderRadius.circular(ProfilePremiumTheme.radiusLg),
       child: InkWell(
         borderRadius: BorderRadius.circular(ProfilePremiumTheme.radiusLg),
@@ -58,19 +58,19 @@ class ProfileHubSummaryCard extends ConsumerWidget {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(ProfilePremiumTheme.radiusLg),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+            border: Border.all(color: ProfilePremiumTheme.insetOf(context, darkAlpha: 0.1)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  const Text(
+                  Text(
                     'Özet',
                     style: TextStyle(
                       fontWeight: FontWeight.w900,
                       fontSize: 15,
-                      color: Colors.white,
+                      color: ProfilePremiumTheme.textOf(context),
                     ),
                   ),
                   const Spacer(),
@@ -96,7 +96,7 @@ class ProfileHubSummaryCard extends ConsumerWidget {
                   const SizedBox(width: 6),
                   Icon(
                     Icons.chevron_right_rounded,
-                    color: Colors.white.withValues(alpha: 0.4),
+                    color: ProfilePremiumTheme.textMutedOf(context),
                     size: 20,
                   ),
                 ],
@@ -150,15 +150,15 @@ class _Chip extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.55),
+                  color: ProfilePremiumTheme.textMutedOf(context),
                 ),
               ),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
-                  color: Colors.white,
+                  color: ProfilePremiumTheme.textOf(context),
                 ),
               ),
             ],

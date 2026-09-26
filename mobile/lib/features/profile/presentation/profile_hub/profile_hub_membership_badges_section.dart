@@ -54,7 +54,7 @@ class ProfileHubMembershipBadgesSection extends ConsumerWidget {
                     child: Text(
                       buildMembershipBadgesSectionTitle(),
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.92),
+                        color: ProfilePremiumTheme.textSecondaryOf(context),
                         fontWeight: FontWeight.w900,
                         fontSize: 15,
                       ),
@@ -82,7 +82,7 @@ class ProfileHubMembershipBadgesSection extends ConsumerWidget {
                 Text(
                   sectionSubtitle,
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.55),
+                    color: ProfilePremiumTheme.textMutedOf(context),
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     height: 1.25,
@@ -171,7 +171,7 @@ class _MembershipBadgeTile extends StatelessWidget {
         ? ProfilePremiumTheme.neonPink
         : unlocked
             ? ProfilePremiumTheme.neonPurple
-            : Colors.white.withValues(alpha: 0.15);
+            : ProfilePremiumTheme.insetOf(context, darkAlpha: 0.15);
 
     return GestureDetector(
       onTap: onTap,
@@ -208,7 +208,7 @@ class _MembershipBadgeTile extends StatelessWidget {
                           Icons.military_tech_rounded,
                           color: unlocked
                               ? ProfilePremiumTheme.neonPurple
-                              : Colors.white54,
+                              : ProfilePremiumTheme.textMutedOf(context),
                         ),
                 ),
                 if (selected)
@@ -220,12 +220,12 @@ class _MembershipBadgeTile extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: ProfilePremiumTheme.neonPink,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white70),
+                        border: Border.all(color: ProfilePremiumTheme.textSecondaryOf(context)),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.check_rounded,
                         size: 10,
-                        color: Colors.white,
+                        color: ProfilePremiumTheme.textOf(context),
                       ),
                     ),
                   )
@@ -239,13 +239,13 @@ class _MembershipBadgeTile extends StatelessWidget {
                         color: Colors.black87,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.2),
+                          color: ProfilePremiumTheme.insetOf(context, darkAlpha: 0.2),
                         ),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.lock_rounded,
                         size: 10,
-                        color: Colors.white70,
+                        color: ProfilePremiumTheme.textSecondaryOf(context),
                       ),
                     ),
                   ),

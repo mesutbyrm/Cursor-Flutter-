@@ -180,7 +180,7 @@ class _ServicesScroller extends StatelessWidget {
           child: Text(
             buildMembershipHubServicesSectionTitle(),
             style: TextStyle(
-              color: Colors.white,
+              color: ProfilePremiumTheme.textOf(context),
               fontWeight: FontWeight.w900,
               fontSize: 15,
             ),
@@ -241,8 +241,8 @@ class _ServiceCard extends StatelessWidget {
                 maxLines: 2,
                 textAlign: TextAlign.center,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: ProfilePremiumTheme.textOf(context),
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
                 ),

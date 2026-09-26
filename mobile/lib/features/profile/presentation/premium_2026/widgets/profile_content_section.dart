@@ -7,7 +7,6 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
-import '../../../../../core/theme/app_theme_colors.dart';
 import '../../../../../core/theme/app_theme_extensions.dart';
 import '../../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../favorites/presentation/providers/favorites_providers.dart';
@@ -21,6 +20,7 @@ import '../../../../shorts/presentation/widgets/shorts_profile_content.dart';
 import '../../../domain/entities/profile_stats_entity.dart';
 import '../../providers/broadcast_history_notifier.dart';
 import '../../widgets/premium/profile_glass.dart';
+import '../profile_theme.dart';
 
 /// İçeriklerim — 6 sekmeli grid görünümü.
 class ProfileContentSection extends ConsumerStatefulWidget {
@@ -66,9 +66,10 @@ class _ProfileContentSectionState extends ConsumerState<ProfileContentSection>
             tabAlignment: TabAlignment.start,
             labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
             unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
-            indicatorColor: AppThemeColors.accentPink,
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white54,
+            indicatorColor: ProfilePremiumTheme.accentOf(context),
+            labelColor: ProfilePremiumTheme.textOf(context),
+            unselectedLabelColor: ProfilePremiumTheme.textMutedOf(context),
+            dividerColor: Colors.transparent,
             tabs: const [
               Tab(text: 'Videolar'),
               Tab(text: 'Beğenilen'),
@@ -510,16 +511,19 @@ class _FavoritesTab extends ConsumerWidget {
                         ),
                       )
                     else
-                      const Icon(Icons.bookmark_rounded, color: Colors.white54),
+                      Icon(
+                        Icons.bookmark_rounded,
+                        color: ProfilePremiumTheme.textMutedOf(context),
+                      ),
                     const Spacer(),
                     Text(
                       fav.title ?? fav.targetType,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 13,
-                        color: Colors.white,
+                        color: ProfilePremiumTheme.textOf(context),
                       ),
                     ),
                   ],
@@ -554,14 +558,14 @@ class _DraftsTab extends ConsumerWidget {
                 Icon(
                   Icons.drive_file_rename_outline_rounded,
                   size: 40,
-                  color: Colors.white.withValues(alpha: 0.4),
+                  color: ProfilePremiumTheme.textMutedOf(context),
                 ),
                 const SizedBox(height: 12),
                 Text(
                   'Taslak videolarınız burada görünür',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: ProfilePremiumTheme.textSecondaryOf(context),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -592,16 +596,19 @@ class _DraftsTab extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.movie_creation_outlined, color: Colors.white54),
+                    Icon(
+                      Icons.movie_creation_outlined,
+                      color: ProfilePremiumTheme.textMutedOf(context),
+                    ),
                     const Spacer(),
                     Text(
                       draft.previewLabel,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 13,
-                        color: Colors.white,
+                        color: ProfilePremiumTheme.textOf(context),
                       ),
                     ),
                   ],

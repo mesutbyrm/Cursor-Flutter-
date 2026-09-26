@@ -48,8 +48,8 @@ Tek kaynak: `lib/core/theme/canlifal_brand_colors.dart`.
 |---|---|---|
 | 1 | Ana sayfa + alt navigasyon | ✅ tamam (bu PR) |
 | 2 | Sosyal akış + hikâyeler | ✅ tamam |
-| 3 | Profil + kullanıcı kartları | ⏳ sıradaki |
-| 4 | Fal türleri + sonuç ekranları | ⏳ |
+| 3 | Profil + kullanıcı kartları | ✅ tamam |
+| 4 | Fal türleri + sonuç ekranları | ⏳ sıradaki |
 | 5 | Sesli oda + koltuklar | ⏳ (SSE/presence yeni stabilize edildi; yalnızca görsel katman) |
 | 6 | Canlı yayın + hediye + PK | ⏳ |
 | 7 | Sohbet, mesajlaşma, diğer | ⏳ |
@@ -68,6 +68,15 @@ Tek kaynak: `lib/core/theme/canlifal_brand_colors.dart`.
 - **Sosyal sayfa**: şerit, `23720058` commit'inde bilinçli olarak kaldırıldığı için sosyal sayfaya **eklenmedi**. Kısayollar + paylaşım kutusu akışla birlikte kayan başlığa taşındı.
 - **Gönderi kartı**: `SocialCdsPostShell(CdsCard.glass)` → `ProGlassCard(blur: 14)` → kenarlıklı kutu üçlüsü tek düz yüzeye indirildi; görsele çift dokunuş beğenir (beğeniyi geri almaz); sil ikonu → "⋯" menüsü; semantik etiketler; ölü `_ActionIcon` silindi.
 - **Açık tema**: paylaşım kutusu (`#12122A` sabit dolgu), etiketleme/duygu alt sayfaları (`#120A24`), metin-only gönderi kutusu, rozetler, `#25F4EE` bağlantı rengi ve `UserAvatar` yer tutucusu temaya bağlandı.
+
+### Aşama 3 — yapılanlar
+
+- **Hızlı menü taşması:** `ProfileHubQuickMenu` 72×78 px kutucukta 3 sütun grid için tasarlanmış `ProfileActionTile`'ı kullanıyordu (~98 px içerik) → ~390 dp ekranda 30 px taşma. `ProfileActionTile(compact: true)` + `compactHeight` (92 px, %130 yazıda sığar). Regresyon testi eski ölçülerle başarısız oluyor.
+- **Kırık rota:** `profile_follow_list_page.dart` ve `live_viewers_sheet.dart` tanımsız `/profile/<id>` rotasına gidiyordu → `buildSocialUserProfileRoute` (`/user/<id>`). İzleyici listesi router'ı `Navigator.pop`'tan önce alıyor.
+- **Takip butonu** (`ProfileFollowButton`): iyimser güncelleme, istek sırasında kilit, hata olursa geri alma + SnackBar.
+- **Açık tema:** `ProfilePremiumTheme`'e temaya duyarlı yardımcılar (`surfaceOf`, `textOf`, `borderOf`, `accentOf`, `glassDecorationOf`…) eklendi; 20 hub/profil dosyası bunlara taşındı. Sabit koyu gradyan üzerindeki metinler (VIP afişi, fal/canlı kartları, küçük resim yer tutucusu) bilerek beyaz bırakıldı — render ile tek tek doğrulandı.
+- **Başlık yerleşimi:** ad bloğu kapağın kenarına biniyordu; kapağın altına alındı, eylemler tam genişlik buton satırına taşındı.
+- **Takipçi listesi:** `UserListTile`, iskelet, yeniden denemeli hata, çekip yenileme.
 
 ## 4. Doğrulama yöntemi (her aşamada)
 

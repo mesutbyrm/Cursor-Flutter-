@@ -10,7 +10,6 @@ import '../../../inbox/presentation/inbox_routes.dart';
 import '../../../inbox/presentation/providers/inbox_unread_providers.dart';
 import '../premium_2026/profile_screen_state.dart';
 import '../premium_2026/profile_theme.dart';
-import '../premium_2026/widgets/profile_settings_section.dart';
 import '../premium_2026/widgets/staff_profile_card.dart';
 import '../providers/profile_activity_notifier.dart';
 import '../providers/profile_hub_providers.dart';
@@ -27,7 +26,6 @@ import 'profile_hub_services_row.dart';
 import 'profile_hub_share_card.dart';
 import 'profile_hub_summary_card.dart';
 import 'profile_hub_top_gifts_section.dart';
-import '../../../shorts/presentation/widgets/shorts_profile_content.dart';
 import '../premium_2026/profile_lazy_sections.dart';
 
 /// Profil içeriği — kart/accordion düzeni; mobilde üst üste binme önlenir.
@@ -289,7 +287,7 @@ class _ProfileSectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final open = openIndex == index;
     return Material(
-      color: ProfilePremiumTheme.deepBg.withValues(alpha: 0.55),
+      color: ProfilePremiumTheme.surfaceOf(context, darkAlpha: 0.55),
       borderRadius: BorderRadius.circular(ProfilePremiumTheme.radiusLg),
       child: InkWell(
         borderRadius: BorderRadius.circular(ProfilePremiumTheme.radiusLg),
@@ -315,10 +313,10 @@ class _ProfileSectionCard extends StatelessWidget {
                       children: [
                         Text(
                           title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 15,
-                            color: Colors.white,
+                            color: ProfilePremiumTheme.textOf(context),
                           ),
                         ),
                         Text(
@@ -327,7 +325,7 @@ class _ProfileSectionCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 11,
-                            color: Colors.white.withValues(alpha: 0.55),
+                            color: ProfilePremiumTheme.textMutedOf(context),
                           ),
                         ),
                       ],
@@ -346,8 +344,8 @@ class _ProfileSectionCard extends StatelessWidget {
                       ),
                       child: Text(
                         badge! > 99 ? '99+' : '$badge',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: ProfilePremiumTheme.textOf(context),
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
                         ),
@@ -357,7 +355,7 @@ class _ProfileSectionCard extends StatelessWidget {
                     open
                         ? Icons.expand_less_rounded
                         : Icons.expand_more_rounded,
-                    color: Colors.white.withValues(alpha: 0.6),
+                    color: ProfilePremiumTheme.textSecondaryOf(context),
                   ),
                 ],
               ),
@@ -389,7 +387,7 @@ class _QuickChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white.withValues(alpha: 0.06),
+      color: ProfilePremiumTheme.insetOf(context, darkAlpha: 0.06),
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -399,14 +397,14 @@ class _QuickChip extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 18, color: Colors.white.withValues(alpha: 0.85)),
+              Icon(icon, size: 18, color: ProfilePremiumTheme.textSecondaryOf(context)),
               const SizedBox(width: 6),
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: ProfilePremiumTheme.textOf(context),
                 ),
               ),
               if (badge != null && badge! > 0) ...[
@@ -420,8 +418,8 @@ class _QuickChip extends StatelessWidget {
                   ),
                   child: Text(
                     '$badge',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: ProfilePremiumTheme.textOf(context),
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
                     ),

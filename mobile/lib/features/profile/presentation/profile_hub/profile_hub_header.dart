@@ -77,16 +77,11 @@ class ProfileHubHeader extends ConsumerWidget {
             text: user.display,
             item: ref.watch(resolvedNameEffectProvider),
             maxLines: 1,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: ProfilePremiumTheme.textOf(context),
               fontSize: 20,
-              fontWeight: FontWeight.w900,
-              shadows: [
-                Shadow(
-                  color: Colors.black54,
-                  blurRadius: 8,
-                ),
-              ],
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.3,
             ),
           ),
         ),
@@ -107,12 +102,9 @@ class ProfileHubHeader extends ConsumerWidget {
         Text(
           '@${user.username}',
           style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.85),
-            fontWeight: FontWeight.w700,
+            color: ProfilePremiumTheme.textSecondaryOf(context),
+            fontWeight: FontWeight.w600,
             fontSize: 13,
-            shadows: const [
-              Shadow(color: Colors.black54, blurRadius: 6),
-            ],
           ),
         ),
         _ProfileMetaChips(
@@ -126,6 +118,16 @@ class ProfileHubHeader extends ConsumerWidget {
       ],
     );
 
+    // Avatar kapağın altına biner; kimlik bloğu kapağın ALTINDA durur ki
+    // metin her temada sayfa zemini üzerinde okunur olsun.
+    const avatarDrop = 46.0;
+    const avatarInset = 12.0;
+    final identity = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [nameRow, const SizedBox(height: 2), membershipRow],
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -133,76 +135,47 @@ class ProfileHubHeader extends ConsumerWidget {
           clipBehavior: Clip.none,
           children: [
             _CoverBanner(coverUrl: ext.coverImage, topInset: topInset),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: -ProfilePremiumTheme.avatarOverlap,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    if (useProfileStagger)
-                      Expanded(
-                        child: SiteAnimationProfileEntranceStagger(
-                          layout: SiteAnimationProfileStaggerLayout.horizontal,
-                          avatarSpacing: 14,
-                          avatar: avatarBlock,
-                          nameRow: nameRow,
-                          membershipRow: membershipRow,
-                        ),
-                      )
-                    else ...[
-                      avatarBlock,
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 4),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              nameRow,
-                              const SizedBox(height: 2),
-                              membershipRow,
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _ActionBtn(
-                          icon: Icons.edit_rounded,
-                          label: 'Düzenle',
-                          onTap: () => context.push('/profile/edit'),
-                        ),
-                        const SizedBox(height: 6),
-                        _ActionBtn(
-                          icon: Icons.qr_code_2_rounded,
-                          label: 'QR Kodum',
-                          onTap: () => context.push('/profile/qr'),
-                        ),
-                        const SizedBox(height: 6),
-                        _ActionBtn(
-                          icon: Icons.settings_rounded,
-                          label: 'Ayarlar',
-                          onTap: () => context.push('/settings'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+            if (!useProfileStagger)
+              Positioned(
+                left: avatarInset,
+                bottom: -avatarDrop,
+                child: avatarBlock,
               ),
-            ),
           ],
         ),
-        SizedBox(height: ProfilePremiumTheme.avatarOverlap + 8),
+        if (useProfileStagger)
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: SiteAnimationProfileEntranceStagger(
+              layout: SiteAnimationProfileStaggerLayout.horizontal,
+              avatarSpacing: 14,
+              avatar: avatarBlock,
+              nameRow: nameRow,
+              membershipRow: membershipRow,
+            ),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.only(
+              left: avatarInset + 92 + 12,
+              top: 8,
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: avatarDrop - 8),
+              child: identity,
+            ),
+          ),
+        const SizedBox(height: 14),
+        _ProfileActionsRow(
+          onEdit: () => context.push('/profile/edit'),
+          onQr: () => context.push('/profile/qr'),
+          onSettings: () => context.push('/settings'),
+        ),
+        const SizedBox(height: 10),
         Text(
           'ID: ${user.id}',
           style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.35),
+            color: ProfilePremiumTheme.textMutedOf(context),
             fontSize: 10,
             fontWeight: FontWeight.w600,
           ),
@@ -220,7 +193,7 @@ class ProfileHubHeader extends ConsumerWidget {
               Text(
                 'Doğrulanmış Üye',
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.7),
+                  color: ProfilePremiumTheme.textSecondaryOf(context),
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                 ),
@@ -235,9 +208,9 @@ class ProfileHubHeader extends ConsumerWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.72),
-              fontSize: 12,
-              height: 1.35,
+              color: ProfilePremiumTheme.textSecondaryOf(context),
+              fontSize: 13,
+              height: 1.4,
             ),
           ),
         ],
@@ -388,7 +361,7 @@ class _AvatarBlock extends ConsumerWidget {
                 ),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: ProfilePremiumTheme.deepBg,
+                  color: Theme.of(context).scaffoldBackgroundColor,
                   width: 1.5,
                 ),
               ),
@@ -413,7 +386,7 @@ class _AvatarBlock extends ConsumerWidget {
                   color: const Color(0xFF00E676),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: ProfilePremiumTheme.deepBg,
+                    color: Theme.of(context).scaffoldBackgroundColor,
                     width: 2,
                   ),
                 ),
@@ -429,7 +402,7 @@ class _AvatarBlock extends ConsumerWidget {
                 onTap: onTap,
                 customBorder: const CircleBorder(),
                 child: const Padding(
-                  padding: EdgeInsets.all(6),
+                  padding: EdgeInsets.all(7),
                   child: Icon(Icons.camera_alt_rounded, size: 14, color: Colors.white),
                 ),
               ),
@@ -504,7 +477,7 @@ class _MembershipBadgeChip extends StatelessWidget {
           : Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
+                color: ProfilePremiumTheme.insetOf(context, darkAlpha: 0.15),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
@@ -561,15 +534,19 @@ class _MetaChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
+        color: ProfilePremiumTheme.insetOf(context, darkAlpha: 0.12),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: ProfilePremiumTheme.glassBorder),
+        border: Border.all(color: ProfilePremiumTheme.borderOf(context)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 11, color: Colors.white70),
+            Icon(
+              icon,
+              size: 11,
+              color: ProfilePremiumTheme.textSecondaryOf(context),
+            ),
             const SizedBox(width: 4),
           ],
           Text(
@@ -577,7 +554,7 @@ class _MetaChip extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.82),
+              color: ProfilePremiumTheme.textSecondaryOf(context),
               fontSize: 10,
               fontWeight: FontWeight.w700,
             ),
@@ -613,39 +590,59 @@ class _VipPill extends StatelessWidget {
   }
 }
 
-class _ActionBtn extends StatelessWidget {
-  const _ActionBtn({
-    required this.icon,
-    required this.label,
-    required this.onTap,
+/// Instagram tarzı eylem satırı — tüm genişlikte, temaya duyarlı.
+class _ProfileActionsRow extends StatelessWidget {
+  const _ProfileActionsRow({
+    required this.onEdit,
+    required this.onQr,
+    required this.onSettings,
   });
 
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
+  final VoidCallback onEdit;
+  final VoidCallback onQr;
+  final VoidCallback onSettings;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-        child: Column(
-          children: [
-            Icon(icon, color: Colors.white70, size: 20),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.55),
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
+    const compact = ButtonStyle(
+      minimumSize: WidgetStatePropertyAll(Size(0, 40)),
+      padding: WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 12)),
+      visualDensity: VisualDensity.compact,
+    );
+    return Row(
+      children: [
+        Expanded(
+          child: FilledButton.tonalIcon(
+            style: compact,
+            onPressed: onEdit,
+            icon: const Icon(Icons.edit_rounded, size: 18),
+            label: const Text('Düzenle', maxLines: 1),
+          ),
         ),
-      ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: OutlinedButton.icon(
+            style: compact,
+            onPressed: onQr,
+            icon: const Icon(Icons.qr_code_2_rounded, size: 18),
+            label: const Text('QR Kodum', maxLines: 1),
+          ),
+        ),
+        const SizedBox(width: 8),
+        IconButton.outlined(
+          tooltip: 'Ayarlar',
+          onPressed: onSettings,
+          constraints: const BoxConstraints.tightFor(width: 40, height: 40),
+          padding: EdgeInsets.zero,
+          style: IconButton.styleFrom(
+            side: BorderSide(color: Theme.of(context).colorScheme.outline),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+          icon: const Icon(Icons.settings_rounded, size: 20),
+        ),
+      ],
     );
   }
 }
@@ -657,24 +654,25 @@ class _StaffRoleChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cyan = Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF25F4EE)
+        : Theme.of(context).colorScheme.secondary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: const Color(0xFF25F4EE).withValues(alpha: 0.18),
+        color: cyan.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: const Color(0xFF25F4EE).withValues(alpha: 0.45),
-        ),
+        border: Border.all(color: cyan.withValues(alpha: 0.45)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.verified_user_rounded, size: 12, color: Color(0xFF25F4EE)),
+          Icon(Icons.verified_user_rounded, size: 12, color: cyan),
           const SizedBox(width: 4),
           Text(
             label,
-            style: const TextStyle(
-              color: Color(0xFF25F4EE),
+            style: TextStyle(
+              color: cyan,
               fontSize: 10,
               fontWeight: FontWeight.w800,
             ),

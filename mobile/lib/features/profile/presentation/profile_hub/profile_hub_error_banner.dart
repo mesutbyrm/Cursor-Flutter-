@@ -24,11 +24,11 @@ class ProfileHubErrorBanner extends ConsumerWidget {
             children: [
               const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 20),
               const SizedBox(width: 10),
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Profil bilgileri yüklenemedi',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: ProfilePremiumTheme.textOf(context),
                     fontWeight: FontWeight.w700,
                     fontSize: 13,
                   ),

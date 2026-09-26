@@ -37,11 +37,11 @@ class ProfileHubTopGiftsSection extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'En Çok Gönderilen Hediyeler',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: ProfilePremiumTheme.textOf(context),
                         fontWeight: FontWeight.w900,
                         fontSize: 14,
                       ),
@@ -66,8 +66,8 @@ class ProfileHubTopGiftsSection extends ConsumerWidget {
                           children: [
                             Text(
                               gift.name,
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: TextStyle(
+                                color: ProfilePremiumTheme.textOf(context),
                                 fontWeight: FontWeight.w800,
                                 fontSize: 13,
                               ),
@@ -76,7 +76,7 @@ class ProfileHubTopGiftsSection extends ConsumerWidget {
                               Text(
                                 '${profileFormatCount(gift.coins)} $jetonLabel',
                                 style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.45),
+                                  color: ProfilePremiumTheme.textMutedOf(context),
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -86,8 +86,8 @@ class ProfileHubTopGiftsSection extends ConsumerWidget {
                       ),
                       Text(
                         '×${profileFormatCount(gift.count)}',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: ProfilePremiumTheme.textOf(context),
                           fontWeight: FontWeight.w900,
                           fontSize: 14,
                         ),
@@ -117,7 +117,7 @@ class _GiftIcon extends StatelessWidget {
       height: 36,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.white.withValues(alpha: 0.08),
+        color: ProfilePremiumTheme.insetOf(context, darkAlpha: 0.08),
       ),
       alignment: Alignment.center,
       child: isUrl

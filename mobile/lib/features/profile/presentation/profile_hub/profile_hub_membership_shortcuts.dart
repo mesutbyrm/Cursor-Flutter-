@@ -86,7 +86,7 @@ class _ShortcutChip extends StatelessWidget {
       borderRadius: ProfilePremiumTheme.radiusSm,
       borderColor: highlight
           ? ProfilePremiumTheme.neonPurple.withValues(alpha: 0.55)
-          : ProfilePremiumTheme.glassBorder,
+          : ProfilePremiumTheme.borderOf(context),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(10),
@@ -97,8 +97,8 @@ class _ShortcutChip extends StatelessWidget {
               icon,
               size: 20,
               color: highlight
-                  ? ProfilePremiumTheme.neonPurple
-                  : Colors.white70,
+                  ? ProfilePremiumTheme.accentOf(context)
+                  : ProfilePremiumTheme.textSecondaryOf(context),
             ),
             const SizedBox(height: 6),
             Text(
@@ -107,7 +107,9 @@ class _ShortcutChip extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: highlight ? 0.95 : 0.75),
+                color: highlight
+                    ? ProfilePremiumTheme.textOf(context)
+                    : ProfilePremiumTheme.textSecondaryOf(context),
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
               ),
@@ -120,7 +122,9 @@ class _ShortcutChip extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: highlight ? 0.7 : 0.5),
+                  color: highlight
+                      ? ProfilePremiumTheme.textSecondaryOf(context)
+                      : ProfilePremiumTheme.textMutedOf(context),
                   fontSize: 8,
                   fontWeight: FontWeight.w600,
                   height: 1.2,

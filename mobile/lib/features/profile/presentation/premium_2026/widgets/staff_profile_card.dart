@@ -116,7 +116,7 @@ class StaffProfileCard extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
-                        color: Colors.white.withValues(alpha: 0.65),
+                        color: ProfilePremiumTheme.textSecondaryOf(context),
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -127,7 +127,7 @@ class StaffProfileCard extends ConsumerWidget {
                           _activityLine(row),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 11, color: Colors.white),
+                          style: TextStyle(fontSize: 11, color: ProfilePremiumTheme.textOf(context)),
                         ),
                       ),
                   ],
@@ -241,7 +241,7 @@ class _KpiTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: ProfilePremiumTheme.insetOf(context, darkAlpha: 0.05),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: highlight
@@ -265,7 +265,7 @@ class _KpiTile extends StatelessWidget {
             maxLines: 2,
             style: TextStyle(
               fontSize: 9,
-              color: Colors.white.withValues(alpha: 0.55),
+              color: ProfilePremiumTheme.textMutedOf(context),
             ),
           ),
         ],

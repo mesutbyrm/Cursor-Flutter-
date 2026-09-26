@@ -45,7 +45,7 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
     return ProfileGlass(
       padding: const EdgeInsets.all(16),
       borderRadius: ProfilePremiumTheme.radiusMd,
-      borderColor: ProfilePremiumTheme.glassBorder,
+      borderColor: ProfilePremiumTheme.borderOf(context),
       child: Column(
         children: [
           Row(
@@ -65,8 +65,8 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
                         const SizedBox(width: 6),
                         Text(
                           'Seviye ${level.level}',
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: ProfilePremiumTheme.textOf(context),
                             fontWeight: FontWeight.w900,
                             fontSize: 14,
                           ),
@@ -79,7 +79,7 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
                       child: LinearProgressIndicator(
                         value: levelLoading ? null : xpProgress,
                         minHeight: 6,
-                        backgroundColor: Colors.white.withValues(alpha: 0.1),
+                        backgroundColor: ProfilePremiumTheme.insetOf(context, darkAlpha: 0.1),
                         color: ProfilePremiumTheme.neonPurple,
                       ),
                     ),
@@ -89,7 +89,7 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
                           ? '…'
                           : '${profileFormatCount(level.xp)} / ${profileFormatCount(xpTarget)} XP',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.5),
+                        color: ProfilePremiumTheme.textMutedOf(context),
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                       ),
@@ -183,7 +183,7 @@ class _MembershipSummaryRow extends ConsumerWidget {
     final leadingColor = switch (leadingAccent) {
       MembershipHubSummaryRowLeadingAccent.paid => ProfilePremiumTheme.neonPurple,
       MembershipHubSummaryRowLeadingAccent.expired => Colors.orangeAccent,
-      MembershipHubSummaryRowLeadingAccent.standard => Colors.white54,
+      MembershipHubSummaryRowLeadingAccent.standard => ProfilePremiumTheme.textMutedOf(context),
     };
     final leadingIcon = switch (leadingAccent) {
       MembershipHubSummaryRowLeadingAccent.paid =>
@@ -193,7 +193,7 @@ class _MembershipSummaryRow extends ConsumerWidget {
     };
 
     return Material(
-      color: Colors.white.withValues(alpha: 0.06),
+      color: ProfilePremiumTheme.insetOf(context, darkAlpha: 0.06),
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: () => context.push('/premium-membership'),
@@ -214,8 +214,8 @@ class _MembershipSummaryRow extends ConsumerWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: ProfilePremiumTheme.textOf(context),
                         fontWeight: FontWeight.w900,
                         fontSize: 12,
                       ),
@@ -223,7 +223,7 @@ class _MembershipSummaryRow extends ConsumerWidget {
                     Text(
                       subtitle,
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.55),
+                        color: ProfilePremiumTheme.textMutedOf(context),
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
                       ),
@@ -245,7 +245,7 @@ class _MembershipSummaryRow extends ConsumerWidget {
               Icon(
                 Icons.chevron_right_rounded,
                 size: 16,
-                color: Colors.white.withValues(alpha: 0.45),
+                color: ProfilePremiumTheme.textMutedOf(context),
               ),
             ],
           ),
@@ -292,8 +292,8 @@ class _CurrencyCell extends StatelessWidget {
               key: ValueKey(value),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: ProfilePremiumTheme.textOf(context),
                 fontWeight: FontWeight.w900,
                 fontSize: 13,
               ),
@@ -305,7 +305,7 @@ class _CurrencyCell extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.45),
+            color: ProfilePremiumTheme.textMutedOf(context),
             fontSize: 9,
             fontWeight: FontWeight.w700,
           ),

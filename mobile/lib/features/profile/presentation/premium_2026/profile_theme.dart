@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_theme_extensions.dart';
+import '../../../../core/theme/canlifal_brand_colors.dart';
+
 /// Premium 2026 profil — dark purple + glass tasarım sabitleri.
 abstract final class ProfilePremiumTheme {
   static const radiusLg = 26.0;
@@ -47,4 +50,51 @@ abstract final class ProfilePremiumTheme {
           ),
         ],
       );
+
+  // ── Temaya duyarlı karşılıklar ──────────────────────────────────────────
+  // Koyu temada mevcut "koyu cam" görünüm korunur; açık temada beyaz kart +
+  // ince kenar + koyu metin. Renkli/gradyanlı yüzeylerdeki metin beyaz kalır.
+
+  static bool _dark(BuildContext c) => c.isDarkTheme;
+
+  /// Kart dolgusu ([deepBg] yarı saydam yerine).
+  static Color surfaceOf(BuildContext c, {double darkAlpha = 0.55}) =>
+      _dark(c) ? deepBg.withValues(alpha: darkAlpha) : c.colors.surface;
+
+  /// Kart içindeki ikincil yüzey (çip, satır zemini).
+  static Color insetOf(BuildContext c, {double darkAlpha = 0.06}) => _dark(c)
+      ? Colors.white.withValues(alpha: darkAlpha)
+      : c.colors.surfaceContainer;
+
+  static Color borderOf(BuildContext c) =>
+      _dark(c) ? glassBorder : c.colors.outlineVariant;
+
+  static Color textOf(BuildContext c) =>
+      _dark(c) ? Colors.white : c.colors.onSurface;
+
+  static Color textSecondaryOf(BuildContext c) => _dark(c)
+      ? Colors.white.withValues(alpha: 0.72)
+      : c.colors.onSurfaceVariant;
+
+  static Color textMutedOf(BuildContext c) => _dark(c)
+      ? Colors.white.withValues(alpha: 0.55)
+      : c.colors.onSurfaceMuted;
+
+  /// Küçük metin/ikon vurgusu — açık temada koyu mor (okunur).
+  static Color accentOf(BuildContext c) =>
+      _dark(c) ? neonPurple : CanlifalBrandColors.violetStrong;
+
+  static List<BoxShadow>? shadowOf(BuildContext c) =>
+      _dark(c) ? null : c.colors.cardShadow;
+
+  /// [glassDecoration]'ın temaya duyarlı hali.
+  static BoxDecoration glassDecorationOf(BuildContext c, {Color? border}) =>
+      _dark(c)
+          ? glassDecoration(border: border)
+          : BoxDecoration(
+              borderRadius: BorderRadius.circular(radiusMd),
+              color: c.colors.surface,
+              border: Border.all(color: border ?? c.colors.outlineVariant),
+              boxShadow: c.colors.cardShadow,
+            );
 }

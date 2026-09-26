@@ -19,16 +19,12 @@ import '../widgets/user_profile_membership_badge.dart';
 import '../widgets/user_profile_info_card.dart';
 import '../widgets/user_profile_membership_upsell.dart';
 import '../widgets/user_profile_role_ribbon.dart';
-import '../../../shorts/presentation/providers/shorts_providers.dart';
 import '../../../shorts/presentation/widgets/shorts_profile_content.dart';
 import '../widgets/user_posts_timeline.dart';
+import '../widgets/profile_follow_button.dart';
 
 class UserProfilePage extends ConsumerWidget {
-  const UserProfilePage({
-    super.key,
-    required this.userId,
-    this.focusPostId,
-  });
+  const UserProfilePage({super.key, required this.userId, this.focusPostId});
 
   final String userId;
   final String? focusPostId;
@@ -66,9 +62,12 @@ class UserProfilePage extends ConsumerWidget {
         ),
         data: (user) {
           // Kurucu / Admin → özel (altın/mor) kapak + avatar çerçevesi.
-          final isFounder =
-              StaffRoles.isFounderUser(role: user.role, username: user.username);
-          final isAdmin = !isFounder &&
+          final isFounder = StaffRoles.isFounderUser(
+            role: user.role,
+            username: user.username,
+          );
+          final isAdmin =
+              !isFounder &&
               StaffRoles.isSiteAdminUser(
                 role: user.role,
                 username: user.username,
@@ -76,17 +75,18 @@ class UserProfilePage extends ConsumerWidget {
           final honorCover = isFounder
               ? const [Color(0xFF3A2A00), Color(0xFFB8860B), Color(0xFFFFD54F)]
               : isAdmin
-                  ? const [Color(0xFF1E1246), Color(0xFF6D28D9), Color(0xFFA78BFA)]
-                  : null;
+              ? const [Color(0xFF1E1246), Color(0xFF6D28D9), Color(0xFFA78BFA)]
+              : null;
           final honorRing = isFounder
               ? const [Color(0xFFFFD54F), Color(0xFFFF8A00)]
               : isAdmin
-                  ? const [Color(0xFF8B5CF6), Color(0xFF6366F1)]
-                  : null;
+              ? const [Color(0xFF8B5CF6), Color(0xFF6366F1)]
+              : null;
           return CustomScrollView(
             physics: PremiumMotion.listPhysics,
-            scrollCacheExtent:
-                ScrollPerf.scrollCache(ScrollPerf.feedCacheExtent),
+            scrollCacheExtent: ScrollPerf.scrollCache(
+              ScrollPerf.feedCacheExtent,
+            ),
             slivers: [
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
@@ -106,13 +106,16 @@ class UserProfilePage extends ConsumerWidget {
                                 gradient: LinearGradient(
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
-                                  colors: honorCover ??
+                                  colors:
+                                      honorCover ??
                                       [
                                         const Color(0xFF2A1248),
-                                        AppThemeColors.accentPurple
-                                            .withValues(alpha: 0.7),
-                                        AppThemeColors.accentPink
-                                            .withValues(alpha: 0.45),
+                                        AppThemeColors.accentPurple.withValues(
+                                          alpha: 0.7,
+                                        ),
+                                        AppThemeColors.accentPink.withValues(
+                                          alpha: 0.45,
+                                        ),
                                       ],
                                 ),
                               ),
@@ -131,8 +134,9 @@ class UserProfilePage extends ConsumerWidget {
                               boxShadow: honorRing != null
                                   ? [
                                       BoxShadow(
-                                        color: honorRing.first
-                                            .withValues(alpha: 0.55),
+                                        color: honorRing.first.withValues(
+                                          alpha: 0.55,
+                                        ),
                                         blurRadius: 18,
                                         spreadRadius: 1,
                                       ),
@@ -145,7 +149,10 @@ class UserProfilePage extends ConsumerWidget {
                                 shape: BoxShape.circle,
                                 color: context.scaffoldBg,
                               ),
-                              child: UserAvatar(url: user.avatarUrl, radius: 48),
+                              child: UserAvatar(
+                                url: user.avatarUrl,
+                                radius: 48,
+                              ),
                             ),
                           ),
                         ),
@@ -189,112 +196,19 @@ class UserProfilePage extends ConsumerWidget {
                       fallbackFollowing: user.followingCount,
                     ),
                     const SizedBox(height: 18),
-                    if (!isSelf) ...[
-                      Row(
-                        children: [
-                          Expanded(
-                            child: FilledButton(
-                              onPressed: () async {
-                                final repo = ref.read(profileRepositoryProvider);
-                                if (user.isFollowing) {
-                                  await repo.unfollow(user.id);
-                                } else {
-                                  await repo.follow(user.id);
-                                }
-                                ref.invalidate(userProfileProvider(userId));
-                                ref.invalidate(
-                                    shortVideoProfileStatsProvider(userId));
-                              },
-                              style: FilledButton.styleFrom(
-                                minimumSize: const Size.fromHeight(52),
-                                backgroundColor: user.isFollowing
-                                    ? context.colors.surfaceContainer
-                                    : AppThemeColors.accentPink,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              child: Text(
-                                user.isFollowing ? 'Takibi bırak' : 'Takip et',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () => context.push('/canli-falcilar'),
-                              style: OutlinedButton.styleFrom(
-                                minimumSize: const Size.fromHeight(52),
-                                foregroundColor: AppThemeColors.accentPink,
-                                side: BorderSide(
-                                  color: AppThemeColors.accentPink
-                                      .withValues(alpha: 0.65),
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              child: const Text(
-                                'Canlı Yayın',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () => context.push('/chat/$userId'),
-                              style: OutlinedButton.styleFrom(
-                                minimumSize: const Size.fromHeight(52),
-                                foregroundColor: AppThemeColors.accentCyan,
-                                side: BorderSide(
-                                  color: AppThemeColors.accentCyan
-                                      .withValues(alpha: 0.65),
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              child: const Text(
-                                'Mesaj',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ] else
-                      FilledButton(
+                    if (!isSelf)
+                      _VisitorActions(
+                        userId: user.id,
+                        isFollowing: user.isFollowing,
+                      )
+                    else
+                      FilledButton.tonalIcon(
                         onPressed: () => context.go('/profile'),
                         style: FilledButton.styleFrom(
-                          minimumSize: const Size.fromHeight(52),
-                          backgroundColor: context.colors.surfaceContainer,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
+                          minimumSize: const Size.fromHeight(46),
                         ),
-                        child: const Text(
-                          'Profilimi düzenle',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 15,
-                          ),
-                        ),
+                        icon: const Icon(Icons.edit_rounded, size: 18),
+                        label: const Text('Profilimi düzenle'),
                       ),
                     if (user.bio != null && user.bio!.isNotEmpty) ...[
                       const SizedBox(height: 14),
@@ -333,6 +247,53 @@ class UserProfilePage extends ConsumerWidget {
           );
         },
       ),
+    );
+  }
+}
+
+/// Ziyaretçi eylemleri — takip, mesaj, canlı yayınlar.
+class _VisitorActions extends StatelessWidget {
+  const _VisitorActions({required this.userId, required this.isFollowing});
+
+  final String userId;
+  final bool isFollowing;
+
+  @override
+  Widget build(BuildContext context) {
+    const compact = ButtonStyle(
+      minimumSize: WidgetStatePropertyAll(Size.fromHeight(46)),
+      padding: WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 10)),
+    );
+    return Row(
+      children: [
+        Expanded(
+          flex: 5,
+          child: ProfileFollowButton(userId: userId, isFollowing: isFollowing),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          flex: 4,
+          child: OutlinedButton.icon(
+            style: compact,
+            onPressed: () => context.push('/chat/$userId'),
+            icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
+            label: const Text('Mesaj', maxLines: 1),
+          ),
+        ),
+        const SizedBox(width: 8),
+        IconButton.outlined(
+          tooltip: 'Canlı yayınlar',
+          onPressed: () => context.push('/canli-falcilar'),
+          constraints: const BoxConstraints.tightFor(width: 46, height: 46),
+          style: IconButton.styleFrom(
+            side: BorderSide(color: Theme.of(context).colorScheme.outline),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+          icon: const Icon(Icons.live_tv_rounded, size: 20),
+        ),
+      ],
     );
   }
 }

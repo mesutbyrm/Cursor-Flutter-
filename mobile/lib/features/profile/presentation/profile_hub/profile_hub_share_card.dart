@@ -33,10 +33,10 @@ class ProfileHubShareCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Profilimi Paylaş',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: ProfilePremiumTheme.textOf(context),
                       fontWeight: FontWeight.w900,
                       fontSize: 14,
                     ),
@@ -45,7 +45,7 @@ class ProfileHubShareCard extends StatelessWidget {
                   Text(
                     'Profil linkini arkadaşlarınla paylaş!',
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.55),
+                      color: ProfilePremiumTheme.textMutedOf(context),
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                     ),
