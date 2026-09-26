@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.602+653 (2026-09-26) — CI import düzeltmesi
+
+- **Analyze:** `voice_room_rtc_page` yarışma rail import yolu; `ApiException` package import
+
 ## 1.0.601+652 (2026-09-26) — PK davet koltuk + yarışma rail
 
 - **PK davet:** aktif PK uzaktan bitirilmez; aktif PK varken yeni davet 409 mesajı; PK sırasında GET /seats + SSE `seat_changed` duraklatılır
