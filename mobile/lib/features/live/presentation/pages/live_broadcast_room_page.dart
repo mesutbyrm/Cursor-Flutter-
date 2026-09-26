@@ -31,7 +31,6 @@ import '../../../live_psychics/presentation/providers/live_psychics_providers.da
 import '../../../live_psychics/presentation/widgets/psychic_booking_sheet.dart';
 import '../../../live_psychics/presentation/widgets/psychic_fortune_types.dart';
 import '../../../cfc_arena/domain/cfc_arena_context.dart';
-import '../../../cfc_arena/presentation/widgets/cfc_arena_room_banner.dart';
 import '../../../voice_hub/presentation/coordinators/room_leave_coordinator.dart';
 import '../../../pk/presentation/providers/pk_feature_enabled_provider.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
@@ -99,9 +98,6 @@ import '../providers/co_broadcast_provider.dart';
 import '../providers/pending_co_broadcast_join_provider.dart';
 import '../providers/live_beauty_provider.dart';
 import '../providers/live_guest_grid_provider.dart';
-import '../providers/weekly_broadcaster_competition_provider.dart';
-import '../providers/weekly_broadcaster_visibility_provider.dart';
-import '../widgets/weekly_broadcaster_competition_card.dart';
 import '../providers/live_gift_leaderboard_provider.dart';
 import '../providers/live_room_interaction_provider.dart'
     show LiveRoomInteractionNotifier, LiveRoomInteractionState, liveRoomInteractionProvider;
@@ -128,6 +124,7 @@ import '../widgets/broadcast_room/live_broadcast_room_connection_overlays.dart';
 import '../widgets/broadcast_room/live_broadcast_room_gift_overlays.dart';
 import '../widgets/broadcast_room/live_broadcast_room_host_overlays.dart';
 import '../widgets/broadcast_room/live_broadcast_room_hud_overlays.dart';
+import '../widgets/broadcast_room/live_broadcast_more_hub_sheet.dart';
 import '../widgets/broadcast_room/live_broadcast_room_chrome_column.dart';
 import '../widgets/broadcast_room/live_broadcast_room_gift_panel_overlay.dart';
 import '../widgets/broadcast_room/live_broadcast_room_host_away_overlay.dart';
@@ -2184,7 +2181,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     }
   }
 
-  Future<void> _openControlCenter() async {
+  Future<void> _openControlCenter({int initialTab = 0}) async {
     final streamId = widget.session.streamId?.trim();
     if (streamId == null || streamId.isEmpty) return;
     await openLiveHostControlCenter(
@@ -2192,6 +2189,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       ref: ref,
       streamId: streamId,
       isHost: widget.session.isHost,
+      initialTabIndex: initialTab,
     );
   }
 
@@ -2414,149 +2412,68 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     bool showTournament = false,
   }) async {
     final streamId = s.streamId?.trim();
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: const Color(0xFF151522),
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (ctx) {
-        Widget tile({
-          required IconData icon,
-          required String label,
-          required VoidCallback onTap,
-        }) {
-          return ListTile(
-            leading: Icon(icon, color: Colors.white70),
-            title: Text(label),
-            onTap: () {
-              Navigator.pop(ctx);
-              onTap();
-            },
-          );
-        }
-
-        void showEmojiPicker() => _showLiveEmojiPicker();
-        return SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                tile(
-                  icon: Icons.emoji_emotions_outlined,
-                  label: 'Emoji',
-                  onTap: showEmojiPicker,
-                ),
-                if (!s.isHost && giftsEnabled && streamId != null)
-                  tile(
-                    icon: Icons.card_giftcard_rounded,
-                    label: 'Hediye gönder',
-                    onTap: () =>
-                        ref.read(liveGiftControllerProvider).setPanelOpen(true),
-                  ),
-                if (!s.isHost && streamId != null && streamId.isNotEmpty)
-                  tile(
-                    icon: Icons.people_alt_rounded,
-                    label: 'Misafir ol',
-                    onTap: () {
-                      final settings = ref.read(liveBroadcastSettingsProvider);
-                      if (!settings.guestsEnabled && !settings.coBroadcastEnabled) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Yayıncı misafir isteğini kapattı'),
-                          ),
-                        );
-                        return;
-                      }
-                      unawaited(_requestGuestJoin());
-                    },
-                  ),
-                if (s.isHost && streamId != null)
-                  tile(
-                    icon: Icons.people_alt_rounded,
-                    label: 'Misafir / kontrol merkezi',
-                    onTap: () => unawaited(_openControlCenter()),
-                  ),
-                if (s.isHost && pkEnabled)
-                  tile(
-                    icon: Icons.video_call_rounded,
-                    label: 'Eş yayın / PK',
-                    onTap: () => unawaited(_openPkPanel()),
-                  ),
-                tile(
-                  icon: Icons.sports_esports_rounded,
-                  label: 'Oyunlar',
-                  onTap: () => unawaited(_openGamesHub()),
-                ),
-                if (showTournament)
-                  tile(
-                    icon: Icons.emoji_events_rounded,
-                    label: 'Yıldız turnuvası',
-                    onTap: () =>
-                        unawaited(showLiveStarTournamentSheet(context, ref)),
-                  ),
-                if (s.isHost) ...[
-                  if (pkEnabled)
-                    tile(
-                      icon: Icons.sports_mma_rounded,
-                      label: 'PK Başlat',
-                      onTap: () => unawaited(_openPkPanel()),
-                    ),
-                  tile(
-                    icon: Icons.auto_awesome_rounded,
-                    label: 'Kontrol merkezi ($pendingFortune)',
-                    onTap: () => unawaited(_openControlCenter()),
-                  ),
-                  tile(
-                    icon: Icons.settings_rounded,
-                    label: 'Yayın ayarları',
-                    onTap: () => showLiveBroadcastSettingsSheet(
-                      context: context,
-                      ref: ref,
-                    ),
-                  ),
-                  tile(
-                    icon: Icons.face_retouching_natural_rounded,
-                    label: 'Güzellik filtresi',
-                    onTap: () => showLiveBeautyFilterSheet(
-                      context: context,
-                      ref: ref,
-                    ),
-                  ),
-                  tile(
-                    icon: Icons.tune_rounded,
-                    label: 'Yayın araçları',
-                    onTap: () => unawaited(_openHostTools()),
-                  ),
-                ] else ...[
-                  tile(
-                    icon: Icons.volume_up_rounded,
-                    label: _viewerAudioOn ? 'Sesi kapat' : 'Sesi aç',
-                    onTap: () => setState(() => _viewerAudioOn = !_viewerAudioOn),
-                  ),
-                  if (streamId != null && streamId.isNotEmpty)
-                    tile(
-                      icon: Icons.flag_outlined,
-                      label: 'Bildir',
-                      onTap: () => openReportFlow(
-                        context,
-                        ReportTarget(
-                          type: ReportTargetType.liveStream,
-                          targetId: streamId,
-                          displayTitle: s.streamerName ?? 'Canlı yayın',
-                        ),
-                      ),
-                    ),
-                ],
-                tile(
-                  icon: Icons.share_rounded,
-                  label: 'Paylaş',
-                  onTap: () => unawaited(_shareLive()),
-                ),
-                const SizedBox(height: 8),
-              ],
+    await showLiveBroadcastMoreHubSheet(
+      context,
+      ref,
+      LiveBroadcastMoreHubActions(
+        session: s,
+        streamId: streamId,
+        giftsEnabled: giftsEnabled,
+        pkEnabled: pkEnabled,
+        pendingFortune: pendingFortune,
+        showTournament: showTournament,
+        viewerAudioOn: _viewerAudioOn,
+        onEmoji: _showLiveEmojiPicker,
+        onGiftPanel: () =>
+            ref.read(liveGiftControllerProvider).setPanelOpen(true),
+        onGuestRequest: () {
+          final settings = ref.read(liveBroadcastSettingsProvider);
+          if (!settings.guestsEnabled && !settings.coBroadcastEnabled) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Yayıncı misafir isteğini kapattı'),
+              ),
+            );
+            return;
+          }
+          unawaited(_requestGuestJoin());
+        },
+        onPkPanel: _openPkPanel,
+        onGames: _openGamesHub,
+        onTournament: () => showLiveStarTournamentSheet(context, ref),
+        onBroadcastSettings: () => showLiveBroadcastSettingsSheet(
+          context: context,
+          ref: ref,
+        ),
+        onBeautyFilter: () => showLiveBeautyFilterSheet(
+          context: context,
+          ref: ref,
+        ),
+        onHostTools: _openHostTools,
+        onToggleViewerAudio: () =>
+            setState(() => _viewerAudioOn = !_viewerAudioOn),
+        onReport: () {
+          if (streamId == null || streamId.isEmpty) return;
+          openReportFlow(
+            context,
+            ReportTarget(
+              type: ReportTargetType.liveStream,
+              targetId: streamId,
+              displayTitle: s.streamerName ?? 'Canlı yayın',
             ),
           );
-      },
+        },
+        onShare: _shareLive,
+        onOpenControlCenter: _openControlCenter,
+      ),
     );
+  }
+
+  int _pendingGuestJoinRequestCount(CoBroadcastState co) {
+    return co.joinRequests.where((r) {
+      final st = (r['status']?.toString() ?? 'pending').toLowerCase();
+      return st == 'pending';
+    }).length;
   }
 
   String _fmtLikes(int n) {
@@ -2648,8 +2565,21 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final baseSession = widget.session;
     final streamId = baseSession.streamId?.trim();
     final hasStream = streamId != null && streamId.isNotEmpty;
+    final pkStateEarly =
+        hasStream ? ref.watch(liveVideoPkProvider(streamId)) : null;
+    final effectiveChatStreamId = hasStream
+        ? livePkEffectiveChatStreamId(
+            battle: pkStateEarly?.battle,
+            myStreamId: streamId!,
+          )
+        : '';
     final roomState =
         hasStream ? ref.watch(liveRoomProvider(streamId)) : const LiveRoomState();
+    final chatRoomState = hasStream && effectiveChatStreamId.isNotEmpty
+        ? (effectiveChatStreamId == streamId
+            ? roomState
+            : ref.watch(liveRoomProvider(effectiveChatStreamId)))
+        : roomState;
     final s = baseSession.copyWith(viewerCount: roomState.viewerCount);
     final top = MediaQuery.paddingOf(context).top;
     final giftCtrl = ref.watch(liveGiftControllerProvider);
@@ -2661,7 +2591,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final interaction = hasStream
         ? ref.watch(liveRoomInteractionProvider(streamId))
         : const LiveRoomInteractionState();
-    final pkState = hasStream ? ref.watch(liveVideoPkProvider(streamId)) : null;
+    final pkState = pkStateEarly;
     final fortuneReqState = hasStream && s.isHost
         ? ref.watch(liveFortuneRequestsProvider(streamId))
         : null;
@@ -2672,6 +2602,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final coBroadcast = ref.watch(coBroadcastProvider);
     final approvedGuests = filterApprovedCoGuests(coBroadcast.coBroadcasters);
     final hasCoGuests = approvedGuests.isNotEmpty;
+    final moreBadgeCount = s.isHost
+        ? (fortuneReqState?.pendingCount ?? 0) +
+            _pendingGuestJoinRequestCount(coBroadcast)
+        : 0;
 
     if (hasStream && s.isHost) {
       ref.listen(coBroadcastProvider, (prev, next) {
@@ -2955,16 +2889,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 child: const ColoredBox(color: Colors.black),
               ),
             const LiveImmersiveScrim(),
-            if (hasStream && !pkImmersive)
-              // Sağ üst köşe — eskiden tam genişlik şerit olarak keşfet ve
-              // süre alanının üstünü kapatıyordu.
-              Positioned(
-                top: top + 48,
-                right: 10,
-                child: const CfcArenaRoomBanner(
-                  surface: CfcArenaSurface.liveBroadcast,
-                ),
-              ),
             LiveFloatingHeartsOverlay(
               key: _heartsKey,
               burstToken: interaction.heartBurstToken,
@@ -3024,38 +2948,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 hostRank: hostRank,
                 tournamentsAsync: tournamentsAsync,
               ),
-            if (hasStream && !pkImmersive)
-              Consumer(
-                builder: (context, ref, _) {
-                  final visible = ref.watch(
-                    weeklyBroadcasterCompetitionVisibleProvider,
-                  );
-                  if (!visible) return const SizedBox.shrink();
-
-                  final competition = ref.watch(
-                    weeklyBroadcasterCompetitionProvider,
-                  );
-
-                  return competition.when(
-                    loading: () => const SizedBox.shrink(),
-                    error: (_, __) => const SizedBox.shrink(),
-                    data: (comp) {
-                      if (comp == null || comp.participants.isEmpty) {
-                        return const SizedBox.shrink();
-                      }
-
-                      return Positioned(
-                        top: top + 48,
-                        right: 10,
-                        child: WeeklyBroadcasterCompetitionCard(
-                          competition: comp,
-                          maxWidth: 190,
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
             LiveBroadcastRoomChromeColumn(
               topInset: top,
               session: s,
@@ -3067,7 +2959,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               suppressTopChrome: pkImmersive,
               chatVisible: _chatVisible,
               onChatVisibleChanged: (v) => setState(() => _chatVisible = v),
-              roomMessages: roomState.messages,
+              roomMessages: chatRoomState.messages,
               lastJoinedName: roomState.lastJoinedDisplayName,
               balance: balance is int ? balance as int? : balance?.toInt(),
               initialFortuneType: _streamFortuneTypeSlug(s),
@@ -3188,6 +3080,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                       tournamentsAsync.valueOrNull?.isNotEmpty == true,
                 ),
               ),
+              moreBadgeCount: moreBadgeCount,
               onRtcStateChanged: s.isHost
                   ? () => setState(() => _localPreviewKey = UniqueKey())
                   : null,
@@ -3203,12 +3096,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                   return;
                 }
                 _chat.clear();
-                final chatRoomId = pkImmersive
-                    ? livePkEffectiveChatStreamId(
-                        battle: pkState?.battle,
-                        myStreamId: streamId,
-                      )
-                    : streamId;
+                final chatRoomId = livePkEffectiveChatStreamId(
+                  battle: pkState?.battle,
+                  myStreamId: streamId,
+                );
                 unawaited(
                   ref
                       .read(liveRoomProvider(chatRoomId).notifier)
@@ -3256,7 +3147,17 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                         ),
                   );
                 },
-                onMore: _openControlCenter,
+                onMore: () => unawaited(
+                  _openLiveMoreMenu(
+                    s: s,
+                    giftsEnabled: broadcastSettings.giftsEnabled,
+                    pkEnabled: broadcastSettings.pkEnabled &&
+                        ref.watch(pkFeatureEnabledProvider),
+                    pendingFortune: fortuneReqState?.pendingCount ?? 0,
+                    showTournament:
+                        tournamentsAsync.valueOrNull?.isNotEmpty == true,
+                  ),
+                ),
                 onRtcStateChanged: s.isHost
                     ? () => setState(() => _localPreviewKey = UniqueKey())
                     : null,

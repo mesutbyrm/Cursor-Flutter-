@@ -56,6 +56,7 @@ class LiveBroadcastRoomChromeColumn extends ConsumerWidget {
     required this.onToggleCamera,
     required this.onSend,
     required this.onEnd,
+    this.moreBadgeCount = 0,
     this.suppressBottomChrome = false,
     this.suppressChatColumn = false,
     this.suppressTopChrome = false,
@@ -102,6 +103,7 @@ class LiveBroadcastRoomChromeColumn extends ConsumerWidget {
   final VoidCallback? onToggleCamera;
   final VoidCallback onSend;
   final VoidCallback? onEnd;
+  final int moreBadgeCount;
   final bool suppressBottomChrome;
   final bool suppressChatColumn;
   final bool suppressTopChrome;
@@ -206,6 +208,7 @@ class LiveBroadcastRoomChromeColumn extends ConsumerWidget {
               onToggleCamera: onToggleCamera,
               onSend: onSend,
               onEnd: onEnd,
+              moreBadgeCount: moreBadgeCount,
             ),
           ],
         ],

@@ -100,6 +100,7 @@ class LiveMockupSideRail extends StatelessWidget {
     this.showFortune = false,
     this.fortuneLabel = 'Fal İste',
     this.onGiftPackages,
+    this.topSlot,
   });
 
   final String likeLabel;
@@ -108,12 +109,17 @@ class LiveMockupSideRail extends StatelessWidget {
   final bool showFortune;
   final String fortuneLabel;
   final VoidCallback? onGiftPackages;
+  final Widget? topSlot;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (topSlot != null) ...[
+          topSlot!,
+          const SizedBox(height: 12),
+        ],
         if (onGiftPackages != null) ...[
           _PromoChip(
             title: 'Hediye Paketleri',

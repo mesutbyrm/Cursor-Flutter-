@@ -2885,6 +2885,7 @@ class VoiceRoomLiveController
         }
       } else if (optimistic != null) {
         list.add(optimistic);
+        unawaited(refresh(includeDj: false));
       }
       list.sort((a, b) => a.createdAt.compareTo(b.createdAt));
       state = state.copyWith(messages: list, clearError: true);

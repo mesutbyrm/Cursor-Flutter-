@@ -18,6 +18,7 @@ class LiveBroadcastRoomBottomChrome extends StatelessWidget {
     required this.onToggleCamera,
     required this.onSend,
     required this.onEnd,
+    this.moreBadgeCount = 0,
   });
 
   final TextEditingController chatController;
@@ -31,6 +32,7 @@ class LiveBroadcastRoomBottomChrome extends StatelessWidget {
   final VoidCallback? onToggleCamera;
   final VoidCallback onSend;
   final VoidCallback? onEnd;
+  final int moreBadgeCount;
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +54,7 @@ class LiveBroadcastRoomBottomChrome extends StatelessWidget {
         onToggleCamera: onToggleCamera,
         onSend: onSend,
         onEnd: onEnd,
+        moreBadgeCount: moreBadgeCount,
       ),
     );
   }

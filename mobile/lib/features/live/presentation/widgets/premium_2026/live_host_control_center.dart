@@ -23,6 +23,7 @@ Future<void> openLiveHostControlCenter({
   required WidgetRef ref,
   required String streamId,
   required bool isHost,
+  int initialTabIndex = 0,
 }) {
   return showGeneralDialog(
     context: context,
@@ -39,6 +40,7 @@ Future<void> openLiveHostControlCenter({
           child: _LiveHostControlCenter(
             streamId: streamId,
             isHost: isHost,
+            initialTabIndex: initialTabIndex,
           ),
         ),
       );
@@ -50,10 +52,12 @@ class _LiveHostControlCenter extends ConsumerStatefulWidget {
   const _LiveHostControlCenter({
     required this.streamId,
     required this.isHost,
+    this.initialTabIndex = 0,
   });
 
   final String streamId;
   final bool isHost;
+  final int initialTabIndex;
 
   @override
   ConsumerState<_LiveHostControlCenter> createState() =>
@@ -67,7 +71,8 @@ class _LiveHostControlCenterState extends ConsumerState<_LiveHostControlCenter>
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 6, vsync: this);
+    final tab = widget.initialTabIndex.clamp(0, 5);
+    _tabs = TabController(length: 6, vsync: this, initialIndex: tab);
   }
 
   @override

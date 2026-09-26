@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../domain/entities/live_broadcast_session.dart';
 import '../../providers/live_room_interaction_provider.dart';
 import '../premium_2026/live_premium_2026.dart';
+import 'live_broadcast_competition_rail_slot.dart';
 
 /// Canlı izleyici yan rail — beğeni + fal CTA.
 class LiveBroadcastRoomViewerRail extends StatelessWidget {
@@ -28,6 +29,7 @@ class LiveBroadcastRoomViewerRail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LiveMockupSideRail(
+      topSlot: const LiveBroadcastCompetitionRailSlot(),
       likeLabel: likeLabel,
       onLike: onLike,
       showFortune: showFortune && !session.isHost,

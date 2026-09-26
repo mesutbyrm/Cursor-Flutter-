@@ -16,6 +16,7 @@ class LiveBroadcastBottomBarV2 extends StatefulWidget {
     this.onRtcStateChanged,
     this.onEnd,
     this.onMore,
+    this.moreBadgeCount = 0,
     this.onGift,
     this.onTip,
     this.commentsEnabled = true,
@@ -29,6 +30,7 @@ class LiveBroadcastBottomBarV2 extends StatefulWidget {
   final VoidCallback? onRtcStateChanged;
   final VoidCallback? onEnd;
   final VoidCallback? onMore;
+  final int moreBadgeCount;
   final VoidCallback? onGift;
   final VoidCallback? onTip;
   final bool commentsEnabled;
@@ -143,6 +145,7 @@ class _LiveBroadcastBottomBarV2State extends State<LiveBroadcastBottomBarV2> {
                     _ActionIconButton(
                       icon: Icons.apps_rounded,
                       label: 'Daha fazla',
+                      badgeCount: widget.moreBadgeCount,
                       onTap: widget.onMore!,
                     ),
                 ],
@@ -372,11 +375,13 @@ class _ActionIconButton extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
+    this.badgeCount = 0,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+  final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
@@ -387,17 +392,46 @@ class _ActionIconButton extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.black.withValues(alpha: 0.35),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.18),
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.black.withValues(alpha: 0.35),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.18),
+                    ),
+                  ),
+                  child: Icon(icon, color: Colors.white, size: 20),
                 ),
-              ),
-              child: Icon(icon, color: Colors.white, size: 20),
+                if (badgeCount > 0)
+                  Positioned(
+                    top: -2,
+                    right: -2,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFF2D7A),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.white, width: 1.2),
+                      ),
+                      child: Text(
+                        badgeCount > 99 ? '99+' : '$badgeCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 2),
             Text(
