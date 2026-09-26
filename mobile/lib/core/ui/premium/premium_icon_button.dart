@@ -3,7 +3,6 @@ import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:canlifal_social/core/navigation/unread_badge_format.dart';
 
-
 /// Cam yüzeyli ikon butonu — bildirim, ayarlar.
 class PremiumIconButton extends StatelessWidget {
   const PremiumIconButton({
@@ -13,8 +12,11 @@ class PremiumIconButton extends StatelessWidget {
     this.showBadge = false,
     this.badgeCount = 0,
     this.size = 44,
+    this.tooltip,
   });
 
+  /// Uzun basışta ipucu + ekran okuyucu etiketi.
+  final String? tooltip;
   final IconData icon;
   final VoidCallback onTap;
   final bool showBadge;
@@ -23,8 +25,8 @@ class PremiumIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white.withValues(alpha: 0.06),
+    final button = Material(
+      color: context.colors.onSurface.withValues(alpha: 0.06),
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,
@@ -88,5 +90,8 @@ class PremiumIconButton extends StatelessWidget {
         ),
       ),
     );
+    final label = tooltip;
+    if (label == null) return button;
+    return Tooltip(message: label, child: button);
   }
 }

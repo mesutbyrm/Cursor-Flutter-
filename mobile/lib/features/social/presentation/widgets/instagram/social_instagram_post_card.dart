@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/canlifal_brand_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
@@ -14,7 +15,6 @@ import 'package:canlifal_social/features/vip_gold/presentation/widgets/vip_badge
 
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../../core/providers/auth_selectors.dart';
-import '../../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../feed/domain/entities/post_entity.dart';
 import '../../../../../core/config/env.dart';
 import '../../../../../core/network/api_exception.dart';
@@ -25,6 +25,7 @@ import '../../providers/social_providers.dart';
 import 'social_post_caption.dart';
 import 'social_post_comments_sheet.dart';
 import 'social_post_video_player.dart';
+import 'double_tap_heart.dart';
 
 /// CanlıFal Sosyal akış kartı — fal rozeti, otomatik paylaşım, etkileşim.
 class SocialInstagramPostCard extends ConsumerStatefulWidget {
@@ -49,6 +50,7 @@ class _SocialInstagramPostCardState
   late bool _liked;
   late int _likeCount;
   var _likeBurst = 0;
+  var _doubleTapHearts = 0;
 
   @override
   void initState() {
@@ -101,23 +103,23 @@ class _SocialInstagramPostCardState
     final isMine = myId != null && myId == post.author.id;
     final likeCount = _likeCount;
 
+    final dark = context.isDarkTheme;
+    // Listede blur yok: tek düz yüzey + ince kenar (kaydırmada ucuz).
     return Padding(
-      padding: const EdgeInsets.fromLTRB(0, 6, 0, 6),
-      child: ProGlassCard(
-        blur: 14,
-        animateIn: false,
-        padding: EdgeInsets.zero,
-        borderRadius: BorderRadius.circular(16),
-        child: DecoratedBox(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          color: Colors.transparent,
+          color: context.colors.surface,
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: AppThemeColors.accentPurple.withValues(alpha: 0.22),
+            color: dark
+                ? Colors.white.withValues(alpha: 0.06)
+                : context.colors.outlineVariant,
           ),
+          boxShadow: dark ? null : context.colors.cardShadow,
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(17),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -125,6 +127,7 @@ class _SocialInstagramPostCardState
                 post: post,
                 isMine: isMine,
                 onProfile: () => _openAuthorTimeline(context),
+                onShare: () => _sharePost(context),
                 onDelete: isMine ? () => _deletePost(context) : null,
               ),
               GestureDetector(
@@ -149,21 +152,28 @@ class _SocialInstagramPostCardState
                           child: DecoratedBox(
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(14),
-                              gradient: const LinearGradient(
+                              gradient: LinearGradient(
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
-                                colors: [Color(0xFF2A1548), Color(0xFF14102A)],
+                                colors: dark
+                                    ? const [
+                                        Color(0xFF241A3D),
+                                        Color(0xFF141419),
+                                      ]
+                                    : const [
+                                        Color(0xFFF3EEFF),
+                                        Color(0xFFEAF7F5),
+                                      ],
                               ),
                               border: Border.all(
-                                color: AppThemeColors.accentPurple
-                                    .withValues(alpha: 0.35),
+                                color: context.colors.primary.withValues(
+                                  alpha: dark ? 0.30 : 0.18,
+                                ),
                               ),
                             ),
                             child: Padding(
                               padding: const EdgeInsets.all(16),
-                              child: SocialPostTextPreview(
-                                text: _bodyText!,
-                              ),
+                              child: SocialPostTextPreview(text: _bodyText!),
                             ),
                           ),
                         ),
@@ -190,12 +200,14 @@ class _SocialInstagramPostCardState
                         post: post,
                         onFortuneTap: () => _openFortune(context),
                         onTap: () => _openPostDetail(context),
+                        onDoubleTap: _likeFromDoubleTap,
+                        heartToken: _doubleTapHearts,
                       ),
                   ],
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                padding: const EdgeInsets.fromLTRB(6, 2, 10, 2),
                 child: Row(
                   children: [
                     _LikeActionRow(
@@ -204,21 +216,24 @@ class _SocialInstagramPostCardState
                       count: likeCount,
                       onTap: _toggleLike,
                     ),
-                    SizedBox(width: 16),
+                    const SizedBox(width: 6),
                     _ActionWithCount(
                       icon: Icons.mode_comment_outlined,
+                      semanticLabel: 'Yorumlar',
                       count: post.commentsCount,
                       onTap: () => _openComments(context),
                     ),
-                    SizedBox(width: 16),
+                    const SizedBox(width: 6),
                     _ActionWithCount(
                       icon: Icons.ios_share_rounded,
+                      semanticLabel: 'Paylaş',
                       count: post.shareCount,
                       onTap: () => _sharePost(context),
                     ),
-                    SizedBox(width: 16),
+                    const SizedBox(width: 6),
                     _ActionWithCount(
                       icon: Icons.visibility_outlined,
+                      semanticLabel: 'Görüntülenme, detayı aç',
                       count: post.displayViewCount,
                       hideZeroCount: false,
                       onTap: () => _openPostDetail(context),
@@ -248,7 +263,9 @@ class _SocialInstagramPostCardState
                     child: Text(
                       '${post.commentsCount} yorumun tümünü gör',
                       style: TextStyle(
-                        color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
+                        color: context.colors.onSurfaceMuted.withValues(
+                          alpha: 0.95,
+                        ),
                         fontSize: 13,
                       ),
                     ),
@@ -257,7 +274,6 @@ class _SocialInstagramPostCardState
             ],
           ),
         ),
-      ),
       ),
     );
   }
@@ -278,15 +294,15 @@ class _SocialInstagramPostCardState
       ref.read(socialNotifierProvider.notifier).removePost(post.id);
       widget.onDeleted?.call();
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Gönderi silindi')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Gönderi silindi')));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Silinemedi: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Silinemedi: $e')));
       }
     }
   }
@@ -298,6 +314,12 @@ class _SocialInstagramPostCardState
     } else {
       context.push('/fortune');
     }
+  }
+
+  /// Instagram davranışı: çift dokunuş yalnızca beğenir, beğeniyi geri almaz.
+  void _likeFromDoubleTap() {
+    setState(() => _doubleTapHearts++);
+    if (!_liked) _toggleLike();
   }
 
   Future<void> _toggleLike() async {
@@ -320,27 +342,24 @@ class _SocialInstagramPostCardState
       if (nextLiked) _likeBurst++;
     });
     try {
-      final r =
-          await ref.read(socialRepositoryProvider).toggleLike(post.id);
+      final r = await ref.read(socialRepositoryProvider).toggleLike(post.id);
       if (!mounted) return;
       setState(() {
         _liked = r.liked;
         _likeCount = r.likesCount > 0 ? r.likesCount : _likeCount;
       });
-      ref.read(socialNotifierProvider.notifier).reconcileLike(
-            post.id,
-            liked: r.liked,
-            likesCount: _likeCount,
-          );
+      ref
+          .read(socialNotifierProvider.notifier)
+          .reconcileLike(post.id, liked: r.liked, likesCount: _likeCount);
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _liked = prevLiked;
         _likeCount = prevCount;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ApiException.userMessage(e))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(ApiException.userMessage(e))));
     }
   }
 
@@ -375,12 +394,14 @@ class _PostHeader extends StatelessWidget {
     required this.post,
     required this.isMine,
     required this.onProfile,
+    required this.onShare,
     this.onDelete,
   });
 
   final PostEntity post;
   final bool isMine;
   final VoidCallback onProfile;
+  final VoidCallback onShare;
   final VoidCallback? onDelete;
 
   @override
@@ -465,8 +486,7 @@ class _PostHeader extends StatelessWidget {
                                   Text(
                                     fortuneLabel,
                                     style: TextStyle(
-                                      color: AppThemeColors.accentPurple
-                                          .withValues(alpha: 0.95),
+                                      color: _accentText(context),
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,
                                     ),
@@ -483,14 +503,48 @@ class _PostHeader extends StatelessWidget {
               ),
             ),
           ),
-          if (onDelete != null)
-            IconButton(
-              icon: Icon(Icons.delete_outline_rounded, size: 22),
-              color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
-              onPressed: onDelete,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+          PopupMenuButton<_PostMenuAction>(
+            tooltip: 'Gönderi seçenekleri',
+            icon: Icon(
+              Icons.more_horiz_rounded,
+              color: context.colors.onSurfaceVariant,
             ),
+            onSelected: (action) => switch (action) {
+              _PostMenuAction.profile => onProfile(),
+              _PostMenuAction.share => onShare(),
+              _PostMenuAction.delete => onDelete?.call(),
+            },
+            itemBuilder: (_) => [
+              const PopupMenuItem(
+                value: _PostMenuAction.profile,
+                child: ListTile(
+                  leading: Icon(Icons.person_outline_rounded),
+                  title: Text('Profili gör'),
+                ),
+              ),
+              const PopupMenuItem(
+                value: _PostMenuAction.share,
+                child: ListTile(
+                  leading: Icon(Icons.ios_share_rounded),
+                  title: Text('Paylaş'),
+                ),
+              ),
+              if (onDelete != null)
+                PopupMenuItem(
+                  value: _PostMenuAction.delete,
+                  child: ListTile(
+                    leading: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: AppThemeColors.liveRed,
+                    ),
+                    title: Text(
+                      'Sil',
+                      style: TextStyle(color: AppThemeColors.liveRed),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ],
       ),
     );
@@ -541,6 +595,8 @@ class _PostHeader extends StatelessWidget {
   }
 }
 
+enum _PostMenuAction { profile, share, delete }
+
 class _AutoShareBadge extends StatelessWidget {
   const _AutoShareBadge();
 
@@ -549,10 +605,12 @@ class _AutoShareBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: AppThemeColors.accentPurple.withValues(alpha: 0.35),
+        color: context.colors.primary.withValues(
+          alpha: context.isDarkTheme ? 0.28 : 0.12,
+        ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppThemeColors.accentPurple.withValues(alpha: 0.5),
+          color: context.colors.primary.withValues(alpha: 0.4),
         ),
       ),
       child: Row(
@@ -599,7 +657,9 @@ class _CoViewersBadge extends StatelessWidget {
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w600,
-          color: const Color(0xFFFFB366).withValues(alpha: 0.95),
+          color: context.isDarkTheme
+              ? const Color(0xFFFFB366)
+              : const Color(0xFFB45309),
         ),
       ),
     );
@@ -627,7 +687,9 @@ class _FortuneViewsBadge extends StatelessWidget {
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w600,
-          color: const Color(0xFF7DD3FC).withValues(alpha: 0.95),
+          color: context.isDarkTheme
+              ? const Color(0xFF7DD3FC)
+              : const Color(0xFF0369A1),
         ),
       ),
     );
@@ -646,7 +708,7 @@ class _ShareCountBadge extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppThemeColors.accentPurple.withValues(alpha: 0.65),
+          color: context.colors.primary.withValues(alpha: 0.5),
           width: 1.2,
         ),
       ),
@@ -655,7 +717,7 @@ class _ShareCountBadge extends StatelessWidget {
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w600,
-          color: AppThemeColors.accentPurple.withValues(alpha: 0.95),
+          color: _accentText(context),
         ),
       ),
     );
@@ -666,12 +728,16 @@ class _PostMediaBlock extends StatelessWidget {
   const _PostMediaBlock({
     required this.post,
     required this.onFortuneTap,
+    required this.onDoubleTap,
+    required this.heartToken,
     this.onTap,
   });
 
   final PostEntity post;
   final VoidCallback onFortuneTap;
   final VoidCallback? onTap;
+  final VoidCallback onDoubleTap;
+  final int heartToken;
 
   @override
   Widget build(BuildContext context) {
@@ -683,24 +749,36 @@ class _PostMediaBlock extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(top: 4),
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: isVideo
-            ? SocialPostVideoPlayer(
+      // Video kendi dokunma kontrollerini kullanır; çift dokunuş yalnız görselde.
+      child: isVideo
+          ? GestureDetector(
+              onTap: onTap,
+              behavior: HitTestBehavior.opaque,
+              child: SocialPostVideoPlayer(
                 videoUrl: mediaUrl,
                 videoId: post.id,
-              )
-            : AspectRatio(
+              ),
+            )
+          : GestureDetector(
+              onTap: onTap,
+              onDoubleTap: onDoubleTap,
+              behavior: HitTestBehavior.opaque,
+              child: AspectRatio(
                 aspectRatio: 4 / 5,
-                child: CanlifalNetworkImage(
-                  url: mediaUrl,
-                  fit: BoxFit.cover,
-                  placeholder: const _MysticMediaPlaceholder(),
-                  errorWidget: const _MysticMediaPlaceholder(),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CanlifalNetworkImage(
+                      url: mediaUrl,
+                      fit: BoxFit.cover,
+                      placeholder: const _MysticMediaPlaceholder(),
+                      errorWidget: const _MysticMediaPlaceholder(),
+                    ),
+                    Center(child: DoubleTapHeart(token: heartToken)),
+                  ],
                 ),
               ),
-      ),
+            ),
     );
   }
 }
@@ -715,16 +793,12 @@ class _MysticMediaPlaceholder extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF1A0F3D),
-            Color(0xFF2D1548),
-            Color(0xFF0B0B1E),
-          ],
+          colors: context.isDarkTheme
+              ? const [Color(0xFF1C1728), Color(0xFF16161D), Color(0xFF101014)]
+              : const [Color(0xFFF1ECFB), Color(0xFFF4F4F8), Color(0xFFEAF6F4)],
         ),
       ),
-      child: Center(
-        child: Text('🔮', style: TextStyle(fontSize: 48)),
-      ),
+      child: Center(child: Text('🔮', style: TextStyle(fontSize: 48))),
     );
   }
 }
@@ -744,70 +818,28 @@ class _LikeActionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        liked ? AppThemeColors.accentPink : context.colors.onSurface;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        CanlifalBurstIcon(
-          burstToken: burstToken,
-          icon: liked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-          color: color,
-          onTap: onTap,
-        ),
-        if (count > 0) ...[
-          const SizedBox(width: 5),
-          Text(
-            _formatCount(count),
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 13,
-              color: context.colors.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  static String _formatCount(int n) {
-    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
-    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
-    return '$n';
-  }
-}
-
-class _ActionWithCount extends StatelessWidget {
-  const _ActionWithCount({
-    required this.icon,
-    required this.onTap,
-    this.count = 0,
-    this.color,
-    this.hideZeroCount = false,
-  });
-
-  final IconData icon;
-  final VoidCallback? onTap;
-  final int count;
-  final Color? color;
-  final bool hideZeroCount;
-
-  @override
-  Widget build(BuildContext context) {
-    final iconColor = color ?? context.colors.onSurface;
-    final showCountLabel = !hideZeroCount || count > 0;
-
-    return InkWell(
+    final color = liked ? AppThemeColors.accentPink : context.colors.onSurface;
+    return Semantics(
+      button: true,
+      toggled: liked,
+      label: count > 0 ? 'Beğen, $count' : 'Beğen',
       onTap: onTap,
-      borderRadius: BorderRadius.circular(24),
+      excludeSemantics: true,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 24, color: iconColor),
-            if (showCountLabel) ...[
-              SizedBox(width: 5),
+            CanlifalBurstIcon(
+              burstToken: burstToken,
+              icon: liked
+                  ? Icons.favorite_rounded
+                  : Icons.favorite_border_rounded,
+              color: color,
+              onTap: onTap,
+            ),
+            if (count > 0) ...[
+              const SizedBox(width: 5),
               Text(
                 _formatCount(count),
                 style: TextStyle(
@@ -823,30 +855,62 @@ class _ActionWithCount extends StatelessWidget {
     );
   }
 
-  static String _formatCount(int n) {
-    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
-    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
-    return '$n';
-  }
+  static String _formatCount(int n) => formatSocialCount(n);
 }
 
-class _ActionIcon extends StatelessWidget {
-  const _ActionIcon({required this.icon, required this.onTap});
+class _ActionWithCount extends StatelessWidget {
+  const _ActionWithCount({
+    required this.icon,
+    required this.onTap,
+    required this.semanticLabel,
+    this.count = 0,
+    this.hideZeroCount = false,
+  });
 
   final IconData icon;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final String semanticLabel;
+  final int count;
+  final bool hideZeroCount;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    final iconColor = context.colors.onSurface;
+    final showCountLabel = !hideZeroCount || count > 0;
+
+    return Semantics(
+      button: true,
+      label: showCountLabel ? '$semanticLabel, $count' : semanticLabel,
+      excludeSemantics: true,
       onTap: onTap,
-      borderRadius: BorderRadius.circular(24),
-      child: Padding(
-        padding: const EdgeInsets.all(4),
-        child: Icon(icon, size: 24, color: context.colors.onSurface),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(24),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 24, color: iconColor),
+              if (showCountLabel) ...[
+                SizedBox(width: 5),
+                Text(
+                  _formatCount(count),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: context.colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
+
+  static String _formatCount(int n) => formatSocialCount(n);
 }
 
 class _TextAction extends StatelessWidget {
@@ -870,12 +934,12 @@ class _TextAction extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 18, color: AppThemeColors.accentPurple),
+            Icon(icon, size: 18, color: _accentText(context)),
             SizedBox(width: 4),
             Text(
               label,
               style: TextStyle(
-                color: AppThemeColors.accentPurple.withValues(alpha: 0.95),
+                color: _accentText(context),
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
               ),
@@ -885,4 +949,16 @@ class _TextAction extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Koyu zeminde açık mor, açık zeminde koyu mor — küçük metin okunur kalsın.
+Color _accentText(BuildContext context) => context.isDarkTheme
+    ? CanlifalBrandColors.violetBright
+    : context.colors.primary;
+
+/// 1.2K / 3.4M biçimi.
+String formatSocialCount(int n) {
+  if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
+  if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
+  return '$n';
 }

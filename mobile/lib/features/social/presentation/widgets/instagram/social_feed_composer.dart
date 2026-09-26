@@ -79,9 +79,9 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Görsel seçilemedi: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Görsel seçilemedi: $e')));
     }
   }
 
@@ -100,9 +100,9 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Video seçilemedi: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Video seçilemedi: $e')));
     }
   }
 
@@ -124,9 +124,9 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
     final picked = await CdsBottomSheet.showTransparent<SearchUserEntity>(
       context: context,
       builder: (ctx) => DecoratedBox(
-        decoration: const BoxDecoration(
-          color: Color(0xFF120A24),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        decoration: BoxDecoration(
+          color: context.colors.bottomSheetBackground,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: const SocialMentionPickerSheet(),
       ),
@@ -176,7 +176,9 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
 
     setState(() => _submitting = true);
     try {
-      await ref.read(socialCreatePostProvider.notifier).submit(
+      await ref
+          .read(socialCreatePostProvider.notifier)
+          .submit(
             CreateSocialPostInput(
               caption: caption,
               imagePath: _imagePath,
@@ -194,14 +196,14 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
       });
       _focus.unfocus();
       widget.onPostPublished?.call();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Paylaşım yayınlandı')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Paylaşım yayınlandı')));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ApiException.userMessage(e))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(ApiException.userMessage(e))));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -231,19 +233,16 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
       padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: const Color(0xFF12122A).withValues(alpha: 0.95),
-          borderRadius: BorderRadius.circular(16),
+          color: context.colors.surfaceElevated,
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: AppThemeColors.accentPurple.withValues(alpha: 0.38),
-            width: 1.2,
+            color: _expanded
+                ? context.colors.primary.withValues(alpha: 0.45)
+                : (context.isDarkTheme
+                      ? Colors.white.withValues(alpha: 0.06)
+                      : context.colors.outlineVariant),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: AppThemeColors.accentPurple.withValues(alpha: 0.12),
-              blurRadius: 20,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: context.isDarkTheme ? null : context.colors.cardShadow,
         ),
         child: Column(
           children: [
@@ -268,10 +267,18 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
                               height: 1.4,
                             ),
                             decoration: InputDecoration(
+                              filled: false,
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 8,
+                              ),
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
                               hintText: 'Ne düşünüyorsun, $displayName?',
                               hintStyle: TextStyle(
-                                color: context.colors.onSurfaceMuted
-                                    .withValues(alpha: 0.9),
+                                color: context.colors.onSurfaceMuted.withValues(
+                                  alpha: 0.9,
+                                ),
                               ),
                               border: InputBorder.none,
                               counterStyle: TextStyle(
@@ -286,8 +293,9 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
                                 ? () {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
-                                        content:
-                                            Text('Paylaşım için giriş yapın'),
+                                        content: Text(
+                                          'Paylaşım için giriş yapın',
+                                        ),
                                       ),
                                     );
                                   }
@@ -295,8 +303,9 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
                             child: Align(
                               alignment: Alignment.centerLeft,
                               child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 6,
+                                ),
                                 child: Text(
                                   'Ne düşünüyorsun, $displayName?',
                                   style: TextStyle(
@@ -390,8 +399,11 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
                           IconButton(
                             tooltip: 'Etiketle',
                             onPressed: _pickMention,
-                            icon: const Icon(Icons.alternate_email_rounded, size: 22),
-                            color: AppThemeColors.accentCyan,
+                            icon: const Icon(
+                              Icons.alternate_email_rounded,
+                              size: 22,
+                            ),
+                            color: context.colors.secondary,
                           ),
                           IconButton(
                             tooltip: 'Konum',
@@ -400,9 +412,14 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
                                 ? const SizedBox(
                                     width: 18,
                                     height: 18,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
                                   )
-                                : const Icon(Icons.location_on_outlined, size: 22),
+                                : const Icon(
+                                    Icons.location_on_outlined,
+                                    size: 22,
+                                  ),
                             color: AppThemeColors.onlineGreen,
                           ),
                         ],
@@ -415,30 +432,29 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
                     label: 'Gönderiyi paylaş',
                     enabled: _canShare && !_submitting,
                     child: FilledButton(
-                    onPressed: _canShare ? _submit : null,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppThemeColors.accentPink,
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      minimumSize: const Size(76, 36),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      onPressed: _canShare ? _submit : null,
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        minimumSize: const Size(76, 36),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: _submitting
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'Paylaş',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13,
+                              ),
+                            ),
                     ),
-                    child: _submitting
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Paylaş',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 13,
-                            ),
-                          ),
-                  ),
                   ),
                 ],
               ),
@@ -454,9 +470,9 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
     CdsBottomSheet.showTransparent<void>(
       context: context,
       builder: (ctx) => DecoratedBox(
-        decoration: const BoxDecoration(
-          color: Color(0xFF120A24),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        decoration: BoxDecoration(
+          color: context.colors.bottomSheetBackground,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: SafeArea(
           child: Padding(
@@ -514,9 +530,9 @@ class _MediaPreview extends StatelessWidget {
               button: true,
               label: 'Medya önizlemesini kaldır',
               child: IconButton(
-              icon: const Icon(Icons.close_rounded, color: Colors.white),
-              onPressed: onClear,
-            ),
+                icon: const Icon(Icons.close_rounded, color: Colors.white),
+                onPressed: onClear,
+              ),
             ),
           ),
         ),
@@ -544,27 +560,27 @@ class _ComposerAction extends StatelessWidget {
       button: true,
       label: label,
       child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 20, color: color),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 12,
-                color: context.colors.onSurfaceVariant,
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 20, color: color),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                  color: context.colors.onSurfaceVariant,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 }

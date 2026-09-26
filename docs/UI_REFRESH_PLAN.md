@@ -47,8 +47,8 @@ Tek kaynak: `lib/core/theme/canlifal_brand_colors.dart`.
 | # | Ekran grubu | Durum |
 |---|---|---|
 | 1 | Ana sayfa + alt navigasyon | ✅ tamam (bu PR) |
-| 2 | Sosyal akış + hikâyeler | ⏳ sıradaki |
-| 3 | Profil + kullanıcı kartları | ⏳ |
+| 2 | Sosyal akış + hikâyeler | ✅ tamam |
+| 3 | Profil + kullanıcı kartları | ⏳ sıradaki |
 | 4 | Fal türleri + sonuç ekranları | ⏳ |
 | 5 | Sesli oda + koltuklar | ⏳ (SSE/presence yeni stabilize edildi; yalnızca görsel katman) |
 | 6 | Canlı yayın + hediye + PK | ⏳ |
@@ -60,6 +60,14 @@ Tek kaynak: `lib/core/theme/canlifal_brand_colors.dart`.
 - **Başlık / arama**: temaya duyarlı arama çubuğu, 40 px dairesel gelen kutusu butonu, semantik etiketler; ölü kod silindi.
 - **Bölüm başlıkları**: tema rengi + "Tümü ›" geniş dokunma alanı.
 - **26 bölüm dosyası**: sayfa zeminindeki metin/yüzeyler `textPrimaryOf(context)` vb. temaya duyarlı karşılıklara taşındı; görsel/gradyan üzerindeki metinler bilerek beyaz bırakıldı.
+
+### Aşama 2 — yapılanlar
+
+- **Hikâye izleyici** (`story_viewer_page.dart`) yeniden yazıldı. Giderilen hatalar: basılı tut/bırak hikâyeyi baştan başlatıyordu; videoda her devam, dinleyiciyi yeniden ekleyip bitişte `_next`'in çoklu çağrılmasına yol açıyordu; ilerleme `Timer.periodic(50ms)` + `setState` ile tüm sayfayı çiziyordu; görsel yüklenmeden süre işliyordu; tam ekran görsel küçük önizleme çözünürlüğündeydi. Yeni: `AnimationController` ile yalnızca çubuğu çizen ilerleme, kişiden kişiye geçiş (`StoryViewerArgs.rings`, geriye uyumlu), yatay kaydırma, aşağı kaydır-kapat, avatar + göreli zaman, uygulama arka plana geçince duraklatma.
+- **Hikâye şeridi**: `StoriesStrip` + `StoryRingTile` ortak bileşenleri; ana sayfa `StoriesSection` ve `SocialStoriesRail` artık aynı kodu kullanıyor. İzlenme bilgisi backend'de olmadığı için cihazda (`storySeenProvider`, en çok 600 kimlik) tutuluyor. Ana sayfadaki her halkada sonsuz döngüde çalışan bulanık-gölge nabız animasyonu (`HomeStoryRingPulse`) kaldırıldı.
+- **Sosyal sayfa**: şerit, `23720058` commit'inde bilinçli olarak kaldırıldığı için sosyal sayfaya **eklenmedi**. Kısayollar + paylaşım kutusu akışla birlikte kayan başlığa taşındı.
+- **Gönderi kartı**: `SocialCdsPostShell(CdsCard.glass)` → `ProGlassCard(blur: 14)` → kenarlıklı kutu üçlüsü tek düz yüzeye indirildi; görsele çift dokunuş beğenir (beğeniyi geri almaz); sil ikonu → "⋯" menüsü; semantik etiketler; ölü `_ActionIcon` silindi.
+- **Açık tema**: paylaşım kutusu (`#12122A` sabit dolgu), etiketleme/duygu alt sayfaları (`#120A24`), metin-only gönderi kutusu, rozetler, `#25F4EE` bağlantı rengi ve `UserAvatar` yer tutucusu temaya bağlandı.
 
 ## 4. Doğrulama yöntemi (her aşamada)
 

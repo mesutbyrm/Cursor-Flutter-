@@ -1,28 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/design_system/cds.dart';
-
-/// Sosyal akış kartı — CDS cam yüzey sarmalayıcı.
-class SocialCdsPostShell extends ConsumerWidget {
+/// Sosyal akış kartı aralığı — kart yüzeyini [SocialInstagramPostCard] çizer.
+class SocialCdsPostShell extends StatelessWidget {
   const SocialCdsPostShell({
     super.key,
     required this.child,
-    this.margin = const EdgeInsets.fromLTRB(0, 0, 0, 12),
+    this.margin = const EdgeInsets.only(bottom: 4),
   });
 
   final Widget child;
   final EdgeInsetsGeometry margin;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Padding(
-      padding: margin,
-      child: CdsCard(
-        variant: CdsCardVariant.glass,
-        padding: EdgeInsets.zero,
-        child: child,
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Padding(padding: margin, child: child);
 }

@@ -5,8 +5,12 @@ class StoryViewerArgs {
   const StoryViewerArgs({
     required this.ring,
     this.initialIndex = 0,
+    this.rings = const [],
   });
 
   final SocialStoryRingEntity ring;
   final int initialIndex;
+
+  /// Şeritteki sıralı halkalar — biri bitince sonrakine geçilir. Boşsa yalnızca [ring].
+  final List<SocialStoryRingEntity> rings;
 }

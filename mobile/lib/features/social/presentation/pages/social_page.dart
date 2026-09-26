@@ -24,6 +24,17 @@ class _SocialPageState extends ConsumerState<SocialPage>
     with WidgetsBindingObserver {
   final _scroll = ScrollController();
 
+  /// Tek örnek: akış her güncellendiğinde paylaşım kutusu yeniden kurulmaz.
+  late final Widget _feedHeader = Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const RepaintBoundary(child: SocialDiscoverShortcuts()),
+      RepaintBoundary(
+        child: SocialFeedComposer(onPostPublished: _scrollFeedToTop),
+      ),
+    ],
+  );
+
   @override
   void initState() {
     super.initState();
@@ -76,25 +87,25 @@ class _SocialPageState extends ConsumerState<SocialPage>
         child: Padding(
           padding: CdsResponsive.screenPadding(context),
           child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            RepaintBoundary(
-              child: SocialInstagramAppBar(onPostPublished: _scrollFeedToTop),
-            ),
-            const RepaintBoundary(child: SocialDiscoverShortcuts()),
-            RepaintBoundary(
-              child: SocialFeedComposer(onPostPublished: _scrollFeedToTop),
-            ),
-            Expanded(
-              child: SocialFeedScrollView(
-                controller: _scroll,
-                onRefresh: _refresh,
-                bottomPadding: bottom,
-                onPostPublished: _scrollFeedToTop,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              RepaintBoundary(
+                child: SocialInstagramAppBar(
+                  onPostPublished: _scrollFeedToTop,
+                  onTitleTap: _scrollFeedToTop,
+                ),
               ),
-            ),
-          ],
-        ),
+              Expanded(
+                child: SocialFeedScrollView(
+                  controller: _scroll,
+                  onRefresh: _refresh,
+                  bottomPadding: bottom,
+                  onPostPublished: _scrollFeedToTop,
+                  header: _feedHeader,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

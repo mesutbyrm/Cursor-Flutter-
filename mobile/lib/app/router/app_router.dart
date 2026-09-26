@@ -475,6 +475,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                         child: StoryViewerPage(
                           ring: args.ring,
                           initialIndex: args.initialIndex,
+                          rings: args.rings,
                         ),
                       );
                     },

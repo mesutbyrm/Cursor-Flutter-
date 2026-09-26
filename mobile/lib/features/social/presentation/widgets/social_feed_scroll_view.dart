@@ -28,12 +28,17 @@ class SocialFeedScrollView extends ConsumerWidget {
     required this.onRefresh,
     required this.bottomPadding,
     this.onPostPublished,
+    this.header,
   });
 
   final ScrollController controller;
   final Future<void> Function() onRefresh;
   final double bottomPadding;
   final VoidCallback? onPostPublished;
+
+  /// Akışla birlikte kayan üst içerik (paylaşım kutusu, kısayollar). Aynı örnek
+  /// verildiği sürece akış güncellemelerinde yeniden oluşturulmaz.
+  final Widget? header;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -52,19 +57,20 @@ class SocialFeedScrollView extends ConsumerWidget {
         scrollCacheExtent: ScrollPerf.scrollCache(ScrollPerf.feedCacheExtent),
         physics: PremiumMotion.listPhysics,
         slivers: [
+          if (header != null) SliverToBoxAdapter(child: header),
           social.when(
             loading: () => SliverList.builder(
               itemCount: 3,
-              itemBuilder: (_, _) => const RepaintBoundary(
-                child: PremiumPostSkeleton(),
-              ),
+              itemBuilder: (_, _) =>
+                  const RepaintBoundary(child: PremiumPostSkeleton()),
             ),
             error: (e, _) => SliverFillRemaining(
               child: DiscoverEmptyState(
                 icon: Icons.cloud_off_rounded,
                 message: ApiException.userMessage(e),
                 actionLabel: 'Tekrar dene',
-                action: () => ref.read(socialNotifierProvider.notifier).refresh(),
+                action: () =>
+                    ref.read(socialNotifierProvider.notifier).refresh(),
               ),
             ),
             data: (posts) {
@@ -136,7 +142,7 @@ class SocialFeedScrollView extends ConsumerWidget {
                     if (showLoadMoreError) {
                       if (slot == 0) {
                         return SocialFeedLoadMoreErrorBanner(
-                          message: loadMoreError!,
+                          message: loadMoreError,
                           onRetry: () => notifier.retryLoadMore(),
                         );
                       }
@@ -151,9 +157,7 @@ class SocialFeedScrollView extends ConsumerWidget {
                   );
                   if (postIdx != null) {
                     final card = SocialCdsPostShell(
-                      child: SocialInstagramPostCard(
-                        post: posts[postIdx],
-                      ),
+                      child: SocialInstagramPostCard(post: posts[postIdx]),
                     );
                     if (postIdx < 8) {
                       return ScrollPerf.item(

@@ -51,4 +51,12 @@ abstract final class CanlifalBrandColors {
     end: Alignment.bottomRight,
     colors: [violet, turquoise],
   );
+
+  /// İzlenmemiş hikâye halkası.
+  static const storyRingGradient = LinearGradient(
+    begin: Alignment.topRight,
+    end: Alignment.bottomLeft,
+    colors: [Color(0xFFFF4D7E), violet, turquoise],
+    stops: [0.0, 0.6, 1.0],
+  );
 }

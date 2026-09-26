@@ -2,14 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../images/canlifal_image_urls.dart';
 import '../images/canlifal_network_image.dart';
-import '../theme/app_theme.dart';
+import '../theme/app_theme_extensions.dart';
 
 class UserAvatar extends StatelessWidget {
-  const UserAvatar({
-    super.key,
-    this.url,
-    this.radius = 22,
-  });
+  const UserAvatar({super.key, this.url, this.radius = 22});
 
   final String? url;
   final double radius;
@@ -26,19 +22,20 @@ class UserAvatar extends StatelessWidget {
           height: side,
           fit: BoxFit.cover,
           thumbnailWidth: CanlifalImageUrls.avatarThumbnailWidth,
-          errorWidget: _fallback(),
-          placeholder: _fallback(),
+          errorWidget: _fallback(context),
+          placeholder: _fallback(context),
         ),
       );
     }
-    return _fallback();
+    return _fallback(context);
   }
 
-  Widget _fallback() {
+  Widget _fallback(BuildContext context) {
+    final c = context.colors;
     return CircleAvatar(
       radius: radius,
-      backgroundColor: AppTheme.surfaceElevated,
-      child: Icon(Icons.person, color: AppTheme.muted, size: radius),
+      backgroundColor: c.isDark ? c.surfaceElevated : c.surfaceContainer,
+      child: Icon(Icons.person, color: c.onSurfaceMuted, size: radius),
     );
   }
 }

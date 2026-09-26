@@ -82,7 +82,9 @@ class _SocialPostCaptionState extends State<SocialPostCaption> {
               child: Text(
                 'daha fazla',
                 style: TextStyle(
-                  color: AppThemeColors.accentCyan,
+                  color: context.isDarkTheme
+                      ? AppThemeColors.accentCyan
+                      : context.colors.secondary,
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
                 ),
@@ -149,7 +151,9 @@ class _SocialPostTextPreviewState extends State<SocialPostTextPreview> {
             child: Text(
               'daha fazla',
               style: TextStyle(
-                color: AppThemeColors.accentCyan,
+                color: context.isDarkTheme
+                    ? AppThemeColors.accentCyan
+                    : context.colors.secondary,
                 fontWeight: FontWeight.w700,
                 fontSize: 14,
               ),

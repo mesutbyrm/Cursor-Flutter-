@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.607+658 (2026-09-27) — UI yenileme Aşama 2: sosyal akış + hikâyeler
+
+- **Hikâye izleyici hataları:** basılı tutup bırakınca hikâye baştan başlıyordu; videoda duraklat/devam çift dinleyici ekleyip hikâye atlatabiliyordu; ilerleme her 50 ms'de tüm sayfayı yeniden çiziyordu; görsel yüklenmeden süre işliyordu
+- **Hikâye izleyici:** akıcı ilerleme çubuğu (tek hikâyede de), kişiden kişiye geçiş, kaydırarak kişi değiştirme, aşağı kaydır → kapat, avatar + zaman, tam çözünürlük görsel, arka plana geçince duraklat
+- **Hikâye şeridi:** ana sayfa ve Keşfet tek bileşende; izlenen/izlenmemiş halka (cihazda kayıtlı), izlenmemişler önde, iskelet yükleme; ana sayfadaki sürekli nabız animasyonu kaldırıldı
+- **Gönderi kartı:** blur'lu 3 katlı kart → tek düz yüzey (kaydırma performansı); görsele çift dokun → beğen; "⋯" menüsü (Profili gör, Paylaş, Sil); daha büyük dokunma alanları
+- **Açık tema:** paylaşım kutusunda yazılan metin, metin-only gönderiler, etiketleme/duygu sayfaları ve bağlantı renkleri okunmuyordu
+- **Sosyal sayfa:** kısayollar + paylaşım kutusu akışla birlikte kayar (akışa daha çok yer)
+
 ## 1.0.606+657 (2026-09-26) — UI yenileme: tasarım sistemi + ana sayfa/alt navigasyon
 
 - **Tasarım sistemi:** tek marka paleti (derin siyah + antrasit, mor + turkuaz); 5 çakışan palet tek kaynağa bağlandı; Material 3 bileşen temaları
