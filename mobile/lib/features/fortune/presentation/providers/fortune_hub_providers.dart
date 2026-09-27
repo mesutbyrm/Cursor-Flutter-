@@ -34,14 +34,17 @@ class FortuneDailyInsights {
   final String? horoscopeText;
   final String? zodiacSign;
 
+  /// Doğum profili yokken: burca bağlı alanlar (renk, burç mesajı) boş;
+  /// kart bunları gizler. Eskiden herkese sabit "Mor" ve genel bir mesaj
+  /// gösteriliyordu.
   static FortuneDailyInsights fallback() {
     final now = DateTime.now();
     return FortuneDailyInsights(
-      energyLabel: 'Yüksek',
-      luckyColor: 'Mor',
+      energyLabel: _energyFor(now),
+      luckyColor: '',
       luckyNumber: '${(now.day + now.month) % 9 + 1}',
-      moonPhase: _moonPhaseFor(now),
-      burcMessage: 'Bugün iç sesine kulak ver.',
+      moonPhase: fortuneMoonPhaseFor(now),
+      burcMessage: '',
     );
   }
 }
@@ -51,7 +54,7 @@ final fortuneDailyInsightsProvider =
   final profile = await ref.watch(fortuneBirthProfileProvider.future);
   final now = DateTime.now();
   final luckyNumber = '${(now.day + now.month) % 9 + 1}';
-  final moonPhase = _moonPhaseFor(now);
+  final moonPhase = fortuneMoonPhaseFor(now);
 
   if (profile == null) {
     return FortuneDailyInsights.fallback();
@@ -65,7 +68,8 @@ final fortuneDailyInsightsProvider =
 
   final message = horoscope != null && horoscope.trim().isNotEmpty
       ? _firstSentence(horoscope)
-      : 'Bugün $zodiac.sign burcu için yeni bir kapı açılıyor.';
+      // `$zodiac.sign` nesneyi yazdırıyordu ("Instance of …".sign).
+      : 'Bugün ${zodiac.sign} burcu için yeni bir kapı açılıyor.';
 
   return FortuneDailyInsights(
     energyLabel: _energyFor(now),
@@ -103,7 +107,8 @@ String _colorForSign(String sign) => switch (sign) {
       _ => 'Mor',
     };
 
-String _moonPhaseFor(DateTime date) {
+/// Ay evresi — tarihten astronomik hesap (ağ gerekmez).
+String fortuneMoonPhaseFor(DateTime date) {
   const phases = [
     'Yeni Ay',
     'Hilal',

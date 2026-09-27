@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.614+665 (2026-09-27) — Fal "Günlük Enerjin": uydurma yedek değerler kaldırıldı
+
+- **Uydurma değerler:** kartlar yüklenirken ve hata durumunda sabit "Yüksek / Mor / 7 / Şişkin Ay / Bugün iç sesine kulak ver" gösteriliyordu → yüklenirken iskelet, hatada "Tekrar dene"
+- **Doğum profili yok:** herkese sabit "Mor" şanslı renk ve genel burç mesajı gösteriliyordu → burca bağlı kartlar gizli (ay evresi gibi hesaplanabilen kartlar görünür)
+- **Hatalı metin:** burç yorumu gelmezse mesaj "Bugün Instance of 'FortuneZodiac'.sign burcu…" olarak çıkıyordu → burç adı yazıyor
+- **Hero:** yüklenirken "Yüksek" yerine "—"; ay evresi tarihten hesaplanıyor
+
 ## 1.0.613+664 (2026-09-27) — Fal yüzdeleri kaldırıldı, sosyal hikâye şeridi
 
 - **Uydurma yüzdeler kaldırıldı:** fal sonuç kartındaki "Enerji / Aşk / Para / Kariyer / Şans %" değerleri sunucudan gelmiyor, özet metninin hash'inden üretiliyordu → kaldırıldı (`FortuneEnergyScores` silindi)

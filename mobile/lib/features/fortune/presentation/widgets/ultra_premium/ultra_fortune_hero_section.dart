@@ -28,8 +28,10 @@ class UltraFortuneHeroSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final insights = ref.watch(fortuneDailyInsightsProvider);
-    final energy = insights.valueOrNull?.energyLabel ?? 'Yüksek';
-    final moon = insights.valueOrNull?.moonPhase ?? 'Şişkin Ay';
+    // Yüklenirken uydurma "Yüksek" yerine "—"; ay evresi hesapla bilinir.
+    final energy = insights.valueOrNull?.energyLabel ?? '—';
+    final moon =
+        insights.valueOrNull?.moonPhase ?? fortuneMoonPhaseFor(DateTime.now());
     final ballSize = _ballSize(context);
     final ballBoxHeight = ballSize * 1.02;
 
