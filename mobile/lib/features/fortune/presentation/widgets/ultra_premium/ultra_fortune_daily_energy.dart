@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/design_system/cds_skeleton.dart';
 import '../../data/fortune_catalog.dart';
 import '../../providers/fortune_hub_providers.dart';
 import '../../data/fortune_type_images.dart';
@@ -18,12 +19,14 @@ class UltraFortuneDailyEnergy extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final insights = ref.watch(fortuneDailyInsightsProvider);
 
+    // Yüklenirken/hata durumunda uydurma değerler ("Yüksek", "Mor", "7")
+    // gösterilmez: iskelet ya da tekrar dene.
     return insights.when(
-      loading: () => _DailyEnergyBody(
-        items: _EnergyItem.fallback(),
-      ),
+      skipLoadingOnRefresh: true,
+      loading: () => const _DailyEnergyBody(items: null),
       error: (_, _) => _DailyEnergyBody(
-        items: _EnergyItem.fallback(),
+        items: const [],
+        onRetry: () => ref.invalidate(fortuneDailyInsightsProvider),
       ),
       data: (data) => _DailyEnergyBody(
         items: _EnergyItem.fromInsights(data),
@@ -33,9 +36,11 @@ class UltraFortuneDailyEnergy extends ConsumerWidget {
 }
 
 class _DailyEnergyBody extends StatelessWidget {
-  const _DailyEnergyBody({required this.items});
+  const _DailyEnergyBody({required this.items, this.onRetry});
 
-  final List<_EnergyItem> items;
+  /// null → yükleniyor (iskelet).
+  final List<_EnergyItem>? items;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -76,20 +81,43 @@ class _DailyEnergyBody extends StatelessWidget {
         ),
         SizedBox(
           height: 132,
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            itemCount: items.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 12),
-            itemBuilder: (context, index) {
-              final card = items[index];
-              return _EnergyCrystalCard(
-                item: card,
-                onTap: () => context.push(card.route),
-              );
-            },
-          ),
+          child: switch (items) {
+            null => ExcludeSemantics(
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  scrollDirection: Axis.horizontal,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: 4,
+                  separatorBuilder: (_, _) => const SizedBox(width: 12),
+                  itemBuilder: (_, _) => CdsSkeleton.box(
+                    width: 128,
+                    height: 132,
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                ),
+              ),
+            final list when list.isEmpty => Center(
+                child: TextButton.icon(
+                  onPressed: onRetry,
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Günlük enerji yüklenemedi · Tekrar dene'),
+                ),
+              ),
+            final list => ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                itemCount: list.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 12),
+                itemBuilder: (context, index) {
+                  final card = list[index];
+                  return _EnergyCrystalCard(
+                    item: card,
+                    onTap: () => context.push(card.route),
+                  );
+                },
+              ),
+          },
         ),
       ],
     );
@@ -112,49 +140,6 @@ class _EnergyItem {
   final Color color;
   final String coverSlug;
   final String route;
-
-  static List<_EnergyItem> fallback() => [
-        (
-          label: 'Enerji',
-          value: 'Yüksek',
-          icon: Icons.bolt_rounded,
-          color: Color(0xFFFBBF24),
-          coverSlug: 'gunluk-fal',
-          route: '/fortune/gunluk-fal',
-        ),
-        (
-          label: 'Şanslı Renk',
-          value: 'Mor',
-          icon: Icons.diamond_rounded,
-          color: UltraFortuneTokens.softLilac,
-          coverSlug: 'aura-analizi',
-          route: '/fortune/gunluk-fal',
-        ),
-        (
-          label: 'Şanslı Sayı',
-          value: '7',
-          icon: Icons.eco_rounded,
-          color: Color(0xFF4ADE80),
-          coverSlug: 'numeroloji',
-          route: '/fortune/gunluk-fal',
-        ),
-        (
-          label: 'Ay Evresi',
-          value: 'Şişkin Ay',
-          icon: Icons.nightlight_round,
-          color: UltraFortuneTokens.metallicGold,
-          coverSlug: 'yildiz-haritasi',
-          route: '/fortune/yildiz-haritasi',
-        ),
-        (
-          label: 'Burç Mesajı',
-          value: 'Bugün iç sesine kulak ver',
-          icon: Icons.star_rounded,
-          color: UltraFortuneTokens.electricPurple,
-          coverSlug: 'yildiz-haritasi',
-          route: '/fortune/yildiz-haritasi',
-        ),
-      ].map(_fromRecord).toList();
 
   static List<_EnergyItem> fromInsights(FortuneDailyInsights data) => [
         (
@@ -197,7 +182,10 @@ class _EnergyItem {
           coverSlug: 'yildiz-haritasi',
           route: '/fortune/yildiz-haritasi',
         ),
-      ].map(_fromRecord).toList();
+      ]
+          .where((r) => r.value.trim().isNotEmpty)
+          .map(_fromRecord)
+          .toList();
 
   static _EnergyItem _fromRecord(
     ({
