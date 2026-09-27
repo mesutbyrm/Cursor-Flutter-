@@ -1,21 +1,29 @@
 import 'package:flutter/foundation.dart';
 
-/// Google AdMob yapılandırması — test birimleri debug/profile, üretim CI ile değiştirilebilir.
+/// Google AdMob — Canlifal üretim birimleri (AdMob konsolu).
 abstract final class AdMobConfig {
-  /// Android uygulama kimliği (AndroidManifest meta-data ile aynı olmalı).
-  static const androidAppId = 'ca-app-pub-3940256099942544~3347511713';
+  /// Canlifal Android uygulama kimliği (AndroidManifest ile aynı).
+  static const productionAndroidAppId =
+      'ca-app-pub-1362974509433002~1394571120';
 
-  /// Ödüllü reklam birimi — Google test ID (gerçek ID CI / dart-define ile).
+  /// Canlifal ödüllü reklam birimi (AdMob → Ödüllü).
+  static const productionRewardedAdUnitId =
+      'ca-app-pub-1362974509433002/8698346072';
+
+  /// Google resmi test kimlikleri — debug/profile geliştirme.
+  static const testAndroidAppId = 'ca-app-pub-3940256099942544~3347511713';
+  static const testRewardedAdUnitId =
+      'ca-app-pub-3940256099942544/5224354917';
+
+  static const androidAppId = productionAndroidAppId;
+
   static String get rewardedAdUnitId {
-    const prod = String.fromEnvironment(
+    const override = String.fromEnvironment(
       'ADMOB_REWARDED_UNIT_ID',
       defaultValue: '',
     );
-    if (prod.isNotEmpty) return prod;
-    if (kReleaseMode) {
-      // Üretimde gerçek birim tanımlanana kadar test birimi (geliştirme APK).
-      return 'ca-app-pub-3940256099942544/5224354917';
-    }
-    return 'ca-app-pub-3940256099942544/5224354917';
+    if (override.isNotEmpty) return override;
+    if (kDebugMode || kProfileMode) return testRewardedAdUnitId;
+    return productionRewardedAdUnitId;
   }
 }

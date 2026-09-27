@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.617+668 (2026-09-27) — AdMob ödüllü reklam (Canlifal)
+
+- **Üretim birimleri:** Android App ID `~1394571120`, ödüllü birim `/8698346072` (AdMob konsolu)
+- **Debug/profile:** Google test reklam birimleri (gerçek tıklama/izlenme üretim hesabına gitmesin)
+- **Kullanım:** Fal kapısı, büyüme merkezi, falcı bekleme, `RewardedAdService` — mevcut akışlar aynı birimi kullanır
+
 ## 1.0.616+667 (2026-09-27) — Sesli oda, PK, DM (APK paketi)
 
 - **Sesli oda mikrofon rozeti:** `isMicOn` yokken herkes susturulmuş sayılıyordu → bilinmeyen durumda koltukta açık; TRTC aç/kapa `applySelfMicOpen`
