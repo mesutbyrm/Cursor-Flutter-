@@ -1,7 +1,10 @@
 import 'package:flutter/foundation.dart';
 
 /// Google AdMob — Canlifal üretim birimleri (AdMob konsolu).
+///
+/// Yayıncı doğrulama: repo kökü `app-ads.txt` → https://canlifal.com/app-ads.txt
 abstract final class AdMobConfig {
+  static const adsTxtPublisherId = 'pub-1362974509433002';
   /// Canlifal Android uygulama kimliği (AndroidManifest ile aynı).
   static const productionAndroidAppId =
       'ca-app-pub-1362974509433002~1394571120';
