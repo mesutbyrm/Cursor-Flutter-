@@ -1,10 +1,6 @@
-import 'package:json_annotation/json_annotation.dart';
 import '../../domain/entities/zodiac_sign.dart';
 import '../../domain/entities/compatibility_entity.dart';
 
-part 'compatibility_dto.g.dart';
-
-@JsonSerializable()
 class CompatibilityScoreDTO {
   final String sign1;
   final String sign2;
@@ -24,10 +20,27 @@ class CompatibilityScoreDTO {
     required this.description,
   });
 
-  factory CompatibilityScoreDTO.fromJson(Map<String, dynamic> json) =>
-      _$CompatibilityScoreDTOFromJson(json);
+  factory CompatibilityScoreDTO.fromJson(Map<String, dynamic> json) {
+    return CompatibilityScoreDTO(
+      sign1: json['sign1'] as String? ?? 'aries',
+      sign2: json['sign2'] as String? ?? 'taurus',
+      overallScore: json['overallScore'] as int? ?? 0,
+      emotionalScore: json['emotionalScore'] as int? ?? 0,
+      intellectualScore: json['intellectualScore'] as int? ?? 0,
+      physicalScore: json['physicalScore'] as int? ?? 0,
+      description: json['description'] as String? ?? '',
+    );
+  }
 
-  Map<String, dynamic> toJson() => _$CompatibilityScoreDTOToJson(this);
+  Map<String, dynamic> toJson() => {
+    'sign1': sign1,
+    'sign2': sign2,
+    'overallScore': overallScore,
+    'emotionalScore': emotionalScore,
+    'intellectualScore': intellectualScore,
+    'physicalScore': physicalScore,
+    'description': description,
+  };
 
   CompatibilityScore toDomain() => CompatibilityScore(
     sign1: ZodiacSign.fromString(sign1) ?? ZodiacSign.aries,
@@ -40,7 +53,6 @@ class CompatibilityScoreDTO {
   );
 }
 
-@JsonSerializable()
 class DailyCompatibilityDTO {
   final String sign1;
   final String sign2;
@@ -58,10 +70,25 @@ class DailyCompatibilityDTO {
     required this.bestHours,
   });
 
-  factory DailyCompatibilityDTO.fromJson(Map<String, dynamic> json) =>
-      _$DailyCompatibilityDTOFromJson(json);
+  factory DailyCompatibilityDTO.fromJson(Map<String, dynamic> json) {
+    return DailyCompatibilityDTO(
+      sign1: json['sign1'] as String? ?? 'aries',
+      sign2: json['sign2'] as String? ?? 'taurus',
+      date: json['date'] as String? ?? DateTime.now().toIso8601String(),
+      dailyScore: json['dailyScore'] as int? ?? 0,
+      daytip: json['daytip'] as String? ?? '',
+      bestHours: json['bestHours'] as String? ?? '',
+    );
+  }
 
-  Map<String, dynamic> toJson() => _$DailyCompatibilityDTOToJson(this);
+  Map<String, dynamic> toJson() => {
+    'sign1': sign1,
+    'sign2': sign2,
+    'date': date,
+    'dailyScore': dailyScore,
+    'daytip': daytip,
+    'bestHours': bestHours,
+  };
 
   DailyCompatibility toDomain() => DailyCompatibility(
     sign1: ZodiacSign.fromString(sign1) ?? ZodiacSign.aries,
