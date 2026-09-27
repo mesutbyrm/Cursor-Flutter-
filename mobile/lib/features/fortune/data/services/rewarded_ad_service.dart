@@ -15,6 +15,21 @@ class RewardedAdService {
   RewardedInterstitialAd? _ad;
   bool _loading = false;
 
+  /// SSV (sunucu taraflı doğrulama) için oturumdaki kullanıcı kimliği.
+  /// AdMob bunu `user_id` olarak https://canlifal.com/api/ads/reward-callback'e iletir.
+  String? _ssvUserId;
+
+  void setUserId(String? userId) {
+    _ssvUserId = (userId == null || userId.isEmpty) ? null : userId;
+    _applySsv(_ad);
+  }
+
+  void _applySsv(RewardedInterstitialAd? ad) {
+    final uid = _ssvUserId;
+    if (ad == null || uid == null) return;
+    ad.setServerSideOptions(ServerSideVerificationOptions(userId: uid));
+  }
+
   static Future<void> ensureInitialized() async {
     if (kIsWeb) return;
     if (_sdkReady) return;
@@ -42,6 +57,7 @@ class RewardedAdService {
         rewardedInterstitialAdLoadCallback: RewardedInterstitialAdLoadCallback(
           onAdLoaded: (ad) {
             _ad = ad;
+            _applySsv(ad);
             _loading = false;
             if (!completer.isCompleted) completer.complete();
           },
@@ -67,6 +83,8 @@ class RewardedAdService {
 
     final ad = _ad;
     if (ad == null) return false;
+
+    _applySsv(ad);
 
     final completer = Completer<bool>();
     var rewarded = false;
