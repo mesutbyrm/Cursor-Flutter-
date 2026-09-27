@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../../../../core/config/app_signature.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/config/google_auth_config.dart';
 import '../../../../core/network/api_endpoints.dart';
@@ -44,11 +45,14 @@ class NativeAuthDataSource {
         );
       }
       if (code.contains('sign_in_failed') || code.contains('10')) {
+        final sha1 = await AppSignature.sha1();
         throw ApiException(
-          'Google giriş başarısız (SHA-1 / OAuth yapılandırması). '
-          'Firebase Console\'da Android uygulamasına debug ve release SHA-1 '
-          'parmak izlerini ekleyin.\n\n'
-          'cd mobile/android && ./gradlew signingReport',
+          'Google giriş başarısız (SHA-1 / OAuth yapılandırması).\n\n'
+          '${sha1 != null ? 'Bu uygulamanın imza SHA-1 değeri:\n$sha1\n\n' : ''}'
+          'Firebase Console → Proje ayarları → Android uygulaması → '
+          '"Parmak izi ekle" bölümüne bu SHA-1 değerini ekleyin, '
+          'güncel google-services.json dosyasını indirip uygulamayı '
+          'yeniden derleyin.',
         );
       }
       throw ApiException(

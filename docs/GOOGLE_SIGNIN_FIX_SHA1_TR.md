@@ -47,3 +47,41 @@ https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlif
 | Play App Signing | Play Console → Uygulama imzalama |
 
 İkisi de Firebase **Proje ayarları** → Android uygulaması → **Parmak izi ekle** altında olmalı.
+
+## Güncelleme (2026-09-27) — 3 parmak izi zorunlu
+
+`mobile/android/app/google-services.json` içinde şu an **yalnızca 1 adet** SHA-1
+kayıtlı (`45:3B:96:...:43:99` = upload/release keystore). Bu nedenle Google girişi
+**yalnızca** CI'nin ürettiği release APK'da çalışır; aşağıdaki iki kurulum biçiminde
+`ApiException 10 / DEVELOPER_ERROR` verir:
+
+| Kurulum biçimi | İmzalayan | Şu an çalışır mı? |
+|---|---|---|
+| `apk-latest` release APK (CI) | Upload keystore `45:3B:…:43:99` | ✅ Evet |
+| Play Store'dan kurulum | **Play App Signing** (Google yeniden imzalar) | ❌ Hayır |
+| `flutter run` / `apk-debug-latest` | Debug keystore | ❌ Hayır |
+
+### Yapılması gerekenler
+
+Firebase Console → **Proje ayarları** → Android uygulaması (`com.mesutbyrm.canlifal`)
+→ **Parmak izi ekle**. Şu üç SHA-1'in hepsi kayıtlı olmalı:
+
+1. `45:3B:96:93:AF:D0:A1:7E:6C:06:87:B1:03:67:8A:3C:EB:C2:43:99` (upload keystore — zaten var)
+2. **Play App Signing SHA-1** → Play Console → Sürüm → Kurulum → **Uygulama imzalama**
+3. **Debug SHA-1** → `cd mobile/android && ./gradlew signingReport`
+
+Sonra `google-services.json` dosyasını **yeniden indirip** `GOOGLE_SERVICES_JSON_BASE64`
+secret'ını güncelleyin ve **Actions → Build release APK** iş akışını çalıştırın.
+
+### Cihazdaki APK'nın gerçek SHA-1'ini öğrenme
+
+Artık uygulama, Google giriş hatası verdiğinde **kendi imza SHA-1'ini** hata
+mesajında gösteriyor (`AppSignature` + `app_signature` MethodChannel). Ekranda
+görünen değeri doğrudan Firebase'e ekleyebilirsiniz.
+
+Bilgisayardan kontrol:
+
+```bash
+bash scripts/verify-google-signin-config.sh                 # kayıtlı SHA sayısı + uyarılar
+bash scripts/verify-google-signin-config.sh /yol/uygulama.apk   # APK'nın imza SHA-1'i
+```
