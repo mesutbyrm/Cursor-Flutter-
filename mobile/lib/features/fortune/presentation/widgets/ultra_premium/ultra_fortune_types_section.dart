@@ -23,6 +23,9 @@ class UltraFortuneTypesSection extends ConsumerStatefulWidget {
 class _UltraFortuneTypesSectionState extends ConsumerState<UltraFortuneTypesSection>
     with SingleTickerProviderStateMixin {
   late final AnimationController _stagger;
+  // Kart başına stagger animasyonu tek sefer üretilir; itemBuilder içinde
+  // CurvedAnimation üretmek her kaydırmada controller'a listener eklerdi.
+  final Map<int, CurvedAnimation> _itemCurves = {};
 
   @override
   void initState() {
@@ -33,8 +36,22 @@ class _UltraFortuneTypesSectionState extends ConsumerState<UltraFortuneTypesSect
     )..forward();
   }
 
+  CurvedAnimation _staggerFor(int index) {
+    return _itemCurves.putIfAbsent(index, () {
+      final start = (index * 0.08).clamp(0.0, 0.84);
+      return CurvedAnimation(
+        parent: _stagger,
+        curve: Interval(start, 1.0, curve: Curves.easeOutCubic),
+      );
+    });
+  }
+
   @override
   void dispose() {
+    for (final c in _itemCurves.values) {
+      c.dispose();
+    }
+    _itemCurves.clear();
     _stagger.dispose();
     super.dispose();
   }
@@ -158,15 +175,7 @@ class _UltraFortuneTypesSectionState extends ConsumerState<UltraFortuneTypesSect
                 itemCount: preview.length,
                 itemBuilder: (context, index) {
                   final e = preview[index];
-                  final start = (index * 0.08).clamp(0.0, 0.84);
-                  final anim = CurvedAnimation(
-                    parent: _stagger,
-                    curve: Interval(
-                      start,
-                      1.0,
-                      curve: Curves.easeOutCubic,
-                    ),
-                  );
+                  final anim = _staggerFor(index);
                   return AnimatedBuilder(
                     animation: anim,
                     builder: (_, child) => Transform.translate(

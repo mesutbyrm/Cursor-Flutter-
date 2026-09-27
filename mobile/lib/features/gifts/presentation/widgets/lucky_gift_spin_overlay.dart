@@ -49,6 +49,7 @@ class _LuckyGiftSpinOverlay extends ConsumerStatefulWidget {
 class _LuckyGiftSpinOverlayState extends ConsumerState<_LuckyGiftSpinOverlay>
     with SingleTickerProviderStateMixin {
   late final AnimationController _spin;
+  late final Animation<double> _turns;
   bool _revealed = false;
 
   @override
@@ -62,6 +63,9 @@ class _LuckyGiftSpinOverlayState extends ConsumerState<_LuckyGiftSpinOverlay>
           setState(() => _revealed = true);
         }
       });
+    _turns = Tween(begin: 0.0, end: 3.0).animate(
+      CurvedAnimation(parent: _spin, curve: Curves.easeInOut),
+    );
     _spin.forward();
   }
 
@@ -114,9 +118,7 @@ class _LuckyGiftSpinOverlayState extends ConsumerState<_LuckyGiftSpinOverlay>
               children: [
                 if (!_revealed)
                   RotationTransition(
-                    turns: Tween(begin: 0.0, end: 3.0).animate(
-                      CurvedAnimation(parent: _spin, curve: Curves.easeInOut),
-                    ),
+                    turns: _turns,
                     child: Text(
                       r.icon ?? '🎁',
                       style: const TextStyle(fontSize: 64),
