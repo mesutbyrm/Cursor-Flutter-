@@ -4,24 +4,18 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.609+660` |
-| Tarih (UTC) | 2026-09-27 01:11 |
-| Commit | [`9c73fbeaf4a6e813205beea6d5ca9b74c96db9e9`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/9c73fbeaf4a6e813205beea6d5ca9b74c96db9e9) |
-| İş akışı | [Run 36282959068](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36282959068) |
+| Sürüm | `1.0.613+664` |
+| Tarih (UTC) | 2026-09-27 09:54 |
+| Commit | [`439a69b26d4e148f4dd44ba4caafb89ca18b40ca`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/439a69b26d4e148f4dd44ba4caafb89ca18b40ca) |
+| İş akışı | [Run 36309652317](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36309652317) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.609+660 (2026-09-27) — UI yenileme Aşama 4: fal türleri + fal sonuç ekranları
+## 1.0.613+664 (2026-09-27) — Fal yüzdeleri kaldırıldı, sosyal hikâye şeridi
 
-- **Çalışmayan buton:** kahve/el falında fotoğraf eklenmemişken "Falını Aç" ve üstteki ✦ hiçbir şey yapmıyordu → artık fotoğraf ekleme sayfasını açıyor, fotoğraflar tamamlanınca falı açıyor
-- **Taşma:** kahve falı fotoğraf kutucuklarının başlığı ~390 dp ekranlarda 33 px taşıyordu
-- **Sonuç başlıkları:** tarot vb. bölümlerde sunucu başlığı ("Geçmiş/Şimdi/Gelecek") yerine hepsine "Yorum" yazılıyordu
-- **Açık tema:** fal bölümü her temada koyu mistik zemin çiziyor; içindeki kartlar/başlıklar açık tema rengi alıp çakışıyordu → fal bölümüne koyu tema kapsamı (koyu/AMOLED kullanıcıda değişiklik yok)
-- **Kart çevirme:** kehanet kartı çevrilirken kalkıyor, gölgesi büyüyor, yüzeyinden ışık geçiyor; "animasyonları azalt"ta anında
-- **Görsel önbelleği:** disk boyutlandırma parametreleri desteklenmeyen önbellek yöneticisiyle kullanılıyordu (release'de yok sayılıyor, debug'da hata) → kaldırıldı; ön-yükleme bellek boyutlandırması `ResizeImage` ile
-- **Ölü kod:** hiçbir yerden açılmayan 17 fal "ekranı" + 17 sağlayıcı + 3 model silindi (6.901 satır, sahte butonlar içeriyordu)
-- **Yükleme:** "Son Falların" şeridi dönen simge yerine iskelet kartlar
+- **Uydurma yüzdeler kaldırıldı:** fal sonuç kartındaki "Enerji / Aşk / Para / Kariyer / Şans %" değerleri sunucudan gelmiyor, özet metninin hash'inden üretiliyordu → kaldırıldı (`FortuneEnergyScores` silindi)
+- **Hikâye şeridi sosyal akışta:** şerit akışın en üstünde, akışla birlikte kayar; aşağı çekince yenilenir; giriş yapmış kullanıcı "Hikâyen" halkasından hikâye ekler (izlenmemişler önde, izlenenler soluk)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
