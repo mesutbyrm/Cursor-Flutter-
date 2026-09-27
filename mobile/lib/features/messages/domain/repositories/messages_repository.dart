@@ -41,4 +41,19 @@ abstract class MessagesRepository {
 
   /// Tüm DM konuşmalarını okundu işaretle (sunucu PATCH yoksa thread GET yedeği).
   Future<void> markAllConversationsRead({String? currentUserId});
+
+  /// Gelen kutusunda bekleyen mesaj isteklerini getirir.
+  Future<List<MessageRequestEntity>> pendingMessageRequests({
+    bool forceRefresh = true,
+  });
+
+  /// Karşı tarafa mesaj isteği gönderir.
+  Future<void> sendMessageRequest(String receiverId, {String? message});
+
+  /// Bekleyen bir mesaj isteğini kabul eder ya da reddeder.
+  Future<void> respondMessageRequest(
+    String requestId, {
+    required bool accept,
+    String? currentUserId,
+  });
 }

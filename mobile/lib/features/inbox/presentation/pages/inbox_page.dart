@@ -11,6 +11,7 @@ import '../../../messages/presentation/providers/conversations_list_notifier.dar
 import '../../../messages/presentation/providers/messages_providers.dart';
 import '../../../messages/presentation/providers/messages_mark_read_providers.dart';
 import '../../../messages/presentation/widgets/conversations_list_sliver.dart';
+import '../../../messages/presentation/widgets/message_requests_sliver.dart';
 import '../../../notifications/presentation/providers/notifications_list_notifier.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';
 import '../../domain/inbox_tab.dart';
@@ -103,6 +104,7 @@ class _InboxPageState extends ConsumerState<InboxPage> {
       ref.read(notificationsListNotifierProvider.notifier).refresh(),
     ]);
     ref.invalidate(conversationsProvider);
+    ref.invalidate(pendingMessageRequestsProvider);
     ref.invalidate(notificationsListProvider);
     ref.invalidate(notificationsUnreadApiProvider);
   }
@@ -214,9 +216,12 @@ class _InboxPageState extends ConsumerState<InboxPage> {
               onSystem: () => _selectTab(InboxTab.system),
             ),
           ),
+          const MessageRequestsSliver(),
           InboxAllFeedSliver(query: _query, unreadOnly: _unreadOnly),
-        ] else
+        ] else ...[
+          const MessageRequestsSliver(),
           ConversationsListSliver(query: _query, unreadOnly: _unreadOnly),
+        ],
       ],
     );
   }
