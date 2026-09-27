@@ -640,6 +640,13 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
           );
       _clearPendingSeatForUser(userId);
       seatLock.release(userId, 'leave');
+      // Koltuktan kalkış bilinçliyse hatırlanan koltuk temizlenir; aksi
+      // halde heartbeat sonrası yeniden katılım kullanıcıyı aynı koltuğa
+      // geri oturtuyordu.
+      final selfId = ref.read(authControllerProvider).valueOrNull?.id;
+      if (selfId != null && selfId == userId) {
+        _lastConfirmedSelfSeatIndex = null;
+      }
       await refresh();
       return null;
     } catch (e) {
