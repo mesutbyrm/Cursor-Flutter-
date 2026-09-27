@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.616+667 (2026-09-27) — Sesli oda, PK, DM (APK paketi)
+
+- **Sesli oda mikrofon rozeti:** `isMicOn` yokken herkes susturulmuş sayılıyordu → bilinmeyen durumda koltukta açık; TRTC aç/kapa `applySelfMicOpen`
+- **Konuşma halkası:** TRTC volume/VAD → koltuk animasyonu (`voiceRoomTrtcSpeakingIdsProvider`)
+- **Koltuk stabilitesi:** `seatSlots` haritası + snapshot’ta `seatIndex` koruma; heartbeat’te güncel koltuk; `seatIndex: -1` dinleyici; koltuk bırakınca son koltuk hafızası temizlenir
+- **PK:** sağ rail **PK** düğmesi; video PK ucu 404 olunca `/api/live/pk` yedeği artık çağrılıyor
+- **DM:** SSE doğru konuşma stream ucu; gelen kutusunda bekleyen mesaj istekleri (Kabul/Reddet)
+
 ## 1.0.614+665 (2026-09-27) — Fal "Günlük Enerjin": uydurma yedek değerler kaldırıldı
 
 - **Uydurma değerler:** kartlar yüklenirken ve hata durumunda sabit "Yüksek / Mor / 7 / Şişkin Ay / Bugün iç sesine kulak ver" gösteriliyordu → yüklenirken iskelet, hatada "Tekrar dene"
