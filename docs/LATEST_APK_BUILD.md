@@ -4,18 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.613+664` |
-| Tarih (UTC) | 2026-09-27 09:54 |
-| Commit | [`439a69b26d4e148f4dd44ba4caafb89ca18b40ca`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/439a69b26d4e148f4dd44ba4caafb89ca18b40ca) |
-| İş akışı | [Run 36309652317](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36309652317) |
+| Sürüm | `1.0.614+665` |
+| Tarih (UTC) | 2026-09-27 13:39 |
+| Commit | [`ca666c0227f369db8654855285169355082001a5`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/ca666c0227f369db8654855285169355082001a5) |
+| İş akışı | [Run 36321995253](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36321995253) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.613+664 (2026-09-27) — Fal yüzdeleri kaldırıldı, sosyal hikâye şeridi
+## 1.0.614+665 (2026-09-27) — Fal "Günlük Enerjin": uydurma yedek değerler kaldırıldı
 
-- **Uydurma yüzdeler kaldırıldı:** fal sonuç kartındaki "Enerji / Aşk / Para / Kariyer / Şans %" değerleri sunucudan gelmiyor, özet metninin hash'inden üretiliyordu → kaldırıldı (`FortuneEnergyScores` silindi)
-- **Hikâye şeridi sosyal akışta:** şerit akışın en üstünde, akışla birlikte kayar; aşağı çekince yenilenir; giriş yapmış kullanıcı "Hikâyen" halkasından hikâye ekler (izlenmemişler önde, izlenenler soluk)
+- **Uydurma değerler:** kartlar yüklenirken ve hata durumunda sabit "Yüksek / Mor / 7 / Şişkin Ay / Bugün iç sesine kulak ver" gösteriliyordu → yüklenirken iskelet, hatada "Tekrar dene"
+- **Doğum profili yok:** herkese sabit "Mor" şanslı renk ve genel burç mesajı gösteriliyordu → burca bağlı kartlar gizli (ay evresi gibi hesaplanabilen kartlar görünür)
+- **Hatalı metin:** burç yorumu gelmezse mesaj "Bugün Instance of 'FortuneZodiac'.sign burcu…" olarak çıkıyordu → burç adı yazıyor
+- **Hero:** yüklenirken "Yüksek" yerine "—"; ay evresi tarihten hesaplanıyor
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
