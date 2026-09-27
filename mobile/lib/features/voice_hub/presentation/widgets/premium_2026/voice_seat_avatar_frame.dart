@@ -143,25 +143,23 @@ class VoiceSeatAvatarFrame extends StatefulWidget {
 
 class _VoiceSeatAvatarFrameState extends State<VoiceSeatAvatarFrame>
     with TickerProviderStateMixin {
-  late final AnimationController _spin;
-  late final AnimationController _pulse;
-  late final AnimationController _orbit;
+  // Yalnızca gerektiğinde çalışır: dönen halka rol çerçevelerinde, nabız
+  // konuşurken. Eskiden her koltukta (konuk dahil) 3 denetleyici sürekli
+  // dönüyor ve 11 koltuk her karede yeniden çiziliyordu.
+  late final AnimationController _spin = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 6),
+  );
+  late final AnimationController _pulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  );
+  var _reduceMotion = false;
 
   @override
-  void initState() {
-    super.initState();
-    _spin = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 5),
-    )..repeat();
-    _pulse = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    );
-    _orbit = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 6),
-    );
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reduceMotion = MediaQuery.disableAnimationsOf(context);
     _syncAnimations();
   }
 
@@ -171,22 +169,22 @@ class _VoiceSeatAvatarFrameState extends State<VoiceSeatAvatarFrame>
     _syncAnimations();
   }
 
+  bool get _speakingNow => widget.speaking && widget.micOpen;
+
   void _syncAnimations() {
-    if (widget.speaking && widget.micOpen) {
+    if (_speakingNow && !_reduceMotion) {
       if (!_pulse.isAnimating) _pulse.repeat(reverse: true);
     } else {
-      _pulse.stop();
-      _pulse.value = 0;
+      _pulse
+        ..stop()
+        ..value = 0;
     }
-    if (widget.micOpen) {
-      if (!_orbit.isAnimating) _orbit.repeat();
-    } else {
-      _orbit.stop();
-      _orbit.value = 0;
-    }
-    if (SeatAvatarStyle.animatedRoleFrame(widget.role) && widget.micOpen) {
+    final spin = SeatAvatarStyle.animatedRoleFrame(widget.role) &&
+        widget.micOpen &&
+        !_reduceMotion;
+    if (spin) {
       if (!_spin.isAnimating) _spin.repeat();
-    } else if (!widget.micOpen) {
+    } else {
       _spin.stop();
     }
   }
@@ -195,7 +193,6 @@ class _VoiceSeatAvatarFrameState extends State<VoiceSeatAvatarFrame>
   void dispose() {
     _spin.dispose();
     _pulse.dispose();
-    _orbit.dispose();
     super.dispose();
   }
 
@@ -206,14 +203,14 @@ class _VoiceSeatAvatarFrameState extends State<VoiceSeatAvatarFrame>
     final accent = SeatAvatarStyle.accent(widget.role, micOpen: widget.micOpen);
     final gradient =
         SeatAvatarStyle.ringGradient(widget.role, micOpen: widget.micOpen);
-    final pulseScale = widget.speaking && widget.micOpen ? 1 + _pulse.value * 0.12 : 1.0;
+    final pulseScale = _speakingNow ? 1 + _pulse.value * 0.05 : 1.0;
     final glowBlur = widget.micOpen
-        ? (widget.speaking ? 16 + _pulse.value * 20 : 8.0)
+        ? (_speakingNow ? 12 + _pulse.value * 10 : 6.0)
         : 0.0;
 
     return RepaintBoundary(
       child: AnimatedBuilder(
-        animation: Listenable.merge([_spin, _pulse, _orbit]),
+        animation: Listenable.merge([_spin, _pulse]),
         builder: (context, child) {
           return Transform.scale(
             scale: pulseScale,
@@ -224,22 +221,13 @@ class _VoiceSeatAvatarFrameState extends State<VoiceSeatAvatarFrame>
                 alignment: Alignment.center,
                 clipBehavior: Clip.none,
                 children: [
-                  if (widget.speaking && widget.micOpen)
+                  if (_speakingNow)
                     CustomPaint(
                       size: Size(widget.size + 10, widget.size + 10),
                       painter: _SpeakingWavePainter(
-                        progress: _pulse.value,
+                        progress: _reduceMotion ? 0.35 : _pulse.value,
                         accent: accent,
                         baseRadius: widget.size / 2 + 2,
-                      ),
-                    ),
-                  if (widget.micOpen)
-                    CustomPaint(
-                      size: Size(widget.size + 8, widget.size + 8),
-                      painter: _OrbitingRingPainter(
-                        progress: _orbit.value,
-                        accent: accent,
-                        radius: widget.size / 2 + 3,
                       ),
                     ),
                   Container(
@@ -454,44 +442,6 @@ class _NeonRingPainter extends CustomPainter {
       oldDelegate.animated != animated;
 }
 
-class _OrbitingRingPainter extends CustomPainter {
-  _OrbitingRingPainter({
-    required this.progress,
-    required this.accent,
-    required this.radius,
-  });
-
-  final double progress;
-  final Color accent;
-  final double radius;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final paint = Paint()
-      ..color = accent.withValues(alpha: 0.75)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.6
-      ..strokeCap = StrokeCap.round;
-
-    const segments = 3;
-    for (var i = 0; i < segments; i++) {
-      final start = progress * math.pi * 2 + i * (math.pi * 2 / segments);
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
-        start,
-        math.pi / 3.5,
-        false,
-        paint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _OrbitingRingPainter oldDelegate) =>
-      oldDelegate.progress != progress;
-}
-
 class _SpeakingWavePainter extends CustomPainter {
   _SpeakingWavePainter({
     required this.progress,
@@ -509,7 +459,7 @@ class _SpeakingWavePainter extends CustomPainter {
 
     for (var i = 0; i < 3; i++) {
       final phase = (progress + i * 0.33) % 1.0;
-      final expand = phase * 14;
+      final expand = phase * 7;
       final alpha = (1 - phase) * 0.65;
       canvas.drawCircle(
         center,
@@ -524,7 +474,7 @@ class _SpeakingWavePainter extends CustomPainter {
     const barCount = 18;
     for (var i = 0; i < barCount; i++) {
       final angle = (i / barCount) * math.pi * 2;
-      final amp = 3 + math.sin((progress * math.pi * 2) + i * 0.55) * 9;
+      final amp = 2.5 + (math.sin((progress * math.pi * 2) + i * 0.55) + 1) * 2;
       final inner = baseRadius - 1;
       final outer = inner + amp;
       final p1 = Offset(

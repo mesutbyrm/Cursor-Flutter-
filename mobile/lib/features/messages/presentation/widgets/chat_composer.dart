@@ -6,11 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
 
+/// Ek menüsü eylemleri. DM API'si yalnızca metin taşır; bu yüzden yalnızca
+/// niyet/davet mesajları var. Fotoğraf, video, dosya, konum, GIF ve sticker
+/// seçenekleri hiçbir şey seçtirmeden "GIF gönderdi" gibi metin yolluyordu →
+/// kaldırıldı.
 enum DmComposerAction {
-  photo,
-  video,
-  file,
-  location,
   gift,
   jeton,
   fortune,
@@ -18,8 +18,6 @@ enum DmComposerAction {
   videoFortune,
   liveInvite,
   voiceRoomInvite,
-  gif,
-  sticker,
 }
 
 class ChatComposer extends ConsumerWidget {
@@ -80,10 +78,6 @@ class ChatComposer extends ConsumerWidget {
   void _showActionSheet(BuildContext context, WidgetRef ref) {
     final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final actions = [
-      (DmComposerAction.photo, Icons.photo_rounded, 'Fotoğraf', AppThemeColors.accentCyan),
-      (DmComposerAction.video, Icons.videocam_rounded, 'Video', AppThemeColors.liveRed),
-      (DmComposerAction.file, Icons.attach_file_rounded, 'Dosya', Colors.white70),
-      (DmComposerAction.location, Icons.location_on_rounded, 'Konum', Colors.greenAccent),
       (DmComposerAction.gift, Icons.card_giftcard_rounded, 'Hediye', AppThemeColors.coinGold),
       (DmComposerAction.jeton, Icons.toll_rounded, jetonLabel, AppThemeColors.coinGold),
       (DmComposerAction.fortune, Icons.auto_awesome_rounded, 'Fal İste', AppThemeColors.accentPurple),
@@ -91,8 +85,6 @@ class ChatComposer extends ConsumerWidget {
       (DmComposerAction.videoFortune, Icons.video_call_rounded, 'Görüntülü Fal', Colors.cyanAccent),
       (DmComposerAction.liveInvite, Icons.podcasts_rounded, 'Canlı Yayın', AppThemeColors.liveRed),
       (DmComposerAction.voiceRoomInvite, Icons.groups_rounded, 'Sesli Oda', AppThemeColors.accentCyan),
-      (DmComposerAction.gif, Icons.gif_box_rounded, 'GIF', Colors.purpleAccent),
-      (DmComposerAction.sticker, Icons.emoji_emotions_rounded, 'Sticker', Colors.orangeAccent),
     ];
     showModalBottomSheet<void>(
       context: context,
@@ -207,8 +199,9 @@ class ChatComposer extends ConsumerWidget {
           children: [
             Semantics(
               button: true,
-              label: 'Ek ekle',
+              label: 'İstek ve davet gönder',
               child: IconButton(
+              tooltip: 'İstek ve davet',
               onPressed: () => _showActionSheet(context, ref),
               icon: Icon(
                 Icons.add_circle_outline_rounded,
@@ -220,10 +213,11 @@ class ChatComposer extends ConsumerWidget {
               button: true,
               label: 'Emoji seç',
               child: IconButton(
+              tooltip: 'Emoji',
               onPressed: () => _showEmojiPicker(context),
-              icon: const Icon(
+              icon: Icon(
                 Icons.emoji_emotions_outlined,
-                color: Colors.white70,
+                color: context.colors.onSurfaceVariant,
               ),
             ),
             ),
@@ -246,7 +240,7 @@ class ChatComposer extends ConsumerWidget {
                     color: context.colors.onSurfaceMuted.withValues(alpha: 0.8),
                   ),
                   filled: true,
-                  fillColor: Colors.white.withValues(alpha: 0.06),
+                  fillColor: context.colors.glassFill,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(22),
                     borderSide: BorderSide(
@@ -275,8 +269,10 @@ class ChatComposer extends ConsumerWidget {
             const SizedBox(width: 8),
             Semantics(
               button: true,
-              label: 'Sesli fal',
+              label: 'Sesli fal isteği gönder',
               child: IconButton.filled(
+              // Ses kaydı değil: sesli fal isteği mesajı gönderir.
+              tooltip: 'Sesli fal isteği gönder',
               onPressed: () => onAction?.call(DmComposerAction.voiceFortune),
               style: IconButton.styleFrom(
                 backgroundColor: AppThemeColors.accentPurple.withValues(alpha: 0.72),

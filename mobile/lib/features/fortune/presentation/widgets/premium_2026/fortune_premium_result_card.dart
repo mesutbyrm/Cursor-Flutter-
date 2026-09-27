@@ -4,9 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../../domain/entities/fortune_type_entity.dart';
-import '../../services/fortune_energy_scorer.dart';
 
-/// Premium fal sonucu kartı — tür, tarih, skorlar, özet.
+/// Premium fal sonucu kartı — tür, tarih, özet.
 class FortunePremiumResultCard extends StatelessWidget {
   const FortunePremiumResultCard({
     super.key,
@@ -17,7 +16,6 @@ class FortunePremiumResultCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scores = FortuneEnergyScores.fromResult(result);
     final accent = result.type.accent;
     final date = DateFormat('d MMMM yyyy, HH:mm', 'tr').format(DateTime.now());
 
@@ -105,66 +103,8 @@ class FortunePremiumResultCard extends StatelessWidget {
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _ScoreChip(label: 'Enerji', value: scores.energy, color: accent),
-              _ScoreChip(label: 'Aşk', value: scores.love, color: const Color(0xFFFF4EC8)),
-              _ScoreChip(label: 'Para', value: scores.money, color: const Color(0xFFFFD700)),
-              _ScoreChip(label: 'Kariyer', value: scores.career, color: const Color(0xFF38BDF8)),
-              _ScoreChip(label: 'Şans', value: scores.luck, color: const Color(0xFF4ADE80)),
-            ],
-          ),
         ],
       ),
     ).animate().fadeIn(duration: 420.ms).slideY(begin: 0.05, curve: Curves.easeOutCubic);
-  }
-}
-
-class _ScoreChip extends StatelessWidget {
-  const _ScoreChip({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  final String label;
-  final int value;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        color: color.withValues(alpha: 0.12),
-        border: Border.all(color: color.withValues(alpha: 0.35)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: color.withValues(alpha: 0.95),
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            '%$value',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.95),
-              fontWeight: FontWeight.w900,
-              fontSize: 13,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

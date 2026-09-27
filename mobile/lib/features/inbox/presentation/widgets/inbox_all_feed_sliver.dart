@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -272,12 +273,12 @@ class _DmTile extends StatelessWidget {
           decoration: BoxDecoration(
             color: unread
                 ? AppThemeColors.accentPurple.withValues(alpha: 0.18)
-                : Colors.white.withValues(alpha: 0.045),
+                : context.colors.glassFill,
             borderRadius: BorderRadius.circular(22),
             border: Border.all(
               color: unread
                   ? AppThemeColors.accentPurple.withValues(alpha: 0.42)
-                  : Colors.white.withValues(alpha: 0.07),
+                  : context.colors.glassBorder,
             ),
           ),
           child: Row(
@@ -295,7 +296,7 @@ class _DmTile extends StatelessWidget {
                       style: TextStyle(
                         fontWeight: unread ? FontWeight.w900 : FontWeight.w700,
                         fontSize: 16,
-                        color: Colors.white,
+                        color: context.colors.onSurface,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -305,8 +306,8 @@ class _DmTile extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: unread
-                            ? Colors.white.withValues(alpha: 0.92)
-                            : Colors.white.withValues(alpha: 0.58),
+                            ? context.colors.onSurface
+                            : context.colors.onSurfaceMuted,
                         fontSize: 13,
                         fontWeight: unread ? FontWeight.w700 : FontWeight.w500,
                       ),
@@ -324,7 +325,7 @@ class _DmTile extends StatelessWidget {
                       fontSize: 11,
                       color: unread
                           ? AppThemeColors.accentPink
-                          : Colors.white.withValues(alpha: 0.46),
+                          : context.colors.onSurfaceMuted,
                       fontWeight: unread ? FontWeight.w800 : FontWeight.w500,
                     ),
                   ),
@@ -416,12 +417,12 @@ class InboxSystemPinnedTile extends ConsumerWidget {
                     children: [
                       Row(
                         children: [
-                          const Text(
+                          Text(
                             'Canlifal Sistemi',
                             style: TextStyle(
                               fontWeight: FontWeight.w900,
                               fontSize: 16,
-                              color: Colors.white,
+                              color: context.colors.onSurface,
                             ),
                           ),
                           if (unread > 0) ...[
@@ -458,7 +459,7 @@ class InboxSystemPinnedTile extends ConsumerWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.72),
+                          color: context.colors.onSurfaceVariant,
                           fontSize: 13,
                           fontWeight:
                               unread > 0 ? FontWeight.w700 : FontWeight.w500,
@@ -467,9 +468,9 @@ class InboxSystemPinnedTile extends ConsumerWidget {
                     ],
                   ),
                 ),
-                const Icon(
+                Icon(
                   Icons.chevron_right_rounded,
-                  color: Colors.white54,
+                  color: context.colors.onSurfaceMuted,
                 ),
               ],
             ),

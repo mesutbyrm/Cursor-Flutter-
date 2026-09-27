@@ -82,7 +82,7 @@ void main() {
     );
 
     expect(find.bySemanticsLabel('Mesaj gönder'), findsOneWidget);
-    expect(find.bySemanticsLabel('Ek ekle'), findsOneWidget);
+    expect(find.bySemanticsLabel('İstek ve davet gönder'), findsOneWidget);
     final fieldSemantics = tester.getSemantics(find.byType(TextField));
     expect(fieldSemantics.label, 'Mesaj yazın');
   });

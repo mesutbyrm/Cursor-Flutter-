@@ -10,10 +10,12 @@ import 'package:canlifal_social/core/theme/app_theme.dart';
 import 'package:canlifal_social/features/auth/domain/entities/user_entity.dart';
 import 'package:canlifal_social/features/auth/presentation/providers/auth_providers.dart';
 import 'package:canlifal_social/features/fortune/domain/entities/fortune_reading_section.dart';
+import 'package:canlifal_social/features/fortune/domain/entities/fortune_type_entity.dart';
 import 'package:canlifal_social/features/fortune/presentation/data/fortune_catalog.dart';
 import 'package:canlifal_social/features/fortune/presentation/design/fortune_lane_theme.dart';
 import 'package:canlifal_social/features/fortune/presentation/pages/fortune_type_intro_page.dart';
 import 'package:canlifal_social/features/fortune/presentation/services/fortune_reading_headlines.dart';
+import 'package:canlifal_social/features/fortune/presentation/widgets/premium_2026/fortune_premium_result_card.dart';
 import 'package:canlifal_social/features/fortune/presentation/widgets/premium_ai/premium_fortune_open_button.dart';
 
 class _NoAuth extends AuthController {
@@ -187,4 +189,33 @@ void main() {
       await tester.pump(const Duration(seconds: 5));
     },
   );
+
+  testWidgets('sonuç kartında uydurma enerji/aşk/para yüzdeleri yok', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: AppLocalizationsConfig.locale,
+        supportedLocales: AppLocalizationsConfig.supportedLocales,
+        localizationsDelegates: AppLocalizationsConfig.delegates,
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: FortunePremiumResultCard(
+              result: FortuneReadingResult(
+                type: FortuneCatalog.bySlug('tarot')!,
+                summary: 'Bugün yeni bir başlangıç var.',
+                detail: 'Detay',
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Bugün yeni bir başlangıç var.'), findsOneWidget);
+    expect(find.textContaining('%'), findsNothing);
+    for (final label in ['Enerji', 'Aşk', 'Para', 'Kariyer', 'Şans']) {
+      expect(find.text(label), findsNothing, reason: label);
+    }
+  });
 }

@@ -227,6 +227,7 @@ import '../../features/cfc_arena/presentation/pages/cfc_arena_contest_page.dart'
 import '../../features/cfc_arena/presentation/pages/cfc_arena_hub_page.dart';
 import '../../features/agency/presentation/providers/agency_providers.dart';
 import '../../features/vip_gold/presentation/pages/vip_gold_hub_page.dart';
+import '../../core/theme/dark_lane_theme.dart';
 import '../../core/bootstrap/app_startup_log.dart';
 import '../../core/bootstrap/auth_redirect.dart';
 import '../../core/bootstrap/startup_route_observer.dart';
@@ -662,7 +663,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           final session = state.extra as LiveBroadcastSession?;
           final child = session == null
               ? const LiveBroadcastTypePage()
-              : LiveBroadcastRoomPage(session: session);
+              : DarkLaneTheme(child: LiveBroadcastRoomPage(session: session));
           return AppPageTransitions.fadeSlide(key: state.pageKey, child: child);
         },
       ),
@@ -672,7 +673,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           final args = state.extra as LiveSwipeFeedArgs?;
           final child = args == null || args.streams.isEmpty
               ? const LivePage()
-              : LiveSwipeViewerPage(args: args);
+              : DarkLaneTheme(child: LiveSwipeViewerPage(args: args));
           return AppPageTransitions.fadeSlide(key: state.pageKey, child: child);
         },
       ),
@@ -2215,7 +2216,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/voice-rooms',
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
-          child: const VoiceRoomsHubPage(),
+          child: const DarkLaneTheme(child: VoiceRoomsHubPage()),
         ),
       ),
       GoRoute(
@@ -2233,7 +2234,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             final id = state.pathParameters['id'] ?? '';
             child = VoiceRoomRoutePage(roomId: id);
           }
-          return AppPageTransitions.none(key: state.pageKey, child: child);
+          return AppPageTransitions.none(
+            key: state.pageKey,
+            child: DarkLaneTheme(child: child),
+          );
         },
         routes: [
           GoRoute(
@@ -2241,7 +2245,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) {
               final room = state.extra as VoiceRoomEntity?;
               if (room != null) {
-                return VoicePkBattlePage(room: room);
+                return DarkLaneTheme(child: VoicePkBattlePage(room: room));
               }
               final id = state.pathParameters['id'] ?? '';
               return VoiceRoomRoutePage(roomId: id);
@@ -2256,7 +2260,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                   roomId: state.pathParameters['id'] ?? '',
                 );
               }
-              return PkInvitePage(room: room);
+              return DarkLaneTheme(child: PkInvitePage(room: room));
             },
           ),
         ],
@@ -2266,7 +2270,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final session = state.extra as LiveBroadcastSession?;
           if (session == null) return const LiveBroadcastPrepPage();
-          return LivePkInvitePage(session: session);
+          return DarkLaneTheme(child: LivePkInvitePage(session: session));
         },
       ),
       GoRoute(
@@ -2285,10 +2289,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           final sharedTrtc = extra is Map
               ? extra['trtc'] as TrtcRoomManager?
               : null;
-          return LivePkBattlePage(
-            session: session,
-            opponentStream: opponent,
-            sharedTrtc: sharedTrtc,
+          return DarkLaneTheme(
+            child: LivePkBattlePage(
+              session: session,
+              opponentStream: opponent,
+              sharedTrtc: sharedTrtc,
+            ),
           );
         },
       ),

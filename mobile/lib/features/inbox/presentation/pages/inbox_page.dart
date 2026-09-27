@@ -278,19 +278,19 @@ class _InboxTabChip extends StatelessWidget {
                   colors: [Color(0xFF7C3AED), Color(0xFFB832FF)],
                 )
               : null,
-          color: selected ? null : Colors.white.withValues(alpha: 0.055),
+          color: selected ? null : context.colors.glassFill,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
             color: selected
                 ? AppThemeColors.accentPurple.withValues(alpha: 0.55)
-                : Colors.white.withValues(alpha: 0.08),
+                : context.colors.glassBorder,
           ),
         ),
         alignment: Alignment.center,
         child: Text(
           label,
           style: TextStyle(
-            color: selected ? Colors.white : Colors.white70,
+            color: selected ? Colors.white : context.colors.onSurfaceVariant,
             fontWeight: FontWeight.w800,
             fontSize: 13,
           ),
@@ -322,7 +322,7 @@ class _InboxSearchPanel extends StatelessWidget {
       children: [
         Container(
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.055),
+            color: context.colors.glassFill,
             borderRadius: BorderRadius.circular(22),
             border: Border.all(
               color: AppThemeColors.accentPurple.withValues(alpha: 0.20),
@@ -331,11 +331,17 @@ class _InboxSearchPanel extends StatelessWidget {
           child: TextField(
             controller: controller,
             onChanged: onChanged,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              color: context.colors.onSurface,
+              fontWeight: FontWeight.w600,
+            ),
             decoration: InputDecoration(
               hintText: 'Ara...',
               hintStyle: TextStyle(color: context.colors.onSurfaceMuted),
-              prefixIcon: const Icon(Icons.search_rounded, color: Colors.white54),
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                color: context.colors.onSurfaceMuted,
+              ),
               suffixIcon: query.isEmpty
                   ? null
                   : IconButton(
@@ -343,7 +349,11 @@ class _InboxSearchPanel extends StatelessWidget {
                         controller.clear();
                         onChanged('');
                       },
-                      icon: const Icon(Icons.close_rounded, color: Colors.white54),
+                      tooltip: 'Temizle',
+                      icon: Icon(
+                        Icons.close_rounded,
+                        color: context.colors.onSurfaceMuted,
+                      ),
                     ),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(vertical: 13),
@@ -438,7 +448,7 @@ class _InboxSectionCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.055),
+          color: context.colors.glassFill,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(color: color.withValues(alpha: 0.35)),
         ),
@@ -457,13 +467,15 @@ class _InboxSectionCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: count > 0
                         ? color
-                        : Colors.white.withValues(alpha: 0.12),
+                        : context.colors.onSurface.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
                     count > 99 ? '99+' : '$count',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: count > 0
+                          ? Colors.white
+                          : context.colors.onSurfaceVariant,
                       fontWeight: FontWeight.w900,
                       fontSize: 12,
                     ),
@@ -474,8 +486,8 @@ class _InboxSectionCard extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               title,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: context.colors.onSurface,
                 fontWeight: FontWeight.w800,
                 fontSize: 14,
               ),
@@ -484,7 +496,7 @@ class _InboxSectionCard extends StatelessWidget {
             Text(
               count > 0 ? '$count okunmamış' : 'Tümü okundu',
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.6),
+                color: context.colors.onSurfaceMuted,
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
               ),
@@ -518,18 +530,18 @@ class _FilterChip extends StatelessWidget {
           gradient: selected
               ? const LinearGradient(colors: [Color(0xFF7C3AED), Color(0xFFB832FF)])
               : null,
-          color: selected ? null : Colors.white.withValues(alpha: 0.055),
+          color: selected ? null : context.colors.glassFill,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
             color: selected
                 ? AppThemeColors.accentPurple.withValues(alpha: 0.55)
-                : Colors.white.withValues(alpha: 0.08),
+                : context.colors.glassBorder,
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: selected ? Colors.white : Colors.white70,
+            color: selected ? Colors.white : context.colors.onSurfaceVariant,
             fontWeight: FontWeight.w800,
             fontSize: 12,
           ),

@@ -8,6 +8,7 @@ import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../providers/social_providers.dart';
 import '../utils/social_feed_refresh.dart';
 import '../widgets/instagram/social_instagram_app_bar.dart';
+import '../widgets/instagram/social_stories_rail.dart';
 import '../widgets/instagram/social_feed_composer.dart';
 import '../widgets/social_discover_shortcuts.dart';
 import '../widgets/social_feed_scroll_view.dart';
@@ -25,9 +26,14 @@ class _SocialPageState extends ConsumerState<SocialPage>
   final _scroll = ScrollController();
 
   /// Tek örnek: akış her güncellendiğinde paylaşım kutusu yeniden kurulmaz.
+  /// Hikâye şeridi en üstte, akışla birlikte kayar (aşağı çekince yenilenir).
   late final Widget _feedHeader = Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
+      const Padding(
+        padding: EdgeInsets.only(top: 4, bottom: 4),
+        child: RepaintBoundary(child: SocialStoriesRail()),
+      ),
       const RepaintBoundary(child: SocialDiscoverShortcuts()),
       RepaintBoundary(
         child: SocialFeedComposer(onPostPublished: _scrollFeedToTop),

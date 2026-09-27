@@ -50,9 +50,9 @@ Tek kaynak: `lib/core/theme/canlifal_brand_colors.dart`.
 | 2 | Sosyal akış + hikâyeler | ✅ tamam |
 | 3 | Profil + kullanıcı kartları | ✅ tamam |
 | 4 | Fal türleri + sonuç ekranları | ✅ tamam |
-| 5 | Sesli oda + koltuklar | ⏳ sıradaki (SSE/presence yeni stabilize edildi; yalnızca görsel katman) |
-| 6 | Canlı yayın + hediye + PK | ⏳ |
-| 7 | Sohbet, mesajlaşma, diğer | ⏳ |
+| 5 | Sesli oda + koltuklar | ✅ tamam (yalnızca görsel katman; SSE/presence/TRTC değişmedi) |
+| 6 | Canlı yayın + hediye + PK | ✅ tamam (TRTC/SSE/API değişmedi) |
+| 7 | Sohbet, mesajlaşma, diğer | ✅ tamam (+ proje geneli ölü UI kodu) |
 
 ### Aşama 1 — yapılanlar
 
@@ -65,7 +65,7 @@ Tek kaynak: `lib/core/theme/canlifal_brand_colors.dart`.
 
 - **Hikâye izleyici** (`story_viewer_page.dart`) yeniden yazıldı. Giderilen hatalar: basılı tut/bırak hikâyeyi baştan başlatıyordu; videoda her devam, dinleyiciyi yeniden ekleyip bitişte `_next`'in çoklu çağrılmasına yol açıyordu; ilerleme `Timer.periodic(50ms)` + `setState` ile tüm sayfayı çiziyordu; görsel yüklenmeden süre işliyordu; tam ekran görsel küçük önizleme çözünürlüğündeydi. Yeni: `AnimationController` ile yalnızca çubuğu çizen ilerleme, kişiden kişiye geçiş (`StoryViewerArgs.rings`, geriye uyumlu), yatay kaydırma, aşağı kaydır-kapat, avatar + göreli zaman, uygulama arka plana geçince duraklatma.
 - **Hikâye şeridi**: `StoriesStrip` + `StoryRingTile` ortak bileşenleri; ana sayfa `StoriesSection` ve `SocialStoriesRail` artık aynı kodu kullanıyor. İzlenme bilgisi backend'de olmadığı için cihazda (`storySeenProvider`, en çok 600 kimlik) tutuluyor. Ana sayfadaki her halkada sonsuz döngüde çalışan bulanık-gölge nabız animasyonu (`HomeStoryRingPulse`) kaldırıldı.
-- **Sosyal sayfa**: şerit, `23720058` commit'inde bilinçli olarak kaldırıldığı için sosyal sayfaya **eklenmedi**. Kısayollar + paylaşım kutusu akışla birlikte kayan başlığa taşındı.
+- **Sosyal sayfa**: şerit `23720058`'de kaldırılmıştı; kullanıcı kararıyla akış başlığının en üstüne geri eklendi. Kısayollar + paylaşım kutusu akışla birlikte kayan başlığa taşındı.
 - **Gönderi kartı**: `SocialCdsPostShell(CdsCard.glass)` → `ProGlassCard(blur: 14)` → kenarlıklı kutu üçlüsü tek düz yüzeye indirildi; görsele çift dokunuş beğenir (beğeniyi geri almaz); sil ikonu → "⋯" menüsü; semantik etiketler; ölü `_ActionIcon` silindi.
 - **Açık tema**: paylaşım kutusu (`#12122A` sabit dolgu), etiketleme/duygu alt sayfaları (`#120A24`), metin-only gönderi kutusu, rozetler, `#25F4EE` bağlantı rengi ve `UserAvatar` yer tutucusu temaya bağlandı.
 
@@ -86,7 +86,35 @@ Tek kaynak: `lib/core/theme/canlifal_brand_colors.dart`.
 - **Kart çevirme** (`CanlifalTarotFlipCard`): kalkma + dinamik gölge + ışık yansıması, `RepaintBoundary`, azaltılmış hareket desteği; genel API geriye uyumlu (`borderRadius` eklendi).
 - **Görsel önbelleği:** `maxWidthDiskCache`/`maxWidth` (ImageCacheManager gerektirir) kaldırıldı; ön-yükleme `ResizeImage`.
 - **Ölü kod:** `fortune/presentation/screens/` (17 ekran) ve yalnızca onların kullandığı 17 sağlayıcı + 3 model silindi; `lib`/`test`'te referans olmadığı HEAD üzerinde doğrulandı.
-- **Açık soru (kullanıcıya):** sonuç kartındaki "Enerji/Aşk/Para/Kariyer/Şans %" değerleri sunucudan gelmiyor, özet metninin hash'inden türetiliyor (`FortuneEnergyScores`). Değiştirilmedi.
+- **Enerji yüzdeleri:** sonuç kartındaki "Enerji/Aşk/Para/Kariyer/Şans %" değerleri sunucudan gelmiyor, özet metninin hash'inden türetiliyordu → kullanıcı kararıyla kaldırıldı (`FortuneEnergyScores` silindi).
+
+### Aşama 5 — yapılanlar
+
+- **Koltuk ölçüsü** (`VoiceMicSeat`): her koltuk `boxWidth(size)` × `footprintHeight(size)` sabit alan kaplar. İsim koltuk genişliğinde kısaltılır; hediye rozeti (`FittedBox`) avatarın alt kenarına, hediye bildirimi (`VoiceSeatGiftFlashStack`, `IgnorePointer`) avatarın üstüne biner. `VoiceWebOwnerStage` sahne yüksekliğini ve sütun genişliğini bu ölçülerden hesaplar (eskiden 5 × (hücre + 10 px çerçeve) hesaba katılmıyordu). İki sıra aynı 5 sütunlu ızgarada.
+- **Sahte seviye:** `_levelLabel` koltuk numarasından `Lv$seat` üretiyordu → `_roleLabel` yalnızca sunucu `roleSymbol` ve yayıncı "MOD".
+- **Kilitli koltuk:** `_EmptySeat` kilitliyken `onTap`/`onLongPress` null'dı → dokunma işleyicileri (zaten kilit kontrolü yapıyor) her zaman bağlı. `onVoiceRoomBasicSeatTap` kilitli koltukta yetkiliye atama/kilit menüsünü açar.
+- **Animasyon** (`VoiceSeatAvatarFrame`): `_orbit` kaldırıldı; `_spin` yalnızca rol çerçevesi + mikrofon açık, `_pulse` yalnızca konuşurken; `MediaQuery.disableAnimations` desteği. Test: konuşmayan konuk koltuğu kare zamanlamaz.
+- **Koyu kapsam:** `FortuneLaneTheme` → ortak `core/theme/dark_lane_theme.dart` (`DarkLaneTheme`; `FortuneLaneTheme` artık typedef). `/voice-rooms` ve `/voice-room/:id` rotaları sarıldı.
+- **Oda listesi:** `VoiceRoomsDiscoverMapper._distanceLabel` konum yoksa `''` döner; `NearbyRoomTileCard` satırı gizler. `VoiceRoomsMockData` içinden kullanılmayan sahte sabitler silindi (kategori/sekme etiketleri kaldı).
+- **Ölü kod:** yalnızca barrel'dan dışa aktarılan ya da hiç içe aktarılmayan 45 dosya silindi (ikinci tur: silinenlerin tek kullanıcısı olduğu 3 dosya). Her biri için `lib`/`test` içe aktarma + sınıf adı taraması yapıldı, silme sonrası `dart analyze` 0 hata.
+
+### Aşama 6 — yapılanlar
+
+- **Alt sayfa kabuğu** (`showPremiumBottomSheet` / `CdsBottomSheet.show`): içerik `Column(min)` içinde sınırsız yükseklik alıyordu; `DraggableScrollableSheet` kullanan `showLiveGiftPicker` ve `live_viewers_sheet` düzen hatası veriyordu → içerik `Flexible`. Test: `test/core/ui/premium_bottom_sheet_test.dart`.
+- **PK hediye seçici** (`live_gift_sheet.dart`): dokunuşta anında gönderim korunuyor; `ValueNotifier` kilidi + `AbsorbPointer` + ilerleme çubuğu; gerçek bakiye çipi (`coinBalanceProvider`, bilinmiyorsa "—").
+- **Canlı hediye paneli** (`PremiumGiftPanel`): `DarkLaneTheme` ile sarıldı; seçim görünen listede değilse ilk hediyeye geçer; boş kategoride boş durum + pasif buton; toplam maliyet; adet çipleri kaydırılabilir; "Destekçiler".
+- **Rotalar:** `/live/room`, `/live/swipe`, `/live/pk`, `/live/pk-invite`, `/voice-room/:id/pk`, `/voice-room/:id/pk-invite` `DarkLaneTheme` ile sarıldı.
+- **Liste kartı** (`LiveStreamListTile`): bitmiş yayın soluk + "Yayında değil"; sayı biçimi; semantik.
+- **PK skor çubuğu:** `ShaderMask` ile metne göre gradyan; `FittedBox`; semantik.
+- **Ölü kod:** içe aktarılmayan 24 dosya + yalnızca barrel'dan dışa aktarılan 4 dosya + ikinci turda 1 dosya (`live_gift_panel.dart`). Proje genelinde başka alanlarda ~100 kullanılmayan dosya daha var; Aşama 7'ye bırakıldı.
+
+### Aşama 7 — yapılanlar
+
+- **Mesaj balonu** (`ChatMessageBubble._actionMeta`): kart yalnızca işaret + birebir üretilen niyet metni eşleşince; eskiden önek eşleşmesiyle serbest mesajlar gizleniyordu.
+- **Yazma alanı** (`ChatComposer`): `DmComposerAction` içinden `photo/video/file/location/gif/sticker` kaldırıldı (API yalnızca metin; bu seçenekler sahte metin yolluyordu). Semantik "İstek ve davet gönder"; emoji simgesi ve alan dolgusu temaya bağlandı; mikrofon ipucu "Sesli fal isteği gönder".
+- **Sohbet sayfası:** başlık metinleri temaya bağlandı, çevrimdışı durum satırı gizli, kamera ipucu "Görüntülü fal isteği gönder".
+- **Gelen kutusu:** `inbox_page`, `inbox_all_feed_sliver`, `conversations_list_sliver` → `context.colors` (`onSurface`, `onSurfaceVariant`, `onSurfaceMuted`, `glassFill`, `glassBorder`).
+- **Ölü kod:** yalnızca sunum katmanı (sayfa/widget) — 3 tur tarama; `lib`/`test` içe aktarması olmayan ve eski kullanıcıları silinmiş dosyalar. Ağ/SSE/veri/sağlayıcı/abacus dosyaları (34) bilerek bırakıldı. `social_stories_rail.dart` açık karar için korundu.
 
 ## 4. Doğrulama yöntemi (her aşamada)
 

@@ -45,9 +45,15 @@ Future<T?> showPremiumBottomSheet<T>({
                 ),
               ),
               const SizedBox(height: 8),
-              Theme(
-                data: theme,
-                child: child,
+              // Flexible: içerik kalan yükseklikle sınırlanır. Eskiden sınırsız
+              // yükseklik veriliyordu; DraggableScrollableSheet içeren alt
+              // sayfalar (PK hediye seçici, izleyici listesi) düzen hatasıyla
+              // hiç açılmıyordu. Sığan içerik için görünüm değişmez.
+              Flexible(
+                child: Theme(
+                  data: theme,
+                  child: child,
+                ),
               ),
             ],
           ),

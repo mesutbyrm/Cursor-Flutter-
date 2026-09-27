@@ -14,7 +14,6 @@ import '../../domain/entities/voice_room_seat_slot.dart';
 import '../providers/chat_room_providers.dart';
 import '../providers/room_fragment_providers.dart';
 import '../providers/voice_room_ui_provider.dart';
-import '../sheets/voice_room_moderation_sheet.dart';
 import '../sheets/voice_room_sheets.dart';
 import '../utils/voice_room_permissions.dart';
 import '../utils/voice_room_user_actions.dart';
@@ -220,6 +219,20 @@ Future<void> onVoiceRoomBasicSeatTap({
         const SnackBar(content: Text('Bu koltuk kilitli')),
       );
     }
+    return;
+  }
+  // Kilitli koltuğa yetkili dokununca doğrudan oturmak yerine kilit/atama
+  // menüsü açılır (RTC sayfasıyla aynı).
+  if (slot?.isLocked == true) {
+    await showVoiceRoomBasicAssignSeatSheet(
+      context: context,
+      ref: ref,
+      room: room,
+      liveKey: liveKey,
+      live: live,
+      seatIndex: internalSeatIndex,
+      perms: perms,
+    );
     return;
   }
   final selfId = ref.read(authControllerProvider).valueOrNull?.id;

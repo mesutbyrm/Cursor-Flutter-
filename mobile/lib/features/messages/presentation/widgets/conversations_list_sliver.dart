@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -178,13 +179,13 @@ class ConversationsListSliver extends ConsumerWidget {
                               color: unread
                                   ? AppThemeColors.accentPurple
                                       .withValues(alpha: 0.18)
-                                  : Colors.white.withValues(alpha: 0.045),
+                                  : context.colors.glassFill,
                               borderRadius: BorderRadius.circular(22),
                               border: Border.all(
                                 color: unread
                                     ? AppThemeColors.accentPurple
                                         .withValues(alpha: 0.42)
-                                    : Colors.white.withValues(alpha: 0.07),
+                                    : context.colors.glassBorder,
                               ),
                               boxShadow: unread
                                   ? AppThemeColors.glowShadow(
@@ -211,7 +212,7 @@ class ConversationsListSliver extends ConsumerWidget {
                                               : Colors.grey.shade700,
                                           shape: BoxShape.circle,
                                           border: Border.all(
-                                            color: const Color(0xFF09090B),
+                                            color: context.scaffoldBg,
                                             width: 2,
                                           ),
                                         ),
@@ -234,7 +235,7 @@ class ConversationsListSliver extends ConsumerWidget {
                                               ? FontWeight.w900
                                               : FontWeight.w700,
                                           fontSize: 16,
-                                          color: Colors.white,
+                                          color: context.colors.onSurface,
                                         ),
                                       ),
                                       const SizedBox(height: 4),
@@ -244,10 +245,8 @@ class ConversationsListSliver extends ConsumerWidget {
                                         overflow: TextOverflow.ellipsis,
                                         style: TextStyle(
                                           color: unread
-                                              ? Colors.white
-                                                  .withValues(alpha: 0.92)
-                                              : Colors.white
-                                                  .withValues(alpha: 0.58),
+                                              ? context.colors.onSurface
+                                              : context.colors.onSurfaceMuted,
                                           fontSize: 13,
                                           fontWeight: unread
                                               ? FontWeight.w700
@@ -267,8 +266,7 @@ class ConversationsListSliver extends ConsumerWidget {
                                         fontSize: 11,
                                         color: unread
                                             ? AppThemeColors.accentPink
-                                            : Colors.white
-                                                .withValues(alpha: 0.46),
+                                            : context.colors.onSurfaceMuted,
                                         fontWeight: unread
                                             ? FontWeight.w800
                                             : FontWeight.w500,

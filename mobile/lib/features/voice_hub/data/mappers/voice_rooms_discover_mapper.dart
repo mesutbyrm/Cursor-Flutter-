@@ -241,6 +241,7 @@ abstract final class VoiceRoomsDiscoverMapper {
     if (label != null && label.isNotEmpty) return label;
     final fromBand = DistanceBand.labelFromBandKey(r.distanceBand);
     if (fromBand != null && fromBand.isNotEmpty) return fromBand;
-    return 'Yakınınızda';
+    // Konum verisi yoksa uydurma "Yakınınızda" yazmıyoruz; kart satırı gizler.
+    return '';
   }
 }

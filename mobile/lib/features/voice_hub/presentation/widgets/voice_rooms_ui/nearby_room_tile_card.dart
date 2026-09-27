@@ -117,6 +117,7 @@ class NearbyRoomTileCard extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
+                      if (room.distance.isNotEmpty) ...[
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -137,6 +138,7 @@ class NearbyRoomTileCard extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 4),
+                      ],
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
