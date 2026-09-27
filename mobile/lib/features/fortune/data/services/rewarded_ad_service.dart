@@ -5,14 +5,14 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../../core/admob_config.dart';
 
-/// AdMob ödüllü reklam — tam izlenince `true`, yarıda kapanınca `false`.
+/// AdMob ödüllü geçiş reklamı — tam izlenince `true`, yarıda kapanınca `false`.
 class RewardedAdService {
   RewardedAdService._();
 
   static final RewardedAdService instance = RewardedAdService._();
 
   static bool _sdkReady = false;
-  RewardedAd? _ad;
+  RewardedInterstitialAd? _ad;
   bool _loading = false;
 
   static Future<void> ensureInitialized() async {
@@ -36,16 +36,17 @@ class RewardedAdService {
     _loading = true;
     try {
       final completer = Completer<void>();
-      await RewardedAd.load(
+      await RewardedInterstitialAd.load(
         adUnitId: AdMobConfig.rewardedAdUnitId,
         request: const AdRequest(),
-        rewardedAdLoadCallback: RewardedAdLoadCallback(
+        rewardedInterstitialAdLoadCallback: RewardedInterstitialAdLoadCallback(
           onAdLoaded: (ad) {
             _ad = ad;
             _loading = false;
             if (!completer.isCompleted) completer.complete();
           },
-          onAdFailedToLoad: (_) {
+          onAdFailedToLoad: (error) {
+            debugPrint('AdMob yüklenemedi: ${error.code} ${error.message}');
             _ad = null;
             _loading = false;
             if (!completer.isCompleted) completer.complete();
