@@ -8,7 +8,7 @@ void main() {
       'ca-app-pub-1362974509433002~1394571120',
     );
     expect(
-      AdMobConfig.productionRewardedAdUnitId,
+      AdMobConfig.productionRewardedInterstitialAdUnitId,
       'ca-app-pub-1362974509433002/8698346072',
     );
   });
