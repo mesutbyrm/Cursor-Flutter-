@@ -4,20 +4,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.614+665` |
-| Tarih (UTC) | 2026-09-27 15:40 |
-| Commit | [`6bfc1bc90ae64890867865194391a7f3b3e123e9`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/6bfc1bc90ae64890867865194391a7f3b3e123e9) |
-| İş akışı | [Run 36329146992](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36329146992) |
+| Sürüm | `1.0.616+667` |
+| Tarih (UTC) | 2026-09-27 16:30 |
+| Commit | [`879b602d80f32f79b0ddd972109b323d5685b0c6`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/879b602d80f32f79b0ddd972109b323d5685b0c6) |
+| İş akışı | [Run 36332162708](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36332162708) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.614+665 (2026-09-27) — Fal "Günlük Enerjin": uydurma yedek değerler kaldırıldı
+## 1.0.616+667 (2026-09-27) — Sesli oda, PK, DM (APK paketi)
 
-- **Uydurma değerler:** kartlar yüklenirken ve hata durumunda sabit "Yüksek / Mor / 7 / Şişkin Ay / Bugün iç sesine kulak ver" gösteriliyordu → yüklenirken iskelet, hatada "Tekrar dene"
-- **Doğum profili yok:** herkese sabit "Mor" şanslı renk ve genel burç mesajı gösteriliyordu → burca bağlı kartlar gizli (ay evresi gibi hesaplanabilen kartlar görünür)
-- **Hatalı metin:** burç yorumu gelmezse mesaj "Bugün Instance of 'FortuneZodiac'.sign burcu…" olarak çıkıyordu → burç adı yazıyor
-- **Hero:** yüklenirken "Yüksek" yerine "—"; ay evresi tarihten hesaplanıyor
+- **Sesli oda mikrofon rozeti:** `isMicOn` yokken herkes susturulmuş sayılıyordu → bilinmeyen durumda koltukta açık; TRTC aç/kapa `applySelfMicOpen`
+- **Konuşma halkası:** TRTC volume/VAD → koltuk animasyonu (`voiceRoomTrtcSpeakingIdsProvider`)
+- **Koltuk stabilitesi:** `seatSlots` haritası + snapshot’ta `seatIndex` koruma; heartbeat’te güncel koltuk; `seatIndex: -1` dinleyici; koltuk bırakınca son koltuk hafızası temizlenir
+- **PK:** sağ rail **PK** düğmesi; video PK ucu 404 olunca `/api/live/pk` yedeği artık çağrılıyor
+- **DM:** SSE doğru konuşma stream ucu; gelen kutusunda bekleyen mesaj istekleri (Kabul/Reddet)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
