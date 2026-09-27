@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.610+661 (2026-09-27) — UI yenileme Aşama 5: sesli oda listesi + koltuklar
+
+- **Koltuk taşması:** koltuk sahnesi her ekran genişliğinde alttan 14 px taşıyordu (alt sıradaki isimler kesiliyor, sohbetin üstüne biniyordu); 360 dp'de uzun isim satırı sağdan 23 px taşırıyordu; hediye rozeti/bildirimi gelince koltuk uzuyordu → her koltuk sabit boyutlu, isim koltuk genişliğinde kısaltılıyor, hediye rozeti avatarın alt kenarında, hediye bildirimi avatarın üstünde
+- **Sahte seviye:** rol simgesi olmayan kullanıcılara koltuk numarasından "Lv3" gibi seviye yazılıyordu → kaldırıldı (sunucu rol simgesi ve "MOD" korunuyor)
+- **Kilitli koltuk:** kilitli koltukta dokunma/uzun basma tamamen kapalıydı; yetkili kilidi koltuktan açamıyor, diğerleri "Bu koltuk kilitli" uyarısını göremiyordu → dokunulabilir; temel modda yetkiliye kilit/atama menüsü açılıyor (RTC sayfasıyla aynı)
+- **Hizalama:** alt koltuk sırası dolu koltuk sayısına göre yayılıyor, üst sırayla hizasız kalıyordu → iki sıra aynı 5 sütunluk ızgarada
+- **Performans:** her koltukta (konuk dahil, konuşmasa bile) 3 animasyon sürekli dönüyor, 11 koltuk her karede yeniden çiziliyordu → dönen halka yalnızca rol çerçevelerinde, nabız yalnızca konuşurken; "animasyonları azalt"ta hiç animasyon yok; konuşma dalgası komşu koltuklara daha az taşıyor
+- **Erişilebilirlik:** koltuklar TalkBack'te "Koltuk 3, Zeynep, konuşuyor / mikrofon kapalı / kilitli / boş" olarak okunuyor; koltuğun tamamı (isim dahil) dokunulabilir
+- **Açık tema:** sesli oda listesi ve oda sayfası her temada koyu zemin çiziyor; başlık, duyuru ve hediye paneli açık tema rengi alıyordu → ortak `DarkLaneTheme` kapsamı (fal bölümüyle aynı)
+- **Uydurma mesafe:** konum verisi olmayan odalarda "Yakınınızda" yazıyordu → satır gizleniyor (sunucu mesafesi varsa gösteriliyor)
+- **Ölü kod:** hiçbir yerden kullanılmayan 45 sesli oda dosyası (eski koltuk sahneleri, alt çubuklar, paneller; 7.692 satır) ve kullanılmayan sahte veriler ("Ayşe", VIP 8, 12 bildirim, sahte odalar/konuşmacılar/müzik) silindi
+
 ## 1.0.609+660 (2026-09-27) — UI yenileme Aşama 4: fal türleri + fal sonuç ekranları
 
 - **Çalışmayan buton:** kahve/el falında fotoğraf eklenmemişken "Falını Aç" ve üstteki ✦ hiçbir şey yapmıyordu → artık fotoğraf ekleme sayfasını açıyor, fotoğraflar tamamlanınca falı açıyor

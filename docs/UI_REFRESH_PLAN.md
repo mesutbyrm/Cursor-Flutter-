@@ -50,8 +50,8 @@ Tek kaynak: `lib/core/theme/canlifal_brand_colors.dart`.
 | 2 | Sosyal akış + hikâyeler | ✅ tamam |
 | 3 | Profil + kullanıcı kartları | ✅ tamam |
 | 4 | Fal türleri + sonuç ekranları | ✅ tamam |
-| 5 | Sesli oda + koltuklar | ⏳ sıradaki (SSE/presence yeni stabilize edildi; yalnızca görsel katman) |
-| 6 | Canlı yayın + hediye + PK | ⏳ |
+| 5 | Sesli oda + koltuklar | ✅ tamam (yalnızca görsel katman; SSE/presence/TRTC değişmedi) |
+| 6 | Canlı yayın + hediye + PK | ⏳ sıradaki |
 | 7 | Sohbet, mesajlaşma, diğer | ⏳ |
 
 ### Aşama 1 — yapılanlar
@@ -87,6 +87,16 @@ Tek kaynak: `lib/core/theme/canlifal_brand_colors.dart`.
 - **Görsel önbelleği:** `maxWidthDiskCache`/`maxWidth` (ImageCacheManager gerektirir) kaldırıldı; ön-yükleme `ResizeImage`.
 - **Ölü kod:** `fortune/presentation/screens/` (17 ekran) ve yalnızca onların kullandığı 17 sağlayıcı + 3 model silindi; `lib`/`test`'te referans olmadığı HEAD üzerinde doğrulandı.
 - **Açık soru (kullanıcıya):** sonuç kartındaki "Enerji/Aşk/Para/Kariyer/Şans %" değerleri sunucudan gelmiyor, özet metninin hash'inden türetiliyor (`FortuneEnergyScores`). Değiştirilmedi.
+
+### Aşama 5 — yapılanlar
+
+- **Koltuk ölçüsü** (`VoiceMicSeat`): her koltuk `boxWidth(size)` × `footprintHeight(size)` sabit alan kaplar. İsim koltuk genişliğinde kısaltılır; hediye rozeti (`FittedBox`) avatarın alt kenarına, hediye bildirimi (`VoiceSeatGiftFlashStack`, `IgnorePointer`) avatarın üstüne biner. `VoiceWebOwnerStage` sahne yüksekliğini ve sütun genişliğini bu ölçülerden hesaplar (eskiden 5 × (hücre + 10 px çerçeve) hesaba katılmıyordu). İki sıra aynı 5 sütunlu ızgarada.
+- **Sahte seviye:** `_levelLabel` koltuk numarasından `Lv$seat` üretiyordu → `_roleLabel` yalnızca sunucu `roleSymbol` ve yayıncı "MOD".
+- **Kilitli koltuk:** `_EmptySeat` kilitliyken `onTap`/`onLongPress` null'dı → dokunma işleyicileri (zaten kilit kontrolü yapıyor) her zaman bağlı. `onVoiceRoomBasicSeatTap` kilitli koltukta yetkiliye atama/kilit menüsünü açar.
+- **Animasyon** (`VoiceSeatAvatarFrame`): `_orbit` kaldırıldı; `_spin` yalnızca rol çerçevesi + mikrofon açık, `_pulse` yalnızca konuşurken; `MediaQuery.disableAnimations` desteği. Test: konuşmayan konuk koltuğu kare zamanlamaz.
+- **Koyu kapsam:** `FortuneLaneTheme` → ortak `core/theme/dark_lane_theme.dart` (`DarkLaneTheme`; `FortuneLaneTheme` artık typedef). `/voice-rooms` ve `/voice-room/:id` rotaları sarıldı.
+- **Oda listesi:** `VoiceRoomsDiscoverMapper._distanceLabel` konum yoksa `''` döner; `NearbyRoomTileCard` satırı gizler. `VoiceRoomsMockData` içinden kullanılmayan sahte sabitler silindi (kategori/sekme etiketleri kaldı).
+- **Ölü kod:** yalnızca barrel'dan dışa aktarılan ya da hiç içe aktarılmayan 45 dosya silindi (ikinci tur: silinenlerin tek kullanıcısı olduğu 3 dosya). Her biri için `lib`/`test` içe aktarma + sınıf adı taraması yapıldı, silme sonrası `dart analyze` 0 hata.
 
 ## 4. Doğrulama yöntemi (her aşamada)
 

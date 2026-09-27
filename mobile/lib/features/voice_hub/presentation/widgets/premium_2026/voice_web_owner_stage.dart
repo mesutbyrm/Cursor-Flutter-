@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../../trtc/presentation/trtc_room_manager.dart';
@@ -7,6 +9,7 @@ import '../../../domain/entities/voice_room_seat_slot.dart';
 import '../../utils/voice_room_seat_layout.dart';
 import '../../utils/voice_room_seat_capacity.dart';
 import '../../utils/voice_room_speak_access.dart';
+import 'voice_mic_seat.dart';
 import 'voice_web_owner_stage_seat.dart';
 
 /// canlifal.com: sol Kurucu (koltuk 1) + sağda 2×5 (koltuk 2–11).
@@ -66,11 +69,12 @@ class VoiceWebOwnerStage extends StatelessWidget {
         const hPad = 8.0;
         final innerW = w - hPad * 2;
         final hostSize = (innerW * 0.17).clamp(52.0, 72.0);
-        final gridW = innerW - hostSize - gap;
-        final cell = ((gridW - gap * 4) / 5).clamp(34.0, 50.0);
-        final rowH = cell + 20;
-        final gridH = rowH * 2 + gap;
-        final totalH = gridH.clamp(112.0, 176.0);
+        final gridW = innerW - VoiceMicSeat.boxWidth(hostSize) - gap;
+        // 5 koltuk + 4 boşluk; her koltuk avatar + çerçeve payı genişliğinde.
+        final cell = ((gridW - gap * 4) / 5 - VoiceMicSeat.framePad)
+            .clamp(30.0, 50.0);
+        final gridH = VoiceMicSeat.footprintHeight(cell) * 2 + gap;
+        final totalH = math.max(gridH, VoiceMicSeat.footprintHeight(hostSize));
 
         final rows = voiceWebOwnerSeatRows(
           room: room,
@@ -120,7 +124,6 @@ class VoiceWebOwnerStage extends StatelessWidget {
                         internalNums: bottomInternal,
                         size: cell,
                         gap: gap,
-                        columns: bottomInternal.length,
                         speaking: speaking,
                       ),
                     ],
@@ -139,13 +142,14 @@ class VoiceWebOwnerStage extends StatelessWidget {
     required double size,
     required double gap,
     required Set<String> speaking,
-    int columns = 5,
   }) {
+    // İki sıra da aynı 5 sütunluk ızgarada — koltuklar alt alta hizalı.
+    const columns = 5;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: List.generate(columns, (col) {
         if (col >= internalNums.length) {
-          return SizedBox(width: size);
+          return SizedBox(width: VoiceMicSeat.boxWidth(size));
         }
         final internal = internalNums[col];
         return VoiceWebOwnerStageSeat(
