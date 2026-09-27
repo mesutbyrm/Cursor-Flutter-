@@ -663,7 +663,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           final session = state.extra as LiveBroadcastSession?;
           final child = session == null
               ? const LiveBroadcastTypePage()
-              : LiveBroadcastRoomPage(session: session);
+              : DarkLaneTheme(child: LiveBroadcastRoomPage(session: session));
           return AppPageTransitions.fadeSlide(key: state.pageKey, child: child);
         },
       ),
@@ -673,7 +673,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           final args = state.extra as LiveSwipeFeedArgs?;
           final child = args == null || args.streams.isEmpty
               ? const LivePage()
-              : LiveSwipeViewerPage(args: args);
+              : DarkLaneTheme(child: LiveSwipeViewerPage(args: args));
           return AppPageTransitions.fadeSlide(key: state.pageKey, child: child);
         },
       ),
@@ -2245,7 +2245,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) {
               final room = state.extra as VoiceRoomEntity?;
               if (room != null) {
-                return VoicePkBattlePage(room: room);
+                return DarkLaneTheme(child: VoicePkBattlePage(room: room));
               }
               final id = state.pathParameters['id'] ?? '';
               return VoiceRoomRoutePage(roomId: id);
@@ -2260,7 +2260,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                   roomId: state.pathParameters['id'] ?? '',
                 );
               }
-              return PkInvitePage(room: room);
+              return DarkLaneTheme(child: PkInvitePage(room: room));
             },
           ),
         ],
@@ -2270,7 +2270,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final session = state.extra as LiveBroadcastSession?;
           if (session == null) return const LiveBroadcastPrepPage();
-          return LivePkInvitePage(session: session);
+          return DarkLaneTheme(child: LivePkInvitePage(session: session));
         },
       ),
       GoRoute(
@@ -2289,10 +2289,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           final sharedTrtc = extra is Map
               ? extra['trtc'] as TrtcRoomManager?
               : null;
-          return LivePkBattlePage(
-            session: session,
-            opponentStream: opponent,
-            sharedTrtc: sharedTrtc,
+          return DarkLaneTheme(
+            child: LivePkBattlePage(
+              session: session,
+              opponentStream: opponent,
+              sharedTrtc: sharedTrtc,
+            ),
           );
         },
       ),

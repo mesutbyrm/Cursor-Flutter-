@@ -10,7 +10,6 @@ import '../../../../core/performance/list_perf.dart';
 import '../../../../core/performance/scroll_perf.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
-import '../../../../core/widgets/messages_notifications_actions.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../shell/presentation/widgets/branch_quick_actions.dart';
 import '../../../voice_hub/presentation/voice_rooms_body.dart';
@@ -108,6 +107,7 @@ class _LivePageState extends ConsumerState<LivePage>
                 ),
                 DiscoverIconButton(
                   icon: Icons.refresh_rounded,
+                  tooltip: 'Yenile',
                   onPressed: _refresh,
                 ),
               ],

@@ -1,5 +1,19 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.611+662 (2026-09-27) — UI yenileme Aşama 6: canlı yayın, hediye, PK
+
+- **PK hediye seçici ve izleyici listesi açılmıyordu:** ortak alt sayfa kabuğu içeriğe sınırsız yükseklik veriyordu; kaydırılabilir alt sayfalar düzen hatasıyla boş kalıyordu → içerik kalan yükseklikle sınırlanıyor (kısa alt sayfalarda görünüm aynı)
+- **Çift ücret:** PK hediye seçicide hediyeye dokununca anında gönderiliyor ama istek sürerken kilit yoktu; hızlı iki dokunuş iki hediye gönderiyordu → istek bitene kadar kilit + ilerleme çubuğu; gerçek bakiye gösteriliyor
+- **Yanlış hediye:** canlı yayın hediye panelinde kategori değişince seçili hediye gizleniyor ama "Gönder" onu yolluyordu; boş kategoride de gönderiyordu → seçim görünen listeye geçiyor, boş kategoride buton pasif ve "Bu kategoride hediye yok"
+- **Sahte bakiye:** bakiye bilinmiyorsa "0" yazıyordu → "—"
+- **Toplam maliyet:** Gönder butonu seçili hediye × adet toplamını gösteriyor
+- **Taşma:** adet çipleri + Gönder butonu ~390 dp ekrana sığmıyordu → çipler kaydırılabilir, onay işareti kaldırıldı; başlık esnek
+- **Açık tema:** hediye paneli, canlı yayın odası, kaydırmalı izleyici ve PK sayfaları koyu zeminli; içerikleri açık tema rengi alıyordu → `DarkLaneTheme`
+- **Canlı liste:** biten yayın canlı gibi görünüp "0 izleyici" yazıyordu → soluk, "Yayında değil"; izleyici sayısı 12.5K biçiminde; ekran okuyucu etiketi
+- **PK skoru:** sağdaki skorun gradyanı hiç görünmüyordu (sabit 0–140 px dikdörtgen) → her sayı kendi sınırında; skor ekran okuyucuda okunuyor
+- **Metin:** "Top Gifters" → "Destekçiler"; ikon butonlarına ipucu
+- **Ölü kod:** hiçbir yerden kullanılmayan 29 canlı yayın/hediye/PK dosyası silindi (~4.900 satır)
+
 ## 1.0.610+661 (2026-09-27) — UI yenileme Aşama 5: sesli oda listesi + koltuklar
 
 - **Koltuk taşması:** koltuk sahnesi her ekran genişliğinde alttan 14 px taşıyordu (alt sıradaki isimler kesiliyor, sohbetin üstüne biniyordu); 360 dp'de uzun isim satırı sağdan 23 px taşırıyordu; hediye rozeti/bildirimi gelince koltuk uzuyordu → her koltuk sabit boyutlu, isim koltuk genişliğinde kısaltılıyor, hediye rozeti avatarın alt kenarında, hediye bildirimi avatarın üstünde

@@ -26,161 +26,262 @@ Future<void> showLiveGiftPicker(
   String receiverName = 'Yayıncı',
 }) async {
   ref.invalidate(liveStreamGiftCatalogProvider);
+  // Dokunuş anında gönderir; istek sürerken ikinci dokunuş ikinci hediyeyi
+  // (ve ikinci ücreti) göndermesin.
+  final sending = ValueNotifier<bool>(false);
   await CdsBottomSheet.show<void>(
     context: context,
     child: Builder(
-    builder: (ctx) {
-      return Consumer(
-        builder: (context, ref, _) {
-          final gifts = ref.watch(liveGiftTypesProvider);
-          return DraggableScrollableSheet(
-            expand: false,
-            initialChildSize: 0.55,
-            minChildSize: 0.35,
-            maxChildSize: 0.92,
-            builder: (context, scroll) {
-              return gifts.when(
-                loading: () => const Padding(
-                  padding: EdgeInsets.all(32),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-                error: (e, _) => Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text(ApiException.userMessage(e)),
-                ),
-                data: (list) {
-                  if (list.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Text('Hediye listesi boş'),
-                    );
-                  }
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
-                        child: Text(
-                          'Hediye gönder',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
+      builder: (ctx) {
+        return Consumer(
+          builder: (context, ref, _) {
+            final gifts = ref.watch(liveGiftTypesProvider);
+            return DraggableScrollableSheet(
+              expand: false,
+              initialChildSize: 0.55,
+              minChildSize: 0.35,
+              maxChildSize: 0.92,
+              builder: (context, scroll) {
+                return gifts.when(
+                  loading: () => const Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (e, _) => Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(ApiException.userMessage(e)),
+                  ),
+                  data: (list) {
+                    if (list.isEmpty) {
+                      return const Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Text('Hediye listesi boş'),
+                      );
+                    }
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                          child: Row(
+                            children: [
+                              const Expanded(
+                                child: Text(
+                                  'Hediye gönder',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                              _BalanceChip(
+                                balance: ref.watch(coinBalanceProvider),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 20),
-                        child: Text(
-                          'Kredi cüzdanından düşer. Site ile aynı hediye türleri.',
-                          style: TextStyle(color: AppTheme.muted, fontSize: 12),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Expanded(
-                        child: GridView.builder(
-                          controller: scroll,
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            mainAxisSpacing: 10,
-                            crossAxisSpacing: 10,
-                            childAspectRatio: 0.82,
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 20),
+                          child: Text(
+                            'Kredi cüzdanından düşer. Site ile aynı hediye türleri.',
+                            style: TextStyle(
+                              color: AppTheme.muted,
+                              fontSize: 12,
+                            ),
                           ),
-                          itemCount: list.length,
-                          itemBuilder: (context, i) {
-                            final g = list[i];
-                            return _GiftTile(
-                              gift: g,
-                              onTap: () async {
-                                final user = ref.read(authControllerProvider).valueOrNull;
-                                final sender = user?.displayName ?? user?.username ?? 'Kullanıcı';
-                                final financeMode =
-                                    await resolveGiftStaffFinanceMode(context, ref);
-                                if (financeMode == null &&
-                                    shouldAskGiftStaffFinanceMode(ref)) {
-                                  return;
-                                }
-                                try {
-                                  final result = await ref
-                                      .read(liveGiftsRemoteProvider)
-                                      .sendGift(
-                                        streamId: streamId,
-                                        giftTypeId: g.id,
-                                        senderName: sender,
-                                        receiverName: receiverName,
-                                        giftName:
-                                            LiveGiftCatalog.displayName(g),
-                                        unitPrice: g.price,
-                                        senderId: user?.id,
-                                        isLucky: g.isLucky,
-                                        staffFinanceMode: financeMode,
-                                      );
-                                  if (context.mounted) {
-                                    ref.refreshWalletCache(force: true);
-                                    Navigator.pop(context);
-                                    if (result.luckyResult != null) {
-                                      final lucky = result.luckyResult!;
-                                      await showLuckyGiftSpinOverlay(
-                                        context,
-                                        result: lucky,
-                                        giftName: LiveGiftCatalog.displayName(g),
-                                      );
-                                      if (lucky.isJackpot) {
-                                        ref
-                                            .read(staffEntranceMarqueeProvider
-                                                .notifier)
-                                            .enqueueLuckyJackpot(
-                                              userName: sender,
-                                              giftName:
-                                                  LiveGiftCatalog.displayName(g),
-                                              multiplier:
-                                                  lucky.multiplier.round(),
-                                              wonJetons: lucky.wonJetons,
-                                            );
+                        ),
+                        ValueListenableBuilder<bool>(
+                          valueListenable: sending,
+                          builder: (_, busy, _) => SizedBox(
+                            height: 8,
+                            child: busy
+                                ? const Align(
+                                    alignment: Alignment.bottomCenter,
+                                    child: LinearProgressIndicator(
+                                      minHeight: 2,
+                                    ),
+                                  )
+                                : null,
+                          ),
+                        ),
+                        Expanded(
+                          child: ValueListenableBuilder<bool>(
+                            valueListenable: sending,
+                            builder: (_, busy, grid) =>
+                                AbsorbPointer(absorbing: busy, child: grid),
+                            child: GridView.builder(
+                              controller: scroll,
+                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 3,
+                                    mainAxisSpacing: 10,
+                                    crossAxisSpacing: 10,
+                                    childAspectRatio: 0.82,
+                                  ),
+                              itemCount: list.length,
+                              itemBuilder: (context, i) {
+                                final g = list[i];
+                                return _GiftTile(
+                                  gift: g,
+                                  onTap: () async {
+                                    if (sending.value) return;
+                                    sending.value = true;
+                                    try {
+                                      final user = ref
+                                          .read(authControllerProvider)
+                                          .valueOrNull;
+                                      final sender =
+                                          user?.displayName ??
+                                          user?.username ??
+                                          'Kullanıcı';
+                                      final financeMode =
+                                          await resolveGiftStaffFinanceMode(
+                                            context,
+                                            ref,
+                                          );
+                                      if (financeMode == null &&
+                                          shouldAskGiftStaffFinanceMode(ref)) {
+                                        return;
                                       }
-                                    } else {
-                                      GiftSyncLog.giftSent(
-                                        roomId: streamId,
-                                        giftId: g.id,
-                                        eventId:
-                                            'api_send_${DateTime.now().millisecondsSinceEpoch}',
-                                      );
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            '${LiveGiftCatalog.displayName(g)} gönderildi',
-                                          ),
-                                        ),
-                                      );
+                                      try {
+                                        final result = await ref
+                                            .read(liveGiftsRemoteProvider)
+                                            .sendGift(
+                                              streamId: streamId,
+                                              giftTypeId: g.id,
+                                              senderName: sender,
+                                              receiverName: receiverName,
+                                              giftName:
+                                                  LiveGiftCatalog.displayName(
+                                                    g,
+                                                  ),
+                                              unitPrice: g.price,
+                                              senderId: user?.id,
+                                              isLucky: g.isLucky,
+                                              staffFinanceMode: financeMode,
+                                            );
+                                        if (context.mounted) {
+                                          ref.refreshWalletCache(force: true);
+                                          Navigator.pop(context);
+                                          if (result.luckyResult != null) {
+                                            final lucky = result.luckyResult!;
+                                            await showLuckyGiftSpinOverlay(
+                                              context,
+                                              result: lucky,
+                                              giftName:
+                                                  LiveGiftCatalog.displayName(
+                                                    g,
+                                                  ),
+                                            );
+                                            if (lucky.isJackpot) {
+                                              ref
+                                                  .read(
+                                                    staffEntranceMarqueeProvider
+                                                        .notifier,
+                                                  )
+                                                  .enqueueLuckyJackpot(
+                                                    userName: sender,
+                                                    giftName:
+                                                        LiveGiftCatalog.displayName(
+                                                          g,
+                                                        ),
+                                                    multiplier: lucky.multiplier
+                                                        .round(),
+                                                    wonJetons: lucky.wonJetons,
+                                                  );
+                                            }
+                                          } else {
+                                            GiftSyncLog.giftSent(
+                                              roomId: streamId,
+                                              giftId: g.id,
+                                              eventId:
+                                                  'api_send_${DateTime.now().millisecondsSinceEpoch}',
+                                            );
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  '${LiveGiftCatalog.displayName(g)} gönderildi',
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          showJetonAwareError(
+                                            context,
+                                            ApiException.userMessage(e),
+                                            ref: ref,
+                                          );
+                                        }
+                                      }
+                                    } finally {
+                                      sending.value = false;
                                     }
-                                  }
-                                } catch (e) {
-                                  if (context.mounted) {
-                                    showJetonAwareError(
-                                      context,
-                                      ApiException.userMessage(e),
-                                      ref: ref,
-                                    );
-                                  }
-                                }
+                                  },
+                                );
                               },
-                            );
-                          },
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-          );
-        },
-      );
-    },
+                      ],
+                    );
+                  },
+                );
+              },
+            );
+          },
+        );
+      },
     ),
   );
+  // `sending` bilerek dispose edilmez: başarılı gönderimde sayfa kapanır ve
+  // onTap'in `finally` bloğu bundan sonra çalışır.
+}
+
+class _BalanceChip extends StatelessWidget {
+  const _BalanceChip({required this.balance});
+
+  /// null → henüz bilinmiyor ("—"); uydurma "0" gösterilmez.
+  final int? balance;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: balance == null ? 'Bakiye yükleniyor' : 'Bakiye $balance',
+      excludeSemantics: true,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: const Color(0x33FFC107),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0x66FFC107)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.monetization_on_rounded,
+              size: 15,
+              color: Color(0xFFFFD54F),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              balance == null ? '—' : '$balance',
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
+                color: Color(0xFFFFE082),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _GiftTile extends StatelessWidget {
@@ -193,50 +294,59 @@ class _GiftTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final url = gift.iconUrl(Env.siteOrigin);
     final emoji = gift.displayEmoji;
-    return Material(
-      color: AppTheme.surfaceElevated,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
+    return Semantics(
+      button: true,
+      label: '${gift.name}, ${gift.price} kredi. Dokununca gönderilir',
+      excludeSemantics: true,
+      onTap: onTap,
+      child: Material(
+        color: AppTheme.surfaceElevated,
         borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (gift.isLucky)
-                Align(
-                  alignment: Alignment.topRight,
-                  child: LuckyGiftBadge(compact: true),
-                ),
-              Expanded(
-                child: emoji != null
-                    ? Center(
-                        child: Text(emoji, style: const TextStyle(fontSize: 36)),
-                      )
-                    : url.isEmpty
-                        ? const Icon(Icons.card_giftcard, size: 36)
-                        : CanlifalNetworkImage(
-                            url: url,
-                            fit: BoxFit.contain,
-                            errorWidget: const Icon(Icons.card_giftcard),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (gift.isLucky)
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: LuckyGiftBadge(compact: true),
+                  ),
+                Expanded(
+                  child: emoji != null
+                      ? Center(
+                          child: Text(
+                            emoji,
+                            style: const TextStyle(fontSize: 36),
                           ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                gift.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 11,
+                        )
+                      : url.isEmpty
+                      ? const Icon(Icons.card_giftcard, size: 36)
+                      : CanlifalNetworkImage(
+                          url: url,
+                          fit: BoxFit.contain,
+                          errorWidget: const Icon(Icons.card_giftcard),
+                        ),
                 ),
-              ),
-              Text(
-                '${gift.price} kredi',
-                style: const TextStyle(color: AppTheme.muted, fontSize: 10),
-              ),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  gift.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                  ),
+                ),
+                Text(
+                  '${gift.price} kredi',
+                  style: const TextStyle(color: AppTheme.muted, fontSize: 10),
+                ),
+              ],
+            ),
           ),
         ),
       ),

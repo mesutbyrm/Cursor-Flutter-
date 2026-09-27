@@ -36,91 +36,95 @@ class LivePkReferenceScoreBar extends StatelessWidget {
     final rightPct = 100 - leftPct;
     final highlight = !active || showEndedScores;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: _ScoreNumber(
-                  value: leftScore,
-                  alignStart: true,
-                  colors: const [Color(0xFFFF2D7A), Color(0xFFB832FF)],
+    return Semantics(
+      container: true,
+      label: 'PK skoru: $leftScore – $rightScore',
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: _ScoreNumber(
+                    value: leftScore,
+                    alignStart: true,
+                    colors: const [Color(0xFFFF2D7A), Color(0xFFB832FF)],
+                  ),
                 ),
-              ),
-              Expanded(
-                child: _ScoreNumber(
-                  value: rightScore,
-                  alignStart: false,
-                  colors: const [Color(0xFF00D2FF), Color(0xFF448AFF)],
+                Expanded(
+                  child: _ScoreNumber(
+                    value: rightScore,
+                    alignStart: false,
+                    colors: const [Color(0xFF00D2FF), Color(0xFF448AFF)],
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: SizedBox(
-              height: 12,
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: (ratio * 1000).round().clamp(1, 999),
-                    child: const DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFFFF2D7A), Color(0xFFB832FF)],
+              ],
+            ),
+            const SizedBox(height: 6),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: SizedBox(
+                height: 12,
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: (ratio * 1000).round().clamp(1, 999),
+                      child: const DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFFFF2D7A), Color(0xFFB832FF)],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  Expanded(
-                    flex: ((1 - ratio) * 1000).round().clamp(1, 999),
-                    child: const DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFF00D2FF), Color(0xFF448AFF)],
+                    Expanded(
+                      flex: ((1 - ratio) * 1000).round().clamp(1, 999),
+                      child: const DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFF00D2FF), Color(0xFF448AFF)],
+                          ),
                         ),
                       ),
                     ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Text(
+                  '$leftPct%',
+                  style: const TextStyle(
+                    color: Color(0xFFFF6B9D),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
                   ),
-                ],
+                ),
+                const Spacer(),
+                Text(
+                  '$rightPct%',
+                  style: const TextStyle(
+                    color: Color(0xFF64B5F6),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Center(
+              child: PkStatusPill(
+                mode: pillMode,
+                winnerName: winnerName,
+                highlight: highlight,
               ),
             ),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              Text(
-                '$leftPct%',
-                style: const TextStyle(
-                  color: Color(0xFFFF6B9D),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                '$rightPct%',
-                style: const TextStyle(
-                  color: Color(0xFF64B5F6),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Center(
-            child: PkStatusPill(
-              mode: pillMode,
-              winnerName: winnerName,
-              highlight: highlight,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -139,17 +143,27 @@ class _ScoreNumber extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      PkAnimatedScoreBar.fmt(value),
-      textAlign: alignStart ? TextAlign.left : TextAlign.right,
-      style: TextStyle(
-        fontSize: 22,
-        fontWeight: FontWeight.w900,
-        foreground: Paint()
-          ..shader = LinearGradient(colors: colors)
-              .createShader(const Rect.fromLTWH(0, 0, 140, 30)),
+    // Gradyan metnin kendi sınırına göre çizilir; eskiden sabit 0–140 px
+    // dikdörtgen kullanıldığından sağa hizalı skor düz renk kalıyordu.
+    return Align(
+      alignment: alignStart ? Alignment.centerLeft : Alignment.centerRight,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: ShaderMask(
+          blendMode: BlendMode.srcIn,
+          shaderCallback: (bounds) =>
+              LinearGradient(colors: colors).createShader(bounds),
+          child: Text(
+            PkAnimatedScoreBar.fmt(value),
+            maxLines: 1,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+            ),
+          ),
+        ),
       ),
     );
   }
 }
-

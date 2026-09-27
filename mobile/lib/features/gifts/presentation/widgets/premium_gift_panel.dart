@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/config/env.dart';
+import '../../../../core/theme/dark_lane_theme.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../live/domain/entities/live_gift_type.dart';
@@ -65,112 +66,132 @@ class _PremiumGiftPanelState extends ConsumerState<PremiumGiftPanel>
   @override
   Widget build(BuildContext context) {
     final gifts = ref.watch(liveGiftCatalogProvider);
-    final leaderboard = ref.watch(streamGiftLeaderboardProvider(widget.streamId));
-    final coins = widget.controller.coinBalance ??
-        ref.watch(coinBalanceProvider) ??
-        0;
+    final leaderboard = ref.watch(
+      streamGiftLeaderboardProvider(widget.streamId),
+    );
+    // Bakiye bilinmiyorsa "0" değil "—" gösterilir.
+    final coins =
+        widget.controller.coinBalance ?? ref.watch(coinBalanceProvider);
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-        child: Container(
-          height: MediaQuery.sizeOf(context).height * 0.52,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                AppThemeColors.accentPurple.withValues(alpha: 0.42),
-                const Color(0xFF0A0A14).withValues(alpha: 0.96),
-              ],
-            ),
-            border: Border(
-              top: BorderSide(color: AppThemeColors.accentPink.withValues(alpha: 0.5)),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppThemeColors.accentPurple.withValues(alpha: 0.25),
-                blurRadius: 32,
-                offset: const Offset(0, -8),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              const SizedBox(height: 10),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 8, 0),
-                child: Row(
-                  children: [
-                    const Text(
-                      'Hediye Gönder',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 20,
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                    const Spacer(),
-                    _CoinChip(coins: coins),
-                    IconButton(
-                      onPressed: widget.onClose,
-                      icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                    ),
-                  ],
-                ),
-              ),
-              TabBar(
-                controller: _tabs,
-                indicatorColor: AppThemeColors.accentPink,
-                labelColor: context.colors.onSurface,
-                unselectedLabelColor: context.colors.onSurfaceMuted,
-                tabs: const [
-                  Tab(text: 'Hediyeler'),
-                  Tab(text: 'Top Gifters'),
+    // Panel her temada koyu zemin çizer; içindeki metin/çip/sekme renkleri de
+    // koyu temadan gelsin (açık temada okunmuyordu).
+    return DarkLaneTheme(
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+          child: Container(
+            height: MediaQuery.sizeOf(context).height * 0.52,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AppThemeColors.accentPurple.withValues(alpha: 0.42),
+                  const Color(0xFF0A0A14).withValues(alpha: 0.96),
                 ],
               ),
-              Expanded(
-                child: TabBarView(
-                  controller: _tabs,
-                  children: [
-                    _GiftsTab(
-                      gifts: gifts,
-                      streamId: widget.streamId,
-                      category: _category,
-                      onCategory: (c) => setState(() => _category = c),
-                      selected: _selected,
-                      qty: _qty,
-                      sending: widget.controller.sending,
-                      onSelect: (g) => setState(() => _selected = g),
-                      onQty: (q) => setState(() => _qty = q),
-                      onSend: _send,
-                    ),
-                    leaderboard.when(
-                      loading: () =>
-                          const TopGiftersLeaderboard(entries: [], loading: true),
-                      error: (_, _) => const TopGiftersLeaderboard(entries: []),
-                      data: (list) => SingleChildScrollView(
-                        padding: const EdgeInsets.all(16),
-                        child: TopGiftersLeaderboard(entries: list),
-                      ),
-                    ),
-                  ],
+              border: Border(
+                top: BorderSide(
+                  color: AppThemeColors.accentPink.withValues(alpha: 0.5),
                 ),
               ),
-            ],
+              boxShadow: [
+                BoxShadow(
+                  color: AppThemeColors.accentPurple.withValues(alpha: 0.25),
+                  blurRadius: 32,
+                  offset: const Offset(0, -8),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                const SizedBox(height: 10),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 8, 0),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Hediye Gönder',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 20,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                      ),
+                      _CoinChip(coins: coins),
+                      IconButton(
+                        onPressed: widget.onClose,
+                        tooltip: 'Kapat',
+                        icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                      ),
+                    ],
+                  ),
+                ),
+                TabBar(
+                  controller: _tabs,
+                  indicatorColor: AppThemeColors.accentPink,
+                  labelColor: context.colors.onSurface,
+                  unselectedLabelColor: context.colors.onSurfaceMuted,
+                  tabs: const [
+                    Tab(text: 'Hediyeler'),
+                    Tab(text: 'Destekçiler'),
+                  ],
+                ),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabs,
+                    children: [
+                      _GiftsTab(
+                        gifts: gifts,
+                        streamId: widget.streamId,
+                        category: _category,
+                        onCategory: (c) => setState(() => _category = c),
+                        selected: _selected,
+                        qty: _qty,
+                        sending: widget.controller.sending,
+                        onSelect: (g) => setState(() => _selected = g),
+                        onQty: (q) => setState(() => _qty = q),
+                        onSend: _send,
+                      ),
+                      leaderboard.when(
+                        loading: () => const TopGiftersLeaderboard(
+                          entries: [],
+                          loading: true,
+                        ),
+                        error: (_, _) =>
+                            const TopGiftersLeaderboard(entries: []),
+                        data: (list) => SingleChildScrollView(
+                          padding: const EdgeInsets.all(16),
+                          child: TopGiftersLeaderboard(entries: list),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    ).animate().slideY(begin: 1, end: 0, duration: 340.ms, curve: Curves.easeOutCubic);
+    ).animate().slideY(
+      begin: 1,
+      end: 0,
+      duration: 340.ms,
+      curve: Curves.easeOutCubic,
+    );
   }
 
   Future<void> _send() async {
@@ -191,11 +212,7 @@ class _PremiumGiftPanelState extends ConsumerState<PremiumGiftPanel>
       ref.refreshWalletCache(force: true);
     } catch (e) {
       if (!mounted) return;
-      showJetonAwareError(
-        context,
-        ApiException.userMessage(e),
-        ref: ref,
-      );
+      showJetonAwareError(context, ApiException.userMessage(e), ref: ref);
     }
   }
 }
@@ -247,29 +264,7 @@ class _GiftsTab extends StatelessWidget {
     if (category == 'gift_box') {
       return Column(
         children: [
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(
-              children: [
-                for (final c in const [
-                  ('popular', 'Popüler'),
-                  ('fortune', 'Fal'),
-                  ('vip', 'VIP'),
-                  ('event', 'Etkinlik'),
-                  ('gift_box', 'Hediye kutusu'),
-                ])
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(c.$2),
-                      selected: category == c.$1,
-                      onSelected: (_) => onCategory(c.$1),
-                    ),
-                  ),
-              ],
-            ),
-          ),
+          _CategoryChips(category: category, onCategory: onCategory),
           Expanded(
             child: GiftBoxPanelSection(
               scope: (roomId: null, streamId: streamId),
@@ -280,7 +275,10 @@ class _GiftsTab extends StatelessWidget {
     }
     return gifts.when(
       loading: () => const Center(
-        child: CircularProgressIndicator(strokeWidth: 2, color: AppThemeColors.accentPink),
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: AppThemeColors.accentPink,
+        ),
       ),
       error: (_, _) => const Center(child: Text('Hediyeler yüklenemedi')),
       data: (catalog) {
@@ -288,8 +286,16 @@ class _GiftsTab extends StatelessWidget {
             .where((g) => g.platform != GiftPlatform.web)
             .toList();
         final filtered = _filter(mobile);
-
-        if (selected == null && filtered.isNotEmpty) {
+        // Seçim görünen listede değilse (kategori değişti) ilk hediyeye geç;
+        // eskiden "Gönder" başka kategoride kalan görünmez hediyeyi yolluyordu.
+        LiveVideoGiftType? current;
+        for (final g in filtered) {
+          if (g.id == selected?.id) {
+            current = LiveVideoGiftType.fromGift(g);
+            break;
+          }
+        }
+        if (current == null && filtered.isNotEmpty) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             onSelect(LiveVideoGiftType.fromGift(filtered.first));
           });
@@ -297,47 +303,36 @@ class _GiftsTab extends StatelessWidget {
 
         return Column(
           children: [
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Row(
-                children: [
-                  for (final c in const [
-                    ('popular', 'Popüler'),
-                    ('fortune', 'Fal'),
-                    ('vip', 'VIP'),
-                    ('event', 'Etkinlik'),
-                    ('gift_box', 'Hediye kutusu'),
-                  ])
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        label: Text(c.$2),
-                        selected: category == c.$1,
-                        onSelected: (_) => onCategory(c.$1),
-                      ),
-                    ),
-                ],
-              ),
-            ),
+            _CategoryChips(category: category, onCategory: onCategory),
             Expanded(
-              child: ListView.builder(
-                cacheExtent: 400, scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                itemCount: filtered.length,
-                itemBuilder: (ctx, i) {
-                  final entity = filtered[i];
-                  final gift = LiveVideoGiftType.fromGift(entity);
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 10),
-                    child: _PremiumGiftTile(
-                      gift: gift,
-                      selected: selected?.id == gift.id,
-                      onTap: () => onSelect(gift),
+              child: filtered.isEmpty
+                  ? Center(
+                      child: Text(
+                        'Bu kategoride hediye yok',
+                        style: TextStyle(color: context.colors.onSurfaceMuted),
+                      ),
+                    )
+                  : ListView.builder(
+                      cacheExtent: 400,
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      itemCount: filtered.length,
+                      itemBuilder: (ctx, i) {
+                        final entity = filtered[i];
+                        final gift = LiveVideoGiftType.fromGift(entity);
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 10),
+                          child: _PremiumGiftTile(
+                            gift: gift,
+                            selected: current?.id == gift.id,
+                            onTap: () => onSelect(gift),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
             Padding(
               padding: EdgeInsets.fromLTRB(
@@ -348,20 +343,40 @@ class _GiftsTab extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  for (final q in [1, 5, 10, 99])
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        label: Text('x$q'),
-                        selected: qty == q,
-                        onSelected: (_) => onQty(q),
-                        selectedColor: AppThemeColors.accentPink.withValues(alpha: 0.45),
-                        backgroundColor: Colors.white10,
-                        labelStyle: const TextStyle(fontWeight: FontWeight.w800),
+                  // Adet çipleri kaydırılabilir: 4 çip + toplamlı Gönder
+                  // butonu ~390 dp ekrana sığmıyordu.
+                  Expanded(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          for (final q in [1, 5, 10, 99])
+                            Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: ChoiceChip(
+                                label: Text('x$q'),
+                                selected: qty == q,
+                                showCheckmark: false,
+                                visualDensity: VisualDensity.compact,
+                                onSelected: (_) => onQty(q),
+                                selectedColor: AppThemeColors.accentPink
+                                    .withValues(alpha: 0.45),
+                                backgroundColor: Colors.white10,
+                                labelStyle: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
-                  const Spacer(),
-                  _SendButton(loading: sending, onPressed: onSend),
+                  ),
+                  const SizedBox(width: 8),
+                  _SendButton(
+                    loading: sending,
+                    total: current == null ? null : current.price * qty,
+                    onPressed: current == null ? null : onSend,
+                  ),
                 ],
               ),
             ),
@@ -388,56 +403,79 @@ class _PremiumGiftTile extends StatelessWidget {
     final url = gift.iconUrl(Env.siteOrigin);
     final glow = gift.rarity.glowColor;
 
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: '${gift.name}, ${gift.price} jeton',
+      excludeSemantics: true,
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: 220.ms,
-        width: 88,
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          gradient: selected
-              ? LinearGradient(
-                  colors: [
-                    glow.withValues(alpha: 0.45),
-                    AppThemeColors.accentPurple.withValues(alpha: 0.25),
-                  ],
-                )
-              : null,
-          color: selected ? null : Colors.white.withValues(alpha: 0.07),
-          border: Border.all(
-            color: selected ? glow : Colors.white.withValues(alpha: 0.12),
-            width: selected ? 2 : 1,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: 220.ms,
+          width: 88,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: selected
+                ? LinearGradient(
+                    colors: [
+                      glow.withValues(alpha: 0.45),
+                      AppThemeColors.accentPurple.withValues(alpha: 0.25),
+                    ],
+                  )
+                : null,
+            color: selected ? null : Colors.white.withValues(alpha: 0.07),
+            border: Border.all(
+              color: selected ? glow : Colors.white.withValues(alpha: 0.12),
+              width: selected ? 2 : 1,
+            ),
+            boxShadow: selected
+                ? AppThemeColors.glowShadow(glow, blur: 18)
+                : null,
           ),
-          boxShadow: selected ? AppThemeColors.glowShadow(glow, blur: 18) : null,
-        ),
-        child: Column(
-          children: [
-            _RarityBadge(rarity: gift.rarity),
-            const SizedBox(height: 4),
-            Expanded(
-              child: url.isEmpty
-                  ? Text(
-                      gift.rarity.index >= GiftRarity.epic.index ? '✨' : '🎁',
-                      style: const TextStyle(fontSize: 34),
-                    )
-                  : CanlifalNetworkImage(url: url, fit: BoxFit.contain),
-            ),
-            Text(
-              gift.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
-            ),
-            Text(
-              '${gift.price}',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: AppThemeColors.coinGold.withValues(alpha: 0.95),
+          child: Column(
+            children: [
+              _RarityBadge(rarity: gift.rarity),
+              const SizedBox(height: 4),
+              Expanded(
+                child: url.isEmpty
+                    ? Text(
+                        gift.rarity.index >= GiftRarity.epic.index ? '✨' : '🎁',
+                        style: const TextStyle(fontSize: 34),
+                      )
+                    : CanlifalNetworkImage(url: url, fit: BoxFit.contain),
               ),
-            ),
-          ],
+              Text(
+                gift.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.monetization_on_rounded,
+                    size: 11,
+                    color: AppThemeColors.coinGold,
+                  ),
+                  const SizedBox(width: 2),
+                  Text(
+                    '${gift.price}',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: AppThemeColors.coinGold.withValues(alpha: 0.95),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -473,70 +511,164 @@ class _RarityBadge extends StatelessWidget {
 
 class _CoinChip extends StatelessWidget {
   const _CoinChip({required this.coins});
-  final int coins;
+  final int? coins;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        gradient: context.colors.brandGradient,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: AppThemeColors.glowShadow(AppThemeColors.coinGold, blur: 12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.monetization_on_rounded, size: 16, color: Colors.black87),
-          const SizedBox(width: 4),
-          Text(
-            '$coins',
-            style: const TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 13,
+    return Semantics(
+      label: coins == null ? 'Bakiye yükleniyor' : 'Bakiye $coins jeton',
+      excludeSemantics: true,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          gradient: context.colors.brandGradient,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: AppThemeColors.glowShadow(
+            AppThemeColors.coinGold,
+            blur: 12,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.monetization_on_rounded,
+              size: 16,
               color: Colors.black87,
             ),
-          ),
-        ],
+            const SizedBox(width: 4),
+            Text(
+              coins == null ? '—' : '$coins',
+              style: const TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 13,
+                color: Colors.black87,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _SendButton extends StatelessWidget {
-  const _SendButton({required this.onPressed, required this.loading});
+  const _SendButton({
+    required this.onPressed,
+    required this.loading,
+    this.total,
+  });
 
-  final VoidCallback onPressed;
+  /// null → gönderilecek hediye yok (buton pasif).
+  final VoidCallback? onPressed;
   final bool loading;
+
+  /// Seçili hediye × adet toplam jeton.
+  final int? total;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: loading ? null : onPressed,
-        borderRadius: BorderRadius.circular(22),
-        child: Ink(
-          padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 12),
-          decoration: BoxDecoration(
-            gradient: context.colors.brandGradient,
+    final enabled = onPressed != null && !loading;
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: total == null ? 'Gönder' : 'Gönder, $total jeton',
+      excludeSemantics: true,
+      onTap: enabled ? onPressed : null,
+      child: Opacity(
+        opacity: enabled || loading ? 1 : 0.45,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: enabled ? onPressed : null,
             borderRadius: BorderRadius.circular(22),
-            boxShadow: AppThemeColors.glowShadow(AppThemeColors.accentPink),
+            child: Ink(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: context.colors.brandGradient,
+                borderRadius: BorderRadius.circular(22),
+                boxShadow: enabled
+                    ? AppThemeColors.glowShadow(AppThemeColors.accentPink)
+                    : null,
+              ),
+              child: loading
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Gönder',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 15,
+                            color: Colors.white,
+                          ),
+                        ),
+                        if (total != null) ...[
+                          const SizedBox(width: 8),
+                          const Icon(
+                            Icons.monetization_on_rounded,
+                            size: 14,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            '$total',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+            ),
           ),
-          child: loading
-              ? const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : const Text(
-                  'Gönder',
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
-                ),
         ),
+      ),
+    );
+  }
+}
+
+class _CategoryChips extends StatelessWidget {
+  const _CategoryChips({required this.category, required this.onCategory});
+
+  final String category;
+  final ValueChanged<String> onCategory;
+
+  static const _items = [
+    ('popular', 'Popüler'),
+    ('fortune', 'Fal'),
+    ('vip', 'VIP'),
+    ('event', 'Etkinlik'),
+    ('gift_box', 'Hediye kutusu'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        children: [
+          for (final c in _items)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ChoiceChip(
+                label: Text(c.$2),
+                selected: category == c.$1,
+                onSelected: (_) => onCategory(c.$1),
+              ),
+            ),
+        ],
       ),
     );
   }

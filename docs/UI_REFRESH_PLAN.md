@@ -51,8 +51,8 @@ Tek kaynak: `lib/core/theme/canlifal_brand_colors.dart`.
 | 3 | Profil + kullanıcı kartları | ✅ tamam |
 | 4 | Fal türleri + sonuç ekranları | ✅ tamam |
 | 5 | Sesli oda + koltuklar | ✅ tamam (yalnızca görsel katman; SSE/presence/TRTC değişmedi) |
-| 6 | Canlı yayın + hediye + PK | ⏳ sıradaki |
-| 7 | Sohbet, mesajlaşma, diğer | ⏳ |
+| 6 | Canlı yayın + hediye + PK | ✅ tamam (TRTC/SSE/API değişmedi) |
+| 7 | Sohbet, mesajlaşma, diğer | ⏳ sıradaki (+ proje geneli ~100 kullanılmayan dosya) |
 
 ### Aşama 1 — yapılanlar
 
@@ -97,6 +97,16 @@ Tek kaynak: `lib/core/theme/canlifal_brand_colors.dart`.
 - **Koyu kapsam:** `FortuneLaneTheme` → ortak `core/theme/dark_lane_theme.dart` (`DarkLaneTheme`; `FortuneLaneTheme` artık typedef). `/voice-rooms` ve `/voice-room/:id` rotaları sarıldı.
 - **Oda listesi:** `VoiceRoomsDiscoverMapper._distanceLabel` konum yoksa `''` döner; `NearbyRoomTileCard` satırı gizler. `VoiceRoomsMockData` içinden kullanılmayan sahte sabitler silindi (kategori/sekme etiketleri kaldı).
 - **Ölü kod:** yalnızca barrel'dan dışa aktarılan ya da hiç içe aktarılmayan 45 dosya silindi (ikinci tur: silinenlerin tek kullanıcısı olduğu 3 dosya). Her biri için `lib`/`test` içe aktarma + sınıf adı taraması yapıldı, silme sonrası `dart analyze` 0 hata.
+
+### Aşama 6 — yapılanlar
+
+- **Alt sayfa kabuğu** (`showPremiumBottomSheet` / `CdsBottomSheet.show`): içerik `Column(min)` içinde sınırsız yükseklik alıyordu; `DraggableScrollableSheet` kullanan `showLiveGiftPicker` ve `live_viewers_sheet` düzen hatası veriyordu → içerik `Flexible`. Test: `test/core/ui/premium_bottom_sheet_test.dart`.
+- **PK hediye seçici** (`live_gift_sheet.dart`): dokunuşta anında gönderim korunuyor; `ValueNotifier` kilidi + `AbsorbPointer` + ilerleme çubuğu; gerçek bakiye çipi (`coinBalanceProvider`, bilinmiyorsa "—").
+- **Canlı hediye paneli** (`PremiumGiftPanel`): `DarkLaneTheme` ile sarıldı; seçim görünen listede değilse ilk hediyeye geçer; boş kategoride boş durum + pasif buton; toplam maliyet; adet çipleri kaydırılabilir; "Destekçiler".
+- **Rotalar:** `/live/room`, `/live/swipe`, `/live/pk`, `/live/pk-invite`, `/voice-room/:id/pk`, `/voice-room/:id/pk-invite` `DarkLaneTheme` ile sarıldı.
+- **Liste kartı** (`LiveStreamListTile`): bitmiş yayın soluk + "Yayında değil"; sayı biçimi; semantik.
+- **PK skor çubuğu:** `ShaderMask` ile metne göre gradyan; `FittedBox`; semantik.
+- **Ölü kod:** içe aktarılmayan 24 dosya + yalnızca barrel'dan dışa aktarılan 4 dosya + ikinci turda 1 dosya (`live_gift_panel.dart`). Proje genelinde başka alanlarda ~100 kullanılmayan dosya daha var; Aşama 7'ye bırakıldı.
 
 ## 4. Doğrulama yöntemi (her aşamada)
 
