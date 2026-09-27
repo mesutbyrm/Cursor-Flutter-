@@ -52,7 +52,9 @@ class PkRoomRemoteDataSource {
       'matchId': id,
       if (extra != null) ...extra,
     };
-    return _postVideoPk(body) ?? _postLivePk(body);
+    final viaVideo = await _postVideoPk(body);
+    if (viaVideo != null) return viaVideo;
+    return _postLivePk(body);
   }
 
   // --- Faz 1: 1v1 davet / yanıt ---
@@ -75,12 +77,15 @@ class PkRoomRemoteDataSource {
       'duration': duration,
       'mode': mode.wire,
     };
-    return _postVideoPk(body) ??
-        _postLivePk({
-          ...body,
-          'roomId': hostStreamId.trim(),
-          'targetRoomId': opponentStreamId.trim(),
-        });
+    final viaVideo = await _postVideoPk(body);
+    if (viaVideo != null) return viaVideo;
+    // `/api/video-streams/pk` yalnızca canlı yayınları çözer; sesli sohbet
+    // odaları ve karışık (oda ↔ yayın) eşleşmeler için `/api/live/pk` gerekir.
+    return _postLivePk({
+      ...body,
+      'roomId': hostStreamId.trim(),
+      'targetRoomId': opponentStreamId.trim(),
+    });
   }
 
   /// Kabul veya red — tek uç: `POST /api/video-streams/pk` (yedek `/api/live/pk`).
