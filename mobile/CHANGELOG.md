@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.619+670 (2026-09-27) — PR #397/#399 birleşimi + SSE (#400 kalanı)
+
+- **Animasyon (#397):** `CurvedAnimation` initState/dispose — sızıntı ve gereksiz listener birikimi giderildi (home, fal, sesli oda, arama)
+- **Google giriş (#399):** Cihazdaki APK SHA-1 parmak izi `AppSignature` ile gösterilir; `scripts/verify-google-signin-config.sh` güncellendi
+- **SSE (#400 kalan):** Bağlantı nesli sayacı, 40 sn heartbeat toleransı, timeout’ta backoff’lu yeniden bağlanma
+- **Reklam (#400 — önceki commit):** Ödüllü geçiş reklamı (`RewardedInterstitialAd`), üretim App ID manifest’te
+
 ## 1.0.618+669 (2026-09-27) — Tarot/fal ödüllü geçiş reklamı düzeltmesi
 
 - **Kök neden:** AdMob birimi ödüllü geçiş (Rewarded Interstitial); uygulama klasik `RewardedAd` ile yüklüyordu → reklam açılmıyor, “ödül verilmedi” hatası
