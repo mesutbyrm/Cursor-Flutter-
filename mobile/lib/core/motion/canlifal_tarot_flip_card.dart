@@ -1,10 +1,13 @@
-import 'dart:math' show pi;
+import 'dart:math' show pi, sin;
 
 import 'package:flutter/material.dart';
 
 import 'canlifal_motion_tokens.dart';
 
 /// Tarot kartı — Y ekseni flip (seçim / açılış).
+///
+/// Çevrilirken kart masadan hafifçe kalkar (ölçek + büyüyen gölge) ve yüzeyinden
+/// bir ışık yansıması geçer; "animasyonları azalt" açıksa anında çevrilir.
 class CanlifalTarotFlipCard extends StatefulWidget {
   const CanlifalTarotFlipCard({
     super.key,
@@ -14,6 +17,7 @@ class CanlifalTarotFlipCard extends StatefulWidget {
     this.onFlipComplete,
     this.width = 96,
     this.height = 142,
+    this.borderRadius = 12,
   });
 
   final Widget front;
@@ -22,6 +26,7 @@ class CanlifalTarotFlipCard extends StatefulWidget {
   final VoidCallback? onFlipComplete;
   final double width;
   final double height;
+  final double borderRadius;
 
   @override
   State<CanlifalTarotFlipCard> createState() => _CanlifalTarotFlipCardState();
@@ -29,43 +34,31 @@ class CanlifalTarotFlipCard extends StatefulWidget {
 
 class _CanlifalTarotFlipCardState extends State<CanlifalTarotFlipCard>
     with SingleTickerProviderStateMixin {
-  late AnimationController _c;
-  late Animation<double> _turn;
-  var _showFront = true;
+  late final AnimationController _c =
+      AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 720),
+        value: widget.flipped ? 1 : 0,
+      )..addStatusListener((s) {
+        if (s == AnimationStatus.completed) widget.onFlipComplete?.call();
+      });
 
-  @override
-  void initState() {
-    super.initState();
-    _c = AnimationController(
-      vsync: this,
-      duration: CanlifalMotionTokens.premium,
-    );
-    _turn = Tween<double>(begin: 0, end: pi).animate(
-      CurvedAnimation(parent: _c, curve: CanlifalMotionTokens.easeOut),
-    );
-    _c.addStatusListener((s) {
-      if (s == AnimationStatus.completed) {
-        widget.onFlipComplete?.call();
-      }
-    });
-    if (widget.flipped) {
-      _showFront = false;
-      _c.value = 1;
-    }
-  }
+  late final Animation<double> _turn = CurvedAnimation(
+    parent: _c,
+    curve: Curves.easeInOutCubic,
+    reverseCurve: CanlifalMotionTokens.easeIn,
+  );
 
   @override
   void didUpdateWidget(covariant CanlifalTarotFlipCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.flipped != oldWidget.flipped) {
-      if (widget.flipped) {
-        _c.forward();
-        _showFront = false;
-      } else {
-        _c.reverse();
-        _showFront = true;
-      }
+    if (widget.flipped == oldWidget.flipped) return;
+    if (MediaQuery.disableAnimationsOf(context)) {
+      // value=1 durum dinleyicisini tetikler; onFlipComplete orada çağrılır.
+      _c.value = widget.flipped ? 1 : 0;
+      return;
     }
+    widget.flipped ? _c.forward() : _c.reverse();
   }
 
   @override
@@ -76,32 +69,75 @@ class _CanlifalTarotFlipCardState extends State<CanlifalTarotFlipCard>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _turn,
-      builder: (_, child) {
-        final angle = _turn.value;
-        final transform = Matrix4.identity()
-          ..setEntry(3, 2, 0.001)
-          ..rotateY(angle);
-        final isUnder = angle >= pi / 2;
-        final face = SizedBox(
-          width: widget.width,
-          height: widget.height,
-          child: isUnder
+    final radius = BorderRadius.circular(widget.borderRadius);
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _turn,
+        builder: (_, _) {
+          final t = _turn.value;
+          final angle = t * pi;
+          // Dönüşün ortasında en yüksek: kart kalkar, gölge büyür, ışık geçer.
+          final lift = sin(t * pi);
+          final isUnder = angle >= pi / 2;
+
+          final face = isUnder
               ? Transform(
                   transform: Matrix4.identity()..rotateY(pi),
                   alignment: Alignment.center,
                   child: widget.back,
                 )
-              : widget.front,
-        );
-        return Transform(
-          transform: transform,
-          alignment: Alignment.center,
-          child: face,
-        );
-      },
-      child: SizedBox(width: widget.width, height: widget.height),
+              : widget.front;
+
+          return Transform(
+            alignment: Alignment.center,
+            transform: Matrix4.identity()
+              ..setEntry(3, 2, 0.0015)
+              ..scaleByDouble(1 + 0.08 * lift, 1 + 0.08 * lift, 1, 1)
+              ..rotateY(angle),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: radius,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.25 + 0.25 * lift),
+                    blurRadius: 8 + 22 * lift,
+                    offset: Offset(0, 4 + 10 * lift),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: radius,
+                child: SizedBox(
+                  width: widget.width,
+                  height: widget.height,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      face,
+                      if (lift > 0.02)
+                        IgnorePointer(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment(-1.6 + 3.2 * t, -1),
+                                end: Alignment(-0.6 + 3.2 * t, 1),
+                                colors: [
+                                  Colors.white.withValues(alpha: 0),
+                                  Colors.white.withValues(alpha: 0.28 * lift),
+                                  Colors.white.withValues(alpha: 0),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }

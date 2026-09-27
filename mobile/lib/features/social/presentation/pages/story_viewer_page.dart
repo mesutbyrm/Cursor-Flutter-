@@ -483,8 +483,6 @@ class _StoryViewerPageState extends ConsumerState<StoryViewerPage>
     return CachedNetworkImage(
       imageUrl: CanlifalImageUrls.full(story.mediaUrl),
       cacheManager: CanlifalImageCacheManager.instance,
-      maxWidthDiskCache: CanlifalImageUrls.fullMaxWidth,
-      maxHeightDiskCache: CanlifalImageUrls.fullMaxWidth,
       fadeInDuration: const Duration(milliseconds: 180),
       imageBuilder: (context, provider) {
         WidgetsBinding.instance.addPostFrameCallback(

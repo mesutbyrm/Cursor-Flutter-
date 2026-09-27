@@ -20,10 +20,14 @@ Future<void> prefetchCanlifalImages(
     if (thumb.isEmpty) continue;
     try {
       await precacheImage(
-        CachedNetworkImageProvider(
-          thumb,
-          maxWidth: cacheW,
-          cacheManager: CanlifalImageCacheManager.instance,
+        // Boyutlandırma kod çözmede (bellek); disk boyutlandırma bu önbellek
+        // yöneticisinde desteklenmiyor.
+        ResizeImage(
+          CachedNetworkImageProvider(
+            thumb,
+            cacheManager: CanlifalImageCacheManager.instance,
+          ),
+          width: cacheW,
         ),
         context,
       );

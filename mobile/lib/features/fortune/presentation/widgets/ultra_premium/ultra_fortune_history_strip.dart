@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/design_system/cds_skeleton.dart';
 import '../../providers/fortune_api_providers.dart';
 import '../../data/fortune_catalog.dart';
 import '../premium_2026/premium_section_header.dart';
@@ -18,16 +19,33 @@ class UltraFortuneHistoryStrip extends ConsumerWidget {
     final history = ref.watch(fortuneHistoryProvider);
 
     return history.when(
-      loading: () => const Padding(
-        padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
-        child: SizedBox(
-          height: 132,
-          child: Center(
-            child: SizedBox(
-              width: 22,
-              height: 22,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
+      // Yüklenirken şeridin gerçek düzeni: başlık + 3 kart iskeleti.
+      loading: () => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        child: ExcludeSemantics(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CdsSkeleton.box(width: 120, height: 14),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 132,
+                child: Row(
+                  children: [
+                    for (var i = 0; i < 3; i++) ...[
+                      if (i > 0) const SizedBox(width: 10),
+                      Expanded(
+                        child: CdsSkeleton.box(
+                          width: double.infinity,
+                          height: 132,
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -76,7 +94,9 @@ class UltraFortuneHistoryStrip extends ConsumerWidget {
                     child: Text(
                       'Tümü >',
                       style: TextStyle(
-                        color: UltraFortuneTokens.softLilac.withValues(alpha: 0.95),
+                        color: UltraFortuneTokens.softLilac.withValues(
+                          alpha: 0.95,
+                        ),
                         fontWeight: FontWeight.w700,
                         fontSize: 12,
                       ),
@@ -96,7 +116,8 @@ class UltraFortuneHistoryStrip extends ConsumerWidget {
                     final slug = item.slug ?? '';
                     final catalog = FortuneCatalog.bySlug(slug);
                     final title = catalog?.title ?? item.displayTitle;
-                    final accent = catalog?.accent ?? UltraFortuneTokens.electricPurple;
+                    final accent =
+                        catalog?.accent ?? UltraFortuneTokens.electricPurple;
                     return SizedBox(
                       width: 148,
                       child: FortunePremiumCard(

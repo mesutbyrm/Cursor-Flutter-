@@ -2,7 +2,7 @@ name: canlifal_social
 description: Canlifal — modern sosyal medya istemcisi (REST + JWT, Clean Architecture).
 publish_to: 'none'
 
-version: 1.0.608+659
+version: 1.0.609+660
 
 environment:
   sdk: '>=3.8.0 <4.0.0'

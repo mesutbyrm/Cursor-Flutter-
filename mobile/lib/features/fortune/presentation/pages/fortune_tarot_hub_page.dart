@@ -3,10 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/push/push_notification_service.dart';
 import '../../../../core/ui/premium_2026/premium_2026.dart';
-import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover_refresh.dart';
 import '../../../../core/site_animation/presentation/widgets/site_animation_context_host.dart';
 import '../providers/fortune_api_providers.dart';
@@ -16,6 +14,7 @@ import '../../../bana_ozel/presentation/providers/bana_ozel_providers.dart';
 import '../../../live_psychics/presentation/widgets/psychics_home_section.dart';
 import '../widgets/ultra_premium/ultra_fortune_app_bar.dart';
 import '../design/fortune_design_lane.dart';
+import '../design/fortune_lane_theme.dart';
 import '../widgets/ultra_premium/ultra_fortune_daily_energy.dart';
 import '../widgets/ultra_premium/ultra_fortune_daily_missions_strip.dart';
 import '../widgets/ultra_premium/ultra_fortune_hero_section.dart';
@@ -40,7 +39,8 @@ class FortuneTarotHubPage extends ConsumerStatefulWidget {
   final String? initialTypeSlug;
 
   @override
-  ConsumerState<FortuneTarotHubPage> createState() => _FortuneTarotHubPageState();
+  ConsumerState<FortuneTarotHubPage> createState() =>
+      _FortuneTarotHubPageState();
 }
 
 class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
@@ -64,8 +64,9 @@ class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
     try {
       final store = await ref.read(fortuneHubPreferencesStoreProvider.future);
       if (store.dailyReminderEnabled) {
-        await PushNotificationService.instance
-            .setDailyFortuneReminderEnabled(true);
+        await PushNotificationService.instance.setDailyFortuneReminderEnabled(
+          true,
+        );
       }
     } catch (_) {}
   }
@@ -97,56 +98,63 @@ class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
-    final bg = context.isDarkTheme
-        ? UltraFortuneTokens.deepNight
-        : context.colors.scaffoldBackground;
+    // Fal bölümü her temada koyu zemin çizer (bkz. FortuneLaneTheme).
+    const bg = UltraFortuneTokens.deepNight;
 
-    return SiteAnimationContextHost(
-      context: SiteAnimationContext.falTarot,
-      child: Scaffold(
-      backgroundColor: bg,
-      body: FortuneLaneBackdrop(
-        surface: FortuneLaneSurface.hub,
-        scrollParallax: _scrollParallax,
-        child: DiscoverRefresh.wrap(
-          onRefresh: _onRefresh,
-          child: CustomScrollView(
-            controller: _scrollController,
-            physics: PremiumMotion.listPhysics,
-            slivers: [
-              const SliverToBoxAdapter(child: UltraFortuneAppBar()),
-              const SliverToBoxAdapter(child: UltraFortuneHeroSection()),
-              const SliverToBoxAdapter(child: UltraFortuneLastFortuneCta()),
-              const SliverToBoxAdapter(child: UltraFortuneHubSearchBar()),
-              const SliverToBoxAdapter(child: UltraFortuneQuickActions()),
-              const SliverToBoxAdapter(child: UltraFortuneHistoryStrip()),
-              const SliverToBoxAdapter(child: UltraFortuneHubQuickGrid()),
-              const SliverToBoxAdapter(child: UltraFortuneTypesSection()),
-              const SliverToBoxAdapter(child: UltraFortuneDailyMissionsStrip()),
-              const SliverToBoxAdapter(child: UltraFortuneReadyReadingsStrip()),
-              const SliverToBoxAdapter(
-                child: UltraFortuneRecommendationsSection(),
+    return FortuneLaneTheme(
+      child: SiteAnimationContextHost(
+        context: SiteAnimationContext.falTarot,
+        child: Scaffold(
+          backgroundColor: bg,
+          body: FortuneLaneBackdrop(
+            surface: FortuneLaneSurface.hub,
+            scrollParallax: _scrollParallax,
+            child: DiscoverRefresh.wrap(
+              onRefresh: _onRefresh,
+              child: CustomScrollView(
+                controller: _scrollController,
+                physics: PremiumMotion.listPhysics,
+                slivers: [
+                  const SliverToBoxAdapter(child: UltraFortuneAppBar()),
+                  const SliverToBoxAdapter(child: UltraFortuneHeroSection()),
+                  const SliverToBoxAdapter(child: UltraFortuneLastFortuneCta()),
+                  const SliverToBoxAdapter(child: UltraFortuneHubSearchBar()),
+                  const SliverToBoxAdapter(child: UltraFortuneQuickActions()),
+                  const SliverToBoxAdapter(child: UltraFortuneHistoryStrip()),
+                  const SliverToBoxAdapter(child: UltraFortuneHubQuickGrid()),
+                  const SliverToBoxAdapter(child: UltraFortuneTypesSection()),
+                  const SliverToBoxAdapter(
+                    child: UltraFortuneDailyMissionsStrip(),
+                  ),
+                  const SliverToBoxAdapter(
+                    child: UltraFortuneReadyReadingsStrip(),
+                  ),
+                  const SliverToBoxAdapter(
+                    child: UltraFortuneRecommendationsSection(),
+                  ),
+                  const SliverToBoxAdapter(child: PsychicsHomeSection()),
+                  const SliverToBoxAdapter(
+                    child: ShortsHubStrip(
+                      title: 'Kısa Videolar',
+                      emoji: '🎬',
+                      padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    ),
+                  ),
+                  const SliverToBoxAdapter(child: BanaOzelHubSection()),
+                  const SliverToBoxAdapter(child: FortuneZodiacHubCard()),
+                  const SliverToBoxAdapter(child: UltraFortuneProphecyCard()),
+                  const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                  const SliverToBoxAdapter(child: UltraFortuneDailyEnergy()),
+                  const SliverToBoxAdapter(
+                    child: UltraFortuneDailyReminderTile(),
+                  ),
+                  SliverToBoxAdapter(child: SizedBox(height: bottom + 100)),
+                ],
               ),
-              const SliverToBoxAdapter(child: PsychicsHomeSection()),
-              const SliverToBoxAdapter(
-                child: ShortsHubStrip(
-                  title: 'Kısa Videolar',
-                  emoji: '🎬',
-                  padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
-                ),
-              ),
-              const SliverToBoxAdapter(child: BanaOzelHubSection()),
-              const SliverToBoxAdapter(child: FortuneZodiacHubCard()),
-              const SliverToBoxAdapter(child: UltraFortuneProphecyCard()),
-              const SliverToBoxAdapter(child: SizedBox(height: 8)),
-              const SliverToBoxAdapter(child: UltraFortuneDailyEnergy()),
-              const SliverToBoxAdapter(child: UltraFortuneDailyReminderTile()),
-              SliverToBoxAdapter(child: SizedBox(height: bottom + 100)),
-            ],
+            ),
           ),
         ),
       ),
-    ),
     );
   }
 }

@@ -31,9 +31,10 @@ CachedNetworkImageProvider canlifalImageProvider(
   final resolved = thumbnail
       ? CanlifalImageUrls.thumbnail(url, width: width)
       : CanlifalImageUrls.full(url);
+  // Disk boyutlandırma (maxWidth) ImageCacheManager ister; bu yönetici değil →
+  // release'de yok sayılıyor, debug'da assert. Sunucu küçük resmi zaten ister.
   return CachedNetworkImageProvider(
     resolved,
-    maxWidth: thumbnail ? width : CanlifalImageUrls.fullMaxWidth,
     cacheManager: CanlifalImageCacheManager.instance,
   );
 }
@@ -127,10 +128,6 @@ class CanlifalNetworkImage extends StatelessWidget {
       cacheManager: CanlifalImageCacheManager.instance,
       memCacheWidth: loadFullResolution ? null : cachePx,
       memCacheHeight: loadFullResolution ? null : memH,
-      maxWidthDiskCache:
-          loadFullResolution ? CanlifalImageUrls.fullMaxWidth : (cachePx ?? 480),
-      maxHeightDiskCache:
-          loadFullResolution ? CanlifalImageUrls.fullMaxWidth : null,
       fadeInDuration:
           fadeIn ? const Duration(milliseconds: 220) : Duration.zero,
       color: color,

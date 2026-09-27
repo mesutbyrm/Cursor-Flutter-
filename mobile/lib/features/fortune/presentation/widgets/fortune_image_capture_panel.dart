@@ -362,12 +362,17 @@ class _PhotoSlot extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 13,
-                color: Colors.white,
+            // Dar sütunda (iki kutucuk yan yana) uzun etiket taşmasın.
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                  color: Colors.white,
+                ),
               ),
             ),
             if (requiredSlot) ...[
@@ -383,6 +388,7 @@ class _PhotoSlot extends StatelessWidget {
             ] else
               Text(
                 ' (opsiyonel)',
+                maxLines: 1,
                 style: TextStyle(
                   color: context.colors.onSurfaceMuted,
                   fontSize: 10,

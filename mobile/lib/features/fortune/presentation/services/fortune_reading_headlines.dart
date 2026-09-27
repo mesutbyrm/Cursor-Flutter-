@@ -41,21 +41,31 @@ abstract final class FortuneReadingHeadlines {
   }
 
   static IconData sectionIcon(String key) => switch (key) {
-        FortuneSectionKeys.love => Icons.favorite_rounded,
-        FortuneSectionKeys.career => Icons.work_rounded,
-        FortuneSectionKeys.money => Icons.payments_rounded,
-        FortuneSectionKeys.future => Icons.nightlight_round,
-        FortuneSectionKeys.advice => Icons.star_rounded,
-        _ => Icons.auto_awesome_rounded,
-      };
+    FortuneSectionKeys.love => Icons.favorite_rounded,
+    FortuneSectionKeys.career => Icons.work_rounded,
+    FortuneSectionKeys.money => Icons.payments_rounded,
+    FortuneSectionKeys.future => Icons.nightlight_round,
+    FortuneSectionKeys.advice => Icons.star_rounded,
+    _ => Icons.auto_awesome_rounded,
+  };
 
   static String sectionLabel(String key) => switch (key) {
-        FortuneSectionKeys.general => 'GENEL YORUM',
-        FortuneSectionKeys.love => 'Aşk',
-        FortuneSectionKeys.career => 'Kariyer',
-        FortuneSectionKeys.money => 'Para',
-        FortuneSectionKeys.future => 'Ruhsal Durum',
-        FortuneSectionKeys.advice => 'Tavsiye',
-        _ => 'Yorum',
-      };
+    FortuneSectionKeys.general => 'GENEL YORUM',
+    FortuneSectionKeys.love => 'Aşk',
+    FortuneSectionKeys.career => 'Kariyer',
+    FortuneSectionKeys.money => 'Para',
+    FortuneSectionKeys.future => 'Ruhsal Durum',
+    FortuneSectionKeys.advice => 'Tavsiye',
+    _ => 'Yorum',
+  };
+
+  /// Bilinen anahtarlarda sabit etiket; diğerlerinde sunucunun başlığı
+  /// (ör. tarot "Geçmiş / Şimdi / Gelecek") — hepsine "Yorum" yazılmasın.
+  static String sectionTitle(FortuneReadingSection section) {
+    if (FortuneSectionKeys.ordered.contains(section.key)) {
+      return sectionLabel(section.key);
+    }
+    final title = section.title.trim();
+    return title.isNotEmpty ? title : sectionLabel(section.key);
+  }
 }

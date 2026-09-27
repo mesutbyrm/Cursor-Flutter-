@@ -361,7 +361,7 @@ class _AnimatedSectionBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = FortuneReadingHeadlines.sectionLabel(section.key);
+    final label = FortuneReadingHeadlines.sectionTitle(section);
     final icon = FortuneReadingHeadlines.sectionIcon(section.key);
     final bodyStyle = TextStyle(
       color: Colors.white.withValues(alpha: 0.94),

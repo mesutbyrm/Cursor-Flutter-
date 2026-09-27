@@ -111,6 +111,7 @@ class _CinematicTarotThumbState extends State<_CinematicTarotThumb> {
       child: CanlifalTarotFlipCard(
         width: 64,
         height: 88,
+        borderRadius: 14,
         flipped: _revealed,
         front: cardFace(
           Stack(

@@ -49,8 +49,8 @@ Tek kaynak: `lib/core/theme/canlifal_brand_colors.dart`.
 | 1 | Ana sayfa + alt navigasyon | ✅ tamam (bu PR) |
 | 2 | Sosyal akış + hikâyeler | ✅ tamam |
 | 3 | Profil + kullanıcı kartları | ✅ tamam |
-| 4 | Fal türleri + sonuç ekranları | ⏳ sıradaki |
-| 5 | Sesli oda + koltuklar | ⏳ (SSE/presence yeni stabilize edildi; yalnızca görsel katman) |
+| 4 | Fal türleri + sonuç ekranları | ✅ tamam |
+| 5 | Sesli oda + koltuklar | ⏳ sıradaki (SSE/presence yeni stabilize edildi; yalnızca görsel katman) |
 | 6 | Canlı yayın + hediye + PK | ⏳ |
 | 7 | Sohbet, mesajlaşma, diğer | ⏳ |
 
@@ -77,6 +77,16 @@ Tek kaynak: `lib/core/theme/canlifal_brand_colors.dart`.
 - **Açık tema:** `ProfilePremiumTheme`'e temaya duyarlı yardımcılar (`surfaceOf`, `textOf`, `borderOf`, `accentOf`, `glassDecorationOf`…) eklendi; 20 hub/profil dosyası bunlara taşındı. Sabit koyu gradyan üzerindeki metinler (VIP afişi, fal/canlı kartları, küçük resim yer tutucusu) bilerek beyaz bırakıldı — render ile tek tek doğrulandı.
 - **Başlık yerleşimi:** ad bloğu kapağın kenarına biniyordu; kapağın altına alındı, eylemler tam genişlik buton satırına taşındı.
 - **Takipçi listesi:** `UserListTile`, iskelet, yeniden denemeli hata, çekip yenileme.
+
+### Aşama 4 — yapılanlar
+
+- **Fal koyu teması:** fal sayfaları sabit koyu zemin (`#0A0118`, `deepNight`) çiziyor; açık temada içteki tema-duyarlı bileşenler açık renk alıyordu. `FortuneLaneTheme` (merkez + `FortuneAnimationRouteShell` altındaki tüm fal rotaları) açık temada koyu `ThemeData` verir; koyu/AMOLED seçimine dokunmaz. Alt sayfalar `showModalBottomSheet`'in tema yakalaması sayesinde kapsamı devralır.
+- **Giriş sayfası:** fotoğraf gerekirken butonlar `() {}` idi → `_onOpenPressed` önce `showFortuneImageCaptureSheet`, sonra fal. Fotoğraf kutucuğu başlığında taşma giderildi.
+- **Sonuç:** `FortuneReadingHeadlines.sectionTitle` — bilinmeyen anahtarda sunucu başlığı.
+- **Kart çevirme** (`CanlifalTarotFlipCard`): kalkma + dinamik gölge + ışık yansıması, `RepaintBoundary`, azaltılmış hareket desteği; genel API geriye uyumlu (`borderRadius` eklendi).
+- **Görsel önbelleği:** `maxWidthDiskCache`/`maxWidth` (ImageCacheManager gerektirir) kaldırıldı; ön-yükleme `ResizeImage`.
+- **Ölü kod:** `fortune/presentation/screens/` (17 ekran) ve yalnızca onların kullandığı 17 sağlayıcı + 3 model silindi; `lib`/`test`'te referans olmadığı HEAD üzerinde doğrulandı.
+- **Açık soru (kullanıcıya):** sonuç kartındaki "Enerji/Aşk/Para/Kariyer/Şans %" değerleri sunucudan gelmiyor, özet metninin hash'inden türetiliyor (`FortuneEnergyScores`). Değiştirilmedi.
 
 ## 4. Doğrulama yöntemi (her aşamada)
 

@@ -72,6 +72,22 @@ class _FortuneTypeIntroPageState extends ConsumerState<FortuneTypeIntroPage> {
     context.pushReplacement('/fortune/${t.slug}');
   }
 
+  /// Fotoğraf gerekiyorsa ve eksikse önce fotoğraf sayfasını açar; ardından
+  /// falı açar. Buton hiçbir durumda sessizce işlevsiz kalmaz.
+  Future<void> _onOpenPressed() async {
+    if (_opening) return;
+    if (!_canOpen) {
+      final picked = await showFortuneImageCaptureSheet(
+        context: context,
+        type: type,
+      );
+      if (!mounted || picked == null) return;
+      setState(() => _images = picked);
+      if (!_canOpen) return;
+    }
+    await _openFortune();
+  }
+
   Future<void> _openFortune() {
     return runPremiumFortuneOpenTransition(
       context: context,
@@ -132,7 +148,8 @@ class _FortuneTypeIntroPageState extends ConsumerState<FortuneTypeIntroPage> {
               onBack: () => context.pop(),
               trailing: FortuneMysticBarButton(
                 icon: Icons.auto_awesome,
-                onPressed: _canOpen && !_opening ? _openFortune : () {},
+                tooltip: 'Falını aç',
+                onPressed: _onOpenPressed,
               ),
             ),
             FortuneTypeContextHeader(type: type),
@@ -165,14 +182,16 @@ class _FortuneTypeIntroPageState extends ConsumerState<FortuneTypeIntroPage> {
                           ],
                           PremiumFortuneOpenButton(
                             accent: type.accent,
-                            enabled: _canOpen && !_opening,
-                            onPressed: _canOpen ? _openFortune : () {},
+                            enabled: !_opening,
+                            onPressed: _onOpenPressed,
                           ),
                           if (_opening) ...[
                             const SizedBox(height: 14),
                             LinearProgressIndicator(
                               color: type.accent,
-                              backgroundColor: type.accent.withValues(alpha: 0.15),
+                              backgroundColor: type.accent.withValues(
+                                alpha: 0.15,
+                              ),
                             ),
                             const SizedBox(height: 8),
                             Text(
