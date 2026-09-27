@@ -29,11 +29,17 @@ abstract class BaseSseService {
   DateTime? _lastEventAt;
   var _openingStream = false;
 
+  /// Her kapatma/yeniden açma turunda artar. Eski turun geç gelen
+  /// onError/onDone/watchdog geri çağrıları bu sayaçla elenir; aksi halde
+  /// bilerek kapatılan bir akım da yeniden bağlanma tetikler (çift bağlantı).
+  var _generation = 0;
+
   /// Son SSE `id:` — reconnect'te Last-Event-ID olarak gönderilir.
   String? get lastEventId => _lastEventId;
 
-  /// Üretim heartbeat 15 sn — 2× tolerans (T+5 donma sorununu çözmek için azalt).
-  static const heartbeatTimeout = Duration(seconds: 30);
+  /// Üretim heartbeat 10 sn — 4× tolerans. Mobil şebekede gecikmiş tek bir
+  /// heartbeat yüzünden gereksiz yeniden bağlanma yaşanmasın.
+  static const heartbeatTimeout = Duration(seconds: 40);
 
   static Dio createSseDio() {
     return Dio(
@@ -181,7 +187,8 @@ abstract class BaseSseService {
 
         _reconnectAttempt = 0;
         _lastEventAt = DateTime.now();
-        _startHeartbeatWatchdog();
+        final gen = _generation;
+        _startHeartbeatWatchdog(gen);
         onStreamOpened();
         status.emit(
           const SseConnectionStatus(phase: SseConnectionPhase.connected),
@@ -190,6 +197,7 @@ abstract class BaseSseService {
         final buffer = StringBuffer();
         _bytesSub = byteStream.listen(
           (chunk) {
+            if (gen != _generation) return;
             _lastEventAt = DateTime.now();
             buffer.write(utf8.decode(chunk, allowMalformed: true));
             drainSseBuffer(buffer, (block) {
@@ -201,6 +209,7 @@ abstract class BaseSseService {
             });
           },
           onError: (Object e) {
+            if (gen != _generation) return;
             status.emit(
               SseConnectionStatus(
                 phase: SseConnectionPhase.reconnecting,
@@ -210,7 +219,10 @@ abstract class BaseSseService {
             );
             _scheduleReconnect();
           },
-          onDone: () => _scheduleReconnect(),
+          onDone: () {
+            if (gen != _generation) return;
+            _scheduleReconnect();
+          },
           cancelOnError: false,
         );
       } on DioException catch (e) {
@@ -268,16 +280,24 @@ abstract class BaseSseService {
     }
   }
 
-  void _startHeartbeatWatchdog() {
+  void _startHeartbeatWatchdog(int gen) {
     _heartbeatWatchdog?.cancel();
-    _heartbeatWatchdog = Timer.periodic(const Duration(seconds: 5), (_) {
+    _heartbeatWatchdog = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (gen != _generation) {
+        timer.cancel();
+        return;
+      }
       final last = _lastEventAt;
       if (last == null || _stopped || _paused) return;
       if (DateTime.now().difference(last) > heartbeatTimeout) {
         if (kDebugMode) {
           debugPrint('$runtimeType: heartbeat timeout — reconnecting');
         }
-        unawaited(_openStream());
+        // Doğrudan _openStream() yerine backoff'lu yol: sunucu kapalıyken
+        // 5 sn'de bir sürekli bağlanma denemesi yapılmasın.
+        timer.cancel();
+        _heartbeatWatchdog = null;
+        _scheduleReconnect();
       }
     });
   }
@@ -309,6 +329,7 @@ abstract class BaseSseService {
   }
 
   Future<void> _closeStreamOnly() async {
+    _generation++;
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
     _heartbeatWatchdog?.cancel();
