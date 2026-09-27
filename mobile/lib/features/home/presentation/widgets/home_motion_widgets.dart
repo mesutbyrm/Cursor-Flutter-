@@ -87,6 +87,9 @@ class HomePulsingIconBadge extends ConsumerStatefulWidget {
 class _HomePulsingIconBadgeState extends ConsumerState<HomePulsingIconBadge>
     with SingleTickerProviderStateMixin {
   late AnimationController _c;
+  // Tek sefer oluşturulur — build() içinde animate() her çizimde listener ekler.
+  late final CurvedAnimation _bumpCurve;
+  late final Animation<double> _bump;
   var _lastBadge = 0;
 
   @override
@@ -97,6 +100,14 @@ class _HomePulsingIconBadgeState extends ConsumerState<HomePulsingIconBadge>
       vsync: this,
       duration: CanlifalMotionTokens.microMax,
     );
+    _bumpCurve = CurvedAnimation(
+      parent: _c,
+      curve: CanlifalMotionTokens.spring,
+    );
+    _bump = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.22), weight: 50),
+      TweenSequenceItem(tween: Tween(begin: 1.22, end: 1.0), weight: 50),
+    ]).animate(_bumpCurve);
   }
 
   @override
@@ -114,6 +125,7 @@ class _HomePulsingIconBadgeState extends ConsumerState<HomePulsingIconBadge>
 
   @override
   void dispose() {
+    _bumpCurve.dispose();
     _c.dispose();
     super.dispose();
   }
@@ -158,22 +170,7 @@ class _HomePulsingIconBadgeState extends ConsumerState<HomePulsingIconBadge>
                 right: -3,
                 top: -3,
                 child: ScaleTransition(
-                  scale:
-                      TweenSequence<double>([
-                        TweenSequenceItem(
-                          tween: Tween(begin: 1.0, end: 1.22),
-                          weight: 50,
-                        ),
-                        TweenSequenceItem(
-                          tween: Tween(begin: 1.22, end: 1.0),
-                          weight: 50,
-                        ),
-                      ]).animate(
-                        CurvedAnimation(
-                          parent: _c,
-                          curve: CanlifalMotionTokens.spring,
-                        ),
-                      ),
+                  scale: _bump,
                   child: _BadgeDot(count: widget.badge),
                 ),
               ),

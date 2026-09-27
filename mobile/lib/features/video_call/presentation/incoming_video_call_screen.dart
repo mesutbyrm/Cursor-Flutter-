@@ -30,6 +30,10 @@ class IncomingVideoCallScreen extends ConsumerStatefulWidget {
 class _IncomingVideoCallScreenState extends ConsumerState<IncomingVideoCallScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _pulse;
+  // build() her saniye (geri sayım) yeniden çalışıyor; animasyon tek sefer
+  // oluşturulmazsa her çizimde controller'a yeni listener eklenir.
+  late final CurvedAnimation _pulseCurve;
+  late final Animation<double> _scale;
   Timer? _countdown;
   var _secondsLeft = VideoCallInvitationService.callTimeout.inSeconds;
 
@@ -40,6 +44,8 @@ class _IncomingVideoCallScreenState extends ConsumerState<IncomingVideoCallScree
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     )..repeat(reverse: true);
+    _pulseCurve = CurvedAnimation(parent: _pulse, curve: Curves.easeInOut);
+    _scale = Tween<double>(begin: 1.0, end: 1.08).animate(_pulseCurve);
     _countdown = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       setState(() {
@@ -54,6 +60,7 @@ class _IncomingVideoCallScreenState extends ConsumerState<IncomingVideoCallScree
   @override
   void dispose() {
     _countdown?.cancel();
+    _pulseCurve.dispose();
     _pulse.dispose();
     super.dispose();
   }
@@ -62,9 +69,7 @@ class _IncomingVideoCallScreenState extends ConsumerState<IncomingVideoCallScree
   Widget build(BuildContext context) {
     final invite = widget.invitation;
     final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
-    final scale = Tween<double>(begin: 1.0, end: 1.08).animate(
-      CurvedAnimation(parent: _pulse, curve: Curves.easeInOut),
-    );
+    final scale = _scale;
 
     return Material(
       color: Colors.black.withValues(alpha: 0.92),
