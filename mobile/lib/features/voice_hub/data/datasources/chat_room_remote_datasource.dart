@@ -105,14 +105,21 @@ class ChatRoomRemoteDataSource {
   static const presenceHeartbeatInterval = Duration(seconds: 15);
 
   /// Heartbeat — Abacus OpenAPI: `POST /presence` (GET/POST/DELETE; PATCH yok).
+  /// [seatIndex] daima gönderilmeli: heartbeat gecikirse (arka plan, ağ
+  /// kesintisi) sunucu bu isteği "yeni giriş" sayar ve seatIndex yoksa
+  /// kullanıcıyı rastgele boş koltuğa oturtur. Oturan kullanıcı kendi
+  /// koltuğunu, dinleyici -1 gönderir.
   Future<void> presenceHeartbeat(
     String roomKey, {
     String? alternateKey,
+    int? seatIndex,
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _dio.safePost<dynamic>(
         presencePath(key),
-        data: const <String, dynamic>{},
+        data: <String, dynamic>{
+          if (seatIndex != null) 'seatIndex': seatIndex,
+        },
       );
     });
   }
@@ -535,10 +542,14 @@ class ChatRoomRemoteDataSource {
       final nick = nickname?.trim();
       final pass = password?.trim();
       final bodies = <Map<String, dynamic>>[
+        // `seatIndex` her gövdede yer almalı: -1 "dinleyici kal" demektir ve
+        // sunucu seatIndex gelmediğinde yeni girişte boş koltuğa otomatik
+        // oturtuyor. Alan düşerse kullanıcı istemeden koltuğa alınır ya da
+        // yeniden bağlanmada koltuğu değişir.
         {
           'action': 'join',
           if (nick != null && nick.isNotEmpty) 'nickname': nick,
-          if (seatIndex != null && seatIndex >= 0) 'seatIndex': seatIndex,
+          if (seatIndex != null) 'seatIndex': seatIndex,
           if (pass != null && pass.isNotEmpty) ...{
             'password': pass,
             'entryPassword': pass,
@@ -547,6 +558,7 @@ class ChatRoomRemoteDataSource {
         if (nick != null && nick.isNotEmpty)
           {
             'action': 'join',
+            if (seatIndex != null) 'seatIndex': seatIndex,
             if (pass != null && pass.isNotEmpty) ...{
               'password': pass,
               'entryPassword': pass,
@@ -555,6 +567,7 @@ class ChatRoomRemoteDataSource {
         {
           'type': 'join',
           if (nick != null && nick.isNotEmpty) 'nickname': nick,
+          if (seatIndex != null) 'seatIndex': seatIndex,
           if (pass != null && pass.isNotEmpty) 'password': pass,
         },
       ];

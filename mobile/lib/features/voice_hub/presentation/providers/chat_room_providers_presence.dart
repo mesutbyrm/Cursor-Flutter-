@@ -511,12 +511,16 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       // Heartbeat sonrası yeniden katılımda koltuk talebi kapalıydı; sunucu
       // presence kaydını düşürdüyse kullanıcı odaya geri giriyor ama koltuğu
       // boş kalıyordu. Son doğrulanmış koltuk biliniyorsa geri istenir.
-      final joinSeat = rejoinAfterHeartbeat
+      final requestedSeat = rejoinAfterHeartbeat
           ? resolveRejoinSeatIndex(
               currentSeatIndex: _currentSelfSeatIndex(),
               lastConfirmedSeatIndex: _lastConfirmedSelfSeatIndex,
             )
           : (allowSeatClaim ? peekJoinSeatIndexForPrivilegedUser() : null);
+      // Koltuk istenmiyorsa alan boş bırakılmaz: sunucu seatIndex gelmeyen
+      // yeni girişte kullanıcıyı ilk boş koltuğa otomatik oturtuyor. -1
+      // açıkça "dinleyici kal" demektir ve otomatik oturmayı engeller.
+      final joinSeat = requestedSeat ?? -1;
       final joined = await ref.read(chatRoomRemoteProvider).joinPresence(
             _presenceApiKey,
             alternateKey: _presenceAlternateKey,
@@ -842,9 +846,14 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         'room': _roomKey,
         'tick': _presenceHeartbeatCount,
       });
+      // Anlık durum gönderilir: oturuyorsa kendi koltuğu, değilse -1.
+      // (Son hatırlanan koltuk burada kullanılmaz; kullanıcı koltuktan
+      // kendi kalktıysa heartbeat onu geri oturtmamalı.)
+      final heartbeatSeat = _currentSelfSeatIndex() ?? -1;
       await ref.read(chatRoomRemoteProvider).presenceHeartbeat(
             _presenceApiKey,
             alternateKey: _presenceAlternateKey,
+            seatIndex: heartbeatSeat,
           );
     } catch (e) {
       VoiceRoomDebugLog.log('api.presence.heartbeat.fail', {

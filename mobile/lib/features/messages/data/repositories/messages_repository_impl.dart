@@ -145,4 +145,27 @@ class MessagesRepositoryImpl implements MessagesRepository {
     final uid = currentUserId ?? '';
     await ApiCacheStore.clear(MessagesLoadPerf.conversationsKey(uid));
   }
+
+  @override
+  Future<List<MessageRequestEntity>> pendingMessageRequests({
+    bool forceRefresh = true,
+  }) =>
+      _remote.pendingMessageRequests(forceRefresh: forceRefresh);
+
+  @override
+  Future<void> sendMessageRequest(String receiverId, {String? message}) =>
+      _remote.sendMessageRequest(receiverId, message: message);
+
+  @override
+  Future<void> respondMessageRequest(
+    String requestId, {
+    required bool accept,
+    String? currentUserId,
+  }) async {
+    await _remote.respondMessageRequest(requestId, accept: accept);
+    // Kabul edilen istek yeni bir konuşma yaratır; liste önbelleği tazelenmeli.
+    await ApiCacheStore.clear(
+      MessagesLoadPerf.conversationsKey(currentUserId ?? ''),
+    );
+  }
 }

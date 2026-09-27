@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/sse/base_sse_service.dart';
 import '../../../../core/network/sse/sse_reconnect_policy.dart';
@@ -17,13 +16,28 @@ class MessageSseService extends BaseSseService {
 
   void Function(MessageSseEvent event)? _onEvent;
 
+  /// Üretimde yalnızca `/api/messages/conversations/{id}/stream` var;
+  /// `/api/messages/{userId}/stream` 404 dönüyordu ve 404'te yeniden
+  /// bağlanma kapalı olduğu için DM'ler gerçek zamanlı gelmiyordu.
+  /// Önce konuşma yolu denenir, 404 alınırsa diğerine bir kez düşülür.
+  bool _useUserScopedPath = false;
+  bool _triedUserScopedPath = false;
+
   @override
-  bool shouldReconnectOnHttpError(int? statusCode) => statusCode != 404;
+  bool shouldReconnectOnHttpError(int? statusCode) {
+    if (statusCode != 404) return true;
+    if (!_useUserScopedPath && !_triedUserScopedPath) {
+      _useUserScopedPath = true;
+      _triedUserScopedPath = true;
+      return true; // alternatif yolla yeniden dene
+    }
+    return false;
+  }
 
   @override
   String streamPath() {
     final id = _conversationId ?? '';
-    if (Env.useMobileAuth) {
+    if (_useUserScopedPath) {
       return ApiEndpoints.messagesStreamWithUser(id);
     }
     return ApiEndpoints.conversationStream(id);
@@ -39,6 +53,8 @@ class MessageSseService extends BaseSseService {
     if (id.isEmpty) return false;
     _conversationId = id;
     _onEvent = onEvent;
+    _useUserScopedPath = false;
+    _triedUserScopedPath = false;
     try {
       await super.openConnection(
         accessToken: accessToken,

@@ -183,16 +183,127 @@ class MessagesRemoteDataSource {
         fromLabel: forwardFrom ?? 'İletilen mesaj',
       );
     }
-    if (Env.useMobileAuth) {
+    try {
+      if (Env.useMobileAuth) {
+        await _dio.safePost(
+          ApiEndpoints.messagesWithUser(peerUserId),
+          data: {'content': payload},
+        );
+        return;
+      }
       await _dio.safePost(
-        ApiEndpoints.messagesWithUser(peerUserId),
-        data: {'content': payload},
+        ApiEndpoints.conversationMessages(peerUserId),
+        data: {'text': payload, 'content': payload},
       );
-      return;
+    } on ApiException catch (e) {
+      // Gizlilik ayarı nedeniyle doğrudan mesaj kapalıysa sunucu 403 +
+      // "Message request required" dönüyor. İstek hiç oluşturulmadığı için
+      // mesaj karşı tarafa hiç ulaşmıyordu; burada otomatik istek gönderilir.
+      if (e.statusCode == 403 && _needsMessageRequest(e.message)) {
+        await sendMessageRequest(peerUserId, message: text);
+        throw const ApiException(
+          'Bu kişiye doğrudan mesaj gönderilemiyor. Mesaj isteğin iletildi; '
+          'kabul edildiğinde yazabilirsin.',
+          statusCode: 403,
+        );
+      }
+      rethrow;
     }
-    await _dio.safePost(
-      ApiEndpoints.conversationMessages(peerUserId),
-      data: {'text': payload, 'content': payload},
+  }
+
+  static bool _needsMessageRequest(String message) {
+    final m = message.toLowerCase();
+    return m.contains('message request') ||
+        m.contains('mesaj iste') ||
+        m.contains('istek gerek');
+  }
+
+  // --- Mesaj istekleri ---
+
+  /// Bekleyen gelen mesaj istekleri — `GET /api/messages` → `requests`.
+  Future<List<MessageRequestEntity>> pendingMessageRequests({
+    bool forceRefresh = true,
+  }) async {
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.messages,
+        forceRefresh: forceRefresh,
+      );
+      var body = res.data;
+      if (body is Map && body['success'] == true && body['data'] is Map) {
+        body = body['data'];
+      }
+      if (body is! Map) return const [];
+      final raw = asJsonMap(body)['requests'];
+      if (raw is! List) return const [];
+      final out = <MessageRequestEntity>[];
+      for (final item in asJsonList(raw)) {
+        final id = (item['id'] ?? '').toString();
+        if (id.isEmpty) continue;
+        final sender = item['sender'] is Map
+            ? asJsonMap(item['sender'])
+            : <String, dynamic>{};
+        final senderId =
+            (sender['id'] ?? item['senderId'] ?? '').toString();
+        if (senderId.isEmpty) continue;
+        final name = (sender['name'] ?? sender['username'] ?? 'Kullanıcı')
+            .toString();
+        out.add(
+          MessageRequestEntity(
+            id: id,
+            senderId: senderId,
+            senderName: name.isEmpty ? 'Kullanıcı' : name,
+            senderUsername: sender['username']?.toString(),
+            senderImage: sender['image']?.toString(),
+            message: item['message']?.toString(),
+            createdAt: DateTime.tryParse(
+              (item['createdAt'] ?? '').toString(),
+            )?.toLocal(),
+          ),
+        );
+      }
+      return out;
+    } on ApiException catch (e) {
+      if (e.statusCode == 401) rethrow;
+      return const [];
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// Mesaj isteği oluştur — `POST /api/messages/request`.
+  /// Zaten bekleyen bir istek varsa sunucu 400 döner; bu durum başarı sayılır.
+  Future<void> sendMessageRequest(
+    String receiverId, {
+    String? message,
+  }) async {
+    final id = receiverId.trim();
+    if (id.isEmpty) return;
+    try {
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.messagesRequest,
+        data: {
+          'receiverId': id,
+          if (message != null && message.trim().isNotEmpty)
+            'message': message.trim(),
+        },
+      );
+    } on ApiException catch (e) {
+      if (e.statusCode == 400) return; // zaten bekliyor / işlenmiş
+      rethrow;
+    }
+  }
+
+  /// İsteği kabul et veya reddet — `PATCH /api/messages/request`.
+  Future<void> respondMessageRequest(
+    String requestId, {
+    required bool accept,
+  }) async {
+    final id = requestId.trim();
+    if (id.isEmpty) return;
+    await _dio.safePatch<dynamic>(
+      ApiEndpoints.messagesRequest,
+      data: {'requestId': id, 'action': accept ? 'accept' : 'reject'},
     );
   }
 

@@ -23,6 +23,28 @@ final conversationsProvider =
   return ref.watch(messagesRepositoryProvider).conversations();
 });
 
+/// Gelen kutusunda bekleyen mesaj istekleri.
+final pendingMessageRequestsProvider =
+    FutureProvider<List<MessageRequestEntity>>((ref) async {
+  return ref.watch(messagesRepositoryProvider).pendingMessageRequests();
+});
+
+/// Bekleyen bir mesaj isteğini kabul/ret eder ve listeleri tazeler.
+Future<void> respondToMessageRequest(
+  WidgetRef ref,
+  String requestId, {
+  required bool accept,
+}) async {
+  final userId = ref.read(authControllerProvider).valueOrNull?.id;
+  await ref.read(messagesRepositoryProvider).respondMessageRequest(
+        requestId,
+        accept: accept,
+        currentUserId: userId,
+      );
+  ref.invalidate(pendingMessageRequestsProvider);
+  ref.invalidate(conversationsProvider);
+}
+
 final chatMessagesProvider =
     FutureProvider.family<List<MessageEntity>, String>((ref, id) async {
   final userId = ref.watch(authControllerProvider).valueOrNull?.id;

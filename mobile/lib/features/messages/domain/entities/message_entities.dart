@@ -29,6 +29,35 @@ class ConversationEntity extends Equatable {
       [id, title, subtitle, avatarUrl, unreadCount, isOnline, lastMessageAt];
 }
 
+/// Gelen mesaj isteği — `GET /api/messages` yanıtındaki `requests` dizisi.
+///
+/// Gizliliği "takipçiler" ya da "kimse" olan bir kullanıcıya ilk kez yazılırken
+/// sunucu doğrudan mesajı reddedip önce istek bekliyor. İstekler gelen kutusunda
+/// gösterilmediği için karşı taraf mesajı hiç görmüyordu.
+class MessageRequestEntity extends Equatable {
+  const MessageRequestEntity({
+    required this.id,
+    required this.senderId,
+    required this.senderName,
+    this.senderUsername,
+    this.senderImage,
+    this.message,
+    this.createdAt,
+  });
+
+  final String id;
+  final String senderId;
+  final String senderName;
+  final String? senderUsername;
+  final String? senderImage;
+  final String? message;
+  final DateTime? createdAt;
+
+  @override
+  List<Object?> get props =>
+      [id, senderId, senderName, senderUsername, senderImage, message, createdAt];
+}
+
 class MessageEntity extends Equatable {
   const MessageEntity({
     required this.id,
