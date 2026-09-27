@@ -22,6 +22,10 @@ class GlobalInAppBannerHost extends ConsumerStatefulWidget {
 class _GlobalInAppBannerHostState extends ConsumerState<GlobalInAppBannerHost>
     with SingleTickerProviderStateMixin {
   late final AnimationController _anim;
+  // Tek sefer oluşturulan geçiş — build() içinde CurvedAnimation üretmek
+  // her yeniden çizimde controller'a listener ekler (bellek sızıntısı).
+  late final CurvedAnimation _slideCurve;
+  late final Animation<Offset> _slide;
   InAppBannerEvent? _current;
   Timer? _dismiss;
 
@@ -34,11 +38,17 @@ class _GlobalInAppBannerHostState extends ConsumerState<GlobalInAppBannerHost>
       vsync: this,
       duration: const Duration(milliseconds: 260),
     );
+    _slideCurve = CurvedAnimation(parent: _anim, curve: Curves.easeOutCubic);
+    _slide = Tween<Offset>(
+      begin: const Offset(0, -1),
+      end: Offset.zero,
+    ).animate(_slideCurve);
   }
 
   @override
   void dispose() {
     _dismiss?.cancel();
+    _slideCurve.dispose();
     _anim.dispose();
     super.dispose();
   }
@@ -95,12 +105,7 @@ class _GlobalInAppBannerHostState extends ConsumerState<GlobalInAppBannerHost>
       left: 0,
       right: 0,
       child: SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(0, -1),
-          end: Offset.zero,
-        ).animate(
-          CurvedAnimation(parent: _anim, curve: Curves.easeOutCubic),
-        ),
+        position: _slide,
         child: Padding(
           padding: EdgeInsets.fromLTRB(10, topPad + 8, 10, 0),
           child: Material(

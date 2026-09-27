@@ -52,6 +52,9 @@ class SiteAnimationProfileReveal extends StatefulWidget {
 class _SiteAnimationProfileRevealState extends State<SiteAnimationProfileReveal>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
+  late final CurvedAnimation _fadeCurve;
+  late final CurvedAnimation _scaleCurve;
+  late final Animation<double> _scale;
 
   @override
   void initState() {
@@ -60,10 +63,15 @@ class _SiteAnimationProfileRevealState extends State<SiteAnimationProfileReveal>
       vsync: this,
       duration: const Duration(milliseconds: 420),
     )..forward();
+    _fadeCurve = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic);
+    _scaleCurve = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutBack);
+    _scale = Tween<double>(begin: 0.98, end: 1).animate(_scaleCurve);
   }
 
   @override
   void dispose() {
+    _fadeCurve.dispose();
+    _scaleCurve.dispose();
     _ctrl.dispose();
     super.dispose();
   }
@@ -71,11 +79,9 @@ class _SiteAnimationProfileRevealState extends State<SiteAnimationProfileReveal>
   @override
   Widget build(BuildContext context) {
     return FadeTransition(
-      opacity: CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic),
+      opacity: _fadeCurve,
       child: ScaleTransition(
-        scale: Tween<double>(begin: 0.98, end: 1).animate(
-          CurvedAnimation(parent: _ctrl, curve: Curves.easeOutBack),
-        ),
+        scale: _scale,
         child: widget.child,
       ),
     );
