@@ -4,21 +4,19 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.616+667` |
-| Tarih (UTC) | 2026-09-27 16:52 |
-| Commit | [`2275afd2b0d64d4ad0914b37ec919c5b2e5f9302`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/2275afd2b0d64d4ad0914b37ec919c5b2e5f9302) |
-| İş akışı | [Run 36332576279](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36332576279) |
+| Sürüm | `1.0.617+668` |
+| Tarih (UTC) | 2026-09-27 20:36 |
+| Commit | [`c424afd5e368d796a285aa264b9c5c35bbf967ee`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/c424afd5e368d796a285aa264b9c5c35bbf967ee) |
+| İş akışı | [Run 36347445535](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36347445535) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.616+667 (2026-09-27) — Sesli oda, PK, DM (APK paketi)
+## 1.0.617+668 (2026-09-27) — AdMob ödüllü reklam (Canlifal)
 
-- **Sesli oda mikrofon rozeti:** `isMicOn` yokken herkes susturulmuş sayılıyordu → bilinmeyen durumda koltukta açık; TRTC aç/kapa `applySelfMicOpen`
-- **Konuşma halkası:** TRTC volume/VAD → koltuk animasyonu (`voiceRoomTrtcSpeakingIdsProvider`)
-- **Koltuk stabilitesi:** `seatSlots` haritası + snapshot’ta `seatIndex` koruma; heartbeat’te güncel koltuk; `seatIndex: -1` dinleyici; koltuk bırakınca son koltuk hafızası temizlenir
-- **PK:** sağ rail **PK** düğmesi; video PK ucu 404 olunca `/api/live/pk` yedeği artık çağrılıyor
-- **DM:** SSE doğru konuşma stream ucu; gelen kutusunda bekleyen mesaj istekleri (Kabul/Reddet)
+- **Üretim birimleri:** Android App ID `~1394571120`, ödüllü birim `/8698346072` (AdMob konsolu)
+- **Debug/profile:** Google test reklam birimleri (gerçek tıklama/izlenme üretim hesabına gitmesin)
+- **Kullanım:** Fal kapısı, büyüme merkezi, falcı bekleme, `RewardedAdService` — mevcut akışlar aynı birimi kullanır
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
