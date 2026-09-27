@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.613+664 (2026-09-27) — Fal yüzdeleri kaldırıldı, sosyal hikâye şeridi
+
+- **Uydurma yüzdeler kaldırıldı:** fal sonuç kartındaki "Enerji / Aşk / Para / Kariyer / Şans %" değerleri sunucudan gelmiyor, özet metninin hash'inden üretiliyordu → kaldırıldı (`FortuneEnergyScores` silindi)
+- **Hikâye şeridi sosyal akışta:** şerit akışın en üstünde, akışla birlikte kayar; aşağı çekince yenilenir; giriş yapmış kullanıcı "Hikâyen" halkasından hikâye ekler (izlenmemişler önde, izlenenler soluk)
+
 ## 1.0.612+663 (2026-09-27) — UI yenileme Aşama 7: mesajlaşma ve temizlik
 
 - **Kaybolan mesaj metni:** emojiyle başlayan her mesaj karta dönüşüyor ve metni gizleniyordu ("✨ Günaydın" → "Sticker · Sticker mesajı"; ✨ emoji seçicide ilk sırada) → kart yalnızca uygulamanın gönderdiği niyet/davet mesajlarında; diğer her şey olduğu gibi

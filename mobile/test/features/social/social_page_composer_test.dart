@@ -4,13 +4,14 @@ import 'package:canlifal_social/features/auth/presentation/providers/auth_provid
 import 'package:canlifal_social/features/feed/domain/entities/post_entity.dart';
 import 'package:canlifal_social/features/social/presentation/pages/social_page.dart';
 import 'package:canlifal_social/features/social/presentation/providers/social_providers.dart';
+import 'package:canlifal_social/features/social/presentation/widgets/instagram/social_stories_rail.dart';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('SocialPage has Paylaş and no Hikayen rail', (tester) async {
+  testWidgets('SocialPage: Paylaş ve en üstte hikâye şeridi', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -36,7 +37,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('Paylaş'), findsOneWidget);
-    expect(find.text('Hikayen'), findsNothing);
+    // Hikâye şeridi akış başlığında; giriş yapmış kullanıcı kendi halkasını
+    // ("Hikâyen") görür ve oradan hikâye ekleyebilir.
+    expect(find.byType(SocialStoriesRail), findsOneWidget);
+    expect(find.text('Hikâyen'), findsOneWidget);
   });
 }
 
