@@ -55,6 +55,10 @@ class TrtcRoomManager {
   /// Bağlantı koptuğunda çağrılır (yeniden bağlanma koordinatörde).
   VoidCallback? onConnectionLost;
 
+  /// Sesli oda — TRTC volume (userId boş = yerel kullanıcı).
+  void Function(List<TRTCVolumeInfo> userVolumes, int totalVolume)?
+      onUserVoiceVolume;
+
   final ValueNotifier<int?> networkQuality = ValueNotifier<int?>(null);
 
   bool get isSupported => !kIsWeb;
@@ -313,6 +317,9 @@ class TrtcRoomManager {
           _cloud?.muteRemoteAudio(userId, true);
         }
       },
+      onUserVoiceVolume: (userVolumes, totalVolume) {
+        onUserVoiceVolume?.call(userVolumes, totalVolume);
+      },
     );
     _cloud!.registerListener(_listener!);
     _configureAudioProcessing();
@@ -489,13 +496,11 @@ class TrtcRoomManager {
 
   void _configureAudioProcessing() {
     if (_cloud == null) return;
-    // Sesli oda: speaking SSE'den gelir; 300ms volume poll gereksiz CPU.
-    if (!_audioOnly) {
-      _cloud!.enableAudioVolumeEvaluation(
-        true,
-        TRTCAudioVolumeEvaluateParams(interval: 300),
-      );
-    }
+    // Sesli oda: konuşma halkası TRTC volume ile (SSE yedek kalır).
+    _cloud!.enableAudioVolumeEvaluation(
+      true,
+      TRTCAudioVolumeEvaluateParams(interval: _audioOnly ? 200 : 300),
+    );
     _device?.setAudioRoute(TXAudioRoute.speakerPhone);
   }
 

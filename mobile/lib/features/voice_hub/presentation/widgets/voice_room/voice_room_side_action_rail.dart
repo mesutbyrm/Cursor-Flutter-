@@ -8,7 +8,9 @@ class VoiceRoomSideActionRail extends StatelessWidget {
     super.key,
     this.onSettings,
     this.onMusic,
+    this.onPk,
     this.showMusic = true,
+    this.showPk = true,
     /// Dikey hizalama: -1 üst, 0 orta, 1 alt. Web gibi hafif aşağıda.
     this.verticalAlignment = 0.12,
     this.topSlot,
@@ -16,7 +18,9 @@ class VoiceRoomSideActionRail extends StatelessWidget {
 
   final VoidCallback? onSettings;
   final VoidCallback? onMusic;
+  final VoidCallback? onPk;
   final bool showMusic;
+  final bool showPk;
   final double verticalAlignment;
 
   /// Ayarlar/Müzik düğmelerinin **üstünde** duran ek kutu (sezon yarışması).
@@ -24,8 +28,9 @@ class VoiceRoomSideActionRail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasButtons =
-        onSettings != null || (showMusic && onMusic != null);
+    final hasButtons = onSettings != null ||
+        (showMusic && onMusic != null) ||
+        (showPk && onPk != null);
     if (!hasButtons && topSlot == null) {
       return const SizedBox.shrink();
     }
@@ -44,6 +49,15 @@ class VoiceRoomSideActionRail extends StatelessWidget {
               topSlot!,
               if (hasButtons) const SizedBox(height: 12),
             ],
+            if (showPk && onPk != null)
+              VoiceRoomRailIconButton(
+                icon: Icons.sports_mma_rounded,
+                label: 'PK',
+                color: VoiceRoomTokens.neonPink,
+                onTap: onPk!,
+              ),
+            if (showPk && onPk != null && (onSettings != null || (showMusic && onMusic != null)))
+              const SizedBox(height: 12),
             if (onSettings != null)
               VoiceRoomRailIconButton(
                 icon: Icons.settings_rounded,

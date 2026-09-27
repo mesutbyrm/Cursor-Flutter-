@@ -24,6 +24,7 @@ import '../../live/domain/entities/voice_room_entity.dart';
 import '../../live/presentation/providers/live_providers.dart';
 import '../../pk/presentation/providers/pk_session_notifier.dart';
 import '../../pk/presentation/providers/pk_providers.dart';
+import '../../pk/presentation/providers/pk_feature_enabled_provider.dart';
 import '../../pk/presentation/widgets/pk_session_overlay_host.dart';
 import '../../pk/presentation/widgets/pk_start_sheet.dart';
 import '../data/services/voice_room_debug_log.dart';
@@ -684,7 +685,12 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     }
     try {
       await _audio?.setMicEnabled(!muted);
-      if (mounted) setState(() => _isMicMuted = muted);
+      if (mounted) {
+        setState(() => _isMicMuted = muted);
+        ref
+            .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
+            .applySelfMicOpen(!muted);
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -712,7 +718,12 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     if (!micOk || !mounted) return;
     try {
       await _audio!.setMicEnabled(true);
-      if (mounted) setState(() => _isMicMuted = false);
+      if (mounted) {
+        setState(() => _isMicMuted = false);
+        ref
+            .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
+            .applySelfMicOpen(true);
+      }
     } catch (_) {}
   }
 
@@ -929,6 +940,32 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
             VoiceSessionPhase.connected,
           );
+    };
+    final mgr = audio.trtcManager;
+    mgr.onUserVoiceVolume = (userVolumes, _) {
+      if (!mounted || _leaving) return;
+      final selfId = ref.read(authControllerProvider).valueOrNull?.id;
+      final presence = ref.read(voiceRoomLiveProvider(_liveRoomKey)).presence;
+      final speaking = <String>{};
+      for (final sample in userVolumes) {
+        final active = sample.volume >= 8 || sample.vad == 1;
+        if (!active) continue;
+        var uid = sample.userId.trim();
+        if (uid.isEmpty) {
+          if (selfId != null && selfId.isNotEmpty) speaking.add(selfId);
+          continue;
+        }
+        for (final p in presence) {
+          if (p.id == uid) {
+            speaking.add(p.id);
+            uid = '';
+            break;
+          }
+        }
+        if (uid.isNotEmpty) speaking.add(uid);
+      }
+      ref.read(voiceRoomTrtcSpeakingIdsProvider(_liveRoomKey).notifier).state =
+          speaking;
     };
   }
 
@@ -1847,6 +1884,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
               ),
             ),
             VoiceRoomSideActionRail(
+              onPk: ref.watch(pkFeatureEnabledProvider)
+                  ? () => unawaited(_openPkInvite(room))
+                  : null,
+              showPk: ref.watch(pkFeatureEnabledProvider),
               onSettings: () => _openManagementPanel(
                 context,
                 room: room,
@@ -2055,7 +2096,9 @@ class _VoiceRoomRtcSeatStage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final seatSlice = ref.watch(voiceRoomSeatSliceProvider(liveRoomKey));
+    final trtcSpeaking = ref.watch(voiceRoomTrtcSpeakingIdsProvider(liveRoomKey));
     final speakingIds = <String>{
+      ...trtcSpeaking,
       for (final p in seatSlice.presence)
         if (p.isSpeaking) p.id,
     };

@@ -94,6 +94,50 @@ class VoiceRoomSeatLayout {
       place(u);
     }
 
+    // Backend koltuk haritası (GET /seats) — presence seatIndex düşse bile oturumu koru.
+    for (final slot in seatSlots) {
+      final idx = slot.index;
+      final uid = slot.userId?.trim();
+      if (uid == null || uid.isEmpty || idx < 0 || idx > maxSeatIndex) {
+        continue;
+      }
+      ChatRoomPresence? occupant;
+      for (final p in presence) {
+        if (p.id == uid) {
+          occupant = p;
+          break;
+        }
+      }
+      occupant ??= ChatRoomPresence(
+        id: uid,
+        name: slot.name ?? 'Kullanıcı',
+        image: slot.image,
+        seatIndex: idx,
+        micOn: slot.micOn,
+      );
+      if (occupant.seatIndex != idx || occupant.micOn != slot.micOn) {
+        occupant = ChatRoomPresence(
+          id: occupant.id,
+          name: occupant.name,
+          nickname: occupant.nickname,
+          image: occupant.image,
+          chatRole: occupant.chatRole,
+          roleSymbol: occupant.roleSymbol,
+          membership: occupant.membership,
+          seatIndex: idx,
+          isSpeaking: occupant.isSpeaking,
+          isMuted: occupant.isMuted,
+          micOn: slot.micOn ?? occupant.micOn,
+        );
+      }
+      for (final key in List<int>.from(bySeat.keys)) {
+        if (bySeat[key]?.id == uid && key != idx) {
+          bySeat.remove(key);
+        }
+      }
+      bySeat[idx] = occupant;
+    }
+
     return bySeat;
   }
 }

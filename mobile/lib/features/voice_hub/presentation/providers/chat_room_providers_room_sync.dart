@@ -465,7 +465,7 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
         roleSymbol: p.roleSymbol,
         membership: p.membership,
         seatIndex: p.seatIndex,
-        isSpeaking: micOn,
+        isSpeaking: micOn ? p.isSpeaking : false,
         isMuted: !micOn,
         micOn: micOn,
       );
@@ -613,6 +613,35 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       }
     }
     state = state.copyWith(seatSlots: slots);
+  }
+
+  /// TRTC / alt bar mikrofonu — sunucu `micOn` gecikse bile koltuk rozeti senkron.
+  void applySelfMicOpen(bool micOpen) {
+    final userId = ref.read(authControllerProvider).valueOrNull?.id;
+    if (userId == null || userId.isEmpty) return;
+    var changed = false;
+    final nextPresence = state.presence.map((p) {
+      if (p.id != userId) return p;
+      if (p.micOn == micOpen && p.isMuted == !micOpen) return p;
+      changed = true;
+      return ChatRoomPresence(
+        id: p.id,
+        name: p.name,
+        nickname: p.nickname,
+        image: p.image,
+        chatRole: p.chatRole,
+        roleSymbol: p.roleSymbol,
+        membership: p.membership,
+        seatIndex: p.seatIndex,
+        isSpeaking: micOpen ? p.isSpeaking : false,
+        isMuted: !micOpen,
+        micOn: micOpen,
+      );
+    }).toList();
+    if (changed) {
+      state = state.copyWith(presence: nextPresence);
+    }
+    _syncSeatMic(userId, micOpen);
   }
 
   int? _parseEventInt(dynamic v) {

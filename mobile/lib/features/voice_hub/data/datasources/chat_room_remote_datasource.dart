@@ -404,7 +404,8 @@ class ChatRoomRemoteDataSource {
                 nickname: u.nickname,
                 image: u.userImage,
                 seatIndex: u.seatIndex,
-                isMuted: !u.isMicOn,
+                isMuted: u.isMicOn == false,
+                micOn: u.isMicOn,
               ),
             )
             .where((p) => p.id.isNotEmpty)

@@ -134,7 +134,7 @@ void main() {
       expect(state.map((e) => e.id), ['a', 'c']);
     });
 
-    test('does not copy previous seatIndex when server clears it', () {
+    test('preserves previous seatIndex when snapshot omits seat field', () {
       final previous = [
         const ChatRoomPresence(id: 'u1', name: 'Ali', seatIndex: 3),
       ];
@@ -146,7 +146,7 @@ void main() {
         incoming: incoming,
       );
       expect(out.single.name, 'Ali');
-      expect(out.single.seatIndex, isNull);
+      expect(out.single.seatIndex, 3);
     });
 
     test('room B snapshot does not keep room A members', () {

@@ -115,9 +115,9 @@ ChatRoomPresence enrichPresenceDisplayFromPrevious(
         : (previous.chatRole ?? 'listener'),
     roleSymbol: incoming.roleSymbol ?? previous.roleSymbol,
     membership: incoming.membership ?? previous.membership,
-    seatIndex: incoming.seatIndex,
+    seatIndex: incoming.seatIndex ?? previous.seatIndex,
     isSpeaking: incoming.isSpeaking,
-    isMuted: incoming.isMuted,
+    isMuted: incoming.micOn != null ? incoming.isMuted : previous.isMuted,
     micOn: incoming.micOn ?? previous.micOn,
   );
 }

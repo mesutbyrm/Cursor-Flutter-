@@ -60,7 +60,7 @@ class LiveFieldOnlineUser {
     this.userImage,
     this.nickname,
     this.seatIndex,
-    this.isMicOn = false,
+    this.isMicOn,
     this.joinedAt,
   });
 
@@ -69,18 +69,22 @@ class LiveFieldOnlineUser {
   final String? userImage;
   final String? nickname;
   final int? seatIndex;
-  final bool isMicOn;
+  /// `null` = API alanı yok (kapalı sanma); `true`/`false` = sunucu bildirdi.
+  final bool? isMicOn;
   final DateTime? joinedAt;
 
   factory LiveFieldOnlineUser.fromJson(Map<String, dynamic> json) {
     final rawTime = json['joinedAt']?.toString();
+    final bool? micOn = json.containsKey('isMicOn') || json.containsKey('micOn')
+        ? (json['isMicOn'] == true || json['micOn'] == true)
+        : null;
     return LiveFieldOnlineUser(
       userId: json['userId']?.toString() ?? '',
       userName: json['userName']?.toString(),
       userImage: json['userImage']?.toString(),
       nickname: json['nickname']?.toString(),
       seatIndex: (json['seatIndex'] as num?)?.toInt(),
-      isMicOn: json['isMicOn'] == true,
+      isMicOn: micOn,
       joinedAt: rawTime != null ? DateTime.tryParse(rawTime) : null,
     );
   }

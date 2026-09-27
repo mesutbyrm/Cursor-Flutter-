@@ -449,6 +449,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       try {
         await _joinPresenceAttempt(
           allowSeatClaim: !rejoinAfterHeartbeat,
+          rejoinAfterHeartbeat: rejoinAfterHeartbeat,
         );
         return;
       } on Object catch (e) {
@@ -492,7 +493,10 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         (msg.contains('presence') && msg.contains('bulunamad'));
   }
 
-  Future<void> _joinPresenceAttempt({bool allowSeatClaim = true}) async {
+  Future<void> _joinPresenceAttempt({
+    bool allowSeatClaim = true,
+    bool rejoinAfterHeartbeat = false,
+  }) async {
     final token = await ref.read(tokenStorageProvider).readAccess();
       final hasJwt = token != null && token.isNotEmpty;
       VoiceRoomDebugLog.jwtStatus(hasToken: hasJwt, tokenLength: token?.length);
@@ -507,12 +511,12 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       // Heartbeat sonrası yeniden katılımda koltuk talebi kapalıydı; sunucu
       // presence kaydını düşürdüyse kullanıcı odaya geri giriyor ama koltuğu
       // boş kalıyordu. Son doğrulanmış koltuk biliniyorsa geri istenir.
-      final joinSeat = allowSeatClaim
-          ? peekJoinSeatIndexForPrivilegedUser()
-          : resolveRejoinSeatIndex(
+      final joinSeat = rejoinAfterHeartbeat
+          ? resolveRejoinSeatIndex(
               currentSeatIndex: _currentSelfSeatIndex(),
               lastConfirmedSeatIndex: _lastConfirmedSelfSeatIndex,
-            );
+            )
+          : (allowSeatClaim ? peekJoinSeatIndexForPrivilegedUser() : null);
       final joined = await ref.read(chatRoomRemoteProvider).joinPresence(
             _presenceApiKey,
             alternateKey: _presenceAlternateKey,

@@ -76,6 +76,10 @@ final voiceRoomSpeakingSignatureProvider = Provider.autoDispose
   );
 });
 
+/// TRTC ses seviyesi — SSE konuşma göstergesi gecikse bile koltuk halkası.
+final voiceRoomTrtcSpeakingIdsProvider = StateProvider.autoDispose
+    .family<Set<String>, String>((ref, roomKey) => const {});
+
 final voiceRoomConnectionSliceProvider = Provider.autoDispose
     .family<({bool loading, bool sseConnected, bool selfInRoom}), String>(
   (ref, roomKey) {
