@@ -154,25 +154,25 @@ class ChatMessageBubble extends ConsumerWidget {
     );
   }
 
+  /// Uygulamanın gönderdiği niyet/davet mesajlarını kart olarak gösterir.
+  ///
+  /// Yalnızca birebir üretilen metinler eşleşir. Eskiden işaret emojisiyle
+  /// başlayan her mesaj karta dönüşüyor ve metni kayboluyordu: "✨ Günaydın"
+  /// "Sticker mesajı" olarak görünüyordu (✨ emoji seçicide ilk sırada).
   _ActionMeta? _actionMeta(String text, {required String jetonLabel}) {
     final t = text.trim();
-    final table = <({String starts, IconData icon, String title, String subtitle, Color color})>[
-      (starts: '🎁', icon: Icons.card_giftcard_rounded, title: 'Hediye', subtitle: 'Canlifal hediyesi', color: AppThemeColors.coinGold),
-      (starts: '🪙', icon: Icons.toll_rounded, title: jetonLabel, subtitle: '$jetonLabel transfer isteği', color: AppThemeColors.coinGold),
-      (starts: '🔮', icon: Icons.auto_awesome_rounded, title: 'Fal İsteği', subtitle: 'Canlifal fal isteği', color: AppThemeColors.accentPurple),
-      (starts: '🎙️', icon: Icons.mic_rounded, title: 'Sesli Fal', subtitle: 'Sesli fal isteği', color: AppThemeColors.accentPink),
-      (starts: '📹', icon: Icons.video_call_rounded, title: 'Görüntülü Fal', subtitle: 'Görüntülü fal isteği', color: Colors.cyanAccent),
-      (starts: '📡', icon: Icons.podcasts_rounded, title: 'Canlı Yayın', subtitle: 'Canlı yayına davet', color: AppThemeColors.liveRed),
-      (starts: '🎧', icon: Icons.groups_rounded, title: 'Sesli Oda', subtitle: 'Sesli odaya davet', color: AppThemeColors.accentCyan),
-      (starts: '📷', icon: Icons.photo_rounded, title: 'Fotoğraf', subtitle: 'Fotoğraf mesajı', color: AppThemeColors.accentCyan),
-      (starts: '🎬', icon: Icons.videocam_rounded, title: 'Video', subtitle: 'Video mesajı', color: AppThemeColors.liveRed),
-      (starts: '📎', icon: Icons.attach_file_rounded, title: 'Dosya', subtitle: 'Dosya mesajı', color: Colors.white70),
-      (starts: '📍', icon: Icons.location_on_rounded, title: 'Konum', subtitle: 'Konum paylaşımı', color: Colors.greenAccent),
-      (starts: '🖼️', icon: Icons.gif_box_rounded, title: 'GIF', subtitle: 'GIF mesajı', color: Colors.purpleAccent),
-      (starts: '✨', icon: Icons.emoji_emotions_rounded, title: 'Sticker', subtitle: 'Sticker mesajı', color: Colors.orangeAccent),
+    final table = <({String starts, String body, IconData icon, String title, String subtitle, Color color})>[
+      (starts: '🎁', body: 'Hediye göndermek istiyor.', icon: Icons.card_giftcard_rounded, title: 'Hediye', subtitle: 'Hediye göndermek istiyor', color: AppThemeColors.coinGold),
+      (starts: '🪙', body: '$jetonLabel göndermek istiyor.', icon: Icons.toll_rounded, title: jetonLabel, subtitle: '$jetonLabel göndermek istiyor', color: AppThemeColors.coinGold),
+      (starts: '🔮', body: 'Fal isteği gönderdi.', icon: Icons.auto_awesome_rounded, title: 'Fal İsteği', subtitle: 'Fal isteği gönderdi', color: AppThemeColors.accentPurple),
+      (starts: '🎙️', body: 'Sesli fal isteği gönderdi.', icon: Icons.mic_rounded, title: 'Sesli Fal', subtitle: 'Sesli fal isteği gönderdi', color: AppThemeColors.accentPink),
+      (starts: '📹', body: 'Görüntülü fal isteği gönderdi.', icon: Icons.video_call_rounded, title: 'Görüntülü Fal', subtitle: 'Görüntülü fal isteği gönderdi', color: Colors.cyanAccent),
+      (starts: '📡', body: 'Canlı yayına davet etti.', icon: Icons.podcasts_rounded, title: 'Canlı Yayın', subtitle: 'Canlı yayına davet etti', color: AppThemeColors.liveRed),
+      (starts: '🎧', body: 'Sesli odaya davet etti.', icon: Icons.groups_rounded, title: 'Sesli Oda', subtitle: 'Sesli odaya davet etti', color: AppThemeColors.accentCyan),
     ];
     for (final row in table) {
-      if (t.startsWith(row.starts)) {
+      if (t.startsWith(row.starts) &&
+          t.substring(row.starts.length).trim() == row.body) {
         return _ActionMeta(
           icon: row.icon,
           title: row.title,

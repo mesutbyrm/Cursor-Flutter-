@@ -52,7 +52,7 @@ Tek kaynak: `lib/core/theme/canlifal_brand_colors.dart`.
 | 4 | Fal türleri + sonuç ekranları | ✅ tamam |
 | 5 | Sesli oda + koltuklar | ✅ tamam (yalnızca görsel katman; SSE/presence/TRTC değişmedi) |
 | 6 | Canlı yayın + hediye + PK | ✅ tamam (TRTC/SSE/API değişmedi) |
-| 7 | Sohbet, mesajlaşma, diğer | ⏳ sıradaki (+ proje geneli ~100 kullanılmayan dosya) |
+| 7 | Sohbet, mesajlaşma, diğer | ✅ tamam (+ proje geneli ölü UI kodu) |
 
 ### Aşama 1 — yapılanlar
 
@@ -107,6 +107,14 @@ Tek kaynak: `lib/core/theme/canlifal_brand_colors.dart`.
 - **Liste kartı** (`LiveStreamListTile`): bitmiş yayın soluk + "Yayında değil"; sayı biçimi; semantik.
 - **PK skor çubuğu:** `ShaderMask` ile metne göre gradyan; `FittedBox`; semantik.
 - **Ölü kod:** içe aktarılmayan 24 dosya + yalnızca barrel'dan dışa aktarılan 4 dosya + ikinci turda 1 dosya (`live_gift_panel.dart`). Proje genelinde başka alanlarda ~100 kullanılmayan dosya daha var; Aşama 7'ye bırakıldı.
+
+### Aşama 7 — yapılanlar
+
+- **Mesaj balonu** (`ChatMessageBubble._actionMeta`): kart yalnızca işaret + birebir üretilen niyet metni eşleşince; eskiden önek eşleşmesiyle serbest mesajlar gizleniyordu.
+- **Yazma alanı** (`ChatComposer`): `DmComposerAction` içinden `photo/video/file/location/gif/sticker` kaldırıldı (API yalnızca metin; bu seçenekler sahte metin yolluyordu). Semantik "İstek ve davet gönder"; emoji simgesi ve alan dolgusu temaya bağlandı; mikrofon ipucu "Sesli fal isteği gönder".
+- **Sohbet sayfası:** başlık metinleri temaya bağlandı, çevrimdışı durum satırı gizli, kamera ipucu "Görüntülü fal isteği gönder".
+- **Gelen kutusu:** `inbox_page`, `inbox_all_feed_sliver`, `conversations_list_sliver` → `context.colors` (`onSurface`, `onSurfaceVariant`, `onSurfaceMuted`, `glassFill`, `glassBorder`).
+- **Ölü kod:** yalnızca sunum katmanı (sayfa/widget) — 3 tur tarama; `lib`/`test` içe aktarması olmayan ve eski kullanıcıları silinmiş dosyalar. Ağ/SSE/veri/sağlayıcı/abacus dosyaları (34) bilerek bırakıldı. `social_stories_rail.dart` açık karar için korundu.
 
 ## 4. Doğrulama yöntemi (her aşamada)
 

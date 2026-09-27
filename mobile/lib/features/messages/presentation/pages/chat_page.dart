@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -295,18 +296,6 @@ class _ChatPageState extends ConsumerState<ChatPage>
         return _sendMessage('📡 Canlı yayına davet etti.');
       case DmComposerAction.voiceRoomInvite:
         return _sendMessage('🎧 Sesli odaya davet etti.');
-      case DmComposerAction.photo:
-        return _sendMessage('📷 Fotoğraf göndermek istiyor.');
-      case DmComposerAction.video:
-        return _sendMessage('🎬 Video göndermek istiyor.');
-      case DmComposerAction.file:
-        return _sendMessage('📎 Dosya göndermek istiyor.');
-      case DmComposerAction.location:
-        return _sendMessage('📍 Konum paylaşmak istiyor.');
-      case DmComposerAction.gif:
-        return _sendMessage('🖼️ GIF gönderdi.');
-      case DmComposerAction.sticker:
-        return _sendMessage('✨ Sticker gönderdi.');
     }
   }
 
@@ -406,7 +395,9 @@ class _ChatPageState extends ConsumerState<ChatPage>
     final peerLabel = _peerName ?? 'Sohbet';
     final statusLabel = _peerTyping
         ? 'Yazıyor...'
-        : (_peerOnline ? 'Çevrimiçi' : 'Son görülme yakın zamanda');
+        // Son görülme verisi yok; eskiden her çevrimdışı kişi için uydurma
+        // "Son görülme yakın zamanda" yazılıyordu.
+        : (_peerOnline ? 'Çevrimiçi' : '');
     final isGold = ref
         .watch(membershipCapabilityAllowsProvider(MembershipCapabilityKeys.adFree));
 
@@ -447,7 +438,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
                                   : Colors.grey.shade700,
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: const Color(0xFF09090B),
+                                color: context.scaffoldBg,
                                 width: 2,
                               ),
                             ),
@@ -467,25 +458,27 @@ class _ChatPageState extends ConsumerState<ChatPage>
                               peerLabel,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: TextStyle(
+                                color: context.colors.onSurface,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w900,
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
+                            if (statusLabel.isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(
                               statusLabel,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: _peerTyping
                                     ? AppThemeColors.accentPink
-                                    : Colors.white.withValues(alpha: 0.62),
+                                    : context.colors.onSurfaceMuted,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
+                            ],
                           ],
                         ),
                       ),
@@ -498,7 +491,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
                       ),
                     DiscoverIconButton(
                       icon: Icons.videocam_rounded,
-                      tooltip: 'Görüntülü arama',
+                      // Arama başlatmaz; görüntülü fal isteği mesajı yollar.
+                      tooltip: 'Görüntülü fal isteği gönder',
                       onPressed: () =>
                           _handleComposerAction(DmComposerAction.videoFortune),
                     ),

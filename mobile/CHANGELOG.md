@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.612+663 (2026-09-27) — UI yenileme Aşama 7: mesajlaşma ve temizlik
+
+- **Kaybolan mesaj metni:** emojiyle başlayan her mesaj karta dönüşüyor ve metni gizleniyordu ("✨ Günaydın" → "Sticker · Sticker mesajı"; ✨ emoji seçicide ilk sırada) → kart yalnızca uygulamanın gönderdiği niyet/davet mesajlarında; diğer her şey olduğu gibi
+- **Çalışmayan ek seçenekleri:** "Fotoğraf, Video, Dosya, Konum, GIF, Sticker" hiçbir şey seçtirmeden "GIF gönderdi" gibi metin yolluyordu (DM API'si yalnızca metin taşır) → kaldırıldı; hediye/jeton/fal isteği ve davetler duruyor; buton "İstek ve davet"
+- **Yanıltıcı ipuçları:** başlıktaki kamera "Görüntülü arama" değil görüntülü fal isteği, yazma alanındaki mikrofon ses kaydı değil sesli fal isteği gönderiyor → ipuçları gerçek işlevi söylüyor
+- **Uydurma durum:** çevrimdışı herkes için "Son görülme yakın zamanda" yazıyordu → yalnızca "Çevrimiçi" / "Yazıyor..." gösteriliyor
+- **Açık tema:** gelen kutusu (sekmeler, arama, okunmamış kartları, sohbet satırları, "Canlifal Sistemi"), sohbet başlığı ve yazma alanı beyaz metinle açık zeminde görünmüyordu → temaya bağlandı; mor gradyan üzerindekiler beyaz kaldı
+- **Ölü kod:** hiçbir yerden kullanılmayan 74 arayüz dosyası silindi (12.831 satır; sahte "Özge 4.892 izleyici" canlı yayın vitrini dahil). Ağ, SSE, veri ve sağlayıcı katmanına dokunulmadı
+
 ## 1.0.611+662 (2026-09-27) — UI yenileme Aşama 6: canlı yayın, hediye, PK
 
 - **PK hediye seçici ve izleyici listesi açılmıyordu:** ortak alt sayfa kabuğu içeriğe sınırsız yükseklik veriyordu; kaydırılabilir alt sayfalar düzen hatasıyla boş kalıyordu → içerik kalan yükseklikle sınırlanıyor (kısa alt sayfalarda görünüm aynı)
