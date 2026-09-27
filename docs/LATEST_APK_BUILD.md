@@ -4,20 +4,24 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.605+656` |
-| Tarih (UTC) | 2026-09-26 22:04 |
-| Commit | [`884cdc5630dcba59b9d8d76e238da403b75ba6c5`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/884cdc5630dcba59b9d8d76e238da403b75ba6c5) |
-| İş akışı | [Run 36272818774](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36272818774) |
+| Sürüm | `1.0.609+660` |
+| Tarih (UTC) | 2026-09-27 00:50 |
+| Commit | [`bd9efa49a8bc157d89df651b1930225266be269b`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/bd9efa49a8bc157d89df651b1930225266be269b) |
+| İş akışı | [Run 36282653214](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36282653214) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.605+656 (2026-09-26) — SSE 401, misafir global, sohbet kuyruk
+## 1.0.609+660 (2026-09-27) — UI yenileme Aşama 4: fal türleri + fal sonuç ekranları
 
-- **Video SSE:** 401 → JWT refresh + yeniden bağlan; bağlantıda mesaj resync + bekleyen gönderim kuyruğu (canlı)
-- **Sesli SSE:** yeniden bağlanınca sohbet resync; ağ/5xx’te mesaj kuyruğu + flush
-- **Misafir (yayıncı):** `LiveHostGuestJoinRequestListener` — yayın odası dışında poll + onay dialog
-- **Misafir sinyali:** `liveGuestJoinSignalProvider` (SSE guest event)
+- **Çalışmayan buton:** kahve/el falında fotoğraf eklenmemişken "Falını Aç" ve üstteki ✦ hiçbir şey yapmıyordu → artık fotoğraf ekleme sayfasını açıyor, fotoğraflar tamamlanınca falı açıyor
+- **Taşma:** kahve falı fotoğraf kutucuklarının başlığı ~390 dp ekranlarda 33 px taşıyordu
+- **Sonuç başlıkları:** tarot vb. bölümlerde sunucu başlığı ("Geçmiş/Şimdi/Gelecek") yerine hepsine "Yorum" yazılıyordu
+- **Açık tema:** fal bölümü her temada koyu mistik zemin çiziyor; içindeki kartlar/başlıklar açık tema rengi alıp çakışıyordu → fal bölümüne koyu tema kapsamı (koyu/AMOLED kullanıcıda değişiklik yok)
+- **Kart çevirme:** kehanet kartı çevrilirken kalkıyor, gölgesi büyüyor, yüzeyinden ışık geçiyor; "animasyonları azalt"ta anında
+- **Görsel önbelleği:** disk boyutlandırma parametreleri desteklenmeyen önbellek yöneticisiyle kullanılıyordu (release'de yok sayılıyor, debug'da hata) → kaldırıldı; ön-yükleme bellek boyutlandırması `ResizeImage` ile
+- **Ölü kod:** hiçbir yerden açılmayan 17 fal "ekranı" + 17 sağlayıcı + 3 model silindi (6.901 satır, sahte butonlar içeriyordu)
+- **Yükleme:** "Son Falların" şeridi dönen simge yerine iskelet kartlar
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
