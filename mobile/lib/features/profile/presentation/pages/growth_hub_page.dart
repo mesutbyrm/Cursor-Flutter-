@@ -307,7 +307,11 @@ class GrowthHubPage extends ConsumerWidget {
       if (!watched) {
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Reklam tamamlanmadı; ödül verilmedi.')),
+          SnackBar(
+            content: Text(
+              RewardedAdService.instance.userFacingFailureMessage(),
+            ),
+          ),
         );
         return;
       }

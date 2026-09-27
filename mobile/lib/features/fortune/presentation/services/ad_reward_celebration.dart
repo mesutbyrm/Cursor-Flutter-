@@ -21,8 +21,9 @@ class AdRewardCelebration {
     final watched = await RewardedAdService.instance.show();
     if (!context.mounted) return false;
     if (!watched) {
+      final msg = RewardedAdService.instance.userFacingFailureMessage();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Reklam tamamlanmadı; ödül verilmedi.')),
+        SnackBar(content: Text(msg)),
       );
       return false;
     }

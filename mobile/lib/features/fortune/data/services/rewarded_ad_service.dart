@@ -5,15 +5,30 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../../core/admob_config.dart';
 
-/// AdMob ödüllü reklam — tam izlenince `true`, yarıda kapanınca `false`.
+/// AdMob ödüllü geçiş reklamı — tam izlenince `true`, yarıda kapanınca `false`.
 class RewardedAdService {
   RewardedAdService._();
 
   static final RewardedAdService instance = RewardedAdService._();
 
   static bool _sdkReady = false;
-  RewardedAd? _ad;
+  RewardedInterstitialAd? _ad;
   bool _loading = false;
+  LoadAdError? _lastLoadError;
+
+  /// SSV için oturumdaki kullanıcı kimliği (AdMob `user_id`).
+  String? _ssvUserId;
+
+  void setUserId(String? userId) {
+    _ssvUserId = (userId == null || userId.isEmpty) ? null : userId;
+    _applySsv(_ad);
+  }
+
+  void _applySsv(RewardedInterstitialAd? ad) {
+    final uid = _ssvUserId;
+    if (ad == null || uid == null) return;
+    ad.setServerSideOptions(ServerSideVerificationOptions(userId: uid));
+  }
 
   static Future<void> ensureInitialized() async {
     if (kIsWeb) return;
@@ -34,18 +49,22 @@ class RewardedAdService {
       return;
     }
     _loading = true;
+    _lastLoadError = null;
     try {
       final completer = Completer<void>();
-      await RewardedAd.load(
+      await RewardedInterstitialAd.load(
         adUnitId: AdMobConfig.rewardedAdUnitId,
         request: const AdRequest(),
-        rewardedAdLoadCallback: RewardedAdLoadCallback(
+        rewardedInterstitialAdLoadCallback: RewardedInterstitialAdLoadCallback(
           onAdLoaded: (ad) {
             _ad = ad;
+            _applySsv(ad);
             _loading = false;
             if (!completer.isCompleted) completer.complete();
           },
-          onAdFailedToLoad: (_) {
+          onAdFailedToLoad: (error) {
+            debugPrint('AdMob yüklenemedi: ${error.code} ${error.message}');
+            _lastLoadError = error;
             _ad = null;
             _loading = false;
             if (!completer.isCompleted) completer.complete();
@@ -58,6 +77,17 @@ class RewardedAdService {
     }
   }
 
+  /// Son yükleme hatası (reklam hiç açılmadan `false` dönerse).
+  LoadAdError? get lastLoadError => _lastLoadError;
+
+  /// Kullanıcıya gösterilecek kısa mesaj (`show()` false iken).
+  String userFacingFailureMessage() {
+    if (_lastLoadError != null) {
+      return 'Reklam yüklenemedi. Birkaç dakika sonra tekrar deneyin.';
+    }
+    return 'Reklam tamamlanmadı; ödül verilmedi.';
+  }
+
   /// Reklamı gösterir. Ödül kazanıldıysa `true`.
   Future<bool> show() async {
     if (kIsWeb) return false;
@@ -66,6 +96,8 @@ class RewardedAdService {
 
     final ad = _ad;
     if (ad == null) return false;
+
+    _applySsv(ad);
 
     final completer = Completer<bool>();
     var rewarded = false;

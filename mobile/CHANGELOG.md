@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.618+669 (2026-09-27) — Tarot/fal ödüllü geçiş reklamı düzeltmesi
+
+- **Kök neden:** AdMob birimi ödüllü geçiş (Rewarded Interstitial); uygulama klasik `RewardedAd` ile yüklüyordu → reklam açılmıyor, “ödül verilmedi” hatası
+- **Düzeltme:** `RewardedInterstitialAd` + doğru test birimi (debug/profile); SSV için giriş yapan kullanıcı kimliği reklama bağlanır
+- **UX:** Yükleme hatasında “Reklam yüklenemedi…” mesajı (Tarot, büyüme merkezi, fal kapısı)
+
 ## 1.0.617+668 (2026-09-27) — AdMob ödüllü reklam (Canlifal)
 
 - **Üretim birimleri:** Android App ID `~1394571120`, ödüllü birim `/8698346072` (AdMob konsolu)

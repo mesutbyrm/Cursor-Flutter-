@@ -22,6 +22,8 @@ import '../features/voice_hub/presentation/widgets/voice_room_music_lifecycle_ho
 import '../features/voice_hub/presentation/widgets/voice_room/voice_room_session_lifecycle_host.dart';
 import '../features/voice_hub/presentation/widgets/voice_room/voice_room_ranking_refresh_host.dart';
 import '../core/site_animation/presentation/site_animation_catalog_provider.dart';
+import '../core/providers/auth_selectors.dart';
+import '../features/fortune/data/services/rewarded_ad_service.dart';
 import 'router/app_router.dart';
 import 'widgets/main_app_shell.dart';
 
@@ -46,6 +48,12 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
       if (!mounted) return;
       setState(() => _bootstrapCapReached = true);
     });
+
+    ref.listenManual<String?>(
+      currentUserIdProvider,
+      (_, next) => RewardedAdService.instance.setUserId(next),
+      fireImmediately: true,
+    );
 
     ref.listenManual<bool>(guestModeProvider, (prev, next) {
       if (prev == next || next != true) return;

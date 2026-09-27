@@ -114,7 +114,9 @@ class FortuneAccessService {
   Future<int> watchAdForCredit({required String slug}) async {
     final completed = await RewardedAdService.instance.show();
     if (!completed) {
-      throw StateError('Reklam tamamlanmadı; fal hakkı verilmedi.');
+      throw StateError(
+        RewardedAdService.instance.userFacingFailureMessage(),
+      );
     }
     return grantFortuneAdCreditAfterWatch(slug: slug);
   }
