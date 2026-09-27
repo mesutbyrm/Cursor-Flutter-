@@ -225,6 +225,7 @@ class _JoinToastLine extends StatefulWidget {
 class _JoinToastLineState extends State<_JoinToastLine>
     with SingleTickerProviderStateMixin {
   late final AnimationController _fade;
+  late final CurvedAnimation _fadeCurve;
 
   @override
   void initState() {
@@ -234,10 +235,12 @@ class _JoinToastLineState extends State<_JoinToastLine>
       duration: const Duration(milliseconds: 320),
       value: 0,
     )..forward();
+    _fadeCurve = CurvedAnimation(parent: _fade, curve: Curves.easeOut);
   }
 
   @override
   void dispose() {
+    _fadeCurve.dispose();
     _fade.dispose();
     super.dispose();
   }
@@ -245,7 +248,7 @@ class _JoinToastLineState extends State<_JoinToastLine>
   @override
   Widget build(BuildContext context) {
     return FadeTransition(
-      opacity: CurvedAnimation(parent: _fade, curve: Curves.easeOut),
+      opacity: _fadeCurve,
       child: Padding(
         padding: const EdgeInsets.only(bottom: 3),
         child: Text(

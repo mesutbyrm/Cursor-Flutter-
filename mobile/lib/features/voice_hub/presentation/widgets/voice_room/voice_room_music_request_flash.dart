@@ -16,6 +16,8 @@ class VoiceRoomMusicRequestFlash extends StatefulWidget {
 class _VoiceRoomMusicRequestFlashState extends State<VoiceRoomMusicRequestFlash>
     with SingleTickerProviderStateMixin {
   late final AnimationController _pulse;
+  late final CurvedAnimation _pulseCurve;
+  late final Animation<double> _opacity;
 
   @override
   void initState() {
@@ -24,10 +26,13 @@ class _VoiceRoomMusicRequestFlashState extends State<VoiceRoomMusicRequestFlash>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     )..repeat(reverse: true);
+    _pulseCurve = CurvedAnimation(parent: _pulse, curve: Curves.easeInOut);
+    _opacity = Tween(begin: 0.55, end: 1.0).animate(_pulseCurve);
   }
 
   @override
   void dispose() {
+    _pulseCurve.dispose();
     _pulse.dispose();
     super.dispose();
   }
@@ -40,9 +45,7 @@ class _VoiceRoomMusicRequestFlashState extends State<VoiceRoomMusicRequestFlash>
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 4, 12, 2),
       child: FadeTransition(
-        opacity: Tween(begin: 0.55, end: 1.0).animate(
-          CurvedAnimation(parent: _pulse, curve: Curves.easeInOut),
-        ),
+        opacity: _opacity,
         child: DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),

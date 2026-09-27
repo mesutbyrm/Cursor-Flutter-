@@ -37,6 +37,7 @@ class VoiceGiftAmbientOverlay extends ConsumerStatefulWidget {
 class _VoiceGiftAmbientOverlayState extends ConsumerState<VoiceGiftAmbientOverlay>
     with SingleTickerProviderStateMixin {
   late final AnimationController _fadeCtrl;
+  late final CurvedAnimation _fadeCurve;
   Timer? _playTimer;
   String? _activeId;
   String? _boundId;
@@ -49,6 +50,7 @@ class _VoiceGiftAmbientOverlayState extends ConsumerState<VoiceGiftAmbientOverla
       vsync: this,
       duration: const Duration(milliseconds: VoiceGiftAmbientOverlay.fadeInMs),
     );
+    _fadeCurve = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeInOut);
     _fadeCtrl.addStatusListener(_onFadeStatus);
   }
 
@@ -65,6 +67,7 @@ class _VoiceGiftAmbientOverlayState extends ConsumerState<VoiceGiftAmbientOverla
     _playTimer?.cancel();
     _videoController?.removeListener(_onVideoProgress);
     _fadeCtrl.removeStatusListener(_onFadeStatus);
+    _fadeCurve.dispose();
     _fadeCtrl.dispose();
     super.dispose();
   }
@@ -180,7 +183,7 @@ class _VoiceGiftAmbientOverlayState extends ConsumerState<VoiceGiftAmbientOverla
       child: IgnorePointer(
         child: RepaintBoundary(
           child: FadeTransition(
-            opacity: CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeInOut),
+            opacity: _fadeCurve,
             child: Opacity(
               opacity: layerOpacity,
               child: isFullScreen
