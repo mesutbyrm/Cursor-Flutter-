@@ -1322,6 +1322,10 @@ abstract final class ApiEndpoints {
   static const horoscopeDaily = '/api/horoscope/daily';
   static const astrologyPanel = '/api/astrology-panel';
 
+  // --- Astrology / Zodiac Compatibility ---
+  static const astrologyCompatibility = '/api/fortunes/ask-uyumu';
+  static const astrologyDailyCompatibility = '/api/horoscope/daily-compatibility';
+
   static const creditPackages = '/api/credit-packages';
 
   static const usersOnline = '/api/users/online';
