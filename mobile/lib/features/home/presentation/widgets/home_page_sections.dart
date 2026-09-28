@@ -15,6 +15,7 @@ import 'home_banner_carousel.dart';
 import 'home_deferred_section.dart';
 import 'home_discover_premium_banner.dart';
 import 'home_fortune_request_types_section.dart';
+import 'home_football_section.dart';
 import 'home_games_section.dart';
 import 'home_growth_teasers_section.dart';
 import 'home_footer_section.dart';
@@ -152,6 +153,15 @@ abstract final class HomePageSections {
           child: HomeViewportSection(
             estimatedHeight: 280,
             child: HomeGamesSection(),
+          ),
+        ),
+      ),
+      const SliverToBoxAdapter(
+        child: HomeDeferredSection(
+          delay: StartupPerf.homeGameSectionDelay,
+          child: HomeViewportSection(
+            estimatedHeight: 140,
+            child: HomeFootballSection(),
           ),
         ),
       ),

@@ -6,7 +6,8 @@ import 'ultra_fortune_cover_backdrop.dart';
 import 'ultra_fortune_liquid_surface.dart';
 import 'ultra_fortune_tokens.dart';
 
-/// Fal hub — hızlı erişim butonları (hazır yorum, geçmiş, canlı falcı, bana özel).
+/// Fal hub — hızlı erişim butonları (hazır yorum, geçmiş, canlı falcı, bana özel,
+/// burç uyumu, rüya yarışması).
 class UltraFortuneQuickActions extends StatelessWidget {
   const UltraFortuneQuickActions({super.key});
 
@@ -35,21 +36,44 @@ class UltraFortuneQuickActions extends StatelessWidget {
     _QuickAction(
       label: 'Bana\nÖzel',
       icon: Icons.auto_fix_high_rounded,
-      color: const Color(0xFF4ADE80),
+      color: Color(0xFF4ADE80),
       route: '/fortune/bana-ozel',
       coverSlug: 'melek-kartlari',
     ),
+    _QuickAction(
+      label: 'Burç\nUyumu',
+      icon: Icons.favorite_rounded,
+      color: Color(0xFFF472B6),
+      route: '/astrology/compatibility',
+      coverSlug: 'ask-fali',
+    ),
+    _QuickAction(
+      label: 'Rüya\nYarışması',
+      icon: Icons.how_to_vote_rounded,
+      color: Color(0xFF818CF8),
+      route: '/dreams/contest',
+      coverSlug: 'ruya-tabiri',
+    ),
   ];
+
+  static const _perRow = 3;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-      child: Row(
+      child: Column(
         children: [
-          for (var i = 0; i < _items.length; i++) ...[
-            if (i > 0) const SizedBox(width: 10),
-            Expanded(child: _QuickActionTile(item: _items[i])),
+          for (var start = 0; start < _items.length; start += _perRow) ...[
+            if (start > 0) const SizedBox(height: 10),
+            Row(
+              children: [
+                for (var i = start; i < start + _perRow && i < _items.length; i++) ...[
+                  if (i > start) const SizedBox(width: 10),
+                  Expanded(child: _QuickActionTile(item: _items[i])),
+                ],
+              ],
+            ),
           ],
         ],
       ),

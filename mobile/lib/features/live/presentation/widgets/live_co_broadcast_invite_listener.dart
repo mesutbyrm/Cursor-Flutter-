@@ -3,17 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../app/router/app_router.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../domain/entities/live_stream_entity.dart';
 import '../providers/co_broadcast_provider.dart';
 import '../providers/live_co_broadcast_invite_signal_provider.dart';
 import '../providers/live_invite_dedup_provider.dart';
-import '../providers/pending_co_broadcast_join_provider.dart';
-import '../providers/live_providers.dart';
 import '../widgets/broadcast_room/live_guest_broadcast_modals.dart';
-import '../utils/open_live_stream.dart';
+import '../utils/co_broadcast_invite_actions.dart';
 
 /// Ortak yayın (misafir) davetleri — yayın sayfası dışında da kabul ekranı.
 class LiveCoBroadcastInviteListener extends ConsumerStatefulWidget {
@@ -47,24 +43,6 @@ class _LiveCoBroadcastInviteListenerState
     super.dispose();
   }
 
-  bool _isPendingInvite(Map<String, dynamic> invite) {
-    final status = (invite['status']?.toString() ?? 'pending').toLowerCase();
-    return status == 'pending' || status == 'invited';
-  }
-
-  bool _inviteTargetsUser(Map<String, dynamic> invite, String userId) {
-    final targets = <String?>{
-      invite['inviteeId']?.toString(),
-      invite['userId']?.toString(),
-      invite['targetUserId']?.toString(),
-      invite['guestUserId']?.toString(),
-    };
-    for (final t in targets) {
-      if (t != null && t.trim() == userId) return true;
-    }
-    return false;
-  }
-
   Future<void> _pollInvites() async {
     if (_showing || !mounted) return;
     final user = ref.read(authControllerProvider).valueOrNull;
@@ -74,14 +52,8 @@ class _LiveCoBroadcastInviteListenerState
       await ref.read(coBroadcastProvider.notifier).refresh();
       final invites = ref.read(coBroadcastProvider).invites;
       for (final invite in invites) {
-        if (!_isPendingInvite(invite)) continue;
-        if (!_inviteTargetsUser(invite, user.id)) continue;
-        final streamId = (invite['streamId'] ??
-                invite['videoStreamId'] ??
-                invite['liveStreamId'] ??
-                '')
-            .toString()
-            .trim();
+        if (!isPendingCoBroadcastInvite(invite, user.id)) continue;
+        final streamId = coBroadcastInviteStreamId(invite);
         if (streamId.isEmpty) continue;
         final id = (invite['id'] ??
                 invite['inviteId'] ??
@@ -105,11 +77,7 @@ class _LiveCoBroadcastInviteListenerState
   ) async {
     if (!mounted || _showing) return;
     _showing = true;
-    final hostName = (invite['hostName'] ??
-            invite['streamerName'] ??
-            invite['fromName'] ??
-            'Yayıncı')
-        .toString();
+    final hostName = coBroadcastInviteHostName(invite);
 
     bool? accept;
     try {
@@ -124,24 +92,7 @@ class _LiveCoBroadcastInviteListenerState
     if (!mounted || accept == null) return;
     try {
       if (accept) {
-        await ref.read(coBroadcastProvider.notifier).acceptInvite(streamId);
-        await ref.read(coBroadcastProvider.notifier).refreshStream(streamId);
-        ref.read(pendingCoBroadcastJoinProvider.notifier).setPending(streamId);
-        final nav = rootNavigatorKey.currentContext;
-        if (nav != null && nav.mounted) {
-          final streams =
-              ref.read(liveStreamsProvider).valueOrNull ?? const [];
-          LiveStreamEntity? stream;
-          for (final s in streams) {
-            if (s.id == streamId) {
-              stream = s;
-              break;
-            }
-          }
-          if (stream != null) {
-            await openLiveStreamSwipe(nav, ref, stream);
-          }
-        }
+        await acceptCoBroadcastInviteAndJoin(ref, streamId);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Ortak yayına katıldınız')),

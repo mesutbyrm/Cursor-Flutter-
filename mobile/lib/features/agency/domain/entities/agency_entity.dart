@@ -105,26 +105,93 @@ class AgencyEarningEntity extends Equatable {
   List<Object?> get props => [id, amount, source, createdAt, memberName];
 }
 
-class AgencyTaskEntity extends Equatable {
-  const AgencyTaskEntity({
+/// `GET /api/agency/tasks` — haftalık ajans hedefi (Prisma `AgencyTask`).
+class AgencyWeeklyTask extends Equatable {
+  const AgencyWeeklyTask({
     required this.id,
-    required this.title,
-    this.description,
-    this.reward = 0,
-    this.completed = false,
-    this.deadline,
+    required this.weekStart,
+    required this.weekEnd,
+    required this.earningsTarget,
+    required this.earningsActual,
+    required this.newUsersTarget,
+    required this.newUsersActual,
+    required this.activeUsersTarget,
+    required this.activeUsersActual,
+    required this.completionPercent,
+    required this.bonusAwarded,
+    required this.status,
   });
 
   final String id;
-  final String title;
-  final String? description;
-  final int reward;
-  final bool completed;
-  final DateTime? deadline;
+  final DateTime? weekStart;
+  final DateTime? weekEnd;
+  final double earningsTarget;
+  final double earningsActual;
+  final int newUsersTarget;
+  final int newUsersActual;
+  final int activeUsersTarget;
+  final int activeUsersActual;
+  final double completionPercent;
+  final double bonusAwarded;
+  final String status;
+
+  static double _num(dynamic v) =>
+      v is num ? v.toDouble() : double.tryParse(v?.toString() ?? '') ?? 0;
+
+  static int _int(dynamic v) => _num(v).round();
+
+  factory AgencyWeeklyTask.fromJson(Map<String, dynamic> json) =>
+      AgencyWeeklyTask(
+        id: json['id']?.toString() ?? '',
+        weekStart: DateTime.tryParse(json['weekStart']?.toString() ?? ''),
+        weekEnd: DateTime.tryParse(json['weekEnd']?.toString() ?? ''),
+        earningsTarget: _num(json['earningsTarget']),
+        earningsActual: _num(json['earningsActual']),
+        newUsersTarget: _int(json['newUsersTarget']),
+        newUsersActual: _int(json['newUsersActual']),
+        activeUsersTarget: _int(json['activeUsersTarget']),
+        activeUsersActual: _int(json['activeUsersActual']),
+        completionPercent: _num(json['completionPercent']),
+        bonusAwarded: _num(json['bonusAwarded']),
+        status: json['status']?.toString() ?? 'active',
+      );
 
   @override
-  List<Object?> get props =>
-      [id, title, description, reward, completed, deadline];
+  List<Object?> get props => [
+        id,
+        weekStart,
+        earningsActual,
+        newUsersActual,
+        activeUsersActual,
+        completionPercent,
+        status,
+      ];
+}
+
+class AgencyWeeklyTasks {
+  const AgencyWeeklyTasks({required this.current, required this.past});
+
+  final AgencyWeeklyTask? current;
+  final List<AgencyWeeklyTask> past;
+
+  factory AgencyWeeklyTasks.fromJson(Map<String, dynamic> json) {
+    final data = json['data'] is Map
+        ? Map<String, dynamic>.from(json['data'] as Map)
+        : json;
+    final cur = data['currentTask'];
+    final past = data['pastTasks'];
+    return AgencyWeeklyTasks(
+      current: cur is Map
+          ? AgencyWeeklyTask.fromJson(Map<String, dynamic>.from(cur))
+          : null,
+      past: past is List
+          ? past
+              .whereType<Map>()
+              .map((e) => AgencyWeeklyTask.fromJson(Map<String, dynamic>.from(e)))
+              .toList()
+          : const [],
+    );
+  }
 }
 
 /// `GET /api/agency/applications` — bekleyen üye / çıkış talepleri.

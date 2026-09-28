@@ -11,6 +11,11 @@ import '../../features/canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../features/content_hub/domain/native_feature_item.dart';
 import '../../features/content_hub/presentation/pages/content_hub_page.dart';
 import '../../features/content_hub/presentation/pages/native_feature_hub_page.dart';
+import '../../features/dreams/presentation/pages/dream_contest_pages.dart';
+import '../../features/astrology/presentation/pages/compatibility_page.dart';
+import '../../features/football/presentation/football_page.dart';
+import '../../features/live/presentation/pages/co_broadcast_invites_page.dart';
+import '../../features/trtc/presentation/pages/voice_audio_settings_page.dart';
 import '../../features/favorites/presentation/pages/favorites_page.dart';
 import '../../features/feed/presentation/pages/feed_page.dart';
 import '../../features/search/presentation/pages/global_search_page.dart';
@@ -223,6 +228,7 @@ import '../../features/live_psychics/presentation/screens/psychic_workflow_autom
 import '../../features/live_psychics/presentation/screens/psychic_compliance_legal_screen.dart';
 import '../../features/agency/presentation/pages/agency_applications_page.dart';
 import '../../features/agency/presentation/pages/agency_dashboard_screen.dart';
+import '../../features/agency/presentation/pages/agency_weekly_tasks_page.dart';
 import '../../features/cfc_arena/presentation/pages/cfc_arena_contest_page.dart';
 import '../../features/cfc_arena/presentation/pages/cfc_arena_hub_page.dart';
 import '../../features/agency/presentation/providers/agency_providers.dart';
@@ -925,6 +931,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ActiveDevicesPage(),
       ),
       GoRoute(
+        path: '/settings/voice-audio',
+        builder: (context, state) => const VoiceAudioSettingsPage(),
+      ),
+      GoRoute(
+        path: '/co-broadcast-invites',
+        builder: (context, state) => const CoBroadcastInvitesPage(),
+      ),
+      GoRoute(
         path: '/settings/entrance-effects',
         builder: (context, state) => const EntranceEffectUserSettingsPage(),
       ),
@@ -1442,6 +1456,36 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: '/dreams/contest',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const DreamContestListPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/astrology/compatibility',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const CompatibilityPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/football',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const FootballPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/dreams/contest/:id',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: DreamContestDetailPage(
+            contestId: state.pathParameters['id'] ?? '',
+          ),
+        ),
+      ),
+      GoRoute(
         path: '/search',
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
@@ -1476,6 +1520,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
           child: const AgencyDashboardScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/ajans/weekly-tasks',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const AgencyWeeklyTasksPage(),
         ),
       ),
       GoRoute(

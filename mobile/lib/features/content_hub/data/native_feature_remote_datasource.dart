@@ -66,7 +66,7 @@ class NativeFeatureRemoteDataSource {
       await _fetchPath(
         ApiEndpoints.dreamContest,
         fallbackIcon: Icons.how_to_vote_rounded,
-        fallbackRoute: '/dreams-hub',
+        fallbackRoute: '/dreams/contest',
         badge: 'Yarışma',
       ),
     );
@@ -173,6 +173,7 @@ class NativeFeatureRemoteDataSource {
       'rooms',
       'tournaments',
       'dreams',
+      'contests',
       'symbols',
       'posts',
       'blogs',
@@ -230,7 +231,7 @@ class NativeFeatureRemoteDataSource {
         _subtitleFor(json);
     final slug = pick(json, ['slug'])?.toString();
     final routeRaw = pick(json, ['route', 'path', 'url'])?.toString();
-    final route = _safeRoute(routeRaw, fallbackRoute, slug);
+    final route = _safeRoute(routeRaw, fallbackRoute, slug, id);
     final image = pick(json, [
       'imageUrl',
       'image',
@@ -253,9 +254,10 @@ class NativeFeatureRemoteDataSource {
     );
   }
 
-  String _safeRoute(String? route, String fallback, String? slug) {
+  String _safeRoute(String? route, String fallback, String? slug, String id) {
     final raw = route?.trim();
     if (raw != null && raw.startsWith('/') && raw.length < 80) return raw;
+    if (fallback == '/dreams/contest') return '/dreams/contest/$id';
     if (fallback == '/blog-hub' && slug != null && slug.isNotEmpty) {
       return '/blog/$slug';
     }
@@ -273,6 +275,7 @@ class NativeFeatureRemoteDataSource {
         'viewCount',
         'playerCount',
         'entriesCount',
+        'entryCount',
       ]),
     );
     if (count > 0) return '$count etkileşim';

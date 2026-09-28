@@ -1,10 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+const _nativeRoutes = {
+  '/dreams/contest',
+  '/astrology/compatibility',
+  '/football',
+  '/ajans/weekly-tasks',
+  '/co-broadcast-invites',
+  '/settings/voice-audio',
+};
+
+const _nativeAliases = {
+  '/ruya-yarismasi': '/dreams/contest',
+  '/burc-uyumu': '/astrology/compatibility',
+  '/futbol': '/football',
+};
+
 /// Site yolu → native Flutter route (WebView yok).
 void openNativeSitePath(BuildContext context, String path) {
   final p = path.trim();
   if (p.isEmpty) return;
+
+  final alias = _nativeAliases[p];
+  if (alias != null) {
+    context.push(alias);
+    return;
+  }
+  if (_nativeRoutes.contains(p) || p.startsWith('/dreams/contest/')) {
+    context.push(p);
+    return;
+  }
 
   if (p.startsWith('/auth/reset-password') || p.startsWith('/sifre-sifirla')) {
     final uri = Uri.tryParse(p.startsWith('http') ? p : 'https://canlifal.com$p');
@@ -73,8 +98,8 @@ void openNativeSitePath(BuildContext context, String path) {
     context.push('/celebrities-hub');
     return;
   }
-  if (p == '/futbol' || p.startsWith('/football')) {
-    context.push('/search?q=futbol');
+  if (p.startsWith('/football')) {
+    context.push('/football');
     return;
   }
   if (p == '/oyunlar' || p == '/games') {

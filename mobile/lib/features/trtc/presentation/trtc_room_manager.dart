@@ -13,6 +13,7 @@ import 'package:tencent_rtc_sdk/tx_device_manager.dart';
 
 import '../../voice_hub/data/services/voice_room_debug_log.dart';
 import '../domain/entities/trtc_credentials.dart';
+import '../domain/voice_audio_settings.dart';
 import 'trtc_operation_gate.dart';
 
 /// Tencent TRTC oda oturumu — canlı yayın ve sesli sohbet.
@@ -375,6 +376,7 @@ class TrtcRoomManager {
       _cloud!.setVideoEncoderParam(encParam);
     }
 
+    await VoiceAudioSettingsStore.ensureLoaded();
     _cloud!.enterRoom(params, scene);
 
     final enterResult = await _enterRoomCompleter!.future.timeout(
@@ -392,12 +394,12 @@ class TrtcRoomManager {
     _joinedStrRoomId = roomId;
 
     if (audioOnly) {
-      _cloud!.startLocalAudio(TRTCAudioQuality.speech);
+      _startLocalAudio();
       _device?.setAudioRoute(TXAudioRoute.speakerPhone);
       _micOn = true;
       _trtcLog('local_audio', {'roomId': roomId, 'enabled': true});
     } else if (publishAsAnchor) {
-      _cloud!.startLocalAudio(TRTCAudioQuality.speech);
+      _startLocalAudio();
       _cloud!.muteLocalVideo(TRTCVideoStreamType.big, false);
       // Yerel önizleme yalnızca TrtcLocalVideoView.onViewCreated ile bağlanır.
       // viewId=0 kullanımı uzak tam ekran yüzeyini ele geçirip kamera flip-flop yapar.
@@ -577,10 +579,43 @@ class TrtcRoomManager {
     return true;
   }
 
+  void _startLocalAudio() {
+    final cloud = _cloud;
+    if (cloud == null) return;
+    final s = VoiceAudioSettingsStore.current;
+    cloud.startLocalAudio(s.quality);
+    _applyVoiceEffects(s);
+  }
+
+  void _applyVoiceEffects(VoiceAudioSettings s) {
+    final cloud = _cloud;
+    if (cloud == null) return;
+    cloud.setAudioCaptureVolume(s.captureVolume);
+    final fx = cloud.getAudioEffectManager();
+    fx.setVoiceReverbType(s.reverb);
+    fx.setVoiceChangerType(s.changer);
+    fx.enableVoiceEarMonitor(s.earMonitor);
+    _trtcLog('voice_effects', {
+      'quality': s.quality.name,
+      'reverb': s.reverb.name,
+      'changer': s.changer.name,
+      'volume': s.captureVolume,
+      'ear': s.earMonitor,
+    });
+  }
+
+  /// Ayarlar ekranından: efekt/ses seviyesi açık oturuma anında uygulanır;
+  /// kalite değişikliği bir sonraki mikrofon açılışında geçerli olur.
+  static void applyVoiceSettingsToActiveSession() {
+    final session = _activeSession;
+    if (session == null || !session._inRoom || !session._micOn) return;
+    session._applyVoiceEffects(VoiceAudioSettingsStore.current);
+  }
+
   void setMicEnabled(bool enabled) {
     if (!_inRoom && !_previewOnly) return;
     if (enabled) {
-      _cloud?.startLocalAudio(TRTCAudioQuality.speech);
+      _startLocalAudio();
       _cloud?.muteLocalAudio(false);
     } else {
       _cloud?.muteLocalAudio(true);

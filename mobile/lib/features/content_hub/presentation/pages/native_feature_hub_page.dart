@@ -125,6 +125,12 @@ class NativeFeatureHubPage extends ConsumerWidget {
               '/fortune/ruya-tabiri',
             ),
             _HubItem(
+              'Rüya yarışması',
+              'Rüyayı yorumla, en çok oyu alan yorum kazansın.',
+              Icons.how_to_vote_rounded,
+              '/dreams/contest',
+            ),
+            _HubItem(
               'Rüya sözlüğü',
               'Sembol ve anlam listesi için native liste fazına hazır.',
               Icons.auto_stories_rounded,

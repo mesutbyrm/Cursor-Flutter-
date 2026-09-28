@@ -83,7 +83,7 @@ class PlatformContentRemoteDataSource {
 
   /// `GET /api/football` — canlı futbol skorları.
   Future<List<Map<String, dynamic>>> fetchFootball() async {
-    return _fetchJsonList(ApiEndpoints.football, keys: const [
+    return _fetchJsonList('${ApiEndpoints.football}?action=matches', keys: const [
       'matches',
       'items',
       'data',

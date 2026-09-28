@@ -86,7 +86,7 @@ class AgencyDashboardState {
     this.agency,
     this.members = const [],
     this.earnings = const [],
-    this.tasks = const [],
+    this.tasks,
     this.loading = true,
     this.lastApiLog,
   });
@@ -94,7 +94,7 @@ class AgencyDashboardState {
   final AgencyEntity? agency;
   final List<AgencyMemberEntity> members;
   final List<AgencyEarningEntity> earnings;
-  final List<AgencyTaskEntity> tasks;
+  final AgencyWeeklyTasks? tasks;
   final bool loading;
   final String? lastApiLog;
 
@@ -102,7 +102,7 @@ class AgencyDashboardState {
     AgencyEntity? agency,
     List<AgencyMemberEntity>? members,
     List<AgencyEarningEntity>? earnings,
-    List<AgencyTaskEntity>? tasks,
+    AgencyWeeklyTasks? tasks,
     bool? loading,
     String? lastApiLog,
   }) {

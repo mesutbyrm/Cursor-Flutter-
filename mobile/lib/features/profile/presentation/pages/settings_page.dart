@@ -115,6 +115,25 @@ class SettingsPage extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 20),
+              const _SectionLabel('Canlı Yayın & Ses'),
+              ProfileGlass(
+                padding: EdgeInsets.zero,
+                child: Column(
+                  children: [
+                    _SettingsTile(
+                      icon: Icons.graphic_eq_rounded,
+                      label: 'Ses ayarları',
+                      onTap: () => context.push('/settings/voice-audio'),
+                    ),
+                    const _Divider(),
+                    _SettingsTile(
+                      icon: Icons.podcasts_rounded,
+                      label: 'Ortak yayın davetleri',
+                      onTap: () => context.push('/co-broadcast-invites'),
+                    ),
+                  ],
+                ),
+              ),              const SizedBox(height: 20),
               const _SectionLabel('Fal & Paylaşım'),
               const ProfileGlass(
                 padding: EdgeInsets.zero,

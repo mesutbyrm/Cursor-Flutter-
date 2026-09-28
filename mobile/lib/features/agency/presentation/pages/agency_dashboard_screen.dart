@@ -12,6 +12,7 @@ import '../providers/agency_presence_provider.dart';
 import '../providers/agency_providers.dart';
 import '../../../platform_social/presentation/widgets/platform_social_ui_kit.dart';
 import '../widgets/agency_jeton_transfer_sheet.dart';
+import '../widgets/agency_weekly_task_card.dart';
 
 /// Onaylı ajans kontrol paneli — üyeler, kazançlar, görevler.
 class AgencyDashboardScreen extends ConsumerWidget {
@@ -152,7 +153,7 @@ class AgencyDashboardScreen extends ConsumerWidget {
                   : dash.members.length,
               totalEarnings: agency.totalEarnings,
               pendingEarnings: agency.pendingEarnings,
-              taskCount: dash.tasks.where((t) => !t.completed).length,
+              weeklyPercent: dash.tasks?.current?.completionPercent,
               jetonLabel: jetonLabel,
             ),
             if (dash.lastApiLog != null) ...[
@@ -216,11 +217,23 @@ class AgencyDashboardScreen extends ConsumerWidget {
             else
               ...dash.earnings.take(8).map((e) => _EarningTile(e, jetonLabel: jetonLabel)),
             const SizedBox(height: 20),
-            const PlatformSocialSectionTitle('Görevler'),
-            if (dash.tasks.isEmpty)
-              _emptyHint('Aktif görev yok.')
-            else
-              ...dash.tasks.map((t) => _TaskTile(t, jetonLabel: jetonLabel)),
+            const PlatformSocialSectionTitle('Haftalık görev'),
+            if (dash.tasks?.current == null)
+              _emptyHint('Haftalık görev bilgisi alınamadı.')
+            else ...[
+              AgencyWeeklyTaskCard(
+                task: dash.tasks!.current!,
+                jetonLabel: jetonLabel,
+                onTap: () => context.push('/ajans/weekly-tasks'),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => context.push('/ajans/weekly-tasks'),
+                  child: const Text('Geçmiş haftalar >'),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -316,14 +329,14 @@ class _StatGrid extends StatelessWidget {
     required this.memberCount,
     required this.totalEarnings,
     required this.pendingEarnings,
-    required this.taskCount,
+    required this.weeklyPercent,
     required this.jetonLabel,
   });
 
   final int memberCount;
   final int totalEarnings;
   final int pendingEarnings;
-  final int taskCount;
+  final double? weeklyPercent;
   final String jetonLabel;
 
   @override
@@ -354,7 +367,12 @@ class _StatGrid extends StatelessWidget {
               _statCard('Üye', '$memberCount'),
               _statCard('Toplam Kazanç', '$totalEarnings $jetonLabel'),
               _statCard('Bekleyen', '$pendingEarnings $jetonLabel'),
-              _statCard('Açık Görev', '$taskCount'),
+              _statCard(
+                'Haftalık Hedef',
+                weeklyPercent == null
+                    ? '—'
+                    : '%${weeklyPercent!.toStringAsFixed(0)}',
+              ),
             ],
           ),
         );
@@ -449,24 +467,3 @@ class _EarningTile extends StatelessWidget {
   }
 }
 
-class _TaskTile extends StatelessWidget {
-  const _TaskTile(this.task, {required this.jetonLabel});
-
-  final AgencyTaskEntity task;
-  final String jetonLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    return PlatformSocialListRow(
-      title: task.title,
-      subtitle:
-          '${task.reward} $jetonLabel${task.description != null ? " · ${task.description}" : ""}',
-      leading: Icon(
-        task.completed ? Icons.check_circle : Icons.radio_button_unchecked,
-        color: task.completed
-            ? PlatformSocialPalette.success
-            : PlatformSocialPalette.textMuted,
-      ),
-    );
-  }
-}

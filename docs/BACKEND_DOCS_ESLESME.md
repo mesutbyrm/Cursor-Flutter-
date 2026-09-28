@@ -1,7 +1,7 @@
 # Backend dokümanları ↔ Flutter eşleşmesi
 
 > **Kaynak:** [`mesutbyrm/canlifal` PR #1](https://github.com/mesutbyrm/canlifal/pull/1) — dal `docs/backend-flutter-parity-2026-09` (HEAD `fdd5e62`), `nextjs_space/app/api/**/route.ts` (714 route).
-> **Tarih:** 2026-09-28 · Flutter sürümü `1.0.622+673`
+> **Tarih:** 2026-09-28 · Flutter sürümü `1.0.623+674`
 
 Mobil entegrasyonun tek kaynağı yine [`FLUTTER_ENTegrasyon_KILAVUZU.md`](FLUTTER_ENTegrasyon_KILAVUZU.md)'dur. Bu dosya, backend dokümanlarındaki her konunun Flutter'da nerede karşılandığını ve kontrol sonuçlarını gösterir.
 
@@ -58,9 +58,18 @@ Hepsi ya yedek zincirindedir (önce doğru uç denenir) ya da backend'de özelli
 | `/api/admin/users/{id}/overview|activity|agency|earnings|moderation|reports|spending`, `/api/admin/pk/bans` | Yönetici; backend `.../360` ve `.../full` sunar |
 | `/api/chat/rooms/{id}` (PATCH), `/api/leaderboard`, `/api/platform-stats`, `/api/games/history`, `/api/games/room/{id}/join`, `/api/short-videos/hashtags/{tag}`, `/api/video-streams/{id}/fortune-requests/{id}` | Yedek — önce doğru uç çağrılıyor |
 
-## 1.0.620 ile eklenen 7 modül
+## 1.0.623 — backend'e bağlanan modüller ve menü yerleri
 
-`astrology`, `sports`, `dreams` (yarışma), `trtc` (gelişmiş), `agency` (görevler), `video_streaming` (ortak yayın), `shorts` (remix) sayfaları hiçbir menüye/route'a bağlı değildir. Çağırdıkları uçların çoğu backend'de yoktur: `/api/horoscope/daily-compatibility`, `/api/football/{id}/bet|bets|leaderboard`, `/api/trtc/token/*` (ses efekti/kayıt/kalite — bunlar TRTC SDK'da istemci tarafı ayarlardır), `/api/video-streams/{id}/invite|audio-mix|permission|end`, `/api/video-streams/request*`, `/api/agency/tasks/{id}/*`, `/api/agency/members/{id}/role`. Backend'de karşılığı olan kısımlar uygulamada zaten mevcuttur (fal uyumu `ask-uyumu`, rüya yarışması, `/api/football`, ajans görevleri, canlı yayın misafirliği, kısa video düet).
+| Modül | Backend ucu | Flutter | Menü |
+|---|---|---|---|
+| Burç uyumu | `POST /api/compatibility` `{sign1, sign2}` → `{analysis}` (HTML) | `features/astrology/` | Fal sekmesi → hızlı erişim |
+| Rüya yarışması | `GET /api/dream-contest`, `GET/POST …/{id}/entries` `{interpretation}`, `POST …/{id}/vote` `{entryId}` | `features/dreams/` | Fal sekmesi, Rüya Merkezi |
+| Futbol | `GET /api/football?action=matches|standings|scorers` | `features/football/` | Ana sayfa şeridi, `/futbol` |
+| Ajans haftalık görev | `GET /api/agency/tasks` → `{currentTask, pastTasks}` | `features/agency/…/agency_weekly_tasks_page.dart` | Ajans paneli |
+| Ortak yayın davetleri | `GET /api/user/co-broadcast-invites`, `PATCH /api/video-streams/{id}/co-broadcast` `{action}` | `features/live/…/co_broadcast_invites_page.dart` | Ayarlar → Canlı Yayın & Ses |
+| Ses ayarları | — (TRTC SDK, cihazda) | `features/trtc/domain/voice_audio_settings.dart` | Ayarlar → Canlı Yayın & Ses |
+
+Backend'de olmadığı için eklenmeyenler: futbol bahis/tahmin ve liderlik, ajans görev oluşturma/atama, kısa video remix, sunucu tarafı ses kaydı.
 
 ## Backend tarafında açık kalanlar (mobil düzeltemez)
 

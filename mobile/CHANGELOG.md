@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.623+674 (2026-09-28) — 7 modül backend uçlarına bağlandı ve menüye eklendi
+
+- **Burç Uyumu** (Fal sekmesi → hızlı erişim): iki burç seç, `POST /api/compatibility` ile aşk/arkadaşlık/iş uyum analizi (uydurma günlük/haftalık skorlar kaldırıldı)
+- **Rüya Yarışması** (Fal sekmesi + Rüya Merkezi): aktif yarışmalar, yorumlanacak rüya, yorum gönderme (en az 20 karakter), oy verme/geri alma — `/api/dream-contest/*`
+- **Futbol** (Ana sayfa şeridi + `/futbol`): bugünkü/dün/yarın maçları, canlı skor, puan durumu, gol krallığı — `/api/football?action=…` (bahis/tahmin backend'de olmadığı için kaldırıldı). Ana sayfa artık `/futbol` bağlantısında arama yerine futbol sayfasını açar
+- **Ajans haftalık görev** (Ajans paneli): kazanç / aktif üye / yeni üye hedefleri ve gerçekleşen, geçmiş 4 hafta — `/api/agency/tasks`. Paneldeki "Görevler" kartı önceden hep boştu
+- **Ortak yayın davetleri** (Ayarlar → Canlı Yayın & Ses): bekleyen davetler, kabul et ve katıl / reddet. **Hata düzeltmesi:** backend davet yanıtında `userId` olmadığı için yayın dışındaki davet penceresi hiç açılmıyordu
+- **Ses ayarları** (Ayarlar → Canlı Yayın & Ses): ses kalitesi (konuşma/dengeli/müzik), mikrofon seviyesi, yankı, ses değiştirici, kulaklıkta kendini duy — TRTC SDK'ya cihazda uygulanır (backend ucu yok)
+- **Kısa video:** kullanılmayan remix katmanı kaldırıldı; kısa videolar mevcut akışta
+- Testler: backend JSON biçimleriyle ayrıştırma + sayfa render testleri (390 dp)
+
 ## 1.0.622+673 (2026-09-28) — Backend dokümanlarıyla eşleşme (canlifal PR #1)
 
 - **Takipçi listesi:** başka birinin profilinde takipçi/takip listesi senin listeni gösteriyordu → `/api/user/followers?userId=` ile doğru kullanıcı

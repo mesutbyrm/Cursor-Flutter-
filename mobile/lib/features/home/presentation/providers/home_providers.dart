@@ -35,7 +35,6 @@ import '../../../agency/presentation/providers/agency_providers.dart';
 import '../../../platform/presentation/providers/platform_content_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../feed/presentation/providers/platform_stats_providers.dart';
-import '../../domain/entities/home_football_match_entity.dart';
 import '../../domain/entities/home_broadcast_image_entity.dart';
 import '../../domain/entities/home_user_liker_entity.dart';
 import '../../domain/entities/home_online_fal_entity.dart';
@@ -71,7 +70,6 @@ void invalidateHomeKeepAliveProviders(dynamic ref) {
   ref.invalidate(homeBlogRecentProvider);
   ref.invalidate(homeDisplayedPsychicsProvider);
   ref.invalidate(homeGiftLeaderboardProvider);
-  ref.invalidate(homeFootballMatchesProvider);
   ref.invalidate(homePkLeaderboardProvider);
   ref.invalidate(homeOnlineFalProvider);
   ref.invalidate(homeAgencyLeaderboardProvider);
@@ -242,19 +240,6 @@ final homeGiftLeaderboardProvider =
   );
 });
 
-/// Canlı futbol maçları — `GET /api/football`.
-final homeFootballMatchesProvider =
-    FutureProvider<List<HomeFootballMatchEntity>>((ref) async {
-  _keepHomeCacheAlive(ref);
-  final raw =
-      await ref.watch(platformContentRemoteDataSourceProvider).fetchFootball();
-  return raw
-      .map(HomeFootballMatchEntity.fromJson)
-      .where((m) => m.hasTeams)
-      .take(8)
-      .toList();
-});
-
 /// Yayın arka plan görselleri — `GET /api/broadcast-images`.
 final homeBroadcastImagesProvider =
     FutureProvider<List<HomeBroadcastImageEntity>>((ref) async {
@@ -366,7 +351,6 @@ Future<void> refreshHomeData(WidgetRef ref) async {
     ref.refresh(homeCelebritiesProvider.future),
     ref.refresh(homeDisplayedPsychicsProvider.future),
     ref.refresh(homeGiftLeaderboardProvider.future),
-    ref.refresh(homeFootballMatchesProvider.future),
     ref.refresh(homePkLeaderboardProvider.future),
     ref.refresh(homeOnlineFalProvider.future),
     ref.refresh(homeAgencyLeaderboardProvider.future),

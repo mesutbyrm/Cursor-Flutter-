@@ -3,90 +3,98 @@ import 'package:dio/dio.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
-import '../models/dream_contest_dto.dart';
 
-abstract class DreamDataSource {
-  Future<DreamContestDTO> getDreamContest();
-  Future<List<DreamContestEntryDTO>> getContestEntries(String contestId);
-  Future<DreamContestEntryDTO> postContestEntry(
-    String contestId,
-    String dreamText,
-  );
-  Future<void> voteContestEntry(String contestId, String entryId);
-  Future<List<DreamInterpretationDTO>> interpretDream(String dreamText);
-  Future<DreamInterpretationDTO> getDreamSymbolInterpretation(String symbol);
-}
+/// Abacus zip §4 — rüya dünyası ve rüya yarışması uçları.
+class DreamsAbacusRemoteDataSource {
+  DreamsAbacusRemoteDataSource(this._dio);
 
-class DreamDataSourceImpl implements DreamDataSource {
   final Dio _dio;
 
-  DreamDataSourceImpl({required Dio dio}) : _dio = dio;
-
-  @override
-  Future<DreamContestDTO> getDreamContest() async {
-    final res = await _dio.safeGet<dynamic>(ApiEndpoints.dreamContest);
-    final data = asJsonMap(res.data);
-    return DreamContestDTO.fromJson(data);
+  Future<Map<String, dynamic>> fetchDreamContest({
+    bool forceRefresh = false,
+  }) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.dreamContest,
+      forceRefresh: forceRefresh,
+    );
+    return asJsonMap(res.data);
   }
 
-  @override
-  Future<List<DreamContestEntryDTO>> getContestEntries(String contestId) async {
+  Future<Map<String, dynamic>> fetchContestEntries(
+    String contestId, {
+    bool forceRefresh = false,
+  }) async {
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.dreamContestEntries(contestId),
+      forceRefresh: forceRefresh,
     );
-    final data = asJsonMap(res.data);
-    final entries = (data['entries'] as List<dynamic>?)
-            ?.map((e) => DreamContestEntryDTO.fromJson(
-                e is Map<String, dynamic> ? e : asJsonMap(e)))
-            .toList() ??
-        [];
-    return entries;
+    return asJsonMap(res.data);
   }
 
-  @override
-  Future<DreamContestEntryDTO> postContestEntry(
+  Future<Map<String, dynamic>> postContestEntry(
     String contestId,
-    String dreamText,
+    Map<String, dynamic> body,
   ) async {
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.dreamContestEntries(contestId),
-      data: {'dreamText': dreamText},
+      data: body,
     );
-    final data = asJsonMap(res.data);
-    return DreamContestEntryDTO.fromJson(data);
+    return asJsonMap(res.data);
   }
 
-  @override
-  Future<void> voteContestEntry(String contestId, String entryId) async {
-    await _dio.safePost<dynamic>(
+  Future<Map<String, dynamic>> voteContest(
+    String contestId,
+    Map<String, dynamic> body,
+  ) async {
+    final res = await _dio.safePost<dynamic>(
       ApiEndpoints.dreamContestVote(contestId),
-      data: {'entryId': entryId},
+      data: body,
     );
+    return asJsonMap(res.data);
   }
 
-  @override
-  Future<List<DreamInterpretationDTO>> interpretDream(String dreamText) async {
+  Future<Map<String, dynamic>> fetchDreamFavorites() async {
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.dreamsFavorites);
+    return asJsonMap(res.data);
+  }
+
+  Future<Map<String, dynamic>> fetchDreamRecommendations() async {
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.dreamsRecommendations);
+    return asJsonMap(res.data);
+  }
+
+  Future<Map<String, dynamic>> interpretDream(Map<String, dynamic> body) async {
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.dreamsInterpret,
-      data: {'dream': dreamText},
+      data: body,
     );
-    final data = asJsonMap(res.data);
-    final interpretations = (data['interpretations'] as List<dynamic>?)
-            ?.map((e) => DreamInterpretationDTO.fromJson(
-                e is Map<String, dynamic> ? e : asJsonMap(e)))
-            .toList() ??
-        [];
-    return interpretations;
+    return asJsonMap(res.data);
   }
 
-  @override
-  Future<DreamInterpretationDTO> getDreamSymbolInterpretation(
-    String symbol,
+  Future<Map<String, dynamic>> fetchDreamFavorite(String slug) async {
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.dreamSlugFavorite(slug));
+    return asJsonMap(res.data);
+  }
+
+  Future<Map<String, dynamic>> postDreamFavorite(
+    String slug,
+    Map<String, dynamic> body,
   ) async {
-    final res = await _dio.safeGet<dynamic>(
-      '${ApiEndpoints.dreamSymbols}/$symbol',
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.dreamSlugFavorite(slug),
+      data: body,
     );
-    final data = asJsonMap(res.data);
-    return DreamInterpretationDTO.fromJson(data);
+    return asJsonMap(res.data);
+  }
+
+  Future<Map<String, dynamic>> postDreamView(
+    String slug,
+    Map<String, dynamic> body,
+  ) async {
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.dreamSlugView(slug),
+      data: body,
+    );
+    return asJsonMap(res.data);
   }
 }

@@ -44,12 +44,16 @@ class AgencyRemoteDataSource {
     }
   }
 
-  Future<List<AgencyTaskEntity>> fetchTasks() async {
+  /// `GET /api/agency/tasks` — `{currentTask, pastTasks}`; üye değilse 403.
+  Future<AgencyWeeklyTasks?> fetchTasks() async {
     try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.agencyTasks);
-      return _parseTaskList(res.data);
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.agencyTasks,
+        forceRefresh: true,
+      );
+      return AgencyWeeklyTasks.fromJson(asJsonMap(res.data));
     } catch (_) {
-      return const [];
+      return null;
     }
   }
 
@@ -243,23 +247,6 @@ class AgencyRemoteDataSource {
         memberName: _str(user, ['name', 'displayName', 'username']),
       );
     }).where((e) => e.id.isNotEmpty).toList(growable: false);
-  }
-
-  List<AgencyTaskEntity> _parseTaskList(dynamic body) {
-    final list = _extractList(body);
-    return list.map((raw) {
-      final m = asJsonMap(raw);
-      return AgencyTaskEntity(
-        id: _str(m, ['id', '_id']) ?? '',
-        title: _str(m, ['title', 'name']) ?? 'Görev',
-        description: _str(m, ['description', 'details']),
-        reward: asInt(pick(m, ['reward', 'jeton', 'amount'])),
-        completed: m['completed'] == true || m['isCompleted'] == true,
-        deadline: DateTime.tryParse(
-          pick(m, ['deadline', 'dueDate', 'expiresAt'])?.toString() ?? '',
-        ),
-      );
-    }).where((t) => t.id.isNotEmpty).toList(growable: false);
   }
 
   List<dynamic> _extractList(dynamic body) {
