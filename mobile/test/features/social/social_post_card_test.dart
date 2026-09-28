@@ -125,7 +125,7 @@ void main() {
       await tester.tap(find.byTooltip('Gönderi seçenekleri'));
       await tester.pump(const Duration(milliseconds: 400));
       expect(find.text('Profili gör'), findsOneWidget);
-      expect(find.text('Paylaş'), findsOneWidget);
+      expect(find.widgetWithText(ListTile, 'Paylaş'), findsOneWidget);
       expect(find.text('Sil'), findsNothing);
     },
   );

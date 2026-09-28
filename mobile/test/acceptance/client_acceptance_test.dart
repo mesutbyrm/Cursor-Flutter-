@@ -472,12 +472,12 @@ void main() {
   group('20n — Sosyal bölüm faz 4 helper sözleşmesi', () {
     test('keşif kısayolu etiketleri', () {
       expect(socialDiscoverShortcutLabels, hasLength(5));
-      expect(socialDiscoverShortcutLabels.first, 'Tanış Kaynaş');
-      expect(socialDiscoverShortcutLabels.last, 'Sesli');
+      expect(socialDiscoverShortcutLabels.first, 'Tümü');
+      expect(socialDiscoverShortcutLabels.last, 'Fan Club');
     });
 
     test('keşif kısayolu rotaları', () {
-      expect(socialDiscoverShortcutRoutes, contains('/live'));
+      expect(socialDiscoverShortcutRoutes, contains('/canli-falcilar'));
       expect(socialDiscoverShortcutRoutes, contains('/fan-club-hub'));
     });
   });

@@ -104,6 +104,23 @@ class _SocialInstagramPostCardState
     final likeCount = _likeCount;
 
     final dark = context.isDarkTheme;
+    final mediaIsImage =
+        _hasMedia &&
+        !socialPostLooksLikeVideo(
+          postType: post.postType,
+          mediaUrl: post.mediaUrl!.trim(),
+        );
+    final headerOnMedia = mediaIsImage && (_bodyText?.isEmpty ?? true);
+    Widget header({bool onMedia = false}) => _PostHeader(
+      post: post,
+      isMine: isMine,
+      onMedia: onMedia,
+      onProfile: () => _openAuthorTimeline(context),
+      onShare: () => _sharePost(context),
+      onDelete: isMine ? () => _deletePost(context) : null,
+    );
+    Widget actions({bool onMedia = false}) =>
+        _buildActions(context, likeCount, onMedia: onMedia);
     // Listede blur yok: tek düz yüzey + ince kenar (kaydırmada ucuz).
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -123,13 +140,7 @@ class _SocialInstagramPostCardState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _PostHeader(
-                post: post,
-                isMine: isMine,
-                onProfile: () => _openAuthorTimeline(context),
-                onShare: () => _sharePost(context),
-                onDelete: isMine ? () => _deletePost(context) : null,
-              ),
+              if (!headerOnMedia) header(),
               GestureDetector(
                 onTap: widget.openProfileOnTap
                     ? () => _openAuthorTimeline(context)
@@ -178,23 +189,6 @@ class _SocialInstagramPostCardState
                           ),
                         ),
                       ),
-                    if (_isFortunePost)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(14, 4, 14, 0),
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            if (post.isAutoShare) const _AutoShareBadge(),
-                            if (post.fortuneCount > 0)
-                              _CoViewersBadge(count: post.fortuneCount),
-                            if (post.displayViewCount > 0)
-                              _FortuneViewsBadge(count: post.displayViewCount),
-                            if (post.shareCount > 0)
-                              _ShareCountBadge(count: post.shareCount),
-                          ],
-                        ),
-                      ),
                     if (_hasMedia)
                       _PostMediaBlock(
                         post: post,
@@ -202,78 +196,98 @@ class _SocialInstagramPostCardState
                         onTap: () => _openPostDetail(context),
                         onDoubleTap: _likeFromDoubleTap,
                         heartToken: _doubleTapHearts,
+                        topOverlay: headerOnMedia
+                            ? header(onMedia: true)
+                            : null,
+                        bottomOverlay: mediaIsImage
+                            ? actions(onMedia: true)
+                            : null,
                       ),
                   ],
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(6, 2, 10, 2),
-                child: Row(
-                  children: [
-                    _LikeActionRow(
-                      liked: _liked,
-                      burstToken: _likeBurst,
-                      count: likeCount,
-                      onTap: _toggleLike,
-                    ),
-                    const SizedBox(width: 6),
-                    _ActionWithCount(
-                      icon: Icons.mode_comment_outlined,
-                      semanticLabel: 'Yorumlar',
-                      count: post.commentsCount,
-                      onTap: () => _openComments(context),
-                    ),
-                    const SizedBox(width: 6),
-                    _ActionWithCount(
-                      icon: Icons.ios_share_rounded,
-                      semanticLabel: 'Paylaş',
-                      count: post.shareCount,
-                      onTap: () => _sharePost(context),
-                    ),
-                    const SizedBox(width: 6),
-                    _ActionWithCount(
-                      icon: Icons.visibility_outlined,
-                      semanticLabel: 'Görüntülenme, detayı aç',
-                      count: post.displayViewCount,
-                      hideZeroCount: false,
-                      onTap: () => _openPostDetail(context),
-                    ),
-                    const Spacer(),
-                    if (_isFortunePost) ...[
-                      _TextAction(
-                        label: 'Kart',
-                        icon: Icons.palette_outlined,
-                        onTap: () => _openFortune(context),
-                      ),
-                      SizedBox(width: 12),
-                      _TextAction(
-                        label: 'Detay',
-                        icon: Icons.open_in_new_rounded,
-                        onTap: () => _openFortune(context),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              if (post.commentsCount > 0)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-                  child: GestureDetector(
-                    onTap: () => _openComments(context),
-                    child: Text(
-                      '${post.commentsCount} yorumun tümünü gör',
-                      style: TextStyle(
-                        color: context.colors.onSurfaceMuted.withValues(
-                          alpha: 0.95,
-                        ),
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
+              if (!mediaIsImage) actions(),
+              if (_isFortunePost && post.fortuneCount > 0)
+                _CoViewersBar(
+                  count: post.fortuneCount,
+                  onTap: () => _openPostDetail(context),
                 ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildActions(
+    BuildContext context,
+    int likeCount, {
+    required bool onMedia,
+  }) {
+    final fg = onMedia ? Colors.white : null;
+    final row = Row(
+      children: [
+        _LikeActionRow(
+          liked: _liked,
+          burstToken: _likeBurst,
+          count: likeCount,
+          onTap: _toggleLike,
+          foreground: fg,
+        ),
+        _ActionWithCount(
+          icon: Icons.chat_bubble_outline_rounded,
+          semanticLabel: 'Yorumlar',
+          count: post.commentsCount,
+          onTap: () => _openComments(context),
+          foreground: fg,
+        ),
+        _ActionWithCount(
+          icon: Icons.repeat_rounded,
+          semanticLabel: 'Paylaşım sayısı',
+          count: post.shareCount,
+          onTap: () => _sharePost(context),
+          foreground: fg,
+        ),
+        _ActionWithCount(
+          icon: Icons.visibility_outlined,
+          semanticLabel: 'Görüntülenme, detayı aç',
+          count: post.displayViewCount,
+          onTap: () => _openPostDetail(context),
+          foreground: fg,
+        ),
+        const Spacer(),
+        if (_isFortunePost) ...[
+          _TextAction(
+            label: 'Kart',
+            icon: Icons.palette_outlined,
+            onTap: () => _openFortune(context),
+          ),
+          const SizedBox(width: 10),
+        ],
+        _TextAction(
+          label: 'Paylaş',
+          icon: Icons.send_outlined,
+          onTap: () => _sharePost(context),
+        ),
+      ],
+    );
+    if (!onMedia) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(6, 2, 10, 2),
+        child: row,
+      );
+    }
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0x00000000), Color(0xCC0B0616)],
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(4, 28, 8, 4),
+        child: row,
       ),
     );
   }
@@ -396,10 +410,12 @@ class _PostHeader extends StatelessWidget {
     required this.onProfile,
     required this.onShare,
     this.onDelete,
+    this.onMedia = false,
   });
 
   final PostEntity post;
   final bool isMine;
+  final bool onMedia;
   final VoidCallback onProfile;
   final VoidCallback onShare;
   final VoidCallback? onDelete;
@@ -410,6 +426,10 @@ class _PostHeader extends StatelessWidget {
         ? _formatTimeShort(post.createdAt!)
         : null;
     final fortuneLabel = _fortuneTypeLabel(post.fortuneType, post.postType);
+    final nameColor = onMedia ? Colors.white : null;
+    final mutedColor = onMedia
+        ? Colors.white.withValues(alpha: 0.8)
+        : context.colors.onSurfaceMuted.withValues(alpha: 0.85);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
@@ -440,9 +460,10 @@ class _PostHeader extends StatelessWidget {
                                     post.author.display,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.w800,
-                                      fontSize: 14,
+                                      fontSize: 15,
+                                      color: nameColor,
                                     ),
                                   ),
                                 ),
@@ -466,8 +487,7 @@ class _PostHeader extends StatelessWidget {
                                   Text(
                                     '· $timeLabel',
                                     style: TextStyle(
-                                      color: context.colors.onSurfaceMuted
-                                          .withValues(alpha: 0.85),
+                                      color: mutedColor,
                                       fontSize: 12,
                                     ),
                                   ),
@@ -507,7 +527,7 @@ class _PostHeader extends StatelessWidget {
             tooltip: 'Gönderi seçenekleri',
             icon: Icon(
               Icons.more_horiz_rounded,
-              color: context.colors.onSurfaceVariant,
+              color: onMedia ? Colors.white : context.colors.onSurfaceVariant,
             ),
             onSelected: (action) => switch (action) {
               _PostMenuAction.profile => onProfile(),
@@ -597,127 +617,51 @@ class _PostHeader extends StatelessWidget {
 
 enum _PostMenuAction { profile, share, delete }
 
-class _AutoShareBadge extends StatelessWidget {
-  const _AutoShareBadge();
+class _CoViewersBar extends StatelessWidget {
+  const _CoViewersBar({required this.count, required this.onTap});
+
+  final int count;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: context.colors.primary.withValues(
-          alpha: context.isDarkTheme ? 0.28 : 0.12,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: context.colors.primary.withValues(alpha: 0.4),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.auto_awesome_rounded,
-            size: 14,
-            color: AppThemeColors.accentPink.withValues(alpha: 0.95),
-          ),
-          SizedBox(width: 5),
-          Text(
-            'Otomatik paylaşıldı',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: context.colors.onSurface,
+    const orange = Color(0xFFFF9F1C);
+    final textColor = context.isDarkTheme
+        ? const Color(0xFFFFB84D)
+        : const Color(0xFFB45309);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(24),
+          child: Ink(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: orange.withValues(alpha: 0.9)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.groups_rounded, size: 22, color: orange),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Bu kullanıcı ile birlikte $count kişi bu fala baktı',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: textColor,
+                    ),
+                  ),
+                ),
+                const Icon(Icons.chevron_right_rounded, color: orange),
+              ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CoViewersBadge extends StatelessWidget {
-  const _CoViewersBadge({required this.count});
-
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFFFF8C42).withValues(alpha: 0.85),
-          width: 1.2,
-        ),
-      ),
-      child: Text(
-        'Bu kullanıcı ile birlikte $count kişi bu fala baktırdı',
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: context.isDarkTheme
-              ? const Color(0xFFFFB366)
-              : const Color(0xFFB45309),
-        ),
-      ),
-    );
-  }
-}
-
-class _FortuneViewsBadge extends StatelessWidget {
-  const _FortuneViewsBadge({required this.count});
-
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFF38BDF8).withValues(alpha: 0.75),
-          width: 1.2,
-        ),
-      ),
-      child: Text(
-        '$count kişi baktı',
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: context.isDarkTheme
-              ? const Color(0xFF7DD3FC)
-              : const Color(0xFF0369A1),
-        ),
-      ),
-    );
-  }
-}
-
-class _ShareCountBadge extends StatelessWidget {
-  const _ShareCountBadge({required this.count});
-
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: context.colors.primary.withValues(alpha: 0.5),
-          width: 1.2,
-        ),
-      ),
-      child: Text(
-        '$count kişi paylaştı',
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: _accentText(context),
         ),
       ),
     );
@@ -731,9 +675,13 @@ class _PostMediaBlock extends StatelessWidget {
     required this.onDoubleTap,
     required this.heartToken,
     this.onTap,
+    this.topOverlay,
+    this.bottomOverlay,
   });
 
   final PostEntity post;
+  final Widget? topOverlay;
+  final Widget? bottomOverlay;
   final VoidCallback onFortuneTap;
   final VoidCallback? onTap;
   final VoidCallback onDoubleTap;
@@ -775,6 +723,29 @@ class _PostMediaBlock extends StatelessWidget {
                       errorWidget: const _MysticMediaPlaceholder(),
                     ),
                     Center(child: DoubleTapHeart(token: heartToken)),
+                    if (topOverlay != null)
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        top: 0,
+                        child: DecoratedBox(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [Color(0xB30B0616), Color(0x000B0616)],
+                            ),
+                          ),
+                          child: topOverlay,
+                        ),
+                      ),
+                    if (bottomOverlay != null)
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        child: bottomOverlay!,
+                      ),
                   ],
                 ),
               ),
@@ -809,16 +780,20 @@ class _LikeActionRow extends StatelessWidget {
     required this.burstToken,
     required this.count,
     required this.onTap,
+    this.foreground,
   });
 
   final bool liked;
   final int burstToken;
   final int count;
   final VoidCallback onTap;
+  final Color? foreground;
 
   @override
   Widget build(BuildContext context) {
-    final color = liked ? AppThemeColors.accentPink : context.colors.onSurface;
+    final color = liked
+        ? AppThemeColors.accentPink
+        : (foreground ?? context.colors.onSurface);
     return Semantics(
       button: true,
       toggled: liked,
@@ -844,8 +819,8 @@ class _LikeActionRow extends StatelessWidget {
                 _formatCount(count),
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                  color: context.colors.onSurfaceVariant,
+                  fontSize: 14,
+                  color: foreground ?? context.colors.onSurfaceVariant,
                 ),
               ),
             ],
@@ -864,23 +839,22 @@ class _ActionWithCount extends StatelessWidget {
     required this.onTap,
     required this.semanticLabel,
     this.count = 0,
-    this.hideZeroCount = false,
+    this.foreground,
   });
 
   final IconData icon;
   final VoidCallback? onTap;
   final String semanticLabel;
   final int count;
-  final bool hideZeroCount;
+  final Color? foreground;
 
   @override
   Widget build(BuildContext context) {
-    final iconColor = context.colors.onSurface;
-    final showCountLabel = !hideZeroCount || count > 0;
+    final iconColor = foreground ?? context.colors.onSurface;
 
     return Semantics(
       button: true,
-      label: showCountLabel ? '$semanticLabel, $count' : semanticLabel,
+      label: '$semanticLabel, $count',
       excludeSemantics: true,
       onTap: onTap,
       child: InkWell(
@@ -892,14 +866,14 @@ class _ActionWithCount extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(icon, size: 24, color: iconColor),
-              if (showCountLabel) ...[
+              ...[
                 SizedBox(width: 5),
                 Text(
                   _formatCount(count),
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                    color: context.colors.onSurfaceVariant,
+                    fontSize: 14,
+                    color: foreground ?? context.colors.onSurfaceVariant,
                   ),
                 ),
               ],

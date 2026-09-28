@@ -434,8 +434,15 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
                     child: FilledButton(
                       onPressed: _canShare ? _submit : null,
                       style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        minimumSize: const Size(76, 36),
+                        backgroundColor: const Color(0xFF7C3AED),
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: const Color(
+                          0xFF7C3AED,
+                        ).withValues(alpha: 0.6),
+                        disabledForegroundColor: Colors.white70,
+                        shape: const StadiumBorder(),
+                        padding: const EdgeInsets.symmetric(horizontal: 26),
+                        minimumSize: const Size(104, 44),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                       child: _submitting
@@ -450,8 +457,8 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
                           : const Text(
                               'Paylaş',
                               style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
                               ),
                             ),
                     ),
