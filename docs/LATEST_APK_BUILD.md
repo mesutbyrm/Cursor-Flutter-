@@ -4,20 +4,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.621+672` |
-| Tarih (UTC) | 2026-09-28 10:48 |
-| Commit | [`544544eba15d951e5f9b975fdcabf33bb9a8d191`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/544544eba15d951e5f9b975fdcabf33bb9a8d191) |
-| İş akışı | [Run 36409956926](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36409956926) |
+| Sürüm | `1.0.622+673` |
+| Tarih (UTC) | 2026-09-28 14:23 |
+| Commit | [`817e16acf8308422f8d4c36ea278a0183ae105e4`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/817e16acf8308422f8d4c36ea278a0183ae105e4) |
+| İş akışı | [Run 36433099374](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36433099374) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.621+672 (2026-09-28) — APK derleme düzeltmeleri (1.0.620 hotfix)
+## 1.0.622+673 (2026-09-28) — Backend dokümanlarıyla eşleşme (canlifal PR #1)
 
-- **Derleme:** 1.0.620 merge sonrası ~170 `dart analyze` hatası giderildi — APK artık CI release gate’ten geçebilir
-- **Kısa video:** Yanlışlıkla değiştirilen `ShortsRepository` geri alındı; yeni `ShortsPage` mevcut dikey akışa (`ShortsFeedPage`) yönlendiriliyor
-- **Ağ katmanı:** Yeni modüllerde `dio_provider` / `safeGet` importları; ortak yayın sayfası sözdizimi düzeltildi
-- **Burç uyumu:** Riverpod `AsyncValue` tip uyumu
+- **Takipçi listesi:** başka birinin profilinde takipçi/takip listesi senin listeni gösteriyordu → `/api/user/followers?userId=` ile doğru kullanıcı
+- **Yönetici üyelik sayfası:** yanlış yol (`membership_tiers`) yüzünden hiç yüklenmiyordu; kademe aç/kapa 400 dönüyordu; yetenek matrisi hep kapalı görünüyordu → düzeltildi
+- **Ajans canlı takip:** üyelerin canlı durumu hep boştu → `/api/agency/live-status`
+- **SSE:** falcı seansı ve video yayın akışında bağlantı zaman aşımında üstel geri çekilmeyle yeniden bağlanma
+- **Doküman:** `docs/BACKEND_DOCS_ESLESME.md` + `scripts/backend-route-parity.py` (714 backend route ↔ Flutter yol kontrolü)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
