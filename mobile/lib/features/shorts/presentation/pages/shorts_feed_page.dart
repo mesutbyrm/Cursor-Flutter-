@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/env.dart';
+import '../../../../core/theme/canlifal_brand_colors.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../core/ui/premium_2026/premium_motion.dart';
@@ -21,6 +22,8 @@ import '../utils/shorts_feed_entries.dart';
 import '../widgets/shorts_feed_page_view.dart';
 import '../widgets/shorts_premium_theme.dart';
 import '../widgets/shorts_safe_settings_sheet.dart';
+import '../../../home/presentation/widgets/approved/bottom_navigation_widget.dart';
+import '../../../shell/presentation/app_bottom_nav_host.dart';
 
 /// TikTok tarzı dikey kısa video akışı — For You / Takip sekmeleri.
 class ShortsFeedPage extends ConsumerStatefulWidget {
@@ -95,8 +98,19 @@ class _ShortsFeedPageState extends ConsumerState<ShortsFeedPage> {
         const ShortsSafeSettings(restrictedMode: false, hideMature: true);
     final top = MediaQuery.paddingOf(context).top;
 
+    final router = GoRouter.of(context);
     return Scaffold(
       backgroundColor: ShortsPremiumTheme.feedBackground(context),
+      bottomNavigationBar: BottomNavigationWidget(
+        activeTab: HomeBottomTab.home,
+        onHome: () => router.go('/feed'),
+        onSocial: () => router.go('/social'),
+        onCreate: () => AppBottomNavHost.showCreateSheet(context, router),
+        onCreateLongPress: () =>
+            AppBottomNavHost.showCreateSheet(context, router),
+        onFortune: () => router.go('/fortune'),
+        onProfile: () => router.go('/profile'),
+      ),
       body: feed.when(
         loading: () => Stack(
           children: [
@@ -229,37 +243,58 @@ class _ShortsFeedTopBar extends ConsumerWidget {
       top: 0,
       left: 0,
       right: 0,
-      child: ShortsPremiumTheme.feedTopBar(
-        context: context,
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0x99000000), Color(0x00000000)],
+          ),
+        ),
         child: Padding(
-          padding: EdgeInsets.only(top: top + 4),
+          padding: EdgeInsets.fromLTRB(16, top + 6, 6, 10),
           child: Column(
             children: [
               Row(
                 children: [
-                  IconButton(
-                    onPressed: () => context.pop(),
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                        color: Colors.white),
+                  ShaderMask(
+                    shaderCallback: (b) =>
+                        CanlifalBrandColors.accentGradient.createShader(b),
+                    child: const Icon(
+                      Icons.auto_awesome,
+                      size: 28,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'CanlıFal',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.5,
+                      shadows: [Shadow(color: Colors.black54, blurRadius: 8)],
+                    ),
                   ),
                   const Spacer(),
                   IconButton(
+                    tooltip: 'Ara',
                     onPressed: () => context.push('/shorts/explore'),
-                    icon: const Icon(Icons.search_rounded, color: Colors.white),
-                  ),
-                  IconButton(
-                    onPressed: () => showShortsSafeSettingsSheet(context, ref),
-                    icon: Icon(
-                      safe.restrictedMode
-                          ? Icons.shield_outlined
-                          : Icons.shield_moon_outlined,
-                      color: safe.restrictedMode ? Colors.amber : Colors.white,
+                    icon: const Icon(
+                      Icons.search_rounded,
+                      color: Colors.white,
+                      size: 30,
                     ),
                   ),
                   IconButton(
-                    onPressed: () => context.push('/shorts/upload'),
-                    icon: const Icon(Icons.video_call_outlined,
-                        color: Colors.white),
+                    tooltip: 'Güvenli mod',
+                    onPressed: () => showShortsSafeSettingsSheet(context, ref),
+                    icon: Icon(
+                      Icons.add_moderator_outlined,
+                      color: safe.restrictedMode ? Colors.amber : Colors.white,
+                      size: 28,
+                    ),
                   ),
                 ],
               ),
@@ -271,7 +306,7 @@ class _ShortsFeedTopBar extends ConsumerWidget {
                     selected: tab == ShortsFeedTab.forYou,
                     onTap: () => onTabChanged(ShortsFeedTab.forYou),
                   ),
-                  const SizedBox(width: 20),
+                  const SizedBox(width: 28),
                   _FeedTabChip(
                     label: 'Takip',
                     selected: tab == ShortsFeedTab.following,
@@ -316,7 +351,8 @@ class _FeedTabChip extends StatelessWidget {
                   ? Colors.white
                   : Colors.white.withValues(alpha: 0.55),
               fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-              fontSize: 15,
+              fontSize: 17,
+              shadows: const [Shadow(color: Colors.black54, blurRadius: 6)],
             ),
             child: Text(label),
           ),
@@ -324,10 +360,10 @@ class _FeedTabChip extends StatelessWidget {
           AnimatedContainer(
             duration: PremiumMotion.fast,
             curve: curve,
-            width: selected ? 28 : 0,
-            height: 3,
+            width: selected ? 32 : 0,
+            height: 4,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: const Color(0xFF7C3AED),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
