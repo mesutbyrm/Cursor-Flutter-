@@ -19,7 +19,6 @@ import '../providers/shorts_playback_coordinator.dart';
 import '../providers/shorts_playback_providers.dart';
 import '../providers/shorts_providers.dart';
 import '../providers/shorts_video_pool_provider.dart';
-import '../widgets/short_playback_speed_sheet.dart';
 import '../widgets/short_video_actions_rail.dart';
 import 'short_video_pip_overlay.dart';
 
@@ -46,7 +45,9 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
   Timer? _viewTimer;
   var _viewSent = false;
   var _watchedSec = 0.0;
-  var _showHeart = false;
+  var _hearts = <({int id, Offset at})>[];
+  var _heartSeq = 0;
+  final _railKey = GlobalKey<ShortVideoActionsRailState>();
   ProviderSubscription<double>? _speedSub;
   ProviderSubscription<int>? _playbackTickSub;
 
@@ -218,10 +219,13 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
     super.dispose();
   }
 
-  Future<void> _doubleTapLike() async {
-    if (!_showHeart) setState(() => _showHeart = true);
-    Future.delayed(const Duration(milliseconds: 700), () {
-      if (mounted) setState(() => _showHeart = false);
+  Future<void> _doubleTapLike(Offset at) async {
+    final id = ++_heartSeq;
+    setState(() => _hearts = [..._hearts, (id: id, at: at)]);
+    Future.delayed(const Duration(milliseconds: 800), () {
+      if (mounted) {
+        setState(() => _hearts = _hearts.where((h) => h.id != id).toList());
+      }
     });
     if (widget.video.likedByMe) return;
     final optimistic = widget.video.copyWith(
@@ -265,10 +269,25 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
           else
             _VideoSurface(controller: c!),
           const _BottomGradient(),
+          Positioned.fill(
+            child: _VideoTapLayer(
+              controller: _ready ? c : null,
+              isActive: widget.isActive,
+              onDoubleTap: _doubleTapLike,
+              onLongPress: () => _railKey.currentState?.openMoreMenu(),
+            ),
+          ),
+          for (final h in _hearts)
+            Positioned(
+              key: ValueKey(h.id),
+              left: h.at.dx - 60,
+              top: h.at.dy - 60,
+              child: const IgnorePointer(child: _DoubleTapHeart()),
+            ),
           Positioned(
             left: 14,
-            right: 78,
-            bottom: bottom + 24,
+            right: 84,
+            bottom: bottom + 16,
             child: ShortVideoInfoOverlay(
               video: video,
               onAuthorTap: () {
@@ -283,25 +302,16 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
             ),
           ),
           Positioned(
-            right: 10,
-            bottom: bottom + 40,
+            right: 4,
+            bottom: bottom + 10,
             child: ShortVideoActionsRail(
+              key: _railKey,
               video: video,
               videoController: c,
               onVideoUpdated: widget.onVideoUpdated,
             ),
           ),
           const ShortVideoPipOverlay(),
-          if (_ready)
-            Positioned.fill(
-              child: _VideoTapLayer(
-                controller: c!,
-                isActive: widget.isActive,
-                onDoubleTap: _doubleTapLike,
-                onLongPress: () => showShortPlaybackSpeedSheet(context, ref),
-              ),
-            ),
-          if (_showHeart) _DoubleTapHeart(),
         ],
       ),
     );
@@ -412,7 +422,7 @@ class _BottomGradient extends StatelessWidget {
   }
 }
 
-class _VideoTapLayer extends StatelessWidget {
+class _VideoTapLayer extends StatefulWidget {
   const _VideoTapLayer({
     required this.controller,
     required this.isActive,
@@ -420,53 +430,73 @@ class _VideoTapLayer extends StatelessWidget {
     required this.onLongPress,
   });
 
-  final VideoPlayerController controller;
+  final VideoPlayerController? controller;
   final bool isActive;
-  final VoidCallback onDoubleTap;
+  final ValueChanged<Offset> onDoubleTap;
   final VoidCallback onLongPress;
 
   @override
+  State<_VideoTapLayer> createState() => _VideoTapLayerState();
+}
+
+class _VideoTapLayerState extends State<_VideoTapLayer> {
+  var _lastDown = Offset.zero;
+
+  void _togglePlay() {
+    final c = widget.controller;
+    if (c == null) return;
+    if (c.value.isPlaying) {
+      c.pause();
+    } else {
+      c.play();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final c = widget.controller;
     return GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      onDoubleTap: onDoubleTap,
-      onLongPress: onLongPress,
-      onTap: () {
-        if (controller.value.isPlaying) {
-          controller.pause();
-        } else {
-          controller.play();
-        }
-      },
-      child: ListenableBuilder(
-        listenable: controller,
-        builder: (context, _) {
-          final showPlay = isActive && !controller.value.isPlaying;
-          return Center(
-            child: AnimatedOpacity(
-              opacity: showPlay ? 0.85 : 0,
-              duration: const Duration(milliseconds: 180),
-              child: const Icon(
-                Icons.play_circle_fill,
-                size: 72,
-                color: Colors.white70,
-              ),
+      behavior: HitTestBehavior.opaque,
+      onDoubleTapDown: (d) => _lastDown = d.localPosition,
+      onDoubleTap: () => widget.onDoubleTap(_lastDown),
+      onLongPress: widget.onLongPress,
+      onTap: _togglePlay,
+      child: c == null
+          ? const SizedBox.expand()
+          : ListenableBuilder(
+              listenable: c,
+              builder: (context, _) {
+                final showPlay = widget.isActive && !c.value.isPlaying;
+                return Center(
+                  child: AnimatedOpacity(
+                    opacity: showPlay ? 0.85 : 0,
+                    duration: const Duration(milliseconds: 180),
+                    child: const Icon(
+                      Icons.play_arrow_rounded,
+                      size: 84,
+                      color: Colors.white70,
+                    ),
+                  ),
+                );
+              },
             ),
-          );
-        },
-      ),
     );
   }
 }
 
 class _DoubleTapHeart extends StatelessWidget {
+  const _DoubleTapHeart();
+
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Icon(
-        Icons.favorite,
-        size: 96,
-        color: Colors.redAccent.withValues(alpha: 0.92),
+    return SizedBox(
+      width: 120,
+      height: 120,
+      child: const Icon(
+        Icons.favorite_rounded,
+        size: 110,
+        color: Color(0xFFFF2D55),
+        shadows: [Shadow(color: Color(0x66000000), blurRadius: 16)],
       )
           .animate()
           .scale(

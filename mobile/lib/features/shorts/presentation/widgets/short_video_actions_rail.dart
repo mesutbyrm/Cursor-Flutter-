@@ -8,7 +8,6 @@ import '../../../admin/presentation/providers/staff_access_provider.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../../../core/firebase/firebase_bootstrap.dart';
-import '../../../../core/performance/effects_perf.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
@@ -22,6 +21,7 @@ import '../utils/shorts_api_message.dart';
 import '../utils/shorts_count_format.dart';
 import 'short_comments_sheet.dart';
 import 'short_gift_sheet.dart';
+import 'short_playback_speed_sheet.dart';
 import 'short_share_sheet.dart';
 import 'short_video_analytics_sheet.dart';
 import 'short_video_pip_overlay.dart';
@@ -41,10 +41,10 @@ class ShortVideoActionsRail extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<ShortVideoActionsRail> createState() =>
-      _ShortVideoActionsRailState();
+      ShortVideoActionsRailState();
 }
 
-class _ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
+class ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
   ShortVideoEntity get video => widget.video;
 
   Future<void> _runInteraction(
@@ -250,7 +250,8 @@ class _ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
     await showShortGiftSheet(context, ref, video);
   }
 
-  void _moreMenu() {
+  /// Videoya uzun basınca açılan seçenekler (bildir, sil, hız, PiP…).
+  void openMoreMenu() {
     final me = ref.read(currentUserIdProvider);
     final isOwner = me != null && me == video.userId;
     final isAdmin = ref.read(staffAccessProvider).isSiteAdmin;
@@ -287,6 +288,14 @@ class _ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
               onTap: () {
                 Navigator.pop(ctx);
                 _startVideoReply();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.speed_rounded),
+              title: const Text('Oynatma hızı'),
+              onTap: () {
+                Navigator.pop(ctx);
+                showShortPlaybackSpeedSheet(context, ref);
               },
             ),
             ListTile(
@@ -349,81 +358,132 @@ class _ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
     );
   }
 
+  void _openMusicOrProfile() {
+    final music = video.music;
+    if (music != null && music.id.isNotEmpty) {
+      context.push(
+        '/shorts/music/${Uri.encodeComponent(music.id)}'
+        '?title=${Uri.encodeComponent(music.title)}',
+      );
+      return;
+    }
+    _openProfile();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        _AuthorAvatar(
+          avatarUrl: video.author?.avatarUrl,
+          showFollow: !video.authorFollowedByMe,
+          onTap: _openProfile,
+          onFollow: _toggleFollow,
+        ),
+        const SizedBox(height: 22),
         _ActionButton(
-          icon: video.likedByMe ? Icons.favorite : Icons.favorite_border,
+          icon: Icons.favorite_rounded,
           label: formatShortCount(video.likesCount),
-          color: video.likedByMe ? Colors.redAccent : Colors.white,
+          color: video.likedByMe ? const Color(0xFFFF2D55) : Colors.white,
+          semanticLabel: video.likedByMe ? 'Beğeniyi geri al' : 'Beğen',
           onTap: _toggleLike,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         _ActionButton(
-          icon: Icons.mode_comment_outlined,
+          icon: Icons.sms_rounded,
           label: formatShortCount(video.commentsCount),
+          semanticLabel: 'Yorumlar',
           onTap: _openComments,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         _ActionButton(
-          icon: Icons.card_giftcard_outlined,
-          label: 'Hediye',
-          color: Colors.amber,
-          onTap: _openGifts,
-        ),
-        const SizedBox(height: 16),
-        _ActionButton(
-          icon: video.savedByMe ? Icons.bookmark : Icons.bookmark_border,
+          icon: Icons.bookmark_rounded,
           label: formatShortCount(video.savesCount),
-          color: video.savedByMe ? Colors.amber : Colors.white,
+          color: video.savedByMe ? const Color(0xFFFFC928) : Colors.white,
+          semanticLabel: video.savedByMe ? 'Kaydı kaldır' : 'Kaydet',
           onTap: _toggleSave,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         _ActionButton(
-          icon: Icons.share_outlined,
+          icon: Icons.reply_rounded,
+          mirror: true,
           label: formatShortCount(video.sharesCount),
+          semanticLabel: 'Paylaş',
           onTap: _share,
         ),
-        const SizedBox(height: 16),
-        _ActionButton(
-          icon: Icons.more_horiz,
-          label: 'Daha',
-          onTap: _moreMenu,
+        const SizedBox(height: 14),
+        _GiftButton(onTap: _openGifts),
+        const SizedBox(height: 18),
+        _MusicDisc(
+          coverUrl: video.music?.coverUrl ?? video.author?.avatarUrl,
+          onTap: _openMusicOrProfile,
         ),
-        const SizedBox(height: 16),
-        Stack(
-          clipBehavior: Clip.none,
-          alignment: Alignment.bottomCenter,
-          children: [
-            GestureDetector(
-              onTap: _openProfile,
-              child: UserAvatar(
-                url: video.author?.avatarUrl,
-                radius: 22,
+      ],
+    );
+  }
+}
+
+class _AuthorAvatar extends StatelessWidget {
+  const _AuthorAvatar({
+    required this.avatarUrl,
+    required this.showFollow,
+    required this.onTap,
+    required this.onFollow,
+  });
+
+  final String? avatarUrl;
+  final bool showFollow;
+  final VoidCallback onTap;
+  final VoidCallback onFollow;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 60,
+      height: 66,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.topCenter,
+        children: [
+          Semantics(
+            button: true,
+            label: 'Profili aç',
+            child: GestureDetector(
+              onTap: onTap,
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Color(0xFF8B5CF6),
+                ),
+                child: UserAvatar(url: avatarUrl, radius: 27),
               ),
             ),
-            if (!video.authorFollowedByMe)
-              Positioned(
-                bottom: -6,
+          ),
+          if (showFollow)
+            Positioned(
+              bottom: 0,
+              child: Semantics(
+                button: true,
+                label: 'Takip et',
                 child: GestureDetector(
-                  onTap: _toggleFollow,
+                  onTap: onFollow,
                   child: Container(
-                    width: 22,
-                    height: 22,
+                    width: 24,
+                    height: 24,
                     decoration: BoxDecoration(
-                      color: Colors.redAccent,
+                      color: const Color(0xFFFF2D55),
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.black, width: 2),
+                      border: Border.all(color: Colors.white, width: 2),
                     ),
-                    child: const Icon(Icons.add, size: 14, color: Colors.white),
+                    child: const Icon(Icons.add, size: 16, color: Colors.white),
                   ),
                 ),
               ),
-          ],
-        ),
-      ],
+            ),
+        ],
+      ),
     );
   }
 }
@@ -433,50 +493,161 @@ class _ActionButton extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
+    required this.semanticLabel,
     this.color = Colors.white,
+    this.mirror = false,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+  final String semanticLabel;
   final Color color;
+  final bool mirror;
+
+  static const _shadow = [Shadow(color: Color(0x99000000), blurRadius: 8)];
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          EffectsPerf.chromeBar(
-            context: context,
-            sigma: 8,
-            borderRadius: BorderRadius.circular(24),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.35),
-              shape: BoxShape.circle,
-            ),
-            child: SizedBox(
-              width: 48,
-              height: 48,
-              child: Icon(icon, color: color, size: 26),
-            ),
+    Widget glyph = Icon(icon, color: color, size: 42, shadows: _shadow);
+    if (mirror) {
+      glyph = Transform.flip(flipX: true, child: glyph);
+    }
+    return Semantics(
+      button: true,
+      label: '$semanticLabel, $label',
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: SizedBox(
+          width: 64,
+          child: Column(
+            children: [
+              glyph,
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  shadows: _shadow,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GiftButton extends StatelessWidget {
+  const _GiftButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Hediye gönder',
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: SizedBox(
+          width: 72,
+          child: Column(
+            children: [
+              ShaderMask(
+                shaderCallback: (b) => const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFFFFC928), Color(0xFFB832FF)],
+                ).createShader(b),
+                child: const Icon(
+                  Icons.card_giftcard_rounded,
+                  size: 42,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 2),
+              const Text(
+                'Hediye',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  shadows: _ActionButton._shadow,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MusicDisc extends StatefulWidget {
+  const _MusicDisc({required this.coverUrl, required this.onTap});
+
+  final String? coverUrl;
+  final VoidCallback onTap;
+
+  @override
+  State<_MusicDisc> createState() => _MusicDiscState();
+}
+
+class _MusicDiscState extends State<_MusicDisc>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _spin = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 6),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _spin.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Müzik',
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: Container(
+          padding: const EdgeInsets.all(5),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: const Color(0xFF2A1745),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF8B5CF6).withValues(alpha: 0.55),
+                blurRadius: 18,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: RotationTransition(
+            turns: _spin,
+            child: UserAvatar(url: widget.coverUrl, radius: 24),
+          ),
+        ),
       ),
     );
   }
 }
 
 class ShortVideoInfoOverlay extends StatelessWidget {
+  static const _textShadow = [Shadow(color: Color(0x99000000), blurRadius: 6)];
+
   const ShortVideoInfoOverlay({
     super.key,
     required this.video,
@@ -550,84 +721,79 @@ class ShortVideoInfoOverlay extends StatelessWidget {
               ),
             ),
           ),
-        if (author != null)
-          GestureDetector(
-            onTap: onAuthorTap,
-            child: Row(
-              children: [
-                Text(
-                  '@${author.username}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15,
+        GestureDetector(
+          onTap: onAuthorTap,
+          child: Row(
+            children: [
+              if (author != null) ...[
+                Flexible(
+                  child: Text(
+                    '@${author.username}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 17,
+                      shadows: _textShadow,
+                    ),
                   ),
                 ),
                 if (author.isVerified) ...[
-                  const SizedBox(width: 4),
-                  const ShortsVerifiedBadge(size: 16),
+                  const SizedBox(width: 6),
+                  const ShortsVerifiedBadge(size: 18),
                 ],
+                const SizedBox(width: 8),
               ],
-            ),
-          ),
-        if (video.music != null) ...[
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              const Icon(Icons.music_note, size: 14, color: Colors.white70),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  video.music!.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+              Text(
+                '· ${formatShortCount(video.viewsCount)} izlenme',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.8),
+                  fontSize: 14,
+                  shadows: _textShadow,
                 ),
               ),
             ],
           ),
-        ],
-        if (video.hashtags.isNotEmpty) ...[
-          const SizedBox(height: 4),
-          Wrap(
-            spacing: 6,
-            children: [
-              for (final tag in video.hashtags.take(4))
-                GestureDetector(
-                  onTap: () => context.push('/shorts/hashtag/${Uri.encodeComponent(tag)}'),
-                  child: Text(
-                    '#$tag',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ],
+        ),
         if (desc != null && desc.isNotEmpty) ...[
           const SizedBox(height: 6),
           Text(
             desc,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.92),
-              fontSize: 14,
-              height: 1.3,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              height: 1.35,
+              shadows: _textShadow,
             ),
           ),
         ],
-        const SizedBox(height: 8),
-        Text(
-          '${formatShortCount(video.viewsCount)} izlenme',
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.8),
-            fontSize: 12,
+        if (video.hashtags.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 10,
+            runSpacing: 2,
+            children: [
+              for (final tag in video.hashtags.take(6))
+                GestureDetector(
+                  onTap: () => context.push(
+                    '/shorts/hashtag/${Uri.encodeComponent(tag)}',
+                  ),
+                  child: Text(
+                    '#$tag',
+                    style: const TextStyle(
+                      color: Color(0xFFA78BFA),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      shadows: _textShadow,
+                    ),
+                  ),
+                ),
+            ],
           ),
-        ),
+        ],
       ],
     );
   }

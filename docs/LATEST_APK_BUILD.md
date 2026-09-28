@@ -4,25 +4,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.625+676` |
-| Tarih (UTC) | 2026-09-28 19:30 |
-| Commit | [`b0570cf0bcddca0d42292a62a79df912a9337b77`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/b0570cf0bcddca0d42292a62a79df912a9337b77) |
-| İş akışı | [Run 36470346529](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36470346529) |
+| Sürüm | `1.0.627+678` |
+| Tarih (UTC) | 2026-09-28 21:37 |
+| Commit | [`6c53cc10f6669b03dbe7754463daacfcea9843df`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/6c53cc10f6669b03dbe7754463daacfcea9843df) |
+| İş akışı | [Run 36483105451](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36483105451) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.624+675 (2026-09-28) — Kalan backend eksikleri bağlandı
+## 1.0.627+678 (2026-09-28) — Sosyal yeni tasarım + derleme düzeltmesi
 
-- **Şikayet et** artık çalışıyor: tüm şikayetler backend'de olmayan bir uca gidiyordu → kullanıcı / içerik sahibi `POST /api/user/report`, sesli oda `/api/chat/rooms/{id}/report`
-- **Kısa videoya hediye** artık çalışıyor: video sahibine `POST /api/gifts/send`; bakiye yetersizse sunucu mesajı gösterilir
-- **Kozmetik:** mikrofon çerçevesi, sohbet balonu, isim efekti, giriş efekti ve avatar aksesuarı seçimleri sunucuya kaydediliyor ve sunucu kataloğu listeleniyor (önceden yalnız cihazda)
-- **Haftalık yayıncı yarışması:** CFC Arena'daki aktif yayıncı yarışmasından sıralama
-- **Ajans talepleri:** bekleyen çıkış talepleri listeleniyor, onay/ret çalışıyor
-- **Oyunlar:** oyun sonu skoru `POST /api/games/play` ile kaydediliyor
-- **Kısa video:** analitik gerçek sayaçlardan; etiket sayfası keşfet aramasından; oynatıcı artık önce ölü bir adresi denemiyor (daha hızlı açılış)
-- **Yönetici:** kullanıcı 360 sekmeleri (genel, aktivite, ajans, kazanç/harcama, moderasyon, şikayetler) gerçek veriye bağlandı; **sahte "StarCraft Ajansı" / uydurma uyarı ve şikayet kayıtları kaldırıldı**; PK yasağı `canPK` alanından; moderasyon kuyruğu web panele yönlendiriyor
-- **Temizlik:** 172 kullanılmayan uç sabiti ve ölü yedek istekler kaldırıldı; `backend-route-parity.py` → 0 eksik
+- **Sosyal sekmesi** paylaşılan tasarıma göre yenilendi: ✦ CanlıFal başlığı, bildirim zili (okunmamış noktası) ve mesaj ikonu (sayaçlı); Tümü · Takip · Falcılar · Ünlüler · Fan Club sekme çubuğu; mor "Paylaş" butonu
+- **Gönderi kartı:** beğeni / yorum / paylaşım / görüntülenme satırı görselin üzerinde; sağda Kart + Paylaş; "Bu kullanıcı ile birlikte N kişi bu fala baktı" şeridi görselin altında; açıklamasız görsellerde isim görselin üstünde
+- Üst çubukta **iki kez görünen arama butonu** kaldırıldı
+- **Derleme düzeltmesi:** 1.0.626'daki 4 analyze hatası APK üretimini engelliyordu (falcı randevu ekranı, PK ekranı)
+- **Geri alındı:** PK için eklenen 2 dakika bekleme (istek tersiydi; kural sunucu aday listesinde) ve oda maksimum kullanıcı 15 (varsayılan yine 150; koltuk 9/15 aynı)
+- Falcı randevu: süre seçimi yok, 10 dk seans ücreti ve personel için "Ücretsiz" tekrar gösteriliyor
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
