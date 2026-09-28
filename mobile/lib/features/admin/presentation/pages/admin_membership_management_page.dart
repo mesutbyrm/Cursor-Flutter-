@@ -24,6 +24,7 @@ class _AdminMembershipManagementPageState
   String? _error;
   List<Map<String, dynamic>> _tiers = [];
   List<Map<String, dynamic>> _features = [];
+  List<Map<String, dynamic>> _rows = [];
 
   @override
   void initState() {
@@ -41,8 +42,9 @@ class _AdminMembershipManagementPageState
       final tiersRes = await dio.safeGet<dynamic>(ApiEndpoints.adminMembershipTiers);
       final featRes =
           await dio.safeGet<dynamic>(ApiEndpoints.adminMembershipFeatures);
-      _tiers = _parseList(tiersRes.data);
-      _features = _parseList(featRes.data);
+      _tiers = _parseList(tiersRes.data, 'tiers');
+      _features = _parseList(featRes.data, 'features');
+      _rows = _parseList(featRes.data, 'rows');
     } catch (e) {
       _error = ApiException.userMessage(e);
     } finally {
@@ -51,21 +53,10 @@ class _AdminMembershipManagementPageState
   }
 
   bool _cellEnabled(String tierKey, String featureKey) {
-    for (final f in _features) {
-      final fk = (f['key'] ?? f['featureKey'] ?? '').toString();
-      if (fk != featureKey) continue;
-      final cells = f['cells'] ?? f['tierGrants'] ?? f['grants'];
-      if (cells is Map) {
-        final v = cells[tierKey];
-        if (v is bool) return v;
-        if (v is Map) return v['enabled'] == true;
-      }
-      if (cells is List) {
-        for (final c in cells) {
-          if (c is! Map) continue;
-          final tk = (c['tierKey'] ?? c['tier'] ?? '').toString();
-          if (tk == tierKey) return c['enabled'] == true;
-        }
+    for (final r in _rows) {
+      if (r['tierKey']?.toString() == tierKey &&
+          r['featureKey']?.toString() == featureKey) {
+        return r['enabled'] == true;
       }
     }
     return false;
@@ -81,7 +72,6 @@ class _AdminMembershipManagementPageState
     try {
       await dio.safePut<dynamic>(
         ApiEndpoints.adminMembershipFeatures,
-        query: {'tierKey': tierKey, 'featureKey': featureKey},
         data: {
           'cells': [
             {
@@ -114,8 +104,7 @@ class _AdminMembershipManagementPageState
     try {
       await dio.safePut<dynamic>(
         ApiEndpoints.adminMembershipTiers,
-        query: {'key': key},
-        data: {'isActive': active},
+        data: {'key': key, 'isActive': active},
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -133,17 +122,13 @@ class _AdminMembershipManagementPageState
     }
   }
 
-  List<Map<String, dynamic>> _parseList(dynamic data) {
-    if (data is List) {
-      return data.map((e) => asJsonMap(e)).toList();
-    }
-    if (data is Map) {
-      final items = data['items'] ?? data['tiers'] ?? data['features'];
-      if (items is List) {
-        return items.map((e) => asJsonMap(e)).toList();
-      }
-    }
-    return const [];
+  /// Backend `apiSuccess` zarfı: `{success, data: {tiers|features|rows}}`.
+  List<Map<String, dynamic>> _parseList(dynamic body, String key) {
+    if (body is! Map) return const [];
+    final data = body['data'] is Map ? body['data'] as Map : body;
+    final items = data[key];
+    if (items is! List) return const [];
+    return items.map((e) => asJsonMap(e)).toList();
   }
 
   @override

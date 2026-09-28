@@ -190,14 +190,16 @@ class PsychicRoomSseService {
 
   void _startHeartbeatWatchdog() {
     _heartbeatWatchdog?.cancel();
-    _heartbeatWatchdog = Timer.periodic(const Duration(seconds: 5), (_) {
+    _heartbeatWatchdog = Timer.periodic(const Duration(seconds: 5), (timer) {
       final last = _lastEventAt;
       if (last == null || _stopped) return;
       if (DateTime.now().difference(last) > BaseSseService.heartbeatTimeout) {
         if (kDebugMode) {
           debugPrint('PsychicRoomSse: heartbeat timeout — reconnecting');
         }
-        unawaited(_openStream());
+        timer.cancel();
+        _heartbeatWatchdog = null;
+        _scheduleReconnect();
       }
     });
   }

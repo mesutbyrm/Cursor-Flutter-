@@ -174,7 +174,9 @@ class AgencyDashboardScreen extends ConsumerWidget {
                 }
                 return Column(
                   children: items.take(8).map((m) {
-                    final label = (m['label'] ?? m['status'] ?? '').toString();
+                    final label =
+                        (m['statusLabel'] ?? m['label'] ?? m['status'] ?? '')
+                            .toString();
                     final name = (m['name'] ?? m['username'] ?? 'Üye').toString();
                     return PlatformSocialListRow(
                       title: name,

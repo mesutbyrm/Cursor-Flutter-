@@ -11,8 +11,9 @@ final agencyPresenceProvider =
     final res = await dio.safeGet<dynamic>(ApiEndpoints.agencyLivePresence);
     final body = res.data;
     if (body is Map) {
-      final map = asJsonMap(body);
-      final list = map['items'] ?? map['members'] ?? map['data'];
+      final root = asJsonMap(body);
+      final map = root['data'] is Map ? asJsonMap(root['data']) : root;
+      final list = map['members'] ?? map['items'];
       if (list is List) {
         return list.whereType<Map>().map((e) => asJsonMap(e)).toList();
       }

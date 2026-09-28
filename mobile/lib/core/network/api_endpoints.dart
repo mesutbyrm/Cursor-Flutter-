@@ -285,7 +285,7 @@ abstract final class ApiEndpoints {
   static const agencyWalletTransfer = '/api/agency/wallet/transfer';
   static const agencyWalletTransactions = '/api/agency/wallet/transactions';
   static const agencyMemberApplications = '/api/agency/applications';
-  static const agencyLivePresence = '/api/agency/presence';
+  static const agencyLivePresence = '/api/agency/live-status';
 
   static const celebrities = '/api/celebrities';
   static String celebrity(String id) => '/api/celebrities/$id';
@@ -339,10 +339,6 @@ abstract final class ApiEndpoints {
   static const userFollowers = '/api/user/followers';
   static const userFollowing = '/api/user/following';
   static const userLikers = '/api/user/likers';
-
-  /// Başka kullanıcının takipçileri (dizi döner).
-  static String userPublicFollowers(String userId) =>
-      '/api/users/$userId/followers';
 
   /// canlifal.com ana sayfa canlı yayın listesi (JSON dizi).
   static const videoStreams = '/api/video-streams';
@@ -628,8 +624,8 @@ abstract final class ApiEndpoints {
   static const adminNotifications = '/api/admin/notifications';
   static const adminPaymentNotifications = '/api/admin/payment-notifications';
   static const adminPaymentsStream = '/api/admin/payments/stream';
-  static const adminMembershipTiers = '/api/admin/membership_tiers';
-  static const adminMembershipFeatures = '/api/admin/membership_features';
+  static const adminMembershipTiers = '/api/admin/membership-tiers';
+  static const adminMembershipFeatures = '/api/admin/membership-features';
   static const adminMembershipStats = '/api/admin/membership-stats';
   static const adminVoiceRoomSettings = '/api/admin/voice-room-settings';
   static const adminVoiceRoomFinanceAudit = '/api/admin/voice-room-finance-audit';
@@ -1412,9 +1408,6 @@ abstract final class ApiEndpoints {
   static String userFollow(String userId) => '/api/user/$userId/follow';
 
   static String follow(String userId) => '/api/users/$userId/follow';
-  static String followers(String userId) => '/api/users/$userId/followers';
-  static String following(String userId) => '/api/users/$userId/following';
-
   /// Engellenen kullanıcılar — kılavuz §9.2 UserRepository.
   static const userBlocked = '/api/user/blocked';
 

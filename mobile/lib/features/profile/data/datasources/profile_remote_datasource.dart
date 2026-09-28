@@ -360,39 +360,28 @@ class ProfileRemoteDataSource {
     return const [];
   }
 
-  Future<List<UserEntity>> followers(String userId) async {
-    for (final path in [
-      ApiEndpoints.userPublicFollowers(userId),
-      if (Env.useMobileAuth) ApiEndpoints.userFollowers,
-      ApiEndpoints.followers(userId),
-    ]) {
-      try {
-        final res = await _dio.safeGet<dynamic>(
-          path,
-          query: const {'page': 1, 'limit': 50},
-        );
-        final list = _parseUserList(res.data);
-        if (list.isNotEmpty) return list;
-      } catch (_) {}
-    }
-    return const [];
-  }
+  // Backend yalnızca `/api/user/followers|following?userId=` sunar; userId
+  // verilmezse oturumdaki kullanıcının listesini döndürür.
+  Future<List<UserEntity>> followers(String userId) =>
+      _userList(ApiEndpoints.userFollowers, userId);
 
-  Future<List<UserEntity>> following(String userId) async {
-    for (final path in [
-      if (Env.useMobileAuth) ApiEndpoints.userFollowing,
-      ApiEndpoints.following(userId),
-    ]) {
-      try {
-        final res = await _dio.safeGet<dynamic>(
-          path,
-          query: const {'page': 1, 'limit': 50},
-        );
-        final list = _parseUserList(res.data);
-        if (list.isNotEmpty) return list;
-      } catch (_) {}
+  Future<List<UserEntity>> following(String userId) =>
+      _userList(ApiEndpoints.userFollowing, userId);
+
+  Future<List<UserEntity>> _userList(String path, String userId) async {
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        path,
+        query: {
+          if (userId.isNotEmpty) 'userId': userId,
+          'page': 1,
+          'limit': 50,
+        },
+      );
+      return _parseUserList(res.data);
+    } catch (_) {
+      return const [];
     }
-    return const [];
   }
 
   List<UserEntity> _parseUserList(dynamic body) {

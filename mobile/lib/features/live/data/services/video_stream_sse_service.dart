@@ -455,7 +455,7 @@ class VideoStreamSseService {
 
   void _startHeartbeatWatchdog() {
     _heartbeatWatchdog?.cancel();
-    _heartbeatWatchdog = Timer.periodic(const Duration(seconds: 5), (_) {
+    _heartbeatWatchdog = Timer.periodic(const Duration(seconds: 5), (timer) {
       final last = _lastEventAt;
       if (last == null || _stopped || _paused) return;
       if (DateTime.now().difference(last) >
@@ -463,7 +463,9 @@ class VideoStreamSseService {
         if (kDebugMode) {
           debugPrint('VideoStreamSseService: heartbeat timeout — reconnecting');
         }
-        unawaited(_openStream());
+        timer.cancel();
+        _heartbeatWatchdog = null;
+        _scheduleReconnect();
       }
     });
   }
