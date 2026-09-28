@@ -4,22 +4,17 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.627+678` |
-| Tarih (UTC) | 2026-09-28 21:37 |
-| Commit | [`6c53cc10f6669b03dbe7754463daacfcea9843df`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/6c53cc10f6669b03dbe7754463daacfcea9843df) |
-| İş akışı | [Run 36483105451](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36483105451) |
+| Sürüm | `1.0.628+679` |
+| Tarih (UTC) | 2026-09-28 22:39 |
+| Commit | [`fa9bf0adf785d9954f8d7ad4ea14ef6e4bd0f96c`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/fa9bf0adf785d9954f8d7ad4ea14ef6e4bd0f96c) |
+| İş akışı | [Run 36491653991](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36491653991) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.627+678 (2026-09-28) — Sosyal yeni tasarım + derleme düzeltmesi
+## 1.0.630+681 (2026-09-28) — Cloud birleşimi: trend video + sesli oda (#403/#404)
 
-- **Sosyal sekmesi** paylaşılan tasarıma göre yenilendi: ✦ CanlıFal başlığı, bildirim zili (okunmamış noktası) ve mesaj ikonu (sayaçlı); Tümü · Takip · Falcılar · Ünlüler · Fan Club sekme çubuğu; mor "Paylaş" butonu
-- **Gönderi kartı:** beğeni / yorum / paylaşım / görüntülenme satırı görselin üzerinde; sağda Kart + Paylaş; "Bu kullanıcı ile birlikte N kişi bu fala baktı" şeridi görselin altında; açıklamasız görsellerde isim görselin üstünde
-- Üst çubukta **iki kez görünen arama butonu** kaldırıldı
-- **Derleme düzeltmesi:** 1.0.626'daki 4 analyze hatası APK üretimini engelliyordu (falcı randevu ekranı, PK ekranı)
-- **Geri alındı:** PK için eklenen 2 dakika bekleme (istek tersiydi; kural sunucu aday listesinde) ve oda maksimum kullanıcı 15 (varsayılan yine 150; koltuk 9/15 aynı)
-- Falcı randevu: süre seçimi yok, 10 dk seans ücreti ve personel için "Ücretsiz" tekrar gösteriliyor
+- **Paket:** PR #403 (trend videolar) + PR #404 (sesli oda sahip araçları) `main` üzerinde birleştirildi
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
