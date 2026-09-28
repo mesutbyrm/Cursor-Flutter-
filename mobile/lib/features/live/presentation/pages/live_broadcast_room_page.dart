@@ -984,7 +984,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final booking = await showPsychicBookingSheet(
       context,
       psychic: psychic,
-      initialMinutes: opt.minutes,
     );
     if (!mounted || booking == null) return;
     await PsychicFlow.bookAndOpenWaiting(

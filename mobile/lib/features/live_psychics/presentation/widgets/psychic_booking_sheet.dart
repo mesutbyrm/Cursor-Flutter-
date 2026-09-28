@@ -15,8 +15,13 @@ class PsychicBookingResult {
     required this.fortuneType,
   });
 
+  /// Süre seçimi kaldırıldı; seans sabit süreyle açılır.
+  static const sessionMinutes = 10;
+
   final int jeton;
   final String fortuneType;
+
+  int get minutes => sessionMinutes;
 }
 
 final _bookingFortuneTypeProvider =
@@ -206,7 +211,9 @@ class _PsychicBookingSheet extends ConsumerWidget {
                     onTap: () => Navigator.pop(
                       context,
                       PsychicBookingResult(
-                        jeton: (psychic.pricePerMinute * 10).toInt(),
+                        jeton: (psychic.pricePerMinute *
+                                PsychicBookingResult.sessionMinutes)
+                            .toInt(),
                         fortuneType: selectedType,
                       ),
                     ),
