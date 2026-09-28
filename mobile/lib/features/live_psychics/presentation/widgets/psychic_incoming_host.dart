@@ -146,6 +146,16 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
     return !AuthRoutePaths.isPublicAuthPath(path);
   }
 
+  bool _isSessionAlreadyQueued(String sessionId) {
+    if (sessionId.isEmpty) return true;
+    final queue = ref.read(psychicIncomingQueueProvider);
+    if (queue.any((r) => r.sessionId == sessionId)) return true;
+    final dismissed = ref.read(psychicDismissedSessionsProvider);
+    if (dismissed.contains(sessionId)) return true;
+    if (_activePresentingSessionId == sessionId) return true;
+    return false;
+  }
+
   Future<void> _bootstrap() async {
     await _ensureTellerProfile();
     await _connectSse();
@@ -262,6 +272,9 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
     )) {
       return;
     }
+    if (_isSessionAlreadyQueued(req.sessionId)) {
+      return;
+    }
     ref.read(psychicIncomingQueueProvider.notifier).enqueue(req);
     PsychicInviteCoordinator.requestPresent(sessionId: req.sessionId);
     if (_mayPresentInvites()) {
@@ -306,6 +319,9 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
         tellerProfileId: _tellerProfileId,
         isFortuneTeller: _isFortuneTeller,
       )) {
+        continue;
+      }
+      if (_isSessionAlreadyQueued(req.sessionId)) {
         continue;
       }
       ref.read(psychicIncomingQueueProvider.notifier).enqueue(req);
