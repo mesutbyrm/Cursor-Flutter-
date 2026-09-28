@@ -12,99 +12,39 @@ import '../providers/staff_access_provider.dart';
 import '../../../platform_social/presentation/widgets/platform_social_ui_kit.dart';
 import '../widgets/admin_hub_platform_social.dart';
 
-/// Lazy sekmeler — API başarısız olursa mock veri sağla.
+/// `GET /api/admin/users/{id}/360?section=…` — `{success, data: {...}}`.
+Future<Map<String, dynamic>?> _fetch360(Ref ref, String path) async {
+  final res = await ref.watch(dioProvider).safeGet<dynamic>(path);
+  final body = asJsonMap(res.data);
+  return body['data'] is Map ? asJsonMap(body['data']) : null;
+}
+
+/// `section=agency` → `{membership: AgencyUser+agency, earnings}`; üye değilse null.
 final adminUserAgencyProbeProvider = FutureProvider.autoDispose
     .family<Map<String, dynamic>?, String>((ref, userId) async {
-  final dio = ref.watch(dioProvider);
-  try {
-    final res = await dio.safeGet<dynamic>(ApiEndpoints.adminUserAgency(userId));
-    final body = res.data;
-    if (body is Map) return asJsonMap(body);
-  } catch (_) {}
-  // Mock veri — API yazılana kadar
-  return {
-    'agencyId': 'age_${userId.substring(0, 8)}',
-    'name': 'StarCraft Ajansı',
-    'role': 'İçerik Üretici',
-    'status': 'Aktif',
-    'commissionRate': 0.15,
-    'totalEarnings': 24500,
-    'joinedAt': '2024-06-15',
-  };
+  final data = await _fetch360(ref, ApiEndpoints.adminUserAgency(userId));
+  final m = data?['membership'];
+  return m is Map ? asJsonMap(m) : null;
 });
 
+/// `section=moderation` → `{status, warnings, admin_actions, total}`.
 final adminUserModerationProbeProvider = FutureProvider.autoDispose
-    .family<Map<String, dynamic>?, String>((ref, userId) async {
-  final dio = ref.watch(dioProvider);
-  try {
-    final res =
-        await dio.safeGet<dynamic>(ApiEndpoints.adminUserModeration(userId));
-    final body = res.data;
-    if (body is Map) return asJsonMap(body);
-  } catch (_) {}
-  // Mock veri — API yazılana kadar
-  return {
-    'actions': [
-      {
-        'type': 'warning',
-        'reason': 'Uygunsuz dil kullanımı',
-        'date': '2025-01-20',
-        'moderator': 'admin_01',
-      },
-      {
-        'type': 'mute',
-        'reason': 'Spam',
-        'date': '2025-01-18',
-        'duration': '24h',
-      },
-    ],
-    'lastAction': '2025-01-20',
-    'warningCount': 2,
-    'muteCount': 1,
-  };
-});
+    .family<Map<String, dynamic>?, String>(
+  (ref, userId) => _fetch360(ref, ApiEndpoints.adminUserModeration(userId)),
+);
 
+/// `section=reports` → `reports_against[]` (şikayet eden `reporter` ile).
 final adminUserReportsProbeProvider = FutureProvider.autoDispose
     .family<List<Map<String, dynamic>>, String>((ref, userId) async {
-  final dio = ref.watch(dioProvider);
-  try {
-    final res = await dio.safeGet<dynamic>(ApiEndpoints.adminUserReports(userId));
-    return _parseList(res.data);
-  } catch (_) {
-    // Mock veri — API yazılana kadar
-    return [
-      {
-        'reportId': 'rpt_001',
-        'reason': 'Uygunsuz içerik',
-        'status': 'Çözüldü',
-        'createdAt': '2025-01-15',
-        'resolvedAt': '2025-01-16',
-        'reporter': 'user_xyz',
-      },
-      {
-        'reportId': 'rpt_002',
-        'reason': 'Taciz',
-        'status': 'Beklemede',
-        'createdAt': '2025-01-18',
-        'reporter': 'user_abc',
-      },
-    ];
-  }
+  final data = await _fetch360(ref, ApiEndpoints.adminUserReports(userId));
+  return asJsonList(data?['reports_against']);
 });
 
-List<Map<String, dynamic>> _parseList(dynamic body) {
-  if (body is List) {
-    return body.whereType<Map>().map((e) => asJsonMap(e)).toList();
-  }
-  if (body is Map) {
-    final map = asJsonMap(body);
-    final data = map['data'] is Map ? asJsonMap(map['data']) : map;
-    final list = data['items'] ?? data['reports'] ?? data['results'] ?? [];
-    if (list is List) {
-      return list.whereType<Map>().map((e) => asJsonMap(e)).toList();
-    }
-  }
-  return const [];
+String _shortDate(dynamic v) {
+  final dt = DateTime.tryParse(v?.toString() ?? '');
+  if (dt == null) return '';
+  final l = dt.toLocal();
+  return '${l.day.toString().padLeft(2, '0')}.${l.month.toString().padLeft(2, '0')}.${l.year}';
 }
 
 class AdminUserVipTab extends ConsumerWidget {
@@ -166,16 +106,9 @@ class AdminUserAgencyTab extends ConsumerWidget {
     return async.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => adminHubEmpty('Ajans verisi yüklenemedi'),
-      data: (data) {
-        if (data == null || data.isEmpty) {
-          return adminHubEmpty(
-            'GET ${ApiEndpoints.adminUserAgency(userId)} henüz yok — '
-            'özet profil alanları kullanılır.',
-          );
-        }
-        final agency = data['agency'] is Map
-            ? asJsonMap(data['agency'])
-            : data;
+      data: (m) {
+        if (m == null) return adminHubEmpty('Kullanıcı bir ajansa üye değil.');
+        final agency = asJsonMap(m['agency']);
         return AdminHubTabScroll(
           children: [
             AdminHubSectionCard(
@@ -183,21 +116,27 @@ class AdminUserAgencyTab extends ConsumerWidget {
               children: [
                 PlatformSocialInfoRow(
                   label: 'Ajans',
-                  value: pick(agency, ['name', 'displayName'])?.toString() ?? '—',
+                  value: agency['name']?.toString() ?? '—',
                 ),
                 PlatformSocialInfoRow(
                   label: 'Rol',
-                  value: pick(agency, ['role', 'memberRole'])?.toString() ?? '—',
+                  value: m['role']?.toString() ?? '—',
                 ),
                 PlatformSocialInfoRow(
                   label: 'Durum',
-                  value:
-                      pick(agency, ['status', 'applicationStatus'])?.toString() ??
-                          '—',
+                  value: m['isActive'] == false ? 'Ayrıldı' : 'Aktif',
+                ),
+                PlatformSocialInfoRow(
+                  label: 'Katılım',
+                  value: _shortDate(m['joinedAt']),
+                ),
+                PlatformSocialInfoRow(
+                  label: 'Ajansa katkı',
+                  value: '${m['totalEarnings'] ?? 0}',
                 ),
                 PlatformSocialInfoRow(
                   label: 'Ajans ID',
-                  value: pick(agency, ['agencyId', 'id'])?.toString() ?? '—',
+                  value: agency['id']?.toString() ?? '—',
                 ),
               ],
             ),
@@ -243,25 +182,80 @@ class AdminUserModerationTab extends ConsumerWidget {
           loading: () => const LinearProgressIndicator(),
           error: (_, __) => const SizedBox.shrink(),
           data: (data) {
-            if (data == null) {
-              return const Padding(
-                padding: EdgeInsets.only(top: 8),
-                child: Text(
-                  'Detaylı moderasyon geçmişi için üretim '
-                  '`GET /api/admin/users/{id}/moderation` bekleniyor.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: PlatformSocialPalette.textMuted,
-                  ),
-                ),
-              );
-            }
-            return AdminHubSectionCard(
-              title: 'Moderasyon API',
+            if (data == null) return const SizedBox.shrink();
+            final warnings = asJsonList(data['warnings']);
+            final actions = asJsonList(data['admin_actions']);
+            final status = asJsonMap(data['status']);
+            return Column(
               children: [
-                PlatformSocialInfoRow(
-                  label: 'Ham veri',
-                  value: data.toString(),
+                AdminHubSectionCard(
+                  title: 'Durum',
+                  children: [
+                    PlatformSocialInfoRow(
+                      label: 'Uyarı sayısı',
+                      value: '${status['warningCount'] ?? warnings.length}',
+                    ),
+                    if (status['banReason'] != null)
+                      PlatformSocialInfoRow(
+                        label: 'Ban nedeni',
+                        value: status['banReason'].toString(),
+                      ),
+                    if (status['bannedUntil'] != null)
+                      PlatformSocialInfoRow(
+                        label: 'Ban bitişi',
+                        value: _shortDate(status['bannedUntil']),
+                      ),
+                    PlatformSocialInfoRow(
+                      label: 'Dondurulmuş',
+                      value: status['isFrozen'] == true ? 'Evet' : 'Hayır',
+                    ),
+                  ],
+                ),
+                AdminHubSectionCard(
+                  title: 'Uyarılar (${warnings.length})',
+                  children: [
+                    if (warnings.isEmpty)
+                      const Text(
+                        'Uyarı yok.',
+                        style: TextStyle(color: PlatformSocialPalette.textMuted),
+                      ),
+                    for (final w in warnings)
+                      PlatformSocialListRow(
+                        title: w['reason']?.toString() ?? 'Uyarı',
+                        subtitle: [
+                          w['severity']?.toString() ?? '',
+                          w['adminName']?.toString() ?? '',
+                          _shortDate(w['createdAt']),
+                        ].where((e) => e.isNotEmpty).join(' · '),
+                        leading: const Icon(
+                          Icons.warning_amber_rounded,
+                          color: PlatformSocialPalette.gold,
+                        ),
+                      ),
+                  ],
+                ),
+                AdminHubSectionCard(
+                  title: 'Yönetici işlemleri (${data['total'] ?? actions.length})',
+                  children: [
+                    if (actions.isEmpty)
+                      const Text(
+                        'İşlem kaydı yok.',
+                        style: TextStyle(color: PlatformSocialPalette.textMuted),
+                      ),
+                    for (final a in actions)
+                      PlatformSocialListRow(
+                        title: a['action']?.toString() ?? 'işlem',
+                        subtitle: [
+                          a['reason']?.toString() ?? '',
+                          a['adminName']?.toString() ?? '',
+                          _shortDate(a['createdAt']),
+                        ].where((e) => e.isNotEmpty).join(' · '),
+                        leading: const Icon(
+                          Icons.gavel_outlined,
+                          color: PlatformSocialPalette.accent,
+                        ),
+                      ),
+                  ],
                 ),
               ],
             );
@@ -326,7 +320,8 @@ class _ActivityList extends StatelessWidget {
         return PlatformSocialListRow(
           title: type,
           subtitle: [
-            if (a['description'] != null) a['description'].toString(),
+            if ((a['detail'] ?? a['description']) != null)
+              (a['detail'] ?? a['description']).toString(),
             if (when.isNotEmpty) when,
           ].join(' · '),
           leading: const Icon(
@@ -352,19 +347,23 @@ class AdminUserReportsTab extends ConsumerWidget {
       error: (e, _) => adminHubEmpty('Raporlar yüklenemedi'),
       data: (rows) {
         if (rows.isEmpty) {
-          return adminHubEmpty(
-            'Şikayet kaydı yok veya `GET ${ApiEndpoints.adminUserReports(userId)}` '
-            'henüz aktif değil.',
-          );
+          return adminHubEmpty('Bu kullanıcı hakkında şikayet yok.');
         }
         return ListView.builder(
           padding: const EdgeInsets.all(20),
           itemCount: rows.length,
           itemBuilder: (_, i) {
             final r = rows[i];
+            final reporter = asJsonMap(r['reporter']);
+            final by = (reporter['name'] ?? reporter['username'])?.toString();
             return PlatformSocialListRow(
-              title: (r['reason'] ?? r['type'] ?? 'Rapor').toString(),
-              subtitle: (r['createdAt'] ?? r['status'] ?? '').toString(),
+              title: (r['reason'] ?? 'Şikayet').toString(),
+              subtitle: [
+                if (by != null && by.isNotEmpty) 'Şikayet eden: $by',
+                r['status']?.toString() ?? '',
+                _shortDate(r['createdAt']),
+                if (r['details'] != null) r['details'].toString(),
+              ].where((e) => e.isNotEmpty).join(' · '),
               leading: const Icon(
                 Icons.flag_outlined,
                 color: PlatformSocialPalette.danger,

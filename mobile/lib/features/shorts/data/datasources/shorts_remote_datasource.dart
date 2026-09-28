@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../../gifts/data/gift_idempotency.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
@@ -802,31 +803,27 @@ class ShortsRemoteDataSource {
         .toList();
   }
 
+  final _hashtagCursors = <String, String?>{};
+
+  /// Etikete özel uç yok → `GET /api/short-videos/explore?q=#etiket` (imleçli);
+  /// backend "contains" eşlemesi yaptığı için tam etiket eşleşmesi süzülür.
   Future<List<ShortVideoEntity>> fetchHashtagVideos(
     String name, {
     int page = 1,
     int limit = 20,
   }) async {
-    final tag = name.replaceAll('#', '').trim();
-    try {
-      final encoded = Uri.encodeComponent(tag);
-      final res = await _dio.safeGet<dynamic>(
-        ApiEndpoints.shortVideosHashtag(encoded),
-        query: {'page': page, 'limit': limit},
-      );
-      final m = _unwrap(res.data);
-      return _videosFrom(m?['videos'] ?? m?['items']);
-    } on ApiException catch (e) {
-      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
-      final feed = await fetchFeed(limit: 50);
-      final lower = tag.toLowerCase();
-      return feed.videos
-          .where(
-            (v) => v.hashtags.any((h) => h.toLowerCase() == lower),
-          )
-          .toList();
-    }
+    final tag = name.replaceAll('#', '').trim().toLowerCase();
+    if (tag.isEmpty) return const [];
+    if (page <= 1) _hashtagCursors.remove(tag);
+    final cursor = _hashtagCursors[tag];
+    if (page > 1 && cursor == null) return const [];
+    final res = await fetchExplore(query: '#$tag', cursor: cursor, limit: limit);
+    _hashtagCursors[tag] = res.hasMore ? res.nextCursor : null;
+    return res.videos
+        .where((v) => v.hashtags.any((h) => h.replaceAll('#', '').toLowerCase() == tag))
+        .toList();
   }
+
 
   Future<List<ShortVideoEntity>> fetchMusicVideos(
     String musicId, {
@@ -870,30 +867,24 @@ class ShortsRemoteDataSource {
     );
   }
 
+  /// Backend'de analitik ucu yok; sayaçlar `GET /api/short-videos/{id}`'den.
   Future<ShortVideoAnalytics> fetchVideoAnalytics(
     String videoId, {
     ShortVideoEntity? fallback,
   }) async {
+    ShortVideoEntity? v = fallback;
     try {
-      final res = await _dio.safeGet<dynamic>(
-        ApiEndpoints.shortVideoAnalytics(videoId),
-      );
-      final m = _unwrap(res.data);
-      if (m != null) {
-        return ShortVideoAnalytics.fromJson(videoId, m);
-      }
+      v = await fetchVideo(videoId);
     } catch (_) {}
-    if (fallback != null) {
-      return ShortVideoAnalytics.fromVideo(
-        videoId: videoId,
-        viewsCount: fallback.viewsCount,
-        likesCount: fallback.likesCount,
-        commentsCount: fallback.commentsCount,
-        sharesCount: fallback.sharesCount,
-        savesCount: fallback.savesCount,
-      );
-    }
-    return ShortVideoAnalytics(videoId: videoId);
+    if (v == null) return ShortVideoAnalytics(videoId: videoId);
+    return ShortVideoAnalytics.fromVideo(
+      videoId: videoId,
+      viewsCount: v.viewsCount,
+      likesCount: v.likesCount,
+      commentsCount: v.commentsCount,
+      sharesCount: v.sharesCount,
+      savesCount: v.savesCount,
+    );
   }
 
   Future<ShortVideoEntity> registerVideo(Map<String, dynamic> body) async {
@@ -1015,57 +1006,40 @@ class ShortsRemoteDataSource {
     }
   }
 
-  Future<LiveGiftEvent?> sendShortGift({
+  /// Kısa videoya özel hediye ucu yok → `POST /api/gifts/send` ile video
+  /// sahibine gönderilir (`recipientUsername` kullanıcı kimliğini de kabul eder).
+  Future<LiveGiftEvent> sendShortGift({
     required String videoId,
     required String giftTypeId,
+    required String giftName,
+    required int unitPrice,
     required String senderName,
-    int quantity = 1,
+    required String receiverId,
+    required String receiverName,
     String? senderId,
   }) async {
-    try {
-      final res = await _dio.safePost<dynamic>(
-        ApiEndpoints.shortVideoGifts(videoId),
-        data: {
-          'giftTypeId': giftTypeId,
-          'quantity': quantity,
-          if (senderName.trim().isNotEmpty) 'senderName': senderName.trim(),
-        },
-      );
-      final raw = _unwrap(res.data);
-      if (raw is Map) {
-        return _parseShortGiftEvent(asJsonMap(raw), videoId: videoId);
-      }
-    } catch (_) {}
-    return null;
-  }
-
-  LiveGiftEvent? _parseShortGiftEvent(
-    Map<String, dynamic> json, {
-    required String videoId,
-  }) {
-    final giftId = pick(json, ['giftTypeId', 'giftId', 'gift_id'])?.toString();
-    if (giftId == null || giftId.isEmpty) return null;
-    final ts = DateTime.tryParse(
-          pick(json, ['createdAt', 'timestamp'])?.toString() ?? '',
-        ) ??
-        DateTime.now();
+    await _dio.safePost<dynamic>(
+      ApiEndpoints.giftsSend,
+      data: {
+        'recipientUsername': receiverId,
+        'giftTypeId': giftTypeId,
+        'type': 'gift',
+      },
+      options: giftIdempotentPostOptions(),
+    );
+    final now = DateTime.now();
     return LiveGiftEvent(
-      id: pick(json, ['id'])?.toString() ??
-          '$videoId-${ts.millisecondsSinceEpoch}-$giftId',
-      senderId: pick(json, ['senderId', 'userId'])?.toString(),
-      senderName:
-          pick(json, ['senderName', 'sender_name'])?.toString() ?? 'Kullanıcı',
-      receiverName:
-          pick(json, ['receiverName', 'receiver_name'])?.toString() ?? 'Yayıncı',
-      giftId: giftId,
-      giftName: pick(json, ['giftName', 'name'])?.toString() ?? 'Hediye',
-      quantity: () {
-        final q = asInt(pick(json, ['quantity']));
-        return q > 0 ? q : 1;
-      }(),
-      coinCost: asInt(pick(json, ['coinCost', 'totalCost', 'cost'])),
-      timestamp: ts,
-      animationKey: giftId,
+      id: '$videoId-${now.millisecondsSinceEpoch}-$giftTypeId',
+      senderId: senderId,
+      senderName: senderName,
+      receiverId: receiverId,
+      receiverName: receiverName,
+      giftId: giftTypeId,
+      giftName: giftName,
+      quantity: 1,
+      coinCost: unitPrice,
+      timestamp: now,
+      animationKey: giftTypeId,
     );
   }
 

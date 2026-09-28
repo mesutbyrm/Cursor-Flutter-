@@ -3,8 +3,6 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:video_player/video_player.dart';
 
-import '../../../../core/config/env.dart';
-import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/video/video_cache_service.dart';
 import 'short_video_url_resolver.dart';
 
@@ -18,11 +16,6 @@ Future<VideoPlayerController> createShortVideoController({
   final candidates = <String>[];
   final trimmed = url.trim();
   if (trimmed.isNotEmpty) candidates.add(trimmed);
-  if (videoId != null && videoId.trim().isNotEmpty) {
-    candidates.add(
-      '${Env.siteOrigin}${ApiEndpoints.shortVideoStream(videoId.trim())}',
-    );
-  }
 
   if (candidates.isEmpty || candidates.every((u) => u.isEmpty)) {
     throw StateError('Video URL boş');
@@ -98,11 +91,6 @@ Future<void> preloadShortVideoUrl(
   if (url.isEmpty) return;
   final cache = VideoCacheService.instance;
   final candidates = <String>[url.trim()];
-  if (videoId != null && videoId.trim().isNotEmpty) {
-    candidates.add(
-      '${Env.siteOrigin}${ApiEndpoints.shortVideoStream(videoId.trim())}',
-    );
-  }
   for (final playUrl in candidates) {
     if (playUrl.isEmpty) continue;
     try {

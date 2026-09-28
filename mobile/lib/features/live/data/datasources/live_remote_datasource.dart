@@ -561,10 +561,8 @@ class LiveRemoteDataSource {
   }
 
   Future<VoiceRoomEntity?> _fetchVoiceRoomDirect(String id) async {
-    final paths = [
-      ApiEndpoints.chatRoomDetail(id),
-      '${ApiEndpoints.chatRooms}/$id',
-    ];
+    // Backend'de oda detay ucu yok; `GET /state` → `{data: {room}}`.
+    final paths = [ApiEndpoints.chatRoomState(id)];
     for (final path in paths) {
       try {
         final res = await _dio.safeGet<dynamic>(path);

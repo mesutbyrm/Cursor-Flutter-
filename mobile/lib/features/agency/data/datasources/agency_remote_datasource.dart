@@ -93,16 +93,22 @@ class AgencyRemoteDataSource {
     }
   }
 
+  /// Bekleyen talepler = `GET /api/agency/members` → `leaveRequests[]`
+  /// (yalnız sahip/yönetici). Katılım doğrudan davet koduyla olduğu için
+  /// backend'de bekleyen katılım başvurusu yoktur.
   Future<List<AgencyMemberApplicationEntity>> fetchMemberApplications() async {
     try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.agencyMemberApplications);
-      final list = _extractList(res.data);
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.agencyMembers,
+        forceRefresh: true,
+      );
+      final list = asJsonList(asJsonMap(res.data)['leaveRequests']);
       return list.map((raw) {
         final m = asJsonMap(raw);
         final user = asJsonMap(m['user'] ?? m['profile']);
         return AgencyMemberApplicationEntity(
           id: _str(m, ['id', '_id']) ?? '',
-          type: _str(m, ['type']) ?? 'application',
+          type: _str(m, ['type']) ?? 'leave_request',
           status: _str(m, ['status']) ?? 'pending',
           userId: _str(m, ['userId']) ??
               _str(user, ['id', 'userId']) ??
@@ -131,11 +137,11 @@ class AgencyRemoteDataSource {
   }) async {
     try {
       await _dio.safePost<dynamic>(
-        ApiEndpoints.agencyMemberApplications,
+        ApiEndpoints.agencyLeave,
         data: {
-          'id': id,
+          'requestId': id,
           'action': approve ? 'approve' : 'reject',
-          if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
+          if (note != null && note.trim().isNotEmpty) 'reviewNote': note.trim(),
         },
       );
       return true;

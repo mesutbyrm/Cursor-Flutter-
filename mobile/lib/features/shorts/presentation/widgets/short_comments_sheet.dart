@@ -174,6 +174,7 @@ class _ShortCommentsSheetState extends ConsumerState<_ShortCommentsSheet> {
       ReportTarget(
         type: ReportTargetType.shortVideo,
         targetId: widget.video.id,
+        ownerUserId: comment.author.id,
         displayTitle: comment.content,
         contextLabel: 'Yorum: ${comment.id}',
       ),

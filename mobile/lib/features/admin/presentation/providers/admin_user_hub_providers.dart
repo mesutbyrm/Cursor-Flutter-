@@ -25,14 +25,12 @@ final adminUserActivityTimelineProvider = FutureProvider.autoDispose
   try {
     final res = await dio.safeGet<dynamic>(
       ApiEndpoints.adminUserActivity(userId),
-      query: {'limit': 80},
     );
-    final body = res.data;
-    if (body is Map) {
-      final items = body['items'] ?? body['data'];
-      if (items is List) {
-        return items.whereType<Map>().map((e) => asJsonMap(e)).toList();
-      }
+    final body = asJsonMap(res.data);
+    final data = body['data'] is Map ? asJsonMap(body['data']) : body;
+    final items = data['recent_activities'] ?? data['items'];
+    if (items is List) {
+      return items.whereType<Map>().map((e) => asJsonMap(e)).toList();
     }
   } catch (_) {}
   return const [];

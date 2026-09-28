@@ -216,25 +216,17 @@ final adminUserPendingPaymentsProvider = FutureProvider.autoDispose
   return ref.read(adminRemoteProvider).fetchPendingPaymentsForUser(userId);
 });
 
+/// PK yasağı = kullanıcıda `canPK: false` (`/360?section=general`).
 final adminUserPkBannedProvider = FutureProvider.autoDispose
     .family<bool, String>((ref, userId) async {
   final access = ref.watch(staffAccessProvider);
   if (!access.canModerate && !access.canManageUsers) return false;
 
   final dio = ref.watch(dioProvider);
-  final res = await dio.safeGet<dynamic>(ApiEndpoints.pkAdminBans);
-  dynamic raw = res.data;
-  if (raw is Map) {
-    raw = asJsonMap(raw)['bans'] ?? asJsonMap(raw)['items'];
-  }
-  final list = raw is List ? raw : [];
-
-  return list.any((e) {
-    if (e is! Map) return false;
-    final m = asJsonMap(e);
-    final uid = pick(m, ['userId', 'uid'])?.toString();
-    return uid == userId;
-  });
+  final res = await dio.safeGet<dynamic>(ApiEndpoints.adminUserOverview(userId));
+  final body = asJsonMap(res.data);
+  final data = body['data'] is Map ? asJsonMap(body['data']) : body;
+  return asJsonMap(data['user'])['canPK'] == false;
 });
 
 final adminUserSiteAnimationSlotsProvider = FutureProvider.autoDispose

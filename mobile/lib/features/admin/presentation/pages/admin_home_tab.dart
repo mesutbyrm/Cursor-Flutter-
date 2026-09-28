@@ -10,7 +10,6 @@ import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../data/services/admin_payments_sse_service.dart';
 import '../providers/admin_providers.dart';
 import '../providers/admin_panel_providers.dart';
-import '../providers/admin_moderation_providers.dart';
 import '../providers/admin_activity_monitoring_providers.dart';
 import '../providers/admin_fraud_detection_providers.dart';
 import '../providers/staff_access_provider.dart';
@@ -87,7 +86,6 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
         : null;
     final pendingCount =
         showFinance ? ref.watch(adminPendingPaymentsCountProvider) : 0;
-    final moderationCount = ref.watch(adminModerationQueueCountProvider);
     final activityMonitoringCount = ref.watch(adminActivityMonitoringCountProvider);
     final fraudAlertCount = ref.watch(adminFraudAlertCountProvider);
     final activeBroadcastCount = ref.watch(adminActiveBroadcastCountProvider);
@@ -131,7 +129,7 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
             _AllToolsBanner(onTap: () => context.push('/admin/tools')),
             const SizedBox(height: 20),
             // Bekleyen işlemler
-            if (pendingCount > 0 || moderationCount > 0 || activityMonitoringCount > 0 || fraudAlertCount > 0) ...[
+            if (pendingCount > 0 || activityMonitoringCount > 0 || fraudAlertCount > 0) ...[
               _SectionTitle('🔴 Bekleyen İşlemler'),
               SizedBox(
                 height: 100,
@@ -153,16 +151,6 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
                       color: AppThemeColors.accentCyan,
                       onTap: () => context.push('/admin'),
                     ),
-                    if (moderationCount > 0) ...[
-                      const SizedBox(width: 12),
-                      _NotificationCard(
-                        icon: Icons.flag_rounded,
-                        label: 'Moderation',
-                        count: moderationCount,
-                        color: AppThemeColors.liveRed,
-                        onTap: () => context.push('/admin/moderation'),
-                      ),
-                    ],
                     if (activityMonitoringCount > 0) ...[
                       const SizedBox(width: 12),
                       _NotificationCard(

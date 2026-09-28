@@ -155,8 +155,11 @@ abstract class ShortsRepository {
   Future<ShortGiftSendResult> sendGift({
     required String videoId,
     required String giftTypeId,
+    required String giftName,
+    required int unitPrice,
     required String senderName,
-    int quantity = 1,
+    required String receiverId,
+    required String receiverName,
     String? senderId,
   });
 }

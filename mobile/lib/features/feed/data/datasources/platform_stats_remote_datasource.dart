@@ -13,10 +13,7 @@ class PlatformStatsRemoteDataSource {
   final Dio _dio;
 
   Future<PlatformStatsEntity?> fetch() async {
-    for (final path in const [
-      ApiEndpoints.publicStats,
-      ApiEndpoints.platformStats,
-    ]) {
+    for (final path in const [ApiEndpoints.publicStats]) {
       try {
         final res = await _dio.safeGet<dynamic>(path);
         final parsed = _parseBody(res.data);

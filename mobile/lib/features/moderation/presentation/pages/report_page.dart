@@ -3,6 +3,7 @@ import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/ui/premium/premium.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
@@ -54,7 +55,11 @@ class _ReportPageState extends ConsumerState<ReportPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gönderilemedi: $e')),
+        SnackBar(
+          content: Text(
+            e is StateError ? e.message : ApiException.userMessage(e),
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _submitting = false);

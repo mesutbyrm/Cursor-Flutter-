@@ -150,19 +150,6 @@ class LiveFortuneRequestDataSource {
     }
 
     final body = {'status': status.name};
-    try {
-      final res = await _dio.safePatch<dynamic>(
-        ApiEndpoints.videoStreamFortuneRequest(streamId.trim(), requestId),
-        data: body,
-      );
-      final row = _unwrap(res.data);
-      if (row != null) return LiveFortuneRequestEntity.fromJson(row);
-    } catch (e) {
-      LiveDebugLog.log('fal.request.update.fail', {
-        'requestId': requestId,
-        'error': ApiException.userMessage(e),
-      });
-    }
 
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.liveFalRequestUpdate(requestId),

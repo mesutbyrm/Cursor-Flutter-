@@ -12,6 +12,14 @@ import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Bilinen yanlış alarmlar: yol dönüştürücü / önbellek önek kuralı (istek değil) ve
+# slug'ı `_apiSlugFor` ile gerçek /api/fortunes/<tür> uçlarına eşlenen yardımcı.
+IGNORED_SOURCES = {
+    'core/network/api_path_v1.dart',
+    'core/network/api_cache_policy.dart',
+}
+IGNORED_CONSTANTS = {'fortuneReading'}
 LIB = os.path.join(ROOT, 'mobile', 'lib')
 ENDPOINTS = os.path.join(LIB, 'core', 'network', 'api_endpoints.dart')
 
@@ -88,8 +96,12 @@ def main():
         if any(r.startswith(path + '/') for r in routes):
             continue
         for rel, ln in locs:
+            if rel in IGNORED_SOURCES:
+                continue
             if rel.endswith('api_endpoints.dart'):
                 name = constant_name(ep_lines, ln)
+                if name in IGNORED_CONSTANTS:
+                    continue
                 used = bool(name) and is_referenced(name)
                 label = f'ApiEndpoints.{name}'
             else:

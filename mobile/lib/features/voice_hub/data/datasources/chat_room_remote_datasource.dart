@@ -1209,18 +1209,10 @@ class ChatRoomRemoteDataSource {
         data['category'] = category.trim().toLowerCase();
       }
       if (data.isEmpty) return;
-      try {
-        await _dio.safePatch<dynamic>(
-          ApiEndpoints.chatRoomSettings(key),
-          data: data,
-        );
-      } on ApiException catch (e) {
-        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
-        await _dio.safePatch<dynamic>(
-          ApiEndpoints.chatRoomDetail(key),
-          data: data,
-        );
-      }
+      await _dio.safePatch<dynamic>(
+        ApiEndpoints.chatRoomSettings(key),
+        data: data,
+      );
     });
   }
 
@@ -1245,19 +1237,10 @@ class ChatRoomRemoteDataSource {
       } on ApiException catch (e) {
         if (e.statusCode != 404 && e.statusCode != 405) rethrow;
       }
-      try {
-        // Yerel mirror / eski uç
-        await _dio.safePatch<dynamic>(
-          roomBackgroundPath(key),
-          data: legacyPayload,
-        );
-        return;
-      } on ApiException catch (e) {
-        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
-      }
+      // `PATCH /api/chat/rooms/{id}/background` — backend'de GET/PATCH mevcut.
       await _dio.safePatch<dynamic>(
-        ApiEndpoints.chatRoomDetail(key),
-        data: {...settingsPayload, ...legacyPayload},
+        roomBackgroundPath(key),
+        data: legacyPayload,
       );
     });
   }

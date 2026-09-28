@@ -86,6 +86,7 @@ Future<void> showVoiceRoomChatMessageActions({
                   ReportTarget(
                     type: ReportTargetType.message,
                     targetId: message.id,
+                    ownerUserId: message.user?.id,
                     displayTitle: text.length > 48
                         ? '${text.substring(0, 48)}…'
                         : text,

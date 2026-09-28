@@ -248,20 +248,6 @@ class _GameTile extends ConsumerWidget {
                 icon: const Icon(Icons.shuffle_rounded),
                 label: const Text('Otomatik eşleş'),
               ),
-              if (game.kind == GameKind.mini) ...[
-                const SizedBox(height: 8),
-                OutlinedButton.icon(
-                  onPressed: () async {
-                    await ref
-                        .read(gameRemoteProvider)
-                        .saveMiniScore(gameId: game.id, score: 0);
-                    if (ctx.mounted) Navigator.pop(ctx);
-                    ref.invalidate(gameMiniScoresProvider);
-                  },
-                  icon: const Icon(Icons.save_rounded),
-                  label: const Text('Mini skor kaydı dene'),
-                ),
-              ],
             ],
           ),
         ),

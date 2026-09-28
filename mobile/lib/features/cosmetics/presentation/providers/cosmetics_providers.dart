@@ -26,6 +26,28 @@ final cosmeticsEquipRemoteProvider =
   return CosmeticsEquipRemoteDataSource(ref.watch(dioProvider));
 });
 
+/// Backend yuva kataloğu (profil çerçevesi hariç — o önbellekli sağlayıcıda).
+final remoteSlotCatalogProvider =
+    FutureProvider.family<List<CosmeticItem>, CosmeticSlot>((ref, slot) async {
+  final r = await ref.watch(cosmeticsEquipRemoteProvider).fetchSlot(slot);
+  return r?.items ?? const [];
+});
+
+/// Backend öğeleri önde, yerleşik katalog arkada (aynı id tekrarlanmaz).
+final mergedCosmeticCatalogProvider =
+    Provider.family<List<CosmeticItem>, CosmeticSlot>((ref, slot) {
+  final local = CosmeticCatalogDefaults.forSlot(slot);
+  final List<CosmeticItem>? remote = switch (slot) {
+    CosmeticSlot.profileFrame => ref.watch(profileFramesCatalogProvider).valueOrNull,
+    CosmeticSlot.badge => ref.watch(membershipBadgesCatalogProvider).valueOrNull,
+    CosmeticSlot.profileEffect => null,
+    _ => ref.watch(remoteSlotCatalogProvider(slot)).valueOrNull,
+  };
+  if (remote == null || remote.isEmpty) return local;
+  final ids = remote.map((e) => e.id).toSet();
+  return [...remote, ...local.where((e) => !ids.contains(e.id))];
+});
+
 final profileFramesCatalogProvider =
     FutureProvider<List<CosmeticItem>>((ref) async {
   final prefs = await SharedPreferences.getInstance();
@@ -80,8 +102,12 @@ class CosmeticLoadoutNotifier extends AsyncNotifier<UserCosmeticLoadout> {
       final remote =
           await ref.read(cosmeticsEquipRemoteProvider).fetchRemoteLoadout();
       if (remote != null && remote.equipped.isNotEmpty) {
-        await (await _ensureStore()).write(userId, remote);
-        return remote;
+        // Sunucu seçimi kazanır; backend'i olmayan yuvalar (efekt/rozet) yerel kalır.
+        final merged = UserCosmeticLoadout(
+          equipped: {...local.equipped, ...remote.equipped},
+        );
+        await (await _ensureStore()).write(userId, merged);
+        return merged;
       }
     } catch (_) {}
     return local;
@@ -94,7 +120,11 @@ class CosmeticLoadoutNotifier extends AsyncNotifier<UserCosmeticLoadout> {
     final next = current.copyWithEquipped(slot, itemId);
     state = AsyncData(next);
     await (await _ensureStore()).write(userId, next);
-    await ref.read(cosmeticsEquipRemoteProvider).pushEquip(slot, itemId);
+    await ref.read(cosmeticsEquipRemoteProvider).pushEquip(
+          slot,
+          itemId,
+          previousId: current.idFor(slot),
+        );
   }
 }
 
@@ -116,8 +146,8 @@ final resolvedProfileFrameProvider = Provider<CosmeticItem?>((ref) {
   final user = ref.watch(authControllerProvider).valueOrNull;
   final tier = ref.watch(vipTierProvider);
   final loadout = ref.watch(cosmeticLoadoutProvider).valueOrNull;
-  final catalog = ref.watch(profileFramesCatalogProvider).valueOrNull ??
-      CosmeticCatalogDefaults.forSlot(CosmeticSlot.profileFrame);
+  final catalog =
+      ref.watch(mergedCosmeticCatalogProvider(CosmeticSlot.profileFrame));
 
   final picked = _resolveEquipped(
     CosmeticSlot.profileFrame,
@@ -149,7 +179,7 @@ final resolvedNameEffectProvider = Provider<CosmeticItem?>((ref) {
   return _resolveEquipped(
     CosmeticSlot.nameEffect,
     ref.watch(cosmeticLoadoutProvider).valueOrNull,
-    CosmeticCatalogDefaults.forSlot(CosmeticSlot.nameEffect),
+    ref.watch(mergedCosmeticCatalogProvider(CosmeticSlot.nameEffect)),
   );
 });
 
@@ -158,7 +188,7 @@ final resolvedProfileEffectProvider = Provider<CosmeticItem?>((ref) {
   return _resolveEquipped(
     CosmeticSlot.profileEffect,
     ref.watch(cosmeticLoadoutProvider).valueOrNull,
-    CosmeticCatalogDefaults.forSlot(CosmeticSlot.profileEffect),
+    ref.watch(mergedCosmeticCatalogProvider(CosmeticSlot.profileEffect)),
   );
 });
 
@@ -167,7 +197,7 @@ final resolvedEntranceEffectProvider = Provider<CosmeticItem?>((ref) {
   return _resolveEquipped(
     CosmeticSlot.entranceAnimation,
     ref.watch(cosmeticLoadoutProvider).valueOrNull,
-    CosmeticCatalogDefaults.forSlot(CosmeticSlot.entranceAnimation),
+    ref.watch(mergedCosmeticCatalogProvider(CosmeticSlot.entranceAnimation)),
   );
 });
 
@@ -176,7 +206,7 @@ final resolvedChatBubbleProvider = Provider<CosmeticItem?>((ref) {
   return _resolveEquipped(
     CosmeticSlot.chatBubble,
     ref.watch(cosmeticLoadoutProvider).valueOrNull,
-    CosmeticCatalogDefaults.forSlot(CosmeticSlot.chatBubble),
+    ref.watch(mergedCosmeticCatalogProvider(CosmeticSlot.chatBubble)),
   );
 });
 
@@ -185,7 +215,7 @@ final resolvedMicrophoneFrameProvider = Provider<CosmeticItem?>((ref) {
   return _resolveEquipped(
     CosmeticSlot.microphoneFrame,
     ref.watch(cosmeticLoadoutProvider).valueOrNull,
-    CosmeticCatalogDefaults.forSlot(CosmeticSlot.microphoneFrame),
+    ref.watch(mergedCosmeticCatalogProvider(CosmeticSlot.microphoneFrame)),
   );
 });
 
@@ -227,20 +257,5 @@ List<CosmeticItem> catalogForSlot(CosmeticSlot slot) {
 List<CosmeticItem> mergedCatalogForSlot(
   WidgetRef ref,
   CosmeticSlot slot,
-) {
-  if (slot == CosmeticSlot.profileFrame) {
-    final remote = ref.watch(profileFramesCatalogProvider).valueOrNull;
-    final local = CosmeticCatalogDefaults.forSlot(slot);
-    if (remote == null || remote.isEmpty) return local;
-    final ids = remote.map((e) => e.id).toSet();
-    return [...remote, ...local.where((e) => !ids.contains(e.id))];
-  }
-  if (slot == CosmeticSlot.badge) {
-    final remote = ref.watch(membershipBadgesCatalogProvider).valueOrNull;
-    final local = CosmeticCatalogDefaults.forSlot(slot);
-    if (remote == null || remote.isEmpty) return local;
-    final ids = remote.map((e) => e.id).toSet();
-    return [...remote, ...local.where((e) => !ids.contains(e.id))];
-  }
-  return CosmeticCatalogDefaults.forSlot(slot);
-}
+) =>
+    ref.watch(mergedCosmeticCatalogProvider(slot));

@@ -41,33 +41,18 @@ class LeaderboardRemoteDataSource {
     GiftLeaderboardPeriod period = GiftLeaderboardPeriod.weekly,
     String type = 'gifts',
   }) async {
-    for (final path in [ApiEndpoints.leaderboards, ApiEndpoints.leaderboard]) {
-      try {
-        final res = await _dio.safeGet<dynamic>(
-          path,
-          query: {
-            'type': type,
-            'period': period.apiValue,
-            'range': period.apiValue,
-            'category': 'gifts',
-          },
-        );
-        final list = _parseEntries(res.data);
-        if (list.isNotEmpty) return list;
-      } catch (_) {}
-      try {
-        final res = await _dio.safePost<dynamic>(
-          path,
-          data: {
-            'type': type,
-            'period': period.apiValue,
-            'range': period.apiValue,
-          },
-        );
-        final list = _parseEntries(res.data);
-        if (list.isNotEmpty) return list;
-      } catch (_) {}
-    }
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.leaderboards,
+        query: {
+          'type': type,
+          'period': period.apiValue,
+          'range': period.apiValue,
+          'category': 'gifts',
+        },
+      );
+      return _parseEntries(res.data);
+    } catch (_) {}
     return const [];
   }
 

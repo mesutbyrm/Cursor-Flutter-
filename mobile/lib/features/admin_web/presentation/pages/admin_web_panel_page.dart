@@ -13,7 +13,6 @@ import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
 import '../../../../core/network/cookie_jar_provider.dart';
-import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
@@ -48,7 +47,6 @@ class _AdminWebPanelPageState extends ConsumerState<AdminWebPanelPage> {
       final sso = AdminWebSsoService(
         tokenStorage: ref.read(tokenStorageProvider),
         cookieJar: ref.read(cookieJarProvider),
-        dio: ref.read(dioProvider),
       );
       final payload = await sso.prepareSession();
       await _initWebView(payload);

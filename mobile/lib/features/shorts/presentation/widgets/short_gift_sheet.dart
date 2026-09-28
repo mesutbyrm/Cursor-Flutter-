@@ -10,7 +10,6 @@ import '../../../live/data/datasources/live_gifts_remote_datasource.dart';
 import '../../../live/domain/entities/live_gift_catalog.dart';
 import '../../../live/domain/entities/live_gift_type.dart';
 import '../../domain/entities/short_video_entity.dart';
-import '../../domain/repositories/shorts_repository.dart';
 import '../providers/shorts_providers.dart';
 import '../utils/shorts_api_message.dart';
 import 'short_gift_burst.dart';
@@ -76,31 +75,23 @@ class _ShortGiftSheetState extends ConsumerState<_ShortGiftSheet> {
     final senderName = me?.display ?? 'Kullanıcı';
     setState(() => _sending = true);
     try {
-      var result = await ref.read(shortsRepositoryProvider).sendGift(
+      final receiverId = widget.video.userId.trim().isNotEmpty
+          ? widget.video.userId.trim()
+          : (widget.video.author?.id ?? '');
+      if (receiverId.isEmpty) {
+        throw StateError('Video sahibi bulunamadı.');
+      }
+      final result = await ref.read(shortsRepositoryProvider).sendGift(
             videoId: widget.video.id,
             giftTypeId: gift.id,
+            giftName: gift.name,
+            unitPrice: gift.price,
             senderName: senderName,
+            receiverId: receiverId,
+            receiverName: widget.video.author?.label ?? 'Kullanıcı',
             senderId: me?.id,
           );
-      if (result.event == null) {
-        final ds = LiveGiftsRemoteDataSource(ref.read(dioProvider));
-        final live = await ds.sendGift(
-          streamId: widget.video.id,
-          giftTypeId: gift.id,
-          senderName: senderName,
-          receiverName: widget.video.author?.label ?? 'Yayıncı',
-          giftName: gift.name,
-          unitPrice: gift.price,
-          senderId: me?.id,
-        );
-        result = ShortGiftSendResult(
-          newBalance: live.newBalance,
-          event: live.event,
-        );
-      }
-      if (result.newBalance != null) {
-        ref.invalidate(coinBalanceProvider);
-      }
+      ref.invalidate(coinBalanceProvider);
       if (!mounted) return;
       if (result.event != null) {
         await showShortGiftBurst(context, gift.id);

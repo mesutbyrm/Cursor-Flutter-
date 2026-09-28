@@ -16,10 +16,15 @@ class ReportTarget {
     required this.targetId,
     this.displayTitle,
     this.contextLabel,
+    this.ownerUserId,
   });
 
   final ReportTargetType type;
   final String targetId;
+
+  /// İçeriğin sahibi — backend yalnızca kullanıcı şikayeti tuttuğu için
+  /// gönderi/mesaj/yayın/kısa video şikayetleri sahibine yazılır.
+  final String? ownerUserId;
   final String? displayTitle;
   final String? contextLabel;
 

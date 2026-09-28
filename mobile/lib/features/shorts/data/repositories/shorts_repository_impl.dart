@@ -227,15 +227,21 @@ class ShortsRepositoryImpl implements ShortsRepository {
   Future<ShortGiftSendResult> sendGift({
     required String videoId,
     required String giftTypeId,
+    required String giftName,
+    required int unitPrice,
     required String senderName,
-    int quantity = 1,
+    required String receiverId,
+    required String receiverName,
     String? senderId,
   }) async {
     final event = await _remote.sendShortGift(
       videoId: videoId,
       giftTypeId: giftTypeId,
+      giftName: giftName,
+      unitPrice: unitPrice,
       senderName: senderName,
-      quantity: quantity,
+      receiverId: receiverId,
+      receiverName: receiverName,
       senderId: senderId,
     );
     return ShortGiftSendResult(event: event);

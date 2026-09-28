@@ -2459,6 +2459,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
             ReportTarget(
               type: ReportTargetType.liveStream,
               targetId: streamId,
+              ownerUserId: s.hostUserId,
               displayTitle: s.streamerName ?? 'Canlı yayın',
             ),
           );

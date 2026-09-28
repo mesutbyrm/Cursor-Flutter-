@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 
-import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/util/json_util.dart';
 
@@ -42,11 +41,6 @@ class ShortVideoUrlResolver {
     }
 
     add(videoUrl);
-
-    // API proxy — CDN 404 olsa bile çalışır; imzalı URL'den önce dene.
-    if (videoId != null && videoId.trim().isNotEmpty) {
-      add('${Env.siteOrigin}${ApiEndpoints.shortVideoStream(videoId.trim())}');
-    }
 
     final key = storageKeyFromUrl(videoUrl);
     if (key != null) {

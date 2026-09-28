@@ -1,7 +1,7 @@
 # Backend dokümanları ↔ Flutter eşleşmesi
 
 > **Kaynak:** [`mesutbyrm/canlifal` PR #1](https://github.com/mesutbyrm/canlifal/pull/1) — dal `docs/backend-flutter-parity-2026-09` (HEAD `fdd5e62`), `nextjs_space/app/api/**/route.ts` (714 route).
-> **Tarih:** 2026-09-28 · Flutter sürümü `1.0.623+674`
+> **Tarih:** 2026-09-28 · Flutter sürümü `1.0.624+675`
 
 Mobil entegrasyonun tek kaynağı yine [`FLUTTER_ENTegrasyon_KILAVUZU.md`](FLUTTER_ENTegrasyon_KILAVUZU.md)'dur. Bu dosya, backend dokümanlarındaki her konunun Flutter'da nerede karşılandığını ve kontrol sonuçlarını gösterir.
 
@@ -45,18 +45,27 @@ Betik Flutter'daki tüm `/api/...` yollarını backend route dosyalarıyla karş
 | Ajans canlı takibi her zaman boştu (`/api/agency/presence` yok; zarf `data.members` okunmuyordu) | `/api/agency/live-status` + `statusLabel` |
 | Falcı ve video yayın SSE watchdog'u zaman aşımında geri çekilmesiz yeniden bağlanıyordu (`REALTIME_SSE.md` kuralı) | `_scheduleReconnect()` üzerinden üstel geri çekilme |
 
-## Backend'de karşılığı olmayan, hâlâ çağrılan yollar
+## 1.0.624 — kalan eksiklerin bağlanması
 
-Hepsi ya yedek zincirindedir (önce doğru uç denenir) ya da backend'de özellik hiç yoktur. Backend'e route eklenmeden mobilde yapılacak bir şey yok:
+`backend-route-parity.py --used-only` sonucu: **0** (önce 34). Bilinen yanlış alarmlar betikte süzülür (`api_path_v1.dart`, `api_cache_policy.dart` önek kuralı, slug'ı `_apiSlugFor` ile gerçek `/api/fortunes/<tür>`'e eşlenen `fortuneReading`). Hiçbir yerde kullanılmayan 172 ölü sabit `api_endpoints.dart`'tan silindi.
 
-| Yol | Durum |
+| Önceki (backend'de yok) | Şimdi |
 |---|---|
-| `/api/broadcasters/weekly-competition` | Backend'de yok — haftalık yayıncı yarışması kutusu veri alamaz |
-| `/api/short-videos/{id}/gifts`, `/analytics` | Backend'de yok — kısa videoya hediye / analitik çalışmaz |
-| `/api/user/cosmetics*`, `/api/user/profile/cosmetics/equip` | Backend'de yok (yalnız `/api/profile-frames`, `/api/mic-frames`) |
-| `/api/agency/applications` | Backend'de yok — ajans başvuru listesi boş gelir |
-| `/api/admin/users/{id}/overview|activity|agency|earnings|moderation|reports|spending`, `/api/admin/pk/bans` | Yönetici; backend `.../360` ve `.../full` sunar |
-| `/api/chat/rooms/{id}` (PATCH), `/api/leaderboard`, `/api/platform-stats`, `/api/games/history`, `/api/games/room/{id}/join`, `/api/short-videos/hashtags/{tag}`, `/api/video-streams/{id}/fortune-requests/{id}` | Yedek — önce doğru uç çağrılıyor |
+| `/api/user/cosmetics*` | Yuva başına: `/api/profile-frames` `{frameId}`, `/api/mic-frames`, `/api/chat-bubbles`, `/api/name-effects` (key), `/api/entrance-effects`, `/api/avatar-accessories` (çoklu) — `POST {id}`; katalog backend + yerleşik birleşik. Profil efekti ve rozet cihazda |
+| `/api/admin/users/{id}/overview…reports` | `/api/admin/users/{id}/360?section=general|activity|agency|earnings|spending|moderation|reports`. **Sahte ajans/moderasyon/şikayet verisi gösteriliyordu → kaldırıldı** |
+| `/api/admin/pk/bans` | Kullanıcı `canPK == false` (`section=general`) |
+| `/api/reports` (şikayet gönderme) | `POST /api/user/report` (içerik şikayeti sahibine), sesli oda `POST /api/chat/rooms/{id}/report`. **Önceden hiçbir şikayet backend'e ulaşmıyordu** |
+| `/api/reports` (yönetici kuyruğu) | Backend'de genel liste yok, `/api/admin/moderation` yalnız web oturumu → web panele yönlendirme |
+| `/api/short-videos/{id}/gifts` | `POST /api/gifts/send {recipientUsername: video sahibi, giftTypeId, type: gift}` + Idempotency-Key. **Önceden kısa videoya hediye gönderilemiyordu** |
+| `/api/short-videos/{id}/analytics` | `GET /api/short-videos/{id}` sayaçları |
+| `/api/short-videos/{id}/stream` | Kaldırıldı (oynatıcı önce bu ölü adresi deniyordu) |
+| `/api/short-videos/hashtags/{tag}` | `GET /api/short-videos/explore?q=#etiket` (imleçli) |
+| `/api/broadcasters/weekly-competition` | CFC Arena: `GET /api/cfc-arena?status=active` → `broadcaster` (weekly öncelikli) → `GET /api/cfc-arena/{id}` leaderboard |
+| `/api/agency/applications` | `GET /api/agency/members` → `leaveRequests`; karar `POST /api/agency/leave {action, requestId, reviewNote}` |
+| `/api/games/mini-scores` | `POST /api/games/play {gameSlug, score, result}`; test amaçlı "skor 0 kaydet" düğmesi kaldırıldı (sunucu CFC ödülü verir) |
+| `/api/games/history`, `/api/games/room/{id}/join` | Kullanıcı bazlı geçmiş ucu yok → istek atılmıyor; katılım `POST /api/games/room/{id}` |
+| `/api/chat/rooms/{id}` (GET/PATCH) | GET → `/state` (`data.room`); PATCH yedeği kaldırıldı (`/settings`, `/background` gerçek) |
+| `/api/leaderboard`, `/api/platform-stats`, `/api/payment/*`, fal isteği PATCH yedeği, SSO `/api/mobile/auth/web-session`, `/api/admin/mobile-auth` | Ölü yedekler kaldırıldı |
 
 ## 1.0.623 — backend'e bağlanan modüller ve menü yerleri
 

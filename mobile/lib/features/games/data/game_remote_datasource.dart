@@ -95,10 +95,7 @@ class GameRemoteDataSource {
   }
 
   Future<GameRoomItem?> joinRoom(String roomId) async {
-    final joinPaths = [
-      ApiEndpoints.gameRoomJoin(roomId),
-      ApiEndpoints.gameRoomJoinLegacy(roomId),
-    ];
+    final joinPaths = [ApiEndpoints.gameRoomJoin(roomId)];
 
     ApiException? lastError;
     for (final path in joinPaths) {
@@ -202,40 +199,22 @@ class GameRemoteDataSource {
     required int score,
     Map<String, dynamic>? metadata,
   }) async {
+    // `POST /api/games/play` — MiniGame slug'ı; ödül CFC olarak sunucuda hesaplanır.
     await _dio.safePost<dynamic>(
-      ApiEndpoints.gameMiniScores,
+      ApiEndpoints.gamePlay,
       data: {
-        'gameId': gameId,
+        'gameSlug': gameId,
         'score': score,
-        'type': 'game-center',
-        ...?metadata,
+        'result': ?metadata,
       },
     );
   }
 
-  Future<List<GameScoreItem>> fetchHistory() async {
-    for (final path in [
-      ApiEndpoints.gameMiniScores,
-      ApiEndpoints.gameProfile,
-      ApiEndpoints.gameHistory,
-    ]) {
-      try {
-        final res = await _dio.safeGet<dynamic>(path);
-        final items = _scores(res.data);
-        if (items.isNotEmpty) return items;
-      } catch (_) {}
-    }
-    return const [];
-  }
+  // Backend'de kullanıcı bazlı skor/geçmiş listesi ucu yok (yalnız
+  // `/api/games/profile` toplamları ve `/api/games/leaderboard`).
+  Future<List<GameScoreItem>> fetchHistory() async => const [];
 
-  Future<List<GameScoreItem>> fetchMiniScores() async {
-    try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.gameMiniScores);
-      return _scores(res.data);
-    } catch (_) {
-      return const [];
-    }
-  }
+  Future<List<GameScoreItem>> fetchMiniScores() async => const [];
 
   Future<List<GameScoreItem>> fetchProfileScores() async {
     try {
@@ -244,16 +223,6 @@ class GameRemoteDataSource {
     } catch (_) {
       return const [];
     }
-  }
-
-  Future<void> saveMiniScore({
-    required String gameId,
-    required int score,
-  }) async {
-    await _dio.safePost<dynamic>(
-      ApiEndpoints.gameMiniScores,
-      data: {'gameId': gameId, 'score': score},
-    );
   }
 
   Future<List<GameScoreItem>> fetchTournaments() async {

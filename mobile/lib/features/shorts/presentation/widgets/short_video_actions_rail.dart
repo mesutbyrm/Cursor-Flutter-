@@ -324,6 +324,7 @@ class _ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
                   ReportTarget(
                     type: ReportTargetType.shortVideo,
                     targetId: video.id,
+                    ownerUserId: video.userId,
                     displayTitle: video.description ?? video.author?.username,
                     contextLabel: 'Kısa video',
                   ),

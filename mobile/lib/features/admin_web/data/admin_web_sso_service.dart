@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:cookie_jar/cookie_jar.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../../core/network/token_storage.dart';
@@ -13,14 +12,11 @@ class AdminWebSsoService {
   AdminWebSsoService({
     required TokenStorage tokenStorage,
     required CookieJar cookieJar,
-    required Dio dio,
   })  : _tokens = tokenStorage,
-        _cookieJar = cookieJar,
-        _dio = dio;
+        _cookieJar = cookieJar;
 
   final TokenStorage _tokens;
   final CookieJar _cookieJar;
-  final Dio _dio;
 
   Future<AdminWebSsoPayload> prepareSession() async {
     final access = await _tokens.readAccess();
@@ -29,9 +25,6 @@ class AdminWebSsoService {
     }
 
     await applyPersistCookiesToWebView(_cookieJar, AdminWebConfig.origin);
-
-    // Sunucu SSO uçları (varsa) — sessizce dene.
-    await _tryServerBridge(access);
 
     final bootstrap = _buildBootstrapHtml(access);
     return AdminWebSsoPayload(
@@ -44,32 +37,6 @@ class AdminWebSsoService {
         'X-Canlifal-Platform': defaultTargetPlatform.name,
       },
     );
-  }
-
-  Future<void> _tryServerBridge(String access) async {
-    final refresh = await _tokens.readRefresh();
-    final candidates = [
-      '/api/mobile/auth/web-session',
-      '/api/admin/mobile-auth',
-    ];
-    for (final path in candidates) {
-      try {
-        await _dio.post<dynamic>(
-          path,
-          data: {
-            'accessToken': access,
-            if (refresh != null && refresh.isNotEmpty)
-              'refreshToken': refresh,
-          },
-          options: Options(
-            headers: {'Authorization': 'Bearer $access'},
-            validateStatus: (s) => s != null && s < 500,
-          ),
-        );
-      } catch (_) {
-        // SSO uçları opsiyonel — yoksa bootstrap devreye girer.
-      }
-    }
   }
 
   String _buildBootstrapHtml(String access) {

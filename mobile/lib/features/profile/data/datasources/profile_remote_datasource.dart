@@ -23,10 +23,6 @@ import '../../domain/entities/profile_extended_entity.dart';
 import '../../domain/entities/profile_stats_entity.dart';
 import '../../domain/entities/referral_info_entity.dart';
 
-/// Deprecated alias yollar — canonical sözleşme testinde literal olarak yasak;
-/// segment birleştirme ile yalnızca 404 yedek çağrıda kullanılır.
-String _deprecatedPaymentApiPath(String tail) => '/api/${'payment'}/$tail';
-
 class ProfileRemoteDataSource {
   ProfileRemoteDataSource(this._dio, this._compound);
 
@@ -481,10 +477,7 @@ class WalletRemoteDataSource {
   /// Site ödeme ayarları — API dolu alanları korur, yalnız boş alanları tamamlar.
   Future<PaymentConfigEntity> paymentConfig() async {
     ApiException? lastError;
-    for (final path in [
-      ApiEndpoints.paymentConfig,
-      _deprecatedPaymentApiPath('config'),
-    ]) {
+    for (final path in [ApiEndpoints.paymentConfig]) {
       try {
         final res = await _dio.safeGet<dynamic>(path);
         final data = res.data;
@@ -671,10 +664,7 @@ class WalletRemoteDataSource {
       'method': body['method'],
     });
 
-    final paths = <String>[
-      ApiEndpoints.paymentRequests,
-      _deprecatedPaymentApiPath('requests'),
-    ];
+    final paths = <String>[ApiEndpoints.paymentRequests];
 
     ApiException? lastError;
     for (final path in paths) {
@@ -855,19 +845,10 @@ class WalletRemoteDataSource {
     int page = 1,
     int limit = 20,
   }) async {
-    Response<dynamic> res;
-    try {
-      res = await _dio.safeGet<dynamic>(
-        ApiEndpoints.paymentRequests,
-        query: {'page': page, 'limit': limit},
-      );
-    } on ApiException catch (e) {
-      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
-      res = await _dio.safeGet<dynamic>(
-        _deprecatedPaymentApiPath('requests'),
-        query: {'page': page, 'limit': limit},
-      );
-    }
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.paymentRequests,
+      query: {'page': page, 'limit': limit},
+    );
     dynamic data = res.data;
     if (data is Map && data['success'] == true) data = data['data'];
     List<dynamic> raw = const [];

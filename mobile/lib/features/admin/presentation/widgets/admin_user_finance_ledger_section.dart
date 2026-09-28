@@ -18,47 +18,66 @@ extension on AdminFinanceRange {
       };
 }
 
-final adminUserEarningsProvider = FutureProvider.autoDispose
-    .family<List<Map<String, dynamic>>, (String userId, AdminFinanceRange range)>(
-  (ref, key) async {
-    final dio = ref.watch(dioProvider);
-    try {
-      final res = await dio.safeGet<dynamic>(
-        ApiEndpoints.adminUserEarnings(key.$1),
-        query: {'range': key.$2.query},
+/// Defter satırı: etiket + tutar (+ adet).
+typedef AdminLedgerRow = ({String label, num amount, int? count});
+
+Future<Map<String, dynamic>> _fetchSection(Ref ref, String path, String range) async {
+  final res = await ref.watch(dioProvider).safeGet<dynamic>(
+        path,
+        query: {if (range != 'all') 'range': range},
       );
-      return _parseItems(res.data);
-    } catch (_) {
-      return const [];
-    }
-  },
+  final body = asJsonMap(res.data);
+  return body['data'] is Map ? asJsonMap(body['data']) : const {};
+}
+
+num _num(dynamic v) => v is num ? v : num.tryParse(v?.toString() ?? '') ?? 0;
+
+List<AdminLedgerRow> _byType(dynamic raw) => [
+      for (final r in asJsonList(raw))
+        (
+          label: r['type']?.toString() ?? 'diğer',
+          amount: _num(asJsonMap(r['_sum'])['amount']).abs(),
+          count: asInt(r['_count']),
+        ),
+    ];
+
+/// `section=earnings` — hediye geliri, falcı/ajans kazancı, jeton gelir türleri.
+List<AdminLedgerRow> parseAdminEarnings(Map<String, dynamic> d) => [
+      (
+        label: 'Hediye geliri',
+        amount: _num(d['gift_income_jeton']),
+        count: asInt(d['gift_income_count']),
+      ),
+      (label: 'Falcı toplam kazanç', amount: _num(d['teller_total_earnings']), count: null),
+      (label: 'Ajans kazancı', amount: _num(d['agency_earnings']), count: null),
+      (label: 'Toplam jeton geliri', amount: _num(d['jeton_earned_total']), count: null),
+      ..._byType(d['by_type']),
+    ];
+
+/// `section=spending` — hediye harcaması, jeton gider türleri.
+List<AdminLedgerRow> parseAdminSpending(Map<String, dynamic> d) => [
+      (
+        label: 'Hediye harcaması',
+        amount: _num(d['gift_spent_jeton']),
+        count: asInt(d['gift_spent_count']),
+      ),
+      (label: 'Toplam jeton harcaması', amount: _num(d['jeton_spent_total']), count: null),
+      ..._byType(d['by_type']),
+    ];
+
+final adminUserEarningsProvider = FutureProvider.autoDispose
+    .family<List<AdminLedgerRow>, (String userId, AdminFinanceRange range)>(
+  (ref, key) async => parseAdminEarnings(
+    await _fetchSection(ref, ApiEndpoints.adminUserEarnings(key.$1), key.$2.query),
+  ),
 );
 
 final adminUserSpendingProvider = FutureProvider.autoDispose
-    .family<List<Map<String, dynamic>>, (String userId, AdminFinanceRange range)>(
-  (ref, key) async {
-    final dio = ref.watch(dioProvider);
-    try {
-      final res = await dio.safeGet<dynamic>(
-        ApiEndpoints.adminUserSpending(key.$1),
-        query: {'range': key.$2.query},
-      );
-      return _parseItems(res.data);
-    } catch (_) {
-      return const [];
-    }
-  },
+    .family<List<AdminLedgerRow>, (String userId, AdminFinanceRange range)>(
+  (ref, key) async => parseAdminSpending(
+    await _fetchSection(ref, ApiEndpoints.adminUserSpending(key.$1), key.$2.query),
+  ),
 );
-
-List<Map<String, dynamic>> _parseItems(dynamic body) {
-  if (body is! Map) return const [];
-  final map = asJsonMap(body);
-  final list = map['items'] ?? map['data'];
-  if (list is List) {
-    return list.whereType<Map>().map((e) => asJsonMap(e)).toList();
-  }
-  return const [];
-}
 
 class AdminUserFinanceLedgerSection extends ConsumerStatefulWidget {
   const AdminUserFinanceLedgerSection({super.key, required this.userId});
@@ -129,40 +148,31 @@ class _LedgerBlock extends StatelessWidget {
   const _LedgerBlock({required this.title, required this.async});
 
   final String title;
-  final AsyncValue<List<Map<String, dynamic>>> async;
+  final AsyncValue<List<AdminLedgerRow>> async;
 
   @override
   Widget build(BuildContext context) {
+    final fmt = NumberFormat.decimalPattern('tr');
     return async.when(
       loading: () => Text('$title…'),
-      error: (_, __) => Text('$title yüklenemedi'),
-      data: (rows) {
-        if (rows.isEmpty) {
-          return Text('$title: kayıt yok (üretim API bekleniyor)');
-        }
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
-            ...rows.take(12).map((r) {
-              final at = r['createdAt']?.toString();
-              final dt = DateTime.tryParse(at ?? '');
-              final when = dt != null
-                  ? DateFormat('dd.MM.yyyy HH:mm').format(dt.toLocal())
-                  : '—';
-              return ListTile(
-                dense: true,
-                title: Text(
-                  '${r['amount']} ${r['currency'] ?? ''} · ${r['type'] ?? ''}',
-                  style: const TextStyle(fontSize: 12),
-                ),
-                subtitle: Text(r['description']?.toString() ?? ''),
-                trailing: Text(when, style: const TextStyle(fontSize: 10)),
-              );
-            }),
-          ],
-        );
-      },
+      error: (_, __) => Text('$title yüklenemedi (yetki gerekebilir)'),
+      data: (rows) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+          for (final r in rows)
+            ListTile(
+              dense: true,
+              title: Text(r.label, style: const TextStyle(fontSize: 12)),
+              trailing: Text(
+                r.count == null
+                    ? fmt.format(r.amount)
+                    : '${fmt.format(r.amount)} · ${r.count} işlem',
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
