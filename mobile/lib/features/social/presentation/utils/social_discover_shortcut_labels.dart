@@ -1,17 +1,18 @@
-/// Sosyal sekme keşif kısayolu etiketleri — test ve acceptance sözleşmesi.
+/// Sosyal sekme üst sekmeleri — test ve acceptance sözleşmesi.
+/// İlk sekme ("Tümü") akışın kendisidir; diğerleri ilgili sayfaya gider.
 const socialDiscoverShortcutLabels = <String>[
-  'Tanış Kaynaş',
+  'Tümü',
+  'Takip',
+  'Falcılar',
   'Ünlüler',
   'Fan Club',
-  'Canlı',
-  'Sesli',
 ];
 
-/// Sosyal sekme keşif kısayolu rotaları.
+/// Sosyal sekme rotaları — "Tümü" için boş (akışta kalır).
 const socialDiscoverShortcutRoutes = <String>[
-  '/social/tanis-kaynas',
+  '',
+  '/profile/following',
+  '/canli-falcilar',
   '/celebrities-hub',
   '/fan-club-hub',
-  '/live',
-  '/voice-rooms',
 ];

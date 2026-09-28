@@ -15,8 +15,13 @@ class PsychicBookingResult {
     required this.fortuneType,
   });
 
+  /// Süre seçimi kaldırıldı; seans sabit süreyle açılır.
+  static const sessionMinutes = 10;
+
   final int jeton;
   final String fortuneType;
+
+  int get minutes => sessionMinutes;
 }
 
 final _bookingFortuneTypeProvider =
@@ -190,6 +195,18 @@ class _PsychicBookingSheet extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
+                    isStaff
+                        ? 'Ücretsiz'
+                        : '${(psychic.pricePerMinute * PsychicBookingResult.sessionMinutes).toInt()} $jetonLabel',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: AppThemeColors.accentCyan,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
                     'Falcı kabul ettiğinde seans direk başlar.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
@@ -206,7 +223,9 @@ class _PsychicBookingSheet extends ConsumerWidget {
                     onTap: () => Navigator.pop(
                       context,
                       PsychicBookingResult(
-                        jeton: (psychic.pricePerMinute * 10).toInt(),
+                        jeton: (psychic.pricePerMinute *
+                                PsychicBookingResult.sessionMinutes)
+                            .toInt(),
                         fortuneType: selectedType,
                       ),
                     ),

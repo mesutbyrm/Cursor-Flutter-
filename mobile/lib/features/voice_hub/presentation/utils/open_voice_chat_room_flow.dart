@@ -201,7 +201,7 @@ class _OpenRoomSetup {
     required this.roomName,
     this.backgroundUrl,
     this.seatCount = 9,
-    this.maxUsers = 15,
+    this.maxUsers = 150,
     this.category = kDefaultVoiceRoomCategory,
   });
 
@@ -231,7 +231,7 @@ class _OpenRoomSetupSheetState extends State<_OpenRoomSetupSheet> {
   String? _selectedBg;
   var _loadingBg = true;
   int _seatCount = 9;
-  int _maxUsers = 15;
+  int _maxUsers = 150;
   String _category = kDefaultVoiceRoomCategory;
 
   @override

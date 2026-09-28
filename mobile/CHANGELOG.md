@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.627+678 (2026-09-28) — Sosyal yeni tasarım + derleme düzeltmesi
+
+- **Sosyal sekmesi** paylaşılan tasarıma göre yenilendi: ✦ CanlıFal başlığı, bildirim zili (okunmamış noktası) ve mesaj ikonu (sayaçlı); Tümü · Takip · Falcılar · Ünlüler · Fan Club sekme çubuğu; mor "Paylaş" butonu
+- **Gönderi kartı:** beğeni / yorum / paylaşım / görüntülenme satırı görselin üzerinde; sağda Kart + Paylaş; "Bu kullanıcı ile birlikte N kişi bu fala baktı" şeridi görselin altında; açıklamasız görsellerde isim görselin üstünde
+- Üst çubukta **iki kez görünen arama butonu** kaldırıldı
+- **Derleme düzeltmesi:** 1.0.626'daki 4 analyze hatası APK üretimini engelliyordu (falcı randevu ekranı, PK ekranı)
+- **Geri alındı:** PK için eklenen 2 dakika bekleme (istek tersiydi; kural sunucu aday listesinde) ve oda maksimum kullanıcı 15 (varsayılan yine 150; koltuk 9/15 aynı)
+- Falcı randevu: süre seçimi yok, 10 dk seans ücreti ve personel için "Ücretsiz" tekrar gösteriliyor
+
 ## 1.0.624+675 (2026-09-28) — Kalan backend eksikleri bağlandı
 
 - **Şikayet et** artık çalışıyor: tüm şikayetler backend'de olmayan bir uca gidiyordu → kullanıcı / içerik sahibi `POST /api/user/report`, sesli oda `/api/chat/rooms/{id}/report`

@@ -7,7 +7,7 @@ import '../../helpers/economy_test_scope.dart';
 
 void main() {
   group('showPsychicBookingSheet', () {
-    testWidgets('returns selected duration, jeton and fortune type', (tester) async {
+    testWidgets('returns fixed 10-minute session, jeton and fortune type', (tester) async {
       const psychic = PsychicEntity(
         id: 'teller_book',
         name: 'Zeynep',
@@ -27,7 +27,6 @@ void main() {
                   result = await showPsychicBookingSheet(
                     context,
                     psychic: psychic,
-                    initialMinutes: 10,
                     initialFortuneType: 'tarot',
                   );
                 },
@@ -45,14 +44,13 @@ void main() {
       expect(find.text('Randevu Al'), findsOneWidget);
       expect(find.textContaining('Zeynep'), findsOneWidget);
 
-      await tester.tap(find.text('15 dk'));
-      await tester.pumpAndSettle();
+      expect(find.text('15 dk'), findsNothing);
       await tester.tap(find.text('Falcıya Bağlan'));
       await tester.pumpAndSettle();
 
       expect(result, isNotNull);
-      expect(result!.minutes, 15);
-      expect(result!.jeton, 150);
+      expect(result!.minutes, 10);
+      expect(result!.jeton, 100);
       expect(result!.fortuneType, 'tarot');
     });
 
