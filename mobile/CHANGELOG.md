@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.631+682 (2026-09-28) — Backend audit dokümanı + APK yenileme
+
+- **`docs/BACKEND_FLUTTER_AUDIT_2026-09-28.md`:** sesli oda, TRTC, PK, koltuk, hediye, JWT, SSE — mirror doküman ↔ Flutter karşılaştırma özeti ve düzeltme planı
+- Kod davranışı değişmedi; CI/APK yeniden tetiklendi
+
 ## 1.0.630+681 (2026-09-28) — Cloud birleşimi: trend video + sesli oda (#403/#404)
 
 - **Paket:** PR #403 (trend videolar) + PR #404 (sesli oda sahip araçları) `main` üzerinde birleştirildi
