@@ -35,7 +35,6 @@ bool _isLegacyCanlifalPath(String path) {
       path == '/api/notifications/unread' ||
       path.startsWith('/api/pk/battles') ||
       path == '/api/daily-rewards' ||
-      path == '/api/tournaments/join' ||
       path == '/api/fortune-access/consume') {
     return true;
   }
@@ -75,7 +74,6 @@ void main() {
       expect(ApiEndpoints.paymentConfig, '/api/payments/config');
       expect(ApiEndpoints.paymentMethods, '/api/payments/methods');
       expect(ApiEndpoints.paymentRequests, '/api/payments/requests');
-      expect(ApiEndpoints.paymentRequestsCancel, '/api/payments/requests');
       expect(ApiEndpoints.membershipPackages, '/api/memberships/packages');
       expect(ApiEndpoints.gamesDailyReward, '/api/games/daily-reward');
       expect(ApiEndpoints.membershipPurchase, '/api/memberships/purchase');

@@ -16,7 +16,6 @@ const _forbiddenInLib = <String>{
   '/api/fortune-access/consume',
   '/api/notifications/unread',
   '/api/social/public-stats',
-  '/api/tournaments/join',
   '/api/users/me/gifts-received',
   '/api/users/me/stats',
 };

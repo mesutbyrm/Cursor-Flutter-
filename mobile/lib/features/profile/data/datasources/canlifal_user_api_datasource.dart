@@ -90,8 +90,8 @@ class CanlifalUserApiDataSource {
     if (body is Map) {
       final map = asJsonMap(body);
       final data = map['data'];
-      final pagRaw = map['pagination'] ??
-          (data is Map ? data['pagination'] : null);
+      final pagRaw =
+          map['pagination'] ?? (data is Map ? data['pagination'] : null);
       if (pagRaw is Map) {
         final pag = asJsonMap(pagRaw);
         final totalPages = asInt(pag['totalPages']);
@@ -105,33 +105,23 @@ class CanlifalUserApiDataSource {
   }
 
   Future<void> markActivityRead(String notificationId) async {
-    final body = {'notificationIds': [notificationId]};
-    final opts = Options(contentType: Headers.jsonContentType);
-    Object? lastError;
-    for (final path in [ApiEndpoints.userActivity, ApiEndpoints.meActivity]) {
-      try {
-        await _dio.safePatch<dynamic>(path, data: body, options: opts);
-        return;
-      } catch (e) {
-        lastError = e;
-      }
-    }
-    if (lastError != null) throw ApiException.userMessage(lastError);
+    // `/api/users/me/activity` yalnız GET; okundu işareti `/api/user/activity`.
+    await _dio.safePatch<dynamic>(
+      ApiEndpoints.userActivity,
+      data: {
+        'notificationIds': [notificationId],
+      },
+      options: Options(contentType: Headers.jsonContentType),
+    );
   }
 
   Future<void> markAllActivityRead() async {
-    const body = {'markAllRead': true};
-    final opts = Options(contentType: Headers.jsonContentType);
-    Object? lastError;
-    for (final path in [ApiEndpoints.userActivity, ApiEndpoints.meActivity]) {
-      try {
-        await _dio.safePatch<dynamic>(path, data: body, options: opts);
-        return;
-      } catch (e) {
-        lastError = e;
-      }
-    }
-    if (lastError != null) throw ApiException.userMessage(lastError);
+    // `/api/users/me/activity` yalnız GET; okundu işareti `/api/user/activity`.
+    await _dio.safePatch<dynamic>(
+      ApiEndpoints.userActivity,
+      data: const {'markAllRead': true},
+      options: Options(contentType: Headers.jsonContentType),
+    );
   }
 
   List<BroadcastHistoryItemEntity> _parseBroadcastHistory(dynamic body) {
@@ -142,7 +132,8 @@ class CanlifalUserApiDataSource {
         throw ApiException(map['error'].toString());
       }
       final data = map['data'];
-      raw = map['items'] ??
+      raw =
+          map['items'] ??
           map['broadcasts'] ??
           map['history'] ??
           (data is Map ? data['items'] : null) ??
@@ -165,7 +156,8 @@ class CanlifalUserApiDataSource {
         throw ApiException(map['error'].toString());
       }
       final data = map['data'];
-      raw = map['activities'] ??
+      raw =
+          map['activities'] ??
           map['items'] ??
           map['notifications'] ??
           (data is Map

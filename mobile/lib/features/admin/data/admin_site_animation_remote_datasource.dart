@@ -76,7 +76,10 @@ class AdminSiteAnimationRemoteDataSource {
     return item;
   }
 
-  Future<AdminSiteAnimation> update(String id, Map<String, dynamic> patch) async {
+  Future<AdminSiteAnimation> update(
+    String id,
+    Map<String, dynamic> patch,
+  ) async {
     try {
       final res = await _dio.safePatch<dynamic>(
         ApiEndpoints.adminSiteAnimation(id),
@@ -122,17 +125,32 @@ class AdminSiteAnimationRemoteDataSource {
     return AdminSiteAnimationSeedCatalog.defaultEntranceIds();
   }
 
+  /// Backend `MEMBERSHIP_TIERS` + `admin`; `host`/`all` sunucuda yok.
+  static String? _backendTier(AdminSiteAnimationMembership m) => switch (m) {
+    AdminSiteAnimationMembership.normal => 'basic',
+    AdminSiteAnimationMembership.host ||
+    AdminSiteAnimationMembership.all => null,
+    _ => m.name,
+  };
+
   Future<void> saveDefaults(
     Map<AdminSiteAnimationMembership, String> defaults,
   ) async {
-    final body = {
-      for (final e in defaults.entries) e.key.name: e.value,
-    };
+    final body = {for (final e in defaults.entries) e.key.name: e.value};
     try {
-      await _dio.safePut<dynamic>(
-        ApiEndpoints.adminSiteAnimationDefaults,
-        data: body,
-      );
+      // Backend: `POST {membershipTier, category, animationId}` (seviye başına upsert).
+      for (final e in defaults.entries) {
+        final tier = _backendTier(e.key);
+        if (tier == null) continue;
+        await _dio.safePost<dynamic>(
+          ApiEndpoints.adminSiteAnimationDefaults,
+          data: {
+            'membershipTier': tier,
+            'category': 'entrance',
+            'animationId': e.value,
+          },
+        );
+      }
       return;
     } on ApiException catch (e) {
       if (e.statusCode != 404 && e.statusCode != 403) rethrow;
@@ -164,14 +182,21 @@ class AdminSiteAnimationRemoteDataSource {
   Future<void> saveExitDefaults(
     Map<AdminSiteAnimationMembership, String> defaults,
   ) async {
-    final body = {
-      for (final e in defaults.entries) e.key.name: e.value,
-    };
+    final body = {for (final e in defaults.entries) e.key.name: e.value};
     try {
-      await _dio.safePut<dynamic>(
-        ApiEndpoints.adminSiteAnimationExitDefaults,
-        data: body,
-      );
+      // Backend: `POST {membershipTier, category, animationId}` (seviye başına upsert).
+      for (final e in defaults.entries) {
+        final tier = _backendTier(e.key);
+        if (tier == null) continue;
+        await _dio.safePost<dynamic>(
+          ApiEndpoints.adminSiteAnimationExitDefaults,
+          data: {
+            'membershipTier': tier,
+            'category': 'exit',
+            'animationId': e.value,
+          },
+        );
+      }
       return;
     } on ApiException catch (e) {
       if (e.statusCode != 404 && e.statusCode != 403) rethrow;

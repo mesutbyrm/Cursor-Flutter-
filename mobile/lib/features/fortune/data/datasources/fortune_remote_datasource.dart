@@ -53,7 +53,8 @@ class FortuneRemoteDataSource {
       if (images.cupImagePath != null && images.cupImagePath!.isNotEmpty) {
         body['cupImagePath'] = images.cupImagePath;
       }
-      if (images.saucerImagePath != null && images.saucerImagePath!.isNotEmpty) {
+      if (images.saucerImagePath != null &&
+          images.saucerImagePath!.isNotEmpty) {
         body['saucerImagePath'] = images.saucerImagePath;
       }
       if (images.palmImagePath != null && images.palmImagePath!.isNotEmpty) {
@@ -218,35 +219,15 @@ class FortuneRemoteDataSource {
     return const PagedResult(items: [], hasMore: false);
   }
 
+  /// Backend'de tekil GET yok (`/api/user/fortunes/{id}` yalnız PATCH
+  /// save/pin); kayıt kullanıcının fal listesinden bulunur.
   Future<UserFortuneEntity> detail(String fortuneId) async {
-    final res = await _dio.safeGet<dynamic>(
-      ApiEndpoints.userFortuneDetail(fortuneId),
-    );
-    final row = _row(res.data);
-    if (row.id.isEmpty) {
-      throw const ApiException('Fal kaydı bulunamadı', statusCode: 404);
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.userFortunes);
+    final list = _parseList(res.data, 1, 1 << 30)?.items ?? const [];
+    for (final row in list) {
+      if (row.id == fortuneId) return row;
     }
-    return row;
-  }
-
-  Future<UserFortuneEntity> save(SaveFortuneInput input) async {
-    final res = await _dio.safePost<dynamic>(
-      ApiEndpoints.userFortunes,
-      data: {
-        'type': input.type,
-        if (input.slug != null) 'slug': input.slug,
-        if (input.question != null) 'question': input.question,
-        if (input.answer != null) 'answer': input.answer,
-        if (input.summary != null) 'summary': input.summary,
-        if (input.detail != null) 'detail': input.detail,
-        if (input.imageUrl != null) 'imageUrl': input.imageUrl,
-        if (input.fortuneText != null) 'fortuneText': input.fortuneText,
-        if (input.visualAnalysis != null) 'visualAnalysis': input.visualAnalysis,
-        if (input.luckyNumber != null) 'luckyNumber': input.luckyNumber,
-        if (input.luckyColor != null) 'luckyColor': input.luckyColor,
-      },
-    );
-    return _row(res.data);
+    throw const ApiException('Fal kaydı bulunamadı', statusCode: 404);
   }
 
   Map<String, dynamic> _unwrapMap(dynamic body) {
@@ -310,9 +291,9 @@ class FortuneRemoteDataSource {
     }
 
     final items = raw.map(_row).where((f) => f.id.isNotEmpty).toList();
-    final hasMore = total != null
-        ? page * limit < total
-        : items.length >= limit;
+    // `GET /api/user/fortunes` sayfalamaz, tüm listeyi döner; `total` yoksa
+    // ikinci sayfa aynı kayıtları tekrarlardı.
+    final hasMore = total != null && page * limit < total;
     return PagedResult(items: items, hasMore: hasMore);
   }
 

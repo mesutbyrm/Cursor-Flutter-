@@ -6,7 +6,13 @@ import '../../../core/network/dio_provider.dart';
 
 /// Ödeme talebi kimliği — API alan adları farklı olabilir.
 String resolvePaymentRequestId(Map<String, dynamic> row) {
-  for (final key in ['id', 'requestId', '_id', 'paymentRequestId', 'targetId']) {
+  for (final key in [
+    'id',
+    'requestId',
+    '_id',
+    'paymentRequestId',
+    'targetId',
+  ]) {
     final v = row[key]?.toString().trim();
     if (v != null && v.isNotEmpty) return v;
   }
@@ -94,7 +100,9 @@ String resolvePaymentRequestType(Map<String, dynamic> row) {
     return 'cfc';
   }
 
-  final title = (row['packageTitle'] ?? row['title'] ?? '').toString().toLowerCase();
+  final title = (row['packageTitle'] ?? row['title'] ?? '')
+      .toString()
+      .toLowerCase();
   if (title.contains('jeton')) return 'jeton';
   if (title.contains('cfc')) return 'cfc';
 
@@ -102,7 +110,8 @@ String resolvePaymentRequestType(Map<String, dynamic> row) {
   if (notes.contains('jeton') && !notes.contains('cfc')) return 'jeton';
   if (notes.contains('cfc') && !notes.contains('jeton')) return 'cfc';
 
-  final hasCoins = row['coins'] != null &&
+  final hasCoins =
+      row['coins'] != null &&
       int.tryParse(row['coins'].toString()) != null &&
       int.parse(row['coins'].toString()) > 0;
   if (hasCoins || row['jeton'] != null) return 'jeton';
@@ -118,7 +127,10 @@ String resolvePaymentRequestType(Map<String, dynamic> row) {
     }
   }
 
-  if (amount != null && amount > 0 && !hasCoins && _isJetonPackageId(packageId)) {
+  if (amount != null &&
+      amount > 0 &&
+      !hasCoins &&
+      _isJetonPackageId(packageId)) {
     return 'jeton';
   }
 
@@ -169,10 +181,8 @@ Future<void> reviewAdminPaymentRequest(
   }
   final isJeton = resolvedType == 'jeton';
   // Üretim PATCH yalnızca `/api/admin/cfc-payment-requests` (jeton + CFC).
-  final paths = <String>[
-    ApiEndpoints.adminCfcPaymentPatch,
-    ApiEndpoints.adminPaymentRequests,
-  ];
+  // `/api/admin/payment-requests` yalnız GET — PATCH yedeği 405 dönüyordu.
+  final paths = <String>[ApiEndpoints.adminCfcPaymentPatch];
 
   final body = <String, dynamic>{
     'requestId': id,
@@ -180,9 +190,10 @@ Future<void> reviewAdminPaymentRequest(
     'requestType': isJeton ? 'jeton' : 'cfc',
     'type': isJeton ? 'jeton' : 'cfc',
     'creditType': isJeton ? 'jeton' : 'cfc',
-    if (action == 'approve') 'reviewNote': reviewNote?.trim().isNotEmpty == true
-        ? reviewNote!.trim()
-        : 'Onaylandı',
+    if (action == 'approve')
+      'reviewNote': reviewNote?.trim().isNotEmpty == true
+          ? reviewNote!.trim()
+          : 'Onaylandı',
     if (action == 'reject' && (reviewNote?.trim().isNotEmpty ?? false))
       'reviewNote': reviewNote!.trim(),
   };

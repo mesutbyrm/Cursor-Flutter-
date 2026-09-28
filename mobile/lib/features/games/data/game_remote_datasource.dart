@@ -35,12 +35,14 @@ class GameRemoteDataSource {
         path: ApiEndpoints.gameRooms,
         data: {'gameType': gameType, ...streamFields},
       ),
-      ..._legacyCreatePayloads(game, videoStreamId: videoStreamId).map(
-        (data) => (path: ApiEndpoints.gameRooms, data: data),
-      ),
-      ..._legacyCreatePayloads(game, videoStreamId: videoStreamId).map(
-        (data) => (path: ApiEndpoints.gameRoomCreate, data: data),
-      ),
+      ..._legacyCreatePayloads(
+        game,
+        videoStreamId: videoStreamId,
+      ).map((data) => (path: ApiEndpoints.gameRooms, data: data)),
+      ..._legacyCreatePayloads(
+        game,
+        videoStreamId: videoStreamId,
+      ).map((data) => (path: ApiEndpoints.gameRoomCreate, data: data)),
     ];
 
     ApiException? lastError;
@@ -65,15 +67,15 @@ class GameRemoteDataSource {
     final gameType = _gameType(game);
     final attempts = <({String path, Map<String, dynamic> data})>[
       (path: ApiEndpoints.gameAutoMatch, data: {'gameType': gameType}),
-      ..._legacyAutoMatchPayloads(game).map(
-        (data) => (path: ApiEndpoints.gameAutoMatch, data: data),
-      ),
-      ..._legacyAutoMatchPayloads(game).map(
-        (data) => (path: ApiEndpoints.gameRoomCreate, data: data),
-      ),
-      ..._legacyAutoMatchPayloads(game).map(
-        (data) => (path: ApiEndpoints.gamePlay, data: data),
-      ),
+      ..._legacyAutoMatchPayloads(
+        game,
+      ).map((data) => (path: ApiEndpoints.gameAutoMatch, data: data)),
+      ..._legacyAutoMatchPayloads(
+        game,
+      ).map((data) => (path: ApiEndpoints.gameRoomCreate, data: data)),
+      ..._legacyAutoMatchPayloads(
+        game,
+      ).map((data) => (path: ApiEndpoints.gamePlay, data: data)),
     ];
 
     ApiException? lastError;
@@ -186,7 +188,9 @@ class GameRemoteDataSource {
     );
   }
 
-  Future<List<GameScoreItem>> fetchLeaderboard({String period = 'weekly'}) async {
+  Future<List<GameScoreItem>> fetchLeaderboard({
+    String period = 'weekly',
+  }) async {
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.gameLeaderboard,
       query: {'period': period},
@@ -202,11 +206,7 @@ class GameRemoteDataSource {
     // `POST /api/games/play` — MiniGame slug'ı; ödül CFC olarak sunucuda hesaplanır.
     await _dio.safePost<dynamic>(
       ApiEndpoints.gamePlay,
-      data: {
-        'gameSlug': gameId,
-        'score': score,
-        'result': ?metadata,
-      },
+      data: {'gameSlug': gameId, 'score': score, 'result': ?metadata},
     );
   }
 
@@ -240,8 +240,8 @@ class GameRemoteDataSource {
       throw const ApiException('Turnuva kimliği boş');
     }
     await _dio.safePost<dynamic>(
-      ApiEndpoints.tournaments,
-      data: {'action': 'join', 'tournamentId': id, 'id': id},
+      ApiEndpoints.tournamentsJoin,
+      data: {'tournamentId': id},
     );
   }
 
@@ -310,10 +310,12 @@ class GameRemoteDataSource {
   }
 
   List<GameRoomItem> _parseRooms(dynamic body) {
-    return _items(
-      body,
-      const ['rooms', 'items', 'data', 'results'],
-    ).map(GameRoomItem.fromJson).where((room) => room.id.isNotEmpty).toList();
+    return _items(body, const [
+      'rooms',
+      'items',
+      'data',
+      'results',
+    ]).map(GameRoomItem.fromJson).where((room) => room.id.isNotEmpty).toList();
   }
 
   GameRoomItem? _roomFromBody(dynamic body) {

@@ -17,10 +17,13 @@ abstract final class ApiEndpoints {
   static const authMobileTiktok = '/api/auth/mobile-tiktok';
   static const authMobileRefresh = '/api/auth/mobile-refresh';
   static const authLogout = '/api/auth/logout';
+
   /// Tüm cihazlardaki token'ları geçersiz kılar (`authentication.md`).
   static const authLogoutAll = '/api/auth/logout-all';
-  static const authMobileSendVerification = '/api/auth/mobile-send-verification';
+  static const authMobileSendVerification =
+      '/api/auth/mobile-send-verification';
   static const authMobileVerifyEmail = '/api/auth/mobile-verify-email';
+
   /// Abacus — kayıtlı cihazlar (`GET` / `DELETE ?deviceId=`).
   static const authSessions = '/api/auth/sessions';
   static const authMobileSessions = '/api/auth/mobile-sessions';
@@ -30,18 +33,22 @@ abstract final class ApiEndpoints {
   static const authForgotPassword = '/api/auth/forgot-password';
   static const authResetPassword = '/api/auth/reset-password';
   static const authChangePassword = '/api/auth/change-password';
+
   /// Abacus zip §1 — e-posta doğrulama gönder (`openapi.yaml`).
   static const authEmailSendVerification = '/api/auth/email/send-verification';
   static const authPhoneSendOtp = '/api/auth/phone/send-otp';
   static const authPhoneVerifyOtp = '/api/auth/phone/verify-otp';
+
   /// Kimlik / belge doğrulama başvurusu (`GET` / `POST`).
   static const authVerification = '/api/verification';
+
   /// PART10 — cihaz doğrulama (metot: GET vs POST doküman çelişkisi; bkz. uyumluluk raporu).
   static const authVerifyDevice = '/api/auth/verify-device';
   static const authReclaimDevice = '/api/auth/reclaim-device';
   static const mobileConfig = '/api/mobile/config';
   static const mobileHome = '/api/mobile/home';
   static String sitePage(String slug) => '/api/site-pages/$slug';
+
   /// Çocuk güvenliği — site-pages slug'ı yok; ayrı legal uç (canlifal.com).
   static const legalChildSafety = '/api/legal/child-safety';
   static const mobileFortuneMenu = '/api/mobile/fortune-menu';
@@ -59,6 +66,7 @@ abstract final class ApiEndpoints {
   static const meVipPreferences = '/api/me/vip-preferences';
   static const meVipXp = '/api/me/vip-xp';
   static const meAdminCapabilities = '/api/me/admin-capabilities';
+
   /// Kılavuz §9.2 — alınan hediyeler (eski `/api/users/me/gifts-received` yedek).
   static const userReceivedGifts = '/api/user/received-gifts';
   @Deprecated('Kılavuz §9.2: userReceivedGifts kullanın')
@@ -86,8 +94,10 @@ abstract final class ApiEndpoints {
   /// canlifal.com sosyal akış (web `/sosyal` ile aynı veri).
   static const socialPosts = '/api/social/posts';
   static const socialStories = '/api/social/stories';
+
   /// BÖLÜM 21/A6 — Tanış & Kaynaş keşif listesi.
   static const socialDiscovery = '/api/social/discovery';
+
   /// Sosyal etkileşim (like, friend_request, block, …).
   static const socialActions = '/api/social/actions';
   static const socialProfile = '/api/social/profile';
@@ -209,6 +219,7 @@ abstract final class ApiEndpoints {
   /// Oyunlar ve etkinlikler.
   static const homeGames = '/api/games';
   static const gameRooms = '/api/games/rooms';
+
   /// Üretimde oda oluşturma (çoğu sürümde `/rooms` yerine bu uç).
   static const gameRoomCreate = '/api/games/room';
   static const gamePlay = '/api/games/play';
@@ -216,9 +227,12 @@ abstract final class ApiEndpoints {
   static const gameLeaderboard = '/api/games/leaderboard';
   static const gameProfile = '/api/games/profile';
   static const tournaments = '/api/tournaments';
+  static const tournamentsJoin = '/api/tournaments/join';
   static String gameRoom(String roomId) => '/api/games/room/$roomId';
+
   /// Yeni backend: `POST /api/games/room/:id` (gövdesiz katılma).
   static String gameRoomJoin(String roomId) => '/api/games/room/$roomId';
+
   /// Eski sürüm yedeği.
 
   /// Public warmup/health kontrolü — backend canonical `/api/warmup`.
@@ -274,6 +288,7 @@ abstract final class ApiEndpoints {
   static const agencyLeaderboard = '/api/agency/leaderboard';
   static const agencyWithdrawals = '/api/agency/withdrawals';
   static const agencyTasks = '/api/agency/tasks';
+
   /// Ajans jeton kredisi cüzdanı (ledger — üretim probe).
   static const agencyWallet = '/api/agency/wallet';
   static const agencyWalletTransfer = '/api/agency/wallet/transfer';
@@ -308,7 +323,6 @@ abstract final class ApiEndpoints {
   static const feedPosts = '/api/social/posts';
 
   /// Okunmamış bildirim sayısı (yoksa liste üzerinden hesaplanır).
-  static const socialPostsAutoFortune = '/api/social/posts/auto-fortune';
   /// Tek gönderi detayı — kılavuz §9.10 `getPost`.
   static String socialPost(String postId) => '/api/social/posts/$postId';
 
@@ -352,20 +366,16 @@ abstract final class ApiEndpoints {
       '/api/chat/rooms/$roomId/presence';
 
   /// Tek kaynaklı oda durumu — katılımcılar, koltuklar, TRTC, owner.
-  static String chatRoomState(String roomId) =>
-      '/api/chat/rooms/$roomId/state';
+  static String chatRoomState(String roomId) => '/api/chat/rooms/$roomId/state';
 
   /// Oda PK + hediye kutusu senkronu (BÖLÜM 22 §6).
-  static String chatRoomSync(String roomId) =>
-      '/api/chat/rooms/$roomId/sync';
+  static String chatRoomSync(String roomId) => '/api/chat/rooms/$roomId/sync';
 
   /// Koltuk yönetimi — kılavuz §9.3 `POST` (`action`, `seatIndex`).
-  static String chatRoomSeats(String roomId) =>
-      '/api/chat/rooms/$roomId/seats';
+  static String chatRoomSeats(String roomId) => '/api/chat/rooms/$roomId/seats';
 
   /// DJ müzik durumu — `GET/POST /api/chat/rooms/{roomId}/music`.
-  static String chatRoomMusic(String roomId) =>
-      '/api/chat/rooms/$roomId/music';
+  static String chatRoomMusic(String roomId) => '/api/chat/rooms/$roomId/music';
 
   /// Şarkı isteği — `POST /api/chat/rooms/{roomId}/song-request`.
   static String chatRoomSongRequest(String roomId) =>
@@ -414,18 +424,6 @@ abstract final class ApiEndpoints {
   static String chatRoomMusicQueue(String roomId) =>
       '/api/chat/rooms/$roomId/music-queue';
 
-  static String chatRoomMusicQueueComplete(String roomId) =>
-      '${chatRoomMusicQueue(roomId)}/complete';
-
-  static String chatRoomMusicQueueAdvance(String roomId) =>
-      '${chatRoomMusicQueue(roomId)}/advance';
-
-  static String chatRoomMusicQueueItem(String roomId, String itemId) =>
-      '${chatRoomMusicQueue(roomId)}/$itemId';
-
-  static String chatRoomMusicQueueReorder(String roomId) =>
-      '${chatRoomMusicQueue(roomId)}/reorder';
-
   /// Sahiplik devri — kılavuz §9.3 `transferOwnership`.
   static String chatRoomTransferOwnership(String roomId) =>
       '/api/chat/rooms/$roomId/transfer-ownership';
@@ -440,15 +438,13 @@ abstract final class ApiEndpoints {
   static String chatRoomSpeakRequestApprove(
     String roomId,
     String targetUserId,
-  ) =>
-      '/api/chat/rooms/$roomId/speak-requests/$targetUserId/approve';
+  ) => '/api/chat/rooms/$roomId/speak-requests/$targetUserId/approve';
 
   /// Üretim yedek — kuyruktan düşürme (404 ise moderasyon akışına düşülür).
   static String chatRoomSpeakRequestReject(
     String roomId,
     String targetUserId,
-  ) =>
-      '/api/chat/rooms/$roomId/speak-requests/$targetUserId';
+  ) => '/api/chat/rooms/$roomId/speak-requests/$targetUserId';
 
   static String chatRoomMusicSettings(String roomId) =>
       '/api/chat/rooms/$roomId/music-settings';
@@ -493,7 +489,8 @@ abstract final class ApiEndpoints {
   static String chatRoomVoice(String roomId) => '/api/chat/rooms/$roomId/voice';
 
   /// Yazıyor göstergesi — `GET/POST /api/chat/rooms/{roomId}/typing`.
-  static String chatRoomTyping(String roomId) => '/api/chat/rooms/$roomId/typing';
+  static String chatRoomTyping(String roomId) =>
+      '/api/chat/rooms/$roomId/typing';
 
   /// Oda şikayet — `POST /api/chat/rooms/{id}/report` (kılavuz §9.3).
   static String chatRoomReport(String roomId) =>
@@ -583,6 +580,7 @@ abstract final class ApiEndpoints {
   static const jetonCatalog = '/api/jeton';
 
   static const membershipPackages = '/api/memberships/packages';
+
   /// CanlifalTV API doc alias (§12).
   static const membershipsCatalog = '/api/memberships';
   static const membershipPurchase = '/api/memberships/purchase';
@@ -600,7 +598,6 @@ abstract final class ApiEndpoints {
   static const paymentConfig = '/api/payments/config';
   static const paymentMethods = '/api/payments/methods';
   static const paymentRequests = '/api/payments/requests';
-  static const paymentRequestsCancel = '/api/payments/requests';
   static const adminCfcPaymentRequests = '/api/admin/cfc-payment-requests';
   static const adminCfcPaymentPatch = '/api/admin/cfc-payment-requests';
   static const adminCfcSettings = '/api/admin/cfc-settings';
@@ -615,11 +612,13 @@ abstract final class ApiEndpoints {
   static const adminMembershipTiers = '/api/admin/membership-tiers';
   static const adminMembershipFeatures = '/api/admin/membership-features';
   static const adminVoiceRoomSettings = '/api/admin/voice-room-settings';
-  static const adminVoiceRoomFinanceAudit = '/api/admin/voice-room-finance-audit';
+  static const adminVoiceRoomFinanceAudit =
+      '/api/admin/voice-room-finance-audit';
   static const platformVoiceRoomSettings = '/api/platform/voice-room-settings';
 
   /// Admin panel — kullanıcı, kredi, finans (canlifal.com web ile aynı).
   static const adminUsers = '/api/admin/users';
+  static const adminPlatformAnalytics = '/api/admin/platform-analytics';
   static const adminUsersStats = '/api/admin/users/stats';
   static const adminUsersCredits = '/api/admin/users/credits';
   static const adminUsersGrantMembership = '/api/admin/users/grant-membership';
@@ -649,6 +648,7 @@ abstract final class ApiEndpoints {
   static String adminUserRooms(String userId) =>
       '/api/admin/users/$userId/rooms';
   static String adminUserAds(String userId) => '/api/admin/users/$userId/ads';
+
   /// Kullanıcı 360 — `?section=general|activity|agency|earnings|spending|moderation|reports…`.
   static String adminUser360(String userId, String section) =>
       '/api/admin/users/$userId/360?section=$section';
@@ -660,7 +660,8 @@ abstract final class ApiEndpoints {
       adminUser360(userId, 'earnings');
   static String adminUserSpending(String userId) =>
       adminUser360(userId, 'spending');
-  static String adminUserAgency(String userId) => adminUser360(userId, 'agency');
+  static String adminUserAgency(String userId) =>
+      adminUser360(userId, 'agency');
   static String adminUserModeration(String userId) =>
       adminUser360(userId, 'moderation');
   static String adminUserReports(String userId) =>
@@ -682,13 +683,15 @@ abstract final class ApiEndpoints {
   /// Site animasyonları — admin kütüphanesi.
   static const adminSiteAnimations = '/api/admin/site-animations';
   static const adminSiteAnimationsStats = '/api/admin/site-animations/stats';
-  static const adminSiteAnimationDefaults = '/api/admin/site-animations/defaults';
+  static const adminSiteAnimationDefaults =
+      '/api/admin/site-animations/defaults';
   static const adminSiteAnimationExitDefaults =
       '/api/admin/site-animations/exit-defaults';
   static const adminSiteAnimationAssign = '/api/admin/site-animations/assign';
   static const adminSiteAnimationBulkAssign =
       '/api/admin/site-animations/bulk-assign';
-  static String adminSiteAnimation(String id) => '/api/admin/site-animations/$id';
+  static String adminSiteAnimation(String id) =>
+      '/api/admin/site-animations/$id';
   static String adminSiteAnimationUser(String userId) =>
       '/api/admin/site-animations/user/$userId';
 
@@ -705,9 +708,6 @@ abstract final class ApiEndpoints {
   static const referralInviteLink = '/api/referral/invite-link';
   static const referralSettings = '/api/referral/settings';
   static const referralValidate = '/api/referral/validate';
-
-  /// Diğer ortamlar için genel canlı listesi.
-  static const liveStreams = '/api/live';
 
   /// Tencent TRTC UserSig (POST: userId, roomId) — eski uç.
   static const trtcUserSig = '/api/trtc/usersig';
@@ -928,10 +928,7 @@ abstract final class ApiEndpoints {
       '/api/search?q=${Uri.encodeComponent(query.trim())}';
 
   /// Gelişmiş arama — kılavuz §9.13.
-  static String searchAdvanced({
-    required String query,
-    String? type,
-  }) {
+  static String searchAdvanced({required String query, String? type}) {
     final q = Uri.encodeComponent(query.trim());
     final t = type?.trim();
     if (t != null && t.isNotEmpty) {
@@ -954,17 +951,11 @@ abstract final class ApiEndpoints {
   /// Fal erişim kontrolü — OpenAPI POST `{ fortuneType }`.
   static const fortuneAccessCheck = '/api/fortune-access/check';
 
-  /// Jeton ile fal kilidi tüketimi (opsiyonel; yoksa fal POST'unda düşülür).
-  static String userFortuneDetail(String fortuneId) =>
-      '/api/user/fortunes/$fortuneId';
-
   static String userFortunePin(String fortuneId) =>
       '/api/user/fortunes/$fortuneId/pin';
 
   static String userFortuneRate(String fortuneId) =>
       '/api/user/fortunes/$fortuneId/rate';
-
-  static const tellerGifts = '/api/teller/gifts';
 
   /// Seans sonrası değerlendirme (FEATURE_INVENTORY).
   static const tellerReviews = '/api/teller/reviews';
@@ -987,6 +978,7 @@ abstract final class ApiEndpoints {
   static String userFollow(String userId) => '/api/user/$userId/follow';
 
   static String follow(String userId) => '/api/users/$userId/follow';
+
   /// Engellenen kullanıcılar — kılavuz §9.2 UserRepository.
   static const userBlocked = '/api/user/blocked';
 
@@ -1072,8 +1064,6 @@ abstract final class ApiEndpoints {
   static String shortVideoView(String id) => '/api/short-videos/$id/view';
   static String shortVideoDelete(String id) => '/api/short-videos/$id';
   static String shortVideoDuets(String id) => '/api/short-videos/$id/duets';
-  static const shortVideosLiveClip = '/api/short-videos/live-clip';
-  static const shortVideosSuggestMetadata = '/api/short-videos/suggest-metadata';
   static const shortVideosMusicRecommend = '/api/short-videos/music/recommend';
   static String shortVideoSubtitlesGenerate(String id) =>
       '/api/short-videos/$id/subtitles/generate';

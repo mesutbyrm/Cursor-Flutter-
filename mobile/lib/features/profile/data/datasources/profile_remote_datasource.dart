@@ -94,28 +94,20 @@ class ProfileRemoteDataSource {
     );
   }
 
-  Future<void> follow(String userId) async {
-    Object? lastError;
-    for (final path in [
-      ApiEndpoints.follow(userId),
-      ApiEndpoints.userFollow(userId),
-    ]) {
-      try {
-        await _dio.safePost(path);
-        return;
-      } catch (e) {
-        lastError = e;
-      }
-    }
-    throw ApiException.userMessage(lastError ?? 'Takip edilemedi');
-  }
+  Future<void> follow(String userId) => _setFollowing(userId, following: true);
 
-  Future<void> unfollow(String userId) async {
-    if (Env.useMobileAuth) {
-      await _dio.safePost(ApiEndpoints.follow(userId));
-      return;
+  Future<void> unfollow(String userId) =>
+      _setFollowing(userId, following: false);
+
+  /// `POST /api/users/{id}/follow` aç/kapa çalışır → `{isFollowing}`; ekrandaki
+  /// durum eskiyse ters işlem olmasın diye istenen duruma ulaşılana dek bir kez
+  /// daha çağrılır.
+  Future<void> _setFollowing(String userId, {required bool following}) async {
+    for (var i = 0; i < 2; i++) {
+      final res = await _dio.safePost<dynamic>(ApiEndpoints.follow(userId));
+      final now = asJsonMap(res.data)['isFollowing'];
+      if (now is! bool || now == following) return;
     }
-    await _dio.safeDelete(ApiEndpoints.follow(userId));
   }
 
   Future<UserEntity> updateMe({
@@ -129,7 +121,8 @@ class ProfileRemoteDataSource {
     String? birthTime,
     String? favoriteTeam,
   }) async {
-    final onlyPasswordChange = currentPassword != null &&
+    final onlyPasswordChange =
+        currentPassword != null &&
         newPassword != null &&
         displayName == null &&
         bio == null &&
@@ -142,10 +135,7 @@ class ProfileRemoteDataSource {
     if (currentPassword != null && newPassword != null) {
       await _dio.safePost<dynamic>(
         ApiEndpoints.authChangePassword,
-        data: {
-          'currentPassword': currentPassword,
-          'newPassword': newPassword,
-        },
+        data: {'currentPassword': currentPassword, 'newPassword': newPassword},
       );
       if (onlyPasswordChange) {
         final res = await _dio.safeGet<Map<String, dynamic>>(ApiEndpoints.me);
@@ -163,10 +153,7 @@ class ProfileRemoteDataSource {
           'displayName': displayName,
         },
         'bio': ?bio,
-        if (avatarUrl != null) ...{
-          'image': avatarUrl,
-          'avatarUrl': avatarUrl,
-        },
+        if (avatarUrl != null) ...{'image': avatarUrl, 'avatarUrl': avatarUrl},
         'username': ?username,
         if (birthDate != null && birthDate.isNotEmpty) 'birthDate': birthDate,
         if (birthTime != null && birthTime.isNotEmpty) 'birthTime': birthTime,
@@ -179,10 +166,7 @@ class ProfileRemoteDataSource {
   }
 
   Future<ProfileStatsEntity> myStats() async {
-    for (final path in [
-      ApiEndpoints.userStats,
-      ApiEndpoints.userStatistics,
-    ]) {
+    for (final path in [ApiEndpoints.userStats, ApiEndpoints.userStatistics]) {
       try {
         final res = await _dio.safeGet<Map<String, dynamic>>(path);
         return ProfileStatsEntity.fromJson(res.data ?? {});
@@ -211,10 +195,7 @@ class ProfileRemoteDataSource {
   }
 
   Future<ProfileUserStatisticsEntity> userStatistics() async {
-    for (final path in [
-      ApiEndpoints.userStatistics,
-      ApiEndpoints.userStats,
-    ]) {
+    for (final path in [ApiEndpoints.userStatistics, ApiEndpoints.userStats]) {
       try {
         final res = await _dio.safeGet<dynamic>(path);
         final body = res.data;
@@ -234,12 +215,14 @@ class ProfileRemoteDataSource {
         if (body is Map) {
           final m = asJsonMap(body);
           final data = m['data'] is Map ? asJsonMap(m['data']) : m;
-          final streak = asInt(pick(data, [
-            'dailyStreak',
-            'loginStreak',
-            'currentStreak',
-            'streak',
-          ]));
+          final streak = asInt(
+            pick(data, [
+              'dailyStreak',
+              'loginStreak',
+              'currentStreak',
+              'streak',
+            ]),
+          );
           if (streak > 0) return streak;
         }
       } catch (_) {}
@@ -268,7 +251,10 @@ class ProfileRemoteDataSource {
     final res = await _dio.safePatch<Map<String, dynamic>>(
       ApiEndpoints.userSiteProfile,
       data: {
-        if (displayName != null) ...{'name': displayName, 'displayName': displayName},
+        if (displayName != null) ...{
+          'name': displayName,
+          'displayName': displayName,
+        },
         'bio': ?bio,
         if (avatarUrl != null) ...{'image': avatarUrl, 'avatarUrl': avatarUrl},
         'phone': ?phone,
@@ -290,11 +276,13 @@ class ProfileRemoteDataSource {
       final res = await _dio.safeGet<dynamic>(ApiEndpoints.meProfileVisitors);
       final data = res.data;
       if (data is Map) {
-        final total = data['total'] ??
+        final total =
+            data['total'] ??
             data['count'] ??
             (data['data'] is Map ? (data['data'] as Map)['total'] : null);
         if (total is num) return total.toInt();
-        final list = (data['data'] as List?) ??
+        final list =
+            (data['data'] as List?) ??
             (data['visitors'] as List?) ??
             (data['items'] as List?);
         if (list != null) return list.length;
@@ -388,9 +376,14 @@ class ProfileRemoteDataSource {
           .toList();
     }
     if (body is! Map) return const [];
-    final data = body['data'] is Map ? asJsonMap(body['data']) : asJsonMap(body);
+    final data = body['data'] is Map
+        ? asJsonMap(body['data'])
+        : asJsonMap(body);
     final raw =
-        data['followers'] ?? data['following'] ?? data['users'] ?? data['items'];
+        data['followers'] ??
+        data['following'] ??
+        data['users'] ??
+        data['items'];
     if (raw is! List) return const [];
     return raw.map((e) => UserDto.fromApiMap(asJsonMap(e)).toEntity()).toList();
   }
@@ -420,10 +413,7 @@ class WalletRemoteDataSource {
     for (final path in [ApiEndpoints.me, ApiEndpoints.userCredits]) {
       try {
         final res = await _dio
-            .safeGet<Map<String, dynamic>>(
-              path,
-              forceRefresh: forceRefresh,
-            )
+            .safeGet<Map<String, dynamic>>(path, forceRefresh: forceRefresh)
             .timeout(const Duration(seconds: 18));
         final body = res.data ?? {};
         final err = body['error'];
@@ -574,11 +564,11 @@ class WalletRemoteDataSource {
   static const _paymentTimeout = Duration(seconds: 45);
 
   Options _paymentPostOptions() => Options(
-        contentType: 'application/json',
-        receiveTimeout: _paymentTimeout,
-        sendTimeout: const Duration(seconds: 25),
-        headers: const {'Accept': 'application/json'},
-      );
+    contentType: 'application/json',
+    receiveTimeout: _paymentTimeout,
+    sendTimeout: const Duration(seconds: 25),
+    headers: const {'Accept': 'application/json'},
+  );
 
   Future<Response<dynamic>> _postPaymentRequest(
     String path,
@@ -614,21 +604,6 @@ class WalletRemoteDataSource {
     }
   }
 
-  Future<void> _cancelAllMyPendingPaymentRequests() async {
-    var page = 1;
-    for (var guard = 0; guard < 20; guard++) {
-      final bundle = await myPaymentRequestsPage(page: page, limit: 50);
-      for (final row in bundle.items) {
-        if (row.status.toLowerCase() != 'pending') continue;
-        try {
-          await cancelPaymentRequest(row.id);
-        } catch (_) {}
-      }
-      if (!bundle.hasMore || bundle.items.isEmpty) break;
-      page++;
-    }
-  }
-
   bool _isPendingPaymentConflict(int code, String msg) {
     if (code != 400) return false;
     final lower = msg.toLowerCase();
@@ -638,7 +613,8 @@ class WalletRemoteDataSource {
   Future<void> submitPaymentRequest(Map<String, dynamic> rawBody) async {
     final body = normalizePaymentRequestBody(rawBody);
     final access = await _tokens.readAccess();
-    final hasJwt = access != null &&
+    final hasJwt =
+        access != null &&
         access.isNotEmpty &&
         access != TokenStorage.sessionCookieMarker;
     PaymentDebugLog.log('jwtStatus', {
@@ -650,11 +626,6 @@ class WalletRemoteDataSource {
         'Oturum bulunamadı. Çıkış yapıp tekrar giriş yapın, ardından ödemeyi deneyin.',
       );
     }
-
-    // Eski bekleyen talepler yeni bildirimi engellemesin — önce iptal et.
-    try {
-      await _cancelAllMyPendingPaymentRequests();
-    } catch (_) {}
 
     PaymentDebugLog.log('submitNormalized', {
       'requestType': body['requestType'],
@@ -682,43 +653,21 @@ class WalletRemoteDataSource {
               !data.contains('<html')) {
             msg = data;
           }
+          // Backend kullanıcı başına tek bekleyen talebe izin verir ve iptal
+          // ucu sunmaz; yönetici onayı/reddi beklenmeli.
           if (_isPendingPaymentConflict(code, msg)) {
-            await _cancelAllMyPendingPaymentRequests();
-            final retry = await _postPaymentRequest(path, body);
-            final retryCode = retry.statusCode ?? 0;
-            final retryData = retry.data;
-            if (retryCode >= 400) {
-              var retryMsg = msg;
-              if (retryData is Map) {
-                retryMsg =
-                    (retryData['error'] ?? retryData['message'] ?? retryMsg)
-                        .toString();
-              }
-              if (_isPendingPaymentConflict(retryCode, retryMsg)) {
-                throw ApiException(
-                  'Bekleyen ödeme talebi sunucuda duruyor. Admin panelinden '
-                  '"Tüm bekleyenleri kapat" ile temizleyin veya destek ile '
-                  'iletişime geçin.',
-                  statusCode: retryCode,
-                );
-              }
-              throw ApiException(retryMsg, statusCode: retryCode);
-            }
-            if (_paymentRequestAccepted(retryData, retryCode)) {
-              _triggerAdminPaymentNotification(body);
-              return;
-            }
-            if (retryCode >= 200 && retryCode < 300) {
-              _triggerAdminPaymentNotification(body);
-              return;
-            }
+            throw ApiException(
+              'Zaten bekleyen bir ödeme talebiniz var. Yönetici onayını '
+              'bekleyin veya destek ile iletişime geçin.',
+              statusCode: code,
+            );
           }
           if (code == 400 && msg.toLowerCase().contains('geçersiz miktar')) {
             final isJeton = body['requestType'] == 'jeton';
             throw ApiException(
               isJeton
                   ? 'Jeton talebi reddedildi (geçersiz miktar). Paket/jeton sayısını '
-                      'kontrol edip tekrar deneyin veya destek ile iletişime geçin.'
+                        'kontrol edip tekrar deneyin veya destek ile iletişime geçin.'
                   : 'CFC miktarı geçersiz. Minimum tutarı kontrol edip tekrar deneyin.',
               statusCode: code,
             );
@@ -807,33 +756,28 @@ class WalletRemoteDataSource {
             if (body['senderInfo'] != null) 'senderInfo': body['senderInfo'],
           },
         )
-        .catchError((Object _) => Response<dynamic>(
-              requestOptions: RequestOptions(
-                path: ApiEndpoints.adminPaymentNotifications,
-              ),
-            ));
+        .catchError(
+          (Object _) => Response<dynamic>(
+            requestOptions: RequestOptions(
+              path: ApiEndpoints.adminPaymentNotifications,
+            ),
+          ),
+        );
   }
 
-  /// Bekleyen ödeme talebini iptal — `PATCH /api/payments/requests`.
+  /// Bekleyen ödeme talebini iptal.
+  ///
+  /// Backend'de iptal ucu yok (`/api/payments/requests` yalnız GET/POST); eski
+  /// `PATCH` her seferinde 405 dönüyordu. İstek atmadan açık hata verilir.
   Future<void> cancelPaymentRequest(String requestId) async {
-    final id = requestId.trim();
-    if (id.isEmpty) {
+    if (requestId.trim().isEmpty) {
       throw const ApiException('Geçersiz talep kimliği');
     }
-    try {
-      await _dio.safePatch<dynamic>(
-        ApiEndpoints.paymentRequestsCancel,
-        data: {'requestId': id, 'action': 'cancel'},
-      );
-    } on ApiException catch (e) {
-      if (e.statusCode == 404 || e.statusCode == 405) {
-        throw ApiException(
-          'Talep iptali sunucuda desteklenmiyor. Destek ile iletişime geçin.',
-          statusCode: e.statusCode,
-        );
-      }
-      rethrow;
-    }
+    throw const ApiException(
+      'Bekleyen talep uygulamadan iptal edilemiyor. Yönetici onayını bekleyin '
+      'veya destek ile iletişime geçin.',
+      statusCode: 405,
+    );
   }
 
   Future<List<CfcPaymentRequestEntity>> myPaymentRequests() async {
@@ -867,7 +811,8 @@ class WalletRemoteDataSource {
     var hasMore = items.length >= limit;
     final body = res.data;
     if (body is Map) {
-      final pag = body['pagination'] ??
+      final pag =
+          body['pagination'] ??
           (body['data'] is Map ? asJsonMap(body['data'])['pagination'] : null);
       if (pag is Map) {
         final pm = asJsonMap(pag);
@@ -951,9 +896,7 @@ class WalletRemoteDataSource {
     if (!Env.useNextAuth) {
       return ReferralInfoEntity(shareUrl: '${Env.siteOrigin}/davet');
     }
-    final res = await _dio.safeGet<Map<String, dynamic>>(
-      ApiEndpoints.referral,
-    );
+    final res = await _dio.safeGet<Map<String, dynamic>>(ApiEndpoints.referral);
     final body = res.data ?? {};
     final err = body['error'];
     if (err != null) {
@@ -968,7 +911,8 @@ List<JetonPackageEntity> _parseJetonPackages(Map<String, dynamic> body) {
   final out = <JetonPackageEntity>[];
   var i = 0;
   for (final m in raw) {
-    final id = pick(m, ['id', 'sku', 'key', 'packageId', 'slug'])?.toString() ??
+    final id =
+        pick(m, ['id', 'sku', 'key', 'packageId', 'slug'])?.toString() ??
         'pkg_$i';
     final coins = asInt(
       pick(m, [
@@ -997,13 +941,20 @@ List<JetonPackageEntity> _parseJetonPackages(Map<String, dynamic> body) {
         'priceTl',
       ]),
     );
-    if (coins <= 0 && priceTry == null && pick(m, ['priceLabel', 'fiyatMetni']) == null) {
+    if (coins <= 0 &&
+        priceTry == null &&
+        pick(m, ['priceLabel', 'fiyatMetni']) == null) {
       i++;
       continue;
     }
-    final title = pick(m, ['title', 'name', 'label', 'baslik', 'description'])
-            ?.toString()
-            .trim() ??
+    final title =
+        pick(m, [
+          'title',
+          'name',
+          'label',
+          'baslik',
+          'description',
+        ])?.toString().trim() ??
         (coins > 0 ? '$coins jeton' : 'Paket');
     final priceLabel = pick(m, [
       'priceLabel',
@@ -1082,10 +1033,18 @@ ReferralInfoEntity _parseReferral(Map<String, dynamic> body) {
     'referral',
     'davetKodu',
   ])?.toString();
-  final headline = pick(body, ['headline', 'title', 'message', 'aciklama'])
-      ?.toString();
-  final rewardHint =
-      pick(body, ['reward', 'rewardHint', 'odul', 'bonusText'])?.toString();
+  final headline = pick(body, [
+    'headline',
+    'title',
+    'message',
+    'aciklama',
+  ])?.toString();
+  final rewardHint = pick(body, [
+    'reward',
+    'rewardHint',
+    'odul',
+    'bonusText',
+  ])?.toString();
   final invited = asInt(
     pick(body, [
       'invitedCount',

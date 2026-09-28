@@ -14,10 +14,11 @@ class PaymentRequestsNotifier
   Future<List<CfcPaymentRequestEntity>> build() async {
     _page = 1;
     _end = false;
-    final bundle =
-        await ref.read(walletRepositoryProvider).myPaymentRequestsPage(page: 1);
+    final bundle = await ref
+        .read(walletRepositoryProvider)
+        .myPaymentRequestsPage(page: 1);
     _end = !bundle.hasMore;
-    return _cancelExpiredAndMaybeReload(bundle.items);
+    return bundle.items;
   }
 
   Future<void> refresh() async {
@@ -25,10 +26,11 @@ class PaymentRequestsNotifier
     state = await AsyncValue.guard(() async {
       _page = 1;
       _end = false;
-      final bundle =
-          await ref.read(walletRepositoryProvider).myPaymentRequestsPage(page: 1);
+      final bundle = await ref
+          .read(walletRepositoryProvider)
+          .myPaymentRequestsPage(page: 1);
       _end = !bundle.hasMore;
-      return _cancelExpiredAndMaybeReload(bundle.items);
+      return bundle.items;
     });
   }
 
@@ -55,83 +57,26 @@ class PaymentRequestsNotifier
 
   bool get hasMore => !_end;
 
-  Future<List<CfcPaymentRequestEntity>> _cancelExpiredAndMaybeReload(
-    List<CfcPaymentRequestEntity> items,
-  ) async {
-    final expired = items.where((r) => r.shouldAutoCancel).toList();
-    if (expired.isEmpty) return items;
-    final repo = ref.read(walletRepositoryProvider);
-    for (final r in expired) {
-      try {
-        await repo.cancelPaymentRequest(r.id);
-      } catch (_) {}
-    }
-    try {
-      await ref.read(notificationsRepositoryProvider).clearPaymentNotifications();
-    } catch (_) {}
-    final bundle = await repo.myPaymentRequestsPage(page: 1);
-    _page = 1;
-    _end = !bundle.hasMore;
-    return bundle.items;
-  }
-
-  Future<int> cancelExpiredPending() async {
-    final cur = state.valueOrNull ?? const <CfcPaymentRequestEntity>[];
-    final expired = cur.where((r) => r.shouldAutoCancel).toList();
-    if (expired.isEmpty) return 0;
-    final repo = ref.read(walletRepositoryProvider);
-    var cancelled = 0;
-    for (final r in expired) {
-      try {
-        await repo.cancelPaymentRequest(r.id);
-        cancelled++;
-      } catch (_) {}
-    }
-    if (cancelled > 0) {
-      try {
-        await ref.read(notificationsRepositoryProvider).clearPaymentNotifications();
-      } catch (_) {}
-      await refresh();
-    }
-    return cancelled;
-  }
+  // Backend'de ödeme talebi iptal ucu yok (`/api/payments/requests` yalnız
+  // GET/POST). Toplu/otomatik iptal ağ isteği atmadan 0 döner; talebi
+  // yönetici onaylar ya da reddeder.
+  Future<int> cancelExpiredPending() async => 0;
 
   Future<void> cancelPending(String requestId) async {
     await ref.read(walletRepositoryProvider).cancelPaymentRequest(requestId);
     try {
-      await ref.read(notificationsRepositoryProvider).clearPaymentNotifications();
+      await ref
+          .read(notificationsRepositoryProvider)
+          .clearPaymentNotifications();
     } catch (_) {}
     await refresh();
   }
 
-  /// Tüm bekleyen talepleri iptal eder — sunucudan sayfalı çeker (önbellek boş olabilir).
-  Future<int> cancelAllPending() async {
-    final repo = ref.read(walletRepositoryProvider);
-    var page = 1;
-    var cancelled = 0;
-    while (page <= 20) {
-      final bundle = await repo.myPaymentRequestsPage(page: page);
-      final pending = bundle.items
-          .where((r) => r.status.toLowerCase() == 'pending')
-          .toList();
-      for (final r in pending) {
-        try {
-          await repo.cancelPaymentRequest(r.id);
-          cancelled++;
-        } catch (_) {}
-      }
-      if (!bundle.hasMore || bundle.items.isEmpty) break;
-      page++;
-    }
-    try {
-      await ref.read(notificationsRepositoryProvider).clearPaymentNotifications();
-    } catch (_) {}
-    await refresh();
-    return cancelled;
-  }
+  Future<int> cancelAllPending() async => 0;
 }
 
 final paymentRequestsNotifierProvider =
-    AsyncNotifierProvider<PaymentRequestsNotifier, List<CfcPaymentRequestEntity>>(
-  PaymentRequestsNotifier.new,
-);
+    AsyncNotifierProvider<
+      PaymentRequestsNotifier,
+      List<CfcPaymentRequestEntity>
+    >(PaymentRequestsNotifier.new);

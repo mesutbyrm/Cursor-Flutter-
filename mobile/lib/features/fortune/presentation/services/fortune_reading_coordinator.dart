@@ -62,9 +62,9 @@ class FortuneReadingCoordinator {
     FortuneAccessGrant? accessGrant;
     if (authed != null) {
       unawaited(
-        ref.read(fortuneAccessRemoteProvider).checkAccess(
-              fortuneType: type.slug,
-            ),
+        ref
+            .read(fortuneAccessRemoteProvider)
+            .checkAccess(fortuneType: type.slug),
       );
       accessGrant = await FortuneAccessGate.request(
         context: context,
@@ -74,25 +74,19 @@ class FortuneReadingCoordinator {
       );
       if (!context.mounted) return null;
       if (accessGrant == null &&
-          ref.read(fortuneAccessServiceProvider).isGateRequired(
-                type,
-                isAuthenticated: true,
-              )) {
+          ref
+              .read(fortuneAccessServiceProvider)
+              .isGateRequired(type, isAuthenticated: true)) {
         return null;
       }
       if (accessGrant != null) {
         try {
-          await ref.read(fortuneAccessServiceProvider).consumeGrant(
-                type: type,
-                grant: accessGrant,
-              );
+          await ref
+              .read(fortuneAccessServiceProvider)
+              .consumeGrant(type: type, grant: accessGrant);
         } catch (e) {
           if (context.mounted) {
-            showJetonAwareError(
-              context,
-              ApiException.userMessage(e),
-              ref: ref,
-            );
+            showJetonAwareError(context, ApiException.userMessage(e), ref: ref);
           }
           return null;
         }
@@ -101,8 +95,8 @@ class FortuneReadingCoordinator {
     if (!context.mounted) return null;
 
     final paidWithJeton = accessGrant?.method == FortuneAccessMethod.jeton;
-    final skipSecondAd = accessGrant != null &&
-        accessGrant.method != FortuneAccessMethod.jeton;
+    final skipSecondAd =
+        accessGrant != null && accessGrant.method != FortuneAccessMethod.jeton;
     if (!skipSecondAd &&
         !await FortuneFullscreenAdGate.showBeforeFortune(
           context: context,
@@ -135,7 +129,9 @@ class FortuneReadingCoordinator {
       if (resolvedBirth == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Doğum tarihi ve saati gerekli — lütfen profilinize ekleyin'),
+            content: Text(
+              'Doğum tarihi ve saati gerekli — lütfen profilinize ekleyin',
+            ),
           ),
         );
         return null;
@@ -164,7 +160,6 @@ class FortuneReadingCoordinator {
     }
 
     FortuneReadingResult? result;
-    var usedRemote = false;
 
     try {
       FortuneCloudImageInput? cloudImages;
@@ -203,7 +198,6 @@ class FortuneReadingCoordinator {
             );
             if (streamedData != null && streamedData.text.trim().isNotEmpty) {
               streamed = true;
-              usedRemote = true;
               result = _service.enrichFromApiText(
                 type: type,
                 text: streamedData.text,
@@ -217,7 +211,9 @@ class FortuneReadingCoordinator {
         }
         if (loadingCancelled) return null;
         if (!streamed) {
-          final remote = await ref.read(fortuneRemoteProvider).readFortune(
+          final remote = await ref
+              .read(fortuneRemoteProvider)
+              .readFortune(
                 type: type,
                 userInput: userInput,
                 yesNoChoice: resolvedYesNo,
@@ -227,7 +223,6 @@ class FortuneReadingCoordinator {
                 paymentMethod: paymentMethod,
                 jetonCost: jetonCost,
               );
-          usedRemote = true;
           result = _service.enrichFromApiText(
             type: type,
             text: remote.detail,
@@ -267,23 +262,21 @@ class FortuneReadingCoordinator {
       if (needsPurchase) {
         if (context.mounted) {
           if (isInsufficientJetonMessage(msg)) {
-            await showInsufficientJetonDialog(
-              context,
-              message: msg,
-              ref: ref,
-            );
+            await showInsufficientJetonDialog(context, message: msg, ref: ref);
           } else {
             await _showPurchasePrompt(context, msg);
           }
         }
         return null;
       }
-      result = _service.generate(
-        type,
-        userInput: userInput,
-        yesNoChoice: resolvedYesNo,
-        imageHint: imageHint,
-      ).copyWith(isLocalFallback: true);
+      result = _service
+          .generate(
+            type,
+            userInput: userInput,
+            yesNoChoice: resolvedYesNo,
+            imageHint: imageHint,
+          )
+          .copyWith(isLocalFallback: true);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -301,32 +294,11 @@ class FortuneReadingCoordinator {
 
     var finalResult = result;
     if (authed != null) {
-      try {
-        final saved = finalResult.recordId != null && usedRemote
-            ? null
-            : await ref.read(fortuneRepositoryProvider).save(
-                  SaveFortuneInput(
-                    type: type.title,
-                    slug: type.slug,
-                    question: userInput.trim().isEmpty ? null : userInput.trim(),
-                    summary: finalResult.summary,
-                    detail: finalResult.detail,
-                    answer: finalResult.summary,
-                    imageUrl: finalResult.imageUrl,
-                    fortuneText: finalResult.fullText,
-                    visualAnalysis: finalResult.visualAnalysis,
-                    luckyNumber: finalResult.luckyNumber,
-                    luckyColor: finalResult.luckyColor,
-                  ),
-                );
-        if (saved != null) {
-          finalResult = finalResult.copyWith(recordId: saved.id);
-        }
-        ref.invalidate(fortuneHistoryProvider);
-        unawaited(_saveLastFortune(ref, type));
-      } catch (_) {
-        // Yerel sonuç yine gösterilir.
-      }
+      // Canlı yorum uçları (`/api/fortunes/<tür>`) kaydı sunucuda oluşturur;
+      // backend'de ayrı "fal kaydet" POST'u yok (`/api/user/fortunes` yalnız
+      // GET). Yerel yedek yorumlar geçmişe yazılmaz.
+      ref.invalidate(fortuneHistoryProvider);
+      unawaited(_saveLastFortune(ref, type));
 
       // Backend auto-fortune (web parity) — FortuneShareHandler.
       unawaited(
@@ -340,7 +312,10 @@ class FortuneReadingCoordinator {
     if (!context.mounted) return null;
     if (stayOnPage) return finalResult;
     if (replaceCurrentRoute) {
-      context.pushReplacement('/fortune/${type.slug}/result', extra: finalResult);
+      context.pushReplacement(
+        '/fortune/${type.slug}/result',
+        extra: finalResult,
+      );
     } else {
       context.push('/fortune/${type.slug}/result', extra: finalResult);
     }
@@ -362,7 +337,8 @@ class FortuneReadingCoordinator {
     WidgetRef ref,
     FortuneTypeEntity type,
   ) async {
-    final needsBirth = type.kind == FortuneSessionKind.zodiacWheel ||
+    final needsBirth =
+        type.kind == FortuneSessionKind.zodiacWheel ||
         type.kind == FortuneSessionKind.numberInput ||
         type.slug == 'yildiz-haritasi' ||
         type.slug == 'burc-yorumu' ||
@@ -376,8 +352,12 @@ class FortuneReadingCoordinator {
     }
   }
 
-  static Future<String?> _resolveBirthTime(WidgetRef ref, FortuneTypeEntity type) async {
-    final needsBirth = type.kind == FortuneSessionKind.zodiacWheel ||
+  static Future<String?> _resolveBirthTime(
+    WidgetRef ref,
+    FortuneTypeEntity type,
+  ) async {
+    final needsBirth =
+        type.kind == FortuneSessionKind.zodiacWheel ||
         type.kind == FortuneSessionKind.numberInput ||
         type.slug == 'yildiz-haritasi' ||
         type.slug == 'burc-yorumu' ||
@@ -404,7 +384,9 @@ class FortuneReadingCoordinator {
     int? jetonCost,
     required bool Function() cancelled,
   }) async {
-    final session = ref.read(fortuneRemoteProvider).openStreamSession(
+    final session = ref
+        .read(fortuneRemoteProvider)
+        .openStreamSession(
           type: type,
           userInput: userInput,
           yesNoChoice: yesNoChoice,
@@ -524,10 +506,7 @@ class FortuneReadingCoordinator {
       );
     }
     final palmPath = await uploader.uploadImageFile(File(local.palmPath!));
-    return FortuneCloudImageInput(
-      palmImagePath: palmPath,
-      hand: local.hand,
-    );
+    return FortuneCloudImageInput(palmImagePath: palmPath, hand: local.hand);
   }
 
   static Future<void> _showPurchasePrompt(

@@ -18,10 +18,15 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
 
   bool _isLocalMusicOutputActive() {
     if (_roomKey.isEmpty) return false;
-    final playerActive =
-        ref.read(roomMusicServiceProvider).player.playback.value.playing;
-    final videoActive =
-        ref.read(roomVideoControllerProvider(_roomKey)).hasActiveVideo;
+    final playerActive = ref
+        .read(roomMusicServiceProvider)
+        .player
+        .playback
+        .value
+        .playing;
+    final videoActive = ref
+        .read(roomVideoControllerProvider(_roomKey))
+        .hasActiveVideo;
     return playerActive || videoActive;
   }
 
@@ -39,10 +44,7 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
     if (vid.isEmpty || _roomKey.isEmpty) return null;
     try {
       return await ref
-          .read(resolveStreamUseCaseProvider)(
-            roomId: _roomKey,
-            videoId: vid,
-          )
+          .read(resolveStreamUseCaseProvider)(roomId: _roomKey, videoId: vid)
           .timeout(const Duration(seconds: 12));
     } catch (_) {
       return null;
@@ -152,10 +154,9 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
       return 'Bu işlemi gerçekleştirme yetkiniz bulunmamaktadır.';
     }
     try {
-      await ref.read(chatRoomRemoteProvider).skipMusicQueue(
-        roomKey: _roomKey,
-        alternateKey: _musicAlternateKey,
-      );
+      await ref
+          .read(chatRoomRemoteProvider)
+          .skipMusicQueue(roomKey: _roomKey, alternateKey: _musicAlternateKey);
       await refresh();
       return null;
     } catch (e) {
@@ -175,24 +176,6 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
       final dj = state.dj.copyWith(playing: true);
       final applied = await _applyDjPlayback(dj);
       state = state.copyWith(dj: applied);
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
-    }
-  }
-
-  Future<String?> reorderMusicQueue(List<String> orderedItemIds) async {
-    if (!_canControlMusic()) {
-      return 'Bu işlemi gerçekleştirme yetkiniz bulunmamaktadır.';
-    }
-    if (orderedItemIds.isEmpty) return null;
-    try {
-      await ref.read(chatRoomRemoteProvider).reorderMusicQueue(
-            roomKey: _roomKey,
-            alternateKey: _musicAlternateKey,
-            orderedItemIds: orderedItemIds,
-          );
-      await refresh(includeDj: true);
       return null;
     } catch (e) {
       return ApiException.userMessage(e);
@@ -219,10 +202,9 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
       return 'Müziği yalnızca oda sahibi, admin veya şarkıyı isteyen durdurabilir.';
     }
     try {
-      final result = await ref.read(chatRoomRemoteProvider).clearMusicQueue(
-        roomKey: _roomKey,
-        alternateKey: _musicAlternateKey,
-      );
+      final result = await ref
+          .read(chatRoomRemoteProvider)
+          .clearMusicQueue(roomKey: _roomKey, alternateKey: _musicAlternateKey);
       if (result.autoAdvanced) {
         await refresh();
         return null;
@@ -247,10 +229,9 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
     }
 
     try {
-      final result = await ref.read(chatRoomRemoteProvider).clearMusicQueue(
-        roomKey: _roomKey,
-        alternateKey: _musicAlternateKey,
-      );
+      final result = await ref
+          .read(chatRoomRemoteProvider)
+          .clearMusicQueue(roomKey: _roomKey, alternateKey: _musicAlternateKey);
       if (result.autoAdvanced) {
         await refresh();
         ref.read(voiceRoomMusicSessionProvider.notifier).dismissAfterClose();
@@ -296,21 +277,19 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
   Future<String?> addRoomDj(String targetUserId) async {
     try {
       final label = _djChatLabel(targetUserId);
-      final ids = await ref.read(chatRoomRemoteProvider).addRoomDj(
+      final ids = await ref
+          .read(chatRoomRemoteProvider)
+          .addRoomDj(
             roomKey: _roomKey,
             alternateKey: _musicAlternateKey,
             targetUserId: targetUserId,
             targetLabel: label,
           );
-      final enriched = _enrichDjUsers(
-        state.dj,
-        state.presence,
-      ).copyWith(
+      final enriched = _enrichDjUsers(state.dj, state.presence).copyWith(
         djUsers: ids
             .map(
-              (id) => state.dj.djUsers
-                      .where((u) => u.id == id)
-                      .firstOrNull ??
+              (id) =>
+                  state.dj.djUsers.where((u) => u.id == id).firstOrNull ??
                   ChatRoomUserRef(
                     id: id,
                     name: _djChatLabel(id) ?? 'DJ',
@@ -331,7 +310,9 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
   Future<String?> removeRoomDj(String targetUserId) async {
     try {
       final label = _djChatLabel(targetUserId);
-      await ref.read(chatRoomRemoteProvider).removeRoomDj(
+      await ref
+          .read(chatRoomRemoteProvider)
+          .removeRoomDj(
             roomKey: _roomKey,
             alternateKey: _musicAlternateKey,
             targetUserId: targetUserId,
@@ -347,7 +328,9 @@ extension VoiceRoomMusicControls on VoiceRoomLiveController {
 
   Future<String?> setActiveDj(String? targetUserId) async {
     try {
-      await ref.read(chatRoomRemoteProvider).setActiveDj(
+      await ref
+          .read(chatRoomRemoteProvider)
+          .setActiveDj(
             roomKey: _roomKey,
             alternateKey: _musicAlternateKey,
             userId: targetUserId,

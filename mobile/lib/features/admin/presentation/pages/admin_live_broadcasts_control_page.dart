@@ -42,15 +42,20 @@ class _AdminLiveBroadcastsControlPageState
     ref.invalidate(adminFlaggedBroadcastsProvider);
   }
 
-  Future<void> _handleBroadcastAction(
-    String broadcastId,
-    String action,
-  ) async {
+  Future<void> _handleBroadcastAction(String broadcastId, String action) async {
     try {
+      // Mobil JWT ile yalnız sonlandırma var: admin/yönetici için
+      // `PATCH /api/video-streams/{id}` `{status: ended}`. Uyarı/askıya alma
+      // uçları backend'de yok (`/api/live/{id}/admin-action` yoktu).
+      if (action != 'terminate') {
+        throw const ApiException(
+          'Bu işlem yalnız web yönetim panelinde yapılabilir.',
+        );
+      }
       final dio = ref.read(dioProvider);
-      await dio.safePost<dynamic>(
-        '${ApiEndpoints.liveStreams}/$broadcastId/admin-action',
-        data: {'action': action},
+      await dio.safePatch<dynamic>(
+        ApiEndpoints.videoStream(broadcastId),
+        data: const {'status': 'ended'},
       );
       _refresh();
       if (mounted) {
@@ -60,9 +65,9 @@ class _AdminLiveBroadcastsControlPageState
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(ApiException.userMessage(e))));
       }
     }
   }
@@ -242,17 +247,13 @@ class _ActiveBroadcastsTab extends StatelessWidget {
             itemCount: broadcasts.length,
             itemBuilder: (context, i) {
               final broadcast = broadcasts[i];
-              return _BroadcastCard(
-                broadcast: broadcast,
-                onAction: onAction,
-              );
+              return _BroadcastCard(broadcast: broadcast, onAction: onAction);
             },
           ),
         );
       },
-      loading: () => const Center(
-        child: CircularProgressIndicator(strokeWidth: 2),
-      ),
+      loading: () =>
+          const Center(child: CircularProgressIndicator(strokeWidth: 2)),
       error: (e, _) => Center(
         child: DiscoverEmptyState(
           icon: Icons.error_outline_rounded,
@@ -305,9 +306,8 @@ class _FlaggedBroadcastsTab extends StatelessWidget {
           ),
         );
       },
-      loading: () => const Center(
-        child: CircularProgressIndicator(strokeWidth: 2),
-      ),
+      loading: () =>
+          const Center(child: CircularProgressIndicator(strokeWidth: 2)),
       error: (e, _) => Center(
         child: DiscoverEmptyState(
           icon: Icons.error_outline_rounded,
@@ -350,9 +350,7 @@ class _BroadcastCard extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: context.colors.surfaceContainer,
-        border: Border.all(
-          color: borderColor.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: borderColor.withValues(alpha: 0.3)),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
@@ -360,11 +358,7 @@ class _BroadcastCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.live_tv_rounded,
-                color: borderColor,
-                size: 18,
-              ),
+              Icon(Icons.live_tv_rounded, color: borderColor, size: 18),
               const SizedBox(width: 8),
               Expanded(
                 child: Column(
@@ -424,10 +418,7 @@ class _BroadcastCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               'Neden: $reason',
-              style: TextStyle(
-                fontSize: 10,
-                color: AppThemeColors.liveRed,
-              ),
+              style: TextStyle(fontSize: 10, color: AppThemeColors.liveRed),
             ),
           ],
           const SizedBox(height: 10),
@@ -449,7 +440,10 @@ class _BroadcastCard extends StatelessWidget {
                     onPressed: broadcastId != null
                         ? () => onAction(broadcastId, 'clear_flag')
                         : null,
-                    label: const Text('Temizle', style: TextStyle(fontSize: 12)),
+                    label: const Text(
+                      'Temizle',
+                      style: TextStyle(fontSize: 12),
+                    ),
                     icon: const Icon(Icons.done_rounded, size: 16),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppThemeColors.accentCyan,
@@ -465,7 +459,10 @@ class _BroadcastCard extends StatelessWidget {
                   onPressed: broadcastId != null
                       ? () => onAction(broadcastId, 'suspend')
                       : null,
-                  label: const Text('Askıya Al', style: TextStyle(fontSize: 12)),
+                  label: const Text(
+                    'Askıya Al',
+                    style: TextStyle(fontSize: 12),
+                  ),
                   icon: const Icon(Icons.pause_rounded, size: 16),
                 ),
               ),
@@ -475,7 +472,10 @@ class _BroadcastCard extends StatelessWidget {
                   onPressed: broadcastId != null
                       ? () => onAction(broadcastId, 'terminate')
                       : null,
-                  label: const Text('Sonlandır', style: TextStyle(fontSize: 12)),
+                  label: const Text(
+                    'Sonlandır',
+                    style: TextStyle(fontSize: 12),
+                  ),
                   icon: const Icon(Icons.stop_rounded, size: 16),
                   style: FilledButton.styleFrom(
                     backgroundColor: AppThemeColors.liveRed,

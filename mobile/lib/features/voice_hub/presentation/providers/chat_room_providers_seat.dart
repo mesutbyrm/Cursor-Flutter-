@@ -201,14 +201,8 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
       return VoiceRoomSeatPriority.tierFounder;
     }
 
-    if (StaffRoles.isSiteAdminUser(
-          role: user.role,
-          username: user.username,
-        ) ||
-        StaffRoles.isFounderUser(
-          role: user.role,
-          username: user.username,
-        )) {
+    if (StaffRoles.isSiteAdminUser(role: user.role, username: user.username) ||
+        StaffRoles.isFounderUser(role: user.role, username: user.username)) {
       return VoiceRoomSeatPriority.tierAdmin;
     }
 
@@ -305,10 +299,9 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
 
   Future<String?> requestSpeak() async {
     try {
-      await ref.read(chatRoomRemoteProvider).requestSpeak(
-            _presenceApiKey,
-            alternateKey: _presenceAlternateKey,
-          );
+      await ref
+          .read(chatRoomRemoteProvider)
+          .requestSpeak(_presenceApiKey, alternateKey: _presenceAlternateKey);
       ref.read(voiceRoomUiProvider.notifier).setRequestSpeakPending(true);
       return null;
     } catch (e) {
@@ -322,7 +315,9 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
 
   Future<String?> cancelSpeakRequest() async {
     try {
-      await ref.read(chatRoomRemoteProvider).cancelSpeakRequest(
+      await ref
+          .read(chatRoomRemoteProvider)
+          .cancelSpeakRequest(
             _presenceApiKey,
             alternateKey: _presenceAlternateKey,
           );
@@ -335,7 +330,9 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
 
   Future<List<String>> fetchSpeakRequests() async {
     try {
-      return await ref.read(chatRoomRemoteProvider).fetchSpeakRequests(
+      return await ref
+          .read(chatRoomRemoteProvider)
+          .fetchSpeakRequests(
             _presenceApiKey,
             alternateKey: _presenceAlternateKey,
           );
@@ -379,7 +376,9 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
 
   Future<String?> rejectSpeakRequest(String userId) async {
     try {
-      await ref.read(chatRoomRemoteProvider).rejectSpeakRequest(
+      await ref
+          .read(chatRoomRemoteProvider)
+          .rejectSpeakRequest(
             _presenceApiKey,
             userId,
             alternateKey: _presenceAlternateKey,
@@ -395,7 +394,9 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     String? reason,
   }) async {
     try {
-      await ref.read(chatRoomRemoteProvider).banUser(
+      await ref
+          .read(chatRoomRemoteProvider)
+          .banUser(
             roomKey: _presenceApiKey,
             alternateKey: _presenceAlternateKey,
             userId: userId,
@@ -530,7 +531,9 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
             currentSeat != seatIndex &&
             currentSeat >= 0) {
           VoiceEventLog.seatTake(roomId: _roomKey, seatIndex: seatIndex);
-          await ref.read(chatRoomRemoteProvider).swapSeat(
+          await ref
+              .read(chatRoomRemoteProvider)
+              .swapSeat(
                 roomKey: _roomKey,
                 alternateKey: _musicAlternateKey,
                 seatIndex: seatIndex,
@@ -566,7 +569,9 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
 
   Future<String?> lockSeat({required int seatIndex}) async {
     try {
-      await ref.read(chatRoomRemoteProvider).lockSeat(
+      await ref
+          .read(chatRoomRemoteProvider)
+          .lockSeat(
             roomKey: _roomKey,
             alternateKey: _musicAlternateKey,
             seatIndex: seatIndex,
@@ -580,7 +585,9 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
 
   Future<String?> unlockSeat({required int seatIndex}) async {
     try {
-      await ref.read(chatRoomRemoteProvider).unlockSeat(
+      await ref
+          .read(chatRoomRemoteProvider)
+          .unlockSeat(
             roomKey: _roomKey,
             alternateKey: _musicAlternateKey,
             seatIndex: seatIndex,
@@ -592,18 +599,17 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     }
   }
 
+  /// Koltuktaki kullanıcıyı indirir — `PATCH /seats {targetUserId, seatIndex: -1}`.
   Future<String?> kickFromSeat({required int seatIndex}) async {
-    try {
-      await ref.read(chatRoomRemoteProvider).kickFromSeat(
-            roomKey: _roomKey,
-            alternateKey: _musicAlternateKey,
-            seatIndex: seatIndex,
-          );
-      await _refreshSeatsFromBackend();
-      return null;
-    } catch (e) {
-      return ApiException.userMessage(e);
+    String? occupantId;
+    for (final p in _presenceCopy()) {
+      if (p.seatIndex == seatIndex) {
+        occupantId = p.id;
+        break;
+      }
     }
+    if (occupantId == null || occupantId.isEmpty) return 'Koltuk zaten boş.';
+    return clearUserSeat(userId: occupantId);
   }
 
   Future<String?> clearUserSeat({required String userId}) async {
@@ -633,7 +639,9 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     _registerPendingSeatLeave(userId);
     try {
       VoiceEventLog.seatLeave(roomId: _roomKey);
-      await ref.read(chatRoomRemoteProvider).clearSeat(
+      await ref
+          .read(chatRoomRemoteProvider)
+          .clearSeat(
             roomKey: _roomKey,
             alternateKey: _musicAlternateKey,
             userId: userId,
@@ -685,10 +693,9 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     final err = await assignSeat(seatIndex: seatIndex, userId: userId);
     if (err != null) return;
     try {
-      await ref.read(chatRoomRemoteProvider).unmuteUser(
-            roomKey: _roomKey,
-            userId: userId,
-          );
+      await ref
+          .read(chatRoomRemoteProvider)
+          .unmuteUser(roomKey: _roomKey, userId: userId);
     } catch (_) {}
   }
 }

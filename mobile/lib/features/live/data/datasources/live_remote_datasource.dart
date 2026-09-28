@@ -20,7 +20,8 @@ class LiveRemoteDataSource {
 
   final Dio _dio;
 
-  LiveFieldApiRemoteDataSource get _liveField => LiveFieldApiRemoteDataSource(_dio);
+  LiveFieldApiRemoteDataSource get _liveField =>
+      LiveFieldApiRemoteDataSource(_dio);
 
   static const int _pageSize = 30;
 
@@ -47,16 +48,10 @@ class LiveRemoteDataSource {
       'page': '$page',
       if (category != null && category.isNotEmpty) 'category': category,
     };
-    if (Env.useMobileAuth) {
-      final res = await _dio.safeGet<dynamic>(
-        ApiEndpoints.videoStreams,
-        query: query,
-      );
-      return _parseStreamList(res.data);
-    }
+    // `/api/live` backend'de yok; web oturumunda da `/api/video-streams`.
     final res = await _dio.safeGet<dynamic>(
-      ApiEndpoints.liveStreams,
-      query: {'page': page, 'limit': 30},
+      ApiEndpoints.videoStreams,
+      query: query,
     );
     return _parseStreamList(res.data);
   }
@@ -126,10 +121,7 @@ class LiveRemoteDataSource {
     final seen = <String>{};
     for (final raw in list) {
       final m = asJsonMap(raw);
-      final id = (m['streamId'] ??
-              m['targetRoomId'] ??
-              m['roomId'] ??
-              m['id'])
+      final id = (m['streamId'] ?? m['targetRoomId'] ?? m['roomId'] ?? m['id'])
           ?.toString()
           .trim();
       if (id == null || id.isEmpty || seen.contains(id)) continue;
@@ -248,11 +240,7 @@ class LiveRemoteDataSource {
         final hasMore = total != null
             ? page * safeLimit < total
             : fromLive.length >= safeLimit;
-        return VoiceRoomsPage(
-          rooms: fromLive,
-          page: page,
-          hasMore: hasMore,
-        );
+        return VoiceRoomsPage(rooms: fromLive, page: page, hasMore: hasMore);
       }
     } on ApiException catch (e) {
       if (e.statusCode != 404 && e.statusCode != 405 && e.statusCode != 401) {
@@ -287,10 +275,9 @@ class LiveRemoteDataSource {
     if (list is! List) {
       return VoiceRoomsPage(rooms: const [], page: page, hasMore: false);
     }
-    final rooms = asJsonList(list)
-        .map(_mapVoiceRoom)
-        .where((r) => r.apiRoomKey.isNotEmpty)
-        .toList();
+    final rooms = asJsonList(
+      list,
+    ).map(_mapVoiceRoom).where((r) => r.apiRoomKey.isNotEmpty).toList();
     return VoiceRoomsPage(
       rooms: rooms,
       page: page,
@@ -331,23 +318,26 @@ class LiveRemoteDataSource {
   }
 
   /// Üretim `POST /api/chat/rooms/create` — name, description ve icon zorunlu.
-  static ({String name, String description, String icon}) voiceRoomCreateMetadata({
-    required String roomType,
-    String? roomName,
-  }) {
+  static ({String name, String description, String icon})
+  voiceRoomCreateMetadata({required String roomType, String? roomName}) {
     final t = roomType.toLowerCase();
     final isVip = t == 'vip';
     final isFree = t == 'free' || t == 'ucretsiz';
     final trimmed = roomName?.trim();
-    final baseName =
-        (trimmed != null && trimmed.isNotEmpty ? trimmed : 'Sohbet');
+    final baseName = (trimmed != null && trimmed.isNotEmpty
+        ? trimmed
+        : 'Sohbet');
     final name = baseName.length > 40 ? baseName.substring(0, 40) : baseName;
     final description = isVip
         ? 'VIP sesli sohbet odası'
         : isFree
-            ? 'Ücretsiz sesli sohbet odası'
-            : 'Sesli sohbet odası';
-    final icon = isVip ? '⭐' : isFree ? '🎙️' : '🎤';
+        ? 'Ücretsiz sesli sohbet odası'
+        : 'Sesli sohbet odası';
+    final icon = isVip
+        ? '⭐'
+        : isFree
+        ? '🎙️'
+        : '🎤';
     return (name: name, description: description, icon: icon);
   }
 
@@ -373,8 +363,9 @@ class LiveRemoteDataSource {
     final bg = background?.trim();
     return {
       'name': meta.name,
-      'description':
-          (desc != null && desc.isNotEmpty) ? desc : meta.description,
+      'description': (desc != null && desc.isNotEmpty)
+          ? desc
+          : meta.description,
       'icon': (ic != null && ic.isNotEmpty) ? ic : meta.icon,
       'paymentType': normalizePaymentType(paymentType),
       'roomType': resolveRoomTypeEnum(roomType, vip: vip),
@@ -415,19 +406,12 @@ class LiveRemoteDataSource {
     );
     final name = payload['name']?.toString() ?? 'Sohbet';
 
-    // safePost ApiException fırlatır, DioException değil — ApiException yakala.
-    ApiException? lastError;
-    for (final path in [ApiEndpoints.chatRoomCreate, ApiEndpoints.chatRooms]) {
-      try {
-        return await _postCreateVoiceRoom(path, payload, roomName: name);
-      } on ApiException catch (e) {
-        lastError = e;
-        final code = e.statusCode ?? 0;
-        if (code != 404 && code != 405) rethrow;
-      }
-    }
-    throw lastError ??
-        ApiException('Oda açılamadı — sunucu yanıt vermedi');
+    // `/api/chat/rooms` yalnız GET; oda oluşturma tek ucu `/create`.
+    return _postCreateVoiceRoom(
+      ApiEndpoints.chatRoomCreate,
+      payload,
+      roomName: name,
+    );
   }
 
   Future<VoiceRoomEntity> _postCreateVoiceRoom(
@@ -448,7 +432,10 @@ class LiveRemoteDataSource {
     final body = res.data;
     if (body is String &&
         (body.contains('<!DOCTYPE') || body.contains('<html'))) {
-      throw const ApiException('Oda açılamadı — oturum gerekli', statusCode: 401);
+      throw const ApiException(
+        'Oda açılamadı — oturum gerekli',
+        statusCode: 401,
+      );
     }
     Map<String, dynamic>? map;
     if (body is Map<String, dynamic>) {
@@ -472,10 +459,7 @@ class LiveRemoteDataSource {
     if (map['success'] != true && httpCode != 201 && httpCode != 200) {
       final err = (map['error'] ?? map['message'])?.toString().trim();
       if (err != null && err.isNotEmpty) {
-        throw DioException(
-          requestOptions: res.requestOptions,
-          message: err,
-        );
+        throw DioException(requestOptions: res.requestOptions, message: err);
       }
     }
     dynamic roomRaw = map['room'] ?? map['data'];
@@ -494,7 +478,9 @@ class LiveRemoteDataSource {
       final entity = _mapVoiceRoom(asJsonMap(roomRaw));
       if (entity.apiRoomKey.isNotEmpty) return entity;
     }
-    if (map.containsKey('id') || map.containsKey('slug') || map.containsKey('roomId')) {
+    if (map.containsKey('id') ||
+        map.containsKey('slug') ||
+        map.containsKey('roomId')) {
       final entity = _mapVoiceRoom(map);
       if (entity.apiRoomKey.isNotEmpty) return entity;
     }
@@ -601,8 +587,9 @@ class LiveRemoteDataSource {
       if (body is Map<String, dynamic>) {
         final raw = body['stream'] ?? body['data'] ?? body;
         if (raw is Map) {
-          return LiveStreamDto.fromApiMap(Map<String, dynamic>.from(raw))
-              .toEntity();
+          return LiveStreamDto.fromApiMap(
+            Map<String, dynamic>.from(raw),
+          ).toEntity();
         }
       }
     } catch (_) {}
@@ -650,9 +637,7 @@ class LiveRemoteDataSource {
   }) async {
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.videoStreamMessages(streamId),
-      query: since != null
-          ? {'since': since.toUtc().toIso8601String()}
-          : null,
+      query: since != null ? {'since': since.toUtc().toIso8601String()} : null,
     );
     return _parseStreamMessages(res.data);
   }
@@ -684,7 +669,8 @@ class LiveRemoteDataSource {
       final text = map['content']?.toString() ?? map['text']?.toString() ?? '';
       if (text.trim().isNotEmpty) {
         return LiveStreamChatMessage(
-          id: map['id']?.toString() ??
+          id:
+              map['id']?.toString() ??
               'rest-${DateTime.now().millisecondsSinceEpoch}',
           content: text.trim(),
           createdAt: DateTime.now(),
@@ -708,9 +694,9 @@ class LiveRemoteDataSource {
     if (list is! List) return const [];
     return list
         .whereType<Map>()
-        .map((e) => LiveStreamChatMessage.fromJson(
-              Map<String, dynamic>.from(e),
-            ))
+        .map(
+          (e) => LiveStreamChatMessage.fromJson(Map<String, dynamic>.from(e)),
+        )
         .where((m) => m.content.isNotEmpty)
         .toList();
   }
@@ -787,7 +773,9 @@ class LiveRemoteDataSource {
         throw e is ApiException ? e : ApiException(ApiException.userMessage(e));
       }
     }
-    throw ApiException(ApiException.userMessage(lastError ?? 'Yayın oluşturulamadı'));
+    throw ApiException(
+      ApiException.userMessage(lastError ?? 'Yayın oluşturulamadı'),
+    );
   }
 
   Map<String, dynamic> _createVideoStreamPayload({
@@ -809,7 +797,8 @@ class LiveRemoteDataSource {
       if (tags != null && tags.isNotEmpty) 'tags': tags,
       if (thumbnailUrl != null && thumbnailUrl.isNotEmpty)
         'thumbnailUrl': thumbnailUrl,
-      if (thumbnailUrl != null && thumbnailUrl.isNotEmpty) 'coverUrl': thumbnailUrl,
+      if (thumbnailUrl != null && thumbnailUrl.isNotEmpty)
+        'coverUrl': thumbnailUrl,
       if (thumbnailUrl != null && thumbnailUrl.isNotEmpty)
         'broadcastImage': thumbnailUrl,
       if (backgroundUrl != null && backgroundUrl.isNotEmpty)
@@ -923,7 +912,13 @@ class LiveRemoteDataSource {
       final body = res.data;
       dynamic list = body;
       if (body is Map) {
-        list = pick(Map<String, dynamic>.from(body), ['viewers', 'items', 'data']) ?? body;
+        list =
+            pick(Map<String, dynamic>.from(body), [
+              'viewers',
+              'items',
+              'data',
+            ]) ??
+            body;
       }
       if (list is! List) return const [];
       return list
@@ -954,7 +949,8 @@ class LiveRemoteDataSource {
       return _extractStreamId(map['data']);
     }
     if (map['success'] == false) return null;
-    final streamObj = map['stream'] ??
+    final streamObj =
+        map['stream'] ??
         map['videoStream'] ??
         map['broadcast'] ??
         map['liveStream'];
@@ -984,11 +980,8 @@ class LiveRemoteDataSource {
     } on ApiException catch (e) {
       if (e.statusCode != 404 && e.statusCode != 405) rethrow;
     } catch (_) {}
-    try {
-      await _dio.safePost<dynamic>(ApiEndpoints.videoStreamEnd(streamId));
-    } catch (_) {
-      await _dio.safeDelete<dynamic>(ApiEndpoints.videoStream(streamId));
-    }
+    // `/api/video-streams/{id}` DELETE desteklemez (GET/PATCH); yedek `/end`.
+    await _dio.safePost<dynamic>(ApiEndpoints.videoStreamEnd(streamId));
   }
 
   VoiceRoomEntity _mapVoiceRoom(Map<String, dynamic> json) {
@@ -1047,7 +1040,8 @@ class LiveRemoteDataSource {
     final slug = pick(json, ['slug'])?.toString() ?? '';
     final rawId = pick(json, ['id', '_id', 'roomId', 'cuid'])?.toString() ?? '';
     final isVipRaw = pick(json, ['isVip', 'vip']);
-    final isVip = isVipRaw == true ||
+    final isVip =
+        isVipRaw == true ||
         isVipRaw == 1 ||
         isVipRaw == 'true' ||
         isVipRaw == '1';
@@ -1060,12 +1054,18 @@ class LiveRemoteDataSource {
       'requiresPassword',
       'isPasswordProtected',
     ]);
-    final isLocked = lockedRaw == true ||
+    final isLocked =
+        lockedRaw == true ||
         lockedRaw == 1 ||
         lockedRaw == 'true' ||
         lockedRaw == '1';
-    final hasPassRaw = pick(json, ['hasPassword', 'passwordRequired', 'requiresPassword']);
-    final hasPassword = hasPassRaw == true ||
+    final hasPassRaw = pick(json, [
+      'hasPassword',
+      'passwordRequired',
+      'requiresPassword',
+    ]);
+    final hasPassword =
+        hasPassRaw == true ||
         hasPassRaw == 1 ||
         hasPassRaw == 'true' ||
         hasPassRaw == '1' ||
@@ -1077,23 +1077,29 @@ class LiveRemoteDataSource {
       'inPk',
       'isPk',
     ]);
-    final isMusicPlaying = _boolFlag(json, [
-      'musicPlaying',
-      'isMusicPlaying',
-      'djPlaying',
-      'isPlaying',
-    ]) ||
+    final isMusicPlaying =
+        _boolFlag(json, [
+          'musicPlaying',
+          'isMusicPlaying',
+          'djPlaying',
+          'isPlaying',
+        ]) ||
         pick(json, ['activeDjId']) != null ||
         djIds.isNotEmpty;
-    final distanceBand =
-        pick(json, ['distanceBand', 'distance_band'])?.toString();
-    final distanceLabel =
-        pick(json, ['distanceLabel', 'distance_label', 'distanceText'])
-            ?.toString();
+    final distanceBand = pick(json, [
+      'distanceBand',
+      'distance_band',
+    ])?.toString();
+    final distanceLabel = pick(json, [
+      'distanceLabel',
+      'distance_label',
+      'distanceText',
+    ])?.toString();
     return VoiceRoomEntity(
       id: rawId,
       slug: slug,
-      nameTr: pick(json, ['nameTr', 'nameEn', 'name', 'slug'])?.toString() ?? 'Oda',
+      nameTr:
+          pick(json, ['nameTr', 'nameEn', 'name', 'slug'])?.toString() ?? 'Oda',
       descTr: pick(json, ['descTr', 'descEn', 'description']) as String?,
       rulesTr: pick(json, ['rules', 'rulesTr', 'roomRules']) as String?,
       icon: pick(json, ['icon']) as String?,
@@ -1103,7 +1109,8 @@ class LiveRemoteDataSource {
       backgroundImageUrl: pick(json, ['backgroundImage']) as String?,
       ownerName: ownerName,
       ownerAvatarUrl: ownerAvatar,
-      ownerId: pick(json, [
+      ownerId:
+          pick(json, [
             'ownerId',
             'ownerUserId',
             'hostUserId',
@@ -1112,8 +1119,12 @@ class LiveRemoteDataSource {
             'hostId',
           ])?.toString() ??
           (o is Map
-              ? pick(asJsonMap(o), ['id', 'userId', 'realCid', 'gcid'])
-                  ?.toString()
+              ? pick(asJsonMap(o), [
+                  'id',
+                  'userId',
+                  'realCid',
+                  'gcid',
+                ])?.toString()
               : null),
       activeDjId: pick(json, ['activeDjId'])?.toString(),
       djUserIds: djIds,

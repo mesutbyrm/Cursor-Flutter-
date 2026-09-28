@@ -45,6 +45,26 @@ Betik Flutter'daki tüm `/api/...` yollarını backend route dosyalarıyla karş
 | Ajans canlı takibi her zaman boştu (`/api/agency/presence` yok; zarf `data.members` okunmuyordu) | `/api/agency/live-status` + `statusLabel` |
 | Falcı ve video yayın SSE watchdog'u zaman aşımında geri çekilmesiz yeniden bağlanıyordu (`REALTIME_SSE.md` kuralı) | `_scheduleReconnect()` üzerinden üstel geri çekilme |
 
+## Yanlış uç / yanlış HTTP metodu taraması (özellik dalı, sürüm yükseltilmedi)
+
+`python3 scripts/backend-method-parity.py <canlifal>/nextjs_space` her Flutter çağrısının **metodunu** backend `route.ts` export'larıyla karşılaştırır (değişken yolları, `for (final path in [...])` listelerini ve yardımcı yol fonksiyonlarını çözer). Önce: 31 hatalı çağrı · şimdi: 0 (kalan 2 satır bilinen yanlış alarm: fal slug'ı ve `_postPaymentRequest(path)` parametresi).
+
+| Sorun (backend'de gerçekte olan) | Düzeltme |
+|---|---|
+| **Koltuk kilitle / kilidi aç / koltuktan at** `{action: lock|kick, seatIndex}` gönderiyordu; `PATCH /seats` `action` okumaz → **işlemi yapan kişi o koltuğa oturuyordu** | Tek sözleşme `PATCH /seats {seatIndex, targetUserId?}`; koltuktan at = oturanı `seatIndex: -1`; kilit ucu yok → açık hata |
+| Koltuk al/değiştir/kalk önce POST deniyordu (405) → her işlemde fazladan tur; "koltuk dolu"da bir alt koltuğa oturtma yedeği | Doğrudan PATCH; yanlış koltuk yedeği kaldırıldı |
+| Müzik "geç" 400, sil/temizle/tamamla/sırala ölü uçlar | `DELETE /music` (geç), `DELETE /song/{id}`, `POST /music/stop`; sıralama (backend'de yok) kaldırıldı |
+| DM engelleme 405 | `POST /api/user/block` aç/kapa + `blocked` doğrulaması |
+| Takip/takibi bırak toggle riski (çift istek = geri alma) | `isFollowing` doğrulamalı tek POST |
+| Site animasyon varsayılanları PUT (405) | Giriş başına `POST {membershipTier, category, animationId}` |
+| Ödeme talebi iptali `PATCH` (405); her ödeme öncesi tüm sayfaları gezen iptal döngüsü | Backend'de iptal yok → açık mesaj; döngüler kaldırıldı |
+| Turnuvaya katıl `POST /api/tournaments` (405) | `POST /api/tournaments/join {tournamentId}` |
+| Fal kaydı `POST /api/user/fortunes` (405), detay `GET /api/user/fortunes/{id}` (405); geçmiş ikinci sayfada aynı kayıtları tekrarlıyordu | Kayıt fal ucunda sunucuda oluşur; detay listeden; sayfalama `total` yoksa kapalı |
+| Kısa video `suggest-metadata` / `live-clip`, `auto-fortune`, seans dışı falcı bahşişi (`POST /api/teller/gifts`) | Backend'de yok → yerel öneri / galeri / `POST /api/social/posts`; istek atılmıyor |
+| Yayın bitirme DELETE yedeği, `/api/live` listesi, mesaj silme web yolu, `/api/users/me/activity` PATCH, admin ödeme PATCH yedeği, hediye hedefi kapatma (4 ölü istek) | Gerçek uçlar / istek yok |
+| Yönetici canlı yayın kontrolü `/api/live/admin/*` (yok) | Aktif liste `GET /api/video-streams`, sonlandır `PATCH /api/video-streams/{id} {status: ended}`; uyarı/askı yalnız web |
+| Yönetici gelişmiş rapor `/api/admin/users/reports/*` (yok) | `GET /api/admin/platform-analytics` (mobil JWT, `analytics.view`) |
+
 ## 1.0.624 — kalan eksiklerin bağlanması
 
 `backend-route-parity.py --used-only` sonucu: **0** (önce 34). Bilinen yanlış alarmlar betikte süzülür (`api_path_v1.dart`, `api_cache_policy.dart` önek kuralı, slug'ı `_apiSlugFor` ile gerçek `/api/fortunes/<tür>`'e eşlenen `fortuneReading`). Hiçbir yerde kullanılmayan 172 ölü sabit `api_endpoints.dart`'tan silindi.

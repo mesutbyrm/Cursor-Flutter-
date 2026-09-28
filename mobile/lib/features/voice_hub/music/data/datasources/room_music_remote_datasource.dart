@@ -15,7 +15,10 @@ class RoomMusicRemoteDataSource {
 
   final Dio _dio;
 
-  Future<List<YoutubeSearchHit>> searchSongs(String query, {int limit = 10}) async {
+  Future<List<YoutubeSearchHit>> searchSongs(
+    String query, {
+    int limit = 10,
+  }) async {
     final q = query.trim();
     if (q.length < 2) return [];
     final res = await _dio.get<dynamic>(
@@ -51,7 +54,9 @@ class RoomMusicRemoteDataSource {
   }
 
   /// @deprecated IFrame-only oynatma — yalnızca geriye dönük uyumluluk.
-  @Deprecated('RoomSongBloc IFrame oynatma kullanın; stream URL çözümlemesi kaldırıldı')
+  @Deprecated(
+    'RoomSongBloc IFrame oynatma kullanın; stream URL çözümlemesi kaldırıldı',
+  )
   Future<String?> resolveStreamUrl({
     required String roomId,
     required String videoId,
@@ -101,14 +106,17 @@ class RoomMusicRemoteDataSource {
     return clientUrl;
   }
 
-  Future<({
-    MusicQueueItem? item,
-    List<MusicQueueItem> queue,
-    int? queuePosition,
-    String? streamUrl,
-    bool playing,
-    int? newBalance,
-  })> enqueueSong({
+  Future<
+    ({
+      MusicQueueItem? item,
+      List<MusicQueueItem> queue,
+      int? queuePosition,
+      String? streamUrl,
+      bool playing,
+      int? newBalance,
+    })
+  >
+  enqueueSong({
     required String roomId,
     required String videoId,
     required String title,
@@ -159,7 +167,8 @@ class RoomMusicRemoteDataSource {
     String? streamUrl,
     bool playing,
     int? newBalance,
-  }) _parseQueueResponse(dynamic data) {
+  })
+  _parseQueueResponse(dynamic data) {
     if (data is! Map) {
       throw ApiException('Geçersiz sunucu yanıtı');
     }
@@ -184,23 +193,29 @@ class RoomMusicRemoteDataSource {
       queuePosition: _parseOptionalInt(map['queuePosition']),
       streamUrl: _extractStreamUrl(map),
       playing: map['playing'] == true || map['isPlaying'] == true,
-      newBalance: _parseOptionalInt(map['newBalance']) ??
+      newBalance:
+          _parseOptionalInt(map['newBalance']) ??
           _parseOptionalInt(map['coinBalance']),
     );
   }
 
   String? _extractStreamUrl(Map<String, dynamic> map) {
-    final direct = pick(map, ['musicUrl', 'streamUrl', 'audioUrl', 'url'])
-        ?.toString()
-        .trim();
+    final direct = pick(map, [
+      'musicUrl',
+      'streamUrl',
+      'audioUrl',
+      'url',
+    ])?.toString().trim();
     if (direct != null && direct.isNotEmpty) return direct;
     for (final key in const ['nowPlaying', 'item', 'currentSong', 'song']) {
       final node = map[key];
       if (node is! Map) continue;
-      final nested = pick(
-        Map<String, dynamic>.from(node),
-        ['musicUrl', 'streamUrl', 'audioUrl', 'url'],
-      )?.toString().trim();
+      final nested = pick(Map<String, dynamic>.from(node), [
+        'musicUrl',
+        'streamUrl',
+        'audioUrl',
+        'url',
+      ])?.toString().trim();
       if (nested != null && nested.isNotEmpty) return nested;
     }
     return null;
@@ -215,7 +230,9 @@ class RoomMusicRemoteDataSource {
   static String _musicPath(String roomId) => ApiEndpoints.chatRoomMusic(roomId);
 
   Future<RoomPlaybackSync?> fetchDjSync(String roomId) async {
-    final res = await _dio.get<dynamic>(ApiEndpoints.chatRoomMusicQueue(roomId));
+    final res = await _dio.get<dynamic>(
+      ApiEndpoints.chatRoomMusicQueue(roomId),
+    );
     final data = res.data;
     if (data is! Map) return null;
     return RoomPlaybackSync.fromPayload(Map<String, dynamic>.from(data));
@@ -236,7 +253,12 @@ class RoomMusicRemoteDataSource {
     }
   }
 
-  Future<void> resumeDj(String roomId, {String? musicUrl, String? videoId, String? title}) async {
+  Future<void> resumeDj(
+    String roomId, {
+    String? musicUrl,
+    String? videoId,
+    String? title,
+  }) async {
     final resolvedVideoId = (videoId?.trim().isNotEmpty == true)
         ? videoId!.trim()
         : ChatRoomDjState.videoIdFromLoose(musicUrl ?? '');
@@ -252,11 +274,13 @@ class RoomMusicRemoteDataSource {
     );
   }
 
+  /// `DELETE /music` — mevcut şarkıyı kapatır, kuyruktan sıradakine geçer.
   Future<void> skipQueue(String roomId) async {
-    await _dio.post<dynamic>(ApiEndpoints.chatRoomMusicQueueAdvance(roomId));
+    await _dio.delete<dynamic>(_musicPath(roomId));
   }
 
+  /// `POST /music/stop` — çalanı durdurur ve bekleyen kuyruğu temizler.
   Future<void> stopQueue(String roomId) async {
-    await _dio.delete<dynamic>(ApiEndpoints.chatRoomMusicQueue(roomId));
+    await _dio.post<dynamic>(ApiEndpoints.chatRoomSongStop(roomId));
   }
 }

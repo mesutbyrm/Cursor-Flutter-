@@ -85,16 +85,8 @@ class _RoomMusicQueueSheetState extends ConsumerState<_RoomMusicQueueSheet> {
   ChatRoomDjState get _liveDj =>
       ref.read(voiceRoomLiveProvider(widget.liveKey)).dj;
 
-  String? get _nowPlayingId => _liveDj.nowPlaying?.id ?? widget.dj.nowPlaying?.id;
-
-  Future<void> _persistOrder() async {
-    final ids = _queue.map((e) => e.id).toList();
-    await _run(
-      () => ref
-          .read(voiceRoomLiveProvider(widget.liveKey).notifier)
-          .reorderMusicQueue(ids),
-    );
-  }
+  String? get _nowPlayingId =>
+      _liveDj.nowPlaying?.id ?? widget.dj.nowPlaying?.id;
 
   @override
   Widget build(BuildContext context) {
@@ -130,14 +122,17 @@ class _RoomMusicQueueSheetState extends ConsumerState<_RoomMusicQueueSheet> {
                     child: Text(
                       'Müzik kuyruğu (${_queue.length})',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      color: Colors.white70,
+                    ),
                   ),
                 ],
               ),
@@ -178,55 +173,27 @@ class _RoomMusicQueueSheetState extends ConsumerState<_RoomMusicQueueSheet> {
                         style: TextStyle(color: Colors.white60),
                       ),
                     )
-                  : widget.canControlMusic
-                      ? ReorderableListView.builder(
-                          scrollController: scrollController,
-                          padding: EdgeInsets.fromLTRB(16, 0, 16, bottom + 16),
-                          itemCount: _queue.length,
-                          onReorder: (oldIndex, newIndex) async {
-                            if (newIndex > oldIndex) newIndex--;
-                            setState(() {
-                              final item = _queue.removeAt(oldIndex);
-                              _queue.insert(newIndex, item);
-                            });
-                            await _persistOrder();
+                  : ListView.separated(
+                      controller: scrollController,
+                      padding: EdgeInsets.fromLTRB(16, 0, 16, bottom + 16),
+                      itemCount: _queue.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 8),
+                      itemBuilder: (context, i) {
+                        final item = _queue[i];
+                        return _QueueTile(
+                          key: ValueKey(item.id.isNotEmpty ? item.id : 'q-$i'),
+                          index: i + 1,
+                          item: item,
+                          isNowPlaying: item.id == nowId,
+                          // Backend'de sıralama ucu yok; yalnız silme.
+                          canRemove: widget.canControlMusic && item.id != nowId,
+                          showDragHandle: false,
+                          onRemove: () async {
+                            await _run(() => ctrl.removeQueueItem(item.id));
                           },
-                          itemBuilder: (context, i) {
-                            final item = _queue[i];
-                            return _QueueTile(
-                              key: ValueKey(item.id.isNotEmpty ? item.id : 'q-$i'),
-                              index: i + 1,
-                              item: item,
-                              isNowPlaying: item.id == nowId,
-                              canRemove: widget.canControlMusic &&
-                                  item.id != nowId,
-                              showDragHandle: widget.canControlMusic,
-                              onRemove: () async {
-                                await _run(
-                                  () => ctrl.removeQueueItem(item.id),
-                                );
-                              },
-                            );
-                          },
-                        )
-                      : ListView.separated(
-                          controller: scrollController,
-                          padding: EdgeInsets.fromLTRB(16, 0, 16, bottom + 16),
-                          itemCount: _queue.length,
-                          separatorBuilder: (_, _) => const SizedBox(height: 8),
-                          itemBuilder: (context, i) {
-                            final item = _queue[i];
-                            return _QueueTile(
-                              key: ValueKey(item.id.isNotEmpty ? item.id : 'q-$i'),
-                              index: i + 1,
-                              item: item,
-                              isNowPlaying: item.id == nowId,
-                              canRemove: false,
-                              showDragHandle: false,
-                              onRemove: () {},
-                            );
-                          },
-                        ),
+                        );
+                      },
+                    ),
             ),
           ],
         );
@@ -347,7 +314,10 @@ class _QueueTile extends StatelessWidget {
             if (canRemove)
               IconButton(
                 onPressed: onRemove,
-                icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+                icon: const Icon(
+                  Icons.delete_outline_rounded,
+                  color: Colors.redAccent,
+                ),
                 tooltip: 'Kuyruktan sil',
               ),
           ],

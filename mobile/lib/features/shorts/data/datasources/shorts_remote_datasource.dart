@@ -46,7 +46,8 @@ class ShortsRemoteDataSource {
     final authorRaw = pick(json, ['author', 'user']);
     final m = authorRaw is Map ? asJsonMap(authorRaw) : json;
     final id = (pick(m, ['id', 'userId']) ?? '').toString();
-    final username = (pick(m, ['username', 'handle']) ?? 'kullanici').toString();
+    final username = (pick(m, ['username', 'handle']) ?? 'kullanici')
+        .toString();
     return ShortVideoAuthor(
       id: id,
       username: username,
@@ -95,15 +96,18 @@ class ShortsRemoteDataSource {
             username: 'kullanici',
           );
 
-    final authorFollowedByMe = asBool(
-      pick(json, [
-        'authorFollowedByMe',
-        'author_followed_by_me',
-        'isFollowingAuthor',
-      ]),
-    ) ||
+    final authorFollowedByMe =
+        asBool(
+          pick(json, [
+            'authorFollowedByMe',
+            'author_followed_by_me',
+            'isFollowingAuthor',
+          ]),
+        ) ||
         (authorMap != null &&
-            asBool(pick(authorMap, ['isFollowing', 'following', 'followedByMe'])));
+            asBool(
+              pick(authorMap, ['isFollowing', 'following', 'followedByMe']),
+            ));
 
     final createdRaw = pick(json, ['createdAt', 'created_at']);
     DateTime? createdAt;
@@ -114,19 +118,20 @@ class ShortsRemoteDataSource {
     return ShortVideoEntity(
       id: (pick(json, ['id']) ?? '').toString(),
       userId: (pick(json, ['userId', 'user_id']) ?? author.id).toString(),
-      videoUrl: (pick(json, [
-            'videoUrl',
-            'video_url',
-            'playbackUrl',
-            'playback_url',
-            'streamUrl',
-            'stream_url',
-            'url',
-            'mediaUrl',
-            'media_url',
-          ]) ??
-          '')
-          .toString(),
+      videoUrl:
+          (pick(json, [
+                    'videoUrl',
+                    'video_url',
+                    'playbackUrl',
+                    'playback_url',
+                    'streamUrl',
+                    'stream_url',
+                    'url',
+                    'mediaUrl',
+                    'media_url',
+                  ]) ??
+                  '')
+              .toString(),
       thumbnailUrl: pick(json, [
         'thumbnailUrl',
         'thumbnail_url',
@@ -158,13 +163,14 @@ class ShortsRemoteDataSource {
       music: _musicFrom(pick(json, ['music'])),
       allowDuet: pick(json, ['allowDuet', 'allow_duet']) != false,
       duetOfId: pick(json, ['duetOfId', 'duet_of_id'])?.toString(),
-      replyToVideoId:
-          pick(json, ['replyToVideoId', 'reply_to_video_id'])?.toString(),
-      contentRating:
-          (pick(json, ['contentRating', 'content_rating']) ?? 'all').toString(),
+      replyToVideoId: pick(json, [
+        'replyToVideoId',
+        'reply_to_video_id',
+      ])?.toString(),
+      contentRating: (pick(json, ['contentRating', 'content_rating']) ?? 'all')
+          .toString(),
       aiSummary: pick(json, ['aiSummary', 'summary'])?.toString(),
-      subtitlesUrl:
-          pick(json, ['subtitlesUrl', 'subtitles_url'])?.toString(),
+      subtitlesUrl: pick(json, ['subtitlesUrl', 'subtitles_url'])?.toString(),
     );
   }
 
@@ -173,9 +179,9 @@ class ShortsRemoteDataSource {
     final repliesRaw = pick(json, ['replies']);
     final replies = repliesRaw is List
         ? asJsonList(repliesRaw)
-            .map((j) => _commentFrom(asJsonMap(j)))
-            .where((c) => c.id.isNotEmpty)
-            .toList()
+              .map((j) => _commentFrom(asJsonMap(j)))
+              .where((c) => c.id.isNotEmpty)
+              .toList()
         : const <ShortCommentEntity>[];
 
     return ShortCommentEntity(
@@ -206,7 +212,11 @@ class ShortsRemoteDataSource {
       id: (pick(json, ['id']) ?? '').toString(),
       title: (pick(json, ['title', 'name']) ?? 'Müzik').toString(),
       artist: pick(json, ['artist', 'author'])?.toString(),
-      coverUrl: pick(json, ['coverUrl', 'cover_url', 'thumbnailUrl'])?.toString(),
+      coverUrl: pick(json, [
+        'coverUrl',
+        'cover_url',
+        'thumbnailUrl',
+      ])?.toString(),
       audioUrl: pick(json, ['audioUrl', 'audio_url', 'url'])?.toString(),
       usageCount: asInt(pick(json, ['usageCount', 'usage_count', 'count'])),
     );
@@ -214,11 +224,13 @@ class ShortsRemoteDataSource {
 
   List<ShortVideoEntity> _videosFrom(dynamic raw) {
     if (raw is! List) return const [];
-    return asJsonList(raw).map(_videoFrom).where((v) => v.id.isNotEmpty).toList();
+    return asJsonList(
+      raw,
+    ).map(_videoFrom).where((v) => v.id.isNotEmpty).toList();
   }
 
   Future<({List<ShortVideoEntity> videos, String? nextCursor, bool hasMore})>
-      fetchFeed({
+  fetchFeed({
     String? cursor,
     int limit = 10,
     ShortsFeedTab tab = ShortsFeedTab.forYou,
@@ -233,11 +245,7 @@ class ShortsRemoteDataSource {
     );
     final m = _unwrap(res.data);
     if (m == null) {
-      return (
-        videos: <ShortVideoEntity>[],
-        nextCursor: null,
-        hasMore: false,
-      );
+      return (videos: <ShortVideoEntity>[], nextCursor: null, hasMore: false);
     }
     final videos = _videosFrom(m['videos']);
     return (
@@ -317,9 +325,7 @@ class ShortsRemoteDataSource {
       ..sort((a, b) => b.value.compareTo(a.value));
     return sorted
         .take(12)
-        .map(
-          (e) => ShortHashtagEntity(name: e.key, videosCount: e.value),
-        )
+        .map((e) => ShortHashtagEntity(name: e.key, videosCount: e.value))
         .toList();
   }
 
@@ -331,7 +337,8 @@ class ShortsRemoteDataSource {
     final trendFuture = fetchExplore(limit: 24);
     final forYouFuture = fetchFeed(tab: ShortsFeedTab.forYou, limit: 12);
     final aiFuture = _fetchAiRecommendations(limit: 12);
-    final nearbyFuture = (locationLabel != null && locationLabel.isNotEmpty) ||
+    final nearbyFuture =
+        (locationLabel != null && locationLabel.isNotEmpty) ||
             lat != null ||
             lng != null
         ? _fetchLocationVideos(
@@ -345,11 +352,7 @@ class ShortsRemoteDataSource {
     final results = await Future.wait([
       trendFuture.catchError((_) => const ShortExplorePage(videos: [])),
       forYouFuture.catchError(
-        (_) => (
-          videos: <ShortVideoEntity>[],
-          nextCursor: null,
-          hasMore: false,
-        ),
+        (_) => (videos: <ShortVideoEntity>[], nextCursor: null, hasMore: false),
       ),
       aiFuture.catchError((_) => const <ShortVideoEntity>[]),
       nearbyFuture,
@@ -357,7 +360,12 @@ class ShortsRemoteDataSource {
 
     final trend = results[0] as ShortExplorePage;
     final forYouPage =
-        results[1] as ({List<ShortVideoEntity> videos, String? nextCursor, bool hasMore});
+        results[1]
+            as ({
+              List<ShortVideoEntity> videos,
+              String? nextCursor,
+              bool hasMore,
+            });
     final aiList = results[2] as List<ShortVideoEntity>;
     final nearbyList = results[3] as List<ShortVideoEntity>;
 
@@ -386,7 +394,9 @@ class ShortsRemoteDataSource {
     );
   }
 
-  Future<List<ShortVideoEntity>> _fetchAiRecommendations({int limit = 12}) async {
+  Future<List<ShortVideoEntity>> _fetchAiRecommendations({
+    int limit = 12,
+  }) async {
     for (final path in [
       ApiEndpoints.shortVideosRecommend,
       ApiEndpoints.shortVideosExplore,
@@ -394,11 +404,7 @@ class ShortsRemoteDataSource {
       try {
         final res = await _dio.safeGet<dynamic>(
           path,
-          query: {
-            'limit': limit,
-            'source': 'ai',
-            'recommendation': 'ai',
-          },
+          query: {'limit': limit, 'source': 'ai', 'recommendation': 'ai'},
         );
         final list = _videosFromExplorePayload(_unwrap(res.data));
         if (list.isNotEmpty) return list;
@@ -472,7 +478,10 @@ class ShortsRemoteDataSource {
     return ShortExplorePage(
       videos: _videosFrom(m['videos'] ?? m['trendVideos'] ?? m['trending']),
       forYouVideos: _videosFrom(
-        m['forYouVideos'] ?? m['for_you'] ?? m['recommended'] ?? m['personalized'],
+        m['forYouVideos'] ??
+            m['for_you'] ??
+            m['recommended'] ??
+            m['personalized'],
       ),
       aiRecommendedVideos: _videosFrom(
         m['aiVideos'] ?? m['aiRecommended'] ?? m['ai_recommended'],
@@ -483,15 +492,15 @@ class ShortsRemoteDataSource {
       locationLabel: pick(m, ['locationLabel', 'location', 'city'])?.toString(),
       trendingHashtags: hashtagsRaw is List
           ? asJsonList(hashtagsRaw)
-              .map((j) => _hashtagFrom(asJsonMap(j)))
-              .where((h) => h.name.isNotEmpty)
-              .toList()
+                .map((j) => _hashtagFrom(asJsonMap(j)))
+                .where((h) => h.name.isNotEmpty)
+                .toList()
           : const [],
       popularMusic: musicRaw is List
           ? asJsonList(musicRaw)
-              .map((j) => _musicEntityFrom(asJsonMap(j)))
-              .where((m) => m.id.isNotEmpty)
-              .toList()
+                .map((j) => _musicEntityFrom(asJsonMap(j)))
+                .where((m) => m.id.isNotEmpty)
+                .toList()
           : const [],
       nextCursor: m['nextCursor']?.toString(),
       hasMore: m['hasMore'] == true || m['nextCursor'] != null,
@@ -621,9 +630,7 @@ class ShortsRemoteDataSource {
   }
 
   Future<void> deleteComment(String videoId, String commentId) async {
-    await _dio.safeDelete(
-      ApiEndpoints.shortVideoComment(videoId, commentId),
-    );
+    await _dio.safeDelete(ApiEndpoints.shortVideoComment(videoId, commentId));
   }
 
   Future<({bool liked, int likesCount})> toggleCommentLike(
@@ -694,36 +701,33 @@ class ShortsRemoteDataSource {
         ? <String, dynamic>{...m, ...asJsonMap(nested)}
         : m;
     return ShortProfileStats(
-      videosCount: asInt(pick(src, [
-        'videosCount',
-        'videoCount',
-        'postCount',
-        'postsCount',
-        'shortVideosCount',
-      ])),
-      totalLikes: asInt(pick(src, [
-        'totalLikes',
-        'likesCount',
-        'likes',
-        'likeCount',
-      ])),
-      totalViews: asInt(pick(src, [
-        'totalViews',
-        'viewsCount',
-        'total_views',
-        'views',
-        'viewCount',
-      ])),
-      followersCount: asInt(pick(src, [
-        'followersCount',
-        'followerCount',
-        'followers',
-      ])),
-      followingCount: asInt(pick(src, [
-        'followingCount',
-        'following',
-        'followingsCount',
-      ])),
+      videosCount: asInt(
+        pick(src, [
+          'videosCount',
+          'videoCount',
+          'postCount',
+          'postsCount',
+          'shortVideosCount',
+        ]),
+      ),
+      totalLikes: asInt(
+        pick(src, ['totalLikes', 'likesCount', 'likes', 'likeCount']),
+      ),
+      totalViews: asInt(
+        pick(src, [
+          'totalViews',
+          'viewsCount',
+          'total_views',
+          'views',
+          'viewCount',
+        ]),
+      ),
+      followersCount: asInt(
+        pick(src, ['followersCount', 'followerCount', 'followers']),
+      ),
+      followingCount: asInt(
+        pick(src, ['followingCount', 'following', 'followingsCount']),
+      ),
       isFollowing: asBool(pick(src, ['isFollowing', 'followedByMe'])),
     );
   }
@@ -762,9 +766,9 @@ class ShortsRemoteDataSource {
       if (e.statusCode != 404 && e.statusCode != 405) rethrow;
       final feed = await fetchFeed(limit: 40);
       final q = query.trim().toLowerCase();
-      return _hashtagsFromVideos(feed.videos)
-          .where((h) => h.name.toLowerCase().contains(q))
-          .toList();
+      return _hashtagsFromVideos(
+        feed.videos,
+      ).where((h) => h.name.toLowerCase().contains(q)).toList();
     }
   }
 
@@ -790,9 +794,7 @@ class ShortsRemoteDataSource {
   Future<List<ShortMusicEntity>> searchMusic(String query) async {
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.shortVideosMusic,
-      query: {
-        if (query.trim().isNotEmpty) 'q': query.trim(),
-      },
+      query: {if (query.trim().isNotEmpty) 'q': query.trim()},
     );
     final m = _unwrap(res.data);
     final raw = m?['music'] ?? m?['items'] ?? m?['tracks'];
@@ -817,13 +819,19 @@ class ShortsRemoteDataSource {
     if (page <= 1) _hashtagCursors.remove(tag);
     final cursor = _hashtagCursors[tag];
     if (page > 1 && cursor == null) return const [];
-    final res = await fetchExplore(query: '#$tag', cursor: cursor, limit: limit);
+    final res = await fetchExplore(
+      query: '#$tag',
+      cursor: cursor,
+      limit: limit,
+    );
     _hashtagCursors[tag] = res.hasMore ? res.nextCursor : null;
     return res.videos
-        .where((v) => v.hashtags.any((h) => h.replaceAll('#', '').toLowerCase() == tag))
+        .where(
+          (v) =>
+              v.hashtags.any((h) => h.replaceAll('#', '').toLowerCase() == tag),
+        )
         .toList();
   }
-
 
   Future<List<ShortVideoEntity>> fetchMusicVideos(
     String musicId, {
@@ -899,48 +907,22 @@ class ShortsRemoteDataSource {
     throw ApiException('Video kaydı tamamlanamadı.');
   }
 
+  /// Backend'de `/api/short-videos/suggest-metadata` yok (yol `[id]` ucuna
+  /// düşüp 405 dönüyordu); boş sonuç → çağıran yerel öneriyi kullanır.
   Future<ShortsAiMetadata> suggestMetadata({
     String? description,
     String? videoKey,
     String? liveClipId,
-  }) async {
-    try {
-      final res = await _dio.safePost<dynamic>(
-        ApiEndpoints.shortVideosSuggestMetadata,
-        data: {
-          if (description != null && description.trim().isNotEmpty)
-            'description': description.trim(),
-          if (videoKey != null && videoKey.isNotEmpty) 'videoKey': videoKey,
-          if (liveClipId != null && liveClipId.isNotEmpty)
-            'liveClipId': liveClipId,
-        },
-      );
-      final m = _unwrap(res.data);
-      if (m != null) return ShortsAiMetadata.fromJson(m);
-    } catch (_) {}
-    return const ShortsAiMetadata();
-  }
+  }) async => const ShortsAiMetadata();
 
+  /// Backend'de canlı yayın klibi üreten uç yok (`/api/short-videos/live-clip`
+  /// `[id]` ucuna düşüp 405 dönüyordu). Çağıran galeriden seçime yönlendirir.
   Future<ShortLiveClipSource> fetchLiveClip({
     required String liveClipId,
     String? sessionId,
     String? roomId,
   }) async {
-    final res = await _dio.safePost<dynamic>(
-      ApiEndpoints.shortVideosLiveClip,
-      data: {
-        'liveClipId': liveClipId,
-        if (sessionId != null && sessionId.isNotEmpty) 'sessionId': sessionId,
-        if (roomId != null && roomId.isNotEmpty) 'roomId': roomId,
-      },
-    );
-    final m = _unwrap(res.data);
-    if (m == null) throw ApiException('Canlı klip oluşturulamadı.');
-    final clip = ShortLiveClipSource.fromJson(m);
-    if (clip.clipUrl.isEmpty) {
-      throw ApiException('Klip URL alınamadı.');
-    }
-    return clip;
+    throw const ApiException('Canlı klip sunucuda üretilemiyor.');
   }
 
   Future<List<ShortMusicEntity>> recommendMusic({
@@ -949,7 +931,8 @@ class ShortsRemoteDataSource {
     String? videoKey,
   }) async {
     final q = [
-      if (description != null && description.trim().isNotEmpty) description.trim(),
+      if (description != null && description.trim().isNotEmpty)
+        description.trim(),
       if (hashtags.isNotEmpty) hashtags.join(' '),
     ].join(' ').trim();
     if (q.isNotEmpty) {

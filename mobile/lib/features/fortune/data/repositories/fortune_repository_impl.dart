@@ -20,17 +20,16 @@ class FortuneRepositoryImpl implements FortuneRepository {
     required String accessToken,
     String? paymentMethod,
     int? jetonCost,
-  }) =>
-      _remote.streamFortune(
-        type: type,
-        userInput: userInput,
-        yesNoChoice: yesNoChoice,
-        birthDate: birthDate,
-        images: images,
-        accessToken: accessToken,
-        paymentMethod: paymentMethod,
-        jetonCost: jetonCost,
-      );
+  }) => _remote.streamFortune(
+    type: type,
+    userInput: userInput,
+    yesNoChoice: yesNoChoice,
+    birthDate: birthDate,
+    images: images,
+    accessToken: accessToken,
+    paymentMethod: paymentMethod,
+    jetonCost: jetonCost,
+  );
 
   @override
   Future<FortuneReadingResult> readFortune({
@@ -42,14 +41,14 @@ class FortuneRepositoryImpl implements FortuneRepository {
     String? paymentMethod,
     int? jetonCost,
   }) => _remote.readFortune(
-        type: type,
-        userInput: userInput,
-        yesNoChoice: yesNoChoice,
-        birthDate: birthDate,
-        images: images,
-        paymentMethod: paymentMethod,
-        jetonCost: jetonCost,
-      );
+    type: type,
+    userInput: userInput,
+    yesNoChoice: yesNoChoice,
+    birthDate: birthDate,
+    images: images,
+    paymentMethod: paymentMethod,
+    jetonCost: jetonCost,
+  );
 
   @override
   Future<PagedResult<UserFortuneEntity>> history({
@@ -60,7 +59,4 @@ class FortuneRepositoryImpl implements FortuneRepository {
   @override
   Future<UserFortuneEntity> detail(String fortuneId) =>
       _remote.detail(fortuneId);
-
-  @override
-  Future<UserFortuneEntity> save(SaveFortuneInput input) => _remote.save(input);
 }

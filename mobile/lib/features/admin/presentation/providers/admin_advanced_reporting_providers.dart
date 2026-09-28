@@ -5,10 +5,10 @@ import '../../../../core/network/dio_provider.dart';
 
 /// Rapor türleri.
 enum ReportType {
-  user,         // Kullanıcı raporları
-  transaction,  // İşlem raporları
-  moderation,   // Moderation raporları
-  broadcast,    // Yayın raporları
+  user, // Kullanıcı raporları
+  transaction, // İşlem raporları
+  moderation, // Moderation raporları
+  broadcast, // Yayın raporları
 }
 
 String reportTypeLabel(ReportType type) {
@@ -26,10 +26,10 @@ String reportTypeLabel(ReportType type) {
 
 /// Tarih aralığı.
 enum DateRangeType {
-  today,     // Bugün
-  week,      // Son 7 gün
-  month,     // Son 30 gün
-  custom,    // Özel
+  today, // Bugün
+  week, // Son 7 gün
+  month, // Son 30 gün
+  custom, // Özel
 }
 
 String dateRangeLabel(DateRangeType type) {
@@ -109,69 +109,90 @@ class ReportData {
   }
 }
 
-/// Rapor üretimi.
-final adminReportDataProvider =
-    FutureProvider.autoDispose.family<ReportData, (ReportType, DateRangeType)>(
-        (ref, params) async {
-  final dio = ref.watch(dioProvider);
-  final (type, dateRange) = params;
-  try {
-    final res = await dio.safeGet<dynamic>(
-      '${ApiEndpoints.adminUsers}/reports/generate',
-      query: {
-        'type': type.name,
-        'date_range': dateRange.name,
-      },
-    );
-    if (res.data is Map) {
-      return ReportData.fromJson(res.data as Map<String, dynamic>);
-    }
-    return ReportData(
-      title: 'Hata',
-      generatedAt: DateTime.now().toIso8601String(),
-      type: type,
-      dateRange: dateRange,
-      rows: [],
-      summary: {},
-    );
-  } catch (e) {
-    return ReportData(
-      title: 'Hata',
-      generatedAt: DateTime.now().toIso8601String(),
-      type: type,
-      dateRange: dateRange,
-      rows: [],
-      summary: {},
-    );
-  }
-});
-
-/// Rapor geçmişi.
-final adminReportHistoryProvider =
-    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final dio = ref.watch(dioProvider);
-  try {
-    final res = await dio.safeGet<dynamic>(
-      '${ApiEndpoints.adminUsers}/reports/history',
-      query: {'limit': '50'},
-    );
-    if (res.data is List) {
-      return List<Map<String, dynamic>>.from(
-        (res.data as List).map((e) => e is Map ? e : {}),
+/// Rapor üretimi — `GET /api/admin/platform-analytics` (mobil JWT,
+/// `analytics.view`). `/api/admin/users/reports/*` backend'de yok.
+///
+/// Backend sabit pencereler döndürür (bugün / 7 / 30 gün); rapor türü ilgili
+/// bölümü seçer.
+final adminReportDataProvider = FutureProvider.autoDispose
+    .family<ReportData, (ReportType, DateRangeType)>((ref, params) async {
+      final dio = ref.watch(dioProvider);
+      final (type, dateRange) = params;
+      ReportData empty(String title) => ReportData(
+        title: title,
+        generatedAt: DateTime.now().toIso8601String(),
+        type: type,
+        dateRange: dateRange,
+        rows: const [],
+        summary: const {},
       );
-    }
-    return [];
-  } catch (e) {
-    return [];
-  }
-});
+      try {
+        final res = await dio.safeGet<dynamic>(
+          ApiEndpoints.adminPlatformAnalytics,
+        );
+        final body = res.data;
+        final data = body is Map && body['data'] is Map
+            ? (body['data'] as Map).cast<String, dynamic>()
+            : const <String, dynamic>{};
+        Map<String, dynamic> section(String k) => data[k] is Map
+            ? (data[k] as Map).cast<String, dynamic>()
+            : const {};
+        final users = section('users');
+        final Map<String, dynamic> picked = switch (type) {
+          ReportType.user => {
+            'Toplam': users['total'],
+            'Günlük aktif': users['dau'],
+            'Haftalık aktif': users['wau'],
+            'Aylık aktif': users['mau'],
+            'Çevrim içi': users['online'],
+            'Yeni (bugün)': users['newToday'],
+            'Yeni (7 gün)': users['newWeek'],
+            'Yeni (30 gün)': users['newMonth'],
+            'Tutunma %': users['retentionRate'],
+          },
+          ReportType.transaction => section('economy'),
+          ReportType.moderation => {
+            'Yasaklı': users['banned'],
+            'Dondurulmuş': users['frozen'],
+          },
+          ReportType.broadcast => section('platform'),
+        };
+        final rows = [
+          for (final e in picked.entries)
+            if (e.value != null) {e.key: e.value},
+        ];
+        if (rows.isEmpty) return empty('Veri yok');
+        final growth = switch (dateRange) {
+          DateRangeType.today => users['newToday'],
+          DateRangeType.week => users['newWeek'],
+          _ => users['newMonth'],
+        };
+        return ReportData(
+          title: '${reportTypeLabel(type)} raporu',
+          generatedAt:
+              data['generatedAt']?.toString() ??
+              DateTime.now().toIso8601String(),
+          type: type,
+          dateRange: dateRange,
+          rows: rows,
+          summary: {
+            if (type == ReportType.user) 'total': users['total'],
+            if (type == ReportType.user && growth != null) 'growth': '+$growth',
+          },
+        );
+      } catch (e) {
+        return empty('Hata');
+      }
+    });
+
+/// Rapor geçmişi — backend'de kayıtlı rapor geçmişi ucu yok.
+final adminReportHistoryProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>(
+      (ref) async => const [],
+    );
 
 /// Export formatları.
-enum ExportFormat {
-  csv,
-  json,
-  pdf,
-}
+enum ExportFormat { csv, json, pdf }
 
 String exportFormatLabel(ExportFormat format) {
   switch (format) {

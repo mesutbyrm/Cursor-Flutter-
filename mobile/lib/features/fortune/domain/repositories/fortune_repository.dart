@@ -3,34 +3,6 @@ import '../entities/fortune_image_input.dart';
 import '../entities/fortune_type_entity.dart';
 import '../entities/user_fortune_entity.dart';
 
-class SaveFortuneInput {
-  const SaveFortuneInput({
-    required this.type,
-    this.slug,
-    this.question,
-    this.answer,
-    this.summary,
-    this.detail,
-    this.imageUrl,
-    this.fortuneText,
-    this.visualAnalysis,
-    this.luckyNumber,
-    this.luckyColor,
-  });
-
-  final String type;
-  final String? slug;
-  final String? question;
-  final String? answer;
-  final String? summary;
-  final String? detail;
-  final String? imageUrl;
-  final String? fortuneText;
-  final String? visualAnalysis;
-  final int? luckyNumber;
-  final String? luckyColor;
-}
-
 /// SSE fal akışı parçası.
 class FortuneStreamUpdate {
   const FortuneStreamUpdate({
@@ -72,6 +44,4 @@ abstract class FortuneRepository {
   });
 
   Future<UserFortuneEntity> detail(String fortuneId);
-
-  Future<UserFortuneEntity> save(SaveFortuneInput input);
 }

@@ -73,23 +73,8 @@ class GiftGoalRemoteDataSource {
     return null;
   }
 
-  /// Aktif hedefi sonlandır — uç yoksa sessizce yoksayılır.
-  Future<void> closeGoal(String goalId) async {
-    final id = goalId.trim();
-    if (id.isEmpty) return;
-    final paths = [
-      '${ApiEndpoints.giftsGoals}/$id',
-      '${ApiEndpoints.giftsGoals}/$id/close',
-    ];
-    for (final path in paths) {
-      try {
-        await _dio.safePatch<dynamic>(path, data: const {'status': 'ended'});
-        return;
-      } catch (_) {}
-      try {
-        await _dio.safePost<dynamic>(path, data: const {'action': 'close'});
-        return;
-      } catch (_) {}
-    }
-  }
+  /// Aktif hedefi sonlandır. Backend'de kapatma ucu yok (`/api/gifts/goals`
+  /// yalnız GET/POST; `/{id}` ve `/{id}/close` yoktu) — hedef süresi dolunca
+  /// sunucuda biter. İstek atılmaz.
+  Future<void> closeGoal(String goalId) async {}
 }

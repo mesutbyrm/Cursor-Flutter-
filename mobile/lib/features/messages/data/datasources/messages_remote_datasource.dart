@@ -15,7 +15,9 @@ class MessagesRemoteDataSource {
 
   final Dio _dio;
 
-  Future<List<ConversationEntity>> conversations({bool forceRefresh = false}) async {
+  Future<List<ConversationEntity>> conversations({
+    bool forceRefresh = false,
+  }) async {
     final paths = Env.useMobileAuth
         ? [ApiEndpoints.messages, ApiEndpoints.messagesConversations]
         : [ApiEndpoints.messagesConversations, ApiEndpoints.messages];
@@ -56,12 +58,7 @@ class MessagesRemoteDataSource {
         return _parseConversations(map['data']);
       }
 
-      final list = pick(map, [
-        'conversations',
-        'items',
-        'data',
-        'results',
-      ]);
+      final list = pick(map, ['conversations', 'items', 'data', 'results']);
       if (list != null) {
         final parsed = asJsonList(list)
             .map(ConversationDto.fromApiMap)
@@ -101,10 +98,7 @@ class MessagesRemoteDataSource {
       final path = Env.useMobileAuth
           ? ApiEndpoints.messagesWithUser(peerUserId)
           : ApiEndpoints.conversationMessages(peerUserId);
-      final res = await _dio.safeGet<dynamic>(
-        path,
-        forceRefresh: forceRefresh,
-      );
+      final res = await _dio.safeGet<dynamic>(path, forceRefresh: forceRefresh);
       final parsed = _parseMessages(res.data, currentUserId: currentUserId);
       if (parsed != null) return parsed;
     } on ApiException catch (e) {
@@ -119,10 +113,7 @@ class MessagesRemoteDataSource {
     return const [];
   }
 
-  List<MessageEntity>? _parseMessages(
-    dynamic body, {
-    String? currentUserId,
-  }) {
+  List<MessageEntity>? _parseMessages(dynamic body, {String? currentUserId}) {
     if (body is String) {
       if (body.contains('<!DOCTYPE') || body.contains('<html')) return null;
       return null;
@@ -141,13 +132,9 @@ class MessagesRemoteDataSource {
       final list = pick(map, ['items', 'data', 'messages', 'results']);
       if (list != null) {
         return asJsonList(list)
-            .map((j) => MessageDto.fromApiMap(
-                  j,
-                  currentUserId: currentUserId,
-                ))
+            .map((j) => MessageDto.fromApiMap(j, currentUserId: currentUserId))
             .map((d) => d.toEntity())
-            .where((m) =>
-                !DmMessageCodec.isSystemPayload(m.rawText ?? m.text))
+            .where((m) => !DmMessageCodec.isSystemPayload(m.rawText ?? m.text))
             .toList();
       }
     }
@@ -243,8 +230,7 @@ class MessagesRemoteDataSource {
         final sender = item['sender'] is Map
             ? asJsonMap(item['sender'])
             : <String, dynamic>{};
-        final senderId =
-            (sender['id'] ?? item['senderId'] ?? '').toString();
+        final senderId = (sender['id'] ?? item['senderId'] ?? '').toString();
         if (senderId.isEmpty) continue;
         final name = (sender['name'] ?? sender['username'] ?? 'Kullanıcı')
             .toString();
@@ -273,10 +259,7 @@ class MessagesRemoteDataSource {
 
   /// Mesaj isteği oluştur — `POST /api/messages/request`.
   /// Zaten bekleyen bir istek varsa sunucu 400 döner; bu durum başarı sayılır.
-  Future<void> sendMessageRequest(
-    String receiverId, {
-    String? message,
-  }) async {
+  Future<void> sendMessageRequest(String receiverId, {String? message}) async {
     final id = receiverId.trim();
     if (id.isEmpty) return;
     try {
@@ -307,23 +290,31 @@ class MessagesRemoteDataSource {
     );
   }
 
-  Future<void> blockUser(String blockedUserId) async {
-    await _dio.safePost(
-      ApiEndpoints.userBlocked,
-      data: {'blockedUserId': blockedUserId},
-    );
-  }
+  Future<void> blockUser(String blockedUserId) =>
+      _setBlocked(blockedUserId, blocked: true);
 
-  Future<void> unblockUser(String blockedUserId) async {
-    await _dio.safeDelete(
-      ApiEndpoints.userBlocked,
-      data: {'blockedUserId': blockedUserId},
-    );
+  Future<void> unblockUser(String blockedUserId) =>
+      _setBlocked(blockedUserId, blocked: false);
+
+  /// `POST /api/user/block {userId}` aç/kapa çalışır → `{blocked}`; istenen
+  /// duruma ulaşılmadıysa bir kez daha çağrılır.
+  Future<void> _setBlocked(String userId, {required bool blocked}) async {
+    for (var i = 0; i < 2; i++) {
+      final res = await _dio.safePost<dynamic>(
+        ApiEndpoints.userBlock,
+        data: {'userId': userId},
+      );
+      final now = asJsonMap(res.data)['blocked'];
+      if (now is! bool || now == blocked) return;
+    }
   }
 
   /// "Yazıyor" işareti gönderir ve karşı tarafın yazıp yazmadığını döndürür.
   /// [selfTyping] false ise yalnızca peerTyping okunur (kendi yazma işaretlenmez).
-  Future<bool> pingTyping(String conversationId, {bool selfTyping = true}) async {
+  Future<bool> pingTyping(
+    String conversationId, {
+    bool selfTyping = true,
+  }) async {
     try {
       final res = await _dio.safePost<dynamic>(
         ApiEndpoints.conversationTyping(conversationId),
@@ -340,11 +331,8 @@ class MessagesRemoteDataSource {
   Future<void> deleteMessage(String peerUserId, String messageId) async {
     if (messageId.isEmpty) return;
     try {
-      await _dio.safeDelete(
-        Env.useMobileAuth
-            ? ApiEndpoints.messageWithId(peerUserId, messageId)
-            : '${ApiEndpoints.conversationMessages(peerUserId)}/$messageId',
-      );
+      // Backend tek ucu: `DELETE /api/messages/{userId}/{messageId}`.
+      await _dio.safeDelete(ApiEndpoints.messageWithId(peerUserId, messageId));
     } on ApiException catch (e) {
       if (e.statusCode == 404 || e.statusCode == 405 || e.statusCode == 501) {
         return;
@@ -354,20 +342,9 @@ class MessagesRemoteDataSource {
   }
 
   /// Profilden sohbet — mobil API doğrudan userId ile çalışır.
-  /// Okunmamış DM'leri sunucuda sıfırlar — önce PATCH, sonra thread GET yedeği.
+  /// Okunmamış DM'leri sunucuda sıfırlar — backend'de toplu "okundu" ucu yok
+  /// (`/api/messages` yalnız GET); `GET /api/messages/{userId}` okundu işaretler.
   Future<void> markAllConversationsRead() async {
-    try {
-      await _dio.safePatch<dynamic>(
-        ApiEndpoints.messages,
-        data: const {'markAllRead': true},
-      );
-      return;
-    } on ApiException catch (e) {
-      if (e.statusCode != 404 && e.statusCode != 405 && e.statusCode != 501) {
-        rethrow;
-      }
-    } catch (_) {}
-
     final convs = await conversations(forceRefresh: true);
     final peers = convs
         .where((c) => c.unreadCount > 0 && c.id.trim().isNotEmpty)
@@ -389,10 +366,7 @@ class MessagesRemoteDataSource {
 
   Future<ConversationEntity> startConversation(String recipientId) async {
     if (Env.useMobileAuth) {
-      return ConversationEntity(
-        id: recipientId,
-        title: 'Sohbet',
-      );
+      return ConversationEntity(id: recipientId, title: 'Sohbet');
     }
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.messagesConversations,

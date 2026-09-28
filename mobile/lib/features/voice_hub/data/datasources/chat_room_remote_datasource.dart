@@ -28,10 +28,7 @@ import '../../domain/entities/voice_room_seat_slot.dart';
 import '../../domain/entities/voice_room_state_snapshot.dart';
 
 class ChatRoomPresencePage {
-  const ChatRoomPresencePage({
-    required this.users,
-    this.onlineCount,
-  });
+  const ChatRoomPresencePage({required this.users, this.onlineCount});
 
   final List<ChatRoomPresence> users;
   final int? onlineCount;
@@ -39,7 +36,7 @@ class ChatRoomPresencePage {
 
 class ChatRoomRemoteDataSource {
   ChatRoomRemoteDataSource(this._dio, {YoutubeMusicSearchCache? searchCache})
-      : _searchCache = searchCache ?? YoutubeMusicSearchCache();
+    : _searchCache = searchCache ?? YoutubeMusicSearchCache();
 
   /// Üretim probe (Ağu 2026): `POST …/music-request-by-query` canlifal.com'da 404.
   /// Yerel Express mirror (`127.0.0.1` / `localhost`) bu ucu sunar.
@@ -61,7 +58,8 @@ class ChatRoomRemoteDataSource {
   final Dio _dio;
   final YoutubeMusicSearchCache _searchCache;
 
-  LiveFieldApiRemoteDataSource get _liveField => LiveFieldApiRemoteDataSource(_dio);
+  LiveFieldApiRemoteDataSource get _liveField =>
+      LiveFieldApiRemoteDataSource(_dio);
   final YoutubeExplode _youtube = YoutubeExplode();
 
   void close() => _youtube.close();
@@ -99,7 +97,8 @@ class ChatRoomRemoteDataSource {
 
   static String voicePath(String roomId) => ApiEndpoints.chatRoomVoice(roomId);
 
-  static String typingPath(String roomId) => ApiEndpoints.chatRoomTyping(roomId);
+  static String typingPath(String roomId) =>
+      ApiEndpoints.chatRoomTyping(roomId);
 
   /// Üretim presence/voice — kılavuz §9.3 + PART4/PART10 (20–30 sn; 25 sn).
   static const presenceHeartbeatInterval = Duration(seconds: 15);
@@ -117,9 +116,7 @@ class ChatRoomRemoteDataSource {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _dio.safePost<dynamic>(
         presencePath(key),
-        data: <String, dynamic>{
-          if (seatIndex != null) 'seatIndex': seatIndex,
-        },
+        data: <String, dynamic>{if (seatIndex != null) 'seatIndex': seatIndex},
       );
     });
   }
@@ -250,12 +247,14 @@ class ChatRoomRemoteDataSource {
     String? since,
     int limit = 100,
   }) async {
-    Future<({
-      ChatRoomMyPermissions? myPermissions,
-      String? myNickname,
-      bool? roomMuted,
-    })> loadMeta() =>
-        _fetchRoomMeta(roomKey, alternateKey: alternateKey);
+    Future<
+      ({
+        ChatRoomMyPermissions? myPermissions,
+        String? myNickname,
+        bool? roomMuted,
+      })
+    >
+    loadMeta() => _fetchRoomMeta(roomKey, alternateKey: alternateKey);
 
     try {
       final liveMsgs = await _liveField.messages.fetchMessages(
@@ -303,10 +302,7 @@ class ChatRoomRemoteDataSource {
           'since': cursor,
         },
       };
-      final res = await _dio.safeGet<dynamic>(
-        messagesPath(key),
-        query: query,
-      );
+      final res = await _dio.safeGet<dynamic>(messagesPath(key), query: query);
       final body = res.data;
       final map = _unwrapMap(body) ?? (body is Map ? asJsonMap(body) : null);
       ChatRoomMyPermissions? perms;
@@ -351,10 +347,8 @@ class ChatRoomRemoteDataSource {
       String? myNickname,
       bool? roomMuted,
     })
-  > _fetchRoomMeta(
-    String roomKey, {
-    String? alternateKey,
-  }) async {
+  >
+  _fetchRoomMeta(String roomKey, {String? alternateKey}) async {
     try {
       return await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
         final res = await _dio.safeGet<dynamic>(
@@ -362,8 +356,7 @@ class ChatRoomRemoteDataSource {
           query: const {'limit': 1},
         );
         final body = res.data;
-        final map =
-            _unwrapMap(body) ?? (body is Map ? asJsonMap(body) : null);
+        final map = _unwrapMap(body) ?? (body is Map ? asJsonMap(body) : null);
         ChatRoomMyPermissions? perms;
         String? myNickname;
         bool? roomMuted;
@@ -385,11 +378,7 @@ class ChatRoomRemoteDataSource {
         );
       });
     } catch (_) {
-      return (
-        myPermissions: null,
-        myNickname: null,
-        roomMuted: null,
-      );
+      return (myPermissions: null, myNickname: null, roomMuted: null);
     }
   }
 
@@ -431,8 +420,7 @@ class ChatRoomRemoteDataSource {
       final users = _presenceList(res.data);
       return ChatRoomPresencePage(
         users: users,
-        onlineCount:
-            _extractOnlineCountFromResponse(res.data) ?? users.length,
+        onlineCount: _extractOnlineCountFromResponse(res.data) ?? users.length,
       );
     });
   }
@@ -751,7 +739,10 @@ class ChatRoomRemoteDataSource {
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       final raw = map['voiceUsers'] ?? map['users'] ?? map['data'];
       if (raw is! List) return const [];
-      return raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      return raw
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
     });
   }
 
@@ -777,7 +768,10 @@ class ChatRoomRemoteDataSource {
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       final raw = map['typingUsers'] ?? map['users'] ?? map['data'];
       if (raw is! List) return const [];
-      return raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      return raw
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
     });
   }
 
@@ -791,12 +785,13 @@ class ChatRoomRemoteDataSource {
       final raw = map['bans'] ?? map['items'];
       final bans = raw is List
           ? raw
-              .whereType<Map>()
-              .map((e) => VoiceRoomBanEntry.fromJson(
-                    Map<String, dynamic>.from(e),
-                  ))
-              .where((b) => b.userId.isNotEmpty)
-              .toList()
+                .whereType<Map>()
+                .map(
+                  (e) =>
+                      VoiceRoomBanEntry.fromJson(Map<String, dynamic>.from(e)),
+                )
+                .where((b) => b.userId.isNotEmpty)
+                .toList()
           : <VoiceRoomBanEntry>[];
       final canManage = map['canManage'] == true;
       return (bans: bans, canManage: canManage);
@@ -820,9 +815,7 @@ class ChatRoomRemoteDataSource {
         statusCode: res.statusCode,
         musicUrl: map['musicUrl']?.toString() ?? map['url']?.toString(),
         videoId: VoiceRoomMusicPipelineLog.videoIdFromUrl(
-          npMap?['youtubeUrl']?.toString() ??
-              npMap?['url']?.toString() ??
-              '',
+          npMap?['youtubeUrl']?.toString() ?? npMap?['url']?.toString() ?? '',
         ),
         playing: map['playing'] == true || map['isPlaying'] == true,
         rawPlayingField: '${map['playing']}/${map['isPlaying']}',
@@ -874,10 +867,7 @@ class ChatRoomRemoteDataSource {
         if (title != null && title.trim().isNotEmpty) 'title': title.trim(),
         if (musicUrl != null && musicUrl.isNotEmpty) 'musicUrl': musicUrl,
       };
-      final res = await _dio.safePost<dynamic>(
-        musicPath(key),
-        data: body,
-      );
+      final res = await _dio.safePost<dynamic>(musicPath(key), data: body);
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       return ChatRoomDjState.fromJson(map);
     });
@@ -898,10 +888,13 @@ class ChatRoomRemoteDataSource {
         query: {'limit': 128},
       );
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
-      final raw = map['backgrounds'] ??
+      final raw =
+          map['backgrounds'] ??
           map['items'] ??
           map['data'] ??
-          (map.isNotEmpty && map.values.first is List ? map.values.first : null);
+          (map.isNotEmpty && map.values.first is List
+              ? map.values.first
+              : null);
       for (final url in VoiceRoomBackgroundCatalog.parseApiList(raw)) {
         addUrl(url);
       }
@@ -942,8 +935,9 @@ class ChatRoomRemoteDataSource {
       await _postModeration(
         roomKey: key,
         action: 'announce',
-        message: '${roleSymbol ?? ''} $userName odaya katıldı${entryType != null && entryType.isNotEmpty ? ' ($entryType)' : ''}'
-            .trim(),
+        message:
+            '${roleSymbol ?? ''} $userName odaya katıldı${entryType != null && entryType.isNotEmpty ? ' ($entryType)' : ''}'
+                .trim(),
         ttl: 8,
         skipPayment: true,
       );
@@ -954,29 +948,22 @@ class ChatRoomRemoteDataSource {
     await skipMusicQueue(roomKey: roomKey, alternateKey: alternateKey);
   }
 
-  Future<void> completeMusicQueue(String roomKey, {String? alternateKey}) async {
-    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      await _dio.safePost<dynamic>(
-        ApiEndpoints.chatRoomMusicQueueComplete(key),
-      );
-    });
+  /// Şarkı bitti → `DELETE /music` (mevcut şarkıyı kapatır, sıradakine geçer).
+  Future<void> completeMusicQueue(
+    String roomKey, {
+    String? alternateKey,
+  }) async {
+    await skipMusicQueue(roomKey: roomKey, alternateKey: alternateKey);
   }
 
   Future<void> skipMusicQueue({
     required String roomKey,
     String? alternateKey,
   }) async {
+    // Backend'de "geç" = `DELETE /music` → `{autoAdvanced}`; `POST /music`
+    // yalnız yeni şarkı (videoId, title) kabul eder.
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      try {
-        await _dio.safePost<dynamic>(
-          musicPath(key),
-          data: const {'action': 'skip'},
-        );
-        return;
-      } on ApiException catch (e) {
-        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
-      }
-      await _dio.safePost<dynamic>(ApiEndpoints.chatRoomMusicQueueAdvance(key));
+      await _dio.safeDelete<dynamic>(musicPath(key));
     });
   }
 
@@ -987,29 +974,8 @@ class ChatRoomRemoteDataSource {
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _dio.safeDelete<dynamic>(
-        ApiEndpoints.chatRoomMusicQueueItem(key, itemId),
+        ApiEndpoints.chatRoomSongRemove(key, itemId),
       );
-    });
-  }
-
-  Future<void> reorderMusicQueue({
-    required String roomKey,
-    String? alternateKey,
-    required List<String> orderedItemIds,
-  }) async {
-    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      try {
-        await _dio.safePatch<dynamic>(
-          ApiEndpoints.chatRoomMusicQueue(key),
-          data: {'order': orderedItemIds},
-        );
-      } on ApiException catch (e) {
-        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
-        await _dio.safePost<dynamic>(
-          ApiEndpoints.chatRoomMusicQueueReorder(key),
-          data: {'order': orderedItemIds},
-        );
-      }
     });
   }
 
@@ -1018,13 +984,7 @@ class ChatRoomRemoteDataSource {
     String? alternateKey,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      Response<dynamic> res;
-      try {
-        res = await _dio.safeDelete<dynamic>(musicPath(key));
-      } on ApiException catch (e) {
-        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
-        res = await _dio.safeDelete<dynamic>(ApiEndpoints.chatRoomMusicQueue(key));
-      }
+      final res = await _dio.safeDelete<dynamic>(musicPath(key));
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       return MusicClearResult.fromJson(map.isEmpty ? null : map);
     });
@@ -1138,9 +1098,10 @@ class ChatRoomRemoteDataSource {
       if (raw is List && raw.isNotEmpty) {
         return raw
             .whereType<Map>()
-            .map((e) => PopularMusicSuggestion.fromJson(
-                  Map<String, dynamic>.from(e),
-                ))
+            .map(
+              (e) =>
+                  PopularMusicSuggestion.fromJson(Map<String, dynamic>.from(e)),
+            )
             .toList();
       }
     } catch (_) {}
@@ -1364,7 +1325,8 @@ class ChatRoomRemoteDataSource {
           'symbol': role,
         },
         if (reason != null && reason.isNotEmpty) 'reason': reason,
-        if (message != null && message.trim().isNotEmpty) 'message': message.trim(),
+        if (message != null && message.trim().isNotEmpty)
+          'message': message.trim(),
         if (ttl != null && ttl > 0) 'ttl': ttl,
         if (skipPayment) 'skipPayment': true,
         if (jetonCost != null && jetonCost > 0) 'jetonCost': jetonCost,
@@ -1396,11 +1358,7 @@ class ChatRoomRemoteDataSource {
         if (e.statusCode != 404 && e.statusCode != 405) rethrow;
       }
       // Yedek: founder rolü (~)
-      await assignRole(
-        roomKey: key,
-        userId: id,
-        roleSymbol: '~',
-      );
+      await assignRole(roomKey: key, userId: id, roleSymbol: '~');
     });
   }
 
@@ -1461,7 +1419,9 @@ class ChatRoomRemoteDataSource {
       }
       await _dio.safePost<dynamic>(
         banPath(key, userId),
-        data: <String, dynamic>{if (reason != null && reason.isNotEmpty) 'reason': reason},
+        data: <String, dynamic>{
+          if (reason != null && reason.isNotEmpty) 'reason': reason,
+        },
       );
     });
   }
@@ -1887,7 +1847,10 @@ class ChatRoomRemoteDataSource {
     String? alternateKey,
   }) async {
     try {
-      await clearChatViaModeration(roomKey: roomKey, alternateKey: alternateKey);
+      await clearChatViaModeration(
+        roomKey: roomKey,
+        alternateKey: alternateKey,
+      );
     } catch (_) {}
   }
 
@@ -1962,17 +1925,17 @@ class ChatRoomRemoteDataSource {
     });
   }
 
-    ({
-      List<MusicQueueItem> queue,
-      int cost,
-      int videoRequestCost,
-      int maxMusicQueue,
-      bool musicEnabled,
-      MusicQueueItem? nowPlaying,
-      bool? playing,
-      bool? canRequestMusic,
-      String? musicUrl,
-    })
+  ({
+    List<MusicQueueItem> queue,
+    int cost,
+    int videoRequestCost,
+    int maxMusicQueue,
+    bool musicEnabled,
+    MusicQueueItem? nowPlaying,
+    bool? playing,
+    bool? canRequestMusic,
+    String? musicUrl,
+  })
   _parseMusicQueueResponse(dynamic body) {
     final map = _unwrapMap(body) ?? asJsonMap(body);
     final raw = pick(map, [
@@ -2046,7 +2009,9 @@ class ChatRoomRemoteDataSource {
         return (audio: 10, video: video);
       }
     }
-    final audioCost = asInt(pick(map, ['cost', 'musicRequestCost', 'requestCost']));
+    final audioCost = asInt(
+      pick(map, ['cost', 'musicRequestCost', 'requestCost']),
+    );
     final resolvedAudio = audioCost == 0 ? 10 : audioCost;
     final videoCost = asInt(
       pick(map, ['videoRequestCost', 'videoMusicRequestCost', 'videoCost']),
@@ -2088,10 +2053,9 @@ class ChatRoomRemoteDataSource {
           ? videoId!.trim()
           : _extractYoutubeId(youtubeUrl);
       final durationLabel = _normalizeDurationLabel(duration);
-      final dedicationText =
-          dedication?.trim().isNotEmpty == true
-              ? dedication!.trim()
-              : giftTo?.trim();
+      final dedicationText = dedication?.trim().isNotEmpty == true
+          ? dedication!.trim()
+          : giftTo?.trim();
       VoiceRoomDebugLog.log('music.queue.add', {
         'room': key,
         'title': title,
@@ -2139,10 +2103,7 @@ class ChatRoomRemoteDataSource {
       if (djMusicControl) {
         usedEndpoint = musicPath(key);
         try {
-          res = await _dio.safePost<dynamic>(
-            usedEndpoint,
-            data: djMusicBody,
-          );
+          res = await _dio.safePost<dynamic>(usedEndpoint, data: djMusicBody);
         } on Object {
           usedEndpoint = songRequestPath(key);
           res = await _dio.safePost<dynamic>(
@@ -2159,16 +2120,10 @@ class ChatRoomRemoteDataSource {
         } on Object {
           usedEndpoint = ApiEndpoints.chatRoomMusicQueue(key);
           try {
-            res = await _dio.safePost<dynamic>(
-              usedEndpoint,
-              data: legacyBody,
-            );
+            res = await _dio.safePost<dynamic>(usedEndpoint, data: legacyBody);
           } on Object {
             usedEndpoint = musicPath(key);
-            res = await _dio.safePost<dynamic>(
-              usedEndpoint,
-              data: djMusicBody,
-            );
+            res = await _dio.safePost<dynamic>(usedEndpoint, data: djMusicBody);
           }
         }
       }
@@ -2226,9 +2181,7 @@ class ChatRoomRemoteDataSource {
         playing: playing,
         nowPlayingTitle: item?.title,
         nowPlayingYoutube: item?.youtubeUrl,
-        queueLen: queue.isNotEmpty
-            ? queue.length
-            : fallbackQueue?.queue.length,
+        queueLen: queue.isNotEmpty ? queue.length : fallbackQueue?.queue.length,
       );
       if (musicUrlRaw == null || musicUrlRaw.isEmpty) {
         VoiceRoomMusicPipelineLog.nullMusicUrl(
@@ -2256,17 +2209,22 @@ class ChatRoomRemoteDataSource {
   }
 
   String? _extractMusicStreamUrl(Map<String, dynamic> map) {
-    final direct = pick(map, ['musicUrl', 'streamUrl', 'audioUrl', 'url'])
-        ?.toString()
-        .trim();
+    final direct = pick(map, [
+      'musicUrl',
+      'streamUrl',
+      'audioUrl',
+      'url',
+    ])?.toString().trim();
     if (direct != null && direct.isNotEmpty) return direct;
     for (final key in const ['nowPlaying', 'item', 'currentSong', 'song']) {
       final node = map[key];
       if (node is! Map) continue;
-      final nested = pick(
-        Map<String, dynamic>.from(node),
-        ['musicUrl', 'streamUrl', 'audioUrl', 'url'],
-      )?.toString().trim();
+      final nested = pick(Map<String, dynamic>.from(node), [
+        'musicUrl',
+        'streamUrl',
+        'audioUrl',
+        'url',
+      ])?.toString().trim();
       if (nested != null && nested.isNotEmpty) return nested;
     }
     return null;
@@ -2349,9 +2307,7 @@ class ChatRoomRemoteDataSource {
         }
       }
     }
-    final balance = asInt(
-      pick(map, ['newBalance', 'coinBalance', 'balance']),
-    );
+    final balance = asInt(pick(map, ['newBalance', 'coinBalance', 'balance']));
     final position = asInt(pick(map, ['queuePosition', 'position', 'rank']));
     final musicUrlRaw = _extractMusicStreamUrl(map);
     final playing = map['playing'] == true || map['isPlaying'] == true;
@@ -2414,47 +2370,26 @@ class ChatRoomRemoteDataSource {
     );
   }
 
-  /// Yetkili rol (owner/admin/mod/dj) — önce `seats`, sonra `join-seat`.
-  Future<void> joinSeat({
-    required String roomKey,
-    String? alternateKey,
-    int? seatIndex,
-    String? userId,
+  /// Koltuk ataması — backend tek sözleşmesi:
+  /// `PATCH /api/chat/rooms/{id}/seats` `{seatIndex, targetUserId?}`.
+  ///
+  /// `seatIndex: -1` koltuktan kaldırır; `targetUserId` yoksa işlem kendine
+  /// uygulanır. Backend `action` alanını okumaz — eski `lock`/`kick` gövdeleri
+  /// işlemi yapanı o koltuğa oturtuyordu; POST denemeleri ise hep 405 dönüp
+  /// her koltuk işlemine fazladan bir tur ekliyordu.
+  Future<void> _patchSeat(
+    String key, {
+    required int seatIndex,
+    String? targetUserId,
   }) async {
-    final targetId = userId?.trim();
-    final isOther = targetId != null && targetId.isNotEmpty;
-    final base = <String, dynamic>{
-      if (seatIndex != null) 'seatIndex': seatIndex,
-      if (isOther) 'userId': targetId,
-    };
-    final bodies = <Map<String, dynamic>>[
-      {'action': 'take', ...base},
-      if (!isOther) {'action': 'sit', ...base},
-      base,
-    ];
-    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      for (final body in bodies) {
-        for (final path in [
-          seatsPath(key),
-          ApiEndpoints.chatRoomJoinSeat(key),
-        ]) {
-          try {
-            await _dio.safePost<dynamic>(path, data: body);
-            return;
-          } on ApiException catch (e) {
-            if (e.statusCode == 404 || e.statusCode == 405) continue;
-            rethrow;
-          }
-        }
-      }
-      try {
-        await _dio.safePatch<dynamic>(seatsPath(key), data: bodies.first);
-        return;
-      } on ApiException catch (e) {
-        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
-      }
-      await _dio.safePost<dynamic>(presencePath(key), data: bodies.last);
-    });
+    final uid = targetUserId?.trim();
+    await _dio.safePatch<dynamic>(
+      seatsPath(key),
+      data: {
+        'seatIndex': seatIndex,
+        if (uid != null && uid.isNotEmpty) 'targetUserId': uid,
+      },
+    );
   }
 
   Future<void> clearSeat({
@@ -2462,68 +2397,24 @@ class ChatRoomRemoteDataSource {
     String? alternateKey,
     String? userId,
   }) async {
-    final uid = userId?.trim();
-    final bodies = <Map<String, dynamic>>[
-      if (uid == null || uid.isEmpty)
-        const {'action': 'leave'}
-      else
-        {
-          'action': 'leave',
-          'userId': uid,
-          'targetUserId': uid,
-        },
-      {
-        'seatIndex': -1,
-        if (uid != null && uid.isNotEmpty) 'userId': uid,
-      },
-    ];
-    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      for (final body in bodies) {
-        try {
-          await _dio.safePost<dynamic>(seatsPath(key), data: body);
-          return;
-        } on ApiException catch (e) {
-          if (e.statusCode == 405 || e.statusCode == 404 || e.statusCode == 400) {
-            continue;
-          }
-          rethrow;
-        }
-      }
-      for (final body in bodies) {
-        try {
-          await _dio.safePatch<dynamic>(seatsPath(key), data: body);
-          return;
-        } on ApiException catch (e) {
-          if (e.statusCode == 405 || e.statusCode == 404) continue;
-          rethrow;
-        }
-      }
-      await _dio.safePost<dynamic>(
-        presencePath(key),
-        data: bodies.first,
-      );
-    });
+    await _withRoomKeyFallback(
+      roomKey,
+      alternateKey,
+      (key) => _patchSeat(key, seatIndex: -1, targetUserId: userId),
+    );
   }
 
-  /// Koltuk değiştir — backend `action: swap` (desteklenmiyorsa take fallback).
+  /// Koltuk değiştir — backend aynı kullanıcının koltuğunu günceller.
   Future<void> swapSeat({
     required String roomKey,
     String? alternateKey,
     required int seatIndex,
   }) async {
-    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      final payload = {'action': 'swap', 'seatIndex': seatIndex};
-      try {
-        await _dio.safePost<dynamic>(seatsPath(key), data: payload);
-        return;
-      } on ApiException catch (e) {
-        if (e.statusCode == 404 || e.statusCode == 405 || e.statusCode == 400) {
-          await assignSeat(roomKey: key, seatIndex: seatIndex);
-          return;
-        }
-        rethrow;
-      }
-    });
+    await _withRoomKeyFallback(
+      roomKey,
+      alternateKey,
+      (key) => _patchSeat(key, seatIndex: seatIndex),
+    );
   }
 
   Future<void> assignSeat({
@@ -2532,125 +2423,28 @@ class ChatRoomRemoteDataSource {
     required int seatIndex,
     String? userId,
   }) async {
-    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      final targetId = userId?.trim();
-      final isOther = targetId != null && targetId.isNotEmpty;
-
-      Map<String, dynamic> seatPayload(String action, int index) => {
-            'action': action,
-            'seatIndex': index,
-            if (isOther) ...{
-              'userId': targetId,
-              'targetUserId': targetId,
-            },
-          };
-
-      final payloads = <Map<String, dynamic>>[
-        if (isOther) ...[
-          seatPayload('force', seatIndex),
-          seatPayload('take', seatIndex),
-          seatPayload('sit', seatIndex),
-        ] else ...[
-          seatPayload('take', seatIndex),
-          seatPayload('sit', seatIndex),
-          if (seatIndex > 0) seatPayload('take', seatIndex - 1),
-        ],
-      ];
-
-      ApiException? lastError;
-      for (final payload in payloads) {
-        for (final send in [_dio.safePost<dynamic>, _dio.safePatch<dynamic>]) {
-          try {
-            await send(seatsPath(key), data: payload);
-            return;
-          } on ApiException catch (e) {
-            lastError = e;
-            if (e.statusCode == 404 ||
-                e.statusCode == 405 ||
-                e.statusCode == 400 ||
-                e.statusCode == 422) {
-              continue;
-            }
-            rethrow;
-          }
-        }
-      }
-
-      final presenceBody = <String, dynamic>{
-        'action': 'join',
-        'seatIndex': seatIndex,
-        if (isOther) 'userId': targetId,
-      };
-      try {
-        await _dio.safePost<dynamic>(presencePath(key), data: presenceBody);
-        return;
-      } on ApiException catch (e) {
-        lastError = e;
-      }
-      if (lastError != null) throw lastError;
-    });
+    await _withRoomKeyFallback(
+      roomKey,
+      alternateKey,
+      (key) => _patchSeat(key, seatIndex: seatIndex, targetUserId: userId),
+    );
   }
 
-  /// Kılavuz §9.3 — koltuk kilitle.
+  /// Koltuk kilidi backend'de yok (seats ucu kilit durumu tutmaz).
   Future<void> lockSeat({
     required String roomKey,
     String? alternateKey,
     required int seatIndex,
   }) async {
-    await _seatAction(
-      roomKey: roomKey,
-      alternateKey: alternateKey,
-      payload: {'action': 'lock', 'seatIndex': seatIndex},
-      failMessage: 'Koltuk kilitlenemedi',
-    );
+    throw const ApiException('Koltuk kilitleme sunucuda desteklenmiyor.');
   }
 
-  /// Kılavuz §9.3 — koltuk kilidini aç (`action: unlock`).
   Future<void> unlockSeat({
     required String roomKey,
     String? alternateKey,
     required int seatIndex,
   }) async {
-    await _seatAction(
-      roomKey: roomKey,
-      alternateKey: alternateKey,
-      payload: {'action': 'unlock', 'seatIndex': seatIndex},
-      failMessage: 'Koltuk kilidi açılamadı',
-    );
-  }
-
-  Future<void> _seatAction({
-    required String roomKey,
-    String? alternateKey,
-    required Map<String, dynamic> payload,
-    required String failMessage,
-  }) async {
-    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      for (final send in [_dio.safePost<dynamic>, _dio.safePatch<dynamic>]) {
-        try {
-          await send(seatsPath(key), data: payload);
-          return;
-        } on ApiException catch (e) {
-          if (e.statusCode == 404 || e.statusCode == 405) continue;
-          rethrow;
-        }
-      }
-      throw ApiException(failMessage);
-    });
-  }
-
-  /// Kılavuz §9.3 — koltuktan at.
-  Future<void> kickFromSeat({
-    required String roomKey,
-    String? alternateKey,
-    required int seatIndex,
-  }) async {
-    await _seatAction(
-      roomKey: roomKey,
-      alternateKey: alternateKey,
-      payload: {'action': 'kick', 'seatIndex': seatIndex},
-      failMessage: 'Koltuktan atılamadı',
-    );
+    throw const ApiException('Koltuk kilitleme sunucuda desteklenmiyor.');
   }
 
   List<String> _parseDjUserIdsResponse(dynamic body) {

@@ -67,14 +67,17 @@ class HomeRemoteDataSource {
     ]) {
       try {
         final res = await _dio.safeGet<dynamic>(path);
-        final items = _itemsFromBody(res.data, keys: const [
-          'items',
-          'tellers',
-          'advisors',
-          'fortuneTellers',
-          'data',
-          'results',
-        ]);
+        final items = _itemsFromBody(
+          res.data,
+          keys: const [
+            'items',
+            'tellers',
+            'advisors',
+            'fortuneTellers',
+            'data',
+            'results',
+          ],
+        );
         if (items.isNotEmpty) {
           return items.map(_mapAdvisor).where((a) => a.id.isNotEmpty).toList();
         }
@@ -203,14 +206,6 @@ class HomeRemoteDataSource {
         ApiEndpoints.horoscopeDaily,
         query: const {'lang': 'tr'},
       );
-      final text = _horoscopeTextFromBody(res.data);
-      if (text != null && text.trim().isNotEmpty) return text;
-    } catch (_) {}
-    try {
-      final res = await _dio.safePost<dynamic>(
-        ApiEndpoints.horoscopeDaily,
-        data: {'zodiacSign': zodiacSign},
-      );
       return _horoscopeTextFromBody(res.data);
     } catch (_) {
       return null;
@@ -234,7 +229,10 @@ class HomeRemoteDataSource {
   }
 
   List<HomeFanClubItem> _fanClubsFromCompound(Map<String, dynamic> raw) {
-    return MobileHomeCompoundLists.rows(raw, MobileHomeCompoundLists.fanClubKeys)
+    return MobileHomeCompoundLists.rows(
+          raw,
+          MobileHomeCompoundLists.fanClubKeys,
+        )
         .map(_mapFanClub)
         .where((c) => c.id.isNotEmpty && c.title.isNotEmpty)
         .toList();
@@ -370,15 +368,10 @@ class HomeRemoteDataSource {
       thumbnailUrl: _resolveTrendThumb(m),
       duration: durationStr,
       viewCount: asInt(pick(m, ['viewsCount', 'views_count', 'viewCount'])),
-      likesCount: asInt(pick(m, [
-        'likesCount',
-        'likes_count',
-        'likeCount',
-        'likes',
-      ])),
-      videoUrl: CanlifalImageUrls.resolve(
-        _str(m, ['videoUrl', 'video_url']),
+      likesCount: asInt(
+        pick(m, ['likesCount', 'likes_count', 'likeCount', 'likes']),
       ),
+      videoUrl: CanlifalImageUrls.resolve(_str(m, ['videoUrl', 'video_url'])),
       badge: 'YENİ',
     );
   }
@@ -424,7 +417,12 @@ class HomeRemoteDataSource {
   int? _homeUnreadFromMap(dynamic body) {
     if (body is! Map) return null;
     final map = asJsonMap(body);
-    final countRaw = pick(map, ['unreadCount', 'count', 'unread', 'totalUnread']);
+    final countRaw = pick(map, [
+      'unreadCount',
+      'count',
+      'unread',
+      'totalUnread',
+    ]);
     if (countRaw != null) return asInt(countRaw);
     return null;
   }
@@ -495,21 +493,25 @@ class HomeRemoteDataSource {
   OnlineAdvisorEntity _mapAdvisor(dynamic raw) {
     final m = asJsonMap(raw);
     final user = asJsonMap(m['user'] ?? m['profile']);
-    final online = m['isOnline'] == true ||
+    final online =
+        m['isOnline'] == true ||
         m['online'] == true ||
         m['status']?.toString().toLowerCase() == 'online';
-    final id = _str(m, ['id', '_id', 'tellerId', 'fortuneTellerId']) ??
+    final id =
+        _str(m, ['id', '_id', 'tellerId', 'fortuneTellerId']) ??
         _str(user, ['tellerId', 'fortuneTellerId']) ??
         _str(m, ['userId']) ??
         _str(user, ['id', 'userId']) ??
         '';
     return OnlineAdvisorEntity(
       id: id,
-      name: _str(m, ['name', 'displayName', 'username']) ??
+      name:
+          _str(m, ['name', 'displayName', 'username']) ??
           _str(user, ['displayName', 'name', 'username']) ??
           'Falcı',
       category: _advisorCategory(m),
-      avatarUrl: _str(m, [
+      avatarUrl:
+          _str(m, [
             'avatarUrl',
             'image',
             'avatar',
@@ -528,19 +530,20 @@ class HomeRemoteDataSource {
       rating: _dbl(m, ['rating', 'score', 'averageRating']) != 0
           ? _dbl(m, ['rating', 'score', 'averageRating'])
           : _dbl(user, ['rating', 'score']),
-      reviewCount: asInt(
-        pick(m, ['reviewCount', 'reviews', 'totalReviews']),
+      reviewCount: asInt(pick(m, ['reviewCount', 'reviews', 'totalReviews'])),
+      pricePerMinute: asInt(
+        pick(m, [
+          'pricePerMinute',
+          'pricePerSession',
+          'sessionPrice',
+          'price',
+          'minutePrice',
+        ]),
       ),
-      pricePerMinute: asInt(pick(m, [
-        'pricePerMinute',
-        'pricePerSession',
-        'sessionPrice',
-        'price',
-        'minutePrice',
-      ])),
       viewerCount: asInt(pick(m, ['viewerCount', 'viewers', 'audience'])),
       specialties: _stringList(m['specialties'] ?? user['specialties']),
-      liveStreamId: _str(m, [
+      liveStreamId:
+          _str(m, [
             'liveStreamId',
             'streamId',
             'videoStreamId',
@@ -575,14 +578,20 @@ class HomeRemoteDataSource {
     return HomeTrendVideoEntity(
       id: _str(m, ['id', '_id']) ?? '',
       title: _str(m, ['title', 'name', 'content']) ?? 'Video',
-      channelName: _str(m, ['channelName', 'author', 'username']) ??
-          _str(asJsonMap(m['channel'] ?? m['celebrity']), ['name', 'displayName']) ??
+      channelName:
+          _str(m, ['channelName', 'author', 'username']) ??
+          _str(asJsonMap(m['channel'] ?? m['celebrity']), [
+            'name',
+            'displayName',
+          ]) ??
           'Canlifal',
       thumbnailUrl: _resolveTrendThumb(m),
       duration: _str(m, ['duration', 'length']) ?? '0:30',
       badge: _str(m, ['badge', 'tag', 'label']) ?? badges[idx],
       viewCount: asInt(pick(m, ['viewCount', 'views', 'viewers'])),
-      likesCount: asInt(pick(m, ['likesCount', 'likes_count', 'likeCount', 'likes'])),
+      likesCount: asInt(
+        pick(m, ['likesCount', 'likes_count', 'likeCount', 'likes']),
+      ),
       videoUrl: CanlifalImageUrls.resolve(videoUrl),
     );
   }
@@ -619,8 +628,11 @@ class HomeRemoteDataSource {
         _str(m, ['iconUrl', 'icon', 'imageUrl', 'image']),
       ),
       linkUrl: _str(m, ['linkUrl', 'href', 'route', 'path', 'url']),
-      specialBehavior:
-          _str(m, ['specialBehavior', 'special_behavior', 'behavior']),
+      specialBehavior: _str(m, [
+        'specialBehavior',
+        'special_behavior',
+        'behavior',
+      ]),
       sortOrder: asInt(pick(m, ['sortOrder', 'order', 'position'])) ?? 0,
       isActive: m['isActive'] != false && m['isVisible'] != false,
     );
@@ -673,14 +685,20 @@ class HomeRemoteDataSource {
     final route = routeRaw != null && routeRaw.startsWith('/')
         ? routeRaw
         : (slug != null && slug.isNotEmpty
-            ? '/celebrities/$slug'
-            : '/celebrities-hub');
+              ? '/celebrities/$slug'
+              : '/celebrities-hub');
     return HomeFanClubItem(
       id: _str(m, ['id', '_id', 'slug']) ?? '',
       title: _str(m, ['title', 'name', 'displayName', 'username']) ?? '',
       subtitle: _str(m, ['subtitle', 'description', 'category', 'role']),
       imageUrl: CanlifalImageUrls.resolve(
-        _str(m, ['imageUrl', 'image', 'avatarUrl', 'profileImageUrl', 'photoUrl']),
+        _str(m, [
+          'imageUrl',
+          'image',
+          'avatarUrl',
+          'profileImageUrl',
+          'photoUrl',
+        ]),
       ),
       route: route,
       memberCount: asInt(
@@ -696,8 +714,8 @@ class HomeRemoteDataSource {
     final route = routeRaw != null && routeRaw.startsWith('/')
         ? routeRaw
         : (slug != null && slug.isNotEmpty
-            ? '/fan-club/$slug'
-            : '/fan-club-hub');
+              ? '/fan-club/$slug'
+              : '/fan-club-hub');
     return HomeFanClubItem(
       id: _str(m, ['id', '_id', 'slug']) ?? '',
       title: _str(m, ['title', 'name', 'displayName']) ?? '',
@@ -786,7 +804,9 @@ class HomeRemoteDataSource {
       return compound.fortuneCards;
     }
     try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.homepageFortuneCards);
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.homepageFortuneCards,
+      );
       final items = _itemsFromBody(res.data, keys: const ['cards', 'items']);
       if (items.isEmpty) return const [];
       return items
@@ -813,12 +833,7 @@ class HomeRemoteDataSource {
         _str(m, const ['image', 'imageUrl', 'thumbnail']),
       ),
       routePath: href.isNotEmpty ? href : null,
-      description: _str(m, const [
-        'description',
-        'descTr',
-        'desc',
-        'subtitle',
-      ]),
+      description: _str(m, const ['description', 'descTr', 'desc', 'subtitle']),
       jetonCost: parseFortuneJetonPrice(m),
     );
   }

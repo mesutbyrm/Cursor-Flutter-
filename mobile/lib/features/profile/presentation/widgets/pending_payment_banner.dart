@@ -31,15 +31,16 @@ class PendingPaymentBanner extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
-    final currencyLabel =
-        kind == PendingPaymentKind.jeton ? jetonLabel : cfcLabel;
+    final currencyLabel = kind == PendingPaymentKind.jeton
+        ? jetonLabel
+        : cfcLabel;
     final staff = ref.watch(staffAccessProvider);
     final timeLeft = request.timeLeft;
     final expiryLine = timeLeft == null
         ? '24 saat içinde cevap verilmezse talebi buradan iptal edebilirsiniz.'
         : timeLeft.inMilliseconds > 0
-            ? 'Kalan süre: ${_formatTimeLeft(timeLeft)} · 24 saat sonunda otomatik iptal edilir.'
-            : '24 saat doldu; uygulama bu talebi otomatik iptal etmeyi deneyecek.';
+        ? 'Kalan süre: ${_formatTimeLeft(timeLeft)} · 24 saat sonunda otomatik iptal edilir.'
+        : '24 saat doldu; uygulama bu talebi otomatik iptal etmeyi deneyecek.';
 
     return ProGlassCard(
       blur: 12,
@@ -98,7 +99,10 @@ class PendingPaymentBanner extends ConsumerWidget {
                     if (staff.canManagePayments)
                       TextButton.icon(
                         onPressed: () => context.push('/admin'),
-                        icon: const Icon(Icons.admin_panel_settings_outlined, size: 18),
+                        icon: const Icon(
+                          Icons.admin_panel_settings_outlined,
+                          size: 18,
+                        ),
                         label: const Text('Admin paneli'),
                       ),
                   ],
@@ -121,8 +125,9 @@ class PendingPaymentBanner extends ConsumerWidget {
   Future<void> _cancel(BuildContext context, WidgetRef ref) async {
     final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
-    final currencyLabel =
-        kind == PendingPaymentKind.jeton ? jetonLabel : cfcLabel;
+    final currencyLabel = kind == PendingPaymentKind.jeton
+        ? jetonLabel
+        : cfcLabel;
     final cancelAll = totalPending > 1;
     final ok = await showDialog<bool>(
       context: context,
@@ -131,9 +136,9 @@ class PendingPaymentBanner extends ConsumerWidget {
         content: Text(
           cancelAll
               ? 'Bekleyen $totalPending $currencyLabel ödeme talebinizin '
-                  'tümü silinecek. Yeni bir ödeme bildirimi gönderebilirsiniz.'
+                    'tümü silinecek. Yeni bir ödeme bildirimi gönderebilirsiniz.'
               : 'Bekleyen $currencyLabel ödeme talebiniz silinecek. '
-                  'Yeni bir ödeme bildirimi gönderebilirsiniz.',
+                    'Yeni bir ödeme bildirimi gönderebilirsiniz.',
         ),
         actions: [
           TextButton(
@@ -150,26 +155,21 @@ class PendingPaymentBanner extends ConsumerWidget {
     if (ok != true || !context.mounted) return;
     try {
       final notifier = ref.read(paymentRequestsNotifierProvider.notifier);
-      if (cancelAll) {
-        await notifier.cancelAllPending();
-      } else {
-        await notifier.cancelPending(request.id);
-      }
+      // Sunucu iptal ucu sunmadığından açık hata mesajı döner.
+      await notifier.cancelPending(request.id);
       ref.invalidate(notificationsListProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              'Bekleyen talep ve ödeme bildirimleri temizlendi.',
-            ),
+            content: Text('Bekleyen talep ve ödeme bildirimleri temizlendi.'),
           ),
         );
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(ApiException.userMessage(e))));
       }
     }
   }
