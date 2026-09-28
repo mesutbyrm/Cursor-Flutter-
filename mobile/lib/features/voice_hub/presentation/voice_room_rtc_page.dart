@@ -1,4 +1,5 @@
 import 'package:canlifal_social/core/design_system/cds_bottom_sheet.dart';
+import 'providers/voice_session_visitors_provider.dart';
 import 'dart:async';
 
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
@@ -191,6 +192,12 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       unawaited(_joinAudioBackground());
       _prefetchRoomImages();
       _setupRoomListeners();
+      trackVoiceSessionVisitors(
+        ref,
+        _liveRoomKey,
+        presence: voiceRoomLiveProvider(_liveRoomKey).select((s) => s.presence),
+        myUserId: ref.read(authControllerProvider).valueOrNull?.id,
+      );
     });
   }
 

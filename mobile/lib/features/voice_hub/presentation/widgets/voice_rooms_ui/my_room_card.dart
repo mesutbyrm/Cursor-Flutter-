@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../live/presentation/providers/live_providers.dart';
 import '../../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
+import '../../pages/voice_room_owner_manage_page.dart';
 import '../../utils/open_voice_chat_room_flow.dart';
 import 'voice_rooms_svg_icons.dart';
 import 'voice_rooms_ui_tokens.dart';
@@ -71,7 +72,7 @@ class MyRoomCard extends ConsumerWidget {
           ),
           if (hasRooms) ...[
             const SizedBox(height: 12),
-            ...owned.take(3).map((room) {
+            ...owned.map((room) {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Material(
@@ -93,15 +94,33 @@ class MyRoomCard extends ConsumerWidget {
                       child: Row(
                         children: [
                           Expanded(
-                            child: Text(
-                              room.displayTitle,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: VoiceRoomsUiTokens.textPrimary,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  room.displayTitle,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: VoiceRoomsUiTokens.textPrimary,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                _OwnedRoomCategory(roomKey: room.apiRoomKey),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: 'Oda ayarları',
+                            visualDensity: VisualDensity.compact,
+                            onPressed: () =>
+                                openVoiceRoomOwnerManagePage(context, room),
+                            icon: const Icon(
+                              Icons.settings_rounded,
+                              color: VoiceRoomsUiTokens.textPrimary,
+                              size: 22,
                             ),
                           ),
                           Text(
@@ -135,6 +154,22 @@ class MyRoomCard extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _OwnedRoomCategory extends ConsumerWidget {
+  const _OwnedRoomCategory({required this.roomKey});
+
+  final String roomKey;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(ownerRoomSettingsProvider(roomKey)).valueOrNull;
+    if (settings == null) return const SizedBox(height: 22);
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: VoiceRoomCategoryChip(category: settings.category),
     );
   }
 }

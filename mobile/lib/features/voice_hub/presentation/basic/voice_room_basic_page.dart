@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../providers/voice_session_visitors_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
@@ -153,6 +154,12 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       unawaited(ref.read(siteAnimationCatalogProvider.future));
       _startPremiumRealtime(ref.read(authControllerProvider).valueOrNull);
       unawaited(_joinAudioBackground());
+      trackVoiceSessionVisitors(
+        ref,
+        _liveRoomKey,
+        presence: voiceRoomLiveProvider(_liveRoomKey).select((s) => s.presence),
+        myUserId: ref.read(authControllerProvider).valueOrNull?.id,
+      );
     });
   }
 
