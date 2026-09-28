@@ -3,8 +3,6 @@ library;
 
 export 'active_speakers_card.dart';
 export 'category_selector.dart';
-export 'featured_banner.dart';
-export 'mini_music_player.dart';
 export 'my_room_card.dart';
 export 'nearby_room_tile_card.dart';
 export 'popular_room_card.dart';

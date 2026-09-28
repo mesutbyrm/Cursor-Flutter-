@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/app_router.dart';
 import '../../../../core/images/canlifal_image_prefetch.dart';
@@ -14,7 +13,6 @@ import '../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
 import '../performance/voice_rooms_perf.dart';
 import '../providers/voice_rooms_discover_providers.dart';
 import '../widgets/voice_rooms_ui/voice_rooms_ui.dart';
-import '../../../shorts/presentation/widgets/shorts_hub_strip.dart';
 
 /// Sesli Odalar ana ekranı — Premium 2026 UI + TikTok seviyesi performans.
 class VoiceRoomsPage extends ConsumerStatefulWidget {
@@ -149,20 +147,18 @@ class _VoiceRoomsPageState extends ConsumerState<VoiceRoomsPage>
                   slivers: [
                     const SliverToBoxAdapter(child: VoiceRoomsAppBar()),
                     const SliverToBoxAdapter(
-                      child: ShortsHubStrip(
-                        title: 'Kısa Videolar',
-                        emoji: '🎬',
+                      child: Padding(
                         padding: EdgeInsets.fromLTRB(
                           VoiceRoomsUiTokens.padScreenH,
                           4,
                           VoiceRoomsUiTokens.padScreenH,
-                          0,
+                          12,
                         ),
+                        child: MyRoomCard(),
                       ),
                     ),
                     const SliverToBoxAdapter(child: VoiceRoomsCategorySection()),
                     const SliverToBoxAdapter(child: SizedBox(height: 8)),
-                    const SliverToBoxAdapter(child: VoiceRoomsFeaturedSection()),
                     const SliverToBoxAdapter(child: VoiceRoomsPopularSection()),
                     const SliverToBoxAdapter(
                       child: SizedBox(height: VoiceRoomsUiTokens.gapSm),
@@ -253,12 +249,6 @@ class _VoiceRoomsPageState extends ConsumerState<VoiceRoomsPage>
                   ],
                 ),
               ),
-            ),
-            const Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: MiniMusicPlayer(),
             ),
           ],
         ),

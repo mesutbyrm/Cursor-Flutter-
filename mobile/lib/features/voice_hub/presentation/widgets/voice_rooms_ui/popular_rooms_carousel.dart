@@ -7,9 +7,14 @@ import 'voice_rooms_ui_tokens.dart';
 import 'voice_rooms_mock_data.dart';
 
 class PopularRoomsCarousel extends StatelessWidget {
-  const PopularRoomsCarousel({super.key, required this.rooms});
+  const PopularRoomsCarousel({
+    super.key,
+    required this.rooms,
+    required this.onRoomTap,
+  });
 
   final List<PopularRoomItem> rooms;
+  final ValueChanged<PopularRoomItem> onRoomTap;
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +49,10 @@ class PopularRoomsCarousel extends StatelessWidget {
                 ),
                 child: RepaintBoundary(
                   key: ValueKey('popular_${room.id}'),
-                  child: PopularRoomCard(room: room),
+                  child: PopularRoomCard(
+                    room: room,
+                    onTap: () => onRoomTap(room),
+                  ),
                 ),
               );
             },
@@ -74,34 +82,6 @@ class _PopularHeader extends StatelessWidget {
             color: VoiceRoomsUiTokens.textPrimary,
             fontSize: 16,
             fontWeight: FontWeight.w800,
-          ),
-        ),
-        const Spacer(),
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {},
-            borderRadius: BorderRadius.circular(8),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-              child: Row(
-                children: [
-                  Text(
-                    'Tümünü Gör',
-                    style: TextStyle(
-                      color: VoiceRoomsUiTokens.textSecondary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  VoiceRoomsSvgIcons.icon(
-                    'chevron_right',
-                    size: 14,
-                    color: VoiceRoomsUiTokens.textSecondary,
-                  ),
-                ],
-              ),
-            ),
           ),
         ),
       ],

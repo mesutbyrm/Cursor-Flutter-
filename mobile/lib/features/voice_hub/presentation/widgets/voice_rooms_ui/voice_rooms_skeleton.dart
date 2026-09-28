@@ -27,26 +27,6 @@ class VoiceRoomsCategorySkeleton extends StatelessWidget {
   }
 }
 
-class VoiceRoomsFeaturedSkeleton extends StatelessWidget {
-  const VoiceRoomsFeaturedSkeleton({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    final cardWidth = ((width - 40) / 2).clamp(160.0, 280.0);
-    return SizedBox(
-      height: 148,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: VoiceRoomsUiTokens.padScreenH),
-        itemCount: 2,
-        separatorBuilder: (_, _) => const SizedBox(width: VoiceRoomsUiTokens.gapMd),
-        itemBuilder: (_, _) => _shimmerBox(cardWidth, 148, radius: VoiceRoomsUiTokens.radiusLg),
-      ),
-    );
-  }
-}
-
 class VoiceRoomsPopularSkeleton extends StatelessWidget {
   const VoiceRoomsPopularSkeleton({super.key});
 

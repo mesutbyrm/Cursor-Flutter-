@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.630+681 (2026-09-28) — Cloud birleşimi: trend video + sesli oda (#403/#404)
+
+- **Paket:** PR #403 (trend videolar) + PR #404 (sesli oda sahip araçları) `main` üzerinde birleştirildi
+
 ## 1.0.628+679 (2026-09-28) — Trend videolar yeni tasarım + dokunma düzeltmesi
 
 - **Trend videolar** paylaşılan tasarıma göre: ✦ CanlıFal başlığı, arama + güvenli mod, Sana Özel / Takip (mor alt çizgi), alt menü
@@ -8,6 +12,15 @@
 - Çift tıklama beğenisi video yüklenmeden de çalışıyor; kalp dokunulan yerde çıkıyor
 - Yorum gönderilemezse artık hata mesajı gösteriliyor (önceden sessizdi)
 - Bildir / sil / oynatma hızı / PiP: videoya uzun basınca
+
+## 1.0.629+680 (2026-09-28) — Sesli odalar: sahip araçları + çıkış özeti
+
+- **Keşfet:** Kısa videolar, Öne çıkan ve Canlı DJ (mini oynatıcı) kaldırıldı; **Popüler Sesli Odalar** kartına dokununca odaya giriliyor (önceden dokunma bağlı değildi); işlevsiz "Tümünü Gör" kaldırıldı
+- **Okunabilirlik:** gri ikincil/soluk yazı renkleri açıldı (#9E9E9E → #D4D4DE, #6B6B6B → #A9A9B8)
+- **Odalarım** en üste taşındı; her odada kategori rozeti ve ⚙️ çark
+- **Oda yönetimi (odaya girmeden):** ad, açıklama, kategori, arka plan, şifre koy/kaldır, koltuk (1–15), sessize alma, karşılama mesajı, sabit duyuru, DJ ekle/çıkar, yetkili ekle (moderatör/yönetici/konuşmacı); hediye komisyon oranı salt okunur
+- **Düzeltme:** oda adı/açıklama/kategori sunucunun okumadığı alanlara gidiyordu (`nameTr`, `descTr`, `tags` eklendi)
+- **Oda sahibi çıkış özeti** (her çıkışta): süre, giren kişi sayısı ve listesi, kim ne kadar jeton attı, size kalan jeton + TL (cüzdandan), güncel bakiye
 
 ## 1.0.627+678 (2026-09-28) — Sosyal yeni tasarım + derleme düzeltmesi
 

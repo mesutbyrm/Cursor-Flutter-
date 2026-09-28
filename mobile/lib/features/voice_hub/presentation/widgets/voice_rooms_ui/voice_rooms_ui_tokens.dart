@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 abstract final class VoiceRoomsUiTokens {
   static const Color bgAmoled = Color(0xFF050505);
   static const Color textPrimary = Color(0xFFFFFFFF);
-  static const Color textSecondary = Color(0xFF9E9E9E);
-  static const Color textMuted = Color(0xFF6B6B6B);
+  static const Color textSecondary = Color(0xFFD4D4DE);
+  static const Color textMuted = Color(0xFFA9A9B8);
 
   static const Color purpleStart = Color(0xFF8E2DE2);
   static const Color purpleEnd = Color(0xFF4A00E0);

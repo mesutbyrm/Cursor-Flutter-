@@ -1146,11 +1146,13 @@ class ChatRoomRemoteDataSource {
       }
       final trimmedName = name?.trim() ?? '';
       if (trimmedName.isNotEmpty) {
+        data['nameTr'] = trimmedName;
         data['name'] = trimmedName;
         data['title'] = trimmedName;
       }
       if (description != null) {
         final desc = description.trim();
+        data['descTr'] = desc;
         data['description'] = desc;
         data['desc'] = desc;
       }
@@ -1168,6 +1170,8 @@ class ChatRoomRemoteDataSource {
       }
       if (category != null && category.trim().isNotEmpty) {
         data['category'] = category.trim().toLowerCase();
+        // Sunucu kategoriyi `tags` alanında saklar.
+        data['tags'] = category.trim().toLowerCase();
       }
       if (data.isEmpty) return;
       await _dio.safePatch<dynamic>(
@@ -1175,6 +1179,33 @@ class ChatRoomRemoteDataSource {
         data: data,
       );
     });
+  }
+
+  /// `GET /api/chat/rooms/{id}/settings` — yalnızca sahip / yönetici.
+  Future<Map<String, dynamic>> fetchRoomSettings(String roomKey) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.chatRoomSettings(roomKey),
+      forceRefresh: true,
+    );
+    final map = asJsonMap(res.data);
+    final room = map['room'];
+    return {
+      ...(room is Map ? asJsonMap(room) : const <String, dynamic>{}),
+      if (map['myPermissions'] is Map)
+        'myPermissions': asJsonMap(map['myPermissions']),
+    };
+  }
+
+  /// `PATCH /api/chat/rooms/{id}/settings` — sunucu alan adlarıyla.
+  Future<void> patchRoomSettings(
+    String roomKey,
+    Map<String, dynamic> data,
+  ) async {
+    if (data.isEmpty) return;
+    await _dio.safePatch<dynamic>(
+      ApiEndpoints.chatRoomSettings(roomKey),
+      data: data,
+    );
   }
 
   Future<void> setRoomBackground({
