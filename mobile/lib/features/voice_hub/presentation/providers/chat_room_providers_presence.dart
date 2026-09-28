@@ -377,6 +377,11 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     if (_roomKey.isEmpty) return;
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) return;
+    if (_roomMeta.ownerId != null &&
+        _roomMeta.ownerId!.trim().isNotEmpty &&
+        user.id == _roomMeta.ownerId!.trim()) {
+      return;
+    }
     ChatRoomPresence? self;
     for (final p in state.presence) {
       if (p.id == user.id) {

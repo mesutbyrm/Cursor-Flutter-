@@ -51,8 +51,9 @@ class VoiceRoomsListNotifier extends AsyncNotifier<List<VoiceRoomEntity>> {
         .read(liveRepositoryProvider)
         .fetchVoiceRoomsPage(page: 1, limit: _pageSize);
     _hasMore = result.hasMore;
-    VoiceEventLog.roomListLoad(page: 1, count: result.rooms.length);
-    return result.rooms;
+    final filtered = result.rooms.where((r) => r.displayOnline > 0).toList();
+    VoiceEventLog.roomListLoad(page: 1, count: filtered.length);
+    return filtered;
   }
 
   Future<void> refresh() async {
@@ -66,8 +67,9 @@ class VoiceRoomsListNotifier extends AsyncNotifier<List<VoiceRoomEntity>> {
           .read(liveRepositoryProvider)
           .fetchVoiceRoomsPage(page: 1, limit: _pageSize);
       _hasMore = result.hasMore;
-      VoiceEventLog.roomListLoad(page: 1, count: result.rooms.length);
-      return result.rooms;
+      final filtered = result.rooms.where((r) => r.displayOnline > 0).toList();
+      VoiceEventLog.roomListLoad(page: 1, count: filtered.length);
+      return filtered;
     });
   }
 
@@ -94,14 +96,15 @@ class VoiceRoomsListNotifier extends AsyncNotifier<List<VoiceRoomEntity>> {
           .fetchVoiceRoomsPage(page: nextPage, limit: _pageSize);
       _page = nextPage;
       _hasMore = result.hasMore;
-      if (result.rooms.isEmpty) {
+      final filtered = result.rooms.where((r) => r.displayOnline > 0).toList();
+      if (filtered.isEmpty) {
         _hasMore = false;
         return;
       }
       final seen = current.map((r) => r.apiRoomKey).toSet();
       final merged = [
         ...current,
-        ...result.rooms.where((r) => seen.add(r.apiRoomKey)),
+        ...filtered.where((r) => seen.add(r.apiRoomKey)),
       ];
       VoiceEventLog.roomListLoad(page: nextPage, count: merged.length);
       state = AsyncValue.data(merged);
