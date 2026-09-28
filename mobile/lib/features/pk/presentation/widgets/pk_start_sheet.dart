@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../voice_hub/domain/pk/pk_duration_options.dart';
+import '../../../voice_hub/presentation/providers/pk_sitting_duration_provider.dart';
+import '../../../voice_hub/presentation/providers/chat_room_providers.dart';
 import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_duration_picker.dart';
 import '../../data/pk_models.dart';
 import '../providers/pk_feature_enabled_provider.dart';
@@ -76,9 +79,36 @@ class _PkStartSheetState extends ConsumerState<_PkStartSheet> {
   String? _invitingTargetId;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(roomSittingDurationProvider.notifier).markRoomEntry();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final session = ref.watch(pkSessionProvider(widget.args));
     final bottom = MediaQuery.paddingOf(context).bottom;
+    final sittingTime = ref.watch(roomSittingDurationProvider);
+    final currentUser = ref.read(authControllerProvider).valueOrNull;
+
+    bool isRoomOwner = false;
+    if (currentUser != null && widget.args.kind == PkContextKind.voice) {
+      final roomAsync = ref.watch(voiceRoomLiveProvider(widget.args.contextId));
+      final room = roomAsync.valueOrNull;
+      isRoomOwner = room?.ownerId?.trim() == currentUser.id.trim();
+    }
+
+    final canAttackPk = isRoomOwner ||
+        (sittingTime != null &&
+         DateTime.now().difference(sittingTime).inSeconds >= 120);
+
+    final remaining = sittingTime != null && !canAttackPk
+        ? 120 - DateTime.now().difference(sittingTime).inSeconds
+        : 0;
+
     final busy = session.selfBusy ||
         session.isRateLimited ||
         session.loading ||
@@ -154,6 +184,11 @@ class _PkStartSheetState extends ConsumerState<_PkStartSheet> {
               ),
               const SizedBox(height: 12),
             ],
+            if (!canAttackPk && remaining > 0)
+              _banner(
+                'Oda içinde ${remaining}sn daha beklemeniz gerekiyor (Oda sahibi bekleme yapabilir)',
+                Colors.orangeAccent,
+              ),
             if (session.isRateLimited)
               _banner(
                 'Çok fazla istek — lütfen biraz bekleyin',
@@ -208,7 +243,8 @@ class _PkStartSheetState extends ConsumerState<_PkStartSheet> {
                     return _CandidateTile(
                       candidate: c,
                       inviting: inviting,
-                      onInvite: busy ? null : () => _invite(c),
+                      onInvite: (busy || !canAttackPk) ? null : () => _invite(c),
+                      disabled: !canAttackPk,
                     );
                   },
                 ),
@@ -349,11 +385,13 @@ class _CandidateTile extends StatelessWidget {
     required this.candidate,
     required this.onInvite,
     this.inviting = false,
+    this.disabled = false,
   });
 
   final PkCandidate candidate;
   final VoidCallback? onInvite;
   final bool inviting;
+  final bool disabled;
 
   @override
   Widget build(BuildContext context) {
@@ -452,7 +490,9 @@ class _CandidateTile extends StatelessWidget {
             FilledButton(
               onPressed: onInvite,
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF9B4DFF),
+                backgroundColor: disabled
+                    ? const Color(0xFF9B4DFF).withValues(alpha: 0.4)
+                    : const Color(0xFF9B4DFF),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 minimumSize: const Size(0, 40),
               ),
@@ -465,9 +505,9 @@ class _CandidateTile extends StatelessWidget {
                         color: Colors.white,
                       ),
                     )
-                  : const Text(
-                      'PK İSTEĞİ GÖNDER',
-                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11),
+                  : Text(
+                      disabled ? 'BEKLEME' : 'PK İSTEĞİ GÖNDER',
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 11),
                     ),
             ),
           ],
