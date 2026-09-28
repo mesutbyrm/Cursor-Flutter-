@@ -8,28 +8,24 @@ import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_entity.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_fortune_types.dart';
 
-/// Randevu onayı sonucu — süre, jeton ve fal türü.
+/// Randevu onayı sonucu — jeton ve fal türü.
 class PsychicBookingResult {
   const PsychicBookingResult({
-    required this.minutes,
     required this.jeton,
     required this.fortuneType,
   });
 
-  final int minutes;
   final int jeton;
   final String fortuneType;
 }
 
-final _bookingMinutesProvider = StateProvider.autoDispose<int>((ref) => 10);
 final _bookingFortuneTypeProvider =
     StateProvider.autoDispose<String>((ref) => 'general');
 
-/// Danışan — süre (5–30 dk), jeton ve fal türü seçimi.
+/// Danışan — fal türü seçimi. Falcı kabul ettikten sonra seans başlar.
 Future<PsychicBookingResult?> showPsychicBookingSheet(
   BuildContext context, {
   required PsychicEntity psychic,
-  int initialMinutes = 10,
   String? initialFortuneType,
   bool isStaff = false,
 }) {
@@ -41,7 +37,6 @@ Future<PsychicBookingResult?> showPsychicBookingSheet(
       container: ProviderScope.containerOf(context),
       child: ProviderScope(
         overrides: [
-          _bookingMinutesProvider.overrideWith((ref) => initialMinutes),
           _bookingFortuneTypeProvider.overrideWith(
             (ref) => initialFortuneType ??
                 psychicFortuneTypesForPsychic(psychic.specialties).first.key,
@@ -64,14 +59,8 @@ class _PsychicBookingSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final options = PsychicDurationOption.forPsychic(psychic.pricePerMinute);
-    final selectedMinutes = ref.watch(_bookingMinutesProvider);
     final selectedType = ref.watch(_bookingFortuneTypeProvider);
     final fortuneTypes = psychicFortuneTypesForPsychic(psychic.specialties);
-    final selected = options.firstWhere(
-      (o) => o.minutes == selectedMinutes,
-      orElse: () => options[1],
-    );
     final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
 
     return Padding(
@@ -164,41 +153,6 @@ class _PsychicBookingSheet extends ConsumerWidget {
                   ],
                   const SizedBox(height: 18),
                   const Text(
-                    'Süre Seçin',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13,
-                      color: Colors.white70,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: options.map((opt) {
-                      final active = opt.minutes == selectedMinutes;
-                      return ChoiceChip(
-                        label: Text(opt.label),
-                        selected: active,
-                        onSelected: (_) => ref
-                            .read(_bookingMinutesProvider.notifier)
-                            .state = opt.minutes,
-                        selectedColor: AppThemeColors.accentPurple,
-                        labelStyle: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: active ? Colors.white : Colors.white70,
-                        ),
-                        backgroundColor: Colors.white.withValues(alpha: 0.08),
-                        side: BorderSide(
-                          color: active
-                              ? AppThemeColors.accentPink
-                              : Colors.white24,
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
                     'Fal Türü Seçin',
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
@@ -235,67 +189,8 @@ class _PsychicBookingSheet extends ConsumerWidget {
                     }).toList(),
                   ),
                   const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.35),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            children: [
-                              Text(
-                                '${selected.minutes} dk',
-                                style: const TextStyle(
-                                  color: Color(0xFFFFD54F),
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'Süre',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.white.withValues(alpha: 0.55),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(width: 1, height: 36, color: Colors.white12),
-                        Expanded(
-                          child: Column(
-                            children: [
-                              Text(
-                                isStaff
-                                    ? 'Ücretsiz'
-                                    : '${selected.totalJeton} $jetonLabel',
-                                style: const TextStyle(
-                                  color: AppThemeColors.accentCyan,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'Ücret',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.white.withValues(alpha: 0.55),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 10),
                   Text(
-                    'İsteğiniz falcıya iletilecek. Kabul ettiğinde seans başlar.',
+                    'Falcı kabul ettiğinde seans direk başlar.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 11,
@@ -311,8 +206,7 @@ class _PsychicBookingSheet extends ConsumerWidget {
                     onTap: () => Navigator.pop(
                       context,
                       PsychicBookingResult(
-                        minutes: selected.minutes,
-                        jeton: selected.totalJeton,
+                        jeton: (psychic.pricePerMinute * 10).toInt(),
                         fortuneType: selectedType,
                       ),
                     ),
