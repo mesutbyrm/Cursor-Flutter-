@@ -4,7 +4,7 @@ import '../../data/repositories/astrology_repository_impl.dart';
 import '../../domain/entities/compatibility_entity.dart';
 import '../../domain/entities/zodiac_sign.dart';
 import '../../domain/repositories/astrology_repository.dart';
-import '../../../../core/providers/dio_provider.dart';
+import '../../../../core/network/dio_provider.dart';
 
 // DataSource Provider
 final astrologyDataSourceProvider = Provider<AstrologyDataSource>((ref) {
@@ -52,13 +52,17 @@ final selectedZodiacPairProvider =
   return null;
 });
 
-// Convenience Provider for current selection
+/// Seçili burç çifti için uyum skoru (seçim yoksa boş `AsyncData`).
 final currentCompatibilityProvider =
-    FutureProvider<CompatibilityScore?>((ref) async {
+    Provider<AsyncValue<CompatibilityScore?>>((ref) {
   final pair = ref.watch(selectedZodiacPairProvider);
-  if (pair == null) return null;
+  if (pair == null) return const AsyncValue.data(null);
   return ref.watch(compatibilityScoreProvider((
     sign1: pair.sign1,
     sign2: pair.sign2,
-  )));
+  ))).when(
+    data: (score) => AsyncValue.data(score),
+    loading: () => const AsyncValue.loading(),
+    error: (e, st) => AsyncValue.error(e, st),
+  );
 });

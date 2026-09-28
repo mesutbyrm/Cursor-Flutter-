@@ -53,7 +53,9 @@ class CompatibilityPage extends ConsumerWidget {
             // Compatibility Score
             if (selectedPair != null)
               compatibility.when(
-                data: (score) => CompatibilityCard(compatibility: score),
+                data: (score) => score == null
+                    ? const SizedBox.shrink()
+                    : CompatibilityCard(compatibility: score),
                 loading: () => const Center(
                   child: Padding(
                     padding: EdgeInsets.all(32),

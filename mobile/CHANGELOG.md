@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.621+672 (2026-09-28) — APK derleme düzeltmeleri (1.0.620 hotfix)
+
+- **Derleme:** 1.0.620 merge sonrası ~170 `dart analyze` hatası giderildi — APK artık CI release gate’ten geçebilir
+- **Kısa video:** Yanlışlıkla değiştirilen `ShortsRepository` geri alındı; yeni `ShortsPage` mevcut dikey akışa (`ShortsFeedPage`) yönlendiriliyor
+- **Ağ katmanı:** Yeni modüllerde `dio_provider` / `safeGet` importları; ortak yayın sayfası sözdizimi düzeltildi
+- **Burç uyumu:** Riverpod `AsyncValue` tip uyumu
+
 ## 1.0.620+671 (2026-09-28) — 7 yeni özellik entegrasyonu
 
 - **Burçları Uyum Analizi:** Kullanıcılar iki burçu seçerek uyum skoru, günlük/haftalık uyum tahminlerini görebiliyor (`compatibility_page.dart`)

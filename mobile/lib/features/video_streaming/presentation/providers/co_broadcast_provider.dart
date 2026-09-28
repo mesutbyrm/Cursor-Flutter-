@@ -3,7 +3,7 @@ import '../../data/datasources/co_broadcast_datasource.dart';
 import '../../data/repositories/co_broadcast_repository_impl.dart';
 import '../../domain/entities/co_broadcast_entity.dart';
 import '../../domain/repositories/co_broadcast_repository.dart';
-import '../../../../core/providers/dio_provider.dart';
+import '../../../../core/network/dio_provider.dart';
 
 final coBroadcastDataSourceProvider = Provider<CoBroadcastDataSource>((ref) => CoBroadcastDataSourceImpl(dio: ref.watch(dioProvider)));
 

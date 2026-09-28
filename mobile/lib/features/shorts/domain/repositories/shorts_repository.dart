@@ -1,11 +1,162 @@
-import '../entities/shorts_entity.dart';
+import '../entities/short_video_analytics.dart';
+import '../entities/short_comment_entity.dart';
+import '../entities/short_explore_entity.dart';
+import '../entities/short_video_entity.dart';
+import '../entities/shorts_ai_metadata.dart';
+import '../../../live/domain/entities/live_gift_event.dart';
+
+enum ShortsFeedTab { forYou, following }
+
+enum ShortUserVideosTab { videos, liked, saved }
+
+class ShortGiftSendResult {
+  const ShortGiftSendResult({
+    this.newBalance,
+    this.event,
+  });
+
+  final int? newBalance;
+  final LiveGiftEvent? event;
+}
+
+class ShortVideoFeedPage {
+  const ShortVideoFeedPage({
+    required this.videos,
+    this.nextCursor,
+    this.hasMore = false,
+  });
+
+  final List<ShortVideoEntity> videos;
+  final String? nextCursor;
+  final bool hasMore;
+}
 
 abstract class ShortsRepository {
-  Future<List<ShortVideo>> getShorts({int limit = 20});
-  Future<List<ShortVideo>> getTrendingShorts();
-  Future<ShortVideo> getShortDetail(String shortId);
-  Future<void> likeShort(String shortId);
-  Future<void> unlikeShort(String shortId);
-  Future<List<ShortVideoRemix>> getRemixes(String originalVideoId);
-  Future<ShortVideoRemix> createRemix(String originalVideoId, String remixType);
+  Future<ShortVideoFeedPage> fetchFeed({
+    String? cursor,
+    int limit = 10,
+    ShortsFeedTab tab = ShortsFeedTab.forYou,
+  });
+
+  Future<ShortExplorePage> fetchExplore({
+    String? query,
+    String? cursor,
+    int limit = 12,
+    String? section,
+    String? location,
+    double? lat,
+    double? lng,
+    String? source,
+  });
+
+  Future<ShortExplorePage> fetchExploreHub({
+    String? locationLabel,
+    double? lat,
+    double? lng,
+  });
+
+  Future<ShortVideoEntity> fetchVideo(String videoId);
+
+  Future<ShortVideoEntity> uploadVideo({
+    required String videoPath,
+    String? thumbnailPath,
+    String? description,
+  });
+
+  Future<({bool liked, int likesCount})> toggleLike(String videoId);
+
+  Future<({bool saved, int savesCount})> toggleSave(String videoId);
+
+  Future<int> recordShare(String videoId);
+
+  Future<List<ShortCommentEntity>> fetchComments(String videoId);
+
+  Future<({ShortCommentEntity comment, int commentsCount})> addComment(
+    String videoId,
+    String content, {
+    String? parentId,
+  });
+
+  Future<void> deleteComment(String videoId, String commentId);
+
+  Future<({bool liked, int likesCount})> toggleCommentLike(
+    String videoId,
+    String commentId,
+  );
+
+  Future<({bool counted, int viewsCount})> recordView(
+    String videoId, {
+    required double watchedSec,
+  });
+
+  Future<void> deleteVideo(String videoId);
+
+  Future<List<ShortVideoEntity>> fetchByUser(
+    String userId, {
+    ShortUserVideosTab tab = ShortUserVideosTab.videos,
+  });
+
+  Future<ShortProfileStats> fetchProfileStats(String userId);
+
+  Future<List<ShortVideoEntity>> fetchViewedByMe({int limit = 20});
+
+  Future<List<ShortVideoEntity>> fetchDuets(String videoId);
+
+  Future<List<ShortHashtagEntity>> searchHashtags(String query);
+
+  Future<List<ShortHashtagEntity>> fetchTrendingHashtags();
+
+  Future<List<ShortMusicEntity>> searchMusic(String query);
+
+  Future<List<ShortVideoEntity>> fetchHashtagVideos(
+    String name, {
+    int page = 1,
+    int limit = 20,
+  });
+
+  Future<List<ShortVideoEntity>> fetchMusicVideos(
+    String musicId, {
+    int page = 1,
+    int limit = 20,
+  });
+
+  Future<List<ShortVideoAuthor>> searchMentions(String query);
+
+  Future<void> pinComment(String videoId, String commentId);
+
+  Future<ShortVideoAnalytics> fetchVideoAnalytics(
+    String videoId, {
+    ShortVideoEntity? fallback,
+  });
+
+  Future<ShortsAiMetadata> suggestMetadata({
+    String? description,
+    String? videoKey,
+    String? liveClipId,
+  });
+
+  Future<ShortLiveClipSource> fetchLiveClip({
+    required String liveClipId,
+    String? sessionId,
+    String? roomId,
+  });
+
+  Future<List<ShortMusicEntity>> recommendMusic({
+    String? description,
+    List<String> hashtags = const [],
+    String? videoKey,
+  });
+
+  Future<String?> generateSubtitles({
+    required String videoId,
+    String? videoKey,
+  });
+
+  Future<ShortGiftSendResult> sendGift({
+    required String videoId,
+    required String giftTypeId,
+    required String senderName,
+    int quantity = 1,
+    String? senderId,
+  });
 }

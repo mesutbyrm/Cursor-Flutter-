@@ -4,7 +4,7 @@ import '../../data/datasources/sports_datasource.dart';
 import '../../data/repositories/sports_repository_impl.dart';
 import '../../domain/entities/sports_prediction_entity.dart';
 import '../../domain/repositories/sports_repository.dart';
-import '../../../../core/providers/dio_provider.dart';
+import '../../../../core/network/dio_provider.dart';
 
 final sportsDataSourceProvider = Provider<SportsDataSource>((ref) {
   final dio = ref.watch(dioProvider);

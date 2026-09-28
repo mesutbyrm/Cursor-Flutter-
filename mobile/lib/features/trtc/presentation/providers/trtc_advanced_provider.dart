@@ -4,7 +4,7 @@ import '../../data/datasources/trtc_advanced_datasource.dart';
 import '../../data/repositories/trtc_advanced_repository_impl.dart';
 import '../../domain/entities/trtc_advanced_config.dart';
 import '../../domain/repositories/trtc_advanced_repository.dart';
-import '../../../../core/providers/dio_provider.dart';
+import '../../../../core/network/dio_provider.dart';
 
 final trtcAdvancedDataSourceProvider = Provider<TRTCAdvancedDataSource>((ref) {
   final dio = ref.watch(dioProvider);

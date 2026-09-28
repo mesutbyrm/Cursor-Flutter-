@@ -4,7 +4,7 @@ import '../../data/datasources/dreams_abacus_remote_datasource.dart';
 import '../../data/repositories/dream_repository_impl.dart';
 import '../../domain/entities/dream_contest_entity.dart';
 import '../../domain/repositories/dream_repository.dart';
-import '../../../../core/providers/dio_provider.dart';
+import '../../../../core/network/dio_provider.dart';
 
 final dreamDataSourceProvider = Provider<DreamDataSource>((ref) {
   final dio = ref.watch(dioProvider);

@@ -4,7 +4,7 @@ import '../../data/datasources/agency_tasks_datasource.dart';
 import '../../data/repositories/agency_tasks_repository_impl.dart';
 import '../../domain/entities/agency_task_entity.dart';
 import '../../domain/repositories/agency_tasks_repository.dart';
-import '../../../../core/providers/dio_provider.dart';
+import '../../../../core/network/dio_provider.dart';
 
 final agencyTasksDataSourceProvider = Provider<AgencyTasksDataSource>((ref) {
   final dio = ref.watch(dioProvider);
