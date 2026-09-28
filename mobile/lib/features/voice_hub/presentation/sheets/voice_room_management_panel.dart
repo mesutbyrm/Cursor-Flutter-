@@ -1161,7 +1161,7 @@ class _VoiceRoomManagementPanelState
   }
 
   Future<void> _pickMaxUsers() async {
-    final current = _live.roomMaxUsers ?? room.maxUsers ?? 150;
+    final current = _live.roomMaxUsers ?? room.maxUsers ?? 15;
     // Kullanıcı isteği: en düşük 150, üstü seçilebilir.
     final options = const [150, 200, 300, 500, 1000];
     final picked = await showDialog<int>(
