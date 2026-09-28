@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.620+671 (2026-09-28) — 7 yeni özellik entegrasyonu
+
+- **Burçları Uyum Analizi:** Kullanıcılar iki burçu seçerek uyum skoru, günlük/haftalık uyum tahminlerini görebiliyor (`compatibility_page.dart`)
+- **Rüya Yarışması:** Rüya dünyasında katılım, yorumlama ve oy verme sistemi; kontestan sıralaması (`dream_contest_page.dart`)
+- **Futbol Tahminleri:** Maç tahminleri, oranlar ve lider tablosu; TDD+SSE ile canlı güncelleme (`football_predictions_page.dart`, `leaderboard_page.dart`)
+- **TRTC Gelişmiş Ayarları:** Ses efektleri (3D, yankı, distorsiyon), kayıt seçenekleri, kalite profilleri, ses işleme (`trtc_advanced_settings_page.dart` — 4 sekme)
+- **Ajans Görev Sistemi:** Takım üyeleri ve görev yönetimi; durum, tamamlanma, vadesi geçmiş görevler (`agency_tasks_page.dart`)
+- **Ortak Yayın:** Misafir davetleri, kabul/reddet, ses karışımı ve izin yönetimi (`co_broadcast_page.dart`)
+- **Kısa Videolar:** Video beslemesi, trending ve remix işlemleri (`shorts_page.dart`)
+
 ## 1.0.619+670 (2026-09-27) — PR #397/#399 birleşimi + SSE (#400 kalanı)
 
 - **Animasyon (#397):** `CurvedAnimation` initState/dispose — sızıntı ve gereksiz listener birikimi giderildi (home, fal, sesli oda, arama)
