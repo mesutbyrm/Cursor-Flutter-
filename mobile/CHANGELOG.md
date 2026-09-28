@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.628+679 (2026-09-28) — Trend videolar yeni tasarım + dokunma düzeltmesi
+
+- **Trend videolar** paylaşılan tasarıma göre: ✦ CanlıFal başlığı, arama + güvenli mod, Sana Özel / Takip (mor alt çizgi), alt menü
+- Sağ şerit: profil + takip, beğeni, yorum, kaydet, paylaş, Hediye, dönen müzik diski; alt bilgi `@kullanıcı ✓ · N izlenme`, açıklama, mor hashtag'ler
+- **Düzeltme:** dokunma katmanı butonların üstündeydi — beğeni/yorum/kaydet/paylaş/hediye dokunuşları oynat/durdur'a gidiyordu
+- Çift tıklama beğenisi video yüklenmeden de çalışıyor; kalp dokunulan yerde çıkıyor
+- Yorum gönderilemezse artık hata mesajı gösteriliyor (önceden sessizdi)
+- Bildir / sil / oynatma hızı / PiP: videoya uzun basınca
+
 ## 1.0.627+678 (2026-09-28) — Sosyal yeni tasarım + derleme düzeltmesi
 
 - **Sosyal sekmesi** paylaşılan tasarıma göre yenilendi: ✦ CanlıFal başlığı, bildirim zili (okunmamış noktası) ve mesaj ikonu (sayaçlı); Tümü · Takip · Falcılar · Ünlüler · Fan Club sekme çubuğu; mor "Paylaş" butonu

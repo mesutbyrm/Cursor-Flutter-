@@ -12,6 +12,7 @@ import '../../domain/entities/short_comment_entity.dart';
 import '../../domain/entities/short_video_entity.dart';
 import '../providers/shorts_providers.dart';
 import '../utils/short_studio_launch.dart';
+import '../utils/shorts_api_message.dart';
 
 Future<int?> showShortCommentsSheet(
   BuildContext context,
@@ -131,6 +132,8 @@ class _ShortCommentsSheetState extends ConsumerState<_ShortCommentsSheet> {
       setState(() => _commentsCount = res.commentsCount);
       _notifyCount();
       await _loadComments();
+    } catch (e) {
+      if (mounted) showShortsSnackBar(context, shortsErrorMessage(e));
     } finally {
       if (mounted) setState(() => _sending = false);
     }
