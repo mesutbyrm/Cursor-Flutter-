@@ -502,7 +502,6 @@ class _VoiceRoomManagementPanelState
   }
 
   Widget _chatView(ScrollController scroll) {
-    final ui = ref.watch(voiceRoomUiProvider);
     final roomMuted = _live.roomMuted;
     final canMod = perms.canModerate || isOwner || perms.isSiteAdmin;
 
@@ -523,14 +522,6 @@ class _VoiceRoomManagementPanelState
               }
             },
           ),
-        SwitchListTile(
-          title: const Text('Bildirim sesini aç'),
-          subtitle: const Text('Giriş ve oda bildirimleri'),
-          value: ui.chatNotificationSoundEnabled,
-          onChanged: (_) => ref
-              .read(voiceRoomUiProvider.notifier)
-              .toggleChatNotificationSound(),
-        ),
         if (canMod)
           ListTile(
             leading: const Icon(Icons.cleaning_services_rounded),
