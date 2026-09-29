@@ -47,7 +47,8 @@ class AuthRemoteDataSource {
   }) async {
     await _dio.safePost<dynamic>(
       ApiEndpoints.authMobileVerifyEmail,
-      data: {'email': email, 'code': code},
+      // Sunucu e-postadaki bağlantının `token`ını bekler.
+      data: {'token': code.trim(), 'email': email, 'code': code},
     );
   }
 
