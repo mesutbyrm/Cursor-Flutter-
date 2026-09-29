@@ -79,7 +79,8 @@ class VoiceTrtcEngine {
     });
 
     try {
-      final micOk = await requestMicrophonePermission();
+      // Dinleyici mikrofon açmaz; izin yalnızca koltukta/yayında gerekir.
+      final micOk = !publishMic || await requestMicrophonePermission();
       if (!micOk) {
         throw const VoiceTrtcException(
           'Mikrofon izni verilmedi. Ayarlardan mikrofonu açıp tekrar deneyin.',
