@@ -44,9 +44,8 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
   @override
   void initState() {
     super.initState();
-    // Önceden her kullanıcıda saniyede bir `/pk/me/invites` + yayın PK isteği
-    // atılıyordu; yavaş ağda istekler üst üste biniyordu.
-    _pollTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+    // Yavaş ağda istek yığılmasını azaltmak için 4 sn (önceden 2 sn).
+    _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) {
       if (!mounted || _showing) return;
       unawaited(_processPendingInvites());
     });

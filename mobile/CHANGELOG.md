@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.639+690 (2026-09-29) — P1 poll seyreltme (ağ yükü)
+
+- **Canlı PK davet:** global poll 2 sn → 4 sn
+- **Falcı bekleme:** ilk durum yoklaması 500 ms → 2 sn (~12 sn pencere)
+- **Sesli oda listesi:** `refresh()` 2 sn debounce; stale oturum / PK sonrası `refresh(immediate: true)`
+- Backend değişikliği yok
+
 ## 1.0.638+689 (2026-09-29) — İstek yığılması / bağlantı dayanıklılığı
 
 - **Sesli oda:** `refresh()` eşzamanlı çağrılar tek uçuşta birleştirildi (poll + SSE debounce çakışması)

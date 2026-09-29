@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/voice_event_log.dart';
@@ -35,16 +37,23 @@ List<VoiceRoomEntity> patchVoiceRoomsInList(
 /// Sesli oda listesi — sayfalanmış yükleme (açılışta tüm odalar çekilmez).
 class VoiceRoomsListNotifier extends AsyncNotifier<List<VoiceRoomEntity>> {
   static const _pageSize = 30;
+  static const _refreshDebounce = Duration(seconds: 2);
 
   var _page = 1;
   var _hasMore = true;
   var _loadingMore = false;
+  Timer? _refreshDebounceTimer;
+  var _refreshInFlight = false;
+  var _refreshQueued = false;
 
   bool get hasMore => _hasMore;
   bool get isLoadingMore => _loadingMore;
 
   @override
   Future<List<VoiceRoomEntity>> build() async {
+    ref.onDispose(() {
+      _refreshDebounceTimer?.cancel();
+    });
     _page = 1;
     _hasMore = true;
     final result = await ref
@@ -55,20 +64,46 @@ class VoiceRoomsListNotifier extends AsyncNotifier<List<VoiceRoomEntity>> {
     return result.rooms;
   }
 
-  Future<void> refresh() async {
-    final previous = state;
-    state = const AsyncValue<List<VoiceRoomEntity>>.loading()
-        .copyWithPrevious(previous);
-    _page = 1;
-    _hasMore = true;
-    state = await AsyncValue.guard(() async {
-      final result = await ref
-          .read(liveRepositoryProvider)
-          .fetchVoiceRoomsPage(page: 1, limit: _pageSize);
-      _hasMore = result.hasMore;
-      VoiceEventLog.roomListLoad(page: 1, count: result.rooms.length);
-      return result.rooms;
+  /// Çoklu olay (çıkış, moderasyon vb.) aynı anda listeyi yenilemesin — 2 sn debounce.
+  Future<void> refresh({bool immediate = false}) async {
+    if (immediate) {
+      _refreshDebounceTimer?.cancel();
+      _refreshDebounceTimer = null;
+      return refreshNow();
+    }
+    _refreshDebounceTimer?.cancel();
+    _refreshDebounceTimer = Timer(_refreshDebounce, () {
+      unawaited(refreshNow());
     });
+  }
+
+  Future<void> refreshNow() async {
+    if (_refreshInFlight) {
+      _refreshQueued = true;
+      return;
+    }
+    _refreshInFlight = true;
+    try {
+      final previous = state;
+      state = const AsyncValue<List<VoiceRoomEntity>>.loading()
+          .copyWithPrevious(previous);
+      _page = 1;
+      _hasMore = true;
+      state = await AsyncValue.guard(() async {
+        final result = await ref
+            .read(liveRepositoryProvider)
+            .fetchVoiceRoomsPage(page: 1, limit: _pageSize);
+        _hasMore = result.hasMore;
+        VoiceEventLog.roomListLoad(page: 1, count: result.rooms.length);
+        return result.rooms;
+      });
+    } finally {
+      _refreshInFlight = false;
+      if (_refreshQueued) {
+        _refreshQueued = false;
+        unawaited(refreshNow());
+      }
+    }
   }
 
   /// Yerel liste önbelleğinde tek oda alanlarını güncelle (ayar PATCH sonrası).

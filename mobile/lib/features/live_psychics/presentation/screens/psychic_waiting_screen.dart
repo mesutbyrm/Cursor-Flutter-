@@ -94,9 +94,10 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
       tellerId: session.psychic.id,
     );
     var burstTicks = 0;
-    _pollBurst = Timer.periodic(const Duration(milliseconds: 500), (_) {
+    _pollBurst = Timer.periodic(const Duration(seconds: 2), (_) {
       burstTicks++;
-      if (state.closed || burstTicks > 24) {
+      // ~12 sn ilk yoğun pencere (6 × 2 sn), sonra 1 sn düzenli poll.
+      if (state.closed || burstTicks > 6) {
         _pollBurst?.cancel();
         return;
       }

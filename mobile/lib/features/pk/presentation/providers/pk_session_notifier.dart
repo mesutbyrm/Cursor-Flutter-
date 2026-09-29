@@ -362,7 +362,9 @@ class PkSessionNotifier
       }
       if (candidates.isEmpty && arg.kind == PkContextKind.voice) {
         try {
-          await ref.read(voiceRoomsListNotifierProvider.notifier).refresh();
+          await ref
+              .read(voiceRoomsListNotifierProvider.notifier)
+              .refresh(immediate: true);
         } catch (_) {}
         final rooms = ref.read(voiceRoomsProvider).valueOrNull ?? [];
         final others = filterPkEligibleOpponentRooms(

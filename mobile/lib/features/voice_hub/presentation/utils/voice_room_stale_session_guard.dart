@@ -68,6 +68,8 @@ Future<void> clearStaleVoicePresenceOnAuth(Ref ref) async {
   }
 
   if (clearedAny) {
-    await ref.read(voiceRoomsListNotifierProvider.notifier).refresh();
+    await ref
+        .read(voiceRoomsListNotifierProvider.notifier)
+        .refresh(immediate: true);
   }
 }
