@@ -505,6 +505,7 @@ abstract final class ApiEndpoints {
   /// Oda PK listesi — `GET ?status=pending,active`.
   static const chatRoomPkList = '/api/chat/rooms/pk-list';
 
+  /// Yayın bazlı PK alias — `GET/POST /api/video-streams/{streamId}/pk-battle`.
   static String videoStreamPkBattle(String streamId) =>
       '/api/video-streams/$streamId/pk-battle';
 

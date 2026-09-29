@@ -623,49 +623,30 @@ class PkBattleRemoteDataSource {
       );
       ApiException? lastCreateError;
       for (final body in bodies) {
-        try {
-          final res = await _dio.safePost<dynamic>(
-            ApiEndpoints.videoStreamPk,
-            data: body,
-          );
-          final battle = _parseBattle(res.data);
-          if (battle != null) return battle;
-          final synthesized = _synthesizePendingBattle(res.data, roomId: host);
-          if (synthesized != null) return synthesized;
-        } on ApiException catch (e) {
-          lastCreateError = e;
-          PkEventLog.apiFailure(
-            method: 'POST',
-            url: ApiEndpoints.videoStreamPk,
-            statusCode: e.statusCode,
-            roomId: host,
-            targetUserId: target,
-            responseBody: e.message,
-          );
-          if (e.statusCode == 400 || e.statusCode == 422) continue;
-          if (e.statusCode != 404 && e.statusCode != 405) rethrow;
-        }
-      }
-      for (final body in bodies) {
-        try {
-          final res = await _dio.safePost<dynamic>(
-            ApiEndpoints.videoStreamPkBattle(host),
-            data: body,
-          );
-          final battle = _parseBattle(res.data);
-          if (battle != null) return battle;
-        } on ApiException catch (e) {
-          lastCreateError = e;
-          PkEventLog.apiFailure(
-            method: 'POST',
-            url: ApiEndpoints.videoStreamPkBattle(host),
-            statusCode: e.statusCode,
-            roomId: host,
-            targetUserId: target,
-            responseBody: e.message,
-          );
-          if (e.statusCode == 400 || e.statusCode == 422) continue;
-          if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+        for (final path in [
+          ApiEndpoints.videoStreamPk,
+          ApiEndpoints.videoStreamPkBattle(host),
+        ]) {
+          try {
+            final res = await _dio.safePost<dynamic>(path, data: body);
+            final battle = _parseBattle(res.data);
+            if (battle != null) return battle;
+            final synthesized = _synthesizePendingBattle(res.data, roomId: host);
+            if (synthesized != null) return synthesized;
+          } on ApiException catch (e) {
+            lastCreateError = e;
+            PkEventLog.apiFailure(
+              method: 'POST',
+              url: path,
+              statusCode: e.statusCode,
+              roomId: host,
+              targetUserId: target,
+              responseBody: e.message,
+            );
+            if (e.statusCode == 400 || e.statusCode == 422) break;
+            if (e.statusCode == 404 || e.statusCode == 405) continue;
+            rethrow;
+          }
         }
       }
       if (lastCreateError != null) throw lastCreateError;

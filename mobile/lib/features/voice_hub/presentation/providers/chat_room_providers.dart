@@ -112,6 +112,7 @@ import '../coordinators/room_leave_coordinator.dart';
 import '../coordinators/room_session_manager.dart';
 import '../utils/voice_room_presence_self_sync.dart';
 import '../utils/voice_room_presence_persistence.dart';
+import '../utils/voice_room_presence_tombstone.dart';
 import '../services/voice_room_music_control_delegate.dart';
 import '../../video/domain/youtube_video_id.dart';
 import '../../video/presentation/room_video_controller.dart';
@@ -498,9 +499,7 @@ class VoiceRoomLiveController
   /// Ağ geri gelince (WiFi↔mobil data) sesli TRTC sessizce düşmüşse yeniden bağlan.
   StreamSubscription<bool>? _networkRecoverySub;
   final Set<String> _knownPresenceIds = {};
-  /// SSE `user_left` sonrası sunucunun eski snapshot'ta tuttuğu hayalet üyeleri
-  /// bir süre listeden filtreler (backend ~5 dk penceresi).
-  final Map<String, DateTime> _presenceDepartedUntil = {};
+  final VoicePresenceTombstone _presenceTombstone = VoicePresenceTombstone();
   /// Oturumda duyurulan girişler — aynı kullanıcı iki kez gösterilmez.
   final Set<String> _sessionAnnouncedJoinUserIds = {};
   /// Ayrılış duyurusu için son bilinen isimler (id → ad).
@@ -1211,7 +1210,7 @@ class VoiceRoomLiveController
           clearVoiceRoomLiveSession(ref, roomKey);
           _removeSelfFromPresenceOptimistic();
           _knownPresenceIds.clear();
-          _presenceDepartedUntil.clear();
+          _presenceTombstone.clear();
           _sessionAnnouncedJoinUserIds.clear();
           _shownEntranceKeys.clear();
           _sseEventDedupe.clear();
