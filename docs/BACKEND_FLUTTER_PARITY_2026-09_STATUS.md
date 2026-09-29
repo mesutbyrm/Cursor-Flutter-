@@ -75,13 +75,14 @@ python3 scripts/backend-method-parity.py canlifal-backend/nextjs_space
 
 ## Bilinen açık uçlar (mobil veya backend)
 
-1. **Backend presence TTL** — hayalet katılımcı (mobil mitigasyon var).  
+1. **Backend presence TTL** — sunucu penceresi; mobil **650+** tombstone (5 dk) + leave guard.  
 2. **P0/P1 cihaz** — PK davet E2E, hediye→PK skor, Psychic TRTC.
 
 ---
 
 ## Bu repoda yapılan son parity düzeltmesi
 
+- **650+:** Presence hayalet tombstone; sesli PK `live/pk` yedeği sıkılaştırma.
 - **649+:** `live_pk_create_body_test` + ölü `join-seat` endpoint sabiti kaldırıldı.
 - **648+:** Canlı PK create gövdesi üretim sözleşmesi; CI `pk_session_keep_alive` imza düzeltmesi.
 - **647+:** Ölü PK uçları (`…/respond`, istemci `live/pk/score`, `postLivePkScore`); davet gövdesi sadeleştirme; parity script fortune slug.

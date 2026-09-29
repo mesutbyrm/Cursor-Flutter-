@@ -85,12 +85,9 @@ Map<String, dynamic> livePkCreateRequestBody({
   return {
     'action': 'create',
     'streamId': host,
-    'hostStreamId': host,
     'targetStreamId': target,
     'opponentStreamId': target,
-    'opponentLiveStreamId': target,
     'duration': duration,
-    'durationSeconds': duration,
     'durationSec': duration,
     'durationMinutes': pkDurationMinutesFromSeconds(duration),
   };
@@ -538,7 +535,7 @@ class PkBattleRemoteDataSource {
     required ApiException primaryError,
   }) async {
     final code = primaryError.statusCode ?? 0;
-    if (code != 404 && code != 400 && code != 405) return null;
+    if (code != 404 && code != 405) return null;
     try {
       final res = await _dio.safePost<dynamic>(
         ApiEndpoints.livePk,

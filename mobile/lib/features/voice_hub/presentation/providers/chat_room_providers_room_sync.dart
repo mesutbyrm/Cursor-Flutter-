@@ -429,6 +429,7 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     final name = payload['name']?.toString() ?? 'Bir kullanıcı';
     final remaining = state.presence.where((p) => p.id != userId).toList();
     if (remaining.length == state.presence.length) return;
+    _markPresenceDeparted(userId);
     _knownPresenceIds.remove(userId);
     state = state.copyWith(presence: remaining);
     _patchHubOnlineCountFromPayload(payload, fallback: remaining.length);

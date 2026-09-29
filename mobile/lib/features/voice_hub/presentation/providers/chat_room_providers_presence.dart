@@ -91,6 +91,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     if (departedIds.isNotEmpty) {
       for (final id in departedIds) {
         if (id.isEmpty) continue;
+        _markPresenceDeparted(id);
         final name = _lastKnownPresenceNames[id];
         if (name != null && name.isNotEmpty) {
           final line = '$name odadan çıkış yaptı.';
@@ -189,10 +190,33 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     });
   }
 
+  void _markPresenceDeparted(String userId) {
+    final id = userId.trim();
+    if (id.isEmpty) return;
+    _presenceDepartedUntil[id] =
+        DateTime.now().add(const Duration(minutes: 5));
+  }
+
+  List<ChatRoomPresence> _withoutTombstonedPresence(
+    List<ChatRoomPresence> incoming,
+  ) {
+    if (_presenceDepartedUntil.isEmpty) return incoming;
+    final now = DateTime.now();
+    _presenceDepartedUntil.removeWhere((_, until) => !until.isAfter(now));
+    if (_presenceDepartedUntil.isEmpty) return incoming;
+    return incoming
+        .where((p) {
+          final until = _presenceDepartedUntil[p.id];
+          return until == null || !until.isAfter(now);
+        })
+        .toList(growable: false);
+  }
+
   List<ChatRoomPresence> _mergePresenceStable(
     List<ChatRoomPresence> incoming, {
     required String source,
   }) {
+    incoming = _withoutTombstonedPresence(incoming);
     final previous = List<ChatRoomPresence>.from(state.presence);
     final pollSource =
         source == 'refresh' || source == 'poll' || source == 'preload';

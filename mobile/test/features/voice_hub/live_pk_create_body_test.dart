@@ -15,6 +15,7 @@ void main() {
     expect(body['duration'], 180);
     expect(body['durationSec'], 180);
     expect(body['durationMinutes'], 3);
+    expect(body.containsKey('hostStreamId'), isFalse);
   });
 
   test('livePkCreateRequestBodies canonical first then alias helper', () {

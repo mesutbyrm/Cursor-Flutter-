@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.650+701 (2026-09-29) — Parity: presence hayalet + PK yanıt
+
+- **Presence:** `user_left` / diff ayrılışında 5 dk tombstone — stale SSE snapshot hayaletlerini filtreler
+- **Sesli PK accept/reject:** `live/pk` yedeği yalnız 404/405 (400 iş kuralı hatasını maskelemez)
+- **Canlı PK alias gövdesi:** gereksiz alanlar kaldırıldı
+- Backend değişikliği yok
+
 ## 1.0.649+700 (2026-09-29) — Parity: PK test + ölü join-seat sabiti
 
 - **Test:** `live_pk_create_body_test` kanonik create gövdesi ile hizalandı (CI)

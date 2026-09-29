@@ -498,6 +498,9 @@ class VoiceRoomLiveController
   /// Ağ geri gelince (WiFi↔mobil data) sesli TRTC sessizce düşmüşse yeniden bağlan.
   StreamSubscription<bool>? _networkRecoverySub;
   final Set<String> _knownPresenceIds = {};
+  /// SSE `user_left` sonrası sunucunun eski snapshot'ta tuttuğu hayalet üyeleri
+  /// bir süre listeden filtreler (backend ~5 dk penceresi).
+  final Map<String, DateTime> _presenceDepartedUntil = {};
   /// Oturumda duyurulan girişler — aynı kullanıcı iki kez gösterilmez.
   final Set<String> _sessionAnnouncedJoinUserIds = {};
   /// Ayrılış duyurusu için son bilinen isimler (id → ad).
@@ -1208,6 +1211,7 @@ class VoiceRoomLiveController
           clearVoiceRoomLiveSession(ref, roomKey);
           _removeSelfFromPresenceOptimistic();
           _knownPresenceIds.clear();
+          _presenceDepartedUntil.clear();
           _sessionAnnouncedJoinUserIds.clear();
           _shownEntranceKeys.clear();
           _sseEventDedupe.clear();
