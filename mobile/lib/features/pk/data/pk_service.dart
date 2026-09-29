@@ -54,6 +54,20 @@ class PkService {
     return battle.id.isEmpty ? null : battle;
   }
 
+  /// Süresi dolan aktif PK'yı sunucuda kapattırır. `/api/live/pk` GET bunu
+  /// yapmaz; `/api/video-streams/pk` GET `finalizeExpiredActivePKs` çalıştırır.
+  Future<void> nudgeLiveFinalize(String streamId) async {
+    final id = streamId.trim();
+    if (id.isEmpty) return;
+    try {
+      await _dio.safeGet<dynamic>(
+        ApiEndpoints.videoStreamPk,
+        query: {'streamId': id},
+        forceRefresh: true,
+      );
+    } catch (_) {}
+  }
+
   Future<PkBattle> postLivePk(Map<String, dynamic> body) async {
     final res = await _dio.safePost<dynamic>(ApiEndpoints.livePk, data: body);
     return _parseLivePkResponse(res);

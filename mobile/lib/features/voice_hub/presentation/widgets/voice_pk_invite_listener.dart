@@ -34,7 +34,7 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
   @override
   void initState() {
     super.initState();
-    _pollTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+    _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
       if (!mounted || _showing) return;
       unawaited(_pollPendingInvites());
     });
@@ -196,6 +196,11 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
       }
 
       final activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
+      // Davet yalnızca oda sahiplerine gelir; odası olmayan ve bir odada
+      // bulunmayan kullanıcı için sunucuya her 3 sn istek atılmaz.
+      if (activeKey.isEmpty && ref.read(myOwnedVoiceRoomsProvider).isEmpty) {
+        return;
+      }
       VoiceRoomEntity? activeRoom;
       if (activeKey.isNotEmpty) {
         activeRoom = ref.read(voiceRoomByIdProvider(activeKey)).valueOrNull;

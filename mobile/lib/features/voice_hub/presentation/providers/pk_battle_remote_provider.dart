@@ -47,7 +47,9 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     // DÜZELTME (2026-09-23): Polling interval 4s → 1s for active PK battles.
     // SSE event deduplication ve gecikmeler nedeniyle client side timer drift oluşuyor.
     // Maksimum 1 saniye gecikmesi ile server state'i taraflar arasında senkronize tut.
-    _activePoll = Timer.periodic(const Duration(seconds: 1), (_) {
+    // Skor ve süre SSE ile gelir; bu yoklama yalnızca kaçan olayları toplar.
+    // Önbellek kaldırıldığı için 1 sn her izleyicide gerçek sunucu yükü olurdu.
+    _activePoll = Timer.periodic(const Duration(seconds: 3), (_) {
       unawaited(loadRoomBattle(roomId, alternateRoomId: _pollAltRoomId));
     });
   }
