@@ -315,6 +315,16 @@ class PkBattleRemoteDataSource {
   Future<PkBattleRemote?> fetchStreamBattle(String streamId) async {
     final id = streamId.trim();
     if (id.isEmpty) return null;
+    // `GET /api/live/pk` ve `/pk-battle` süresi dolan aktif PK'yı kapatmaz;
+    // yalnızca `GET /api/video-streams/pk` `finalizeExpiredActivePKs` çalıştırır.
+    // Bu uca dokunulmazsa PK sunucuda "aktif" kalıyor, ekran PK'dan çıkmıyordu.
+    try {
+      await _dio.safeGet<dynamic>(
+        ApiEndpoints.videoStreamPk,
+        query: {'streamId': id},
+        forceRefresh: true,
+      );
+    } catch (_) {}
     try {
       final field = await _liveFieldPk.fetchPk(id);
       if (field != null && field.id.isNotEmpty) {
