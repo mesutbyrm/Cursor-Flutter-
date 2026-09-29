@@ -842,6 +842,8 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
 
   Future<void> _presenceHeartbeatTick() async {
     if (_roomKey.isEmpty) return;
+    if (_presenceHeartbeatInFlight) return;
+    _presenceHeartbeatInFlight = true;
     _presenceHeartbeatCount++;
     // Heartbeat düşerse aynı koltuğa geri dönebilmek için önce hatırla.
     _rememberSelfSeatIfSeated();
@@ -871,14 +873,16 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         _presenceJoined = false;
         unawaited(_joinPresence(rejoinAfterHeartbeat: true));
       }
-    }
-    final last = _lastSseEventAt;
-    final sseSilent = last == null ||
-        DateTime.now().difference(last) > const Duration(seconds: 45);
-    if (!state.sseConnected) {
-      unawaited(_preloadPresenceMembers());
-    } else if (sseSilent) {
-      unawaited(resyncAfterSseReconnect());
+    } finally {
+      final last = _lastSseEventAt;
+      final sseSilent = last == null ||
+          DateTime.now().difference(last) > const Duration(seconds: 45);
+      if (!state.sseConnected) {
+        unawaited(_preloadPresenceMembers());
+      } else if (sseSilent) {
+        unawaited(resyncAfterSseReconnect());
+      }
+      _presenceHeartbeatInFlight = false;
     }
   }
 

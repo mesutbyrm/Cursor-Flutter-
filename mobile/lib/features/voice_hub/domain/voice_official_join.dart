@@ -179,7 +179,9 @@ abstract final class VoiceOfficialJoin {
       return _joinLine(_cleanDisplayName(trimmed), roomName);
     }
 
-    return trimmed.contains('📣') ? trimmed : '📣 $trimmed';
+    return trimmed.contains('👋') || trimmed.contains('📣')
+        ? trimmed.replaceFirst('📣', '👋')
+        : '👋 $trimmed';
   }
 
   static bool _looksLikeFormattedEntrance(String raw) {

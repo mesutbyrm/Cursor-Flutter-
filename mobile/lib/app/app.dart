@@ -19,6 +19,7 @@ import '../core/theme/app_theme.dart';
 import '../features/auth/presentation/auth_flow_app.dart';
 import '../features/auth/presentation/providers/auth_providers.dart';
 import '../features/voice_hub/presentation/widgets/voice_room_music_lifecycle_host.dart';
+import '../features/voice_hub/presentation/widgets/voice_room/voice_room_route_presence_guard.dart';
 import '../features/voice_hub/presentation/widgets/voice_room/voice_room_session_lifecycle_host.dart';
 import '../features/voice_hub/presentation/widgets/voice_room/voice_room_ranking_refresh_host.dart';
 import '../core/site_animation/presentation/site_animation_catalog_provider.dart';
@@ -144,6 +145,7 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
 
     return MobileConfigGate(
       child: VoiceRoomRankingRefreshHost(
+        child: VoiceRoomRoutePresenceGuard(
         child: VoiceRoomSessionLifecycleHost(
         child: VoiceRoomMusicLifecycleHost(
         child: UserOnlinePresenceLifecycleHost(
@@ -180,6 +182,7 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
           ),
         ),
         ),
+      ),
       ),
       ),
       ),

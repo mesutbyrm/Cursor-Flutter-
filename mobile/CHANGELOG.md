@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.636+687 (2026-09-29) — Sesli oda, PK ve canlı yayın tamirleri
+
+- **Hayalet oda üyeliği:** rota değişince (ana sayfa vb.) `VoiceRoomRoutePresenceGuard` sunucuda `leave` + stale presence temizliği; çıkışta yerel listeden düşme backend onayından sonra
+- **Heartbeat:** üst üste binen presence heartbeat istekleri engellendi
+- **PK davet:** games backend `POST …/pk/{id}/respond` yolu eklendi (action body yedeği korundu)
+- **PK beğeni:** admin `live/pk/score` kaldırıldı; beğeni `videoStreamLike` + sunucu skor yenileme; yerel +3 puan göstergesi
+- **PK UI:** yüzde etiketleri kaldırıldı; PK bitince immersive katman kapanır (mesaj/hediye normal yayına döner)
+- **Giriş bildirimi:** alt şerit metni `👋 … odaya giriş yaptı` biçimine yaklaştırıldı
+- Backend değişikliği yok
+
 ## 1.0.635+686 (2026-09-29) — Cihaz testi: izin, PK bitişi, sesli PK daveti, misafir modu
 
 - **İzinler:** mikrofon/kamera ilk açılışta bir kez istenir; odaya/yayına girişte yalnızca yayın gönderilecekse (sahip, koltuk, misafir) ve izin hâlâ yoksa sorulur. Dinleyici/izleyiciden izin istenmez, kalıcı reddedilmişse Ayarlar'a atılmaz

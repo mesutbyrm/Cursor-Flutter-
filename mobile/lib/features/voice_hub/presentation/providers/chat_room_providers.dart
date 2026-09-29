@@ -459,6 +459,7 @@ class VoiceRoomLiveController
   int? _lastConfirmedSelfSeatIndex;
   Timer? _presenceHeartbeat;
   var _presenceHeartbeatCount = 0;
+  var _presenceHeartbeatInFlight = false;
   Timer? _typingStopTimer;
   Timer? _enterBannerTimer;
   Timer? _musicRequestFlashTimer;
@@ -1168,8 +1169,7 @@ class VoiceRoomLiveController
           _postVoiceSessionEndSummary(endedLabel: 'Odadan ayrıldınız');
           _cancelSessionTimers();
           _announceSelfLeave();
-          _removeSelfFromPresenceOptimistic();
-          state = state.copyWith(selfInRoom: false, loading: false);
+          state = state.copyWith(loading: false);
         },
         () async {
           final backendLeave = _leavePresenceWithSeatClear(force: forcePresenceLeave)
@@ -1180,6 +1180,8 @@ class VoiceRoomLiveController
           } else {
             unawaited(backendLeave);
           }
+          _removeSelfFromPresenceOptimistic();
+          state = state.copyWith(selfInRoom: false);
         },
         () async {
           ref.read(roomMusicServiceProvider).bindRoom(null);

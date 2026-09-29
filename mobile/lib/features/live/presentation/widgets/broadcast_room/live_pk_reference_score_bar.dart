@@ -94,28 +94,6 @@ class LivePkReferenceScoreBar extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 6),
-            Row(
-              children: [
-                Text(
-                  '$leftPct%',
-                  style: const TextStyle(
-                    color: Color(0xFFFF6B9D),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  '$rightPct%',
-                  style: const TextStyle(
-                    color: Color(0xFF64B5F6),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
             Center(
               child: PkStatusPill(
                 mode: pillMode,

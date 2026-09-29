@@ -1952,7 +1952,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
 
   var _livePkInviteDialogOpen = false;
   final _pkLikeBudget = LivePkLikeBudget();
-  DateTime? _lastPkHeartScoreErrorSnackAt;
 
   void _maybeShowPkInvite(String streamId, Map<String, dynamic> battle) {
     if (!widget.session.isHost) return;
@@ -2034,7 +2033,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final inPk = isLivePkBroadcastStage(pk.battle, pk.status) &&
         isLivePkActiveStatus(pk.status);
     if (inPk) {
-      ref.read(liveRoomInteractionProvider(streamId).notifier).pulseHeartsVisual();
       unawaited(_postPkHeartScore(streamId, pk.battle));
       return;
     }
@@ -2059,30 +2057,19 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     if (battleId.isEmpty) return;
     final userId = ref.read(authControllerProvider).valueOrNull?.id.trim() ?? '';
     if (userId.isEmpty) return;
-    const points = 1;
+    const points = 3;
     if (!_pkLikeBudget.canAward(battleId, userId, points)) return;
     final side = livePkScoreSideForStream(battle: battle, myStreamId: streamId);
-    try {
-      await ref.read(pkBattleRemoteDataSourceProvider).postLivePkScore(
-            amount: points,
-            battleId: battleId,
-            roomId: streamId,
-            side: side,
-          );
-      _pkLikeBudget.record(battleId, userId, points);
-    } catch (e) {
-      if (!mounted) return;
-      final now = DateTime.now();
-      if (_lastPkHeartScoreErrorSnackAt != null &&
-          now.difference(_lastPkHeartScoreErrorSnackAt!) <
-              const Duration(seconds: 8)) {
-        return;
-      }
-      _lastPkHeartScoreErrorSnackAt = now;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ApiException.userMessage(e))),
-      );
-    }
+    ref.read(liveRoomInteractionProvider(streamId).notifier).burstHearts(
+          likes: 1,
+          userId: userId,
+        );
+    ref.read(liveVideoPkProvider(streamId).notifier).applyLocalScoreDelta(
+          side: side,
+          amount: points,
+        );
+    _pkLikeBudget.record(battleId, userId, points);
+    unawaited(ref.read(liveVideoPkProvider(streamId).notifier).refresh());
   }
 
   Future<void> _openPkGiftPicker(
@@ -2811,7 +2798,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final pkStatus = pkState?.status ?? '';
     final pkImmersive = hasStream &&
         streamId != null &&
-        isLivePkBroadcastStage(pkState?.battle, pkStatus);
+        isLivePkBroadcastStage(pkState?.battle, pkStatus) &&
+        !isLivePkEndedStatus(pkStatus);
     final pkOpponentUserId = hasStream && streamId != null
         ? _pkOpponentUserId(streamId!, s, pkState?.battle)
         : '';

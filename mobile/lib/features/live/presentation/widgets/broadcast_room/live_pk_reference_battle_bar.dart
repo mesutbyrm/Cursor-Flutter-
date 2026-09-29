@@ -356,31 +356,11 @@ class LivePkReferenceScoreBar extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 3),
-          Stack(
+          if (showStatus) const SizedBox(height: 3),
+          if (showStatus)
+            Stack(
             alignment: Alignment.center,
             children: [
-              Row(
-                children: [
-                  Text(
-                    '$leftPct%',
-                    style: const TextStyle(
-                      color: _pink,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '$rightPct%',
-                    style: const TextStyle(
-                      color: _blue,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ],
-              ),
               if (showStatus)
                 Container(
                   padding:

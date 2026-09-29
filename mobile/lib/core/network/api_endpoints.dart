@@ -503,6 +503,10 @@ abstract final class ApiEndpoints {
   /// Kılavuz §2.2–2.5 (FLUTTER_ENTegrasyon_KILAVUZU.md).
   static String chatRoomPk(String roomId) => '/api/chat/rooms/$roomId/pk';
 
+  /// Games backend — davet yanıtı (accept/reject).
+  static String chatRoomPkRespond(String roomId, String inviteId) =>
+      '/api/chat/rooms/$roomId/pk/$inviteId/respond';
+
   /// PK skor — yalnızca admin (`POST` istemci çağırmamalı; hediye skoru otomatik).
   static String chatRoomPkScore(String roomId) =>
       '/api/chat/rooms/$roomId/pk/score';
