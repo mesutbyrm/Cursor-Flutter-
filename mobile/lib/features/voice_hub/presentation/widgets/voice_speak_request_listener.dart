@@ -28,6 +28,7 @@ class _VoiceSpeakRequestListenerState
     extends ConsumerState<VoiceSpeakRequestListener> {
   final Set<String> _pendingDialogKeys = {};
   var _showing = false;
+  var _polling = false;
   Timer? _pollTimer;
 
   static String _dedupKey(String roomKey, String userId) => '$roomKey:$userId';
@@ -35,7 +36,7 @@ class _VoiceSpeakRequestListenerState
   @override
   void initState() {
     super.initState();
-    _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+    _pollTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       if (!mounted || _showing) return;
       unawaited(_pollPending());
     });
@@ -101,12 +102,20 @@ class _VoiceSpeakRequestListenerState
         );
   }
 
-  Future<void> _pollPending() async {
-    if (!mounted || _showing) return;
+  Future<void> _pollPending({bool force = false}) async {
+    if (!mounted || _showing || _polling) return;
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) return;
 
     final activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
+    if (!force &&
+        activeKey.isNotEmpty &&
+        ref.read(voiceRoomActiveSseConnectedProvider)) {
+      return;
+    }
+
+    _polling = true;
+    try {
     final roomsByKey = <String, VoiceRoomEntity>{};
 
     if (activeKey.isNotEmpty) {
@@ -160,6 +169,9 @@ class _VoiceSpeakRequestListenerState
         );
         return;
       }
+    }
+    } finally {
+      _polling = false;
     }
   }
 
@@ -268,7 +280,7 @@ class _VoiceSpeakRequestListenerState
   @override
   Widget build(BuildContext context) {
     ref.listen(voiceSpeakRequestSignalProvider, (_, __) {
-      unawaited(_pollPending());
+      unawaited(_pollPending(force: true));
     });
     ref.listen(authControllerProvider, (prev, next) {
       if (prev?.valueOrNull == null && next.valueOrNull != null) {

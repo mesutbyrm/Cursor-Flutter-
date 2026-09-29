@@ -34,6 +34,16 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
   var _loadRoomBattleInFlight = false;
   DateTime? _lastSsePkIngestAt;
 
+  void _invalidateInviteListCache() => _api.invalidateMyInvitesCache();
+
+  /// SSE ile yakın PK olayı geldiyse sesli davet poll yedek REST atlanabilir.
+  bool deferVoicePkInviteRestPoll() {
+    if (!ref.read(voiceRoomActiveSseConnectedProvider)) return false;
+    final last = _lastSsePkIngestAt;
+    if (last == null) return false;
+    return DateTime.now().difference(last) < const Duration(seconds: 10);
+  }
+
   @override
   PkBattleRemote? build() {
     ref.onDispose(() => _activePoll?.cancel());
@@ -167,6 +177,7 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     );
     if (battle != null) {
       PkEventLog.requestSuccess(battleId: battle.id);
+      _invalidateInviteListCache();
       _apply(battle, 'pk:invite');
       if (battle.isPending) {
         ref.read(livePkInviteSignalProvider.notifier).bump();
@@ -200,6 +211,7 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
       duration: durationSeconds,
     );
     if (battle != null) {
+      _invalidateInviteListCache();
       _apply(battle, 'pk:invite');
       _syncLiveVideoPk(battle);
       if (battle.isPending) {
@@ -236,6 +248,7 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     }
     if (battle != null) {
       PkEventLog.acceptSuccess(battleId: battle.id);
+      _invalidateInviteListCache();
       _apply(battle, 'pk:accept');
     } else {
       ref.read(pkSessionPhaseProvider.notifier).reset();
@@ -268,6 +281,7 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
       return null;
     }
     if (battle != null) {
+      _invalidateInviteListCache();
       _apply(battle, 'pk:reject');
     } else {
       ref.read(pkSessionPhaseProvider.notifier).reset();
@@ -286,6 +300,7 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
       alternateRoomId: alternateRoomId,
     );
     if (battle != null) {
+      _invalidateInviteListCache();
       _apply(battle, 'pk:cancel');
     } else {
       clear();
@@ -348,6 +363,7 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     }
     if (battle != null) {
       PkEventLog.ended(battleId: battleId);
+      _invalidateInviteListCache();
       _apply(battle, 'pk:end');
     } else {
       ref.read(pkSessionPhaseProvider.notifier).reset();

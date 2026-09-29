@@ -358,6 +358,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
           duration: 180,
         );
         if (remote != null) {
+          ref.read(pkBattleRemoteDataSourceProvider).invalidateMyInvitesCache();
           state = state.copyWith(
             battle: pkBattleRemoteToBattleMap(remote, myStreamId: arg),
             unifiedMatchId: remote.effectiveId,
@@ -429,6 +430,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
           break;
       }
       if (remote != null) {
+        ref.read(pkBattleRemoteDataSourceProvider).invalidateMyInvitesCache();
         state = state.copyWith(
           battle: pkBattleRemoteToBattleMap(remote, myStreamId: arg),
           unifiedMatchId: remote.effectiveId,

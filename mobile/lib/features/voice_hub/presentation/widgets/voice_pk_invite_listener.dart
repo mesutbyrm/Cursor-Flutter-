@@ -211,6 +211,9 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
     if (_showing || _polling || !mounted) return;
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) return;
+    if (ref.read(pkBattleRemoteProvider.notifier).deferVoicePkInviteRestPoll()) {
+      return;
+    }
     // Yavaş ağda önceki tur bitmeden yenisi başlamasın (istek yığılması).
     _polling = true;
     try {

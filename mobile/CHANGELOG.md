@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.643+694 (2026-09-29) — PK davet önbelleği + sesli poll SSE
+
+- **`/pk/me/invites`:** 8 sn paylaşımlı önbellek (canlı/sesli poll + pk session); davet kabul/red/create/end sonrası sıfırlanır
+- **Sesli PK davet poll:** SSE ile yakın PK olayı varsa yedek REST turu atlanır (`deferVoicePkInviteRestPoll`)
+- **Konuşma isteği (moderatör):** poll 3 sn → 5 sn; odadayken SSE açıkken yalnız periyodik yedek atlanır (SSE sinyali `force` ile çalışır)
+- Backend değişikliği yok
+
 ## 1.0.642+693 (2026-09-29) — Canlı PK REST yükü (davet + hediye skor)
 
 - **liveVideoPkProvider.refresh:** `GET /api/pk/me/invites` yedek çağrısı kaldırıldı (davet: `LivePkInviteListener` + SSE)

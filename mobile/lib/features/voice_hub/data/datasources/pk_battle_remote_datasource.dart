@@ -202,6 +202,16 @@ class PkBattleRemoteDataSource {
 
   final Dio _dio;
 
+  List<PkBattleRemote>? _myInvitesCache;
+  DateTime? _myInvitesCachedAt;
+  static const _myInvitesCacheTtl = Duration(seconds: 8);
+
+  /// Davet kabul/red/create sonrası — paylaşımlı poll önbelleğini sıfırla.
+  void invalidateMyInvitesCache() {
+    _myInvitesCache = null;
+    _myInvitesCachedAt = null;
+  }
+
   LiveFieldPkApi get _liveFieldPk => LiveFieldPkApi(_dio);
 
   Map<String, dynamic>? _unwrap(dynamic body) => unwrapPkHttpBody(body);
@@ -704,7 +714,13 @@ class PkBattleRemoteDataSource {
   }
 
   /// Bekleyen PK davetleri — REST poll yedek.
-  Future<List<PkBattleRemote>> fetchMyInvites() async {
+  Future<List<PkBattleRemote>> fetchMyInvites({bool forceRefresh = false}) async {
+    if (!forceRefresh &&
+        _myInvitesCache != null &&
+        _myInvitesCachedAt != null &&
+        DateTime.now().difference(_myInvitesCachedAt!) < _myInvitesCacheTtl) {
+      return List<PkBattleRemote>.from(_myInvitesCache!);
+    }
     try {
       final res = await _dio.safeGet<dynamic>(
         ApiEndpoints.pkMeInvites,
@@ -744,6 +760,8 @@ class PkBattleRemoteDataSource {
           out.add(battle);
         }
       }
+      _myInvitesCache = out;
+      _myInvitesCachedAt = DateTime.now();
       return out;
     } on ApiException catch (e) {
       if (e.statusCode == 404) return const [];
