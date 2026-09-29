@@ -206,10 +206,22 @@ class PkBattleRemoteDataSource {
   DateTime? _myInvitesCachedAt;
   static const _myInvitesCacheTtl = Duration(seconds: 8);
 
+  final Map<String, _PkBattlePollCacheEntry> _roomBattleCache = {};
+  final Map<String, _PkBattlePollCacheEntry> _streamBattleLiteCache = {};
+  static const _roomBattleCacheTtl = Duration(seconds: 6);
+  static const _streamBattleLiteCacheTtl = Duration(seconds: 6);
+
   /// Davet kabul/red/create sonrası — paylaşımlı poll önbelleğini sıfırla.
   void invalidateMyInvitesCache() {
     _myInvitesCache = null;
     _myInvitesCachedAt = null;
+  }
+
+  /// PK poll yedek REST (oda/yayın battle + davet listesi).
+  void invalidatePkPollCaches() {
+    invalidateMyInvitesCache();
+    _roomBattleCache.clear();
+    _streamBattleLiteCache.clear();
   }
 
   LiveFieldPkApi get _liveFieldPk => LiveFieldPkApi(_dio);
@@ -307,34 +319,65 @@ class PkBattleRemoteDataSource {
   Future<PkBattleRemote?> fetchRoomBattle(
     String roomId, {
     String? alternateRoomId,
+    bool forceRefresh = false,
   }) async {
+    final cacheKey = '${roomId.trim()}|${alternateRoomId?.trim() ?? ''}';
+    if (!forceRefresh) {
+      final hit = _roomBattleCache[cacheKey];
+      if (hit != null &&
+          DateTime.now().difference(hit.at) < _roomBattleCacheTtl) {
+        return hit.battle;
+      }
+    }
     for (final key in _roomKeyCandidates(roomId, alternateRoomId)) {
       try {
         final res = await _dio.safeGet<dynamic>(ApiEndpoints.chatRoomPk(key));
-        if (res.data == null) return null;
+        if (res.data == null) {
+          _roomBattleCache[cacheKey] =
+              _PkBattlePollCacheEntry(null, DateTime.now());
+          return null;
+        }
         final battle = _parseBattle(res.data);
-        if (battle != null && !battle.isEnded) return battle;
+        if (battle != null && !battle.isEnded) {
+          _roomBattleCache[cacheKey] =
+              _PkBattlePollCacheEntry(battle, DateTime.now());
+          return battle;
+        }
       } on ApiException catch (e) {
         if (e.statusCode == 404 || e.statusCode == 405) continue;
         rethrow;
       }
     }
+    _roomBattleCache[cacheKey] = _PkBattlePollCacheEntry(null, DateTime.now());
     return null;
   }
 
-  Future<PkBattleRemote?> fetchStreamBattle(String streamId) async {
+  /// [finalizeExpired]: davet poll için `false` — 3 istek yerine hafif okuma.
+  Future<PkBattleRemote?> fetchStreamBattle(
+    String streamId, {
+    bool finalizeExpired = true,
+    bool forceRefresh = false,
+  }) async {
     final id = streamId.trim();
     if (id.isEmpty) return null;
+    if (!finalizeExpired && !forceRefresh) {
+      final hit = _streamBattleLiteCache[id];
+      if (hit != null &&
+          DateTime.now().difference(hit.at) < _streamBattleLiteCacheTtl) {
+        return hit.battle;
+      }
+    }
     // `GET /api/live/pk` ve `/pk-battle` süresi dolan aktif PK'yı kapatmaz;
     // yalnızca `GET /api/video-streams/pk` `finalizeExpiredActivePKs` çalıştırır.
-    // Bu uca dokunulmazsa PK sunucuda "aktif" kalıyor, ekran PK'dan çıkmıyordu.
-    try {
-      await _dio.safeGet<dynamic>(
-        ApiEndpoints.videoStreamPk,
-        query: {'streamId': id},
-        forceRefresh: true,
-      );
-    } catch (_) {}
+    if (finalizeExpired) {
+      try {
+        await _dio.safeGet<dynamic>(
+          ApiEndpoints.videoStreamPk,
+          query: {'streamId': id},
+          forceRefresh: true,
+        );
+      } catch (_) {}
+    }
     try {
       final field = await _liveFieldPk.fetchPk(id);
       if (field != null && field.id.isNotEmpty) {
@@ -346,11 +389,22 @@ class PkBattleRemoteDataSource {
           'score2': field.room2Score,
           'liveStreamId': id,
         });
-        if (battle != null) return battle;
+        if (battle != null) {
+          if (!finalizeExpired) {
+            _streamBattleLiteCache[id] =
+                _PkBattlePollCacheEntry(battle, DateTime.now());
+          }
+          return battle;
+        }
       }
     } catch (_) {}
     final res = await _dio.safeGet<dynamic>(ApiEndpoints.videoStreamPkBattle(id));
-    return _parseBattle(res.data);
+    final parsed = _parseBattle(res.data);
+    if (!finalizeExpired) {
+      _streamBattleLiteCache[id] =
+          _PkBattlePollCacheEntry(parsed, DateTime.now());
+    }
+    return parsed;
   }
 
   Future<List<PkBattleRemote>> fetchHistory({
@@ -784,4 +838,11 @@ class PkBattleRemoteDataSource {
       side: side,
     );
   }
+}
+
+class _PkBattlePollCacheEntry {
+  const _PkBattlePollCacheEntry(this.battle, this.at);
+
+  final PkBattleRemote? battle;
+  final DateTime at;
 }

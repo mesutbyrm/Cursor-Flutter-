@@ -34,7 +34,7 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
   var _loadRoomBattleInFlight = false;
   DateTime? _lastSsePkIngestAt;
 
-  void _invalidateInviteListCache() => _api.invalidateMyInvitesCache();
+  void _invalidateInviteListCache() => _api.invalidatePkPollCaches();
 
   /// SSE ile yakın PK olayı geldiyse sesli davet poll yedek REST atlanabilir.
   bool deferVoicePkInviteRestPoll() {
@@ -84,6 +84,7 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     final battle = await _api.fetchRoomBattle(
       roomId,
       alternateRoomId: alternateRoomId,
+      forceRefresh: true,
     );
     if (battle != null) {
       _apply(battle, 'load');
@@ -107,6 +108,7 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     final battle = await _api.fetchRoomBattle(
       roomId,
       alternateRoomId: alternateRoomId,
+      forceRefresh: true,
     );
     if (battle == null) {
       clear();

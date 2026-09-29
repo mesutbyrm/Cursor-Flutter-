@@ -207,13 +207,13 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
     }
   }
 
-  Future<void> _pollPendingInvites() async {
+  Future<void> _pollPendingInvites({bool force = false}) async {
     if (_showing || _polling || !mounted) return;
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) return;
-    if (ref.read(pkBattleRemoteProvider.notifier).deferVoicePkInviteRestPoll()) {
-      return;
-    }
+    final deferOwned =
+        !force &&
+            ref.read(pkBattleRemoteProvider.notifier).deferVoicePkInviteRestPoll();
     // Yavaş ağda önceki tur bitmeden yenisi başlamasın (istek yığılması).
     _polling = true;
     try {
@@ -262,15 +262,17 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
         }
       }
 
-      await _pollOwnedRooms(
-        user.id,
-        user.username,
-        activeKey,
-        activeRoom,
-        api,
-      );
+      if (!deferOwned) {
+        await _pollOwnedRooms(
+          user.id,
+          user.username,
+          activeKey,
+          activeRoom,
+          api,
+        );
+      }
 
-      final invites = await api.fetchMyInvites();
+      final invites = await api.fetchMyInvites(forceRefresh: force);
       for (final battle in invites) {
         if (battle.isEnded || !battle.isPending) continue;
         _ingestBattleIfRelevant(
@@ -303,7 +305,7 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
       _onBattleUpdate(next);
     });
     ref.listen<int>(livePkInviteSignalProvider, (_, __) {
-      unawaited(_pollPendingInvites());
+      unawaited(_pollPendingInvites(force: true));
     });
     return widget.child;
   }

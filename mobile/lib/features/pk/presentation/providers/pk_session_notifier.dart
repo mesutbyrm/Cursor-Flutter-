@@ -286,6 +286,7 @@ class PkSessionNotifier
         var remote = await api.fetchRoomBattle(
           id,
           alternateRoomId: hostAlt,
+          forceRefresh: showLoading,
         );
         remote ??= await _firstVoiceInviteForRoom(
           api,

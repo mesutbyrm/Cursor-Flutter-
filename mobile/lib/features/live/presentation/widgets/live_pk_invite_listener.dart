@@ -12,6 +12,7 @@ import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/pk/live_pk_invite_helper.dart';
 import '../providers/live_active_broadcast_provider.dart';
 import '../providers/live_invite_dedup_provider.dart';
+import '../providers/live_room_providers.dart';
 import '../providers/live_pk_invite_signal_provider.dart';
 import '../providers/live_providers.dart';
 import '../providers/live_video_pk_provider.dart';
@@ -125,7 +126,7 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
     await _showDialog(battle, streamId);
   }
 
-  Future<void> _processPendingInvites() async {
+  Future<void> _processPendingInvites({bool force = false}) async {
     if (_showing || _polling || !mounted) return;
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) return;
@@ -137,14 +138,24 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
 
       for (final stream in owned) {
         final inRoom = isLiveBroadcastRoomActiveForStream(ref, stream.id);
-        final battle = await api.fetchStreamBattle(stream.id);
+        if (!force &&
+            inRoom &&
+            ref.read(liveRoomProvider(stream.id)).sseConnected) {
+          continue;
+        }
+        final battle = await api.fetchStreamBattle(
+          stream.id,
+          finalizeExpired: false,
+        );
         if (battle != null) {
           ref.read(liveVideoPkProvider(stream.id).notifier).applyRemoteBattle(
                 pkBattleRemoteToBattleMap(battle, myStreamId: stream.id),
               );
-          unawaited(ref.read(pkSessionProvider(
-            PkSessionArgs(contextId: stream.id, kind: PkContextKind.live),
-          ).notifier).loadState());
+          if (!inRoom && (battle.isPending || battle.isActive)) {
+            unawaited(ref.read(pkSessionProvider(
+              PkSessionArgs(contextId: stream.id, kind: PkContextKind.live),
+            ).notifier).loadState());
+          }
           if (!inRoom) {
             await _tryShowBattle(battle, user.id, owned);
             if (_showing) return;
@@ -202,7 +213,7 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
   @override
   Widget build(BuildContext context) {
     ref.listen(livePkInviteSignalProvider, (_, __) {
-      unawaited(_processPendingInvites());
+      unawaited(_processPendingInvites(force: true));
     });
     ref.listen(authControllerProvider, (prev, next) {
       if (prev?.valueOrNull == null && next.valueOrNull != null) {

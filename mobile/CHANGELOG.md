@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.644+695 (2026-09-29) — PK battle poll hafifletme
+
+- **Canlı PK davet poll:** yayın odasında SSE varken `fetchStreamBattle` yedek atlanır; davet poll hafif mod (`finalizeExpired: false`, 6 sn önbellek)
+- **Sesli PK poll:** SSE defer yalnızca diğer sahip odalar turunu atlar; aktif oda + `/pk/me/invites` sürer (sinyalde `force`)
+- **Oda PK GET:** 6 sn poll önbelleği; aktif `loadRoomBattle` / davet hazırlığı `forceRefresh`
+- **`invalidatePkPollCaches`** — PK aksiyonlarında oda/yayın/davet poll önbelleği temizlenir
+- Backend değişikliği yok
+
 ## 1.0.643+694 (2026-09-29) — PK davet önbelleği + sesli poll SSE
 
 - **`/pk/me/invites`:** 8 sn paylaşımlı önbellek (canlı/sesli poll + pk session); davet kabul/red/create/end sonrası sıfırlanır
