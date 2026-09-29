@@ -57,6 +57,13 @@ abstract final class ApiCachePolicy {
     '/payment',
     '/stripe',
     '/webhook',
+    // Gerçek zamanlı durum: önbellekten okunursa PK daveti/bitişi ve
+    // SSE yeniden bağlanma senkronu saniyelerce bayat kalır.
+    '/pk',
+    '/state',
+    '/sync',
+    '/seats',
+    '/speak-request',
   ];
 
   static bool allowsStaleFallback(String path) {

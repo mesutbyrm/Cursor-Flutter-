@@ -243,7 +243,29 @@ class PkSessionNotifier
       if (invite != null && invite.inSeconds <= 0 && b.status == PkStatus.pending) {
         unawaited(loadState());
       }
+      if (battleRem != null &&
+          battleRem.inSeconds <= 0 &&
+          b.status == PkStatus.active) {
+        unawaited(_refreshAfterTimeUp());
+      }
     });
+  }
+
+  DateTime? _lastTimeUpRefresh;
+
+  /// Süre dolunca "bitti" olayını SSE'den beklemek yerine sunucuya sorar.
+  Future<void> _refreshAfterTimeUp() async {
+    final now = DateTime.now();
+    final last = _lastTimeUpRefresh;
+    if (last != null && now.difference(last) < const Duration(seconds: 3)) {
+      return;
+    }
+    _lastTimeUpRefresh = now;
+    if (arg.kind == PkContextKind.live) {
+      await _api.nudgeLiveFinalize(arg.contextId);
+    }
+    if (_disposed) return;
+    await loadState(showLoading: false);
   }
 
   Future<void> loadState({bool showLoading = true}) async {

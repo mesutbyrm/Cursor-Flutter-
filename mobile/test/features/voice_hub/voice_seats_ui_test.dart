@@ -36,7 +36,13 @@ class _Gifts extends VoiceSeatGiftTotals {
   Map<String, SeatGiftAggregate> build() => m;
 }
 
-const _room = VoiceRoomEntity(id: 'r1', slug: 'r1', nameTr: 'Oda');
+const _room = VoiceRoomEntity(
+  id: 'r1',
+  slug: 'r1',
+  nameTr: 'Oda',
+  onlineCount: 3,
+  userCount: 3,
+);
 
 List<Override> _overrides({
   VoiceRoomLiveState live = const VoiceRoomLiveState(loading: false),
@@ -283,6 +289,8 @@ void main() {
             id: 'r2',
             slug: 'r2',
             nameTr: 'Oda',
+            onlineCount: 3,
+            userCount: 3,
             distanceLabel: '1.2 km',
           ),
         ],

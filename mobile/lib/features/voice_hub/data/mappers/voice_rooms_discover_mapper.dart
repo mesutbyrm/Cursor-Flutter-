@@ -94,7 +94,8 @@ abstract final class VoiceRoomsDiscoverMapper {
     List<VoiceRoomEntity> rooms, {
     required VoiceRoomsNearbyTab tab,
   }) {
-    final copy = List<VoiceRoomEntity>.from(rooms);
+    // Keşif listesinde yalnızca içinde kullanıcı olan odalar gösterilir.
+    final copy = rooms.where((r) => r.displayOnline > 0).toList();
     switch (tab) {
       case VoiceRoomsNearbyTab.nearby:
         copy.sort((a, b) => b.displayOnline.compareTo(a.displayOnline));
