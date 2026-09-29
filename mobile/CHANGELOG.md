@@ -6,12 +6,12 @@
 - **Sesli oda PK daveti:** oda listesinden boş odaları eleyen filtre kaldırıldı (sahip tek başınayken karşı oda bulunamıyor, "Odalarım" boş kalıyordu); boş oda filtresi yalnızca keşfetteki "Yakındakiler"de
 - **Önbellek:** `/pk`, `/state`, `/sync`, `/seats`, `/speak-request` uçları HTTP önbelleğinden çıkarıldı (davet/bitiş 12–20 sn bayat okunuyordu)
 - **Hız:** PK davet yoklaması 2 sn → 3 sn ve yalnızca odadayken veya oda sahibiyken; aktif PK yoklaması 1 sn → 3 sn (SSE zaten canlı skor gönderiyor)
-- **Backend (canlifal, ayrı PR):** SSE akışı PK durumunu veritabanından senkronlar (çoklu sunucu örneğinde de davet/bitiş ulaşır); `/api/live/pk` süresi dolan PK'yı kapatır; global PK taraması 3 sn'de bir
+- **Backend değişikliği yok:** tüm düzeltmeler canlı backend'in mevcut uçlarıyla çalışır (`/api/video-streams/pk` ve `/api/chat/rooms/{id}/pk` süresi dolan PK'yı zaten kapatır)
 
 ## 1.0.632+683 (2026-09-29) — Oda ayarları temizliği + sahip payı anahtarı
 
 - **Oda içi ayarlar:** çalışmayan "Oda kilidi" ve "Maksimum kullanıcı" kaldırıldı (sunucuda bu alanlar yok; başarı mesajı gösterip hiçbir şey yapmıyordu). Oda kilitlemek için "Giriş şifresi" kullanılıyor
-- **Oda yönetimi:** "Hediye payımı al" anahtarı — kapatılırsa oda sahibi payı hediyeyi alana gider; yüzdeler değişmez. Backend güncellemesi (canlifal PR #2) yayına alınınca görünür
+- **Oda yönetimi:** "Hediye payımı al" anahtarı — kapatılırsa oda sahibi payı hediyeyi alana gider; yüzdeler değişmez. Yalnızca sunucu `ownerCommissionEnabled` alanını gönderirse görünür; canlı backend göndermediği için gizli kalır
 - **PK:** sunucu kuralı zaten "karşı oda sahibi odada + PK açık"; 2 dakika bir oturma süresi değil, 15 sn'lik çevrimiçi sinyal penceresi
 
 ## 1.0.631+682 (2026-09-28) — Backend audit dokümanı + APK yenileme
