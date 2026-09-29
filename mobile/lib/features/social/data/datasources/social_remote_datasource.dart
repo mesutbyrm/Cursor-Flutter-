@@ -118,63 +118,43 @@ class SocialRemoteDataSource {
     }
   }
 
-  /// POST `/api/social/posts` — metin veya görsel paylaşım (multipart / JSON).
+  /// POST `/api/social/posts` — yalnızca JSON okur (`request.json()`):
+  /// `{content, postType: text|fortune|horoscope, imageUrl?, youtubeUrl?}`.
+  /// Önceden görsel/video multipart gönderiliyordu; sunucu gövdeyi JSON
+  /// olarak çözemediği için paylaşım başarısız oluyordu. Görsel önce
+  /// `/api/upload/presigned` ile yüklenir, adresi `imageUrl` olarak gider.
   Future<PostDto> createPost(CreateSocialPostInput input) async {
     final caption = input.caption.trim();
-    final type = input.resolvedType;
+    final type = socialPostTypeForBackend(input.resolvedType);
 
-    Response<dynamic> res;
-    if (input.hasImage) {
-      final path = input.imagePath!;
-      final form = FormData.fromMap({
-        'caption': caption,
-        'text': caption,
-        'content': caption,
-        'description': caption,
-        'postType': type,
-        'type': type,
-        'image': await MultipartFile.fromFile(
-          path,
-          filename: 'post_${DateTime.now().millisecondsSinceEpoch}.jpg',
-        ),
-      });
-      res = await _dio.safePost<dynamic>(
-        ApiEndpoints.socialPosts,
-        data: form,
-        options: Options(contentType: 'multipart/form-data'),
-      );
-    } else if (input.hasVideo) {
-      final path = input.videoPath!;
-      final form = FormData.fromMap({
-        'caption': caption,
-        'text': caption,
-        'content': caption,
-        'description': caption,
-        'postType': type,
-        'type': type,
-        'video': await MultipartFile.fromFile(
-          path,
-          filename: 'post_${DateTime.now().millisecondsSinceEpoch}.mp4',
-        ),
-      });
-      res = await _dio.safePost<dynamic>(
-        ApiEndpoints.socialPosts,
-        data: form,
-        options: Options(contentType: 'multipart/form-data'),
-      );
-    } else {
-      res = await _dio.safePost<dynamic>(
-        ApiEndpoints.socialPosts,
-        data: {
-          'caption': caption,
-          'text': caption,
-          'content': caption,
-          'postType': type,
-          'type': type,
-        },
+    if (input.hasVideo) {
+      throw const ApiException(
+        'Video paylaşımı Kısa Videolar bölümünden yapılır.',
       );
     }
-
+    String? imageUrl;
+    if (input.hasImage) {
+      final upload = _upload;
+      if (upload == null) {
+        throw const ApiException('Görsel yükleme kullanılamıyor');
+      }
+      imageUrl = await upload.uploadImageFile(
+        File(input.imagePath!),
+        folder: 'social',
+        isPublic: true,
+      );
+    }
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.socialPosts,
+      data: {
+        'content': caption,
+        'caption': caption,
+        'text': caption,
+        'postType': type,
+        'type': type,
+        if (imageUrl != null && imageUrl.isNotEmpty) 'imageUrl': imageUrl,
+      },
+    );
     return _parseCreatedPost(res.data, caption: caption, type: type);
   }
 
@@ -472,4 +452,12 @@ class SocialRemoteDataSource {
     }
     return int.tryParse(raw.toString());
   }
+}
+
+
+/// Backend yalnızca `fortune`, `text`, `horoscope` gönderi türlerini kabul eder.
+String socialPostTypeForBackend(String type) {
+  final t = type.trim().toLowerCase();
+  if (t == 'fortune' || t == 'horoscope') return t;
+  return 'text';
 }

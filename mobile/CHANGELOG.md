@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.653+704 (2026-09-29) — Backend (mesutbyrm/canlifal) sözleşme denetimi
+
+Mobilin çağırdığı 475 uç backend kaynağıyla (yol, metot, gövde, eylem adı) karşılaştırıldı. Backend değişikliği yok.
+
+- **Canlı yayın misafir:** yayıncı daveti asıl misafir sistemine (`/api/live/guest` `invite`) taşındı; izleyici daveti `respond` + `inviteId` ile kabul/red ediyor (önceden 400/403). Onay gelince izleyici hemen misafir yayınına geçiyor (önceden 60 sn'ye kadar bekliyordu)
+- **Canlı yayın PK (video uçları):** `action`, `targetStreamId`, `duration` alanları backend'e uygun
+- **Sosyal:** gönderi JSON ile; görsel önce yüklenip `imageUrl` olarak gidiyor (multipart gönderim sunucuda başarısızdı). Video paylaşımı Kısa Videolar'a yönlendiriliyor
+- **E-posta doğrulama:** backend'de olmayan uçlar yerine `/api/auth/email/send-verification` ve `/api/auth/email/verify`
+- Sesli oda, canlı falcı, profil, fal & tarot: yol/metot/gövde uyumlu bulundu
+
 ## 1.0.652+703 (2026-09-29) — Sesli PK davet popup + presence hayalet
 
 - **PK davet poll:** `GET /api/pk/me/invites` artık **canlifal.com** (games değil) — bildirim gelip kabul/red popup'ının gelmemesi düzeltildi

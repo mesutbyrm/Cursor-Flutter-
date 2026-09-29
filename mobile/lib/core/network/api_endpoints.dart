@@ -20,9 +20,11 @@ abstract final class ApiEndpoints {
 
   /// Tüm cihazlardaki token'ları geçersiz kılar (`authentication.md`).
   static const authLogoutAll = '/api/auth/logout-all';
+  // Backend'de `mobile-send-verification` / `mobile-verify-email` yok;
+  // gerçek uçlar `email/send-verification` (Bearer) ve `email/verify` ({token}).
   static const authMobileSendVerification =
-      '/api/auth/mobile-send-verification';
-  static const authMobileVerifyEmail = '/api/auth/mobile-verify-email';
+      '/api/auth/email/send-verification';
+  static const authMobileVerifyEmail = '/api/auth/email/verify';
 
   /// Abacus — kayıtlı cihazlar (`GET` / `DELETE ?deviceId=`).
   static const authSessions = '/api/auth/sessions';

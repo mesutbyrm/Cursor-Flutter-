@@ -11,6 +11,7 @@ class CoBroadcastState {
     this.invites = const [],
     this.coBroadcasters = const [],
     this.joinRequests = const [],
+    this.myGuestInvites = const [],
     this.loading = false,
     this.error,
   });
@@ -18,6 +19,9 @@ class CoBroadcastState {
   final List<Map<String, dynamic>> invites;
   final List<Map<String, dynamic>> coBroadcasters;
   final List<Map<String, dynamic>> joinRequests;
+
+  /// İzleyici: bu yayında bana gelmiş bekleyen misafir davetleri (inviteId).
+  final List<Map<String, dynamic>> myGuestInvites;
   final bool loading;
   final String? error;
 
@@ -25,6 +29,7 @@ class CoBroadcastState {
     List<Map<String, dynamic>>? invites,
     List<Map<String, dynamic>>? coBroadcasters,
     List<Map<String, dynamic>>? joinRequests,
+    List<Map<String, dynamic>>? myGuestInvites,
     bool? loading,
     String? error,
     bool clearError = false,
@@ -33,6 +38,7 @@ class CoBroadcastState {
       invites: invites ?? this.invites,
       coBroadcasters: coBroadcasters ?? this.coBroadcasters,
       joinRequests: joinRequests ?? this.joinRequests,
+      myGuestInvites: myGuestInvites ?? this.myGuestInvites,
       loading: loading ?? this.loading,
       error: clearError ? null : (error ?? this.error),
     );
@@ -73,6 +79,7 @@ class CoBroadcastNotifier extends Notifier<CoBroadcastState> {
       state = state.copyWith(
         coBroadcasters: snapshot.coBroadcasters,
         joinRequests: snapshot.joinRequests,
+        myGuestInvites: _remote.lastMyGuestInvites,
         loading: false,
       );
     } catch (e) {
@@ -181,12 +188,63 @@ class CoBroadcastNotifier extends Notifier<CoBroadcastState> {
     return '';
   }
 
-  Future<void> acceptInvite(String streamId) async {
-    await _guest.patchCoBroadcastCompat(streamId: streamId, action: 'accept');
+  Future<void> acceptInvite(String streamId, {String? inviteId}) =>
+      _respondToInvite(streamId, accept: true, inviteId: inviteId);
+
+  Future<void> rejectInvite(String streamId, {String? inviteId}) =>
+      _respondToInvite(streamId, accept: false, inviteId: inviteId);
+
+  /// Davet edilen izleyicinin cevabı.
+  ///
+  /// `/api/live/guest` davet yanıtı `{action: respond, inviteId, accept}`
+  /// ister; `accept` diye bir eylem yok (400), `reject` ise yayıncının istek
+  /// reddetme dalıdır (403). Önceden izleyici daveti kabul/red edemiyordu.
+  /// Davet eski co-broadcast sisteminden geldiyse onun PATCH ucu kullanılır.
+  Future<void> _respondToInvite(
+    String streamId, {
+    required bool accept,
+    String? inviteId,
+  }) async {
+    var id = inviteId?.trim() ?? '';
+    if (id.isEmpty) id = await _pendingGuestInviteId(streamId);
+    if (id.isNotEmpty) {
+      await _guest.postGuestAction(
+        {
+          'action': 'respond',
+          'streamId': streamId,
+          'inviteId': id,
+          'accept': accept,
+        },
+        streamId: streamId,
+      );
+      await refreshStream(streamId);
+      return;
+    }
+    await _guest.patchCoBroadcastCompat(
+      streamId: streamId,
+      action: accept ? 'accept' : 'reject',
+    );
   }
 
-  Future<void> rejectInvite(String streamId) async {
-    await _guest.patchCoBroadcastCompat(streamId: streamId, action: 'reject');
+  /// `GET /api/live/guest?view=sync` — yetkisiz kullanıcıya yalnızca kendi
+  /// bekleyen kayıtları döner; yayıncı daveti `kind: invite`.
+  Future<String> _pendingGuestInviteId(String streamId) async {
+    try {
+      final body = await _guest.fetchGuestSession(
+        streamId: streamId,
+        view: 'sync',
+      );
+      final pending = body['pending'];
+      if (pending is! List) return '';
+      for (final p in pending) {
+        if (p is! Map) continue;
+        if (p['kind']?.toString() == 'invite' &&
+            (p['status']?.toString() ?? 'pending') == 'pending') {
+          return p['id']?.toString() ?? '';
+        }
+      }
+    } catch (_) {}
+    return '';
   }
 
   Future<void> leave(String streamId) async {
