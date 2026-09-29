@@ -1451,8 +1451,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
 
   void _startViewerCoBroadcastPoll(String streamId) {
     _coBroadcastPoll?.cancel();
+    // Misafir onayı/daveti SSE'de kaçarsa en geç 15 sn'de yakalanır.
     final interval = _liveSseConnected
-        ? const Duration(seconds: 60)
+        ? const Duration(seconds: 15)
         : const Duration(seconds: 8);
     _coBroadcastPoll = Timer.periodic(interval, (_) {
       if (!mounted) return;
@@ -1770,13 +1771,18 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     if (!mounted || accept == null) return;
     try {
       final user = ref.read(authControllerProvider).valueOrNull;
+      final inviteId = invite['inviteId']?.toString();
       if (accept) {
-        await ref.read(coBroadcastProvider.notifier).acceptInvite(streamId);
+        await ref
+            .read(coBroadcastProvider.notifier)
+            .acceptInvite(streamId, inviteId: inviteId);
         if (user != null) {
           await _upgradeToCoHost(streamId, user);
         }
       } else {
-        await ref.read(coBroadcastProvider.notifier).rejectInvite(streamId);
+        await ref
+            .read(coBroadcastProvider.notifier)
+            .rejectInvite(streamId, inviteId: inviteId);
       }
     } catch (e) {
       if (mounted) {
@@ -1813,6 +1819,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         await _upgradeToCoHost(streamId, user);
       } else {
         _checkCoHostDowngrade(streamId);
+        // Yayıncının `/api/live/guest` daveti (SSE kaçsa bile yoklamayla).
+        final invites = ref.read(coBroadcastProvider).myGuestInvites;
+        if (invites.isNotEmpty) {
+          unawaited(_promptCoBroadcastInvite(streamId, invites.first));
+        }
       }
     } catch (_) {}
   }
@@ -2693,7 +2704,19 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         }
       });
       ref.listen(coBroadcastProvider, (prev, next) {
+        // Onay SSE ile geldiğinde (liste yenilenir) hemen misafir yayınına
+        // geç; önceden yalnızca 60 sn'lik yoklama bunu yapıyordu.
+        final me = ref.read(authControllerProvider).valueOrNull;
+        if (me != null &&
+            !_coHostUpgraded &&
+            _isSelfApprovedCoGuest(next.coBroadcasters, me.id)) {
+          unawaited(_upgradeToCoHost(streamId, me));
+          return;
+        }
         _checkCoHostDowngrade(streamId);
+        for (final inv in next.myGuestInvites) {
+          unawaited(_promptCoBroadcastInvite(streamId, inv));
+        }
         for (final inv in next.invites) {
           final status = (inv['status']?.toString() ?? 'pending').toLowerCase();
           if (status != 'pending') continue;

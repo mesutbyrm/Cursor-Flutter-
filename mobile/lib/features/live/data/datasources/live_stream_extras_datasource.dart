@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../domain/live_guest_list_snapshot.dart';
@@ -70,10 +71,15 @@ class LiveStreamExtrasDataSource {
       try {
         final res = await _dio.safePost<dynamic>(
           ApiEndpoints.videoStreamPk,
+          // Sunucu `{action: create, streamId, targetStreamId, duration(sn)}`
+          // okur; `action`/`targetStreamId` eksikken istek hep başarısızdı.
           data: {
+            'action': 'create',
+            'streamId': streamId,
+            'targetStreamId': targetStreamId,
             'opponentStreamId': targetStreamId,
             'hostStreamId': streamId,
-            'streamId': streamId,
+            'duration': duration,
             'durationMinutes': durationMinutes,
           },
         );
@@ -85,8 +91,11 @@ class LiveStreamExtrasDataSource {
       try {
         final res = await _dio.safePost<dynamic>(
           ApiEndpoints.videoStreamPkBattle(streamId),
+          // Sunucu `{targetStreamId, duration(sn)}` okur.
           data: {
+            'targetStreamId': targetStreamId,
             'opponentStreamId': targetStreamId,
+            'duration': duration,
             'durationMinutes': durationMinutes,
           },
         );
@@ -224,8 +233,12 @@ class LiveStreamExtrasDataSource {
     return snapshot.coBroadcasters;
   }
 
+  /// Son `view=sync` yanıtındaki, bu kullanıcıya gelmiş yayıncı davetleri.
+  List<Map<String, dynamic>> lastMyGuestInvites = const [];
+
   Future<({List<Map<String, dynamic>> coBroadcasters, List<Map<String, dynamic>> joinRequests})>
       fetchCoBroadcastSnapshot(String streamId) async {
+    lastMyGuestInvites = const [];
     // Asıl kaynak: `GET /api/live/guest?view=sync` — aktif misafirler +
     // bekleyen istekler (`pending[].id` = onay/red için gereken requestId).
     // `/guest/list` bekleyen istek döndürmez; eski co-broadcast ucu ise
@@ -239,6 +252,7 @@ class LiveStreamExtrasDataSource {
       final body = res.data;
       if (body is Map && body['guests'] is List) {
         final map = asJsonMap(body);
+        lastMyGuestInvites = guestInvitesForMeFromSync(map);
         return (
           coBroadcasters: LiveGuestListSnapshot.fromJson(map).toCoBroadcasters(),
           joinRequests: guestJoinRequestsFromSync(map),
@@ -325,6 +339,18 @@ class LiveStreamExtrasDataSource {
     required String streamId,
     required String inviteeId,
   }) async {
+    // Asıl misafir sistemi: davet kabul edilince misafir `/api/live/guest`
+    // listesine düşer. Eski co-broadcast daveti bu listeye hiç girmiyordu;
+    // kabul eden izleyici ızgarada görünmüyor, yayıncı moduna geçemiyordu.
+    try {
+      final res = await _dio.safePost<dynamic>(
+        ApiEndpoints.liveGuest,
+        data: {'action': 'invite', 'streamId': streamId, 'guestId': inviteeId},
+      );
+      if (res.data is Map) return asJsonMap(res.data);
+    } on ApiException catch (e) {
+      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+    }
     try {
       final res = await _dio.safePost<dynamic>(
         ApiEndpoints.videoStreamCoBroadcastInvite(streamId),
@@ -523,6 +549,34 @@ List<Map<String, dynamic>> guestJoinRequestsFromSync(Map<String, dynamic> body) 
       'message': p['message'],
       'status': p['status'] ?? 'pending',
       'requestedAt': p['createdAt'],
+      'expiresAt': p['expiresAt'],
+    });
+  }
+  return out;
+}
+
+
+/// `view=sync` → yetkisiz kullanıcıya yalnızca kendi bekleyen kayıtları
+/// döner; yayıncının daveti `kind: invite`.
+List<Map<String, dynamic>> guestInvitesForMeFromSync(Map<String, dynamic> body) {
+  final me = body['me'];
+  if (me is Map && me['canManage'] == true) return const [];
+  final raw = body['pending'];
+  if (raw is! List) return const [];
+  final out = <Map<String, dynamic>>[];
+  for (final item in raw) {
+    if (item is! Map) continue;
+    final p = Map<String, dynamic>.from(item);
+    if (p['kind']?.toString() != 'invite') continue;
+    if ((p['status']?.toString() ?? 'pending') != 'pending') continue;
+    final id = p['id']?.toString() ?? '';
+    if (id.isEmpty) continue;
+    out.add({
+      'id': id,
+      'inviteId': id,
+      'streamId': p['streamId'] ?? body['streamId'],
+      'hostId': p['hostId'] ?? body['hostId'],
+      'status': 'pending',
       'expiresAt': p['expiresAt'],
     });
   }
