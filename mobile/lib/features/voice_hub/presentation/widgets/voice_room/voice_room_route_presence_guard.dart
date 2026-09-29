@@ -3,12 +3,13 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:riverpod/riverpod.dart' show Ref;
 
-import '../../../../app/router/app_router.dart';
+import '../../../../../app/router/app_router.dart';
 import '../../providers/chat_room_providers.dart';
 import '../../providers/voice_room_session_registry.dart';
-import '../utils/voice_room_leave_flow.dart';
-import '../utils/voice_room_stale_session_guard.dart';
+import '../../utils/voice_room_leave_flow.dart';
+import '../../utils/voice_room_stale_session_guard.dart';
 
 /// Ana sayfa / başka sekmeye geçildiğinde aktif sesli oda oturumunu sunucuda kapatır.
 class VoiceRoomRoutePresenceGuard extends ConsumerStatefulWidget {
@@ -53,7 +54,7 @@ class _VoiceRoomRoutePresenceGuardState
           await ref.read(chatRoomRemoteProvider).leavePresence(active);
         } catch (_) {}
       }
-      await clearStaleVoicePresenceOnAuth(ref);
+      await clearStaleVoicePresenceOnAuth(ref as Ref);
       _leaveInFlight = false;
     }());
   }
