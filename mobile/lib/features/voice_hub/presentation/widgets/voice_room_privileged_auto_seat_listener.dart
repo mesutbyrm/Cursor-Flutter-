@@ -19,7 +19,6 @@ class VoiceRoomPrivilegedAutoSeatListener extends ConsumerWidget {
     ref.listen(
       voiceRoomLiveProvider(roomKey).select(
         (s) => (
-          s.presence.length,
           s.serverPermissions?.role,
           s.serverPermissions?.isRoomOwner,
           s.serverPermissions?.canModerate,
@@ -30,7 +29,7 @@ class VoiceRoomPrivilegedAutoSeatListener extends ConsumerWidget {
       ),
       (prev, next) {
         if (prev == next) return;
-        if (next.$7 != true) return;
+        if (next.$6 != true) return;
         ref
             .read(voiceRoomLiveProvider(roomKey).notifier)
             .scheduleReactivePrivilegedAutoSeatFromUi();

@@ -266,8 +266,10 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         source: source,
       );
     }
-    _scheduleReactivePrivilegedAutoSeat();
-    _maybeReconcileHostSeatIfNeeded();
+    // Auto-seat yalnızca giriş / rol değişiminde; her SSE presence merge'de değil.
+    if (source == 'join') {
+      _maybeReconcileHostSeatIfNeeded();
+    }
     return guarded;
   }
 
@@ -579,12 +581,12 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         ref.read(livePkInviteSignalProvider.notifier).bump();
       });
       unawaited(refreshServerPermissions());
-      unawaited(_fetchAndApplySeats());
       unawaited(_refreshHubOnlineCountFromServer());
       if (allowSeatClaim) {
         _autoSeatAttempted = false;
-        unawaited(_tryAutoPrivilegedSeat());
-        schedulePrivilegedSeatAttempts();
+        // Koltuk snapshot giriş sırasında `_beginRoomSession` içinde alınır;
+        // burada ikinci `fetchSeats` yarışını ve gecikmeli oturmayı önler.
+        _maybeReconcileHostSeatIfNeeded();
       }
   }
 

@@ -2072,16 +2072,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     if (userId.isEmpty) return;
     const points = 3;
     if (!_pkLikeBudget.canAward(battleId, userId, points)) return;
-    final side = livePkScoreSideForStream(battle: battle, myStreamId: streamId);
     ref.read(liveRoomInteractionProvider(streamId).notifier).burstHearts(
           likes: 1,
           userId: userId,
         );
-    ref.read(liveVideoPkProvider(streamId).notifier).applyLocalScoreDelta(
-          side: side,
-          amount: points,
-        );
     _pkLikeBudget.record(battleId, userId, points);
+    // PK puanı yalnız sunucudan (beğeni API + battle refresh / SSE).
     unawaited(ref.read(liveVideoPkProvider(streamId).notifier).refresh());
   }
 

@@ -164,7 +164,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     if (priority == null) return;
 
     _autoSeatContextAttempted = ctx;
-    await _tryAutoPrivilegedSeat();
+    await _autoSeatAfterRoleGrant(user.id);
   }
 
   void _maybeReconcileHostSeatIfNeeded() {
@@ -187,8 +187,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
       return;
     }
     _lastHostReconcileAttemptAt = DateTime.now();
-    _autoSeatAttempted = false;
-    unawaited(_tryAutoPrivilegedSeat());
+    unawaited(_autoSeatAfterRoleGrant(user.id));
   }
 
   int? _privilegedRolePriority(
@@ -664,12 +663,13 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     }
   }
 
-  /// UI `ref.listen` — presence/izin değişiminde auto-seat.
+  /// UI `ref.listen` — yalnızca sunucu izinleri değişince (presence sayısı değil).
   void scheduleReactivePrivilegedAutoSeatFromUi() {
     _scheduleReactivePrivilegedAutoSeat();
   }
 
   Future<void> _autoSeatAfterRoleGrant(String userId) async {
+    if (_roleGrantSeatInFlight) return;
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null || user.id != userId) return;
     ChatRoomPresence? self;
@@ -690,12 +690,17 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
       presence: state.presence,
     );
     if (seatIndex == null || seatIndex < 1) return;
-    final err = await assignSeat(seatIndex: seatIndex, userId: userId);
-    if (err != null) return;
+    _roleGrantSeatInFlight = true;
     try {
-      await ref
-          .read(chatRoomRemoteProvider)
-          .unmuteUser(roomKey: _roomKey, userId: userId);
-    } catch (_) {}
+      final err = await assignSeat(seatIndex: seatIndex, userId: userId);
+      if (err != null) return;
+      try {
+        await ref
+            .read(chatRoomRemoteProvider)
+            .unmuteUser(roomKey: _roomKey, userId: userId);
+      } catch (_) {}
+    } finally {
+      _roleGrantSeatInFlight = false;
+    }
   }
 }

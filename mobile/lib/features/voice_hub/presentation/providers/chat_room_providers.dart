@@ -492,6 +492,7 @@ class VoiceRoomLiveController
   final Map<String, VoiceSeatPendingAction> _pendingSeatByUser = {};
   DateTime? _lastSelfSeatTakeSuccessAt;
   DateTime? _lastHostReconcileAttemptAt;
+  var _roleGrantSeatInFlight = false;
   String? _autoSeatContextAttempted;
   Timer? _autoSeatDebounce;
   /// Ağ geri gelince (WiFi↔mobil data) sesli TRTC sessizce düşmüşse yeniden bağlan.
@@ -808,7 +809,8 @@ class VoiceRoomLiveController
       if (!wasPrivileged && nowPrivileged) {
         _autoSeatAttempted = false;
         _autoSeatContextAttempted = null;
-        _scheduleReactivePrivilegedAutoSeat();
+        final uid = ref.read(authControllerProvider).valueOrNull?.id;
+        if (uid != null) unawaited(_autoSeatAfterRoleGrant(uid));
       }
     });
     ref.listen(walletBalancesProvider, (prev, next) {
@@ -818,7 +820,8 @@ class VoiceRoomLiveController
       if (!wasAdmin && nowAdmin) {
         _autoSeatAttempted = false;
         _autoSeatContextAttempted = null;
-        unawaited(_tryAutoPrivilegedSeat());
+        final uid = ref.read(authControllerProvider).valueOrNull?.id;
+        if (uid != null) unawaited(_autoSeatAfterRoleGrant(uid));
       }
     });
     _roomKeepAliveLink = ref.keepAlive();
@@ -2085,7 +2088,6 @@ class VoiceRoomLiveController
           unawaited(_playDjInBackground(dj));
         }
       }
-      unawaited(_tryAutoPrivilegedSeat());
     } catch (e) {
       final msg = ApiException.userMessage(e);
       final lower = msg.toLowerCase();

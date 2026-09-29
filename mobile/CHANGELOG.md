@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.641+692 (2026-09-29) — Auto-seat sadeleştirme + PK skor sunucu otoritesi
+
+- **Koltuk:** SSE presence merge’de auto-seat tetiklenmez; girişte tek host reconcile; join sonrası ikinci `fetchSeats` kaldırıldı; izin dinleyicisi presence sayısına bağlı değil
+- **Rol/kurucu koltuk:** `_autoSeatAfterRoleGrant` in-flight kilidi; boş `_tryAutoPrivilegedSeat` zinciri kaldırıldı
+- **PK beğeni:** istemci `applyLocalScoreDelta` kapatıldı; beğeni API + `refresh()` / SSE skor
+- Backend değişikliği yok
+
 ## 1.0.640+691 (2026-09-29) — P1 devam: SSE’ye göre PK/misafir poll
 
 - **Sesli PK (aktif):** SSE varken REST poll 10 sn; son SSE olayından sonra 9 sn REST atlanır (3 sn yerine)

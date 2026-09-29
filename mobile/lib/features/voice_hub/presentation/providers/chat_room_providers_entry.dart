@@ -287,7 +287,7 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
             ),
       ], eagerError: false);
       _autoSeatAttempted = false;
-      unawaited(_tryAutoPrivilegedSeat());
+      _maybeReconcileHostSeatIfNeeded();
       unawaited(_syncSpeakRequestPending());
       unawaited(_syncMusicFromServerIfNeeded(force: true));
       if (_roomKey.isNotEmpty) {

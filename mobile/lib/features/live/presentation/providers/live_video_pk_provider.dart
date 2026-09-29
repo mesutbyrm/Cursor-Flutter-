@@ -219,28 +219,8 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
     }
   }
 
-  /// Skor güncellemesi — tam `refresh` PK ekranını düşürmez.
-  /// Sunucu skor güncellemesi gelene kadar yalnızca görsel burst; otorite sunucuda.
-  void applyLocalScoreDelta({required String side, required int amount}) {
-    if (amount <= 0) return;
-    final b = state.battle;
-    if (b == null) return;
-    final next = Map<String, dynamic>.from(b);
-    final isLeft = side == 'score1' || side == 'left';
-    final key = isLeft ? 'score1' : 'score2';
-    final altLeft = 'leftScore';
-    final altRight = 'rightScore';
-    final cur = int.tryParse('${next[key] ?? (isLeft ? next[altLeft] : next[altRight]) ?? 0}') ?? 0;
-    next[key] = cur + amount;
-    if (isLeft) {
-      next[altLeft] = next[key];
-      next['challengerScore'] = next[key];
-    } else {
-      next[altRight] = next[key];
-      next['opponentScore'] = next[key];
-    }
-    state = state.copyWith(battle: next, clearError: true);
-  }
+  /// PK skorları yalnız sunucu yanıtı / SSE ile güncellenir (çift sayım önleme).
+  void applyLocalScoreDelta({required String side, required int amount}) {}
 
   Map<String, dynamic> _mergeBattleMap(
     Map<String, dynamic> incoming,
