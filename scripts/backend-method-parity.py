@@ -36,6 +36,12 @@ def match(path):
     for r, c in compiled:
         if c.match(path):
             return r
+    # Flutter şablonları ($slug → X): örnek slug ile eşleştir.
+    if re.search(r'/X(?=/|$)', path):
+        sample = re.sub(r'/X(?=/|$)', '/tarot-fali', path)
+        for r, c in compiled:
+            if c.match(sample):
+                return r
     return None
 
 # ---- ApiEndpoints constants (name -> raw template)

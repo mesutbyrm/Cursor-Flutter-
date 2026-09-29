@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.647+698 (2026-09-29) — Parity 2026-09: ölü PK API temizliği
+
+- **Kaldırıldı:** `chatRoomPkRespond`, `chatRoomPkScore` sabitleri; `postLivePkScore` / `LiveFieldPkApi.updateScore` (skor SSE/hediye)
+- **Sesli PK davet:** yedek gövde listesi sadeleştirildi (ana site sözleşmesi)
+- **CI parity:** `backend-method-parity.py` — `/api/fortunes/{slug}` şablon eşlemesi
+- Backend değişikliği yok
+
 ## 1.0.646+697 (2026-09-29) — Parity 2026-09: PK REST ana origin
 
 - **ApiBackendRouter:** sesli oda PK (`/api/chat/rooms/{id}/pk*`) → **canlifal.com** (SSE ile aynı origin; STAGE16)

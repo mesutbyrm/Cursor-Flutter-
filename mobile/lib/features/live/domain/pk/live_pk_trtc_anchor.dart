@@ -180,7 +180,7 @@ LivePkTrtcAnchor resolveLivePkTrtcAnchor({
   );
 }
 
-/// `POST /api/live/pk/score` — `side`: score1 | score2 | left | right
+/// PK skor tarafı — SSE / hediye; istemci skor POST kullanmaz.
 String livePkScoreSideForStream({
   required Map<String, dynamic> battle,
   required String myStreamId,

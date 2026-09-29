@@ -96,6 +96,10 @@ void main() {
       expect(literals, isNot(contains(r'/api/chat/rooms/$roomId/pause')));
       expect(literals, isNot(contains(r'/api/chat/rooms/$roomId/resume')));
       expect(literals, isNot(contains(r'/api/rooms/$roomId/music/current')));
+      expect(
+        literals.where((p) => p.contains('/pk/') && p.contains('/respond')),
+        isEmpty,
+      );
     });
 
     test('production lib/ sources do not embed legacy canlifal API paths', () {

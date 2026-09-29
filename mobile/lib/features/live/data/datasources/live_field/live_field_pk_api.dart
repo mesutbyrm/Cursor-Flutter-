@@ -5,7 +5,7 @@ import '../../../../../core/network/dio_provider.dart';
 import '../../../../../core/util/json_util.dart';
 import 'live_field_api_util.dart';
 
-/// Saha 6 — PK Battle (`GET/POST /api/live/pk`, `POST /api/live/pk/score`).
+/// Saha 6 — PK Battle (`GET/POST /api/live/pk`). Skor sunucu/hediye/SSE.
 class LiveFieldPkApi {
   LiveFieldPkApi(this._dio);
 
@@ -56,25 +56,6 @@ class LiveFieldPkApi {
     return LiveFieldPkBattle.fromJson(battle);
   }
 
-  Future<LiveFieldPkScore?> updateScore({
-    required int amount,
-    String? battleId,
-    String? roomId,
-    String? side,
-  }) async {
-    final res = await _dio.safePost<dynamic>(
-      ApiEndpoints.livePkScore,
-      data: {
-        'amount': amount,
-        if (battleId != null && battleId.isNotEmpty) 'battleId': battleId,
-        if (roomId != null && roomId.isNotEmpty) 'roomId': roomId,
-        if (side != null && side.isNotEmpty) 'side': side,
-      },
-    );
-    final map = LiveFieldApiUtil.unwrapData(res.data);
-    if (map == null) return null;
-    return LiveFieldPkScore.fromJson(map);
-  }
 }
 
 class LiveFieldPkBattle {
@@ -113,22 +94,3 @@ class LiveFieldPkBattle {
   }
 }
 
-class LiveFieldPkScore {
-  const LiveFieldPkScore({
-    this.battleId,
-    this.room1Score = 0,
-    this.room2Score = 0,
-  });
-
-  final String? battleId;
-  final int room1Score;
-  final int room2Score;
-
-  factory LiveFieldPkScore.fromJson(Map<String, dynamic> json) {
-    return LiveFieldPkScore(
-      battleId: json['battleId']?.toString(),
-      room1Score: (json['room1Score'] as num?)?.toInt() ?? 0,
-      room2Score: (json['room2Score'] as num?)?.toInt() ?? 0,
-    );
-  }
-}

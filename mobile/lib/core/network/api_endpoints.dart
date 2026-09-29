@@ -503,15 +503,6 @@ abstract final class ApiEndpoints {
   /// Kılavuz §2.2–2.5 (FLUTTER_ENTegrasyon_KILAVUZU.md).
   static String chatRoomPk(String roomId) => '/api/chat/rooms/$roomId/pk';
 
-  /// Games backend — davet yanıtı (accept/reject).
-  @Deprecated('Üretimde yok; POST chatRoomPk(roomId) + {action, battleId}')
-  static String chatRoomPkRespond(String roomId, String inviteId) =>
-      '/api/chat/rooms/$roomId/pk/$inviteId/respond';
-
-  /// PK skor — yalnızca admin (`POST` istemci çağırmamalı; hediye skoru otomatik).
-  static String chatRoomPkScore(String roomId) =>
-      '/api/chat/rooms/$roomId/pk/score';
-
   /// Geriye dönük alias (`pk-battle` üretimde 404).
   static String chatRoomPkBattle(String roomId) => chatRoomPk(roomId);
 
@@ -733,7 +724,6 @@ abstract final class ApiEndpoints {
   static const liveGiftTypes = '/api/live/gift-types';
   static const liveGiftSend = '/api/live/gift/send';
   static const livePk = '/api/live/pk';
-  static const livePkScore = '/api/live/pk/score';
   static const liveOnlineUsers = '/api/live/online-users';
 
   /// Canlı yayın hediye kataloğu (Tencent / site ile aynı liste).

@@ -2,7 +2,7 @@ import 'package:canlifal_social/features/voice_hub/data/datasources/pk_battle_re
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('voicePkInviteRequestBodies prefers games action create with targetRoomId',
+  test('voicePkInviteRequestBodies prefers action create with targetRoomId',
       () {
     final bodies = voicePkInviteRequestBodies(
       opponentRoomId: 'room-b',
@@ -12,11 +12,11 @@ void main() {
     expect(bodies.first['action'], 'create');
     expect(bodies.first['targetRoomId'], 'room-b');
     expect(bodies.first['duration'], 180);
-    expect(bodies.last['guestUserId'], 'user-guest');
+    expect(bodies[1]['targetRoomId'], 'room-b');
   });
 
-  test('first body carries both targetRoomId and guestUserId so either backend '
-      'can bind the invite to a recipient', () {
+  test('first body carries both targetRoomId and guestUserId for main backend',
+      () {
     final bodies = voicePkInviteRequestBodies(
       opponentRoomId: 'room-b',
       guestUserId: 'user-guest',
@@ -25,9 +25,8 @@ void main() {
     expect(bodies.first['targetRoomId'], 'room-b');
     expect(bodies.first['guestUserId'], 'user-guest');
     expect(bodies.first['durationSec'], 180);
-    // Tekil gövdeler yedek olarak korunur.
-    expect(bodies.any((b) => !b.containsKey('guestUserId')), isTrue);
-    expect(bodies.any((b) => !b.containsKey('targetRoomId')), isTrue);
+    expect(bodies.length, 2);
+    expect(bodies[1].containsKey('guestUserId'), isFalse);
   });
 
   test('voicePkInviteRequestBodies works without guestUserId', () {
