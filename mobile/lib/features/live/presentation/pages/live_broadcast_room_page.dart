@@ -3177,10 +3177,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
             if (giftCtrl.panelOpen &&
                 !pkImmersive &&
                 user != null &&
+                hasStream &&
                 broadcastSettings.giftsEnabled)
               LiveBroadcastRoomGiftPanelOverlay(
                 controller: giftCtrl,
-                streamId: widget.session.streamId ?? '',
+                streamId: streamId!,
                 senderName: user.display,
                 senderId: user.id,
                 onClose: () => giftCtrl.setPanelOpen(false),

@@ -158,18 +158,19 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       membership: user.membership,
       chatRole: user.chatRole,
     );
-    // Normal üyeler: oda içi popup/banner yok — yalnızca Gold/VIP/staff görünür giriş.
-    if (!isGoldOrVip) return;
-
-    final line = '$name giriş yaptı';
+    final line = VoiceOfficialJoin.formatEntranceBanner(
+      '$name odaya giriş yaptı',
+    );
     _pushRealtimeEvent(VoiceRoomRealtimeKind.join, line);
     _appendSyntheticSystemMessage(
       '$name odaya giriş yaptı.',
       kind: ChatMessageKind.systemJoin,
       user: userRef,
     );
-    final banner = '👋 $name → $_roomLabelForBanner odasına giriş yaptı';
-    _pushEnterExitBanner(banner);
+    if (isGoldOrVip) {
+      final banner = '👋 $name → $_roomLabelForBanner odasına giriş yaptı';
+      _pushEnterExitBanner(banner);
+    }
   }
 
   void _showStaffEnterBanner(String name, {ChatRoomUserRef? user}) {

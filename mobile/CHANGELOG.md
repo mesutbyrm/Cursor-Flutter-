@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.637+688 (2026-09-29) — Giriş bildirimi (tüm üyeler) + canlı hediye paneli
+
+- **Sesli oda girişi:** Gold/VIP dışındaki üyeler için de alt toast + gerçek zamanlı giriş olayı (👋 … odaya giriş yaptı); VIP üst banner ayrı kaldı
+- **Canlı yayın hediye:** panel yalnızca geçerli `streamId` varken açılır (boş id ile sessiz başarısızlık engellendi)
+- Backend değişikliği yok
+
 ## 1.0.636+687 (2026-09-29) — Sesli oda, PK ve canlı yayın tamirleri
 
 - **Hayalet oda üyeliği:** rota değişince (ana sayfa vb.) `VoiceRoomRoutePresenceGuard` sunucuda `leave` + stale presence temizliği; çıkışta yerel listeden düşme backend onayından sonra

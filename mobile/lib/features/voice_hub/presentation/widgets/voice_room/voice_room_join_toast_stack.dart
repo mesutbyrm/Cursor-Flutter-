@@ -140,7 +140,9 @@ class _VoiceRoomJoinToastStackState extends State<VoiceRoomJoinToastStack> {
     }
     final name = _parseName(raw, user: user);
     if (name.isEmpty) return;
-    final line = isLeave ? '$name çıkış yaptı.' : '$name giriş yaptı.';
+    final line = isLeave
+        ? '👋 $name odadan çıkış yaptı'
+        : VoiceOfficialJoin.formatEntranceBanner('$name odaya giriş yaptı');
     final key = VoiceOfficialJoin.entranceDedupeKey(raw);
     if (!_seen.add(key)) return;
     final id = '${DateTime.now().microsecondsSinceEpoch}_$name';
