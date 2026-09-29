@@ -191,33 +191,33 @@ void main() {
       );
     });
 
-    test('sesli oda PK uçları Games backend (ana site GET stub)', () {
+    test('sesli oda PK uçları ana backend (SSE ile aynı origin)', () {
       expect(
         ApiBackendRouter.resolve(
           '/api/chat/rooms/cm123/pk',
         ),
-        ApiBackendKind.game,
+        ApiBackendKind.main,
       );
       expect(
         ApiBackendRouter.resolve(
           '/api/chat/rooms/cm123/pk/inv-1/respond',
           method: 'POST',
         ),
-        ApiBackendKind.game,
+        ApiBackendKind.main,
       );
       expect(
         ApiBackendRouter.resolve(
           '/api/chat/rooms/cm123/pk/battle-1/end',
           method: 'POST',
         ),
-        ApiBackendKind.game,
+        ApiBackendKind.main,
       );
       expect(
         ApiBackendRouter.resolve(
           '/api/chat/rooms/cm123/pk/score',
           method: 'POST',
         ),
-        ApiBackendKind.game,
+        ApiBackendKind.main,
       );
       expect(
         ApiBackendRouter.resolve('/api/chat/rooms/cm123/messages'),

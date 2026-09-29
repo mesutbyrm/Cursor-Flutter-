@@ -6,21 +6,24 @@
 
 ## Ortam notu (2026-09-29)
 
-Cloud agent ortamında `mesutbyrm/canlifal` deposuna **clone/API erişimi yok** (`Repository not found`). Karşılaştırma şu mirror’larla yapıldı:
+`canlifal-backend/` — dal `docs/backend-flutter-parity-2026-09` (714 route, PR #1). Son script çıktısı:
 
-| Mirror | Route sayısı | Kullanım |
-|--------|--------------|----------|
-| `backend-parity/nextjs_space/` | ~120 indexed | `scripts/backend-route-parity.py --used-only` → **639** kullanılan Flutter yolu mirror’da dosya yok (mirror eksik) |
-| `backend-reference/canlifal_flutter_paketi/` | Markdown + lib snippet | Sesli/canlı/falcı **sözleşme metni** (voice_room_api.md, kılavuz §9) |
-| Üretim | `https://canlifal.com` | Runtime doğrulama (agent acceptance / cihaz) |
+| Script | Sonuç |
+|--------|--------|
+| `backend-route-parity.py --used-only` | **714** backend route, **0** eksik Flutter kullanımı |
+| `backend-method-parity.py` | **606** ok, **101** unresolved, **2** bad (aşağıda) |
 
-**Tam parity için (geliştirici makinesi):**
+**Method parity — kalan 2 satır:**
+
+1. `POST /api/payments/config` — script `profile_remote_datasource.dart:585` satırını `_postPaymentRequest` ile eşleştiriyor; gerçek `paymentConfig()` **GET** kullanıyor (yanlış pozitif).
+2. `POST /api/fortunes/X` — fal SSE akışı; route tablosu dışı (bilinçli).
+
+**Clone (yenileme):**
 
 ```bash
-git clone https://github.com/mesutbyrm/canlifal /tmp/canlifal
-git -C /tmp/canlifal checkout docs/backend-flutter-parity-2026-09
-python3 scripts/backend-route-parity.py /tmp/canlifal/nextjs_space --used-only
-python3 scripts/backend-method-parity.py /tmp/canlifal/nextjs_space
+git clone -b docs/backend-flutter-parity-2026-09 https://github.com/mesutbyrm/canlifal canlifal-backend
+python3 scripts/backend-route-parity.py canlifal-backend/nextjs_space --used-only
+python3 scripts/backend-method-parity.py canlifal-backend/nextjs_space
 ```
 
 ---
@@ -29,7 +32,7 @@ python3 scripts/backend-method-parity.py /tmp/canlifal/nextjs_space
 
 | Alan | Flutter modül | Kanonik backend ailesi | Durum | Not |
 |------|---------------|------------------------|-------|-----|
-| **Sesli oda** | `voice_hub/` | `/api/chat/rooms/*` | **Hizalı (kod)** | presence, state, SSE, PATCH seats, POST pk + action |
+| **Sesli oda** | `voice_hub/` | `/api/chat/rooms/*` | **Hizalı (646+)** | PK REST ana origin + SSE; presence, PATCH seats, POST pk + action |
 | **Sesli PK davet** | `pk_battle_remote_datasource.dart` | `POST …/pk` `{action, battleId}` | **Düzeltildi (645+)** | `…/pk/{id}/respond` artık çağrılmıyor |
 | **Sesli PK poll** | invite listener + remote provider | GET pk, GET me/invites | **İyileştirildi (644)** | Önbellek, SSE defer, lite stream battle |
 | **Canlı yayın** | `live/` | `/api/video-streams/*` | **Hizalı** | join POST, leave POST (+ DELETE join yedek), SSE, pk-battle |
@@ -79,16 +82,15 @@ python3 scripts/backend-method-parity.py /tmp/canlifal/nextjs_space
 
 ## Bilinen açık uçlar (mobil veya backend)
 
-1. **`mesutbyrm/canlifal` full route tree** — agent clone edemedi; method-parity **0 hata** iddiası yalnızca tam clone ile tekrarlanmalı.  
-2. **Backend presence TTL** — hayalet katılımcı (mobil mitigasyon var).  
-3. **P0/P1 cihaz** — PK davet E2E, hediye→PK skor, Psychic TRTC.  
-4. **`backend-parity/` mirror** — 120 route; üretimin 714 route’unun tam listesi değil.  
-5. **Dead API yüzeyi** — `postLivePkScore`, `@Deprecated chatRoomPkRespond` (çağrılmıyor).
+1. **Backend presence TTL** — hayalet katılımcı (mobil mitigasyon var).  
+2. **P0/P1 cihaz** — PK davet E2E, hediye→PK skor, Psychic TRTC.  
+3. **Dead API yüzeyi** — `postLivePkScore`, `@Deprecated chatRoomPkRespond` (çağrılmıyor).
 
 ---
 
 ## Bu repoda yapılan son parity düzeltmesi
 
+- **646+:** `ApiBackendRouter` — sesli oda PK REST → `canlifal.com` (games değil); STAGE16 §1.
 - **645+:** Sesli PK accept/reject/cancel — yalnızca `POST /api/chat/rooms/{roomId}/pk` (respond alt yolu kaldırıldı).
 
 Önceki oturumlar (636–644): presence guard, PK poll, auto-seat, canlı PK refresh, davet cache — `mobile/CHANGELOG.md`.
