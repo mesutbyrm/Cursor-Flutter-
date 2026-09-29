@@ -85,7 +85,11 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
             'invite_missing_rooms',
             'PK davetinde room1/room2 (voiceRoomId) yok — backend response doğrulanmalı',
           );
+          return;
         }
+        // Hedef oda yerel oda listesinde yok (liste eski/filtreli): odayı
+        // sunucudan id ile çekip daveti yine göster.
+        unawaited(_showInviteForUnlistedRoom(battle, user.id));
         return;
       }
       final recipient = isPkInviteTarget(battle, room, userId: user.id) ||
@@ -114,6 +118,24 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
       }
       ref.read(pkBattleRemoteProvider.notifier).clear();
     }
+  }
+
+  Future<void> _showInviteForUnlistedRoom(
+    PkBattleRemote battle,
+    String userId,
+  ) async {
+    final targetId = battle.opponentVoiceRoomId?.trim() ?? '';
+    if (targetId.isEmpty || _showing) return;
+    try {
+      final room = await ref.read(voiceRoomByIdProvider(targetId).future);
+      if (!mounted || room == null) return;
+      if (!isPkInviteTarget(battle, room, userId: userId)) return;
+      if (isPkChallengerRoom(battle, room)) return;
+      final inviteId = battle.effectiveId;
+      if (inviteId.isEmpty) return;
+      PkEventLog.incomingRequest(inviteId: inviteId);
+      await _showInviteDialog(battle, room);
+    } catch (_) {}
   }
 
   Future<void> _showInviteDialog(
@@ -199,11 +221,10 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
       }
 
       final activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
-      // Davet yalnızca oda sahiplerine gelir; odası olmayan ve bir odada
-      // bulunmayan kullanıcı için sunucuya her 3 sn istek atılmaz.
-      if (activeKey.isEmpty && ref.read(myOwnedVoiceRoomsProvider).isEmpty) {
-        return;
-      }
+      // Not: "Odalarım" boşsa yoklamayı atlamak, sahipliği listeden tespit
+      // edilemeyen kullanıcıda `/pk/me/invites` kontrolünü de atlatıyor ve
+      // davet hiç görünmüyordu. Davet listesi odaya bağlı değildir; her turda
+      // sorulur.
       VoiceRoomEntity? activeRoom;
       if (activeKey.isNotEmpty) {
         activeRoom = ref.read(voiceRoomByIdProvider(activeKey)).valueOrNull;

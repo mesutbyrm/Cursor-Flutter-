@@ -89,25 +89,16 @@ class TrtcRoomManager {
     debugPrint('[TRTC] $event $safe');
   }
 
+  /// Mikrofon (+ isteğe bağlı kamera) izni. Zaten verilmişse pencere açılmaz.
+  /// İzinler ilk açılışta [MediaPermissionBootstrap] ile bir kez istenir;
+  /// burada yalnızca yayın/mikrofon gerçekten açılacaksa tekrar sorulur.
+  /// Kalıcı reddedilmişse kullanıcı her girişte Ayarlar'a atılmaz — çağıran
+  /// taraf mesaj gösterir.
   static Future<bool> requestPermissions({required bool video}) async {
     if (kIsWeb) return false;
     try {
-      final mic = await Permission.microphone.request();
-      if (!mic.isGranted) {
-        if (mic.isPermanentlyDenied) {
-          await openAppSettings();
-        }
-        return false;
-      }
-      if (video) {
-        final cam = await Permission.camera.request();
-        if (!cam.isGranted) {
-          if (cam.isPermanentlyDenied) {
-            await openAppSettings();
-          }
-          return false;
-        }
-      }
+      if (!await _ensureGranted(Permission.microphone)) return false;
+      if (video && !await _ensureGranted(Permission.camera)) return false;
       return true;
     } on MissingPluginException {
       _logTrtc('permission_plugin_missing');
@@ -116,6 +107,14 @@ class TrtcRoomManager {
       _logTrtc('permission_error', {'error': e.runtimeType.toString()});
       return false;
     }
+  }
+
+  static Future<bool> _ensureGranted(Permission permission) async {
+    final status = await permission.status;
+    if (status.isGranted || status.isLimited) return true;
+    if (status.isPermanentlyDenied || status.isRestricted) return false;
+    final result = await permission.request();
+    return result.isGranted || result.isLimited;
   }
 
   /// Önizleme — kanala girmeden kamera (yayın hazırlığı).
@@ -189,9 +188,17 @@ class TrtcRoomManager {
       );
     }
 
-    final ok = await requestPermissions(video: !audioOnly);
-    if (!ok) {
-      throw StateError('Mikrofon veya kamera izni verilmedi');
+    // İzleyici/dinleyici yayın göndermez; mikrofon/kamera izni gerekmez.
+    // Önceden her girişte izin soruluyor, reddeden izleyici odaya giremiyordu.
+    final publishes = isHost || twoWayVideo || (publishLocal ?? false);
+    if (publishes) {
+      final ok = await requestPermissions(video: !audioOnly);
+      if (!ok) {
+        throw StateError(
+          'Mikrofon veya kamera izni verilmedi. Ayarlar > Uygulamalar > '
+          'Canlifal > İzinler bölümünden açabilirsiniz.',
+        );
+      }
     }
 
     if (_inRoom) {

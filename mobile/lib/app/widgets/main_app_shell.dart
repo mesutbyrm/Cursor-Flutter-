@@ -39,6 +39,7 @@ import '../../features/gifts/presentation/providers/gift_catalog_version_watcher
 import '../../features/notifications/presentation/widgets/notifications_realtime_listener.dart';
 import '../../features/inbox/presentation/widgets/global_in_app_banner_host.dart';
 import '../../features/platform/presentation/widgets/app_popups_listener.dart';
+import '../../core/permissions/media_permission_bootstrap.dart';
 
 /// MaterialApp.router [builder] içeriği — [ListenableBuilder] kullanmaz.
 ///
@@ -74,6 +75,8 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
       _sseLifecycle?.attach();
       _sseHubLifecycle = ref.read(sseHubLifecycleProvider);
       _sseHubLifecycle?.attach();
+      // Mikrofon/kamera: ilk açılışta bir kez; odalarda tekrar sorulmaz.
+      unawaited(MediaPermissionBootstrap.askOnce());
     });
     _realtimeTimer = Timer(StartupPerf.shellRealtimeDelay, () {
       if (!mounted) return;

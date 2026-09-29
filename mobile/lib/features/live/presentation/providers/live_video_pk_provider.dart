@@ -72,6 +72,7 @@ class LiveVideoPkState {
 class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, String> {
   Timer? _poll;
   Timer? _endedCleanup;
+  Timer? _endsAtRefresh;
   String? _lastIngestFingerprint;
   final _eventDedup = LivePkEventDedup();
 
@@ -87,6 +88,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
     ref.onDispose(() {
       _poll?.cancel();
       _endedCleanup?.cancel();
+      _endsAtRefresh?.cancel();
     });
     Future.microtask(() => refresh());
     return const LiveVideoPkState();
@@ -108,6 +110,26 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
   void _stopPolling() {
     _poll?.cancel();
     _poll = null;
+    _endsAtRefresh?.cancel();
+    _endsAtRefresh = null;
+  }
+
+  /// Sayaç bittiği anda sunucudan durum iste (15 sn yoklamayı bekleme);
+  /// sunucu henüz kapatmadıysa kısa aralıkla birkaç kez tekrar dener.
+  void _scheduleEndsAtRefresh(Map<String, dynamic> battle, {int attempt = 0}) {
+    _endsAtRefresh?.cancel();
+    final endsAt = DateTime.tryParse(battle['endsAt']?.toString() ?? '');
+    if (endsAt == null || attempt > 5) return;
+    var wait = endsAt.difference(DateTime.now().toUtc()) +
+        const Duration(milliseconds: 1500);
+    if (wait.isNegative) wait = Duration(seconds: 2 + attempt * 2);
+    _endsAtRefresh = Timer(wait, () async {
+      await refresh();
+      final st = state.status;
+      if (state.battle != null && isLivePkActiveStatus(st)) {
+        _scheduleEndsAtRefresh(state.battle!, attempt: attempt + 1);
+      }
+    });
   }
 
   Future<void> refresh() async {
@@ -149,6 +171,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
           );
           if (isLivePkActiveStatus(remote.status)) {
             _startPolling();
+            _scheduleEndsAtRefresh(map);
           } else {
             _stopPolling();
             if (isLivePkEndedStatus(remote.status)) {
