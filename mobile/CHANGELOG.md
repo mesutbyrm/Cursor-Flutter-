@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.634+685 (2026-09-29) — Backend sözleşmesine göre SSE, çıkış ve yoklama düzeltmeleri
+
+- **SSE:** parça sınırında bölünen Türkçe karakter/emoji artık olayı bozmuyor (önceden JSON bozulup PK daveti, presence, hediye olayları sessizce kayboluyordu); 6 SSE istemcisinde ortak çözücü
+- **Odadan çıkış:** `DELETE /api/chat/rooms/{id}/presence?leave=1` ilk istek — sunucu koltuğu boşaltır, mikrofon oturumunu kapatır, sahip çıkınca PK'yı bitirir ve `user_left` yayınlar (önceden yalnızca `lastSeen` sıfırlanıyor, kullanıcı/koltuk asılı kalıyordu)
+- **Hız:** canlı PK davet yoklaması 1 sn → 2 sn ve üst üste binmiyor; yayını olmayan kullanıcıda `/pk/me/invites` 10 sn'de bir; sesli PK davet ve falcı bekleme yoklamalarında istek yığılması engellendi
+- Backend değişikliği yok
+
 ## 1.0.633+684 (2026-09-29) — PK bitişi, PK daveti teslimi, SSE ve hız
 
 - **Canlı yayın PK:** süre dolunca istemci sunucuya yeniden sorar ve bitişi tetikler; PK artık "0:00"da asılı kalmaz
