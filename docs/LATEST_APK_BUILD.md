@@ -4,19 +4,19 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.651+702` |
-| Tarih (UTC) | 2026-09-29 21:21 |
-| Commit | [`6739627738c3b19153817115274f117ac400cb59`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/6739627738c3b19153817115274f117ac400cb59) |
-| İş akışı | [Run 36628540976](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36628540976) |
+| Sürüm | `1.0.652+703` |
+| Tarih (UTC) | 2026-09-29 22:17 |
+| Commit | [`09a957444d857da638ceff84b021601ab8128b52`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/09a957444d857da638ceff84b021601ab8128b52) |
+| İş akışı | [Run 36636387178](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36636387178) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.650+701 (2026-09-29) — Parity: presence hayalet + PK yanıt
+## 1.0.652+703 (2026-09-29) — Sesli PK davet popup + presence hayalet
 
-- **Presence:** `user_left` / diff ayrılışında 5 dk tombstone — stale SSE snapshot hayaletlerini filtreler
-- **Sesli PK accept/reject:** `live/pk` yedeği yalnız 404/405 (400 iş kuralı hatasını maskelemez)
-- **Canlı PK alias gövdesi:** gereksiz alanlar kaldırıldı
+- **PK davet poll:** `GET /api/pk/me/invites` artık **canlifal.com** (games değil) — bildirim gelip kabul/red popup'ının gelmemesi düzeltildi
+- **PK wire map:** `room1Id` / `room2Id` alanları sesli oda PK modeline eşlenir
+- **Presence:** SSE yeniden bağlanınca yalnızca aktif oda oturumunda join; çıkış sonrası self listeden + tombstone filtre
 - Backend değişikliği yok
 
 
