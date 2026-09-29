@@ -14,6 +14,7 @@ import '../../domain/entities/live_stream_chat_message.dart';
 import '../../../live_psychics/domain/entities/psychic_request_entity.dart';
 import '../../../live_psychics/presentation/providers/psychic_live_event_bus.dart';
 import '../datasources/live_gifts_remote_datasource.dart';
+import '../../../../core/network/sse/sse_chunk_decoder.dart';
 
 /// Video yayın SSE — `GET /api/video-streams/{streamId}/stream`.
 class VideoStreamSseService {
@@ -164,10 +165,11 @@ class VideoStreamSseService {
       _lastEventAt = DateTime.now();
       _startHeartbeatWatchdog();
       final buffer = StringBuffer();
+      final chunkDecoder = SseChunkDecoder();
       _bytesSub = byteStream.listen(
         (chunk) {
           _lastEventAt = DateTime.now();
-          buffer.write(utf8.decode(chunk, allowMalformed: true));
+          buffer.write(chunkDecoder.convert(chunk));
           _drainBuffer(buffer);
         },
         onError: (_) => _scheduleReconnect(),

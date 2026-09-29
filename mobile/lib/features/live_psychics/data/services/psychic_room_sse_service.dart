@@ -12,6 +12,7 @@ import '../../domain/entities/psychic_room_entity.dart';
 import '../../domain/entities/psychic_session_status.dart';
 import '../../domain/session_room_sse_event.dart';
 import 'psychic_room_sse_parser.dart';
+import '../../../../core/network/sse/sse_chunk_decoder.dart';
 
 /// Seans oda SSE — `GET /api/room/{sessionId}/stream`.
 class PsychicRoomSseService {
@@ -108,10 +109,11 @@ class PsychicRoomSseService {
       _startHeartbeatWatchdog();
       _onConnected?.call();
       final buffer = StringBuffer();
+      final chunkDecoder = SseChunkDecoder();
       _bytesSub = stream.listen(
         (chunk) {
           _lastEventAt = DateTime.now();
-          buffer.write(utf8.decode(chunk, allowMalformed: true));
+          buffer.write(chunkDecoder.convert(chunk));
           _drain(buffer);
         },
         onError: (_) => _scheduleReconnect(),

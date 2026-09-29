@@ -8,6 +8,7 @@ import 'package:flutter/widgets.dart';
 import 'config/env.dart';
 import 'network/api_endpoints.dart';
 import 'network/sse/sse_reconnect_policy.dart';
+import 'network/sse/sse_chunk_decoder.dart';
 
 /// SSE olayı — `data: { "type": "...", "data": { ... } }`.
 class SseEvent {
@@ -384,12 +385,13 @@ class SseClient {
     CancelToken cancel,
   ) async {
     final buffer = StringBuffer();
+    final chunkDecoder = SseChunkDecoder();
     final acc = StringBuffer();
     String? fortuneId;
 
     await for (final chunk in byteStream) {
       if (cancel.isCancelled) break;
-      buffer.write(utf8.decode(chunk, allowMalformed: true));
+      buffer.write(chunkDecoder.convert(chunk));
       var raw = buffer.toString().replaceAll('\r\n', '\n');
       while (true) {
         final sep = raw.indexOf('\n\n');
@@ -529,9 +531,10 @@ class _SseConnection {
 
       _attempt = 0;
       final buffer = StringBuffer();
+      final chunkDecoder = SseChunkDecoder();
       _bytesSub = byteStream.listen(
         (chunk) {
-          buffer.write(utf8.decode(chunk, allowMalformed: true));
+          buffer.write(chunkDecoder.convert(chunk));
           SseClient.drainBuffer(buffer, _onBlock);
         },
         onError: (_) => _scheduleReconnect(),

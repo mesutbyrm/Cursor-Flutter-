@@ -9,6 +9,7 @@ import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/sse/sse_reconnect_policy.dart';
 import '../../domain/entities/psychic_request_entity.dart';
 import 'psychic_incoming_sse_parser.dart';
+import '../../../../core/network/sse/sse_chunk_decoder.dart';
 
 /// Falcı gelen istek SSE — `GET /api/fortune-tellers/sessions/stream`.
 class PsychicIncomingSseService {
@@ -90,9 +91,10 @@ class PsychicIncomingSseService {
       _reconnectAttempt = 0;
       _streamActive = true;
       final buffer = StringBuffer();
+      final chunkDecoder = SseChunkDecoder();
       _bytesSub = stream.listen(
         (chunk) {
-          buffer.write(utf8.decode(chunk, allowMalformed: true));
+          buffer.write(chunkDecoder.convert(chunk));
           _drain(buffer);
         },
         onError: (_) => _scheduleReconnect(),
