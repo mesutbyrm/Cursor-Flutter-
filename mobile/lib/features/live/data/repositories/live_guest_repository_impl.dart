@@ -45,11 +45,14 @@ class LiveGuestRepositoryImpl implements LiveGuestRepository {
     required String streamId,
     required String action,
     String? userId,
+    String? requestId,
   }) async {
     final body = <String, dynamic>{
       'action': action,
       'streamId': streamId,
       if (userId != null && userId.isNotEmpty) 'userId': userId,
+      // `/api/live/guest` approve/reject yalnızca requestId ile çalışır.
+      if (requestId != null && requestId.isNotEmpty) 'requestId': requestId,
     };
     try {
       final res = await postGuestAction(body, streamId: streamId);

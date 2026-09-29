@@ -226,6 +226,25 @@ class LiveStreamExtrasDataSource {
 
   Future<({List<Map<String, dynamic>> coBroadcasters, List<Map<String, dynamic>> joinRequests})>
       fetchCoBroadcastSnapshot(String streamId) async {
+    // Asıl kaynak: `GET /api/live/guest?view=sync` — aktif misafirler +
+    // bekleyen istekler (`pending[].id` = onay/red için gereken requestId).
+    // `/guest/list` bekleyen istek döndürmez; eski co-broadcast ucu ise
+    // `/api/live/guest` isteklerini hiç görmez.
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.liveGuest,
+        query: {'streamId': streamId, 'view': 'sync'},
+        forceRefresh: true,
+      );
+      final body = res.data;
+      if (body is Map && body['guests'] is List) {
+        final map = asJsonMap(body);
+        return (
+          coBroadcasters: LiveGuestListSnapshot.fromJson(map).toCoBroadcasters(),
+          joinRequests: guestJoinRequestsFromSync(map),
+        );
+      }
+    } catch (_) {}
     try {
       final res = await _dio.safeGet<dynamic>(
         ApiEndpoints.liveGuestList,
@@ -477,4 +496,35 @@ class LiveStreamExtrasDataSource {
   Future<void> triggerAutoClose(String streamId) async {
     await _dio.safePost<dynamic>(ApiEndpoints.videoStreamAutoClose(streamId));
   }
+}
+
+
+/// `GET /api/live/guest?view=sync` → `pending[]` içinden izleyici istekleri.
+/// Yayıncının davetleri (`kind: invite`) istek listesine girmez.
+List<Map<String, dynamic>> guestJoinRequestsFromSync(Map<String, dynamic> body) {
+  final raw = body['pending'];
+  if (raw is! List) return const [];
+  final out = <Map<String, dynamic>>[];
+  for (final item in raw) {
+    if (item is! Map) continue;
+    final p = Map<String, dynamic>.from(item);
+    final kind = p['kind']?.toString().toLowerCase() ?? 'request';
+    if (kind != 'request') continue;
+    final requestId = p['id']?.toString() ?? '';
+    final userId = p['guestId']?.toString() ?? '';
+    if (requestId.isEmpty || userId.isEmpty) continue;
+    final name = p['guestName']?.toString() ?? 'İzleyici';
+    out.add({
+      'requestId': requestId,
+      'userId': userId,
+      'userName': name,
+      'displayName': name,
+      'image': p['guestImage'],
+      'message': p['message'],
+      'status': p['status'] ?? 'pending',
+      'requestedAt': p['createdAt'],
+      'expiresAt': p['expiresAt'],
+    });
+  }
+  return out;
 }

@@ -1593,10 +1593,20 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         request['displayName']?.toString() ??
         'İzleyici';
     if (userId.isEmpty) return;
-    await ref.read(coBroadcastProvider.notifier).approveRequest(
-          streamId: streamId,
-          userId: userId,
+    try {
+      await ref.read(coBroadcastProvider.notifier).approveRequest(
+            streamId: streamId,
+            userId: userId,
+            requestId: request['requestId']?.toString(),
+          );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
         );
+      }
+      return;
+    }
     await ref.read(coBroadcastProvider.notifier).refreshStream(streamId);
     final approved = filterApprovedCoGuests(
       ref.read(coBroadcastProvider).coBroadcasters,
@@ -1615,10 +1625,19 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     if (streamId == null || streamId.isEmpty) return;
     final userId = request['userId']?.toString() ?? '';
     if (userId.isEmpty) return;
-    await ref.read(coBroadcastProvider.notifier).rejectRequest(
-          streamId: streamId,
-          userId: userId,
+    try {
+      await ref.read(coBroadcastProvider.notifier).rejectRequest(
+            streamId: streamId,
+            userId: userId,
+            requestId: request['requestId']?.toString(),
+          );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
         );
+      }
+    }
   }
 
   Future<void> _blockGuestRequest(Map<String, dynamic> request) async {

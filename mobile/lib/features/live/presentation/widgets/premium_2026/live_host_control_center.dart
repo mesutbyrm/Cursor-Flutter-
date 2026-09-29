@@ -16,6 +16,7 @@ import '../../../../../core/economy/presentation/providers/economy_providers.dar
 import '../../../../../core/widgets/lazy_list_views.dart';
 import '../../widgets/broadcast_room/live_moderation_sheet.dart';
 import 'live_host_dashboard_chart.dart';
+import '../../../../../core/network/api_exception.dart';
 
 /// Sağdan açılan yayıncı kontrol merkezi — PK daveti yalnızca yayın/oda ekranında.
 Future<void> openLiveHostControlCenter({
@@ -420,24 +421,46 @@ class _GuestsTab extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextButton(
-                  onPressed: () {
+                  onPressed: () async {
                     final uid = r['userId']?.toString() ?? '';
                     if (uid.isEmpty) return;
-                    ref.read(coBroadcastProvider.notifier).rejectRequest(
-                          streamId: streamId,
-                          userId: uid,
+                    try {
+                      await ref.read(coBroadcastProvider.notifier).rejectRequest(
+                            streamId: streamId,
+                            userId: uid,
+                            requestId: r['requestId']?.toString(),
+                          );
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(ApiException.userMessage(e))),
                         );
+                      }
+                    }
                   },
                   child: const Text('Red', style: TextStyle(color: Colors.white70)),
                 ),
                 FilledButton(
-                  onPressed: () {
+                  onPressed: () async {
                     final uid = r['userId']?.toString() ?? '';
                     if (uid.isNotEmpty) {
-                      ref.read(coBroadcastProvider.notifier).approveRequest(
-                            streamId: streamId,
-                            userId: uid,
+                      // Sunucu onaylamadan ızgaraya boş misafir karesi eklenmez.
+                      try {
+                        await ref
+                            .read(coBroadcastProvider.notifier)
+                            .approveRequest(
+                              streamId: streamId,
+                              userId: uid,
+                              requestId: r['requestId']?.toString(),
+                            );
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(ApiException.userMessage(e))),
                           );
+                        }
+                        return;
+                      }
                       ref.read(liveGuestGridProvider.notifier).addGuest(
                             slotIndex: 1,
                             userId: uid,

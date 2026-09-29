@@ -51,6 +51,7 @@ import 'live_co_broadcast_invite_signal_provider.dart';
 import 'live_co_guest_camera_signal_provider.dart';
 import 'live_pk_invite_signal_provider.dart';
 import 'live_guest_join_signal_provider.dart';
+import '../../domain/live_co_guest_status.dart';
 
 class LiveRoomState {
   const LiveRoomState({
@@ -440,8 +441,13 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
         type.contains('guest')) {
       bumpLiveGuestJoinSignalReader(ref);
     }
-    final co = ref.read(coBroadcastProvider).coBroadcasters;
-    if (type.contains('left')) {
+    // Yalnızca onaylı (aktif) misafirler ızgaraya girer. Önceden bir izleyici
+    // istek attığında (`guest_request_created`) herkesin ekranı bekleyen
+    // istekle birlikte çoklu düzene geçiyor, boş kamera kareleri çıkıyordu.
+    final co = filterApprovedCoGuests(
+      ref.read(coBroadcastProvider).coBroadcasters,
+    );
+    if (type.contains('left') || co.isEmpty) {
       ref.read(liveGuestGridProvider.notifier).syncCoBroadcasters(co);
       return;
     }

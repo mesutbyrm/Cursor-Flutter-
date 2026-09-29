@@ -136,7 +136,11 @@ class _LiveHostGuestJoinRequestListenerState
 
       final notifier = ref.read(coBroadcastProvider.notifier);
       if (action == 'approve') {
-        await notifier.approveRequest(streamId: streamId, userId: userId);
+        await notifier.approveRequest(
+          streamId: streamId,
+          userId: userId,
+          requestId: request['requestId']?.toString(),
+        );
         await notifier.refreshStream(streamId);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -144,12 +148,20 @@ class _LiveHostGuestJoinRequestListenerState
           );
         }
       } else if (action == 'reject') {
-        await notifier.rejectRequest(streamId: streamId, userId: userId);
+        await notifier.rejectRequest(
+          streamId: streamId,
+          userId: userId,
+          requestId: request['requestId']?.toString(),
+        );
       } else if (action == 'block') {
         ref
             .read(liveGuestRequestBlocklistProvider(streamId).notifier)
             .block(userId);
-        await notifier.rejectRequest(streamId: streamId, userId: userId);
+        await notifier.rejectRequest(
+          streamId: streamId,
+          userId: userId,
+          requestId: request['requestId']?.toString(),
+        );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

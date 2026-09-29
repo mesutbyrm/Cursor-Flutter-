@@ -23,6 +23,7 @@ abstract class LiveGuestRepository {
     required String streamId,
     required String action,
     String? userId,
+    String? requestId,
   });
 
   /// Mevcut PATCH co-broadcast (`accept` / `reject` / `leave`).

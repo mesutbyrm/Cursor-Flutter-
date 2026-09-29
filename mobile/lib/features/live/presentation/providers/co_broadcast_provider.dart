@@ -110,28 +110,64 @@ class CoBroadcastNotifier extends Notifier<CoBroadcastState> {
         : LiveGuestRequestOutcome.unconfirmed;
   }
 
+  /// Onay/red `POST /api/live/guest {action, streamId, requestId}` ister;
+  /// yalnızca `userId` gönderildiğinde sunucu 400 "requestId gerekli" dönüyor,
+  /// yayıncının Kabul/Red düğmeleri hiçbir şey yapmıyordu.
   Future<void> approveRequest({
     required String streamId,
     required String userId,
-  }) async {
-    await _guest.postCoBroadcastCompat(
-      streamId: streamId,
-      action: 'approve',
-      userId: userId,
-    );
-    await refreshStream(streamId);
-  }
+    String? requestId,
+  }) =>
+      _respondToRequest(
+        streamId: streamId,
+        userId: userId,
+        requestId: requestId,
+        action: 'approve',
+      );
 
   Future<void> rejectRequest({
     required String streamId,
     required String userId,
+    String? requestId,
+  }) =>
+      _respondToRequest(
+        streamId: streamId,
+        userId: userId,
+        requestId: requestId,
+        action: 'reject',
+      );
+
+  Future<void> _respondToRequest({
+    required String streamId,
+    required String userId,
+    required String action,
+    String? requestId,
   }) async {
+    var id = requestId?.trim() ?? '';
+    if (id.isEmpty) id = _requestIdFor(userId);
+    if (id.isEmpty) {
+      await refreshStream(streamId);
+      id = _requestIdFor(userId);
+    }
+    if (id.isEmpty) {
+      throw StateError('İstek bulunamadı — süresi dolmuş olabilir');
+    }
     await _guest.postCoBroadcastCompat(
       streamId: streamId,
-      action: 'reject',
+      action: action,
       userId: userId,
+      requestId: id,
     );
     await refreshStream(streamId);
+  }
+
+  String _requestIdFor(String userId) {
+    for (final r in state.joinRequests) {
+      if (r['userId']?.toString() == userId) {
+        return r['requestId']?.toString() ?? '';
+      }
+    }
+    return '';
   }
 
   Future<void> acceptInvite(String streamId) async {
