@@ -4,21 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.633+684` |
-| Tarih (UTC) | 2026-09-29 11:47 |
-| Commit | [`b746a3e650eeec34ecfce57a51c82c029aefbbea`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/b746a3e650eeec34ecfce57a51c82c029aefbbea) |
-| İş akışı | [Run 36561990440](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36561990440) |
+| Sürüm | `1.0.634+685` |
+| Tarih (UTC) | 2026-09-29 13:22 |
+| Commit | [`4e46a6e1bea8c42a860aa82d836a8863ce57e922`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/4e46a6e1bea8c42a860aa82d836a8863ce57e922) |
+| İş akışı | [Run 36571932822](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36571932822) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.633+684 (2026-09-29) — PK bitişi, PK daveti teslimi, SSE ve hız
+## 1.0.634+685 (2026-09-29) — Backend sözleşmesine göre SSE, çıkış ve yoklama düzeltmeleri
 
-- **Canlı yayın PK:** süre dolunca istemci sunucuya yeniden sorar ve bitişi tetikler; PK artık "0:00"da asılı kalmaz
-- **Sesli oda PK daveti:** oda listesinden boş odaları eleyen filtre kaldırıldı (sahip tek başınayken karşı oda bulunamıyor, "Odalarım" boş kalıyordu); boş oda filtresi yalnızca keşfetteki "Yakındakiler"de
-- **Önbellek:** `/pk`, `/state`, `/sync`, `/seats`, `/speak-request` uçları HTTP önbelleğinden çıkarıldı (davet/bitiş 12–20 sn bayat okunuyordu)
-- **Hız:** PK davet yoklaması 2 sn → 3 sn ve yalnızca odadayken veya oda sahibiyken; aktif PK yoklaması 1 sn → 3 sn (SSE zaten canlı skor gönderiyor)
-- **Backend (canlifal, ayrı PR):** SSE akışı PK durumunu veritabanından senkronlar (çoklu sunucu örneğinde de davet/bitiş ulaşır); `/api/live/pk` süresi dolan PK'yı kapatır; global PK taraması 3 sn'de bir
+- **SSE:** parça sınırında bölünen Türkçe karakter/emoji artık olayı bozmuyor (önceden JSON bozulup PK daveti, presence, hediye olayları sessizce kayboluyordu); 6 SSE istemcisinde ortak çözücü
+- **Odadan çıkış:** `DELETE /api/chat/rooms/{id}/presence?leave=1` ilk istek — sunucu koltuğu boşaltır, mikrofon oturumunu kapatır, sahip çıkınca PK'yı bitirir ve `user_left` yayınlar (önceden yalnızca `lastSeen` sıfırlanıyor, kullanıcı/koltuk asılı kalıyordu)
+- **Hız:** canlı PK davet yoklaması 1 sn → 2 sn ve üst üste binmiyor; yayını olmayan kullanıcıda `/pk/me/invites` 10 sn'de bir; sesli PK davet ve falcı bekleme yoklamalarında istek yığılması engellendi
+- Backend değişikliği yok
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
