@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../config/env.dart';
 import 'sse_reconnect_policy.dart';
+import 'sse_chunk_decoder.dart';
 
 /// Ortak SSE altyapısı — auth, reconnect, heartbeat, ağ kurtarma, yaşam döngüsü.
 abstract class BaseSseService {
@@ -193,11 +194,13 @@ abstract class BaseSseService {
         );
 
         final buffer = StringBuffer();
+
+        final chunkDecoder = SseChunkDecoder();
         _bytesSub = byteStream.listen(
           (chunk) {
             if (gen != _generation) return;
             _lastEventAt = DateTime.now();
-            buffer.write(utf8.decode(chunk, allowMalformed: true));
+            buffer.write(chunkDecoder.convert(chunk));
             drainSseBuffer(buffer, (block) {
               final eventId = parseSseEventId(block);
               if (eventId != null && eventId.isNotEmpty) {

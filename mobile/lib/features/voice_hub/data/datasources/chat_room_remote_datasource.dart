@@ -630,15 +630,18 @@ class ChatRoomRemoteDataSource {
 
   Future<bool> _leavePresenceOnce(String roomKey) async {
     return _withRoomKeyFallback(roomKey, null, (key) async {
-      // Backend voice_room_api.md — önce DELETE .../presence, sonra POST action leave.
+      // Sunucu yalnızca `?leave=1` ile koltuğu boşaltır, mikrofon oturumunu
+      // kapatır, sahip çıkınca PK'yı bitirir ve `user_left` yayınlar.
+      // Parametresiz DELETE yalnızca `lastSeen`'i sıfırlıyordu (200 döndüğü
+      // için `leave=1` hiç denenmiyor, koltuk/kullanıcı odada asılı kalıyordu).
       try {
-        await _dio.safeDelete<dynamic>(presencePath(key));
+        await _dio.safeDelete<dynamic>('${presencePath(key)}?leave=1');
         return true;
       } on ApiException catch (e) {
         if (e.statusCode != 404 && e.statusCode != 405) rethrow;
       } catch (_) {}
       try {
-        await _dio.safeDelete<dynamic>('${presencePath(key)}?leave=1');
+        await _dio.safeDelete<dynamic>(presencePath(key));
         return true;
       } on ApiException catch (e) {
         if (e.statusCode != 404 && e.statusCode != 405) rethrow;

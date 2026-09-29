@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/util/json_util.dart';
+import '../../../../core/network/sse/sse_chunk_decoder.dart';
 
 /// Fal LLM yanıtı — `POST /api/fortunes/*` SSE (`text/event-stream`).
 class FortuneStreamChunk {
@@ -127,12 +128,14 @@ class FortuneSseService {
       }
 
       final buffer = StringBuffer();
+
+      final chunkDecoder = SseChunkDecoder();
       final acc = StringBuffer();
       String? fortuneId;
 
       await for (final chunk in byteStream) {
         if (cancel.isCancelled) break;
-        buffer.write(utf8.decode(chunk, allowMalformed: true));
+        buffer.write(chunkDecoder.convert(chunk));
         var raw = buffer.toString().replaceAll('\r\n', '\n');
         while (true) {
           final sep = raw.indexOf('\n\n');

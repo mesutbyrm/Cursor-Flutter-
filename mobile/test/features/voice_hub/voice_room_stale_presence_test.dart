@@ -136,6 +136,25 @@ void main() {
       expect(await ds.leavePresence('room-a'), isTrue);
     });
 
+    test('first request is the intentional leave (?leave=1)', () async {
+      final seen = <String>[];
+      final ds = ChatRoomRemoteDataSource(
+        _dioWithAdapter(
+          _FakeAdapter((options, _, _) async {
+            seen.add('${options.method} ${options.uri}');
+            return _json(200, {'success': true});
+          }),
+        ),
+      );
+
+      expect(await ds.leavePresence('room-a'), isTrue);
+      // Sunucu koltuğu boşaltma, mikrofon oturumunu kapatma ve `user_left`
+      // yayınını yalnızca `leave=1` ile yapar.
+      expect(seen, hasLength(1));
+      expect(seen.single, startsWith('DELETE'));
+      expect(seen.single, contains('leave=1'));
+    });
+
     test('reports failure instead of pretending success when no variant exists',
         () async {
       var calls = 0;

@@ -85,6 +85,7 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
   Timer? _pollBurst;
   Timer? _timeout;
   var _navigated = false;
+  var _checking = false;
 
   Future<void> _init() async {
     await PsychicSessionStore.save(session);
@@ -125,7 +126,19 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     state = state.copyWith(remainingSeconds: next);
   }
 
+  /// Zamanlayıcılar (0,5 sn + 1 sn) tetiklese de aynı anda tek tur çalışır;
+  /// her tur 3 istek attığından yavaş ağda istekler birikip kabulü geciktiriyordu.
   Future<void> _checkStatus() async {
+    if (state.closed || _checking) return;
+    _checking = true;
+    try {
+      await _checkStatusOnce();
+    } finally {
+      _checking = false;
+    }
+  }
+
+  Future<void> _checkStatusOnce() async {
     if (state.closed) return;
     final repo = ref.read(livePsychicsRepositoryProvider);
 
