@@ -57,7 +57,6 @@ List<Map<String, dynamic>> livePkCreateRequestBodies({
   final host = hostStreamId.trim();
   final target = targetStreamId.trim();
   final duration = durationSeconds.clamp(60, 3600);
-  final minutes = pkDurationMinutesFromSeconds(duration);
 
   return [
     {
@@ -66,14 +65,11 @@ List<Map<String, dynamic>> livePkCreateRequestBodies({
       'targetStreamId': target,
       'duration': duration,
     },
-    {
-      'action': 'create',
-      'streamId': host,
-      'targetStreamId': target,
-      'opponentStreamId': target,
-      'durationSec': duration,
-      'durationMinutes': minutes,
-    },
+    livePkCreateRequestBody(
+      hostStreamId: host,
+      targetStreamId: target,
+      durationSeconds: duration,
+    ),
   ];
 }
 

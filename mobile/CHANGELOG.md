@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.649+700 (2026-09-29) — Parity: PK test + ölü join-seat sabiti
+
+- **Test:** `live_pk_create_body_test` kanonik create gövdesi ile hizalandı (CI)
+- **PK create listesi:** ikinci gövde `livePkCreateRequestBody` helper (tek kaynak)
+- **Temizlik:** kullanılmayan `chatRoomJoinSeat` sabiti (koltuk: `PATCH …/seats`)
+- Backend değişikliği yok
+
 ## 1.0.648+699 (2026-09-29) — Parity: canlı PK create + CI test
 
 - **Canlı PK davet:** `POST /api/video-streams/pk` — kanonik `{action, streamId, targetStreamId, duration}` (+ kısa yedek); gereksiz `live/pk` create turu ve 4 gövde shotgun kaldırıldı

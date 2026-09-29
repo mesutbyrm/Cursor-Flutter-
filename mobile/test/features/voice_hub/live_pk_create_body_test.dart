@@ -17,15 +17,17 @@ void main() {
     expect(body['durationMinutes'], 3);
   });
 
-  test('livePkCreateRequestBodies guide-first', () {
+  test('livePkCreateRequestBodies canonical first then alias helper', () {
     final bodies = livePkCreateRequestBodies(
       hostStreamId: 'stream-host',
       targetStreamId: 'stream-target',
       durationSeconds: 300,
     );
-    expect(bodies.first, {
-      'opponentStreamId': 'stream-target',
-      'durationMinutes': 5,
-    });
+    expect(bodies.length, 2);
+    expect(bodies.first['action'], 'create');
+    expect(bodies.first['streamId'], 'stream-host');
+    expect(bodies.first['targetStreamId'], 'stream-target');
+    expect(bodies.first['duration'], 300);
+    expect(bodies.last['durationMinutes'], 5);
   });
 }
