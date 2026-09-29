@@ -4,6 +4,7 @@
 
 - **Sesli oda girişi:** Gold/VIP dışındaki üyeler için de alt toast + gerçek zamanlı giriş olayı (👋 … odaya giriş yaptı); VIP üst banner ayrı kaldı
 - **Canlı yayın hediye:** panel yalnızca geçerli `streamId` varken açılır (boş id ile sessiz başarısızlık engellendi)
+- **Hayalet presence guard:** `VoiceRoomRoutePresenceGuard` import yolları düzeltildi (CI analyze)
 - Backend değişikliği yok
 
 ## 1.0.636+687 (2026-09-29) — Sesli oda, PK ve canlı yayın tamirleri
