@@ -6,12 +6,14 @@
 
 ## Ortam notu (2026-09-29)
 
+**Agent parity hattı:** route **0** eksik · method **0 bad** · CI **651** yeşil · `apk-latest` **651** derlemesi CI sırasında güncellenir ([Actions](https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml)).
+
 `canlifal-backend/` — dal `docs/backend-flutter-parity-2026-09` (714 route). Son script:
 
 | Script | Sonuç |
 |--------|--------|
 | `backend-route-parity.py --used-only` | **0** eksik kullanım |
-| `backend-method-parity.py` | **607+** ok, **0 bad** (fortune slug şablonu düzeltildi) |
+| `backend-method-parity.py` | **606** ok, **102** unresolved, **0 bad** (fortune slug şablonu) |
 
 ```bash
 git clone -b docs/backend-flutter-parity-2026-09 https://github.com/mesutbyrm/canlifal canlifal-backend
@@ -46,7 +48,7 @@ python3 scripts/backend-method-parity.py canlifal-backend/nextjs_space
 | PK skor | Sunucu/hediye; admin score POST yok | UI score POST yok |
 | SSE davet | `room_event` pk_invite / pk_requested + dedup | `chat_room_providers_room_sync.dart` |
 | Aday liste | `GET …/pk/candidates?roomId=` | pk session candidates |
-| Hayalet üye | Backend SSE penceresi ~5 dk | Mobil leave/guard; **sunucu TTL gerekir** |
+| Hayalet üye | Backend SSE penceresi ~5 dk | **651+** `VoicePresenceTombstone` (5 dk) + leave guard; kalıcı çözüm sunucu TTL |
 
 ---
 
@@ -82,6 +84,7 @@ python3 scripts/backend-method-parity.py canlifal-backend/nextjs_space
 
 ## Bu repoda yapılan son parity düzeltmesi
 
+- **651+:** Tombstone util + test; canlı PK create endpoint sırası optimize.
 - **650+:** Presence hayalet tombstone; sesli PK `live/pk` yedeği sıkılaştırma.
 - **649+:** `live_pk_create_body_test` + ölü `join-seat` endpoint sabiti kaldırıldı.
 - **648+:** Canlı PK create gövdesi üretim sözleşmesi; CI `pk_session_keep_alive` imza düzeltmesi.
