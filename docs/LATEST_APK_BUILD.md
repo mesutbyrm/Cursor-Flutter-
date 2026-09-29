@@ -4,18 +4,19 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.631+682` |
-| Tarih (UTC) | 2026-09-28 23:41 |
-| Commit | [`b478e85a4dccf4e5560da03ad590f7c7a7eeaa00`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/b478e85a4dccf4e5560da03ad590f7c7a7eeaa00) |
-| İş akışı | [Run 36497551347](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36497551347) |
+| Sürüm | `1.0.632+683` |
+| Tarih (UTC) | 2026-09-29 10:51 |
+| Commit | [`0efc683a34e797c6e7f6d1483a4f961e905906c5`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/0efc683a34e797c6e7f6d1483a4f961e905906c5) |
+| İş akışı | [Run 36556154274](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36556154274) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.631+682 (2026-09-28) — Backend audit dokümanı + APK yenileme
+## 1.0.632+683 (2026-09-29) — Oda ayarları temizliği + sahip payı anahtarı
 
-- **`docs/BACKEND_FLUTTER_AUDIT_2026-09-28.md`:** sesli oda, TRTC, PK, koltuk, hediye, JWT, SSE — mirror doküman ↔ Flutter karşılaştırma özeti ve düzeltme planı
-- Kod davranışı değişmedi; CI/APK yeniden tetiklendi
+- **Oda içi ayarlar:** çalışmayan "Oda kilidi" ve "Maksimum kullanıcı" kaldırıldı (sunucuda bu alanlar yok; başarı mesajı gösterip hiçbir şey yapmıyordu). Oda kilitlemek için "Giriş şifresi" kullanılıyor
+- **Oda yönetimi:** "Hediye payımı al" anahtarı — kapatılırsa oda sahibi payı hediyeyi alana gider; yüzdeler değişmez. Backend güncellemesi (canlifal PR #2) yayına alınınca görünür
+- **PK:** sunucu kuralı zaten "karşı oda sahibi odada + PK açık"; 2 dakika bir oturma süresi değil, 15 sn'lik çevrimiçi sinyal penceresi
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
