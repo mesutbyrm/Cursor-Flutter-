@@ -19,6 +19,7 @@ import 'live_pk_action_lock_provider.dart';
 import '../../../voice_hub/domain/pk/pk_battle_remote_models.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
 import 'pk_session_phase_provider.dart';
+import 'live_room_providers.dart';
 import '../navigation/live_pk_home_transition_bridge.dart';
 
 class LiveVideoPkState {
@@ -76,6 +77,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
   String? _lastIngestFingerprint;
   final _eventDedup = LivePkEventDedup();
   var _refreshInFlight = false;
+  DateTime? _lastRemoteBattleIngestAt;
 
   bool _shouldRetainBattleOnEmptyRefresh() {
     return shouldRetainPkBattleOnEmptyRefresh(
@@ -97,11 +99,19 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
 
   void _startPolling() {
     _poll?.cancel();
-    _poll = Timer.periodic(const Duration(seconds: 15), (_) {
+    final sse = ref.read(liveRoomProvider(arg)).sseConnected;
+    final interval =
+        sse ? const Duration(seconds: 30) : const Duration(seconds: 15);
+    _poll = Timer.periodic(interval, (_) {
       if (state.battle == null ||
           state.status == 'completed' ||
           state.status == 'ended') {
         _poll?.cancel();
+        return;
+      }
+      final last = _lastRemoteBattleIngestAt;
+      if (last != null &&
+          DateTime.now().difference(last) < const Duration(seconds: 12)) {
         return;
       }
       refresh();
@@ -287,6 +297,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
       return;
     }
     _lastIngestFingerprint = fp;
+    _lastRemoteBattleIngestAt = DateTime.now();
 
     final status = battle['status']?.toString() ?? '';
     // Pending davet split ekranı açmaz; yalnızca kabul sonrası aktif senkron.
@@ -315,6 +326,8 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
     syncLivePkHomeTransitionFromBattle(ref, battle: merged, streamId: arg);
     if (state.isUnified && matchId != null && matchId.isNotEmpty) {
       _stopPolling();
+    } else {
+      _startPolling();
     }
   }
 

@@ -32,6 +32,7 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
   String? _pollRoomId;
   String? _pollAltRoomId;
   var _loadRoomBattleInFlight = false;
+  DateTime? _lastSsePkIngestAt;
 
   @override
   PkBattleRemote? build() {
@@ -50,7 +51,16 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     // Maksimum 1 saniye gecikmesi ile server state'i taraflar arasında senkronize tut.
     // Skor ve süre SSE ile gelir; bu yoklama yalnızca kaçan olayları toplar.
     // Önbellek kaldırıldığı için 1 sn her izleyicide gerçek sunucu yükü olurdu.
-    _activePoll = Timer.periodic(const Duration(seconds: 3), (_) {
+    final sse = ref.read(voiceRoomActiveSseConnectedProvider);
+    final interval = sse
+        ? const Duration(seconds: 10)
+        : const Duration(seconds: 5);
+    _activePoll = Timer.periodic(interval, (_) {
+      final last = _lastSsePkIngestAt;
+      if (last != null &&
+          DateTime.now().difference(last) < const Duration(seconds: 9)) {
+        return;
+      }
       unawaited(loadRoomBattle(roomId, alternateRoomId: _pollAltRoomId));
     });
   }
@@ -348,6 +358,7 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
   /// Oda SSE üzerinden gelen PK güncellemesi.
   void ingestSseBattle(PkBattleRemote battle) {
     if (!_shouldIngestBattle(battle)) return;
+    _lastSsePkIngestAt = DateTime.now();
     _apply(battle, 'sse:pk');
     if (battle.isPending) {
       ref.read(livePkInviteSignalProvider.notifier).bump();

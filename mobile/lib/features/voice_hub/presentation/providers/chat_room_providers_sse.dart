@@ -38,6 +38,7 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
     _sse._sseStarted = false;
     _sse._sseAttachedRoomKey = null;
     state = state.copyWith(sseConnected: false);
+    ref.read(voiceRoomActiveSseConnectedProvider.notifier).state = false;
     _startSse();
   }
 
@@ -86,6 +87,8 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             } else {
               VoiceEventLog.socketReconnected(roomId: roomKey);
             }
+            ref.read(voiceRoomActiveSseConnectedProvider.notifier).state =
+                true;
             ref.read(voiceRoomGiftRealtimeProvider).setSseActive(true);
             if (!state.selfInRoom || !_sse._presenceJoined) {
               unawaited(_sse._joinPresence());

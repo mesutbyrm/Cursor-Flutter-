@@ -1225,6 +1225,7 @@ class VoiceRoomLiveController
             loading: false,
             clearHubOnlineCount: true,
           );
+          ref.read(voiceRoomActiveSseConnectedProvider.notifier).state = false;
         },
         () async {
           ref.read(sseConnectionHubProvider).forceReleaseVoiceRoom(sseReleaseKey);

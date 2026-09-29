@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.640+691 (2026-09-29) — P1 devam: SSE’ye göre PK/misafir poll
+
+- **Sesli PK (aktif):** SSE varken REST poll 10 sn; son SSE olayından sonra 9 sn REST atlanır (3 sn yerine)
+- **Canlı PK:** SSE varken stream battle poll 30 sn; SSE ingest sonrası 12 sn poll atlanır
+- **Sesli PK davet:** poll 3 sn → 4 sn (canlı ile hizalı)
+- **Misafir istek yedek poll:** SSE varken 4 sn → 8 sn (yayıncı odası)
+- **Global misafir dinleyici:** 3 sn → 5 sn
+- **Co-broadcast:** `refresh` / `refreshStream` üst üste binme engeli
+- **voiceRoomActiveSseConnectedProvider** — PK poll için global SSE bayrağı
+- Backend değişikliği yok
+
 ## 1.0.639+690 (2026-09-29) — P1 poll seyreltme (ağ yükü)
 
 - **Canlı PK davet:** global poll 2 sn → 4 sn

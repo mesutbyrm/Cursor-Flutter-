@@ -32,7 +32,7 @@ class _LiveHostGuestJoinRequestListenerState
   @override
   void initState() {
     super.initState();
-    _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+    _pollTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       if (!mounted || _showing) return;
       unawaited(_pollHostGuestRequests());
     });

@@ -1423,7 +1423,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     // istek olayı yayınlarsa SSE yolu zaten anında çalışır; bu yoklama
     // güvenilir bir yedek olacak kadar sık kalmalı.
     final interval = _liveSseConnected
-        ? const Duration(seconds: 4)
+        ? const Duration(seconds: 8)
         : const Duration(seconds: 3);
     _guestJoinPoll = Timer.periodic(interval, (_) {
       if (!mounted) return;

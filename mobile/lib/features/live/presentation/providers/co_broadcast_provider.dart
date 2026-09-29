@@ -44,20 +44,29 @@ class CoBroadcastNotifier extends Notifier<CoBroadcastState> {
 
   LiveGuestRepository get _guest => ref.read(liveGuestRepositoryProvider);
 
+  var _refreshInFlight = false;
+  var _refreshStreamInFlight = false;
+
   @override
   CoBroadcastState build() => const CoBroadcastState();
 
   Future<void> refresh() async {
+    if (_refreshInFlight) return;
+    _refreshInFlight = true;
     state = state.copyWith(loading: true, clearError: true);
     try {
       final invites = await _remote.fetchCoBroadcastInvites();
       state = state.copyWith(invites: invites, loading: false);
     } catch (e) {
       state = state.copyWith(loading: false, error: '$e');
+    } finally {
+      _refreshInFlight = false;
     }
   }
 
   Future<void> refreshStream(String streamId) async {
+    if (_refreshStreamInFlight) return;
+    _refreshStreamInFlight = true;
     state = state.copyWith(loading: true, clearError: true);
     try {
       final snapshot = await _remote.fetchCoBroadcastSnapshot(streamId);
@@ -68,6 +77,8 @@ class CoBroadcastNotifier extends Notifier<CoBroadcastState> {
       );
     } catch (e) {
       state = state.copyWith(loading: false, error: '$e');
+    } finally {
+      _refreshStreamInFlight = false;
     }
   }
 
