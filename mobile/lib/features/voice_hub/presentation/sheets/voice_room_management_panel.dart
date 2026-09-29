@@ -15,7 +15,6 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
-import '../../../live/presentation/providers/voice_rooms_list_notifier.dart';
 import '../../../pk/presentation/providers/pk_feature_enabled_provider.dart';
 import '../../../pk/presentation/widgets/pk_start_sheet.dart';
 import 'voice_in_room_pk_sheet.dart';
@@ -834,31 +833,6 @@ class _VoiceRoomManagementPanelState
             subtitle: Text(voiceRoomCategoryLabel(room.category)),
             onTap: _pickCategory,
           ),
-          SwitchListTile(
-            secondary: const Icon(Icons.lock_outline_rounded),
-            title: const Text('Oda kilidi'),
-            subtitle: Text(
-              room.isLocked == true || room.hasPassword == true
-                  ? 'Giriş kısıtlı'
-                  : 'Herkes girebilir',
-            ),
-            value: room.isLocked == true,
-            onChanged: (v) async {
-              final err = await _ctrl.setRoomLocked(v);
-              if (!mounted) return;
-              if (err != null) {
-                await _snack(err);
-                setState(() {});
-                return;
-              }
-              ref.invalidate(voiceRoomByIdProvider(_liveRoomKey));
-              unawaited(
-                ref.read(voiceRoomsListNotifierProvider.notifier).refresh(),
-              );
-              await _snack(v ? 'Oda kilitlendi' : 'Oda kilidi kaldırıldı');
-              if (mounted) setState(() {});
-            },
-          ),
           ListTile(
             leading: const Icon(Icons.event_seat_rounded),
             title: const Text('Koltuk sayısı'),
@@ -866,14 +840,6 @@ class _VoiceRoomManagementPanelState
               '${_live.roomSeatCount ?? room.seatCount ?? kDefaultVoiceSeatCount} mikrofon',
             ),
             onTap: _pickSeatCount,
-          ),
-          ListTile(
-            leading: const Icon(Icons.groups_rounded),
-            title: const Text('Maksimum kullanıcı'),
-            subtitle: Text(
-              '${_live.roomMaxUsers ?? room.maxUsers ?? 150} kişi',
-            ),
-            onTap: _pickMaxUsers,
           ),
         ],
         if (isOwner || perms.canManageRoom) ...[
@@ -1149,38 +1115,6 @@ class _VoiceRoomManagementPanelState
     if (picked == null || picked == current) return;
     final err = await _ctrl.updateRoomCapacity(seatCount: picked);
     await _snack(err ?? 'Koltuk sayısı $picked olarak güncellendi');
-  }
-
-  Future<void> _pickMaxUsers() async {
-    final current = _live.roomMaxUsers ?? room.maxUsers ?? 150;
-    // Kullanıcı isteği: en düşük 150, üstü seçilebilir.
-    final options = const [150, 200, 300, 500, 1000];
-    final picked = await showDialog<int>(
-      context: context,
-      builder: (ctx) => SimpleDialog(
-        title: const Text('Maksimum kullanıcı'),
-        children: options
-            .map(
-              (n) => SimpleDialogOption(
-                onPressed: () => Navigator.pop(ctx, n),
-                child: Row(
-                  children: [
-                    if (n == current)
-                      const Icon(Icons.check_rounded, size: 20)
-                    else
-                      const SizedBox(width: 20),
-                    const SizedBox(width: 8),
-                    Text('$n kişi'),
-                  ],
-                ),
-              ),
-            )
-            .toList(),
-      ),
-    );
-    if (picked == null || picked == current) return;
-    final err = await _ctrl.updateRoomCapacity(maxUsers: picked);
-    await _snack(err ?? 'Maksimum kullanıcı $picked olarak güncellendi');
   }
 
   Future<void> _setRoomPassword() async {

@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.632+683 (2026-09-29) — Oda ayarları temizliği + sahip payı anahtarı
+
+- **Oda içi ayarlar:** çalışmayan "Oda kilidi" ve "Maksimum kullanıcı" kaldırıldı (sunucuda bu alanlar yok; başarı mesajı gösterip hiçbir şey yapmıyordu). Oda kilitlemek için "Giriş şifresi" kullanılıyor
+- **Oda yönetimi:** "Hediye payımı al" anahtarı — kapatılırsa oda sahibi payı hediyeyi alana gider; yüzdeler değişmez. Backend güncellemesi (canlifal PR #2) yayına alınınca görünür
+- **PK:** sunucu kuralı zaten "karşı oda sahibi odada + PK açık"; 2 dakika bir oturma süresi değil, 15 sn'lik çevrimiçi sinyal penceresi
+
 ## 1.0.631+682 (2026-09-28) — Backend audit dokümanı + APK yenileme
 
 - **`docs/BACKEND_FLUTTER_AUDIT_2026-09-28.md`:** sesli oda, TRTC, PK, koltuk, hediye, JWT, SSE — mirror doküman ↔ Flutter karşılaştırma özeti ve düzeltme planı

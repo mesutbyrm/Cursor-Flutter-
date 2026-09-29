@@ -72,6 +72,12 @@ void main() {
       expect(s.djUserIds, ['u1', 'u2']);
       expect(s.commissionPercent, 10);
       expect(s.welcomeMessage, isNull);
+      expect(s.ownerCommissionEnabled, isNull);
+    });
+
+    test('owner commission toggle when server supports it', () {
+      final s = OwnerRoomSettings.fromJson({'ownerCommissionEnabled': false});
+      expect(s.ownerCommissionEnabled, isFalse);
     });
 
     test('no password and no tags', () {
