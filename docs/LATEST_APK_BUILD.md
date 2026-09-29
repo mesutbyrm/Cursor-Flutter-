@@ -4,20 +4,19 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.642+693` |
-| Tarih (UTC) | 2026-09-29 19:21 |
-| Commit | [`0ae2f22191685661eef12d9328a6c3b81ffc0874`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/0ae2f22191685661eef12d9328a6c3b81ffc0874) |
-| İş akışı | [Run 36614610876](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36614610876) |
+| Sürüm | `1.0.649+700` |
+| Tarih (UTC) | 2026-09-29 20:59 |
+| Commit | [`6c5b0ba2701be1754aab1fa088cac62fd0db1af1`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/6c5b0ba2701be1754aab1fa088cac62fd0db1af1) |
+| İş akışı | [Run 36627780992](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36627780992) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.644+695 (2026-09-29) — PK battle poll hafifletme
+## 1.0.650+701 (2026-09-29) — Parity: presence hayalet + PK yanıt
 
-- **Canlı PK davet poll:** yayın odasında SSE varken `fetchStreamBattle` yedek atlanır; davet poll hafif mod (`finalizeExpired: false`, 6 sn önbellek)
-- **Sesli PK poll:** SSE defer yalnızca diğer sahip odalar turunu atlar; aktif oda + `/pk/me/invites` sürer (sinyalde `force`)
-- **Oda PK GET:** 6 sn poll önbelleği; aktif `loadRoomBattle` / davet hazırlığı `forceRefresh`
-- **`invalidatePkPollCaches`** — PK aksiyonlarında oda/yayın/davet poll önbelleği temizlenir
+- **Presence:** `user_left` / diff ayrılışında 5 dk tombstone — stale SSE snapshot hayaletlerini filtreler
+- **Sesli PK accept/reject:** `live/pk` yedeği yalnız 404/405 (400 iş kuralı hatasını maskelemez)
+- **Canlı PK alias gövdesi:** gereksiz alanlar kaldırıldı
 - Backend değişikliği yok
 
 
