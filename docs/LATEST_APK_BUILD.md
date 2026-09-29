@@ -4,20 +4,19 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.635+686` |
-| Tarih (UTC) | 2026-09-29 14:55 |
-| Commit | [`5b1f82a5148e979021bb84218a419e9b90cb43f0`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/5b1f82a5148e979021bb84218a419e9b90cb43f0) |
-| İş akışı | [Run 36583848837](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36583848837) |
+| Sürüm | `1.0.637+688` |
+| Tarih (UTC) | 2026-09-29 16:36 |
+| Commit | [`37ccf130d342ac33642bb51503700f03514cf744`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/37ccf130d342ac33642bb51503700f03514cf744) |
+| İş akışı | [Run 36596831610](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36596831610) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.635+686 (2026-09-29) — Cihaz testi: izin, PK bitişi, sesli PK daveti, misafir modu
+## 1.0.637+688 (2026-09-29) — Giriş bildirimi (tüm üyeler) + canlı hediye paneli
 
-- **İzinler:** mikrofon/kamera ilk açılışta bir kez istenir; odaya/yayına girişte yalnızca yayın gönderilecekse (sahip, koltuk, misafir) ve izin hâlâ yoksa sorulur. Dinleyici/izleyiciden izin istenmez, kalıcı reddedilmişse Ayarlar'a atılmaz
-- **Canlı yayın PK bitişi:** durum okunmadan önce süresi doluyu kapatan uç (`GET /api/video-streams/pk`) çağrılır; sayaç bitince hemen yenilenir. Önceden PK sunucuda "aktif" kalıyor, ekran PK modundan çıkmıyordu
-- **Sesli oda PK daveti:** `/api/pk/me/invites` her turda soruluyor (1.0.633'teki kısa devre "Odalarım" boşken daveti atlıyordu); hedef oda listede yoksa sunucudan çekilip davet yine gösteriliyor
-- **Canlı yayın misafir:** kabul/red `requestId` ile gönderiliyor (önceden sunucu 400 dönüyordu); istek listesi `GET /api/live/guest?view=sync`'ten; izleyici istek attığında ekran artık misafir düzenine geçmiyor (yalnızca onaylı misafir varsa); kontrol merkezinde onaysız boş misafir karesi eklenmiyor
+- **Sesli oda girişi:** Gold/VIP dışındaki üyeler için de alt toast + gerçek zamanlı giriş olayı (👋 … odaya giriş yaptı); VIP üst banner ayrı kaldı
+- **Canlı yayın hediye:** panel yalnızca geçerli `streamId` varken açılır (boş id ile sessiz başarısızlık engellendi)
+- **Hayalet presence guard:** `VoiceRoomRoutePresenceGuard` import yolları düzeltildi (CI analyze)
 - Backend değişikliği yok
 
 
