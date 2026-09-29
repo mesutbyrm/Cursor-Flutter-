@@ -124,6 +124,16 @@
 - **Giriş bildirimi:** alt şerit metni `👋 … odaya giriş yaptı` biçimine yaklaştırıldı
 - Backend değişikliği yok
 
+## 1.0.636+687 (2026-09-29) — Backend (mesutbyrm/canlifal) sözleşme denetimi
+
+Mobilin çağırdığı 475 uç backend kaynağıyla (yol, metot, gövde, eylem adı) karşılaştırıldı. Backend değişikliği yok.
+
+- **Canlı yayın misafir:** yayıncı daveti asıl misafir sistemine (`/api/live/guest` `invite`) taşındı; izleyici daveti `respond` + `inviteId` ile kabul/red ediyor (önceden 400/403). Onay gelince izleyici hemen misafir yayınına geçiyor (önceden 60 sn'ye kadar bekliyordu)
+- **Canlı yayın PK (video uçları):** `action`, `targetStreamId`, `duration` alanları backend'e uygun
+- **Sosyal:** gönderi JSON ile; görsel önce yüklenip `imageUrl` olarak gidiyor (multipart gönderim sunucuda başarısızdı). Video paylaşımı Kısa Videolar'a yönlendiriliyor
+- **E-posta doğrulama:** backend'de olmayan uçlar yerine `/api/auth/email/send-verification` ve `/api/auth/email/verify`
+- Sesli oda, canlı falcı, profil, fal & tarot: yol/metot/gövde uyumlu bulundu
+
 ## 1.0.635+686 (2026-09-29) — Cihaz testi: izin, PK bitişi, sesli PK daveti, misafir modu
 
 - **İzinler:** mikrofon/kamera ilk açılışta bir kez istenir; odaya/yayına girişte yalnızca yayın gönderilecekse (sahip, koltuk, misafir) ve izin hâlâ yoksa sorulur. Dinleyici/izleyiciden izin istenmez, kalıcı reddedilmişse Ayarlar'a atılmaz
