@@ -5,8 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/auth/bot_account_guard.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/auth/bot_account_provider.dart';
-import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../domain/pk/live_pk_invite_helper.dart';
 import '../../domain/pk/live_pk_event_dedup.dart';
 import '../../domain/pk/live_pk_ingest.dart';
 import '../../domain/pk/pk_action_error.dart';
@@ -147,31 +145,10 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
     if (_refreshInFlight) return;
     _refreshInFlight = true;
     try {
-    // Canlı 1v1 PK — GET stream battle; yoksa /api/pk/me/invites yedek.
+    // Canlı 1v1 PK — GET stream battle (davet: LivePkInviteListener + SSE).
     try {
       final api = ref.read(pkBattleRemoteDataSourceProvider);
-      var remote = await api.fetchStreamBattle(arg);
-      if (remote == null || remote.isEnded) {
-        final userId = ref.read(authControllerProvider).valueOrNull?.id ?? '';
-        if (userId.isNotEmpty) {
-          final invites = await api.fetchMyInvites();
-          for (final inv in invites) {
-            if (!inv.isPending || inv.isEnded || !isLiveStreamPkBattle(inv)) {
-              continue;
-            }
-            if (isLivePkInviteRecipientBattle(
-                  inv,
-                  myUserId: userId,
-                  myStreamId: arg,
-                ) ||
-                inv.opponentLiveStreamId?.trim() == arg ||
-                inv.liveStreamId?.trim() == arg) {
-              remote = inv;
-              break;
-            }
-          }
-        }
-      }
+      final remote = await api.fetchStreamBattle(arg);
       if (remote != null) {
         final map = _mergeBattleMap(
           pkBattleRemoteToBattleMap(remote, myStreamId: arg),
@@ -221,6 +198,18 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
 
   /// PK skorları yalnız sunucu yanıtı / SSE ile güncellenir (çift sayım önleme).
   void applyLocalScoreDelta({required String side, required int amount}) {}
+
+  /// Hediye / beğeni sonrası — yakın SSE ingest varsa REST yoklamayı atla.
+  Future<void> refreshScoresIfStale({
+    Duration sseFreshWindow = const Duration(seconds: 8),
+  }) async {
+    final last = _lastRemoteBattleIngestAt;
+    if (last != null &&
+        DateTime.now().difference(last) < sseFreshWindow) {
+      return;
+    }
+    await refresh();
+  }
 
   Map<String, dynamic> _mergeBattleMap(
     Map<String, dynamic> incoming,

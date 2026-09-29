@@ -2078,7 +2078,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         );
     _pkLikeBudget.record(battleId, userId, points);
     // PK puanı yalnız sunucudan (beğeni API + battle refresh / SSE).
-    unawaited(ref.read(liveVideoPkProvider(streamId).notifier).refresh());
+    unawaited(
+      ref.read(liveVideoPkProvider(streamId).notifier).refreshScoresIfStale(),
+    );
   }
 
   Future<void> _openPkGiftPicker(
@@ -2766,9 +2768,13 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           dispatchSiteAnimationGiftFromLiveEvent(ref, ev);
         }
         if (hasStream) {
-          final battle = ref.read(liveVideoPkProvider(streamId)).battle;
-          if (battle != null && battle['status'] == 'active') {
-            unawaited(ref.read(liveVideoPkProvider(streamId).notifier).refresh());
+          final pk = ref.read(liveVideoPkProvider(streamId));
+          if (pk.battle != null && isLivePkActiveStatus(pk.status)) {
+            unawaited(
+              ref
+                  .read(liveVideoPkProvider(streamId).notifier)
+                  .refreshScoresIfStale(),
+            );
           }
         }
       });

@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.642+693 (2026-09-29) — Canlı PK REST yükü (davet + hediye skor)
+
+- **liveVideoPkProvider.refresh:** `GET /api/pk/me/invites` yedek çağrısı kaldırıldı (davet: `LivePkInviteListener` + SSE)
+- **PK skor yoklama:** hediye/beğeni sonrası `refreshScoresIfStale` — son SSE ingest 8 sn içindeyse REST atlanır
+- **Canlı PK davet poll:** yayıncıdayken `/pk/me/invites` en az 8 sn aralık
+- Backend değişikliği yok
+
 ## 1.0.641+692 (2026-09-29) — Auto-seat sadeleştirme + PK skor sunucu otoritesi
 
 - **Koltuk:** SSE presence merge’de auto-seat tetiklenmez; girişte tek host reconcile; join sonrası ikinci `fetchSeats` kaldırıldı; izin dinleyicisi presence sayısına bağlı değil

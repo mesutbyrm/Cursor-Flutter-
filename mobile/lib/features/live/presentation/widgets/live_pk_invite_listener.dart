@@ -41,6 +41,9 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
   /// yayın listesi gecikebileceği için yine de seyrek yoklanır.
   static const _idleInvitesInterval = Duration(seconds: 10);
 
+  /// Yayıncıdayken de `/pk/me/invites` her 4 sn poll ile çağrılmasın.
+  static const _hostInvitesInterval = Duration(seconds: 8);
+
   @override
   void initState() {
     super.initState();
@@ -149,12 +152,11 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
         }
       }
 
-      if (owned.isEmpty) {
-        final last = _lastInvitesPoll;
-        if (last != null &&
-            DateTime.now().difference(last) < _idleInvitesInterval) {
-          return;
-        }
+      final minInvitesGap =
+          owned.isEmpty ? _idleInvitesInterval : _hostInvitesInterval;
+      final last = _lastInvitesPoll;
+      if (last != null && DateTime.now().difference(last) < minInvitesGap) {
+        return;
       }
       _lastInvitesPoll = DateTime.now();
       final invites = await api.fetchMyInvites();
