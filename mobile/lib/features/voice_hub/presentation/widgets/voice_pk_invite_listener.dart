@@ -29,6 +29,7 @@ class VoicePkInviteListener extends ConsumerStatefulWidget {
 class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
   final Set<String> _seenRejections = {};
   var _showing = false;
+  var _polling = false;
   Timer? _pollTimer;
 
   @override
@@ -185,9 +186,11 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
   }
 
   Future<void> _pollPendingInvites() async {
-    if (_showing || !mounted) return;
+    if (_showing || _polling || !mounted) return;
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) return;
+    // Yavaş ağda önceki tur bitmeden yenisi başlamasın (istek yığılması).
+    _polling = true;
     try {
       final api = ref.read(pkBattleRemoteDataSourceProvider);
       final roomsAsync = ref.read(voiceRoomsProvider);
@@ -265,6 +268,8 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
         debugPrint('[PK] poll error: $e\n$st');
         return true;
       }());
+    } finally {
+      _polling = false;
     }
   }
 

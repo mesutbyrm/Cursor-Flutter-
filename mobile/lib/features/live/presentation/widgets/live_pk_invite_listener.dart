@@ -33,12 +33,20 @@ class LivePkInviteListener extends ConsumerStatefulWidget {
 
 class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
   var _showing = false;
+  var _polling = false;
+  DateTime? _lastInvitesPoll;
   Timer? _pollTimer;
+
+  /// Yayını olmayan kullanıcı canlı PK daveti alamaz (hedef yayında olmalı);
+  /// yayın listesi gecikebileceği için yine de seyrek yoklanır.
+  static const _idleInvitesInterval = Duration(seconds: 10);
 
   @override
   void initState() {
     super.initState();
-    _pollTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+    // Önceden her kullanıcıda saniyede bir `/pk/me/invites` + yayın PK isteği
+    // atılıyordu; yavaş ağda istekler üst üste biniyordu.
+    _pollTimer = Timer.periodic(const Duration(seconds: 2), (_) {
       if (!mounted || _showing) return;
       unawaited(_processPendingInvites());
     });
@@ -116,10 +124,11 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
   }
 
   Future<void> _processPendingInvites() async {
-    if (_showing || !mounted) return;
+    if (_showing || _polling || !mounted) return;
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) return;
 
+    _polling = true;
     try {
       final api = ref.read(pkBattleRemoteDataSourceProvider);
       final owned = _ownedLiveStreams(user.id);
@@ -141,6 +150,14 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
         }
       }
 
+      if (owned.isEmpty) {
+        final last = _lastInvitesPoll;
+        if (last != null &&
+            DateTime.now().difference(last) < _idleInvitesInterval) {
+          return;
+        }
+      }
+      _lastInvitesPoll = DateTime.now();
       final invites = await api.fetchMyInvites();
       for (final battle in invites) {
         if (!battle.isPending || battle.isEnded) continue;
@@ -160,6 +177,8 @@ class _LivePkInviteListenerState extends ConsumerState<LivePkInviteListener> {
         debugPrint('[LivePK] invite poll error: $e\n$st');
         return true;
       }());
+    } finally {
+      _polling = false;
     }
   }
 
