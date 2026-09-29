@@ -504,6 +504,7 @@ abstract final class ApiEndpoints {
   static String chatRoomPk(String roomId) => '/api/chat/rooms/$roomId/pk';
 
   /// Games backend — davet yanıtı (accept/reject).
+  @Deprecated('Üretimde yok; POST chatRoomPk(roomId) + {action, battleId}')
   static String chatRoomPkRespond(String roomId, String inviteId) =>
       '/api/chat/rooms/$roomId/pk/$inviteId/respond';
 

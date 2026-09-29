@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.645+696 (2026-09-29) — Parity 2026-09: sesli PK respond yolu
+
+- **Sesli PK kabul/red/iptal:** yalnızca `POST /api/chat/rooms/{roomId}/pk` + `{action, battleId}` — üretimde olmayan `…/pk/{id}/respond` çağrısı kaldırıldı
+- **Dokümantasyon:** `docs/BACKEND_FLUTTER_PARITY_2026-09_STATUS.md` (sesli/canlı/falcı matrisi + clone talimatı)
+- Backend değişikliği yok
+
 ## 1.0.644+695 (2026-09-29) — PK battle poll hafifletme
 
 - **Canlı PK davet poll:** yayın odasında SSE varken `fetchStreamBattle` yedek atlanır; davet poll hafif mod (`finalizeExpired: false`, 6 sn önbellek)

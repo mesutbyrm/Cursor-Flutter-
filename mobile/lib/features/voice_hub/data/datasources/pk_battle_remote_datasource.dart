@@ -524,18 +524,8 @@ class PkBattleRemoteDataSource {
     String? alternateRoomId,
     required String action,
   }) async {
-    for (final key in _roomKeyCandidates(roomId, alternateRoomId)) {
-      try {
-        final res = await _dio.safePost<dynamic>(
-          ApiEndpoints.chatRoomPkRespond(key, inviteId),
-          data: {'action': action},
-        );
-        final battle = _parseBattle(res.data);
-        if (battle != null) return battle;
-      } on ApiException catch (e) {
-        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
-      }
-    }
+    // Üretim (parity 2026-09): yalnız POST /api/chat/rooms/{roomId}/pk + action body.
+    // …/pk/{id}/respond üretimde yok — 404 gecikmesi kaldırıldı.
     try {
       final battle = await _postPkAction(
         roomId: roomId,
