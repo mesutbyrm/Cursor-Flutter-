@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.646+697 (2026-09-29) — Parity 2026-09: PK REST ana origin
+
+- **ApiBackendRouter:** sesli oda PK (`/api/chat/rooms/{id}/pk*`) → **canlifal.com** (SSE ile aynı origin; STAGE16)
+- **Parity script:** ödeme POST yanlış pozitifi giderildi (`profile_remote_datasource` değişken adları)
+- Backend değişikliği yok
+
 ## 1.0.645+696 (2026-09-29) — Parity 2026-09: sesli PK respond yolu
 
 - **Sesli PK kabul/red/iptal:** yalnızca `POST /api/chat/rooms/{roomId}/pk` + `{action, battleId}` — üretimde olmayan `…/pk/{id}/respond` çağrısı kaldırıldı

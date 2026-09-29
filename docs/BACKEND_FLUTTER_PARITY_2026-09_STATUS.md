@@ -29,7 +29,7 @@ python3 scripts/backend-method-parity.py /tmp/canlifal/nextjs_space
 
 | Alan | Flutter modül | Kanonik backend ailesi | Durum | Not |
 |------|---------------|------------------------|-------|-----|
-| **Sesli oda** | `voice_hub/` | `/api/chat/rooms/*` | **Hizalı (kod)** | presence, state, SSE, PATCH seats, POST pk + action |
+| **Sesli oda** | `voice_hub/` | `/api/chat/rooms/*` | **Hizalı (646+)** | PK REST ana origin + SSE; presence, POST pk + action |
 | **Sesli PK davet** | `pk_battle_remote_datasource.dart` | `POST …/pk` `{action, battleId}` | **Düzeltildi (645+)** | `…/pk/{id}/respond` artık çağrılmıyor |
 | **Sesli PK poll** | invite listener + remote provider | GET pk, GET me/invites | **İyileştirildi (644)** | Önbellek, SSE defer, lite stream battle |
 | **Canlı yayın** | `live/` | `/api/video-streams/*` | **Hizalı** | join POST, leave POST (+ DELETE join yedek), SSE, pk-battle |
@@ -89,6 +89,7 @@ python3 scripts/backend-method-parity.py /tmp/canlifal/nextjs_space
 
 ## Bu repoda yapılan son parity düzeltmesi
 
+- **646+:** `ApiBackendRouter` — sesli oda PK REST → `canlifal.com` (games değil); STAGE16 §1.
 - **645+:** Sesli PK accept/reject/cancel — yalnızca `POST /api/chat/rooms/{roomId}/pk` (respond alt yolu kaldırıldı).
 
 Önceki oturumlar (636–644): presence guard, PK poll, auto-seat, canlı PK refresh, davet cache — `mobile/CHANGELOG.md`.

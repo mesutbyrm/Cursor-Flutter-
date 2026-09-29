@@ -467,9 +467,9 @@ class WalletRemoteDataSource {
   /// Site ödeme ayarları — API dolu alanları korur, yalnız boş alanları tamamlar.
   Future<PaymentConfigEntity> paymentConfig() async {
     ApiException? lastError;
-    for (final path in [ApiEndpoints.paymentConfig]) {
+    for (final configPath in [ApiEndpoints.paymentConfig]) {
       try {
-        final res = await _dio.safeGet<dynamic>(path);
+        final res = await _dio.safeGet<dynamic>(configPath);
         final data = res.data;
         if (data is String &&
             (data.contains('<!DOCTYPE') || data.contains('<html'))) {
@@ -571,31 +571,31 @@ class WalletRemoteDataSource {
   );
 
   Future<Response<dynamic>> _postPaymentRequest(
-    String path,
+    String requestPath,
     Map<String, dynamic> body,
   ) async {
     final started = DateTime.now();
     PaymentDebugLog.log('submitStart', {
-      'path': path,
+      'path': requestPath,
       'baseUrl': Env.apiBaseUrl,
       'timeoutSec': _paymentTimeout.inSeconds,
       'bodyKeys': body.keys.join(','),
     });
     try {
       final res = await _dio.safePost<dynamic>(
-        path,
+        requestPath,
         data: body,
         options: _paymentPostOptions(),
       );
       PaymentDebugLog.log('submitDone', {
-        'path': path,
+        'path': requestPath,
         'status': res.statusCode,
         'elapsedMs': DateTime.now().difference(started).inMilliseconds,
       });
       return res;
     } on ApiException catch (e) {
       PaymentDebugLog.log('submitFailed', {
-        'path': path,
+        'path': requestPath,
         'status': e.statusCode,
         'elapsedMs': DateTime.now().difference(started).inMilliseconds,
         'message': e.message,

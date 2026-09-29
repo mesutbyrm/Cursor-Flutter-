@@ -4,7 +4,7 @@
 > **Güncel (2026-09-07):** **`1.0.371+409`** · Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
 **Tarih:** 15 Temmuz 2026  
-**Üretim:** `https://canlifal.com` (oda, SSE, hediye) + `https://canlifalapi.abacusai.app` (sesli oda PK REST)
+**Üretim:** `https://canlifal.com` (oda, SSE, hediye, sesli oda PK REST — 646+)
 
 ---
 
@@ -14,7 +14,7 @@ Canlifal'da **üç ayrı PK katmanı** vardır; karıştırılmamalıdır:
 
 | Katman | Kapsam | REST tabanı | Gerçek zamanlı |
 |--------|--------|-------------|----------------|
-| **Sesli oda PK** | Voice chat odaları 1v1 | `GET/POST /api/chat/rooms/{roomId}/pk` → **games backend** | Oda SSE `type: pk` + Socket.IO (web) |
+| **Sesli oda PK** | Voice chat odaları 1v1 | `GET/POST /api/chat/rooms/{roomId}/pk` → **ana backend** | Oda SSE `type: pk` |
 | **Canlı yayın PK (legacy)** | Video stream 1v1 | `GET/POST /api/video-streams/{id}/pk-battle` | Yayın SSE + Socket.IO |
 | **Birleşik PK (Faz 1–3)** | Live stream guest/team, liderlik | `GET/POST /api/pk/*` → games backend | `GET /api/pk/{id}/stream` SSE |
 
@@ -24,12 +24,12 @@ Bu doküman **sesli oda PK** odaklıdır. Birleşik PK için: [`PK_SYSTEM_FLUTTE
 
 | Uç | Host | HTTP | Yanıt |
 |----|------|------|-------|
-| `GET …/chat/rooms/{id}/pk` | canlifal.com | 200 | `null` (stub — **kullanılmamalı**) |
-| `GET …/chat/rooms/{id}/pk` | canlifalapi.abacusai.app | 200 | `{"roomId":"…","activeBattle":null,"pendingInvite":null}` |
+| `GET …/chat/rooms/{id}/pk` | canlifal.com | 200 | Aktif PK / davet (SSE ile aynı origin) |
+| `GET …/chat/rooms/{id}/pk` | canlifalapi | 200 | Ayrı veri — mobil **kullanmaz (646+)** |
 | `GET …/chat/rooms/{id}/pk-battle` | her iki host | **404** | Eski yol deploy edilmemiş |
-| `POST …/chat/rooms/{id}/pk` | games | 401 | JWT zorunlu |
+| `POST …/chat/rooms/{id}/pk` | canlifal.com | 401/200 | JWT; `{action, …}` |
 
-Flutter `ApiBackendRouter` sesli oda `/pk` alt yolunu otomatik games backend'e yönlendirir (`api_backend_router.dart`).
+Flutter `ApiBackendRouter` sesli oda `/pk` alt yolunu **ana backend**'e yönlendirir (`api_backend_router.dart`, 646+).
 
 ---
 
