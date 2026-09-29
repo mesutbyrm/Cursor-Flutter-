@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.648+699 (2026-09-29) — Parity: canlı PK create + CI test
+
+- **Canlı PK davet:** `POST /api/video-streams/pk` — kanonik `{action, streamId, targetStreamId, duration}` (+ kısa yedek); gereksiz `live/pk` create turu ve 4 gövde shotgun kaldırıldı
+- **Test:** `pk_session_keep_alive_test` — `fetchRoomBattle` / `fetchMyInvites` imza uyumu (CI)
+- Backend değişikliği yok
+
 ## 1.0.647+698 (2026-09-29) — Parity 2026-09: ölü PK API temizliği
 
 - **Kaldırıldı:** `chatRoomPkRespond`, `chatRoomPkScore` sabitleri; `postLivePkScore` / `LiveFieldPkApi.updateScore` (skor SSE/hediye)

@@ -1,7 +1,7 @@
 # Backend dokümanları ↔ Flutter eşleşmesi
 
 > **Kaynak:** [`mesutbyrm/canlifal` PR #1](https://github.com/mesutbyrm/canlifal/pull/1) — dal `docs/backend-flutter-parity-2026-09` (HEAD `fdd5e62`), `nextjs_space/app/api/**/route.ts` (714 route).
-> **Tarih:** 2026-09-29 · Flutter sürümü `1.0.647+698` · özet: [`BACKEND_FLUTTER_PARITY_2026-09_STATUS.md`](BACKEND_FLUTTER_PARITY_2026-09_STATUS.md)
+> **Tarih:** 2026-09-29 · Flutter sürümü `1.0.648+699` · özet: [`BACKEND_FLUTTER_PARITY_2026-09_STATUS.md`](BACKEND_FLUTTER_PARITY_2026-09_STATUS.md)
 
 Mobil entegrasyonun tek kaynağı yine [`FLUTTER_ENTegrasyon_KILAVUZU.md`](FLUTTER_ENTegrasyon_KILAVUZU.md)'dur. Bu dosya, backend dokümanlarındaki her konunun Flutter'da nerede karşılandığını ve kontrol sonuçlarını gösterir.
 

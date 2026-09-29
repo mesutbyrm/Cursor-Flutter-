@@ -139,13 +139,15 @@ class _FakePkRemoteDataSource extends PkBattleRemoteDataSource {
   Future<PkBattleRemote?> fetchRoomBattle(
     String roomId, {
     String? alternateRoomId,
+    bool forceRefresh = false,
   }) async {
     fetchRoomBattleCalls += 1;
     return _battle;
   }
 
   @override
-  Future<List<PkBattleRemote>> fetchMyInvites() async => const [];
+  Future<List<PkBattleRemote>> fetchMyInvites({bool forceRefresh = false}) async =>
+      const [];
 }
 
 class _StubRemoteController extends PkBattleRemoteController {

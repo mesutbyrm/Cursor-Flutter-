@@ -82,6 +82,7 @@ python3 scripts/backend-method-parity.py canlifal-backend/nextjs_space
 
 ## Bu repoda yapılan son parity düzeltmesi
 
+- **648+:** Canlı PK create gövdesi üretim sözleşmesi; CI `pk_session_keep_alive` imza düzeltmesi.
 - **647+:** Ölü PK uçları (`…/respond`, istemci `live/pk/score`, `postLivePkScore`); davet gövdesi sadeleştirme; parity script fortune slug.
 - **646+:** `ApiBackendRouter` — sesli oda PK REST → `canlifal.com`; STAGE16 §1.
 - **645+:** Sesli PK accept/reject/cancel — yalnızca `POST /api/chat/rooms/{roomId}/pk`.

@@ -48,7 +48,7 @@ List<Map<String, dynamic>> voicePkInviteRequestBodies({
   return [primary];
 }
 
-/// Canlı PK create gövdeleri — kılavuz §9.4 önce, sonra action tabanlı yedekler.
+/// Canlı PK create — `POST /api/video-streams/pk` (üretim: action + streamId + targetStreamId).
 List<Map<String, dynamic>> livePkCreateRequestBodies({
   required String hostStreamId,
   required String targetStreamId,
@@ -61,26 +61,19 @@ List<Map<String, dynamic>> livePkCreateRequestBodies({
 
   return [
     {
-      'opponentStreamId': target,
-      'durationMinutes': minutes,
-    },
-    {
+      'action': 'create',
       'streamId': host,
-      'opponentStreamId': target,
-      'durationMinutes': minutes,
+      'targetStreamId': target,
+      'duration': duration,
     },
     {
       'action': 'create',
       'streamId': host,
       'targetStreamId': target,
-      'duration': '$duration',
+      'opponentStreamId': target,
       'durationSec': duration,
+      'durationMinutes': minutes,
     },
-    livePkCreateRequestBody(
-      hostStreamId: host,
-      targetStreamId: target,
-      durationSeconds: duration,
-    ),
   ];
 }
 
@@ -630,38 +623,6 @@ class PkBattleRemoteDataSource {
       }
       final durationSec =
           duration != null ? duration.clamp(60, 3600) : 180;
-      try {
-        final fieldBattle = await _liveFieldPk.pkAction(
-          action: 'create',
-          roomId: host,
-          targetRoomId: target,
-          durationSeconds: durationSec,
-        );
-        if (fieldBattle != null && fieldBattle.id.isNotEmpty) {
-          final battle = _parseBattle({
-            'id': fieldBattle.id,
-            'status': fieldBattle.status ?? 'pending',
-            'duration': fieldBattle.durationSeconds ?? durationSec,
-            'score1': fieldBattle.room1Score,
-            'score2': fieldBattle.room2Score,
-            'liveStreamId': host,
-            'opponentLiveStreamId': target,
-          });
-          if (battle != null) return battle;
-        }
-      } on ApiException catch (e) {
-        PkEventLog.apiFailure(
-          method: 'POST',
-          url: ApiEndpoints.livePk,
-          statusCode: e.statusCode,
-          roomId: host,
-          targetUserId: target,
-          responseBody: e.message,
-        );
-        if (e.statusCode != 404 && e.statusCode != 405 && e.statusCode != 409) {
-          rethrow;
-        }
-      }
       final bodies = livePkCreateRequestBodies(
         hostStreamId: host,
         targetStreamId: target,

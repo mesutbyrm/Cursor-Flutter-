@@ -39,15 +39,18 @@ void main() {
     expect(bodies.any((b) => b.containsKey('guestUserId')), isFalse);
   });
 
-  test('livePkCreateRequestBodies starts with guide opponentStreamId + durationMinutes',
+  test('livePkCreateRequestBodies uses canonical video-streams pk create',
       () {
     final bodies = livePkCreateRequestBodies(
       hostStreamId: 'host',
       targetStreamId: 'target',
       durationSeconds: 180,
     );
-    expect(bodies.first['opponentStreamId'], 'target');
-    expect(bodies.first['durationMinutes'], 3);
-    expect(bodies.last['action'], 'create');
+    expect(bodies.first['action'], 'create');
+    expect(bodies.first['streamId'], 'host');
+    expect(bodies.first['targetStreamId'], 'target');
+    expect(bodies.first['duration'], 180);
+    expect(bodies.length, 2);
+    expect(bodies.last['durationMinutes'], 3);
   });
 }
