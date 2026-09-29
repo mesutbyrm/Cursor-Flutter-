@@ -4,19 +4,19 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.637+688` |
-| Tarih (UTC) | 2026-09-29 16:59 |
-| Commit | [`8c88fdc8bb73886cbfebba247fcc4577f278d0cd`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/8c88fdc8bb73886cbfebba247fcc4577f278d0cd) |
-| İş akışı | [Run 36597791224](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36597791224) |
+| Sürüm | `1.0.638+689` |
+| Tarih (UTC) | 2026-09-29 18:40 |
+| Commit | [`a829195c2620e8e7c62a9b5acd353db759f0d415`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/a829195c2620e8e7c62a9b5acd353db759f0d415) |
+| İş akışı | [Run 36611208341](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36611208341) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.637+688 (2026-09-29) — Giriş bildirimi (tüm üyeler) + canlı hediye paneli
+## 1.0.642+693 (2026-09-29) — Canlı PK REST yükü (davet + hediye skor)
 
-- **Sesli oda girişi:** Gold/VIP dışındaki üyeler için de alt toast + gerçek zamanlı giriş olayı (👋 … odaya giriş yaptı); VIP üst banner ayrı kaldı
-- **Canlı yayın hediye:** panel yalnızca geçerli `streamId` varken açılır (boş id ile sessiz başarısızlık engellendi)
-- **Hayalet presence guard:** `VoiceRoomRoutePresenceGuard` import yolları düzeltildi (CI analyze)
+- **liveVideoPkProvider.refresh:** `GET /api/pk/me/invites` yedek çağrısı kaldırıldı (davet: `LivePkInviteListener` + SSE)
+- **PK skor yoklama:** hediye/beğeni sonrası `refreshScoresIfStale` — son SSE ingest 8 sn içindeyse REST atlanır
+- **Canlı PK davet poll:** yayıncıdayken `/pk/me/invites` en az 8 sn aralık
 - Backend değişikliği yok
 
 
