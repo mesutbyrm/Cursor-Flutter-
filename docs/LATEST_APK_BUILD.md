@@ -4,19 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.640+691` |
-| Tarih (UTC) | 2026-09-29 18:59 |
-| Commit | [`85585cab3e923046af6c81d696bb70da58565485`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/85585cab3e923046af6c81d696bb70da58565485) |
-| İş akışı | [Run 36612781538](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36612781538) |
+| Sürüm | `1.0.642+693` |
+| Tarih (UTC) | 2026-09-29 19:21 |
+| Commit | [`0ae2f22191685661eef12d9328a6c3b81ffc0874`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/0ae2f22191685661eef12d9328a6c3b81ffc0874) |
+| İş akışı | [Run 36614610876](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36614610876) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.643+694 (2026-09-29) — PK davet önbelleği + sesli poll SSE
+## 1.0.644+695 (2026-09-29) — PK battle poll hafifletme
 
-- **`/pk/me/invites`:** 8 sn paylaşımlı önbellek (canlı/sesli poll + pk session); davet kabul/red/create/end sonrası sıfırlanır
-- **Sesli PK davet poll:** SSE ile yakın PK olayı varsa yedek REST turu atlanır (`deferVoicePkInviteRestPoll`)
-- **Konuşma isteği (moderatör):** poll 3 sn → 5 sn; odadayken SSE açıkken yalnız periyodik yedek atlanır (SSE sinyali `force` ile çalışır)
+- **Canlı PK davet poll:** yayın odasında SSE varken `fetchStreamBattle` yedek atlanır; davet poll hafif mod (`finalizeExpired: false`, 6 sn önbellek)
+- **Sesli PK poll:** SSE defer yalnızca diğer sahip odalar turunu atlar; aktif oda + `/pk/me/invites` sürer (sinyalde `force`)
+- **Oda PK GET:** 6 sn poll önbelleği; aktif `loadRoomBattle` / davet hazırlığı `forceRefresh`
+- **`invalidatePkPollCaches`** — PK aksiyonlarında oda/yayın/davet poll önbelleği temizlenir
 - Backend değişikliği yok
 
 
