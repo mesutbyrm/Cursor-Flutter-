@@ -37,6 +37,7 @@ class OwnerRoomSettings {
     this.isMuted = false,
     this.djUserIds = const [],
     this.commissionPercent = 0,
+    this.ownerCommissionEnabled,
   });
 
   factory OwnerRoomSettings.fromJson(Map<String, dynamic> j) {
@@ -61,6 +62,9 @@ class OwnerRoomSettings {
       commissionPercent: j['giftCommissionPercent'] is num
           ? (j['giftCommissionPercent'] as num).toInt()
           : 0,
+      ownerCommissionEnabled: j['ownerCommissionEnabled'] is bool
+          ? j['ownerCommissionEnabled'] as bool
+          : null,
     );
   }
 
@@ -88,6 +92,9 @@ class OwnerRoomSettings {
   final bool isMuted;
   final List<String> djUserIds;
   final int commissionPercent;
+
+  /// Sunucu desteklemiyorsa `null` — anahtar gizlenir.
+  final bool? ownerCommissionEnabled;
 }
 
 Future<void> openVoiceRoomOwnerManagePage(
@@ -543,6 +550,29 @@ class _VoiceRoomOwnerManagePageState
             ],
           ),
         ),
+        if (s.ownerCommissionEnabled != null) ...[
+          const SizedBox(height: 8),
+          _switch(
+            Icons.savings_rounded,
+            'Hediye payımı al',
+            s.ownerCommissionEnabled!,
+            (v) => _patch(
+              {'ownerCommissionEnabled': v},
+              v
+                  ? 'Oda sahibi payı alınacak'
+                  : 'Payınız artık hediyeyi alana gidecek',
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
+              s.ownerCommissionEnabled!
+                  ? 'Odanızda atılan hediyelerden oda sahibi payı size gelir.'
+                  : 'Payınızı almıyorsunuz; bu pay hediyeyi alan kişiye eklenir.',
+              style: const TextStyle(color: _muted, fontSize: 12),
+            ),
+          ),
+        ],
         const SizedBox(height: 24),
         FilledButton.icon(
           onPressed: () => openVoiceRoomWithVipGate(
