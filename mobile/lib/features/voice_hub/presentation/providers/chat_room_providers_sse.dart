@@ -90,7 +90,10 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             ref.read(voiceRoomActiveSseConnectedProvider.notifier).state =
                 true;
             ref.read(voiceRoomGiftRealtimeProvider).setSseActive(true);
-            if (!state.selfInRoom || !_sse._presenceJoined) {
+            // Yalnızca aktif oda oturumunda presence join (SSE lease / önizleme
+            // yeniden bağlanınca kullanıcı hiç girmediği halde listede görünmesin).
+            if (_sse._sessionActive &&
+                (!state.selfInRoom || !_sse._presenceJoined)) {
               unawaited(_sse._joinPresence());
             }
             // Signal manager that SSE reconnected

@@ -122,6 +122,21 @@ void main() {
       );
     });
 
+    test('PK davet listesi ana backend (üretim /api/pk/me/*)', () {
+      expect(
+        ApiBackendRouter.resolve('/api/pk/me/invites'),
+        ApiBackendKind.main,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/pk/me/history'),
+        ApiBackendKind.main,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/pk/me/stats'),
+        ApiBackendKind.main,
+      );
+    });
+
     test('birleşik PK uçları Games backend', () {
       expect(ApiBackendRouter.resolve('/api/pk/active'), ApiBackendKind.game);
       expect(

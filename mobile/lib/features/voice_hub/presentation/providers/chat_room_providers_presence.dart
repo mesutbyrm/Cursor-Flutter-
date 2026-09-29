@@ -192,11 +192,23 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
 
   void _markPresenceDeparted(String userId) => _presenceTombstone.mark(userId);
 
+  List<ChatRoomPresence> _filterSelfWhenNotJoined(
+    List<ChatRoomPresence> incoming,
+  ) {
+    if (_presenceJoined || state.selfInRoom) return incoming;
+    final selfId = ref.read(authControllerProvider).valueOrNull?.id.trim();
+    if (selfId == null || selfId.isEmpty) return incoming;
+    return incoming
+        .where((p) => p.id != selfId)
+        .toList(growable: false);
+  }
+
   List<ChatRoomPresence> _mergePresenceStable(
     List<ChatRoomPresence> incoming, {
     required String source,
   }) {
     incoming = _presenceTombstone.filter(incoming);
+    incoming = _filterSelfWhenNotJoined(incoming);
     final previous = List<ChatRoomPresence>.from(state.presence);
     final pollSource =
         source == 'refresh' || source == 'poll' || source == 'preload';
@@ -778,6 +790,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
   void _removeSelfFromPresenceOptimistic() {
     final userId = ref.read(authControllerProvider).valueOrNull?.id;
     if (userId == null || userId.isEmpty) return;
+    _markPresenceDeparted(userId);
     final remaining =
         state.presence.where((p) => p.id != userId).toList(growable: false);
     if (remaining.length == state.presence.length) return;

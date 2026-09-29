@@ -22,6 +22,7 @@ abstract final class ApiBackendRouter {
     final p = _normalizePath(path);
     if (_isMainLivePkPath(p)) return ApiBackendKind.main;
     if (_isVoiceRoomPkPath(p)) return ApiBackendKind.main;
+    if (_isMainPkUserPath(p)) return ApiBackendKind.main;
     if (_isGamesPkNamespacePath(p)) return ApiBackendKind.game;
     return ApiBackendKind.main;
   }
@@ -53,6 +54,15 @@ abstract final class ApiBackendRouter {
       return false;
     }
     return segments[4] == 'pk';
+  }
+
+  /// Oturum PK davetleri — üretimde ana site (`canlifal.com`), games değil.
+  static bool _isMainPkUserPath(String path) {
+    if (path == '/api/pk/me/invites') return true;
+    if (path == '/api/pk/me/history') return true;
+    if (path == '/api/pk/me/stats') return true;
+    if (path == '/api/pk/me/matches') return true;
+    return false;
   }
 
   /// Games backend PK — `/api/pk/*` (sesli oda `/chat/rooms/{id}/pk` ayrı).

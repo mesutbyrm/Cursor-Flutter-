@@ -79,18 +79,32 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
         room = activeRoom;
       }
       if (room == null) {
-        if (battle.voiceRoomId?.trim().isEmpty == true &&
-            battle.opponentVoiceRoomId?.trim().isEmpty == true) {
-          PkEventLog.error(
-            'invite_missing_rooms',
-            'PK davetinde room1/room2 (voiceRoomId) yok — backend response doğrulanmalı',
-          );
+        final oppRoomId = battle.opponentVoiceRoomId?.trim() ?? '';
+        if (oppRoomId.isEmpty &&
+            battle.voiceRoomId?.trim().isEmpty == true) {
+          // Davet yalnızca kullanıcı kimliği ile (GET /pk/me/invites) — sahip olunan oda.
+          final owned = ref.read(myOwnedVoiceRoomsProvider);
+          for (final r in owned) {
+            if (isPkInviteTarget(battle, r, userId: user.id)) {
+              room = r;
+              break;
+            }
+          }
+        }
+        if (room == null) {
+          if (battle.voiceRoomId?.trim().isEmpty == true &&
+              battle.opponentVoiceRoomId?.trim().isEmpty == true) {
+            PkEventLog.error(
+              'invite_missing_rooms',
+              'PK davetinde room1/room2 (voiceRoomId) yok — backend response doğrulanmalı',
+            );
+            return;
+          }
+          // Hedef oda yerel oda listesinde yok (liste eski/filtreli): odayı
+          // sunucudan id ile çekip daveti yine göster.
+          unawaited(_showInviteForUnlistedRoom(battle, user.id));
           return;
         }
-        // Hedef oda yerel oda listesinde yok (liste eski/filtreli): odayı
-        // sunucudan id ile çekip daveti yine göster.
-        unawaited(_showInviteForUnlistedRoom(battle, user.id));
-        return;
       }
       final recipient = isPkInviteTarget(battle, room, userId: user.id) ||
           isPkInviteRecipientInActiveRoom(battle, room, userId: user.id);

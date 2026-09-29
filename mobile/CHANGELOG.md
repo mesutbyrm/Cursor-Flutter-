@@ -1,5 +1,19 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.652+703 (2026-09-29) — Sesli PK davet popup + presence hayalet
+
+- **PK davet poll:** `GET /api/pk/me/invites` artık **canlifal.com** (games değil) — bildirim gelip kabul/red popup'ının gelmemesi düzeltildi
+- **PK wire map:** `room1Id` / `room2Id` alanları sesli oda PK modeline eşlenir
+- **Presence:** SSE yeniden bağlanınca yalnızca aktif oda oturumunda join; çıkış sonrası self listeden + tombstone filtre
+- Backend değişikliği yok
+
+## 1.0.651+702 (2026-09-29) — Parity: presence tombstone test + PK create sırası
+
+- **Presence:** `VoicePresenceTombstone` util + birim test; oda state refactor
+- **Canlı PK create:** gövde başına önce `/video-streams/pk` sonra `…/pk-battle` (gereksiz çift tur azaltıldı)
+- **Dokümantasyon:** `pk-battle` endpoint yorumu düzeltildi
+- Backend değişikliği yok
+
 ## 1.0.650+701 (2026-09-29) — Parity: presence hayalet + PK yanıt
 
 - **Presence:** `user_left` / diff ayrılışında 5 dk tombstone — stale SSE snapshot hayaletlerini filtreler
