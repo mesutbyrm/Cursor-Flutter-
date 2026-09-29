@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.638+689 (2026-09-29) — İstek yığılması / bağlantı dayanıklılığı
+
+- **Sesli oda:** `refresh()` eşzamanlı çağrılar tek uçuşta birleştirildi (poll + SSE debounce çakışması)
+- **Canlı PK:** `liveVideoPkProvider.refresh()` ve sesli `loadRoomBattle` üst üste binme engeli
+- **Canlı yayın:** sinyal poll + yayıncı heartbeat önceki istek bitmeden tekrarlanmaz
+- Backend değişikliği yok
+
 ## 1.0.637+688 (2026-09-29) — Giriş bildirimi (tüm üyeler) + canlı hediye paneli
 
 - **Sesli oda girişi:** Gold/VIP dışındaki üyeler için de alt toast + gerçek zamanlı giriş olayı (👋 … odaya giriş yaptı); VIP üst banner ayrı kaldı

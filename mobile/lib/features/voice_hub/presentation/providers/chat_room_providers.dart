@@ -460,6 +460,7 @@ class VoiceRoomLiveController
   Timer? _presenceHeartbeat;
   var _presenceHeartbeatCount = 0;
   var _presenceHeartbeatInFlight = false;
+  var _roomRefreshInFlight = false;
   Timer? _typingStopTimer;
   Timer? _enterBannerTimer;
   Timer? _musicRequestFlashTimer;
@@ -1834,6 +1835,22 @@ class VoiceRoomLiveController
     bool skipPresenceAndMessages = false,
   }) async {
     if (_roomKey.isEmpty) return;
+    if (_roomRefreshInFlight) return;
+    _roomRefreshInFlight = true;
+    try {
+      await _refreshImpl(
+        includeDj: includeDj,
+        skipPresenceAndMessages: skipPresenceAndMessages,
+      );
+    } finally {
+      _roomRefreshInFlight = false;
+    }
+  }
+
+  Future<void> _refreshImpl({
+    bool includeDj = true,
+    bool skipPresenceAndMessages = false,
+  }) async {
     final room = _roomMeta;
     final remote = ref.read(chatRoomRemoteProvider);
     final user = ref.read(authControllerProvider).valueOrNull;

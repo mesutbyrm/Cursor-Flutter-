@@ -201,6 +201,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   Timer? _signalPoll;
   String? _signalSince;
   var _signalPollFailures = 0;
+  var _signalPollInFlight = false;
   String? _signalPollError;
   Timer? _guestJoinPoll;
   Timer? _fortunePoll;
@@ -208,6 +209,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   Timer? _lazyExtrasTimer;
   Timer? _coBroadcastPoll;
   Timer? _hostHeartbeat;
+  var _hostHeartbeatInFlight = false;
   Timer? _botAutoCloseTimer;
   final Set<String> _seenGuestJoinIds = {};
   final Set<String> _seenVipEntrances = {};
@@ -1179,11 +1181,19 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final streamId = widget.session.streamId?.trim();
     if (streamId == null || streamId.isEmpty) return;
     _hostHeartbeat = Timer.periodic(const Duration(seconds: 15), (_) {
-      if (_leaving || !widget.session.isHost) return;
-      unawaited(ref.read(liveRemoteProvider).sendStreamHeartbeat(streamId));
-      if (!_trtc.inChannel && _hostAway) {
-        unawaited(_resumeHostBroadcast(silent: true));
-      }
+      if (_leaving || !widget.session.isHost || _hostHeartbeatInFlight) return;
+      _hostHeartbeatInFlight = true;
+      unawaited(() async {
+        try {
+          await ref.read(liveRemoteProvider).sendStreamHeartbeat(streamId);
+          if (!_trtc.inChannel && _hostAway) {
+            await _resumeHostBroadcast(silent: true);
+          }
+        } catch (_) {
+        } finally {
+          _hostHeartbeatInFlight = false;
+        }
+      }());
     });
   }
 
@@ -1473,7 +1483,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   }
 
   Future<void> _tickLiveSignals(String streamId) async {
-    if (!mounted || streamId.isEmpty) return;
+    if (!mounted || streamId.isEmpty || _signalPollInFlight) return;
+    _signalPollInFlight = true;
     try {
       final remote = ref.read(liveStreamExtrasProvider);
       final signals = await remote.pollSignals(streamId, since: _signalSince);
@@ -1500,6 +1511,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               'Canlı sinyal bağlantısı kesildi — yeniden deneniyor…';
         });
       }
+    } finally {
+      _signalPollInFlight = false;
     }
   }
 

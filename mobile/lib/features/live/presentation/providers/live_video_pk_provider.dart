@@ -75,6 +75,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
   Timer? _endsAtRefresh;
   String? _lastIngestFingerprint;
   final _eventDedup = LivePkEventDedup();
+  var _refreshInFlight = false;
 
   bool _shouldRetainBattleOnEmptyRefresh() {
     return shouldRetainPkBattleOnEmptyRefresh(
@@ -133,6 +134,9 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
   }
 
   Future<void> refresh() async {
+    if (_refreshInFlight) return;
+    _refreshInFlight = true;
+    try {
     // Canlı 1v1 PK — GET stream battle; yoksa /api/pk/me/invites yedek.
     try {
       final api = ref.read(pkBattleRemoteDataSourceProvider);
@@ -195,11 +199,14 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
       return;
     }
 
-    _stopPolling();
-    if (_shouldRetainBattleOnEmptyRefresh()) {
-      return;
+      _stopPolling();
+      if (_shouldRetainBattleOnEmptyRefresh()) {
+        return;
+      }
+      state = state.copyWith(clearBattle: true, clearUnifiedMatchId: true);
+    } finally {
+      _refreshInFlight = false;
     }
-    state = state.copyWith(clearBattle: true, clearUnifiedMatchId: true);
   }
 
   /// Skor güncellemesi — tam `refresh` PK ekranını düşürmez.

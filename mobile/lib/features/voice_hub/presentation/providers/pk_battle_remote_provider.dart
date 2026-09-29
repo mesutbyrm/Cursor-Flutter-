@@ -31,6 +31,7 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
   Timer? _activePoll;
   String? _pollRoomId;
   String? _pollAltRoomId;
+  var _loadRoomBattleInFlight = false;
 
   @override
   PkBattleRemote? build() {
@@ -55,8 +56,11 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
   }
 
   Future<PkBattleRemote?> loadRoomBattle(String roomId, {String? alternateRoomId}) async {
+    if (_loadRoomBattleInFlight) return state;
+    _loadRoomBattleInFlight = true;
     _pollRoomId = roomId;
     _pollAltRoomId = alternateRoomId;
+    try {
     final battle = await _api.fetchRoomBattle(
       roomId,
       alternateRoomId: alternateRoomId,
@@ -67,6 +71,9 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
       _activePoll?.cancel();
     }
     return battle;
+    } finally {
+      _loadRoomBattleInFlight = false;
+    }
   }
 
   /// Sunucudaki askıda / bitmemiş PK kaydını temizler; davet öncesi çağırın.
