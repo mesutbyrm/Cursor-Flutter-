@@ -194,7 +194,11 @@ abstract final class VoiceOfficialJoin {
 
   static String _stripDuplicateRoom(String raw, String? roomName) {
     var line = raw.trim();
-    if (!line.startsWith('📣')) line = '📣 $line';
+    if (!line.startsWith('👋') && !line.startsWith('📣')) {
+      line = '👋 $line';
+    } else if (line.startsWith('📣')) {
+      line = line.replaceFirst('📣', '👋');
+    }
     final room = roomName?.trim();
     if (room == null || room.isEmpty) return line;
     final escaped = RegExp.escape(room);
@@ -217,9 +221,9 @@ abstract final class VoiceOfficialJoin {
               lower.contains('giriş'))) {
         return _stripDuplicateRoom(cleanName, roomName);
       }
-      return '📣 $cleanName $room sesli odasına katıldı';
+      return '👋 $cleanName odaya giriş yaptı';
     }
-    return '📣 $cleanName odaya katıldı';
+    return '👋 $cleanName odaya giriş yaptı';
   }
 
   /// «MODERATÖR İlham Perisi … katıldı» → «İlham Perisi»
