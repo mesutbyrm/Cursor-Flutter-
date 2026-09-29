@@ -5,7 +5,7 @@
 
 ## Özet
 
-Flutter **1.0.630+681** ile üretim sözleşmesi büyük ölçüde hizalı (JWT, presence, PATCH seats, SSE, TRTC, oda hediyeleri). Kritik kalan alanlar: hayalet presence (backend penceresi), sesli PK games host + respond path, istemci `POST /api/live/pk/score`, `full-source` route parity teyidi.
+Flutter **1.0.647+698** (2026-09-29): sesli PK ana origin (646+), respond/score ölü uçlar temizlendi (647+), `canlifal-backend` 714 route **0 eksik**, method-parity **bad=0**. Kalan: hayalet presence (backend TTL), P0 cihaz E2E.
 
 ## Kritik bulgular
 
