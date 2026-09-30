@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
-<<<<<<< HEAD
+## 1.0.654+705 (2026-09-30) — Sesli PK UX: hedef banner, sayaç, davet kartı
+
+- **Hediye hedefi:** tamamlanınca banner gizlenir; X ile goalId+oda prefs’e kaydedilir
+- **PK etiketleri:** başlatan «Biz/Onlar», diğerleri «1. Takım / 2. Takım»
+- **PK davet:** pending + yalnız davetli; aktif PK’da davet kartı yok; skor SSE→aktif state
+- **Sayaç:** `endsAt` tabanlı tek timer; küçük/büyük PK aynı remote state
+- **Davet:** global navigator + bildirim tıklanınca poll; SSE `pk_request` alias
+- Backend değişikliği yok
+
 ## 1.0.653+704 (2026-09-29) — Backend (mesutbyrm/canlifal) sözleşme denetimi
 
 Mobilin çağırdığı 475 uç backend kaynağıyla (yol, metot, gövde, eylem adı) karşılaştırıldı. Backend değişikliği yok.
@@ -10,16 +18,6 @@ Mobilin çağırdığı 475 uç backend kaynağıyla (yol, metot, gövde, eylem 
 - **Sosyal:** gönderi JSON ile; görsel önce yüklenip `imageUrl` olarak gidiyor (multipart gönderim sunucuda başarısızdı). Video paylaşımı Kısa Videolar'a yönlendiriliyor
 - **E-posta doğrulama:** backend'de olmayan uçlar yerine `/api/auth/email/send-verification` ve `/api/auth/email/verify`
 - Sesli oda, canlı falcı, profil, fal & tarot: yol/metot/gövde uyumlu bulundu
-=======
-## 1.0.653+704 (2026-09-30) — Sesli PK UX: hedef banner, sayaç, davet kartı
-
-- **Hediye hedefi:** tamamlanınca banner gizlenir; X ile goalId+oda prefs’e kaydedilir
-- **PK etiketleri:** başlatan «Biz/Onlar», diğerleri «1. Takım / 2. Takım»
-- **PK davet:** pending + yalnız davetli; aktif PK’da davet kartı yok; skor SSE→aktif state
-- **Sayaç:** `endsAt` tabanlı tek timer; küçük/büyük PK aynı remote state
-- **Davet:** global navigator + bildirim tıklanınca poll; SSE `pk_request` alias
-- Backend değişikliği yok
->>>>>>> 7afbe5b9 (fix(voice-pk): goal dismiss, team labels, endsAt timers, invite card (1.0.653+704))
 
 ## 1.0.652+703 (2026-09-29) — Sesli PK davet popup + presence hayalet
 
