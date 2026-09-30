@@ -4,17 +4,19 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.650+701` |
-| Tarih (UTC) | 2026-09-30 22:56 |
-| Commit | [`933f930ca6a321eda305f670279a9c84b971ca7d`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/933f930ca6a321eda305f670279a9c84b971ca7d) |
-| İş akışı | [Run 36786668305](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36786668305) |
+| Sürüm | `1.0.664+717` |
+| Tarih (UTC) | 2026-09-30 23:37 |
+| Commit | [`a9d367acbbf8c71b4bca8718f5e8ccf66299c944`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/a9d367acbbf8c71b4bca8718f5e8ccf66299c944) |
+| İş akışı | [Run 36790230860](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36790230860) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.663+715 (2026-09-30) — Kalan UX tamamlama (PK, DM, jeton, Gold, falcı)
+## 1.0.664+717 (2026-09-30) — apk-latest düzeltme (güncel indirme)
 
-- CI: DM notifier `ApiException` import düzeltmesi
+- **CI:** Gecikmiş workflow_run eski commit ile `apk-latest` yayınlayamaz (main ucu zorunlu)
+- **İçerik:** 1.0.663 paketi (PK, DM, jeton, Gold, alt menü, falcı video/ses) — apk-latest yeniden yüklenecek
+- Backend değişikliği yok
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
