@@ -3079,7 +3079,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               commentsEnabled: broadcastSettings.commentsEnabled,
               onGift: broadcastSettings.giftsEnabled && streamId != null
                   ? () {
-                      if (pkImmersive) {
+                      final inPkGift = isLivePkBroadcastStage(
+                            pkState?.battle,
+                            pkStatus,
+                          ) &&
+                          isLivePkActiveStatus(pkStatus);
+                      if (pkImmersive || inPkGift) {
                         unawaited(
                           _openPkGiftPicker(
                             context,
@@ -3095,7 +3100,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                   : null,
               onTip: !s.isHost && streamId != null
                   ? () {
-                      if (pkImmersive) {
+                      final inPkGift = isLivePkBroadcastStage(
+                            pkState?.battle,
+                            pkStatus,
+                          ) &&
+                          isLivePkActiveStatus(pkStatus);
+                      if (pkImmersive || inPkGift) {
                         unawaited(
                           _openPkGiftPicker(
                             context,
@@ -3157,6 +3167,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 );
               },
               onEnd: s.isHost ? () => unawaited(_exitBroadcast(context)) : null,
+              onEndPk: streamId != null && s.isHost
+                  ? () => unawaited(_endActivePk(streamId!))
+                  : null,
+              opponentUserId: pkOpponentUserId,
             ),
             if (pkImmersive && streamId != null)
               LivePkBroadcastOverlay(

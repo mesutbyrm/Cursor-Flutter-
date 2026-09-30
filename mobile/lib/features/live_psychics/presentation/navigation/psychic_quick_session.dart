@@ -69,6 +69,7 @@ Future<void> openPsychicQuickSession(
     totalJeton: result.jeton,
     fortuneType: result.fortuneType,
     staffExempt: isStaff,
+    preferVideo: preferVideo,
   );
   if (!context.mounted) return;
   if (!preferVideo) {

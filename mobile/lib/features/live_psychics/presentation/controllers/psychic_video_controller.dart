@@ -1088,8 +1088,12 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     if (!_trtc.micOn) {
       _trtc.setMicEnabled(true);
     }
-    if (!_trtc.cameraOn) {
-      _trtc.setCameraEnabled(true);
+    if (session.preferVideo) {
+      if (!_trtc.cameraOn) {
+        _trtc.setCameraEnabled(true);
+      }
+    } else if (_trtc.cameraOn) {
+      _trtc.setCameraEnabled(false);
     }
     if (state.timerStartPrompt || state.timerStartRequestSent) {
       state = state.copyWith(

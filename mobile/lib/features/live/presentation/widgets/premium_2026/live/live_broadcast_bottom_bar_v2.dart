@@ -20,6 +20,10 @@ class LiveBroadcastBottomBarV2 extends StatefulWidget {
     this.onGift,
     this.onTip,
     this.commentsEnabled = true,
+    this.onEndPk,
+    this.onToggleOpponentMute,
+    this.opponentMuted = false,
+    this.showPkHostControls = false,
   });
 
   final TextEditingController chatController;
@@ -34,6 +38,10 @@ class LiveBroadcastBottomBarV2 extends StatefulWidget {
   final VoidCallback? onGift;
   final VoidCallback? onTip;
   final bool commentsEnabled;
+  final VoidCallback? onEndPk;
+  final VoidCallback? onToggleOpponentMute;
+  final bool opponentMuted;
+  final bool showPkHostControls;
 
   @override
   State<LiveBroadcastBottomBarV2> createState() => _LiveBroadcastBottomBarV2State();
@@ -109,6 +117,22 @@ class _LiveBroadcastBottomBarV2State extends State<LiveBroadcastBottomBarV2> {
                       onChanged: rtcChanged,
                     ),
                     LiveCameraSwitchButton(trtc: widget.trtc!),
+                    if (widget.showPkHostControls &&
+                        widget.onToggleOpponentMute != null)
+                      _MiniControl(
+                        icon: widget.opponentMuted
+                            ? Icons.mic_off_rounded
+                            : Icons.mic_rounded,
+                        label: widget.opponentMuted ? 'Ses kapalı' : 'Rakip sesi',
+                        onTap: widget.onToggleOpponentMute,
+                      ),
+                    if (widget.showPkHostControls && widget.onEndPk != null)
+                      _MiniControl(
+                        icon: Icons.flag_rounded,
+                        label: 'PK bitir',
+                        color: AppThemeColors.liveRed,
+                        onTap: widget.onEndPk,
+                      ),
                     if (widget.onEnd != null)
                       _MiniControl(
                         icon: Icons.stop_circle_rounded,

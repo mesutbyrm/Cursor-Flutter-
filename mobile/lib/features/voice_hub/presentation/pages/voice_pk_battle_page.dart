@@ -206,6 +206,10 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
     final room = widget.room;
     final sessionKey =
         room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+    final pkGiftAnimating = ref.watch(
+      giftSessionProvider(sessionKey)
+          .select((s) => s.activeAnimation != null),
+    );
     final user = ref.watch(authControllerProvider).valueOrNull;
     ChatRoomPresence? selfPresence;
     if (user != null) {
@@ -305,6 +309,7 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                       : _OneVsOneBody(
                           state: pk,
                           leadingLeft: leadingLeft,
+                          hideHudScores: pkGiftAnimating,
                           leftTeamLabel: remote != null
                               ? resolveVoicePkTeamPresentation(
                                   battle: remote,
@@ -686,12 +691,14 @@ class _OneVsOneBody extends StatelessWidget {
   const _OneVsOneBody({
     required this.state,
     required this.leadingLeft,
+    this.hideHudScores = false,
     this.leftTeamLabel,
     this.rightTeamLabel,
   });
 
   final PkBattleState state;
   final bool leadingLeft;
+  final bool hideHudScores;
   final String? leftTeamLabel;
   final String? rightTeamLabel;
 
@@ -733,6 +740,7 @@ class _OneVsOneBody extends StatelessWidget {
                     accent: VoiceRoomTokens.neonPurple,
                     label: (leftTeamLabel ?? '1. TAKIM').toUpperCase(),
                     score: state.left.total,
+                    showScore: !hideHudScores,
                     isLeading: leadingLeft && state.isActive,
                   ),
                 ),
@@ -768,6 +776,7 @@ class _OneVsOneBody extends StatelessWidget {
                     accent: VoiceRoomTokens.neonBlue,
                     label: (rightTeamLabel ?? '2. TAKIM').toUpperCase(),
                     score: state.right.total,
+                    showScore: !hideHudScores,
                     isLeading: !leadingLeft && state.isActive,
                   ),
                 ),

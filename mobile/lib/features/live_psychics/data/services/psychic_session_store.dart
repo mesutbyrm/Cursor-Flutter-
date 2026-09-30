@@ -43,6 +43,7 @@ abstract final class PsychicSessionStore {
       'isClient': s.isClient,
       'trtcRoomIdOverride': s.trtcRoomIdOverride,
       'fortuneType': s.fortuneType,
+      'preferVideo': s.preferVideo,
       'psychic': {
         'id': p.id,
         'userId': p.userId,
@@ -94,6 +95,7 @@ abstract final class PsychicSessionStore {
       isClient: map['isClient'] != false,
       trtcRoomIdOverride: map['trtcRoomIdOverride']?.toString(),
       fortuneType: map['fortuneType']?.toString() ?? 'general',
+      preferVideo: map['preferVideo'] == true,
     );
   }
 }

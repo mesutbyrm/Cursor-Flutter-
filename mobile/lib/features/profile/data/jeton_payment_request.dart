@@ -35,6 +35,7 @@ Map<String, dynamic> normalizePaymentRequestBody(Map<String, dynamic> raw) {
       'type': 'jeton',
       'creditType': 'jeton',
       'method': method,
+      'methodId': method,
       'packageId': packageId,
       'packageTitle':
           (title != null && title.isNotEmpty) ? title : '$safeCoins Jeton',

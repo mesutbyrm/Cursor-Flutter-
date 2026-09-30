@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.663+714 (2026-09-30) — Kalan UX tamamlama (PK, DM, jeton, Gold, falcı)
+
+- **Canlı PK:** yayıncı alt barında PK bitir / rakip sesi (immersive dışı); skor/süre yoklama 5–10 sn; PK hediye paneli
+- **Sesli PK:** hediye animasyonu sırasında HUD yan skorları gizlenir — tek skor şeridi altta
+- **DM:** mesaj isteği 403’te optimistik mesaj düşmez; SSE/poll ayarı korunur
+- **Jeton yükleme:** kılavuz `methodId` + `/api/payments/requests` öncelikli yol
+- **Gold / üyelik:** jeton satın alma `paymentMethod` yedekleri; sayfada «Hesaptaki jeton ile al» banner; cüzdan bakiyesi sekme sıçramadan güncellenir
+- **Canlı falcı:** görüntülü seans seçiminde süre başlayınca kamera açılır; sesli seans kamera kapalı kalır
+- **1.0.662** paketi: alt menü, PK sohbet hediyeleri, staff hediye modu kapalı, CFC kaldırıldı, 1 saat jeton talep TTL
+- Backend değişikliği yok
+
 ## 1.0.662+713 (2026-09-30) — Canlı PK, DM, jeton, alt menü
 
 - **Canlı PK:** yayıncı alt kontrollerde «PK bitir» ve «Rakip sesi»; PK sırasında hediye paneli; sohbette hediye satırları görünür

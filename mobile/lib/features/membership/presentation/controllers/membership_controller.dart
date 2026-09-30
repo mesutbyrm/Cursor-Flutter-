@@ -144,6 +144,8 @@ class MembershipController extends Notifier<MembershipUiState> {
         daysRemaining:
             wallet.membershipDaysRemaining ?? state.daysRemaining,
         currentMembership: wallet.membership ?? state.currentMembership,
+        jetonBalance: wallet.jeton,
+        diamondBalance: wallet.jeton,
       );
     });
     ref.listen<AsyncValue<MembershipCatalogEntity>>(

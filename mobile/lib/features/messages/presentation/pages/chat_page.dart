@@ -111,7 +111,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
       if (!mounted) return;
       ref
           .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
-          .refresh(silent: true, forceRefresh: true);
+          .refresh(silent: true, forceRefresh: !_dmSseActive);
     });
   }
 
@@ -134,12 +134,6 @@ class _ChatPageState extends ConsumerState<ChatPage>
                             .notifier,
                       )
                       .ingestFromSse(event, currentUserId: uid);
-                  ref
-                      .read(
-                        chatMessagesListNotifierProvider(widget.conversationId)
-                            .notifier,
-                      )
-                      .refresh(silent: true, forceRefresh: true);
                 },
               );
       if (!mounted) return;

@@ -29,6 +29,7 @@ abstract final class PsychicFlow {
     required int totalJeton,
     String? fortuneType,
     bool staffExempt = false,
+    bool preferVideo = false,
   }) async {
     final repo = ref.read(livePsychicsRepositoryProvider);
 
@@ -113,6 +114,7 @@ abstract final class PsychicFlow {
       isClient: true,
       trtcRoomIdOverride: created.trtcRoomId,
       fortuneType: type,
+      preferVideo: preferVideo,
     );
     PsychicEventLog.requestSend(
       sessionId: created.sessionId,

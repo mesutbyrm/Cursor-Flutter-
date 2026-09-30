@@ -38,11 +38,18 @@ class MembershipRemoteDataSource {
       throw const ApiException('Plan kimliği boş');
     }
     final method = paymentMethod?.trim();
+    final methodVariants = <String>{
+      if (method != null && method.isNotEmpty) method,
+      'jeton',
+      'wallet',
+    };
     final bodies = <Map<String, dynamic>>[
       {'planId': id},
-      if (method != null && method.isNotEmpty)
-        {'planId': id, 'paymentMethod': method},
-      {'membershipId': id, if (method != null && method.isNotEmpty) 'paymentMethod': method},
+      for (final m in methodVariants)
+        {'planId': id, 'paymentMethod': m},
+      for (final m in methodVariants)
+        {'membershipId': id, 'paymentMethod': m},
+      {'planId': id, 'paymentMethod': 'JETON'},
     ];
     ApiException? last;
     for (final path in [

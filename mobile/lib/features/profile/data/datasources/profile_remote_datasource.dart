@@ -636,8 +636,8 @@ class WalletRemoteDataSource {
     });
 
     final paths = <String>[
-      '/api/payment/requests',
       ApiEndpoints.paymentRequests,
+      '/api/payment/requests',
       '/api/jeton/payment-request',
       '/api/payment/request',
     ];

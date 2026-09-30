@@ -9,6 +9,9 @@ import '../../../domain/entities/live_fortune_request_entity.dart';
 import '../../providers/live_gift_leaderboard_provider.dart';
 import '../../providers/live_host_rank_provider.dart';
 import '../../providers/live_video_pk_provider.dart';
+import '../../providers/live_pk_ui_providers.dart';
+import '../../../domain/pk/live_pk_broadcast_stage.dart';
+import '../../../domain/pk/pk_status_helper.dart';
 import 'live_network_quality_pill.dart';
 import '../premium_2026/live_premium_2026.dart';
 import 'live_broadcast_room_bottom_chrome.dart';
@@ -60,7 +63,12 @@ class LiveBroadcastRoomChromeColumn extends ConsumerWidget {
     this.suppressBottomChrome = false,
     this.suppressChatColumn = false,
     this.suppressTopChrome = false,
+    this.onEndPk,
+    this.opponentUserId,
   });
+
+  final VoidCallback? onEndPk;
+  final String? opponentUserId;
 
   final double topInset;
   final LiveBroadcastSession session;
@@ -196,19 +204,45 @@ class LiveBroadcastRoomChromeColumn extends ConsumerWidget {
             ),
           if (!suppressBottomChrome) ...[
             const SizedBox(height: 8),
-            LiveBroadcastRoomBottomChrome(
-              chatController: chatController,
-              isHost: s.isHost,
-              trtc: s.isHost ? trtc : null,
-              commentsEnabled: commentsEnabled,
-              onGift: onGift,
-              onTip: onTip,
-              onMore: onMore,
-              onRtcStateChanged: onRtcStateChanged,
-              onToggleCamera: onToggleCamera,
-              onSend: onSend,
-              onEnd: onEnd,
-              moreBadgeCount: moreBadgeCount,
+            Builder(
+              builder: (context) {
+                final pkActive = hasStream &&
+                    streamId != null &&
+                    isLivePkBroadcastStage(pkState?.battle, pkStatus) &&
+                    isLivePkActiveStatus(pkStatus);
+                final opponentMuted = streamId != null
+                    ? ref.watch(livePkOpponentMutedProvider(streamId!))
+                    : false;
+                final opp = opponentUserId?.trim() ?? '';
+                return LiveBroadcastRoomBottomChrome(
+                  chatController: chatController,
+                  isHost: s.isHost,
+                  trtc: s.isHost ? trtc : null,
+                  commentsEnabled: commentsEnabled,
+                  onGift: onGift,
+                  onTip: onTip,
+                  onMore: onMore,
+                  onRtcStateChanged: onRtcStateChanged,
+                  onToggleCamera: onToggleCamera,
+                  onSend: onSend,
+                  onEnd: onEnd,
+                  moreBadgeCount: moreBadgeCount,
+                  showPkHostControls: s.isHost && pkActive,
+                  opponentMuted: opponentMuted,
+                  onEndPk: onEndPk,
+                  onToggleOpponentMute: s.isHost && pkActive && opp.isNotEmpty
+                      ? () {
+                          final next = !opponentMuted;
+                          ref
+                              .read(
+                                livePkOpponentMutedProvider(streamId!).notifier,
+                              )
+                              .state = next;
+                          trtc.muteRemoteAudio(opp, next);
+                        }
+                      : null,
+                );
+              },
             ),
           ],
         ],

@@ -22,6 +22,7 @@ import '../../../profile/presentation/widgets/jeton_checkout_flow.dart';
 import '../../../profile/presentation/widgets/payment_methods_summary_line.dart';
 import '../../domain/membership_catalog_merge.dart';
 import '../../domain/membership_model.dart';
+import '../../domain/membership_package_entity.dart';
 import '../../../profile/presentation/providers/profile_hub_providers.dart';
 import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../controllers/membership_controller.dart';
@@ -47,6 +48,7 @@ class MembershipPage extends ConsumerWidget {
     final catalogAsync = ref.watch(membershipCatalogProvider);
     final padding = ResponsiveLayout.pagePadding(context);
     final pendingRequests = ref.watch(paymentRequestsNotifierProvider);
+    final wallet = ref.watch(walletBalancesProvider).valueOrNull;
 
     return Scaffold(
       backgroundColor: MembershipCatalogData.bg,
@@ -224,6 +226,20 @@ class MembershipPage extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(height: 18),
+                            _JetonWalletPurchaseBanner(
+                              jetonLabel: jetonLabel,
+                              jetonBalance: wallet?.jeton ?? ui.jetonBalance,
+                              tier: ui.selectedTierModel,
+                              apiPackage: ui.apiPackageFor(
+                                ui.selectedTierModel.wireId,
+                              ),
+                              jetonTlRate: wallet?.jetonTlRate ?? ui.jetonTlRate,
+                              onPurchaseWithJeton: () => _purchaseSelected(
+                                context,
+                                ref,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
                             FilledButton(
                               onPressed: () =>
                                   _purchaseSelected(context, ref),
@@ -853,6 +869,92 @@ class _UpgradeBanner extends ConsumerWidget {
           begin: const Offset(0.97, 0.97),
           end: const Offset(1, 1),
         );
+  }
+}
+
+class _JetonWalletPurchaseBanner extends StatelessWidget {
+  const _JetonWalletPurchaseBanner({
+    required this.jetonLabel,
+    required this.jetonBalance,
+    required this.tier,
+    required this.apiPackage,
+    required this.jetonTlRate,
+    required this.onPurchaseWithJeton,
+  });
+
+  final String jetonLabel;
+  final int jetonBalance;
+  final MembershipTierModel tier;
+  final MembershipPackageEntity? apiPackage;
+  final double jetonTlRate;
+  final VoidCallback onPurchaseWithJeton;
+
+  @override
+  Widget build(BuildContext context) {
+    final priceJeton = apiPackage?.resolvedPriceJeton(
+          fallbackFromTry: tier.monthlyPriceTry,
+          jetonTlRate: jetonTlRate,
+        ) ??
+        (jetonTlRate > 0
+            ? (tier.monthlyPriceTry / jetonTlRate).round()
+            : tier.monthlyPriceTry * 2);
+    if (priceJeton <= 0) return const SizedBox.shrink();
+    final canBuy = jetonBalance >= priceJeton;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: MembershipCatalogData.gold.withValues(alpha: 0.35)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            Icon(Icons.toll_rounded, color: MembershipCatalogData.gold, size: 28),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Hesaptaki $jetonLabel ile al',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    canBuy
+                        ? 'Bakiye: $jetonBalance · gerekli: $priceJeton $jetonLabel'
+                        : 'Bakiye yetersiz ($jetonBalance / $priceJeton $jetonLabel)',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.55),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (canBuy)
+              FilledButton(
+                onPressed: onPurchaseWithJeton,
+                style: FilledButton.styleFrom(
+                  backgroundColor: MembershipCatalogData.gold,
+                  foregroundColor: const Color(0xFF1A1030),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                ),
+                child: const Text(
+                  'Jeton ile al',
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

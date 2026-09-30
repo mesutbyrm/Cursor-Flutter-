@@ -19,6 +19,10 @@ class LiveBroadcastRoomBottomChrome extends StatelessWidget {
     required this.onSend,
     required this.onEnd,
     this.moreBadgeCount = 0,
+    this.onEndPk,
+    this.onToggleOpponentMute,
+    this.opponentMuted = false,
+    this.showPkHostControls = false,
   });
 
   final TextEditingController chatController;
@@ -33,6 +37,10 @@ class LiveBroadcastRoomBottomChrome extends StatelessWidget {
   final VoidCallback onSend;
   final VoidCallback? onEnd;
   final int moreBadgeCount;
+  final VoidCallback? onEndPk;
+  final VoidCallback? onToggleOpponentMute;
+  final bool opponentMuted;
+  final bool showPkHostControls;
 
   @override
   Widget build(BuildContext context) {
@@ -55,6 +63,10 @@ class LiveBroadcastRoomBottomChrome extends StatelessWidget {
         onSend: onSend,
         onEnd: onEnd,
         moreBadgeCount: moreBadgeCount,
+        onEndPk: onEndPk,
+        onToggleOpponentMute: onToggleOpponentMute,
+        opponentMuted: opponentMuted,
+        showPkHostControls: showPkHostControls,
       ),
     );
   }

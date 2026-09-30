@@ -54,6 +54,7 @@ void main() {
     expect(body['coins'], 100);
     expect(body['amount'], 100);
     expect(body['packageId'], 'p100');
+    expect(body['methodId'], 'papara');
     expect(body.containsKey('priceTry'), isFalse);
   });
 

@@ -25,6 +25,7 @@ class PkPlayerHudFrame extends ConsumerWidget {
     this.isLeading = false,
     this.onFollow,
     this.score = 0,
+    this.showScore = true,
   });
 
   final ChatRoomPresence? user;
@@ -33,6 +34,7 @@ class PkPlayerHudFrame extends ConsumerWidget {
   final bool isLeading;
   final VoidCallback? onFollow;
   final int score;
+  final bool showScore;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -109,31 +111,33 @@ class PkPlayerHudFrame extends ConsumerWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 6),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.monetization_on_rounded,
-                      size: 14, color: VoiceRoomTokens.gold),
-                  const SizedBox(width: 4),
-                  Text(
-                    _fmtScore(score),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 14,
+              if (showScore) ...[
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.monetization_on_rounded,
+                        size: 14, color: VoiceRoomTokens.gold),
+                    const SizedBox(width: 4),
+                    Text(
+                      _fmtScore(score),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 14,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    jetonLabel,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white.withValues(alpha: 0.7),
+                    const SizedBox(width: 4),
+                    Text(
+                      jetonLabel,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white.withValues(alpha: 0.7),
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
               if (onFollow != null) ...[
                 const SizedBox(height: 10),
                 FilledButton(

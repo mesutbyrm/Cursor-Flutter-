@@ -99,7 +99,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
     _poll?.cancel();
     final sse = ref.read(liveRoomProvider(arg)).sseConnected;
     final interval =
-        sse ? const Duration(seconds: 30) : const Duration(seconds: 15);
+        sse ? const Duration(seconds: 10) : const Duration(seconds: 5);
     _poll = Timer.periodic(interval, (_) {
       if (state.battle == null ||
           state.status == 'completed' ||

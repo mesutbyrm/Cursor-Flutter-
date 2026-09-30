@@ -15,6 +15,7 @@ class PsychicSessionEntity extends Equatable {
     this.isClient = true,
     this.trtcRoomIdOverride,
     this.fortuneType = 'general',
+    this.preferVideo = false,
   });
 
   final String sessionId;
@@ -26,6 +27,9 @@ class PsychicSessionEntity extends Equatable {
   final bool isClient;
   final String? trtcRoomIdOverride;
   final String fortuneType;
+
+  /// Kullanıcı görüntülü seans seçtiyse süre başlayınca kamera açılır.
+  final bool preferVideo;
 
   String get trtcRoomId =>
       (trtcRoomIdOverride?.trim().isNotEmpty == true)
@@ -61,6 +65,7 @@ class PsychicSessionEntity extends Equatable {
     bool? isClient,
     String? trtcRoomIdOverride,
     String? fortuneType,
+    bool? preferVideo,
   }) {
     return PsychicSessionEntity(
       sessionId: sessionId ?? this.sessionId,
@@ -72,6 +77,7 @@ class PsychicSessionEntity extends Equatable {
       isClient: isClient ?? this.isClient,
       trtcRoomIdOverride: trtcRoomIdOverride ?? this.trtcRoomIdOverride,
       fortuneType: fortuneType ?? this.fortuneType,
+      preferVideo: preferVideo ?? this.preferVideo,
     );
   }
 
@@ -86,5 +92,6 @@ class PsychicSessionEntity extends Equatable {
         isClient,
         trtcRoomIdOverride,
         fortuneType,
+        preferVideo,
       ];
 }

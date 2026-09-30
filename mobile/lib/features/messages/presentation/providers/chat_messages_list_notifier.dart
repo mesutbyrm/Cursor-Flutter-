@@ -229,6 +229,21 @@ class ChatMessagesListNotifier
       _markLocalOptimisticDelivered(optimisticId);
       await refresh(silent: true, forceRefresh: true);
       _markLocalOptimisticDelivered(optimisticId);
+    } on ApiException catch (e) {
+      if (e.statusCode == 403 &&
+          e.message.toLowerCase().contains('mesaj iste')) {
+        _markLocalOptimisticDelivered(optimisticId);
+        return;
+      }
+      final latest = state.valueOrNull;
+      if (latest != null) {
+        state = AsyncValue.data(
+          latest.copyWith(
+            all: latest.all.where((m) => m.id != optimisticId).toList(),
+          ),
+        );
+      }
+      rethrow;
     } catch (e, st) {
       final latest = state.valueOrNull;
       if (latest != null) {
