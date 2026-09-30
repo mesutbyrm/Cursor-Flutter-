@@ -1,9 +1,11 @@
 import 'package:go_router/go_router.dart';
 
+import '../../../core/realtime/room_realtime_event_parser.dart';
 import '../../voice_hub/presentation/utils/voice_room_nav_paths.dart';
 import '../../inbox/domain/inbox_tab.dart';
 import '../../inbox/presentation/inbox_routes.dart';
 import 'entities/app_notification_entity.dart';
+import 'pk_invite_notification_bridge.dart';
 
 typedef VoiceRoomSwitchPreparer = Future<void> Function(
   String nextLiveKey, {
@@ -50,6 +52,11 @@ Future<void> _navigateFromNotificationImpl(
   required bool staffCanManagePayments,
   required Future<void> Function(GoRouter router, String path) pushPath,
 }) async {
+  if (RoomRealtimeEventParser.isPkInviteEvent(n.type)) {
+    PkInviteNotificationBridge.notifyInviteTapped();
+    return;
+  }
+
   final path = n.targetPath?.trim();
   if (path != null && path.isNotEmpty) {
     if (path == '/' || path == '/index' || path == '/home') {

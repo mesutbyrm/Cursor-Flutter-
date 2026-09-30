@@ -23,6 +23,8 @@ import '../../features/live_psychics/presentation/providers/psychic_session_ende
 import '../../features/live_psychics/presentation/providers/psychic_session_cancel_signal.dart';
 import '../../features/messages/presentation/providers/conversations_list_notifier.dart';
 import '../../features/messages/presentation/providers/messages_providers.dart';
+import '../../features/live/presentation/providers/live_pk_invite_signal_provider.dart';
+import '../../features/notifications/domain/pk_invite_notification_bridge.dart';
 import '../../features/notifications/presentation/providers/notifications_list_notifier.dart';
 import '../../features/notifications/presentation/providers/notifications_providers.dart';
 import '../../features/voice_hub/presentation/utils/voice_room_session_utils.dart';
@@ -129,6 +131,9 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener>
               source: source,
             ),
       );
+      PkInviteNotificationBridge.onInviteTapped = () {
+        ref.read(livePkInviteSignalProvider.notifier).bump();
+      };
       PushNavigationHandler.staffCanManagePayments = () =>
           ref.read(staffAccessProvider).canManagePayments;
       PsychicPushActionBridge.onRespond = (

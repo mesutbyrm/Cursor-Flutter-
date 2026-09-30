@@ -6,8 +6,10 @@ import 'package:go_router/go_router.dart';
 import '../../features/live_psychics/presentation/providers/psychic_push_payload.dart';
 import '../../features/inbox/domain/inbox_tab.dart';
 import '../../features/inbox/presentation/inbox_routes.dart';
+import '../../core/realtime/room_realtime_event_parser.dart';
 import '../../features/notifications/domain/entities/app_notification_entity.dart';
 import '../../features/notifications/domain/notification_action.dart';
+import '../../features/notifications/domain/pk_invite_notification_bridge.dart';
 import '../../features/voice_hub/presentation/utils/voice_room_nav_paths.dart';
 import '../navigation/post_login_navigation.dart';
 
@@ -167,6 +169,13 @@ class PushNavigationHandler {
       } else {
         router.go('/canli-falcilar');
       }
+      return;
+    }
+
+    final rawType = (data['type'] ?? data['event'] ?? data['notificationType'])
+        ?.toString();
+    if (RoomRealtimeEventParser.isPkInviteEvent(rawType)) {
+      PkInviteNotificationBridge.notifyInviteTapped();
       return;
     }
 

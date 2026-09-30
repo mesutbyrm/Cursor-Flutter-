@@ -158,8 +158,8 @@ void main() {
     expect(lastLocation, '/canli-falcilar');
   });
 
-  testWidgets('pk invite with root targetPath routes to voice room', (tester) async {
-    late String? lastLocation;
+  testWidgets('pk invite defers navigation for global invite modal', (tester) async {
+    String? lastLocation;
     final router = GoRouter(
       initialLocation: '/feed',
       routes: [
@@ -191,7 +191,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(lastLocation, '/voice-room/room-abc');
+    expect(lastLocation, isNull);
   });
 
   testWidgets('root targetPath without type falls back to feed', (tester) async {
@@ -263,8 +263,8 @@ void main() {
     expect(lastLocation, '/live/stream-xyz');
   });
 
-  testWidgets('pk type without targetId falls back to live hub', (tester) async {
-    late String? lastLocation;
+  testWidgets('pk_request defers navigation for global invite modal', (tester) async {
+    String? lastLocation;
     final router = GoRouter(
       initialLocation: '/feed',
       routes: [
@@ -295,7 +295,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(lastLocation, '/live');
+    expect(lastLocation, isNull);
   });
 
   testWidgets('pk text fallback without type uses targetId for voice room', (tester) async {
@@ -369,9 +369,9 @@ void main() {
     expect(lastLocation, '/live');
   });
 
-  testWidgets('async voice room navigation awaits prepareVoiceRoomSwitch', (tester) async {
+  testWidgets('async pk invite skips voice room navigation', (tester) async {
     final prepared = <String>[];
-    late String? lastLocation;
+    String? lastLocation;
     final router = GoRouter(
       initialLocation: '/feed',
       routes: [
@@ -403,8 +403,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(prepared, ['notification:room-xyz']);
-    expect(lastLocation, '/voice-room/room-xyz');
+    expect(prepared, isEmpty);
+    expect(lastLocation, isNull);
   });
 
   testWidgets('comment uses targetPath from backend', (tester) async {

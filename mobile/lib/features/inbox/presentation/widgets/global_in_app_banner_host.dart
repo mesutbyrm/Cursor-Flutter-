@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/router/app_router.dart';
+import '../../../../core/realtime/room_realtime_event_parser.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../live/presentation/providers/live_pk_invite_signal_provider.dart';
 import '../../../notifications/domain/notification_action.dart';
@@ -79,6 +80,10 @@ class _GlobalInAppBannerHostState extends ConsumerState<GlobalInAppBannerHost>
       final type = n.type.toLowerCase();
       if (type.contains('pk')) {
         ref.read(livePkInviteSignalProvider.notifier).bump();
+      }
+      // PK davet: aynı Kabul/Reddet modalı — odaya zorla gitme.
+      if (RoomRealtimeEventParser.isPkInviteEvent(n.type)) {
+        return;
       }
       // Kanonik yönlendirme — ödeme talebi admin onay alanına gider.
       navigateFromNotification(

@@ -74,7 +74,7 @@ void main() {
       'targetId': 'room-xyz',
       'title': 'PK Daveti',
     });
-    expect(router.routeInformationProvider.value.uri.path, '/voice-room/room-xyz');
-    expect(prepared, ['notification:room-xyz']);
+    expect(router.routeInformationProvider.value.uri.path, '/feed');
+    expect(prepared, isEmpty);
   });
 }

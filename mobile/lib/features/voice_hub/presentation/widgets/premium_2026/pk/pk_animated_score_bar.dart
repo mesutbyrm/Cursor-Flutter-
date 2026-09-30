@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../domain/pk/pk_battle_state.dart';
 import '../../../theme/voice_room_tokens.dart';
+import '../../pk/pk_ends_at_countdown.dart';
 import 'pk_vs_emblem.dart';
 
 /// TikTok PK — çift renkli animasyonlu skor çubuğu + timer + win streak.
@@ -13,10 +14,16 @@ class PkAnimatedScoreBar extends ConsumerWidget {
     super.key,
     required this.state,
     this.compact = false,
+    this.battleEndsAt,
+    this.serverNow,
+    this.fallbackSeconds,
   });
 
   final PkBattleState state;
   final bool compact;
+  final DateTime? battleEndsAt;
+  final DateTime? serverNow;
+  final int? fallbackSeconds;
 
   static String fmt(int n) {
     if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
@@ -132,16 +139,30 @@ class PkAnimatedScoreBar extends ConsumerWidget {
                         ),
                         boxShadow: VoiceRoomTokens.goldGlow(blur: 10),
                       ),
-                      child: Text(
-                        state.timerLabel,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 15,
-                          color: VoiceRoomTokens.gold,
-                          letterSpacing: 1.4,
-                          fontFeatures: [FontFeature.tabularFigures()],
-                        ),
-                      ),
+                      child: state.isActive && battleEndsAt != null
+                          ? PkEndsAtCountdownText(
+                              endsAt: battleEndsAt,
+                              serverNow: serverNow,
+                              fallbackSeconds:
+                                  fallbackSeconds ?? state.secondsLeft,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 15,
+                                color: VoiceRoomTokens.gold,
+                                letterSpacing: 1.4,
+                                fontFeatures: [FontFeature.tabularFigures()],
+                              ),
+                            )
+                          : Text(
+                              state.timerLabel,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 15,
+                                color: VoiceRoomTokens.gold,
+                                letterSpacing: 1.4,
+                                fontFeatures: [FontFeature.tabularFigures()],
+                              ),
+                            ),
                     ),
                   ),
                 ],

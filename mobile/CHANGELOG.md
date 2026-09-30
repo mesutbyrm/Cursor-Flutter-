@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.655+706 (2026-09-30) — PK davet bildirimi + skor sayacı tamamlama
+
+- **PK davet tıklama:** push, banner ve bildirim listesi odaya zorla gitmez; `VoicePkInviteListener` aynı Kabul/Reddet modalını açar
+- **PK skor şeridi:** `PkAnimatedScoreBar` süresi `endsAt` ile (çift/laggy `secondsLeft` sayacı kaldırıldı)
+- Backend değişikliği yok
+
 ## 1.0.654+705 (2026-09-30) — Sesli PK UX: hedef banner, sayaç, davet kartı
 
 - **Hediye hedefi:** tamamlanınca banner gizlenir; X ile goalId+oda prefs’e kaydedilir

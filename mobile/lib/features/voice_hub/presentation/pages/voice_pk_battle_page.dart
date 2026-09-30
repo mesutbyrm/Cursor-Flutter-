@@ -290,7 +290,13 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                   ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-                  child: PkAnimatedScoreBar(state: pk, compact: true),
+                  child: PkAnimatedScoreBar(
+                    state: pk,
+                    compact: true,
+                    battleEndsAt: remote?.endsAt,
+                    serverNow: DateTime.tryParse(remote?.serverNow ?? ''),
+                    fallbackSeconds: remote?.resolvedSecondsLeft() ?? pk.secondsLeft,
+                  ),
                 ),
                 if (remote != null &&
                     remote.isPending &&
