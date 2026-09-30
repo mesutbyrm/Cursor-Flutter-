@@ -76,7 +76,7 @@ void main() {
       expect(find.text('Gold üyeliği · ödeme'), findsOneWidget);
       expect(find.textContaining('Hesaptaki'), findsOneWidget);
       expect(find.textContaining('WhatsApp'), findsWidgets);
-      expect(find.textContaining('ile öde'), findsWidgets);
+      expect(find.textContaining('ile al'), findsWidgets);
       expect(find.textContaining('Bakiye yetersiz'), findsOneWidget);
       expect(find.textContaining('önerilen:'), findsNothing);
     });
