@@ -4,20 +4,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.658+709` |
-| Tarih (UTC) | 2026-09-30 17:05 |
-| Commit | [`06480087870c32b7384d24ba5b3f06b85121b9a7`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/06480087870c32b7384d24ba5b3f06b85121b9a7) |
-| İş akışı | [Run 36744966015](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36744966015) |
+| Sürüm | `1.0.659+710` |
+| Tarih (UTC) | 2026-09-30 18:29 |
+| Commit | [`7fe3a7d97364fd2c982d43895e4f1f84688895ce`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/7fe3a7d97364fd2c982d43895e4f1f84688895ce) |
+| İş akışı | [Run 36756543965](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36756543965) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.657+708 (2026-09-30) — Backend↔Flutter uyumluluk (PK sonuç + davet wire)
+## 1.0.659+710 (2026-09-30) — Gelen kutu, DM, Gold jeton, alt menü
 
-- **PK status:** backend `live` → aktif sayım; `hostStreamId`/`guestStreamId` oda eşlemesi
-- **PK sonuç:** `winnerSide` 1/2 ve `result` host/guest/draw → kazanan UI
-- **Presence:** join debug log sözdizimi düzeltmesi
-- **Dokümantasyon:** `BACKEND_FRONTEND_UYUMLULUK.md`, `BACKEND_YAPILACAKLAR.md`
+- **Ana sayfa:** “Seni beğenenler” ve “Popüler falcılar” bölümleri kaldırıldı
+- **Gelen kutusu:** varsayılan sekme “Tümü”; mesaj bildiriminde `senderId` SSE parse + doğru sohbet rotası
+- **DM:** hızlı cevaplar kaldırıldı; + menüsü ilgili ekranlara yönlendirir; mikrofon ile sesli mesaj (24 saat sonra gizlenir)
+- **Gold üyelik:** hesaptaki jeton ile satın alma (`paymentMethod: jeton`) ve ödeme sheet’inde jeton seçeneği
+- **Alt menü:** Sosyal · Canlı · Fal · Tarot · Profil; gelen kutusunda da görünür; geri tuşunda çıkış onayı
+- **Sesli oda sohbet:** mesaj POST yedek oda anahtarı düzeltmesi; PK süresi sunucu `endsAt` ile 10 sn sıçraması azaltıldı
 - Backend değişikliği yok
 
 
