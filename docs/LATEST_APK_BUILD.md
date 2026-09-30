@@ -4,21 +4,17 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.661+712` |
-| Tarih (UTC) | 2026-09-30 20:33 |
-| Commit | [`46415d1b7f7f627d13c3d3d340ad61f3829eb0d4`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/46415d1b7f7f627d13c3d3d340ad61f3829eb0d4) |
-| İş akışı | [Run 36769496256](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36769496256) |
+| Sürüm | `1.0.663+716` |
+| Tarih (UTC) | 2026-09-30 22:17 |
+| Commit | [`09710bff6f9ad7ffa00b0c9b619a69bfe36539a7`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/09710bff6f9ad7ffa00b0c9b619a69bfe36539a7) |
+| İş akışı | [Run 36782598971](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36782598971) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.661+712 (2026-09-30) — Alt menü: tek bar, 7 sekme, video yükle
+## 1.0.663+715 (2026-09-30) — Kalan UX tamamlama (PK, DM, jeton, Gold, falcı)
 
-- **Alt menü:** Ana Sayfa · Sosyal · Canlı · ortada **Yükle (+)** · Fal · Tarot · Profil
-- **Kısa videolar:** üst üste çift alt bar kaldırıldı (yalnızca global overlay)
-- **Gelen kutusu / mesajlar:** shell dışı sayfalarda alt bar overlay ile gösterilir
-- Ortadaki + → `/shorts/upload` (video yükleme stüdyosu)
-- Backend değişikliği yok
+- CI: DM notifier `ApiException` import düzeltmesi
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
