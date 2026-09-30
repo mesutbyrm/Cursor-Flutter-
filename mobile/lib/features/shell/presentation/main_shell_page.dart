@@ -43,8 +43,6 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
 
   HomeBottomTab _activeTab(int shellIndex) {
     switch (shellIndex) {
-      case 0:
-        return HomeBottomTab.home;
       case 1:
         return HomeBottomTab.social;
       case 2:
@@ -54,16 +52,8 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
       case 4:
         return HomeBottomTab.profile;
       default:
-        return HomeBottomTab.home;
+        return HomeBottomTab.social;
     }
-  }
-
-  void _onYayinTap(BuildContext context) {
-    ShellUi.showCreateSheet(context, GoRouter.of(context));
-  }
-
-  void _onYayinLongPress(BuildContext context) {
-    ShellUi.showCreateSheet(context, GoRouter.of(context));
   }
 
   @override
@@ -117,11 +107,10 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
         body: widget.navigationShell,
         bottomNavigationBar: BottomNavigationWidget(
           activeTab: _activeTab(widget.navigationShell.currentIndex),
-          onHome: () => _goBranch(0),
           onSocial: () => _goBranch(1),
-          onCreate: () => _onYayinTap(context),
-          onCreateLongPress: () => _onYayinLongPress(context),
-          onFortune: () => _goBranch(3),
+          onLive: () => _goBranch(2),
+          onFortune: () => context.go('/fortune'),
+          onTarot: () => context.go('/fortune?type=tarot'),
           onProfile: () => _goBranch(4),
         ),
       ),

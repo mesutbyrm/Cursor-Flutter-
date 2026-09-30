@@ -6,9 +6,9 @@ import 'package:intl/intl.dart';
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../domain/entities/message_entities.dart';
-import 'chat_quick_replies_bar.dart';
-
-/// WhatsApp tarzı mesaj balonu — büyük yazı, alıntı, hızlı yanıtlar.
+import '../../domain/utils/dm_message_codec.dart';
+import 'dm_voice_note_bubble.dart';
+/// WhatsApp tarzı mesaj balonu — büyük yazı, alıntı.
 class ChatMessageBubble extends ConsumerWidget {
   const ChatMessageBubble({
     super.key,
@@ -16,26 +16,25 @@ class ChatMessageBubble extends ConsumerWidget {
     this.onDelete,
     this.onReply,
     this.onForward,
-    this.showQuickReplies = false,
-    this.onQuickReply,
   });
 
   final MessageEntity message;
   final VoidCallback? onDelete;
   final VoidCallback? onReply;
   final VoidCallback? onForward;
-  final bool showQuickReplies;
-  final ValueChanged<String>? onQuickReply;
 
   static const _theirsColor = Color(0xFF1A1A22);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final m = message;
-    final action = _actionMeta(
-      m.text,
-      jetonLabel: economyCurrencyLabel(ref, key: 'jeton'),
-    );
+    final voiceNote = DmMessageCodec.parseVoiceNote(m.text);
+    final action = voiceNote == null
+        ? _actionMeta(
+            m.text,
+            jetonLabel: economyCurrencyLabel(ref, key: 'jeton'),
+          )
+        : null;
     return Column(
       crossAxisAlignment:
           m.isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
@@ -113,7 +112,9 @@ class ChatMessageBubble extends ConsumerWidget {
                       ),
                     ),
                   ],
-                  if (action != null)
+                  if (voiceNote != null)
+                    DmVoiceNoteBubble(meta: voiceNote)
+                  else if (action != null)
                     _CanlifalActionCard(meta: action)
                   else
                     Text(
@@ -148,8 +149,6 @@ class ChatMessageBubble extends ConsumerWidget {
             ),
           ),
         ),
-        if (showQuickReplies && onQuickReply != null)
-          ChatQuickRepliesBar(onSelect: onQuickReply!),
       ],
     );
   }

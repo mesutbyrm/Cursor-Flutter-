@@ -9,7 +9,7 @@ void main() {
 
   Widget host({
     required ThemeData theme,
-    HomeBottomTab active = HomeBottomTab.home,
+    HomeBottomTab active = HomeBottomTab.social,
     double width = 390,
     double textScale = 1.0,
   }) {
@@ -25,11 +25,10 @@ void main() {
           body: const SizedBox.expand(),
           bottomNavigationBar: BottomNavigationWidget(
             activeTab: active,
-            onHome: () => taps.add('home'),
             onSocial: () => taps.add('social'),
-            onCreate: () => taps.add('create'),
-            onCreateLongPress: () => taps.add('create-long'),
+            onLive: () => taps.add('live'),
             onFortune: () => taps.add('fortune'),
+            onTarot: () => taps.add('tarot'),
             onProfile: () => taps.add('profile'),
           ),
         ),
@@ -39,24 +38,17 @@ void main() {
 
   setUp(() => taps = []);
 
-  testWidgets('her sekme kendi gerçek geri çağrısını tetikler', (tester) async {
+  testWidgets('her sekme kendi geri çağrısını tetikler', (tester) async {
     await tester.pumpWidget(host(theme: AppTheme.dark()));
 
-    await tester.tap(find.text('Ana Sayfa'));
     await tester.tap(find.text('Sosyal'));
     await tester.tap(find.text('Canlı'));
-    await tester.tap(find.text('Fal & Tarot'));
+    await tester.tap(find.text('Fal'));
+    await tester.tap(find.text('Tarot'));
     await tester.tap(find.text('Profil'));
     await tester.pumpAndSettle();
 
-    expect(taps, ['home', 'social', 'create', 'fortune', 'profile']);
-  });
-
-  testWidgets('orta buton uzun basışta oluşturma sayfasını açar', (tester) async {
-    await tester.pumpWidget(host(theme: AppTheme.dark()));
-    await tester.longPress(find.text('Canlı'));
-    await tester.pumpAndSettle();
-    expect(taps, ['create-long']);
+    expect(taps, ['social', 'live', 'fortune', 'tarot', 'profile']);
   });
 
   testWidgets('etkin sekme erişilebilirlikte seçili olarak bildirilir',
@@ -67,9 +59,9 @@ void main() {
     );
 
     expect(
-      tester.getSemantics(find.bySemanticsLabel('Fal & Tarot')),
+      tester.getSemantics(find.bySemanticsLabel('Fal')),
       matchesSemantics(
-        label: 'Fal & Tarot',
+        label: 'Fal',
         isButton: true,
         isSelected: true,
         hasSelectedState: true,
@@ -103,7 +95,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      expect(find.text('Fal & Tarot'), findsOneWidget);
+      expect(find.text('Tarot'), findsOneWidget);
     });
   }
 

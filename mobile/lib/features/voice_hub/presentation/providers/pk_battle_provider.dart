@@ -286,8 +286,12 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
       swapSides ? remote.challenger : remote.opponent,
     );
 
+    final newEndUtc = remote.endsAt?.toUtc();
+    final endsAtChanged = newEndUtc != _endsAtUtc;
     final secLeft = remote.endsAt != null
-        ? remote.resolvedSecondsLeft()
+        ? (endsAtChanged
+            ? remote.resolvedSecondsLeft()
+            : state.secondsLeft)
         : remote.secondsLeft;
 
     state = state.copyWith(

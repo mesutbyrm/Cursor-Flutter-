@@ -2884,7 +2884,7 @@ class VoiceRoomLiveController
             .read(chatRoomRemoteProvider)
             .sendMessage(
               roomKey: _roomKey,
-              alternateKey: _musicAlternateKey,
+              alternateKey: _presenceAlternateKey,
               content: trimmed,
               nickname: _effectiveNickname(user),
               mentionedUserIds: mentionedUserIds,

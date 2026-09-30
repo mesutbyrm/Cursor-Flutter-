@@ -19,10 +19,8 @@ import 'home_football_section.dart';
 import 'home_games_section.dart';
 import 'home_growth_teasers_section.dart';
 import 'home_footer_section.dart';
-import 'home_social_strip_section.dart';
 import 'home_promo_popup_banner.dart';
 import 'home_viewport_section.dart';
-import 'home_advisors_row.dart';
 import '../../../bana_ozel/presentation/widgets/home_bana_ozel_section.dart';
 import '../../../live_psychics/presentation/widgets/psychics_home_section.dart';
 import 'approved/fortune_section.dart';
@@ -87,12 +85,6 @@ abstract final class HomePageSections {
       ),
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
-          delay: StartupPerf.homeTrendingSectionDelay,
-          child: HomeSectionReveal(child: HomeSocialStripSection()),
-        ),
-      ),
-      const SliverToBoxAdapter(
-        child: HomeDeferredSection(
           delay: StartupPerf.homeBannerDelay,
           child: HomePromoPopupBanner(),
         ),
@@ -114,12 +106,6 @@ abstract final class HomePageSections {
         child: HomeDeferredSection(
           delay: StartupPerf.homePsychicsSectionDelay,
           child: PsychicsHomeSection(),
-        ),
-      ),
-      const SliverToBoxAdapter(
-        child: HomeDeferredSection(
-          delay: StartupPerf.homePsychicsSectionDelay,
-          child: HomeAdvisorsRow(),
         ),
       ),
       const SliverToBoxAdapter(

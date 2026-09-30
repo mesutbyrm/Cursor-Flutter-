@@ -346,7 +346,7 @@ class MembershipPage extends ConsumerWidget {
     }
 
     if (wallet != null && priceJeton > 0 && wallet.jeton >= priceJeton) {
-      if (await tryInstantPurchase()) return;
+      if (await tryInstantPurchase(paymentMethod: 'jeton')) return;
     }
 
     final cfcBal = wallet?.cfc ?? ui.cfcBalance;
@@ -377,6 +377,13 @@ class MembershipPage extends ConsumerWidget {
       externalMethodsLabel: externalLabel,
     );
     if (!context.mounted || choice == null) return;
+
+    if (choice == MembershipCheckoutChoice.jetonWallet) {
+      if (await tryInstantPurchase(paymentMethod: 'jeton')) {
+        onPurchaseDone();
+      }
+      return;
+    }
 
     if (choice == MembershipCheckoutChoice.cfcPayment) {
       if (cfcBal >= priceCfc) {

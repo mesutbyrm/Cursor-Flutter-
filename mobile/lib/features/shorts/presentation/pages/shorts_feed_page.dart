@@ -102,13 +102,11 @@ class _ShortsFeedPageState extends ConsumerState<ShortsFeedPage> {
     return Scaffold(
       backgroundColor: ShortsPremiumTheme.feedBackground(context),
       bottomNavigationBar: BottomNavigationWidget(
-        activeTab: HomeBottomTab.home,
-        onHome: () => router.go('/feed'),
+        activeTab: HomeBottomTab.social,
         onSocial: () => router.go('/social'),
-        onCreate: () => AppBottomNavHost.showCreateSheet(context, router),
-        onCreateLongPress: () =>
-            AppBottomNavHost.showCreateSheet(context, router),
+        onLive: () => router.go('/live'),
         onFortune: () => router.go('/fortune'),
+        onTarot: () => router.go('/fortune?type=tarot'),
         onProfile: () => router.go('/profile'),
       ),
       body: feed.when(

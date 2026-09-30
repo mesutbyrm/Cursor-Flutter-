@@ -10,6 +10,7 @@ class ChatComposerBar extends StatefulWidget {
     required this.onSend,
     this.onChanged,
     this.onAction,
+    this.onVoiceNote,
     this.tightBottomInset = false,
   });
 
@@ -17,6 +18,7 @@ class ChatComposerBar extends StatefulWidget {
   final Future<void> Function(String text) onSend;
   final ValueChanged<String>? onChanged;
   final ValueChanged<DmComposerAction>? onAction;
+  final VoidCallback? onVoiceNote;
   final bool tightBottomInset;
 
   @override
@@ -45,6 +47,7 @@ class _ChatComposerBarState extends State<ChatComposerBar> {
       onSend: _handleSend,
       onChanged: widget.onChanged,
       onAction: widget.onAction,
+      onVoiceNote: widget.onVoiceNote,
       tightBottomInset: widget.tightBottomInset,
     );
   }

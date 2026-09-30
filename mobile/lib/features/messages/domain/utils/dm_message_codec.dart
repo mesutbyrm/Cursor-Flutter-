@@ -6,7 +6,8 @@ abstract final class DmMessageCodec {
     final t = text.trim();
     return t.startsWith('$_prefix') ||
         t.startsWith('⟦') ||
-        t.contains('⟦vc:');
+        t.contains('⟦vc:') ||
+        t.startsWith('⟦vn:');
   }
 
   static String wrapReply({
@@ -36,6 +37,33 @@ abstract final class DmMessageCodec {
   static String callAccept(String callId) => '⟦vc:a:$callId⟧';
 
   static String callReject(String callId) => '⟦vc:r:$callId⟧';
+
+  static String wrapVoiceNote({
+    required String url,
+    required DateTime expiresAt,
+  }) =>
+      '⟦vn:${Uri.encodeComponent(url)}:${expiresAt.toUtc().millisecondsSinceEpoch}⟧';
+
+  static DmVoiceNoteMeta? parseVoiceNote(String text) {
+    final t = text.trim();
+    if (!t.startsWith('⟦vn:')) return null;
+    final inner = t.replaceFirst('⟦vn:', '').replaceFirst('⟧', '');
+    final sep = inner.lastIndexOf(':');
+    if (sep <= 0) return null;
+    final urlEnc = inner.substring(0, sep);
+    final expMs = int.tryParse(inner.substring(sep + 1));
+    if (expMs == null) return null;
+    final url = Uri.decodeComponent(urlEnc);
+    if (url.isEmpty) return null;
+    return DmVoiceNoteMeta(
+      url: url,
+      expiresAt: DateTime.fromMillisecondsSinceEpoch(expMs, isUtc: true),
+    );
+  }
+
+  static bool isExpiredVoiceNote(DmVoiceNoteMeta meta) {
+    return DateTime.now().toUtc().isAfter(meta.expiresAt);
+  }
 
   static DmCallSignal? parseCallSignal(String text) {
     final t = text.trim();
@@ -150,4 +178,11 @@ final class DmCallAcceptSignal extends DmCallSignal {
 
 final class DmCallRejectSignal extends DmCallSignal {
   const DmCallRejectSignal({required super.callId});
+}
+
+class DmVoiceNoteMeta {
+  const DmVoiceNoteMeta({required this.url, required this.expiresAt});
+
+  final String url;
+  final DateTime expiresAt;
 }

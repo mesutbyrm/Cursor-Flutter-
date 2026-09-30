@@ -17,7 +17,7 @@ enum InboxTab {
       'system' || 'sistem' || 'notifications' || 'bildirimler' =>
         InboxTab.system,
       'all' || 'tumu' || 'tümü' => InboxTab.all,
-      _ => InboxTab.messages,
+      _ => InboxTab.all,
     };
   }
 

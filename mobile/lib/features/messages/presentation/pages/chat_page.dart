@@ -32,6 +32,7 @@ import '../widgets/chat_message_actions.dart';
 import '../widgets/chat_messages_list_pane.dart';
 import '../widgets/chat_reply_preview_bar.dart';
 import '../widgets/chat_typing_indicator.dart';
+import '../services/dm_voice_note_service.dart';
 
 class ChatPage extends ConsumerStatefulWidget {
   const ChatPage({super.key, required this.conversationId});
@@ -56,6 +57,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
   String? _peerAvatar;
   var _peerOnline = false;
   var _dmSseActive = false;
+  var _recordingVoiceNote = false;
 
   @override
   void initState() {
@@ -283,19 +285,62 @@ class _ChatPageState extends ConsumerState<ChatPage>
   Future<void> _handleComposerAction(DmComposerAction action) async {
     switch (action) {
       case DmComposerAction.gift:
-        return _sendMessage('🎁 Hediye göndermek istiyor.');
+        await _sendMessage('🎁 Hediye göndermek istiyor.');
+        if (mounted) context.push('/user/${widget.conversationId}');
+        return;
       case DmComposerAction.jeton:
-        return _sendMessage(economyJetonSendIntentMessage(ref));
+        await _sendMessage(economyJetonSendIntentMessage(ref));
+        if (mounted) context.push('/jeton-store');
+        return;
       case DmComposerAction.fortune:
-        return _sendMessage('🔮 Fal isteği gönderdi.');
+        await _sendMessage('🔮 Fal isteği gönderdi.');
+        if (mounted) context.push('/fortune');
+        return;
       case DmComposerAction.voiceFortune:
-        return _sendMessage('🎙️ Sesli fal isteği gönderdi.');
+        await _sendMessage('🎙️ Sesli fal isteği gönderdi.');
+        if (mounted) context.push('/canli-falcilar');
+        return;
       case DmComposerAction.videoFortune:
-        return _sendMessage('📹 Görüntülü fal isteği gönderdi.');
+        await _sendMessage('📹 Görüntülü fal isteği gönderdi.');
+        if (mounted) context.push('/canli-falcilar');
+        return;
       case DmComposerAction.liveInvite:
-        return _sendMessage('📡 Canlı yayına davet etti.');
+        await _sendMessage('📡 Canlı yayına davet etti.');
+        if (mounted) context.push('/live');
+        return;
       case DmComposerAction.voiceRoomInvite:
-        return _sendMessage('🎧 Sesli odaya davet etti.');
+        await _sendMessage('🎧 Sesli odaya davet etti.');
+        if (mounted) context.push('/voice-rooms');
+        return;
+    }
+  }
+
+  Future<void> _toggleVoiceNote() async {
+    if (_recordingVoiceNote) return;
+    try {
+      final service = ref.read(dmVoiceNoteServiceProvider);
+      final url = await service.recordAndUpload(
+        onRecordingChanged: (rec) {
+          if (mounted) setState(() => _recordingVoiceNote = rec);
+        },
+      );
+      if (url == null || url.isEmpty) return;
+      await service.sendVoiceNote(
+        peerUserId: widget.conversationId,
+        audioUrl: url,
+      );
+      await ref
+          .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
+          .refresh(silent: true, forceRefresh: true);
+      _scrollToEnd();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _recordingVoiceNote = false);
     }
   }
 
@@ -489,13 +534,13 @@ class _ChatPageState extends ConsumerState<ChatPage>
                         tooltip: 'Sesli ara',
                         onPressed: _startVoiceCall,
                       ),
-                    DiscoverIconButton(
-                      icon: Icons.videocam_rounded,
-                      // Arama başlatmaz; görüntülü fal isteği mesajı yollar.
-                      tooltip: 'Görüntülü fal isteği gönder',
-                      onPressed: () =>
-                          _handleComposerAction(DmComposerAction.videoFortune),
-                    ),
+                    if (isGold)
+                      DiscoverIconButton(
+                        icon: Icons.videocam_rounded,
+                        tooltip: 'Görüntülü konuşma (Gold)',
+                        onPressed: () =>
+                            _handleComposerAction(DmComposerAction.videoFortune),
+                      ),
                     DiscoverIconButton(
                       icon: Icons.more_horiz_rounded,
                       tooltip: 'Sohbet işlemleri',
@@ -515,7 +560,6 @@ class _ChatPageState extends ConsumerState<ChatPage>
                   _forwardTarget = null;
                 }),
                 onForward: _pickForwardTarget,
-                onQuickReply: (t) => _sendMessage(t),
                 onIncomingMessage: _onIncomingMessage,
               ),
             ),
@@ -529,6 +573,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
               controller: _text,
               onSend: _sendMessage,
               onAction: _handleComposerAction,
+              onVoiceNote: _toggleVoiceNote,
               tightBottomInset: true,
             ),
           ],

@@ -12,22 +12,18 @@ class BottomNavigationWidget extends StatelessWidget {
   const BottomNavigationWidget({
     super.key,
     required this.activeTab,
-    required this.onHome,
     required this.onSocial,
-    required this.onCreate,
-    this.onCreateLongPress,
+    required this.onLive,
     required this.onFortune,
-    this.onFortuneLongPress,
+    required this.onTarot,
     required this.onProfile,
   });
 
   final HomeBottomTab activeTab;
-  final VoidCallback onHome;
   final VoidCallback onSocial;
-  final VoidCallback onCreate;
-  final VoidCallback? onCreateLongPress;
+  final VoidCallback onLive;
   final VoidCallback onFortune;
-  final VoidCallback? onFortuneLongPress;
+  final VoidCallback onTarot;
   final VoidCallback onProfile;
 
   static const double barHeight = 62;
@@ -63,32 +59,32 @@ class BottomNavigationWidget extends StatelessWidget {
           child: Row(
             children: [
               _NavItem(
-                icon: Icons.home_outlined,
-                activeIcon: Icons.home_rounded,
-                label: 'Ana Sayfa',
-                active: activeTab == HomeBottomTab.home,
-                onTap: onHome,
-              ),
-              _NavItem(
                 icon: Icons.groups_outlined,
                 activeIcon: Icons.groups_rounded,
                 label: 'Sosyal',
                 active: activeTab == HomeBottomTab.social,
                 onTap: onSocial,
               ),
-              _CreateItem(
+              _NavItem(
+                icon: Icons.podcasts_outlined,
+                activeIcon: Icons.podcasts_rounded,
+                label: 'Canlı',
                 active: activeTab == HomeBottomTab.live,
-                onTap: onCreate,
-                onLongPress: onCreateLongPress,
+                onTap: onLive,
               ),
               _NavItem(
                 icon: Icons.auto_awesome_outlined,
                 activeIcon: Icons.auto_awesome_rounded,
-                label: 'Fal & Tarot',
+                label: 'Fal',
                 active: activeTab == HomeBottomTab.fortune,
                 onTap: onFortune,
-                onLongPress: onFortuneLongPress,
-                // Bildirim/mesaj rozeti buraya gelmez; hepsi Gelen Kutusu'nda.
+              ),
+              _NavItem(
+                icon: Icons.style_outlined,
+                activeIcon: Icons.style_rounded,
+                label: 'Tarot',
+                active: activeTab == HomeBottomTab.tarot,
+                onTap: onTarot,
               ),
               _NavItem(
                 icon: Icons.person_outline_rounded,
@@ -105,7 +101,7 @@ class BottomNavigationWidget extends StatelessWidget {
   }
 }
 
-enum HomeBottomTab { home, social, live, fortune, profile }
+enum HomeBottomTab { social, live, fortune, tarot, profile }
 
 Color _activeColor(BuildContext context) => context.isDarkTheme
     ? CanlifalBrandColors.violetBright

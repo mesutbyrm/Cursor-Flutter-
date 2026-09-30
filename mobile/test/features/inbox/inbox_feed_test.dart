@@ -20,7 +20,7 @@ void main() {
       expect(InboxTab.fromQuery('sistem'), InboxTab.system);
       expect(InboxTab.fromQuery('notifications'), InboxTab.system);
       expect(InboxTab.fromQuery('messages'), InboxTab.messages);
-      expect(InboxTab.fromQuery(null), InboxTab.messages);
+      expect(InboxTab.fromQuery(null), InboxTab.all);
       expect(InboxTab.fromQuery('all'), InboxTab.all);
     });
   });

@@ -28,6 +28,7 @@ class ChatComposer extends ConsumerWidget {
     required this.sending,
     this.onChanged,
     this.onAction,
+    this.onVoiceNote,
     this.tightBottomInset = false,
   });
 
@@ -36,6 +37,7 @@ class ChatComposer extends ConsumerWidget {
   final bool sending;
   final ValueChanged<String>? onChanged;
   final ValueChanged<DmComposerAction>? onAction;
+  final VoidCallback? onVoiceNote;
   /// Sohbet tam ekran (/chat) — alt navbar yokken fazla boşluk bırakma.
   final bool tightBottomInset;
 
@@ -269,11 +271,10 @@ class ChatComposer extends ConsumerWidget {
             const SizedBox(width: 8),
             Semantics(
               button: true,
-              label: 'Sesli fal isteği gönder',
+              label: 'Sesli mesaj kaydet',
               child: IconButton.filled(
-              // Ses kaydı değil: sesli fal isteği mesajı gönderir.
-              tooltip: 'Sesli fal isteği gönder',
-              onPressed: () => onAction?.call(DmComposerAction.voiceFortune),
+              tooltip: 'Sesli mesaj',
+              onPressed: onVoiceNote,
               style: IconButton.styleFrom(
                 backgroundColor: AppThemeColors.accentPurple.withValues(alpha: 0.72),
               ),

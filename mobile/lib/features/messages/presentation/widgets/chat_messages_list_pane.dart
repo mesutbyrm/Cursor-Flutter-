@@ -16,7 +16,6 @@ class ChatMessagesListPane extends ConsumerStatefulWidget {
     required this.onScrollToEnd,
     this.onReply,
     this.onForward,
-    this.onQuickReply,
     this.onIncomingMessage,
   });
 
@@ -25,7 +24,6 @@ class ChatMessagesListPane extends ConsumerStatefulWidget {
   final VoidCallback onScrollToEnd;
   final ValueChanged<MessageEntity>? onReply;
   final ValueChanged<MessageEntity>? onForward;
-  final ValueChanged<String>? onQuickReply;
   final ValueChanged<MessageEntity>? onIncomingMessage;
 
   @override
@@ -116,8 +114,6 @@ class _ChatMessagesListPaneState extends ConsumerState<ChatMessagesListPane> {
       );
     }
 
-    final lastIncomingIndex = msgs.rows.lastIndexWhere((m) => !m.isMine);
-
     return ListView.builder(
       scrollCacheExtent: ScrollPerf.scrollCache(ScrollPerf.chatCacheExtent),
       controller: widget.scrollController,
@@ -167,9 +163,6 @@ class _ChatMessagesListPaneState extends ConsumerState<ChatMessagesListPane> {
             onForward: widget.onForward == null
                 ? null
                 : () => widget.onForward!(row),
-            showQuickReplies:
-                !row.isMine && idx == lastIncomingIndex && widget.onQuickReply != null,
-            onQuickReply: widget.onQuickReply,
           ),
         );
       },

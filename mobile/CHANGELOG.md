@@ -1,5 +1,24 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.659+710 (2026-09-30) — Gelen kutu, DM, Gold jeton, alt menü
+
+- **Ana sayfa:** “Seni beğenenler” ve “Popüler falcılar” bölümleri kaldırıldı
+- **Gelen kutusu:** varsayılan sekme “Tümü”; mesaj bildiriminde `senderId` SSE parse + doğru sohbet rotası
+- **DM:** hızlı cevaplar kaldırıldı; + menüsü ilgili ekranlara yönlendirir; mikrofon ile sesli mesaj (24 saat sonra gizlenir)
+- **Gold üyelik:** hesaptaki jeton ile satın alma (`paymentMethod: jeton`) ve ödeme sheet’inde jeton seçeneği
+- **Alt menü:** Sosyal · Canlı · Fal · Tarot · Profil; gelen kutusunda da görünür; geri tuşunda çıkış onayı
+- **Sesli oda sohbet:** mesaj POST yedek oda anahtarı düzeltmesi; PK süresi sunucu `endsAt` ile 10 sn sıçraması azaltıldı
+- Backend değişikliği yok
+
+## 1.0.658+709 (2026-09-30) — Canlı PK kontrolleri, sohbet, self-gift
+
+- **Canlı PK:** rakip panelinde X (bitir) + mikrofon (rakip sesi); yalnızca yayıncı görür; tek geri sayım skor şeridinde
+- **PK bitince:** `forceExitPk` ile her iki tarafta tekli yayına dönüş
+- **Hediye animasyonu:** PK sırasında skor şeridini kapatmaz (video bölgesinde)
+- **Sesli oda sohbet:** mesaj gönderiminde slug/cuid yedek anahtarı
+- **Self-gift:** sesli hediye panelinde Kendim + reciprocal atlama
+- Backend değişikliği yok
+
 ## 1.0.657+708 (2026-09-30) — Backend↔Flutter uyumluluk (PK sonuç + davet wire)
 
 - **PK status:** backend `live` → aktif sayım; `hostStreamId`/`guestStreamId` oda eşlemesi

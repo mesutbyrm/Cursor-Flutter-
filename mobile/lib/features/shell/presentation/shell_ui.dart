@@ -58,15 +58,59 @@ abstract final class ShellUi {
               ),
               const SizedBox(height: 12),
               ListTile(
+                leading: const Icon(Icons.card_giftcard_rounded, color: Colors.amber),
+                title: Text('Hediye', style: TextStyle(color: colors.onSurface)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  router.push('/live');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.toll_rounded, color: Colors.amber),
+                title: Text('Jeton', style: TextStyle(color: colors.onSurface)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  router.push('/jeton-store');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.auto_awesome_rounded, color: Colors.purpleAccent),
+                title: Text('Fal iste', style: TextStyle(color: colors.onSurface)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  router.push('/fortune');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.mic_rounded, color: Colors.pinkAccent),
+                title: Text('Sesli fal', style: TextStyle(color: colors.onSurface)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  router.push('/canli-falcilar');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.video_call_rounded, color: Colors.cyanAccent),
+                title: Text('Görüntülü fal', style: TextStyle(color: colors.onSurface)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  router.push('/canli-falcilar');
+                },
+              ),
+              ListTile(
                 leading: const Icon(Icons.videocam_rounded, color: Colors.redAccent),
-                title: Text('Canlı yayın aç', style: TextStyle(color: colors.onSurface)),
-                subtitle: Text(
-                  'Kamera veya ekran yayını başlat',
-                  style: TextStyle(color: colors.onSurfaceVariant),
-                ),
+                title: Text('Canlı yayın', style: TextStyle(color: colors.onSurface)),
                 onTap: () {
                   Navigator.pop(ctx);
                   router.push('/live/type');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.groups_rounded, color: Colors.tealAccent),
+                title: Text('Sesli oda', style: TextStyle(color: colors.onSurface)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  router.push('/voice-rooms');
                 },
               ),
               ListTile(

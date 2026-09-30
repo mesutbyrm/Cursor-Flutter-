@@ -91,8 +91,11 @@ class _NotificationsRealtimeListenerState
     final suppress = isMessageType && sender.isNotEmpty && sender == openDm;
     if (!suppress) {
       final target = notification.targetPath?.trim() ?? '';
+      final peerId = sender.isNotEmpty
+          ? sender
+          : (notification.targetId?.trim() ?? '');
       final route = isMessageType
-          ? (sender.isNotEmpty ? '/chat/$sender' : '/messages')
+          ? (peerId.isNotEmpty ? '/chat/$peerId' : '/messages')
           : (target.isNotEmpty ? target : '/notifications');
       final canManagePayments =
           ref.read(staffAccessProvider).canManagePayments;
@@ -106,9 +109,7 @@ class _NotificationsRealtimeListenerState
                   : InAppBannerKind.system,
               route: route,
               avatarUrl: notification.imageUrl,
-              // Sistem bildirimleri (ödeme talebi vb.) kanonik yönlendirmeyle
-              // admin onay alanına gitsin; mesajlar sohbete.
-              notification: isMessageType ? null : notification,
+              notification: notification,
               staffCanManagePayments: canManagePayments,
             ),
           );

@@ -251,6 +251,11 @@ String? _routeFromTypeAndText(
       return '/canli-falcilar';
     case 'message':
     case 'chat':
+    case 'dm':
+    case 'direct_message':
+      if (n.senderId != null && n.senderId!.isNotEmpty) {
+        return '/chat/${n.senderId}';
+      }
       if (n.targetId != null && n.targetId!.isNotEmpty) {
         return '/chat/${n.targetId}';
       }
@@ -345,6 +350,9 @@ String? _routeFromTypeAndText(
     return '/voice-rooms';
   }
   if (text.contains('mesaj') || text.contains('sohbet')) {
+    if (n.senderId != null && n.senderId!.isNotEmpty) {
+      return '/chat/${n.senderId}';
+    }
     if (n.targetId != null && n.targetId!.isNotEmpty) {
       return '/chat/${n.targetId}';
     }

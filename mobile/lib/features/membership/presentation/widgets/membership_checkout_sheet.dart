@@ -4,10 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../profile/presentation/widgets/payment_methods_summary_line.dart';
 import '../../domain/membership_model.dart';
 
-enum MembershipCheckoutChoice { externalPayment, cfcPayment }
+enum MembershipCheckoutChoice { jetonWallet, externalPayment, cfcPayment }
 
 /// Jeton yetersizken üyelik ödeme yolu seçimi.
 Future<MembershipCheckoutChoice?> showMembershipCheckoutSheet(
@@ -27,6 +28,9 @@ Future<MembershipCheckoutChoice?> showMembershipCheckoutSheet(
         builder: (context, ref, _) {
           final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
           final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
+          final wallet = ref.watch(walletBalancesProvider).valueOrNull;
+          final jetonBal = wallet?.jeton ?? 0;
+          final hasJeton = priceJeton > 0 && jetonBal >= priceJeton;
           return SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
@@ -62,6 +66,22 @@ Future<MembershipCheckoutChoice?> showMembershipCheckoutSheet(
                     ),
                   ),
                   const SizedBox(height: 18),
+                  _OptionTile(
+                    icon: Icons.toll_rounded,
+                    color: AppThemeColors.coinGold,
+                    title: 'Hesaptaki $jetonLabel ile al',
+                    subtitle: hasJeton
+                        ? 'Bakiyeniz: $jetonBal $jetonLabel · gerekli: $priceJeton $jetonLabel'
+                        : 'Bakiye yetersiz ($jetonBal / $priceJeton $jetonLabel)',
+                    enabled: hasJeton,
+                    onTap: hasJeton
+                        ? () => Navigator.pop(
+                              ctx,
+                              MembershipCheckoutChoice.jetonWallet,
+                            )
+                        : null,
+                  ),
+                  const SizedBox(height: 10),
                   _OptionTile(
                     icon: Icons.credit_card_rounded,
                     color: MembershipCatalogData.gold,

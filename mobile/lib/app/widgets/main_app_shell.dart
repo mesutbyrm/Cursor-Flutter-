@@ -34,7 +34,9 @@ import '../router/app_router.dart';
 import '../../core/network/sse/connectivity_sse_reconnect_provider.dart';
 import '../../core/network/sse/sse_hub_provider.dart';
 import '../../core/sse_client_provider.dart';
+import '../../core/widgets/exit_confirm_dialog.dart';
 import '../../core/widgets/offline_status_banner.dart';
+import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/gifts/presentation/providers/gift_catalog_version_watcher.dart';
 import '../../features/notifications/presentation/widgets/notifications_realtime_listener.dart';
 import '../../features/inbox/presentation/widgets/global_in_app_banner_host.dart';
@@ -162,7 +164,22 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
       body = AppBottomNavHost(location: location, child: body);
     }
 
-    return OfflineStatusBanner(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        if (router.canPop()) {
+          router.pop();
+          return;
+        }
+        await handleShellBackPress(
+          context,
+          onLogout: () async {
+            await ref.read(authControllerProvider.notifier).logout();
+          },
+        );
+      },
+      child: OfflineStatusBanner(
       child: SiteAnimationContextHost(
         context: SiteAnimationContext.social,
         child: SiteAnimationSocialEntranceListener(
@@ -187,6 +204,7 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
             ),
           ),
         ),
+      ),
       ),
     );
   }

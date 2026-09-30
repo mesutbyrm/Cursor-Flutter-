@@ -69,8 +69,35 @@ class NotificationsSseService extends BaseSseService {
         'refId',
         'sessionId',
         'session_id',
+        'conversationId',
       ])?.toString(),
+      imageUrl: pick(json, [
+        'imageUrl',
+        'image',
+        'avatar',
+        'avatarUrl',
+        'iconUrl',
+        'thumbnail',
+      ])?.toString(),
+      senderId: _senderIdFromNotificationJson(json),
     );
+  }
+
+  static String? _senderIdFromNotificationJson(Map<String, dynamic> json) {
+    final direct = pick(json, [
+      'senderId',
+      'userId',
+      'actorId',
+      'fromUserId',
+    ])?.toString();
+    if (direct != null && direct.trim().isNotEmpty) return direct.trim();
+    final sender = pick(json, ['sender', 'from', 'actor', 'user']);
+    if (sender is Map) {
+      final map = Map<String, dynamic>.from(sender);
+      final nested = pick(map, ['id', 'userId', '_id'])?.toString();
+      if (nested != null && nested.trim().isNotEmpty) return nested.trim();
+    }
+    return null;
   }
 
   @override

@@ -63,10 +63,15 @@ class ChatMessagesListNotifier
             .where((m) => m.id.startsWith('local-'))
             .toList() ??
         const <MessageEntity>[];
-    final all = DmMessageDedupe.merge(
+    var all = DmMessageDedupe.merge(
       remote: remote,
       localOptimistic: optimistic,
     );
+    all = all.where((m) {
+      final note = DmMessageCodec.parseVoiceNote(m.text);
+      if (note == null) return true;
+      return !DmMessageCodec.isExpiredVoiceNote(note);
+    }).toList();
     var visible = all.length;
     if (previous != null && all.length > previous.all.length) {
       visible = all.length;

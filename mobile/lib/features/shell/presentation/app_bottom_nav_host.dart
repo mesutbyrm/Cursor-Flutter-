@@ -46,7 +46,14 @@ class AppBottomNavHost extends ConsumerWidget {
 
   static bool shellHasBottomNav(String location) {
     final path = Uri.tryParse(location)?.path ?? location;
-    const roots = ['/feed', '/social', '/live', '/fortune', '/profile'];
+    const roots = [
+      '/feed',
+      '/social',
+      '/live',
+      '/fortune',
+      '/profile',
+      '/messages',
+    ];
     for (final root in roots) {
       if (path == root || path.startsWith('$root/')) return true;
     }
@@ -60,6 +67,7 @@ class AppBottomNavHost extends ConsumerWidget {
   }
 
   static HomeBottomTab activeTabFor(String location) {
+    if (location.contains('type=tarot')) return HomeBottomTab.tarot;
     final path = Uri.tryParse(location)?.path ?? location;
     if (path.startsWith('/social') || path.startsWith('/shorts')) {
       return HomeBottomTab.social;
@@ -71,13 +79,11 @@ class AppBottomNavHost extends ConsumerWidget {
         path.startsWith('/wallet')) {
       return HomeBottomTab.fortune;
     }
-    if (path.startsWith('/messages') ||
-        path.startsWith('/notifications') ||
-        path.startsWith('/content-hub') ||
-        path.startsWith('/chat/')) {
-      return HomeBottomTab.home;
+    if (path.startsWith('/messages') || path.startsWith('/notifications')) {
+      return HomeBottomTab.social;
     }
-    return HomeBottomTab.home;
+    if (path.contains('type=tarot')) return HomeBottomTab.tarot;
+    return HomeBottomTab.social;
   }
 
   static void showCreateSheet(BuildContext context, GoRouter router) {
@@ -96,10 +102,10 @@ class AppBottomNavHost extends ConsumerWidget {
 
     if (useRail) {
       final railIndex = switch (tab) {
-        HomeBottomTab.home => 0,
-        HomeBottomTab.social => 1,
-        HomeBottomTab.live => 2,
-        HomeBottomTab.fortune => 3,
+        HomeBottomTab.social => 0,
+        HomeBottomTab.live => 1,
+        HomeBottomTab.fortune => 2,
+        HomeBottomTab.tarot => 3,
         HomeBottomTab.profile => 4,
       };
       return ColoredBox(
@@ -111,13 +117,13 @@ class AppBottomNavHost extends ConsumerWidget {
               onDestinationSelected: (i) {
                 switch (i) {
                   case 0:
-                    router.go('/feed');
-                  case 1:
                     router.go('/social');
+                  case 1:
+                    router.go('/live');
                   case 2:
-                    AppBottomNavHost.showCreateSheet(context, router);
-                  case 3:
                     router.go('/fortune');
+                  case 3:
+                    router.go('/fortune?type=tarot');
                   case 4:
                     router.go('/profile');
                 }
@@ -127,24 +133,24 @@ class AppBottomNavHost extends ConsumerWidget {
               labelType: NavigationRailLabelType.selected,
               destinations: const [
                 NavigationRailDestination(
-                  icon: Icon(Icons.home_outlined),
-                  selectedIcon: Icon(Icons.home_rounded),
-                  label: Text('Ana'),
-                ),
-                NavigationRailDestination(
                   icon: Icon(Icons.groups_outlined),
                   selectedIcon: Icon(Icons.groups_rounded),
                   label: Text('Sosyal'),
                 ),
                 NavigationRailDestination(
-                  icon: Icon(Icons.mic_none_rounded),
-                  selectedIcon: Icon(Icons.mic_rounded),
+                  icon: Icon(Icons.podcasts_outlined),
+                  selectedIcon: Icon(Icons.podcasts_rounded),
                   label: Text('Canlı'),
                 ),
                 NavigationRailDestination(
                   icon: Icon(Icons.auto_awesome_outlined),
                   selectedIcon: Icon(Icons.auto_awesome_rounded),
                   label: Text('Fal'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.style_outlined),
+                  selectedIcon: Icon(Icons.style_rounded),
+                  label: Text('Tarot'),
                 ),
                 NavigationRailDestination(
                   icon: Icon(Icons.person_outline),
@@ -167,12 +173,10 @@ class AppBottomNavHost extends ConsumerWidget {
           Expanded(child: child),
           BottomNavigationWidget(
             activeTab: tab,
-            onHome: () => router.go('/feed'),
             onSocial: () => router.go('/social'),
-            onCreate: () => AppBottomNavHost.showCreateSheet(context, router),
-            onCreateLongPress: () =>
-                AppBottomNavHost.showCreateSheet(context, router),
+            onLive: () => router.go('/live'),
             onFortune: () => router.go('/fortune'),
+            onTarot: () => router.go('/fortune?type=tarot'),
             onProfile: () => router.go('/profile'),
           ),
         ],
