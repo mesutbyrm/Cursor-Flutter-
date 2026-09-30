@@ -66,6 +66,13 @@ bash scripts/psychic-p0-checklist.sh
 
 Kritik satır: **T+5s** — eski bug burada donuyordu.
 
+### 3.1 Sesli oda PK + presence (2 telefon, ek)
+
+Canlı falcı testine **ek** veya ayrı oturum: çapraz PK modal, aktif PK ekranı, presence hayalet.
+
+→ Adım adım: [`VOICE_PK_PRESENCE_P0_TEST.md`](VOICE_PK_PRESENCE_P0_TEST.md)  
+Sonuç: agent’a `Voice PK P0 PASS` veya `Voice PK P0 FAIL …`
+
 ---
 
 ## 4. Sonuç bildirimi
