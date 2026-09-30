@@ -41,18 +41,23 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
     });
   }
 
-  HomeBottomTab _activeTab(int shellIndex) {
+  HomeBottomTab _activeTab(BuildContext context, int shellIndex) {
+    if (shellIndex == 3) {
+      final type = GoRouterState.of(context).uri.queryParameters['type'];
+      if (type == 'tarot') return HomeBottomTab.tarot;
+      return HomeBottomTab.fortune;
+    }
     switch (shellIndex) {
+      case 0:
+        return HomeBottomTab.home;
       case 1:
         return HomeBottomTab.social;
       case 2:
         return HomeBottomTab.live;
-      case 3:
-        return HomeBottomTab.fortune;
       case 4:
         return HomeBottomTab.profile;
       default:
-        return HomeBottomTab.social;
+        return HomeBottomTab.home;
     }
   }
 
@@ -106,9 +111,11 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
         backgroundColor: ShellUi.shellBackground(context),
         body: widget.navigationShell,
         bottomNavigationBar: BottomNavigationWidget(
-          activeTab: _activeTab(widget.navigationShell.currentIndex),
+          activeTab: _activeTab(context, widget.navigationShell.currentIndex),
+          onHome: () => _goBranch(0),
           onSocial: () => _goBranch(1),
           onLive: () => _goBranch(2),
+          onCreate: () => context.push('/shorts/upload'),
           onFortune: () => context.go('/fortune'),
           onTarot: () => context.go('/fortune?type=tarot'),
           onProfile: () => _goBranch(4),

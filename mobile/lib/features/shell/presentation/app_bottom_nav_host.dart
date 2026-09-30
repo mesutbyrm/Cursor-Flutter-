@@ -44,6 +44,7 @@ class AppBottomNavHost extends ConsumerWidget {
     return false;
   }
 
+  /// Shell içinde zaten alt bar olan kök rotalar — overlay gösterme.
   static bool shellHasBottomNav(String location) {
     final path = Uri.tryParse(location)?.path ?? location;
     const roots = [
@@ -52,7 +53,6 @@ class AppBottomNavHost extends ConsumerWidget {
       '/live',
       '/fortune',
       '/profile',
-      '/messages',
     ];
     for (final root in roots) {
       if (path == root || path.startsWith('$root/')) return true;
@@ -67,8 +67,16 @@ class AppBottomNavHost extends ConsumerWidget {
   }
 
   static HomeBottomTab activeTabFor(String location) {
-    if (location.contains('type=tarot')) return HomeBottomTab.tarot;
-    final path = Uri.tryParse(location)?.path ?? location;
+    final uri = Uri.tryParse(location);
+    final path = uri?.path ?? location;
+    if (path.startsWith('/shorts/upload')) return HomeBottomTab.create;
+    if (uri?.queryParameters['type'] == 'tarot' ||
+        location.contains('type=tarot')) {
+      return HomeBottomTab.tarot;
+    }
+    if (path == '/feed' || path.startsWith('/feed/')) {
+      return HomeBottomTab.home;
+    }
     if (path.startsWith('/social') || path.startsWith('/shorts')) {
       return HomeBottomTab.social;
     }
@@ -82,8 +90,7 @@ class AppBottomNavHost extends ConsumerWidget {
     if (path.startsWith('/messages') || path.startsWith('/notifications')) {
       return HomeBottomTab.social;
     }
-    if (path.contains('type=tarot')) return HomeBottomTab.tarot;
-    return HomeBottomTab.social;
+    return HomeBottomTab.home;
   }
 
   static void showCreateSheet(BuildContext context, GoRouter router) {
@@ -102,11 +109,13 @@ class AppBottomNavHost extends ConsumerWidget {
 
     if (useRail) {
       final railIndex = switch (tab) {
-        HomeBottomTab.social => 0,
-        HomeBottomTab.live => 1,
-        HomeBottomTab.fortune => 2,
-        HomeBottomTab.tarot => 3,
-        HomeBottomTab.profile => 4,
+        HomeBottomTab.home => 0,
+        HomeBottomTab.social => 1,
+        HomeBottomTab.live => 2,
+        HomeBottomTab.create => 3,
+        HomeBottomTab.fortune => 4,
+        HomeBottomTab.tarot => 5,
+        HomeBottomTab.profile => 6,
       };
       return ColoredBox(
         color: ShellUi.shellBackground(context),
@@ -117,14 +126,18 @@ class AppBottomNavHost extends ConsumerWidget {
               onDestinationSelected: (i) {
                 switch (i) {
                   case 0:
-                    router.go('/social');
+                    router.go('/feed');
                   case 1:
-                    router.go('/live');
+                    router.go('/social');
                   case 2:
-                    router.go('/fortune');
+                    router.go('/live');
                   case 3:
-                    router.go('/fortune?type=tarot');
+                    router.push('/shorts/upload');
                   case 4:
+                    router.go('/fortune');
+                  case 5:
+                    router.go('/fortune?type=tarot');
+                  case 6:
                     router.go('/profile');
                 }
               },
@@ -132,6 +145,11 @@ class AppBottomNavHost extends ConsumerWidget {
               indicatorColor: context.colors.primary.withValues(alpha: 0.2),
               labelType: NavigationRailLabelType.selected,
               destinations: const [
+                NavigationRailDestination(
+                  icon: Icon(Icons.home_outlined),
+                  selectedIcon: Icon(Icons.home_rounded),
+                  label: Text('Ana Sayfa'),
+                ),
                 NavigationRailDestination(
                   icon: Icon(Icons.groups_outlined),
                   selectedIcon: Icon(Icons.groups_rounded),
@@ -141,6 +159,11 @@ class AppBottomNavHost extends ConsumerWidget {
                   icon: Icon(Icons.podcasts_outlined),
                   selectedIcon: Icon(Icons.podcasts_rounded),
                   label: Text('Canlı'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.add_circle_outline),
+                  selectedIcon: Icon(Icons.add_circle),
+                  label: Text('Yükle'),
                 ),
                 NavigationRailDestination(
                   icon: Icon(Icons.auto_awesome_outlined),
@@ -173,8 +196,10 @@ class AppBottomNavHost extends ConsumerWidget {
           Expanded(child: child),
           BottomNavigationWidget(
             activeTab: tab,
+            onHome: () => router.go('/feed'),
             onSocial: () => router.go('/social'),
             onLive: () => router.go('/live'),
+            onCreate: () => router.push('/shorts/upload'),
             onFortune: () => router.go('/fortune'),
             onTarot: () => router.go('/fortune?type=tarot'),
             onProfile: () => router.go('/profile'),

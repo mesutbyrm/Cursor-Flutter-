@@ -25,8 +25,10 @@ void main() {
           body: const SizedBox.expand(),
           bottomNavigationBar: BottomNavigationWidget(
             activeTab: active,
+            onHome: () => taps.add('home'),
             onSocial: () => taps.add('social'),
             onLive: () => taps.add('live'),
+            onCreate: () => taps.add('create'),
             onFortune: () => taps.add('fortune'),
             onTarot: () => taps.add('tarot'),
             onProfile: () => taps.add('profile'),
@@ -41,14 +43,19 @@ void main() {
   testWidgets('her sekme kendi geri çağrısını tetikler', (tester) async {
     await tester.pumpWidget(host(theme: AppTheme.dark()));
 
+    await tester.tap(find.text('Ana Sayfa'));
     await tester.tap(find.text('Sosyal'));
     await tester.tap(find.text('Canlı'));
+    await tester.tap(find.text('Yükle'));
     await tester.tap(find.text('Fal'));
     await tester.tap(find.text('Tarot'));
     await tester.tap(find.text('Profil'));
     await tester.pumpAndSettle();
 
-    expect(taps, ['social', 'live', 'fortune', 'tarot', 'profile']);
+    expect(
+      taps,
+      ['home', 'social', 'live', 'create', 'fortune', 'tarot', 'profile'],
+    );
   });
 
   testWidgets('etkin sekme erişilebilirlikte seçili olarak bildirilir',

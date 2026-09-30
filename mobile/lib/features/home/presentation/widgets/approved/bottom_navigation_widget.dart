@@ -6,22 +6,26 @@ import '../../../../../core/motion/canlifal_motion_widgets.dart';
 import '../../../../../core/theme/app_theme_extensions.dart';
 import '../../../../../core/theme/canlifal_brand_colors.dart';
 
-/// Uygulama alt navigasyonu — antrasit zemin, hap göstergesi, ortada
-/// öne çıkan "Canlı" oluşturma butonu.
+/// Uygulama alt navigasyonu — ana sayfa, sosyal, canlı, ortada video yükleme,
+/// fal, tarot ve profil.
 class BottomNavigationWidget extends StatelessWidget {
   const BottomNavigationWidget({
     super.key,
     required this.activeTab,
+    required this.onHome,
     required this.onSocial,
     required this.onLive,
+    required this.onCreate,
     required this.onFortune,
     required this.onTarot,
     required this.onProfile,
   });
 
   final HomeBottomTab activeTab;
+  final VoidCallback onHome;
   final VoidCallback onSocial;
   final VoidCallback onLive;
+  final VoidCallback onCreate;
   final VoidCallback onFortune;
   final VoidCallback onTarot;
   final VoidCallback onProfile;
@@ -59,6 +63,14 @@ class BottomNavigationWidget extends StatelessWidget {
           child: Row(
             children: [
               _NavItem(
+                icon: Icons.home_outlined,
+                activeIcon: Icons.home_rounded,
+                label: 'Ana Sayfa',
+                shortLabel: true,
+                active: activeTab == HomeBottomTab.home,
+                onTap: onHome,
+              ),
+              _NavItem(
                 icon: Icons.groups_outlined,
                 activeIcon: Icons.groups_rounded,
                 label: 'Sosyal',
@@ -71,6 +83,10 @@ class BottomNavigationWidget extends StatelessWidget {
                 label: 'Canlı',
                 active: activeTab == HomeBottomTab.live,
                 onTap: onLive,
+              ),
+              _CreateItem(
+                active: activeTab == HomeBottomTab.create,
+                onTap: onCreate,
               ),
               _NavItem(
                 icon: Icons.auto_awesome_outlined,
@@ -101,7 +117,15 @@ class BottomNavigationWidget extends StatelessWidget {
   }
 }
 
-enum HomeBottomTab { social, live, fortune, tarot, profile }
+enum HomeBottomTab {
+  home,
+  social,
+  live,
+  create,
+  fortune,
+  tarot,
+  profile,
+}
 
 Color _activeColor(BuildContext context) => context.isDarkTheme
     ? CanlifalBrandColors.violetBright
@@ -115,6 +139,7 @@ class _NavItem extends StatelessWidget {
     required this.active,
     required this.onTap,
     this.onLongPress,
+    this.shortLabel = false,
   });
 
   final IconData icon;
@@ -123,6 +148,7 @@ class _NavItem extends StatelessWidget {
   final bool active;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
+  final bool shortLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -151,13 +177,13 @@ class _NavItem extends StatelessWidget {
               AnimatedContainer(
                 duration: CanlifalMotionTokens.normal,
                 curve: CanlifalMotionTokens.easeOut,
-                width: active ? 52 : 40,
-                height: 30,
+                width: active ? 48 : 36,
+                height: 28,
                 decoration: BoxDecoration(
                   color: active
                       ? activeColor.withValues(alpha: 0.16)
                       : Colors.transparent,
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 alignment: Alignment.center,
                 child: CanlifalNavIcon(
@@ -167,13 +193,13 @@ class _NavItem extends StatelessWidget {
                   inactiveColor: inactiveColor,
                 ),
               ),
-              const SizedBox(height: 3),
+              const SizedBox(height: 2),
               AnimatedDefaultTextStyle(
                 duration: CanlifalMotionTokens.micro,
                 style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                  fontSize: 10.5,
-                  height: 1.1,
-                  letterSpacing: 0.1,
+                  fontSize: shortLabel ? 9.5 : 10,
+                  height: 1.05,
+                  letterSpacing: 0,
                   fontWeight: active ? FontWeight.w800 : FontWeight.w600,
                   color: active ? context.colors.onSurface : inactiveColor,
                 ),
@@ -192,7 +218,7 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-/// Ortadaki oluşturma butonu — yayın/oda/gönderi açma sayfasını açar.
+/// Ortadaki video yükleme butonu.
 class _CreateItem extends StatelessWidget {
   const _CreateItem({
     required this.active,
@@ -216,7 +242,7 @@ class _CreateItem extends StatelessWidget {
       child: Semantics(
         button: true,
         selected: active,
-        label: 'Canlı — yayın veya oda başlat',
+        label: 'Video yükle',
         onTap: handleTap,
         onLongPress: onLongPress,
         excludeSemantics: true,
@@ -228,8 +254,8 @@ class _CreateItem extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 46,
-                height: 32,
+                width: 42,
+                height: 30,
                 decoration: BoxDecoration(
                   gradient: CanlifalBrandColors.primaryGradient,
                   borderRadius: BorderRadius.circular(12),
@@ -249,18 +275,18 @@ class _CreateItem extends StatelessWidget {
                 ),
                 child: const Icon(
                   Icons.add_rounded,
-                  size: 24,
+                  size: 22,
                   color: Colors.white,
                 ),
               ),
-              const SizedBox(height: 3),
+              const SizedBox(height: 2),
               Text(
-                'Canlı',
+                'Yükle',
                 maxLines: 1,
                 textScaler: _navTextScaler(context),
                 style: TextStyle(
-                  fontSize: 10.5,
-                  height: 1.1,
+                  fontSize: 9.5,
+                  height: 1.05,
                   fontWeight: active ? FontWeight.w800 : FontWeight.w600,
                   color: active
                       ? context.colors.onSurface
@@ -277,4 +303,4 @@ class _CreateItem extends StatelessWidget {
 
 /// Sabit yükseklikli barda taşmayı önlerken büyük yazı tercihini kısmen korur.
 TextScaler _navTextScaler(BuildContext context) =>
-    MediaQuery.textScalerOf(context).clamp(maxScaleFactor: 1.15);
+    MediaQuery.textScalerOf(context).clamp(maxScaleFactor: 1.12);

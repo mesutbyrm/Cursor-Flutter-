@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.661+712 (2026-09-30) — Alt menü: tek bar, 7 sekme, video yükle
+
+- **Alt menü:** Ana Sayfa · Sosyal · Canlı · ortada **Yükle (+)** · Fal · Tarot · Profil
+- **Kısa videolar:** üst üste çift alt bar kaldırıldı (yalnızca global overlay)
+- **Gelen kutusu / mesajlar:** shell dışı sayfalarda alt bar overlay ile gösterilir
+- Ortadaki + → `/shorts/upload` (video yükleme stüdyosu)
+- Backend değişikliği yok
+
 ## 1.0.660+711 (2026-09-30) — PK destek, takım üyeleri, falcı arama
 
 - **Sesli / canlı PK «Destekle»:** jetonsuz +3 izleyici puanı (kullanıcı başına en fazla 3); hediye seçici yerine destek akışı

@@ -22,8 +22,6 @@ import '../utils/shorts_feed_entries.dart';
 import '../widgets/shorts_feed_page_view.dart';
 import '../widgets/shorts_premium_theme.dart';
 import '../widgets/shorts_safe_settings_sheet.dart';
-import '../../../home/presentation/widgets/approved/bottom_navigation_widget.dart';
-import '../../../shell/presentation/app_bottom_nav_host.dart';
 
 /// TikTok tarzı dikey kısa video akışı — For You / Takip sekmeleri.
 class ShortsFeedPage extends ConsumerStatefulWidget {
@@ -98,17 +96,8 @@ class _ShortsFeedPageState extends ConsumerState<ShortsFeedPage> {
         const ShortsSafeSettings(restrictedMode: false, hideMature: true);
     final top = MediaQuery.paddingOf(context).top;
 
-    final router = GoRouter.of(context);
     return Scaffold(
       backgroundColor: ShortsPremiumTheme.feedBackground(context),
-      bottomNavigationBar: BottomNavigationWidget(
-        activeTab: HomeBottomTab.social,
-        onSocial: () => router.go('/social'),
-        onLive: () => router.go('/live'),
-        onFortune: () => router.go('/fortune'),
-        onTarot: () => router.go('/fortune?type=tarot'),
-        onProfile: () => router.go('/profile'),
-      ),
       body: feed.when(
         loading: () => Stack(
           children: [
