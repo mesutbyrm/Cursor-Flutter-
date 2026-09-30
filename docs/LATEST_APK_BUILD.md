@@ -4,23 +4,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.653+704` |
-| Tarih (UTC) | 2026-09-29 23:48 |
-| Commit | [`974d77229f561eda73ef63558fba6bbb166c9758`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/974d77229f561eda73ef63558fba6bbb166c9758) |
-| İş akışı | [Run 36645320386](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36645320386) |
+| Sürüm | `1.0.657+708` |
+| Tarih (UTC) | 2026-09-30 13:39 |
+| Commit | [`4cf33a9116de3da6d1f8f484033c0393741c7f50`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/4cf33a9116de3da6d1f8f484033c0393741c7f50) |
+| İş akışı | [Run 36720793299](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36720793299) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.653+704 (2026-09-29) — Backend (mesutbyrm/canlifal) sözleşme denetimi
+## 1.0.657+708 (2026-09-30) — Backend↔Flutter uyumluluk (PK sonuç + davet wire)
 
-Mobilin çağırdığı 475 uç backend kaynağıyla (yol, metot, gövde, eylem adı) karşılaştırıldı. Backend değişikliği yok.
-
-- **Canlı yayın misafir:** yayıncı daveti asıl misafir sistemine (`/api/live/guest` `invite`) taşındı; izleyici daveti `respond` + `inviteId` ile kabul/red ediyor (önceden 400/403). Onay gelince izleyici hemen misafir yayınına geçiyor (önceden 60 sn'ye kadar bekliyordu)
-- **Canlı yayın PK (video uçları):** `action`, `targetStreamId`, `duration` alanları backend'e uygun
-- **Sosyal:** gönderi JSON ile; görsel önce yüklenip `imageUrl` olarak gidiyor (multipart gönderim sunucuda başarısızdı). Video paylaşımı Kısa Videolar'a yönlendiriliyor
-- **E-posta doğrulama:** backend'de olmayan uçlar yerine `/api/auth/email/send-verification` ve `/api/auth/email/verify`
-- Sesli oda, canlı falcı, profil, fal & tarot: yol/metot/gövde uyumlu bulundu
+- **PK status:** backend `live` → aktif sayım; `hostStreamId`/`guestStreamId` oda eşlemesi
+- **PK sonuç:** `winnerSide` 1/2 ve `result` host/guest/draw → kazanan UI
+- **Presence:** join debug log sözdizimi düzeltmesi
+- **Dokümantasyon:** `BACKEND_FRONTEND_UYUMLULUK.md`, `BACKEND_YAPILACAKLAR.md`
+- Backend değişikliği yok
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
