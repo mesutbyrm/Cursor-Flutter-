@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.663+715 (2026-09-30) — Kalan UX tamamlama (PK, DM, jeton, Gold, falcı)
+
+- CI: DM notifier `ApiException` import düzeltmesi
+
 ## 1.0.663+714 (2026-09-30) — Kalan UX tamamlama (PK, DM, jeton, Gold, falcı)
 
 - **Canlı PK:** yayıncı alt barında PK bitir / rakip sesi (immersive dışı); skor/süre yoklama 5–10 sn; PK hediye paneli
