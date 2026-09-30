@@ -77,7 +77,7 @@ class _GlobalInAppBannerHostState extends ConsumerState<GlobalInAppBannerHost>
     final router = ref.read(goRouterProvider);
     final n = event.notification;
     if (n != null) {
-      final type = n.type.toLowerCase();
+      final type = (n.type ?? '').toLowerCase();
       if (type.contains('pk')) {
         ref.read(livePkInviteSignalProvider.notifier).bump();
       }
