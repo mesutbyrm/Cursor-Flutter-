@@ -92,6 +92,22 @@ jobs:
           echo "sha=$SHA" >> "$GITHUB_OUTPUT"
           echo "Build SHA: $SHA"
 
+      # Gecikmiş CI tetiklemesi eski commit ile apk-latest'i ezebilir — yalnızca main ucu.
+      - name: main ucu doğrula (workflow_run)
+        if: github.event_name == 'workflow_run'
+        working-directory: ${{ github.workspace }}
+        run: |
+          set -eux
+          git fetch origin main --depth=1
+          TIP="$(git rev-parse origin/main)"
+          HEAD="$(git rev-parse HEAD)"
+          if [[ "$HEAD" != "$TIP" ]]; then
+            echo "::error::CI commit ($HEAD) main ucunda değil ($TIP). Eski APK yayını engellendi — latest main için CI bekleyin veya workflow_dispatch çalıştırın."
+            exit 1
+          fi
+          echo "sha=$TIP" >> "$GITHUB_STEP_SUMMARY"
+          echo "Main tip OK: $TIP"
+
       - name: Disk alanı aç (runner ön-yüklü gereksiz paketler)
         continue-on-error: true
         timeout-minutes: 2

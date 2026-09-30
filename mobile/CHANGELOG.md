@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.664+717 (2026-09-30) — apk-latest düzeltme (güncel indirme)
+
+- **CI:** Gecikmiş workflow_run eski commit ile `apk-latest` yayınlayamaz (main ucu zorunlu)
+- **İçerik:** 1.0.663 paketi (PK, DM, jeton, Gold, alt menü, falcı video/ses) — apk-latest yeniden yüklenecek
+- Backend değişikliği yok
+
+## 1.0.663+716 (2026-09-30) — Kalan UX tamamlama (PK, DM, jeton, Gold, falcı)
+
+- Jeton talebi yalnızca kanonik `/api/payments/requests` + jeton yedek ucu; CI sözleşme testleri
+
 ## 1.0.663+715 (2026-09-30) — Kalan UX tamamlama (PK, DM, jeton, Gold, falcı)
 
 - CI: DM notifier `ApiException` import düzeltmesi
