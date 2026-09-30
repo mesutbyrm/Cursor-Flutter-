@@ -1,32 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../admin/presentation/providers/staff_access_provider.dart';
-import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../../profile/presentation/providers/profile_providers.dart';
-import '../../../../core/auth/staff_roles.dart';
 import '../../domain/gift_staff_finance_mode.dart';
 
-/// Admin, kurucu veya yönetici hediye atarken finans modu sorulsun.
-bool shouldAskGiftStaffFinanceMode(WidgetRef ref) {
-  final access = ref.read(staffAccessProvider);
-  if (access.isFounder || access.isSiteAdmin || access.canManageGifts) {
-    return true;
-  }
-  final role = ref.read(walletBalancesProvider).valueOrNull?.role?.toLowerCase();
-  if (role != null && StaffRoles.adminOrManager.contains(role)) {
-    return true;
-  }
-  final authRole = ref.read(authControllerProvider).valueOrNull?.role?.toLowerCase();
-  if (authRole != null && StaffRoles.adminOrManager.contains(authRole)) {
-    return true;
-  }
-  final username =
-      ref.read(authControllerProvider).valueOrNull?.username.toLowerCase();
-  return username != null &&
-      (StaffRoles.siteAdminUsernames.contains(username) ||
-          StaffRoles.founderUsernames.contains(username));
-}
+/// Staff jeton modu kapatıldı — tüm hediyeler normal jeton akışıyla alıcıya düşer.
+bool shouldAskGiftStaffFinanceMode(WidgetRef ref) => false;
 
 /// `null` = kullanıcı iptal etti.
 Future<GiftStaffFinanceMode?> showGiftStaffFinanceModeDialog(

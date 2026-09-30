@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.662+713 (2026-09-30) — Canlı PK, DM, jeton, alt menü
+
+- **Canlı PK:** yayıncı alt kontrollerde «PK bitir» ve «Rakip sesi»; PK sırasında hediye paneli; sohbette hediye satırları görünür
+- **Hediye:** staff jeton modu kapatıldı — hediyeler alıcıya normal düşer
+- **DM:** gönderim gövdesi `content` + `message` + `text` (karşı tarafa ulaşım)
+- **Jeton talebi:** `POST /api/payment/requests` yedek uçları; admin bildirimi; bekleyen talep 1 saat sonra yenile mesajı
+- **Gold:** CFC ödeme kaldırıldı; jeton ile satın alma uç yedekleri; üyelik sayfası gereksiz sekme sıçraması azaltıldı
+- **Alt menü:** Ana Sayfa · Sosyal · Sesli · animasyonlu kamera (+ canlı / video) · Fal&Tarot · Tanış · Profil; sesli odalar listesinde bar görünür
+- Backend değişikliği yok
+
 ## 1.0.661+712 (2026-09-30) — Alt menü: tek bar, 7 sekme, video yükle
 
 - **Alt menü:** Ana Sayfa · Sosyal · Canlı · ortada **Yükle (+)** · Fal · Tarot · Profil

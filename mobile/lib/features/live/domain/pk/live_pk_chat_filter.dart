@@ -1,17 +1,16 @@
 import '../../presentation/widgets/broadcast_room/live_room_chat_message.dart';
 
-/// PK overlay sohbet — sistem/PK/hediye satırlarını gizle.
+/// PK overlay sohbet — yalnızca PK sistem gürültüsünü gizle; hediyeler görünür.
 bool livePkChatMessageVisible(LiveRoomChatMessage message) {
   if (!message.isSystem) {
     final t = message.text.toLowerCase();
     if (_pkNoise(t)) return false;
-    if (_giftNoise(t)) return false;
     return true;
   }
   final t = message.text.toLowerCase();
-  if (_pkNoise(t) || _giftNoise(t)) return false;
+  if (_pkNoise(t)) return false;
   if (message.user == 'Sistem' || message.user.toLowerCase() == 'system') {
-    return !_giftNoise(t) && !_pkNoise(t);
+    return !_pkNoise(t);
   }
   return true;
 }

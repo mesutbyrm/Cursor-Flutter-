@@ -29,7 +29,6 @@ import '../widgets/common_benefits.dart';
 import '../widgets/feature_table.dart';
 import '../widgets/membership_card.dart';
 import '../widgets/membership_checkout_sheet.dart';
-import '../widgets/membership_cfc_checkout_flow.dart';
 import '../widgets/membership_pending_payment_banner.dart';
 import '../widgets/membership_checkout_footer_hint.dart';
 import '../widgets/membership_payment_methods_summary.dart';
@@ -349,11 +348,6 @@ class MembershipPage extends ConsumerWidget {
       if (await tryInstantPurchase(paymentMethod: 'jeton')) return;
     }
 
-    final cfcBal = wallet?.cfc ?? ui.cfcBalance;
-    if (cfcBal >= priceCfc && priceCfc > 0) {
-      if (await tryInstantPurchase(paymentMethod: 'cfc')) return;
-    }
-
     if (!context.mounted) return;
 
     List<PaymentMethodEntity> paymentMethods;
@@ -373,7 +367,7 @@ class MembershipPage extends ConsumerWidget {
       tier: tier,
       priceJeton: priceJeton,
       priceCfc: priceCfc,
-      cfcBalance: cfcBal,
+      cfcBalance: wallet?.cfc ?? ui.cfcBalance,
       externalMethodsLabel: externalLabel,
     );
     if (!context.mounted || choice == null) return;
@@ -382,27 +376,6 @@ class MembershipPage extends ConsumerWidget {
       if (await tryInstantPurchase(paymentMethod: 'jeton')) {
         onPurchaseDone();
       }
-      return;
-    }
-
-    if (choice == MembershipCheckoutChoice.cfcPayment) {
-      if (cfcBal >= priceCfc) {
-        final ok = await submitMembershipCfcInstant(
-          context,
-          ref,
-          tier: tier,
-          priceCfc: priceCfc,
-          onDone: onPurchaseDone,
-        );
-        if (ok) return;
-      }
-      if (!context.mounted) return;
-      await openMembershipCfcCheckoutFlow(
-        context,
-        ref,
-        tier: tier,
-        onDone: onPurchaseDone,
-      );
       return;
     }
 

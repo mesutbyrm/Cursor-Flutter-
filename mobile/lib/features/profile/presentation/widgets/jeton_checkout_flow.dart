@@ -474,6 +474,31 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
   }
 
   Future<void> _submitRequest({String? extraReceiptRef}) async {
+    final expired = ref
+        .read(paymentRequestsNotifierProvider.notifier)
+        .pendingJetonRequestOlderThanHour();
+    if (expired != null && mounted) {
+      final lastMsg = expired.notes?.trim().isNotEmpty == true
+          ? expired.notes!.trim()
+          : expired.senderInfo?.trim() ?? '';
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Jeton talebi süresi doldu'),
+          content: Text(
+            'Önceki talebiniz 1 saat içinde yanıtlanmadığı için kapandı.\n\n'
+            'Lütfen mesajınızı gözden geçirip yeniden gönderin.'
+            '${lastMsg.isNotEmpty ? '\n\nSon mesajınız:\n$lastMsg' : ''}',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Tamam'),
+            ),
+          ],
+        ),
+      );
+    }
     await ref
         .read(paymentRequestsNotifierProvider.notifier)
         .cancelExpiredPending();

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-
 import '../../../app/router/app_router.dart';
 import '../../../core/theme/app_theme_extensions.dart';
 import '../../../core/ui/responsive/responsive_layout.dart';
@@ -30,7 +28,6 @@ class AppBottomNavHost extends ConsumerWidget {
     }
     if (path.startsWith('/chat/')) return true;
     if (path.startsWith('/voice-room/')) return true;
-    if (path == '/voice-rooms' || path.startsWith('/voice-rooms/')) return true;
     if (path == '/live/room' || path.startsWith('/live/room/')) return true;
     if (path.contains('/session') && path.startsWith('/canli-falcilar')) {
       return true;
@@ -44,7 +41,6 @@ class AppBottomNavHost extends ConsumerWidget {
     return false;
   }
 
-  /// Shell içinde zaten alt bar olan kök rotalar — overlay gösterme.
   static bool shellHasBottomNav(String location) {
     final path = Uri.tryParse(location)?.path ?? location;
     const roots = [
@@ -70,9 +66,11 @@ class AppBottomNavHost extends ConsumerWidget {
     final uri = Uri.tryParse(location);
     final path = uri?.path ?? location;
     if (path.startsWith('/shorts/upload')) return HomeBottomTab.create;
-    if (uri?.queryParameters['type'] == 'tarot' ||
+    if (path.contains('tanis-kaynas')) return HomeBottomTab.meet;
+    if (path.startsWith('/fortune') ||
+        uri?.queryParameters['type'] == 'tarot' ||
         location.contains('type=tarot')) {
-      return HomeBottomTab.tarot;
+      return HomeBottomTab.fortuneTarot;
     }
     if (path == '/feed' || path.startsWith('/feed/')) {
       return HomeBottomTab.home;
@@ -80,21 +78,16 @@ class AppBottomNavHost extends ConsumerWidget {
     if (path.startsWith('/social') || path.startsWith('/shorts')) {
       return HomeBottomTab.social;
     }
-    if (path.startsWith('/live')) return HomeBottomTab.live;
+    if (path.startsWith('/voice-rooms')) return HomeBottomTab.voice;
+    if (path.startsWith('/live')) return HomeBottomTab.create;
     if (path.startsWith('/profile')) return HomeBottomTab.profile;
-    if (path.startsWith('/fortune') ||
-        path.startsWith('/jeton-store') ||
-        path.startsWith('/wallet')) {
-      return HomeBottomTab.fortune;
+    if (path.startsWith('/jeton-store') || path.startsWith('/wallet')) {
+      return HomeBottomTab.fortuneTarot;
     }
     if (path.startsWith('/messages') || path.startsWith('/notifications')) {
       return HomeBottomTab.social;
     }
     return HomeBottomTab.home;
-  }
-
-  static void showCreateSheet(BuildContext context, GoRouter router) {
-    ShellUi.showCreateSheet(context, router);
   }
 
   @override
@@ -111,10 +104,10 @@ class AppBottomNavHost extends ConsumerWidget {
       final railIndex = switch (tab) {
         HomeBottomTab.home => 0,
         HomeBottomTab.social => 1,
-        HomeBottomTab.live => 2,
+        HomeBottomTab.voice => 2,
         HomeBottomTab.create => 3,
-        HomeBottomTab.fortune => 4,
-        HomeBottomTab.tarot => 5,
+        HomeBottomTab.fortuneTarot => 4,
+        HomeBottomTab.meet => 5,
         HomeBottomTab.profile => 6,
       };
       return ColoredBox(
@@ -130,13 +123,13 @@ class AppBottomNavHost extends ConsumerWidget {
                   case 1:
                     router.go('/social');
                   case 2:
-                    router.go('/live');
+                    router.go('/voice-rooms');
                   case 3:
-                    router.push('/shorts/upload');
+                    ShellUi.showPublishNavSheet(context, router);
                   case 4:
                     router.go('/fortune');
                   case 5:
-                    router.go('/fortune?type=tarot');
+                    router.push('/social/tanis-kaynas');
                   case 6:
                     router.go('/profile');
                 }
@@ -156,24 +149,24 @@ class AppBottomNavHost extends ConsumerWidget {
                   label: Text('Sosyal'),
                 ),
                 NavigationRailDestination(
-                  icon: Icon(Icons.podcasts_outlined),
-                  selectedIcon: Icon(Icons.podcasts_rounded),
-                  label: Text('Canlı'),
+                  icon: Icon(Icons.headphones_rounded),
+                  selectedIcon: Icon(Icons.headphones),
+                  label: Text('Sesli'),
                 ),
                 NavigationRailDestination(
-                  icon: Icon(Icons.add_circle_outline),
-                  selectedIcon: Icon(Icons.add_circle),
-                  label: Text('Yükle'),
+                  icon: Icon(Icons.photo_camera_outlined),
+                  selectedIcon: Icon(Icons.photo_camera_rounded),
+                  label: Text('Yayın'),
                 ),
                 NavigationRailDestination(
                   icon: Icon(Icons.auto_awesome_outlined),
                   selectedIcon: Icon(Icons.auto_awesome_rounded),
-                  label: Text('Fal'),
+                  label: Text('Fal&Tarot'),
                 ),
                 NavigationRailDestination(
-                  icon: Icon(Icons.style_outlined),
-                  selectedIcon: Icon(Icons.style_rounded),
-                  label: Text('Tarot'),
+                  icon: Icon(Icons.favorite_outline),
+                  selectedIcon: Icon(Icons.favorite),
+                  label: Text('Tanış'),
                 ),
                 NavigationRailDestination(
                   icon: Icon(Icons.person_outline),
@@ -198,10 +191,10 @@ class AppBottomNavHost extends ConsumerWidget {
             activeTab: tab,
             onHome: () => router.go('/feed'),
             onSocial: () => router.go('/social'),
-            onLive: () => router.go('/live'),
-            onCreate: () => router.push('/shorts/upload'),
-            onFortune: () => router.go('/fortune'),
-            onTarot: () => router.go('/fortune?type=tarot'),
+            onVoice: () => router.go('/voice-rooms'),
+            onCreate: () => ShellUi.showPublishNavSheet(context, router),
+            onFortuneTarot: () => router.go('/fortune'),
+            onMeet: () => router.push('/social/tanis-kaynas'),
             onProfile: () => router.go('/profile'),
           ),
         ],

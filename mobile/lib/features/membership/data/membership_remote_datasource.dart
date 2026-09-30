@@ -38,13 +38,29 @@ class MembershipRemoteDataSource {
       throw const ApiException('Plan kimliği boş');
     }
     final method = paymentMethod?.trim();
-    await _dio.safePost<Map<String, dynamic>>(
+    final bodies = <Map<String, dynamic>>[
+      {'planId': id},
+      if (method != null && method.isNotEmpty)
+        {'planId': id, 'paymentMethod': method},
+      {'membershipId': id, if (method != null && method.isNotEmpty) 'paymentMethod': method},
+    ];
+    ApiException? last;
+    for (final path in [
       ApiEndpoints.membershipPurchase,
-      data: {
-        'planId': id,
-        if (method != null && method.isNotEmpty) 'paymentMethod': method,
-      },
-    );
+      '/api/membership/purchase',
+    ]) {
+      for (final data in bodies) {
+        try {
+          await _dio.safePost<Map<String, dynamic>>(path, data: data);
+          return;
+        } on ApiException catch (e) {
+          last = e;
+          if (e.statusCode == 404 || e.statusCode == 405) continue;
+          rethrow;
+        }
+      }
+    }
+    throw last ?? const ApiException('Üyelik satın alınamadı');
   }
 
   MembershipCatalogEntity? _parseResponse(dynamic data, WalletBalances wallet) {

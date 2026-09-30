@@ -132,6 +132,8 @@ class MembershipUiState {
 }
 
 class MembershipController extends Notifier<MembershipUiState> {
+  var _initialTierApplied = false;
+
   @override
   MembershipUiState build() {
     ref.listen<AsyncValue<WalletBalances>>(walletBalancesProvider, (_, next) {
@@ -176,9 +178,11 @@ class MembershipController extends Notifier<MembershipUiState> {
           apiPackages: cat.packages,
           jetonTlRate: ref.read(walletBalancesProvider).valueOrNull?.jetonTlRate ??
               kDefaultJetonTlRate,
-          selectedTier: initialTier,
-          selectedTokenPackage: initialTier,
+          selectedTier: _initialTierApplied ? state.selectedTier : initialTier,
+          selectedTokenPackage:
+              _initialTierApplied ? state.selectedTokenPackage : initialTier,
         );
+        _initialTierApplied = true;
       },
       fireImmediately: true,
     );

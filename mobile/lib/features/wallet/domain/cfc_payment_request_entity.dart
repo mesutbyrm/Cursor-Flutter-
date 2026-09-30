@@ -54,7 +54,7 @@ class CfcPaymentRequestEntity {
 
   DateTime? get expiresAt {
     final created = createdDate;
-    return created == null ? null : created.add(const Duration(hours: 24));
+    return created == null ? null : created.add(const Duration(hours: 1));
   }
 
   Duration? get timeLeft {

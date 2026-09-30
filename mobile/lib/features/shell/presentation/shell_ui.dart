@@ -22,6 +22,73 @@ abstract final class ShellUi {
   static Color bottomSheetBackground(BuildContext context) =>
       context.colors.bottomSheetBackground;
 
+  /// Alt bar (+) — yalnızca canlı yayın ve kısa video yükleme.
+  static void showPublishNavSheet(BuildContext context, GoRouter router) {
+    final colors = context.colors;
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: colors.bottomSheetBackground,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: colors.onSurfaceMuted.withValues(alpha: 0.35),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Yayın ve video',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                  color: colors.onSurface,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                leading: const Icon(Icons.videocam_rounded, color: Colors.redAccent),
+                title: Text('Canlı yayın aç', style: TextStyle(color: colors.onSurface)),
+                subtitle: Text(
+                  'Yayın türünü seç ve başlat',
+                  style: TextStyle(color: colors.onSurfaceVariant),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  router.push('/live/type');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.video_library_rounded, color: Colors.purpleAccent),
+                title: Text('Video yükle', style: TextStyle(color: colors.onSurface)),
+                subtitle: Text(
+                  'Kısa video paylaş',
+                  style: TextStyle(color: colors.onSurfaceVariant),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  router.push('/shorts/upload');
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   static void showCreateSheet(BuildContext context, GoRouter router) {
     final colors = context.colors;
     showModalBottomSheet<void>(

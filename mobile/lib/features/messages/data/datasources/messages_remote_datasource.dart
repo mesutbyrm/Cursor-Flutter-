@@ -174,13 +174,21 @@ class MessagesRemoteDataSource {
       if (Env.useMobileAuth) {
         await _dio.safePost(
           ApiEndpoints.messagesWithUser(peerUserId),
-          data: {'content': payload},
+          data: {
+            'content': payload,
+            'message': payload,
+            'text': payload,
+          },
         );
         return;
       }
       await _dio.safePost(
         ApiEndpoints.conversationMessages(peerUserId),
-        data: {'text': payload, 'content': payload},
+        data: {
+          'text': payload,
+          'content': payload,
+          'message': payload,
+        },
       );
     } on ApiException catch (e) {
       // Gizlilik ayarı nedeniyle doğrudan mesaj kapalıysa sunucu 403 +

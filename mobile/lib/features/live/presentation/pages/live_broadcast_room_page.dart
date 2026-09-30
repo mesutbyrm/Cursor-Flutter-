@@ -3215,7 +3215,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 onEndBroadcast: () => unawaited(_exitBroadcast(context)),
               ),
             if (giftCtrl.panelOpen &&
-                !pkImmersive &&
                 user != null &&
                 hasStream &&
                 broadcastSettings.giftsEnabled)

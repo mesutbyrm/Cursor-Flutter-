@@ -8,7 +8,7 @@ import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../profile/presentation/widgets/payment_methods_summary_line.dart';
 import '../../domain/membership_model.dart';
 
-enum MembershipCheckoutChoice { jetonWallet, externalPayment, cfcPayment }
+enum MembershipCheckoutChoice { jetonWallet, externalPayment }
 
 /// Jeton yetersizken üyelik ödeme yolu seçimi.
 Future<MembershipCheckoutChoice?> showMembershipCheckoutSheet(
@@ -19,7 +19,6 @@ Future<MembershipCheckoutChoice?> showMembershipCheckoutSheet(
   required int cfcBalance,
   String externalMethodsLabel = PaymentMethodsSummaryLine.externalCheckoutFallback,
 }) {
-  final hasCfc = cfcBalance >= priceCfc && priceCfc > 0;
   return CdsBottomSheet.show<MembershipCheckoutChoice>(
     context: context,
     child: Builder(
@@ -27,8 +26,7 @@ Future<MembershipCheckoutChoice?> showMembershipCheckoutSheet(
       return Consumer(
         builder: (context, ref, _) {
           final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
-          final cfcLabel = economyCurrencyLabel(ref, key: 'cfc');
-          final wallet = ref.watch(walletBalancesProvider).valueOrNull;
+          final wallet = ref.read(walletBalancesProvider).valueOrNull;
           final jetonBal = wallet?.jeton ?? 0;
           final hasJeton = priceJeton > 0 && jetonBal >= priceJeton;
           return SafeArea(
@@ -92,22 +90,6 @@ Future<MembershipCheckoutChoice?> showMembershipCheckoutSheet(
                       ctx,
                       MembershipCheckoutChoice.externalPayment,
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  _OptionTile(
-                    icon: Icons.auto_awesome_rounded,
-                    color: AppThemeColors.diamondBlue,
-                    title: '$cfcLabel ile öde',
-                    subtitle: hasCfc
-                        ? 'Bakiyeniz: $cfcBalance $cfcLabel · gerekli: $priceCfc $cfcLabel'
-                        : 'Bakiye yetersiz ($cfcBalance / $priceCfc $cfcLabel) — yükleme talebi',
-                    enabled: priceCfc > 0,
-                    onTap: priceCfc > 0
-                        ? () => Navigator.pop(
-                              ctx,
-                              MembershipCheckoutChoice.cfcPayment,
-                            )
-                        : null,
                   ),
                   const SizedBox(height: 12),
                   const PaymentMethodsSummaryLine(

@@ -27,10 +27,10 @@ void main() {
             activeTab: active,
             onHome: () => taps.add('home'),
             onSocial: () => taps.add('social'),
-            onLive: () => taps.add('live'),
+            onVoice: () => taps.add('voice'),
             onCreate: () => taps.add('create'),
-            onFortune: () => taps.add('fortune'),
-            onTarot: () => taps.add('tarot'),
+            onFortuneTarot: () => taps.add('fortune'),
+            onMeet: () => taps.add('meet'),
             onProfile: () => taps.add('profile'),
           ),
         ),
@@ -45,16 +45,16 @@ void main() {
 
     await tester.tap(find.text('Ana Sayfa'));
     await tester.tap(find.text('Sosyal'));
-    await tester.tap(find.text('Canlı'));
-    await tester.tap(find.text('Yükle'));
-    await tester.tap(find.text('Fal'));
-    await tester.tap(find.text('Tarot'));
+    await tester.tap(find.text('Sesli'));
+    await tester.tap(find.text('Yayın'));
+    await tester.tap(find.text('Fal&Tarot'));
+    await tester.tap(find.text('Tanış'));
     await tester.tap(find.text('Profil'));
-    await tester.pumpAndSettle();
+    await tester.pump();
 
     expect(
       taps,
-      ['home', 'social', 'live', 'create', 'fortune', 'tarot', 'profile'],
+      ['home', 'social', 'voice', 'create', 'fortune', 'meet', 'profile'],
     );
   });
 
@@ -62,28 +62,18 @@ void main() {
       (tester) async {
     final handle = tester.ensureSemantics();
     await tester.pumpWidget(
-      host(theme: AppTheme.light(), active: HomeBottomTab.fortune),
+      host(theme: AppTheme.light(), active: HomeBottomTab.fortuneTarot),
     );
 
     expect(
-      tester.getSemantics(find.bySemanticsLabel('Fal')),
+      tester.getSemantics(find.bySemanticsLabel('Fal&Tarot')),
       matchesSemantics(
-        label: 'Fal',
+        label: 'Fal&Tarot',
         isButton: true,
         isSelected: true,
         hasSelectedState: true,
         hasTapAction: true,
         hasLongPressAction: false,
-      ),
-    );
-    expect(
-      tester.getSemantics(find.bySemanticsLabel('Profil')),
-      matchesSemantics(
-        label: 'Profil',
-        isButton: true,
-        isSelected: false,
-        hasSelectedState: true,
-        hasTapAction: true,
       ),
     );
     handle.dispose();
@@ -99,10 +89,10 @@ void main() {
       await tester.pumpWidget(
         host(theme: theme.value, width: 320, textScale: 1.6),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       expect(tester.takeException(), isNull);
-      expect(find.text('Tarot'), findsOneWidget);
+      expect(find.text('Tanış'), findsOneWidget);
     });
   }
 

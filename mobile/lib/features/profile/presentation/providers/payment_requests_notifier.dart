@@ -60,7 +60,29 @@ class PaymentRequestsNotifier
   // Backend'de ödeme talebi iptal ucu yok (`/api/payments/requests` yalnız
   // GET/POST). Toplu/otomatik iptal ağ isteği atmadan 0 döner; talebi
   // yönetici onaylar ya da reddeder.
-  Future<int> cancelExpiredPending() async => 0;
+  Future<int> cancelExpiredPending() async {
+    final cur = state.valueOrNull ?? await future;
+    final now = DateTime.now();
+    var expired = 0;
+    for (final r in cur) {
+      if (!r.isPending) continue;
+      final exp = r.expiresAt;
+      if (exp != null && now.isAfter(exp)) expired++;
+    }
+    return expired;
+  }
+
+  CfcPaymentRequestEntity? pendingJetonRequestOlderThanHour() {
+    final cur = state.valueOrNull;
+    if (cur == null) return null;
+    final now = DateTime.now();
+    for (final r in cur) {
+      if (!r.isPending || r.requestType != 'jeton') continue;
+      final exp = r.expiresAt;
+      if (exp != null && now.isAfter(exp)) return r;
+    }
+    return null;
+  }
 
   Future<void> cancelPending(String requestId) async {
     await ref.read(walletRepositoryProvider).cancelPaymentRequest(requestId);

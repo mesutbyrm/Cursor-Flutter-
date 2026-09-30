@@ -6,28 +6,27 @@ import '../../../../../core/motion/canlifal_motion_widgets.dart';
 import '../../../../../core/theme/app_theme_extensions.dart';
 import '../../../../../core/theme/canlifal_brand_colors.dart';
 
-/// Uygulama alt navigasyonu — ana sayfa, sosyal, canlı, ortada video yükleme,
-/// fal, tarot ve profil.
+/// Alt navigasyon: Ana Sayfa · Sosyal · Sesli · (+ yayın/video) · Fal&Tarot · Tanış · Profil
 class BottomNavigationWidget extends StatelessWidget {
   const BottomNavigationWidget({
     super.key,
     required this.activeTab,
     required this.onHome,
     required this.onSocial,
-    required this.onLive,
+    required this.onVoice,
     required this.onCreate,
-    required this.onFortune,
-    required this.onTarot,
+    required this.onFortuneTarot,
+    required this.onMeet,
     required this.onProfile,
   });
 
   final HomeBottomTab activeTab;
   final VoidCallback onHome;
   final VoidCallback onSocial;
-  final VoidCallback onLive;
+  final VoidCallback onVoice;
   final VoidCallback onCreate;
-  final VoidCallback onFortune;
-  final VoidCallback onTarot;
+  final VoidCallback onFortuneTarot;
+  final VoidCallback onMeet;
   final VoidCallback onProfile;
 
   static const double barHeight = 62;
@@ -66,7 +65,7 @@ class BottomNavigationWidget extends StatelessWidget {
                 icon: Icons.home_outlined,
                 activeIcon: Icons.home_rounded,
                 label: 'Ana Sayfa',
-                shortLabel: true,
+                compact: true,
                 active: activeTab == HomeBottomTab.home,
                 onTap: onHome,
               ),
@@ -78,29 +77,30 @@ class BottomNavigationWidget extends StatelessWidget {
                 onTap: onSocial,
               ),
               _NavItem(
-                icon: Icons.podcasts_outlined,
-                activeIcon: Icons.podcasts_rounded,
-                label: 'Canlı',
-                active: activeTab == HomeBottomTab.live,
-                onTap: onLive,
+                icon: Icons.headphones_rounded,
+                activeIcon: Icons.headphones,
+                label: 'Sesli',
+                active: activeTab == HomeBottomTab.voice,
+                onTap: onVoice,
               ),
-              _CreateItem(
+              _CreateCameraItem(
                 active: activeTab == HomeBottomTab.create,
                 onTap: onCreate,
               ),
               _NavItem(
                 icon: Icons.auto_awesome_outlined,
                 activeIcon: Icons.auto_awesome_rounded,
-                label: 'Fal',
-                active: activeTab == HomeBottomTab.fortune,
-                onTap: onFortune,
+                label: 'Fal&Tarot',
+                compact: true,
+                active: activeTab == HomeBottomTab.fortuneTarot,
+                onTap: onFortuneTarot,
               ),
               _NavItem(
-                icon: Icons.style_outlined,
-                activeIcon: Icons.style_rounded,
-                label: 'Tarot',
-                active: activeTab == HomeBottomTab.tarot,
-                onTap: onTarot,
+                icon: Icons.favorite_outline_rounded,
+                activeIcon: Icons.favorite_rounded,
+                label: 'Tanış',
+                active: activeTab == HomeBottomTab.meet,
+                onTap: onMeet,
               ),
               _NavItem(
                 icon: Icons.person_outline_rounded,
@@ -120,10 +120,10 @@ class BottomNavigationWidget extends StatelessWidget {
 enum HomeBottomTab {
   home,
   social,
-  live,
+  voice,
   create,
-  fortune,
-  tarot,
+  fortuneTarot,
+  meet,
   profile,
 }
 
@@ -138,8 +138,7 @@ class _NavItem extends StatelessWidget {
     required this.label,
     required this.active,
     required this.onTap,
-    this.onLongPress,
-    this.shortLabel = false,
+    this.compact = false,
   });
 
   final IconData icon;
@@ -147,8 +146,7 @@ class _NavItem extends StatelessWidget {
   final String label;
   final bool active;
   final VoidCallback onTap;
-  final VoidCallback? onLongPress;
-  final bool shortLabel;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -166,24 +164,22 @@ class _NavItem extends StatelessWidget {
         selected: active,
         label: label,
         onTap: handleTap,
-        onLongPress: onLongPress,
         excludeSemantics: true,
         child: CanlifalPressable(
           onTap: handleTap,
-          onLongPress: onLongPress,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               AnimatedContainer(
                 duration: CanlifalMotionTokens.normal,
                 curve: CanlifalMotionTokens.easeOut,
-                width: active ? 48 : 36,
-                height: 28,
+                width: active ? 44 : 34,
+                height: 26,
                 decoration: BoxDecoration(
                   color: active
                       ? activeColor.withValues(alpha: 0.16)
                       : Colors.transparent,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(13),
                 ),
                 alignment: Alignment.center,
                 child: CanlifalNavIcon(
@@ -197,7 +193,7 @@ class _NavItem extends StatelessWidget {
               AnimatedDefaultTextStyle(
                 duration: CanlifalMotionTokens.micro,
                 style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                  fontSize: shortLabel ? 9.5 : 10,
+                  fontSize: compact ? 8.8 : 9.5,
                   height: 1.05,
                   letterSpacing: 0,
                   fontWeight: active ? FontWeight.w800 : FontWeight.w600,
@@ -218,77 +214,110 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-/// Ortadaki video yükleme butonu.
-class _CreateItem extends StatelessWidget {
-  const _CreateItem({
+/// Ortadaki animasyonlu kamera — canlı yayın + video yükle menüsü.
+class _CreateCameraItem extends StatefulWidget {
+  const _CreateCameraItem({
     required this.active,
     required this.onTap,
-    this.onLongPress,
   });
 
   final bool active;
   final VoidCallback onTap;
-  final VoidCallback? onLongPress;
+
+  @override
+  State<_CreateCameraItem> createState() => _CreateCameraItemState();
+}
+
+class _CreateCameraItemState extends State<_CreateCameraItem>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (TickerMode.of(context)) {
+      if (!_pulse.isAnimating) _pulse.repeat(reverse: true);
+    } else {
+      _pulse.stop();
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final dark = context.isDarkTheme;
     void handleTap() {
       HapticFeedback.lightImpact();
-      onTap();
+      widget.onTap();
     }
 
     return Expanded(
       child: Semantics(
         button: true,
-        selected: active,
-        label: 'Video yükle',
+        selected: widget.active,
+        label: 'Canlı yayın veya video yükle',
         onTap: handleTap,
-        onLongPress: onLongPress,
         excludeSemantics: true,
         child: CanlifalPressable(
           scale: 0.92,
           onTap: handleTap,
-          onLongPress: onLongPress,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 42,
-                height: 30,
-                decoration: BoxDecoration(
-                  gradient: CanlifalBrandColors.primaryGradient,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: dark ? 0.14 : 0.3),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: CanlifalBrandColors.violet.withValues(
-                        alpha: dark ? 0.45 : 0.3,
+              AnimatedBuilder(
+                animation: _pulse,
+                builder: (context, child) {
+                  final glow = 0.35 + _pulse.value * 0.25;
+                  return Container(
+                    width: 44,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      gradient: CanlifalBrandColors.primaryGradient,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: dark ? 0.2 : 0.35),
                       ),
-                      blurRadius: 14,
-                      spreadRadius: -4,
-                      offset: const Offset(0, 5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: CanlifalBrandColors.violet.withValues(alpha: glow),
+                          blurRadius: 16 + _pulse.value * 6,
+                          spreadRadius: -2,
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                    child: child,
+                  );
+                },
                 child: const Icon(
-                  Icons.add_rounded,
+                  Icons.photo_camera_rounded,
                   size: 22,
                   color: Colors.white,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
-                'Yükle',
+                'Yayın',
                 maxLines: 1,
                 textScaler: _navTextScaler(context),
                 style: TextStyle(
-                  fontSize: 9.5,
+                  fontSize: 8.8,
                   height: 1.05,
-                  fontWeight: active ? FontWeight.w800 : FontWeight.w600,
-                  color: active
+                  fontWeight: widget.active ? FontWeight.w800 : FontWeight.w600,
+                  color: widget.active
                       ? context.colors.onSurface
                       : context.colors.onSurfaceMuted,
                 ),
@@ -301,6 +330,5 @@ class _CreateItem extends StatelessWidget {
   }
 }
 
-/// Sabit yükseklikli barda taşmayı önlerken büyük yazı tercihini kısmen korur.
 TextScaler _navTextScaler(BuildContext context) =>
-    MediaQuery.textScalerOf(context).clamp(maxScaleFactor: 1.12);
+    MediaQuery.textScalerOf(context).clamp(maxScaleFactor: 1.1);

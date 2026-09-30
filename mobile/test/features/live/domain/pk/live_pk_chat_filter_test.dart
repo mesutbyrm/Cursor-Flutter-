@@ -17,7 +17,7 @@ void main() {
     );
   });
 
-  test('hides gift system lines', () {
+  test('shows gift lines in PK chat overlay', () {
     expect(
       livePkChatMessageVisible(
         LiveRoomChatMessage(
@@ -27,7 +27,7 @@ void main() {
           isSystem: true,
         ),
       ),
-      isFalse,
+      isTrue,
     );
   });
 

@@ -49,6 +49,7 @@ class LivePkBroadcastOverlay extends ConsumerWidget {
     final battle = pk.battle ?? const <String, dynamic>{};
     final pkActive = isLivePkBroadcastStage(battle, pk.status);
     final pkRunning = isLivePkActiveStatus(pk.status);
+    final oppId = opponentUserId.trim();
 
     final chromeBottom = LivePkLayoutMetrics.chromeReserve(context);
     final controlsHeight = LivePkLayoutMetrics.controlBarHeight +
@@ -112,7 +113,27 @@ class LivePkBroadcastOverlay extends ConsumerWidget {
                 label: 'Sohbet',
                 onTap: () => onChatOpenChanged(!chatOpen),
               ),
-              // PK bitir / rakip sesi — rakip video panelinde (yalnızca yayıncı).
+              if (isHost && pkRunning && oppId.isNotEmpty)
+                LivePkControlItem(
+                  icon: opponentMuted
+                      ? Icons.mic_off_rounded
+                      : Icons.mic_rounded,
+                  label: opponentMuted ? 'Ses kapalı' : 'Rakip sesi',
+                  onTap: () {
+                    final next = !opponentMuted;
+                    ref
+                        .read(livePkOpponentMutedProvider(streamId).notifier)
+                        .state = next;
+                    trtc.muteRemoteAudio(oppId, next);
+                  },
+                ),
+              if (isHost && pkRunning)
+                LivePkControlItem(
+                  icon: Icons.flag_rounded,
+                  label: 'PK bitir',
+                  danger: true,
+                  onTap: onEndPk,
+                ),
               if (isHost && !pkRunning)
                 LivePkControlItem(
                   icon: Icons.close_rounded,

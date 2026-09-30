@@ -29,8 +29,6 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
       index,
       initialLocation: index == widget.navigationShell.currentIndex,
     );
-    // Sekme geçişinde ekranda takılı kalmış hayalet barrier'ı temizle
-    // (kararmış sayfa + üstte panel + ölü tıklama sorunu).
     _schedulePurgeIfBlocked('branch-switch-$index');
   }
 
@@ -44,8 +42,8 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
   HomeBottomTab _activeTab(BuildContext context, int shellIndex) {
     if (shellIndex == 3) {
       final type = GoRouterState.of(context).uri.queryParameters['type'];
-      if (type == 'tarot') return HomeBottomTab.tarot;
-      return HomeBottomTab.fortune;
+      if (type == 'tarot') return HomeBottomTab.fortuneTarot;
+      return HomeBottomTab.fortuneTarot;
     }
     switch (shellIndex) {
       case 0:
@@ -53,7 +51,7 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
       case 1:
         return HomeBottomTab.social;
       case 2:
-        return HomeBottomTab.live;
+        return HomeBottomTab.voice;
       case 4:
         return HomeBottomTab.profile;
       default:
@@ -92,11 +90,13 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
       });
     }
 
+    final router = GoRouter.of(context);
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
-        if (GoRouter.of(context).canPop()) {
+        if (router.canPop()) {
           context.pop();
           return;
         }
@@ -114,10 +114,10 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
           activeTab: _activeTab(context, widget.navigationShell.currentIndex),
           onHome: () => _goBranch(0),
           onSocial: () => _goBranch(1),
-          onLive: () => _goBranch(2),
-          onCreate: () => context.push('/shorts/upload'),
-          onFortune: () => context.go('/fortune'),
-          onTarot: () => context.go('/fortune?type=tarot'),
+          onVoice: () => context.go('/voice-rooms'),
+          onCreate: () => ShellUi.showPublishNavSheet(context, router),
+          onFortuneTarot: () => context.go('/fortune'),
+          onMeet: () => context.push('/social/tanis-kaynas'),
           onProfile: () => _goBranch(4),
         ),
       ),
