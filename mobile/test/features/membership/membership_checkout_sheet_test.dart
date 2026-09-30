@@ -7,6 +7,7 @@ import 'package:canlifal_social/features/membership/presentation/widgets/members
 import 'package:canlifal_social/features/profile/domain/entities/payment_method_entity.dart';
 import 'package:canlifal_social/features/profile/presentation/providers/profile_providers.dart';
 import 'package:canlifal_social/features/profile/presentation/widgets/payment_methods_summary_line.dart';
+import 'package:canlifal_social/features/wallet/domain/wallet_balances.dart';
 
 void main() {
   const tier = MembershipTierModel(
@@ -26,6 +27,11 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            walletBalancesProvider.overrideWith(
+              () => _FixedWalletNotifier(
+                const WalletBalances(jeton: 5000, cfc: 100),
+              ),
+            ),
             paymentMethodsProvider.overrideWith(
               (ref) async => const [
                 PaymentMethodEntity(
@@ -68,10 +74,20 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Gold üyeliği · ödeme'), findsOneWidget);
+      expect(find.textContaining('Hesaptaki'), findsOneWidget);
       expect(find.textContaining('WhatsApp'), findsWidgets);
-      expect(find.text('CFC ile öde'), findsOneWidget);
+      expect(find.textContaining('ile öde'), findsWidgets);
       expect(find.textContaining('Bakiye yetersiz'), findsOneWidget);
       expect(find.textContaining('önerilen:'), findsNothing);
     });
   });
+}
+
+class _FixedWalletNotifier extends WalletBalancesNotifier {
+  _FixedWalletNotifier(this._wallet);
+
+  final WalletBalances _wallet;
+
+  @override
+  Future<WalletBalances> build() async => _wallet;
 }
