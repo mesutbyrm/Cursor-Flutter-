@@ -12,6 +12,7 @@ String normalizePkStatus(String? status) =>
 bool isLivePkActiveStatus(String? status) {
   final s = normalizePkStatus(status);
   return s == 'active' ||
+      s == 'live' ||
       s == 'started' ||
       s == 'in_progress' ||
       s == 'running';

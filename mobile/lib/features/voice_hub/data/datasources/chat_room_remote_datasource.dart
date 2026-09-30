@@ -571,7 +571,7 @@ class ChatRoomRemoteDataSource {
             'roomId': key,
             'status': res.statusCode,
             'count': list.length,
-            'seatIndex': ?seatIndex,
+            if (seatIndex != null) 'seatIndex': seatIndex,
             'bodyKeys': body.keys.toList(),
           });
           return list;

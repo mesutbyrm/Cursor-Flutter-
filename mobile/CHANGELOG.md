@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.657+708 (2026-09-30) — Backend↔Flutter uyumluluk (PK sonuç + davet wire)
+
+- **PK status:** backend `live` → aktif sayım; `hostStreamId`/`guestStreamId` oda eşlemesi
+- **PK sonuç:** `winnerSide` 1/2 ve `result` host/guest/draw → kazanan UI
+- **Presence:** join debug log sözdizimi düzeltmesi
+- **Dokümantasyon:** `BACKEND_FRONTEND_UYUMLULUK.md`, `BACKEND_YAPILACAKLAR.md`
+- Backend değişikliği yok
+
 ## 1.0.656+707 (2026-09-30) — PK parity kalan: 1v1 etiket, aktif ekran, hedef kutlama
 
 - **1v1 PK HUD:** Biz/Onlar veya 1./2. Takım etiketleri (isim üstü küçük başlık)

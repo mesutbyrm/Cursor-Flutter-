@@ -245,13 +245,23 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
 
     PkBattleWinner winner = PkBattleWinner.none;
     if (remote.isEnded && remote.result != null) {
-      final side = remote.result!.winnerSide;
-      if (side == 'tie') {
+      final side = remote.result!.winnerSide?.toLowerCase().trim();
+      if (side == 'tie' || side == 'draw') {
         winner = PkBattleWinner.tie;
-      } else if (side == 'challenger') {
+      } else if (side == 'challenger' || side == 'host' || side == '1' || side == 'left') {
         winner = swapSides ? PkBattleWinner.right : PkBattleWinner.left;
-      } else if (side == 'opponent') {
+      } else if (side == 'opponent' || side == 'guest' || side == '2' || side == 'right') {
         winner = swapSides ? PkBattleWinner.left : PkBattleWinner.right;
+      } else if (remote.winnerId != null &&
+          remote.winnerId!.trim().isNotEmpty) {
+        final wid = remote.winnerId!.trim();
+        final leftId = (swapSides ? remote.opponentId : remote.challengerId)?.trim();
+        final rightId = (swapSides ? remote.challengerId : remote.opponentId)?.trim();
+        if (wid == leftId) {
+          winner = PkBattleWinner.left;
+        } else if (wid == rightId) {
+          winner = PkBattleWinner.right;
+        }
       }
     }
 

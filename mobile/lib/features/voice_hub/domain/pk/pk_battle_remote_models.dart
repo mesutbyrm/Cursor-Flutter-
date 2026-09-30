@@ -105,11 +105,13 @@ class PkBattleRemote extends Equatable {
     }
 
     setIfEmpty('voiceRoomId', json['stream1Id']);
+    setIfEmpty('voiceRoomId', json['hostStreamId']);
     setIfEmpty('voiceRoomId', json['room1Id']);
     setIfEmpty('voiceRoomId', json['challengerRoomId']);
     setIfEmpty('voiceRoomId', nestedRoomId(json['room1']));
 
     setIfEmpty('opponentVoiceRoomId', json['stream2Id']);
+    setIfEmpty('opponentVoiceRoomId', json['guestStreamId']);
     setIfEmpty('opponentVoiceRoomId', json['room2Id']);
     setIfEmpty('opponentVoiceRoomId', json['opponentRoomId']);
     setIfEmpty('opponentVoiceRoomId', json['targetRoomId']);
@@ -148,6 +150,7 @@ class PkBattleRemote extends Equatable {
         '';
     final id = rawId.isNotEmpty ? rawId : (invite ?? '');
     var status = (normalized['status']?.toString() ?? 'pending').toLowerCase();
+    if (status == 'live') status = 'active';
     final battleType = normalized['battleType']?.toString() ?? 'voice_room';
     final scope = normalized['scope']?.toString().toLowerCase() ?? '';
     final isVoiceScope = battleType.contains('voice') ||
@@ -353,13 +356,55 @@ class PkResultRemote extends Equatable {
   final bool championBadge;
 
   factory PkResultRemote.fromJson(Map<String, dynamic> json) {
+    final score1 = PkBattleRemote._int(json['score1']);
+    final score2 = PkBattleRemote._int(json['score2']);
+    var challengerFinal = PkBattleRemote._int(json['challengerFinalScore']);
+    var opponentFinal = PkBattleRemote._int(json['opponentFinalScore']);
+    if (challengerFinal == 0 && opponentFinal == 0 && (score1 > 0 || score2 > 0)) {
+      challengerFinal = score1;
+      opponentFinal = score2;
+    }
+
+    String? winnerSide = _normalizeWinnerSide(json);
+    if (json['isDraw'] == true) winnerSide = 'tie';
+
     return PkResultRemote(
       winnerId: json['winnerId']?.toString(),
-      winnerSide: json['winnerSide']?.toString(),
-      challengerFinalScore: PkBattleRemote._int(json['challengerFinalScore']),
-      opponentFinalScore: PkBattleRemote._int(json['opponentFinalScore']),
+      winnerSide: winnerSide,
+      challengerFinalScore: challengerFinal,
+      opponentFinalScore: opponentFinal,
       championBadge: json['championBadge'] != false,
     );
+  }
+
+  /// Backend: `winnerSide` 1|2, `result` host|guest|draw, birleşik PK `leftScore`.
+  static String? _normalizeWinnerSide(Map<String, dynamic> json) {
+    if (json['isDraw'] == true) return 'tie';
+    final result = json['result']?.toString().toLowerCase().trim();
+    if (result == 'draw' || result == 'tie') return 'tie';
+    if (result == 'host' || result == 'challenger' || result == 'left_win') {
+      return 'challenger';
+    }
+    if (result == 'guest' || result == 'opponent' || result == 'right_win') {
+      return 'opponent';
+    }
+
+    final raw = json['winnerSide'];
+    if (raw == null) return null;
+    if (raw is num) {
+      if (raw == 1) return 'challenger';
+      if (raw == 2) return 'opponent';
+      return null;
+    }
+    final s = raw.toString().toLowerCase().trim();
+    if (s == '1' || s == 'left' || s == 'host' || s == 'challenger') {
+      return 'challenger';
+    }
+    if (s == '2' || s == 'right' || s == 'guest' || s == 'opponent') {
+      return 'opponent';
+    }
+    if (s == 'draw' || s == 'tie') return 'tie';
+    return s.isEmpty ? null : s;
   }
 
   @override
