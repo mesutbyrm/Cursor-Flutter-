@@ -71,6 +71,7 @@ class ChatRoomGiftsRemoteDataSource {
     String? senderName,
     String? receiverName,
     String? receiverId,
+    String? senderId,
     String platform = 'mobile',
     String? battleId,
     bool isLucky = false,
@@ -88,8 +89,12 @@ class ChatRoomGiftsRemoteDataSource {
         newBalance: lucky.newBalance,
       );
     }
-    if (receiverId != null && receiverId.isNotEmpty) {
-      await assertReciprocalGiftAllowed(_dio, receiverId);
+    final recipient = receiverId?.trim() ?? '';
+    final sender = senderId?.trim() ?? '';
+    if (recipient.isNotEmpty &&
+        sender.isNotEmpty &&
+        recipient != sender) {
+      await assertReciprocalGiftAllowed(_dio, recipient);
     }
     try {
       final field = await LiveFieldApiRemoteDataSource(_dio).gifts.sendGift(

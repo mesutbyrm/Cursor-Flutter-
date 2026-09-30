@@ -562,18 +562,7 @@ class _PkHeader extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                 ],
-                if (phase == PkBattlePhase.active && battleEndsAt != null)
-                  PkEndsAtCountdownText(
-                    endsAt: battleEndsAt,
-                    serverNow: serverNow,
-                    fallbackSeconds: fallbackSeconds,
-                    builder: (context, sec) => PkBattleTimerBadge(
-                      secondsLeft: sec,
-                    ),
-                  )
-                else if (phase == PkBattlePhase.active && fallbackSeconds > 0)
-                  PkBattleTimerBadge(secondsLeft: fallbackSeconds)
-                else
+                if (phase == PkBattlePhase.finished)
                   Text(
                     liveLabel,
                     style: const TextStyle(

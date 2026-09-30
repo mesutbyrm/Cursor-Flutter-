@@ -2569,6 +2569,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         await ref.read(liveVideoPkProvider(streamId).notifier).end();
       } catch (_) {}
     }
+    ref.read(liveVideoPkProvider(streamId).notifier).forceExitPk();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('PK sona erdi')),
@@ -2952,6 +2953,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               LiveBroadcastRoomGiftOverlays(
                 streamId: streamId!,
                 activeGift: activeGift,
+                clipToVideoRegion: pkImmersive,
               ),
             if (hasStream && s.isHost)
               LiveBroadcastRoomHostOverlays(

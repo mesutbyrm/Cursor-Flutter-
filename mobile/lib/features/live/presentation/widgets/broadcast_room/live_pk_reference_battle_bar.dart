@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../profile/presentation/providers/profile_providers.dart';
+import 'live_pk_resolved_timer.dart';
 
 /// Referans PK tasarımı — başlık altındaki yayıncı bandı:
 /// [sol yayıncı kartı | PK sayacı | sağ yayıncı kartı].
@@ -272,12 +273,20 @@ class LivePkReferenceScoreBar extends StatelessWidget {
     required this.rightScore,
     this.statusText = 'PK devam ediyor!',
     this.showStatus = true,
+    this.endsAt,
+    this.fallbackSeconds = 0,
+    this.countdownActive = false,
+    this.onCountdownExpired,
   });
 
   final int leftScore;
   final int rightScore;
   final String statusText;
   final bool showStatus;
+  final DateTime? endsAt;
+  final int fallbackSeconds;
+  final bool countdownActive;
+  final VoidCallback? onCountdownExpired;
 
   static const _pink = Color(0xFFFF2D6B);
   static const _blue = Color(0xFF2E9BFF);
@@ -356,6 +365,16 @@ class LivePkReferenceScoreBar extends StatelessWidget {
               ),
             ),
           ),
+          if (countdownActive) ...[
+            const SizedBox(height: 6),
+            LivePkResolvedTimer(
+              fallbackSeconds: fallbackSeconds,
+              endsAt: endsAt,
+              countdownActive: true,
+              centered: true,
+              onExpired: onCountdownExpired,
+            ),
+          ],
           if (showStatus) const SizedBox(height: 3),
           if (showStatus)
             Stack(

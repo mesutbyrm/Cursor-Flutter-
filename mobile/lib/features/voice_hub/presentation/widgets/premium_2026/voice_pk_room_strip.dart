@@ -11,8 +11,6 @@ import '../../../domain/pk/pk_battle_remote_models.dart';
 import '../../../domain/pk/pk_opponent_room_filter.dart';
 import '../../../domain/pk/pk_team_label_helper.dart';
 import '../../providers/pk_battle_remote_provider.dart';
-import '../pk/pk_ends_at_countdown.dart';
-
 /// Oda içi PK durumu — aktif skor şeridi veya bekleyen davet metni.
 /// Davet popup'ı uygulama geneli `VoicePkInviteListener` ile gösterilir.
 class VoicePkRoomStrip extends ConsumerWidget {
@@ -53,8 +51,6 @@ class VoicePkRoomStrip extends ConsumerWidget {
       currentUserId: userId,
       room: room,
     );
-    final serverNow = DateTime.tryParse(remote.serverNow ?? '');
-
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
       child: GestureDetector(
@@ -76,17 +72,6 @@ class VoicePkRoomStrip extends ConsumerWidget {
                     ),
                   ),
                 ),
-                PkEndsAtCountdownText(
-                  endsAt: remote.endsAt,
-                  serverNow: serverNow,
-                  fallbackSeconds: remote.resolvedSecondsLeft(),
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.85),
-                    fontWeight: FontWeight.w800,
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(width: 4),
                 const Icon(Icons.chevron_right, color: Colors.white54, size: 18),
               ],
             ),

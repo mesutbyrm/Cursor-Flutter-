@@ -14,19 +14,40 @@ class LiveBroadcastRoomGiftOverlays extends ConsumerWidget {
     super.key,
     required this.streamId,
     required this.activeGift,
+    this.clipToVideoRegion = false,
   });
 
   final String streamId;
   final dynamic activeGift;
 
+  /// PK split: animasyonlar skor şeridinin üstünü kapatmasın.
+  final bool clipToVideoRegion;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(liveBroadcastSettingsProvider);
+    final h = MediaQuery.sizeOf(context).height;
+    final giftClipHeight = clipToVideoRegion ? h * 0.58 : h;
+    Widget giftStack({required Widget child}) {
+      if (!clipToVideoRegion) {
+        return Positioned.fill(child: child);
+      }
+      return Positioned(
+        top: 0,
+        left: 0,
+        right: 0,
+        height: giftClipHeight,
+        child: ClipRect(child: child),
+      );
+    }
+
     return Stack(
       fit: StackFit.expand,
       children: [
-        GiftEngineSeatEffectsOverlay(event: activeGift),
-        Positioned.fill(
+        giftStack(
+          child: GiftEngineSeatEffectsOverlay(event: activeGift),
+        ),
+        giftStack(
           child: IgnorePointer(
             child: GiftEngineOverlay(
               event: activeGift,

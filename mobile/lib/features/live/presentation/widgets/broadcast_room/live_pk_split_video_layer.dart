@@ -40,6 +40,7 @@ import 'live_pk_result_flash_overlay.dart';
 import 'live_pk_score_pop_overlay.dart';
 import 'live_pk_top_supporters_panel.dart';
 import '../../providers/live_pk_score_burst_provider.dart';
+import 'live_pk_opponent_broadcaster_controls.dart';
 
 /// PK aktifken tam ekran split: sol yerel/yayıncı, sağ rakip + referans overlay.
 class LivePkSplitVideoLayer extends ConsumerStatefulWidget {
@@ -406,7 +407,7 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
         // Kullanıcı isteği: video %15 daha küçük (alttan yukarı).
         final filledVideoHeight =
             availableVideoHeight < paneWidth ? paneWidth : availableVideoHeight;
-        final videoHeight = filledVideoHeight * 0.72;
+        final videoHeight = filledVideoHeight.clamp(0.0, constraints.maxHeight);
         final scoreBarTop = videoTop + videoHeight;
 
         return ColoredBox(
@@ -479,6 +480,32 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                                 winnerPane: leftWins,
                                 progress: fxProgress,
                               ),
+                              if (session.isHost &&
+                                  !layout.left.isLocalPane &&
+                                  pkActive &&
+                                  !ended)
+                                Positioned(
+                                  left: 0,
+                                  right: 0,
+                                  bottom: 52,
+                                  child: LivePkOpponentBroadcasterControls(
+                                    opponentMuted: opponentMuted,
+                                    onToggleOpponentMute: () {
+                                      final opp = opponentUserId?.trim() ?? '';
+                                      if (opp.isEmpty) return;
+                                      final next = !opponentMuted;
+                                      ref
+                                          .read(
+                                            livePkOpponentMutedProvider(streamId)
+                                                .notifier,
+                                          )
+                                          .state = next;
+                                      trtc.muteRemoteAudio(opp, next);
+                                      widget.onMuteOpponent?.call(opp, next);
+                                    },
+                                    onEndPk: widget.onEndPk,
+                                  ),
+                                ),
                             ],
                           ),
                         ),
@@ -545,6 +572,32 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                                 winnerPane: !leftWins && leftScore != rightScore,
                                 progress: fxProgress,
                               ),
+                              if (session.isHost &&
+                                  !layout.right.isLocalPane &&
+                                  pkActive &&
+                                  !ended)
+                                Positioned(
+                                  left: 0,
+                                  right: 0,
+                                  bottom: 52,
+                                  child: LivePkOpponentBroadcasterControls(
+                                    opponentMuted: opponentMuted,
+                                    onToggleOpponentMute: () {
+                                      final opp = opponentUserId?.trim() ?? '';
+                                      if (opp.isEmpty) return;
+                                      final next = !opponentMuted;
+                                      ref
+                                          .read(
+                                            livePkOpponentMutedProvider(streamId)
+                                                .notifier,
+                                          )
+                                          .state = next;
+                                      trtc.muteRemoteAudio(opp, next);
+                                      widget.onMuteOpponent?.call(opp, next);
+                                    },
+                                    onEndPk: widget.onEndPk,
+                                  ),
+                                ),
                             ],
                           ),
                         ),
@@ -568,7 +621,10 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                   leftScore: leftScore,
                   rightScore: rightScore,
                   showStatus: !ended,
-                  statusText: 'PK devam ediyor!',
+                  countdownActive: pkActive && !ended,
+                  endsAt: endsAt,
+                  fallbackSeconds: secondsLeft,
+                  onCountdownExpired: session.isHost ? widget.onEndPk : null,
                 ),
               ),
               Positioned(
@@ -583,50 +639,10 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                 ),
               ),
               LivePkReferenceTopBar(
-                // Geri tuşu kaldırıldı; kapatma (X) korunuyor.
                 onBack: null,
                 onClose: widget.onBack,
                 viewerCount: widget.viewerCount,
                 viewers: viewers,
-                centerTimer: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: const Color(0xFFFFD24A).withValues(alpha: 0.7),
-                      width: 1.1,
-                    ),
-                  ),
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    child: ended
-                        ? const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.bolt_rounded,
-                                  color: Color(0xFFFFD54F), size: 15),
-                              SizedBox(width: 4),
-                              Text('PK',
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 12)),
-                              SizedBox(width: 6),
-                              PkBattleTimerBadge(
-                                  secondsLeft: 0, flashThreshold: 10),
-                            ],
-                          )
-                        : LivePkResolvedTimer(
-                            remote: null,
-                            fallbackSeconds: secondsLeft,
-                            endsAt: endsAt,
-                            countdownActive: true,
-                            centered: true,
-                            onExpired: session.isHost ? widget.onEndPk : null,
-                          ),
-                  ),
-                ),
               ),
               Positioned(
                 top: headerH + 8,

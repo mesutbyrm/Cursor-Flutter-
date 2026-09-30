@@ -106,38 +106,13 @@ class LivePkBroadcastOverlay extends ConsumerWidget {
                   },
                 ),
               LivePkControlItem(
-                icon: opponentMuted
-                    ? Icons.volume_off_rounded
-                    : Icons.hearing_rounded,
-                label: 'Rakibi sessize al',
-                active: !opponentMuted,
-                onTap: () {
-                  final next = !opponentMuted;
-                  ref
-                      .read(livePkOpponentMutedProvider(streamId).notifier)
-                      .state = next;
-                  final opp = opponentUserId.trim();
-                  if (opp.isNotEmpty) {
-                    trtc.muteRemoteAudio(opp, next);
-                  }
-                },
-              ),
-              LivePkControlItem(
                 icon: chatOpen
                     ? Icons.chat_bubble_rounded
                     : Icons.chat_bubble_outline_rounded,
                 label: 'Sohbet',
                 onTap: () => onChatOpenChanged(!chatOpen),
               ),
-              if (isHost && pkRunning)
-                LivePkControlItem(
-                  icon: Icons.stop_circle_outlined,
-                  label: "PK'yi Bitir",
-                  danger: true,
-                  onTap: onEndPk,
-                ),
-              // PK bittiğinde (aktif değil) host'un çıkış yolu — split ekranı
-              // koşulsuz kapatıp normal yayına döner (takılı kalmaya son).
+              // PK bitir / rakip sesi — rakip video panelinde (yalnızca yayıncı).
               if (isHost && !pkRunning)
                 LivePkControlItem(
                   icon: Icons.close_rounded,

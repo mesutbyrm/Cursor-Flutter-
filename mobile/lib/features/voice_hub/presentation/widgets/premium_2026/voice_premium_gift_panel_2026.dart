@@ -70,12 +70,51 @@ class _VoicePremiumGiftPanel2026State
   @override
   void initState() {
     super.initState();
-    _receiver = _pickInitialReceiver();
+    _receiver = widget.initialReceiver;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _receiver ??= _pickInitialReceiver();
+  }
+
+  List<ChatRoomPresence> _receiverChoices() {
+    final user = ref.read(authControllerProvider).valueOrNull;
+    final out = <ChatRoomPresence>[];
+    if (user != null && user.id.isNotEmpty) {
+      out.add(
+        ChatRoomPresence(
+          id: user.id,
+          name: 'Kendim',
+          nickname: user.username,
+          image: user.avatarUrl,
+        ),
+      );
+    }
+    for (final u in widget.seatedUsers) {
+      if (user != null && u.id == user.id) continue;
+      out.add(u);
+    }
+    if (out.isEmpty &&
+        widget.room.ownerId != null &&
+        widget.room.ownerId!.isNotEmpty) {
+      out.add(
+        ChatRoomPresence(
+          id: widget.room.ownerId!,
+          name: widget.room.ownerName ?? 'Yayıncı',
+          image: widget.room.ownerAvatarUrl,
+          chatRole: 'owner',
+        ),
+      );
+    }
+    return out;
   }
 
   ChatRoomPresence? _pickInitialReceiver() {
     if (widget.initialReceiver != null) return widget.initialReceiver;
-    if (widget.seatedUsers.isNotEmpty) return widget.seatedUsers.first;
+    final choices = _receiverChoices();
+    if (choices.isNotEmpty) return choices.first;
     if (widget.room.ownerId != null && widget.room.ownerId!.isNotEmpty) {
       return ChatRoomPresence(
         id: widget.room.ownerId!,
@@ -177,41 +216,47 @@ class _VoicePremiumGiftPanel2026State
                   ],
                 ),
               ),
-              if (widget.seatedUsers.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Kime gönderilsin?',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white.withValues(alpha: 0.7),
+              Builder(
+                builder: (context) {
+                  final choices = _receiverChoices();
+                  if (choices.isEmpty) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Kime gönderilsin?',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white.withValues(alpha: 0.7),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        height: 72,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: widget.seatedUsers.length,
-                          separatorBuilder: (_, _) => const SizedBox(width: 8),
-                          itemBuilder: (context, i) {
-                            final u = widget.seatedUsers[i];
-                            final selected = _receiver?.id == u.id;
-                            return _RecipientChip(
-                              user: u,
-                              selected: selected,
-                              onTap: () => setState(() => _receiver = u),
-                            );
-                          },
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          height: 72,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: choices.length,
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(width: 8),
+                            itemBuilder: (context, i) {
+                              final u = choices[i];
+                              final selected = _receiver?.id == u.id;
+                              return _RecipientChip(
+                                user: u,
+                                selected: selected,
+                                onTap: () => setState(() => _receiver = u),
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
+                      ],
+                    ),
+                  );
+                },
+              ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
@@ -300,6 +345,7 @@ class _VoicePremiumGiftPanel2026State
             giftTypeId: g.id,
             quantity: _qty,
             senderName: user?.display ?? 'Sen',
+            senderId: user?.id,
             receiverName: receiver.displayName,
             receiverId: receiver.id,
             battleId: pkBattleId,

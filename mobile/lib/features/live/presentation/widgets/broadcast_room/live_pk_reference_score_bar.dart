@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../voice_hub/presentation/widgets/premium_2026/pk/pk_animated_score_bar.dart';
 import '../../../domain/pk/live_pk_status_pill_mode.dart';
 import 'pk_status_pill.dart';
+import 'live_pk_resolved_timer.dart';
 
 /// Referans — skorlar üstte, bar ortada, yüzde satırı, altında durum pill.
 class LivePkReferenceScoreBar extends StatelessWidget {
@@ -14,6 +15,10 @@ class LivePkReferenceScoreBar extends StatelessWidget {
     this.winnerName,
     this.active = true,
     this.showEndedScores = false,
+    this.endsAt,
+    this.fallbackSeconds = 0,
+    this.countdownActive = false,
+    this.onCountdownExpired,
   });
 
   final int leftScore;
@@ -22,6 +27,10 @@ class LivePkReferenceScoreBar extends StatelessWidget {
   final String? winnerName;
   final bool active;
   final bool showEndedScores;
+  final DateTime? endsAt;
+  final int fallbackSeconds;
+  final bool countdownActive;
+  final VoidCallback? onCountdownExpired;
 
   static double leftRatio(int left, int right) {
     final t = left + right;
@@ -93,6 +102,16 @@ class LivePkReferenceScoreBar extends StatelessWidget {
                 ),
               ),
             ),
+            if (countdownActive && active && !showEndedScores) ...[
+              const SizedBox(height: 6),
+              LivePkResolvedTimer(
+                fallbackSeconds: fallbackSeconds,
+                endsAt: endsAt,
+                countdownActive: true,
+                centered: true,
+                onExpired: onCountdownExpired,
+              ),
+            ],
             const SizedBox(height: 6),
             Center(
               child: PkStatusPill(
