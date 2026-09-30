@@ -272,6 +272,20 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                       : _OneVsOneBody(
                           state: pk,
                           leadingLeft: leadingLeft,
+                          leftTeamLabel: remote != null
+                              ? resolveVoicePkTeamPresentation(
+                                  battle: remote,
+                                  currentUserId: user?.id,
+                                  room: widget.room,
+                                ).leftLabel
+                              : null,
+                          rightTeamLabel: remote != null
+                              ? resolveVoicePkTeamPresentation(
+                                  battle: remote,
+                                  currentUserId: user?.id,
+                                  room: widget.room,
+                                ).rightLabel
+                              : null,
                         ),
                 ),
                 if (pk.mode == PkBattleMode.team && remote != null)
@@ -654,10 +668,14 @@ class _OneVsOneBody extends StatelessWidget {
   const _OneVsOneBody({
     required this.state,
     required this.leadingLeft,
+    this.leftTeamLabel,
+    this.rightTeamLabel,
   });
 
   final PkBattleState state;
   final bool leadingLeft;
+  final String? leftTeamLabel;
+  final String? rightTeamLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -695,7 +713,7 @@ class _OneVsOneBody extends StatelessWidget {
                   child: PkPlayerHudFrame(
                     user: state.left.leader,
                     accent: VoiceRoomTokens.neonPurple,
-                    label: state.left.leader?.displayName ?? 'PLAYER 01',
+                    label: (leftTeamLabel ?? '1. TAKIM').toUpperCase(),
                     score: state.left.total,
                     isLeading: leadingLeft && state.isActive,
                   ),
@@ -730,7 +748,7 @@ class _OneVsOneBody extends StatelessWidget {
                   child: PkPlayerHudFrame(
                     user: state.right.leader,
                     accent: VoiceRoomTokens.neonBlue,
-                    label: state.right.leader?.displayName ?? 'PLAYER 02',
+                    label: (rightTeamLabel ?? '2. TAKIM').toUpperCase(),
                     score: state.right.total,
                     isLeading: !leadingLeft && state.isActive,
                   ),

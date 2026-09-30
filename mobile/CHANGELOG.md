@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.656+707 (2026-09-30) — PK parity kalan: 1v1 etiket, aktif ekran, hedef kutlama
+
+- **1v1 PK HUD:** Biz/Onlar veya 1./2. Takım etiketleri (isim üstü küçük başlık)
+- **Sayaç:** sunucu `endsAt` ile `secondsLeft` saniyede bir güncellenir (son 10 sn pulse doğru)
+- **PK aktif:** kabul sonrası karşı taraf (challenger) odadaysa otomatik tam ekran PK
+- **Hediye hedefi:** tamamlanınca ~4 sn kutlama, sonra otomatik kapanır
+- Backend değişikliği yok
+
 ## 1.0.655+706 (2026-09-30) — PK davet bildirimi + skor sayacı tamamlama
 
 - **PK davet tıklama:** push, banner ve bildirim listesi odaya zorla gitmez; `VoicePkInviteListener` aynı Kabul/Reddet modalını açar

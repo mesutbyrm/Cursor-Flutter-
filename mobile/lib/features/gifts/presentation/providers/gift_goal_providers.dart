@@ -108,14 +108,14 @@ class GiftGoalController
           (goal.isCompleted ||
               goal.currentAmount >= goal.targetAmount ||
               goal.status.toLowerCase() == 'completed')) {
-        await GiftGoalDismissStorage.dismiss(
-          context: arg.context,
-          contextId: arg.contextId,
-          goalId: goal.id,
-        );
-        _dismissedGoalIds.add(goal.id);
-        state = const GiftGoalState(dismissed: true);
-        _timer?.cancel();
+        if (_dismissedGoalIds.contains(goal.id)) {
+          state = const GiftGoalState(dismissed: true);
+          _timer?.cancel();
+          return;
+        }
+        final justCompleted = !_wasCompleted;
+        _wasCompleted = true;
+        state = GiftGoalState(goal: goal, justCompleted: justCompleted);
         return;
       }
 
@@ -153,6 +153,23 @@ class GiftGoalController
     if (state.justCompleted) {
       state = state.copyWith(justCompleted: false);
     }
+  }
+
+  /// Kutlama bitti — prefs’e kaydet ve şeridi kaldır.
+  Future<void> dismissAfterCelebration() async {
+    final goal = state.goal;
+    if (goal == null) return;
+    await GiftGoalDismissStorage.dismiss(
+      context: arg.context,
+      contextId: arg.contextId,
+      goalId: goal.id,
+    );
+    _dismissedGoalIds.add(goal.id);
+    state = const GiftGoalState(dismissed: true);
+    _timer?.cancel();
+    try {
+      await ref.read(giftGoalRemoteProvider).closeGoal(goal.id);
+    } catch (_) {}
   }
 
   /// Kullanıcı X ile kapattı — aynı goalId tekrar gösterilmez.

@@ -13,6 +13,9 @@ import '../../domain/pk/pk_opponent_room_filter.dart';
 /// PK savaş kontrolü — skor, zamanlayıcı, hediye gücü, kazanan.
 class PkBattleNotifier extends Notifier<PkBattleState> {
   Timer? _tick;
+  Timer? _endsAtSync;
+  DateTime? _endsAtUtc;
+  Duration _clockSkew = Duration.zero;
   VoiceRoomEntity? _room;
   List<ChatRoomPresence> _presence = const [];
 
@@ -21,6 +24,8 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
     ref.onDispose(() {
       _tick?.cancel();
       _tick = null;
+      _endsAtSync?.cancel();
+      _endsAtSync = null;
     });
     return const PkBattleState();
   }
@@ -302,6 +307,38 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
           remote.isActive ? state.reactionBurst + 1 : state.reactionBurst,
     );
     _tick?.cancel();
+    _startEndsAtSync(
+      endsAt: remote.endsAt,
+      serverNow: remote.serverNow,
+      phase: phase,
+    );
+  }
+
+  void _startEndsAtSync({
+    required DateTime? endsAt,
+    required String? serverNow,
+    required PkBattlePhase phase,
+  }) {
+    _endsAtSync?.cancel();
+    _endsAtSync = null;
+    _endsAtUtc = endsAt?.toUtc();
+    _clockSkew = Duration.zero;
+    final parsedNow = serverNow != null ? DateTime.tryParse(serverNow) : null;
+    if (parsedNow != null) {
+      _clockSkew =
+          parsedNow.toUtc().difference(DateTime.now().toUtc());
+    }
+    if (_endsAtUtc == null || phase != PkBattlePhase.active) return;
+    _endsAtSync = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!state.isActive || !state.serverAuthoritative) return;
+      final end = _endsAtUtc;
+      if (end == null) return;
+      final now = DateTime.now().toUtc().add(_clockSkew);
+      final sec = end.difference(now).inSeconds.clamp(0, 86400);
+      if (sec != state.secondsLeft) {
+        state = state.copyWith(secondsLeft: sec);
+      }
+    });
   }
 
   void _onTick() {
@@ -333,6 +370,9 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
   void reset() {
     _tick?.cancel();
     _tick = null;
+    _endsAtSync?.cancel();
+    _endsAtSync = null;
+    _endsAtUtc = null;
     _room = null;
     _presence = const [];
     state = const PkBattleState();

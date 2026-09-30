@@ -52,8 +52,10 @@ class _GiftGoalBarState extends ConsumerState<GiftGoalBar> {
       if (next.justCompleted && !_celebrating) {
         setState(() => _celebrating = true);
         ref.read(giftGoalProvider(key).notifier).acknowledgeCelebration();
-        Future.delayed(const Duration(seconds: 4), () {
-          if (mounted) setState(() => _celebrating = false);
+        Future.delayed(const Duration(seconds: 4), () async {
+          if (!mounted) return;
+          setState(() => _celebrating = false);
+          await ref.read(giftGoalProvider(key).notifier).dismissAfterCelebration();
         });
       }
       if (next.justExpired) {
@@ -69,7 +71,10 @@ class _GiftGoalBarState extends ConsumerState<GiftGoalBar> {
 
     final goal = st.goal;
     _armCountdownIfNeeded(goal);
-    if (goal == null || st.dismissed || goal.isCompleted) {
+    if (goal == null || st.dismissed) {
+      return const SizedBox.shrink();
+    }
+    if (goal.isCompleted && !st.justCompleted && !_celebrating) {
       return const SizedBox.shrink();
     }
 

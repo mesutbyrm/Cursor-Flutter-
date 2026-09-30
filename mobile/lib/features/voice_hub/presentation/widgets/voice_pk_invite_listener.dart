@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/app_router.dart';
+import '../../../../core/performance/voice_room_entry_perf.dart';
 import '../../../live/presentation/providers/live_pk_invite_signal_provider.dart';
 import '../../../../core/network/pk_event_log.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -15,6 +17,7 @@ import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_room_session_registry.dart';
 import '../utils/pk_invite_dialog_helper.dart';
+import '../utils/voice_room_session_utils.dart';
 
 /// Sesli oda PK davetleri — oda poll + global davet poll; aktif PK'da yönlendirme.
 class VoicePkInviteListener extends ConsumerStatefulWidget {
@@ -29,6 +32,7 @@ class VoicePkInviteListener extends ConsumerStatefulWidget {
 
 class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
   final Set<String> _seenRejections = {};
+  final Set<String> _openedActivePk = {};
   var _showing = false;
   var _polling = false;
   Timer? _pollTimer;
@@ -58,7 +62,7 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
     if (user == null) return;
 
     if (battle.isActive && !battle.isEnded) {
-      // Otomatik PK sayfasına gitme — yalnızca kabul sonrası dialog yönlendirir.
+      unawaited(_maybeOpenActivePkScreen(battle, user.id));
       return;
     }
 
@@ -151,6 +155,57 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
       PkEventLog.incomingRequest(inviteId: inviteId);
       await _showInviteDialog(battle, room);
     } catch (_) {}
+  }
+
+  Future<void> _maybeOpenActivePkScreen(
+    PkBattleRemote battle,
+    String userId,
+  ) async {
+    final battleKey = battle.effectiveId;
+    if (battleKey.isEmpty || !_openedActivePk.add(battleKey)) return;
+
+    VoiceRoomEntity? room;
+    final activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
+    if (activeKey.isNotEmpty) {
+      final activeRoom =
+          ref.read(voiceRoomByIdProvider(activeKey)).valueOrNull;
+      if (activeRoom != null && pkBattleBelongsToRoom(battle, activeRoom)) {
+        room = activeRoom;
+      }
+    }
+    room ??= resolvePkInviteTargetRoom(ref, battle, userId);
+    if (room == null) {
+      for (final r in ref.read(myOwnedVoiceRoomsProvider)) {
+        if (pkBattleBelongsToRoom(battle, r)) {
+          room = r;
+          break;
+        }
+      }
+    }
+    if (room == null) {
+      _openedActivePk.remove(battleKey);
+      return;
+    }
+
+    final nav = rootNavigatorKey.currentContext;
+    if (nav == null || !nav.mounted) {
+      _openedActivePk.remove(battleKey);
+      return;
+    }
+    final router = GoRouter.of(nav);
+    final roomKey =
+        room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+    final path = router.routerDelegate.currentConfiguration.uri.path;
+    if (path.contains('/voice-room/$roomKey/pk')) return;
+
+    await prepareVoiceRoomSwitch(
+      ref,
+      nextLiveKey: roomKey,
+      source: 'pk_active_sse',
+    );
+    if (!nav.mounted) return;
+    VoiceRoomEntryPerf.prewarmOnRoomTap(ref, room);
+    GoRouter.of(nav).push('/voice-room/$roomKey/pk', extra: room);
   }
 
   Future<void> _showInviteDialog(
