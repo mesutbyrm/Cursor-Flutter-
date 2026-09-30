@@ -172,6 +172,9 @@ if isinstance(rooms,list) and rooms:
 test_08_sse() {
   skip_unless_user_token 8 "SSE bağlantısı" || return 0
   if [[ -z "$ROOM_ID" ]]; then
+    ROOM_ID=$(pick_acceptance_probe_room_id "$USER_TOKEN" "${VOICE_PROBE_ROOM:-}" 2>/dev/null || true)
+  fi
+  if [[ -z "$ROOM_ID" ]]; then
     if acceptance_user_secrets_configured; then
       record 8 "SSE bağlantısı" FAIL "oda kimliği yok"
     else

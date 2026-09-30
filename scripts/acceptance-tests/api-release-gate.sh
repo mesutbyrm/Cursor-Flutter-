@@ -123,6 +123,9 @@ gate_07_profile_speed() {
 gate_06_sse() {
   skip_unless_user_token 6 "SSE bağlantıları" || return 0
   if [[ -z "$ROOM_ID" ]]; then
+    ROOM_ID=$(pick_acceptance_probe_room_id "$USER_TOKEN" "${VOICE_PROBE_ROOM:-}" 2>/dev/null || true)
+  fi
+  if [[ -z "$ROOM_ID" ]]; then
     local body
     body=$(curl_json "$BASE/api/chat/rooms?limit=10&withCounts=true" \
       -H "Authorization: Bearer $USER_TOKEN")
@@ -150,10 +153,14 @@ gate_06_sse() {
     record 6 "SSE bağlantıları" PASS "chat stream veri alındı"
   else
     local code ct
-    code=$(http_code -H "Authorization: Bearer $USER_TOKEN" \
+    code=$(curl "${CURL_ACCEPTANCE_OPTS[@]}" -o /dev/null -w "%{http_code}" \
+      --max-time 15 \
+      -H "Authorization: Bearer $USER_TOKEN" \
       -H "Accept: text/event-stream" \
       "$BASE/api/chat/rooms/$ROOM_ID/stream")
-    ct=$(curl -sSI -H "Authorization: Bearer $USER_TOKEN" \
+    ct=$(curl -sSI --max-time 15 \
+      -H "Authorization: Bearer $USER_TOKEN" \
+      -H "Accept: text/event-stream" \
       "$BASE/api/chat/rooms/$ROOM_ID/stream" | tr -d '\r' | grep -i '^content-type:' | head -1)
     if [[ "$code" == "200" ]] && echo "$ct" | grep -qi 'text/event-stream'; then
       record 6 "SSE bağlantıları" PASS "HTTP 200 text/event-stream"
