@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../domain/entities/psychic_entity.dart';
 import '../controllers/psychic_flow.dart';
 import '../widgets/psychic_booking_sheet.dart';
