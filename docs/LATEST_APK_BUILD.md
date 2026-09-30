@@ -4,22 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.659+710` |
-| Tarih (UTC) | 2026-09-30 18:29 |
-| Commit | [`7fe3a7d97364fd2c982d43895e4f1f84688895ce`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/7fe3a7d97364fd2c982d43895e4f1f84688895ce) |
-| İş akışı | [Run 36756543965](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36756543965) |
+| Sürüm | `1.0.660+711` |
+| Tarih (UTC) | 2026-09-30 19:40 |
+| Commit | [`82d391085f9d9ce76a39102852125ced39fcf581`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/82d391085f9d9ce76a39102852125ced39fcf581) |
+| İş akışı | [Run 36765021379](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36765021379) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.659+710 (2026-09-30) — Gelen kutu, DM, Gold jeton, alt menü
+## 1.0.660+711 (2026-09-30) — PK destek, takım üyeleri, falcı arama
 
-- **Ana sayfa:** “Seni beğenenler” ve “Popüler falcılar” bölümleri kaldırıldı
-- **Gelen kutusu:** varsayılan sekme “Tümü”; mesaj bildiriminde `senderId` SSE parse + doğru sohbet rotası
-- **DM:** hızlı cevaplar kaldırıldı; + menüsü ilgili ekranlara yönlendirir; mikrofon ile sesli mesaj (24 saat sonra gizlenir)
-- **Gold üyelik:** hesaptaki jeton ile satın alma (`paymentMethod: jeton`) ve ödeme sheet’inde jeton seçeneği
-- **Alt menü:** Sosyal · Canlı · Fal · Tarot · Profil; gelen kutusunda da görünür; geri tuşunda çıkış onayı
-- **Sesli oda sohbet:** mesaj POST yedek oda anahtarı düzeltmesi; PK süresi sunucu `endsAt` ile 10 sn sıçraması azaltıldı
+- **Sesli / canlı PK «Destekle»:** jetonsuz +3 izleyici puanı (kullanıcı başına en fazla 3); hediye seçici yerine destek akışı
+- **PK takım görünürlüğü:** sunucu `participants` + `user1`/`user2` listesi sol/sağ üye şeridine yansır (rakip oda dahil)
+- **Gelen kutusu:** «Tümü» sekmesinde açılışta mesaj + bildirimler otomatik okundu
+- **Canlı falcılar listesi:** müsait falcılarda sesli / görüntülü hızlı seans kısayolları
 - Backend değişikliği yok
 
 
