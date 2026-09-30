@@ -17,6 +17,7 @@ import 'package:canlifal_social/features/live_psychics/presentation/widgets/psyc
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychic_flow.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychics_list_controller.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_booking_sheet.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/navigation/psychic_quick_session.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_favorite_button.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_fortune_types.dart';
 import 'package:canlifal_social/features/profile/presentation/providers/profile_providers.dart';
@@ -412,6 +413,41 @@ class _ProfileBody extends ConsumerWidget {
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 10),
+        ],
+        if (!isSelf &&
+            psychic.isOnline &&
+            !onLiveBroadcast &&
+            !booking) ...[
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => openPsychicQuickSession(
+                    context,
+                    ref,
+                    psychic: psychic,
+                    preferVideo: false,
+                  ),
+                  icon: const Icon(Icons.call_rounded),
+                  label: const Text('Sesli'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => openPsychicQuickSession(
+                    context,
+                    ref,
+                    psychic: psychic,
+                    preferVideo: true,
+                  ),
+                  icon: const Icon(Icons.videocam_rounded),
+                  label: const Text('Görüntülü'),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 10),
         ],

@@ -9,6 +9,7 @@ import '../../domain/pk/pk_battle_mode.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
 import '../../domain/pk/pk_battle_state.dart';
 import '../../domain/pk/pk_opponent_room_filter.dart';
+import '../../../live/domain/pk/live_pk_like_budget.dart';
 
 /// PK savaş kontrolü — skor, zamanlayıcı, hediye gücü, kazanan.
 class PkBattleNotifier extends Notifier<PkBattleState> {
@@ -18,6 +19,7 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
   Duration _clockSkew = Duration.zero;
   VoiceRoomEntity? _room;
   List<ChatRoomPresence> _presence = const [];
+  final _audienceSupportBudget = LivePkLikeBudget();
 
   @override
   PkBattleState build() {
@@ -161,6 +163,81 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
     );
   }
 
+  /// Jetonsuz izleyici desteği — taraf başına en fazla 3 puan (istemci gösterimi).
+  bool applyAudienceSupport({
+    required String battleId,
+    required String userId,
+    int points = 3,
+    bool toLeft = true,
+  }) {
+    if (!state.isActive) return false;
+    final bid = battleId.trim();
+    final uid = userId.trim();
+    if (bid.isEmpty || uid.isEmpty) return false;
+    if (!_audienceSupportBudget.canAward(bid, uid, points)) return false;
+    _audienceSupportBudget.record(bid, uid, points);
+    if (toLeft) {
+      state = state.copyWith(
+        left: state.left.copyWith(
+          audienceSupport: state.left.audienceSupport + points,
+        ),
+        reactionBurst: state.reactionBurst + 1,
+      );
+    } else {
+      state = state.copyWith(
+        right: state.right.copyWith(
+          audienceSupport: state.right.audienceSupport + points,
+        ),
+        reactionBurst: state.reactionBurst + 1,
+      );
+    }
+    return true;
+  }
+
+  int audienceSupportRemaining(String battleId, String userId) {
+    return _audienceSupportBudget.remaining(battleId, userId);
+  }
+
+  List<ChatRoomPresence> _membersFromRemote({
+    required PkBattleRemote remote,
+    required int side,
+    required ChatRoomPresence? leader,
+    required List<ChatRoomPresence> fallbackPresence,
+  }) {
+    ChatRoomPresence fromParticipant(PkParticipantRemote p) {
+      return ChatRoomPresence(
+        id: p.userId,
+        name: p.displayName ?? 'Katılımcı',
+        image: p.avatarUrl,
+        chatRole: p.userId == leader?.id ? 'owner' : 'member',
+      );
+    }
+
+    final fromRemote = remote.participants
+        .where((p) => p.side == side)
+        .map(fromParticipant)
+        .toList();
+    if (fromRemote.isNotEmpty) {
+      if (leader != null &&
+          !fromRemote.any((m) => m.id.trim() == leader.id.trim())) {
+        return [leader, ...fromRemote];
+      }
+      return fromRemote;
+    }
+
+    if (remote.participants.isEmpty && fallbackPresence.isNotEmpty) {
+      if (state.mode == PkBattleMode.team) {
+        final half = (fallbackPresence.length / 2).ceil().clamp(1, fallbackPresence.length);
+        return side == 1
+            ? fallbackPresence.take(half).toList()
+            : fallbackPresence.skip(half).toList();
+      }
+    }
+
+    if (leader != null) return [leader];
+    return const [];
+  }
+
   void applyGift(LiveGiftEvent event, {required bool toLeft}) {
     if (!state.isActive || state.serverAuthoritative) return;
     if (!giftSideResolvable(event)) return;
@@ -286,6 +363,19 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
       swapSides ? remote.challenger : remote.opponent,
     );
 
+    final leftMembers = _membersFromRemote(
+      remote: remote,
+      side: swapSides ? 2 : 1,
+      leader: leftLeader,
+      fallbackPresence: _presence,
+    );
+    final rightMembers = _membersFromRemote(
+      remote: remote,
+      side: swapSides ? 1 : 2,
+      leader: rightLeader,
+      fallbackPresence: _presence,
+    );
+
     final newEndUtc = remote.endsAt?.toUtc();
     final endsAtChanged = newEndUtc != _endsAtUtc;
     final secLeft = remote.endsAt != null
@@ -304,18 +394,22 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
       left: state.left.copyWith(
         score: leftScore,
         giftPower: 0,
+        audienceSupport: state.left.audienceSupport,
         winStreak: swapSides
             ? remote.opponent?.winStreak ?? state.left.winStreak
             : remote.challenger?.winStreak ?? state.left.winStreak,
         leader: leftLeader ?? state.left.leader,
+        members: leftMembers.isNotEmpty ? leftMembers : state.left.members,
       ),
       right: state.right.copyWith(
         score: rightScore,
         giftPower: 0,
+        audienceSupport: state.right.audienceSupport,
         winStreak: swapSides
             ? remote.challenger?.winStreak ?? state.right.winStreak
             : remote.opponent?.winStreak ?? state.right.winStreak,
         leader: rightLeader ?? state.right.leader,
+        members: rightMembers.isNotEmpty ? rightMembers : state.right.members,
       ),
       reactionBurst:
           remote.isActive ? state.reactionBurst + 1 : state.reactionBurst,

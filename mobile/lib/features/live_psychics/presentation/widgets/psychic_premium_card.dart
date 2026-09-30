@@ -211,6 +211,8 @@ class PsychicPremiumListTile extends ConsumerWidget {
     required this.pricePerMinute,
     required this.onTap,
     this.showLiveBadge = false,
+    this.onVoiceCall,
+    this.onVideoCall,
   });
 
   final String name;
@@ -222,6 +224,8 @@ class PsychicPremiumListTile extends ConsumerWidget {
   final int pricePerMinute;
   final VoidCallback onTap;
   final bool showLiveBadge;
+  final VoidCallback? onVoiceCall;
+  final VoidCallback? onVideoCall;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -326,19 +330,61 @@ class PsychicPremiumListTile extends ConsumerWidget {
                   ],
                 ),
               ),
-              if (pricePerMinute > 0) ...[
-                const SizedBox(width: 8),
-                Text(
-                  '$pricePerMinute\n$jetonLabel/dk',
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    color: HomeApprovedDesign.gold,
-                    height: 1.15,
-                  ),
-                ),
-              ],
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  if (isOnline && !showLiveBadge) ...[
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (onVoiceCall != null)
+                          IconButton(
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 36,
+                              minHeight: 36,
+                            ),
+                            tooltip: 'Sesli seans',
+                            onPressed: onVoiceCall,
+                            icon: const Icon(
+                              Icons.call_rounded,
+                              color: HomeApprovedDesign.green,
+                              size: 22,
+                            ),
+                          ),
+                        if (onVideoCall != null)
+                          IconButton(
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 36,
+                              minHeight: 36,
+                            ),
+                            tooltip: 'Görüntülü seans',
+                            onPressed: onVideoCall,
+                            icon: const Icon(
+                              Icons.videocam_rounded,
+                              color: HomeApprovedDesign.liveRed,
+                              size: 22,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                  if (pricePerMinute > 0)
+                    Text(
+                      '$pricePerMinute\n$jetonLabel/dk',
+                      textAlign: TextAlign.right,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: HomeApprovedDesign.gold,
+                        height: 1.15,
+                      ),
+                    ),
+                ],
+              ),
             ],
           ),
         ),

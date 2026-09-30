@@ -53,12 +53,15 @@ class _InboxPageState extends ConsumerState<InboxPage> {
       ref.read(notificationsListNotifierProvider.future),
     ]);
     ref.invalidate(notificationsUnreadApiProvider);
+    if (_tab == InboxTab.all) {
+      await _markAllInboxRead(silent: true);
+    }
   }
 
-  Future<void> _markAllInboxRead() async {
+  Future<void> _markAllInboxRead({bool silent = false}) async {
     await markAllMessagesRead(ref);
     await markAllNotificationsRead(ref);
-    if (!mounted) return;
+    if (!mounted || silent) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Gelen kutusu okundu olarak işaretlendi')),
     );

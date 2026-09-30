@@ -115,6 +115,11 @@ Map<String, dynamic> _pkBattleJsonWithEnvelope(
   if (sn != null && sn.isNotEmpty && (merged['serverNow']?.toString().isEmpty ?? true)) {
     merged['serverNow'] = sn;
   }
+  for (final key in ['participants', 'pkParticipants', 'user1', 'user2']) {
+    if (!merged.containsKey(key) && envelope.containsKey(key)) {
+      merged[key] = envelope[key];
+    }
+  }
   return merged;
 }
 

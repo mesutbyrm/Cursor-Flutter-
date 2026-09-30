@@ -25,6 +25,7 @@ class PkBattleRemote extends Equatable {
     this.winnerId,
     this.challenger,
     this.opponent,
+    this.participants = const [],
     this.result,
     this.recentGifts = const [],
     this.endsAt,
@@ -54,6 +55,7 @@ class PkBattleRemote extends Equatable {
   final String? winnerId;
   final PkParticipantRemote? challenger;
   final PkParticipantRemote? opponent;
+  final List<PkParticipantRemote> participants;
   final PkResultRemote? result;
   final List<PkGiftRemote> recentGifts;
   final DateTime? endsAt;
@@ -134,6 +136,28 @@ class PkBattleRemote extends Equatable {
     final inv = inviteId?.trim() ?? '';
     if (inv.isNotEmpty) return inv;
     return id.trim();
+  }
+
+  static List<PkParticipantRemote> _parseParticipantsList(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((e) => PkParticipantRemote.fromJson(Map<String, dynamic>.from(e)))
+        .where((p) => p.userId.isNotEmpty)
+        .toList();
+  }
+
+  static PkParticipantRemote? _participantFromUserWire(dynamic raw) {
+    if (raw is! Map) return null;
+    final map = Map<String, dynamic>.from(raw);
+    final id = (map['id'] ?? map['userId'])?.toString().trim() ?? '';
+    if (id.isEmpty) return null;
+    return PkParticipantRemote(
+      userId: id,
+      side: PkBattleRemote._int(map['side'], fallback: 0),
+      displayName: map['name']?.toString() ?? map['displayName']?.toString(),
+      avatarUrl: map['image']?.toString() ?? map['avatarUrl']?.toString(),
+    );
   }
 
   factory PkBattleRemote.fromJson(Map<String, dynamic> json) {
@@ -251,12 +275,15 @@ class PkBattleRemote extends Equatable {
           ? PkParticipantRemote.fromJson(
               Map<String, dynamic>.from(normalized['challenger'] as Map),
             )
-          : null,
+          : _participantFromUserWire(normalized['user1'] ?? normalized['user1Id']),
       opponent: normalized['opponent'] is Map
           ? PkParticipantRemote.fromJson(
               Map<String, dynamic>.from(normalized['opponent'] as Map),
             )
-          : null,
+          : _participantFromUserWire(normalized['user2'] ?? normalized['user2Id']),
+      participants: _parseParticipantsList(
+        normalized['participants'] ?? normalized['pkParticipants'],
+      ),
       result: normalized['result'] is Map
           ? PkResultRemote.fromJson(
               Map<String, dynamic>.from(normalized['result'] as Map),
@@ -310,6 +337,7 @@ class PkParticipantRemote extends Equatable {
     required this.userId,
     this.roomId,
     this.streamId,
+    this.side = 0,
     this.score = 0,
     this.winStreak = 0,
     this.displayName,
@@ -319,25 +347,31 @@ class PkParticipantRemote extends Equatable {
   final String userId;
   final String? roomId;
   final String? streamId;
+  /// 1 = challenger / room1, 2 = opponent / room2.
+  final int side;
   final int score;
   final int winStreak;
   final String? displayName;
   final String? avatarUrl;
 
   factory PkParticipantRemote.fromJson(Map<String, dynamic> json) {
+    final uid = (json['userId'] ?? json['id'])?.toString().trim() ?? '';
     return PkParticipantRemote(
-      userId: json['userId']?.toString() ?? '',
+      userId: uid,
       roomId: json['roomId']?.toString(),
       streamId: json['streamId']?.toString(),
-      score: PkBattleRemote._int(json['score']),
+      side: PkBattleRemote._int(json['side'], fallback: 0),
+      score: PkBattleRemote._int(json['score'] ?? json['points']),
       winStreak: PkBattleRemote._int(json['winStreak']),
-      displayName: json['displayName']?.toString(),
-      avatarUrl: json['avatarUrl']?.toString(),
+      displayName: json['displayName']?.toString() ??
+          json['name']?.toString() ??
+          json['username']?.toString(),
+      avatarUrl: json['avatarUrl']?.toString() ?? json['image']?.toString(),
     );
   }
 
   @override
-  List<Object?> get props => [userId, score, winStreak];
+  List<Object?> get props => [userId, side, score, winStreak];
 }
 
 class PkResultRemote extends Equatable {

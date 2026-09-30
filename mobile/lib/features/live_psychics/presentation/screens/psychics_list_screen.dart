@@ -6,6 +6,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../core/ui/premium_2026/cosmic_galaxy_background.dart';
 import '../navigation/psychic_card_navigation.dart';
+import '../navigation/psychic_quick_session.dart';
 import '../widgets/psychic_premium_card.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../controllers/psychics_list_controller.dart';
@@ -184,6 +185,24 @@ class PsychicsListScreen extends ConsumerWidget {
                           ref,
                           psychic,
                         ),
+                        onVoiceCall: psychic.isOnline &&
+                                !psychic.hasLiveBroadcast
+                            ? () => openPsychicQuickSession(
+                                  context,
+                                  ref,
+                                  psychic: psychic,
+                                  preferVideo: false,
+                                )
+                            : null,
+                        onVideoCall: psychic.isOnline &&
+                                !psychic.hasLiveBroadcast
+                            ? () => openPsychicQuickSession(
+                                  context,
+                                  ref,
+                                  psychic: psychic,
+                                  preferVideo: true,
+                                )
+                            : null,
                       );
                     },
                   ),

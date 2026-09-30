@@ -11,6 +11,7 @@ class PkSideState extends Equatable {
     this.winStreak = 0,
     this.members = const [],
     this.leader,
+    this.audienceSupport = 0,
   });
 
   final int score;
@@ -19,7 +20,10 @@ class PkSideState extends Equatable {
   final List<ChatRoomPresence> members;
   final ChatRoomPresence? leader;
 
-  int get total => score + giftPower;
+  /// İzleyici «Destekle» — jetonsuz, kullanıcı başına sınırlı (sunucu skoru ayrı).
+  final int audienceSupport;
+
+  int get total => score + giftPower + audienceSupport;
 
   PkSideState copyWith({
     int? score,
@@ -27,6 +31,7 @@ class PkSideState extends Equatable {
     int? winStreak,
     List<ChatRoomPresence>? members,
     ChatRoomPresence? leader,
+    int? audienceSupport,
   }) {
     return PkSideState(
       score: score ?? this.score,
@@ -34,11 +39,13 @@ class PkSideState extends Equatable {
       winStreak: winStreak ?? this.winStreak,
       members: members ?? this.members,
       leader: leader ?? this.leader,
+      audienceSupport: audienceSupport ?? this.audienceSupport,
     );
   }
 
   @override
-  List<Object?> get props => [score, giftPower, winStreak, members, leader];
+  List<Object?> get props =>
+      [score, giftPower, winStreak, members, leader, audienceSupport];
 }
 
 /// Tam PK savaş durumu.

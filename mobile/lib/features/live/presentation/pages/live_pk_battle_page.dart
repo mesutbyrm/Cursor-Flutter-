@@ -40,6 +40,7 @@ import '../../../gifts/presentation/engine/gift_engine_overlay.dart';
 import '../../../gifts/presentation/engine/gift_engine_seat_effects_overlay.dart';
 import '../../../gifts/presentation/widgets/gift_stage_layout.dart';
 import '../providers/live_room_providers.dart';
+import '../providers/live_video_pk_provider.dart';
 import '../providers/pk_room_providers.dart';
 import '../gifts/live_gift_controller.dart';
 import '../gifts/providers/live_gift_providers.dart';
@@ -82,6 +83,36 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
   var _timerEndFired = false;
 
   String? get _streamId => widget.session.streamId?.trim();
+
+  void _onLivePkSupport() {
+    final streamId = _streamId;
+    if (streamId == null || streamId.isEmpty) return;
+    final remote = ref.read(pkBattleRemoteProvider);
+    final battleId = remote?.effectiveId ??
+        ref.read(liveVideoPkProvider(streamId)).unifiedMatchId ??
+        '';
+    if (battleId.isEmpty) return;
+    final userId = ref.read(authControllerProvider).valueOrNull?.id ?? '';
+    final ok = ref.read(pkBattleProvider.notifier).applyAudienceSupport(
+          battleId: battleId,
+          userId: userId,
+          points: 3,
+          toLeft: true,
+        );
+    if (!mounted) return;
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sol tarafa +3 destek puanı!')),
+      );
+      unawaited(
+        ref.read(liveVideoPkProvider(streamId).notifier).refreshScoresIfStale(),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Destek limitine ulaştınız.')),
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -636,6 +667,13 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
                             setState(() {});
                           },
                         ),
+                        if (!isHost && pkActive)
+                          LivePkControlItem(
+                            icon: Icons.favorite_rounded,
+                            label: 'Destekle',
+                            active: true,
+                            onTap: _onLivePkSupport,
+                          ),
                         LivePkControlItem(
                           icon: _chatOpen
                               ? Icons.chat_bubble_rounded

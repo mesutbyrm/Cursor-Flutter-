@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.660+711 (2026-09-30) — PK destek, takım üyeleri, falcı arama
+
+- **Sesli / canlı PK «Destekle»:** jetonsuz +3 izleyici puanı (kullanıcı başına en fazla 3); hediye seçici yerine destek akışı
+- **PK takım görünürlüğü:** sunucu `participants` + `user1`/`user2` listesi sol/sağ üye şeridine yansır (rakip oda dahil)
+- **Gelen kutusu:** «Tümü» sekmesinde açılışta mesaj + bildirimler otomatik okundu
+- **Canlı falcılar listesi:** müsait falcılarda sesli / görüntülü hızlı seans kısayolları
+- Backend değişikliği yok
+
 ## 1.0.659+710 (2026-09-30) — Gelen kutu, DM, Gold jeton, alt menü
 
 - **Ana sayfa:** “Seni beğenenler” ve “Popüler falcılar” bölümleri kaldırıldı

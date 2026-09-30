@@ -141,6 +141,39 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
     ref.read(pkBattleProvider.notifier).applyGift(event, toLeft: toLeft);
   }
 
+  void _onPkSupport() {
+    final remote = ref.read(pkBattleRemoteProvider);
+    if (remote == null || !remote.isActive) return;
+    final userId = ref.read(authControllerProvider).valueOrNull?.id ?? '';
+    final battleId = remote.effectiveId;
+    final ok = ref.read(pkBattleProvider.notifier).applyAudienceSupport(
+          battleId: battleId,
+          userId: userId,
+          points: 3,
+          toLeft: true,
+        );
+    if (!mounted) return;
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Takımına +3 destek puanı!')),
+      );
+      final r = widget.room;
+      final roomKey = r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
+      unawaited(
+        ref.read(pkBattleRemoteProvider.notifier).loadRoomBattle(
+              roomKey,
+              alternateRoomId: r.slug != roomKey ? r.slug : null,
+            ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Destek limitine ulaştınız (en fazla 3 puan).'),
+        ),
+      );
+    }
+  }
+
   void _openResultPageIfNeeded({
     required PkBattleState pk,
     PkBattleRemote? remote,
@@ -457,11 +490,7 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                     ),
                   ),
                 PkActionBottomBar(
-                  onSupport: () => showVoiceRoomGiftPicker(
-                    context,
-                    ref,
-                    room: widget.room,
-                  ),
+                  onSupport: _onPkSupport,
                   onGift: () => showVoiceRoomGiftPicker(
                     context,
                     ref,
