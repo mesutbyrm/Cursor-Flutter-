@@ -1,10 +1,9 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import '../../../domain/pk/pk_battle_remote_models.dart';
+import '../pk/pk_ends_at_countdown.dart';
 
-/// Orta ekran PK daveti — 60 sn geri sayım, süre dolunca otomatik kapanır.
+/// Orta ekran PK daveti — süre `expiresAt` ile (sunucu).
 Future<bool?> showVoicePkInviteCenterModal({
   required BuildContext context,
   required String challengerLabel,
@@ -12,6 +11,7 @@ Future<bool?> showVoicePkInviteCenterModal({
 }) {
   final minutes = (battle.durationSeconds / 60).round();
   final durationHint = minutes > 0 ? '$minutes dk' : null;
+  final serverNow = DateTime.tryParse(battle.serverNow ?? '');
 
   return showDialog<bool>(
     context: context,
@@ -21,57 +21,30 @@ Future<bool?> showVoicePkInviteCenterModal({
     builder: (ctx) => _VoicePkInviteDialogBody(
       challengerLabel: challengerLabel,
       durationHint: durationHint,
-      initialCountdown: battle.inviteCountdown(),
+      expiresAt: battle.expiresAt,
+      serverNow: serverNow,
+      fallbackSeconds: battle.inviteCountdown().inSeconds,
     ),
   );
 }
 
-class _VoicePkInviteDialogBody extends StatefulWidget {
+class _VoicePkInviteDialogBody extends StatelessWidget {
   const _VoicePkInviteDialogBody({
     required this.challengerLabel,
     required this.durationHint,
-    required this.initialCountdown,
+    required this.expiresAt,
+    required this.serverNow,
+    required this.fallbackSeconds,
   });
 
   final String challengerLabel;
   final String? durationHint;
-  final Duration initialCountdown;
-
-  @override
-  State<_VoicePkInviteDialogBody> createState() =>
-      _VoicePkInviteDialogBodyState();
-}
-
-class _VoicePkInviteDialogBodyState extends State<_VoicePkInviteDialogBody> {
-  late Duration _remaining;
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    _remaining = widget.initialCountdown;
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) return;
-      if (_remaining.inSeconds <= 1) {
-        _timer?.cancel();
-        Navigator.of(context).pop(null);
-        return;
-      }
-      setState(() {
-        _remaining = Duration(seconds: _remaining.inSeconds - 1);
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
+  final DateTime? expiresAt;
+  final DateTime? serverNow;
+  final int fallbackSeconds;
 
   @override
   Widget build(BuildContext context) {
-    final secs = _remaining.inSeconds.clamp(0, 99);
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 340),
@@ -96,17 +69,29 @@ class _VoicePkInviteDialogBodyState extends State<_VoicePkInviteDialogBody> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  'Kalan süre: ${secs}s',
-                  style: TextStyle(
-                    color: Colors.orange.shade300,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
-                  ),
+                PkEndsAtCountdownText(
+                  endsAt: expiresAt,
+                  serverNow: serverNow,
+                  fallbackSeconds: fallbackSeconds,
+                  builder: (context, sec) {
+                    if (sec <= 0) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (context.mounted) Navigator.of(context).pop(null);
+                      });
+                    }
+                    return Text(
+                      'Kalan süre: ${sec.clamp(0, 99)}s',
+                      style: TextStyle(
+                        color: Colors.orange.shade300,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  '@${widget.challengerLabel} seninle PK yapmak istiyor.',
+                  '@$challengerLabel seninle PK yapmak istiyor.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.82),
@@ -114,10 +99,10 @@ class _VoicePkInviteDialogBodyState extends State<_VoicePkInviteDialogBody> {
                     height: 1.35,
                   ),
                 ),
-                if (widget.durationHint != null) ...[
+                if (durationHint != null) ...[
                   const SizedBox(height: 8),
                   Text(
-                    'Maç süresi: ${widget.durationHint}',
+                    'Maç süresi: $durationHint',
                     style: TextStyle(
                       color: const Color(0xFFB832FF).withValues(alpha: 0.9),
                       fontWeight: FontWeight.w700,

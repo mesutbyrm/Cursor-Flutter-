@@ -10,7 +10,9 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../gifts/presentation/sync/gift_event_listener.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
-import '../../../live/presentation/widgets/broadcast_room/live_pk_score_bar.dart';
+import '../../domain/pk/pk_team_label_helper.dart';
+import '../widgets/pk/pk_ends_at_countdown.dart';
+import '../widgets/pk/voice_pk_invite_action_card.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/pk/pk_battle_mode.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
@@ -129,16 +131,6 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
     _giftSub = service.events.listen(_onGiftEvent);
   }
 
-  bool _isOpponentOwner(PkBattleRemote? remote) {
-    if (remote == null) return false;
-    final user = ref.read(authControllerProvider).valueOrNull;
-    if (user == null) return false;
-    final r = widget.room;
-    final keys = {r.apiRoomKey, r.id, r.slug};
-    final opp = remote.opponentVoiceRoomId;
-    return opp != null && keys.contains(opp);
-  }
-
   void _onGiftEvent(LiveGiftEvent raw) {
     if (!mounted) return;
     final event = ref.read(voiceGiftComboTrackerProvider.notifier).enrich(raw);
@@ -205,6 +197,11 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
       _openResultPageIfNeeded(pk: next, remote: remote);
     });
     ref.listen<PkBattleRemote?>(pkBattleForRoomProvider(widget.room), (prev, next) {
+      if (next != null && pkBattleBelongsToRoom(next, widget.room)) {
+        ref
+            .read(pkBattleProvider.notifier)
+            .applyRemoteBattleForVoiceRoom(next, widget.room);
+      }
       _openResultPageIfNeeded(pk: pk, remote: next);
     });
 
@@ -255,7 +252,9 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
               children: [
                 _PkHeader(
                   timer: pk.timerLabel,
-                  secondsLeft: remote?.secondsLeft ?? pk.secondsLeft,
+                  battleEndsAt: remote?.endsAt,
+                  serverNow: DateTime.tryParse(remote?.serverNow ?? ''),
+                  fallbackSeconds: remote?.resolvedSecondsLeft() ?? pk.secondsLeft,
                   phase: pk.phase,
                   onBack: () => context.pop(),
                   onMode: pk.isActive && !pk.serverAuthoritative
@@ -275,53 +274,68 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                           leadingLeft: leadingLeft,
                         ),
                 ),
-                if (pk.mode == PkBattleMode.team) PkTeamBattleStrip(state: pk),
+                if (pk.mode == PkBattleMode.team && remote != null)
+                  PkTeamBattleStrip(
+                    state: pk,
+                    leftTitle: resolveVoicePkTeamPresentation(
+                      battle: remote,
+                      currentUserId: user?.id,
+                      room: widget.room,
+                    ).leftLabel.toUpperCase(),
+                    rightTitle: resolveVoicePkTeamPresentation(
+                      battle: remote,
+                      currentUserId: user?.id,
+                      room: widget.room,
+                    ).rightLabel.toUpperCase(),
+                  ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
                   child: PkAnimatedScoreBar(state: pk, compact: true),
                 ),
-                if (remote?.isPending == true)
+                if (remote != null &&
+                    remote.isPending &&
+                    !remote.isActive &&
+                    user != null &&
+                    isPkInviteTarget(remote, widget.room, userId: user.id) &&
+                    !isPkChallengerRoom(remote, widget.room))
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                    child: remote!.isPending && _isOpponentOwner(remote)
-                        ? LivePkScoreBar(
-                            leftScore: remote.challengerScore,
-                            rightScore: remote.opponentScore,
-                            status: 'pending',
-                            isHost: false,
-                            onAccept: () {
-                              final r = widget.room;
-                              final roomKey =
-                                  r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
-                              ref.read(pkBattleRemoteProvider.notifier).accept(
-                                    remote.effectiveId,
-                                    roomId: roomKey,
-                                    alternateRoomId:
-                                        r.slug != roomKey ? r.slug : null,
-                                  );
-                            },
-                            onReject: () {
-                              final r = widget.room;
-                              final roomKey =
-                                  r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
-                              ref.read(pkBattleRemoteProvider.notifier).reject(
-                                    remote.effectiveId,
-                                    roomId: roomKey,
-                                    alternateRoomId:
-                                        r.slug != roomKey ? r.slug : null,
-                                  );
-                            },
-                          )
-                        : Text(
-                            isChallenger
-                                ? 'Rakip kabul edene kadar bekleniyor…'
-                                : 'PK daveti bekleniyor…',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.75),
-                              fontSize: 12,
-                            ),
-                          ),
+                    child: VoicePkInviteActionCard(
+                      onAccept: () {
+                        final r = widget.room;
+                        final roomKey =
+                            r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
+                        ref.read(pkBattleRemoteProvider.notifier).accept(
+                              remote.effectiveId,
+                              roomId: roomKey,
+                              alternateRoomId:
+                                  r.slug != roomKey ? r.slug : null,
+                            );
+                      },
+                      onReject: () {
+                        final r = widget.room;
+                        final roomKey =
+                            r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
+                        ref.read(pkBattleRemoteProvider.notifier).reject(
+                              remote.effectiveId,
+                              roomId: roomKey,
+                              alternateRoomId:
+                                  r.slug != roomKey ? r.slug : null,
+                            );
+                      },
+                    ),
+                  )
+                else if (remote?.isPending == true && isChallenger)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                    child: Text(
+                      'Rakip kabul edene kadar bekleniyor…',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.75),
+                        fontSize: 12,
+                      ),
+                    ),
                   ),
                 PkMicParticipantRow(
                   presence: live.presence,
@@ -454,7 +468,9 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
 class _PkHeader extends StatelessWidget {
   const _PkHeader({
     required this.timer,
-    required this.secondsLeft,
+    required this.battleEndsAt,
+    required this.serverNow,
+    required this.fallbackSeconds,
     required this.mode,
     required this.phase,
     required this.onBack,
@@ -462,7 +478,9 @@ class _PkHeader extends StatelessWidget {
   });
 
   final String timer;
-  final int secondsLeft;
+  final DateTime? battleEndsAt;
+  final DateTime? serverNow;
+  final int fallbackSeconds;
   final PkBattleMode mode;
   final PkBattlePhase phase;
   final VoidCallback onBack;
@@ -524,8 +542,17 @@ class _PkHeader extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                 ],
-                if (phase == PkBattlePhase.active && secondsLeft > 0)
-                  PkBattleTimerBadge(secondsLeft: secondsLeft)
+                if (phase == PkBattlePhase.active && battleEndsAt != null)
+                  PkEndsAtCountdownText(
+                    endsAt: battleEndsAt,
+                    serverNow: serverNow,
+                    fallbackSeconds: fallbackSeconds,
+                    builder: (context, sec) => PkBattleTimerBadge(
+                      secondsLeft: sec,
+                    ),
+                  )
+                else if (phase == PkBattlePhase.active && fallbackSeconds > 0)
+                  PkBattleTimerBadge(secondsLeft: fallbackSeconds)
                 else
                   Text(
                     liveLabel,

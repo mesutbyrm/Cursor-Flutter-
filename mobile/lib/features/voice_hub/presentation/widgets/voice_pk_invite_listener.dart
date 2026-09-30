@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../app/router/app_router.dart';
 import '../../../live/presentation/providers/live_pk_invite_signal_provider.dart';
 import '../../../../core/network/pk_event_log.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -159,7 +160,8 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
     if (!mounted || _showing) return;
     _showing = true;
     try {
-      await showPkInviteDialog(context, ref, battle: battle, room: room);
+      final nav = rootNavigatorKey.currentContext ?? context;
+      await showPkInviteDialog(nav, ref, battle: battle, room: room);
     } finally {
       _showing = false;
     }

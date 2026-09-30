@@ -11,9 +11,13 @@ class PkTeamBattleStrip extends StatelessWidget {
   const PkTeamBattleStrip({
     super.key,
     required this.state,
+    this.leftTitle = 'TAKIM A',
+    this.rightTitle = 'TAKIM B',
   });
 
   final PkBattleState state;
+  final String leftTitle;
+  final String rightTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +28,7 @@ class PkTeamBattleStrip extends StatelessWidget {
         children: [
           Expanded(
             child: _TeamColumn(
-              title: 'TAKIM A',
+              title: leftTitle,
               members: state.left.members,
               total: state.left.total,
               color: VoiceRoomTokens.neonPink,
@@ -33,7 +37,7 @@ class PkTeamBattleStrip extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: _TeamColumn(
-              title: 'TAKIM B',
+              title: rightTitle,
               members: state.right.members,
               total: state.right.total,
               color: VoiceRoomTokens.neonBlue,

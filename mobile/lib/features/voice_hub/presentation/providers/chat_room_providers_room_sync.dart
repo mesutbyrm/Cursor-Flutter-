@@ -189,7 +189,8 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     final isPkInviteEvent = event == 'pk_invite' ||
         event == 'pkinvite' ||
         event == 'pk_requested' ||
-        event == 'pkrequest';
+        event == 'pkrequest' ||
+        event == 'pk_request';
     if (isPkInviteEvent) {
       if (_tryApplyPkRoomEvent(payload)) return;
     }
@@ -234,6 +235,7 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       case 'pkended':
       case 'pk_requested':
       case 'pkrequest':
+      case 'pk_request':
       case 'pk_invite':
       case 'pkinvite':
         if (_tryApplyPkRoomEvent(payload)) return;

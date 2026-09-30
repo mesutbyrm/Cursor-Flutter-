@@ -271,9 +271,13 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
       swapSides ? remote.challenger : remote.opponent,
     );
 
+    final secLeft = remote.endsAt != null
+        ? remote.resolvedSecondsLeft()
+        : remote.secondsLeft;
+
     state = state.copyWith(
       phase: phase,
-      secondsLeft: remote.secondsLeft,
+      secondsLeft: secLeft,
       targetScore: remote.targetScore,
       remoteBattleId: remote.id,
       serverAuthoritative: true,
@@ -297,10 +301,7 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
       reactionBurst:
           remote.isActive ? state.reactionBurst + 1 : state.reactionBurst,
     );
-    if (remote.isActive && remote.secondsLeft > 0) {
-      _tick?.cancel();
-      _tick = Timer.periodic(const Duration(seconds: 1), (_) => _onTick());
-    }
+    _tick?.cancel();
   }
 
   void _onTick() {

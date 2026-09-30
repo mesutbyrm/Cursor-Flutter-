@@ -69,14 +69,14 @@ class _GiftGoalBarState extends ConsumerState<GiftGoalBar> {
 
     final goal = st.goal;
     _armCountdownIfNeeded(goal);
-    if (goal == null || st.dismissed) return const SizedBox.shrink();
+    if (goal == null || st.dismissed || goal.isCompleted) {
+      return const SizedBox.shrink();
+    }
 
     return _GoalStrip(
       goal: goal,
       celebrating: _celebrating,
-      onDismiss: goal.isCompleted
-          ? () => ref.read(giftGoalProvider(key).notifier).dismissCompleted()
-          : null,
+      onDismiss: () => ref.read(giftGoalProvider(key).notifier).dismissByUser(),
     );
   }
 }
@@ -153,7 +153,7 @@ class _GoalStrip extends StatelessWidget {
                   ),
                 ),
               ],
-              if (done && onDismiss != null) ...[
+              if (onDismiss != null) ...[
                 const SizedBox(width: 4),
                 InkWell(
                   onTap: onDismiss,

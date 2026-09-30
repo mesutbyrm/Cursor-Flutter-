@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/router/app_router.dart';
 import '../../../../core/theme/app_theme_colors.dart';
+import '../../../live/presentation/providers/live_pk_invite_signal_provider.dart';
 import '../../../notifications/domain/notification_action.dart';
 import '../providers/in_app_banner_provider.dart';
 
@@ -75,6 +76,10 @@ class _GlobalInAppBannerHostState extends ConsumerState<GlobalInAppBannerHost>
     final router = ref.read(goRouterProvider);
     final n = event.notification;
     if (n != null) {
+      final type = n.type.toLowerCase();
+      if (type.contains('pk')) {
+        ref.read(livePkInviteSignalProvider.notifier).bump();
+      }
       // Kanonik yönlendirme — ödeme talebi admin onay alanına gider.
       navigateFromNotification(
         router,

@@ -76,8 +76,9 @@ Future<void> showPkInviteDialog(
   final alt = room.slug != key ? room.slug : null;
   final remote = ref.read(pkBattleRemoteProvider.notifier);
 
+  final dialogContext = rootNavigatorKey.currentContext ?? context;
   final accept = await showVoicePkInviteCenterModal(
-    context: context,
+    context: dialogContext,
     challengerLabel: challengerLabel,
     battle: battle,
   ).timeout(

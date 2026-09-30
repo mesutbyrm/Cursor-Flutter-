@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
+import '../../data/gift_goal_dismiss_storage.dart';
 import '../../data/gift_goal_remote_datasource.dart';
 import '../../domain/gift_goal.dart';
 
@@ -52,12 +53,25 @@ class GiftGoalController
     extends AutoDisposeFamilyNotifier<GiftGoalState, GiftGoalKey> {
   Timer? _timer;
   bool _wasCompleted = false;
+  Set<String> _dismissedGoalIds = {};
 
   @override
   GiftGoalState build(GiftGoalKey arg) {
     ref.onDispose(() => _timer?.cancel());
+    unawaited(_loadDismissed());
     _start();
     return const GiftGoalState();
+  }
+
+  Future<void> _loadDismissed() async {
+    _dismissedGoalIds = await GiftGoalDismissStorage.readDismissedIds(
+      context: arg.context,
+      contextId: arg.contextId,
+    );
+    if (state.goal != null &&
+        _dismissedGoalIds.contains(state.goal!.id)) {
+      state = state.copyWith(dismissed: true);
+    }
   }
 
   void _start() {
@@ -68,6 +82,12 @@ class GiftGoalController
 
   Future<void> _tick() async {
     if (state.dismissed) return;
+    if (_dismissedGoalIds.isEmpty) {
+      _dismissedGoalIds = await GiftGoalDismissStorage.readDismissedIds(
+        context: arg.context,
+        contextId: arg.contextId,
+      );
+    }
     try {
       final remote = ref.read(giftGoalRemoteProvider);
       final goals = await remote.fetchGoals(
@@ -83,6 +103,26 @@ class GiftGoalController
       }
       goal ??= goals.isNotEmpty ? goals.first : null;
       goal = goal?.withResolvedDeadline();
+
+      if (goal != null &&
+          (goal.isCompleted ||
+              goal.currentAmount >= goal.targetAmount ||
+              goal.status.toLowerCase() == 'completed')) {
+        await GiftGoalDismissStorage.dismiss(
+          context: arg.context,
+          contextId: arg.contextId,
+          goalId: goal.id,
+        );
+        _dismissedGoalIds.add(goal.id);
+        state = const GiftGoalState(dismissed: true);
+        _timer?.cancel();
+        return;
+      }
+
+      if (goal != null && _dismissedGoalIds.contains(goal.id)) {
+        state = state.copyWith(dismissed: true, goal: goal);
+        return;
+      }
 
       if (goal != null && goal.endsAt != null) {
         final expired = DateTime.now().isAfter(goal.endsAt!);
@@ -115,16 +155,27 @@ class GiftGoalController
     }
   }
 
-  /// Hedef tamamlandıktan sonra şeridi kapat.
-  Future<void> dismissCompleted() async {
+  /// Kullanıcı X ile kapattı — aynı goalId tekrar gösterilmez.
+  Future<void> dismissByUser() async {
     final goal = state.goal;
+    if (goal == null) return;
+    await GiftGoalDismissStorage.dismiss(
+      context: arg.context,
+      contextId: arg.contextId,
+      goalId: goal.id,
+    );
+    _dismissedGoalIds.add(goal.id);
     state = state.copyWith(dismissed: true, justCompleted: false);
     _timer?.cancel();
-    if (goal == null) return;
-    try {
-      await ref.read(giftGoalRemoteProvider).closeGoal(goal.id);
-    } catch (_) {}
+    if (goal.isCompleted) {
+      try {
+        await ref.read(giftGoalRemoteProvider).closeGoal(goal.id);
+      } catch (_) {}
+    }
   }
+
+  @Deprecated('Use dismissByUser')
+  Future<void> dismissCompleted() => dismissByUser();
 
   /// Yeni hedef oluşturulduktan sonra anında takibe al.
   void adopt(GiftGoal goal, {int? fallbackDurationMinutes}) {
@@ -132,6 +183,7 @@ class GiftGoalController
       fallbackDurationMinutes: fallbackDurationMinutes,
     );
     _wasCompleted = resolved.isCompleted;
+    _dismissedGoalIds.remove(resolved.id);
     state = GiftGoalState(goal: resolved, dismissed: false);
     _start();
   }
