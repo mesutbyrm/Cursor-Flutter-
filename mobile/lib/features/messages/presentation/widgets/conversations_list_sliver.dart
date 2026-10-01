@@ -1,3 +1,4 @@
+import '../../../../core/design_system/cds_skeleton.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -99,7 +100,10 @@ class ConversationsListSliver extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ref.watch(conversationsListNotifierProvider).when(
-          loading: () => const SliverFillRemaining(child: DiscoverAccentLoader()),
+          loading: () => SliverFillRemaining(
+            hasScrollBody: false,
+            child: CdsSkeleton.listRows(),
+          ),
           error: (e, _) => SliverFillRemaining(
             child: DiscoverEmptyState(
               icon: Icons.chat_bubble_outline,

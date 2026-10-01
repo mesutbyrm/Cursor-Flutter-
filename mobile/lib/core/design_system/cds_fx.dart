@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../performance/device_perf_tuning.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _kPerfKey = 'cds_fx_performance_mode';
@@ -40,7 +42,8 @@ class CdsFxNotifier extends Notifier<CdsFxState> {
   Future<void> _load() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final perf = prefs.getBool(_kPerfKey) ?? false;
+      // Kullanıcı seçimi varsa o geçerli; yoksa düşük donanımda otomatik açık.
+      final perf = prefs.getBool(_kPerfKey) ?? DevicePerfTuning.isLowEndDevice;
       if (perf != state.performanceMode) {
         state = state.copyWith(performanceMode: perf);
       }

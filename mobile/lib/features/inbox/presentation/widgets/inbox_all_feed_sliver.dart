@@ -1,3 +1,4 @@
+import '../../../../core/design_system/cds_skeleton.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -112,7 +113,10 @@ class InboxAllFeedSliver extends ConsumerWidget {
     final notifState = ref.watch(notificationsListNotifierProvider);
 
     if (convState.isLoading && notifState.isLoading) {
-      return const SliverFillRemaining(child: DiscoverAccentLoader());
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: CdsSkeleton.listRows(),
+      );
     }
 
     final conversations = convState.valueOrNull?.all ?? const [];
