@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.668+721 (2026-10-01) — Premium cila: şifre göster/gizle, tema geçişi, ayarlar
+
+- **Giriş/Kayıt:** şifre alanlarına göster/gizle düğmesi (animasyonlu ikon)
+- **Tema:** koyu/açık geçişi 360 ms `easeOutCubic` ile yumuşak
+- **Ayarlar:** satır ikonları tema uyumlu yuvarlak zemin; sabit kırmızı → `CdsColors.error`
+- Backend değişikliği yok
+
 ## 1.0.666+719 (2026-10-01) — Bellek, SSE, açılış performansı
 
 - **Soğuk açılış:** TRTC engine sıfırlama, video/hediye sıcak cache temizliği, görsel cache trim

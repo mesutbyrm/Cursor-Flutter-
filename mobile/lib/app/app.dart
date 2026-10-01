@@ -170,6 +170,8 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
             theme: AppTheme.light(),
             darkTheme: darkTheme,
             themeMode: themeMode,
+            themeAnimationDuration: const Duration(milliseconds: 360),
+            themeAnimationCurve: Curves.easeOutCubic,
             builder: (context, child) {
               final brightness = Theme.of(context).brightness;
               SystemChrome.setSystemUIOverlayStyle(

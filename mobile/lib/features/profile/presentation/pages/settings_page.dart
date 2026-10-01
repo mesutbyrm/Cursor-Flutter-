@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/bootstrap/app_cache_clear.dart';
+import '../../../../core/design_system/cds_colors.dart';
 import '../../../../core/design_system/cds_fx.dart';
+import '../../../../core/design_system/cds_radius.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
@@ -280,7 +282,7 @@ class _Divider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Divider(height: 1, indent: 52, color: context.colors.outlineVariant);
+    return Divider(height: 1, indent: 64, color: context.colors.outlineVariant);
   }
 }
 
@@ -301,10 +303,18 @@ class _SettingsTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = destructive
-        ? const Color(0xFFFF5252)
+        ? CdsColors.error
         : context.colors.onSurface;
     return ListTile(
-      leading: Icon(icon, color: color),
+      leading: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(CdsRadius.md),
+        ),
+        child: Icon(icon, color: color, size: 20),
+      ),
       title: Text(label, style: TextStyle(fontWeight: FontWeight.w700, color: color)),
       trailing: trailing != null
           ? Text(trailing!, style: TextStyle(color: context.colors.onSurfaceMuted))
