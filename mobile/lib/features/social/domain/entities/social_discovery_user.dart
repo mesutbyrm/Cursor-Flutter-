@@ -150,12 +150,26 @@ class SocialDiscoveryUser {
         pick(user, ['distanceKm', 'distance_km']);
     final distLegacy = pick(json, ['distance', 'distanceLabel', 'distanceText'])
         ?? pick(user, ['distance', 'distanceLabel', 'distanceText']);
-    String? distanceLabel = DistanceBand.labelFromBandKey(bandKey, hidden: hidden);
+    // `GET /api/social/discovery` mesafeyi `{band, text}` nesnesi olarak
+    // döndürür (ham koordinat yok); önceden bu biçim okunmuyordu.
+    String? distanceLabel;
+    if (distLegacy is Map) {
+      final text = distLegacy['text']?.toString().trim() ?? '';
+      final band = distLegacy['band']?.toString();
+      distanceLabel = hidden
+          ? 'Mesafe bilgisi gizli'
+          : (text.isNotEmpty
+              ? text
+              : DistanceBand.labelFromBandKey(band, hidden: hidden));
+    }
+    distanceLabel ??= DistanceBand.labelFromBandKey(bandKey, hidden: hidden);
     if (distanceLabel == null && distKm is num) {
       distanceLabel = DistanceBand.displayLabel(distKm, hidden: hidden);
     } else if (distanceLabel == null && distLegacy is num) {
       distanceLabel = DistanceBand.displayLabel(distLegacy, hidden: hidden);
-    } else if (distanceLabel == null && distLegacy is String && distLegacy.isNotEmpty) {
+    } else if (distanceLabel == null &&
+        distLegacy is String &&
+        distLegacy.isNotEmpty) {
       distanceLabel = hidden ? 'Mesafe bilgisi gizli' : distLegacy;
     }
     final merged = Map<String, dynamic>.from(user);
