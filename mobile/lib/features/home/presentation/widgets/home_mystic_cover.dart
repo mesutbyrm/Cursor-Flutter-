@@ -11,6 +11,7 @@ class HomeMysticCover extends StatelessWidget {
     required this.slug,
     required this.accent,
     this.networkUrl,
+    this.assetOverride,
     this.thumbnailWidth = 480,
     this.fit = BoxFit.cover,
   });
@@ -18,13 +19,16 @@ class HomeMysticCover extends StatelessWidget {
   final String slug;
   final Color accent;
   final String? networkUrl;
+
+  /// Verilirse bu yerel görsel gösterilir; ağ katmanı çizilmez.
+  final String? assetOverride;
   final int thumbnailWidth;
   final BoxFit fit;
 
   @override
   Widget build(BuildContext context) {
-    final assetPath = FortuneTypeImages.assetPathFor(slug);
-    final remote = networkUrl?.trim();
+    final assetPath = assetOverride ?? FortuneTypeImages.assetPathFor(slug);
+    final remote = assetOverride != null ? null : networkUrl?.trim();
 
     return Stack(
       fit: StackFit.expand,

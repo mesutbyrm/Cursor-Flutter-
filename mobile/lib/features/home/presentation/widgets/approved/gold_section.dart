@@ -1,3 +1,4 @@
+import '../../../../membership/presentation/widgets/membership_tier_art.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -92,6 +93,9 @@ class GoldSection extends ConsumerWidget {
                 title: pkg.title,
                 subtitle: '₺${pkg.priceJeton ~/ 2}/ay · +${pkg.bonusJeton} $jetonLabel',
                 coverSlug: SectionVisualCatalog.goldSlug(
+                  pkg.planId.isNotEmpty ? pkg.planId : pkg.id,
+                ),
+                coverAsset: MembershipTierArt.assetFor(
                   pkg.planId.isNotEmpty ? pkg.planId : pkg.id,
                 ),
                 networkUrl: SectionVisualCatalog.goldTier(

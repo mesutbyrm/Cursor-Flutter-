@@ -76,6 +76,7 @@ class HomeHoroscopeSection extends ConsumerWidget {
               primary: primary,
               secondary: secondary,
               imageUrl: SectionVisualCatalog.horoscopeFor(name),
+              imageAsset: SectionVisualCatalog.horoscopeAsset(name),
               highlighted: isMine,
               onTap: () => showHomeHoroscopeDailySheet(
                 context,
@@ -98,6 +99,7 @@ class _SignChip extends StatelessWidget {
     required this.primary,
     required this.secondary,
     required this.imageUrl,
+    this.imageAsset,
     required this.onTap,
     this.highlighted = false,
   });
@@ -107,6 +109,7 @@ class _SignChip extends StatelessWidget {
   final Color primary;
   final Color secondary;
   final String imageUrl;
+  final String? imageAsset;
   final VoidCallback onTap;
   final bool highlighted;
 
@@ -146,7 +149,18 @@ class _SignChip extends StatelessWidget {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    CanlifalNetworkImage(url: imageUrl, fit: BoxFit.cover),
+                    if (imageAsset != null)
+                      Image.asset(
+                        imageAsset!,
+                        fit: BoxFit.cover,
+                        cacheWidth: 192,
+                        errorBuilder: (_, _, _) => CanlifalNetworkImage(
+                          url: imageUrl,
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    else
+                      CanlifalNetworkImage(url: imageUrl, fit: BoxFit.cover),
                     DecoratedBox(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
