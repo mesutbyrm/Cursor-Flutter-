@@ -10,7 +10,7 @@ CI: `scripts/apk-pending-features-gate.sh` (release gate madde 2 sonrası).
 | 3 | Hediye kutusu UI + API | `gift_box_panel_section.dart` |
 | 4 | SSE hediye kutusu yenileme (oda) | `chat_room_providers_room_sync.dart` → `gift_box_` |
 | 5 | Tanış Kaynaş — etkileşimler sekmesi | `tanis_kaynas_page.dart` → `socialDiscoveryActionsProvider` |
-| 6 | Tanış Kaynaş — hashtag & takım | `tanis_kaynas_page.dart` → `socialTrendingHashtagsProvider` |
+| 6 | Tanış Kaynaş — hashtag & takım | `tanis_kaynas_activity_page.dart` → `socialTrendingHashtagsProvider` |
 | 7 | Tanış Kaynaş — favori aksiyonu (süper beğeni) | `tanis_discover_tab.dart` → `favorite` |
 | 8 | Tanış — sana gelen / gönderilen beğeniler | `tanis_likes_tab.dart` |
 | 9 | Tanış — hashtag → keşif filtresi | `discovery_hashtag_navigation.dart` |

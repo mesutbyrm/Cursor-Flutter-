@@ -46,7 +46,7 @@ check "Tanış — actions provider" \
   'socialDiscoveryActionsProvider'
 
 check "Tanış — hashtag tab" \
-  "$MOBILE/lib/features/social/presentation/pages/tanis_kaynas_page.dart" \
+  "$MOBILE/lib/features/social/presentation/pages/tanis_kaynas_activity_page.dart" \
   'socialTrendingHashtagsProvider'
 
 check "Tanış — favorite action (süper beğeni)" \
