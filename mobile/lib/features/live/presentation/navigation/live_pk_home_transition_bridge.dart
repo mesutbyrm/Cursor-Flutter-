@@ -98,7 +98,7 @@ void syncLivePkHomeTransitionState(
   if (streamId != null && streamId.trim().isNotEmpty) {
     bridge.noteEnteringLive(streamId: streamId.trim());
   }
-  if (isLivePkEndedStatus(status) ||
+  if (livePkBattleFinished(status: status, battle: battle) ||
       (status.isEmpty && (battleId == null || battleId.isEmpty))) {
     bridge.reset();
     return;

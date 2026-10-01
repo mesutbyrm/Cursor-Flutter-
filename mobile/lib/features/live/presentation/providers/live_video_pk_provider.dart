@@ -154,23 +154,23 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
           pkBattleRemoteToBattleMap(remote, myStreamId: arg),
           previous: state.battle,
         );
-        if (!remote.isEnded || isLivePkEndedStatus(remote.status)) {
-          state = state.copyWith(
-            battle: map,
-            unifiedMatchId: remote.effectiveId,
-            clearError: true,
-          );
-          if (isLivePkActiveStatus(remote.status)) {
-            _startPolling();
-            _scheduleEndsAtRefresh(map);
-          } else {
-            _stopPolling();
-            if (isLivePkEndedStatus(remote.status)) {
-              _scheduleEndedCleanup(remote.effectiveId);
-            }
+        final finished = remote.isEnded ||
+            livePkBattleFinished(status: remote.status, battle: map);
+        state = state.copyWith(
+          battle: map,
+          unifiedMatchId: remote.effectiveId,
+          clearError: true,
+        );
+        if (isLivePkActiveStatus(remote.status) && !finished) {
+          _startPolling();
+          _scheduleEndsAtRefresh(map);
+        } else {
+          _stopPolling();
+          if (finished) {
+            _scheduleEndedCleanup(remote.effectiveId);
           }
-          return;
         }
+        return;
       }
     } on ApiException catch (e) {
       state = state.copyWith(error: ApiException.userMessage(e));
@@ -236,7 +236,35 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
       out[key] = incoming[key];
     }
     _ensurePkEndsAt(out);
+    _guardPrematureEndedStatus(out, previous: previous);
     return out;
+  }
+
+  void _guardPrematureEndedStatus(
+    Map<String, dynamic> merged, {
+    Map<String, dynamic>? previous,
+  }) {
+    final incStatus = merged['status']?.toString();
+    if (isLivePkOutcomeOnlyStatus(incStatus) &&
+        !livePkBattleFinished(status: incStatus, battle: merged)) {
+      merged['status'] =
+          previous?['status']?.toString().trim().isNotEmpty == true
+              ? previous!['status']
+              : 'active';
+      return;
+    }
+    if (previous == null) return;
+    final prevStatus = previous['status']?.toString();
+    final prevActive = isLivePkActiveStatus(prevStatus) ||
+        isLivePkStartingStatus(prevStatus) ||
+        isLivePkPausedStatus(prevStatus);
+    if (!prevActive) return;
+    if (!livePkBattleFinished(status: incStatus, battle: merged)) return;
+    final endsAt =
+        DateTime.tryParse(merged['endsAt']?.toString() ?? '')?.toUtc();
+    if (endsAt != null && DateTime.now().toUtc().isBefore(endsAt)) {
+      merged['status'] = previous['status'];
+    }
   }
 
   void _ensurePkEndsAt(Map<String, dynamic> battle) {
@@ -277,11 +305,17 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
       _stopPolling();
       return;
     }
-    if (!isLivePkActiveStatus(status)) {
+    final mergedStatus = merged['status']?.toString() ?? '';
+    final stillRunning = isLivePkActiveStatus(mergedStatus) ||
+        isLivePkStartingStatus(mergedStatus) ||
+        isLivePkPausedStatus(mergedStatus) ||
+        (isLivePkOutcomeOnlyStatus(mergedStatus) &&
+            !livePkBattleFinished(status: mergedStatus, battle: merged));
+    if (!stillRunning) {
       state = state.copyWith(battle: merged, clearError: true);
       syncLivePkHomeTransitionFromBattle(ref, battle: merged, streamId: arg);
       _stopPolling();
-      if (isLivePkEndedStatus(status)) {
+      if (livePkBattleFinished(status: mergedStatus, battle: merged)) {
         _scheduleEndedCleanup(merged['id']?.toString() ?? '');
       }
       return;
@@ -324,7 +358,9 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
   /// PK sonuç ekranından sonra split'i kapatır (sunucu zaten `ended` döndü).
   void dismissEndedOverlay({String? expectedBattleId}) {
     final currentId = state.battle?['id']?.toString() ?? '';
-    if (!isLivePkEndedStatus(state.status)) return;
+    if (!livePkBattleFinished(status: state.status, battle: state.battle)) {
+      return;
+    }
     if (expectedBattleId != null &&
         expectedBattleId.trim().isNotEmpty &&
         currentId != expectedBattleId.trim()) {

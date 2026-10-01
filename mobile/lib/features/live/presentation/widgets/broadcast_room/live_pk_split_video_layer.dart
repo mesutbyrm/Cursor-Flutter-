@@ -146,9 +146,12 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
     final pk = ref.watch(liveVideoPkProvider(streamId));
     final battle = pk.battle;
     ref.listen(liveVideoPkProvider(streamId), (prev, next) {
-      final wasEnded =
-          prev != null && isLivePkEndedStatus(prev.status);
-      final nowEnded = isLivePkEndedStatus(next.status);
+      final wasEnded = prev != null &&
+          livePkBattleFinished(status: prev.status, battle: prev.battle);
+      final nowEnded = livePkBattleFinished(
+        status: next.status,
+        battle: next.battle,
+      );
       if (!wasEnded && nowEnded) {
         _onPkEndedTransition(next.battle?['id']?.toString());
       }
@@ -156,7 +159,7 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
     if (battle == null || !isLivePkBroadcastStage(battle, pk.status)) {
       return const ColoredBox(color: Color(0xFF120A1E));
     }
-    final ended = isLivePkEndedStatus(pk.status);
+    final ended = livePkBattleFinished(status: pk.status, battle: battle);
     final pkActive = isLivePkActiveStatus(pk.status);
     final pkStarting = isLivePkStartingStatus(pk.status);
 

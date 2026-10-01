@@ -93,16 +93,21 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
         '';
     if (battleId.isEmpty) return;
     final userId = ref.read(authControllerProvider).valueOrNull?.id ?? '';
+    final toLeft = ref.read(pkBattleProvider.notifier).audienceSupportToLeft;
     final ok = ref.read(pkBattleProvider.notifier).applyAudienceSupport(
           battleId: battleId,
           userId: userId,
           points: 3,
-          toLeft: true,
+          toLeft: toLeft,
         );
     if (!mounted) return;
     if (ok) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sol tarafa +3 destek puanı!')),
+        SnackBar(
+          content: Text(
+            toLeft ? 'Sol tarafa +3 destek!' : 'Sağ tarafa +3 destek!',
+          ),
+        ),
       );
       unawaited(
         ref.read(liveVideoPkProvider(streamId).notifier).refreshScoresIfStale(),

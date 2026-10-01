@@ -19,15 +19,44 @@ bool livePkHasDualStreams(Map<String, dynamic>? battle) {
       opponent.isNotEmpty;
 }
 
+/// Maç sonucu etiketi — aktif maç bitmiş sayılmaz (erken "berabere" önlenir).
+bool isLivePkOutcomeOnlyStatus(String? status) {
+  final s = normalizePkStatus(status);
+  return s == 'tie' || s == 'draw';
+}
+
 bool isLivePkEndedStatus(String? status) {
   final s = normalizePkStatus(status);
   return s == 'ended' ||
       s == 'completed' ||
       s == 'finished' ||
-      s == 'tie' ||
-      s == 'draw' ||
       s == 'cancelled' ||
       s == 'canceled';
+}
+
+/// PK gerçekten bitti mi — `tie`/`draw` yalnızca süre dolduktan sonra.
+bool livePkBattleFinished({
+  required String? status,
+  Map<String, dynamic>? battle,
+  DateTime? now,
+}) {
+  if (isLivePkEndedStatus(status)) return true;
+  if (!isLivePkOutcomeOnlyStatus(status)) return false;
+  final clock = (now ?? DateTime.now()).toUtc();
+  final endsRaw = battle?['endsAt']?.toString().trim() ?? '';
+  final endsAt = endsRaw.isNotEmpty ? DateTime.tryParse(endsRaw)?.toUtc() : null;
+  if (endsAt != null && clock.isAfter(endsAt)) return true;
+  final startedRaw = battle?['startedAt']?.toString().trim() ?? '';
+  final started =
+      startedRaw.isNotEmpty ? DateTime.tryParse(startedRaw)?.toUtc() : null;
+  if (started != null) {
+    final dur = int.tryParse(
+          '${battle?['durationSeconds'] ?? battle?['duration'] ?? 180}',
+        ) ??
+        180;
+    if (clock.isAfter(started.add(Duration(seconds: dur)))) return true;
+  }
+  return false;
 }
 
 /// Aktif veya bitti — split video + skor çubuğu (tam ekran sonuç overlay yok).
@@ -35,7 +64,7 @@ bool isLivePkBroadcastStage(Map<String, dynamic>? battle, String? status) {
   if (!livePkHasDualStreams(battle)) return false;
   if (isLivePkStartingStatus(status)) return true;
   if (isLivePkActiveStatus(status)) return true;
-  return isLivePkEndedStatus(status);
+  return livePkBattleFinished(status: status, battle: battle);
 }
 
 String livePkOutcomeStatusLabel({

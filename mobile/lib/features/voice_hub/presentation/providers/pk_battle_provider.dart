@@ -20,6 +20,7 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
   VoiceRoomEntity? _room;
   List<ChatRoomPresence> _presence = const [];
   final _audienceSupportBudget = LivePkLikeBudget();
+  var _audienceSupportToLeft = true;
 
   @override
   PkBattleState build() {
@@ -163,6 +164,12 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
     );
   }
 
+  void setAudienceSupportSide({required bool toLeft}) {
+    _audienceSupportToLeft = toLeft;
+  }
+
+  bool get audienceSupportToLeft => _audienceSupportToLeft;
+
   /// Jetonsuz izleyici desteği — taraf başına en fazla 3 puan (istemci gösterimi).
   bool applyAudienceSupport({
     required String battleId,
@@ -176,6 +183,7 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
     if (bid.isEmpty || uid.isEmpty) return false;
     if (!_audienceSupportBudget.canAward(bid, uid, points)) return false;
     _audienceSupportBudget.record(bid, uid, points);
+    _audienceSupportToLeft = toLeft;
     if (toLeft) {
       state = state.copyWith(
         left: state.left.copyWith(
@@ -263,15 +271,27 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
     final rightIds = _sideUserIds(state.right);
     final rid = event.receiverId?.trim();
     if (rid != null && rid.isNotEmpty) {
-      if (leftIds.contains(rid)) return true;
-      if (rightIds.contains(rid)) return false;
+      if (leftIds.contains(rid)) {
+        _audienceSupportToLeft = true;
+        return true;
+      }
+      if (rightIds.contains(rid)) {
+        _audienceSupportToLeft = false;
+        return false;
+      }
     }
     final sid = event.senderId?.trim();
     if (sid != null && sid.isNotEmpty) {
-      if (leftIds.contains(sid)) return true;
-      if (rightIds.contains(sid)) return false;
+      if (leftIds.contains(sid)) {
+        _audienceSupportToLeft = true;
+        return true;
+      }
+      if (rightIds.contains(sid)) {
+        _audienceSupportToLeft = false;
+        return false;
+      }
     }
-    return true;
+    return _audienceSupportToLeft;
   }
 
   bool giftSideResolvable(LiveGiftEvent event) {

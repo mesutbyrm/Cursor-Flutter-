@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.665+718 (2026-09-30) — PK, sesli PK, gelen kutusu
+
+- **Canlı PK:** `tie`/`draw` erken bitiş engeli; süre dolmadan berabere overlay yok; merge guard
+- **Sesli PK:** destek/hediye tarafı — panele dokunarak seçim; hediye alıcısı seçili taraf
+- **Sesli PK sohbet:** hızlı chat son mesajları gösterir
+- **Gelen kutusu:** varsayılan Mesajlar sekmesi; açılışta otomatik «tümünü oku» kaldırıldı; WhatsApp tarzı liste
+- Backend değişikliği yok
+
 ## 1.0.664+717 (2026-09-30) — apk-latest düzeltme (güncel indirme)
 
 - **CI:** Gecikmiş workflow_run eski commit ile `apk-latest` yayınlayamaz (main ucu zorunlu)

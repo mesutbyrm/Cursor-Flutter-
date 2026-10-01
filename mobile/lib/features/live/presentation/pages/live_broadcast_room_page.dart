@@ -2073,7 +2073,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     if (battle == null) return;
     final pk = ref.read(liveVideoPkProvider(streamId));
     if (!isLivePkActiveStatus(pk.status) ||
-        isLivePkEndedStatus(pk.status)) {
+        livePkBattleFinished(status: pk.status, battle: pk.battle)) {
       return;
     }
     final battleId =
@@ -2838,7 +2838,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final pkImmersive = hasStream &&
         streamId != null &&
         isLivePkBroadcastStage(pkState?.battle, pkStatus) &&
-        !isLivePkEndedStatus(pkStatus);
+        !livePkBattleFinished(status: pkStatus, battle: pkState?.battle);
     final pkOpponentUserId = hasStream && streamId != null
         ? _pkOpponentUserId(streamId!, s, pkState?.battle)
         : '';
