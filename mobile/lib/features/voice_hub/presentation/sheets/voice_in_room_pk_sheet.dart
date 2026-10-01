@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,9 +8,9 @@ import '../../../../core/network/pk_event_log.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/presentation/providers/live_pk_invite_signal_provider.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
-import '../../../pk/presentation/providers/pk_session_notifier.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/presence_canonical.dart';
+import '../pk_room/pk_room_controller.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../../domain/pk/pk_duration_options.dart';
 import '../widgets/premium_2026/pk/pk_duration_picker.dart';
@@ -152,11 +154,12 @@ class _VoiceInRoomPkSheetState extends ConsumerState<_VoiceInRoomPkSheet> {
       // Karşı taraf PK'yı 2 sn'lik yoklamayla öğreniyor; sinyal ile hemen
       // yoklanmasını tetikle (sesli oda SSE'si games backend PK'sını taşımıyor).
       ref.read(livePkInviteSignalProvider.notifier).bump();
-      await ref
-          .read(pkSessionProvider(
-            PkSessionArgs(contextId: _roomKey, kind: PkContextKind.voice),
-          ).notifier)
-          .loadState(showLoading: false);
+      // Oda içi PK paneli: sunucudaki güncel PK'yı hemen al (SSE gelmese de görünsün).
+      unawaited(
+        ref
+            .read(pkRoomControllerProvider(widget.room.liveKey).notifier)
+            .loadCurrent(),
+      );
       if (!mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(

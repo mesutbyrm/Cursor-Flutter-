@@ -258,8 +258,9 @@ class TrtcRoomManager {
         _trackRemoteUser(userId, joined: true);
         if (_twoWayVideo) {
           _setRemoteAnchor(userId);
-          _cloud?.muteRemoteAudio(userId, false);
+          _unmuteRemoteAudio(userId);
         }
+        _enforceLocalRemoteMute(userId);
       },
       onRemoteUserLeaveRoom: (userId, _) {
         _trtcLog('remote_leave', {'userId': userId});
@@ -318,9 +319,12 @@ class TrtcRoomManager {
         if (userId == _localUserId) return;
         _trtcLog('remote_audio', {'userId': userId, 'available': available});
         _setRemoteAudioState(userId, available);
-        if (!_twoWayVideo && _isHost) return;
+        if (!_twoWayVideo && _isHost) {
+          _enforceLocalRemoteMute(userId);
+          return;
+        }
         if (available) {
-          _cloud?.muteRemoteAudio(userId, false);
+          _unmuteRemoteAudio(userId);
         } else {
           _cloud?.muteRemoteAudio(userId, true);
         }
@@ -500,7 +504,50 @@ class TrtcRoomManager {
   }
 
   void muteRemoteAudio(String userId, bool mute) {
-    _cloud?.muteRemoteAudio(userId, mute);
+    if (!mute) {
+      _unmuteRemoteAudio(userId);
+      return;
+    }
+    _cloud?.muteRemoteAudio(userId, true);
+  }
+
+  /// Yalnızca BU cihazda sesi kapatılan uzak kullanıcılar (ör. PK'da karşı takım).
+  ///
+  /// TRTC `muteRemoteAudio` yerel oynatmayı keser; kullanıcının mikrofonu,
+  /// diğer dinleyiciler ve backend etkilenmez. Otomatik "ses geldi → aç"
+  /// mantığı ve kulaklık (tümünü aç) bu kümeyi ezmez.
+  final Set<String> _locallyMutedRemote = <String>{};
+
+  Set<String> get locallyMutedRemoteUsers => Set.unmodifiable(_locallyMutedRemote);
+
+  void setLocallyMutedRemoteUsers(Set<String> userIds) {
+    final next = userIds.where((id) => id.trim().isNotEmpty).toSet();
+    final prev = Set<String>.of(_locallyMutedRemote);
+    _locallyMutedRemote
+      ..clear()
+      ..addAll(next);
+    for (final id in next) {
+      if (!prev.contains(id)) _cloud?.muteRemoteAudio(id, true);
+    }
+    for (final id in prev) {
+      if (!next.contains(id)) _cloud?.muteRemoteAudio(id, false);
+    }
+    _trtcLog('local_mute_remote', {'users': next.length});
+  }
+
+  /// Yerel susturma listesindeyse sessiz tut; değilse sesi aç.
+  void _unmuteRemoteAudio(String userId) {
+    if (_locallyMutedRemote.contains(userId)) {
+      _cloud?.muteRemoteAudio(userId, true);
+      return;
+    }
+    _cloud?.muteRemoteAudio(userId, false);
+  }
+
+  void _enforceLocalRemoteMute(String userId) {
+    if (_locallyMutedRemote.contains(userId)) {
+      _cloud?.muteRemoteAudio(userId, true);
+    }
   }
 
   void _configureAudioProcessing() {
@@ -558,7 +605,7 @@ class TrtcRoomManager {
     if (_cloud == null || !_inRoom) return;
     _remoteViewBindings[userId] = viewId;
     _cloud!.startRemoteView(userId, TRTCVideoStreamType.big, viewId);
-    _cloud!.muteRemoteAudio(userId, false);
+    _unmuteRemoteAudio(userId);
     _trtcLog('remote_video', {'userId': userId, 'viewId': viewId, 'enabled': true});
     _trtcLog('remote_audio', {'userId': userId, 'muted': false});
   }
@@ -581,7 +628,7 @@ class TrtcRoomManager {
     if (viewId == null) return false;
     _cloud!.stopRemoteView(userId, TRTCVideoStreamType.big);
     _cloud!.startRemoteView(userId, TRTCVideoStreamType.big, viewId);
-    _cloud!.muteRemoteAudio(userId, false);
+    _unmuteRemoteAudio(userId);
     _trtcLog('remote_video_resubscribe', {'userId': userId, 'viewId': viewId});
     return true;
   }
@@ -652,6 +699,12 @@ class TrtcRoomManager {
 
   void setAllRemoteAudioMuted(bool mute) {
     _cloud?.muteAllRemoteAudio(mute);
+    if (!mute) {
+      // "Tümünü aç" yerel susturmayı bozmasın.
+      for (final id in _locallyMutedRemote) {
+        _cloud?.muteRemoteAudio(id, true);
+      }
+    }
   }
 
   void switchCamera() {
@@ -670,6 +723,7 @@ class TrtcRoomManager {
     _clearRemoteAnchor();
     _remoteViewBindings.clear();
     _remoteUserIds.clear();
+    _locallyMutedRemote.clear();
     remoteUserIdsNotifier.value = const [];
     remoteVideoByUser.value = const {};
     remoteAudioByUser.value = const {};

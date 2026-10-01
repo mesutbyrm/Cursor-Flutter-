@@ -293,6 +293,9 @@ class PkSessionNotifier
           id,
           alternateRoomId: hostAlt,
         );
+        // Oda içi PK `PkRoomController`'a aittir: davet/geri sayım-sonuç
+        // diyalogları ve tam ekran PK hattı bunu görmemeli.
+        if (remote != null && remote.isInRoomUser) remote = null;
         if (_disposed) return;
         _applyBattle(remote != null ? pkRemoteToBattle(remote) : null);
         state = state.copyWith(loading: false, clearError: true);

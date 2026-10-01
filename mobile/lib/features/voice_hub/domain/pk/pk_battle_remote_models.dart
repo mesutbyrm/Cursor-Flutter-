@@ -33,6 +33,7 @@ class PkBattleRemote extends Equatable {
     this.expiresAt,
     this.inviteTimeoutSeconds = 0,
     this.serverNow,
+    this.scope = '',
   });
 
   final String id;
@@ -65,6 +66,50 @@ class PkBattleRemote extends Equatable {
   final int inviteTimeoutSeconds;
   /// PK_ENTEGRASYON — `endsAt − serverNow` geri sayımı için (oda GET /pk).
   final String? serverNow;
+
+  /// Backend `scope`: `room` (oda-vs-oda), `room_user` (oda içi kullanıcı PK), `stream`…
+  final String scope;
+
+  /// Oda içi (kullanıcı-vs-kullanıcı) PK — davet/tam ekran PK akışına GİRMEZ;
+  /// oda içi kompakt PK paneli (`PkRoomController`) yönetir.
+  bool get isInRoomUser =>
+      scope.toLowerCase().contains('room_user') ||
+      battleType.toLowerCase().contains('room_user');
+
+  /// Yalnızca skorları değiştirir (hediye puanı yaması). Durum/süre aynı kalır.
+  PkBattleRemote withScores({required int challengerScore, required int opponentScore}) {
+    return PkBattleRemote(
+      id: id,
+      inviteId: inviteId,
+      battleType: battleType,
+      status: status,
+      challengerScore: challengerScore,
+      opponentScore: opponentScore,
+      secondsLeft: secondsLeft,
+      durationSeconds: durationSeconds,
+      targetScore: targetScore,
+      voiceRoomId: voiceRoomId,
+      opponentVoiceRoomId: opponentVoiceRoomId,
+      liveStreamId: liveStreamId,
+      opponentLiveStreamId: opponentLiveStreamId,
+      challengerId: challengerId,
+      opponentId: opponentId,
+      targetUserId: targetUserId,
+      guestUserId: guestUserId,
+      winnerId: winnerId,
+      challenger: challenger,
+      opponent: opponent,
+      participants: participants,
+      result: result,
+      recentGifts: recentGifts,
+      endsAt: endsAt,
+      startedAt: startedAt,
+      expiresAt: expiresAt,
+      inviteTimeoutSeconds: inviteTimeoutSeconds,
+      serverNow: serverNow,
+      scope: scope,
+    );
+  }
 
   /// Sunucu `endsAt` / `startedAt` varsa öncelikli geri sayım.
   int resolvedSecondsLeft({DateTime? now}) {
@@ -300,6 +345,7 @@ class PkBattleRemote extends Equatable {
       expiresAt: expiresAt,
       inviteTimeoutSeconds: inviteTimeoutSeconds,
       serverNow: normalized['serverNow']?.toString(),
+      scope: normalized['scope']?.toString() ?? '',
     );
   }
 
