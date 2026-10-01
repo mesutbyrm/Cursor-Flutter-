@@ -94,6 +94,7 @@ flutter:
     - assets/brand/
     - assets/fortune/
     - assets/games/
+    - assets/membership/
     - assets/gifts/lottie/
     - assets/gifts/svga/
     - assets/gifts/sounds/

@@ -1,4 +1,3 @@
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
@@ -9,6 +8,7 @@ import '../../../../core/motion/canlifal_motion_widgets.dart';
 import '../../../../core/membership/membership_capability_keys.dart';
 import '../../../../core/membership/membership_capability_providers.dart';
 import '../../domain/vip_tier.dart';
+import '../../../membership/presentation/widgets/membership_tier_art.dart';
 import '../providers/vip_membership_provider.dart';
 import '../theme/vip_gold_tokens.dart';
 import '../widgets/vip_luxury_card.dart';
@@ -202,34 +202,22 @@ class _CrownHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(28),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 32),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: VipGoldTokens.goldMid.withValues(alpha: 0.4)),
-            gradient: LinearGradient(
-              colors: [
-                VipGoldTokens.goldMid.withValues(alpha: 0.2),
-                Colors.transparent,
-              ],
+    return MembershipTierArt(
+      tierId: tier.name,
+      height: 190,
+      radius: 28,
+      glow: VipGoldTokens.goldMid,
+      fallback: Center(
+        child: Icon(
+          Icons.workspace_premium_rounded,
+          size: 88,
+          color: VipGoldTokens.goldMid,
+          shadows: [
+            Shadow(
+              color: VipGoldTokens.goldMid.withValues(alpha: 0.8),
+              blurRadius: 32,
             ),
-          ),
-          child: Icon(
-            Icons.workspace_premium_rounded,
-            size: 88,
-            color: VipGoldTokens.goldMid,
-            shadows: [
-              Shadow(
-                color: VipGoldTokens.goldMid.withValues(alpha: 0.8),
-                blurRadius: 32,
-              ),
-            ],
-          ),
+          ],
         ),
       ),
     );

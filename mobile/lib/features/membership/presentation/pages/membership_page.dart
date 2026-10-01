@@ -29,6 +29,7 @@ import '../controllers/membership_controller.dart';
 import '../widgets/common_benefits.dart';
 import '../widgets/feature_table.dart';
 import '../widgets/membership_card.dart';
+import '../widgets/membership_tier_art.dart';
 import '../widgets/membership_checkout_sheet.dart';
 import '../widgets/membership_pending_payment_banner.dart';
 import '../widgets/membership_checkout_footer_hint.dart';
@@ -155,6 +156,13 @@ class MembershipPage extends ConsumerWidget {
                                   );
                                 },
                               ),
+                            ),
+                            const SizedBox(height: 16),
+                            MembershipTierArt(
+                              tierId: ui.selectedTierModel.wireId,
+                              title: ui.selectedTierModel.title,
+                              subtitle: ui.selectedTierModel.subtitle,
+                              glow: ui.selectedTierModel.glow,
                             ),
                             const SizedBox(height: 22),
                             Text(
