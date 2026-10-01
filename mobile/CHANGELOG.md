@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.667+720 (2026-10-01) — Tanış Kaynaş Premium 2026
+
+- **Yeni tasarım:** koyu cam / gradyan arayüz; kategori sekmeleri (Sana Özel, Çevrimiçi, Yakınımda, İlgi Alanları, Tanışma Odaları), çevrimiçi şerit + Hikayem, kaydırmalı keşif kartı (sağ beğen · sol geç · yukarı tanış), tanışma amacı, yakındakiler, ortak ilgi alanları, canlı sesli odalar. İskelet, boş ve hata durumları; açık tema desteği
+- **Gerçek veri:** uyum yüzdesi sunucunun ortak ilgi hesabı (`matchPercent`); çevrimiçi sayısı `filter=online` toplamı; ilgi sayıları yüklenen kullanıcılardan; odalar mevcut sesli oda sistemi. Sahte veri yok
+- **Düzeltmeler:** Eşleşmeler/Beğeniler yanlış listeyi gösteriyordu (sunucunun tanımadığı parametreler); mesafe hiç görünmüyordu; çevrimiçi süzgeci çalışmıyordu
+- Eski sekmeli görünüm "Etkinliğim" olarak `/social/tanis-kaynas/activity`
+
 ## 1.0.666+719 (2026-10-01) — Bellek, SSE, açılış performansı
 
 - **Soğuk açılış:** TRTC engine sıfırlama, video/hediye sıcak cache temizliği, görsel cache trim
