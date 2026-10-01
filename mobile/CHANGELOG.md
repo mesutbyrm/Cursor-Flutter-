@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.672+725 (2026-10-01) — PK, sesli PK, gelen kutusu
+
+- **Canlı PK:** `tie`/`draw` erken bitiş engeli; süre dolmadan berabere overlay yok; merge guard; `livePkBattleFinished` ile gerçek bitiş
+- **Sesli PK:** destek/hediye tarafı — panele dokunarak seçim; hediye alıcısı seçili taraf; yanlış tarafa beğeni düzeltmesi
+- **Sesli PK sohbet:** hızlı chat son oda mesajlarını gösterir
+- **Gelen kutusu:** varsayılan Mesajlar sekmesi; açılışta otomatik «tümünü oku» kaldırıldı; bildirim yönlendirmesi Mesajlar; WhatsApp tarzı liste
+- Backend değişikliği yok
+
 ## 1.0.671+724 (2026-10-01) — Mistik görseller (stok fotoğraflar kaldırıldı)
 
 - Pexels stok fotoğrafları kaldırıldı; yerine proje sahibinin sağladığı mistik illüstrasyonlar: 12 burç, 5 üyelik kademesi, 5 fal görseli, 34 oyun kapağı, giriş arka planı

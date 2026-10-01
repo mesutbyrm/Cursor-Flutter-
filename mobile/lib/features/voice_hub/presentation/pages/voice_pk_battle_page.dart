@@ -66,6 +66,7 @@ class VoicePkBattlePage extends ConsumerStatefulWidget {
 class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
   StreamSubscription<LiveGiftEvent>? _giftSub;
   var _lastGiftSideLeft = true;
+  var _supportToLeft = true;
   var _chatOpen = false;
   var _resultNavigated = false;
 
@@ -150,7 +151,7 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
           battleId: battleId,
           userId: userId,
           points: 3,
-          toLeft: true,
+          toLeft: _supportToLeft,
         );
     if (!mounted) return;
     if (ok) {
@@ -310,6 +311,13 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                           state: pk,
                           leadingLeft: leadingLeft,
                           hideHudScores: pkGiftAnimating,
+                          supportToLeft: _supportToLeft,
+                          onSelectSupportSide: (toLeft) {
+                            setState(() => _supportToLeft = toLeft);
+                            ref
+                                .read(pkBattleProvider.notifier)
+                                .setAudienceSupportSide(toLeft: toLeft);
+                          },
                           leftTeamLabel: remote != null
                               ? resolveVoicePkTeamPresentation(
                                   battle: remote,
@@ -496,11 +504,23 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                   ),
                 PkActionBottomBar(
                   onSupport: _onPkSupport,
-                  onGift: () => showVoiceRoomGiftPicker(
-                    context,
-                    ref,
-                    room: widget.room,
-                  ),
+                  onGift: () {
+                    final pkState = ref.read(pkBattleProvider);
+                    final seated = <ChatRoomPresence>[
+                      ...pkState.left.members,
+                      ...pkState.right.members,
+                    ];
+                    final initial = _supportToLeft
+                        ? pkState.left.leader
+                        : pkState.right.leader;
+                    showVoiceRoomGiftPicker(
+                      context,
+                      ref,
+                      room: widget.room,
+                      seatedUsers: seated,
+                      initialReceiver: initial,
+                    );
+                  },
                   onChat: () => setState(() => _chatOpen = !_chatOpen),
                 ),
                 if (_chatOpen)
@@ -634,6 +654,11 @@ class _PkQuickChatState extends ConsumerState<_PkQuickChat> {
 
   @override
   Widget build(BuildContext context) {
+    final live = ref.watch(voiceRoomLiveProvider(widget.room.liveKey));
+    final recent = live.messages.length <= 8
+        ? live.messages
+        : live.messages.sublist(live.messages.length - 8);
+
     Future<void> send() async {
       final t = _ctrl.text.trim();
       if (t.isEmpty) return;
@@ -643,46 +668,79 @@ class _PkQuickChatState extends ConsumerState<_PkQuickChat> {
           .sendMessage(t);
     }
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E).withValues(alpha: 0.92),
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: Colors.white24),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _ctrl,
-              style: const TextStyle(color: Colors.white, fontSize: 15),
-              decoration: const InputDecoration(
-                hintText: 'Mesaj',
-                hintStyle: TextStyle(color: Colors.white54),
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              ),
-              textInputAction: TextInputAction.send,
-              onSubmitted: (_) => send(),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (recent.isNotEmpty)
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 120),
+            child: ListView.builder(
+              shrinkWrap: true,
+              reverse: true,
+              itemCount: recent.length,
+              itemBuilder: (_, i) {
+                final m = recent[recent.length - 1 - i];
+                final name = m.user?.displayName ?? 'Kullanıcı';
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    '$name: ${m.content}',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.88),
+                      fontSize: 12,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(right: 6, top: 6, bottom: 6),
-            child: Material(
-              color: const Color(0xFF25D366),
-              shape: const CircleBorder(),
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: send,
-                child: const SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: Icon(Icons.send_rounded, color: Colors.white, size: 20),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: const Color(0xFF1C1C1E).withValues(alpha: 0.92),
+            borderRadius: BorderRadius.circular(26),
+            border: Border.all(color: Colors.white24),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _ctrl,
+                  style: const TextStyle(color: Colors.white, fontSize: 15),
+                  decoration: const InputDecoration(
+                    hintText: 'Mesaj',
+                    hintStyle: TextStyle(color: Colors.white54),
+                    border: InputBorder.none,
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                  textInputAction: TextInputAction.send,
+                  onSubmitted: (_) => send(),
                 ),
               ),
-            ),
+              Padding(
+                padding: const EdgeInsets.only(right: 6, top: 6, bottom: 6),
+                child: Material(
+                  color: const Color(0xFF25D366),
+                  shape: const CircleBorder(),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: send,
+                    child: const SizedBox(
+                      width: 40,
+                      height: 40,
+                      child:
+                          Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -692,6 +750,8 @@ class _OneVsOneBody extends StatelessWidget {
     required this.state,
     required this.leadingLeft,
     this.hideHudScores = false,
+    this.supportToLeft = true,
+    this.onSelectSupportSide,
     this.leftTeamLabel,
     this.rightTeamLabel,
   });
@@ -699,6 +759,8 @@ class _OneVsOneBody extends StatelessWidget {
   final PkBattleState state;
   final bool leadingLeft;
   final bool hideHudScores;
+  final bool supportToLeft;
+  final ValueChanged<bool>? onSelectSupportSide;
   final String? leftTeamLabel;
   final String? rightTeamLabel;
 
@@ -711,73 +773,95 @@ class _OneVsOneBody extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
-              child: PkOutcomeBorder(
-                outcome: pkSideOutcome(
-                  isLeft: true,
-                  leftScore: state.left.total,
-                  rightScore: state.right.total,
-                  battleActive: state.isActive,
-                  leftWon: state.winner == PkBattleWinner.left,
-                  rightWon: state.winner == PkBattleWinner.right,
-                  isDraw: state.winner == PkBattleWinner.tie,
-                ),
-                urgentPulse: state.isActive &&
-                    state.secondsLeft > 0 &&
-                    state.secondsLeft <= 10,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.centerLeft,
-                      end: Alignment.center,
-                      colors: [
-                        VoiceRoomTokens.neonPink.withValues(alpha: 0.35),
-                        Colors.transparent,
-                      ],
-                    ),
+              child: GestureDetector(
+                onTap: state.isActive
+                    ? () => onSelectSupportSide?.call(true)
+                    : null,
+                child: PkOutcomeBorder(
+                  outcome: pkSideOutcome(
+                    isLeft: true,
+                    leftScore: state.left.total,
+                    rightScore: state.right.total,
+                    battleActive: state.isActive,
+                    leftWon: state.winner == PkBattleWinner.left,
+                    rightWon: state.winner == PkBattleWinner.right,
+                    isDraw: state.winner == PkBattleWinner.tie,
                   ),
-                  child: PkPlayerHudFrame(
-                    user: state.left.leader,
-                    accent: VoiceRoomTokens.neonPurple,
-                    label: (leftTeamLabel ?? '1. TAKIM').toUpperCase(),
-                    score: state.left.total,
-                    showScore: !hideHudScores,
-                    isLeading: leadingLeft && state.isActive,
+                  urgentPulse: state.isActive &&
+                      state.secondsLeft > 0 &&
+                      state.secondsLeft <= 10,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      border: supportToLeft && state.isActive
+                          ? Border.all(
+                              color: VoiceRoomTokens.neonPink,
+                              width: 2,
+                            )
+                          : null,
+                      gradient: LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.center,
+                        colors: [
+                          VoiceRoomTokens.neonPink.withValues(alpha: 0.35),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                    child: PkPlayerHudFrame(
+                      user: state.left.leader,
+                      accent: VoiceRoomTokens.neonPurple,
+                      label: (leftTeamLabel ?? '1. TAKIM').toUpperCase(),
+                      score: state.left.total,
+                      showScore: !hideHudScores,
+                      isLeading: leadingLeft && state.isActive,
+                    ),
                   ),
                 ),
               ),
             ),
             Expanded(
-              child: PkOutcomeBorder(
-                outcome: pkSideOutcome(
-                  isLeft: false,
-                  leftScore: state.left.total,
-                  rightScore: state.right.total,
-                  battleActive: state.isActive,
-                  leftWon: state.winner == PkBattleWinner.left,
-                  rightWon: state.winner == PkBattleWinner.right,
-                  isDraw: state.winner == PkBattleWinner.tie,
-                ),
-                urgentPulse: state.isActive &&
-                    state.secondsLeft > 0 &&
-                    state.secondsLeft <= 10,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.centerRight,
-                      end: Alignment.center,
-                      colors: [
-                        VoiceRoomTokens.neonBlue.withValues(alpha: 0.35),
-                        Colors.transparent,
-                      ],
-                    ),
+              child: GestureDetector(
+                onTap: state.isActive
+                    ? () => onSelectSupportSide?.call(false)
+                    : null,
+                child: PkOutcomeBorder(
+                  outcome: pkSideOutcome(
+                    isLeft: false,
+                    leftScore: state.left.total,
+                    rightScore: state.right.total,
+                    battleActive: state.isActive,
+                    leftWon: state.winner == PkBattleWinner.left,
+                    rightWon: state.winner == PkBattleWinner.right,
+                    isDraw: state.winner == PkBattleWinner.tie,
                   ),
-                  child: PkPlayerHudFrame(
-                    user: state.right.leader,
-                    accent: VoiceRoomTokens.neonBlue,
-                    label: (rightTeamLabel ?? '2. TAKIM').toUpperCase(),
-                    score: state.right.total,
-                    showScore: !hideHudScores,
-                    isLeading: !leadingLeft && state.isActive,
+                  urgentPulse: state.isActive &&
+                      state.secondsLeft > 0 &&
+                      state.secondsLeft <= 10,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      border: !supportToLeft && state.isActive
+                          ? Border.all(
+                              color: VoiceRoomTokens.neonBlue,
+                              width: 2,
+                            )
+                          : null,
+                      gradient: LinearGradient(
+                        begin: Alignment.centerRight,
+                        end: Alignment.center,
+                        colors: [
+                          VoiceRoomTokens.neonBlue.withValues(alpha: 0.35),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                    child: PkPlayerHudFrame(
+                      user: state.right.leader,
+                      accent: VoiceRoomTokens.neonBlue,
+                      label: (rightTeamLabel ?? '2. TAKIM').toUpperCase(),
+                      score: state.right.total,
+                      showScore: !hideHudScores,
+                      isLeading: !leadingLeft && state.isActive,
+                    ),
                   ),
                 ),
               ),

@@ -132,7 +132,7 @@ class ConversationsListSliver extends ConsumerWidget {
               );
             }
             return SliverPadding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 32),
+              padding: const EdgeInsets.fromLTRB(0, 0, 0, 32),
               sliver: SliverList.builder(
                 itemCount: items.length + (state.hasMore && q.isEmpty ? 1 : 0),
                 itemBuilder: (ctx, i) {
@@ -151,13 +151,11 @@ class ConversationsListSliver extends ConsumerWidget {
                   final c = items[i];
                   final unread = c.unreadCount > 0;
                   return ScrollPerf.item(
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: Material(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(22),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(22),
+                    Material(
+                      color: unread
+                          ? const Color(0xFF25D366).withValues(alpha: 0.08)
+                          : context.colors.surface,
+                      child: InkWell(
                           onTap: () {
                             unawaited(
                               ref
@@ -170,36 +168,17 @@ class ConversationsListSliver extends ConsumerWidget {
                             context.push('/chat/${c.id}');
                           },
                           onLongPress: () => _showPeerActions(context, ref, c),
-                          child: Ink(
+                          child: Padding(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              color: unread
-                                  ? AppThemeColors.accentPurple
-                                      .withValues(alpha: 0.18)
-                                  : context.colors.glassFill,
-                              borderRadius: BorderRadius.circular(22),
-                              border: Border.all(
-                                color: unread
-                                    ? AppThemeColors.accentPurple
-                                        .withValues(alpha: 0.42)
-                                    : context.colors.glassBorder,
-                              ),
-                              boxShadow: unread
-                                  ? AppThemeColors.glowShadow(
-                                      AppThemeColors.accentPurple,
-                                      blur: 14,
-                                    )
-                                  : null,
+                              horizontal: 16,
+                              vertical: 10,
                             ),
                             child: Row(
                               children: [
                                 Stack(
                                   clipBehavior: Clip.none,
                                   children: [
-                                    UserAvatar(url: c.avatarUrl, radius: 28),
+                                    UserAvatar(url: c.avatarUrl, radius: 26),
                                     Positioned(
                                       right: 0,
                                       bottom: 1,
@@ -231,26 +210,22 @@ class ConversationsListSliver extends ConsumerWidget {
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: TextStyle(
-                                          fontWeight: unread
-                                              ? FontWeight.w900
-                                              : FontWeight.w700,
+                                          fontWeight: FontWeight.w600,
                                           fontSize: 16,
                                           color: context.colors.onSurface,
                                         ),
                                       ),
-                                      const SizedBox(height: 4),
+                                      const SizedBox(height: 2),
                                       Text(
                                         c.subtitle ?? '',
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: TextStyle(
-                                          color: unread
-                                              ? context.colors.onSurface
-                                              : context.colors.onSurfaceMuted,
-                                          fontSize: 13,
+                                          color: context.colors.onSurfaceMuted,
+                                          fontSize: 14,
                                           fontWeight: unread
-                                              ? FontWeight.w700
-                                              : FontWeight.w500,
+                                              ? FontWeight.w600
+                                              : FontWeight.w400,
                                         ),
                                       ),
                                     ],
@@ -280,12 +255,7 @@ class ConversationsListSliver extends ConsumerWidget {
                                           vertical: 3,
                                         ),
                                         decoration: BoxDecoration(
-                                          gradient: const LinearGradient(
-                                            colors: [
-                                              Color(0xFF7C3AED),
-                                              Color(0xFFFF2D8D),
-                                            ],
-                                          ),
+                                          color: const Color(0xFF25D366),
                                           borderRadius:
                                               BorderRadius.circular(12),
                                         ),
@@ -305,7 +275,6 @@ class ConversationsListSliver extends ConsumerWidget {
                             ),
                           ),
                         ),
-                      ),
                     ),
                   );
                 },

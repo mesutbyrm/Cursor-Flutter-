@@ -23,7 +23,7 @@ import '../widgets/inbox_system_notifications_panel.dart';
 class InboxPage extends ConsumerStatefulWidget {
   const InboxPage({
     super.key,
-    this.initialTab = InboxTab.all,
+    this.initialTab = InboxTab.messages,
   });
 
   final InboxTab initialTab;
@@ -53,9 +53,6 @@ class _InboxPageState extends ConsumerState<InboxPage> {
       ref.read(notificationsListNotifierProvider.future),
     ]);
     ref.invalidate(notificationsUnreadApiProvider);
-    if (_tab == InboxTab.all) {
-      await _markAllInboxRead(silent: true);
-    }
   }
 
   Future<void> _markAllInboxRead({bool silent = false}) async {

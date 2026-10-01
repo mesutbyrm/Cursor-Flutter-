@@ -712,7 +712,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           if (tab != null && tab.isNotEmpty) {
             return '/messages?tab=$tab';
           }
-          return '/messages?tab=all';
+          return '/messages?tab=messages';
         },
       ),
       GoRoute(
