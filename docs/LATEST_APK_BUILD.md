@@ -4,18 +4,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.664+717` |
-| Tarih (UTC) | 2026-09-30 23:37 |
-| Commit | [`a9d367acbbf8c71b4bca8718f5e8ccf66299c944`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/a9d367acbbf8c71b4bca8718f5e8ccf66299c944) |
-| İş akışı | [Run 36790230860](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36790230860) |
+| Sürüm | `1.0.666+719` |
+| Tarih (UTC) | 2026-10-01 12:34 |
+| Commit | [`3e4cdb53e2927172a0de50b1e854468915b3343e`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/3e4cdb53e2927172a0de50b1e854468915b3343e) |
+| İş akışı | [Run 36860626238](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36860626238) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.664+717 (2026-09-30) — apk-latest düzeltme (güncel indirme)
+## 1.0.666+719 (2026-10-01) — Bellek, SSE, açılış performansı
 
-- **CI:** Gecikmiş workflow_run eski commit ile `apk-latest` yayınlayamaz (main ucu zorunlu)
-- **İçerik:** 1.0.663 paketi (PK, DM, jeton, Gold, alt menü, falcı video/ses) — apk-latest yeniden yüklenecek
+- **Soğuk açılış:** TRTC engine sıfırlama, video/hediye sıcak cache temizliği, görsel cache trim
+- **Sesli oda:** keepAlive yalnızca oturum başladığında; sohbet listesi en fazla 180 mesaj
+- **SSE:** `inactive` geçişinde gereksiz pause kaldırıldı; ön plan resume debounce; bağlantı debounce
+- **Açılış:** çift site animasyon katalog refresh kaldırıldı; animasyon preload batch (6)
+- **Teşhis:** AppStartupLog APP_PAUSE/RESUME, SSE/TRTC olayları (debug)
 - Backend değişikliği yok
 
 
