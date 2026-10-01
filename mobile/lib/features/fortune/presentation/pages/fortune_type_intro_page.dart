@@ -50,6 +50,11 @@ class _FortuneTypeIntroPageState extends ConsumerState<FortuneTypeIntroPage> {
     _scrollParallax.bind(_scroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      final asset = FortuneTypeImages.assetPathFor(type.slug);
+      if (asset != null) {
+        precacheImage(ResizeImage(AssetImage(asset), width: 1200), context);
+        return;
+      }
       final url = FortuneTypeImages.urlFor(type.slug, width: 1400);
       precacheImage(canlifalImageProvider(url), context);
     });

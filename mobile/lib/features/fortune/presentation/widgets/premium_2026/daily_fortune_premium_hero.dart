@@ -64,6 +64,7 @@ class _DailyFortunePremiumHeroState extends State<DailyFortunePremiumHero>
 
   Widget _buildContent(double scrollOffset) {
     final url = FortuneTypeImages.urlFor('gunluk-fal', width: 1200);
+    final localAsset = FortuneTypeImages.assetPathFor('gunluk-fal');
     final glow = FortuneTypeImages.glowColor('tarot');
     final parallax = scrollOffset * 0.2;
 
@@ -91,14 +92,25 @@ class _DailyFortunePremiumHeroState extends State<DailyFortunePremiumHero>
               ),
               Transform.translate(
                 offset: Offset(0, parallax),
-                child: CanlifalNetworkImage(
-                  url: url,
-                  fit: BoxFit.cover,
-                  thumbnailWidth: 1000,
-                  color: Colors.white.withValues(alpha: 0.35),
-                  colorBlendMode: BlendMode.softLight,
-                  placeholder: const FortuneImageShimmer(accent: Color(0xFFB832FF)),
-                ),
+                child: localAsset != null
+                    ? Image.asset(
+                        localAsset,
+                        fit: BoxFit.cover,
+                        cacheWidth: 1000,
+                        errorBuilder: (_, _, _) => const FortuneImageShimmer(
+                          accent: Color(0xFFB832FF),
+                        ),
+                      )
+                    : CanlifalNetworkImage(
+                        url: url,
+                        fit: BoxFit.cover,
+                        thumbnailWidth: 1000,
+                        color: Colors.white.withValues(alpha: 0.35),
+                        colorBlendMode: BlendMode.softLight,
+                        placeholder: const FortuneImageShimmer(
+                          accent: Color(0xFFB832FF),
+                        ),
+                      ),
               ),
               DecoratedBox(
                 decoration: BoxDecoration(
