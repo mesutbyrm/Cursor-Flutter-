@@ -121,6 +121,7 @@ class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
                       const FortuneHubShorts(),
                       const FortuneHubReadyReadings(),
                       const FortuneHubBanaOzel(),
+                      const FortuneHubDailyMissions(),
                       const FortuneHubReminderTile(),
                       const FortuneHubExploreBanner(),
                       SizedBox(height: bottom + 100),

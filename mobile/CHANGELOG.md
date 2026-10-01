@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.677+730 (2026-10-01) — Fal & Tarot: günlük görevler geri geldi
+
+- Hub'a yeni tasarım sistemiyle **Günlük Görevler** şeridi eklendi (`GET /api/daily-missions`, ilerleme çubuğu, boş/hata/yükleme durumları); önceki yenilemede çıkarılmıştı
+- Backend ve API değişmedi
+
 ## 1.0.676+729 (2026-10-01) — Fal & Tarot Premium 2026 yeniden tasarım
 
 - **Ortak tasarım sistemi** (`widgets/fortune_hub_2026/fortune_hub_kit.dart`): renk, gradient, radius, tipografi (Playfair başlık), cam kart (blur'suz), bölüm başlığı, kategori kartı, altın düğme, boş/hata/yükleme durumları
