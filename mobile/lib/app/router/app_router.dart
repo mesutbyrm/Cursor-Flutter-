@@ -91,6 +91,7 @@ import '../../features/live/presentation/pages/live_swipe_viewer_page.dart';
 import '../../features/social/presentation/pages/social_create_post_page.dart';
 import '../../features/social/presentation/pages/social_page.dart';
 import '../../features/social/presentation/pages/tanis_kaynas_page.dart';
+import '../../features/social/presentation/pages/tanis_kaynas_activity_page.dart';
 import '../../features/social/presentation/pages/tanis_kaynas_extras_page.dart';
 import '../../features/social/presentation/pages/social_team_detail_page.dart';
 import '../../features/social/presentation/pages/social_post_detail_page.dart';
@@ -443,6 +444,17 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                         parentNavigatorKey: rootNavigatorKey,
                         builder: (context, state) =>
                             const TanisKaynasExtrasPage(),
+                      ),
+                      // Eşleşmeler / beğeniler / etkileşimler (eski sekmeli görünüm).
+                      GoRoute(
+                        path: 'activity',
+                        parentNavigatorKey: rootNavigatorKey,
+                        builder: (context, state) => TanisKaynasActivityPage(
+                          initialTab: int.tryParse(
+                                state.uri.queryParameters['tab'] ?? '',
+                              ) ??
+                              1,
+                        ),
                       ),
                     ],
                   ),
