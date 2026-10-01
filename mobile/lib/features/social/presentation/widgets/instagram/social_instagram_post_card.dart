@@ -14,6 +14,7 @@ import 'package:canlifal_social/features/shorts/presentation/widgets/shorts_prof
 import 'package:canlifal_social/features/vip_gold/presentation/widgets/vip_badge.dart';
 
 import '../../../../../core/widgets/user_avatar.dart';
+import '../../../../auth/domain/entities/user_entity.dart';
 import '../../../../../core/providers/auth_selectors.dart';
 import '../../../../feed/domain/entities/post_entity.dart';
 import '../../../../../core/config/env.dart';
@@ -235,6 +236,7 @@ class _SocialInstagramPostCardState
               if (_isFortunePost && post.fortuneCount > 0)
                 _CoViewersBar(
                   count: post.fortuneCount,
+                  viewers: ref.watch(fortuneCoViewersProvider(post)),
                   onTap: () => _openPostDetail(context),
                 ),
             ],
@@ -643,10 +645,17 @@ class _PostHeader extends StatelessWidget {
 enum _PostMenuAction { profile, share, delete }
 
 class _CoViewersBar extends StatelessWidget {
-  const _CoViewersBar({required this.count, required this.onTap});
+  const _CoViewersBar({
+    required this.count,
+    required this.onTap,
+    this.viewers = const [],
+  });
 
   final int count;
   final VoidCallback onTap;
+
+  /// Aynı fal türünü paylaşan son kullanıcılar (en çok 3, gerçek akıştan).
+  final List<UserEntity> viewers;
 
   @override
   Widget build(BuildContext context) {
@@ -669,7 +678,10 @@ class _CoViewersBar extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.groups_rounded, size: 22, color: orange),
+                if (viewers.isEmpty)
+                  const Icon(Icons.groups_rounded, size: 22, color: orange)
+                else
+                  _AvatarStack(users: viewers),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -687,6 +699,46 @@ class _CoViewersBar extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Üst üste binen küçük avatarlar (en çok 3).
+class _AvatarStack extends StatelessWidget {
+  const _AvatarStack({required this.users});
+
+  final List<UserEntity> users;
+
+  static const _r = 13.0;
+  static const _step = 20.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final n = users.length.clamp(0, 3);
+    return Semantics(
+      label: 'Son bakanlar: ${users.take(n).map((u) => u.display).join(', ')}',
+      child: SizedBox(
+        width: _step * (n - 1) + _r * 2 + 2,
+        height: _r * 2 + 2,
+        child: Stack(
+          children: [
+            for (var i = 0; i < n; i++)
+              Positioned(
+                left: i * _step,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFFFF9F1C),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: UserAvatar(url: users[i].avatarUrl, radius: _r),
+                ),
+              ),
+          ],
         ),
       ),
     );

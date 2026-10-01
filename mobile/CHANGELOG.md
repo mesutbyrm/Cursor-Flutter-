@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.674+727 (2026-10-01) — Eksikler: son bakanlar, canlı arka plan, iskeletler
+
+- **Sosyal akış:** "Bu fala baktı" satırında aynı fal türünü paylaşan son 3 gerçek kullanıcının avatarı (akıştan türetilir; backend son bakanları vermiyor)
+- **Canlı yayın arka planı:** hazır seçenekler uygulamadaki mistik görseller; seçilince bir kez siteye yüklenir (izleyiciler de görür). Eski ikon/uzak görsel bağımlılığı kalktı
+- **Gelen kutusu / mesajlar / bildirimler:** yükleme sırasında dönen gösterge yerine iskelet satırları (`CdsSkeleton.listRows`)
+- **Performans:** düşük donanımlı cihazlarda dekoratif efektler (CDS performans modu) kullanıcı seçimi yoksa varsayılan açık
+- Backend değişikliği yok
+
 ## 1.0.673+726 (2026-10-01) — CI: gelen kutusu varsayılan sekme testi
 
 - `InboxTab.fromQuery(null)` artık `messages` — birim test güncellendi

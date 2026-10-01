@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
-import 'package:flutter/painting.dart';
 import 'package:flutter/scheduler.dart';
 
 /// Cihaz sınıfına göre bellek ve önbellek ayarları.
@@ -24,6 +23,9 @@ abstract final class DevicePerfTuning {
       cache.maximumSizeBytes = 100 << 20;
     }
   }
+
+  /// Düşük donanım (≤4 çekirdekli Android) — dekoratif efektler varsayılan kapalı.
+  static bool get isLowEndDevice => _isLowRamDevice();
 
   static bool _isLowRamDevice() {
     if (kIsWeb) return false;

@@ -1,9 +1,11 @@
+import '../utils/fortune_co_viewers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/providers/auth_selectors.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profile/presentation/providers/profile_hub_providers.dart';
+import '../../../auth/domain/entities/user_entity.dart';
 import '../../../feed/domain/entities/post_entity.dart';
 import '../../data/datasources/social_remote_datasource.dart';
 import '../../data/repositories/social_repository_impl.dart';
@@ -223,4 +225,11 @@ final postCommentsProvider =
     FutureProvider.family<List<SocialCommentEntity>, String>((ref, postId) async {
   if (postId.trim().isEmpty) return const [];
   return ref.read(socialRepositoryProvider).fetchComments(postId);
+});
+
+/// Bir fal gönderisi için "birlikte bakan" son 3 kullanıcı (akıştan türetilir).
+final fortuneCoViewersProvider =
+    Provider.autoDispose.family<List<UserEntity>, PostEntity>((ref, post) {
+  final feed = ref.watch(socialNotifierProvider).valueOrNull ?? const [];
+  return recentFortuneCoViewers(feed, post);
 });

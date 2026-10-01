@@ -42,6 +42,44 @@ abstract final class CdsSkeleton {
     );
   }
 
+  /// Sohbet / bildirim listesi iskeleti: avatar + iki satır (kaydırmaz).
+  static Widget listRows({int count = 7}) {
+    return Semantics(
+      label: 'Yükleniyor',
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: CdsSpacing.lg,
+          vertical: CdsSpacing.md,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var i = 0; i < count; i++)
+              Padding(
+                padding: const EdgeInsets.only(bottom: CdsSpacing.lg),
+                child: Row(
+                  children: [
+                    circle(size: 48),
+                    const SizedBox(width: CdsSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          box(width: 140.0 + (i % 3) * 30, height: 14),
+                          const SizedBox(height: CdsSpacing.sm),
+                          box(width: double.infinity, height: 12),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   static Widget membershipCatalog() {
     return Padding(
       padding: const EdgeInsets.all(CdsSpacing.lg),
