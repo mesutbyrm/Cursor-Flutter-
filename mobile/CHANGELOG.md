@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.669+722 (2026-10-01) — Mistik görseller: fal paylaşımı, oyunlar, üyelikler, burçlar
+
+- **Sosyal akış:** fal paylaşımı türe uygun mistik görselin (kahve, el, tarot, aşk…) üzerine yazılı kart olarak gösterilir; backend `fortuneType` (coffee, palm…) → görsel eşlemesi
+- **Fal görselleri:** aura, doğum haritası, günlük fal, kurşun dökme ve istihare için yeni illüstrasyonlar; fal detay/intro ekranları yerel görseli öncelikli kullanır (çevrimdışı çalışır)
+- **Oyunlar:** katalogdaki 34 oyun için kendi kapak illüstrasyonu (backend görseli yoksa/yüklenmezse)
+- **Üyelikler:** Basic/Gold/Premium/Diamond/SVIP kademelerine özel illüstrasyon (üyelik sayfası, VIP merkezi, ana sayfa Gold kartları)
+- **Ana sayfa:** burç chip'leri element renkli takımyıldız arka planı kullanır (Unsplash fotoğrafı kaldırıldı)
+- Üretim betikleri: `mobile/tool/gen_*_art.py`
+- Backend değişikliği yok
+
 ## 1.0.668+721 (2026-10-01) — Premium cila: şifre göster/gizle, tema geçişi, ayarlar
 
 - **Giriş/Kayıt:** şifre alanlarına göster/gizle düğmesi (animasyonlu ikon)
