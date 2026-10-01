@@ -20,7 +20,7 @@ class CategorySelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 88,
+      height: 92,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         scrollCacheExtent: VoiceRoomsPerf.scrollCacheExtent,
@@ -73,7 +73,7 @@ class _CategoryChip extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 280),
           curve: Curves.easeOutCubic,
-          width: 64,
+          width: 72,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -102,12 +102,18 @@ class _CategoryChip extends StatelessWidget {
                       : null,
                 ),
                 child: Center(
-                  child: VoicePremiumCategoryIcon(
-                    iconKey: item.iconKey,
-                    colors: item.colors,
-                    active: active,
-                    showLottie: item.iconKey == 'music' && active,
-                  ),
+                  child: item.materialIcon != null
+                      ? Icon(
+                          item.materialIcon,
+                          size: 24,
+                          color: active ? Colors.white : item.colors.first,
+                        )
+                      : VoicePremiumCategoryIcon(
+                          iconKey: item.iconKey,
+                          colors: item.colors,
+                          active: active,
+                          showLottie: item.iconKey == 'music' && active,
+                        ),
                 ),
               ),
               const SizedBox(height: 6),

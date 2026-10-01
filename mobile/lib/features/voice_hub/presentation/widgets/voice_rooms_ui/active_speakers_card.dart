@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/images/canlifal_network_image.dart';
-import 'voice_rooms_fx.dart';
+import '../../../../../core/providers/auth_selectors.dart';
+import '../../../../profile/presentation/providers/profile_providers.dart';
 import 'voice_rooms_mock_data.dart';
-import 'voice_rooms_svg_icons.dart';
 import 'voice_rooms_ui_tokens.dart';
 
+/// En aktif konuşmacılar — oda sahipleri (dinleyici ve oda sayısı canlı veriden).
 class ActiveSpeakersCard extends StatelessWidget {
   const ActiveSpeakersCard({super.key, required this.speakers});
 
@@ -13,196 +15,192 @@ class ActiveSpeakersCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return VoiceGlassFxContainer(
-      radius: VoiceRoomsUiTokens.radiusLg,
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
-      glowColor: VoiceRoomsUiTokens.purpleGlow,
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(VoiceRoomsUiTokens.radiusLg),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF2A1252), Color(0xFF150A2B)],
+        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
+          const Row(
             children: [
-              const Expanded(
-                child: Text(
-                  'En Aktif Konuşmacılar',
-                  style: TextStyle(
-                    color: VoiceRoomsUiTokens.textPrimary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                  ),
+              Icon(Icons.workspace_premium_rounded,
+                  color: VoiceRoomsUiTokens.gold, size: 22),
+              SizedBox(width: 8),
+              Text(
+                'En Aktif Konuşmacılar',
+                style: TextStyle(
+                  color: VoiceRoomsUiTokens.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
-              const VoiceLottieAccent(size: 20),
             ],
           ),
           const SizedBox(height: 10),
-          ...speakers.map(_SpeakerRow.new),
-          const SizedBox(height: 6),
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () {},
-              borderRadius: BorderRadius.circular(8),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Tümünü Gör',
-                      style: TextStyle(
-                        color: VoiceRoomsUiTokens.textSecondary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    VoiceRoomsSvgIcons.icon(
-                      'chevron_right',
-                      size: 14,
-                      color: VoiceRoomsUiTokens.textSecondary,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+          for (final s in speakers) _SpeakerRow(speaker: s),
         ],
       ),
     );
   }
 }
 
-class _SpeakerRow extends StatelessWidget {
-  const _SpeakerRow(this.speaker);
+class _SpeakerRow extends ConsumerStatefulWidget {
+  const _SpeakerRow({required this.speaker});
 
   final ActiveSpeakerItem speaker;
 
-  Color get _rankColor => switch (speaker.rank) {
+  @override
+  ConsumerState<_SpeakerRow> createState() => _SpeakerRowState();
+}
+
+class _SpeakerRowState extends ConsumerState<_SpeakerRow> {
+  var _followed = false;
+  var _busy = false;
+
+  ActiveSpeakerItem get speaker => widget.speaker;
+
+  Future<void> _follow() async {
+    final id = speaker.userId;
+    if (id == null || _busy || _followed) return;
+    setState(() => _busy = true);
+    try {
+      await ref.read(profileRepositoryProvider).follow(id);
+      if (mounted) setState(() => _followed = true);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Takip edilemedi, tekrar dene.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Color get _rank => switch (speaker.rank) {
         1 => VoiceRoomsUiTokens.gold,
-        2 => VoiceRoomsUiTokens.silver,
-        _ => VoiceRoomsUiTokens.bronze,
+        2 => VoiceRoomsUiTokens.purpleGlow,
+        3 => VoiceRoomsUiTokens.blue,
+        4 => VoiceRoomsUiTokens.onlineGreen,
+        _ => VoiceRoomsUiTokens.magenta,
       };
 
   @override
   Widget build(BuildContext context) {
-    final isTop = speaker.rank <= 2;
+    final url = speaker.avatarUrl?.trim();
+    final myId = ref.watch(currentUserIdProvider);
+    final canFollow = speaker.userId != null && speaker.userId != myId;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         children: [
           Container(
-            width: 22,
-            height: 22,
-            decoration: BoxDecoration(
-              color: _rankColor.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-              border: Border.all(color: _rankColor, width: 1.5),
-            ),
+            width: 24,
+            height: 24,
             alignment: Alignment.center,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: _rank),
             child: Text(
               '${speaker.rank}',
               style: TextStyle(
-                color: _rankColor,
-                fontSize: 11,
+                color: speaker.rank == 1 ? Colors.black : Colors.white,
+                fontSize: 12,
                 fontWeight: FontWeight.w900,
               ),
             ),
           ),
           const SizedBox(width: 10),
-          VoiceLiveAvatarGlow(
-            live: isTop,
-            glowColor: _rankColor,
-            size: 36,
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: speaker.avatarColor,
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.2),
-                ),
-              ),
-              clipBehavior: Clip.antiAlias,
-              alignment: Alignment.center,
-              child: speaker.avatarUrl?.trim().isNotEmpty == true
-                  ? CanlifalNetworkImage(
-                      url: speaker.avatarUrl!,
-                      width: 36,
-                      height: 36,
-                      fit: BoxFit.cover,
-                      thumbnailWidth: 72,
-                      fadeIn: false,
-                    )
-                  : Text(
-                      speaker.name.characters.first,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14,
-                      ),
-                    ),
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: speaker.avatarColor,
+              border: Border.all(color: _rank.withValues(alpha: 0.8), width: 2),
             ),
+            clipBehavior: Clip.antiAlias,
+            alignment: Alignment.center,
+            child: url != null && url.isNotEmpty
+                ? CanlifalNetworkImage(
+                    url: url,
+                    width: 42,
+                    height: 42,
+                    fit: BoxFit.cover,
+                    thumbnailWidth: 96,
+                    fadeIn: false,
+                    errorWidget: _initial(),
+                  )
+                : _initial(),
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(
-              speaker.name,
-              style: const TextStyle(
-                color: VoiceRoomsUiTokens.textPrimary,
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          if (isTop) ...[
-            VoiceMicLevelBars(
-              width: 22,
-              height: 12,
-              color: VoiceRoomsUiTokens.onlineGreen,
-            ),
-            const SizedBox(width: 6),
-          ],
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (speaker.onlineLabel != null) ...[
-                VoiceRoomsSvgIcons.icon(
-                  'soundwave',
-                  size: 12,
-                  color: VoiceRoomsUiTokens.onlineGreen,
-                ),
-                const SizedBox(width: 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
                 Text(
-                  speaker.onlineLabel!,
+                  speaker.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: VoiceRoomsUiTokens.textSecondary,
-                    fontSize: 11,
+                    color: VoiceRoomsUiTokens.textPrimary,
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-              ] else ...[
-                VoiceRoomsSvgIcons.icon(
-                  'diamond',
-                  size: 12,
-                  color: VoiceRoomsUiTokens.purpleGlow,
-                ),
-                const SizedBox(width: 4),
                 Text(
-                  speaker.diamonds,
+                  speaker.onlineLabel ?? '${speaker.listeners} dinleyici',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: VoiceRoomsUiTokens.textSecondary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
+                    color: VoiceRoomsUiTokens.textMuted,
+                    fontSize: 11.5,
                   ),
                 ),
               ],
-            ],
+            ),
           ),
+          if (canFollow)
+            OutlinedButton(
+              onPressed: _followed || _busy ? null : _follow,
+              style: OutlinedButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                minimumSize: const Size(0, 30),
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                foregroundColor: VoiceRoomsUiTokens.purpleGlow,
+                side: BorderSide(
+                  color: VoiceRoomsUiTokens.purpleGlow.withValues(alpha: 0.7),
+                ),
+              ),
+              child: Text(
+                _followed ? 'Takipte' : 'Takip Et',
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+              ),
+            )
+          else
+            const Icon(
+              Icons.graphic_eq_rounded,
+              color: VoiceRoomsUiTokens.onlineGreen,
+              size: 22,
+            ),
         ],
       ),
     );
   }
+
+  Widget _initial() => Text(
+        speaker.name.characters.first.toUpperCase(),
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w800,
+          fontSize: 16,
+        ),
+      );
 }

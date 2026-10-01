@@ -19,7 +19,7 @@ class VoiceRoomsDiscoverRepositoryImpl implements VoiceRoomsDiscoverRepository {
     String? categoryId,
     bool forceRefresh = false,
   }) async {
-    final cacheKey = 'voice_discover_bundle_v2_${categoryId ?? 'all'}';
+    final cacheKey = 'voice_discover_bundle_v3_${categoryId ?? 'all'}';
     return CacheFirstLoader.load(
       cacheKey: cacheKey,
       forceRefresh: forceRefresh,
@@ -265,6 +265,10 @@ class VoiceRoomsDiscoverRepositoryImpl implements VoiceRoomsDiscoverRepository {
       return VoiceRoomsDiscoverMapper.categoriesFromApi();
     }
     return raw.whereType<Map>().map((m) {
+      // Bilinen kategori → katalogdan (Material simge dahil); önbellek simgeyi taşımaz.
+      for (final c in VoiceRoomsMockData.categories) {
+        if (c.id == '${m['id']}') return c;
+      }
       final colors = m['colors'];
       return VoiceCategoryItem(
         id: '${m['id']}',

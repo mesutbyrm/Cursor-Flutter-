@@ -69,11 +69,34 @@ class VoiceRoomsDiscoverRemoteDataSource {
     }
     final cat = room.category?.trim().toLowerCase();
     if (cat != null && cat.isNotEmpty) {
+      if (categoryId == 'other') {
+        const known = {'chat', 'music', 'love', 'game', 'fal', 'friends', 'help'};
+        return !known.contains(cat);
+      }
       return cat == categoryId;
     }
     final hay = '${room.nameTr} ${room.descTr ?? ''} ${room.roomType ?? ''}'
         .toLowerCase();
+    bool has(List<String> words) => words.any(hay.contains);
+    const falWords = ['fal', 'tarot', 'burç', 'burc', 'astro', 'kahve', 'rüya'];
+    const friendWords = ['arkadaş', 'arkadas', 'dostluk', 'tanış', 'tanis'];
+    const helpWords = ['yardım', 'yardim', 'destek', 'sorun'];
     return switch (categoryId) {
+      'fal' => has(falWords),
+      'friends' => has(friendWords),
+      'help' => has(helpWords),
+      // "Diğer": bilinen başlıklardan hiçbirine uymayan odalar.
+      'other' => !has([
+          ...falWords,
+          ...friendWords,
+          ...helpWords,
+          'müzik',
+          'dj',
+          'aşk',
+          'flört',
+          'oyun',
+          'game',
+        ]),
       'chat' => true,
       'music' =>
         room.activeDjId != null ||

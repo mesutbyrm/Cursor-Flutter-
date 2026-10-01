@@ -1,3 +1,5 @@
+import '../../features/voice_hub/presentation/pages/voice_rooms_list_page.dart';
+import '../../features/voice_hub/presentation/pages/voice_rooms_mine_page.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -2280,6 +2282,25 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
           child: const DarkLaneTheme(child: VoiceRoomsHubPage()),
+        ),
+      ),
+      GoRoute(
+        path: '/voice-rooms/list',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: DarkLaneTheme(
+            child: VoiceRoomsListPage(
+              initialTab:
+                  int.tryParse(state.uri.queryParameters['tab'] ?? '') ?? 0,
+            ),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/voice-rooms/mine',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const DarkLaneTheme(child: VoiceRoomsMinePage()),
         ),
       ),
       GoRoute(

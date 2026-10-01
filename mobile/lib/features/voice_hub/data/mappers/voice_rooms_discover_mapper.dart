@@ -143,36 +143,46 @@ abstract final class VoiceRoomsDiscoverMapper {
   }
 
   static List<ActiveSpeakerItem> speakersFromRooms(List<VoiceRoomEntity> rooms) {
-    final candidates = <({String name, int online, String? avatarUrl})>[];
+    // Aynı sahibin odaları birleştirilir: toplam dinleyici + oda sayısı.
+    final byOwner = <String, ({String name, int online, int rooms, String? avatarUrl, String? userId})>{};
     for (final r in rooms) {
       if (r.displayOnline <= 0) continue;
       final owner = r.ownerName?.trim();
-      if (owner != null && owner.isNotEmpty) {
-        candidates.add((
-          name: owner,
-          online: r.displayOnline,
-          avatarUrl: r.ownerAvatarUrl,
-        ));
-      }
+      if (owner == null || owner.isEmpty) continue;
+      final key = (r.ownerId?.trim().isNotEmpty == true ? r.ownerId! : owner);
+      final cur = byOwner[key];
+      byOwner[key] = (
+        name: owner,
+        online: (cur?.online ?? 0) + r.displayOnline,
+        rooms: (cur?.rooms ?? 0) + 1,
+        avatarUrl: cur?.avatarUrl ?? r.ownerAvatarUrl,
+        userId: cur?.userId ??
+            (r.ownerId?.trim().isNotEmpty == true ? r.ownerId!.trim() : null),
+      );
     }
-    if (candidates.isEmpty) return const [];
+    if (byOwner.isEmpty) return const [];
 
-    candidates.sort((a, b) => b.online.compareTo(a.online));
+    final candidates = byOwner.values.toList()
+      ..sort((a, b) => b.online.compareTo(a.online));
     final colors = [
       VoiceRoomsUiTokens.gold,
-      VoiceRoomsUiTokens.silver,
-      VoiceRoomsUiTokens.bronze,
+      VoiceRoomsUiTokens.purpleGlow,
+      VoiceRoomsUiTokens.blue,
+      VoiceRoomsUiTokens.onlineGreen,
+      VoiceRoomsUiTokens.magenta,
     ];
-    return candidates.take(3).toList().asMap().entries.map((e) {
-      final rank = e.key + 1;
+    return candidates.take(5).toList().asMap().entries.map((e) {
       final c = e.value;
       return ActiveSpeakerItem(
-        rank: rank,
+        rank: e.key + 1,
         name: c.name,
         diamonds: _formatCount(c.online),
         avatarColor: colors[e.key % colors.length],
         avatarUrl: c.avatarUrl,
-        onlineLabel: '${_formatCount(c.online)} dinleyici',
+        onlineLabel: '${_formatCount(c.online)} dinleyici • ${c.rooms} oda',
+        roomCount: c.rooms,
+        listeners: c.online,
+        userId: c.userId,
       );
     }).toList();
   }

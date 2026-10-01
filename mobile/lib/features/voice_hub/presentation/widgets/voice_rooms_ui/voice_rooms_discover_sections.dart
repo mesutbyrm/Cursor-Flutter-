@@ -5,7 +5,6 @@ import '../../performance/voice_rooms_perf.dart';
 import '../../providers/voice_rooms_discover_providers.dart';
 import 'voice_rooms_nearby_tabs.dart';
 import 'voice_rooms_ui.dart';
-import '../../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
 
 /// Kategori şeridi — yalnızca kategori state değişince rebuild.
 class VoiceRoomsCategorySection extends ConsumerWidget {
@@ -35,43 +34,6 @@ class VoiceRoomsCategorySection extends ConsumerWidget {
           onSelected: ref.read(voiceRoomsDiscoverProvider.notifier).selectCategory,
         ),
       ),
-    );
-  }
-}
-
-class VoiceRoomsPopularSection extends ConsumerWidget {
-  const VoiceRoomsPopularSection({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final bootstrapping = ref.watch(
-      voiceRoomsDiscoverProvider.select(
-        (s) => s.isBootstrapping && s.categories.isEmpty,
-      ),
-    );
-    if (bootstrapping) {
-      return const VoiceRoomsPopularSkeleton();
-    }
-    final rooms = ref.watch(
-      voiceRoomsDiscoverProvider.select((s) => s.popular),
-    );
-    if (rooms.isEmpty) return const SizedBox.shrink();
-    return VoiceRoomsFx.sectionEnter(
-      VoiceRoomsPerf.section(
-        PopularRoomsCarousel(
-          rooms: rooms,
-          onRoomTap: (item) {
-            final all = ref.read(voiceRoomsDiscoverProvider).allRooms;
-            for (final r in all) {
-              if (r.id == item.id) {
-                openVoiceRoomWithVipGate(context, ref, r);
-                return;
-              }
-            }
-          },
-        ),
-      ),
-      delayMs: 120,
     );
   }
 }
