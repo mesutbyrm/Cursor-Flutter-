@@ -24,10 +24,15 @@ class SocialDiscoveryRemoteDataSource {
     String? gender,
     String? membership,
     String? interest,
+    String? filter,
   }) async {
+    // Sunucu yalnızca `page`, `limit`, `filter` (online|new|popular) okur;
+    // yaş/şehir/cinsiyet/ilgi süzgeçleri istemcide uygulanır.
+    final serverFilter = filter ?? (onlineOnly == true ? 'online' : null);
     final query = <String, dynamic>{
       'page': page,
       'limit': limit,
+      if (serverFilter != null && serverFilter.isNotEmpty) 'filter': serverFilter,
       if (minAge != null) 'minAge': minAge,
       if (maxAge != null) 'maxAge': maxAge,
       if (city != null && city.trim().isNotEmpty) 'city': city.trim(),
@@ -45,56 +50,62 @@ class SocialDiscoveryRemoteDataSource {
     return _parseFeed(res.data, page: page, limit: limit);
   }
 
+  /// `GET /api/social/actions?type=…&direction=received|sent`.
+  /// Sunucunun tanıdığı `type`: likes, favorites, friends (kabul edilmiş
+  /// tanışma), friend_requests (bekleyen), blocks, all. Önceden gönderilen
+  /// `filter=matches` / `scope=sent` / `type=like` yok sayılıyor; sekmeler
+  /// alınan tüm kayıtları (engeller dahil) yanlış listede gösteriyordu.
   Future<List<Map<String, dynamic>>> fetchActions({
-    String? filter,
-    String? scope,
-    String? type,
+    String type = 'all',
+    String direction = 'received',
   }) async {
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.socialActions,
-      query: {
-        if (filter != null && filter.isNotEmpty) 'filter': filter,
-        if (scope != null && scope.isNotEmpty) 'scope': scope,
-        if (type != null && type.isNotEmpty) 'type': type,
-      },
+      query: {'type': type, 'direction': direction},
     );
     return _parseActionRows(res.data);
   }
 
+  /// Eşleşmeler — karşılıklı kabul edilmiş tanışmalar (iki yön birleşik).
   Future<List<SocialDiscoveryUser>> fetchMatches() async {
-    final rows = await fetchActions(filter: 'matches');
-    return _usersFromActionRows(rows);
+    final sent = await fetchActions(type: 'friends', direction: 'sent');
+    final received = await fetchActions(type: 'friends', direction: 'received');
+    return _dedupe(_usersFromActionRows([...sent, ...received]));
   }
 
-  /// Üretimde boş olabilir; sırayla bilinen filtreleri dener.
+  /// Beni beğenenler.
   Future<List<SocialDiscoveryUser>> fetchIncomingLikes() async {
-    for (final filter in ['liked_me', 'incoming', 'likes']) {
-      final rows = await fetchActions(filter: filter);
-      final users = _usersFromActionRows(rows);
-      if (users.isNotEmpty) return users;
-    }
-    final received = await fetchActions(scope: 'received', type: 'like');
-    return _usersFromActionRows(received);
+    final rows = await fetchActions(type: 'likes', direction: 'received');
+    return _dedupe(_usersFromActionRows(rows));
   }
 
+  /// Beğendiklerim + favorilerim.
   Future<List<SocialDiscoveryUser>> fetchSentLikes() async {
-    final likes = await fetchActions(scope: 'sent', type: 'like');
-    final favorites = await fetchActions(scope: 'sent', type: 'favorite');
-    return _usersFromActionRows([...likes, ...favorites]);
+    final likes = await fetchActions(type: 'likes', direction: 'sent');
+    final favorites = await fetchActions(type: 'favorites', direction: 'sent');
+    return _dedupe(_usersFromActionRows([...likes, ...favorites]));
   }
 
+  /// Bana gelen bekleyen tanışma istekleri.
+  Future<List<SocialDiscoveryUser>> fetchIncomingFriendRequests() async {
+    final rows = await fetchActions(type: 'friend_requests', direction: 'received');
+    return _dedupe(_usersFromActionRows(rows));
+  }
+
+  /// Daha önce işlem yaptığım (beğeni, tanışma, engel…) herkes — keşiften düşülür.
   Future<Set<String>> fetchSentActionTargetIds() async {
     final out = <String>{};
-    for (final type in ['like', 'favorite']) {
-      final rows = await fetchActions(scope: 'sent', type: type);
-      for (final row in rows) {
-        final id = pick(row, ['targetId', 'userId'])?.toString() ?? '';
-        if (id.isNotEmpty) out.add(id);
-        final u = SocialDiscoveryUser.fromActionRow(row);
-        if (u.id.isNotEmpty) out.add(u.id);
-      }
+    final rows = await fetchActions(type: 'all', direction: 'sent');
+    for (final row in rows) {
+      final id = pick(row, ['targetId'])?.toString() ?? '';
+      if (id.isNotEmpty) out.add(id);
     }
     return out;
+  }
+
+  List<SocialDiscoveryUser> _dedupe(List<SocialDiscoveryUser> users) {
+    final seen = <String>{};
+    return [for (final u in users) if (seen.add(u.id)) u];
   }
 
   List<SocialDiscoveryUser> _usersFromActionRows(List<Map<String, dynamic>> rows) {
