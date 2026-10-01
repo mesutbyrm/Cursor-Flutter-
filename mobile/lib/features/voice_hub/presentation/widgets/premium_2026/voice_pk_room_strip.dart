@@ -28,7 +28,9 @@ class VoicePkRoomStrip extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final remote = ref.watch(pkBattleForRoomProvider(room));
-    if (remote == null || remote.isEnded) return const SizedBox.shrink();
+    if (remote == null || remote.isEnded || remote.isInRoomUser) {
+      return const SizedBox.shrink(); // oda içi PK: VoicePkRoomPanel gösterir
+    }
 
     if (remote.isPending && !remote.isActive) {
       final isChallenger = isPkChallengerRoom(remote, room);

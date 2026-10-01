@@ -7,6 +7,7 @@ import '../../domain/entities/chat_room_message.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/chat_room_sse_event.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
+import '../../domain/pk_room/pk_wire_event.dart';
 import '../../../gifts/domain/gift_payload_util.dart';
 import '../../../gifts/presentation/sync/gift_sync_log.dart';
 import '../../presentation/utils/voice_sse_dj_payload.dart';
@@ -37,6 +38,10 @@ class ChatRoomSseService extends BaseSseService {
   void Function(Map<String, dynamic> payload)? _onFortuneRequest;
   void Function(Map<String, dynamic> payload)? _onSpeakRequest;
   void Function(PkBattleRemote battle, String event)? _onPk;
+  /// Oda içi (kullanıcı-vs-kullanıcı) PK olayları — merkezi PK kontrolcüsüne gider.
+  void Function(PkWireEvent event)? _onPkRoom;
+  /// Hediye puanı (`PK_SCORE`) — durum/davet DEĞİL, yalnızca skor yaması.
+  void Function(PkWireEvent event)? _onPkScore;
   void Function(List<String> users)? _onTyping;
   void Function(Map<String, dynamic> payload)? _onRoomEvent;
 
@@ -82,6 +87,8 @@ class ChatRoomSseService extends BaseSseService {
     void Function(Map<String, dynamic> payload)? onFortuneRequest,
     void Function(Map<String, dynamic> payload)? onSpeakRequest,
     void Function(PkBattleRemote battle, String event)? onPk,
+    void Function(PkWireEvent event)? onPkRoom,
+    void Function(PkWireEvent event)? onPkScore,
     void Function(List<String> users)? onTyping,
     void Function(Map<String, dynamic> payload)? onRoomEvent,
   }) async {
@@ -104,6 +111,8 @@ class ChatRoomSseService extends BaseSseService {
     if (onFortuneRequest != null) _onFortuneRequest = onFortuneRequest;
     if (onSpeakRequest != null) _onSpeakRequest = onSpeakRequest;
     if (onPk != null) _onPk = onPk;
+    if (onPkRoom != null) _onPkRoom = onPkRoom;
+    if (onPkScore != null) _onPkScore = onPkScore;
     if (onTyping != null) _onTyping = onTyping;
     if (onRoomEvent != null) _onRoomEvent = onRoomEvent;
     if (isLiveForRoom(id)) {
@@ -368,6 +377,19 @@ class ChatRoomSseService extends BaseSseService {
   }
 
   void _emitPk(Map<String, dynamic> map) {
+    // Olay TİPİ ile kesin yönlendirme (metin/kelime ayrıştırması YOK):
+    //  * oda içi PK  → merkezi kontrolcü (davet hattına asla girmez)
+    //  * PK_SCORE    → yalnızca skor yaması (status taşımaz; "pending/davet" sayılmaz)
+    //  * diğerleri   → eski oda-vs-oda davet/durum hattı
+    final wire = PkWireEvent.parse(map);
+    if (wire.inRoom && _onPkRoom != null) {
+      _onPkRoom!(wire);
+      return;
+    }
+    if (wire.kind == PkWireKind.score) {
+      _onPkScore?.call(wire);
+      return;
+    }
     final nested = map['battle'] ?? map['pk'] ?? map['match'] ?? map['data'];
     Map<String, dynamic>? raw;
     if (nested is Map) {

@@ -9,6 +9,7 @@ import '../../providers/chat_room_providers.dart';
 import '../../providers/room_fragment_providers.dart';
 import '../../providers/voice_room_ui_provider.dart';
 import '../../providers/voice_room_ranking_provider.dart';
+import '../../pk_room/pk_room_controller.dart';
 import '../premium_2026/voice_live_header_2026.dart';
 import '../premium_2026/voice_online_gift_box.dart';
 import '../premium_2026/voice_live_action_bar_2026.dart';
@@ -271,8 +272,11 @@ class VoiceRoomRtcFooterBand extends ConsumerWidget {
     required this.onEmojiTap,
     required this.onChanged,
     required this.onSpeakRequest,
+    this.pkChatOpen = false,
   });
 
+  /// Oda içi PK sürerken sohbet girişi gizlidir; bu bayrak 💬 ile açar.
+  final bool pkChatOpen;
   final String liveRoomKey;
   final VoiceRoomEntity room;
   final bool canSpeak;
@@ -299,7 +303,13 @@ class VoiceRoomRtcFooterBand extends ConsumerWidget {
       ),
     );
 
+    // PK sırasında (panel açıkken) mesaj girişi gizli; yalnızca 💬 ile görünür.
+    final pkOverlay = ref.watch(
+      pkRoomControllerProvider(liveRoomKey).select((s) => s.overlayVisible),
+    );
+
     return VoiceRoomSpecFooter(
+      hideInputRow: pkOverlay && !pkChatOpen,
       liveRoomKey: liveRoomKey,
       controller: controller,
       focusNode: focusNode,

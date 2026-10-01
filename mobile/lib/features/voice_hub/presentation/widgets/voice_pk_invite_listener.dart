@@ -58,6 +58,8 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
 
   void _onBattleUpdate(PkBattleRemote? battle) {
     if (!mounted || battle == null) return;
+    // Oda içi PK ne davettir ne de ayrı sayfadır (kompakt panel gösterir).
+    if (battle.isInRoomUser) return;
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) return;
 

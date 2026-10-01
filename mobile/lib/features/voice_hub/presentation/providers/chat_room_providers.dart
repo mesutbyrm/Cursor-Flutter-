@@ -45,6 +45,7 @@ import '../../../gift_box/presentation/providers/gift_box_scope_providers.dart';
 import 'voice_room_audio_providers.dart';
 import 'pk_battle_provider.dart';
 import 'pk_battle_remote_provider.dart';
+import '../pk_room/pk_room_controller.dart';
 import '../../../pk/presentation/providers/pk_session_notifier.dart';
 import '../utils/pk_invite_dialog_helper.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';

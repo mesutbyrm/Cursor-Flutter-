@@ -16,6 +16,7 @@ import '../../../live/presentation/providers/live_video_pk_provider.dart';
 import '../../../live/presentation/providers/pk_session_phase_provider.dart';
 import '../../data/datasources/pk_battle_remote_datasource.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
+import '../../domain/pk_room/pk_wire_event.dart';
 import '../../domain/pk/pk_duration_options.dart';
 import '../../domain/pk/pk_opponent_room_filter.dart';
 import 'pk_battle_provider.dart';
@@ -373,6 +374,23 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     return battle;
   }
 
+  /// Hediye puanı (`PK_SCORE`): yalnızca skor yaması. Durumu `pending/davet` yapmaz,
+  /// süreyi (`secondsLeft`/`endsAt`) sıfırlamaz — eskiden status'suz payload tüm
+  /// maçı ezip PK davet popup'ı açıyordu.
+  void applyScorePatch(PkWireEvent e) {
+    final cur = state;
+    if (cur == null || !cur.isActive) return;
+    final id = e.battleId;
+    if (id.isEmpty || (cur.id != id && cur.effectiveId != id)) return;
+    int? i(dynamic v) => v is num ? v.toInt() : int.tryParse('$v');
+    final s1 = i(e.raw['score1']);
+    final s2 = i(e.raw['score2']);
+    if (s1 == null || s2 == null) return;
+    if (cur.challengerScore == s1 && cur.opponentScore == s2) return;
+    state = cur.withScores(challengerScore: s1, opponentScore: s2);
+    _lastSsePkIngestAt = DateTime.now();
+  }
+
   /// Oda SSE üzerinden gelen PK güncellemesi.
   void ingestSseBattle(PkBattleRemote battle) {
     if (!_shouldIngestBattle(battle)) return;
@@ -472,6 +490,9 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
   }
 
   void _apply(PkBattleRemote battle, String event) {
+    // Oda içi (kullanıcı-vs-kullanıcı) PK'yı `PkRoomController` yönetir; eski
+    // davet / tam ekran PK hattına (ve global depoya) girmez.
+    if (battle.isInRoomUser) return;
     final cur = state;
     if (cur != null &&
         cur.effectiveId == battle.effectiveId &&

@@ -44,12 +44,17 @@ class VoiceRoomSpecFooter extends ConsumerWidget {
     this.speakRequestPending = false,
     this.showSpeakRequest = false,
     this.sendEnabled = true,
+    this.hideInputRow = false,
   });
 
   final TextEditingController controller;
   final FocusNode focusNode;
   final VoidCallback onSend;
   final bool sendEnabled;
+
+  /// true → emoji + mesaj girişi + gönder satırı gizlenir (oda içi PK sırasında
+  /// ekranı kaplamasın; 💬 ile açılır). Diğer aksiyonlar yerinde kalır.
+  final bool hideInputRow;
   final VoidCallback onToggleAudioOutput;
   final bool headphonesOn;
   final VoidCallback onMicToggle;
@@ -92,94 +97,102 @@ class VoiceRoomSpecFooter extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                IconButton(
-                  visualDensity: VisualDensity.compact,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                  onPressed: onEmojiTap,
-                  icon: Icon(
-                    Icons.emoji_emotions_outlined,
-                    color: Colors.white.withValues(alpha: 0.75),
-                    size: 20,
+            if (!hideInputRow)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 32,
+                    ),
+                    onPressed: onEmojiTap,
+                    icon: Icon(
+                      Icons.emoji_emotions_outlined,
+                      color: Colors.white.withValues(alpha: 0.75),
+                      size: 20,
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: useLiveSlices
-                      ? Consumer(
-                          builder: (context, ref, _) {
-                            final mentionPresence = ref.watch(
-                              voiceRoomLiveProvider(key).select((s) => s.presence),
-                            );
-                            return VoiceRoomMentionTextField(
-                              controller: controller,
-                              focusNode: focusNode,
-                              presence: mentionPresence,
-                              excludeUserId: selfUserId,
-                              onChanged: onChanged,
-                              onSubmitted: sendEnabled ? (_) => onSend() : null,
-                              hintText: 'Mesajınızı yazın...',
-                              decoration: _inputDecoration(context),
-                            );
-                          },
-                        )
-                      : VoiceRoomMentionTextField(
-                          controller: controller,
-                          focusNode: focusNode,
-                          presence: presence,
-                          excludeUserId: selfUserId,
-                          onChanged: onChanged,
-                          onSubmitted: sendEnabled ? (_) => onSend() : null,
-                          hintText: 'Mesajınızı yazın...',
-                          decoration: _inputDecoration(context),
+                  Expanded(
+                    child: useLiveSlices
+                        ? Consumer(
+                            builder: (context, ref, _) {
+                              final mentionPresence = ref.watch(
+                                voiceRoomLiveProvider(
+                                  key,
+                                ).select((s) => s.presence),
+                              );
+                              return VoiceRoomMentionTextField(
+                                controller: controller,
+                                focusNode: focusNode,
+                                presence: mentionPresence,
+                                excludeUserId: selfUserId,
+                                onChanged: onChanged,
+                                onSubmitted: sendEnabled
+                                    ? (_) => onSend()
+                                    : null,
+                                hintText: 'Mesajınızı yazın...',
+                                decoration: _inputDecoration(context),
+                              );
+                            },
+                          )
+                        : VoiceRoomMentionTextField(
+                            controller: controller,
+                            focusNode: focusNode,
+                            presence: presence,
+                            excludeUserId: selfUserId,
+                            onChanged: onChanged,
+                            onSubmitted: sendEnabled ? (_) => onSend() : null,
+                            hintText: 'Mesajınızı yazın...',
+                            decoration: _inputDecoration(context),
+                          ),
+                  ),
+                  if (showMusicRequest && onMusicRequest != null) ...[
+                    const SizedBox(width: 6),
+                    Material(
+                      color: VoiceRoomTokens.gold.withValues(alpha: 0.92),
+                      shape: const CircleBorder(),
+                      child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: onMusicRequest,
+                        child: const SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: Icon(
+                            Icons.music_note_rounded,
+                            color: Colors.black87,
+                            size: 21,
+                          ),
                         ),
-                ),
-                if (showMusicRequest && onMusicRequest != null) ...[
-                  const SizedBox(width: 6),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(width: 4),
                   Material(
-                    color: VoiceRoomTokens.gold.withValues(alpha: 0.92),
+                    color: sendEnabled
+                        ? VoiceRoomTokens.neonPurple
+                        : VoiceRoomTokens.neonPurple.withValues(alpha: 0.35),
                     shape: const CircleBorder(),
                     child: InkWell(
                       customBorder: const CircleBorder(),
-                      onTap: onMusicRequest,
-                      child: const SizedBox(
+                      onTap: sendEnabled ? onSend : null,
+                      child: SizedBox(
                         width: 40,
                         height: 40,
                         child: Icon(
-                          Icons.music_note_rounded,
-                          color: Colors.black87,
-                          size: 21,
+                          Icons.send_rounded,
+                          color: Colors.white.withValues(
+                            alpha: sendEnabled ? 1 : 0.45,
+                          ),
+                          size: 19,
                         ),
                       ),
                     ),
                   ),
                 ],
-                const SizedBox(width: 4),
-                Material(
-                  color: sendEnabled
-                      ? VoiceRoomTokens.neonPurple
-                      : VoiceRoomTokens.neonPurple.withValues(alpha: 0.35),
-                  shape: const CircleBorder(),
-                  child: InkWell(
-                    customBorder: const CircleBorder(),
-                    onTap: sendEnabled ? onSend : null,
-                    child: SizedBox(
-                      width: 40,
-                      height: 40,
-                      child: Icon(
-                        Icons.send_rounded,
-                        color: Colors.white.withValues(
-                          alpha: sendEnabled ? 1 : 0.45,
-                        ),
-                        size: 19,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
             useLiveSlices
                 ? Consumer(
                     builder: (context, ref, _) {
@@ -233,10 +246,7 @@ class VoiceRoomSpecFooter extends ConsumerWidget {
       ),
       filled: true,
       fillColor: Colors.white.withValues(alpha: 0.08),
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 14,
-        vertical: 10,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(22),
         borderSide: BorderSide.none,

@@ -292,6 +292,26 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
               'status': battle.status,
             });
           },
+          onPkRoom: (wire) {
+            if (!_sse._isSseEventForAttachedRoom(roomKey)) return;
+            if (VoiceRoomBasicMode.enabled && !VoiceRoomBasicMode.premiumEnabled) {
+              return;
+            }
+            // Oda içi PK: yalnızca merkezi kontrolcü (davet/tam ekran hattına girmez).
+            ref
+                .read(pkRoomControllerProvider(_sse._roomKey).notifier)
+                .ingest(wire);
+            VoiceRoomDebugLog.log('sse.pk_room', {
+              'roomId': roomKey,
+              'battleId': wire.battleId,
+              'kind': wire.kind.name,
+            });
+          },
+          onPkScore: (wire) {
+            if (!_sse._isSseEventForAttachedRoom(roomKey)) return;
+            // Hediye puanı yalnızca skor yamasıdır; asla davet olarak işlenmez.
+            ref.read(pkBattleRemoteProvider.notifier).applyScorePatch(wire);
+          },
           onSystem: _sse._handleSseSystemEvent,
           onAnnouncement: _sse._handleSseAnnouncement,
           onModeration: _sse._handleSseModeration,

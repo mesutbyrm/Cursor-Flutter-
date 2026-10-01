@@ -62,6 +62,8 @@ import '../music/presentation/providers/room_music_providers.dart';
 import '../music/presentation/widgets/room_song_mini_player.dart';
 import 'sheets/voice_room_hub_settings.dart';
 import 'providers/pk_battle_remote_provider.dart';
+import 'pk_room/pk_room_controller.dart';
+import 'pk_room/voice_pk_room_panel.dart';
 import '../domain/pk/pk_duration_options.dart';
 import 'utils/voice_room_image_prefetch.dart';
 import 'utils/voice_room_seat_capacity.dart';
@@ -148,6 +150,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   var _musicSearchOpen = false;
   final _messageFocus = FocusNode();
   var _showVipEntrance = false;
+  /// PK sırasında sohbet girişi gizlidir; 💬 ile açılır/kapanır (PK bitince sıfırlanır).
+  var _pkChatOpen = false;
   var _vipEntrancePlayed = false;
   var _giftRealtimeStarted = false;
   /// Riverpod oturum anahtarı — metadata değişince provider dispose olmasın.
@@ -529,6 +533,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     }
     ref.read(voiceRoomGiftRealtimeProvider).stop();
     ref.read(pkBattleRemoteProvider.notifier).clear();
+    // Oda içi PK yerel durumu (sayaç, kuyruk, yerel susturma) odadan çıkınca temizlenir.
+    final pkKey = _liveRoomKey;
+    if (pkKey.isNotEmpty) {
+      ref.read(pkRoomControllerProvider(pkKey).notifier).reset();
+    }
     super.dispose();
   }
 
@@ -1709,6 +1718,27 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             ),
                           ),
                         const _VoiceRoomRtcDiagnosticBanner(),
+                        // Oda içi PK: ayrı sayfa değil, koltukların üstünde kompakt mod.
+                        if (_liveRoomKey.isNotEmpty)
+                          VoicePkRoomHost(
+                            roomKey: _liveRoomKey,
+                            room: room,
+                            canManage: isOwner || perms.canModerate,
+                            micOn: !_isMicMuted,
+                            micEnabled: _audioReady,
+                            onToggleMic: _toggleMic,
+                            onGift: () => _openGiftShop(
+                              context,
+                              room: room,
+                              presence: ref
+                                  .read(voiceRoomLiveProvider(_liveRoomKey))
+                                  .presence,
+                            ),
+                            chatOpen: _pkChatOpen,
+                            onToggleChat: () =>
+                                setState(() => _pkChatOpen = !_pkChatOpen),
+                            trtc: _audio?.trtcManager,
+                          ),
                         _VoiceRoomRtcSeatStage(
                           liveRoomKey: _liveRoomKey,
                           room: room,
@@ -1852,6 +1882,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                   ),
                 ),
                 VoiceRoomRtcFooterBand(
+                  pkChatOpen: _pkChatOpen,
                   liveRoomKey: _liveRoomKey,
                   room: room,
                   canSpeak: canSpeak,
@@ -1968,9 +1999,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
             side1UserIds: [myUserId],
             side2UserIds: [opponentUserId],
           );
-      await ref.read(pkSessionProvider(
-        PkSessionArgs(contextId: key, kind: PkContextKind.voice),
-      ).notifier).loadState();
+      if (_liveRoomKey.isNotEmpty) {
+        unawaited(
+          ref.read(pkRoomControllerProvider(_liveRoomKey).notifier).loadCurrent(),
+        );
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Oda içi PK başlatıldı')),
