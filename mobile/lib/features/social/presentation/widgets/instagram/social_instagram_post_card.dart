@@ -22,6 +22,7 @@ import '../../utils/social_caption_link_parser.dart';
 import '../../utils/social_post_detail_route.dart';
 import '../../utils/social_user_profile_route.dart';
 import '../../providers/social_providers.dart';
+import 'social_fortune_scene_card.dart';
 import 'social_post_caption.dart';
 import 'social_post_comments_sheet.dart';
 import 'social_post_video_player.dart';
@@ -110,6 +111,12 @@ class _SocialInstagramPostCardState
           postType: post.postType,
           mediaUrl: post.mediaUrl!.trim(),
         );
+    // Fal paylaşımı: türe uygun görselin üzerine metin (otomatik paylaşımda
+    // sunucunun genel görseli yerine, medya yoksa da).
+    final useScene =
+        _isFortunePost &&
+        (_bodyText?.isNotEmpty ?? false) &&
+        (!_hasMedia || post.isAutoShare);
     final headerOnMedia = mediaIsImage && (_bodyText?.isEmpty ?? true);
     Widget header({bool onMedia = false}) => _PostHeader(
       post: post,
@@ -149,13 +156,31 @@ class _SocialInstagramPostCardState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if ((_bodyText?.isNotEmpty ?? false) && _hasMedia)
+                    if (useScene)
+                      SocialFortuneSceneCard(
+                        fortuneType: post.fortuneType ?? post.fortuneSlug,
+                        typeLabel:
+                            _PostHeader._fortuneTypeLabel(
+                              post.fortuneType ?? post.fortuneSlug,
+                              post.postType,
+                            ) ??
+                            'Fal',
+                        body: _bodyText!,
+                        onTap: () => _openPostDetail(context),
+                        onDoubleTap: _likeFromDoubleTap,
+                        bottomOverlay: actions(onMedia: true),
+                      ),
+                    if (!useScene &&
+                        (_bodyText?.isNotEmpty ?? false) &&
+                        _hasMedia)
                       SocialPostCaption(
                         post: post,
                         inlineBodyOnly: true,
                         bodyText: _bodyText,
                       ),
-                    if (!_hasMedia && (_bodyText?.isNotEmpty ?? false))
+                    if (!useScene &&
+                        !_hasMedia &&
+                        (_bodyText?.isNotEmpty ?? false))
                       GestureDetector(
                         onTap: () => _openPostDetail(context),
                         child: Padding(
@@ -189,7 +214,7 @@ class _SocialInstagramPostCardState
                           ),
                         ),
                       ),
-                    if (_hasMedia)
+                    if (!useScene && _hasMedia)
                       _PostMediaBlock(
                         post: post,
                         onFortuneTap: () => _openFortune(context),
@@ -206,7 +231,7 @@ class _SocialInstagramPostCardState
                   ],
                 ),
               ),
-              if (!mediaIsImage) actions(),
+              if (!mediaIsImage && !useScene) actions(),
               if (_isFortunePost && post.fortuneCount > 0)
                 _CoViewersBar(
                   count: post.fortuneCount,
