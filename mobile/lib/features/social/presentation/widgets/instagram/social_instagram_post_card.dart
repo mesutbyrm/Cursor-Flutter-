@@ -784,17 +784,11 @@ class _MysticMediaPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: context.isDarkTheme
-              ? const [Color(0xFF1C1728), Color(0xFF16161D), Color(0xFF101014)]
-              : const [Color(0xFFF1ECFB), Color(0xFFF4F4F8), Color(0xFFEAF6F4)],
-        ),
-      ),
-      child: Center(child: Text('🔮', style: TextStyle(fontSize: 48))),
+    return Image.asset(
+      'assets/fortune/tarot.webp',
+      fit: BoxFit.cover,
+      cacheWidth: 720,
+      errorBuilder: (_, _, _) => const ColoredBox(color: Color(0xFF16161D)),
     );
   }
 }

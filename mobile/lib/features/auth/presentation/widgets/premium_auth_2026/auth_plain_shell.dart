@@ -26,11 +26,7 @@ class AuthPlainShell extends StatelessWidget {
   static const _bg = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      Color(0xFF1A0E38),
-      Color(0xFF12082A),
-      Color(0xFF0A0618),
-    ],
+    colors: [Color(0xFF1A0E38), Color(0xFF12082A), Color(0xFF0A0618)],
   );
 
   @override
@@ -43,97 +39,121 @@ class AuthPlainShell extends StatelessWidget {
       data: AppTheme.dark(),
       child: Scaffold(
         backgroundColor: const Color(0xFF05050D),
-        body: DecoratedBox(
-          decoration: const BoxDecoration(gradient: _bg),
-          child: SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (showBack)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                      color: Colors.white.withValues(alpha: 0.85),
-                      onPressed:
-                          onBack ?? () => Navigator.of(context).maybePop(),
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            const DecoratedBox(decoration: BoxDecoration(gradient: _bg)),
+            // Stok gece gökyüzü fotoğrafı (Pexels) — metin okunurluğu için
+            // üstüne koyu degrade bindirilir.
+            ExcludeSemantics(
+              child: Image.asset(
+                'assets/backgrounds/login-night-sky.webp',
+                fit: BoxFit.cover,
+                cacheWidth: 720,
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
+              ),
+            ),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0x990A0618), Color(0xD90A0618)],
+                ),
+              ),
+            ),
+            SafeArea(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (showBack)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                        color: Colors.white.withValues(alpha: 0.85),
+                        onPressed:
+                            onBack ?? () => Navigator.of(context).maybePop(),
+                      ),
+                    ),
+                  Expanded(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          padding: EdgeInsets.fromLTRB(
+                            20,
+                            showBack ? 0 : 12,
+                            20,
+                            mq.viewInsets.bottom + 24,
+                          ),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight:
+                                  constraints.maxHeight - mq.viewInsets.bottom,
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                if (heroLogo)
+                                  CanlifalBrandLogo.appIcon(size: logoSize),
+                                if (topTitle != null) ...[
+                                  const SizedBox(height: 20),
+                                  Text(
+                                    topTitle!,
+                                    textAlign: TextAlign.center,
+                                    style: PremiumTypography.displayMedium(
+                                      context,
+                                    ),
+                                  ),
+                                ],
+                                if (topSubtitle != null) ...[
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    topSubtitle!,
+                                    textAlign: TextAlign.center,
+                                    style: PremiumTypography.body(context)
+                                        .copyWith(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.62,
+                                          ),
+                                        ),
+                                  ),
+                                ],
+                                const SizedBox(height: 24),
+                                SizedBox(
+                                  width: maxW,
+                                  child: DecoratedBox(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(32),
+                                      color: const Color(0xFF1A1030),
+                                      border: Border.all(
+                                        color: const Color(0x55B84DFF),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                        22,
+                                        26,
+                                        22,
+                                        28,
+                                      ),
+                                      child: child,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
-                Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      return SingleChildScrollView(
-                        physics: const BouncingScrollPhysics(),
-                        padding: EdgeInsets.fromLTRB(
-                          20,
-                          showBack ? 0 : 12,
-                          20,
-                          mq.viewInsets.bottom + 24,
-                        ),
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            minHeight:
-                                constraints.maxHeight - mq.viewInsets.bottom,
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              if (heroLogo)
-                                CanlifalBrandLogo.appIcon(size: logoSize),
-                              if (topTitle != null) ...[
-                                const SizedBox(height: 20),
-                                Text(
-                                  topTitle!,
-                                  textAlign: TextAlign.center,
-                                  style:
-                                      PremiumTypography.displayMedium(context),
-                                ),
-                              ],
-                              if (topSubtitle != null) ...[
-                                const SizedBox(height: 8),
-                                Text(
-                                  topSubtitle!,
-                                  textAlign: TextAlign.center,
-                                  style: PremiumTypography.body(context)
-                                      .copyWith(
-                                    color:
-                                        Colors.white.withValues(alpha: 0.62),
-                                  ),
-                                ),
-                              ],
-                              const SizedBox(height: 24),
-                              SizedBox(
-                                width: maxW,
-                                child: DecoratedBox(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(32),
-                                    color: const Color(0xFF1A1030),
-                                    border: Border.all(
-                                      color: const Color(0x55B84DFF),
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.fromLTRB(
-                                      22,
-                                      26,
-                                      22,
-                                      28,
-                                    ),
-                                    child: child,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

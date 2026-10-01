@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.670+723 (2026-10-01) — Stok fotoğraflar (kodla çizilen görseller kaldırıldı)
+
+- Kodla çizilen tüm görseller (fal, oyun, üyelik, burç) **Pexels stok fotoğraflarıyla** değiştirildi; kaynaklar `docs/STOCK_MEDIA_CREDITS.md`
+- Giriş/kayıt ekranına gece gökyüzü arka plan fotoğrafı (okunurluk için koyu degrade ile)
+- Sosyal akış görsel yer tutucusu emoji yerine tarot görseli
+- `mobile/tool/gen_*_art.py` betikleri kaldırıldı
+- Backend değişikliği yok
+
 ## 1.0.669+722 (2026-10-01) — Mistik görseller: fal paylaşımı, oyunlar, üyelikler, burçlar
 
 - **Sosyal akış:** fal paylaşımı türe uygun mistik görselin (kahve, el, tarot, aşk…) üzerine yazılı kart olarak gösterilir; backend `fortuneType` (coffee, palm…) → görsel eşlemesi
