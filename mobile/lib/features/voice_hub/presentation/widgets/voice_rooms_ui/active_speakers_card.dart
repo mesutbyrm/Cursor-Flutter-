@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/images/canlifal_network_image.dart';
+import '../../../../../core/providers/auth_selectors.dart';
+import '../../../../profile/presentation/providers/profile_providers.dart';
 import 'voice_rooms_mock_data.dart';
 import 'voice_rooms_ui_tokens.dart';
 
@@ -49,10 +52,38 @@ class ActiveSpeakersCard extends StatelessWidget {
   }
 }
 
-class _SpeakerRow extends StatelessWidget {
+class _SpeakerRow extends ConsumerStatefulWidget {
   const _SpeakerRow({required this.speaker});
 
   final ActiveSpeakerItem speaker;
+
+  @override
+  ConsumerState<_SpeakerRow> createState() => _SpeakerRowState();
+}
+
+class _SpeakerRowState extends ConsumerState<_SpeakerRow> {
+  var _followed = false;
+  var _busy = false;
+
+  ActiveSpeakerItem get speaker => widget.speaker;
+
+  Future<void> _follow() async {
+    final id = speaker.userId;
+    if (id == null || _busy || _followed) return;
+    setState(() => _busy = true);
+    try {
+      await ref.read(profileRepositoryProvider).follow(id);
+      if (mounted) setState(() => _followed = true);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Takip edilemedi, tekrar dene.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
 
   Color get _rank => switch (speaker.rank) {
         1 => VoiceRoomsUiTokens.gold,
@@ -65,6 +96,8 @@ class _SpeakerRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final url = speaker.avatarUrl?.trim();
+    final myId = ref.watch(currentUserIdProvider);
+    final canFollow = speaker.userId != null && speaker.userId != myId;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -134,11 +167,29 @@ class _SpeakerRow extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(
-            Icons.graphic_eq_rounded,
-            color: VoiceRoomsUiTokens.onlineGreen,
-            size: 22,
-          ),
+          if (canFollow)
+            OutlinedButton(
+              onPressed: _followed || _busy ? null : _follow,
+              style: OutlinedButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                minimumSize: const Size(0, 30),
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                foregroundColor: VoiceRoomsUiTokens.purpleGlow,
+                side: BorderSide(
+                  color: VoiceRoomsUiTokens.purpleGlow.withValues(alpha: 0.7),
+                ),
+              ),
+              child: Text(
+                _followed ? 'Takipte' : 'Takip Et',
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+              ),
+            )
+          else
+            const Icon(
+              Icons.graphic_eq_rounded,
+              color: VoiceRoomsUiTokens.onlineGreen,
+              size: 22,
+            ),
         ],
       ),
     );

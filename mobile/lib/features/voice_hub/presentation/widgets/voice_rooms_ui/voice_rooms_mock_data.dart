@@ -112,6 +112,7 @@ class ActiveSpeakerItem {
     this.onlineLabel,
     this.roomCount = 1,
     this.listeners = 0,
+    this.userId,
   });
 
   final int rank;
@@ -124,6 +125,9 @@ class ActiveSpeakerItem {
   /// Sahibin aktif oda sayısı / toplam dinleyici (odalardan türetilir).
   final int roomCount;
   final int listeners;
+
+  /// Oda sahibinin kullanıcı kimliği (Takip Et için); yoksa buton gösterilmez.
+  final String? userId;
 }
 
 /// Sabit kategori ve sekme etiketleri (adı tarihsel; sahte oda/kullanıcı

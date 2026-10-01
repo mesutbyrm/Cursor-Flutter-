@@ -144,7 +144,7 @@ abstract final class VoiceRoomsDiscoverMapper {
 
   static List<ActiveSpeakerItem> speakersFromRooms(List<VoiceRoomEntity> rooms) {
     // Aynı sahibin odaları birleştirilir: toplam dinleyici + oda sayısı.
-    final byOwner = <String, ({String name, int online, int rooms, String? avatarUrl})>{};
+    final byOwner = <String, ({String name, int online, int rooms, String? avatarUrl, String? userId})>{};
     for (final r in rooms) {
       if (r.displayOnline <= 0) continue;
       final owner = r.ownerName?.trim();
@@ -156,6 +156,8 @@ abstract final class VoiceRoomsDiscoverMapper {
         online: (cur?.online ?? 0) + r.displayOnline,
         rooms: (cur?.rooms ?? 0) + 1,
         avatarUrl: cur?.avatarUrl ?? r.ownerAvatarUrl,
+        userId: cur?.userId ??
+            (r.ownerId?.trim().isNotEmpty == true ? r.ownerId!.trim() : null),
       );
     }
     if (byOwner.isEmpty) return const [];
@@ -180,6 +182,7 @@ abstract final class VoiceRoomsDiscoverMapper {
         onlineLabel: '${_formatCount(c.online)} dinleyici • ${c.rooms} oda',
         roomCount: c.rooms,
         listeners: c.online,
+        userId: c.userId,
       );
     }).toList();
   }
