@@ -93,6 +93,7 @@ flutter:
     - assets/splash/
     - assets/brand/
     - assets/fortune/
+    - assets/games/
     - assets/gifts/lottie/
     - assets/gifts/svga/
     - assets/gifts/sounds/
