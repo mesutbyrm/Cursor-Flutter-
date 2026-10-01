@@ -1,37 +1,25 @@
-import 'package:canlifal_social/core/performance/animation_perf.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/push/push_notification_service.dart';
+import '../../../../core/site_animation/presentation/widgets/site_animation_context_host.dart';
 import '../../../../core/ui/premium_2026/premium_2026.dart';
 import '../../../../core/widgets/discover_refresh.dart';
-import '../../../../core/site_animation/presentation/widgets/site_animation_context_host.dart';
+import '../../../bana_ozel/presentation/providers/bana_ozel_providers.dart';
+import '../../../home/presentation/providers/home_providers.dart';
+import '../../../live_psychics/presentation/providers/live_psychics_providers.dart';
+import '../design/fortune_lane_theme.dart';
 import '../providers/fortune_api_providers.dart';
 import '../providers/fortune_hub_providers.dart';
 import '../providers/fortune_types_display_provider.dart';
-import '../../../bana_ozel/presentation/providers/bana_ozel_providers.dart';
-import '../../../live_psychics/presentation/widgets/psychics_home_section.dart';
-import '../widgets/ultra_premium/ultra_fortune_app_bar.dart';
-import '../design/fortune_design_lane.dart';
-import '../design/fortune_lane_theme.dart';
-import '../widgets/ultra_premium/ultra_fortune_daily_energy.dart';
-import '../widgets/ultra_premium/ultra_fortune_daily_missions_strip.dart';
-import '../widgets/ultra_premium/ultra_fortune_hero_section.dart';
-import '../widgets/ultra_premium/ultra_fortune_history_strip.dart';
-import '../widgets/ultra_premium/ultra_fortune_hub_search_bar.dart';
-import '../widgets/ultra_premium/ultra_fortune_prophecy_card.dart';
-import '../widgets/ultra_premium/ultra_fortune_ready_readings_strip.dart';
-import '../widgets/ultra_premium/ultra_fortune_recommendations_section.dart';
-import '../widgets/fortune_zodiac_hub_card.dart';
-import '../widgets/ultra_premium/ultra_fortune_tokens.dart';
-import '../widgets/ultra_premium/ultra_fortune_quick_actions.dart';
-import '../widgets/ultra_premium/ultra_fortune_hub_quick_grid.dart';
-import '../widgets/ultra_premium/ultra_fortune_types_section.dart';
-import '../../../bana_ozel/presentation/widgets/bana_ozel_hub_section.dart';
-import '../../../shorts/presentation/widgets/shorts_hub_strip.dart';
+import '../widgets/fortune_hub_2026/fortune_hub_kit.dart';
+import '../widgets/fortune_hub_2026/fortune_hub_live_sections.dart';
+import '../widgets/fortune_hub_2026/fortune_hub_sections.dart';
+import '../widgets/fortune_hub_2026/fortune_hub_top.dart';
+import '../widgets/fortune_zodiac_hub_card.dart' show maybePromptFortuneBirthOnHub;
 
-/// Fal & Tarot ana sekme — Ultra Premium 2026 Liquid Glass mistik evren.
+/// Fal & Tarot ana sekme — Premium 2026 (tek tasarım sistemi, gerçek API verisi).
 class FortuneTarotHubPage extends ConsumerStatefulWidget {
   const FortuneTarotHubPage({super.key, this.initialTypeSlug});
 
@@ -45,13 +33,11 @@ class FortuneTarotHubPage extends ConsumerStatefulWidget {
 
 class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
   final _scrollController = ScrollController();
-  final _scrollParallax = ScrollParallaxNotifier();
   var _deepLinkHandled = false;
 
   @override
   void initState() {
     super.initState();
-    _scrollParallax.bind(_scrollController);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       maybePromptFortuneBirthOnHub(context, ref);
@@ -81,7 +67,6 @@ class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
 
   @override
   void dispose() {
-    _scrollParallax.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -91,6 +76,8 @@ class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
     ref.invalidate(fortuneDailyInsightsProvider);
     ref.invalidate(fortuneHubPreferencesStoreProvider);
     ref.invalidate(banaOzelCatalogProvider);
+    ref.invalidate(homeOnlinePsychicsProvider);
+    ref.invalidate(homeTrendVideosProvider);
     invalidateFortuneTypesDisplay(ref);
     await Future<void>.delayed(const Duration(milliseconds: 350));
   }
@@ -98,57 +85,47 @@ class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
-    // Fal bölümü her temada koyu zemin çizer (bkz. FortuneLaneTheme).
-    const bg = UltraFortuneTokens.deepNight;
 
     return FortuneLaneTheme(
       child: SiteAnimationContextHost(
         context: SiteAnimationContext.falTarot,
         child: Scaffold(
-          backgroundColor: bg,
-          body: FortuneLaneBackdrop(
-            surface: FortuneLaneSurface.hub,
-            scrollParallax: _scrollParallax,
+          backgroundColor: FortuneUi.bg0,
+          body: DecoratedBox(
+            decoration: const BoxDecoration(
+              gradient: FortuneUi.backgroundGradient,
+            ),
             child: DiscoverRefresh.wrap(
               onRefresh: _onRefresh,
               child: CustomScrollView(
                 controller: _scrollController,
                 physics: PremiumMotion.listPhysics,
                 slivers: [
-                  const SliverToBoxAdapter(child: UltraFortuneAppBar()),
-                  const SliverToBoxAdapter(child: UltraFortuneHeroSection()),
-                  const SliverToBoxAdapter(child: UltraFortuneLastFortuneCta()),
-                  const SliverToBoxAdapter(child: UltraFortuneHubSearchBar()),
-                  const SliverToBoxAdapter(child: UltraFortuneQuickActions()),
-                  const SliverToBoxAdapter(child: UltraFortuneHistoryStrip()),
-                  const SliverToBoxAdapter(child: UltraFortuneHubQuickGrid()),
-                  const SliverToBoxAdapter(child: UltraFortuneTypesSection()),
-                  const SliverToBoxAdapter(
-                    child: UltraFortuneDailyMissionsStrip(),
+                  // SliverList: alt bölümler yalnızca görünür olunca kurulur
+                  // ve kendi verilerini o zaman ister (tembel yükleme).
+                  SliverList(
+                    delegate: SliverChildListDelegate([
+                      const FortuneHubHeader(),
+                      const FortuneWalletBar(),
+                      const FortuneHubHero(),
+                      const FortuneHubStatRow(),
+                      const FortuneHubHistoryBanner(),
+                      const FortuneHubSearchField(),
+                      const FortuneHubQuickGrid(),
+                      const FortuneHubDailyProphecy(),
+                      const FortuneHubRecentReadings(),
+                      const FortuneHubPopularTypes(),
+                      const FortuneHubForYouBanner(),
+                      const FortuneHubAllTypes(),
+                      const FortuneHubPsychics(),
+                      const FortuneHubShorts(),
+                      const FortuneHubReadyReadings(),
+                      const FortuneHubBanaOzel(),
+                      const FortuneHubReminderTile(),
+                      const FortuneHubExploreBanner(),
+                      SizedBox(height: bottom + 100),
+                    ]),
                   ),
-                  const SliverToBoxAdapter(
-                    child: UltraFortuneReadyReadingsStrip(),
-                  ),
-                  const SliverToBoxAdapter(
-                    child: UltraFortuneRecommendationsSection(),
-                  ),
-                  const SliverToBoxAdapter(child: PsychicsHomeSection()),
-                  const SliverToBoxAdapter(
-                    child: ShortsHubStrip(
-                      title: 'Kısa Videolar',
-                      emoji: '🎬',
-                      padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
-                    ),
-                  ),
-                  const SliverToBoxAdapter(child: BanaOzelHubSection()),
-                  const SliverToBoxAdapter(child: FortuneZodiacHubCard()),
-                  const SliverToBoxAdapter(child: UltraFortuneProphecyCard()),
-                  const SliverToBoxAdapter(child: SizedBox(height: 8)),
-                  const SliverToBoxAdapter(child: UltraFortuneDailyEnergy()),
-                  const SliverToBoxAdapter(
-                    child: UltraFortuneDailyReminderTile(),
-                  ),
-                  SliverToBoxAdapter(child: SizedBox(height: bottom + 100)),
                 ],
               ),
             ),

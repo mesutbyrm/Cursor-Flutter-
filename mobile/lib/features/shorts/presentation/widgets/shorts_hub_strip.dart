@@ -107,7 +107,7 @@ class ShortsHubStrip extends ConsumerWidget {
                   index: i,
                   video: items[i],
                   size: thumbSize,
-                  onTap: () => _openVideo(context, ref, items[i]),
+                  onTap: () => openVideo(context, ref, items[i]),
                 ),
               ),
             ),
@@ -118,7 +118,7 @@ class ShortsHubStrip extends ConsumerWidget {
     );
   }
 
-  static void _openVideo(
+  static void openVideo(
     BuildContext context,
     WidgetRef ref,
     HomeTrendVideoEntity video,

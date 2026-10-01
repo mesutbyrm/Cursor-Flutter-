@@ -2,6 +2,8 @@ import 'package:canlifal_social/core/economy/domain/economy_wallet_snapshot.dart
 import 'package:canlifal_social/core/economy/presentation/providers/economy_providers.dart';
 import 'package:canlifal_social/core/network/cookie_jar_provider.dart';
 import 'package:canlifal_social/features/auth/domain/entities/user_entity.dart';
+import 'package:canlifal_social/features/bana_ozel/domain/entities/bana_ozel_entities.dart';
+import 'package:canlifal_social/features/bana_ozel/presentation/providers/bana_ozel_providers.dart';
 import 'package:canlifal_social/features/auth/presentation/providers/auth_providers.dart';
 import 'package:canlifal_social/features/fortune/domain/entities/fortune_display_entry.dart';
 import 'package:canlifal_social/features/fortune/domain/entities/user_fortune_entity.dart';
@@ -63,6 +65,7 @@ void main() {
             ],
           ),
           socialNotifierProvider.overrideWith(_StubSocial.new),
+          banaOzelCatalogProvider.overrideWith(_EmptyCatalog.new),
         ],
         child: const MaterialApp(home: FortuneTarotHubPage()),
       ),
@@ -86,7 +89,7 @@ void main() {
         final w = e.widget;
         if (w is! Text) return false;
         final data = w.data ?? w.textSpan?.toPlainText() ?? '';
-        return data == 'FAL TÜRLERİ';
+        return data == 'TÜM FAL TÜRLERİ';
       }),
       findsOneWidget,
     );
@@ -109,4 +112,10 @@ class _EmptyHistory extends FortuneHistoryNotifier {
 class _StubSocial extends SocialNotifier {
   @override
   Future<List<PostEntity>> build() async => [];
+}
+
+class _EmptyCatalog extends BanaOzelCatalogNotifier {
+  @override
+  Future<BanaOzelCatalogEntity> build() async =>
+      const BanaOzelCatalogEntity(items: []);
 }
