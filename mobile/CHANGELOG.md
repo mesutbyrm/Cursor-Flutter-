@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.673+726 (2026-10-01) — CI: gelen kutusu varsayılan sekme testi
+
+- `InboxTab.fromQuery(null)` artık `messages` — birim test güncellendi
+- Backend değişikliği yok
+
 ## 1.0.672+725 (2026-10-01) — PK, sesli PK, gelen kutusu
 
 - **Canlı PK:** `tie`/`draw` erken bitiş engeli; süre dolmadan berabere overlay yok; merge guard; `livePkBattleFinished` ile gerçek bitiş
