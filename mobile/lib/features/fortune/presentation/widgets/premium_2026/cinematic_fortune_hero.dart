@@ -55,6 +55,7 @@ class _CinematicFortuneHeroState extends State<CinematicFortuneHero>
   Widget build(BuildContext context) {
     final type = widget.type;
     final url = FortuneTypeImages.urlFor(type.slug, width: 1600);
+    final localAsset = FortuneTypeImages.assetPathFor(type.slug);
     final tag = FortuneTypeImages.heroTagFor(type.slug);
     final glow = FortuneTypeImages.glowColor(type.slug);
 
@@ -68,12 +69,20 @@ class _CinematicFortuneHeroState extends State<CinematicFortuneHero>
               tag: tag,
               child: Material(
                 type: MaterialType.transparency,
-                child: CanlifalNetworkImage(
-                  url: url,
-                  fit: BoxFit.cover,
-                  placeholder: FortuneImageShimmer(accent: type.accent),
-                  errorWidget: FortuneImageShimmer(accent: type.accent),
-                ),
+                child: localAsset != null
+                    ? Image.asset(
+                        localAsset,
+                        fit: BoxFit.cover,
+                        cacheWidth: 1200,
+                        errorBuilder: (_, _, _) =>
+                            FortuneImageShimmer(accent: type.accent),
+                      )
+                    : CanlifalNetworkImage(
+                        url: url,
+                        fit: BoxFit.cover,
+                        placeholder: FortuneImageShimmer(accent: type.accent),
+                        errorWidget: FortuneImageShimmer(accent: type.accent),
+                      ),
               ),
             ),
           ),

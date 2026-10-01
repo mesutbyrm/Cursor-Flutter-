@@ -203,6 +203,19 @@ class _ArtFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final asset = GameCatalogAssets.assetPath(game);
+    if (asset != null) {
+      return Image.asset(
+        asset,
+        fit: BoxFit.cover,
+        cacheWidth: 640,
+        errorBuilder: (_, _, _) => _iconArt(),
+      );
+    }
+    return _iconArt();
+  }
+
+  Widget _iconArt() {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(

@@ -12,6 +12,22 @@ abstract final class GameCatalogAssets {
     return null;
   }
 
+  /// Yerel kapak (`assets/games/<id>.webp`) — backend görseli yoksa/yüklenmezse.
+  static const _localIds = <String>{
+    '2048', 'amiral-batti', 'anagram', 'carkifelek', 'color-sort', 'connect4',
+    'dama', 'gomoku', 'hangman', 'kart-eslestirme-pvp', 'kelime-duellosu',
+    'logo-quiz', 'mangala', 'mastermind', 'memory-match', 'minesweeper',
+    'okey', 'okey101', 'pisti', 'quiz', 'quiz-1v1', 'reversi', 'sayi-tahmin',
+    'scratch', 'slot', 'sos', 'sudoku', 'tas-kagit-makas', 'tavla', 'tombala',
+    'word-hunt', 'word-puzzle', 'xox', 'zar',
+  };
+
+  static String? assetPath(GameCatalogItem game) {
+    var id = game.id.trim().toLowerCase().replaceAll('_', '-');
+    if (id == 'yuzbirokey') id = 'okey101';
+    return _localIds.contains(id) ? 'assets/games/$id.webp' : null;
+  }
+
   static IconData iconFor(GameCatalogItem game) {
     final id = game.id.toLowerCase();
     if (id.contains('okey')) return Icons.view_module_rounded;

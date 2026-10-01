@@ -41,6 +41,7 @@ class AuthFloatingField extends StatefulWidget {
 class _AuthFloatingFieldState extends State<AuthFloatingField> {
   late final FocusNode _focus;
   var _focused = false;
+  var _revealed = false;
 
   bool get _isPasswordField => widget.obscureText;
 
@@ -90,7 +91,7 @@ class _AuthFloatingFieldState extends State<AuthFloatingField> {
       child: TextFormField(
         controller: widget.controller,
         focusNode: _focus,
-        obscureText: _isPasswordField,
+        obscureText: _isPasswordField && !_revealed,
         enableSuggestions: !_isPasswordField,
         autocorrect: !_isPasswordField,
         enableIMEPersonalizedLearning: !_isPasswordField,
@@ -127,6 +128,23 @@ class _AuthFloatingFieldState extends State<AuthFloatingField> {
                       : context.colors.onSurfaceMuted,
                   size: 22,
                 ),
+          suffixIcon: _isPasswordField
+              ? IconButton(
+                  tooltip: _revealed ? 'Şifreyi gizle' : 'Şifreyi göster',
+                  onPressed: () => setState(() => _revealed = !_revealed),
+                  icon: AnimatedSwitcher(
+                    duration: PremiumMotion.medium,
+                    child: Icon(
+                      _revealed
+                          ? Icons.visibility_off_rounded
+                          : Icons.visibility_rounded,
+                      key: ValueKey(_revealed),
+                      color: context.colors.onSurfaceMuted,
+                      size: 22,
+                    ),
+                  ),
+                )
+              : null,
           filled: true,
           fillColor: const Color(0xFF140A28).withValues(alpha: 0.72),
           contentPadding: const EdgeInsets.symmetric(

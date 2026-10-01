@@ -11,6 +11,17 @@ abstract final class SectionVisualCatalog {
     return _url(id, width: width, crop: 'center');
   }
 
+  /// Yerel burç arka planı (`assets/zodiac/`); bilinmeyen burç → null.
+  static String? horoscopeAsset(String signName) {
+    const ascii = {
+      'koç': 'koc', 'boğa': 'boga', 'ikizler': 'ikizler', 'yengeç': 'yengec',
+      'aslan': 'aslan', 'başak': 'basak', 'terazi': 'terazi', 'akrep': 'akrep',
+      'yay': 'yay', 'oğlak': 'oglak', 'kova': 'kova', 'balık': 'balik',
+    };
+    final f = ascii[signName.trim().toLowerCase()];
+    return f == null ? null : 'assets/zodiac/$f.webp';
+  }
+
   static const _horoscopePhotos = <String, String>{
     'koç': '1518131353823-3909e8946c78',
     'boğa': '1500382017468-903a271edb2f',

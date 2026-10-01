@@ -1,5 +1,36 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.671+724 (2026-10-01) — Mistik görseller (stok fotoğraflar kaldırıldı)
+
+- Pexels stok fotoğrafları kaldırıldı; yerine proje sahibinin sağladığı mistik illüstrasyonlar: 12 burç, 5 üyelik kademesi, 5 fal görseli, 34 oyun kapağı, giriş arka planı
+- Oyun kapakları kaynak kolajdan yeniden kesildi (zip'teki oyun dosyaları kaymıştı); kaynak notu `docs/ART_ASSETS.md`
+- Backend değişikliği yok
+
+## 1.0.670+723 (2026-10-01) — Stok fotoğraflar (kodla çizilen görseller kaldırıldı)
+
+- Kodla çizilen tüm görseller (fal, oyun, üyelik, burç) **Pexels stok fotoğraflarıyla** değiştirildi; kaynaklar `docs/STOCK_MEDIA_CREDITS.md`
+- Giriş/kayıt ekranına gece gökyüzü arka plan fotoğrafı (okunurluk için koyu degrade ile)
+- Sosyal akış görsel yer tutucusu emoji yerine tarot görseli
+- `mobile/tool/gen_*_art.py` betikleri kaldırıldı
+- Backend değişikliği yok
+
+## 1.0.669+722 (2026-10-01) — Mistik görseller: fal paylaşımı, oyunlar, üyelikler, burçlar
+
+- **Sosyal akış:** fal paylaşımı türe uygun mistik görselin (kahve, el, tarot, aşk…) üzerine yazılı kart olarak gösterilir; backend `fortuneType` (coffee, palm…) → görsel eşlemesi
+- **Fal görselleri:** aura, doğum haritası, günlük fal, kurşun dökme ve istihare için yeni illüstrasyonlar; fal detay/intro ekranları yerel görseli öncelikli kullanır (çevrimdışı çalışır)
+- **Oyunlar:** katalogdaki 34 oyun için kendi kapak illüstrasyonu (backend görseli yoksa/yüklenmezse)
+- **Üyelikler:** Basic/Gold/Premium/Diamond/SVIP kademelerine özel illüstrasyon (üyelik sayfası, VIP merkezi, ana sayfa Gold kartları)
+- **Ana sayfa:** burç chip'leri element renkli takımyıldız arka planı kullanır (Unsplash fotoğrafı kaldırıldı)
+- Üretim betikleri: `mobile/tool/gen_*_art.py`
+- Backend değişikliği yok
+
+## 1.0.668+721 (2026-10-01) — Premium cila: şifre göster/gizle, tema geçişi, ayarlar
+
+- **Giriş/Kayıt:** şifre alanlarına göster/gizle düğmesi (animasyonlu ikon)
+- **Tema:** koyu/açık geçişi 360 ms `easeOutCubic` ile yumuşak
+- **Ayarlar:** satır ikonları tema uyumlu yuvarlak zemin; sabit kırmızı → `CdsColors.error`
+- Backend değişikliği yok
+
 ## 1.0.667+720 (2026-10-01) — Tanış Kaynaş Premium 2026
 
 - **Yeni tasarım:** koyu cam / gradyan arayüz; kategori sekmeleri (Sana Özel, Çevrimiçi, Yakınımda, İlgi Alanları, Tanışma Odaları), çevrimiçi şerit + Hikayem, kaydırmalı keşif kartı (sağ beğen · sol geç · yukarı tanış), tanışma amacı, yakındakiler, ortak ilgi alanları, canlı sesli odalar. İskelet, boş ve hata durumları; açık tema desteği

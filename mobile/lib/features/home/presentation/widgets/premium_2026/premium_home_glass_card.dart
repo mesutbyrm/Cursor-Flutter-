@@ -13,6 +13,7 @@ class PremiumHomeGlassCard extends StatelessWidget {
     required this.title,
     required this.coverSlug,
     this.networkUrl,
+    this.coverAsset,
     this.subtitle,
     this.heroTag,
     this.width = 148,
@@ -26,6 +27,7 @@ class PremiumHomeGlassCard extends StatelessWidget {
   final String? subtitle;
   final String coverSlug;
   final String? networkUrl;
+  final String? coverAsset;
   final String? heroTag;
   final double width;
   final double height;
@@ -50,6 +52,7 @@ class PremiumHomeGlassCard extends StatelessWidget {
                 slug: coverSlug,
                 accent: accentColor,
                 networkUrl: networkUrl,
+                assetOverride: coverAsset,
                 thumbnailWidth: 480,
               ),
               DecoratedBox(
