@@ -12,6 +12,7 @@ import 'core/bootstrap/app_session_reset.dart';
 import 'core/bootstrap/app_startup_log.dart';
 import 'core/bootstrap/storage_deferred_init.dart';
 import 'core/network/lazy_cookie_jar.dart';
+import 'core/images/canlifal_image_cache.dart';
 import 'core/performance/device_perf_tuning.dart';
 import 'core/performance/app_perf_metrics.dart';
 import 'features/voice_hub/data/services/voice_room_debug_log.dart';
@@ -21,6 +22,7 @@ Future<void> main() async {
   AppSessionReset.onColdStart();
   AppPerfMetrics.mark('cold_start');
   DevicePerfTuning.apply();
+  CanlifalImageCache.configure();
   AppStartupLog.log('main() begin');
 
   // Release'de hata detayı gösterme; debug'da teşhis için bırak.

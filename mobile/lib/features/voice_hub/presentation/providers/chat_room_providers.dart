@@ -826,8 +826,6 @@ class VoiceRoomLiveController
         if (uid != null) unawaited(_autoSeatAfterRoleGrant(uid));
       }
     });
-    _roomKeepAliveLink = ref.keepAlive();
-
     // Initialize RoomSessionManager
     final auth = ref.read(authControllerProvider).valueOrNull;
     if (auth != null && _roomKey.isNotEmpty) {
@@ -2590,7 +2588,7 @@ class VoiceRoomLiveController
           const ChatRoomUserRef(id: 'system', name: 'Sistem'),
     );
     state = state.copyWith(
-      messages: [...state.messages, chatLine],
+      messages: VoiceRoomMessageMerge.append(state.messages, chatLine),
       clearMusicRequestFlash: true,
     );
   }
@@ -2856,7 +2854,7 @@ class VoiceRoomLiveController
 
     state = state.copyWith(
       messages: optimistic != null
-          ? [...state.messages, optimistic]
+          ? VoiceRoomMessageMerge.append(state.messages, optimistic)
           : state.messages,
       clearError: true,
     );
@@ -2915,7 +2913,10 @@ class VoiceRoomLiveController
         unawaited(refresh(includeDj: false));
       }
       list.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-      state = state.copyWith(messages: list, clearError: true);
+      state = state.copyWith(
+        messages: VoiceRoomMessageMerge.trim(list),
+        clearError: true,
+      );
       if (mentionedUserIds.isNotEmpty) {
         unawaited(
           _deliverMentionNotifications(

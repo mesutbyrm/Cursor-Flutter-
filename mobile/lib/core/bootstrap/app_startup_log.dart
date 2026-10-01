@@ -10,6 +10,22 @@ abstract final class AppStartupLog {
 
   static void appStart() => log('APP_START');
 
+  static void appPause() => log('APP_PAUSE');
+
+  static void appResume() => log('APP_RESUME');
+
+  static void screenOpen(String name) => log('SCREEN_OPEN name=$name');
+
+  static void screenDispose(String name) => log('SCREEN_DISPOSE name=$name');
+
+  static void sseConnect(String id) => log('SSE_CONNECT id=$id');
+
+  static void sseDisconnect(String id) => log('SSE_DISCONNECT id=$id');
+
+  static void trtcJoin(String roomId) => log('TRTC_JOIN room=$roomId');
+
+  static void trtcLeave(String roomId) => log('TRTC_LEAVE room=$roomId');
+
   static void authStart() => log('AUTH_START');
 
   static void authFinish({

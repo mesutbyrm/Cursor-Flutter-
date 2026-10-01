@@ -60,6 +60,7 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
     _sseStarted = false;
     _sseAttachedRoomKey = null;
     _sessionActive = true;
+    _roomKeepAliveLink ??= ref.keepAlive();
     _entrancesArmed = false;
     _realtimeEffectsEpochMs = null;
     _selfPresenceTracker.reset();

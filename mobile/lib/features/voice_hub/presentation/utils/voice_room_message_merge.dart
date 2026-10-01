@@ -2,6 +2,21 @@ import '../../domain/entities/chat_room_message.dart';
 
 /// Sohbet mesajlarını birleştirir; optimistic `local-*` id'leri sunucu yanıtıyla değiştirir.
 abstract final class VoiceRoomMessageMerge {
+  /// Oda sohbeti RAM'de sınırsız büyümesin (çok odalı gezinme / yeniden açılış).
+  static const maxRetainedMessages = 180;
+
+  static List<ChatRoomMessage> trim(List<ChatRoomMessage> list) {
+    if (list.length <= maxRetainedMessages) return list;
+    return list.sublist(list.length - maxRetainedMessages);
+  }
+
+  static List<ChatRoomMessage> append(
+    List<ChatRoomMessage> current,
+    ChatRoomMessage message,
+  ) {
+    return trim([...current, message]);
+  }
+
   static List<ChatRoomMessage> merge(
     List<ChatRoomMessage> current,
     List<ChatRoomMessage> fetched,
@@ -28,6 +43,6 @@ abstract final class VoiceRoomMessageMerge {
     }
     final merged = byId.values.toList()
       ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
-    return merged;
+    return trim(merged);
   }
 }

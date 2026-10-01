@@ -81,9 +81,18 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
     });
 
     unawaited(ref.read(currencyBrandingProvider.future));
-    unawaited(
-      ref.read(siteAnimationCatalogProvider.notifier).refresh(forceRefresh: false),
-    );
+    // Katalog ilk yükleme [siteAnimationCatalogProvider.build] ile yapılır;
+    // açılışta ikinci refresh ANR/CPU fırtınası yaratıyordu.
+    Future<void>.delayed(const Duration(seconds: 3), () {
+      if (!mounted) return;
+      final catalog = ref.read(siteAnimationCatalogProvider);
+      if (catalog.hasValue) return;
+      unawaited(
+        ref
+            .read(siteAnimationCatalogProvider.notifier)
+            .refresh(forceRefresh: false),
+      );
+    });
   }
 
   @override

@@ -173,7 +173,9 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
               _sse._pushBasicChatEvent(msg);
               final exists = state.messages.any((m) => m.id == msg.id);
               if (!exists) {
-                state = state.copyWith(messages: [...state.messages, msg]);
+                state = state.copyWith(
+                  messages: VoiceRoomMessageMerge.append(state.messages, msg),
+                );
               }
               return;
             }
@@ -182,7 +184,9 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             }
             final exists = state.messages.any((m) => m.id == msg.id);
             if (exists) return;
-            state = state.copyWith(messages: [...state.messages, msg]);
+            state = state.copyWith(
+              messages: VoiceRoomMessageMerge.append(state.messages, msg),
+            );
             _sse._onMusicRelatedChatMessage(msg);
             _sse._pushBasicChatEvent(msg);
             _sse._maybeNotifyMention(msg);

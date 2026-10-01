@@ -27,6 +27,10 @@ abstract final class SiteAnimationCatalogPreload {
       }
     }
     if (futures.isEmpty) return;
-    await Future.wait(futures, eagerError: false);
+    const batchSize = 6;
+    for (var i = 0; i < futures.length; i += batchSize) {
+      final end = (i + batchSize).clamp(0, futures.length);
+      await Future.wait(futures.sublist(i, end), eagerError: false);
+    }
   }
 }

@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.666+719 (2026-10-01) — Bellek, SSE, açılış performansı
+
+- **Soğuk açılış:** TRTC engine sıfırlama, video/hediye sıcak cache temizliği, görsel cache trim
+- **Sesli oda:** keepAlive yalnızca oturum başladığında; sohbet listesi en fazla 180 mesaj
+- **SSE:** `inactive` geçişinde gereksiz pause kaldırıldı; ön plan resume debounce; bağlantı debounce
+- **Açılış:** çift site animasyon katalog refresh kaldırıldı; animasyon preload batch (6)
+- **Teşhis:** AppStartupLog APP_PAUSE/RESUME, SSE/TRTC olayları (debug)
+- Backend değişikliği yok
+
 ## 1.0.664+717 (2026-09-30) — apk-latest düzeltme (güncel indirme)
 
 - **CI:** Gecikmiş workflow_run eski commit ile `apk-latest` yayınlayamaz (main ucu zorunlu)
