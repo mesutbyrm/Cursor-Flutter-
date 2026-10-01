@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.671+724 (2026-10-01) — Mistik görseller (stok fotoğraflar kaldırıldı)
+
+- Pexels stok fotoğrafları kaldırıldı; yerine proje sahibinin sağladığı mistik illüstrasyonlar: 12 burç, 5 üyelik kademesi, 5 fal görseli, 34 oyun kapağı, giriş arka planı
+- Oyun kapakları kaynak kolajdan yeniden kesildi (zip'teki oyun dosyaları kaymıştı); kaynak notu `docs/ART_ASSETS.md`
+- Backend değişikliği yok
+
 ## 1.0.670+723 (2026-10-01) — Stok fotoğraflar (kodla çizilen görseller kaldırıldı)
 
 - Kodla çizilen tüm görseller (fal, oyun, üyelik, burç) **Pexels stok fotoğraflarıyla** değiştirildi; kaynaklar `docs/STOCK_MEDIA_CREDITS.md`
