@@ -1,3 +1,4 @@
+import '../../../../core/design_system/cds_skeleton.dart';
 import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -140,10 +141,10 @@ class _InboxSystemNotificationsPanelState
     final fmt = DateFormat('HH:mm');
     Widget listBody;
     if (!_listReady) {
-      listBody = const DiscoverAccentLoader();
+      listBody = CdsSkeleton.listRows();
     } else {
       listBody = ref.watch(notificationsListNotifierProvider).when(
-            loading: () => const DiscoverAccentLoader(),
+            loading: () => CdsSkeleton.listRows(),
             error: (e, _) => DiscoverEmptyState(
               icon: Icons.notifications_off_outlined,
               message: ApiException.userMessage(e),
