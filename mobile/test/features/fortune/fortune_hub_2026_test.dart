@@ -18,6 +18,8 @@ import 'package:canlifal_social/features/home/presentation/providers/home_provid
 import 'package:canlifal_social/features/inbox/presentation/providers/inbox_unread_providers.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_entity.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
+import 'package:canlifal_social/features/profile/domain/entities/daily_task_entity.dart';
+import 'package:canlifal_social/features/profile/presentation/providers/profile_providers.dart';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,29 +27,26 @@ import 'package:flutter_test/flutter_test.dart';
 
 class _FakeAuth extends AuthController {
   @override
-  Future<UserEntity?> build() async => const UserEntity(
-        id: 'u1',
-        username: 'u',
-        displayName: 'Kullanıcı',
-      );
+  Future<UserEntity?> build() async =>
+      const UserEntity(id: 'u1', username: 'u', displayName: 'Kullanıcı');
 }
 
 class _History extends FortuneHistoryNotifier {
   @override
   Future<List<UserFortuneEntity>> build() async => [
-        UserFortuneEntity(
-          id: '1',
-          type: 'Tarot',
-          slug: 'tarot',
-          createdAt: DateTime.now().subtract(const Duration(days: 2)),
-        ),
-        UserFortuneEntity(
-          id: '2',
-          type: 'Kahve Falı',
-          slug: 'kahve-fali',
-          createdAt: DateTime.now().subtract(const Duration(days: 4)),
-        ),
-      ];
+    UserFortuneEntity(
+      id: '1',
+      type: 'Tarot',
+      slug: 'tarot',
+      createdAt: DateTime.now().subtract(const Duration(days: 2)),
+    ),
+    UserFortuneEntity(
+      id: '2',
+      type: 'Kahve Falı',
+      slug: 'kahve-fali',
+      createdAt: DateTime.now().subtract(const Duration(days: 4)),
+    ),
+  ];
 }
 
 class _HistoryError extends FortuneHistoryNotifier {
@@ -58,18 +57,18 @@ class _HistoryError extends FortuneHistoryNotifier {
 class _Catalog extends BanaOzelCatalogNotifier {
   @override
   Future<BanaOzelCatalogEntity> build() async => const BanaOzelCatalogEntity(
-        items: [
-          BanaOzelItemEntity(
-            id: '1',
-            slug: 'kisisel-oneri',
-            nameTr: 'Kişisel Fal Önerisi',
-            descTr: 'Sana özel hazırlandı',
-            icon: '🔮',
-            jetonCost: 5,
-            category: 'tarot',
-          ),
-        ],
-      );
+    items: [
+      BanaOzelItemEntity(
+        id: '1',
+        slug: 'kisisel-oneri',
+        nameTr: 'Kişisel Fal Önerisi',
+        descTr: 'Sana özel hazırlandı',
+        icon: '🔮',
+        jetonCost: 5,
+        category: 'tarot',
+      ),
+    ],
+  );
 }
 
 class _EmptyCatalog extends BanaOzelCatalogNotifier {
@@ -78,64 +77,68 @@ class _EmptyCatalog extends BanaOzelCatalogNotifier {
       const BanaOzelCatalogEntity(items: []);
 }
 
-List<Override> _overrides({
-  bool filled = true,
-  bool historyError = false,
-}) =>
-    [
-      cookieJarProvider.overrideWithValue(PersistCookieJar()),
-      authControllerProvider.overrideWith(_FakeAuth.new),
-      economyWalletProvider.overrideWith(
-        (ref) async => const EconomyWalletSnapshot(cfc: 100, jeton: 50),
-      ),
-      inboxUnreadCountProvider.overrideWith((ref) => 2),
-      fortuneHistoryProvider.overrideWith(
-        historyError ? _HistoryError.new : _History.new,
-      ),
-      fortuneBirthProfileProvider.overrideWith((ref) async => null),
-      fortuneDailyInsightsProvider.overrideWith(
-        (ref) async => FortuneDailyInsights.fallback(),
-      ),
-      homeFortuneCardsProvider.overrideWith((ref) async => []),
-      homeFortuneRequestTypesProvider.overrideWith((ref) async => []),
-      homeTrendVideosProvider.overrideWith(
-        (ref) async => filled
-            ? const [
-                HomeTrendVideoEntity(
-                  id: 'v1',
-                  title: 'Kahve falı',
-                  channelName: 'k',
-                  viewCount: 12400,
-                  likesCount: 1280,
-                ),
-              ]
-            : <HomeTrendVideoEntity>[],
-      ),
-      homeOnlinePsychicsProvider.overrideWith(
-        (ref) async => filled
-            ? const [
-                PsychicEntity(
-                  id: 'p1',
-                  name: 'İlhamperisi',
-                  isOnline: true,
-                  rating: 5,
-                  pricePerMinute: 100,
-                  specialties: ['Kahve'],
-                ),
-              ]
-            : <PsychicEntity>[],
-      ),
-      fortuneTypesDisplayProvider.overrideWith(
-        (ref) async => const [
-          FortuneDisplayEntry(slug: 'tarot', title: 'Tarot'),
-          FortuneDisplayEntry(slug: 'kahve-fali', title: 'Kahve Falı'),
-          FortuneDisplayEntry(slug: 'el-fali', title: 'El Falı'),
-        ],
-      ),
-      banaOzelCatalogProvider.overrideWith(
-        filled ? _Catalog.new : _EmptyCatalog.new,
-      ),
-    ];
+List<Override> _overrides({bool filled = true, bool historyError = false}) => [
+  cookieJarProvider.overrideWithValue(PersistCookieJar()),
+  authControllerProvider.overrideWith(_FakeAuth.new),
+  economyWalletProvider.overrideWith(
+    (ref) async => const EconomyWalletSnapshot(cfc: 100, jeton: 50),
+  ),
+  inboxUnreadCountProvider.overrideWith((ref) => 2),
+  fortuneHistoryProvider.overrideWith(
+    historyError ? _HistoryError.new : _History.new,
+  ),
+  fortuneBirthProfileProvider.overrideWith((ref) async => null),
+  fortuneDailyInsightsProvider.overrideWith(
+    (ref) async => FortuneDailyInsights.fallback(),
+  ),
+  homeFortuneCardsProvider.overrideWith((ref) async => []),
+  homeFortuneRequestTypesProvider.overrideWith((ref) async => []),
+  homeTrendVideosProvider.overrideWith(
+    (ref) async => filled
+        ? const [
+            HomeTrendVideoEntity(
+              id: 'v1',
+              title: 'Kahve falı',
+              channelName: 'k',
+              viewCount: 12400,
+              likesCount: 1280,
+            ),
+          ]
+        : <HomeTrendVideoEntity>[],
+  ),
+  homeOnlinePsychicsProvider.overrideWith(
+    (ref) async => filled
+        ? const [
+            PsychicEntity(
+              id: 'p1',
+              name: 'İlhamperisi',
+              isOnline: true,
+              rating: 5,
+              pricePerMinute: 100,
+              specialties: ['Kahve'],
+            ),
+          ]
+        : <PsychicEntity>[],
+  ),
+  fortuneTypesDisplayProvider.overrideWith(
+    (ref) async => const [
+      FortuneDisplayEntry(slug: 'tarot', title: 'Tarot'),
+      FortuneDisplayEntry(slug: 'kahve-fali', title: 'Kahve Falı'),
+      FortuneDisplayEntry(slug: 'el-fali', title: 'El Falı'),
+    ],
+  ),
+  banaOzelCatalogProvider.overrideWith(
+    filled ? _Catalog.new : _EmptyCatalog.new,
+  ),
+  userDailyTasksProvider.overrideWith(
+    (ref) async => filled
+        ? const [
+            DailyTaskEntity(id: 'a', title: 'Fal bak', completed: true),
+            DailyTaskEntity(id: 'b', title: 'Paylaş'),
+          ]
+        : <DailyTaskEntity>[],
+  ),
+];
 
 Future<void> _pumpHub(
   WidgetTester tester, {
@@ -152,9 +155,9 @@ Future<void> _pumpHub(
       overrides: overrides ?? _overrides(),
       child: MaterialApp(
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context).copyWith(
-            textScaler: TextScaler.linear(textScale),
-          ),
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(textScale)),
           child: child!,
         ),
         home: const FortuneTarotHubPage(),
@@ -178,11 +181,7 @@ Finder _hubScrollable() => find
     .first;
 
 Future<void> _scrollTo(WidgetTester tester, Finder target) async {
-  await tester.scrollUntilVisible(
-    target,
-    300,
-    scrollable: _hubScrollable(),
-  );
+  await tester.scrollUntilVisible(target, 300, scrollable: _hubScrollable());
   await tester.pump();
 }
 
@@ -233,6 +232,8 @@ void main() {
     await _scrollTo(tester, find.text('İlhamperisi'));
     expect(find.text('İlhamperisi'), findsOneWidget);
     expect(find.text('MÜSAİT'), findsOneWidget);
+    await _scrollTo(tester, find.text('1 / 2'));
+    expect(find.text('1 / 2'), findsOneWidget);
     await _done(tester);
   });
 
@@ -277,6 +278,7 @@ void main() {
       'Şu anda müsait falcı bulunmuyor. Biraz sonra tekrar deneyin.',
       'Henüz kısa video yok',
       'Size özel yeni içerikler hazırlanıyor.',
+      'Bugün için görev bulunamadı',
     ]) {
       await _scrollTo(tester, find.text(text));
       expect(find.text(text), findsOneWidget);

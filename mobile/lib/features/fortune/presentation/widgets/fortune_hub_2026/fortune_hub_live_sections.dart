@@ -11,6 +11,7 @@ import '../../../../bana_ozel/presentation/providers/bana_ozel_providers.dart';
 import '../../../../home/domain/entities/home_trend_video_entity.dart';
 import '../../../../home/presentation/providers/home_providers.dart';
 import '../../../../live_psychics/domain/entities/psychic_entity.dart';
+import '../../../../profile/presentation/providers/profile_providers.dart';
 import '../../../../live_psychics/presentation/navigation/psychic_card_navigation.dart';
 import '../../../../live_psychics/presentation/providers/live_psychics_providers.dart';
 import '../../../../shorts/presentation/widgets/shorts_hub_strip.dart';
@@ -812,6 +813,84 @@ class FortuneHubExploreBanner extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Günlük görev ilerlemesi — `GET /api/daily-missions` (gerçek görevler).
+class FortuneHubDailyMissions extends ConsumerWidget {
+  const FortuneHubDailyMissions({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tasks = ref.watch(userDailyTasksProvider);
+
+    return FortuneSection(
+      header: FortuneSectionHeader(
+        title: 'GÜNLÜK GÖREVLER',
+        icon: Icons.task_alt_rounded,
+        iconColor: FortuneUi.green,
+        onAll: () => context.push('/profile/growth'),
+      ),
+      child: tasks.when(
+        loading: () =>
+            const FortuneRowSkeleton(height: 72, itemWidth: 300, count: 1),
+        error: (_, _) => FortuneInlineState(
+          icon: Icons.error_outline_rounded,
+          message: 'Günlük görevler yüklenemedi',
+          actionLabel: 'Tekrar dene',
+          onAction: () => ref.invalidate(userDailyTasksProvider),
+        ),
+        data: (list) {
+          if (list.isEmpty) {
+            return const FortuneInlineState(
+              icon: Icons.task_alt_rounded,
+              message: 'Bugün için görev bulunamadı',
+            );
+          }
+          final done = list.where((t) => t.completed).length;
+          final progress = done / list.length;
+          return FortuneGlassCard(
+            onTap: () => context.push('/profile/growth'),
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Bugünkü ilerlemen',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: FortuneUi.title,
+                      ),
+                    ),
+                    Text(
+                      '$done / ${list.length}',
+                      style: const TextStyle(
+                        color: FortuneUi.gold,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 7,
+                    backgroundColor: Colors.white.withValues(alpha: 0.12),
+                    color: FortuneUi.gold,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
