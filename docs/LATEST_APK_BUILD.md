@@ -4,22 +4,25 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.676+729` |
-| Tarih (UTC) | 2026-10-01 20:09 |
-| Commit | [`f223f19d7fd23a8aef23dca32f57fd9bcea60a87`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/f223f19d7fd23a8aef23dca32f57fd9bcea60a87) |
-| İş akışı | [Run 36917077585](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36917077585) |
+| Sürüm | `1.0.678+731` |
+| Tarih (UTC) | 2026-10-01 21:51 |
+| Commit | [`8b169aee46b2d13e2e4b70be68526150aecfca27`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/8b169aee46b2d13e2e4b70be68526150aecfca27) |
+| İş akışı | [Run 36927563088](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36927563088) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.676+729 (2026-10-01) — Fal & Tarot Premium 2026 yeniden tasarım
+## 1.0.678+731 (2026-10-01) — Sesli oda PK modu (kompakt panel, tek sunucu sayacı)
 
-- **Ortak tasarım sistemi** (`widgets/fortune_hub_2026/fortune_hub_kit.dart`): renk, gradient, radius, tipografi (Playfair başlık), cam kart (blur'suz), bölüm başlığı, kategori kartı, altın düğme, boş/hata/yükleme durumları
-- **Hub sırası referansa göre:** başlık (menü, geçmiş, bildirim, CFC/Jeton) → hero "Kaderin Bugün Sana Ne Söylüyor?" + Falına Bak → Enerjin/Ay Evresi → "N fal kaydın var" → arama → hızlı erişim 3×2 → Günlük Kehanet → Son Fallarım → Popüler Fal Türleri (2 sütun) → Sana Özel → Tüm Fal Türleri (3 sütun) → Canlı Falcılar → Kısa Videolar → Hazır Yorumlar → Bana Özel → Hatırlatıcı
-- **Gerçek veri:** fal geçmişi, günlük içgörü, fal türleri vitrini, canlı falcılar (müsaitlik, puan, Jeton/dk), kısa videolar, Bana Özel ve cüzdan mevcut sağlayıcılardan; uydurma içerik yok. Veri gelmezse yükleniyor/boş/hata durumu gösterilir
-- **Performans:** sürekli dönen kristal/parçacık/bulanıklık arka planı kaldırıldı (statik gradient); alt bölümler yalnızca görününce kurulur ve veri ister
-- **Tüm Fal Türleri sayfası** aynı kartlarla yenilendi; arama hub'daki tür listelerini süzer
-- Backend, API yolu, JWT, CFC/Jeton, fal akışı değişmedi. Hub'dan kaldırılanlar: eski burç/doğum kartı ve günlük görev şeridi (doğum bilgisi istemi korunuyor)
+- **PK artık odada geçici bir mod:** koltukların üstünde kompakt neon cam panel (ekranın ~%30'u); ayrı tam ekran sayfa açılmaz, PK bitince oda eski haline döner
+- **Takım ızgarası 1x1–4x4:** avatar boyutu oyuncu sayısına göre dinamik; PK oyuncuları konuşmaya devam eder (mikrofon düğmesi)
+- **Tek merkezi sayaç:** `PkRoomController` — sunucu `endsAt` + `serverNow` ofseti; widget rebuild / hediye / sohbet / SSE / mikrofon sayacı sıfırlamaz; süre bitince iki cihazda aynı anda otomatik biter
+- **Hediye ≠ PK daveti:** SSE olayları tipine göre yönlendirilir; skor (status'suz PK_SCORE) artık davet açmaz ve sayaç/skor durumunu bozmaz
+- **Hediye gösterimi:** gönderen, hediye, miktar; ~5 sn, fade, son 3'lük kuyruk; skor yalnızca sunucudan
+- **Karşı takımı sustur:** yalnızca bu cihazın TRTC oynatmasını kapatır (backend mute yok)
+- **PK Bitir:** anında (iyimser), hata olursa geri alınır; sohbet girişi 💬'a basılana dek gizli
+- **Yeniden bağlanma:** sunucudan güncel PK okunur (sunucu durumu kazanır, sayaç yeniden başlamaz)
+- Backend değişmedi
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
