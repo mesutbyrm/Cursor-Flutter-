@@ -9,6 +9,7 @@ class VoiceCategoryItem {
     required this.iconKey,
     required this.colors,
     this.active = false,
+    this.materialIcon,
   });
 
   final String id;
@@ -16,6 +17,9 @@ class VoiceCategoryItem {
   final String iconKey;
   final List<Color> colors;
   final bool active;
+
+  /// Boyalı SVG anahtarı olmayan kategoriler için Material simgesi.
+  final IconData? materialIcon;
 }
 
 class FeaturedRoomItem {
@@ -106,6 +110,8 @@ class ActiveSpeakerItem {
     required this.avatarColor,
     this.avatarUrl,
     this.onlineLabel,
+    this.roomCount = 1,
+    this.listeners = 0,
   });
 
   final int rank;
@@ -114,6 +120,10 @@ class ActiveSpeakerItem {
   final Color avatarColor;
   final String? avatarUrl;
   final String? onlineLabel;
+
+  /// Sahibin aktif oda sayısı / toplam dinleyici (odalardan türetilir).
+  final int roomCount;
+  final int listeners;
 }
 
 /// Sabit kategori ve sekme etiketleri (adı tarihsel; sahte oda/kullanıcı
@@ -152,16 +162,38 @@ abstract final class VoiceRoomsMockData {
       colors: [Color(0xFFFF4081), Color(0xFFC51162)],
     ),
     VoiceCategoryItem(
+      id: 'fal',
+      label: 'Fal & Astroloji',
+      iconKey: 'sparkle',
+      colors: [Color(0xFFFFB300), Color(0xFFFF6F00)],
+      materialIcon: Icons.auto_awesome_rounded,
+    ),
+    VoiceCategoryItem(
       id: 'game',
       label: 'Oyun',
       iconKey: 'game',
       colors: [Color(0xFF00E676), Color(0xFF00C853)],
     ),
     VoiceCategoryItem(
-      id: 'night',
-      label: 'Gece',
-      iconKey: 'moon',
-      colors: [Color(0xFF7C4DFF), Color(0xFF311B92)],
+      id: 'friends',
+      label: 'Arkadaşlık',
+      iconKey: 'chat',
+      colors: [Color(0xFFFF8A65), Color(0xFFE64A19)],
+      materialIcon: Icons.diversity_3_rounded,
+    ),
+    VoiceCategoryItem(
+      id: 'help',
+      label: 'Yardım',
+      iconKey: 'chat',
+      colors: [Color(0xFF26C6DA), Color(0xFF00838F)],
+      materialIcon: Icons.support_agent_rounded,
+    ),
+    VoiceCategoryItem(
+      id: 'other',
+      label: 'Diğer',
+      iconKey: 'soundwave',
+      colors: [Color(0xFF9E9EB8), Color(0xFF5C5C7A)],
+      materialIcon: Icons.more_horiz_rounded,
     ),
   ];
 
