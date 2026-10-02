@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.685+738 (2026-10-02) — Hediye sheet'i yenilendi
+
+- **Hediye paneli:** Hediyeler · Özel · Lüks · Animasyon sekmeleri (+ Kutu, Destekçiler), 4 kolonlu ızgara, [−] adet [+] adımlayıcı, tam genişlik «Gönder 🪙 toplam»
+- **Bakiye:** yetmezse «Yeterli Jetonunuz yok» + «Jeton Al» (jeton mağazasına gider)
+
 ## 1.0.684+737 (2026-10-02) — 2x2 çoklu canlı yayın yenilendi
 
 - **Izgara:** 2 kişi üst/alt, 3 kişi 1|2, 4 kişi 2x2 (boş alan yok); kutu başına avatar+isim, mikrofon/kamera durumu, hediye göstergesi
