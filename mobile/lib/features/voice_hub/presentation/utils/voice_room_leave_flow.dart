@@ -57,13 +57,9 @@ abstract final class VoiceRoomLeaveFlow {
       final nav = rootNavigatorKey.currentContext ?? context;
       if (nav != null && nav.mounted) {
         final router = GoRouter.of(nav);
-        final location = router.state.matchedLocation;
-        if (shouldLeaveVoiceRoomRoute(location)) {
-          router.go('/voice-rooms');
-          return;
-        }
-        if (nav.canPop()) {
-          nav.pop();
+        // Önceki sayfa varsa ona dön (liste, sosyal, bildirim…); yoksa liste.
+        if (router.canPop()) {
+          router.pop();
           return;
         }
         router.go('/voice-rooms');

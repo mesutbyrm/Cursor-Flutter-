@@ -17,7 +17,8 @@ Future<void> navigateToVoiceRoom(
   if (key.isEmpty) return;
   await prepareVoiceRoomSwitch(ref, nextLiveKey: key, source: source);
   if (!context.mounted) return;
-  context.go('/voice-room/$key', extra: room);
+  // push: geri tuşu bir önceki sayfaya (liste/sosyal vb.) dönsün.
+  context.push('/voice-room/$key', extra: room);
 }
 
 /// Entity yüklenemediğinde ID ile geçiş — teardown önce, oda sayfası sonra yükler.

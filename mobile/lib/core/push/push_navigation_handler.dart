@@ -11,6 +11,7 @@ import '../../features/notifications/domain/entities/app_notification_entity.dar
 import '../../features/notifications/domain/notification_action.dart';
 import '../../features/notifications/domain/pk_invite_notification_bridge.dart';
 import '../../features/voice_hub/presentation/utils/voice_room_nav_paths.dart';
+import '../navigation/app_back_policy.dart';
 import '../navigation/post_login_navigation.dart';
 
 /// OneSignal `additionalData` → uygulama içi sayfa.
@@ -83,7 +84,13 @@ class PushNavigationHandler {
       await prepareVoiceRoomSwitch!(voiceKey, source: 'push');
     }
     try {
-      router.go(normalized);
+      // Sekme kökleri `go` (sekme geçişi); diğer sayfalar `push` — geri tuşu
+      // bildirimden önceki sayfaya dönsün.
+      if (AppBackPolicy.isTabRoot(normalized)) {
+        router.go(normalized);
+      } else {
+        router.push(normalized);
+      }
     } catch (e, st) {
       debugPrint('Push path navigation failed: $e\n$st');
     }
