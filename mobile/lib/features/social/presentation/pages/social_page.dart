@@ -88,8 +88,11 @@ class _SocialPageState extends ConsumerState<SocialPage>
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
+        // Akış tam genişlik: yatay sayfa dolgusu yok (app bar kendi dolgusunu taşır).
         child: Padding(
-          padding: CdsResponsive.screenPadding(context),
+          padding: EdgeInsets.symmetric(
+            vertical: CdsResponsive.screenPadding(context).vertical / 2,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
