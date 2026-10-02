@@ -269,6 +269,7 @@ class ApprovedPsychicState {
     this.loading = false,
     this.checked = false,
     this.lastDiagnostic,
+    this.checkFailed = false,
   });
 
   final PsychicEntity? profile;
@@ -276,7 +277,14 @@ class ApprovedPsychicState {
   final bool checked;
   final String? lastDiagnostic;
 
+  /// Son doğrulama ağ/sunucu hatasıyla bitti — «falcı değil» sonucu DEĞİL.
+  final bool checkFailed;
+
   bool get isApprovedTeller => profile?.isUsable == true;
+
+  /// Rota koruması yalnız bu durumda «Falcı ol» sayfasına yönlendirmeli:
+  /// kontrol tamamlandı, başarısız değil ve profil yok.
+  bool get definitelyNotTeller => checked && !checkFailed && !isApprovedTeller;
 }
 
 class ApprovedPsychicNotifier extends Notifier<ApprovedPsychicState> {
@@ -309,7 +317,20 @@ class ApprovedPsychicNotifier extends Notifier<ApprovedPsychicState> {
     );
   }
 
-  Future<void> refresh() async {
+  Future<void>? _inFlight;
+
+  /// Eş zamanlı çağrılar (açılış, auth dinleyicisi, rota koruması) tek istek
+  /// zincirini paylaşır; eskiden 3 paralel koşu birbirinin sonucunun üzerine
+  /// yazabiliyordu.
+  Future<void> refresh() {
+    final running = _inFlight;
+    if (running != null) return running;
+    final f = _refreshOnce().whenComplete(() => _inFlight = null);
+    _inFlight = f;
+    return f;
+  }
+
+  Future<void> _refreshOnce() async {
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) {
       state = const ApprovedPsychicState(checked: true);
@@ -376,6 +397,9 @@ class ApprovedPsychicNotifier extends Notifier<ApprovedPsychicState> {
         profile: preserved,
         loading: false,
         checked: true,
+        // Ağ hatası: önbellekte profil yoksa «falcı değil» denmez; rota
+        // koruması bir sonraki girişte yeniden dener.
+        checkFailed: preserved?.isUsable != true,
         lastDiagnostic: preserved?.isUsable == true
             ? (previousDiagnostic ?? 'cached_profile')
             : 'error',
@@ -390,6 +414,7 @@ extension ApprovedPsychicStateCopy on ApprovedPsychicState {
     bool? loading,
     bool? checked,
     String? lastDiagnostic,
+    bool? checkFailed,
     bool clearProfile = false,
   }) {
     return ApprovedPsychicState(
@@ -397,6 +422,7 @@ extension ApprovedPsychicStateCopy on ApprovedPsychicState {
       loading: loading ?? this.loading,
       checked: checked ?? this.checked,
       lastDiagnostic: lastDiagnostic ?? this.lastDiagnostic,
+      checkFailed: checkFailed ?? this.checkFailed,
     );
   }
 }

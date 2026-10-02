@@ -2,15 +2,19 @@ import 'package:canlifal_social/features/live_psychics/presentation/data/psychic
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('psychic teller catalog lists all major tool routes', () {
-    final sections = psychicTellerFeaturesCatalog(profileId: 'test-id');
-    final routes = sections
+  test('katalog yalnızca gerçek veriye bağlı ekranları listeler', () {
+    final routes = psychicTellerFeaturesCatalog(profileId: 'test-id')
         .expand((s) => s.items)
         .map((i) => i.routePath)
         .toSet();
-    expect(routes.length, greaterThan(40));
-    expect(routes, contains('/canli-falcilar/gamification'));
-    expect(routes, contains('/canli-falcilar/ai-chatbot'));
+    expect(routes, contains('/canli-falcilar/dashboard'));
     expect(routes, contains('/canli-falcilar/test-id'));
+    expect(routes, contains('/canli-falcilar/sessions'));
+    expect(routes, contains('/canli-falcilar/dashboard/reviews'));
+    expect(routes, contains('/wallet'));
+    // Sahte veriyle çalışan ekranlar geri gelmesin.
+    expect(routes, isNot(contains('/canli-falcilar/earnings')));
+    expect(routes, isNot(contains('/canli-falcilar/withdrawal-management')));
+    expect(routes, isNot(contains('/canli-falcilar/dashboard/profile-edit')));
   });
 }

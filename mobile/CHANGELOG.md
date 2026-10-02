@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.696+749 (2026-10-02) — Canlı falcı hata düzeltmeleri
+
+- **Oturum kaybı:** ağ hatası artık «seans yok» sayılmıyor — açılışta durum alınamazsa kayıtlı seans silinmez; aktif seans listesi alınamazsa yeni rezervasyon açılmaz («Bağlantı sorunu» uyarısı)
+- **Falcı rota koruması:** onaylı falcı, tek bir ağ hatası yüzünden kalıcı olarak «Falcı ol» sayfasına atılmıyor; eş zamanlı doğrulamalar tek istekte birleşti
+- **Bekleme ekranı:** turda 3 yerine 1 istek (yedek sorgular 5 turda bir); 180 sn geri sayım duvar saatinden hesaplanır (arka planda uzamaz); sunucu seansı bilmiyorsa 3 turda çıkış; süre dolarken son saniye kabul edilmişse iptal edilmez
+- **Düzeltme:** oturum devam ettirmede toplam jeton dakika fiyatı olarak yazılıyordu, fal türü 'general'e düşüyordu
+- **Sahte ekranlar kaldırıldı:** sabit/sahte veriyle çalışan 45 falcı paneli ekranı (sahte kazanç, sahte banka hesabı, hiçbir şey göndermeden «Çekim talebi gönderildi») silindi; Seans geçmişi ve Yorumlar gerçek API verisine bağlandı; Kazanç/para çekme cüzdana yönlendirilir. Profil düzenleme ve müsaitlik için sunucu ucu olmadığından kaldırıldı
+
 ## 1.0.695+748 (2026-10-02) — PK alt çubuğu
 
 - **PK alt çubuğu:** «Yorum yaz...» + pembe Hediye + Paylaş tek satırda (Gönder yalnız yazarken görünür); yüzen «Gönder 🌹» düğmesi ve yeşil gönder/küçük hediye ikonları kaldırıldı

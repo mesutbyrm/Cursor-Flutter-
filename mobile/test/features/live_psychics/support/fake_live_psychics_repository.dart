@@ -17,6 +17,7 @@ class FakeLivePsychicsRepository implements LivePsychicsRepository {
     this.activeSessions = const [],
     PsychicRespondResult? respondResult,
     this.submitReviewResult = true,
+    this.lookupsFail = false,
   }) {
     if (respondResult != null) this.respondResult = respondResult;
   }
@@ -27,6 +28,9 @@ class FakeLivePsychicsRepository implements LivePsychicsRepository {
   PsychicEntity? psychicResult;
   PsychicRespondResult respondResult = const PsychicRespondResult(success: true);
   bool submitReviewResult;
+
+  /// true → durum/aktif seans sorguları ağ hatasıyla başarısız olur.
+  bool lookupsFail;
   String? lastRespondAction;
   String? lastRespondSessionId;
   String? lastReviewSessionId;
@@ -55,6 +59,18 @@ class FakeLivePsychicsRepository implements LivePsychicsRepository {
   @override
   Future<PsychicSessionStatusResult?> fetchSessionStatus(String sessionId) async =>
       statusResult;
+
+  @override
+  Future<PsychicStatusLookup> fetchSessionStatusLookup(String sessionId) async =>
+      lookupsFail
+          ? const PsychicStatusLookup.failed()
+          : statusResult == null
+              ? const PsychicStatusLookup.notFound()
+              : PsychicStatusLookup.found(statusResult!);
+
+  @override
+  Future<List<PsychicSessionStatusResult>?> fetchActiveSessionsOrNull() async =>
+      lookupsFail ? null : activeSessions;
 
   @override
   Future<PsychicRoomEntity?> fetchRoom(String sessionId) async => roomResult;

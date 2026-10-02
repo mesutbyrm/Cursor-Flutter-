@@ -633,7 +633,7 @@ class _QuickActions extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          '50+ ekran — Claude Pro modülleri dahil',
+                          'Seans geçmişi, yorumlar, kazanç',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.white70,
@@ -668,62 +668,6 @@ class _QuickActions extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: () => context.push('/canli-falcilar/dashboard/profile-edit'),
-                icon: const Icon(Icons.edit_outlined, size: 18),
-                label: const Text('Düzenle'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => context.push('/canli-falcilar/analytics'),
-                icon: const Icon(Icons.analytics_outlined, size: 18),
-                label: const Text('Analitikler'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => context.push('/canli-falcilar/earnings'),
-                icon: const Icon(Icons.payments_outlined, size: 18),
-                label: const Text('Kazançlar'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => context.push('/canli-falcilar/dashboard/schedule'),
-                icon: const Icon(Icons.calendar_month_outlined, size: 18),
-                label: const Text('Takvim'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: OutlinedButton.icon(
                 onPressed: () => context.push('/canli-falcilar/dashboard/reviews'),
                 icon: const Icon(Icons.star_outline_rounded, size: 18),
                 label: const Text('Yorumlar'),
@@ -740,18 +684,6 @@ class _QuickActions extends StatelessWidget {
           children: [
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: () => context.push('/canli-falcilar/customers'),
-                icon: const Icon(Icons.people_outline_rounded, size: 18),
-                label: const Text('Müşteriler'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: OutlinedButton.icon(
                 onPressed: () => context.push('/canli-falcilar/sessions'),
                 icon: const Icon(Icons.history_outlined, size: 18),
                 label: const Text('Seanslar'),
@@ -761,56 +693,12 @@ class _QuickActions extends StatelessWidget {
                 ),
               ),
             ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => context.push('/canli-falcilar/campaigns'),
-                icon: const Icon(Icons.local_offer_outlined, size: 18),
-                label: const Text('Kampanyalar'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
-                ),
-              ),
-            ),
             const SizedBox(width: 8),
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: () => context.push('/canli-falcilar/settings/notifications'),
-                icon: const Icon(Icons.notifications_outlined, size: 18),
-                label: const Text('Bildirimler'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => context.push('/canli-falcilar/metrics'),
-                icon: const Icon(Icons.trending_up_rounded, size: 18),
-                label: const Text('Metrikler'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => context.push('/canli-falcilar/badges'),
-                icon: const Icon(Icons.emoji_events_outlined, size: 18),
-                label: const Text('Rozetler'),
+                onPressed: () => context.push('/wallet'),
+                icon: const Icon(Icons.payments_outlined, size: 18),
+                label: const Text('Kazanç / çekim'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.white,
                   side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),

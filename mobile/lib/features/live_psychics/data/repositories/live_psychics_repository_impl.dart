@@ -120,6 +120,14 @@ class LivePsychicsRepositoryImpl implements LivePsychicsRepository {
       _remote.fetchSessionStatus(sessionId);
 
   @override
+  Future<PsychicStatusLookup> fetchSessionStatusLookup(String sessionId) =>
+      _remote.fetchSessionStatusLookup(sessionId);
+
+  @override
+  Future<List<PsychicSessionStatusResult>?> fetchActiveSessionsOrNull() =>
+      _remote.fetchActiveSessionsOrNull();
+
+  @override
   Future<List<PsychicSessionHistoryEntity>> fetchRecentSessions({
     int limit = 20,
   }) =>
