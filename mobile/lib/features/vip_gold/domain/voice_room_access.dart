@@ -17,6 +17,10 @@ extension VoiceRoomAccess on VoiceRoomEntity {
         t.contains('premium oda');
   }
 
+  /// Sunucudaki `roomType == VIP` — şifre özelliği yalnızca bu odalarda var.
+  /// (İsim/açıklama ipuçlarına bakmaz: "VIP" yazan normal oda şifrelenemez.)
+  bool get isStrictVipRoom => roomType?.toUpperCase().trim() == 'VIP';
+
   /// Ücretsiz oda — hediye/müzik geliri oda sahibine gitmez.
   bool get isFreeRoom {
     final type = roomType?.toUpperCase().trim();
