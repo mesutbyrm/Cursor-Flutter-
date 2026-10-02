@@ -25,21 +25,17 @@ abstract final class VoiceRoomLeaveFlow {
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1A0F2E),
         title: const Text(
-          'Odadan çık',
+          'Sesli sohbet odasından çıkmak istiyor musunuz?',
           style: TextStyle(color: Colors.white),
-        ),
-        content: const Text(
-          'Sesli sohbetten ayrılmak istiyor musunuz?',
-          style: TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Kal'),
+            child: const Text('Hayır'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Çık'),
+            child: const Text('Evet'),
           ),
         ],
       ),
