@@ -669,7 +669,7 @@ class _CoViewersBar extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Bu kullanıcı ile birlikte $count kişi bu fala baktı',
+                    'Bu kullanıcı ile birlikte $count kişi bu fal türüne baktırdı',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
