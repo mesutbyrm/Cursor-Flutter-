@@ -22,6 +22,7 @@ import '../../../gifts/presentation/providers/gift_battle_providers.dart';
 import '../../../gifts/presentation/providers/gift_goal_providers.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/voice_room_ban_entry.dart';
+import '../../domain/entities/voice_room_violation.dart';
 import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../../../vip_gold/domain/voice_room_access.dart';
 import '../../domain/voice_room_background_policy.dart';
@@ -71,9 +72,10 @@ enum _MgmtView {
   userNotifications,
   userAppearance,
   userOther,
+  autoMod,
 }
 
-enum _PenaltyTab { muted, banned, temporary }
+enum _PenaltyTab { muted, banned, temporary, warnings }
 
 /// Oda ayarları — Kullanıcı / Sohbet / Oda yönetimi / Kullanıcı ayarları.
 Future<void> showVoiceRoomManagementPanel(
@@ -134,6 +136,9 @@ class _VoiceRoomManagementPanelState
   List<VoiceRoomBanEntry> _bans = const [];
   var _loadingBans = false;
   var _penaltyTab = _PenaltyTab.muted;
+  List<VoiceRoomViolation> _violations = const [];
+  var _loadingViolations = false;
+  bool? _autoMod;
 
   static _MgmtView _mapInitial(VoiceMgmtInitial initial) => switch (initial) {
         VoiceMgmtInitial.home => _MgmtView.home,
@@ -181,12 +186,37 @@ class _VoiceRoomManagementPanelState
     }
   }
 
+  Future<void> _loadViolations() async {
+    if (_loadingViolations) return;
+    setState(() => _loadingViolations = true);
+    try {
+      final list = await _ctrl.fetchModerationViolations();
+      if (mounted) setState(() => _violations = list);
+    } finally {
+      if (mounted) setState(() => _loadingViolations = false);
+    }
+  }
+
+  Future<void> _loadAutoMod() async {
+    try {
+      final key = widget.room.apiRoomKey.isNotEmpty
+          ? widget.room.apiRoomKey
+          : widget.room.id;
+      final map = await ref.read(chatRoomRemoteProvider).fetchRoomSettings(key);
+      final room = map['room'];
+      final v = room is Map ? room['autoModeration'] : map['autoModeration'];
+      if (mounted) setState(() => _autoMod = v is bool ? v : true);
+    } catch (_) {
+      if (mounted) setState(() => _autoMod = true);
+    }
+  }
+
   void _go(_MgmtView view) => setState(() => _view = view);
 
   /// Alt ekranın bağlı olduğu üst ekran.
   static _MgmtView _parentOf(_MgmtView v) => switch (v) {
         _MgmtView.users || _MgmtView.penalties => _MgmtView.userMgmt,
-        _MgmtView.chatSettings => _MgmtView.chatMgmt,
+        _MgmtView.chatSettings || _MgmtView.autoMod => _MgmtView.chatMgmt,
         _MgmtView.roomInfo ||
         _MgmtView.vipSecurity ||
         _MgmtView.authority ||
@@ -254,6 +284,7 @@ class _VoiceRoomManagementPanelState
                 _MgmtView.userNotifications => _userNotificationsView(scroll),
                 _MgmtView.userAppearance => _userAppearanceView(scroll),
                 _MgmtView.userOther => _userOtherView(scroll),
+                _MgmtView.autoMod => _autoModView(scroll),
               },
             ),
           ],
@@ -283,6 +314,7 @@ class _VoiceRoomManagementPanelState
       _MgmtView.userNotifications => 'Bildirimler',
       _MgmtView.userAppearance => 'Görünüm',
       _MgmtView.userOther => 'Diğer ayarlar',
+      _MgmtView.autoMod => 'Otomatik moderasyon',
     };
     return Row(
       children: [
@@ -374,6 +406,7 @@ class _VoiceRoomManagementPanelState
           'Sessize alınanlar, banlananlar, geçici cezalar',
           () {
             _loadBans();
+            _loadViolations();
             _go(_MgmtView.penalties);
           },
           accent: VoiceRoomTokens.neonPink,
@@ -673,12 +706,73 @@ class _VoiceRoomManagementPanelState
           ),
         if (canMod)
           _hubTile(
+            Icons.shield_rounded,
+            'Otomatik Moderasyon',
+            'GirLive Bot: uyarı, mute ve ban kuralları',
+            () {
+              _loadAutoMod();
+              _go(_MgmtView.autoMod);
+            },
+            accent: const Color(0xFF22C55E),
+          ),
+        if (canMod)
+          _hubTile(
             Icons.cleaning_services_rounded,
             'Sohbeti Temizle',
             'Tüm mesajları siler',
             _confirmClearChat,
             accent: VoiceRoomTokens.gold,
           ),
+      ],
+    );
+  }
+
+  Widget _autoModView(ScrollController scroll) {
+    final canToggle = isOwner || perms.canManageRoom || perms.isSiteAdmin;
+    final on = _autoMod ?? true;
+    const ladder = [
+      ('LOW', 'Hafif ihlal', 'Uyarı'),
+      ('MEDIUM', 'Orta ihlal', 'Uyarı + geçici sessize alma'),
+      ('HIGH', 'Ağır ihlal', 'Odadan atma'),
+      ('CRITICAL', 'Çok ağır ihlal', 'Ban'),
+    ];
+    return ListView(
+      controller: scroll,
+      children: [
+        SwitchListTile(
+          title: const Text('GirLive Bot otomatik moderasyon'),
+          subtitle: Text(
+            _autoMod == null
+                ? 'Yükleniyor…'
+                : (on
+                    ? 'Açık — mesajlar sunucuda denetlenir'
+                    : 'Kapalı — bu odada otomatik işlem yapılmaz'),
+          ),
+          value: on,
+          onChanged: (_autoMod == null || !canToggle)
+              ? null
+              : (v) async {
+                  final err = await _ctrl.setAutoModeration(v);
+                  if (err == null && mounted) setState(() => _autoMod = v);
+                  await _snack(err ?? (v ? 'Otomatik moderasyon açıldı' : 'Otomatik moderasyon kapatıldı'));
+                },
+        ),
+        const VoiceMgmtSectionTitle('Ciddiyet seviyeleri'),
+        for (final l in ladder)
+          ListTile(
+            dense: true,
+            leading: Text(
+              l.$1,
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 11),
+            ),
+            title: Text(l.$2),
+            subtitle: Text(l.$3),
+          ),
+        const _EmptyHint(
+          'Tek kelimeyle doğrudan ban verilmez: tekrarlayan ihlaller kademeli '
+          'olarak yükselir. Oda sahibi ve yöneticiler etkilenmez. Kelime listesi '
+          've eylem eşlemesi yönetici panelinden değiştirilebilir.',
+        ),
       ],
     );
   }
@@ -1543,6 +1637,11 @@ class _VoiceRoomManagementPanelState
         ),
       );
       if (pass == null) return;
+      final trimmed = pass.trim();
+      if (trimmed.isNotEmpty && trimmed.length < 4) {
+        await _snack('Şifre en az 4 karakter olmalı');
+        return;
+      }
       final err = await _ctrl.setRoomPassword(
         password: pass.trim().isEmpty ? null : pass.trim(),
       );
@@ -1573,6 +1672,7 @@ class _VoiceRoomManagementPanelState
                 (_PenaltyTab.muted, 'Sessize alınanlar'),
                 (_PenaltyTab.banned, 'Banlananlar'),
                 (_PenaltyTab.temporary, 'Geçici cezalar'),
+                (_PenaltyTab.warnings, 'Uyarılar'),
               ])
                 ChoiceChip(
                   label: Text(t.$2),
@@ -1602,6 +1702,30 @@ class _VoiceRoomManagementPanelState
                     : null,
               ),
             ),
+        ] else if (_penaltyTab == _PenaltyTab.warnings) ...[
+          if (_loadingViolations)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            )
+          else if (_violations.where((v) => v.isWarning).isEmpty)
+            const _EmptyHint('Uyarı kaydı yok')
+          else
+            ..._violations.where((v) => v.isWarning).map(
+                  (v) => ListTile(
+                    leading: VoiceNeonAvatar(url: v.imageUrl, size: 36),
+                    title: Text(v.userLabel),
+                    subtitle: Text(
+                      [
+                        v.actionLabel,
+                        v.severity,
+                        if ((v.word ?? '').isNotEmpty) '"${v.word}"',
+                      ].join(' · '),
+                    ),
+                  ),
+                ),
         ] else ...[
           if (_loadingBans)
             const Center(

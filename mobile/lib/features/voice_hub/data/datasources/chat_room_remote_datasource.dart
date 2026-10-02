@@ -22,6 +22,7 @@ import '../youtube_music_search_cache.dart';
 import '../../domain/entities/music_queue_item.dart';
 import '../../domain/entities/moderation_result.dart';
 import '../../domain/entities/voice_room_ban_entry.dart';
+import '../../domain/entities/voice_room_violation.dart';
 import '../../domain/entities/popular_music_suggestion.dart';
 import '../../domain/entities/chat_room_my_permissions.dart';
 import '../../domain/entities/voice_room_seat_slot.dart';
@@ -1177,6 +1178,41 @@ class ChatRoomRemoteDataSource {
         ApiEndpoints.chatRoomSettings(key),
         data: data,
       );
+    });
+  }
+
+  /// GirLive Bot otomatik moderasyonu aç/kapat (`PATCH settings {autoModeration}`).
+  Future<void> setAutoModeration({
+    required String roomKey,
+    String? alternateKey,
+    required bool enabled,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      await _dio.safePatch<dynamic>(
+        ApiEndpoints.chatRoomSettings(key),
+        data: {'autoModeration': enabled},
+      );
+    });
+  }
+
+  /// `GET moderation/violations` — GirLive Bot'un bu odadaki kayıtları.
+  Future<List<VoiceRoomViolation>> fetchModerationViolations({
+    required String roomKey,
+    String? alternateKey,
+  }) async {
+    return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.chatRoomModerationViolations(key),
+        forceRefresh: true,
+      );
+      final body = res.data;
+      final list = body is Map ? body['violations'] : null;
+      if (list is! List) return const <VoiceRoomViolation>[];
+      return [
+        for (final raw in list)
+          if (raw is Map)
+            VoiceRoomViolation.fromJson(Map<String, dynamic>.from(raw)),
+      ];
     });
   }
 

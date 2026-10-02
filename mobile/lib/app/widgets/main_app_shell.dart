@@ -19,6 +19,7 @@ import '../../features/live/presentation/widgets/live_pk_invite_listener.dart';
 import '../../features/voice_hub/presentation/widgets/voice_pk_invite_listener.dart';
 import '../../features/voice_hub/presentation/widgets/voice_speak_request_listener.dart';
 import '../../features/vip_gold/presentation/widgets/voice_room_join_request_listener.dart';
+import '../../features/voice_hub/presentation/widgets/girlive_rules_listener.dart';
 import '../../features/messages/presentation/widgets/dm_realtime_listener.dart';
 import '../../features/messages/presentation/widgets/dm_voice_call_host.dart';
 import '../../features/video_call/presentation/incoming_video_call_screen.dart';
@@ -160,6 +161,7 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
       body = VoicePkInviteListener(child: body);
       body = VoiceSpeakRequestListener(child: body);
       body = VoiceRoomJoinRequestListener(child: body);
+      body = GirLiveRulesListener(child: body);
       body = VideoCallIncomingHost(child: body);
       body = AppBottomNavHost(location: location, child: body);
     }

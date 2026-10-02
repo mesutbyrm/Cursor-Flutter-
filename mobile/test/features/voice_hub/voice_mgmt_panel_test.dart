@@ -1,6 +1,9 @@
 import 'package:canlifal_social/features/live/domain/entities/voice_room_entity.dart';
 import 'package:canlifal_social/features/vip_gold/domain/voice_room_access.dart';
 import 'package:canlifal_social/features/voice_hub/domain/entities/voice_room_ban_entry.dart';
+import 'package:canlifal_social/features/voice_hub/domain/entities/voice_room_violation.dart';
+import 'package:canlifal_social/features/voice_hub/presentation/providers/girlive_rules_notice_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/features/voice_hub/presentation/widgets/premium/voice_mgmt_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -85,5 +88,39 @@ void main() {
     expect(b.expiresAt!.isAfter(DateTime.now()), isTrue);
     final perm = VoiceRoomBanEntry.fromJson({'id': 'b2', 'userId': 'u2'});
     expect(perm.expiresAt, isNull);
+  });
+
+  group('GirLive Bot', () {
+    test('ihlal kaydı ayrıştırılır', () {
+      final v = VoiceRoomViolation.fromJson({
+        'id': 'v1',
+        'userId': 'u1',
+        'severity': 'MEDIUM',
+        'action': 'mute',
+        'word': 'amk',
+        'createdAt': '2026-10-02T10:00:00.000Z',
+        'expiresAt': '2026-10-02T10:05:00.000Z',
+        'user': {'id': 'u1', 'name': 'Ali', 'username': 'ali'},
+      });
+      expect(v.userLabel, '@ali');
+      expect(v.actionLabel, 'Sessize alındı');
+      expect(v.isWarning, isFalse);
+      expect(v.expiresAt, isNotNull);
+      final w = VoiceRoomViolation.fromJson({'id': 'v2', 'action': 'warn'});
+      expect(w.isWarning, isTrue);
+      expect(w.userLabel, 'Kullanıcı');
+    });
+
+    test('kural bildirimi boş metinle tetiklenmez, her gösterim yeni nonce alır', () {
+      final c = ProviderContainer();
+      addTearDown(c.dispose);
+      final n = c.read(girLiveRulesNoticeProvider.notifier);
+      n.show('   ');
+      expect(c.read(girLiveRulesNoticeProvider), isNull);
+      n.show('Kurallara uyun');
+      final first = c.read(girLiveRulesNoticeProvider)!;
+      n.show('Kurallara uyun');
+      expect(c.read(girLiveRulesNoticeProvider)!.nonce, greaterThan(first.nonce));
+    });
   });
 }

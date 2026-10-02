@@ -417,6 +417,10 @@ abstract final class ApiEndpoints {
       '/api/chat/rooms/$roomId/moderation';
 
   /// Oda ayarları — kılavuz §9.3 `updateSettings`.
+  /// GirLive Bot — bu odadaki uyarı / mute / kick / ban kayıtları (moderatör).
+  static String chatRoomModerationViolations(String roomId) =>
+      '/api/chat/rooms/$roomId/moderation/violations';
+
   static String chatRoomSettings(String roomId) =>
       '/api/chat/rooms/$roomId/settings';
 

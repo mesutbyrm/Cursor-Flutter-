@@ -269,6 +269,9 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
         _enqueueJoinRequestFromSse(payload);
         ref.read(voiceJoinRequestSignalProvider.notifier).bump();
         return;
+      case 'girlive_rules':
+        _handleGirLiveRules(payload);
+        return;
       case 'join_request_resolved':
         _resolveJoinRequestFromSse(payload);
         return;
@@ -820,6 +823,16 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     } catch (_) {
       // Ağ hatası: SSE olayları yine de popup'ı tetikler.
     }
+  }
+
+  /// `girlive_rules` — GirLive Bot kural hatırlatması; yalnızca hedef kullanıcıda.
+  void _handleGirLiveRules(Map<String, dynamic> payload) {
+    final me = ref.read(authControllerProvider).valueOrNull?.id.trim();
+    final target = payload['targetUserId']?.toString().trim();
+    if (me == null || me.isEmpty || target != me) return;
+    ref
+        .read(girLiveRulesNoticeProvider.notifier)
+        .show(payload['text']?.toString() ?? '');
   }
 
   /// `join_request_resolved` — başka bir yönetici yanıtladı: popup kapanır.
