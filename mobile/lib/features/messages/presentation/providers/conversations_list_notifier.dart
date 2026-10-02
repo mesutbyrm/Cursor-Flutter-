@@ -37,6 +37,11 @@ class ConversationsListState {
 }
 
 class ConversationsListNotifier extends AsyncNotifier<ConversationsListState> {
+  /// Yerelde okundu işaretlenen sohbetler (kimlik → okunma zamanı). Sunucu GET'i
+  /// ("okundu" yan etkisi) henüz işlemediği için gelen liste okunmamış sayısını
+  /// geri getirirse, bu sohbetten sonra yeni mesaj yoksa sıfır tutulur.
+  final _readLocallyAt = <String, DateTime>{};
+
   @override
   Future<ConversationsListState> build() async {
     final userId = ref.watch(authControllerProvider).valueOrNull?.id;
@@ -48,10 +53,11 @@ class ConversationsListNotifier extends AsyncNotifier<ConversationsListState> {
     bool forceRefresh = false,
     ConversationsListState? previous,
   }) async {
-    final all = await ref.read(messagesRepositoryProvider).conversations(
+    final fetched = await ref.read(messagesRepositoryProvider).conversations(
           forceRefresh: forceRefresh,
           cacheUserId: userId,
         );
+    final all = _applyLocalReads(fetched);
     final defaultVisible = ListPerf.defaultPageSize.clamp(0, all.length);
     final visible = previous?.visibleCount.clamp(defaultVisible, all.length) ??
         defaultVisible;
@@ -93,11 +99,34 @@ class ConversationsListNotifier extends AsyncNotifier<ConversationsListState> {
     state = AsyncValue.data(cur.copyWith(all: _zeroUnread(cur.all)));
   }
 
+  List<ConversationEntity> _applyLocalReads(List<ConversationEntity> list) {
+    if (_readLocallyAt.isEmpty) return list;
+    return [
+      for (final c in list)
+        if (c.unreadCount > 0 &&
+            _readLocallyAt[c.id] != null &&
+            (c.lastMessageAt == null ||
+                !c.lastMessageAt!.isAfter(_readLocallyAt[c.id]!)))
+          ConversationEntity(
+            id: c.id,
+            title: c.title,
+            subtitle: c.subtitle,
+            avatarUrl: c.avatarUrl,
+            unreadCount: 0,
+            isOnline: c.isOnline,
+            lastMessageAt: c.lastMessageAt,
+          )
+        else
+          c,
+    ];
+  }
+
   void markConversationReadLocally(String conversationId) {
     final cur = state.valueOrNull;
     if (cur == null) return;
     final id = conversationId.trim();
     if (id.isEmpty) return;
+    _readLocallyAt[id] = DateTime.now().toUtc();
     final updated = [
       for (final c in cur.all)
         if (c.id == id)

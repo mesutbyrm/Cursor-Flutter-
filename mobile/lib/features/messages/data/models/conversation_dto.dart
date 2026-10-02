@@ -60,9 +60,18 @@ abstract class ConversationDto with _$ConversationDto {
       ]) as String?,
       unreadCount: asInt(pick(json, ['unreadCount', 'unread', 'badge'])),
       isOnline: asBool(pick(json, ['isOnline', 'online', 'is_online'])),
+      // Backend `lastMessageAt` (üst düzey) döndürür; eskiden yalnızca
+      // lastMessage nesnesi / updatedAt okunuyordu → tarih hep null olup "Tümü"
+      // akışında sohbetler en alta düşüyor, saat etiketi boş kalıyordu.
       lastMessageAt: lastMessageAt ??
           DateTime.tryParse(
-            pick(json, ['updatedAt', 'updated_at'])?.toString() ?? '',
+            pick(json, [
+                  'lastMessageAt',
+                  'last_message_at',
+                  'updatedAt',
+                  'updated_at',
+                ])?.toString() ??
+                '',
           ),
     );
   }
