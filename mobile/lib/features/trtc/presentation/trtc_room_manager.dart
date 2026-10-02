@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -501,6 +502,28 @@ class TrtcRoomManager {
       TRTCVideoResolution.res_960_540 => 1000,
       _ => 600,
     };
+  }
+
+  /// Odalar arası PK ses köprüsü (TRTC cross-room): çağıran sahip, karşı odanın
+  /// sahibini arar; iki odanın dinleyicileri karşı sahibin sesini de duyar.
+  /// Sonuç `onConnectOtherRoom` ile bildirilir; hata sessizce loglanır.
+  void connectOtherRoom({required String strRoomId, required String userId}) {
+    if (strRoomId.trim().isEmpty || userId.trim().isEmpty) return;
+    try {
+      _cloud?.connectOtherRoom(
+        jsonEncode({'strRoomId': strRoomId.trim(), 'userId': userId.trim()}),
+      );
+      _trtcLog('connect_other_room', {'room': strRoomId, 'user': userId});
+    } catch (e) {
+      _trtcLog('connect_other_room_error', {'error': '$e'});
+    }
+  }
+
+  void disconnectOtherRoom() {
+    try {
+      _cloud?.disconnectOtherRoom();
+      _trtcLog('disconnect_other_room', const {});
+    } catch (_) {}
   }
 
   void muteRemoteAudio(String userId, bool mute) {

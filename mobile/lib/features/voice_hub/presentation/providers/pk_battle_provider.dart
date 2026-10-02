@@ -170,6 +170,11 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
 
   bool get audienceSupportToLeft => _audienceSupportToLeft;
 
+  /// Destek/beğeni animasyonunu tetikler (puan sunucudan gelir).
+  void pulseReaction() {
+    state = state.copyWith(reactionBurst: state.reactionBurst + 1);
+  }
+
   /// Jetonsuz izleyici desteği — taraf başına en fazla 3 puan (istemci gösterimi).
   bool applyAudienceSupport({
     required String battleId,

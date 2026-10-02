@@ -16,6 +16,8 @@ import '../widgets/pk/voice_pk_invite_action_card.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/pk/pk_battle_mode.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
+import '../../domain/pk_room/pk_wire_event.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../domain/pk/pk_battle_state.dart';
 import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../providers/chat_room_providers.dart';
@@ -25,6 +27,7 @@ import '../providers/voice_gift_combo_tracker.dart';
 import '../providers/voice_gift_leaderboard_provider.dart';
 import '../providers/voice_gift_providers.dart';
 import '../providers/voice_room_audio_providers.dart';
+import '../audio/voice_trtc_engine.dart';
 import '../providers/voice_room_ui_provider.dart';
 import '../utils/voice_room_permissions.dart';
 import '../theme/voice_room_tokens.dart';
@@ -68,8 +71,10 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
   StreamSubscription<LiveGiftEvent>? _giftSub;
   var _lastGiftSideLeft = true;
   var _supportToLeft = true;
-  var _chatOpen = false;
+  var _chatOpen = true; // sohbet PK sırasında varsayılan açık (yazılanlar görünür)
   var _soundMuted = false;
+  var _opponentMuted = false;
+  var _bridgeConnected = false;
   var _resultNavigated = false;
 
   @override
@@ -111,6 +116,8 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
           .applyRemoteBattleForVoiceRoom(battle, r);
     }
 
+    if (battle.isActive) _connectOpponentAudio(battle);
+
     if (battle.isPending && !battle.isActive) {
       final userId = ref.read(authControllerProvider).valueOrNull?.id;
       final isTarget = isPkInviteTarget(battle, r, userId: userId);
@@ -144,36 +151,71 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
     ref.read(pkBattleProvider.notifier).applyGift(event, toLeft: toLeft);
   }
 
-  void _onPkSupport() {
+  var _supporting = false;
+
+  ChatRoomPresence? _self(VoiceRoomLiveState live) {
+    final me = ref.read(authControllerProvider).valueOrNull?.id;
+    if (me == null) return null;
+    for (final p in live.presence) {
+      if (p.id == me) return p;
+    }
+    return null;
+  }
+
+  bool _selfSeated(VoiceRoomLiveState live) {
+    final p = _self(live);
+    return p != null && p.seatIndex != null && p.seatIndex! >= 0;
+  }
+
+  bool _selfMicOpen(VoiceRoomLiveState live) => _self(live)?.micOpen ?? false;
+
+  /// "Destekle": sunucu BULUNDUĞUN odanın tarafına +3 yazar ve iki odaya anında
+  /// yayınlar. Taraf istemciden seçilmez (oda-vs-oda); yalnızca oda içi takım
+  /// PK'sında desteklenen takım seçilir.
+  Future<void> _onPkSupport() async {
+    if (_supporting) return;
     final remote = ref.read(pkBattleRemoteProvider);
     if (remote == null || !remote.isActive) return;
-    final userId = ref.read(authControllerProvider).valueOrNull?.id ?? '';
+    _supporting = true;
+    final r = widget.room;
+    final roomKey = r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
     final battleId = remote.effectiveId;
-    final ok = ref.read(pkBattleProvider.notifier).applyAudienceSupport(
-          battleId: battleId,
-          userId: userId,
-          points: 3,
-          toLeft: _supportToLeft,
-        );
-    if (!mounted) return;
-    if (ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Takımına +3 destek puanı!')),
-      );
-      final r = widget.room;
-      final roomKey = r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
-      unawaited(
-        ref.read(pkBattleRemoteProvider.notifier).loadRoomBattle(
-              roomKey,
-              alternateRoomId: r.slug != roomKey ? r.slug : null,
+    try {
+      final res = await ref.read(chatRoomRemoteProvider).supportPk(
+            roomKey: roomKey,
+            alternateKey: r.slug != roomKey ? r.slug : null,
+            battleId: battleId,
+            side: remote.isInRoomUser ? (_supportToLeft ? 1 : 2) : null,
+          );
+      if (!mounted) return;
+      // Anında yansıt: sunucunun kesin skoru (SSE aynı değeri iki odaya da taşır).
+      ref.read(pkBattleRemoteProvider.notifier).applyScorePatch(
+            PkWireEvent(
+              kind: PkWireKind.score,
+              battleId: battleId,
+              raw: {
+                'battleId': battleId,
+                'score1': res.score1,
+                'score2': res.score2,
+              },
             ),
-      );
-    } else {
+          );
+      ref.read(pkBattleProvider.notifier).pulseReaction();
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            duration: const Duration(milliseconds: 900),
+            content: Text('+${res.added > 0 ? res.added : 3} puan!'),
+          ),
+        );
+    } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Destek limitine ulaştınız (en fazla 3 puan).'),
-        ),
+        SnackBar(content: Text(ApiException.userMessage(e))),
       );
+    } finally {
+      _supporting = false;
     }
   }
 
@@ -191,6 +233,95 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
     });
   }
 
+  /// Karşı odanın kullanıcıları: PK katılımcılarından benim tarafım dışındakiler
+  /// + karşı oda sahibi.
+  Set<String> _opponentUserIds(PkBattleRemote remote) {
+    final mine = isPkChallengerRoom(remote, widget.room) ? 1 : 2;
+    final ids = <String>{
+      for (final p in remote.participants)
+        if (p.side != 0 && p.side != mine && p.userId.isNotEmpty) p.userId,
+    };
+    final host = mine == 1
+        ? (remote.opponent?.userId ?? remote.opponentId)
+        : (remote.challenger?.userId ?? remote.challengerId);
+    if (host != null && host.trim().isNotEmpty) ids.add(host.trim());
+    return ids;
+  }
+
+  String? _opponentHostId(PkBattleRemote remote) {
+    final mine = isPkChallengerRoom(remote, widget.room) ? 1 : 2;
+    final host = mine == 1
+        ? (remote.opponent?.userId ?? remote.opponentId)
+        : (remote.challenger?.userId ?? remote.challengerId);
+    final t = host?.trim() ?? '';
+    return t.isEmpty ? null : t;
+  }
+
+  /// Oda sahibi PK başlayınca karşı oda sahibini TRTC cross-room ile arar:
+  /// iki odanın dinleyicileri karşı sahibin sesini duyar. Başarısız olursa
+  /// (ör. mikrofon yayını kapalı) sessizce geçilir; kendi oda sesi etkilenmez.
+  void _connectOpponentAudio(PkBattleRemote remote) {
+    if (_bridgeConnected || !remote.isActive) return;
+    final me = ref.read(authControllerProvider).valueOrNull?.id ?? '';
+    final iAmOwner = me.isNotEmpty && widget.room.ownerId == me;
+    if (!iAmOwner || remote.isInRoomUser) return;
+    final mineIsChallenger = isPkChallengerRoom(remote, widget.room);
+    final oppRoomKey =
+        (mineIsChallenger ? remote.opponentVoiceRoomId : remote.voiceRoomId)
+                ?.trim() ??
+            '';
+    final oppHost = _opponentHostId(remote);
+    if (oppRoomKey.isEmpty || oppHost == null) return;
+    try {
+      ref.read(voiceRoomAudioCoordinatorProvider).trtcManager.connectOtherRoom(
+            strRoomId: VoiceTrtcEngine.trtcRoomIdFor(oppRoomKey),
+            userId: oppHost,
+          );
+      _bridgeConnected = true;
+    } catch (_) {}
+  }
+
+  /// Karşı tarafın sesini yalnızca BU cihazda kapat/aç.
+  void _toggleOpponentSound() {
+    final remote = ref.read(pkBattleRemoteProvider);
+    if (remote == null) return;
+    final muted = !_opponentMuted;
+    setState(() => _opponentMuted = muted);
+    ref
+        .read(voiceRoomAudioCoordinatorProvider)
+        .trtcManager
+        .setLocallyMutedRemoteUsers(muted ? _opponentUserIds(remote) : const {});
+  }
+
+  /// Koltuktaki kullanıcı PK sırasında mikrofonunu açıp kapatır.
+  Future<void> _toggleMic() async {
+    final coord = ref.read(voiceRoomAudioCoordinatorProvider);
+    final turnOn = !coord.micOn;
+    if (turnOn) {
+      final ok = await VoiceTrtcEngine.requestMicrophonePermission();
+      if (!ok) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Mikrofon izni gerekli')),
+        );
+        return;
+      }
+    }
+    try {
+      await coord.setMicEnabled(turnOn);
+      if (!mounted) return;
+      ref
+          .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
+          .applySelfMicOpen(turnOn);
+      setState(() {});
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
+    }
+  }
+
   void _toggleSound() {
     final muted = !_soundMuted;
     setState(() => _soundMuted = muted);
@@ -200,6 +331,12 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
   @override
   void dispose() {
     _giftSub?.cancel();
+    // PK ses köprüsü ve yerel "karşı sesi kapat" yalnızca PK'ya özgüdür.
+    try {
+      final mgr = ref.read(voiceRoomAudioCoordinatorProvider).trtcManager;
+      if (_opponentMuted) mgr.setLocallyMutedRemoteUsers(const {});
+      if (_bridgeConnected) mgr.disconnectOtherRoom();
+    } catch (_) {}
     // PK sayfası kapanırken uzak sesleri geri aç (oda sessizde kalmasın).
     if (_soundMuted) {
       try {
@@ -312,6 +449,11 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                   onToggleChat: () => setState(() => _chatOpen = !_chatOpen),
                   soundMuted: _soundMuted,
                   onToggleSound: _toggleSound,
+                  opponentMuted: _opponentMuted,
+                  onToggleOpponent: _toggleOpponentSound,
+                  canMic: _selfSeated(live),
+                  micOn: _selfMicOpen(live),
+                  onToggleMic: _toggleMic,
                   onMode: pk.isActive && !pk.serverAuthoritative
                       ? (m) => ref.read(pkBattleProvider.notifier).setMode(m)
                       : null,
@@ -526,6 +668,11 @@ class _PkHeader extends StatelessWidget {
     required this.onToggleChat,
     required this.soundMuted,
     required this.onToggleSound,
+    required this.opponentMuted,
+    required this.onToggleOpponent,
+    required this.canMic,
+    required this.micOn,
+    required this.onToggleMic,
   });
 
   final String timer;
@@ -540,6 +687,11 @@ class _PkHeader extends StatelessWidget {
   final VoidCallback onToggleChat;
   final bool soundMuted;
   final VoidCallback onToggleSound;
+  final bool opponentMuted;
+  final VoidCallback onToggleOpponent;
+  final bool canMic;
+  final bool micOn;
+  final VoidCallback onToggleMic;
 
   @override
   Widget build(BuildContext context) {
@@ -575,6 +727,31 @@ class _PkHeader extends StatelessWidget {
                       : Icons.chat_bubble_outline_rounded,
                   size: 22,
                   color: chatOpen ? VoiceRoomTokens.neonPurple : Colors.white,
+                ),
+              ),
+              if (canMic)
+                IconButton(
+                  tooltip: micOn ? 'Mikrofonu kapat' : 'Mikrofonu aç',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: onToggleMic,
+                  icon: Icon(
+                    micOn ? Icons.mic_rounded : Icons.mic_off_rounded,
+                    size: 22,
+                    color: micOn ? const Color(0xFF22C55E) : VoiceRoomTokens.neonPink,
+                  ),
+                ),
+              IconButton(
+                tooltip: opponentMuted
+                    ? 'Karşı tarafın sesini aç'
+                    : 'Karşı tarafın sesini kapat',
+                visualDensity: VisualDensity.compact,
+                onPressed: onToggleOpponent,
+                icon: Icon(
+                  opponentMuted
+                      ? Icons.person_off_rounded
+                      : Icons.record_voice_over_rounded,
+                  size: 22,
+                  color: opponentMuted ? VoiceRoomTokens.neonPink : Colors.white,
                 ),
               ),
               IconButton(

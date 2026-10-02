@@ -1181,6 +1181,34 @@ class ChatRoomRemoteDataSource {
     });
   }
 
+  /// PK "Destekle": izleyicinin BULUNDUĞU odanın tarafına sunucu sabit puan
+  /// (varsayılan 3) yazar ve iki odaya `PK_SCORE` yayınlar.
+  /// Oda içi (takım) PK'da desteklenen takım [side] (1|2) ile seçilir.
+  Future<({int score1, int score2, int added})> supportPk({
+    required String roomKey,
+    String? alternateKey,
+    String? battleId,
+    int? side,
+  }) async {
+    return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final res = await _dio.safePost<dynamic>(
+        ApiEndpoints.chatRoomPkSupport(key),
+        data: {
+          if (battleId != null && battleId.isNotEmpty) 'battleId': battleId,
+          'side': ?side,
+        },
+      );
+      final body = res.data;
+      final m = body is Map ? Map<String, dynamic>.from(body) : const <String, dynamic>{};
+      int i(Object? v) => v is num ? v.toInt() : int.tryParse('$v') ?? 0;
+      return (
+        score1: i(m['score1']),
+        score2: i(m['score2']),
+        added: i(m['addedAmount']),
+      );
+    });
+  }
+
   /// GirLive Bot otomatik moderasyonu aç/kapat (`PATCH settings {autoModeration}`).
   Future<void> setAutoModeration({
     required String roomKey,
