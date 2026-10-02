@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import '../../features/notifications/data/local_notification_store.dart';
 import '../onesignal/onesignal_bootstrap.dart';
 import 'message_notification_data.dart';
 import 'notification_channels.dart';
@@ -501,6 +502,18 @@ class PushNotificationService {
     bool urgent = false,
   }) async {
     if (!_initialized) await init();
+    // Uygulama içi "Bildirimler" listesine de düşsün (acil/arama bildirimleri hariç).
+    if (!urgent) {
+      try {
+        await LocalNotificationStore.record(
+          title: title,
+          body: body,
+          type: 'local',
+          targetPath: payload != null && payload.startsWith('/') ? payload : null,
+        );
+        PushNavigationHandler.onPushReceived?.call();
+      } catch (_) {}
+    }
     final channelId = urgent ? _urgentChannelId : _channelId;
     final channelName = urgent ? 'Canlifal — Acil' : _channelName;
     final android = AndroidNotificationDetails(
