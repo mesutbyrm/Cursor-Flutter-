@@ -4,21 +4,17 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.697+750` |
-| Tarih (UTC) | 2026-10-02 21:39 |
-| Commit | [`10666058064655c3b65c25a947f0ea29d3d3a438`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/10666058064655c3b65c25a947f0ea29d3d3a438) |
-| İş akışı | [Run 37065990750](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37065990750) |
+| Sürüm | `1.0.698+751` |
+| Tarih (UTC) | 2026-10-02 22:21 |
+| Commit | [`ae2a5d4a1ba3ea9d8227614e4d1f9d952b8d52f2`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/ae2a5d4a1ba3ea9d8227614e4d1f9d952b8d52f2) |
+| İş akışı | [Run 37070053403](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37070053403) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.697+750 (2026-10-02) — Falcı gecikmesi, canlı yayın senkronu, ayarlar kutucukları
+## 1.0.698+751 (2026-10-02) — Misafir modunda sohbet alanı
 
-- **Falcı isteği:** sunucu istek olayını artık bildirim/push'u BEKLEMEDEN yayınlıyor (uygulamanın kullandığı `/{tellerId}/session` yolunda hiç yayınlanmıyordu → istek yalnızca yoklamayla/15 sn yedekle ulaşıyordu); DB yedeği 6 sn; kabul yanıtı push'u beklemiyor. İstemci: sunucunun süresiz tuttuğu bayat bekleyen talepler (>175 sn) yeni talebin önüne geçmiyor, en yeni talep önce gösteriliyor; seçilen süre (`maxMinutes`) artık sunucuca da okunuyor
-- **Canlı yayın beğeni:** beğeni artık yayındaki herkese SSE ile anında yayılıyor (eskiden yalnızca DB sayacı artıyordu; başkaları kendileri beğenene dek görmüyordu). Başkasının beğenisi yerel toplamdan bağımsız olarak ekleniyor, kendi beğeni yankısı çift sayılmıyor
-- **Hediye / PK puanı:** PK skoru ve hediye motoru para akışından hemen sonra paralel çalışıyor; skor olayı ledger yazımlarından ÖNCE yayınlanıyor; hediye yanıtındaki skor gönderen ekranına anında uygulanıyor
-- **Misafir (çoklu yayın):** 2 kişi düzeni yan yana; son misafir ayrılınca/indirilince çoklu mod kapanıp tekli yayına otomatik dönülüyor (yayıncı ve izleyicide)
-- **Ayarlar:** ayarlar ana sayfası ve bağlı ekranlar (bildirim, ses, cihazlar, hesap güvenliği, yardım, hakkımızda, VIP gizlilik) ortak kutucuk bileşenleriyle yeniden tasarlandı (`core/widgets/settings_kit.dart`)
+- **Misafir (bölünmüş) modu:** sohbet, sütun düzeninden bağımsız sabit bir alanda (ekranın alt yarısı, alt çubuğun üstü) çiziliyor; yayıncının yazdığı mesaj ve «Canlı yayına hoş geldin» satırı artık bu alanda görünür. Yan raylar (beğeni/paylaş) yerinde kalır. Kök neden cihazda doğrulanamadı — savunmacı düzeltme
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
