@@ -65,7 +65,7 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
             ),
             const SizedBox(height: 8),
             Text(
-              'Ücretsiz oda: 0 $jetonLabel\nSesli oda: $normalCost $jetonLabel\nVIP oda: $vipCost $jetonLabel',
+              'Ücretsiz oda: 0 $jetonLabel (ödüllerden komisyon alınmaz)\nSesli oda: $normalCost $jetonLabel\nVIP oda: $vipCost $jetonLabel',
               style: TextStyle(
                 color: ctx.colors.onSurfaceMuted.withValues(alpha: 0.95),
                 fontSize: 13,
@@ -95,6 +95,18 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
                   color: AppThemeColors.accentCyan.withValues(alpha: 0.7),
                 ),
                 minimumSize: const Size.fromHeight(48),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                '(ödüllerden komisyon alınmaz)',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppThemeColors.accentCyan.withValues(alpha: 0.85),
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             const SizedBox(height: 10),
