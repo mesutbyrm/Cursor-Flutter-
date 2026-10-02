@@ -31,7 +31,9 @@ import '../../pk/presentation/widgets/pk_start_sheet.dart';
 import '../data/services/voice_room_debug_log.dart';
 import 'utils/voice_room_key_resolver.dart';
 import '../domain/entities/voice_room_realtime_event.dart';
+import '../../admin/presentation/providers/staff_access_provider.dart';
 import '../domain/voice_official_join.dart';
+import '../domain/voice_room_background_policy.dart';
 import '../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../gifts/presentation/widgets/gift_battle_strip.dart';
 import '../../gifts/presentation/widgets/lucky_gift_wins_ticker.dart';
@@ -1104,6 +1106,13 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   }
 
   Future<void> _pickBackground(BuildContext context, VoiceRoomEntity room) async {
+    final isAdmin = ref.read(staffAccessProvider).isSiteAdmin;
+    if (!voiceRoomBackgroundUnlocked(room, isSiteAdmin: isAdmin)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(voiceRoomBackgroundLockedMessage)),
+      );
+      return;
+    }
     await showVoiceRoomBackgroundSheet(context, ref, room: room);
   }
 

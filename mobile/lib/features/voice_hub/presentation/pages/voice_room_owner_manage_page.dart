@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import '../../../admin/presentation/providers/staff_access_provider.dart';
+import '../../domain/voice_room_background_policy.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/images/canlifal_network_image.dart';
@@ -235,6 +237,11 @@ class _VoiceRoomOwnerManagePageState
   }
 
   Future<void> _pickBackground() async {
+    final isAdmin = ref.read(staffAccessProvider).isSiteAdmin;
+    if (!voiceRoomBackgroundUnlocked(widget.room, isSiteAdmin: isAdmin)) {
+      _snack(voiceRoomBackgroundLockedMessage);
+      return;
+    }
     List<String> urls;
     try {
       urls = await ref.read(chatRoomRemoteProvider).fetchBackgrounds();
@@ -454,7 +461,22 @@ class _VoiceRoomOwnerManagePageState
           () => _pickCategory(s),
         ),
         _section('Görünüm ve giriş'),
-        _tile(Icons.wallpaper_rounded, 'Arka plan resmi', 'Değiştir', _pickBackground),
+        _tile(
+          voiceRoomBackgroundUnlocked(
+            widget.room,
+            isSiteAdmin: ref.read(staffAccessProvider).isSiteAdmin,
+          )
+              ? Icons.wallpaper_rounded
+              : Icons.lock_rounded,
+          'Arka plan resmi',
+          voiceRoomBackgroundUnlocked(
+            widget.room,
+            isSiteAdmin: ref.read(staffAccessProvider).isSiteAdmin,
+          )
+              ? 'Değiştir'
+              : 'Kilitli — ücretli ve VIP odalar',
+          _pickBackground,
+        ),
         _tile(
           s.hasPassword ? Icons.lock_rounded : Icons.lock_open_rounded,
           'Giriş şifresi',

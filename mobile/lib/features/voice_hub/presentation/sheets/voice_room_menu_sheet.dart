@@ -18,6 +18,7 @@ import '../theme/voice_room_tokens.dart';
 import '../utils/voice_room_permissions.dart';
 import '../widgets/premium/voice_glass.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
+import '../../domain/voice_room_background_policy.dart';
 import 'voice_moderation_user_picker_sheet.dart';
 import 'voice_room_hub_settings.dart';
 import 'voice_room_management_panel.dart';
@@ -138,6 +139,15 @@ class _VoiceRoomMenuSheet extends ConsumerWidget {
           if (!perms.canChangeBackground && !isOwner) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Arka plan değiştirme yetkiniz yok')),
+            );
+            return;
+          }
+          if (!voiceRoomBackgroundUnlocked(
+            room,
+            isSiteAdmin: perms.isSiteAdmin,
+          )) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text(voiceRoomBackgroundLockedMessage)),
             );
             return;
           }

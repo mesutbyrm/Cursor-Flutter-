@@ -158,6 +158,8 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
           ? user.display.trim()
           : (user.username.trim().isNotEmpty ? user.username.trim() : 'Sohbet'),
       backgroundsFuture: ref.read(chatRoomRemoteProvider).fetchBackgrounds(),
+      // Arka plan yalnızca ücretli (2500 jeton) ve VIP odalarda seçilebilir.
+      allowBackground: choice != _OpenRoomChoice.free,
     ),
   );
 
@@ -228,10 +230,12 @@ class _OpenRoomSetupSheet extends StatefulWidget {
   const _OpenRoomSetupSheet({
     required this.defaultName,
     required this.backgroundsFuture,
+    this.allowBackground = true,
   });
 
   final String defaultName;
   final Future<List<String>> backgroundsFuture;
+  final bool allowBackground;
 
   @override
   State<_OpenRoomSetupSheet> createState() => _OpenRoomSetupSheetState();
@@ -250,7 +254,11 @@ class _OpenRoomSetupSheetState extends State<_OpenRoomSetupSheet> {
   void initState() {
     super.initState();
     _nameCtrl = TextEditingController(text: widget.defaultName);
-    _loadBackgrounds();
+    if (widget.allowBackground) {
+      _loadBackgrounds();
+    } else {
+      _loadingBg = false;
+    }
   }
 
   Future<void> _loadBackgrounds() async {
@@ -279,7 +287,7 @@ class _OpenRoomSetupSheetState extends State<_OpenRoomSetupSheet> {
     Navigator.of(context, rootNavigator: true).pop(
       _OpenRoomSetup(
         roomName: name,
-        backgroundUrl: _selectedBg,
+        backgroundUrl: widget.allowBackground ? _selectedBg : null,
         seatCount: _seatCount,
         maxUsers: _maxUsers,
         category: _category,
@@ -375,7 +383,15 @@ class _OpenRoomSetupSheetState extends State<_OpenRoomSetupSheet> {
               ),
             ),
             const SizedBox(height: 8),
-            if (_loadingBg)
+            if (!widget.allowBackground)
+              Text(
+                'Arka plan seçimi yalnızca ücretli (2500 jeton) ve VIP odalarda açıktır.',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.5),
+                  fontSize: 12,
+                ),
+              )
+            else if (_loadingBg)
               const SizedBox(
                 height: 100,
                 child: Center(

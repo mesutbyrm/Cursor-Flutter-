@@ -23,6 +23,7 @@ import '../../../gifts/presentation/providers/gift_goal_providers.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/voice_room_ban_entry.dart';
 import '../../domain/pk/pk_opponent_room_filter.dart';
+import '../../domain/voice_room_background_policy.dart';
 import '../providers/chat_room_providers.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_room_ui_provider.dart';
@@ -805,7 +806,15 @@ class _VoiceRoomManagementPanelState
             showVoiceYoutubeSongSheet(context, ref, room: room);
           }),
         ),
-        if (canBg)
+        if (canBg &&
+            !voiceRoomBackgroundUnlocked(room, isSiteAdmin: perms.isSiteAdmin))
+          const ListTile(
+            enabled: false,
+            leading: Icon(Icons.lock_rounded),
+            title: Text('Arkaplan (kilitli)'),
+            subtitle: Text(voiceRoomBackgroundLockedMessage),
+          )
+        else if (canBg)
           ListTile(
             leading: const Icon(Icons.photo_library_rounded),
             title: const Text('Arkaplan'),
