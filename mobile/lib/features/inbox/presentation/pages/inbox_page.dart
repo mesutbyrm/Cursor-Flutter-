@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/push/notification_permission_prompter.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
@@ -45,6 +46,10 @@ class _InboxPageState extends ConsumerState<InboxPage> {
     _tab = widget.initialTab;
     _scroll.addListener(_onScroll);
     unawaited(_bootstrap());
+    // Bildirim izni (Android 13+ POST_NOTIFICATIONS) — gelen kutusu açılınca bir kez.
+    Future<void>.delayed(const Duration(milliseconds: 900), () {
+      if (mounted) unawaited(NotificationPermissionPrompter.maybePrompt());
+    });
   }
 
   Future<void> _bootstrap() async {
