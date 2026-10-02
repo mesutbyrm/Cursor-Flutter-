@@ -37,31 +37,38 @@ Future<bool?> showViewerGuestInviteModal({
   );
 }
 
-/// Yayıncı — yayını bitir onayı.
-Future<bool?> showLiveEndConfirmDialog(BuildContext context) {
+/// Geri tuşu / çıkış — "Canlı yayından çıkmak istiyor musunuz?" (Hayır/Evet).
+/// Yayıncı için Evet yayını da sonlandırır; izleyici için yalnızca odadan ayrılır.
+Future<bool?> showLiveEndConfirmDialog(
+  BuildContext context, {
+  bool isHost = true,
+}) {
   return showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
       backgroundColor: const Color(0xFF1A1030),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: const Text(
-        'Yayını bitir',
+        'Canlı yayından çıkmak istiyor musunuz?',
         style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900),
       ),
-      content: const Text(
-        'Bu sayfadan çıkarsanız canlı yayınınız sonlanır. '
-        'Yayını bitirmek istiyor musunuz?',
-        style: TextStyle(color: Colors.white70),
-      ),
+      content: isHost
+          ? const Text(
+              'Evet derseniz canlı yayınınız sonlanır.',
+              style: TextStyle(color: Colors.white70),
+            )
+          : null,
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Devam Et'),
+          child: const Text('Hayır'),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(ctx, true),
-          style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
-          child: const Text('Yayını Bitir'),
+          style: FilledButton.styleFrom(
+            backgroundColor: isHost ? const Color(0xFFC62828) : null,
+          ),
+          child: const Text('Evet'),
         ),
       ],
     ),
