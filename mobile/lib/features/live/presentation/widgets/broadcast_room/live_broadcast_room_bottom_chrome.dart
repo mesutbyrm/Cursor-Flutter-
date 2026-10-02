@@ -23,6 +23,11 @@ class LiveBroadcastRoomBottomChrome extends StatelessWidget {
     this.onToggleOpponentMute,
     this.opponentMuted = false,
     this.showPkHostControls = false,
+    this.onGuest,
+    this.onMulti,
+    this.onShare,
+    this.onSettings,
+    this.multiLayoutActive = false,
   });
 
   final TextEditingController chatController;
@@ -41,6 +46,11 @@ class LiveBroadcastRoomBottomChrome extends StatelessWidget {
   final VoidCallback? onToggleOpponentMute;
   final bool opponentMuted;
   final bool showPkHostControls;
+  final VoidCallback? onGuest;
+  final VoidCallback? onMulti;
+  final VoidCallback? onShare;
+  final VoidCallback? onSettings;
+  final bool multiLayoutActive;
 
   @override
   Widget build(BuildContext context) {
@@ -67,6 +77,11 @@ class LiveBroadcastRoomBottomChrome extends StatelessWidget {
         onToggleOpponentMute: onToggleOpponentMute,
         opponentMuted: opponentMuted,
         showPkHostControls: showPkHostControls,
+        onGuest: onGuest,
+        onMulti: onMulti,
+        onShare: onShare,
+        onSettings: onSettings,
+        multiLayoutActive: multiLayoutActive,
       ),
     );
   }

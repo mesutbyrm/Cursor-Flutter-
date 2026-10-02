@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.687+740 (2026-10-02) — Canlı yayın alt çubuğu
+
+- **Alt çubuk:** «Yorum yaz...» + Misafir · Çoklu (yayıncı) · Hediye (pembe) · Paylaş · Daha fazla; 2x2 çoklu yayında Çoklu/Paylaş yerine Ayarlar (yayıncı); yazarken yalnız yorum alanı görünür; 44 px dokunma alanı
+- **Hediye düğmesi:** sahte (sabit listeli) dropdown kaldırıldı — doğrudan gerçek hediye panelini açar
+- **Misafir düğmesi:** yayıncıda «Misafir Davet Et» sheet'i, izleyicide misafirlik isteği
+
 ## 1.0.686+739 (2026-10-02) — Misafir Davet Et sheet'i
 
 - **Yayıncı:** «⋯» menüsünde yeni «Misafir Davet Et» sheet'i — «Kullanıcı ara...», avatar + ad + [Davet Et]; arama boşken izleyiciler, 2+ karakterde tüm kullanıcılar; davetten sonra satır «Gönderildi» olur

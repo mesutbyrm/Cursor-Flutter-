@@ -24,6 +24,11 @@ class LiveBroadcastBottomBarV2 extends StatefulWidget {
     this.onToggleOpponentMute,
     this.opponentMuted = false,
     this.showPkHostControls = false,
+    this.onGuest,
+    this.onMulti,
+    this.onShare,
+    this.onSettings,
+    this.multiLayoutActive = false,
   });
 
   final TextEditingController chatController;
@@ -42,6 +47,19 @@ class LiveBroadcastBottomBarV2 extends StatefulWidget {
   final VoidCallback? onToggleOpponentMute;
   final bool opponentMuted;
   final bool showPkHostControls;
+
+  /// Misafir: yayıncıda davet sheet'i, izleyicide misafirlik isteği.
+  final VoidCallback? onGuest;
+
+  /// Çoklu yayın düzeni (yalnız yayıncı, tekli yayında).
+  final VoidCallback? onMulti;
+  final VoidCallback? onShare;
+
+  /// Yayın ayarları (yalnız yayıncı) — çoklu (2x2) düzende «Çoklu/Paylaş» yerine.
+  final VoidCallback? onSettings;
+
+  /// Çoklu yayın (2+ kişi) açık mı — alt çubuk düzeni buna göre değişir.
+  final bool multiLayoutActive;
 
   @override
   State<LiveBroadcastBottomBarV2> createState() => _LiveBroadcastBottomBarV2State();
@@ -76,6 +94,53 @@ class _LiveBroadcastBottomBarV2State extends State<LiveBroadcastBottomBarV2> {
     widget.chatController.clear();
     setState(() => _messageExpanded = false);
     _messageFocus.unfocus();
+  }
+
+  List<Widget> _actions() {
+    final w = widget;
+    final multi = w.multiLayoutActive;
+    final items = <Widget>[
+      if (w.onGuest != null)
+        _ActionIconButton(
+          icon: Icons.person_add_alt_1_rounded,
+          label: 'Misafir',
+          onTap: w.onGuest!,
+        ),
+      // Tekli yayında «Çoklu» (yalnız yayıncı).
+      if (w.isHost && !multi && w.onMulti != null)
+        _ActionIconButton(
+          icon: Icons.grid_view_rounded,
+          label: 'Çoklu',
+          onTap: w.onMulti!,
+        ),
+      if (w.onGift != null) _GiftButton(onTap: w.onGift!),
+      // Tekli: Paylaş · 2x2: Ayarlar (yayıncı) / Paylaş (izleyici).
+      if (w.isHost && multi && w.onSettings != null)
+        _ActionIconButton(
+          icon: Icons.settings_rounded,
+          label: 'Ayarlar',
+          onTap: w.onSettings!,
+        )
+      else if (w.onShare != null)
+        _ActionIconButton(
+          icon: Icons.ios_share_rounded,
+          label: 'Paylaş',
+          onTap: w.onShare!,
+        ),
+      if (w.onMore != null)
+        _ActionIconButton(
+          icon: Icons.more_horiz_rounded,
+          label: 'Daha fazla',
+          badgeCount: w.moreBadgeCount,
+          onTap: w.onMore!,
+        ),
+    ];
+    return [
+      for (var i = 0; i < items.length; i++) ...[
+        if (i > 0) const SizedBox(width: 4),
+        items[i],
+      ],
+    ];
   }
 
   @override
@@ -145,10 +210,9 @@ class _LiveBroadcastBottomBarV2State extends State<LiveBroadcastBottomBarV2> {
                 const SizedBox(height: 8),
               ],
 
-              // Mesaj input + Kontroller
+              // Mesaj input + aksiyonlar. Yazarken yalnız input görünür.
               Row(
                 children: [
-                  // Mesaj input (genişletilebilir)
                   Expanded(
                     child: _ExpandableMessageInput(
                       controller: widget.chatController,
@@ -158,20 +222,10 @@ class _LiveBroadcastBottomBarV2State extends State<LiveBroadcastBottomBarV2> {
                       onSend: _onSendMessage,
                     ),
                   ),
-                  const SizedBox(width: 4),
-
-                  // Hediye dropdown (sola doğru açılır)
-                  if (widget.onGift != null)
-                    _GiftDropdownButton(onGift: widget.onGift!),
-
-                  // Daha fazla (ayarlar)
-                  if (widget.onMore != null)
-                    _ActionIconButton(
-                      icon: Icons.apps_rounded,
-                      label: 'Daha fazla',
-                      badgeCount: widget.moreBadgeCount,
-                      onTap: widget.onMore!,
-                    ),
+                  if (!_messageExpanded) ...[
+                    const SizedBox(width: 6),
+                    ..._actions(),
+                  ],
                 ],
               ),
             ],
@@ -226,7 +280,7 @@ class _ExpandableMessageInput extends StatelessWidget {
               ),
               decoration: InputDecoration(
                 isDense: true,
-                hintText: commentsEnabled ? 'Mesajını yaz...' : 'Yorumlar kapalı',
+                hintText: commentsEnabled ? 'Yorum yaz...' : 'Yorumlar kapalı',
                 hintStyle: TextStyle(
                   color: Colors.white.withValues(alpha: 0.45),
                   fontSize: 14,
@@ -253,142 +307,58 @@ class _ExpandableMessageInput extends StatelessWidget {
   }
 }
 
-/// Hediye dropdown — sola doğru açılır, hediye seçilebilir
-class _GiftDropdownButton extends StatefulWidget {
-  const _GiftDropdownButton({required this.onGift});
+/// Hediye — doğrudan hediye panelini açar (sahte dropdown listesi kaldırıldı).
+class _GiftButton extends StatelessWidget {
+  const _GiftButton({required this.onTap});
 
-  final VoidCallback onGift;
-
-  @override
-  State<_GiftDropdownButton> createState() => _GiftDropdownButtonState();
-}
-
-class _GiftDropdownButtonState extends State<_GiftDropdownButton> {
-  bool _showDropdown = false;
-
-  // Mock hediye listesi — backend'den gelecek
-  final List<Map<String, dynamic>> gifts = [
-    {'name': '❤️', 'label': 'Kalp', 'price': 10},
-    {'name': '💎', 'label': 'Elmas', 'price': 50},
-    {'name': '🌹', 'label': 'Gül', 'price': 20},
-    {'name': '⭐', 'label': 'Yıldız', 'price': 30},
-    {'name': '🎁', 'label': 'Hediye', 'price': 100},
-  ];
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.topRight,
-      children: [
-        // Gift button
-        GestureDetector(
-          onTap: () => setState(() => _showDropdown = !_showDropdown),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFFB388FF),
-                      Color(0xFF7C4DFF),
-                      Color(0xFF5E35B1)
-                    ],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF7C4DFF).withValues(alpha: 0.55),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.35),
-                    width: 1.2,
-                  ),
+    return Semantics(
+      button: true,
+      label: 'Hediye',
+      child: GestureDetector(
+        onTap: onTap,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFFFF4D8D), Color(0xFFB832FF)],
                 ),
-                child: const Icon(
-                  Icons.card_giftcard_rounded,
-                  color: Colors.white,
-                  size: 26,
-                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFFF2D7A).withValues(alpha: 0.5),
+                    blurRadius: 12,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
-              const SizedBox(height: 2),
-              const Text(
-                'Hediye',
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // Dropdown menu — sola doğru açılır
-        if (_showDropdown)
-          Positioned(
-            right: 0,
-            top: 50,
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.85),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.15),
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: gifts
-                        .map(
-                          (gift) => GestureDetector(
-                            onTap: () {
-                              widget.onGift();
-                              setState(() => _showDropdown = false);
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    gift['name'],
-                                    style: const TextStyle(fontSize: 20),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    '${gift['label']} (${gift['price']})',
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                  ),
-                ),
+              child: const Icon(
+                Icons.card_giftcard_rounded,
+                color: Colors.white,
+                size: 24,
               ),
             ),
-          ),
-      ],
+            const SizedBox(height: 2),
+            const Text(
+              'Hediye',
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -420,8 +390,8 @@ class _ActionIconButton extends StatelessWidget {
               clipBehavior: Clip.none,
               children: [
                 Container(
-                  width: 40,
-                  height: 40,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: Colors.black.withValues(alpha: 0.35),
@@ -429,7 +399,7 @@ class _ActionIconButton extends StatelessWidget {
                       color: Colors.white.withValues(alpha: 0.18),
                     ),
                   ),
-                  child: Icon(icon, color: Colors.white, size: 20),
+                  child: Icon(icon, color: Colors.white, size: 22),
                 ),
                 if (badgeCount > 0)
                   Positioned(
@@ -461,7 +431,7 @@ class _ActionIconButton extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                fontSize: 8,
+                fontSize: 9,
                 fontWeight: FontWeight.w700,
                 color: Colors.white.withValues(alpha: 0.9),
               ),

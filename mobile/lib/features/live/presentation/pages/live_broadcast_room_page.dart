@@ -2448,6 +2448,45 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     );
   }
 
+  void _openGuestInviteSheet() {
+    final sid = widget.session.streamId?.trim() ?? '';
+    if (sid.isEmpty) return;
+    unawaited(
+      showLiveGuestInviteSheet(
+        context,
+        ref,
+        streamId: sid,
+        hostUserId: widget.session.hostUserId ?? '',
+        onInvite: (userId, name) =>
+            _inviteViewerAsGuest(userId: userId, displayName: name),
+      ),
+    );
+  }
+
+  void _onViewerGuestRequest() {
+    final settings = ref.read(liveBroadcastSettingsProvider);
+    if (!settings.guestsEnabled && !settings.coBroadcastEnabled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Yayıncı misafir isteğini kapattı')),
+      );
+      return;
+    }
+    unawaited(_requestGuestJoin());
+  }
+
+  /// Alt çubuk «Misafir»: yayıncıda davet sheet'i, izleyicide misafirlik isteği.
+  void _onGuestButton() {
+    if (widget.session.isHost) {
+      _openGuestInviteSheet();
+    } else {
+      _onViewerGuestRequest();
+    }
+  }
+
+  void _openBroadcastSettings() => unawaited(
+        showLiveBroadcastSettingsSheet(context: context, ref: ref),
+      );
+
   Future<void> _openLiveMoreMenu({
     required LiveBroadcastSession s,
     required bool giftsEnabled,
@@ -2470,32 +2509,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         onEmoji: _showLiveEmojiPicker,
         onGiftPanel: () =>
             ref.read(liveGiftControllerProvider).setPanelOpen(true),
-        onInviteGuest: () {
-          final sid = widget.session.streamId?.trim() ?? '';
-          if (sid.isEmpty) return;
-          unawaited(
-            showLiveGuestInviteSheet(
-              context,
-              ref,
-              streamId: sid,
-              hostUserId: widget.session.hostUserId ?? '',
-              onInvite: (userId, name) =>
-                  _inviteViewerAsGuest(userId: userId, displayName: name),
-            ),
-          );
-        },
-        onGuestRequest: () {
-          final settings = ref.read(liveBroadcastSettingsProvider);
-          if (!settings.guestsEnabled && !settings.coBroadcastEnabled) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Yayıncı misafir isteğini kapattı'),
-              ),
-            );
-            return;
-          }
-          unawaited(_requestGuestJoin());
-        },
+        onInviteGuest: _openGuestInviteSheet,
+        onGuestRequest: _onViewerGuestRequest,
         onPkPanel: _openPkPanel,
         onGames: _openGamesHub,
         onTournament: () => showLiveStarTournamentSheet(context, ref),
@@ -2596,7 +2611,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         ref
             .read(pkBattleRemoteProvider.notifier)
             .end(battleId, streamId: streamId)
-            .catchError((_) {}),
+            .then<void>((_) {}, onError: (Object _) {}),
       );
     }
     if (mounted) {
@@ -3186,6 +3201,18 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 ),
               ),
               moreBadgeCount: moreBadgeCount,
+              onGuest: hasStream &&
+                      (s.isHost ||
+                          ref.watch(liveBroadcastSettingsProvider).guestsEnabled ||
+                          ref
+                              .watch(liveBroadcastSettingsProvider)
+                              .coBroadcastEnabled)
+                  ? _onGuestButton
+                  : null,
+              onMulti: s.isHost && hasStream ? _openBroadcastSettings : null,
+              onSettings: s.isHost ? _openBroadcastSettings : null,
+              onShare: hasStream ? _shareLive : null,
+              multiLayoutActive: _resolveGuestLayout() != LiveGuestLayout.solo,
               onRtcStateChanged: s.isHost
                   ? () => setState(() => _localPreviewKey = UniqueKey())
                   : null,
