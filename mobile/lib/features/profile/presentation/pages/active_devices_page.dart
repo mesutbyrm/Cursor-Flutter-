@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
+import '../../../../core/widgets/settings_kit.dart';
 import '../../../auth/domain/entities/active_session_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
@@ -126,10 +127,16 @@ class _LogoutAllButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      onPressed: () => _confirm(context),
-      icon: const Icon(Icons.logout_rounded),
-      label: const Text('Tüm cihazlardan çıkış'),
+    return SettingsTileGrid(
+      children: [
+        SettingsTileCard(
+          icon: Icons.logout_rounded,
+          label: 'Tüm cihazlardan çıkış',
+          subtitle: 'Bu cihaz dahil tüm oturumlar kapanır',
+          destructive: true,
+          onTap: () => _confirm(context),
+        ),
+      ],
     );
   }
 }
@@ -147,41 +154,43 @@ class _SessionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: context.colors.surfaceElevated.withValues(alpha: 0.35),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            Icon(
-              Icons.smartphone_rounded,
-              color: context.colors.primary,
+    final c = context.colors;
+    return SettingsPanel(
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              color: c.primary.withValues(alpha: 0.16),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    session.deviceLabel,
-                    style: const TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                  Text(
-                    '${session.devicePlatform} · $lastSeenLabel',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: context.colors.onSurfaceMuted,
-                    ),
-                  ),
-                ],
-              ),
+            child: Icon(Icons.smartphone_rounded, color: c.primary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  session.deviceLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${session.devicePlatform} · $lastSeenLabel',
+                  style: TextStyle(fontSize: 12, color: c.onSurfaceMuted),
+                ),
+              ],
             ),
-            TextButton(
-              onPressed: onRevoke,
-              child: const Text('Çıkar'),
-            ),
-          ],
-        ),
+          ),
+          FilledButton.tonal(
+            onPressed: onRevoke,
+            child: const Text('Çıkar'),
+          ),
+        ],
       ),
     );
   }

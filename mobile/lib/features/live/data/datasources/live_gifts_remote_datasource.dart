@@ -25,7 +25,13 @@ class LiveGiftSendResult {
     this.streamerBalance,
     this.event,
     this.luckyResult,
+    this.pkScore1,
+    this.pkScore2,
   });
+
+  /// Hediye aktif PK'ya puan yazdıysa sunucunun döndürdüğü mutlak skorlar.
+  final int? pkScore1;
+  final int? pkScore2;
 
   final int? newBalance;
   final int? streamerBalance;
@@ -155,6 +161,7 @@ class LiveGiftsRemoteDataSource {
     );
     final raw = _unwrap(res.data);
     final b = raw is Map ? asJsonMap(raw) : <String, dynamic>{};
+    final pkUpdate = b['pkUpdate'] is Map ? asJsonMap(b['pkUpdate']) : null;
     final event = parseGiftEvent(b, streamId: streamId) ??
         LiveGiftEvent(
           id: 'local-${DateTime.now().microsecondsSinceEpoch}',
@@ -183,6 +190,8 @@ class LiveGiftsRemoteDataSource {
         ]),
       ),
       event: event,
+      pkScore1: pkUpdate == null ? null : asInt(pkUpdate['score1']),
+      pkScore2: pkUpdate == null ? null : asInt(pkUpdate['score2']),
     );
   }
 

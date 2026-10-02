@@ -347,6 +347,9 @@ PsychicRequestEntity? parsePsychicIncomingPayload(Map<String, dynamic>? raw) {
             ?.toString() ??
         'general',
     status: inviteStatus,
+    createdAt: DateTime.tryParse(
+      pick(map, ['createdAt', 'requestedAt'])?.toString() ?? '',
+    ),
   );
 }
 

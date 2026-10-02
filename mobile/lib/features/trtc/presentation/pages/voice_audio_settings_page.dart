@@ -4,6 +4,7 @@ import 'package:tencent_rtc_sdk/tx_audio_effect_manager.dart';
 
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover/discover_tab_pages.dart';
+import '../../../../core/widgets/settings_kit.dart';
 import '../../domain/voice_audio_settings.dart';
 import '../trtc_room_manager.dart';
 
@@ -44,8 +45,10 @@ class _VoiceAudioSettingsPageState extends State<VoiceAudioSettingsPage> {
           : ListView(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
               children: [
-                _label('Ses kalitesi'),
-                Card(
+                const SettingsSectionHeader('Ses kalitesi',
+                    icon: Icons.high_quality_rounded),
+                SettingsPanel(
+                  padding: EdgeInsets.zero,
                   child: RadioGroup<TRTCAudioQuality>(
                     groupValue: s.quality,
                     onChanged: (v) {
@@ -70,9 +73,10 @@ class _VoiceAudioSettingsPageState extends State<VoiceAudioSettingsPage> {
                     style: TextStyle(color: c.onSurfaceMuted, fontSize: 12),
                   ),
                 ),
-                const SizedBox(height: 16),
-                _label('Mikrofon seviyesi: ${s.captureVolume}'),
-                Card(
+                SettingsSectionHeader('Mikrofon seviyesi: ${s.captureVolume}',
+                    icon: Icons.mic_rounded),
+                SettingsPanel(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
                   child: Slider(
                     value: s.captureVolume.toDouble(),
                     max: 150,
@@ -84,9 +88,10 @@ class _VoiceAudioSettingsPageState extends State<VoiceAudioSettingsPage> {
                         _update(s.copyWith(captureVolume: v.round())),
                   ),
                 ),
-                const SizedBox(height: 16),
-                _label('Efektler'),
-                Card(
+                const SettingsSectionHeader('Efektler',
+                    icon: Icons.graphic_eq_rounded),
+                SettingsPanel(
+                  padding: EdgeInsets.zero,
                   child: Column(
                     children: [
                       ListTile(
@@ -139,12 +144,4 @@ class _VoiceAudioSettingsPageState extends State<VoiceAudioSettingsPage> {
             ),
     );
   }
-
-  Widget _label(String text) => Padding(
-        padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
-        child: Text(
-          text,
-          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
-        ),
-      );
 }

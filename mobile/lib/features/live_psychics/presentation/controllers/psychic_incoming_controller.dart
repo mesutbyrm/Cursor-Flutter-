@@ -16,10 +16,29 @@ class PsychicIncomingQueue extends Notifier<List<PsychicRequestEntity>> {
     state = list;
   }
 
+  /// Danışan en fazla bu kadar bekler; sunucu bekleyen kayıtları süresiz
+  /// tuttuğundan daha eski talepler ölüdür ve yeni talebin önüne geçmemeli.
+  static const maxRequestAge = Duration(seconds: 175);
+
+  /// Bayat talepleri eler, kalanlardan EN YENİSİNİ döndürür (poll yanıtı
+  /// yeniden-eskiye gelir; sıraya eklenme sırası güvenilir değildir).
   PsychicRequestEntity? takeNext() {
-    if (state.isEmpty) return null;
-    final next = state.first;
-    state = state.sublist(1);
+    final now = DateTime.now();
+    final fresh = state.where((r) {
+      final at = r.createdAt;
+      return at == null || now.difference(at.toLocal()) <= maxRequestAge;
+    }).toList();
+    if (fresh.isEmpty) {
+      if (state.isNotEmpty) state = const [];
+      return null;
+    }
+    var next = fresh.first;
+    for (final r in fresh) {
+      final a = r.createdAt;
+      final b = next.createdAt;
+      if (a != null && (b == null || a.isAfter(b))) next = r;
+    }
+    state = fresh.where((r) => r.sessionId != next.sessionId).toList();
     return next;
   }
 

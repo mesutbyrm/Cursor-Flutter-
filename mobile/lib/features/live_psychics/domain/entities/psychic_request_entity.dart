@@ -15,6 +15,7 @@ class PsychicRequestEntity extends Equatable {
     required this.totalJeton,
     required this.fortuneType,
     this.status = PsychicSessionStatus.pending,
+    this.createdAt,
   });
 
   final String sessionId;
@@ -27,6 +28,9 @@ class PsychicRequestEntity extends Equatable {
   final int totalJeton;
   final String fortuneType;
   final PsychicSessionStatus status;
+
+  /// Sunucunun talebi oluşturduğu an (bilinmiyorsa null).
+  final DateTime? createdAt;
 
   bool get isPending => status.isWaiting;
 
@@ -42,5 +46,6 @@ class PsychicRequestEntity extends Equatable {
         totalJeton,
         fortuneType,
         status,
+        createdAt,
       ];
 }

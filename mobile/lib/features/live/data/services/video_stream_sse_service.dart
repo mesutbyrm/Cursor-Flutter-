@@ -60,7 +60,7 @@ class VideoStreamSseService {
   void Function(String userId)? _onViewerKicked;
   void Function(Map<String, dynamic> battle)? _onPkBattle;
 
-  void Function(int likeCount)? _onLike;
+  void Function(Map<String, dynamic> like)? _onLike;
   void Function(Map<String, dynamic> user)? _onUserJoined;
   void Function(String userId)? _onUserLeft;
   void Function(String userId, bool isModerator)? _onModeratorUpdated;
@@ -94,7 +94,7 @@ class VideoStreamSseService {
     void Function(Map<String, dynamic> battle)? onPkBattle,
     void Function(PsychicRequestEntity request)? onFortuneRequest,
     void Function(Map<String, dynamic> request)? onStreamFortuneRequest,
-    void Function(int likeCount)? onLike,
+    void Function(Map<String, dynamic> like)? onLike,
     void Function(Map<String, dynamic> user)? onUserJoined,
     void Function(String userId)? onUserLeft,
     void Function(String userId, bool isModerator)? onModeratorUpdated,
@@ -338,8 +338,10 @@ class VideoStreamSseService {
         return;
       case 'like':
       case 'streamLike':
-        final count = map['likeCount'] ?? map['count'] ?? map['total'];
-        if (count is num) _onLike?.call(count.round());
+        final count = map['likeCount'] ?? map['total'] ?? map['count'];
+        if (count is num || map['count'] is num) {
+          _onLike?.call(Map<String, dynamic>.from(map));
+        }
         return;
       case 'userJoined':
       case 'viewerJoined':

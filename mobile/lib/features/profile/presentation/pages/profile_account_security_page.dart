@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/security/secure_screen.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
+import '../../../../core/widgets/settings_kit.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../providers/profile_providers.dart';
@@ -91,69 +92,100 @@ class _ProfileAccountSecurityPageState
                         .withValues(alpha: 0.65),
                   ),
                 ),
-                const SizedBox(height: 16),
-                const ListTile(
-                leading: Icon(Icons.verified_user_outlined),
-                title: Text('İki adımlı doğrulama'),
-                subtitle: Text('Yakında — SMS / e-posta OTP'),
-                trailing: Icon(Icons.schedule_rounded),
-              ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.devices_rounded),
-                title: const Text('Aktif cihazlar'),
-                subtitle: const Text('Oturum açık cihazları yönet'),
-                trailing: const Icon(Icons.chevron_right_rounded),
-                onTap: () => context.push('/settings/devices'),
-              ),
-              const Divider(),
-              TextField(
-                controller: _currentCtrl,
-                obscureText: true,
-                enableSuggestions: false,
-                autocorrect: false,
-                enableIMEPersonalizedLearning: false,
-                autofillHints: const <String>[],
-                decoration: const InputDecoration(labelText: 'Mevcut şifre'),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _newCtrl,
-                obscureText: true,
-                enableSuggestions: false,
-                autocorrect: false,
-                enableIMEPersonalizedLearning: false,
-                autofillHints: const <String>[],
-                decoration: const InputDecoration(labelText: 'Yeni şifre'),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _confirmCtrl,
-                obscureText: true,
-                enableSuggestions: false,
-                autocorrect: false,
-                enableIMEPersonalizedLearning: false,
-                autofillHints: const <String>[],
-                decoration: const InputDecoration(labelText: 'Yeni şifre (tekrar)'),
-              ),
-              const SizedBox(height: 20),
-              FilledButton(
-                onPressed: _saving ? null : _changePassword,
-                child: _saving
-                    ? const SizedBox(
-                        height: 22,
-                        width: 22,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Şifreyi güncelle'),
-              ),
-              const SizedBox(height: 24),
-              OutlinedButton.icon(
-                onPressed: () =>
-                    ref.read(authControllerProvider.notifier).logout(),
-                icon: const Icon(Icons.logout_rounded),
-                label: const Text('Tüm cihazlardan çıkış'),
-              ),
+                const SizedBox(height: 14),
+                SettingsTileGrid(
+                  children: [
+                    SettingsTileCard(
+                      icon: Icons.verified_user_outlined,
+                      label: 'İki adımlı doğrulama',
+                      subtitle: 'Yakında — SMS / e-posta OTP',
+                      badge: 'Yakında',
+                      accent: Theme.of(context).disabledColor,
+                      onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('İki adımlı doğrulama yakında geliyor'),
+                        ),
+                      ),
+                    ),
+                    SettingsTileCard(
+                      icon: Icons.devices_rounded,
+                      label: 'Aktif cihazlar',
+                      subtitle: 'Oturum açık cihazları yönet',
+                      onTap: () => context.push('/settings/devices'),
+                    ),
+                  ],
+                ),
+                const SettingsSectionHeader(
+                  'Şifre değiştir',
+                  icon: Icons.lock_outline_rounded,
+                ),
+                SettingsPanel(
+                  child: Column(
+                    children: [
+                      TextField(
+                        controller: _currentCtrl,
+                        obscureText: true,
+                        enableSuggestions: false,
+                        autocorrect: false,
+                        enableIMEPersonalizedLearning: false,
+                        autofillHints: const <String>[],
+                        decoration:
+                            const InputDecoration(labelText: 'Mevcut şifre'),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _newCtrl,
+                        obscureText: true,
+                        enableSuggestions: false,
+                        autocorrect: false,
+                        enableIMEPersonalizedLearning: false,
+                        autofillHints: const <String>[],
+                        decoration:
+                            const InputDecoration(labelText: 'Yeni şifre'),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _confirmCtrl,
+                        obscureText: true,
+                        enableSuggestions: false,
+                        autocorrect: false,
+                        enableIMEPersonalizedLearning: false,
+                        autofillHints: const <String>[],
+                        decoration: const InputDecoration(
+                          labelText: 'Yeni şifre (tekrar)',
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          onPressed: _saving ? null : _changePassword,
+                          child: _saving
+                              ? const SizedBox(
+                                  height: 22,
+                                  width: 22,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Text('Şifreyi güncelle'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                SettingsTileGrid(
+                  children: [
+                    SettingsTileCard(
+                      icon: Icons.logout_rounded,
+                      label: 'Tüm cihazlardan çıkış',
+                      subtitle: 'Bu cihaz dahil tüm oturumlar kapanır',
+                      destructive: true,
+                      onTap: () =>
+                          ref.read(authControllerProvider.notifier).logout(),
+                    ),
+                  ],
+                ),
             ],
           ),
         ),

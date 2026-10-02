@@ -1,3 +1,4 @@
+import '../../providers/live_video_pk_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/network/dio_provider.dart';
@@ -23,6 +24,9 @@ final liveGiftControllerProvider =
     remote: ref.watch(liveGiftsRemoteProvider),
     realtime: ref.watch(liveGiftRealtimeProvider),
     sound: ref.watch(giftSoundServiceProvider),
+    onPkScore: (streamId, s1, s2) => ref
+        .read(liveVideoPkProvider(streamId).notifier)
+        .applyScoreSnapshot(score1: s1, score2: s2),
   );
   ref.onDispose(c.dispose);
   return c;

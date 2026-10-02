@@ -17,6 +17,7 @@ class LiveGiftController extends ChangeNotifier {
     required LiveGiftsRemoteDataSource remote,
     required LiveGiftRealtimeService realtime,
     GiftSoundService? sound,
+    this.onPkScore,
   })  : _remote = remote,
         _realtime = realtime,
         _sound = sound {
@@ -26,6 +27,9 @@ class LiveGiftController extends ChangeNotifier {
   final LiveGiftsRemoteDataSource _remote;
   final LiveGiftRealtimeService _realtime;
   final GiftSoundService? _sound;
+
+  /// Hediye yanıtındaki PK skoru (sunucu mutlak değerleri) — anında yansıtılır.
+  final void Function(String streamId, int score1, int score2)? onPkScore;
   StreamSubscription<LiveGiftEvent>? _sub;
 
   final List<LiveGiftEvent> notifications = [];
@@ -106,6 +110,9 @@ class LiveGiftController extends ChangeNotifier {
         return result.luckyResult;
       }
       if (result.newBalance != null) coinBalance = result.newBalance;
+      if (result.pkScore1 != null && result.pkScore2 != null) {
+        onPkScore?.call(streamId, result.pkScore1!, result.pkScore2!);
+      }
 
       final ev = result.event;
       if (ev != null) {
