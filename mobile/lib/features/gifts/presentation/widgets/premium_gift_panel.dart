@@ -16,6 +16,7 @@ import '../../../live/domain/entities/live_gift_type.dart';
 import '../../../live/presentation/gifts/live_gift_controller.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../domain/premium_gift_catalog_2026.dart';
+import '../../domain/gift_animation_kind.dart';
 import '../../domain/gift_entity.dart';
 import '../../domain/gift_platform.dart';
 import '../../domain/gift_rarity.dart';
@@ -44,31 +45,23 @@ class PremiumGiftPanel extends ConsumerStatefulWidget {
   ConsumerState<PremiumGiftPanel> createState() => _PremiumGiftPanelState();
 }
 
-class _PremiumGiftPanelState extends ConsumerState<PremiumGiftPanel>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabs;
+class _PremiumGiftPanelState extends ConsumerState<PremiumGiftPanel> {
   LiveVideoGiftType? _selected;
   int _qty = 1;
   String _category = 'popular';
 
-  @override
-  void initState() {
-    super.initState();
-    _tabs = TabController(length: 2, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabs.dispose();
-    super.dispose();
-  }
+  static const _tabs = [
+    ('popular', 'Hediyeler'),
+    ('special', 'Özel'),
+    ('vip', 'Lüks'),
+    ('animation', 'Animasyon'),
+    ('gift_box', 'Kutu'),
+    ('supporters', 'Destekçiler'),
+  ];
 
   @override
   Widget build(BuildContext context) {
     final gifts = ref.watch(liveGiftCatalogProvider);
-    final leaderboard = ref.watch(
-      streamGiftLeaderboardProvider(widget.streamId),
-    );
     // Bakiye bilinmiyorsa "0" değil "—" gösterilir.
     final coins =
         widget.controller.coinBalance ?? ref.watch(coinBalanceProvider);
@@ -81,7 +74,7 @@ class _PremiumGiftPanelState extends ConsumerState<PremiumGiftPanel>
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
           child: Container(
-            height: MediaQuery.sizeOf(context).height * 0.52,
+            height: MediaQuery.sizeOf(context).height * 0.56,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
@@ -116,70 +109,57 @@ class _PremiumGiftPanelState extends ConsumerState<PremiumGiftPanel>
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 8, 0),
+                  padding: const EdgeInsets.fromLTRB(12, 4, 4, 0),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      const Expanded(
-                        child: Text(
-                          'Hediye Gönder',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 20,
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                      ),
                       _CoinChip(coins: coins),
                       IconButton(
                         onPressed: widget.onClose,
                         tooltip: 'Kapat',
+                        visualDensity: VisualDensity.compact,
                         icon: const Icon(Icons.keyboard_arrow_down_rounded),
                       ),
                     ],
                   ),
                 ),
-                TabBar(
-                  controller: _tabs,
-                  indicatorColor: AppThemeColors.accentPink,
-                  labelColor: context.colors.onSurface,
-                  unselectedLabelColor: context.colors.onSurfaceMuted,
-                  tabs: const [
-                    Tab(text: 'Hediyeler'),
-                    Tab(text: 'Destekçiler'),
-                  ],
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: _TabRow(
+                    tabs: _tabs,
+                    current: _category,
+                    onChanged: (c) => setState(() => _category = c),
+                  ),
                 ),
                 Expanded(
-                  child: TabBarView(
-                    controller: _tabs,
-                    children: [
-                      _GiftsTab(
-                        gifts: gifts,
-                        streamId: widget.streamId,
-                        category: _category,
-                        onCategory: (c) => setState(() => _category = c),
-                        selected: _selected,
-                        qty: _qty,
-                        sending: widget.controller.sending,
-                        onSelect: (g) => setState(() => _selected = g),
-                        onQty: (q) => setState(() => _qty = q),
-                        onSend: _send,
-                      ),
-                      leaderboard.when(
-                        loading: () => const TopGiftersLeaderboard(
-                          entries: [],
-                          loading: true,
+                  child: _category == 'supporters'
+                      ? ref
+                            .watch(streamGiftLeaderboardProvider(widget.streamId))
+                            .when(
+                              loading: () => const TopGiftersLeaderboard(
+                                entries: [],
+                                loading: true,
+                              ),
+                              error: (_, _) =>
+                                  const TopGiftersLeaderboard(entries: []),
+                              data: (list) => SingleChildScrollView(
+                                padding: const EdgeInsets.all(16),
+                                child: TopGiftersLeaderboard(entries: list),
+                              ),
+                            )
+                      : _GiftsTab(
+                          gifts: gifts,
+                          streamId: widget.streamId,
+                          category: _category,
+                          coins: coins,
+                          selected: _selected,
+                          qty: _qty,
+                          sending: widget.controller.sending,
+                          onSelect: (g) => setState(() => _selected = g),
+                          onQty: (q) => setState(() => _qty = q.clamp(1, 99)),
+                          onSend: _send,
+                          onBuy: () => openJetonStore(context, ref: ref),
                         ),
-                        error: (_, _) =>
-                            const TopGiftersLeaderboard(entries: []),
-                        data: (list) => SingleChildScrollView(
-                          padding: const EdgeInsets.all(16),
-                          child: TopGiftersLeaderboard(entries: list),
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ],
             ),
@@ -217,30 +197,88 @@ class _PremiumGiftPanelState extends ConsumerState<PremiumGiftPanel>
   }
 }
 
+class _TabRow extends StatelessWidget {
+  const _TabRow({
+    required this.tabs,
+    required this.current,
+    required this.onChanged,
+  });
+
+  final List<(String, String)> tabs;
+  final String current;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (final t in tabs)
+            InkWell(
+              onTap: () => onChanged(t.$1),
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      t.$2,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                        color: current == t.$1
+                            ? Colors.white
+                            : Colors.white54,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      height: 2.5,
+                      width: current == t.$1 ? 22 : 0,
+                      decoration: BoxDecoration(
+                        color: AppThemeColors.accentPink,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _GiftsTab extends StatelessWidget {
   const _GiftsTab({
     required this.gifts,
     required this.streamId,
     required this.category,
-    required this.onCategory,
+    required this.coins,
     required this.selected,
     required this.qty,
     required this.sending,
     required this.onSelect,
     required this.onQty,
     required this.onSend,
+    required this.onBuy,
   });
 
   final AsyncValue<List<GiftEntity>> gifts;
   final String streamId;
   final String category;
-  final ValueChanged<String> onCategory;
+  final int? coins;
   final LiveVideoGiftType? selected;
   final int qty;
   final bool sending;
   final ValueChanged<LiveVideoGiftType> onSelect;
   final ValueChanged<int> onQty;
   final VoidCallback onSend;
+  final VoidCallback onBuy;
 
   List<GiftEntity> _filter(List<GiftEntity> all) {
     bool isFortune(GiftEntity g) {
@@ -252,9 +290,15 @@ class _GiftsTab extends StatelessWidget {
         g.rarity.index >= GiftRarity.epic.index || g.price >= 200;
 
     return switch (category) {
-      'fortune' => all.where(isFortune).toList(),
+      'special' => all.where((g) => !isVip(g) && isFortune(g)).toList(),
       'vip' => all.where(isVip).toList(),
-      'event' => all.where((g) => !isFortune(g) && !isVip(g)).toList(),
+      'animation' => all
+          .where(
+            (g) =>
+                g.animationKind != GiftAnimationKind.none &&
+                (g.animationRef?.isNotEmpty ?? false),
+          )
+          .toList(),
       _ => PremiumGiftCatalog2026.sortCatalog(all, (g) => g.id),
     };
   }
@@ -262,16 +306,7 @@ class _GiftsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (category == 'gift_box') {
-      return Column(
-        children: [
-          _CategoryChips(category: category, onCategory: onCategory),
-          Expanded(
-            child: GiftBoxPanelSection(
-              scope: (roomId: null, streamId: streamId),
-            ),
-          ),
-        ],
-      );
+      return GiftBoxPanelSection(scope: (roomId: null, streamId: streamId));
     }
     return gifts.when(
       loading: () => const Center(
@@ -286,8 +321,8 @@ class _GiftsTab extends StatelessWidget {
             .where((g) => g.platform != GiftPlatform.web)
             .toList();
         final filtered = _filter(mobile);
-        // Seçim görünen listede değilse (kategori değişti) ilk hediyeye geç;
-        // eskiden "Gönder" başka kategoride kalan görünmez hediyeyi yolluyordu.
+        // Seçim görünen listede değilse (sekme değişti) ilk hediyeye geç;
+        // eskiden "Gönder" başka sekmede kalan görünmez hediyeyi yolluyordu.
         LiveVideoGiftType? current;
         for (final g in filtered) {
           if (g.id == selected?.id) {
@@ -300,10 +335,12 @@ class _GiftsTab extends StatelessWidget {
             onSelect(LiveVideoGiftType.fromGift(filtered.first));
           });
         }
+        final total = current == null ? null : current.price * qty;
+        final insufficient =
+            total != null && coins != null && total > coins!;
 
         return Column(
           children: [
-            _CategoryChips(category: category, onCategory: onCategory),
             Expanded(
               child: filtered.isEmpty
                   ? Center(
@@ -312,24 +349,22 @@ class _GiftsTab extends StatelessWidget {
                         style: TextStyle(color: context.colors.onSurfaceMuted),
                       ),
                     )
-                  : ListView.builder(
-                      cacheExtent: 400,
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
+                  : GridView.builder(
+                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 4,
+                            mainAxisSpacing: 8,
+                            crossAxisSpacing: 8,
+                            childAspectRatio: 0.78,
+                          ),
                       itemCount: filtered.length,
                       itemBuilder: (ctx, i) {
-                        final entity = filtered[i];
-                        final gift = LiveVideoGiftType.fromGift(entity);
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 10),
-                          child: _PremiumGiftTile(
-                            gift: gift,
-                            selected: current?.id == gift.id,
-                            onTap: () => onSelect(gift),
-                          ),
+                        final gift = LiveVideoGiftType.fromGift(filtered[i]);
+                        return _PremiumGiftTile(
+                          gift: gift,
+                          selected: current?.id == gift.id,
+                          onTap: () => onSelect(gift),
                         );
                       },
                     ),
@@ -339,43 +374,34 @@ class _GiftsTab extends StatelessWidget {
                 16,
                 0,
                 16,
-                MediaQuery.paddingOf(context).bottom + 12,
+                MediaQuery.paddingOf(context).bottom + 10,
               ),
-              child: Row(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Adet çipleri kaydırılabilir: 4 çip + toplamlı Gönder
-                  // butonu ~390 dp ekrana sığmıyordu.
-                  Expanded(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          for (final q in [1, 5, 10, 99])
-                            Padding(
-                              padding: const EdgeInsets.only(right: 6),
-                              child: ChoiceChip(
-                                label: Text('x$q'),
-                                selected: qty == q,
-                                showCheckmark: false,
-                                visualDensity: VisualDensity.compact,
-                                onSelected: (_) => onQty(q),
-                                selectedColor: AppThemeColors.accentPink
-                                    .withValues(alpha: 0.45),
-                                backgroundColor: Colors.white10,
-                                labelStyle: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ),
-                        ],
+                  _QtyStepper(qty: qty, onQty: onQty),
+                  const SizedBox(height: 8),
+                  if (insufficient)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Text(
+                        'Yeterli Jetonunuz yok',
+                        style: TextStyle(
+                          color: Colors.red.shade300,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  _SendButton(
-                    loading: sending,
-                    total: current == null ? null : current.price * qty,
-                    onPressed: current == null ? null : onSend,
+                  SizedBox(
+                    width: double.infinity,
+                    child: insufficient
+                        ? _BuyButton(onPressed: onBuy)
+                        : _SendButton(
+                            loading: sending,
+                            total: total,
+                            onPressed: current == null ? null : onSend,
+                          ),
                   ),
                 ],
               ),
@@ -383,6 +409,88 @@ class _GiftsTab extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _QtyStepper extends StatelessWidget {
+  const _QtyStepper({required this.qty, required this.onQty});
+
+  final int qty;
+  final ValueChanged<int> onQty;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget btn(IconData icon, bool enabled, VoidCallback onTap, String label) =>
+        Semantics(
+          button: true,
+          label: label,
+          child: IconButton(
+            onPressed: enabled ? onTap : null,
+            icon: Icon(icon),
+            color: Colors.white,
+            disabledColor: Colors.white24,
+            visualDensity: VisualDensity.compact,
+          ),
+        );
+    return Container(
+      height: 44,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+      ),
+      child: Row(
+        children: [
+          btn(Icons.remove_rounded, qty > 1, () => onQty(qty - 1), 'Azalt'),
+          Expanded(
+            child: Center(
+              child: Text(
+                'x$qty',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ),
+          btn(Icons.add_rounded, qty < 99, () => onQty(qty + 1), 'Artır'),
+        ],
+      ),
+    );
+  }
+}
+
+class _BuyButton extends StatelessWidget {
+  const _BuyButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(22),
+        child: Ink(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            color: AppThemeColors.coinGold,
+          ),
+          child: const Center(
+            child: Text(
+              'Jeton Al',
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 16,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -412,40 +520,38 @@ class _PremiumGiftTile extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: AnimatedContainer(
-          duration: 220.ms,
-          width: 88,
-          padding: const EdgeInsets.all(10),
+          duration: 200.ms,
+          padding: const EdgeInsets.fromLTRB(4, 8, 4, 6),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            gradient: selected
-                ? LinearGradient(
-                    colors: [
-                      glow.withValues(alpha: 0.45),
-                      AppThemeColors.accentPurple.withValues(alpha: 0.25),
-                    ],
-                  )
-                : null,
-            color: selected ? null : Colors.white.withValues(alpha: 0.07),
+            borderRadius: BorderRadius.circular(16),
+            color: selected
+                ? AppThemeColors.accentPink.withValues(alpha: 0.18)
+                : Colors.white.withValues(alpha: 0.05),
             border: Border.all(
-              color: selected ? glow : Colors.white.withValues(alpha: 0.12),
-              width: selected ? 2 : 1,
+              color: selected
+                  ? AppThemeColors.accentPink
+                  : Colors.white.withValues(alpha: 0.08),
+              width: selected ? 1.6 : 1,
             ),
             boxShadow: selected
-                ? AppThemeColors.glowShadow(glow, blur: 18)
+                ? AppThemeColors.glowShadow(glow, blur: 14)
                 : null,
           ),
           child: Column(
             children: [
-              _RarityBadge(rarity: gift.rarity),
-              const SizedBox(height: 4),
               Expanded(
                 child: url.isEmpty
-                    ? Text(
-                        gift.rarity.index >= GiftRarity.epic.index ? '✨' : '🎁',
-                        style: const TextStyle(fontSize: 34),
+                    ? Center(
+                        child: Text(
+                          gift.rarity.index >= GiftRarity.epic.index
+                              ? '✨'
+                              : '🎁',
+                          style: const TextStyle(fontSize: 34),
+                        ),
                       )
                     : CanlifalNetworkImage(url: url, fit: BoxFit.contain),
               ),
+              const SizedBox(height: 4),
               Text(
                 gift.name,
                 maxLines: 1,
@@ -476,33 +582,6 @@ class _PremiumGiftTile extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RarityBadge extends StatelessWidget {
-  const _RarityBadge({required this.rarity});
-
-  final GiftRarity rarity;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: rarity.glowColor.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: rarity.borderColor.withValues(alpha: 0.6)),
-      ),
-      child: Text(
-        rarity.label,
-        style: TextStyle(
-          fontSize: 8,
-          fontWeight: FontWeight.w900,
-          color: rarity.glowColor,
-          letterSpacing: 0.3,
         ),
       ),
     );
@@ -633,42 +712,6 @@ class _SendButton extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _CategoryChips extends StatelessWidget {
-  const _CategoryChips({required this.category, required this.onCategory});
-
-  final String category;
-  final ValueChanged<String> onCategory;
-
-  static const _items = [
-    ('popular', 'Popüler'),
-    ('fortune', 'Fal'),
-    ('vip', 'VIP'),
-    ('event', 'Etkinlik'),
-    ('gift_box', 'Hediye kutusu'),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
-        children: [
-          for (final c in _items)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: ChoiceChip(
-                label: Text(c.$2),
-                selected: category == c.$1,
-                onSelected: (_) => onCategory(c.$1),
-              ),
-            ),
-        ],
       ),
     );
   }

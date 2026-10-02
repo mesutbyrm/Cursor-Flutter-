@@ -38,69 +38,104 @@ class LivePkReferenceScoreBar extends StatelessWidget {
     return (left / t).clamp(0.0, 1.0);
   }
 
+  static const _leftColors = [Color(0xFFFF3B5C), Color(0xFFFF7A59)];
+  static const _rightColors = [Color(0xFF2979FF), Color(0xFF4FC3F7)];
+
   @override
   Widget build(BuildContext context) {
     final ratio = leftRatio(leftScore, rightScore);
-    final leftPct = (ratio * 100).round();
-    final rightPct = 100 - leftPct;
     final highlight = !active || showEndedScores;
 
     return Semantics(
       container: true,
       label: 'PK skoru: $leftScore – $rightScore',
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 10),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: _ScoreNumber(
-                    value: leftScore,
-                    alignStart: true,
-                    colors: const [Color(0xFFFF2D7A), Color(0xFFB832FF)],
-                  ),
-                ),
-                Expanded(
-                  child: _ScoreNumber(
-                    value: rightScore,
-                    alignStart: false,
-                    colors: const [Color(0xFF00D2FF), Color(0xFF448AFF)],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: SizedBox(
-                height: 12,
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: (ratio * 1000).round().clamp(1, 999),
-                      child: const DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Color(0xFFFF2D7A), Color(0xFFB832FF)],
+            // Bigo/TikTok: tek şerit — kırmızı (sol) | mavi (sağ), sayılar
+            // şeridin uçlarında, ayırıcı skorla birlikte kayar.
+            TweenAnimationBuilder<double>(
+              tween: Tween<double>(end: ratio),
+              duration: const Duration(milliseconds: 260),
+              curve: Curves.easeOutCubic,
+              builder: (context, r, _) {
+                final lf = (r * 1000).round().clamp(60, 940);
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: SizedBox(
+                    height: 28,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: lf,
+                              child: const DecoratedBox(
+                                decoration: BoxDecoration(
+                                  gradient:
+                                      LinearGradient(colors: _leftColors),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 1000 - lf,
+                              child: const DecoratedBox(
+                                decoration: BoxDecoration(
+                                  gradient:
+                                      LinearGradient(colors: _rightColors),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Positioned.fill(
+                          child: Row(
+                            children: [
+                              Expanded(
+                                flex: lf,
+                                child: const Align(
+                                  alignment: Alignment.centerRight,
+                                  child: SizedBox(
+                                    width: 3,
+                                    child: DecoratedBox(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.white70,
+                                            blurRadius: 8,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Expanded(flex: 1000 - lf, child: const SizedBox()),
+                            ],
                           ),
                         ),
-                      ),
-                    ),
-                    Expanded(
-                      flex: ((1 - ratio) * 1000).round().clamp(1, 999),
-                      child: const DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Color(0xFF00D2FF), Color(0xFF448AFF)],
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: Row(
+                            children: [
+                              _ScoreNumber(value: leftScore, alignStart: true),
+                              const Spacer(),
+                              _ScoreNumber(
+                                value: rightScore,
+                                alignStart: false,
+                              ),
+                            ],
                           ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             ),
             if (countdownActive && active && !showEndedScores) ...[
               const SizedBox(height: 6),
@@ -128,38 +163,22 @@ class LivePkReferenceScoreBar extends StatelessWidget {
 }
 
 class _ScoreNumber extends StatelessWidget {
-  const _ScoreNumber({
-    required this.value,
-    required this.alignStart,
-    required this.colors,
-  });
+  const _ScoreNumber({required this.value, required this.alignStart});
 
   final int value;
   final bool alignStart;
-  final List<Color> colors;
 
   @override
   Widget build(BuildContext context) {
-    // Gradyan metnin kendi sınırına göre çizilir; eskiden sabit 0–140 px
-    // dikdörtgen kullanıldığından sağa hizalı skor düz renk kalıyordu.
-    return Align(
-      alignment: alignStart ? Alignment.centerLeft : Alignment.centerRight,
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: ShaderMask(
-          blendMode: BlendMode.srcIn,
-          shaderCallback: (bounds) =>
-              LinearGradient(colors: colors).createShader(bounds),
-          child: Text(
-            PkAnimatedScoreBar.fmt(value),
-            maxLines: 1,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-            ),
-          ),
-        ),
+    return Text(
+      PkAnimatedScoreBar.fmt(value),
+      maxLines: 1,
+      textAlign: alignStart ? TextAlign.left : TextAlign.right,
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w900,
+        color: Colors.white,
+        shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
       ),
     );
   }

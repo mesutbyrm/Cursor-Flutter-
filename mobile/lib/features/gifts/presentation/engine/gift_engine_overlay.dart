@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -89,6 +90,8 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
       }
       _gateEventId = ev.id;
       setState(() => _visible = true);
+      // Hafif titreşim — hediye ekrana geldiği an.
+      unawaited(HapticFeedback.lightImpact());
       final key = widget.sessionKey?.trim();
       if (key != null && key.isNotEmpty) {
         ref.read(giftSessionProvider(key).notifier).playActiveGiftSound(ev);
@@ -221,11 +224,35 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
     }
 
     // Diğer alanlar (center vb.) — alttan-hizalı banda alınır, sınırlı boyut.
+    // Arkada parlama (glow), girişte scale+fade, bitmeden önce fade-out.
+    final holdMs = (config.durationMs - 320 - 450).clamp(0, 600000);
     return GiftStageBand(
       stage: widget.stage,
       child: Align(
         alignment: Alignment.bottomCenter,
-        child: child
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            SizedBox(
+              width: giftSize * 1.25,
+              height: giftSize * 1.25,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      const Color(0xFFFFB300).withValues(alpha: 0.38),
+                      const Color(0xFFFF2D7A).withValues(alpha: 0.16),
+                      Colors.transparent,
+                    ],
+                    stops: const [0.0, 0.5, 1.0],
+                  ),
+                ),
+              ),
+            ),
+            child,
+          ],
+        )
             .animate(key: ValueKey('gift-enter-${event.id}'))
             .fadeIn(duration: 220.ms)
             .slideY(begin: 0.28, end: 0, duration: 320.ms, curve: Curves.easeOutCubic)
@@ -234,7 +261,9 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
               end: const Offset(1, 1),
               duration: 320.ms,
               curve: Curves.easeOutBack,
-            ),
+            )
+            .then(delay: Duration(milliseconds: holdMs))
+            .fadeOut(duration: 450.ms),
       ),
     );
   }

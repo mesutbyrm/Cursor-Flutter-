@@ -31,6 +31,7 @@ class LivePremiumTopBar extends StatelessWidget {
     this.streamTitle,
     this.fortuneTypeBadge,
     this.networkQualityBadge,
+    this.likeLabel,
   });
 
   final LiveBroadcastSession session;
@@ -51,6 +52,9 @@ class LivePremiumTopBar extends StatelessWidget {
   final String? streamTitle;
   final String? fortuneTypeBadge;
   final Widget? networkQualityBadge;
+
+  /// Alt satır metni (örn. «1.2M beğeni»); verilmezse kullanıcı kimliği gösterilir.
+  final String? likeLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +111,7 @@ class LivePremiumTopBar extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                'ID: $displayId',
+                                likeLabel ?? 'ID: $displayId',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
@@ -199,50 +203,37 @@ class LivePremiumTopBar extends StatelessWidget {
               networkQualityBadge!,
               const SizedBox(width: 6),
             ],
-            if (popularRank != null)
-              _BadgeChip(
-                emoji: '🔥',
-                label: 'Popüler No. $popularRank',
-                color: const Color(0xFFFF6B35),
+            if (onPopularTap != null) ...[
+              _GlassChip(
+                icon: Icons.emoji_events_rounded,
+                iconColor: const Color(0xFFFFC107),
+                label: 'Saatlik Sıralama',
                 onTap: onPopularTap,
               ),
-            if (popularRank != null && (leagueLabel ?? '').isNotEmpty)
               const SizedBox(width: 6),
-            if ((leagueLabel ?? '').isNotEmpty)
-              _BadgeChip(
-                emoji: '💎',
+            ],
+            _GlassChip(
+              icon: Icons.local_fire_department_rounded,
+              iconColor: const Color(0xFFFF6B35),
+              label: popularRank != null ? 'Popüler No. $popularRank' : 'Popüler',
+              onTap: onPopularTap,
+            ),
+            if ((leagueLabel ?? '').isNotEmpty) ...[
+              const SizedBox(width: 6),
+              _GlassChip(
+                icon: Icons.diamond_rounded,
+                iconColor: const Color(0xFF7C4DFF),
                 label: leagueLabel!,
-                color: const Color(0xFF7C4DFF),
                 onTap: onLeagueTap,
               ),
+            ],
             const Spacer(),
             if (onDiscoverTap != null)
-              GestureDetector(
+              _GlassChip(
+                icon: Icons.explore_rounded,
+                iconColor: const Color(0xFFFF2D7A),
+                label: 'Keşfet >',
                 onTap: onDiscoverTap,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white24),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.card_giftcard_rounded,
-                          size: 14, color: Color(0xFFFFD54F)),
-                      SizedBox(width: 4),
-                      Text(
-                        'Keşfet >',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ),
             const SizedBox(width: 6),
             elapsedBadge,
@@ -332,14 +323,12 @@ class _FollowChip extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: loading ? null : onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         child: Ink(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF9C27FF), Color(0xFF7C4DFF)],
-            ),
-            borderRadius: BorderRadius.circular(14),
+            color: AppThemeColors.accentPink,
+            borderRadius: BorderRadius.circular(16),
           ),
           child: loading
               ? const SizedBox(
@@ -351,12 +340,61 @@ class _FollowChip extends StatelessWidget {
                   ),
                 )
               : const Text(
-                  '+ Takip Et',
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
+                  'Takip et',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
                 ),
         ),
       ),
     );
+  }
+}
+
+/// Koyu cam çip — ikon + etiket (Saatlik Sıralama / Popüler / Keşfet).
+class _GlassChip extends StatelessWidget {
+  const _GlassChip({
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final chip = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.42),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: iconColor),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            maxLines: 1,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+    if (onTap == null) return chip;
+    return GestureDetector(onTap: onTap, child: chip);
   }
 }
 
@@ -431,18 +469,7 @@ class _ViewerPill extends StatelessWidget {
 
   static String _fmt(int n) {
     if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
-    if (n >= 1000) {
-      final s = n.toString();
-      if (n >= 10000) {
-        final withDot = StringBuffer();
-        for (var i = 0; i < s.length; i++) {
-          if (i > 0 && (s.length - i) % 3 == 0) withDot.write('.');
-          withDot.write(s[i]);
-        }
-        return withDot.toString();
-      }
-      return '${(n / 1000).toStringAsFixed(1)}K';
-    }
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
     return '$n';
   }
 }

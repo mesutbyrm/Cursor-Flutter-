@@ -39,7 +39,11 @@ class LiveStreamExtrasDataSource {
     return 0;
   }
 
-  Future<int> sendLike(String streamId, {int count = 1}) async {
+  Future<int> sendLike(
+    String streamId, {
+    int count = 1,
+    void Function(int score1, int score2)? onPkScore,
+  }) async {
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.videoStreamLike(streamId),
       data: {'count': count},
@@ -50,6 +54,10 @@ class LiveStreamExtrasDataSource {
       final data = map['data'] is Map
           ? Map<String, dynamic>.from(map['data'] as Map)
           : map;
+      final pk = data['pk'];
+      if (pk is Map && onPkScore != null) {
+        onPkScore(asInt(pk['score1']), asInt(pk['score2']));
+      }
       return asInt(pick(data, ['likeCount', 'count']));
     }
     return 0;

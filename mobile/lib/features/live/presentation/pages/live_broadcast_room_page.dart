@@ -144,6 +144,7 @@ import '../widgets/broadcast_room/live_moderation_sheet.dart';
 import '../providers/live_broadcast_settings_provider.dart';
 import '../widgets/broadcast_room/live_broadcast_settings_sheet.dart';
 import '../widgets/broadcast_room/live_viewers_sheet.dart';
+import '../widgets/broadcast_room/live_guest_invite_sheet.dart';
 import '../widgets/broadcast_room/live_fortune_request_popup.dart';
 import '../widgets/broadcast_room/live_room_chat_fal_panel.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
@@ -1680,17 +1681,19 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     }
   }
 
-  Future<void> _inviteViewerAsGuest({
+  Future<bool> _inviteViewerAsGuest({
     required String userId,
     required String displayName,
   }) async {
     final streamId = widget.session.streamId?.trim();
-    if (streamId == null || streamId.isEmpty || !widget.session.isHost) return;
+    if (streamId == null || streamId.isEmpty || !widget.session.isHost) {
+      return false;
+    }
     if (!_canAddCoGuest()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Misafir kotası dolu (8/8)')),
       );
-      return;
+      return false;
     }
     try {
       await ref.read(coBroadcastProvider.notifier).invite(
@@ -1699,15 +1702,17 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$displayName misafir daveti gönderildi')),
+          SnackBar(content: Text('Davet gönderildi: $displayName')),
         );
       }
+      return true;
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(ApiException.userMessage(e))),
         );
       }
+      return false;
     }
   }
 
@@ -2443,6 +2448,58 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     );
   }
 
+  void _openGuestInviteSheet() {
+    final sid = widget.session.streamId?.trim() ?? '';
+    if (sid.isEmpty) return;
+    unawaited(
+      showLiveGuestInviteSheet(
+        context,
+        ref,
+        streamId: sid,
+        hostUserId: widget.session.hostUserId ?? '',
+        onInvite: (userId, name) =>
+            _inviteViewerAsGuest(userId: userId, displayName: name),
+      ),
+    );
+  }
+
+  void _onViewerGuestRequest() {
+    final settings = ref.read(liveBroadcastSettingsProvider);
+    if (!settings.guestsEnabled && !settings.coBroadcastEnabled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Yayıncı misafir isteğini kapattı')),
+      );
+      return;
+    }
+    unawaited(_requestGuestJoin());
+  }
+
+  /// Alt çubuk «Misafir»: yayıncıda davet sheet'i, izleyicide misafirlik isteği.
+  void _onGuestButton() {
+    if (widget.session.isHost) {
+      _openGuestInviteSheet();
+    } else {
+      _onViewerGuestRequest();
+    }
+  }
+
+  void _openBroadcastSettings() => unawaited(
+        showLiveBroadcastSettingsSheet(
+          context: context,
+          ref: ref,
+          trtc: widget.session.isHost ? _trtc : null,
+          hostName: widget.session.streamerName,
+          hostAvatarUrl: widget.session.avatarUrl,
+          onBeautyFilter: () =>
+              showLiveBeautyFilterSheet(context: context, ref: ref),
+          onShare: _shareLive,
+          onEndBroadcast: widget.session.isHost
+              ? () => unawaited(_exitBroadcast(context))
+              : null,
+          onRtcChanged: () => setState(() => _localPreviewKey = UniqueKey()),
+        ),
+      );
+
   Future<void> _openLiveMoreMenu({
     required LiveBroadcastSession s,
     required bool giftsEnabled,
@@ -2465,25 +2522,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         onEmoji: _showLiveEmojiPicker,
         onGiftPanel: () =>
             ref.read(liveGiftControllerProvider).setPanelOpen(true),
-        onGuestRequest: () {
-          final settings = ref.read(liveBroadcastSettingsProvider);
-          if (!settings.guestsEnabled && !settings.coBroadcastEnabled) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Yayıncı misafir isteğini kapattı'),
-              ),
-            );
-            return;
-          }
-          unawaited(_requestGuestJoin());
-        },
+        onInviteGuest: _openGuestInviteSheet,
+        onGuestRequest: _onViewerGuestRequest,
         onPkPanel: _openPkPanel,
         onGames: _openGamesHub,
         onTournament: () => showLiveStarTournamentSheet(context, ref),
-        onBroadcastSettings: () => showLiveBroadcastSettingsSheet(
-          context: context,
-          ref: ref,
-        ),
+        onBroadcastSettings: _openBroadcastSettings,
         onBeautyFilter: () => showLiveBeautyFilterSheet(
           context: context,
           ref: ref,
@@ -2565,26 +2609,28 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   }
 
   Future<void> _endActivePk(String streamId) async {
-    final battleId = ref.read(liveVideoPkProvider(streamId)).battle?['id']?.toString() ??
-        ref.read(pkBattleRemoteProvider)?.effectiveId ??
-        '';
-    try {
-      if (battleId.isNotEmpty) {
-        await ref.read(pkBattleRemoteProvider.notifier).end(
-              battleId,
-              streamId: streamId,
-            );
-      }
-      await ref.read(liveVideoPkProvider(streamId).notifier).end();
-    } catch (_) {
-      try {
-        await ref.read(liveVideoPkProvider(streamId).notifier).end();
-      } catch (_) {}
+    final battleId =
+        ref.read(liveVideoPkProvider(streamId)).battle?['id']?.toString() ??
+            ref.read(pkBattleRemoteProvider)?.effectiveId ??
+            '';
+    // Ekran anında tekli yayına döner; sunucu bitirme çağrısı arkada sürer.
+    final ok =
+        await ref.read(liveVideoPkProvider(streamId).notifier).endAndExit();
+    if (battleId.isNotEmpty) {
+      unawaited(
+        ref
+            .read(pkBattleRemoteProvider.notifier)
+            .end(battleId, streamId: streamId)
+            .then<void>((_) {}, onError: (Object _) {}),
+      );
     }
-    ref.read(liveVideoPkProvider(streamId).notifier).forceExitPk();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('PK sona erdi')),
+        SnackBar(
+          content: Text(
+            ok ? 'PK sona erdi' : 'PK kapatıldı (sunucu yanıtı gecikti)',
+          ),
+        ),
       );
     }
   }
@@ -3165,6 +3211,19 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 ),
               ),
               moreBadgeCount: moreBadgeCount,
+              likeLabel: '${_fmtLikes(interaction.likeCount)} beğeni',
+              onGuest: hasStream &&
+                      (s.isHost ||
+                          ref.watch(liveBroadcastSettingsProvider).guestsEnabled ||
+                          ref
+                              .watch(liveBroadcastSettingsProvider)
+                              .coBroadcastEnabled)
+                  ? _onGuestButton
+                  : null,
+              onMulti: s.isHost && hasStream ? _openBroadcastSettings : null,
+              onSettings: s.isHost ? _openBroadcastSettings : null,
+              onShare: hasStream ? _shareLive : null,
+              multiLayoutActive: _resolveGuestLayout() != LiveGuestLayout.solo,
               onRtcStateChanged: s.isHost
                   ? () => setState(() => _localPreviewKey = UniqueKey())
                   : null,
@@ -3235,6 +3294,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                         ),
                   );
                 },
+                onShare: _shareLive,
                 onMore: () => unawaited(
                   _openLiveMoreMenu(
                     s: s,

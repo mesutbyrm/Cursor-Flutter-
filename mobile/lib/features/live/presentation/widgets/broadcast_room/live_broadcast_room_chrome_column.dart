@@ -60,6 +60,12 @@ class LiveBroadcastRoomChromeColumn extends ConsumerWidget {
     required this.onSend,
     required this.onEnd,
     this.moreBadgeCount = 0,
+    this.likeLabel,
+    this.onGuest,
+    this.onMulti,
+    this.onShare,
+    this.onSettings,
+    this.multiLayoutActive = false,
     this.suppressBottomChrome = false,
     this.suppressChatColumn = false,
     this.suppressTopChrome = false,
@@ -112,6 +118,12 @@ class LiveBroadcastRoomChromeColumn extends ConsumerWidget {
   final VoidCallback onSend;
   final VoidCallback? onEnd;
   final int moreBadgeCount;
+  final String? likeLabel;
+  final VoidCallback? onGuest;
+  final VoidCallback? onMulti;
+  final VoidCallback? onShare;
+  final VoidCallback? onSettings;
+  final bool multiLayoutActive;
   final bool suppressBottomChrome;
   final bool suppressChatColumn;
   final bool suppressTopChrome;
@@ -131,6 +143,7 @@ class LiveBroadcastRoomChromeColumn extends ConsumerWidget {
             child: LivePremiumTopBar(
               session: s,
               elapsedBadge: const LiveElapsedTimePill(),
+              likeLabel: likeLabel,
               streamTitle: s.title.trim().isNotEmpty ? s.title : null,
               fortuneTypeBadge: fortuneTypeBadge,
               networkQualityBadge: s.isHost
@@ -227,6 +240,11 @@ class LiveBroadcastRoomChromeColumn extends ConsumerWidget {
                   onSend: onSend,
                   onEnd: onEnd,
                   moreBadgeCount: moreBadgeCount,
+                  onGuest: onGuest,
+                  onMulti: onMulti,
+                  onShare: onShare,
+                  onSettings: onSettings,
+                  multiLayoutActive: multiLayoutActive,
                   showPkHostControls: s.isHost && pkActive,
                   opponentMuted: opponentMuted,
                   onEndPk: onEndPk,

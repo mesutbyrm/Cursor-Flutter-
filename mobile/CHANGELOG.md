@@ -1,5 +1,80 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.695+748 (2026-10-02) — PK alt çubuğu
+
+- **PK alt çubuğu:** «Yorum yaz...» + pembe Hediye + Paylaş tek satırda (Gönder yalnız yazarken görünür); yüzen «Gönder 🌹» düğmesi ve yeşil gönder/küçük hediye ikonları kaldırıldı
+- **Yayıncı kontrolleri:** Mikrofon · Kamera · Sohbet · Rakip sesi · PK bitir, çubuğun üstünde 44 px yuvarlak düğmeler; izleyicide bu satır yok ve sohbet her zaman açık
+
+## 1.0.694+747 (2026-10-02) — Canlı yayın PK: Bigo/TikTok düzeni
+
+- **Düzen:** sahne ekranın üst ~%54'ü (iki dikey panel + VS); skor barı videonun ÜSTÜNDE (kırmızı | mavi, sayılar uçlarda, süre ortada); alt yarı sohbet + hediye akışı + kontroller
+- **Sohbet:** sahnenin altında, kontrol çubuğunun üstünde tek bir sohbet alanı (ikinci/yinelenen sohbet katmanı kaldırıldı)
+- **Hediye akışı:** PK'da sahnenin altına iner; «PK devam ediyor» etiketi kaldırıldı; destekçi paneli sayaçla çakışmaz
+
+## 1.0.693+746 (2026-10-02) — Canlı Yayın Özeti
+
+- **Yayın sonu (yayıncı):** «Canlı Yayın Özeti» kartı — ⏱ Yayın süresi · 👥 Maksimum izleyici · ❤️ Beğeni · 🎁 Alınan hediyeler · 💰 Kazanılan Jeton + [Kapat]; «Detaylı özet» isteğe bağlı (eskiden ikinci sheet otomatik açılıyordu)
+- **İzleyici:** sade «Yayın bitti» kartı
+
+## 1.0.692+745 (2026-10-02) — Yayın sağ tarafı: yarışma kutuları
+
+- **Yarışma kutuları:** Sezon ve Haftalık kutuları puan gösterir — katıldıysan «#sıra · puan», değilse lider «1. Ad 12.4K»
+- **Düzeltme:** katılım durumu yüklenmeden karar verildiği için katılmış kullanıcıya da her seferinde «Katıl» soruluyordu; artık önce katılım durumu beklenir, alınamazsa soru sorulmaz
+
+## 1.0.691+744 (2026-10-02) — Kalp animasyonu
+
+- **Kalpler:** farklı boyut/renk/eğim, sağa-sola salınarak yukarı süzülür, pop ile girer ve solarak kaybolur; her kalbin kendi ömrü var (2.2–3.3 sn)
+- **Düzeltme:** eski katman kalpleri sonsuza dek döndürüyordu ve boştayken bile her karede çiziyordu — artık kalpler ömrü bitince silinir, kalp yokken ticker durur; en fazla 30 kalp
+
+## 1.0.690+743 (2026-10-02) — Hediye animasyonu
+
+- **Hediye akışı:** sol tarafta pill satırlar — avatar, «Ad / Aslan gönderdi», hediye ikonu, büyük «xN» (artınca pop animasyonu); aynı kişi + aynı hediye tek satırda birleşir; en fazla 3 satır
+- **Ekran ortası:** hediye animasyonunun arkasında parlama (glow), scale + fade giriş, bitmeden fade-out, hafif titreşim; sıra/kuyruk mevcut hediye motoruyla (üst üste binmez)
+
+## 1.0.689+742 (2026-10-02) — Tekli yayın düzeni
+
+- **Üst bar:** yayıncı adı + «1.2M beğeni», pembe «Takip et», «12.4K» izleyici (K biçimi), X; altında cam çipler: Saatlik Sıralama · Popüler · Keşfet >
+- **Sohbet:** küçük avatar + ad üstte / mesaj altta, kenarlıksız şeffaf gradyan zemin
+
+## 1.0.688+741 (2026-10-02) — Yayın ayarları sheet'i
+
+- **Yayın Ayarları:** yayıncı kartı; Kamera / Mikrofon aç-kapat (durum yazılı), Güzellik efektleri ve filtreler, Paylaş; Misafir kabul et · Yorumlar · Hediyeler · Fal isteği · PK · Çoklu yayın (+ düzen) anahtarları; sabit alt «Yayını Bitir»
+- Üç yerden (alt çubuk, ⋯ menüsü, 2x2 Ayarlar) aynı sheet açılır
+
+## 1.0.687+740 (2026-10-02) — Canlı yayın alt çubuğu
+
+- **Alt çubuk:** «Yorum yaz...» + Misafir · Çoklu (yayıncı) · Hediye (pembe) · Paylaş · Daha fazla; 2x2 çoklu yayında Çoklu/Paylaş yerine Ayarlar (yayıncı); yazarken yalnız yorum alanı görünür; 44 px dokunma alanı
+- **Hediye düğmesi:** sahte (sabit listeli) dropdown kaldırıldı — doğrudan gerçek hediye panelini açar
+- **Misafir düğmesi:** yayıncıda «Misafir Davet Et» sheet'i, izleyicide misafirlik isteği
+
+## 1.0.686+739 (2026-10-02) — Misafir Davet Et sheet'i
+
+- **Yayıncı:** «⋯» menüsünde yeni «Misafir Davet Et» sheet'i — «Kullanıcı ara...», avatar + ad + [Davet Et]; arama boşken izleyiciler, 2+ karakterde tüm kullanıcılar; davetten sonra satır «Gönderildi» olur
+
+## 1.0.685+738 (2026-10-02) — Hediye sheet'i yenilendi
+
+- **Hediye paneli:** Hediyeler · Özel · Lüks · Animasyon sekmeleri (+ Kutu, Destekçiler), 4 kolonlu ızgara, [−] adet [+] adımlayıcı, tam genişlik «Gönder 🪙 toplam»
+- **Bakiye:** yetmezse «Yeterli Jetonunuz yok» + «Jeton Al» (jeton mağazasına gider)
+
+## 1.0.684+737 (2026-10-02) — 2x2 çoklu canlı yayın yenilendi
+
+- **Izgara:** 2 kişi üst/alt, 3 kişi 1|2, 4 kişi 2x2 (boş alan yok); kutu başına avatar+isim, mikrofon/kamera durumu, hediye göstergesi
+- **Konuşan vurgusu:** TRTC ses seviyesiyle konuşan kutu neon çerçeveyle vurgulanır; kamera kapalıysa avatar gösterilir
+
+## 1.0.683+736 (2026-10-02) — Canlı yayın sohbeti
+
+- **Sohbet:** canlı yayın akışında mesajlar 40 sn sonra otomatik kaybolur (kayıt silinmez); art arda aynı hediye tek satırda toplanır («🎁 Mert → Ayşe · Aslan x3 (1500 Jeton)»)
+
+## 1.0.683+736 (2026-10-02) — Canlı yayın sohbeti
+
+- **Sohbet:** canlı yayın akışında mesajlar 40 sn sonra otomatik kaybolur (kayıt silinmez); art arda aynı hediye tek satırda toplanır («🎁 Mert → Ayşe · Aslan x3 (1500 Jeton)»)
+
+## 1.0.682+735 (2026-10-02) — Canlı yayın PK: sohbet, anında çıkış, anlık skor
+
+- **PK sohbeti:** canlı yayın PK ekranında sohbet akışı artık görünür (sol alt, şeffaf); kullanıcı mesajları ("pk" geçse bile) filtrelenmez
+- **PK bitir:** ekran anında tekli yayına döner (sunucu çağrısı arka planda); bitmiş/kapatılmış PK gecikmeli yanıtla yeniden açılmaz
+- **Skor:** beğeni/destek PK puanı yazar (sunucu `+3`), iki tarafa anında SSE; yayın SSE gecikmesi 1 sn → 250 ms; skor çubuğu animasyonlu
+
 ## 1.0.681+734 (2026-10-02) — VIP şifre kapısı zorunlu, PK düzeltmeleri, temizlik
 
 - **VIP şifreli oda:** kapı tüm giriş yollarında zorunlu (router'daki doğrudan `push` dahil); oda içeriği şifre geçilmeden oluşturulmuyor; sunucu da mesaj/SSE/durum/koltuk/TRTC uçlarında şifresiz erişimi reddediyor; "Oda Sahibine Bildir" → sahip popup'ı (kimin istediği görünür) → kabul/ret; ret sonrası düğme pasif

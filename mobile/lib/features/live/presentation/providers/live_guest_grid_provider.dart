@@ -158,6 +158,8 @@ class LiveGuestGridNotifier extends Notifier<LiveGuestGridState> {
         displayName: name,
         rtcUserId: _guestRtcUserId(g),
         jetonEarned: parseGuestJeton(g),
+        avatarUrl: (g['avatarUrl'] ?? g['userAvatar'] ?? g['avatar'] ?? g['image'])
+            ?.toString(),
       );
     }
     state = state.copyWith(slots: list);

@@ -73,8 +73,9 @@ class LiveGuestGrid extends ConsumerWidget {
 
     const gap = SizedBox(width: 3, height: 3);
 
+    // 2 kişi: üst/alt (boş alan gösterilmez).
     if (layout == LiveGuestLayout.duo) {
-      return Row(
+      return Column(
         children: [
           Expanded(child: cell(0)),
           gap,
@@ -188,6 +189,8 @@ class _SlotCell extends ConsumerWidget {
   final void Function(String action)? onAction;
   final int hostJetonEarned;
 
+  static const _neon = Color(0xFF22D3EE);
+
   int get _displayJeton =>
       slot.isHost || slot.index == 0 ? hostJetonEarned : slot.jetonEarned;
 
@@ -198,123 +201,196 @@ class _SlotCell extends ConsumerWidget {
     final isSelf = currentUserId != null &&
         ((slotUserId != null && slotUserId == currentUserId) ||
             (isHost && slot.isHost && slotUserId == null));
+    final remoteId = isSelf
+        ? null
+        : (slotUserId ?? (slot.isHost || slot.index == 0 ? remoteUserId : null));
 
-    Widget child;
-    if (isSelf) {
-      child = trtc != null
-          ? TrtcLocalVideoView(key: localPreviewKey, manager: trtc!)
-          : _placeholder(hostName ?? 'Sen', hostAvatarUrl);
-    } else {
-      final remoteId = slotUserId ??
-          (slot.isHost || slot.index == 0 ? remoteUserId : null);
-      if (!slot.cameraOn && slot.index > 0 && !slot.isHost) {
-        child = _placeholder(slot.displayName ?? hostName ?? 'Konuk', null);
-      } else if (remoteId != null &&
-          remoteId != currentUserId &&
-          trtc != null) {
-        child = TrtcRemoteVideoView(
+    if (!isSelf && remoteId == null && slot.isEmpty) return _emptySlot();
+
+    final name = slot.displayName ??
+        (slot.index == 0 || isSelf ? hostName : null) ??
+        (slot.index == 0 ? 'Yayıncı' : 'Konuk');
+    final avatar = slot.avatarUrl ?? (slot.index == 0 || isSelf ? hostAvatarUrl : null);
+
+    final videoMap = trtc?.remoteVideoByUser;
+    final audioMap = trtc?.remoteAudioByUser;
+    final speakingN = trtc?.speakingUsersNotifier;
+
+    Widget body(bool cameraOn, bool micOn, bool speaking) {
+      Widget video;
+      if (!cameraOn) {
+        video = _cameraOffPlaceholder(name, avatar);
+      } else if (isSelf) {
+        video = trtc != null
+            ? TrtcLocalVideoView(key: localPreviewKey, manager: trtc!)
+            : _cameraOffPlaceholder(name, avatar);
+      } else if (remoteId != null && trtc != null) {
+        video = TrtcRemoteVideoView(
           key: ValueKey(remoteId),
           manager: trtc!,
           userId: remoteId,
         );
-      } else if (slot.isEmpty) {
-        return _emptySlot();
       } else {
-        child = _placeholder(slot.displayName ?? hostName ?? 'Yayıncı', null);
+        video = _cameraOffPlaceholder(name, avatar);
       }
-    }
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(10),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          child,
-          if (pinned)
-            Positioned(
-              top: 6,
-              left: 6,
-              child: _badge(Icons.push_pin_rounded, 'Sabit'),
-            ),
-          if (slot.mutedByHost)
-            Positioned(
-              top: 6,
-              right: 6,
-              child: _badge(Icons.mic_off_rounded, 'Sessiz'),
-            ),
-          if (!slot.cameraOn && slot.index > 0)
-            Positioned(
-              top: 6,
-              right: slot.mutedByHost ? 56 : 6,
-              child: _badge(Icons.videocam_off_rounded, 'Kamera kapalı'),
-            ),
-          Positioned(
-            left: 6,
-            bottom: 6,
-            right: isHost && slot.index > 0 && onAction != null ? 72 : 6,
-            child: _badge(
-              Icons.person_rounded,
-              slot.displayName ?? hostName ?? 'Yayıncı',
-            ),
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: speaking ? _neon : Colors.white.withValues(alpha: 0.08),
+            width: speaking ? 2 : 1,
           ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 28,
-            child: LiveSeatGiftFlashStack(
-              userId: slot.userId ?? (slot.index == 0 ? null : remoteUserId),
-              displayName: slot.displayName ?? (slot.index == 0 ? hostName : null),
-            ),
-          ),
-          Positioned(
-            left: 6,
-            right: 6,
-            bottom: 6,
-            child: Center(
-              child: SeatGiftBadge(
-                compact: true,
-                receiverName: slot.displayName ?? hostName ?? 'Yayıncı',
-                aggregate: ref.watch(
-                  liveSeatGiftTotalsProvider.select(
-                    (m) => selectSeatGiftAggregate(
-                      m,
-                      userId: slot.userId ??
-                          (slot.index == 0 ? null : remoteUserId),
-                      displayName: slot.displayName ??
-                          (slot.index == 0 ? hostName : null),
+          boxShadow: speaking
+              ? [BoxShadow(color: _neon.withValues(alpha: 0.45), blurRadius: 10)]
+              : null,
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(11),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              video,
+              // Alt gradyan — isim/ikon okunaklı kalsın.
+              const Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: 56,
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.transparent, Color(0xAA000000)],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ),
-          if (_displayJeton > 0)
-            Positioned(
-              left: 6,
-              top: 6,
-              child: _badge(Icons.monetization_on_rounded, '$_displayJeton'),
-            ),
-          if (isHost && slot.index > 0 && onAction != null)
-            Positioned(
-              right: 4,
-              bottom: 4,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _miniBtn(Icons.push_pin_outlined, () => onAction!('pin')),
-                  _miniBtn(Icons.mic_off_outlined, () => onAction!('mute')),
-                  _miniBtn(
-                    slot.cameraOn
-                        ? Icons.videocam_off_outlined
-                        : Icons.videocam_rounded,
-                    () => onAction!('cam'),
+              if (_displayJeton > 0)
+                Positioned(
+                  left: 6,
+                  top: 6,
+                  child: _pill(
+                    Icons.favorite_rounded,
+                    _fmt(_displayJeton),
+                    const Color(0xFFFF2D7A),
                   ),
-                ],
+                ),
+              if (pinned)
+                Positioned(
+                  left: 6,
+                  top: _displayJeton > 0 ? 30 : 6,
+                  child: _pill(Icons.push_pin_rounded, 'Sabit', Colors.white),
+                ),
+              if (isHost && slot.index > 0 && onAction != null)
+                Positioned(
+                  right: 4,
+                  top: 4,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _miniBtn(Icons.push_pin_outlined, () => onAction!('pin')),
+                      _miniBtn(Icons.mic_off_outlined, () => onAction!('mute')),
+                      _miniBtn(
+                        cameraOn
+                            ? Icons.videocam_off_outlined
+                            : Icons.videocam_rounded,
+                        () => onAction!('cam'),
+                      ),
+                    ],
+                  ),
+                ),
+              Positioned(
+                left: 6,
+                bottom: 6,
+                right: 36,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: _namePill(name, avatar),
+                ),
               ),
-            ),
-        ],
-      ),
+              Positioned(
+                right: 6,
+                bottom: 6,
+                child: _micDot(micOn),
+              ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 34,
+                child: LiveSeatGiftFlashStack(
+                  userId: slot.userId ?? (slot.index == 0 ? null : remoteUserId),
+                  displayName:
+                      slot.displayName ?? (slot.index == 0 ? hostName : null),
+                ),
+              ),
+              Positioned(
+                left: 6,
+                right: 6,
+                bottom: 30,
+                child: Center(
+                  child: SeatGiftBadge(
+                    compact: true,
+                    receiverName: name,
+                    aggregate: ref.watch(
+                      liveSeatGiftTotalsProvider.select(
+                        (m) => selectSeatGiftAggregate(
+                          m,
+                          userId: slot.userId ??
+                              (slot.index == 0 ? null : remoteUserId),
+                          displayName: slot.displayName ??
+                              (slot.index == 0 ? hostName : null),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Kamera/mikrofon/konuşma durumu: uzak katılımcı için TRTC bildirimcileri,
+    // yerel için TrtcRoomManager alanları.
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        ?videoMap,
+        ?audioMap,
+        ?speakingN,
+      ]),
+      builder: (context, _) {
+        final bool cameraOn;
+        final bool micOn;
+        final bool speaking;
+        if (isSelf) {
+          cameraOn = trtc?.cameraOn ?? slot.cameraOn;
+          micOn = (trtc?.micOn ?? slot.micOn) && !slot.mutedByHost;
+          speaking = micOn &&
+              (speakingN?.value.contains(TrtcRoomManager.localSpeakingKey) ??
+                  false);
+        } else {
+          final rid = remoteId;
+          cameraOn = slot.cameraOn &&
+              (rid == null || (videoMap?.value[rid] ?? true));
+          micOn = !slot.mutedByHost &&
+              (rid == null || (audioMap?.value[rid] ?? true));
+          speaking = rid != null && (speakingN?.value.contains(rid) ?? false);
+        }
+        return body(cameraOn, micOn, speaking);
+      },
     );
+  }
+
+  static String _fmt(int v) {
+    if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)}M';
+    if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}K';
+    return '$v';
   }
 
   Widget _emptySlot() {
@@ -322,9 +398,9 @@ class _SlotCell extends ConsumerWidget {
       onTap: onInvite,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.45),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+          color: Colors.white.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -336,9 +412,9 @@ class _SlotCell extends ConsumerWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              'Davet et',
+              onInvite != null ? 'Davet et' : 'Boş',
               style: TextStyle(
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: FontWeight.w700,
                 color: Colors.white.withValues(alpha: 0.85),
               ),
@@ -349,46 +425,119 @@ class _SlotCell extends ConsumerWidget {
     );
   }
 
-  Widget _placeholder(String name, String? avatar) {
+  Widget _cameraOffPlaceholder(String name, String? avatar) {
     return Container(
-      color: Colors.black54,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF2A1450), Color(0xFF120A24)],
+        ),
+      ),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (avatar?.isNotEmpty == true)
-              CircleAvatar(
-                radius: 24,
-                backgroundImage: canlifalImageProvider(avatar!),
-              )
-            else
-              const Icon(Icons.person_rounded, color: Colors.white54, size: 40),
+            CircleAvatar(
+              radius: 30,
+              backgroundColor: Colors.white12,
+              backgroundImage:
+                  avatar?.isNotEmpty == true ? canlifalImageProvider(avatar!) : null,
+              child: avatar?.isNotEmpty == true
+                  ? null
+                  : const Icon(Icons.person_rounded,
+                      color: Colors.white54, size: 34),
+            ),
             const SizedBox(height: 6),
-            Text(name, style: const TextStyle(color: Colors.white70, fontSize: 11)),
+            const Icon(Icons.videocam_off_rounded,
+                color: Colors.white38, size: 14),
           ],
         ),
       ),
     );
   }
 
-  Widget _badge(IconData icon, String label) {
+  Widget _namePill(String name, String? avatar) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(14),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-          color: Colors.black.withValues(alpha: 0.45),
+          padding: const EdgeInsets.fromLTRB(3, 3, 8, 3),
+          color: Colors.black.withValues(alpha: 0.4),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 11, color: Colors.white),
+              CircleAvatar(
+                radius: 9,
+                backgroundColor: Colors.white24,
+                backgroundImage: avatar?.isNotEmpty == true
+                    ? canlifalImageProvider(avatar!)
+                    : null,
+                child: avatar?.isNotEmpty == true
+                    ? null
+                    : const Icon(Icons.person_rounded,
+                        size: 11, color: Colors.white70),
+              ),
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _micDot(bool micOn) {
+    return Container(
+      width: 24,
+      height: 24,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: micOn
+            ? Colors.black.withValues(alpha: 0.45)
+            : const Color(0xFFE11D48).withValues(alpha: 0.9),
+      ),
+      child: Icon(
+        micOn ? Icons.mic_rounded : Icons.mic_off_rounded,
+        size: 14,
+        color: Colors.white,
+      ),
+    );
+  }
+
+  Widget _pill(IconData icon, String label, Color iconColor) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+          color: Colors.black.withValues(alpha: 0.4),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 12, color: iconColor),
               const SizedBox(width: 4),
               Text(
                 label,
                 maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Colors.white, fontSize: 9),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ],
           ),
@@ -398,15 +547,18 @@ class _SlotCell extends ConsumerWidget {
   }
 
   Widget _miniBtn(IconData icon, VoidCallback onTap) {
-    return Material(
-      color: Colors.black54,
-      borderRadius: BorderRadius.circular(6),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        child: Padding(
-          padding: const EdgeInsets.all(4),
-          child: Icon(icon, size: 14, color: Colors.white),
+    return Padding(
+      padding: const EdgeInsets.only(left: 3),
+      child: Material(
+        color: Colors.black54,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.all(5),
+            child: Icon(icon, size: 14, color: Colors.white),
+          ),
         ),
       ),
     );

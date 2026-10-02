@@ -304,8 +304,20 @@ class LivePkReferenceScoreBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final total = (leftScore + rightScore).clamp(1, 1 << 31);
-    final leftPct = (leftScore / total * 100).round().clamp(1, 99);
-    final rightPct = 100 - leftPct;
+    final targetLeft = (leftScore / total).clamp(0.01, 0.99);
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(end: targetLeft),
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
+      builder: (context, animLeft, _) {
+        final leftPct = (animLeft * 1000).round().clamp(10, 990);
+        final rightPct = 1000 - leftPct;
+        return _buildBar(leftPct, rightPct);
+      },
+    );
+  }
+
+  Widget _buildBar(int leftPct, int rightPct) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Column(

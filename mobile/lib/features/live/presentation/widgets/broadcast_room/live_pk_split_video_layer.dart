@@ -26,7 +26,6 @@ import '../../../../pk/presentation/providers/pk_providers.dart';
 import '../../../../pk/presentation/widgets/pk_battle_visuals.dart';
 import '../../../../voice_hub/presentation/widgets/premium_2026/pk/pk_vs_emblem.dart';
 import 'live_pk_immersive_video_pane.dart';
-import 'live_pk_resolved_timer.dart';
 import 'live_pk_reference_chat_overlay.dart';
 import 'live_pk_pane_gift_toast.dart';
 import 'live_pk_layout_metrics.dart';
@@ -410,8 +409,17 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
         // Kullanıcı isteği: video %15 daha küçük (alttan yukarı).
         final filledVideoHeight =
             availableVideoHeight < paneWidth ? paneWidth : availableVideoHeight;
-        final videoHeight = filledVideoHeight.clamp(0.0, constraints.maxHeight);
-        final scoreBarTop = videoTop + videoHeight;
+        // Bigo/TikTok: sahne ekranın üst ~%54'ü; altı sohbet + hediye alanı.
+        final stageCap = (constraints.maxHeight * 0.54 - videoTop)
+            .clamp(paneWidth, constraints.maxHeight)
+            .toDouble();
+        final videoHeight =
+            filledVideoHeight.clamp(0.0, constraints.maxHeight).clamp(0.0, stageCap).toDouble();
+        final videoBottom = videoTop + videoHeight;
+        final chromeBottom = LivePkLayoutMetrics.chromeReserve(context);
+        final chatHeight = (constraints.maxHeight - videoBottom - chromeBottom - 12)
+            .clamp(80.0, 260.0)
+            .toDouble();
 
         return ColoredBox(
           color: Colors.black,
@@ -615,30 +623,32 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                   ],
                 ),
               ),
-              // Referans skor barı — video ile alt kontroller arasında.
+              // Skor barı videonun ÜSTÜNDE (Bigo/TikTok): kırmızı | mavi, sayılar
+              // uçlarda, VS + süre ortada.
               Positioned(
-                top: scoreBarTop,
+                top: videoTop + 6,
                 left: 0,
                 right: 0,
                 child: LivePkReferenceScoreBar(
                   leftScore: leftScore,
                   rightScore: rightScore,
-                  showStatus: !ended,
+                  showStatus: false,
                   countdownActive: pkActive && !ended,
                   endsAt: endsAt,
                   fallbackSeconds: secondsLeft,
                   onCountdownExpired: session.isHost ? widget.onEndPk : null,
                 ),
               ),
+              // Sohbet: sahnenin altında, kontrol çubuğunun üstünde.
               Positioned(
                 left: LivePkLayoutMetrics.chatOverlayLeftPadding,
-                bottom: LivePkLayoutMetrics.videoBottomInset(context) + 6,
-                width: MediaQuery.sizeOf(context).width *
-                    LivePkLayoutMetrics.chatOverlayWidthFactor,
-                height: LivePkLayoutMetrics.chatOverlayHeight,
+                bottom: chromeBottom + 6,
+                width: MediaQuery.sizeOf(context).width * 0.72,
+                height: chatHeight,
                 child: LivePkReferenceChatOverlay(
                   streamId: chatStreamId,
                   visible: widget.chatVisible,
+                  maxHeight: chatHeight,
                 ),
               ),
               LivePkReferenceTopBar(
@@ -648,7 +658,8 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                 viewers: viewers,
               ),
               Positioned(
-                top: headerH + 8,
+                // Skor barı + sayaç altında (üst üste binmesin).
+                top: headerH + 84,
                 right: 8,
                 width: MediaQuery.sizeOf(context).width * 0.42,
                 child: LivePkTopSupportersPanel(

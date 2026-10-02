@@ -178,7 +178,7 @@ void main() {
       final ctrl = await _pumpPanel(tester, balance: 100);
       await tester.tap(find.text('Kalp'));
       await tester.pump();
-      await tester.tap(find.text('Fal'));
+      await tester.tap(find.text('Özel'));
       await tester.pump();
       await tester.pump();
       expect(find.text('Kalp'), findsNothing);
@@ -191,7 +191,7 @@ void main() {
       final ctrl = await _pumpPanel(tester, balance: 100);
       await tester.tap(find.text('Kalp'));
       await tester.pump();
-      await tester.tap(find.text('VIP'));
+      await tester.tap(find.text('Lüks'));
       await tester.pump();
       await tester.pump();
       expect(find.text('Bu kategoride hediye yok'), findsOneWidget);
@@ -205,17 +205,32 @@ void main() {
       final ctrl = await _pumpPanel(tester, balance: 100);
       await tester.tap(find.text('Kalp'));
       await tester.pump();
-      await tester.tap(find.text('x5'));
-      await tester.pump();
+      for (var i = 0; i < 4; i++) {
+        await tester.tap(find.byIcon(Icons.add_rounded));
+        await tester.pump();
+      }
+      expect(find.text('x5'), findsOneWidget);
       expect(find.text('100'), findsNWidgets(2)); // bakiye + toplam
       await _tapSend(tester);
       expect(ctrl.sent.single, ('Kalp', 5));
       await _dispose(tester);
     });
 
+    testWidgets('bakiye yetmezse "Yeterli Jetonunuz yok" ve "Jeton Al"', (
+      tester,
+    ) async {
+      final ctrl = await _pumpPanel(tester, balance: 5);
+      await tester.tap(find.text('Kalp'));
+      await tester.pump();
+      expect(find.text('Yeterli Jetonunuz yok'), findsOneWidget);
+      expect(find.text('Jeton Al'), findsOneWidget);
+      expect(find.text('Gönder'), findsNothing);
+      expect(ctrl.sent, isEmpty);
+    });
+
     testWidgets('açık temada başlık koyu panelde okunur', (tester) async {
       await _pumpPanel(tester, theme: AppTheme.light());
-      final ctx = tester.element(find.text('Hediye Gönder'));
+      final ctx = tester.element(find.text('Hediyeler'));
       expect(Theme.of(ctx).brightness, Brightness.dark);
     });
   });

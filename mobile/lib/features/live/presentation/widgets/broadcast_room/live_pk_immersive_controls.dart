@@ -29,9 +29,8 @@ class LivePkImmersiveControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bottom = MediaQuery.paddingOf(context).bottom;
     return Padding(
-      padding: EdgeInsets.fromLTRB(12, 8, 12, bottom + 8),
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
@@ -66,8 +65,8 @@ class _RoundControl extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 52,
-              height: 52,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: bg,
@@ -86,7 +85,7 @@ class _RoundControl extends StatelessWidget {
               child: Icon(
                 item.danger ? Icons.stop_rounded : item.icon,
                 color: item.danger ? Colors.white : iconColor,
-                size: item.danger ? 26 : 24,
+                size: item.danger ? 22 : 22,
               ),
             ),
             const SizedBox(height: 4),
@@ -105,7 +104,7 @@ class _RoundControl extends StatelessWidget {
   }
 }
 
-/// Sohbet girişi — kompakt, video üzerinde.
+/// PK alt çubuğu (Bigo/TikTok): «Yorum yaz...» + Hediye + Paylaş.
 class LivePkChatInputBar extends StatelessWidget {
   const LivePkChatInputBar({
     super.key,
@@ -113,6 +112,7 @@ class LivePkChatInputBar extends StatelessWidget {
     required this.onSend,
     this.onToggleVisibility,
     this.onGift,
+    this.onShare,
     this.onQuickRose,
     this.onMore,
     this.visible = true,
@@ -122,6 +122,7 @@ class LivePkChatInputBar extends StatelessWidget {
   final VoidCallback onSend;
   final VoidCallback? onToggleVisibility;
   final VoidCallback? onGift;
+  final VoidCallback? onShare;
   final VoidCallback? onQuickRose;
   final VoidCallback? onMore;
   final bool visible;
@@ -130,60 +131,56 @@ class LivePkChatInputBar extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!visible) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
-            child: DecoratedBox(
+            child: Container(
+              height: 44,
               decoration: BoxDecoration(
-                color: const Color(0xFF1C1C1E).withValues(alpha: 0.88),
-                borderRadius: BorderRadius.circular(26),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                color: Colors.white.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
               ),
               child: Row(
                 children: [
                   Expanded(
                     child: TextField(
                       controller: controller,
-                      minLines: 1,
-                      maxLines: 4,
-                      style: const TextStyle(color: Colors.white, fontSize: 15),
+                      maxLines: 1,
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
                       decoration: InputDecoration(
-                        hintText: 'Mesaj',
+                        hintText: 'Yorum yaz...',
                         hintStyle: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.42),
-                          fontSize: 15,
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: 14,
                         ),
                         border: InputBorder.none,
+                        isDense: true,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
-                          vertical: 11,
+                          vertical: 12,
                         ),
                       ),
                       textInputAction: TextInputAction.send,
                       onSubmitted: (_) => onSend(),
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(right: 6, bottom: 6, top: 6),
-                    child: Material(
-                      color: const Color(0xFF25D366),
-                      shape: const CircleBorder(),
-                      clipBehavior: Clip.antiAlias,
-                      child: InkWell(
-                        onTap: onSend,
-                        child: const SizedBox(
-                          width: 40,
-                          height: 40,
-                          child: Icon(
-                            Icons.send_rounded,
-                            color: Colors.white,
-                            size: 20,
+                  // Gönder yalnız yazı varken görünür.
+                  ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: controller,
+                    builder: (context, v, _) => v.text.trim().isEmpty
+                        ? const SizedBox(width: 8)
+                        : IconButton(
+                            onPressed: onSend,
+                            tooltip: 'Gönder',
+                            icon: const Icon(
+                              Icons.send_rounded,
+                              color: Colors.white70,
+                              size: 20,
+                            ),
                           ),
-                        ),
-                      ),
-                    ),
                   ),
                 ],
               ),
@@ -191,25 +188,78 @@ class LivePkChatInputBar extends StatelessWidget {
           ),
           if (onGift != null) ...[
             const SizedBox(width: 8),
-            Material(
-              color: Colors.black.withValues(alpha: 0.45),
-              shape: const CircleBorder(),
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: onGift,
-                child: const SizedBox(
-                  width: 44,
-                  height: 44,
-                  child: Icon(
-                    Icons.card_giftcard_rounded,
-                    color: Color(0xFFFFD54F),
-                    size: 22,
-                  ),
-                ),
+            _BarAction(
+              onTap: onGift!,
+              label: 'Hediye',
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFF4D8D), Color(0xFFB832FF)],
               ),
+              icon: Icons.card_giftcard_rounded,
+            ),
+          ],
+          if (onShare != null) ...[
+            const SizedBox(width: 8),
+            _BarAction(
+              onTap: onShare!,
+              label: 'Paylaş',
+              icon: Icons.ios_share_rounded,
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _BarAction extends StatelessWidget {
+  const _BarAction({
+    required this.onTap,
+    required this.label,
+    required this.icon,
+    this.gradient,
+  });
+
+  final VoidCallback onTap;
+  final String label;
+  final IconData icon;
+  final Gradient? gradient;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: label,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: gradient,
+                color: gradient == null
+                    ? Colors.black.withValues(alpha: 0.4)
+                    : null,
+                border: gradient == null
+                    ? Border.all(color: Colors.white.withValues(alpha: 0.18))
+                    : null,
+              ),
+              child: Icon(icon, color: Colors.white, size: 21),
+            ),
+            const SizedBox(height: 1),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
