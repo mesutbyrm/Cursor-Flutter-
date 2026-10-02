@@ -5,12 +5,10 @@ import '../../../../trtc/presentation/trtc_room_manager.dart';
 import '../../../domain/entities/live_broadcast_session.dart';
 import '../../../domain/pk/live_pk_broadcast_stage.dart';
 import '../../../domain/pk/pk_status_helper.dart';
-import '../../../domain/pk/live_pk_chat_stream.dart';
 import '../../providers/live_pk_ui_providers.dart';
 import '../../providers/live_video_pk_provider.dart';
 import 'live_pk_immersive_controls.dart';
 import 'live_pk_layout_metrics.dart';
-import 'live_pk_reference_chat_overlay.dart';
 
 /// Yayın odası PK — alt kontroller + mesaj girişi (referans 1:1).
 class LivePkBroadcastOverlay extends ConsumerWidget {
@@ -66,20 +64,6 @@ class LivePkBroadcastOverlay extends ConsumerWidget {
           onTap: onGift,
           bottom: chromeBottom + LivePkLayoutMetrics.scoreBandHeight + 12,
         ),
-        if (chatOpen)
-          Positioned(
-            left: LivePkLayoutMetrics.chatOverlayLeftPadding,
-            bottom: controlsHeight + LivePkLayoutMetrics.inputBarHeight + 8,
-            width: MediaQuery.sizeOf(context).width *
-                LivePkLayoutMetrics.chatOverlayWidthFactor,
-            height: LivePkLayoutMetrics.chatOverlayHeight,
-            child: LivePkReferenceChatOverlay(
-              streamId: livePkEffectiveChatStreamId(
-                battle: pk.battle,
-                myStreamId: streamId,
-              ),
-            ),
-          ),
         Positioned(
           left: 0,
           right: 0,

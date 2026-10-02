@@ -67,10 +67,14 @@ class GiftFeedPanel extends ConsumerWidget {
     super.key,
     required this.sessionKey,
     this.maxWidth = 270,
+    this.topFraction = 0.40,
   });
 
   final String sessionKey;
   final double maxWidth;
+
+  /// Akışın ekran yüksekliğine göre üst konumu (PK'da sahnenin altına iner).
+  final double topFraction;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -82,7 +86,7 @@ class GiftFeedPanel extends ConsumerWidget {
 
     return Positioned(
       left: 12,
-      top: MediaQuery.sizeOf(context).height * 0.40,
+      top: MediaQuery.sizeOf(context).height * topFraction,
       width: maxWidth,
       child: IgnorePointer(
         child: RepaintBoundary(

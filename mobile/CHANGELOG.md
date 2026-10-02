@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.694+747 (2026-10-02) — Canlı yayın PK: Bigo/TikTok düzeni
+
+- **Düzen:** sahne ekranın üst ~%54'ü (iki dikey panel + VS); skor barı videonun ÜSTÜNDE (kırmızı | mavi, sayılar uçlarda, süre ortada); alt yarı sohbet + hediye akışı + kontroller
+- **Sohbet:** sahnenin altında, kontrol çubuğunun üstünde tek bir sohbet alanı (ikinci/yinelenen sohbet katmanı kaldırıldı)
+- **Hediye akışı:** PK'da sahnenin altına iner; «PK devam ediyor» etiketi kaldırıldı; destekçi paneli sayaçla çakışmaz
+
 ## 1.0.693+746 (2026-10-02) — Canlı Yayın Özeti
 
 - **Yayın sonu (yayıncı):** «Canlı Yayın Özeti» kartı — ⏱ Yayın süresi · 👥 Maksimum izleyici · ❤️ Beğeni · 🎁 Alınan hediyeler · 💰 Kazanılan Jeton + [Kapat]; «Detaylı özet» isteğe bağlı (eskiden ikinci sheet otomatik açılıyordu)

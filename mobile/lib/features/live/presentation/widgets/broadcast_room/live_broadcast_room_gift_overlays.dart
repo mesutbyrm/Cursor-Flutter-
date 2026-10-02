@@ -62,7 +62,11 @@ class LiveBroadcastRoomGiftOverlays extends ConsumerWidget {
             ),
           ),
         ),
-        GiftFeedPanel(sessionKey: streamId),
+        GiftFeedPanel(
+          sessionKey: streamId,
+          topFraction: clipToVideoRegion ? 0.57 : 0.40,
+          maxWidth: clipToVideoRegion ? 220 : 270,
+        ),
       ],
     );
   }
