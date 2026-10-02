@@ -6,7 +6,9 @@ import 'package:canlifal_social/features/vip_gold/data/room_access_remote_dataso
 import 'package:canlifal_social/features/vip_gold/domain/room_access_models.dart';
 import 'package:canlifal_social/features/vip_gold/domain/voice_room_access.dart';
 import 'package:canlifal_social/features/vip_gold/presentation/providers/room_access_providers.dart';
+import 'package:canlifal_social/core/network/api_exception.dart';
 import 'package:canlifal_social/features/vip_gold/presentation/widgets/vip_locked_room_sheet.dart';
+import 'package:canlifal_social/features/voice_hub/presentation/voice_room_gated_entry.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -139,6 +141,7 @@ Future<(ProviderContainer, _FakeRemote, ValueNotifier<bool?>)> _pumpSheet(
 }
 
 void main() {
+  gateTests();
   group('RoomAccessRemoteDataSource', () {
     test('verifyPassword: 200 → jeton döner', () async {
       final a = _Adapter(
@@ -272,7 +275,7 @@ void main() {
       expect(find.text('Şifreli Oda'), findsOneWidget);
       expect(find.text('3 giriş hakkınız bulunmaktadır.'), findsOneWidget);
       expect(find.text('Odaya Gir'), findsOneWidget);
-      expect(find.text('Oda Sahibinden İzin İste'), findsOneWidget);
+      expect(find.text('Oda Sahibine Bildir'), findsOneWidget);
     });
 
     testWidgets('yanlış şifre kalan hakkı gösterir; 3. yanlışta kilitlenir',
@@ -311,7 +314,7 @@ void main() {
 
     testWidgets('izin isteği yalnızca bir kez gönderilebilir', (tester) async {
       final (_, fake, _) = await _pumpSheet(tester);
-      await tester.tap(find.text('Oda Sahibinden İzin İste'));
+      await tester.tap(find.text('Oda Sahibine Bildir'));
       await tester.pumpAndSettle();
       expect(
         find.text('Oda sahibine giriş isteğiniz gönderildi.'),
@@ -341,6 +344,57 @@ void main() {
       expect(n.peek('b'), 't2');
       n.clear('b');
       expect(n.peek('b'), isNull);
+    });
+  });
+}
+
+class _GateRemote extends RoomAccessRemoteDataSource {
+  _GateRemote(this.onStatus) : super(Dio());
+  final Future<RoomAccessStatus> Function() onStatus;
+  @override
+  Future<RoomAccessStatus> status(String roomKey) => onStatus();
+}
+
+Future<void> _pumpGate(WidgetTester tester, RoomAccessRemoteDataSource remote) async {
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [roomAccessRemoteProvider.overrideWithValue(remote)],
+      child: MaterialApp(
+        home: VoiceRoomGatedEntry(room: _room(), prepareSwitch: false),
+      ),
+    ),
+  );
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 100));
+}
+
+void gateTests() {
+  group('VoiceRoomGatedEntry (tek şifre kapısı)', () {
+    testWidgets('şifreli odada kapı geçilmeden oda sayfası oluşturulmaz',
+        (tester) async {
+      await _pumpGate(
+        tester,
+        _GateRemote(
+          () async => const RoomAccessStatus(passwordProtected: true),
+        ),
+      );
+      // Şifre sayfası açık; oda içeriği yok.
+      expect(find.text('Şifreli Oda'), findsOneWidget);
+      // Sayfayı kapat → engel ekranı; oda içeriği hâlâ yok.
+      await tester.tapAt(const Offset(5, 5));
+      await tester.pumpAndSettle();
+      expect(find.text('Bu odaya girmek için şifre gerekli'), findsOneWidget);
+      expect(find.text('Şifre gir'), findsOneWidget);
+    });
+
+    testWidgets('durum alınamazsa (ağ hatası) oda açılmaz, tekrar dene çıkar',
+        (tester) async {
+      await _pumpGate(
+        tester,
+        _GateRemote(() async => throw const ApiException('Bağlantı yok')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Tekrar dene'), findsOneWidget);
     });
   });
 }

@@ -171,6 +171,7 @@ import '../../features/voice_hub/presentation/pages/pk_invite_page.dart';
 import '../../features/voice_hub/presentation/pages/pk_result_page.dart';
 import '../../features/voice_hub/presentation/pages/voice_pk_battle_page.dart';
 import '../../features/voice_hub/presentation/voice_room_route_page.dart';
+import '../../features/voice_hub/presentation/voice_room_gated_entry.dart';
 import '../../features/voice_hub/presentation/basic/voice_room_page.dart';
 import '../../features/voice_hub/presentation/widgets/voice_room_error_boundary.dart';
 import '../../features/voice_hub/presentation/voice_rooms_hub_page.dart';
@@ -2314,11 +2315,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           final room = state.extra as VoiceRoomEntity?;
           final Widget child;
           if (room != null) {
-            final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
-            child = VoiceRoomErrorBoundary(
-              roomId: key,
-              child: buildVoiceRoomPage(room),
-            );
+            // Tüm giriş yolları şifre kapısından geçer (oda içeriği kapı
+            // geçilmeden oluşturulmaz).
+            child = VoiceRoomGatedEntry(room: room, prepareSwitch: false);
           } else {
             final id = state.pathParameters['id'] ?? '';
             child = VoiceRoomRoutePage(roomId: id);
