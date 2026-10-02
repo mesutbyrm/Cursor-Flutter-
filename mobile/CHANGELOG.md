@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.684+737 (2026-10-02) — 2x2 çoklu canlı yayın yenilendi
+
+- **Izgara:** 2 kişi üst/alt, 3 kişi 1|2, 4 kişi 2x2 (boş alan yok); kutu başına avatar+isim, mikrofon/kamera durumu, hediye göstergesi
+- **Konuşan vurgusu:** TRTC ses seviyesiyle konuşan kutu neon çerçeveyle vurgulanır; kamera kapalıysa avatar gösterilir
+
 ## 1.0.683+736 (2026-10-02) — Canlı yayın sohbeti
 
 - **Sohbet:** canlı yayın akışında mesajlar 40 sn sonra otomatik kaybolur (kayıt silinmez); art arda aynı hediye tek satırda toplanır («🎁 Mert → Ayşe · Aslan x3 (1500 Jeton)»)
