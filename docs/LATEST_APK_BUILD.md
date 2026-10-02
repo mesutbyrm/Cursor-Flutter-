@@ -4,21 +4,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.696+749` |
-| Tarih (UTC) | 2026-10-02 20:19 |
-| Commit | [`b3e4fe33c804d2be7938ae4d34c76613659d520d`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/b3e4fe33c804d2be7938ae4d34c76613659d520d) |
-| İş akışı | [Run 37058071492](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37058071492) |
+| Sürüm | `1.0.697+750` |
+| Tarih (UTC) | 2026-10-02 21:39 |
+| Commit | [`10666058064655c3b65c25a947f0ea29d3d3a438`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/10666058064655c3b65c25a947f0ea29d3d3a438) |
+| İş akışı | [Run 37065990750](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37065990750) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.696+749 (2026-10-02) — Canlı falcı hata düzeltmeleri
+## 1.0.697+750 (2026-10-02) — Falcı gecikmesi, canlı yayın senkronu, ayarlar kutucukları
 
-- **Oturum kaybı:** ağ hatası artık «seans yok» sayılmıyor — açılışta durum alınamazsa kayıtlı seans silinmez; aktif seans listesi alınamazsa yeni rezervasyon açılmaz («Bağlantı sorunu» uyarısı)
-- **Falcı rota koruması:** onaylı falcı, tek bir ağ hatası yüzünden kalıcı olarak «Falcı ol» sayfasına atılmıyor; eş zamanlı doğrulamalar tek istekte birleşti
-- **Bekleme ekranı:** turda 3 yerine 1 istek (yedek sorgular 5 turda bir); 180 sn geri sayım duvar saatinden hesaplanır (arka planda uzamaz); sunucu seansı bilmiyorsa 3 turda çıkış; süre dolarken son saniye kabul edilmişse iptal edilmez
-- **Düzeltme:** oturum devam ettirmede toplam jeton dakika fiyatı olarak yazılıyordu, fal türü 'general'e düşüyordu
-- **Sahte ekranlar kaldırıldı:** sabit/sahte veriyle çalışan 45 falcı paneli ekranı (sahte kazanç, sahte banka hesabı, hiçbir şey göndermeden «Çekim talebi gönderildi») silindi; Seans geçmişi ve Yorumlar gerçek API verisine bağlandı; Kazanç/para çekme cüzdana yönlendirilir. Profil düzenleme ve müsaitlik için sunucu ucu olmadığından kaldırıldı
+- **Falcı isteği:** sunucu istek olayını artık bildirim/push'u BEKLEMEDEN yayınlıyor (uygulamanın kullandığı `/{tellerId}/session` yolunda hiç yayınlanmıyordu → istek yalnızca yoklamayla/15 sn yedekle ulaşıyordu); DB yedeği 6 sn; kabul yanıtı push'u beklemiyor. İstemci: sunucunun süresiz tuttuğu bayat bekleyen talepler (>175 sn) yeni talebin önüne geçmiyor, en yeni talep önce gösteriliyor; seçilen süre (`maxMinutes`) artık sunucuca da okunuyor
+- **Canlı yayın beğeni:** beğeni artık yayındaki herkese SSE ile anında yayılıyor (eskiden yalnızca DB sayacı artıyordu; başkaları kendileri beğenene dek görmüyordu). Başkasının beğenisi yerel toplamdan bağımsız olarak ekleniyor, kendi beğeni yankısı çift sayılmıyor
+- **Hediye / PK puanı:** PK skoru ve hediye motoru para akışından hemen sonra paralel çalışıyor; skor olayı ledger yazımlarından ÖNCE yayınlanıyor; hediye yanıtındaki skor gönderen ekranına anında uygulanıyor
+- **Misafir (çoklu yayın):** 2 kişi düzeni yan yana; son misafir ayrılınca/indirilince çoklu mod kapanıp tekli yayına otomatik dönülüyor (yayıncı ve izleyicide)
+- **Ayarlar:** ayarlar ana sayfası ve bağlı ekranlar (bildirim, ses, cihazlar, hesap güvenliği, yardım, hakkımızda, VIP gizlilik) ortak kutucuk bileşenleriyle yeniden tasarlandı (`core/widgets/settings_kit.dart`)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
