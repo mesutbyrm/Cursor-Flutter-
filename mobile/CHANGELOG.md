@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.692+745 (2026-10-02) — Yayın sağ tarafı: yarışma kutuları
+
+- **Yarışma kutuları:** Sezon ve Haftalık kutuları puan gösterir — katıldıysan «#sıra · puan», değilse lider «1. Ad 12.4K»
+- **Düzeltme:** katılım durumu yüklenmeden karar verildiği için katılmış kullanıcıya da her seferinde «Katıl» soruluyordu; artık önce katılım durumu beklenir, alınamazsa soru sorulmaz
+
 ## 1.0.691+744 (2026-10-02) — Kalp animasyonu
 
 - **Kalpler:** farklı boyut/renk/eğim, sağa-sola salınarak yukarı süzülür, pop ile girer ve solarak kaybolur; her kalbin kendi ömrü var (2.2–3.3 sn)
