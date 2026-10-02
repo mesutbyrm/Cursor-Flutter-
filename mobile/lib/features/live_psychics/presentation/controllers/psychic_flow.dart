@@ -33,7 +33,16 @@ abstract final class PsychicFlow {
   }) async {
     final repo = ref.read(livePsychicsRepositoryProvider);
 
-    final existing = await _findBlockingSession(repo: repo);
+    final blocking = await _findBlockingSession(repo: repo);
+    if (blocking.lookupFailed) {
+      // Ağ/sunucu hatası: mevcut seans kontrol edilemedi — çift rezervasyon
+      // riskine girmeden kullanıcıya bildir.
+      ref.read(psychicBookingFeedbackProvider.notifier).state =
+          'Bağlantı sorunu: mevcut seans kontrol edilemedi. '
+          'Lütfen tekrar deneyin.';
+      return null;
+    }
+    final existing = blocking.session;
     if (existing != null) {
       final stored = await PsychicSessionStore.load();
       final existingTellerId =
@@ -129,25 +138,34 @@ abstract final class PsychicFlow {
     return session;
   }
 
-  static Future<PsychicSessionStatusResult?> _findBlockingSession({
+  static Future<({PsychicSessionStatusResult? session, bool lookupFailed})>
+      _findBlockingSession({
     required LivePsychicsRepository repo,
   }) async {
     final stored = await PsychicSessionStore.load();
-    final activeFuture = repo.fetchActiveSessions();
+    final activeFuture = repo.fetchActiveSessionsOrNull();
     final storedStatusFuture = stored != null && stored.isClient
-        ? repo.fetchSessionStatus(stored.sessionId)
-        : Future<PsychicSessionStatusResult?>.value(null);
+        ? repo.fetchSessionStatusLookup(stored.sessionId)
+        : Future<PsychicStatusLookup>.value(
+            const PsychicStatusLookup.notFound(),
+          );
 
     final active = await activeFuture;
-    final fromActive = PsychicClientSessionGuard.firstBlockingFromActive(active);
-    if (fromActive != null) return fromActive;
-
-    final status = await storedStatusFuture;
+    final storedLookup = await storedStatusFuture;
+    if (active != null) {
+      final fromActive =
+          PsychicClientSessionGuard.firstBlockingFromActive(active);
+      if (fromActive != null) return (session: fromActive, lookupFailed: false);
+    }
+    final status = storedLookup.status;
     if (status != null &&
         PsychicClientSessionGuard.blocksNewBooking(status.status)) {
-      return status;
+      return (session: status, lookupFailed: false);
     }
-    return null;
+    // Hiçbir yerde engel bulunamadı: yalnız sorgular gerçekten başarılıysa
+    // «engel yok» say.
+    final failed = active == null || storedLookup.isFailed;
+    return (session: null, lookupFailed: failed);
   }
 
   static Future<PsychicSessionEntity?> _sessionFromStatus(
@@ -156,16 +174,23 @@ abstract final class PsychicFlow {
     PsychicEntity psychic,
   ) async {
     final room = await repo.fetchRoom(status.sessionId);
+    final stored = await PsychicSessionStore.load();
+    final minutes = status.durationMinutes ?? stored?.durationMinutes ?? 10;
     return PsychicSessionEntity(
       sessionId: status.sessionId,
       psychic: psychic,
-      durationMinutes: status.durationMinutes ?? 10,
-      totalJeton: status.totalJeton ?? psychic.pricePerMinute,
+      durationMinutes: minutes,
+      // Eskiden dakika fiyatı toplam diye yazılıyordu.
+      totalJeton: status.totalJeton ??
+          (stored?.sessionId == status.sessionId ? stored?.totalJeton : null) ??
+          psychic.pricePerMinute * minutes,
       tellerUserId: status.tellerUserId ?? room?.tellerUserId,
       clientId: room?.clientId,
       isClient: true,
       trtcRoomIdOverride: status.trtcRoomId ?? room?.roomId,
-      fortuneType: 'general',
+      fortuneType: stored?.sessionId == status.sessionId
+          ? stored!.fortuneType
+          : 'general',
     );
   }
 
@@ -177,8 +202,8 @@ abstract final class PsychicFlow {
     final path = router.routerDelegate.currentConfiguration.uri.path;
     if (_isInPsychicFlow(path) || AuthRoutePaths.isPublicAuthPath(path)) return;
 
-    final active = await repo.fetchActiveSessions();
-    for (final s in active) {
+    final active = await repo.fetchActiveSessionsOrNull();
+    for (final s in active ?? const <PsychicSessionStatusResult>[]) {
       if (!s.isClient || !s.status.isActive) continue;
       await _openActiveSession(router, repo, s);
       return;
@@ -187,7 +212,10 @@ abstract final class PsychicFlow {
     final stored = await PsychicSessionStore.load();
     if (stored == null || !stored.isClient) return;
 
-    final status = await repo.fetchSessionStatus(stored.sessionId);
+    final lookup = await repo.fetchSessionStatusLookup(stored.sessionId);
+    // Ağ/sunucu hatasında kayıtlı seansı SİLME — sonraki açılışta devam eder.
+    if (lookup.isFailed) return;
+    final status = lookup.status;
     if (status == null) {
       await PsychicSessionStore.clear();
       return;

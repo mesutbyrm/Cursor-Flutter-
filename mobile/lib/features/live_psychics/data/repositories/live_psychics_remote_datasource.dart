@@ -578,6 +578,63 @@ class LivePsychicsRemoteDataSource {
     }
   }
 
+  /// 404/410 → notFound; başka her hata → failed. Başarıda gövde ayrıştırılamazsa
+  /// oda sorgusu yedeği denenir.
+  Future<PsychicStatusLookup> fetchSessionStatusLookup(String sessionId) async {
+    final key = sessionId.trim();
+    if (key.isEmpty) return const PsychicStatusLookup.notFound();
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.fortuneTellerSessionQuery(key),
+      );
+      final body = res.data;
+      if (body is Map) {
+        final map = asJsonMap(body);
+        final data = map['data'] is Map ? asJsonMap(map['data']) : map;
+        final sessionMap =
+            data['session'] is Map ? asJsonMap(data['session']) : data;
+        final status = PsychicModel.sessionStatusFromJson(data, sessionMap);
+        if (status != null) return PsychicStatusLookup.found(status);
+      }
+    } on ApiException catch (e) {
+      if (e.statusCode == 404 || e.statusCode == 410) {
+        return const PsychicStatusLookup.notFound();
+      }
+      return const PsychicStatusLookup.failed();
+    } catch (_) {
+      return const PsychicStatusLookup.failed();
+    }
+    final room = await fetchRoom(key);
+    if (room == null) return const PsychicStatusLookup.notFound();
+    return PsychicStatusLookup.found(
+      PsychicSessionStatusResult(
+        sessionId: room.sessionId,
+        status: room.status,
+        isClient: room.isClient,
+        trtcRoomId: room.roomId,
+        durationMinutes: room.maxMinutes,
+      ),
+    );
+  }
+
+  /// Aktif seanslar; ağ/sunucu hatasında `null`.
+  Future<List<PsychicSessionStatusResult>?> fetchActiveSessionsOrNull() async {
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.userActiveSessions);
+      final list = PsychicModel.itemsFromBody(
+        res.data,
+        keys: const ['sessions', 'items', 'data'],
+      );
+      return list
+          .map((m) => PsychicModel.sessionStatusFromJson(m, m))
+          .whereType<PsychicSessionStatusResult>()
+          .where((s) => s.status.isActive)
+          .toList(growable: false);
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<List<PsychicSessionStatusResult>> fetchActiveSessions() async {
     try {
       final res = await _dio.safeGet<dynamic>(ApiEndpoints.userActiveSessions);

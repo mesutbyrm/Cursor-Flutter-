@@ -262,7 +262,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
   Future<ApprovedPsychicState> readApprovedTellerState() async {
     var approved = ref.read(approvedPsychicProvider);
-    if (approved.checked) return approved;
+    // Başarısız kontrol önbelleğe alınmaz — falcı bir ağ hatası yüzünden
+    // kalıcı olarak «Falcı ol» sayfasına atılmasın.
+    if (approved.checked && !approved.checkFailed) return approved;
     try {
       await LoadingTimeout.run(
         ref.read(approvedPsychicProvider.notifier).refresh(),
@@ -356,10 +358,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/falci-panel',
         redirect: (context, state) async {
           final approved = await readApprovedTellerState();
-          if (approved.isApprovedTeller) {
-            return '/canli-falcilar/dashboard';
-          }
-          return '/falci-ol';
+          if (approved.definitelyNotTeller) return '/falci-ol';
+          return '/canli-falcilar/dashboard';
         },
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
@@ -1592,7 +1592,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'packages',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1606,7 +1606,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'customers',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1620,7 +1620,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'followers',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1634,7 +1634,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'flash-sales',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1648,7 +1648,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'sessions',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1662,7 +1662,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'badges',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1676,7 +1676,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'ratings',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1690,7 +1690,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'availability',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1704,7 +1704,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'earnings-analytics',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1718,7 +1718,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'gamification',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1732,7 +1732,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'referral',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1746,7 +1746,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'customer-chemistry',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1760,7 +1760,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'notifications',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1774,7 +1774,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'message-templates',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1788,7 +1788,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'advanced-search',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1802,7 +1802,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'analytics-export',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1816,7 +1816,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'session-automation',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1830,7 +1830,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'client-management',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1844,7 +1844,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'team-workspace',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1858,7 +1858,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'retention-analytics',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1872,7 +1872,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'performance-insights',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1886,7 +1886,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'revenue-forecasting',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1900,7 +1900,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'customer-ltv-optimization',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1914,7 +1914,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'campaign-management',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1928,7 +1928,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'social-media-planner',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1942,7 +1942,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'ai-chatbot',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1956,7 +1956,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'withdrawal-management',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1970,7 +1970,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'feedback-management',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1984,7 +1984,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'churn-analysis',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -1998,7 +1998,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'pricing-optimization',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -2012,7 +2012,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'scheduling-optimization',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -2026,7 +2026,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'growth-metrics',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -2040,7 +2040,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'tax-reporting',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -2054,7 +2054,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'session-recording',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -2068,7 +2068,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'benchmarking',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -2082,7 +2082,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'behavior-analytics',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -2096,7 +2096,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'workflow-automation',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -2110,7 +2110,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'compliance-legal',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;
@@ -2124,7 +2124,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'dashboard',
             redirect: (context, state) async {
               final approved = await readApprovedTellerState();
-              if (!approved.isApprovedTeller) {
+              if (approved.definitelyNotTeller) {
                 return '/falci-ol';
               }
               return null;

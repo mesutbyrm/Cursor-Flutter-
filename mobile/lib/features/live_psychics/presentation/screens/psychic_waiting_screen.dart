@@ -82,10 +82,15 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
   final Ref ref;
   final PsychicSessionEntity session;
   Timer? _poll;
-  Timer? _pollBurst;
   Timer? _timeout;
   var _navigated = false;
   var _checking = false;
+
+  /// Bekleme başlangıcı — geri sayım duvar saatinden hesaplanır; uygulama
+  /// arka plana alınınca Timer durduğunda süre uzamaz.
+  final _startedAt = DateTime.now();
+  var _pollCount = 0;
+  var _notFoundStreak = 0;
 
   Future<void> _init() async {
     await PsychicSessionStore.save(session);
@@ -93,16 +98,8 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
       sessionId: session.sessionId,
       tellerId: session.psychic.id,
     );
-    var burstTicks = 0;
-    _pollBurst = Timer.periodic(const Duration(seconds: 2), (_) {
-      burstTicks++;
-      // ~12 sn ilk yoğun pencere (6 × 2 sn), sonra 1 sn düzenli poll.
-      if (state.closed || burstTicks > 6) {
-        _pollBurst?.cancel();
-        return;
-      }
-      unawaited(_checkStatus());
-    });
+    // Tek zamanlayıcı, turda tek istek (eskiden 1 sn'de 3 istek + ek burst
+    // zamanlayıcısı vardı). Yedek sorgular birkaç turda bir yapılır.
     _poll = Timer.periodic(const Duration(seconds: 1), (_) => _checkStatus());
     _timeout = Timer.periodic(const Duration(seconds: 1), (_) => _tickTimeout());
     unawaited(_checkStatus());
@@ -113,18 +110,23 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
   }
 
   void onAppResumed() {
-    if (!state.closed) unawaited(_checkStatus());
+    if (state.closed) return;
+    _tickTimeout();
+    unawaited(_checkStatus());
   }
 
   void _tickTimeout() {
     if (state.closed || state.phase != PsychicWaitingPhase.waiting) return;
-    final next = state.remainingSeconds - 1;
+    final elapsed = DateTime.now().difference(_startedAt).inSeconds;
+    final next = psychicWaitingTimeoutSeconds - elapsed;
     if (next <= 0) {
       _timeout?.cancel();
       unawaited(_onExpired());
       return;
     }
-    state = state.copyWith(remainingSeconds: next);
+    if (next != state.remainingSeconds) {
+      state = state.copyWith(remainingSeconds: next);
+    }
   }
 
   /// Zamanlayıcılar (0,5 sn + 1 sn) tetiklese de aynı anda tek tur çalışır;
@@ -142,8 +144,24 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
   Future<void> _checkStatusOnce() async {
     if (state.closed) return;
     final repo = ref.read(livePsychicsRepositoryProvider);
+    _pollCount++;
 
-    final status = await repo.fetchSessionStatus(session.sessionId);
+    final lookup = await repo.fetchSessionStatusLookup(session.sessionId);
+    if (state.closed) return;
+
+    if (lookup.isNotFound) {
+      // Sunucu seansı bilmiyor (silinmiş/bitmiş): art arda 3 turda onaylanırsa
+      // 3 dakika beklemeden çık.
+      _notFoundStreak++;
+      if (_notFoundStreak >= 3) {
+        await _onRejected();
+        return;
+      }
+    } else {
+      _notFoundStreak = 0;
+    }
+
+    final status = lookup.status;
     if (status != null) {
       if (status.status == PsychicSessionStatus.rejected ||
           status.status == PsychicSessionStatus.cancelled ||
@@ -161,8 +179,11 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
       }
     }
 
-    final actives = await repo.fetchActiveSessions();
-    final activeMine = actives
+    // Yedek sorgular (aktif seanslar + oda) her 5. turda.
+    if (_pollCount % 5 != 0) return;
+
+    final actives = await repo.fetchActiveSessionsOrNull();
+    final activeMine = (actives ?? const <PsychicSessionStatusResult>[])
         .where((s) => s.sessionId == session.sessionId)
         .toList(growable: false);
     if (activeMine.isNotEmpty) {
@@ -191,7 +212,6 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     if (state.closed || _navigated) return;
     _navigated = true;
     state = state.copyWith(phase: PsychicWaitingPhase.accepted, closed: true);
-    _pollBurst?.cancel();
     _poll?.cancel();
     _timeout?.cancel();
     final room = await ref
@@ -217,7 +237,6 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
   Future<void> _onRejected() async {
     if (state.closed) return;
     state = state.copyWith(phase: PsychicWaitingPhase.rejected, closed: true);
-    _pollBurst?.cancel();
     _poll?.cancel();
     _timeout?.cancel();
     await PsychicSessionStore.clear();
@@ -234,8 +253,17 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
 
   Future<void> _onExpired() async {
     if (state.closed) return;
+    // Son saniyede kabul edilmiş olabilir — iptal etmeden önce bir kez sor.
+    final last = await ref
+        .read(livePsychicsRepositoryProvider)
+        .fetchSessionStatusLookup(session.sessionId);
+    if (state.closed) return;
+    final lastStatus = last.status;
+    if (lastStatus != null && lastStatus.status.isActive) {
+      await _onAccepted(lastStatus);
+      return;
+    }
     state = state.copyWith(phase: PsychicWaitingPhase.expired, closed: true);
-    _pollBurst?.cancel();
     _poll?.cancel();
     _timeout?.cancel();
     unawaited(
@@ -272,7 +300,6 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
   Future<void> _exitImmediate() async {
     if (state.closed) return;
     state = state.copyWith(closed: true);
-    _pollBurst?.cancel();
     _poll?.cancel();
     _timeout?.cancel();
     await PsychicSessionStore.clear();
@@ -282,7 +309,6 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
 
   @override
   void dispose() {
-    _pollBurst?.cancel();
     _poll?.cancel();
     _timeout?.cancel();
     super.dispose();

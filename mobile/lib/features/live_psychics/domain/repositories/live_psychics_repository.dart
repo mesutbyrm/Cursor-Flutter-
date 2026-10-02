@@ -69,6 +69,32 @@ class PsychicSessionStatusResult {
   final int? totalJeton;
 }
 
+/// Oturum durumu sorgusunun sonucu — «yok» ile «sorgu başarısız» ayrı tutulur.
+///
+/// Ağ hatası eskiden `null` (= oturum yok) gibi okunup kayıtlı seansı siliyor,
+/// çift rezervasyon korumasını devre dışı bırakıyordu.
+enum PsychicLookupOutcome { found, notFound, failed }
+
+class PsychicStatusLookup {
+  const PsychicStatusLookup(this.outcome, [this.status]);
+
+  const PsychicStatusLookup.found(PsychicSessionStatusResult s)
+      : outcome = PsychicLookupOutcome.found,
+        status = s;
+  const PsychicStatusLookup.notFound()
+      : outcome = PsychicLookupOutcome.notFound,
+        status = null;
+  const PsychicStatusLookup.failed()
+      : outcome = PsychicLookupOutcome.failed,
+        status = null;
+
+  final PsychicLookupOutcome outcome;
+  final PsychicSessionStatusResult? status;
+
+  bool get isFailed => outcome == PsychicLookupOutcome.failed;
+  bool get isNotFound => outcome == PsychicLookupOutcome.notFound;
+}
+
 abstract class LivePsychicsRepository {
   Future<List<PsychicEntity>> fetchPsychics({
     int page = 1,
@@ -119,6 +145,13 @@ abstract class LivePsychicsRepository {
   });
 
   Future<PsychicSessionStatusResult?> fetchSessionStatus(String sessionId);
+
+  /// [fetchSessionStatus] ile aynı, ama 404/410 («yok») ile ağ/sunucu
+  /// hatasını ayırır.
+  Future<PsychicStatusLookup> fetchSessionStatusLookup(String sessionId);
+
+  /// Aktif seanslar; sorgu başarısızsa `null` (boş liste DEĞİL).
+  Future<List<PsychicSessionStatusResult>?> fetchActiveSessionsOrNull();
   Future<List<PsychicSessionHistoryEntity>> fetchRecentSessions({int limit = 20});
   Future<List<PsychicSessionStatusResult>> fetchActiveSessions();
   Future<List<PsychicRequestEntity>> fetchIncomingRequests({
