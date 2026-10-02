@@ -51,6 +51,23 @@ class TrtcRoomManager {
   final ValueNotifier<Map<String, bool>> remoteAudioByUser =
       ValueNotifier<Map<String, bool>>({});
 
+  /// Şu an konuşan katılımcılar (TRTC ses seviyesi) — yerel kullanıcı için
+  /// [localSpeakingKey] kullanılır. Çoklu yayın ızgarasında vurgu için.
+  static const localSpeakingKey = '__local__';
+  final ValueNotifier<Set<String>> speakingUsersNotifier =
+      ValueNotifier<Set<String>>(const {});
+
+  void _updateSpeaking(List<TRTCVolumeInfo> volumes) {
+    if (_notifiersDisposed) return;
+    final next = <String>{
+      for (final v in volumes)
+        if (v.volume >= 15) v.userId.isEmpty ? localSpeakingKey : v.userId,
+    };
+    final cur = speakingUsersNotifier.value;
+    if (next.length == cur.length && next.containsAll(cur)) return;
+    speakingUsersNotifier.value = next;
+  }
+
   final Map<String, int> _remoteViewBindings = {};
   String? _expectedAnchorUserId;
 
@@ -331,6 +348,7 @@ class TrtcRoomManager {
         }
       },
       onUserVoiceVolume: (userVolumes, totalVolume) {
+        _updateSpeaking(userVolumes);
         onUserVoiceVolume?.call(userVolumes, totalVolume);
       },
     );
@@ -849,6 +867,7 @@ class TrtcRoomManager {
       remoteAudioByUser.dispose();
       networkQuality.dispose();
       remoteUserIdsNotifier.dispose();
+      speakingUsersNotifier.dispose();
     }
   }
 

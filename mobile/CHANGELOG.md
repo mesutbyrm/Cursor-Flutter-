@@ -4,6 +4,10 @@
 
 - **Sohbet:** canlı yayın akışında mesajlar 40 sn sonra otomatik kaybolur (kayıt silinmez); art arda aynı hediye tek satırda toplanır («🎁 Mert → Ayşe · Aslan x3 (1500 Jeton)»)
 
+## 1.0.683+736 (2026-10-02) — Canlı yayın sohbeti
+
+- **Sohbet:** canlı yayın akışında mesajlar 40 sn sonra otomatik kaybolur (kayıt silinmez); art arda aynı hediye tek satırda toplanır («🎁 Mert → Ayşe · Aslan x3 (1500 Jeton)»)
+
 ## 1.0.682+735 (2026-10-02) — Canlı yayın PK: sohbet, anında çıkış, anlık skor
 
 - **PK sohbeti:** canlı yayın PK ekranında sohbet akışı artık görünür (sol alt, şeffaf); kullanıcı mesajları ("pk" geçse bile) filtrelenmez

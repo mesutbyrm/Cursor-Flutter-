@@ -13,6 +13,7 @@ class LiveGuestSlot extends Equatable {
     this.pinned = false,
     this.mutedByHost = false,
     this.jetonEarned = 0,
+    this.avatarUrl,
   });
 
   final int index;
@@ -25,6 +26,7 @@ class LiveGuestSlot extends Equatable {
   final bool pinned;
   final bool mutedByHost;
   final int jetonEarned;
+  final String? avatarUrl;
 
   bool get isEmpty => userId == null && rtcUserId == null && !isHost;
 
@@ -38,6 +40,7 @@ class LiveGuestSlot extends Equatable {
     bool? pinned,
     bool? mutedByHost,
     int? jetonEarned,
+    String? avatarUrl,
     bool clearUser = false,
   }) {
     return LiveGuestSlot(
@@ -51,6 +54,7 @@ class LiveGuestSlot extends Equatable {
       pinned: pinned ?? this.pinned,
       mutedByHost: mutedByHost ?? this.mutedByHost,
       jetonEarned: jetonEarned ?? this.jetonEarned,
+      avatarUrl: clearUser ? null : (avatarUrl ?? this.avatarUrl),
     );
   }
 
@@ -65,5 +69,6 @@ class LiveGuestSlot extends Equatable {
         pinned,
         mutedByHost,
         jetonEarned,
+        avatarUrl,
       ];
 }
