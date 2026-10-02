@@ -413,45 +413,47 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                 if (pk.isActive && canControlPk)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () async {
-                              final battle = ref.read(
-                                pkBattleForRoomProvider(widget.room),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final battle = ref.read(
+                            pkBattleForRoomProvider(widget.room),
+                          );
+                          final battleId = battle?.effectiveId ?? '';
+                          if (battleId.isEmpty) return;
+                          final r = widget.room;
+                          final roomKey =
+                              r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
+                          PkEventLog.ending(battleId: battleId);
+                          await ref.read(pkBattleRemoteProvider.notifier).end(
+                                battleId,
+                                roomId: roomKey,
+                                alternateRoomId:
+                                    r.slug != roomKey ? r.slug : null,
                               );
-                              final battleId = battle?.effectiveId ?? '';
-                              if (battleId.isEmpty) return;
-                              final r = widget.room;
-                              final roomKey =
-                                  r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
-                              PkEventLog.ending(battleId: battleId);
-                              await ref
-                                  .read(pkBattleRemoteProvider.notifier)
-                                  .end(
-                                    battleId,
-                                    roomId: roomKey,
-                                    alternateRoomId:
-                                        r.slug != roomKey ? r.slug : null,
-                                  );
-                              PkEventLog.ended(battleId: battleId);
-                              if (context.mounted) context.pop();
-                            },
-                            icon: const Icon(
-                              Icons.stop_circle_outlined,
-                              size: 18,
-                            ),
-                            label: const Text('Bitir'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.white,
-                              side: BorderSide(
-                                color: Colors.white.withValues(alpha: 0.45),
-                              ),
-                            ),
+                          PkEventLog.ended(battleId: battleId);
+                          if (context.mounted) context.pop();
+                        },
+                        icon: const Icon(Icons.stop_circle_outlined, size: 14),
+                        label: const Text(
+                          'Bitir',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
-                      ],
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(0, 28),
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          visualDensity: VisualDensity.compact,
+                          side: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.45),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 PkActionBottomBar(
