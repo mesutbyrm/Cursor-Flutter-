@@ -1,31 +1,93 @@
 import 'package:canlifal_social/core/performance/effects_perf.dart';
 import 'package:canlifal_social/core/performance/scroll_perf.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+
+import '../../../../domain/live_chat_gift_merge.dart';
 
 import '../../broadcast_room/live_room_chat_message.dart';
 import '../live_vip_chat_badge.dart';
 
 /// Canlı yorum akışı — opak baloncuklar (liste içinde blur yok).
-class LivePremiumChatFeed extends StatelessWidget {
+///
+/// [fadeAfter] verilirse, ilk görüldüğünden bu yana o süreyi aşan mesajlar
+/// akıştan kaybolur (TikTok tarzı); mesajlar sunucu durumunda silinmez.
+class LivePremiumChatFeed extends StatefulWidget {
   const LivePremiumChatFeed({
     super.key,
     required this.messages,
     this.maxHeight = 200,
     this.onMessageLongPress,
     this.canModerate = false,
+    this.fadeAfter,
   });
 
   final List<LiveRoomChatMessage> messages;
   final double maxHeight;
   final void Function(LiveRoomChatMessage message)? onMessageLongPress;
   final bool canModerate;
+  final Duration? fadeAfter;
+
+  @override
+  State<LivePremiumChatFeed> createState() => _LivePremiumChatFeedState();
+}
+
+class _LivePremiumChatFeedState extends State<LivePremiumChatFeed> {
+  final _firstSeen = <LiveRoomChatMessage, DateTime>{};
+  Timer? _tick;
+
+  @override
+  void initState() {
+    super.initState();
+    _syncTimer();
+  }
+
+  @override
+  void didUpdateWidget(covariant LivePremiumChatFeed old) {
+    super.didUpdateWidget(old);
+    _syncTimer();
+  }
+
+  void _syncTimer() {
+    if (widget.fadeAfter == null) {
+      _tick?.cancel();
+      _tick = null;
+      return;
+    }
+    _tick ??= Timer.periodic(const Duration(seconds: 2), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _tick?.cancel();
+    super.dispose();
+  }
+
+  List<LiveRoomChatMessage> _visible() {
+    final merged = mergeGiftChatMessages(widget.messages);
+    final fade = widget.fadeAfter;
+    if (fade == null) return merged;
+    final now = DateTime.now();
+    final live = Set<LiveRoomChatMessage>.of(merged);
+    _firstSeen.removeWhere((k, _) => !live.contains(k));
+    return merged.where((m) {
+      final seen = _firstSeen.putIfAbsent(m, () => now);
+      return now.difference(seen) < fade;
+    }).toList(growable: false);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final messages = _visible();
+    final onMessageLongPress = widget.onMessageLongPress;
+    final canModerate = widget.canModerate;
     return EffectsPerf.repaint(
       SizedBox(
-        height: maxHeight,
+        height: widget.maxHeight,
         child: ShaderMask(
           shaderCallback: (rect) => LinearGradient(
             begin: Alignment.topCenter,
@@ -34,28 +96,28 @@ class LivePremiumChatFeed extends StatelessWidget {
             stops: const [0.0, 0.12, 1.0],
           ).createShader(rect),
           blendMode: BlendMode.dstIn,
-        child: ListView.builder(
-          reverse: true,
-          padding: EdgeInsets.zero,
-          scrollCacheExtent: ScrollPerf.scrollCache(ScrollPerf.chatCacheExtent),
-          addAutomaticKeepAlives: false,
-          addRepaintBoundaries: false,
-          physics: ScrollPerf.feedPhysics,
-          itemCount: messages.length,
-          itemBuilder: (ctx, i) {
-            final m = messages[messages.length - 1 - i];
-            final bubble = ScrollPerf.item(_ChatBubble(message: m));
-              final child = canModerate &&
+          child: ListView.builder(
+            reverse: true,
+            padding: EdgeInsets.zero,
+            scrollCacheExtent:
+                ScrollPerf.scrollCache(ScrollPerf.chatCacheExtent),
+            addAutomaticKeepAlives: false,
+            addRepaintBoundaries: false,
+            physics: ScrollPerf.feedPhysics,
+            itemCount: messages.length,
+            itemBuilder: (ctx, i) {
+              final m = messages[messages.length - 1 - i];
+              final bubble = ScrollPerf.item(_ChatBubble(message: m));
+              return canModerate &&
                       onMessageLongPress != null &&
                       !m.isSystem &&
                       m.userId != null &&
                       m.userId!.isNotEmpty
                   ? GestureDetector(
-                      onLongPress: () => onMessageLongPress!(m),
+                      onLongPress: () => onMessageLongPress(m),
                       child: bubble,
                     )
                   : bubble;
-              return child;
             },
           ),
         ),

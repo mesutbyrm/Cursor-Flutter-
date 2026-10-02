@@ -91,6 +91,7 @@ class _LiveRoomChatFalPanelState extends State<LiveRoomChatFalPanel>
                   ],
                 )
               : LivePremiumChatFeed(
+                  fadeAfter: const Duration(seconds: 40),
                   messages: widget.messages,
                   onMessageLongPress: widget.onMessageLongPress,
                   canModerate: widget.canModerate,
