@@ -171,6 +171,8 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       : session = session,
         super(PsychicVideoState(remaining: Duration(minutes: session.durationMinutes))) {
     _trtc = ref.read(trtcRoomManagerProvider);
+    // dispose() içinde ref kullanılmasın diye servis baştan alınır.
+    _roomSse = ref.read(psychicRoomSseServiceProvider);
     _trtcConn.sessionId = session.sessionId;
     _watchNetwork();
     _bootstrap();
@@ -180,6 +182,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   PsychicSessionEntity session;
 
   late final TrtcRoomManager _trtc;
+  late final PsychicRoomSseService _roomSse;
   final _trtcConn = PsychicTrtcConnection();
   final _remoteBind = PsychicTrtcListenerBind();
   final _seenChatIds = <String>{};
@@ -1728,7 +1731,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     unawaited(_onlineSub?.cancel());
     _onlineSub = null;
     _trtc.onConnectionLost = null;
-    unawaited(ref.read(psychicRoomSseServiceProvider).disconnect());
+    unawaited(_roomSse.disconnect());
     unawaited(_trtc.leave());
     super.dispose();
   }
