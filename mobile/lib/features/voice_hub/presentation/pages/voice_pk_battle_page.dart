@@ -494,11 +494,13 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                     );
                   },
                 ),
-                if (_chatOpen)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                    child: _PkQuickChat(room: widget.room),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                  child: _PkQuickChat(
+                    room: widget.room,
+                    showMessages: _chatOpen,
                   ),
+                ),
               ],
             ),
           ),
@@ -638,9 +640,13 @@ class _PkHeader extends StatelessWidget {
 }
 
 class _PkQuickChat extends ConsumerStatefulWidget {
-  const _PkQuickChat({required this.room});
+  const _PkQuickChat({required this.room, this.showMessages = false});
 
   final VoiceRoomEntity room;
+
+  /// Son mesaj listesini göster (üst sağdaki sohbet ikonu). Yazma alanı her
+  /// zaman görünür.
+  final bool showMessages;
 
   @override
   ConsumerState<_PkQuickChat> createState() => _PkQuickChatState();
@@ -675,7 +681,7 @@ class _PkQuickChatState extends ConsumerState<_PkQuickChat> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (recent.isNotEmpty)
+        if (widget.showMessages && recent.isNotEmpty)
           ConstrainedBox(
             constraints: const BoxConstraints(maxHeight: 120),
             child: ListView.builder(
@@ -711,20 +717,22 @@ class _PkQuickChatState extends ConsumerState<_PkQuickChat> {
               Expanded(
                 child: TextField(
                   controller: _ctrl,
-                  style: const TextStyle(color: Colors.white, fontSize: 15),
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                  minLines: 1,
+                  maxLines: 3,
                   decoration: const InputDecoration(
-                    hintText: 'Mesaj',
+                    hintText: 'Mesaj yaz…',
                     hintStyle: TextStyle(color: Colors.white54),
                     border: InputBorder.none,
                     contentPadding:
-                        EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        EdgeInsets.symmetric(horizontal: 18, vertical: 16),
                   ),
                   textInputAction: TextInputAction.send,
                   onSubmitted: (_) => send(),
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.only(right: 6, top: 6, bottom: 6),
+                padding: const EdgeInsets.only(right: 6, top: 4, bottom: 4),
                 child: Material(
                   color: const Color(0xFF25D366),
                   shape: const CircleBorder(),
@@ -732,10 +740,10 @@ class _PkQuickChatState extends ConsumerState<_PkQuickChat> {
                   child: InkWell(
                     onTap: send,
                     child: const SizedBox(
-                      width: 40,
-                      height: 40,
+                      width: 46,
+                      height: 46,
                       child:
-                          Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                          Icon(Icons.send_rounded, color: Colors.white, size: 22),
                     ),
                   ),
                 ),
