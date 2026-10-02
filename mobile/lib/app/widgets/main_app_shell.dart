@@ -172,12 +172,7 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
           router.pop();
           return;
         }
-        await handleShellBackPress(
-          context,
-          onLogout: () async {
-            await ref.read(authControllerProvider.notifier).logout();
-          },
-        );
+        await handleShellBackPress(context);
       },
       child: OfflineStatusBanner(
       child: SiteAnimationContextHost(

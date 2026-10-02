@@ -100,12 +100,7 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
           context.pop();
           return;
         }
-        await handleShellBackPress(
-          context,
-          onLogout: () async {
-            await ref.read(authControllerProvider.notifier).logout();
-          },
-        );
+        await handleShellBackPress(context);
       },
       child: Scaffold(
         backgroundColor: ShellUi.shellBackground(context),
