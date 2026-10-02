@@ -11,11 +11,17 @@ class SocialLinkedCaptionText extends StatefulWidget {
     required this.text,
     this.style,
     this.linkStyle,
+    this.maxLines,
+    this.overflow = TextOverflow.clip,
   });
 
   final String text;
   final TextStyle? style;
   final TextStyle? linkStyle;
+
+  /// Null: sınırsız. Verilirse [overflow] ile kesilir (ör. "…").
+  final int? maxLines;
+  final TextOverflow overflow;
 
   @override
   State<SocialLinkedCaptionText> createState() => _SocialLinkedCaptionTextState();
@@ -85,6 +91,10 @@ class _SocialLinkedCaptionTextState extends State<SocialLinkedCaptionText> {
       }
     }
 
-    return Text.rich(TextSpan(children: spans));
+    return Text.rich(
+      TextSpan(children: spans),
+      maxLines: widget.maxLines,
+      overflow: widget.maxLines == null ? TextOverflow.clip : widget.overflow,
+    );
   }
 }
