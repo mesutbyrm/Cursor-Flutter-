@@ -109,6 +109,12 @@ class SettingsPage extends ConsumerWidget {
                     ),
                     const _Divider(),
                     _SettingsTile(
+                      icon: Icons.tune_rounded,
+                      label: 'Bildirim ayarları',
+                      onTap: () => context.push('/settings/notifications'),
+                    ),
+                    const _Divider(),
+                    _SettingsTile(
                       icon: Icons.notifications_outlined,
                       label: 'Sistem bildirimleri',
                       onTap: () => InboxRoutes.open(context, tab: InboxTab.system),
