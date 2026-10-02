@@ -34,16 +34,7 @@ extension VoiceRoomAccess on VoiceRoomEntity {
     return 'NORMAL';
   }
 
-  /// Şifre korumalı oda — sunucu bayrağı veya isim/açıklama ipucu.
-  bool get isPasswordLockedRoom {
-    if (isFreeRoom) return false;
-    if (isLocked == true || hasPassword == true) return true;
-    final t = _haystack;
-    return t.contains('şifre') ||
-        t.contains('sifre') ||
-        t.contains('password') ||
-        t.contains('kilitli') ||
-        t.contains('locked') ||
-        t.contains('private');
-  }
+  /// Şifre korumalı oda — YALNIZCA VIP odalarda ve sunucu bayrağıyla.
+  /// (İsim/açıklama ipuçlarına bakılmaz; normal odalarda şifre özelliği yok.)
+  bool get isPasswordLockedRoom => isStrictVipRoom && hasPassword == true;
 }

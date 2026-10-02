@@ -23,6 +23,11 @@ class VipUnlockedRooms extends Notifier<Set<String>> {
     state = {...state, roomKey};
   }
 
+  void lock(String roomKey) {
+    if (!state.contains(roomKey)) return;
+    state = {...state}..remove(roomKey);
+  }
+
   bool isUnlocked(String roomKey) => state.contains(roomKey);
 }
 

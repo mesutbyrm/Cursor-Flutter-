@@ -490,7 +490,7 @@ class ChatRoomRemoteDataSource {
     String? alternateKey,
     String? nickname,
     int? seatIndex,
-    String? password,
+    String? accessToken,
   }) async {
     Object? lastFailure;
     for (var attempt = 0; attempt < 2; attempt++) {
@@ -503,7 +503,7 @@ class ChatRoomRemoteDataSource {
           alternateKey: alternateKey,
           nickname: nickname,
           seatIndex: seatIndex,
-          password: password,
+          accessToken: accessToken,
         );
       } on Object catch (e) {
         lastFailure = e;
@@ -524,11 +524,13 @@ class ChatRoomRemoteDataSource {
     String? alternateKey,
     String? nickname,
     int? seatIndex,
-    String? password,
+    String? accessToken,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final nick = nickname?.trim();
-      final pass = password?.trim();
+      // Şifre istemciden GİTMEZ: sunucunun `verify-password` ile verdiği imzalı
+      // jeton gönderilir; yetkiyi sunucu doğrular.
+      final token = accessToken?.trim();
       final bodies = <Map<String, dynamic>>[
         // `seatIndex` her gövdede yer almalı: -1 "dinleyici kal" demektir ve
         // sunucu seatIndex gelmediğinde yeni girişte boş koltuğa otomatik
@@ -538,25 +540,19 @@ class ChatRoomRemoteDataSource {
           'action': 'join',
           if (nick != null && nick.isNotEmpty) 'nickname': nick,
           if (seatIndex != null) 'seatIndex': seatIndex,
-          if (pass != null && pass.isNotEmpty) ...{
-            'password': pass,
-            'entryPassword': pass,
-          },
+          if (token != null && token.isNotEmpty) 'roomAccessToken': token,
         },
         if (nick != null && nick.isNotEmpty)
           {
             'action': 'join',
             if (seatIndex != null) 'seatIndex': seatIndex,
-            if (pass != null && pass.isNotEmpty) ...{
-              'password': pass,
-              'entryPassword': pass,
-            },
+            if (token != null && token.isNotEmpty) 'roomAccessToken': token,
           },
         {
           'type': 'join',
           if (nick != null && nick.isNotEmpty) 'nickname': nick,
           if (seatIndex != null) 'seatIndex': seatIndex,
-          if (pass != null && pass.isNotEmpty) 'password': pass,
+          if (token != null && token.isNotEmpty) 'roomAccessToken': token,
         },
       ];
       ApiException? lastError;
@@ -1281,24 +1277,6 @@ class ChatRoomRemoteDataSource {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _dio.safePost<dynamic>(
         ApiEndpoints.chatRoomSpeakRequestApprove(key, targetUserId),
-      );
-    });
-  }
-
-  /// Şifreli oda — sahip onayı / red (presence action; üretim SSE ile eşleşir).
-  Future<void> respondPasswordAccessRequest(
-    String roomKey,
-    String targetUserId, {
-    required bool approve,
-    String? alternateKey,
-  }) async {
-    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      await _dio.safePost<dynamic>(
-        ApiEndpoints.chatRoomPresence(key),
-        data: {
-          'action': approve ? 'approve_password' : 'deny_password',
-          'userId': targetUserId,
-        },
       );
     });
   }
