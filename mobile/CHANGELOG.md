@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.691+744 (2026-10-02) — Kalp animasyonu
+
+- **Kalpler:** farklı boyut/renk/eğim, sağa-sola salınarak yukarı süzülür, pop ile girer ve solarak kaybolur; her kalbin kendi ömrü var (2.2–3.3 sn)
+- **Düzeltme:** eski katman kalpleri sonsuza dek döndürüyordu ve boştayken bile her karede çiziyordu — artık kalpler ömrü bitince silinir, kalp yokken ticker durur; en fazla 30 kalp
+
 ## 1.0.690+743 (2026-10-02) — Hediye animasyonu
 
 - **Hediye akışı:** sol tarafta pill satırlar — avatar, «Ad / Aslan gönderdi», hediye ikonu, büyük «xN» (artınca pop animasyonu); aynı kişi + aynı hediye tek satırda birleşir; en fazla 3 satır
