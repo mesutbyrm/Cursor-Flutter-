@@ -10,7 +10,6 @@ import '../utils/social_feed_refresh.dart';
 import '../widgets/instagram/social_instagram_app_bar.dart';
 import '../widgets/instagram/social_stories_rail.dart';
 import '../widgets/instagram/social_feed_composer.dart';
-import '../widgets/social_discover_shortcuts.dart';
 import '../widgets/social_feed_scroll_view.dart';
 
 /// CanlıFal Sosyal — premium mistik akış.
@@ -34,7 +33,6 @@ class _SocialPageState extends ConsumerState<SocialPage>
         padding: EdgeInsets.only(top: 4, bottom: 4),
         child: RepaintBoundary(child: SocialStoriesRail()),
       ),
-      const RepaintBoundary(child: SocialDiscoverShortcuts()),
       RepaintBoundary(
         child: SocialFeedComposer(onPostPublished: _scrollFeedToTop),
       ),
@@ -90,8 +88,11 @@ class _SocialPageState extends ConsumerState<SocialPage>
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
+        // Akış tam genişlik: yatay sayfa dolgusu yok (app bar kendi dolgusunu taşır).
         child: Padding(
-          padding: CdsResponsive.screenPadding(context),
+          padding: EdgeInsets.symmetric(
+            vertical: CdsResponsive.screenPadding(context).vertical / 2,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

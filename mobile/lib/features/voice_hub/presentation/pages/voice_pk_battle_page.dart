@@ -24,6 +24,7 @@ import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_gift_combo_tracker.dart';
 import '../providers/voice_gift_leaderboard_provider.dart';
 import '../providers/voice_gift_providers.dart';
+import '../providers/voice_room_audio_providers.dart';
 import '../providers/voice_room_ui_provider.dart';
 import '../utils/voice_room_permissions.dart';
 import '../theme/voice_room_tokens.dart';
@@ -68,6 +69,7 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
   var _lastGiftSideLeft = true;
   var _supportToLeft = true;
   var _chatOpen = false;
+  var _soundMuted = false;
   var _resultNavigated = false;
 
   @override
@@ -189,9 +191,21 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
     });
   }
 
+  void _toggleSound() {
+    final muted = !_soundMuted;
+    setState(() => _soundMuted = muted);
+    ref.read(voiceRoomAudioCoordinatorProvider).setHeadphonesOn(!muted);
+  }
+
   @override
   void dispose() {
     _giftSub?.cancel();
+    // PK sayfası kapanırken uzak sesleri geri aç (oda sessizde kalmasın).
+    if (_soundMuted) {
+      try {
+        ref.read(voiceRoomAudioCoordinatorProvider).setHeadphonesOn(true);
+      } catch (_) {}
+    }
     super.dispose();
   }
 
@@ -229,7 +243,6 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
     );
     final canControlPk =
         perms.isRoomOwner || perms.canModerate || perms.isSiteAdmin;
-    final isPaused = remote?.status == 'paused';
 
     ref.listen<PkBattleState>(pkBattleProvider, (prev, next) {
       _openResultPageIfNeeded(pk: next, remote: remote);
@@ -295,6 +308,10 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                   fallbackSeconds: remote?.resolvedSecondsLeft() ?? pk.secondsLeft,
                   phase: pk.phase,
                   onBack: () => context.pop(),
+                  chatOpen: _chatOpen,
+                  onToggleChat: () => setState(() => _chatOpen = !_chatOpen),
+                  soundMuted: _soundMuted,
+                  onToggleSound: _toggleSound,
                   onMode: pk.isActive && !pk.serverAuthoritative
                       ? (m) => ref.read(pkBattleProvider.notifier).setMode(m)
                       : null,
@@ -414,92 +431,47 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                 if (pk.isActive && canControlPk)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                    child: Row(
-                      children: [
-                        if (remote != null &&
-                            (remote.isActive || remote.status == 'paused'))
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () async {
-                                final battleId = remote.effectiveId;
-                                if (battleId.isEmpty) return;
-                                final r = widget.room;
-                                final roomKey = r.apiRoomKey.isNotEmpty
-                                    ? r.apiRoomKey
-                                    : r.id;
-                                final notifier =
-                                    ref.read(pkBattleRemoteProvider.notifier);
-                                if (isPaused) {
-                                  await notifier.resume(
-                                    battleId,
-                                    roomId: roomKey,
-                                    alternateRoomId:
-                                        r.slug != roomKey ? r.slug : null,
-                                  );
-                                } else {
-                                  await notifier.pause(
-                                    battleId,
-                                    roomId: roomKey,
-                                    alternateRoomId:
-                                        r.slug != roomKey ? r.slug : null,
-                                  );
-                                }
-                              },
-                              icon: Icon(
-                                isPaused
-                                    ? Icons.play_arrow_rounded
-                                    : Icons.pause_rounded,
-                                size: 18,
-                              ),
-                              label: Text(isPaused ? 'Devam' : 'Duraklat'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.white,
-                                side: BorderSide(
-                                  color: Colors.white.withValues(alpha: 0.45),
-                                ),
-                              ),
-                            ),
-                          ),
-                        if (remote != null &&
-                            (remote.isActive || remote.status == 'paused'))
-                          const SizedBox(width: 8),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () async {
-                              final battle = ref.read(
-                                pkBattleForRoomProvider(widget.room),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final battle = ref.read(
+                            pkBattleForRoomProvider(widget.room),
+                          );
+                          final battleId = battle?.effectiveId ?? '';
+                          if (battleId.isEmpty) return;
+                          final r = widget.room;
+                          final roomKey =
+                              r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
+                          PkEventLog.ending(battleId: battleId);
+                          await ref.read(pkBattleRemoteProvider.notifier).end(
+                                battleId,
+                                roomId: roomKey,
+                                alternateRoomId:
+                                    r.slug != roomKey ? r.slug : null,
                               );
-                              final battleId = battle?.effectiveId ?? '';
-                              if (battleId.isEmpty) return;
-                              final r = widget.room;
-                              final roomKey =
-                                  r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
-                              PkEventLog.ending(battleId: battleId);
-                              await ref
-                                  .read(pkBattleRemoteProvider.notifier)
-                                  .end(
-                                    battleId,
-                                    roomId: roomKey,
-                                    alternateRoomId:
-                                        r.slug != roomKey ? r.slug : null,
-                                  );
-                              PkEventLog.ended(battleId: battleId);
-                              if (context.mounted) context.pop();
-                            },
-                            icon: const Icon(
-                              Icons.stop_circle_outlined,
-                              size: 18,
-                            ),
-                            label: const Text('Bitir'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.white,
-                              side: BorderSide(
-                                color: Colors.white.withValues(alpha: 0.45),
-                              ),
-                            ),
+                          PkEventLog.ended(battleId: battleId);
+                          if (context.mounted) context.pop();
+                        },
+                        icon: const Icon(Icons.stop_circle_outlined, size: 14),
+                        label: const Text(
+                          'Bitir',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
-                      ],
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(0, 28),
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          visualDensity: VisualDensity.compact,
+                          side: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.45),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 PkActionBottomBar(
@@ -521,13 +493,14 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                       initialReceiver: initial,
                     );
                   },
-                  onChat: () => setState(() => _chatOpen = !_chatOpen),
                 ),
-                if (_chatOpen)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                    child: _PkQuickChat(room: widget.room),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                  child: _PkQuickChat(
+                    room: widget.room,
+                    showMessages: _chatOpen,
                   ),
+                ),
               ],
             ),
           ),
@@ -549,6 +522,10 @@ class _PkHeader extends StatelessWidget {
     required this.phase,
     required this.onBack,
     required this.onMode,
+    required this.chatOpen,
+    required this.onToggleChat,
+    required this.soundMuted,
+    required this.onToggleSound,
   });
 
   final String timer;
@@ -559,6 +536,10 @@ class _PkHeader extends StatelessWidget {
   final PkBattlePhase phase;
   final VoidCallback onBack;
   final ValueChanged<PkBattleMode>? onMode;
+  final bool chatOpen;
+  final VoidCallback onToggleChat;
+  final bool soundMuted;
+  final VoidCallback onToggleSound;
 
   @override
   Widget build(BuildContext context) {
@@ -580,10 +561,34 @@ class _PkHeader extends StatelessWidget {
                   style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
                 ),
               ),
-              if (onMode != null)
-                PkModeSwitcher(mode: mode, onChanged: onMode!)
-              else
-                const SizedBox(width: 48),
+              if (onMode != null) ...[
+                PkModeSwitcher(mode: mode, onChanged: onMode!),
+                const SizedBox(width: 4),
+              ],
+              IconButton(
+                tooltip: chatOpen ? 'Sohbeti gizle' : 'Sohbeti göster',
+                visualDensity: VisualDensity.compact,
+                onPressed: onToggleChat,
+                icon: Icon(
+                  chatOpen
+                      ? Icons.chat_bubble_rounded
+                      : Icons.chat_bubble_outline_rounded,
+                  size: 22,
+                  color: chatOpen ? VoiceRoomTokens.neonPurple : Colors.white,
+                ),
+              ),
+              IconButton(
+                tooltip: soundMuted ? 'Sesleri aç' : 'Sesleri kapat',
+                visualDensity: VisualDensity.compact,
+                onPressed: onToggleSound,
+                icon: Icon(
+                  soundMuted
+                      ? Icons.volume_off_rounded
+                      : Icons.volume_up_rounded,
+                  size: 22,
+                  color: soundMuted ? VoiceRoomTokens.neonPink : Colors.white,
+                ),
+              ),
             ],
           ),
           Container(
@@ -635,9 +640,13 @@ class _PkHeader extends StatelessWidget {
 }
 
 class _PkQuickChat extends ConsumerStatefulWidget {
-  const _PkQuickChat({required this.room});
+  const _PkQuickChat({required this.room, this.showMessages = false});
 
   final VoiceRoomEntity room;
+
+  /// Son mesaj listesini göster (üst sağdaki sohbet ikonu). Yazma alanı her
+  /// zaman görünür.
+  final bool showMessages;
 
   @override
   ConsumerState<_PkQuickChat> createState() => _PkQuickChatState();
@@ -672,7 +681,7 @@ class _PkQuickChatState extends ConsumerState<_PkQuickChat> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (recent.isNotEmpty)
+        if (widget.showMessages && recent.isNotEmpty)
           ConstrainedBox(
             constraints: const BoxConstraints(maxHeight: 120),
             child: ListView.builder(
@@ -708,20 +717,22 @@ class _PkQuickChatState extends ConsumerState<_PkQuickChat> {
               Expanded(
                 child: TextField(
                   controller: _ctrl,
-                  style: const TextStyle(color: Colors.white, fontSize: 15),
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                  minLines: 1,
+                  maxLines: 3,
                   decoration: const InputDecoration(
-                    hintText: 'Mesaj',
+                    hintText: 'Mesaj yaz…',
                     hintStyle: TextStyle(color: Colors.white54),
                     border: InputBorder.none,
                     contentPadding:
-                        EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        EdgeInsets.symmetric(horizontal: 18, vertical: 16),
                   ),
                   textInputAction: TextInputAction.send,
                   onSubmitted: (_) => send(),
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.only(right: 6, top: 6, bottom: 6),
+                padding: const EdgeInsets.only(right: 6, top: 4, bottom: 4),
                 child: Material(
                   color: const Color(0xFF25D366),
                   shape: const CircleBorder(),
@@ -729,10 +740,10 @@ class _PkQuickChatState extends ConsumerState<_PkQuickChat> {
                   child: InkWell(
                     onTap: send,
                     child: const SizedBox(
-                      width: 40,
-                      height: 40,
+                      width: 46,
+                      height: 46,
                       child:
-                          Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                          Icon(Icons.send_rounded, color: Colors.white, size: 22),
                     ),
                   ),
                 ),

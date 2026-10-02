@@ -127,7 +127,16 @@ abstract class PostDto with _$PostDto {
           json['isAuto'] == true ||
           json['is_auto_share'] == true ||
           json['autoShared'] == true,
-      fortuneCount: asInt(pick(json, ['fortuneCount', 'fortune_count'])),
+      // Aynı fal TÜRÜNE baktıran toplam kişi: `fortuneTypeCount`; mevcut backend
+      // aynı değeri otomatik fal paylaşımlarında `fortuneCount` adıyla döner.
+      fortuneCount: asInt(
+        pick(json, [
+          'fortuneTypeCount',
+          'fortune_type_count',
+          'fortuneCount',
+          'fortune_count',
+        ]),
+      ),
       postType: pick(json, ['postType', 'post_type', 'type'])?.toString(),
       likedByMe: likedByMe,
     );

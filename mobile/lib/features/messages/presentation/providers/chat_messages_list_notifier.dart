@@ -7,7 +7,7 @@ import '../../../../core/performance/list_perf.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/message_entities.dart';
 import '../../domain/utils/dm_message_codec.dart';
-import '../../domain/utils/dm_message_dedupe.dart';
+import '../../domain/utils/dm_message_merge.dart';
 import '../../data/services/message_sse_service.dart';
 import 'messages_providers.dart';
 
@@ -44,40 +44,44 @@ class ChatMessagesListState {
 
 class ChatMessagesListNotifier
     extends FamilyAsyncNotifier<ChatMessagesListState, String> {
+  /// Eşzamanlı yenilemelerde yalnızca en yenisi uygulanır (sıra bozuk yanıt
+  /// ekranı eski listeyle ezmesin).
+  var _refreshSeq = 0;
+
   @override
   Future<ChatMessagesListState> build(String conversationId) async {
-    return _load(conversationId);
+    final remote = await _fetchRemote(conversationId, forceRefresh: false);
+    return _compose(remote, previous: null);
   }
 
-  Future<ChatMessagesListState> _load(
+  Future<List<MessageEntity>> _fetchRemote(
     String conversationId, {
-    bool forceRefresh = false,
-    ChatMessagesListState? previous,
-  }) async {
+    required bool forceRefresh,
+  }) {
     final userId = ref.read(authControllerProvider).valueOrNull?.id;
-    final remote = await ref.read(messagesRepositoryProvider).messages(
+    return ref.read(messagesRepositoryProvider).messages(
           conversationId,
           currentUserId: userId,
           forceRefresh: forceRefresh,
         );
-    final optimistic = previous?.all
-            .where((m) => m.id.startsWith('local-'))
-            .toList() ??
-        const <MessageEntity>[];
-    var all = DmMessageDedupe.merge(
+  }
+
+  /// Sunucu listesi + ekrandaki liste → kimliğe göre birleşik durum.
+  /// [previous] işlem SONUNDA (commit anında) okunan güncel durumdur.
+  ChatMessagesListState _compose(
+    List<MessageEntity> remote, {
+    required ChatMessagesListState? previous,
+  }) {
+    var all = DmMessageMerge.mergeById(
+      previous: previous?.all ?? const <MessageEntity>[],
       remote: remote,
-      localOptimistic: optimistic,
     );
     all = all.where((m) {
       final note = DmMessageCodec.parseVoiceNote(m.text);
       if (note == null) return true;
       return !DmMessageCodec.isExpiredVoiceNote(note);
     }).toList();
-    var visible = all.length;
-    if (previous != null && all.length > previous.all.length) {
-      visible = all.length;
-    }
-    return ChatMessagesListState(all: all, visibleCount: visible);
+    return ChatMessagesListState(all: all, visibleCount: all.length);
   }
 
   Future<void> refresh({
@@ -85,14 +89,23 @@ class ChatMessagesListNotifier
     bool forceRefresh = true,
   }) async {
     final id = arg;
+    final seq = ++_refreshSeq;
     if (!silent) {
       state = const AsyncLoading<ChatMessagesListState>().copyWithPrevious(state);
     }
-    final previous = state.valueOrNull;
     ref.invalidate(chatMessagesProvider(id));
-    state = await AsyncValue.guard(() async {
-      return _load(id, forceRefresh: forceRefresh, previous: previous);
-    });
+    try {
+      final remote = await _fetchRemote(id, forceRefresh: forceRefresh);
+      if (seq != _refreshSeq) return; // daha yeni bir yenileme başladı
+      // ÖNEMLİ: birleştirme commit anındaki güncel duruma göre yapılır —
+      // yenileme sürerken eklenen optimistic mesaj ezilmez.
+      state = AsyncValue.data(_compose(remote, previous: state.valueOrNull));
+    } catch (e, st) {
+      if (seq != _refreshSeq) return;
+      // Sessiz yenileme hata verirse ekrandaki mesajlar KORUNUR.
+      if (silent && state.valueOrNull != null) return;
+      state = AsyncValue.error(e, st);
+    }
   }
 
   void loadOlder() {
@@ -155,10 +168,8 @@ class ChatMessagesListNotifier
       );
       return;
     }
-    final merged = DmMessageDedupe.merge(
-      remote: [...cur.all, entity],
-      localOptimistic: const [],
-    );
+    // SSE'den gelen mesaj = sunucu kaydı: eşleşen optimistic mesajın yerini alır.
+    final merged = DmMessageMerge.upsert(cur.all, entity);
     state = AsyncValue.data(
       cur.copyWith(all: merged, visibleCount: merged.length),
     );

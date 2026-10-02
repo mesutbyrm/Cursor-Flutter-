@@ -3,7 +3,10 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 
+import '../push/message_notification_data.dart';
+import '../push/notification_channels.dart';
 import '../push/push_navigation_handler.dart';
+import '../push/push_notification_service.dart';
 import 'onesignal_config.dart';
 import '../../features/live_psychics/presentation/controllers/psychic_push_action_bridge.dart';
 
@@ -78,10 +81,32 @@ class OneSignalBootstrap {
             );
         // preventDefault olmadan display() çağrılırsa Android'de çift bildirim oluşur.
         event.preventDefault();
-        if (!isFortuneInvite) {
-          event.notification.display();
+        if (isFortuneInvite) return;
+        unawaited(() async {
+          // Kullanıcı kanalı kapattıysa gösterme (uygulama içi liste yine dolar).
+          final channel = AppNotificationChannel.forType(
+            data['type']?.toString(),
+          );
+          final enabled = await const NotificationChannelPrefs().isEnabled(
+            channel,
+          );
+          if (enabled) {
+            // Direkt mesaj: gönderen adı/avatarı/metni + "Yanıtla" ile göster.
+            final message = MessageNotificationData.tryParse(
+              data,
+              fallbackTitle: event.notification.title,
+              fallbackBody: event.notification.body,
+            );
+            if (message != null) {
+              await PushNotificationService.instance.showMessageNotification(
+                message,
+              );
+            } else {
+              event.notification.display();
+            }
+          }
           PushNavigationHandler.onPushReceived?.call();
-        }
+        }());
       });
 
       _ready = true;

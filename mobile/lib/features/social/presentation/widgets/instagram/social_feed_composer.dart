@@ -229,21 +229,11 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
     final displayName = me.$2 ?? 'sen';
     final avatarUrl = me.$1;
 
+    // Tam genişlik: yan boşluk, kenar çizgisi ve köşe yuvarlaması yok.
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+      padding: const EdgeInsets.only(top: 4, bottom: 4),
       child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: context.colors.surfaceElevated,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: _expanded
-                ? context.colors.primary.withValues(alpha: 0.45)
-                : (context.isDarkTheme
-                      ? Colors.white.withValues(alpha: 0.06)
-                      : context.colors.outlineVariant),
-          ),
-          boxShadow: context.isDarkTheme ? null : context.colors.cardShadow,
-        ),
+        decoration: BoxDecoration(color: context.colors.surfaceElevated),
         child: Column(
           children: [
             Padding(

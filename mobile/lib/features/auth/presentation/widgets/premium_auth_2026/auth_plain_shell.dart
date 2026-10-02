@@ -39,26 +39,42 @@ class AuthPlainShell extends StatelessWidget {
       data: AppTheme.dark(),
       child: Scaffold(
         backgroundColor: const Color(0xFF05050D),
+        // Klavye açılınca gövde küçülmesin: arka plan görseli Stack'te sabit
+        // kalır (yeniden ölçeklenmez); form klavye boşluğunu kendi dolgusuyla
+        // (viewInsets.bottom) yönetir.
+        resizeToAvoidBottomInset: false,
         body: Stack(
           fit: StackFit.expand,
           children: [
-            const DecoratedBox(decoration: BoxDecoration(gradient: _bg)),
-            // Stok gece gökyüzü fotoğrafı (Pexels) — metin okunurluğu için
-            // üstüne koyu degrade bindirilir.
-            ExcludeSemantics(
-              child: Image.asset(
-                'assets/backgrounds/login-night-sky.webp',
-                fit: BoxFit.cover,
-                cacheWidth: 720,
-                errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            const Positioned.fill(
+              child: DecoratedBox(decoration: BoxDecoration(gradient: _bg)),
+            ),
+            // Gece gökyüzü illüstrasyonu (1060×1844, kenar boşlukları kırpılmış).
+            // BoxFit.cover: oranı bozmadan ekranı kaplar.
+            Positioned.fill(
+              child: ExcludeSemantics(
+                child: Image.asset(
+                  'assets/backgrounds/login-night-sky.webp',
+                  fit: BoxFit.cover,
+                  alignment: Alignment.center,
+                  width: double.infinity,
+                  height: double.infinity,
+                  cacheWidth: 1080,
+                  filterQuality: FilterQuality.medium,
+                  gaplessPlayback: true,
+                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                ),
               ),
             ),
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0x990A0618), Color(0xD90A0618)],
+            // Metin okunurluğu için koyu degrade bindirme.
+            const Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0x990A0618), Color(0xD90A0618)],
+                  ),
                 ),
               ),
             ),
@@ -89,8 +105,9 @@ class AuthPlainShell extends StatelessWidget {
                           ),
                           child: ConstrainedBox(
                             constraints: BoxConstraints(
-                              minHeight:
-                                  constraints.maxHeight - mq.viewInsets.bottom,
+                              minHeight: (constraints.maxHeight -
+                                      mq.viewInsets.bottom)
+                                  .clamp(0.0, double.infinity),
                             ),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,

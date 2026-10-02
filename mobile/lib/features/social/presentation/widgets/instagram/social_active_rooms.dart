@@ -114,7 +114,7 @@ class _SocialActiveRoomsState extends ConsumerState<SocialActiveRooms> {
                   ),
                   const Spacer(),
                   TextButton(
-                    onPressed: () => context.go('/voice-rooms'),
+                    onPressed: () => context.push('/voice-rooms'),
                     child: Text('Tümü'),
                   ),
                 ],

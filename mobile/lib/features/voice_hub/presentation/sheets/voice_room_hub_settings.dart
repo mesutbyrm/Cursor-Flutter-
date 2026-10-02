@@ -14,6 +14,7 @@ import '../../../../core/membership/membership_capability_providers.dart';
 import '../../../vip_gold/domain/vip_tier.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/entities/chat_room_presence.dart';
+import '../../domain/voice_room_background_policy.dart';
 import '../providers/chat_room_providers.dart';
 import '../providers/voice_room_ui_provider.dart';
 import '../theme/voice_room_tokens.dart';
@@ -176,7 +177,11 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
   @override
   Widget build(BuildContext context) {
     final ui = ref.watch(voiceRoomUiProvider);
-    final canBg = widget.perms.canChangeBackground || widget.isOwner;
+    final canBg = (widget.perms.canChangeBackground || widget.isOwner) &&
+        voiceRoomBackgroundUnlocked(
+          widget.room,
+          isSiteAdmin: widget.perms.isSiteAdmin,
+        );
 
     final tiles = <({IconData icon, String label, VoidCallback onTap})>[
       (
@@ -468,6 +473,33 @@ class _VoiceRoomBackgroundSheetState
     final isAdmin = ref.watch(staffAccessProvider).isSiteAdmin;
     final tier = ref.watch(membershipCapabilitiesSyncProvider).effectiveTier;
     final canUpload = isAdmin || tier.isAtLeast(VipTier.gold);
+    if (!voiceRoomBackgroundUnlocked(widget.room, isSiteAdmin: isAdmin)) {
+      return VoiceGlass(
+        borderRadius: 24,
+        padding: EdgeInsets.fromLTRB(16, 20, 16, bottom + 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.lock_rounded, size: 32),
+            const SizedBox(height: 10),
+            const Text(
+              'Oda arka planı kilitli',
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              voiceRoomBackgroundLockedMessage,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: context.colors.onSurfaceMuted,
+                fontSize: 13,
+                height: 1.35,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     return DraggableScrollableSheet(
       initialChildSize: 0.55,
       minChildSize: 0.35,

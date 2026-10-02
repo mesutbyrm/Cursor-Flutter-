@@ -1045,6 +1045,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     if (!mounted) return;
     if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
       widget.onSwipeClose!();
+    } else if (context.canPop()) {
+      context.pop();
     } else {
       context.go('/feed');
     }
@@ -1056,8 +1058,13 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     bool skipHostConfirm = false,
   }) async {
     if (_leaving) return;
-    if (widget.session.isHost && !skipHostConfirm) {
-      final confirmed = await showLiveEndConfirmDialog(context);
+    // Geri tuşu / çıkış: yayıncı VE izleyici için onay. skipHostConfirm yalnızca
+    // programatik çıkışlarda (bot zamanlayıcı, uygulama kapanışı) true gelir.
+    if (!skipHostConfirm) {
+      final confirmed = await showLiveEndConfirmDialog(
+        context,
+        isHost: widget.session.isHost,
+      );
       if (confirmed != true) return;
     }
     _streamEndUiHandled = true;
@@ -1070,7 +1077,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
       widget.onSwipeClose!();
     } else if (context.mounted) {
-      context.go('/feed');
+      // Önceki sayfaya dön (liste/ana sayfa); yığın boşsa ana sayfa.
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/feed');
+      }
     }
 
     try {

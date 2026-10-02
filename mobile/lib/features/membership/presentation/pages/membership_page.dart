@@ -23,6 +23,8 @@ import '../../../profile/presentation/widgets/payment_methods_summary_line.dart'
 import '../../domain/membership_catalog_merge.dart';
 import '../../domain/membership_model.dart';
 import '../../domain/membership_package_entity.dart';
+import '../../domain/membership_purchase_error.dart';
+import '../widgets/membership_purchase_error_dialog.dart';
 import '../../../profile/presentation/providers/profile_hub_providers.dart';
 import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../controllers/membership_controller.dart';
@@ -325,10 +327,42 @@ class MembershipPage extends ConsumerWidget {
     await ref.read(paymentRequestsNotifierProvider.notifier).cancelAllPending();
 
     Future<bool> tryInstantPurchase({String? paymentMethod}) async {
+      // Satın alma sunucudaki GERÇEK plan kimliği (cuid) ile yapılır; yalnızca
+      // katalogdaki tier adı ('svip') sunucuda `Plan not found` (404) döner.
+      var planId = tier.resolvedPlanId;
+      if (!looksLikeServerPlanId(planId)) {
+        try {
+          await ref.read(membershipControllerProvider.notifier).refresh();
+          await Future<void>.delayed(Duration.zero);
+        } catch (_) {}
+        planId = ref
+            .read(membershipControllerProvider)
+            .selectedTierModel
+            .resolvedPlanId;
+      }
+      if (!looksLikeServerPlanId(planId)) {
+        debugPrint(
+          '[Membership] purchase blocked: sunucu paket listesinde '
+          '${tier.title} (wireId=${tier.wireId}) için planId yok '
+          '(resolvedPlanId=$planId)',
+        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '${tier.title} planı sunucu paket listesinde bulunamadı. '
+                'Lütfen biraz sonra tekrar deneyin.',
+              ),
+            ),
+          );
+        }
+        return false;
+      }
       try {
         await ref.read(membershipRemoteProvider).purchaseMembership(
-              tier.resolvedPlanId,
+              planId,
               paymentMethod: paymentMethod,
+              planLabel: tier.title,
             );
         await ref.read(membershipControllerProvider.notifier).refresh();
         await refreshMembershipAfterPurchase(ref);
@@ -349,9 +383,31 @@ class MembershipPage extends ConsumerWidget {
             e.message.contains('Yetersiz CFC') ||
             e.message.toLowerCase().contains('insufficient');
         if (!insufficient) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(e.message)),
-          );
+          if (e is MembershipPurchaseException) {
+            // Paket listesini yenile (plan değişmiş/kapanmış olabilir).
+            if (e.statusCode == 404) {
+              unawaited(
+                ref.read(membershipControllerProvider.notifier).refresh(),
+              );
+            }
+            final messenger = ScaffoldMessenger.of(context);
+            messenger.showSnackBar(
+              SnackBar(
+                content: Text(e.message),
+                duration: const Duration(seconds: 8),
+                action: SnackBarAction(
+                  label: 'Ayrıntı',
+                  onPressed: () => unawaited(
+                    showMembershipPurchaseErrorDetails(context, e),
+                  ),
+                ),
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(e.message)),
+            );
+          }
           return false;
         }
         if (e.message.contains('Yetersiz jeton') ||
@@ -363,7 +419,15 @@ class MembershipPage extends ConsumerWidget {
           );
         }
         return false;
-      } catch (_) {
+      } catch (e, st) {
+        debugPrint('[Membership] purchase unexpected error: $e\n$st');
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Üyelik satın alınamadı. Lütfen tekrar deneyin.'),
+            ),
+          );
+        }
         return false;
       }
     }

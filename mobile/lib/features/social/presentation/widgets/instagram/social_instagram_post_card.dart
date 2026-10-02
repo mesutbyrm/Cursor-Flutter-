@@ -129,22 +129,12 @@ class _SocialInstagramPostCardState
     );
     Widget actions({bool onMedia = false}) =>
         _buildActions(context, likeCount, onMedia: onMedia);
-    // Listede blur yok: tek düz yüzey + ince kenar (kaydırmada ucuz).
+    // Listede blur yok: tek düz yüzey; kenar çizgisi/yan boşluk yok (tam genişlik).
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: context.colors.surface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: dark
-                ? Colors.white.withValues(alpha: 0.06)
-                : context.colors.outlineVariant,
-          ),
-          boxShadow: dark ? null : context.colors.cardShadow,
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(17),
+        decoration: BoxDecoration(color: context.colors.surface),
+        child: ClipRect(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -185,10 +175,9 @@ class _SocialInstagramPostCardState
                       GestureDetector(
                         onTap: () => _openPostDetail(context),
                         child: Padding(
-                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                          padding: const EdgeInsets.only(bottom: 8),
                           child: DecoratedBox(
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(14),
                               gradient: LinearGradient(
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
@@ -201,11 +190,6 @@ class _SocialInstagramPostCardState
                                         Color(0xFFF3EEFF),
                                         Color(0xFFEAF7F5),
                                       ],
-                              ),
-                              border: Border.all(
-                                color: context.colors.primary.withValues(
-                                  alpha: dark ? 0.30 : 0.18,
-                                ),
                               ),
                             ),
                             child: Padding(
@@ -685,7 +669,7 @@ class _CoViewersBar extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Bu kullanıcı ile birlikte $count kişi bu fala baktı',
+                    'Bu kullanıcı ile birlikte $count kişi bu fal türüne baktırdı',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(

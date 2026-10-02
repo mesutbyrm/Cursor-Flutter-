@@ -29,6 +29,7 @@ import '../../features/notifications/presentation/providers/notifications_list_n
 import '../../features/notifications/presentation/providers/notifications_providers.dart';
 import '../../features/voice_hub/presentation/utils/voice_room_session_utils.dart';
 import '../onesignal/onesignal_bootstrap.dart';
+import 'notification_reply_sender.dart';
 import 'push_notification_service.dart';
 import 'push_navigation_handler.dart';
 import 'push_registrar.dart';
@@ -56,6 +57,12 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Bildirimden "Yanıtla": uygulama açıkken mevcut mesaj repository'si kullanılır
+    // (kapalıyken NotificationReplySender doğrudan API'ye gider).
+    NotificationReplySender.foregroundHandler = (peerId, text) async {
+      await ref.read(messagesRepositoryProvider).sendMessage(peerId, text);
+      ref.invalidate(conversationsProvider);
+    };
     bindPushRegistrarTokenRefresh(() {
       if (!mounted) return;
       ref.read(pushRegistrarProvider).registerIfPossible(allowTokenRetry: true);
@@ -312,6 +319,7 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener>
 
   @override
   void dispose() {
+    NotificationReplySender.foregroundHandler = null;
     WidgetsBinding.instance.removeObserver(this);
     _adminPollTimer?.cancel();
     _pushSyncTimer?.cancel();

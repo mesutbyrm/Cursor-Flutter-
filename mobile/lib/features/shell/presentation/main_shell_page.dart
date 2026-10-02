@@ -24,6 +24,38 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
   var _prefetched = false;
   int? _lastBranchIndex;
 
+  /// Ziyaret edilen sekme geçmişi — geri tuşu önce önceki sekmeye döner.
+  final _branchHistory = <int>[];
+  static const _historyMax = 8;
+
+  void _recordBranchChange(int? from, int to) {
+    if (from == null || from == to) return;
+    _branchHistory.remove(to); // aynı sekme geçmişte iki kez durmasın
+    _branchHistory.add(from);
+    if (_branchHistory.length > _historyMax) _branchHistory.removeAt(0);
+  }
+
+  /// Geri tuşu (yığın boşken): önceki sekme → ana sekme → çıkış onayı.
+  Future<void> _onShellBack(BuildContext context, GoRouter router) async {
+    if (router.canPop()) {
+      context.pop();
+      return;
+    }
+    final current = widget.navigationShell.currentIndex;
+    if (_branchHistory.isNotEmpty) {
+      final prev = _branchHistory.removeLast();
+      _lastBranchIndex = prev; // geri dönüş geçmişe yeniden yazılmasın
+      widget.navigationShell.goBranch(prev);
+      return;
+    }
+    if (current != 0) {
+      _lastBranchIndex = 0;
+      widget.navigationShell.goBranch(0);
+      return;
+    }
+    await handleShellBackPress(context);
+  }
+
   void _goBranch(int index) {
     widget.navigationShell.goBranch(
       index,
@@ -76,6 +108,7 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
 
     final currentIndex = widget.navigationShell.currentIndex;
     if (_lastBranchIndex != currentIndex) {
+      _recordBranchChange(_lastBranchIndex, currentIndex);
       _lastBranchIndex = currentIndex;
       _schedulePurgeIfBlocked('branch-active-$currentIndex');
     }
@@ -96,16 +129,7 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
-        if (router.canPop()) {
-          context.pop();
-          return;
-        }
-        await handleShellBackPress(
-          context,
-          onLogout: () async {
-            await ref.read(authControllerProvider.notifier).logout();
-          },
-        );
+        await _onShellBack(context, router);
       },
       child: Scaffold(
         backgroundColor: ShellUi.shellBackground(context),

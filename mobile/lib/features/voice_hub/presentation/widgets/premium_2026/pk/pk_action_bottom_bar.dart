@@ -3,18 +3,16 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../theme/voice_room_tokens.dart';
 
-/// PK alt bar — Destekle · Hediye (neon) · Sohbet.
+/// PK alt bar — Destekle · Hediye (neon). Sohbet/ses kontrolleri üst başlıkta.
 class PkActionBottomBar extends StatelessWidget {
   const PkActionBottomBar({
     super.key,
     required this.onSupport,
     required this.onGift,
-    required this.onChat,
   });
 
   final VoidCallback onSupport;
   final VoidCallback onGift;
-  final VoidCallback onChat;
 
   @override
   Widget build(BuildContext context) {
@@ -22,6 +20,7 @@ class PkActionBottomBar extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.fromLTRB(20, 8, 20, bottom + 10),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           _PkCircleAction(
             icon: Icons.auto_awesome_rounded,
@@ -29,15 +28,8 @@ class PkActionBottomBar extends StatelessWidget {
             color: VoiceRoomTokens.neonPurple,
             onTap: onSupport,
           ),
-          const Spacer(),
+          const SizedBox(width: 48),
           _PkGiftFab(onTap: onGift),
-          const Spacer(),
-          _PkCircleAction(
-            icon: Icons.chat_bubble_outline_rounded,
-            label: 'Sohbet',
-            color: const Color(0xFF2A2D45),
-            onTap: onChat,
-          ),
         ],
       ),
     );

@@ -100,7 +100,16 @@ class MessagesRemoteDataSource {
           : ApiEndpoints.conversationMessages(peerUserId);
       final res = await _dio.safeGet<dynamic>(path, forceRefresh: forceRefresh);
       final parsed = _parseMessages(res.data, currentUserId: currentUserId);
-      if (parsed != null) return parsed;
+      if (parsed != null) {
+        // Arka uç düz GET'te yalnızca EN ESKİ 100 mesajı döndürür
+        // (`orderBy createdAt asc, take 100`). 100'e ulaşıldıysa en yeni sayfa
+        // imleç modundan (`paginate=cursor`, yeniden eskiye) eklenir; yoksa yeni
+        // gönderilen mesajlar uzun sohbetlerde hiç görünmez.
+        if (parsed.length >= backendThreadCap) {
+          return _withNewestPage(path, parsed, currentUserId: currentUserId);
+        }
+        return parsed;
+      }
     } on ApiException catch (e) {
       if (e.statusCode == 401) {
         throw const ApiException(
@@ -111,6 +120,38 @@ class MessagesRemoteDataSource {
       rethrow;
     }
     return const [];
+  }
+
+  /// `GET /api/messages/{id}` düz modunda arka ucun döndürdüğü üst sınır.
+  static const backendThreadCap = 100;
+
+  Future<List<MessageEntity>> _withNewestPage(
+    String path,
+    List<MessageEntity> oldest, {
+    String? currentUserId,
+  }) async {
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        path,
+        query: const {'paginate': 'cursor', 'limit': 50},
+        forceRefresh: true,
+      );
+      final newest = _parseMessages(res.data, currentUserId: currentUserId);
+      if (newest == null || newest.isEmpty) return oldest;
+      final byId = <String, MessageEntity>{
+        for (final m in oldest) m.id: m,
+        for (final m in newest) m.id: m,
+      };
+      final merged = byId.values.toList()
+        ..sort((a, b) {
+          final at = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+          final bt = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+          return at.compareTo(bt);
+        });
+      return merged;
+    } catch (_) {
+      return oldest;
+    }
   }
 
   List<MessageEntity>? _parseMessages(dynamic body, {String? currentUserId}) {

@@ -8,6 +8,7 @@ import '../../../../core/performance/network_perf.dart';
 import '../../../../core/offline/api_cache_store.dart';
 import '../../../../core/offline/cache_first_loader.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../local_notification_store.dart';
 
 class NotificationsRepositoryImpl implements NotificationsRepository {
   NotificationsRepositoryImpl(this._remote, this._canlifal);
@@ -80,6 +81,9 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
     addAll(
       (pair[1] as List<ProfileActivityItemEntity>).map(_activityToNotification),
     );
+
+    // Cihazda üretilen bildirimler (yayın hatırlatıcısı vb.) uygulama içi listede de.
+    addAll(await LocalNotificationStore.load());
 
     final localRead = await _NotificationReadMemory.load();
     final list = _dedupeMergedNotifications(byId.values.toList())
@@ -173,8 +177,10 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
   }
 
   /// Logout — yerel okundu hafızasını temizle (kullanıcılar arası sızıntı önleme).
-  static Future<void> clearLocalReadState() =>
-      _NotificationReadMemory.clearAll();
+  static Future<void> clearLocalReadState() async {
+    await _NotificationReadMemory.clearAll();
+    await LocalNotificationStore.clear();
+  }
 
   Future<void> _invalidateCache() => ApiCacheStore.clear(_cacheKey);
 

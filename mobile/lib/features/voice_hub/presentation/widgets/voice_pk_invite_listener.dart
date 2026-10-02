@@ -166,28 +166,20 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
     final battleKey = battle.effectiveId;
     if (battleKey.isEmpty || !_openedActivePk.add(battleKey)) return;
 
-    VoiceRoomEntity? room;
+    // YALNIZCA kullanıcı zaten bu odanın içindeyse PK sayfasına geç. Eskiden
+    // oda dışındayken de (sahip olunan oda / davet hedefi çözülüp) kullanıcı
+    // `/voice-room/.../pk` sayfasına kendiliğinden itiliyordu → "sesli odaya
+    // kendi kendine giriş". Odaya giriş artık yalnızca kullanıcı eylemiyle olur
+    // (liste dokunuşu, davet kabulü, bildirim dokunuşu).
     final activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
-    if (activeKey.isNotEmpty) {
-      final activeRoom =
-          ref.read(voiceRoomByIdProvider(activeKey)).valueOrNull;
-      if (activeRoom != null && pkBattleBelongsToRoom(battle, activeRoom)) {
-        room = activeRoom;
-      }
-    }
-    room ??= resolvePkInviteTargetRoom(ref, battle, userId);
-    if (room == null) {
-      for (final r in ref.read(myOwnedVoiceRoomsProvider)) {
-        if (pkBattleBelongsToRoom(battle, r)) {
-          room = r;
-          break;
-        }
-      }
-    }
-    if (room == null) {
+    final activeRoom = activeKey.isEmpty
+        ? null
+        : ref.read(voiceRoomByIdProvider(activeKey)).valueOrNull;
+    if (activeRoom == null || !pkBattleBelongsToRoom(battle, activeRoom)) {
       _openedActivePk.remove(battleKey);
       return;
     }
+    final room = activeRoom;
 
     final nav = rootNavigatorKey.currentContext;
     if (nav == null || !nav.mounted) {

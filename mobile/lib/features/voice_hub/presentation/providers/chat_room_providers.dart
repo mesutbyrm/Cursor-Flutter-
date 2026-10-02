@@ -49,6 +49,7 @@ import '../pk_room/pk_room_controller.dart';
 import '../../../pk/presentation/providers/pk_session_notifier.dart';
 import '../utils/pk_invite_dialog_helper.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
+import '../../domain/voice_room_background_policy.dart';
 import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../../../../core/network/sse/sse_hub_provider.dart';
 import '../../data/youtube_music_search_cache.dart';
@@ -3243,6 +3244,12 @@ class VoiceRoomLiveController
   Future<String?> setRoomBackground(String url) async {
     final trimmed = url.trim();
     if (trimmed.isEmpty) return 'Arka plan seçilemedi.';
+    if (!voiceRoomBackgroundUnlocked(
+      _roomMeta,
+      isSiteAdmin: _permissions().isSiteAdmin,
+    )) {
+      return voiceRoomBackgroundLockedMessage;
+    }
     final previous = state.backgroundUrl;
     state = state.copyWith(backgroundUrl: trimmed, clearError: true);
     try {

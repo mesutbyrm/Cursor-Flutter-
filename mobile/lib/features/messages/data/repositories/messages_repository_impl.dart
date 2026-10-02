@@ -27,8 +27,23 @@ class MessagesRepositoryImpl implements MessagesRepository {
       refreshInBackground: false,
       fetch: () async {
         final remote = await _remote.conversations(forceRefresh: forceRefresh);
-        final hidden = await HiddenConversationsStore.read(cacheUserId ?? '');
-        return remote.where((c) => !hidden.contains(c.id)).toList();
+        final uid = cacheUserId ?? '';
+        final hidden = await HiddenConversationsStore.read(uid);
+        final visible = <ConversationEntity>[];
+        for (final c in remote) {
+          if (!hidden.contains(c.id)) {
+            visible.add(c);
+            continue;
+          }
+          // Kullanıcı sohbeti gizlemiş ama karşı taraf yeni mesaj yazmış →
+          // sohbet geri gelir (eskiden sonsuza dek gizli kalıyor, yeni mesajlar
+          // görünmüyordu).
+          if (c.unreadCount > 0) {
+            await HiddenConversationsStore.unhide(uid, c.id);
+            visible.add(c);
+          }
+        }
+        return visible;
       },
       encode: (list) => CacheFirstLoader.encodeList(
         [for (final c in list) encodeConversation(c)],
@@ -95,6 +110,8 @@ class MessagesRepositoryImpl implements MessagesRepository {
       forwardFrom: forwardFrom,
     );
     final uid = currentUserId ?? '';
+    // Gizlenmiş sohbete mesaj yazmak sohbeti yeniden görünür kılar.
+    await HiddenConversationsStore.unhide(uid, conversationId);
     await ApiCacheStore.clear(MessagesLoadPerf.threadKey(uid, conversationId));
     await ApiCacheStore.clear(MessagesLoadPerf.conversationsKey(uid));
   }

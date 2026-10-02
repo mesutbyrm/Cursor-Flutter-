@@ -15,6 +15,7 @@ import '../providers/gift_catalog_index_provider.dart';
 import '../sync/gift_session_controller.dart';
 import '../widgets/gift_animation_player.dart';
 import '../widgets/gift_media_widget.dart';
+import '../widgets/gift_recipient_banner.dart';
 import '../widgets/gift_stage_layout.dart';
 import '../../../../core/design_system/cds_overlay_priority.dart';
 
@@ -144,6 +145,9 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
               giftSize: giftSize,
               seatIndex: widget.seatIndex ?? ev.seatIndex,
             ),
+            if (config.displayArea != GiftEngineDisplayArea.seat &&
+                GiftRecipientBanner.shouldShow(ev))
+              _positionedRecipientBanner(context, ev, config),
             if (config.showComboBadge && comboAllowed)
               _ComboBadge(
                 combo: config.combo,
@@ -151,6 +155,31 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// "X → Y'ye hediye gönderdi" bandı — tüm (koltuk dışı) hediye alanlarında.
+  Widget _positionedRecipientBanner(
+    BuildContext context,
+    LiveGiftEvent event,
+    GiftEngineConfig config,
+  ) {
+    final top = MediaQuery.paddingOf(context).top + 64;
+    // Animasyon bitmeden ~450 ms önce solar.
+    final holdMs = (config.durationMs - 450 - 480).clamp(0, 600000);
+    return Positioned(
+      top: top,
+      left: 12,
+      right: 12,
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: GiftRecipientBanner(event: event)
+            .animate(key: ValueKey('gift-recipient-${event.id}'))
+            .fadeIn(duration: 220.ms)
+            .slideY(begin: -0.4, end: 0, duration: 260.ms)
+            .then(delay: Duration(milliseconds: holdMs))
+            .fadeOut(duration: 400.ms),
       ),
     );
   }

@@ -7,7 +7,6 @@ import 'package:canlifal_social/core/theme/app_theme.dart';
 import 'package:canlifal_social/features/membership/domain/membership_model.dart';
 import 'package:canlifal_social/features/profile/presentation/premium_2026/profile_membership_helpers.dart';
 import 'package:canlifal_social/features/social/presentation/utils/social_post_location_helper.dart';
-import 'package:canlifal_social/features/social/presentation/utils/social_discover_shortcut_labels.dart';
 import 'package:canlifal_social/features/social/presentation/utils/social_feed_end_label.dart';
 import 'package:canlifal_social/features/social/presentation/utils/social_post_resolver.dart';
 import 'package:canlifal_social/features/social/presentation/utils/social_feed_refresh.dart';
@@ -466,19 +465,6 @@ void main() {
       const fail = SocialPostLocationResult(errorMessage: 'izin yok');
       expect(ok.ok, isTrue);
       expect(fail.ok, isFalse);
-    });
-  });
-
-  group('20n — Sosyal bölüm faz 4 helper sözleşmesi', () {
-    test('keşif kısayolu etiketleri', () {
-      expect(socialDiscoverShortcutLabels, hasLength(5));
-      expect(socialDiscoverShortcutLabels.first, 'Tümü');
-      expect(socialDiscoverShortcutLabels.last, 'Fan Club');
-    });
-
-    test('keşif kısayolu rotaları', () {
-      expect(socialDiscoverShortcutRoutes, contains('/canli-falcilar'));
-      expect(socialDiscoverShortcutRoutes, contains('/fan-club-hub'));
     });
   });
 

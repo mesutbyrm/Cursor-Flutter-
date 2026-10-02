@@ -82,5 +82,6 @@ Future<void> _enterVoiceRoom(
 
   VoiceRoomEntryPerf.prewarmOnRoomTap(ref, room);
   if (!context.mounted) return;
-  context.go('/voice-room/${room.apiRoomKey}', extra: room);
+  // push: geri tuşu bir önceki sayfaya dönsün (yığın silinmez).
+  context.push('/voice-room/${room.apiRoomKey}', extra: room);
 }

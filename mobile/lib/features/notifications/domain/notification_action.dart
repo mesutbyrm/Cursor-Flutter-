@@ -136,12 +136,7 @@ void _applyInAppPath(GoRouter router, String path) {
     router.go(withQuery);
     return;
   }
-  if (basePath.startsWith('/voice-room/') ||
-      basePath.startsWith('/live/') ||
-      basePath.startsWith('/chat/')) {
-    router.go(withQuery);
-    return;
-  }
+  // Oda / yayın / sohbet: push — geri tuşu bildirimden önceki sayfaya dönsün.
   router.push(withQuery);
 }
 

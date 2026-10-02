@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 
 import '../motion/canlifal_motion_tokens.dart';
+import 'app_back_scope.dart';
 import '../ui/premium_2026/premium_motion.dart';
 
 /// Android varsayılan geçişleri modal barrier/scrim bırakabiliyor — barrier yok.
@@ -39,7 +40,7 @@ abstract final class AppPageTransitions {
     required LocalKey? key,
     required Widget child,
   }) {
-    return NoTransitionPage<T>(key: key, child: child);
+    return NoTransitionPage<T>(key: key, child: AppBackScope(child: child));
   }
 
   static CustomTransitionPage<T> fadeSlide<T>({
@@ -49,7 +50,7 @@ abstract final class AppPageTransitions {
   }) {
     return CustomTransitionPage<T>(
       key: key,
-      child: child,
+      child: AppBackScope(child: child),
       transitionDuration: duration,
       reverseTransitionDuration: duration,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -77,7 +78,7 @@ abstract final class AppPageTransitions {
   }) {
     return CustomTransitionPage<T>(
       key: key,
-      child: child,
+      child: AppBackScope(child: child),
       transitionDuration: PremiumMotion.medium,
       reverseTransitionDuration: PremiumMotion.medium,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -108,7 +109,7 @@ abstract final class AppPageTransitions {
   }) {
     return CustomTransitionPage<T>(
       key: key,
-      child: child,
+      child: AppBackScope(child: child),
       transitionDuration: PremiumMotion.sheet,
       reverseTransitionDuration: PremiumMotion.sheet,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
