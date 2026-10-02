@@ -4,10 +4,11 @@ import '../../../notifications/presentation/providers/notifications_list_notifie
 import '../../../notifications/presentation/providers/notifications_providers.dart';
 import '../providers/payment_requests_notifier.dart';
 
-/// Jeton / üyelik mağazası açılışında hayalet bekleyen talepleri temizler.
+/// Jeton / üyelik mağazası açılışında bekleyen talep durumunu SUNUCUDAN yeniler
+/// (yerel bayrak tutulmaz; onaylanan/reddedilen talep banner'da kalmaz).
 Future<int> cleanupStalePaymentRequests(WidgetRef ref) async {
   final notifier = ref.read(paymentRequestsNotifierProvider.notifier);
-  await notifier.refresh();
+  await notifier.refresh(silent: true);
   final expired = await notifier.cancelExpiredPending();
   final all = await notifier.cancelAllPending();
   if (expired > 0 || all > 0) {

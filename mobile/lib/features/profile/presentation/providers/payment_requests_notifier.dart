@@ -1,11 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/providers/auth_selectors.dart';
 import '../../../wallet/domain/cfc_payment_request_entity.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';
 import 'profile_providers.dart';
 
+/// Ödeme talepleri — SUNUCU tek doğruluk kaynağıdır (`GET /api/payments/requests`).
+///
+/// Yerel bayrak/önbellek tutulmaz: sağlayıcı `autoDispose`dur (ekran açıldıkça
+/// sunucudan taze çekilir), kullanıcı değişince sıfırlanır ve uygulama öne
+/// gelince sessizce yenilenebilir ([refresh] `silent: true`).
 class PaymentRequestsNotifier
-    extends AsyncNotifier<List<CfcPaymentRequestEntity>> {
+    extends AutoDisposeAsyncNotifier<List<CfcPaymentRequestEntity>> {
   int _page = 1;
   bool _end = false;
   bool _loadingMore = false;
@@ -14,6 +20,9 @@ class PaymentRequestsNotifier
   Future<List<CfcPaymentRequestEntity>> build() async {
     _page = 1;
     _end = false;
+    // Hesap değişince (çıkış/giriş) önceki kullanıcının talepleri kalmasın.
+    final uid = ref.watch(currentUserIdProvider);
+    if (uid == null || uid.isEmpty) return const [];
     final bundle = await ref
         .read(walletRepositoryProvider)
         .myPaymentRequestsPage(page: 1);
@@ -21,9 +30,14 @@ class PaymentRequestsNotifier
     return bundle.items;
   }
 
-  Future<void> refresh() async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
+  /// [silent]: mevcut liste ekranda kalır (banner titremez); hata olursa eski
+  /// liste korunur.
+  Future<void> refresh({bool silent = false}) async {
+    final previous = state;
+    if (!silent || !previous.hasValue) {
+      state = const AsyncValue.loading();
+    }
+    final next = await AsyncValue.guard(() async {
       _page = 1;
       _end = false;
       final bundle = await ref
@@ -32,6 +46,8 @@ class PaymentRequestsNotifier
       _end = !bundle.hasMore;
       return bundle.items;
     });
+    if (silent && next.hasError && previous.hasValue) return;
+    state = next;
   }
 
   Future<void> loadMore() async {
@@ -98,7 +114,7 @@ class PaymentRequestsNotifier
 }
 
 final paymentRequestsNotifierProvider =
-    AsyncNotifierProvider<
+    AsyncNotifierProvider.autoDispose<
       PaymentRequestsNotifier,
       List<CfcPaymentRequestEntity>
     >(PaymentRequestsNotifier.new);
