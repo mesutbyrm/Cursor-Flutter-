@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 /// PK immersive — video katmanı ve alt kontroller arasında paylaşılan ölçüler.
 abstract final class LivePkLayoutMetrics {
-  static const controlBarHeight = 96.0;
-  static const inputBarHeight = 48.0;
+  static const controlBarHeight = 66.0;
+  static const inputBarHeight = 58.0;
   static const scoreBandHeight = 102.0;
 
   /// Referans mock — sol alt sohbet (TikTok/Bigo); ekranla ölçeklenmez.

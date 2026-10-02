@@ -3294,6 +3294,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                         ),
                   );
                 },
+                onShare: _shareLive,
                 onMore: () => unawaited(
                   _openLiveMoreMenu(
                     s: s,

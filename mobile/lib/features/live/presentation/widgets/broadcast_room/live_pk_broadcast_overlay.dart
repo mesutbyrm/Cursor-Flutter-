@@ -26,6 +26,7 @@ class LivePkBroadcastOverlay extends ConsumerWidget {
     required this.onSendChat,
     this.onRtcStateChanged,
     this.onMore,
+    this.onShare,
   });
 
   final String streamId;
@@ -40,6 +41,7 @@ class LivePkBroadcastOverlay extends ConsumerWidget {
   final VoidCallback onSendChat;
   final VoidCallback? onRtcStateChanged;
   final VoidCallback? onMore;
+  final VoidCallback? onShare;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -51,37 +53,36 @@ class LivePkBroadcastOverlay extends ConsumerWidget {
     final pkRunning = isLivePkActiveStatus(pk.status);
     final oppId = opponentUserId.trim();
 
-    final chromeBottom = LivePkLayoutMetrics.chromeReserve(context);
-    final controlsHeight = LivePkLayoutMetrics.controlBarHeight +
-        LivePkLayoutMetrics.bottomInset(context);
+    final inset = LivePkLayoutMetrics.bottomInset(context);
+    // Alt çubuk: yorum + hediye + paylaş en altta; yayıncı kontrolleri üstünde.
+    final inputBottom = inset + 8;
+    final controlsBottom = inputBottom + LivePkLayoutMetrics.inputBarHeight;
 
     if (!pkActive) return const SizedBox.shrink();
 
     return Stack(
       fit: StackFit.expand,
       children: [
-        LivePkFloatingGiftButton(
-          onTap: onGift,
-          bottom: chromeBottom + LivePkLayoutMetrics.scoreBandHeight + 12,
-        ),
         Positioned(
           left: 0,
           right: 0,
-          bottom: controlsHeight,
+          bottom: inputBottom,
           child: LivePkChatInputBar(
             controller: chatController,
-            visible: chatOpen,
+            // İzleyicide sohbet kapatma yok; yayıncı «Sohbet» ile açıp kapatır.
+            visible: chatOpen || !isHost,
             onGift: onGift,
-            onQuickRose: onGift,
+            onShare: onShare,
             onSend: onSendChat,
             onMore: onMore,
             onToggleVisibility: () => onChatOpenChanged(false),
           ),
         ),
+        if (isHost)
         Positioned(
           left: 0,
           right: 0,
-          bottom: 0,
+          bottom: controlsBottom,
           child: LivePkImmersiveControls(
             items: [
               if (isHost)

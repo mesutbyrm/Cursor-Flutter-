@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.695+748 (2026-10-02) — PK alt çubuğu
+
+- **PK alt çubuğu:** «Yorum yaz...» + pembe Hediye + Paylaş tek satırda (Gönder yalnız yazarken görünür); yüzen «Gönder 🌹» düğmesi ve yeşil gönder/küçük hediye ikonları kaldırıldı
+- **Yayıncı kontrolleri:** Mikrofon · Kamera · Sohbet · Rakip sesi · PK bitir, çubuğun üstünde 44 px yuvarlak düğmeler; izleyicide bu satır yok ve sohbet her zaman açık
+
 ## 1.0.694+747 (2026-10-02) — Canlı yayın PK: Bigo/TikTok düzeni
 
 - **Düzen:** sahne ekranın üst ~%54'ü (iki dikey panel + VS); skor barı videonun ÜSTÜNDE (kırmızı | mavi, sayılar uçlarda, süre ortada); alt yarı sohbet + hediye akışı + kontroller
