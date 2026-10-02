@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.689+742 (2026-10-02) — Tekli yayın düzeni
+
+- **Üst bar:** yayıncı adı + «1.2M beğeni», pembe «Takip et», «12.4K» izleyici (K biçimi), X; altında cam çipler: Saatlik Sıralama · Popüler · Keşfet >
+- **Sohbet:** küçük avatar + ad üstte / mesaj altta, kenarlıksız şeffaf gradyan zemin
+
 ## 1.0.688+741 (2026-10-02) — Yayın ayarları sheet'i
 
 - **Yayın Ayarları:** yayıncı kartı; Kamera / Mikrofon aç-kapat (durum yazılı), Güzellik efektleri ve filtreler, Paylaş; Misafir kabul et · Yorumlar · Hediyeler · Fal isteği · PK · Çoklu yayın (+ düzen) anahtarları; sabit alt «Yayını Bitir»

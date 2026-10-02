@@ -147,46 +147,88 @@ class _ChatBubble extends StatelessWidget {
       );
     }
 
+    final initial =
+        message.user.trim().isNotEmpty ? message.user.trim()[0].toUpperCase() : '?';
+    // TikTok tarzı: küçük avatar + ad üstte, mesaj altta; kenarlıksız, soldan
+    // sağa şeffaflaşan koyu gradyan zemin.
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: EffectsPerf.chatBubble(),
-        child: RichText(
-          text: TextSpan(
-            style: const TextStyle(fontSize: 13, height: 1.35),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          gradient: LinearGradient(
+            colors: [
+              Colors.black.withValues(alpha: 0.38),
+              Colors.black.withValues(alpha: 0.04),
+            ],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(5, 5, 12, 5),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              WidgetSpan(
-                alignment: PlaceholderAlignment.middle,
-                child: Row(
+              CircleAvatar(
+                radius: 14,
+                backgroundColor: AppThemeColors.accentPurple,
+                child: Text(
+                  initial,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (message.isVip)
-                      const LiveVipChatBadge(kind: LiveChatBadgeKind.vip),
-                    if (message.isModerator)
-                      const LiveVipChatBadge(kind: LiveChatBadgeKind.moderator),
-                    if (message.isFortuneTeller)
-                      const LiveVipChatBadge(kind: LiveChatBadgeKind.fortuneTeller),
-                    if (message.level != null)
-                      LiveVipChatBadge(
-                        kind: LiveChatBadgeKind.level,
-                        label: 'Lv${message.level}',
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (message.isVip)
+                          const LiveVipChatBadge(kind: LiveChatBadgeKind.vip),
+                        if (message.isModerator)
+                          const LiveVipChatBadge(
+                            kind: LiveChatBadgeKind.moderator,
+                          ),
+                        if (message.isFortuneTeller)
+                          const LiveVipChatBadge(
+                            kind: LiveChatBadgeKind.fortuneTeller,
+                          ),
+                        if (message.level != null)
+                          LiveVipChatBadge(
+                            kind: LiveChatBadgeKind.level,
+                            label: 'Lv${message.level}',
+                          ),
+                        Flexible(
+                          child: Text(
+                            message.user,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white.withValues(alpha: 0.72),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      message.text,
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        height: 1.3,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
                       ),
+                    ),
                   ],
-                ),
-              ),
-              TextSpan(
-                text: '${message.user} ',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  color: AppThemeColors.accentPink,
-                ),
-              ),
-              TextSpan(
-                text: message.text,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],

@@ -3211,6 +3211,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 ),
               ),
               moreBadgeCount: moreBadgeCount,
+              likeLabel: '${_fmtLikes(interaction.likeCount)} beğeni',
               onGuest: hasStream &&
                       (s.isHost ||
                           ref.watch(liveBroadcastSettingsProvider).guestsEnabled ||

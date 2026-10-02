@@ -60,6 +60,7 @@ class LiveBroadcastRoomChromeColumn extends ConsumerWidget {
     required this.onSend,
     required this.onEnd,
     this.moreBadgeCount = 0,
+    this.likeLabel,
     this.onGuest,
     this.onMulti,
     this.onShare,
@@ -117,6 +118,7 @@ class LiveBroadcastRoomChromeColumn extends ConsumerWidget {
   final VoidCallback onSend;
   final VoidCallback? onEnd;
   final int moreBadgeCount;
+  final String? likeLabel;
   final VoidCallback? onGuest;
   final VoidCallback? onMulti;
   final VoidCallback? onShare;
@@ -141,6 +143,7 @@ class LiveBroadcastRoomChromeColumn extends ConsumerWidget {
             child: LivePremiumTopBar(
               session: s,
               elapsedBadge: const LiveElapsedTimePill(),
+              likeLabel: likeLabel,
               streamTitle: s.title.trim().isNotEmpty ? s.title : null,
               fortuneTypeBadge: fortuneTypeBadge,
               networkQualityBadge: s.isHost
