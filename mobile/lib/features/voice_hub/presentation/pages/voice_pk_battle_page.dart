@@ -24,6 +24,7 @@ import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_gift_combo_tracker.dart';
 import '../providers/voice_gift_leaderboard_provider.dart';
 import '../providers/voice_gift_providers.dart';
+import '../providers/voice_room_audio_providers.dart';
 import '../providers/voice_room_ui_provider.dart';
 import '../utils/voice_room_permissions.dart';
 import '../theme/voice_room_tokens.dart';
@@ -68,6 +69,7 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
   var _lastGiftSideLeft = true;
   var _supportToLeft = true;
   var _chatOpen = false;
+  var _soundMuted = false;
   var _resultNavigated = false;
 
   @override
@@ -189,9 +191,21 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
     });
   }
 
+  void _toggleSound() {
+    final muted = !_soundMuted;
+    setState(() => _soundMuted = muted);
+    ref.read(voiceRoomAudioCoordinatorProvider).setHeadphonesOn(!muted);
+  }
+
   @override
   void dispose() {
     _giftSub?.cancel();
+    // PK sayfası kapanırken uzak sesleri geri aç (oda sessizde kalmasın).
+    if (_soundMuted) {
+      try {
+        ref.read(voiceRoomAudioCoordinatorProvider).setHeadphonesOn(true);
+      } catch (_) {}
+    }
     super.dispose();
   }
 
@@ -294,6 +308,10 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                   fallbackSeconds: remote?.resolvedSecondsLeft() ?? pk.secondsLeft,
                   phase: pk.phase,
                   onBack: () => context.pop(),
+                  chatOpen: _chatOpen,
+                  onToggleChat: () => setState(() => _chatOpen = !_chatOpen),
+                  soundMuted: _soundMuted,
+                  onToggleSound: _toggleSound,
                   onMode: pk.isActive && !pk.serverAuthoritative
                       ? (m) => ref.read(pkBattleProvider.notifier).setMode(m)
                       : null,
@@ -475,7 +493,6 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                       initialReceiver: initial,
                     );
                   },
-                  onChat: () => setState(() => _chatOpen = !_chatOpen),
                 ),
                 if (_chatOpen)
                   Padding(
@@ -503,6 +520,10 @@ class _PkHeader extends StatelessWidget {
     required this.phase,
     required this.onBack,
     required this.onMode,
+    required this.chatOpen,
+    required this.onToggleChat,
+    required this.soundMuted,
+    required this.onToggleSound,
   });
 
   final String timer;
@@ -513,6 +534,10 @@ class _PkHeader extends StatelessWidget {
   final PkBattlePhase phase;
   final VoidCallback onBack;
   final ValueChanged<PkBattleMode>? onMode;
+  final bool chatOpen;
+  final VoidCallback onToggleChat;
+  final bool soundMuted;
+  final VoidCallback onToggleSound;
 
   @override
   Widget build(BuildContext context) {
@@ -534,10 +559,34 @@ class _PkHeader extends StatelessWidget {
                   style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
                 ),
               ),
-              if (onMode != null)
-                PkModeSwitcher(mode: mode, onChanged: onMode!)
-              else
-                const SizedBox(width: 48),
+              if (onMode != null) ...[
+                PkModeSwitcher(mode: mode, onChanged: onMode!),
+                const SizedBox(width: 4),
+              ],
+              IconButton(
+                tooltip: chatOpen ? 'Sohbeti gizle' : 'Sohbeti göster',
+                visualDensity: VisualDensity.compact,
+                onPressed: onToggleChat,
+                icon: Icon(
+                  chatOpen
+                      ? Icons.chat_bubble_rounded
+                      : Icons.chat_bubble_outline_rounded,
+                  size: 22,
+                  color: chatOpen ? VoiceRoomTokens.neonPurple : Colors.white,
+                ),
+              ),
+              IconButton(
+                tooltip: soundMuted ? 'Sesleri aç' : 'Sesleri kapat',
+                visualDensity: VisualDensity.compact,
+                onPressed: onToggleSound,
+                icon: Icon(
+                  soundMuted
+                      ? Icons.volume_off_rounded
+                      : Icons.volume_up_rounded,
+                  size: 22,
+                  color: soundMuted ? VoiceRoomTokens.neonPink : Colors.white,
+                ),
+              ),
             ],
           ),
           Container(
