@@ -144,6 +144,7 @@ import '../widgets/broadcast_room/live_moderation_sheet.dart';
 import '../providers/live_broadcast_settings_provider.dart';
 import '../widgets/broadcast_room/live_broadcast_settings_sheet.dart';
 import '../widgets/broadcast_room/live_viewers_sheet.dart';
+import '../widgets/broadcast_room/live_guest_invite_sheet.dart';
 import '../widgets/broadcast_room/live_fortune_request_popup.dart';
 import '../widgets/broadcast_room/live_room_chat_fal_panel.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
@@ -1680,17 +1681,19 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     }
   }
 
-  Future<void> _inviteViewerAsGuest({
+  Future<bool> _inviteViewerAsGuest({
     required String userId,
     required String displayName,
   }) async {
     final streamId = widget.session.streamId?.trim();
-    if (streamId == null || streamId.isEmpty || !widget.session.isHost) return;
+    if (streamId == null || streamId.isEmpty || !widget.session.isHost) {
+      return false;
+    }
     if (!_canAddCoGuest()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Misafir kotası dolu (8/8)')),
       );
-      return;
+      return false;
     }
     try {
       await ref.read(coBroadcastProvider.notifier).invite(
@@ -1699,15 +1702,17 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$displayName misafir daveti gönderildi')),
+          SnackBar(content: Text('Davet gönderildi: $displayName')),
         );
       }
+      return true;
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(ApiException.userMessage(e))),
         );
       }
+      return false;
     }
   }
 
@@ -2465,6 +2470,20 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         onEmoji: _showLiveEmojiPicker,
         onGiftPanel: () =>
             ref.read(liveGiftControllerProvider).setPanelOpen(true),
+        onInviteGuest: () {
+          final sid = widget.session.streamId?.trim() ?? '';
+          if (sid.isEmpty) return;
+          unawaited(
+            showLiveGuestInviteSheet(
+              context,
+              ref,
+              streamId: sid,
+              hostUserId: widget.session.hostUserId ?? '',
+              onInvite: (userId, name) =>
+                  _inviteViewerAsGuest(userId: userId, displayName: name),
+            ),
+          );
+        },
         onGuestRequest: () {
           final settings = ref.read(liveBroadcastSettingsProvider);
           if (!settings.guestsEnabled && !settings.coBroadcastEnabled) {

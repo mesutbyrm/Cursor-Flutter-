@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.686+739 (2026-10-02) — Misafir Davet Et sheet'i
+
+- **Yayıncı:** «⋯» menüsünde yeni «Misafir Davet Et» sheet'i — «Kullanıcı ara...», avatar + ad + [Davet Et]; arama boşken izleyiciler, 2+ karakterde tüm kullanıcılar; davetten sonra satır «Gönderildi» olur
+
 ## 1.0.685+738 (2026-10-02) — Hediye sheet'i yenilendi
 
 - **Hediye paneli:** Hediyeler · Özel · Lüks · Animasyon sekmeleri (+ Kutu, Destekçiler), 4 kolonlu ızgara, [−] adet [+] adımlayıcı, tam genişlik «Gönder 🪙 toplam»

@@ -18,6 +18,7 @@ class LiveBroadcastMoreHubActions {
     required this.onEmoji,
     required this.onGiftPanel,
     required this.onGuestRequest,
+    required this.onInviteGuest,
     required this.onPkPanel,
     required this.onGames,
     required this.onTournament,
@@ -40,6 +41,7 @@ class LiveBroadcastMoreHubActions {
   final VoidCallback onEmoji;
   final VoidCallback onGiftPanel;
   final VoidCallback onGuestRequest;
+  final VoidCallback onInviteGuest;
   final VoidCallback onPkPanel;
   final VoidCallback onGames;
   final VoidCallback onTournament;
@@ -175,6 +177,14 @@ List<Widget> _buildTiles(
   }
 
   if (s.isHost && streamId != null) {
+    tiles.add(
+      _HubTile(
+        icon: Icons.person_add_alt_1_rounded,
+        label: 'Misafir Davet Et',
+        color: const Color(0xFFFF2D7A),
+        onTap: () => popThen(a.onInviteGuest),
+      ),
+    );
     tiles.add(
       _HubTile(
         icon: Icons.people_alt_rounded,
