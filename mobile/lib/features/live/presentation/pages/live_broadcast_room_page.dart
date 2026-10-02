@@ -148,6 +148,7 @@ import '../widgets/broadcast_room/live_guest_invite_sheet.dart';
 import '../widgets/broadcast_room/live_fortune_request_popup.dart';
 import '../widgets/broadcast_room/live_room_chat_fal_panel.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
+import '../widgets/premium_2026/live/live_premium_chat_feed.dart';
 import '../widgets/broadcast_room/live_room_video_background.dart';
 import '../widgets/live_playback_bridge.dart';
 import '../widgets/premium_2026/live/live_star_tournament_sheet.dart';
@@ -2943,6 +2944,14 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         streamId != null &&
         isLivePkBroadcastStage(pkState?.battle, pkStatus) &&
         !livePkBattleFinished(status: pkStatus, battle: pkState?.battle);
+    final splitChat = _chatVisible &&
+        !pkImmersive &&
+        _isSplitStage(
+          s,
+          pkStatus,
+          hasCoGuests: hasCoGuests,
+          pkBattle: pkState?.battle,
+        );
     final pkOpponentUserId = hasStream && streamId != null
         ? _pkOpponentUserId(streamId!, s, pkState?.battle)
         : '';
@@ -3099,6 +3108,41 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 hostRank: hostRank,
                 tournamentsAsync: tournamentsAsync,
               ),
+            // Misafir (bölünmüş) modunda sohbet, ekran düzeninden bağımsız sabit
+            // bir alanda çizilir: alt yarıda her zaman görünür.
+            if (hasStream && splitChat)
+              Positioned(
+                left: 12,
+                right: 76,
+                top: MediaQuery.sizeOf(context).height * 0.5 + 6,
+                bottom: 0,
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    bottom: (s.isHost ? 150.0 : 84.0) +
+                        MediaQuery.paddingOf(context).bottom,
+                  ),
+                  child: LayoutBuilder(
+                    builder: (context, box) => LivePremiumChatFeed(
+                      key: const ValueKey('guest-split-chat'),
+                      maxHeight: box.maxHeight.isFinite ? box.maxHeight : 200,
+                      fadeAfter: const Duration(seconds: 40),
+                      canModerate: s.isHost,
+                      onMessageLongPress: s.isHost
+                          ? (m) => unawaited(_onChatModeration(m))
+                          : null,
+                      messages: chatRoomState.messages.isEmpty
+                          ? const [
+                              LiveRoomChatMessage(
+                                user: 'Sistem',
+                                text: 'Canlı yayına hoş geldin',
+                                isSystem: true,
+                              ),
+                            ]
+                          : chatRoomState.messages,
+                    ),
+                  ),
+                ),
+              ),
             LiveBroadcastRoomChromeColumn(
               topInset: top,
               session: s,
@@ -3108,7 +3152,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               suppressBottomChrome: pkImmersive,
               suppressChatColumn: pkImmersive,
               suppressTopChrome: pkImmersive,
-              chatVisible: _chatVisible,
+              chatVisible: _chatVisible && !splitChat,
               onChatVisibleChanged: (v) => setState(() => _chatVisible = v),
               roomMessages: chatRoomState.messages,
               lastJoinedName: roomState.lastJoinedDisplayName,

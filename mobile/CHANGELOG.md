@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.698+751 (2026-10-02) — Misafir modunda sohbet alanı
+
+- **Misafir (bölünmüş) modu:** sohbet, sütun düzeninden bağımsız sabit bir alanda (ekranın alt yarısı, alt çubuğun üstü) çiziliyor; yayıncının yazdığı mesaj ve «Canlı yayına hoş geldin» satırı artık bu alanda görünür. Yan raylar (beğeni/paylaş) yerinde kalır. Kök neden cihazda doğrulanamadı — savunmacı düzeltme
+
 ## 1.0.697+750 (2026-10-02) — Falcı gecikmesi, canlı yayın senkronu, ayarlar kutucukları
 
 - **Falcı isteği:** sunucu istek olayını artık bildirim/push'u BEKLEMEDEN yayınlıyor (uygulamanın kullandığı `/{tellerId}/session` yolunda hiç yayınlanmıyordu → istek yalnızca yoklamayla/15 sn yedekle ulaşıyordu); DB yedeği 6 sn; kabul yanıtı push'u beklemiyor. İstemci: sunucunun süresiz tuttuğu bayat bekleyen talepler (>175 sn) yeni talebin önüne geçmiyor, en yeni talep önce gösteriliyor; seçilen süre (`maxMinutes`) artık sunucuca da okunuyor
