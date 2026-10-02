@@ -4,20 +4,18 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.681+734` |
-| Tarih (UTC) | 2026-10-02 17:12 |
-| Commit | [`8071003a6c5b2d2b584452cec22428885925d847`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/8071003a6c5b2d2b584452cec22428885925d847) |
-| İş akışı | [Run 37036800383](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37036800383) |
+| Sürüm | `1.0.695+748` |
+| Tarih (UTC) | 2026-10-02 19:40 |
+| Commit | [`a6efacedc8b55743e1267ff4a725887db7b73261`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/a6efacedc8b55743e1267ff4a725887db7b73261) |
+| İş akışı | [Run 37053629556](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37053629556) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.681+734 (2026-10-02) — VIP şifre kapısı zorunlu, PK düzeltmeleri, temizlik
+## 1.0.695+748 (2026-10-02) — PK alt çubuğu
 
-- **VIP şifreli oda:** kapı tüm giriş yollarında zorunlu (router'daki doğrudan `push` dahil); oda içeriği şifre geçilmeden oluşturulmuyor; sunucu da mesaj/SSE/durum/koltuk/TRTC uçlarında şifresiz erişimi reddediyor; "Oda Sahibine Bildir" → sahip popup'ı (kimin istediği görünür) → kabul/ret; ret sonrası düğme pasif
-- **Sesli oda PK:** sohbet varsayılan açık (yazılanlar görünür); "Destekle" sunucuda bulunduğun odanın tarafına +3 yazar ve iki odada anında görünür; koltuktakiler PK sırasında mikrofonu açıp kapatır; "karşı tarafın sesini kapat"; oda sahipleri arası ses köprüsü (TRTC)
-- **Kullanıcı satırları:** seviye ve gerçek çevrimiçi durumu; **canlı yayın:** gerçek "çıkar" (yasaklamadan)
-- **Temizlik:** hiçbir yerde kullanılmayan 63 dosya silindi (yinelenen `lib/services/models` dahil)
+- **PK alt çubuğu:** «Yorum yaz...» + pembe Hediye + Paylaş tek satırda (Gönder yalnız yazarken görünür); yüzen «Gönder 🌹» düğmesi ve yeşil gönder/küçük hediye ikonları kaldırıldı
+- **Yayıncı kontrolleri:** Mikrofon · Kamera · Sohbet · Rakip sesi · PK bitir, çubuğun üstünde 44 px yuvarlak düğmeler; izleyicide bu satır yok ve sohbet her zaman açık
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
