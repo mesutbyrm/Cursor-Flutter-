@@ -1,3 +1,4 @@
+import '../../providers/live_video_pk_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -230,6 +231,14 @@ class _PkGiftPickerBodyState extends ConsumerState<_PkGiftPickerBody> {
             isLucky: g.isLucky,
             staffFinanceMode: financeMode,
           );
+      if (result.pkScore1 != null && result.pkScore2 != null) {
+        ref
+            .read(liveVideoPkProvider(widget.streamId).notifier)
+            .applyScoreSnapshot(
+              score1: result.pkScore1!,
+              score2: result.pkScore2!,
+            );
+      }
       final ev = result.event;
       if (ev != null) {
         ref.read(giftSessionProvider(widget.streamId).notifier).onGiftSent(

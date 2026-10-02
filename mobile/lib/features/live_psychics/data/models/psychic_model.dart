@@ -245,6 +245,7 @@ abstract final class PsychicModel {
           str(teller, ['specialty']) ??
           'general',
       status: PsychicSessionStatus.fromApi(statusRaw, tellerResponse: response),
+      createdAt: DateTime.tryParse(str(m, ['createdAt', 'requestedAt']) ?? ''),
     );
   }
 

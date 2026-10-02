@@ -215,6 +215,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   final Set<String> _seenGuestJoinIds = {};
   final Set<String> _seenVipEntrances = {};
   var _coHostUpgraded = false;
+  var _guestLayoutCollapsed = false;
   var _pkTwoWayRtc = false;
   var _joinRequestPending = false;
   String? _vipBannerName;
@@ -1942,6 +1943,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     LiveGuestLayout layout,
     List<Map<String, dynamic>> guests,
   ) {
+    _guestLayoutCollapsed = false;
     final settings = ref.read(liveBroadcastSettingsProvider.notifier);
     settings.toggleCoBroadcast(true);
     settings.toggleGuests(true);
@@ -2160,7 +2162,23 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     if (settings.guestLayout != LiveGuestLayout.solo) {
       return settings.guestLayout;
     }
+    // Son misafir ayrıldıktan sonra yayın hazırlık ekranındaki çoklu düzene
+    // geri dönme — tekli yayında kal.
+    if (_guestLayoutCollapsed) return LiveGuestLayout.solo;
     return widget.session.guestLayout;
+  }
+
+  /// Hiç onaylı misafir kalmadığında çoklu yayın modunu kapatır ve tekli
+  /// yayına döner (mod aksi halde sürekli açık kalıyordu).
+  void _collapseGuestLayout() {
+    if (_leaving) return;
+    _guestLayoutCollapsed = true;
+    final settings = ref.read(liveBroadcastSettingsProvider.notifier);
+    settings.toggleCoBroadcast(false);
+    settings.toggleGuests(false);
+    settings.setGuestLayout(LiveGuestLayout.solo);
+    ref.read(liveGuestGridProvider.notifier).setLayout(LiveGuestLayout.solo);
+    if (mounted) setState(() {});
   }
 
   int _nextEmptyGuestSlot() {
@@ -2693,6 +2711,19 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         ? (fortuneReqState?.pendingCount ?? 0) +
             _pendingGuestJoinRequestCount(coBroadcast)
         : 0;
+
+    if (hasStream) {
+      // Herkes için (yayıncı + izleyici): son misafir ayrılınca tekliye dön.
+      ref.listen(coBroadcastProvider, (prev, next) {
+        final before = filterApprovedCoGuests(prev?.coBroadcasters ?? const []);
+        final after = filterApprovedCoGuests(next.coBroadcasters);
+        if (before.isNotEmpty &&
+            after.isEmpty &&
+            _resolveGuestLayout() != LiveGuestLayout.solo) {
+          _collapseGuestLayout();
+        }
+      });
+    }
 
     if (hasStream && s.isHost) {
       ref.listen(coBroadcastProvider, (prev, next) {

@@ -1,3 +1,4 @@
+import '../providers/live_video_pk_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/design_system/cds_bottom_sheet.dart';
@@ -161,6 +162,16 @@ Future<void> showLiveGiftPicker(
                                               isLucky: g.isLucky,
                                               staffFinanceMode: financeMode,
                                             );
+                                        if (result.pkScore1 != null &&
+                                            result.pkScore2 != null) {
+                                          ref
+                                              .read(liveVideoPkProvider(streamId)
+                                                  .notifier)
+                                              .applyScoreSnapshot(
+                                                score1: result.pkScore1!,
+                                                score2: result.pkScore2!,
+                                              );
+                                        }
                                         if (context.mounted) {
                                           ref.refreshWalletCache(force: true);
                                           Navigator.pop(context);

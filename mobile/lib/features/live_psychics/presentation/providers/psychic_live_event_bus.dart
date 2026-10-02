@@ -92,5 +92,8 @@ PsychicRequestEntity? parsePsychicSsePayload(Map<String, dynamic> map) {
     fortuneType: pick(nested, ['category', 'fortuneType', 'falType'])?.toString() ??
         'Canlı fal',
     status: inviteStatus,
+    createdAt: DateTime.tryParse(
+      pick(nested, ['createdAt', 'requestedAt'])?.toString() ?? '',
+    ),
   );
 }

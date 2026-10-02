@@ -8,6 +8,7 @@ import '../../../../core/membership/membership_capability_gate.dart';
 import '../../../../core/membership/membership_capability_keys.dart';
 import '../../../../core/membership/membership_capability_providers.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/widgets/settings_kit.dart';
 import 'premium/profile_glass.dart';
 
 /// Ayarlar — VIP gizlilik (`/api/me/vip-preferences`).
@@ -52,87 +53,75 @@ class VipPrivacySettingsSection extends ConsumerWidget {
                   ),
                 ),
               ),
-            ProfileGlass(
-              padding: EdgeInsets.zero,
-              child: Column(
-                children: [
-                  _VipPrefSwitch(
-                    label: 'Çevrimiçi durumumu gizle',
-                    subtitle: 'Premium+',
-                    capabilityKey: MembershipCapabilityKeys.hiddenOnline,
-                    value: prefs.hideOnlineStatus,
-                    enabled: caps.allows(MembershipCapabilityKeys.hiddenOnline),
-                    lockedMessage:
-                        'Çevrimiçi gizleme için Premium veya üzeri gerekir.',
-                    onChanged: (v) => _save(
-                      ref,
-                      prefs.copyWith(hideOnlineStatus: v),
-                    ),
-                  ),
-                  const Divider(height: 1, indent: 16),
-                  _VipPrefSwitch(
-                    label: 'Odaya gizli giriş',
-                    subtitle: 'Premium+',
-                    capabilityKey: MembershipCapabilityKeys.hiddenRoomEntry,
-                    value: prefs.hiddenRoomEntry,
-                    enabled:
-                        caps.allows(MembershipCapabilityKeys.hiddenRoomEntry),
-                    lockedMessage:
-                        'Gizli oda girişi için Premium veya üzeri gerekir.',
-                    onChanged: (v) => _save(
-                      ref,
-                      prefs.copyWith(hiddenRoomEntry: v),
-                    ),
-                  ),
-                  const Divider(height: 1, indent: 16),
-                  _VipPrefSwitch(
-                    label: 'VIP rozetini gizle',
-                    capabilityKey: MembershipCapabilityKeys.hideVipBadge,
-                    value: prefs.hideVipBadge,
-                    enabled: caps.allows(MembershipCapabilityKeys.hideVipBadge),
-                    lockedMessage: 'Rozet gizleme Premium+ özelliğidir.',
-                    onChanged: (v) => _save(
-                      ref,
-                      prefs.copyWith(hideVipBadge: v),
-                    ),
-                  ),
-                  const Divider(height: 1, indent: 16),
-                  _VipPrefSwitch(
-                    label: 'Giriş efektlerini kapat',
-                    capabilityKey: MembershipCapabilityKeys.entranceEffect,
-                    value: prefs.disableEntranceEffects,
-                    enabled:
-                        caps.allows(MembershipCapabilityKeys.entranceEffect),
-                    lockedMessage: 'Gold+ giriş efekti gerekir.',
-                    onChanged: (v) => _save(
-                      ref,
-                      prefs.copyWith(disableEntranceEffects: v),
-                    ),
-                  ),
-                  const Divider(height: 1, indent: 16),
-                  _VipPrefSwitch(
-                    label: 'Başkalarının giriş efektini sessize al',
-                    value: prefs.muteOthersEntrance,
-                    enabled: true,
-                    onChanged: (v) => _save(
-                      ref,
-                      prefs.copyWith(muteOthersEntrance: v),
-                    ),
-                  ),
-                ],
-              ),
+            SettingsTileGrid(
+              children: [
+                _VipPrefSwitch(
+                  icon: Icons.visibility_off_rounded,
+                  label: 'Çevrimiçi durumumu gizle',
+                  subtitle: 'Premium+',
+                  capabilityKey: MembershipCapabilityKeys.hiddenOnline,
+                  value: prefs.hideOnlineStatus,
+                  enabled: caps.allows(MembershipCapabilityKeys.hiddenOnline),
+                  lockedMessage:
+                      'Çevrimiçi gizleme için Premium veya üzeri gerekir.',
+                  onChanged: (v) =>
+                      _save(ref, prefs.copyWith(hideOnlineStatus: v)),
+                ),
+                _VipPrefSwitch(
+                  icon: Icons.meeting_room_rounded,
+                  label: 'Odaya gizli giriş',
+                  subtitle: 'Premium+',
+                  capabilityKey: MembershipCapabilityKeys.hiddenRoomEntry,
+                  value: prefs.hiddenRoomEntry,
+                  enabled:
+                      caps.allows(MembershipCapabilityKeys.hiddenRoomEntry),
+                  lockedMessage:
+                      'Gizli oda girişi için Premium veya üzeri gerekir.',
+                  onChanged: (v) =>
+                      _save(ref, prefs.copyWith(hiddenRoomEntry: v)),
+                ),
+                _VipPrefSwitch(
+                  icon: Icons.workspace_premium_rounded,
+                  label: 'VIP rozetini gizle',
+                  capabilityKey: MembershipCapabilityKeys.hideVipBadge,
+                  value: prefs.hideVipBadge,
+                  enabled: caps.allows(MembershipCapabilityKeys.hideVipBadge),
+                  lockedMessage: 'Rozet gizleme Premium+ özelliğidir.',
+                  onChanged: (v) =>
+                      _save(ref, prefs.copyWith(hideVipBadge: v)),
+                ),
+                _VipPrefSwitch(
+                  icon: Icons.auto_awesome_rounded,
+                  label: 'Giriş efektlerini kapat',
+                  capabilityKey: MembershipCapabilityKeys.entranceEffect,
+                  value: prefs.disableEntranceEffects,
+                  enabled: caps.allows(MembershipCapabilityKeys.entranceEffect),
+                  lockedMessage: 'Gold+ giriş efekti gerekir.',
+                  onChanged: (v) =>
+                      _save(ref, prefs.copyWith(disableEntranceEffects: v)),
+                ),
+                _VipPrefSwitch(
+                  icon: Icons.volume_off_rounded,
+                  label: 'Başkalarının giriş efektini sessize al',
+                  value: prefs.muteOthersEntrance,
+                  enabled: true,
+                  onChanged: (v) =>
+                      _save(ref, prefs.copyWith(muteOthersEntrance: v)),
+                ),
+              ],
             ),
             if (caps.allows(MembershipCapabilityKeys.svipLounge)) ...[
               const SizedBox(height: 12),
-              ProfileGlass(
-                padding: EdgeInsets.zero,
-                child: ListTile(
-                  leading: const Icon(Icons.weekend_rounded),
-                  title: const Text('SVIP Lounge'),
-                  subtitle: const Text('Özel SVIP sesli odalar'),
-                  trailing: const Icon(Icons.chevron_right_rounded),
-                  onTap: () => context.push('/vip-svip-lounge'),
-                ),
+              SettingsTileGrid(
+                children: [
+                  SettingsTileCard(
+                    icon: Icons.weekend_rounded,
+                    label: 'SVIP Lounge',
+                    subtitle: 'Özel SVIP sesli odalar',
+                    accent: const Color(0xFFFFC107),
+                    onTap: () => context.push('/vip-svip-lounge'),
+                  ),
+                ],
               ),
             ],
           ],
@@ -153,6 +142,7 @@ class VipPrivacySettingsSection extends ConsumerWidget {
 
 class _VipPrefSwitch extends StatelessWidget {
   const _VipPrefSwitch({
+    required this.icon,
     required this.label,
     required this.value,
     required this.enabled,
@@ -162,6 +152,7 @@ class _VipPrefSwitch extends StatelessWidget {
     this.capabilityKey = MembershipCapabilityKeys.hiddenOnline,
   });
 
+  final IconData icon;
   final String label;
   final String? subtitle;
   final String capabilityKey;
@@ -173,39 +164,42 @@ class _VipPrefSwitch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!enabled && lockedMessage != null) {
-      return ListTile(
-        title: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Text(lockedMessage!),
-        trailing: IconButton(
-          icon: const Icon(Icons.lock_outline_rounded),
-          onPressed: () {
-            showDialog<void>(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                title: Text(label),
-                content: MembershipCapabilityLockedBody(
-                  capabilityKey: capabilityKey,
-                  title: label,
-                  message: lockedMessage!,
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    child: const Text('Kapat'),
-                  ),
-                ],
+      return SettingsTileCard(
+        icon: Icons.lock_outline_rounded,
+        label: label,
+        subtitle: lockedMessage,
+        accent: Theme.of(context).disabledColor,
+        badge: 'Kilitli',
+        onTap: () {
+          showDialog<void>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: Text(label),
+              content: MembershipCapabilityLockedBody(
+                capabilityKey: capabilityKey,
+                title: label,
+                message: lockedMessage!,
               ),
-            );
-          },
-        ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Kapat'),
+                ),
+              ],
+            ),
+          );
+        },
       );
     }
 
-    return SwitchListTile(
-      title: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-      subtitle: subtitle != null ? Text(subtitle!) : null,
+    return SettingsToggleTile(
+      icon: icon,
+      label: label,
+      subtitle: subtitle,
       value: enabled ? value : false,
-      onChanged: enabled ? onChanged : null,
+      onChanged: (v) {
+        if (enabled) onChanged(v);
+      },
     );
   }
 }

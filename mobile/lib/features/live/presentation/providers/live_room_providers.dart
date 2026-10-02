@@ -277,10 +277,22 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
           ref.invalidate(pkPendingInvitesProvider);
         }
       },
-      onLike: (count) {
-        ref
-            .read(liveRoomInteractionProvider(streamId).notifier)
-            .syncRemoteLikeCount(count);
+      onLike: (like) {
+        final me = ref.read(authControllerProvider).valueOrNull?.id;
+        final from = (like['userId'] ?? like['senderId'])?.toString().trim() ?? '';
+        final notifier = ref.read(liveRoomInteractionProvider(streamId).notifier);
+        final total = like['likeCount'] ?? like['total'];
+        final delta = like['count'];
+        // Kendi beğenimiz zaten yerelde sayıldı (yankıyı çift sayma).
+        if (me != null && from == me) return;
+        if (from.isNotEmpty && delta is num && delta > 0) {
+          // Başkasının beğenisi: yerel (iyimser) toplam sunucu toplamının
+          // ÜSTÜNDE kalabildiğinden `total > yerel` karşılaştırmasına güvenme;
+          // farkı doğrudan ekle ki başkalarının beğenisi hep işlensin.
+          notifier.applyRemoteUserLike(userId: from, delta: delta.round());
+        } else if (total is num) {
+          notifier.syncRemoteLikeCount(total.round(), pulse: true);
+        }
       },
       onUserJoined: (user) {
         final count = user['viewerCount'] ?? user['viewers'] ?? user['watching'];

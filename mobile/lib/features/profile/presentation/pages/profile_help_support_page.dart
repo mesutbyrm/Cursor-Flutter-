@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +12,7 @@ import '../../../../core/util/json_util.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
+import '../../../../core/widgets/settings_kit.dart';
 import '../../../messages/data/datasources/messages_remote_datasource.dart';
 
 /// Destek kullanıcısına kullanıcı adıyla mesaj gönderir.
@@ -101,39 +103,64 @@ class _ProfileHelpSupportPageState extends ConsumerState<ProfileHelpSupportPage>
           body: ListView(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
             children: [
-              Text(
-                'Merhaba ${user?.display ?? ""}, sorununuzu yazın. '
-                'Ekibimiz @${user?.username ?? "kullanici"} bilgisiyle yanıtlar.',
-                style: TextStyle(
-                  color: context.colors.onSurfaceVariant.withValues(alpha: 0.95),
-                  height: 1.4,
+              SettingsHeroCard(
+                title: 'Merhaba ${user?.display ?? ""}',
+                subtitle:
+                    'Ekibimiz @${user?.username ?? "kullanici"} bilgisiyle yanıtlar',
+                leading: Icon(
+                  Icons.support_agent_rounded,
+                  size: 34,
+                  color: context.colors.primary,
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'İletişim: ${Env.siteOrigin}/destek',
-                style: TextStyle(fontSize: 12, color: context.colors.onSurfaceMuted),
+              const SettingsSectionHeader(
+                'Destek ekibine yaz',
+                icon: Icons.edit_note_rounded,
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _messageCtrl,
-                maxLines: 6,
-                decoration: const InputDecoration(
-                  labelText: 'Mesajınız',
-                  alignLabelWithHint: true,
-                  hintText: 'Sorun, öneri veya ödeme bildirimi detayı…',
+              SettingsPanel(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextField(
+                      controller: _messageCtrl,
+                      maxLines: 6,
+                      decoration: const InputDecoration(
+                        labelText: 'Mesajınız',
+                        alignLabelWithHint: true,
+                        hintText: 'Sorun, öneri veya ödeme bildirimi detayı…',
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    FilledButton(
+                      onPressed: _sending ? null : _send,
+                      child: _sending
+                          ? const SizedBox(
+                              height: 22,
+                              width: 22,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Gönder'),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 20),
-              FilledButton(
-                onPressed: _sending ? null : _send,
-                child: _sending
-                    ? const SizedBox(
-                        height: 22,
-                        width: 22,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Gönder'),
+              const SettingsSectionHeader(
+                'Diğer yollar',
+                icon: Icons.language_rounded,
+              ),
+              SettingsTileGrid(
+                children: [
+                  SettingsTileCard(
+                    icon: Icons.language_rounded,
+                    label: 'Destek sayfası',
+                    subtitle: '${Env.siteOrigin}/destek',
+                    accent: context.colors.secondary,
+                    onTap: () => launchUrl(
+                      Uri.parse('${Env.siteOrigin}/destek'),
+                      mode: LaunchMode.externalApplication,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

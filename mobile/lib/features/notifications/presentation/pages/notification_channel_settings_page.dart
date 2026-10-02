@@ -8,6 +8,7 @@ import '../../../../core/push/notification_channels.dart';
 import '../../../../core/push/push_notification_service.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
+import '../../../../core/widgets/settings_kit.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../widgets/notification_permission_banner.dart';
 
@@ -51,6 +52,20 @@ class _NotificationChannelSettingsPageState
     }
   }
 
+  IconData _channelIcon(AppNotificationChannel c) => switch (c) {
+        AppNotificationChannel.messages => Icons.chat_bubble_rounded,
+        AppNotificationChannel.liveStarters => Icons.sensors_rounded,
+        AppNotificationChannel.dailyFortune => Icons.auto_awesome_rounded,
+        AppNotificationChannel.other => Icons.notifications_rounded,
+      };
+
+  Color _channelAccent(AppNotificationChannel c) => switch (c) {
+        AppNotificationChannel.messages => context.accentCyan,
+        AppNotificationChannel.liveStarters => context.liveRed,
+        AppNotificationChannel.dailyFortune => context.accentPurple,
+        AppNotificationChannel.other => context.coinGold,
+      };
+
   @override
   Widget build(BuildContext context) {
     final values = _values;
@@ -66,25 +81,22 @@ class _NotificationChannelSettingsPageState
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
                   children: [
                     const NotificationPermissionBanner(),
-                    for (final c in AppNotificationChannel.values)
-                      SwitchListTile.adaptive(
-                        key: ValueKey('notif-switch-${c.name}'),
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(
-                          c.label,
-                          style: const TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                        subtitle: Text(
-                          c.description,
-                          style: TextStyle(
-                            color: context.colors.onSurfaceMuted,
-                            fontSize: 12.5,
+                    const SizedBox(height: 14),
+                    SettingsTileGrid(
+                      children: [
+                        for (final c in AppNotificationChannel.values)
+                          SettingsToggleTile(
+                            key: ValueKey('notif-switch-${c.name}'),
+                            icon: _channelIcon(c),
+                            label: c.label,
+                            subtitle: c.description,
+                            accent: _channelAccent(c),
+                            value: values[c] ?? true,
+                            onChanged: (v) => unawaited(_toggle(c, v)),
                           ),
-                        ),
-                        value: values[c] ?? true,
-                        onChanged: (v) => unawaited(_toggle(c, v)),
-                      ),
-                    const SizedBox(height: 12),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
                     OutlinedButton.icon(
                       onPressed: () => unawaited(openAppSettings()),
                       icon: const Icon(Icons.settings_outlined),

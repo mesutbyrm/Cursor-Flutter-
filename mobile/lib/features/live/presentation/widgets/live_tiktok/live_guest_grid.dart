@@ -73,9 +73,9 @@ class LiveGuestGrid extends ConsumerWidget {
 
     const gap = SizedBox(width: 3, height: 3);
 
-    // 2 kişi: üst/alt (boş alan gösterilmez).
+    // 2 kişi: YAN YANA (üst üste değil), boş alan gösterilmez.
     if (layout == LiveGuestLayout.duo) {
-      return Column(
+      return Row(
         children: [
           Expanded(child: cell(0)),
           gap,
