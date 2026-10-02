@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
-import '../../../../core/economy/presentation/widgets/topup_bonus_info_banner.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
 import '../providers/payment_requests_notifier.dart';
@@ -50,7 +49,6 @@ class JetonPurchasePage extends ConsumerWidget {
                             child: Column(
                               children: [
                                 _JetonStoreHeader(onBack: () => context.pop()),
-                                const TopupBonusInfoBanner(),
                               ],
                             ),
                           ),
