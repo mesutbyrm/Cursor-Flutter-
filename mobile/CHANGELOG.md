@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.693+746 (2026-10-02) — Canlı Yayın Özeti
+
+- **Yayın sonu (yayıncı):** «Canlı Yayın Özeti» kartı — ⏱ Yayın süresi · 👥 Maksimum izleyici · ❤️ Beğeni · 🎁 Alınan hediyeler · 💰 Kazanılan Jeton + [Kapat]; «Detaylı özet» isteğe bağlı (eskiden ikinci sheet otomatik açılıyordu)
+- **İzleyici:** sade «Yayın bitti» kartı
+
 ## 1.0.692+745 (2026-10-02) — Yayın sağ tarafı: yarışma kutuları
 
 - **Yarışma kutuları:** Sezon ve Haftalık kutuları puan gösterir — katıldıysan «#sıra · puan», değilse lider «1. Ad 12.4K»
