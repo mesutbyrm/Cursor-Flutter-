@@ -2769,6 +2769,21 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 .clearFortuneAnsweredNotice();
           });
         }
+        if (next.kicked && !(prev?.kicked ?? false)) {
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            if (!mounted || _leaving || _streamEndUiHandled) return;
+            ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+              const SnackBar(
+                content: Text('Kurallara uymadığınız için yayından çıkarıldınız.'),
+              ),
+            );
+            await _finalizeStreamEndedUi(
+              streamId: streamId,
+              endReason: 'kicked',
+              showEndedDialog: false,
+            );
+          });
+        }
         if (next.streamEnded && !(prev?.streamEnded ?? false)) {
           WidgetsBinding.instance.addPostFrameCallback((_) async {
             if (!mounted || _leaving || _streamEndUiHandled) return;

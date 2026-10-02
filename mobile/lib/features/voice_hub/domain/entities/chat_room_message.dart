@@ -14,6 +14,7 @@ class ChatRoomUserRef extends Equatable {
     this.membership,
     this.favoriteTeam,
     this.teamRaw,
+    this.level,
   });
 
   factory ChatRoomUserRef.fromJson(Map<String, dynamic> json) {
@@ -39,8 +40,14 @@ class ChatRoomUserRef extends Equatable {
       favoriteTeam: json['favoriteTeam']?.toString() ??
           json['favorite_team']?.toString(),
       teamRaw: teamRaw is Map ? Map<String, dynamic>.from(teamRaw) : null,
+      level: json['level'] is num
+          ? (json['level'] as num).toInt()
+          : int.tryParse(json['level']?.toString() ?? ''),
     );
   }
+
+  /// Kullanıcı seviyesi (sunucu `User.level`); bilinmiyorsa `null`.
+  final int? level;
 
   final String id;
   final String name;
@@ -96,6 +103,7 @@ class ChatRoomUserRef extends Equatable {
         membership,
         favoriteTeam,
         teamRaw,
+        level,
       ];
 }
 

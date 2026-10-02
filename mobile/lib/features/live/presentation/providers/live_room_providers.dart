@@ -58,6 +58,7 @@ class LiveRoomState {
     this.messages = const [],
     this.viewerCount = 0,
     this.streamEnded = false,
+    this.kicked = false,
     this.sending = false,
     this.sseConnected = false,
     this.error,
@@ -68,6 +69,9 @@ class LiveRoomState {
   final List<LiveRoomChatMessage> messages;
   final int viewerCount;
   final bool streamEnded;
+
+  /// GirLive Bot / moderatör bu kullanıcıyı yayından çıkardı (yasak değil).
+  final bool kicked;
   final bool sending;
   final bool sseConnected;
   final String? error;
@@ -79,6 +83,7 @@ class LiveRoomState {
     List<LiveRoomChatMessage>? messages,
     int? viewerCount,
     bool? streamEnded,
+    bool? kicked,
     bool? sending,
     bool? sseConnected,
     String? error,
@@ -92,6 +97,7 @@ class LiveRoomState {
       messages: messages ?? this.messages,
       viewerCount: viewerCount ?? this.viewerCount,
       streamEnded: streamEnded ?? this.streamEnded,
+      kicked: kicked ?? this.kicked,
       sending: sending ?? this.sending,
       sseConnected: sseConnected ?? this.sseConnected,
       error: clearError ? null : (error ?? this.error),
@@ -254,6 +260,10 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
           giftsRemote: ref.read(liveGiftsRemoteProvider),
           voiceRealtime: false,
         );
+      },
+      onViewerKicked: (userId) {
+        final me = ref.read(authControllerProvider).valueOrNull?.id;
+        if (me != null && me == userId) state = state.copyWith(kicked: true);
       },
       onStreamEnded: () {
         state = state.copyWith(streamEnded: true);

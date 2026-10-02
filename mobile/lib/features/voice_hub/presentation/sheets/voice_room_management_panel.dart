@@ -951,12 +951,14 @@ class _VoiceRoomManagementPanelState
             clipBehavior: Clip.none,
             children: [
               VoiceNeonAvatar(url: u.image, size: 40),
-              const Positioned(
+              Positioned(
                 right: -1,
                 bottom: -1,
                 child: CircleAvatar(
                   radius: 5,
-                  backgroundColor: Color(0xFF22C55E),
+                  backgroundColor: u.isOnline
+                      ? const Color(0xFF22C55E)
+                      : Colors.white38,
                 ),
               ),
             ],
@@ -970,6 +972,17 @@ class _VoiceRoomManagementPanelState
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+              if (u.level != null) ...[
+                const SizedBox(width: 6),
+                Text(
+                  'Sv.${u.level}',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: VoiceRoomTokens.neonBlue,
+                  ),
+                ),
+              ],
               if (isVip) ...[
                 const SizedBox(width: 6),
                 const Icon(

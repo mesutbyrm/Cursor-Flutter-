@@ -9,6 +9,8 @@ class ChatRoomPresence extends ChatRoomUserRef {
     super.chatRole,
     super.roleSymbol,
     super.membership,
+    super.level,
+    this.lastSeen,
     this.seatIndex,
     this.isSpeaking = false,
     this.isMuted = false,
@@ -25,6 +27,8 @@ class ChatRoomPresence extends ChatRoomUserRef {
       chatRole: base.chatRole,
       roleSymbol: base.roleSymbol,
       membership: base.membership,
+      level: base.level,
+      lastSeen: DateTime.tryParse(json['lastSeen']?.toString() ?? '')?.toLocal(),
       seatIndex: _parseSeatIndex(
         json['seatIndex'] ??
             json['seat'] ??
@@ -50,6 +54,14 @@ class ChatRoomPresence extends ChatRoomUserRef {
   }
 
   final int? seatIndex;
+
+  /// Sunucunun son görülme zamanı (presence yenilemesi); çevrimiçi göstergesi için.
+  final DateTime? lastSeen;
+
+  /// Presence 2 dakikadan yeni yenilendiyse çevrimiçi sayılır; bilinmiyorsa `true`.
+  bool get isOnline =>
+      lastSeen == null ||
+      DateTime.now().difference(lastSeen!) < const Duration(minutes: 2);
   final bool isSpeaking;
   final bool isMuted;
   /// Backend `micOn` — tek kaynak.
