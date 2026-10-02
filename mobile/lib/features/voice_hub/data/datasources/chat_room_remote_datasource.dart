@@ -22,6 +22,7 @@ import '../youtube_music_search_cache.dart';
 import '../../domain/entities/music_queue_item.dart';
 import '../../domain/entities/moderation_result.dart';
 import '../../domain/entities/voice_room_ban_entry.dart';
+import '../../domain/entities/voice_room_violation.dart';
 import '../../domain/entities/popular_music_suggestion.dart';
 import '../../domain/entities/chat_room_my_permissions.dart';
 import '../../domain/entities/voice_room_seat_slot.dart';
@@ -490,7 +491,7 @@ class ChatRoomRemoteDataSource {
     String? alternateKey,
     String? nickname,
     int? seatIndex,
-    String? password,
+    String? accessToken,
   }) async {
     Object? lastFailure;
     for (var attempt = 0; attempt < 2; attempt++) {
@@ -503,7 +504,7 @@ class ChatRoomRemoteDataSource {
           alternateKey: alternateKey,
           nickname: nickname,
           seatIndex: seatIndex,
-          password: password,
+          accessToken: accessToken,
         );
       } on Object catch (e) {
         lastFailure = e;
@@ -524,11 +525,13 @@ class ChatRoomRemoteDataSource {
     String? alternateKey,
     String? nickname,
     int? seatIndex,
-    String? password,
+    String? accessToken,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final nick = nickname?.trim();
-      final pass = password?.trim();
+      // Şifre istemciden GİTMEZ: sunucunun `verify-password` ile verdiği imzalı
+      // jeton gönderilir; yetkiyi sunucu doğrular.
+      final token = accessToken?.trim();
       final bodies = <Map<String, dynamic>>[
         // `seatIndex` her gövdede yer almalı: -1 "dinleyici kal" demektir ve
         // sunucu seatIndex gelmediğinde yeni girişte boş koltuğa otomatik
@@ -538,25 +541,19 @@ class ChatRoomRemoteDataSource {
           'action': 'join',
           if (nick != null && nick.isNotEmpty) 'nickname': nick,
           if (seatIndex != null) 'seatIndex': seatIndex,
-          if (pass != null && pass.isNotEmpty) ...{
-            'password': pass,
-            'entryPassword': pass,
-          },
+          if (token != null && token.isNotEmpty) 'roomAccessToken': token,
         },
         if (nick != null && nick.isNotEmpty)
           {
             'action': 'join',
             if (seatIndex != null) 'seatIndex': seatIndex,
-            if (pass != null && pass.isNotEmpty) ...{
-              'password': pass,
-              'entryPassword': pass,
-            },
+            if (token != null && token.isNotEmpty) 'roomAccessToken': token,
           },
         {
           'type': 'join',
           if (nick != null && nick.isNotEmpty) 'nickname': nick,
           if (seatIndex != null) 'seatIndex': seatIndex,
-          if (pass != null && pass.isNotEmpty) 'password': pass,
+          if (token != null && token.isNotEmpty) 'roomAccessToken': token,
         },
       ];
       ApiException? lastError;
@@ -1184,6 +1181,41 @@ class ChatRoomRemoteDataSource {
     });
   }
 
+  /// GirLive Bot otomatik moderasyonu aç/kapat (`PATCH settings {autoModeration}`).
+  Future<void> setAutoModeration({
+    required String roomKey,
+    String? alternateKey,
+    required bool enabled,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      await _dio.safePatch<dynamic>(
+        ApiEndpoints.chatRoomSettings(key),
+        data: {'autoModeration': enabled},
+      );
+    });
+  }
+
+  /// `GET moderation/violations` — GirLive Bot'un bu odadaki kayıtları.
+  Future<List<VoiceRoomViolation>> fetchModerationViolations({
+    required String roomKey,
+    String? alternateKey,
+  }) async {
+    return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.chatRoomModerationViolations(key),
+        forceRefresh: true,
+      );
+      final body = res.data;
+      final list = body is Map ? body['violations'] : null;
+      if (list is! List) return const <VoiceRoomViolation>[];
+      return [
+        for (final raw in list)
+          if (raw is Map)
+            VoiceRoomViolation.fromJson(Map<String, dynamic>.from(raw)),
+      ];
+    });
+  }
+
   /// `GET /api/chat/rooms/{id}/settings` — yalnızca sahip / yönetici.
   Future<Map<String, dynamic>> fetchRoomSettings(String roomKey) async {
     final res = await _dio.safeGet<dynamic>(
@@ -1281,24 +1313,6 @@ class ChatRoomRemoteDataSource {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _dio.safePost<dynamic>(
         ApiEndpoints.chatRoomSpeakRequestApprove(key, targetUserId),
-      );
-    });
-  }
-
-  /// Şifreli oda — sahip onayı / red (presence action; üretim SSE ile eşleşir).
-  Future<void> respondPasswordAccessRequest(
-    String roomKey,
-    String targetUserId, {
-    required bool approve,
-    String? alternateKey,
-  }) async {
-    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      await _dio.safePost<dynamic>(
-        ApiEndpoints.chatRoomPresence(key),
-        data: {
-          'action': approve ? 'approve_password' : 'deny_password',
-          'userId': targetUserId,
-        },
       );
     });
   }

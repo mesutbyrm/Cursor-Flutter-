@@ -2108,6 +2108,28 @@ Auth gerektiren endpoint'ler `Authorization: Bearer <accessToken>` header'ı bek
 | `getPresence` | POST | `/api/presence` | ✅ | - |
 | `watchAd` | POST | `/api/user/watch-ad` | ✅ | - |
 
+### 9.3.1 VIP şifreli oda + giriş izni (backend: `lib/room-access.ts`)
+
+Şifre **yalnızca `roomType == VIP`** odalarda vardır; oda listesi/ayarlar `hasPassword` bayrağı döner (şifre/hash asla dönmez).
+
+| Metot | HTTP | Endpoint | Body | Yanıt |
+|-------|------|----------|------|-------|
+| `status` | GET | `/api/live/rooms/{roomId}/verify-password` | - | `{passwordProtected, maxAttempts, remainingAttempts, locked, bypass, joinRequestStatus}` |
+| `verifyPassword` | POST | `/api/live/rooms/{roomId}/verify-password` | `{password}` | 200 `{accessToken, expiresAt}` · 403 `INVALID_ROOM_PASSWORD` / `PASSWORD_ATTEMPTS_EXHAUSTED` + `remainingAttempts`, `locked` |
+| `requestJoin` | POST | `/api/live/rooms/{roomId}/join-request` | - | 200 `{requestId, status}` · 409 `ALREADY_REQUESTED` (kullanıcı+oda başına 1 istek) |
+| `myJoinRequest` / `pending` | GET | `/api/live/rooms/{roomId}/join-request` | - | istek sahibi: `{request, allowed}` · sahip/yönetici: `{requests[]}` |
+| `approve` / `reject` | POST | `/api/live/rooms/{roomId}/join-request/{requestId}/approve\|reject` | - | yalnızca sahip / yönetici |
+
+- Kullanıcı + oda başına **3 yanlış deneme**; hak bitince şifre karşılaştırılmaz (kilit). Şifre değişince sayaç ve verilmiş izinler sıfırlanır.
+- `accessToken` (2 sa) odaya + kullanıcıya + mevcut şifreye bağlıdır; `presence` join gövdesinde `roomAccessToken` olarak gönderilir. Onaylı giriş izni 24 saat geçerlidir ve sunucuda doğrulanır.
+- SSE `room_event`: `join_request` (oda sahibine popup), `join_request_resolved`, `girlive_rules` (`targetUserId` ile hedefli kural hatırlatması).
+
+### 9.3.2 GirLive Bot / sunucu taraflı moderasyon
+
+- Mesaj POST uçları (`/api/chat/rooms/{id}/messages`, `/api/live/message`, `/api/video-streams/{id}/comments|messages`) mesajı sunucuda denetler; ihlalde **422** `{code: "MODERATION_BLOCKED", moderation: {verdict, severity}}`.
+- LOW → uyarı · MEDIUM → uyarı + geçici mute · HIGH → odadan at · CRITICAL → ban; tekrar eden ihlaller kademeli yükselir. Oda sahibi / yönetici / oda op+ / yayın moderatörü bot tarafından cezalandırılmaz.
+- `GET /api/chat/rooms/{id}/moderation/violations` (moderatör) · `PATCH /api/chat/rooms/{id}/settings {autoModeration}` · Admin: `GET/PUT /api/admin/girlive-bot`.
+
 ### 9.3 ChatRoomRepository
 
 | Metot | HTTP | Endpoint | Auth | Body / Query |
@@ -2117,7 +2139,7 @@ Auth gerektiren endpoint'ler `Authorization: Bearer <accessToken>` header'ı bek
 | `getBackgrounds` | GET | `/api/chat/rooms/backgrounds` | ✅ | - |
 | `getMessages` | GET | `/api/chat/rooms/{roomId}/messages` | ✅ | `?limit=50` |
 | `sendMessage` | POST | `/api/chat/rooms/{roomId}/messages` | ✅ | `{content, type?, nickname?}` |
-| `joinRoom` | POST | `/api/chat/rooms/{roomId}/presence` | ✅ | `{action: "join", nickname?, password?}` |
+| `joinRoom` | POST | `/api/chat/rooms/{roomId}/presence` | ✅ | `{action: "join", nickname?, seatIndex?, roomAccessToken?}` — şifreli VIP odada jeton `verify-password` ile alınır (düz şifre gönderilmez) |
 | `leaveRoom` | POST | `/api/chat/rooms/{roomId}/presence` | ✅ | `{action: "leave"}` |
 | `getPresence` | GET | `/api/chat/rooms/{roomId}/presence` | ✅ | - |
 | `getSeats` | GET | `/api/chat/rooms/{roomId}/seats` | ✅ | - |

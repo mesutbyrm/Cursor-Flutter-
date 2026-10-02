@@ -217,6 +217,32 @@ extension VoiceRoomModerationControls on VoiceRoomLiveController {
     }
   }
 
+  /// GirLive Bot'un bu odadaki uyarı / mute / kick / ban kayıtları.
+  Future<List<VoiceRoomViolation>> fetchModerationViolations() async {
+    try {
+      return await ref.read(chatRoomRemoteProvider).fetchModerationViolations(
+            roomKey: _roomKey,
+            alternateKey: _musicAlternateKey,
+          );
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// GirLive Bot otomatik moderasyonunu aç/kapat (oda sahibi / yönetici).
+  Future<String?> setAutoModeration(bool enabled) async {
+    try {
+      await ref.read(chatRoomRemoteProvider).setAutoModeration(
+            roomKey: _roomKey,
+            alternateKey: _musicAlternateKey,
+            enabled: enabled,
+          );
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
   Future<String?> addBannedWord(String word) async {
     try {
       final words = await ref

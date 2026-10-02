@@ -265,17 +265,15 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       case 'raise_hand':
         ref.read(voiceSpeakRequestSignalProvider.notifier).bump();
         return;
-      case 'password_request':
-      case 'passwordrequest':
-      case 'request_password':
-      case 'password_access_request':
-        _enqueuePasswordRequestFromSse(payload);
-        ref.read(voicePasswordRequestSignalProvider.notifier).bump();
+      case 'join_request':
+        _enqueueJoinRequestFromSse(payload);
+        ref.read(voiceJoinRequestSignalProvider.notifier).bump();
         return;
-      case 'password_granted':
-      case 'password_approved':
-      case 'passwordapproved':
-        _handlePasswordGrantedSse(payload);
+      case 'girlive_rules':
+        _handleGirLiveRules(payload);
+        return;
+      case 'join_request_resolved':
+        _resolveJoinRequestFromSse(payload);
         return;
       case 'room_closed':
         _applyRoomEventRoomClosed(payload);
@@ -778,37 +776,71 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     return changed ? next : presence;
   }
 
-  void _enqueuePasswordRequestFromSse(Map<String, dynamic> payload) {
+  /// `join_request` — şifreli VIP odaya giriş isteği (oda sahibinin popup'ı).
+  /// Yetki kararı sunucudadır; burada yalnızca kuyruğa alınır.
+  void _enqueueJoinRequestFromSse(Map<String, dynamic> payload) {
     final roomKey = _resolveRoomKeyFromEvent(payload) ?? _roomKey;
     if (roomKey.isEmpty) return;
-    final nestedUser = payload['user'];
-    final userMap = nestedUser is Map
-        ? Map<String, dynamic>.from(nestedUser)
-        : null;
-    final requesterId = (payload['userId'] ??
-            payload['requesterId'] ??
-            payload['requesterUserId'] ??
-            userMap?['id'])
-        ?.toString()
-        .trim();
-    if (requesterId == null || requesterId.isEmpty) return;
-    final name = (payload['userName'] ??
-            payload['username'] ??
-            payload['displayName'] ??
-            userMap?['name'] ??
-            userMap?['username'])
-        ?.toString()
-        .trim();
-    final display = (name != null && name.isNotEmpty) ? name : 'Bir kullanıcı';
-    final message = payload['message']?.toString();
-    ref.read(voiceRoomPasswordRequestQueueProvider.notifier).enqueue(
-          VoiceRoomPasswordRequestEntry(
+    final requestId = payload['requestId']?.toString().trim() ?? '';
+    final userId = payload['userId']?.toString().trim() ?? '';
+    if (requestId.isEmpty || userId.isEmpty) return;
+    final display = (payload['userName'] ?? payload['name'])?.toString().trim();
+    final handle = payload['name']?.toString().trim();
+    ref.read(voiceRoomJoinRequestQueueProvider.notifier).enqueue(
+          VoiceRoomJoinRequestEntry(
             roomKey: roomKey,
-            requesterUserId: requesterId,
-            requesterName: display,
-            message: message,
+            request: PendingJoinRequest(
+              id: requestId,
+              userId: userId,
+              name: (display != null && display.isNotEmpty)
+                  ? display
+                  : 'Bir kullanıcı',
+              username: handle != null && handle != display ? handle : null,
+              avatarUrl: (payload['avatar'] ?? payload['image'])?.toString(),
+            ),
           ),
         );
+  }
+
+  /// Oda sahibi odaya girdiğinde, çevrimdışıyken gelen bekleyen giriş
+  /// isteklerini sunucudan çeker (SSE olayı kaçırılmış olabilir).
+  /// Yalnızca şifreli VIP odanın sahibi için çalışır; yetkiyi sunucu doğrular.
+  Future<void> _syncPendingJoinRequests() async {
+    final room = _roomMeta;
+    if (!room.isPasswordLockedRoom) return;
+    final me = ref.read(authControllerProvider).valueOrNull?.id.trim() ?? '';
+    final ownerId = room.ownerId?.trim() ?? '';
+    if (me.isEmpty || ownerId != me) return;
+    try {
+      final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+      final pending = await ref.read(roomAccessRemoteProvider).pending(key);
+      if (pending.isEmpty) return;
+      final queue = ref.read(voiceRoomJoinRequestQueueProvider.notifier);
+      for (final r in pending.where((p) => p.id.isNotEmpty)) {
+        queue.enqueue(VoiceRoomJoinRequestEntry(roomKey: key, request: r));
+      }
+      ref.read(voiceJoinRequestSignalProvider.notifier).bump();
+    } catch (_) {
+      // Ağ hatası: SSE olayları yine de popup'ı tetikler.
+    }
+  }
+
+  /// `girlive_rules` — GirLive Bot kural hatırlatması; yalnızca hedef kullanıcıda.
+  void _handleGirLiveRules(Map<String, dynamic> payload) {
+    final me = ref.read(authControllerProvider).valueOrNull?.id.trim();
+    final target = payload['targetUserId']?.toString().trim();
+    if (me == null || me.isEmpty || target != me) return;
+    ref
+        .read(girLiveRulesNoticeProvider.notifier)
+        .show(payload['text']?.toString() ?? '');
+  }
+
+  /// `join_request_resolved` — başka bir yönetici yanıtladı: popup kapanır.
+  void _resolveJoinRequestFromSse(Map<String, dynamic> payload) {
+    final roomKey = _resolveRoomKeyFromEvent(payload) ?? _roomKey;
+    final requestId = payload['requestId']?.toString().trim() ?? '';
+    if (roomKey.isEmpty || requestId.isEmpty) return;
+    ref.read(voiceRoomJoinRequestQueueProvider.notifier).resolve(roomKey, requestId);
   }
 
   String? _resolveRoomKeyFromEvent(Map<String, dynamic> payload) {
@@ -825,28 +857,5 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       }
     }
     return null;
-  }
-
-  void _handlePasswordGrantedSse(Map<String, dynamic> payload) {
-    final me = ref.read(authControllerProvider).valueOrNull?.id.trim();
-    if (me == null || me.isEmpty) return;
-    final target = (payload['userId'] ??
-            payload['targetUserId'] ??
-            payload['requesterId'])
-        ?.toString()
-        .trim();
-    if (target == null || target.isEmpty || target != me) return;
-    final roomKey = _resolveRoomKeyFromEvent(payload) ?? _roomKey;
-    if (roomKey.isEmpty) return;
-    ref.read(vipUnlockedRoomsProvider.notifier).unlock(roomKey);
-    final pass = (payload['password'] ?? payload['roomPassword'])
-        ?.toString()
-        .trim();
-    if (pass != null && pass.isNotEmpty) {
-      ref
-          .read(pendingRoomPasswordProvider.notifier)
-          .setPassword(roomKey, pass);
-    }
-    unawaited(RoomPasswordAccessCooldown.clear(roomKey, me));
   }
 }

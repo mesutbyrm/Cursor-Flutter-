@@ -8,6 +8,7 @@ class VoiceRoomBanEntry {
     this.username,
     this.imageUrl,
     this.bannedByName,
+    this.expiresAt,
   });
 
   final String id;
@@ -17,6 +18,9 @@ class VoiceRoomBanEntry {
   final String? username;
   final String? imageUrl;
   final String? bannedByName;
+
+  /// Süreli ban bitiş zamanı (`null` = kalıcı).
+  final DateTime? expiresAt;
 
   String get displayName {
     final name = userName?.trim();
@@ -42,6 +46,7 @@ class VoiceRoomBanEntry {
       username: userMap?['username']?.toString(),
       imageUrl: userMap?['image']?.toString(),
       bannedByName: bannedByMap?['name']?.toString(),
+      expiresAt: DateTime.tryParse(json['expiresAt']?.toString() ?? '')?.toLocal(),
     );
   }
 }

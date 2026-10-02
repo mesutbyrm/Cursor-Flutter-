@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/providers/auth_selectors.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
 import '../../vip_gold/presentation/widgets/vip_locked_room_sheet.dart';
 import '../../vip_gold/domain/voice_room_access.dart';
@@ -32,7 +33,11 @@ class _VoiceRoomGatedEntryState extends ConsumerState<VoiceRoomGatedEntry> {
 
   Future<void> _runGate() async {
     if (!mounted) return;
-    if (widget.room.isPasswordLockedRoom) {
+    final me = ref.read(currentUserIdProvider);
+    final iAmOwner = me != null &&
+        me.isNotEmpty &&
+        widget.room.ownerId == me;
+    if (widget.room.isPasswordLockedRoom && !iAmOwner) {
       final ok = await showVipLockedRoomSheet(context, ref, room: widget.room);
       if (!mounted) return;
       if (!ok) {

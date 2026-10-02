@@ -27,7 +27,14 @@ Future<void> openVoiceRoomWithVipGate(
   bool skipVipGateForOwner = false,
   bool skipPreview = false,
 }) async {
-  if (room.isPasswordLockedRoom) {
+  final meId = ref.read(currentUserIdProvider);
+  final iAmRoomOwner = meId != null &&
+      meId.isNotEmpty &&
+      room.ownerId != null &&
+      room.ownerId == meId;
+  // Oda sahibi kendi odasının şifresini girmez; yönetici muafiyeti ve diğer
+  // tüm kararlar yine sunucudadır (verify-password / presence).
+  if (room.isPasswordLockedRoom && !iAmRoomOwner) {
     final isStaff = ref.read(staffAccessProvider).isSiteAdmin;
     if (isStaff) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -39,11 +46,7 @@ Future<void> openVoiceRoomWithVipGate(
     }
   }
 
-  final me = ref.read(currentUserIdProvider);
-  final isRoomOwner = me != null &&
-      me.isNotEmpty &&
-      room.ownerId != null &&
-      room.ownerId == me;
+  final isRoomOwner = iAmRoomOwner;
   final isOwner = skipVipGateForOwner && isRoomOwner;
 
   final capabilities = ref.read(membershipCapabilitiesSyncProvider);

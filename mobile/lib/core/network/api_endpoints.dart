@@ -417,6 +417,10 @@ abstract final class ApiEndpoints {
       '/api/chat/rooms/$roomId/moderation';
 
   /// Oda ayarları — kılavuz §9.3 `updateSettings`.
+  /// GirLive Bot — bu odadaki uyarı / mute / kick / ban kayıtları (moderatör).
+  static String chatRoomModerationViolations(String roomId) =>
+      '/api/chat/rooms/$roomId/moderation/violations';
+
   static String chatRoomSettings(String roomId) =>
       '/api/chat/rooms/$roomId/settings';
 
@@ -718,6 +722,16 @@ abstract final class ApiEndpoints {
   static const liveLeaveRoom = '/api/live/leave-room';
   static const liveHeartbeat = '/api/live/heartbeat';
   static const liveRooms = '/api/live/rooms';
+
+  /// VIP şifreli oda — sunucu tarafı şifre doğrulama (3 hak) ve giriş izni.
+  static String liveRoomVerifyPassword(String roomId) =>
+      '/api/live/rooms/$roomId/verify-password';
+  static String liveRoomJoinRequest(String roomId) =>
+      '/api/live/rooms/$roomId/join-request';
+  static String liveRoomJoinRequestApprove(String roomId, String requestId) =>
+      '/api/live/rooms/$roomId/join-request/$requestId/approve';
+  static String liveRoomJoinRequestReject(String roomId, String requestId) =>
+      '/api/live/rooms/$roomId/join-request/$requestId/reject';
   static const liveSeats = '/api/live/seats';
   static const liveMessage = '/api/live/message';
   static const liveGiftTypes = '/api/live/gift-types';

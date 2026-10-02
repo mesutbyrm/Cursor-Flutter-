@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.680+733 (2026-10-02) — VIP şifreli oda, oda ayarları kartları, GirLive Bot
+
+- **VIP şifreli oda:** şifre yalnızca VIP odalarda; doğrulama sunucuda (3 deneme hakkı, kilit), gerçek şifre istemcide tutulmaz (imzalı erişim jetonu); "Oda Sahibinden İzin İste" (kullanıcı başına 1 kez) + oda sahibine Evet/Hayır popup'ı; eski, sunucuda karşılığı olmayan `request_password` akışı kaldırıldı
+- **Sesli oda ayarları:** Kullanıcı / Sohbet / Oda Yönetimi / Kullanıcı Ayarları kartları ve alt kartlar; Cezalar tek yerde (sessize alınan, banlanan, geçici, uyarılar); VIP olmayan odada şifreleme görünmez; yinelenen eski ayar ekranları silindi
+- **GirLive Bot:** hoş geldin mesajı, kurallar yalnızca girene bildirim, sunucu taraflı yasaklı kelime moderasyonu (LOW→uyarı, MEDIUM→mute, HIGH→at, CRITICAL→ban), Otomatik Moderasyon ekranı
+- **Fal & Tarot:** Günlük Görevler şeridi geri eklendi (PR #419)
+
 ## 1.0.679+732 (2026-10-02) — PK ekranı, Sosyal, oda/jeton düzeltmeleri, geri tuşu, bildirimler, gelen kutusu
 
 - **PK ekranı:** Duraklat kaldırıldı, "Bitir" küçüldü, alttaki Sohbet yerine sağ üstte sohbet + "sesleri kapat" (TRTC uzak sesler), mesaj alanı hep açık/büyük; hediye animasyonlarında "X → Y'ye … gönderdi" (alıcı avatarı + adı)

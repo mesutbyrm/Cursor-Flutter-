@@ -529,9 +529,8 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       final user = ref.read(authControllerProvider).valueOrNull;
       final nick = _effectiveNickname(user);
       _presenceNickname = nick;
-      final pendingPass = ref
-          .read(pendingRoomPasswordProvider.notifier)
-          .peek(_roomKey);
+      final accessToken =
+          ref.read(roomAccessTokenProvider.notifier).peek(_roomKey);
       // Heartbeat sonrası yeniden katılımda koltuk talebi kapalıydı; sunucu
       // presence kaydını düşürdüyse kullanıcı odaya geri giriyor ama koltuğu
       // boş kalıyordu. Son doğrulanmış koltuk biliniyorsa geri istenir.
@@ -549,18 +548,18 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
             _presenceApiKey,
             alternateKey: _presenceAlternateKey,
             nickname: nick,
-            password: pendingPass,
+            accessToken: accessToken,
             seatIndex: joinSeat,
           );
-      ref.read(pendingRoomPasswordProvider.notifier).clear(_roomKey);
-      // Şifreli odaya doğru şifreyle giriş başarılı → bu oturum için kilidi aç
-      // (yanlış şifre join'i buraya ulaşamaz; terminal hata ile çıkarılır).
+      // Şifreli odaya sunucu onayıyla giriş başarılı → bu oturum için kilidi aç.
+      // Jeton saklı kalır: presence düşüp yeniden katılımda tekrar şifre sorulmaz.
       ref.read(vipUnlockedRoomsProvider.notifier).unlock(_roomKey);
       VoiceRoomDebugLog.log('api.presence.join.ok', {
         'count': joined.length,
         'roomId': _roomKey,
       });
       _presenceJoined = true;
+      unawaited(_syncPendingJoinRequests());
       _selfPresenceTracker.reset();
       registerVoiceRoomLiveSession(
         ref,
@@ -638,10 +637,11 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
           lower.contains('wrong password') ||
           lower.contains('invalid password') ||
           (e is ApiException && e.statusCode == 401)) {
-        ref.read(pendingRoomPasswordProvider.notifier).clear(_roomKey);
+        ref.read(roomAccessTokenProvider.notifier).clear(_roomKey);
+        ref.read(vipUnlockedRoomsProvider.notifier).lock(_roomKey);
         state = state.copyWith(
           loading: false,
-          error: 'Oda şifresi hatalı. Şifreyi bilmeden giremezsiniz.',
+          error: 'Oda şifresi doğrulanamadı. Odaya yeniden girin ve şifreyi tekrar girin.',
         );
         return;
       }

@@ -18,12 +18,7 @@ import '../theme/voice_room_tokens.dart';
 import '../utils/voice_room_permissions.dart';
 import '../widgets/premium/voice_glass.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
-import '../../domain/voice_room_background_policy.dart';
-import 'voice_moderation_user_picker_sheet.dart';
-import 'voice_room_hub_settings.dart';
 import 'voice_room_management_panel.dart';
-import 'voice_room_muted_users_sheet.dart';
-import 'voice_room_sheets.dart';
 
 /// Faz 3 — 3 nokta menüsü: kullanıcı + yetki + Material 3 büyük kartlar.
 Future<void> showVoiceRoomMenuSheet(
@@ -75,13 +70,6 @@ class _VoiceRoomMenuSheet extends ConsumerWidget {
     final pk = ref.watch(pkBattleForRoomProvider(room));
     final pkLive = isPkBattleLive(pk);
     final role = VoiceRoomMenuRole.label(perms, user: user, live: live);
-    final canManageAuthority = perms.isSiteAdmin ||
-        perms.isRoomOwner ||
-        perms.canModerate ||
-        perms.canManageRoom ||
-        perms.canMuteUsers ||
-        perms.canKickUsers ||
-        perms.canBanUsers;
     final bottom = MediaQuery.paddingOf(context).bottom;
     final pkFeatureOn = ref.watch(pkFeatureEnabledProvider);
 
@@ -107,7 +95,7 @@ class _VoiceRoomMenuSheet extends ConsumerWidget {
       _MenuAction(
         icon: Icons.tune_rounded,
         color: VoiceRoomTokens.neonBlue,
-        tooltip: 'Oda yönetimi',
+        tooltip: 'Ayarlar',
         onTap: () {
           Navigator.pop(context);
           showVoiceRoomManagementPanel(
@@ -127,35 +115,15 @@ class _VoiceRoomMenuSheet extends ConsumerWidget {
         tooltip: 'Kullanıcı ayarları',
         onTap: () {
           Navigator.pop(context);
-          showVoiceEffectsSheet(context, ref);
-        },
-      ),
-      _MenuAction(
-        icon: Icons.wallpaper_rounded,
-        color: const Color(0xFF22C55E),
-        tooltip: 'Arkaplan',
-        enabled: perms.canChangeBackground || isOwner,
-        onTap: () {
-          if (!perms.canChangeBackground && !isOwner) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Arka plan değiştirme yetkiniz yok')),
-            );
-            return;
-          }
-          if (!voiceRoomBackgroundUnlocked(
-            room,
-            isSiteAdmin: perms.isSiteAdmin,
-          )) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text(voiceRoomBackgroundLockedMessage)),
-            );
-            return;
-          }
-          Navigator.pop(context);
-          showVoiceRoomBackgroundSheet(
+          showVoiceRoomManagementPanel(
             context,
             ref,
             room: room,
+            live: live,
+            perms: perms,
+            isOwner: isOwner,
+            onUserTap: onUserTap,
+            initial: VoiceMgmtInitial.userSettings,
           );
         },
       ),
@@ -185,84 +153,6 @@ class _VoiceRoomMenuSheet extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               _UserHeader(user: user, role: role),
-              if (canManageAuthority) ...[
-                const SizedBox(height: 14),
-                _ModerationMenuButton(
-                  icon: Icons.volume_off_rounded,
-                  label: 'Sessize alınmış kullanıcılar',
-                  onTap: () {
-                    Navigator.pop(context);
-                    showVoiceMutedUsersSheet(
-                      context: context,
-                      ref: ref,
-                      roomKey: room.liveKey,
-                      presence: live.presence,
-                      perms: perms,
-                    );
-                  },
-                ),
-                const SizedBox(height: 8),
-                _ModerationMenuButton(
-                  icon: Icons.block_rounded,
-                  label: 'Banlanmış kullanıcılar',
-                  onTap: () {
-                    Navigator.pop(context);
-                    showVoiceModerationUserPicker(
-                      context: context,
-                      ref: ref,
-                      room: room,
-                      perms: perms,
-                      action: VoiceModerationPickerAction.unban,
-                      presence: live.presence,
-                    );
-                  },
-                ),
-                const SizedBox(height: 8),
-                _ModerationMenuButton(
-                  icon: Icons.cleaning_services_rounded,
-                  label: 'Sohbeti temizle',
-                  onTap: () async {
-                    Navigator.pop(context);
-                    final err = await ref
-                        .read(voiceRoomLiveProvider(room.liveKey).notifier)
-                        .clearChatAsModerator();
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(err ?? 'Sohbet temizlendi'),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 8),
-                FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: VoiceRoomTokens.neonPurple.withValues(alpha: 0.85),
-                    minimumSize: const Size.fromHeight(48),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    showVoiceRoomManagementPanel(
-                      context,
-                      ref,
-                      room: room,
-                      live: live,
-                      perms: perms,
-                      isOwner: isOwner,
-                      onUserTap: onUserTap,
-                      initial: VoiceMgmtInitial.users,
-                    );
-                  },
-                  icon: const Icon(Icons.admin_panel_settings_rounded),
-                  label: const Text(
-                    'Kullanıcı yönetimi',
-                    style: TextStyle(fontWeight: FontWeight.w900),
-                  ),
-                ),
-              ],
               const SizedBox(height: 20),
               LayoutBuilder(
                 builder: (context, constraints) {
@@ -360,36 +250,6 @@ class _UserHeader extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _ModerationMenuButton extends StatelessWidget {
-  const _ModerationMenuButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      style: OutlinedButton.styleFrom(
-        foregroundColor: Colors.white,
-        minimumSize: const Size.fromHeight(46),
-        side: BorderSide(color: Colors.white.withValues(alpha: 0.28)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      ),
-      onPressed: onTap,
-      icon: Icon(icon, size: 20),
-      label: Text(
-        label,
-        style: const TextStyle(fontWeight: FontWeight.w800),
-      ),
     );
   }
 }
