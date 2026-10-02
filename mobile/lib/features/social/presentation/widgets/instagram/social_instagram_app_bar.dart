@@ -7,7 +7,7 @@ import '../../../../inbox/domain/inbox_tab.dart';
 import '../../../../inbox/presentation/inbox_routes.dart';
 import '../../../../inbox/presentation/providers/inbox_unread_providers.dart';
 
-/// CanlıFal Sosyal üst çubuk — logo + bildirim + mesajlar.
+/// Sosyal üst çubuk — başlık + bildirim + mesajlar.
 class SocialInstagramAppBar extends ConsumerWidget {
   const SocialInstagramAppBar({
     super.key,
@@ -34,7 +34,7 @@ class SocialInstagramAppBar extends ConsumerWidget {
             child: Semantics(
               header: true,
               button: onTitleTap != null,
-              label: 'CanlıFal',
+              label: 'Sosyal',
               onTap: onTitleTap,
               excludeSemantics: true,
               child: GestureDetector(
@@ -54,7 +54,7 @@ class SocialInstagramAppBar extends ConsumerWidget {
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        'CanlıFal',
+                        'Sosyal',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
