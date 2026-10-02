@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.688+741 (2026-10-02) — Yayın ayarları sheet'i
+
+- **Yayın Ayarları:** yayıncı kartı; Kamera / Mikrofon aç-kapat (durum yazılı), Güzellik efektleri ve filtreler, Paylaş; Misafir kabul et · Yorumlar · Hediyeler · Fal isteği · PK · Çoklu yayın (+ düzen) anahtarları; sabit alt «Yayını Bitir»
+- Üç yerden (alt çubuk, ⋯ menüsü, 2x2 Ayarlar) aynı sheet açılır
+
 ## 1.0.687+740 (2026-10-02) — Canlı yayın alt çubuğu
 
 - **Alt çubuk:** «Yorum yaz...» + Misafir · Çoklu (yayıncı) · Hediye (pembe) · Paylaş · Daha fazla; 2x2 çoklu yayında Çoklu/Paylaş yerine Ayarlar (yayıncı); yazarken yalnız yorum alanı görünür; 44 px dokunma alanı

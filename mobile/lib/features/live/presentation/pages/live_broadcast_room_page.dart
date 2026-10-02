@@ -2484,7 +2484,20 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   }
 
   void _openBroadcastSettings() => unawaited(
-        showLiveBroadcastSettingsSheet(context: context, ref: ref),
+        showLiveBroadcastSettingsSheet(
+          context: context,
+          ref: ref,
+          trtc: widget.session.isHost ? _trtc : null,
+          hostName: widget.session.streamerName,
+          hostAvatarUrl: widget.session.avatarUrl,
+          onBeautyFilter: () =>
+              showLiveBeautyFilterSheet(context: context, ref: ref),
+          onShare: _shareLive,
+          onEndBroadcast: widget.session.isHost
+              ? () => unawaited(_exitBroadcast(context))
+              : null,
+          onRtcChanged: () => setState(() => _localPreviewKey = UniqueKey()),
+        ),
       );
 
   Future<void> _openLiveMoreMenu({
@@ -2514,10 +2527,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         onPkPanel: _openPkPanel,
         onGames: _openGamesHub,
         onTournament: () => showLiveStarTournamentSheet(context, ref),
-        onBroadcastSettings: () => showLiveBroadcastSettingsSheet(
-          context: context,
-          ref: ref,
-        ),
+        onBroadcastSettings: _openBroadcastSettings,
         onBeautyFilter: () => showLiveBeautyFilterSheet(
           context: context,
           ref: ref,
