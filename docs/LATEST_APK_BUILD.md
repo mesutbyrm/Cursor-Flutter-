@@ -4,25 +4,25 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.678+731` |
-| Tarih (UTC) | 2026-10-01 21:51 |
-| Commit | [`8b169aee46b2d13e2e4b70be68526150aecfca27`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/8b169aee46b2d13e2e4b70be68526150aecfca27) |
-| İş akışı | [Run 36927563088](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/36927563088) |
+| Sürüm | `1.0.679+732` |
+| Tarih (UTC) | 2026-10-02 13:36 |
+| Commit | [`70d24e13dcf81d8a8bcb3576bca7e1a6a99fc537`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/70d24e13dcf81d8a8bcb3576bca7e1a6a99fc537) |
+| İş akışı | [Run 37011869559](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37011869559) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.678+731 (2026-10-01) — Sesli oda PK modu (kompakt panel, tek sunucu sayacı)
+## 1.0.679+732 (2026-10-02) — PK ekranı, Sosyal, oda/jeton düzeltmeleri, geri tuşu, bildirimler, gelen kutusu
 
-- **PK artık odada geçici bir mod:** koltukların üstünde kompakt neon cam panel (ekranın ~%30'u); ayrı tam ekran sayfa açılmaz, PK bitince oda eski haline döner
-- **Takım ızgarası 1x1–4x4:** avatar boyutu oyuncu sayısına göre dinamik; PK oyuncuları konuşmaya devam eder (mikrofon düğmesi)
-- **Tek merkezi sayaç:** `PkRoomController` — sunucu `endsAt` + `serverNow` ofseti; widget rebuild / hediye / sohbet / SSE / mikrofon sayacı sıfırlamaz; süre bitince iki cihazda aynı anda otomatik biter
-- **Hediye ≠ PK daveti:** SSE olayları tipine göre yönlendirilir; skor (status'suz PK_SCORE) artık davet açmaz ve sayaç/skor durumunu bozmaz
-- **Hediye gösterimi:** gönderen, hediye, miktar; ~5 sn, fade, son 3'lük kuyruk; skor yalnızca sunucudan
-- **Karşı takımı sustur:** yalnızca bu cihazın TRTC oynatmasını kapatır (backend mute yok)
-- **PK Bitir:** anında (iyimser), hata olursa geri alınır; sohbet girişi 💬'a basılana dek gizli
-- **Yeniden bağlanma:** sunucudan güncel PK okunur (sunucu durumu kazanır, sayaç yeniden başlamaz)
-- Backend değişmedi
+- **PK ekranı:** Duraklat kaldırıldı, "Bitir" küçüldü, alttaki Sohbet yerine sağ üstte sohbet + "sesleri kapat" (TRTC uzak sesler), mesaj alanı hep açık/büyük; hediye animasyonlarında "X → Y'ye … gönderdi" (alıcı avatarı + adı)
+- **Sosyal:** başlık "Sosyal"; Tümü/Takip/Falcılar/Ünlüler/Fan Club sekmeleri kaldırıldı; "Ne düşünüyorsun" ve paylaşım kartları tam genişlik/kenarlıksız; metin ekrana sığdığı kadar + "Daha fazla"; fal paylaşımında "X kişi bu fal türüne baktırdı" (fortuneTypeCount)
+- **Sesli oda:** ücretsiz odaya "(ödüllerden komisyon alınmaz)"; aktif PK olayı artık oda dışındaki kullanıcıyı kendiliğinden odaya itmiyor; oda arka planı yalnızca ücretli (2500) ve VIP odalarda
+- **Jeton/üyelik:** yükleme bonus kademeleri kaldırıldı; "bekleyen ödeme" durumu her açılışta sunucudan; SVIP jeton satın alma hatası yakalanıp loglanır, Türkçe mesaj + kopyalanabilir ayrıntı, gereksiz tekrar denemeler kaldırıldı
+- **Geri tuşu:** hiçbir yerde uygulamayı doğrudan kapatmaz (AppBackScope, sekme geçmişi, go→push); ana sayfada "Uygulamadan çıkmak istiyor musunuz?"; sesli odada/canlı yayında çıkış onayı (yayıncı Evet → yayın kapanır)
+- **Giriş ekranı:** arka plan 1080×1920 kaynaktan yeniden üretildi (kenar şeridi yok), BoxFit.cover, klavyede ölçeklenmez
+- **Bildirimler:** WhatsApp tarzı mesaj bildirimi (MessagingStyle, "Yanıtla"), POST_NOTIFICATIONS isteği, kanal bazlı ayarlar (Mesajlar / Canlı yayın başlatanlar / Günlük fal önerisi / Diğer), yerel bildirimler uygulama içi listede
+- **Gelen kutusu:** gönderilen mesajın 3–5 sn sonra kaybolması giderildi (kimliğe göre birleştirme); uzun sohbetlerde yeni mesajlar; sohbet tarihi/sıralama, okunmamış sayacı, gizlenen sohbetin geri gelmesi
+- Backend değişmedi (backend notları PR açıklamasında)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
