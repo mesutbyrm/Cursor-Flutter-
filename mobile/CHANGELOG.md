@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.690+743 (2026-10-02) — Hediye animasyonu
+
+- **Hediye akışı:** sol tarafta pill satırlar — avatar, «Ad / Aslan gönderdi», hediye ikonu, büyük «xN» (artınca pop animasyonu); aynı kişi + aynı hediye tek satırda birleşir; en fazla 3 satır
+- **Ekran ortası:** hediye animasyonunun arkasında parlama (glow), scale + fade giriş, bitmeden fade-out, hafif titreşim; sıra/kuyruk mevcut hediye motoruyla (üst üste binmez)
+
 ## 1.0.689+742 (2026-10-02) — Tekli yayın düzeni
 
 - **Üst bar:** yayıncı adı + «1.2M beğeni», pembe «Takip et», «12.4K» izleyici (K biçimi), X; altında cam çipler: Saatlik Sıralama · Popüler · Keşfet >
