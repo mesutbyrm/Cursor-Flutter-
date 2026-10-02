@@ -2565,26 +2565,28 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   }
 
   Future<void> _endActivePk(String streamId) async {
-    final battleId = ref.read(liveVideoPkProvider(streamId)).battle?['id']?.toString() ??
-        ref.read(pkBattleRemoteProvider)?.effectiveId ??
-        '';
-    try {
-      if (battleId.isNotEmpty) {
-        await ref.read(pkBattleRemoteProvider.notifier).end(
-              battleId,
-              streamId: streamId,
-            );
-      }
-      await ref.read(liveVideoPkProvider(streamId).notifier).end();
-    } catch (_) {
-      try {
-        await ref.read(liveVideoPkProvider(streamId).notifier).end();
-      } catch (_) {}
+    final battleId =
+        ref.read(liveVideoPkProvider(streamId)).battle?['id']?.toString() ??
+            ref.read(pkBattleRemoteProvider)?.effectiveId ??
+            '';
+    // Ekran anında tekli yayına döner; sunucu bitirme çağrısı arkada sürer.
+    final ok =
+        await ref.read(liveVideoPkProvider(streamId).notifier).endAndExit();
+    if (battleId.isNotEmpty) {
+      unawaited(
+        ref
+            .read(pkBattleRemoteProvider.notifier)
+            .end(battleId, streamId: streamId)
+            .catchError((_) {}),
+      );
     }
-    ref.read(liveVideoPkProvider(streamId).notifier).forceExitPk();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('PK sona erdi')),
+        SnackBar(
+          content: Text(
+            ok ? 'PK sona erdi' : 'PK kapatıldı (sunucu yanıtı gecikti)',
+          ),
+        ),
       );
     }
   }

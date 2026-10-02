@@ -68,6 +68,8 @@ class LiveVideoPkState {
   }
 }
 
+int pkScoreInt(Object? v) => v is num ? v.toInt() : int.tryParse('$v') ?? 0;
+
 class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, String> {
   Timer? _poll;
   Timer? _endedCleanup;
@@ -76,6 +78,27 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
   final _eventDedup = LivePkEventDedup();
   var _refreshInFlight = false;
   DateTime? _lastRemoteBattleIngestAt;
+
+  /// Kapatılan (çıkış yapılan / bitmiş) battle kimlikleri — gecikmeli SSE/REST
+  /// yanıtı ekranı yeniden PK'ya döndürmesin.
+  final _closedBattleIds = <String>{};
+
+  static String _battleIdOf(Map<String, dynamic>? b) =>
+      (b?['id'] ?? b?['battleId'] ?? b?['pkBattleId'] ?? '').toString().trim();
+
+  bool _isClosed(Map<String, dynamic>? b) {
+    final id = _battleIdOf(b);
+    return id.isNotEmpty && _closedBattleIds.contains(id);
+  }
+
+  void _markClosed(String? id) {
+    final v = id?.trim() ?? '';
+    if (v.isEmpty) return;
+    _closedBattleIds.add(v);
+    if (_closedBattleIds.length > 32) {
+      _closedBattleIds.remove(_closedBattleIds.first);
+    }
+  }
 
   bool _shouldRetainBattleOnEmptyRefresh() {
     return shouldRetainPkBattleOnEmptyRefresh(
@@ -150,8 +173,15 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
       final api = ref.read(pkBattleRemoteDataSourceProvider);
       final remote = await api.fetchStreamBattle(arg);
       if (remote != null) {
+        final fresh = pkBattleRemoteToBattleMap(remote, myStreamId: arg);
+        if (_isClosed(fresh) ||
+            (state.battle == null &&
+                livePkBattleFinished(status: remote.status, battle: fresh))) {
+          _stopPolling();
+          return;
+        }
         final map = _mergeBattleMap(
-          pkBattleRemoteToBattleMap(remote, myStreamId: arg),
+          fresh,
           previous: state.battle,
         );
         final finished = remote.isEnded ||
@@ -286,6 +316,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
   }
 
   void applyRemoteBattle(Map<String, dynamic> battle) {
+    if (_isClosed(battle)) return;
     if (!_eventDedup.shouldProcess(battle)) {
       return;
     }
@@ -346,6 +377,8 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
   /// Koşulsuz çıkış — PK bittiğinde host "PK'yi Kapat"a basınca split ekranı
   /// her durumda temizlenir ve normal yayına dönülür (takılı kalmaya son).
   void forceExitPk() {
+    _markClosed(_battleIdOf(state.battle));
+    _markClosed(state.unifiedMatchId);
     _stopPolling();
     _endedCleanup?.cancel();
     _eventDedup.clear();
@@ -366,12 +399,54 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
         currentId != expectedBattleId.trim()) {
       return;
     }
+    _markClosed(currentId);
     _endedCleanup?.cancel();
     _eventDedup.clear();
     _lastIngestFingerprint = null;
     ref.read(livePkScoreBurstProvider(arg).notifier).reset();
     state = state.copyWith(clearBattle: true, clearUnifiedMatchId: true);
     ref.read(livePkHomeTransitionProvider.notifier).reset();
+  }
+
+  /// "PK bitir": ekran HEMEN tekli yayına döner; sunucu çağrısı arka planda
+  /// yapılır (ağ gecikmesi kullanıcıyı PK ekranında bekletmez).
+  /// Dönen değer: sunucu bitirmeyi kabul etti mi (zaten bitmiş = true).
+  Future<bool> endAndExit() async {
+    final battleId = state.unifiedMatchId ?? _battleIdOf(state.battle);
+    forceExitPk();
+    if (battleId.isEmpty) return true;
+    try {
+      final api = ref.read(pkBattleRemoteDataSourceProvider);
+      await api.streamPkAction(
+        streamId: arg,
+        action: 'end',
+        battleId: battleId,
+      );
+      api.invalidatePkPollCaches();
+      return true;
+    } catch (e) {
+      return pkActionErrorMeansAlreadySettled(e);
+    }
+  }
+
+  /// Skor bildirimi (hediye/destek yanıtı) — mutlak değerler, yalnız artar.
+  void applyScoreSnapshot({required int score1, required int score2}) {
+    final b = state.battle;
+    if (b == null || livePkBattleFinished(status: state.status, battle: b)) {
+      return;
+    }
+    final cur1 = pkScoreInt(b['score1'] ?? b['leftScore']);
+    final cur2 = pkScoreInt(b['score2'] ?? b['rightScore']);
+    if (score1 < cur1 && score2 < cur2) return;
+    final next = Map<String, dynamic>.from(b)
+      ..['score1'] = score1 > cur1 ? score1 : cur1
+      ..['score2'] = score2 > cur2 ? score2 : cur2
+      ..['leftScore'] = score1 > cur1 ? score1 : cur1
+      ..['rightScore'] = score2 > cur2 ? score2 : cur2
+      ..['challengerScore'] = score1 > cur1 ? score1 : cur1
+      ..['opponentScore'] = score2 > cur2 ? score2 : cur2;
+    _lastRemoteBattleIngestAt = DateTime.now();
+    state = state.copyWith(battle: next);
   }
 
   Future<void> create({String? opponentStreamId, String? targetStreamId}) async {

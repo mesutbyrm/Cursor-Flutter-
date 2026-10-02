@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.682+735 (2026-10-02) — Canlı yayın PK: sohbet, anında çıkış, anlık skor
+
+- **PK sohbeti:** canlı yayın PK ekranında sohbet akışı artık görünür (sol alt, şeffaf); kullanıcı mesajları ("pk" geçse bile) filtrelenmez
+- **PK bitir:** ekran anında tekli yayına döner (sunucu çağrısı arka planda); bitmiş/kapatılmış PK gecikmeli yanıtla yeniden açılmaz
+- **Skor:** beğeni/destek PK puanı yazar (sunucu `+3`), iki tarafa anında SSE; yayın SSE gecikmesi 1 sn → 250 ms; skor çubuğu animasyonlu
+
 ## 1.0.681+734 (2026-10-02) — VIP şifre kapısı zorunlu, PK düzeltmeleri, temizlik
 
 - **VIP şifreli oda:** kapı tüm giriş yollarında zorunlu (router'daki doğrudan `push` dahil); oda içeriği şifre geçilmeden oluşturulmuyor; sunucu da mesaj/SSE/durum/koltuk/TRTC uçlarında şifresiz erişimi reddediyor; "Oda Sahibine Bildir" → sahip popup'ı (kimin istediği görünür) → kabul/ret; ret sonrası düğme pasif

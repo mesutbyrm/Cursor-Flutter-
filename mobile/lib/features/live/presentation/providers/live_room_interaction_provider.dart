@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'live_video_pk_provider.dart';
 
 import '../../../profile/presentation/providers/profile_providers.dart';
 import 'live_providers.dart';
@@ -170,7 +171,13 @@ class LiveRoomInteractionNotifier
     try {
       final total = await ref
           .read(liveStreamExtrasProvider)
-          .sendLike(streamId, count: likes);
+          .sendLike(
+            streamId,
+            count: likes,
+            onPkScore: (s1, s2) => ref
+                .read(liveVideoPkProvider(streamId).notifier)
+                .applyScoreSnapshot(score1: s1, score2: s2),
+          );
       if (total > state.likeCount) {
         state = state.copyWith(likeCount: total);
       }
