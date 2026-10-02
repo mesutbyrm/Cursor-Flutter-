@@ -508,6 +508,10 @@ abstract final class ApiEndpoints {
   /// Geriye dönük alias (`pk-battle` üretimde 404).
   static String chatRoomPkBattle(String roomId) => chatRoomPk(roomId);
 
+  /// "Destekle": bulunulan odanın tarafına +3 puan (sunucu iki odaya anlık yayınlar).
+  static String chatRoomPkSupport(String roomId) =>
+      '${chatRoomPk(roomId)}/support';
+
   /// Oda PK listesi — `GET ?status=pending,active`.
   static const chatRoomPkList = '/api/chat/rooms/pk-list';
 

@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.681+734 (2026-10-02) — VIP şifre kapısı zorunlu, PK düzeltmeleri, temizlik
+
+- **VIP şifreli oda:** kapı tüm giriş yollarında zorunlu (router'daki doğrudan `push` dahil); oda içeriği şifre geçilmeden oluşturulmuyor; sunucu da mesaj/SSE/durum/koltuk/TRTC uçlarında şifresiz erişimi reddediyor; "Oda Sahibine Bildir" → sahip popup'ı (kimin istediği görünür) → kabul/ret; ret sonrası düğme pasif
+- **Sesli oda PK:** sohbet varsayılan açık (yazılanlar görünür); "Destekle" sunucuda bulunduğun odanın tarafına +3 yazar ve iki odada anında görünür; koltuktakiler PK sırasında mikrofonu açıp kapatır; "karşı tarafın sesini kapat"; oda sahipleri arası ses köprüsü (TRTC)
+- **Kullanıcı satırları:** seviye ve gerçek çevrimiçi durumu; **canlı yayın:** gerçek "çıkar" (yasaklamadan)
+- **Temizlik:** hiçbir yerde kullanılmayan 63 dosya silindi (yinelenen `lib/services/models` dahil)
+
 ## 1.0.680+733 (2026-10-02) — VIP şifreli oda, oda ayarları kartları, GirLive Bot
 
 - **VIP şifreli oda:** şifre yalnızca VIP odalarda; doğrulama sunucuda (3 deneme hakkı, kilit), gerçek şifre istemcide tutulmaz (imzalı erişim jetonu); "Oda Sahibinden İzin İste" (kullanıcı başına 1 kez) + oda sahibine Evet/Hayır popup'ı; eski, sunucuda karşılığı olmayan `request_password` akışı kaldırıldı

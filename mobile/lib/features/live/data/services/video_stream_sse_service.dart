@@ -57,6 +57,7 @@ class VideoStreamSseService {
   void Function(LiveStreamChatMessage message)? _onMessage;
   void Function(Map<String, dynamic> payload)? _onGift;
   VoidCallback? _onStreamEnded;
+  void Function(String userId)? _onViewerKicked;
   void Function(Map<String, dynamic> battle)? _onPkBattle;
 
   void Function(int likeCount)? _onLike;
@@ -89,6 +90,7 @@ class VideoStreamSseService {
     void Function(LiveStreamChatMessage message)? onMessage,
     void Function(Map<String, dynamic> payload)? onGift,
     VoidCallback? onStreamEnded,
+    void Function(String userId)? onViewerKicked,
     void Function(Map<String, dynamic> battle)? onPkBattle,
     void Function(PsychicRequestEntity request)? onFortuneRequest,
     void Function(Map<String, dynamic> request)? onStreamFortuneRequest,
@@ -111,6 +113,7 @@ class VideoStreamSseService {
     _onMessage = onMessage;
     _onGift = onGift;
     _onStreamEnded = onStreamEnded;
+    _onViewerKicked = onViewerKicked;
     _onPkBattle = onPkBattle;
     _onFortuneRequest = onFortuneRequest;
     _onStreamFortuneRequest = onStreamFortuneRequest;
@@ -309,6 +312,10 @@ class VideoStreamSseService {
       case 'gift_finished':
       case 'giftsentevent':
         _onGift?.call(GiftPayloadUtil.unwrap(map));
+        return;
+      case 'viewerKicked':
+        final kickedId = map['userId']?.toString() ?? '';
+        if (kickedId.isNotEmpty) _onViewerKicked?.call(kickedId);
         return;
       case 'streamEnded':
         _onStreamEnded?.call();

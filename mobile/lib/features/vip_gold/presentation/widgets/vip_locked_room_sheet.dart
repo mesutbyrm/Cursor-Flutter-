@@ -190,7 +190,7 @@ class _VipLockedRoomSheetState extends ConsumerState<VipLockedRoomSheet> {
           setState(() {
             _requestState = JoinRequestState.rejected;
             _info = null;
-            _error = 'Oda sahibi giriş isteğinizi reddetti.';
+            _error = 'Oda sahibi giriş isteğinizi kabul etmedi.';
           });
         }
       } catch (_) {
@@ -258,7 +258,7 @@ class _VipLockedRoomSheetState extends ConsumerState<VipLockedRoomSheet> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Bu oda şifrelidir.\nOdaya girmek için oda şifresini girin.',
+                  'Bu oda şifrelidir.\nŞifreyi giriniz.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: muted),
                 ),
@@ -351,10 +351,10 @@ class _VipLockedRoomSheetState extends ConsumerState<VipLockedRoomSheet> {
                     icon: const Text('🔑'),
                     label: Text(
                       switch (_requestState) {
-                        null => 'Oda Sahibinden İzin İste',
+                        null => 'Oda Sahibine Bildir',
                         JoinRequestState.pending => 'İstek gönderildi — yanıt bekleniyor',
                         JoinRequestState.accepted => 'İzin verildi',
-                        JoinRequestState.rejected => 'İstek reddedildi',
+                        JoinRequestState.rejected => 'Oda sahibi kabul etmedi',
                       },
                       style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
