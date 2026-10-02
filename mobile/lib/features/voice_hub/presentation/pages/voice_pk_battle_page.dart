@@ -229,7 +229,6 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
     );
     final canControlPk =
         perms.isRoomOwner || perms.canModerate || perms.isSiteAdmin;
-    final isPaused = remote?.status == 'paused';
 
     ref.listen<PkBattleState>(pkBattleProvider, (prev, next) {
       _openResultPageIfNeeded(pk: next, remote: remote);
@@ -416,53 +415,6 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                     padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
                     child: Row(
                       children: [
-                        if (remote != null &&
-                            (remote.isActive || remote.status == 'paused'))
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () async {
-                                final battleId = remote.effectiveId;
-                                if (battleId.isEmpty) return;
-                                final r = widget.room;
-                                final roomKey = r.apiRoomKey.isNotEmpty
-                                    ? r.apiRoomKey
-                                    : r.id;
-                                final notifier =
-                                    ref.read(pkBattleRemoteProvider.notifier);
-                                if (isPaused) {
-                                  await notifier.resume(
-                                    battleId,
-                                    roomId: roomKey,
-                                    alternateRoomId:
-                                        r.slug != roomKey ? r.slug : null,
-                                  );
-                                } else {
-                                  await notifier.pause(
-                                    battleId,
-                                    roomId: roomKey,
-                                    alternateRoomId:
-                                        r.slug != roomKey ? r.slug : null,
-                                  );
-                                }
-                              },
-                              icon: Icon(
-                                isPaused
-                                    ? Icons.play_arrow_rounded
-                                    : Icons.pause_rounded,
-                                size: 18,
-                              ),
-                              label: Text(isPaused ? 'Devam' : 'Duraklat'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.white,
-                                side: BorderSide(
-                                  color: Colors.white.withValues(alpha: 0.45),
-                                ),
-                              ),
-                            ),
-                          ),
-                        if (remote != null &&
-                            (remote.isActive || remote.status == 'paused'))
-                          const SizedBox(width: 8),
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: () async {
