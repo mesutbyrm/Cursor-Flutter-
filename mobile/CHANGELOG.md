@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.704+757 (2026-10-03) — Reklam ödülü sunucu doğrulamalı (AdMob SSV) ile uyumlu
+
+- **Reklam ödülü:** reklam bitince istemci önce ~6 sn bakiyeyi yoklar; AdMob SSV (`/api/ads/ssv/admob`) ödülü sunucuda verdiyse bakiye artar ve istemci **ek ödül çağrısı yapmaz** (çifte ödül yok). SSV ödülü gelmezse (bayrak kapalı/gecikme) eski `/api/user/watch-ad` yedeğine düşer — SSV bayrağı açılınca istemci çağrısı kendiliğinden devre dışı kalır
+
 ## 1.0.703+756 (2026-10-03) — Canlı yayın: kapatma, PK görüntüsü, hediye, beğeni, misafir; ana sayfada Ajans
 
 - **Ana sayfa:** Keşfet · Sesli Oda · Tanış & Kaynaş · Gold yanına **Ajans** kutusu (5 kompakt kutu, metin küçülür/sığar). Onaylı ajansı olan «Ajansım» (`/ajans/dashboard`), olmayan «Ajans Ol» görür → yeni başvuru ekranı (`POST /api/agency/apply`, admin onayına düşer)
