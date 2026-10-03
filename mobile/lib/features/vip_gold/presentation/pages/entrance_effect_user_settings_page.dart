@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/widgets/discover_tab_layout.dart';
+import '../../../../core/widgets/settings_kit.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../domain/entrance_visual_style.dart';
 import '../providers/entrance_effect_settings_provider.dart';
@@ -81,74 +82,95 @@ class _EntranceEffectUserSettingsPageState
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
                     children: [
-                      Text(
-                        'Profilde seçtiğiniz takımın renkleri ve amblemi '
-                        'odaya veya yayına girişte üstten kayar.',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withValues(alpha: 0.7),
+                      SettingsHeroCard(
+                        title: 'Giriş efektim',
+                        subtitle:
+                            'Takımın renkleri ve amblemi odaya girişte üstten kayar',
+                        leading: Icon(
+                          Icons.auto_awesome_rounded,
+                          size: 32,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      SegmentedButton<EntranceVisualStyle>(
-                        segments: const [
-                          ButtonSegment(
-                            value: EntranceVisualStyle.topTeamPass,
-                            label: Text('Üstten'),
-                            icon: Icon(Icons.vertical_align_top_rounded),
+                      const SettingsSectionHeader(
+                        'Görünüm',
+                        icon: Icons.brush_rounded,
+                      ),
+                      SettingsPanel(
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: SegmentedButton<EntranceVisualStyle>(
+                            segments: const [
+                              ButtonSegment(
+                                value: EntranceVisualStyle.topTeamPass,
+                                label: Text('Üstten'),
+                                icon: Icon(Icons.vertical_align_top_rounded),
+                              ),
+                              ButtonSegment(
+                                value: EntranceVisualStyle.centerFullscreen,
+                                label: Text('Tam ekran'),
+                                icon: Icon(Icons.fullscreen_rounded),
+                              ),
+                            ],
+                            selected: {settings.visualStyle},
+                            onSelectionChanged: (s) => notifier.update(
+                              settings.copyWith(visualStyle: s.first),
+                            ),
                           ),
-                          ButtonSegment(
-                            value: EntranceVisualStyle.centerFullscreen,
-                            label: Text('Tam ekran'),
-                            icon: Icon(Icons.fullscreen_rounded),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      SettingsTileGrid(
+                        children: [
+                          SettingsToggleTile(
+                            icon: Icons.shield_rounded,
+                            label: 'Takım renkleri ve amblem',
+                            subtitle:
+                                theme.teamName ?? 'Takım profilden okunur',
+                            value: settings.teamColorsEnabled,
+                            onChanged: (v) => notifier.update(
+                              settings.copyWith(teamColorsEnabled: v),
+                            ),
                           ),
                         ],
-                        selected: {settings.visualStyle},
-                        onSelectionChanged: (s) => notifier.update(
-                          settings.copyWith(visualStyle: s.first),
-                        ),
                       ),
-                      const SizedBox(height: 12),
-                      SwitchListTile(
-                        title: const Text('Takım renkleri ve amblem'),
-                        subtitle: Text(
-                          theme.teamName ?? 'Takım profilden okunur',
-                        ),
-                        value: settings.teamColorsEnabled,
-                        onChanged: (v) => notifier.update(
-                          settings.copyWith(teamColorsEnabled: v),
-                        ),
+                      const SettingsSectionHeader(
+                        'Animasyon',
+                        icon: Icons.speed_rounded,
                       ),
-                      _slider(
-                        label: 'Hız',
-                        value: settings.speed,
-                        min: 0.6,
-                        max: 2.0,
-                        display: '${settings.speed.toStringAsFixed(1)}×',
-                        onChanged: (v) =>
-                            notifier.update(settings.copyWith(speed: v)),
-                      ),
-                      _slider(
-                        label: 'Süre (ms)',
-                        value: settings.durationMs.toDouble(),
-                        min: 1400,
-                        max: 4200,
-                        display: '${settings.durationMs} ms',
-                        onChanged: (v) => notifier.update(
-                          settings.copyWith(durationMs: v.round()),
-                        ),
-                      ),
-                      _slider(
-                        label: 'Geçiş sayısı',
-                        value: settings.passCount.toDouble(),
-                        min: 1,
-                        max: 3,
-                        display: '${settings.passCount}',
-                        onChanged: (v) => notifier.update(
-                          settings.copyWith(passCount: v.round()),
+                      SettingsPanel(
+                        child: Column(
+                          children: [
+                            _slider(
+                              label: 'Hız',
+                              value: settings.speed,
+                              min: 0.6,
+                              max: 2.0,
+                              display: '${settings.speed.toStringAsFixed(1)}×',
+                              onChanged: (v) => notifier
+                                  .update(settings.copyWith(speed: v)),
+                            ),
+                            _slider(
+                              label: 'Süre (ms)',
+                              value: settings.durationMs.toDouble(),
+                              min: 1400,
+                              max: 4200,
+                              display: '${settings.durationMs} ms',
+                              onChanged: (v) => notifier.update(
+                                settings.copyWith(durationMs: v.round()),
+                              ),
+                            ),
+                            _slider(
+                              label: 'Geçiş sayısı',
+                              value: settings.passCount.toDouble(),
+                              min: 1,
+                              max: 3,
+                              display: '${settings.passCount}',
+                              onChanged: (v) => notifier.update(
+                                settings.copyWith(passCount: v.round()),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 16),
