@@ -301,6 +301,10 @@ class _SlotCell extends ConsumerWidget {
                             : Icons.videocam_rounded,
                         () => onAction!('cam'),
                       ),
+                      _miniBtn(
+                        Icons.person_remove_alt_1_rounded,
+                        () => onAction!('kick'),
+                      ),
                     ],
                   ),
                 ),

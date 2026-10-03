@@ -126,8 +126,7 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
     final shortest = size.shortestSide;
     // Tam ekran hediye (canlı yayın + sesli oda): ekranı doldurur; diğer
     // alanlar (center vb.) sınırlı boyutta kalır.
-    final isFullScreen =
-        config.displayArea == GiftEngineDisplayArea.fullScreen;
+    final isFullScreen = _wantsFullScreen(config);
     final giftSize = isFullScreen
         ? size.longestSide
         : math.min(
@@ -162,6 +161,24 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
     );
   }
 
+  /// Canlı yayında hareketli (lottie/svga/rive/video) hediyeler, katalogdaki
+  /// alan ne olursa olsun TAM EKRAN oynar; şeffaf katman olduğu için PK/misafir
+  /// sahnesi altında görünür kalır. Koltuk efektleri küçük kalır.
+  bool _wantsFullScreen(GiftEngineConfig config) {
+    if (config.displayArea == GiftEngineDisplayArea.fullScreen) return true;
+    if (widget.stage != GiftStageContext.liveStream) return false;
+    if (config.displayArea == GiftEngineDisplayArea.seat) return false;
+    return switch (config.animationType) {
+      GiftEngineAnimationType.lottie ||
+      GiftEngineAnimationType.svga ||
+      GiftEngineAnimationType.rive ||
+      GiftEngineAnimationType.mp4 ||
+      GiftEngineAnimationType.webm =>
+        true,
+      _ => false,
+    };
+  }
+
   /// "X → Y'ye hediye gönderdi" bandı — tüm (koltuk dışı) hediye alanlarında.
   Widget _positionedRecipientBanner(
     BuildContext context,
@@ -194,8 +211,7 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
     required double giftSize,
     int? seatIndex,
   }) {
-    final isFullScreen =
-        config.displayArea == GiftEngineDisplayArea.fullScreen;
+    final isFullScreen = _wantsFullScreen(config);
     final child = _GiftEngineAnimation(
       event: event,
       config: config,

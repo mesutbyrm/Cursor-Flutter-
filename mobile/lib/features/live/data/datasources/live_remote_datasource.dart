@@ -978,7 +978,9 @@ class LiveRemoteDataSource {
       );
       return;
     } on ApiException catch (e) {
-      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      // 401/403 yetki sorunudur; yedek uç da aynı yanıtı verir. Diğer hatalarda
+      // (404/405/5xx) yedek `/end` denenir.
+      if (e.statusCode == 401 || e.statusCode == 403) rethrow;
     } catch (_) {}
     // `/api/video-streams/{id}` DELETE desteklemez (GET/PATCH); yedek `/end`.
     await _dio.safePost<dynamic>(ApiEndpoints.videoStreamEnd(streamId));

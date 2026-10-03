@@ -84,6 +84,11 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
   var _resultFlashVisible = false;
   Timer? _uiClock;
 
+  /// TRTC cross-room köprüsü: PK aktifken challenger host karşı yayının odasını
+  /// arar; böylece iki yayının izleyicileri ve iki host karşı tarafın VİDEOSUNU
+  /// da görür (yalnız playbackUrl'e güvenilmez).
+  String? _bridgedBattleId;
+
   @override
   void initState() {
     super.initState();
@@ -105,7 +110,66 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
   void dispose() {
     _uiClock?.cancel();
     _outcomeFx.dispose();
+    _disconnectBridge();
     super.dispose();
+  }
+
+  void _disconnectBridge() {
+    if (_bridgedBattleId == null) return;
+    _bridgedBattleId = null;
+    try {
+      widget.trtc.disconnectOtherRoom();
+    } catch (_) {}
+  }
+
+  /// `voice_room_<id>` kuralını (backend `voiceTrtcRoomId`) kendi odamızdan
+  /// türeterek karşı yayının TRTC oda kimliğini üretir.
+  String _opponentStrRoomId(String myStreamId, String opponentStreamId) {
+    final mine = widget.trtc.joinedStrRoomId?.trim() ?? '';
+    if (mine.isNotEmpty &&
+        mine.length > myStreamId.length &&
+        mine.endsWith(myStreamId)) {
+      return '${mine.substring(0, mine.length - myStreamId.length)}'
+          '$opponentStreamId';
+    }
+    return 'voice_room_$opponentStreamId';
+  }
+
+  void _syncCrossRoomBridge({
+    required String battleId,
+    required bool active,
+    required LivePkSplitLayout layout,
+    required bool? iAmChallenger,
+    required String? myUserId,
+  }) {
+    if (!widget.session.isHost) return;
+    if (!active || battleId.isEmpty) {
+      if (_bridgedBattleId != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _disconnectBridge();
+        });
+      }
+      return;
+    }
+    if (_bridgedBattleId == battleId || !widget.rtcReady) return;
+    final opp = layout.left.isLocalPane ? layout.right : layout.left;
+    final oppStream = opp.streamId?.trim() ?? '';
+    final oppUser = opp.userId?.trim() ?? '';
+    if (oppStream.isEmpty || oppUser.isEmpty) return;
+    // İki taraf birden aramasın: challenger arar; bilinmiyorsa kimlik sırası.
+    final iCall = iAmChallenger ??
+        ((myUserId ?? '').isNotEmpty && (myUserId ?? '').compareTo(oppUser) < 0);
+    _bridgedBattleId = battleId;
+    if (!iCall) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _bridgedBattleId != battleId) return;
+      try {
+        widget.trtc.connectOtherRoom(
+          strRoomId: _opponentStrRoomId(widget.streamId, oppStream),
+          userId: oppUser,
+        );
+      } catch (_) {}
+    });
   }
 
   void _onPkEndedTransition(String? battleId) {
@@ -187,6 +251,16 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
       iAmChallengerOverride: latchBattleId.isNotEmpty
           ? _iAmChallengerLatch[latchBattleId]
           : confidentChallenger,
+    );
+
+    _syncCrossRoomBridge(
+      battleId: latchBattleId,
+      active: pkActive && !ended,
+      layout: layout,
+      iAmChallenger: latchBattleId.isNotEmpty
+          ? _iAmChallengerLatch[latchBattleId]
+          : confidentChallenger,
+      myUserId: myUserId ?? session.hostUserId,
     );
 
     final opponentMuted = ref.watch(livePkOpponentMutedProvider(streamId));

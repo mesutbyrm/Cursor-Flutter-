@@ -66,6 +66,8 @@ class LiveBroadcastRoomChromeColumn extends ConsumerWidget {
     this.onShare,
     this.onSettings,
     this.multiLayoutActive = false,
+    this.guestLabel = 'Misafir',
+    this.guestIcon = Icons.person_add_alt_1_rounded,
     this.suppressBottomChrome = false,
     this.suppressChatColumn = false,
     this.suppressTopChrome = false,
@@ -124,6 +126,8 @@ class LiveBroadcastRoomChromeColumn extends ConsumerWidget {
   final VoidCallback? onShare;
   final VoidCallback? onSettings;
   final bool multiLayoutActive;
+  final String guestLabel;
+  final IconData guestIcon;
   final bool suppressBottomChrome;
   final bool suppressChatColumn;
   final bool suppressTopChrome;
@@ -245,6 +249,8 @@ class LiveBroadcastRoomChromeColumn extends ConsumerWidget {
                   onShare: onShare,
                   onSettings: onSettings,
                   multiLayoutActive: multiLayoutActive,
+                  guestLabel: guestLabel,
+                  guestIcon: guestIcon,
                   showPkHostControls: s.isHost && pkActive,
                   opponentMuted: opponentMuted,
                   onEndPk: onEndPk,

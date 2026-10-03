@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import '../../domain/pk/live_pk_local_score.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/auth/bot_account_guard.dart';
@@ -226,8 +228,29 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
     }
   }
 
-  /// PK skorları yalnız sunucu yanıtı / SSE ile güncellenir (çift sayım önleme).
-  void applyLocalScoreDelta({required String side, required int amount}) {}
+  /// İzleyici/yayıncı beğenisi sonrası skoru ANINDA yerelde artırır (iyimser).
+  ///
+  /// [side]: `'left'` (challenger / score1) veya `'right'` (rakip / score2).
+  /// Sunucu yanıtı / SSE mutlak değer getirince [applyScoreSnapshot] yalnız
+  /// artırır, [applyRemoteBattle] ise sunucu değerini esas alır; böylece iyimser
+  /// artış çift sayıma yol açmaz.
+  void applyLocalScoreDelta({required String side, required int amount}) {
+    final b = state.battle;
+    if (b == null || amount <= 0) return;
+    if (!isLivePkActiveStatus(state.status) ||
+        livePkBattleFinished(status: state.status, battle: b)) {
+      return;
+    }
+    state = state.copyWith(
+      battle: battleWithLocalScore(b, side: side, amount: amount),
+    );
+  }
+
+  /// Bu yayının PK'daki tarafı: challenger (host) yayını `left`, aksi `right`.
+  String mySideInBattle() {
+    final b = state.battle;
+    return b == null ? 'left' : pkSideForStream(b, arg);
+  }
 
   /// Hediye / beğeni sonrası — yakın SSE ingest varsa REST yoklamayı atla.
   Future<void> refreshScoresIfStale({

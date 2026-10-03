@@ -216,6 +216,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   final Set<String> _seenGuestJoinIds = {};
   final Set<String> _seenVipEntrances = {};
   var _coHostUpgraded = false;
+  DateTime? _leavingSince;
   var _guestLayoutCollapsed = false;
   var _pkTwoWayRtc = false;
   var _joinRequestPending = false;
@@ -1060,7 +1061,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     BuildContext context, {
     bool skipHostConfirm = false,
   }) async {
-    if (_leaving) return;
+    // Takılı kalmış bir çıkış denemesi (ör. TRTC temizliği asılı) kullanıcıyı
+    // sonsuza dek kilitlemesin: 6 sn'den eski `_leaving` yok sayılır.
+    final stale = _leavingSince != null &&
+        DateTime.now().difference(_leavingSince!) > const Duration(seconds: 6);
+    if (_leaving && !stale) return;
     // Geri tuşu / çıkış: yayıncı VE izleyici için onay. skipHostConfirm yalnızca
     // programatik çıkışlarda (bot zamanlayıcı, uygulama kapanışı) true gelir.
     if (!skipHostConfirm) {
@@ -1072,7 +1077,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     }
     _streamEndUiHandled = true;
     _leaving = true;
-    ref.read(liveGiftControllerProvider).detach();
+    _leavingSince = DateTime.now();
+    try {
+      ref.read(liveGiftControllerProvider).detach();
+    } catch (_) {}
     final streamId = widget.session.streamId?.trim() ?? '';
     final user = ref.read(authControllerProvider).valueOrNull;
 
@@ -1096,12 +1104,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 content: 'Yayıncı yayını kapattı.',
               ),
         );
-        unawaited(
-          ref.read(liveRepositoryProvider).endVideoStream(streamId).then(
-            (_) => HostLiveStreamRecovery.clear(),
-            onError: (_) => HostLiveStreamRecovery.clear(),
-          ),
-        );
+        // Sunucuda yayını bitir: başarısızsa kısa aralıklarla 3 kez dene; yayın
+        // sunucuda açık kalırsa kurtarma kaydı silinmez (uygulama yeniden
+        // açıldığında «Sonlandır» sorulur).
+        unawaited(_endStreamOnServerWithRetry(streamId));
         ref.read(liveRoomProvider(streamId).notifier).markStreamEnded();
         await _leaveLiveSession(endReason: 'host_exit');
       } else {
@@ -1145,6 +1151,19 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       }
     } finally {
       _leaving = false;
+    }
+  }
+
+  Future<void> _endStreamOnServerWithRetry(String streamId) async {
+    final repo = ref.read(liveRepositoryProvider);
+    for (var attempt = 0; attempt < 3; attempt++) {
+      try {
+        await repo.endVideoStream(streamId);
+        await HostLiveStreamRecovery.clear();
+        return;
+      } catch (_) {
+        await Future<void>.delayed(Duration(seconds: 1 + attempt));
+      }
     }
   }
 
@@ -2102,13 +2121,20 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final userId = ref.read(authControllerProvider).valueOrNull?.id.trim() ?? '';
     if (userId.isEmpty) return;
     const points = 3;
-    if (!_pkLikeBudget.canAward(battleId, userId, points)) return;
+    // Beğeni sayısı (üstte profilde) her dokunuşta anında artar; PK puanı ise
+    // sunucudaki dakika bütçesiyle aynı kuralla yazılır.
     ref.read(liveRoomInteractionProvider(streamId).notifier).burstHearts(
           likes: 1,
           userId: userId,
         );
+    if (!_pkLikeBudget.canAward(battleId, userId, points)) return;
     _pkLikeBudget.record(battleId, userId, points);
-    // PK puanı yalnız sunucudan (beğeni API + battle refresh / SSE).
+    // Puan ekranda ANINDA artar (iyimser); sunucu yanıtı/SSE esas alınır.
+    final pkNotifier = ref.read(liveVideoPkProvider(streamId).notifier);
+    pkNotifier.applyLocalScoreDelta(
+      side: pkNotifier.mySideInBattle(),
+      amount: points,
+    );
     unawaited(
       ref.read(liveVideoPkProvider(streamId).notifier).refreshScoresIfStale(),
     );
@@ -2200,6 +2226,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   void _onGuestAction(int slotIndex, String action) {
     final grid = ref.read(liveGuestGridProvider.notifier);
     switch (action) {
+      case 'kick':
+        final slots = ref.read(liveGuestGridProvider).slots;
+        if (slotIndex < slots.length) {
+          final uid = slots[slotIndex].userId ?? slots[slotIndex].rtcUserId;
+          if (uid != null && uid.isNotEmpty) unawaited(_removeGuest(uid));
+        }
       case 'pin':
         grid.togglePin(slotIndex);
       case 'mute':
@@ -2496,10 +2528,131 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   /// Alt çubuk «Misafir»: yayıncıda davet sheet'i, izleyicide misafirlik isteği.
   void _onGuestButton() {
     if (widget.session.isHost) {
-      _openGuestInviteSheet();
+      if (_activeCoGuestCount() > 0) {
+        _openGuestManageSheet();
+      } else {
+        _openGuestInviteSheet();
+      }
+    } else if (_coHostUpgraded) {
+      unawaited(_leaveAsGuest());
     } else {
       _onViewerGuestRequest();
     }
+  }
+
+  /// Misafir kendi isteğiyle misafirlikten düşer; uygulamadan çıkmak gerekmez.
+  Future<void> _leaveAsGuest() async {
+    final streamId = widget.session.streamId?.trim() ?? '';
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (streamId.isEmpty || user == null || !_coHostUpgraded) return;
+    try {
+      await ref.read(coBroadcastProvider.notifier).leave(streamId);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
+        );
+      }
+    }
+    await _downgradeFromCoHost(streamId, user);
+    _collapseGuestLayout();
+    unawaited(ref.read(coBroadcastProvider.notifier).refreshStream(streamId));
+  }
+
+  /// Yayıncı — bir misafiri indirir; son misafir inince yayın tekliye döner.
+  Future<void> _removeGuest(String userId) async {
+    final streamId = widget.session.streamId?.trim() ?? '';
+    if (streamId.isEmpty || userId.isEmpty || !widget.session.isHost) return;
+    try {
+      await ref.read(coBroadcastProvider.notifier).removeGuest(streamId, userId);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
+        );
+      }
+      return;
+    }
+    final remaining = filterApprovedCoGuests(
+      ref.read(coBroadcastProvider).coBroadcasters,
+    ).where((g) => (g['userId'] ?? g['id'])?.toString() != userId);
+    if (remaining.isEmpty) _collapseGuestLayout();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Misafir indirildi')),
+      );
+    }
+  }
+
+  /// Yayıncı — aktif misafirleri listeler; «İndir» ile misafirlikten alır.
+  void _openGuestManageSheet() {
+    final guests =
+        filterApprovedCoGuests(ref.read(coBroadcastProvider).coBroadcasters);
+    unawaited(
+      showModalBottomSheet<void>(
+        context: context,
+        backgroundColor: const Color(0xFF1A1030),
+        showDragHandle: true,
+        builder: (ctx) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Misafirler',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                    ),
+                  ),
+                ),
+              ),
+              for (final g in guests)
+                ListTile(
+                  leading: const Icon(Icons.person_rounded, color: Colors.white70),
+                  title: Text(
+                    (g['displayName'] ?? g['userName'] ?? g['name'] ?? 'Misafir')
+                        .toString(),
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  trailing: FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFFC62828),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      unawaited(
+                        _removeGuest(
+                          (g['userId'] ?? g['id'])?.toString() ?? '',
+                        ),
+                      );
+                    },
+                    child: const Text('İndir'),
+                  ),
+                ),
+              if (_canAddCoGuest())
+                ListTile(
+                  leading: const Icon(Icons.person_add_alt_1_rounded,
+                      color: Colors.white70),
+                  title: const Text(
+                    'Misafir davet et',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _openGuestInviteSheet();
+                  },
+                ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _openBroadcastSettings() => unawaited(
@@ -3287,6 +3440,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               ),
               moreBadgeCount: moreBadgeCount,
               likeLabel: '${_fmtLikes(interaction.likeCount)} beğeni',
+              guestLabel: (!s.isHost && _coHostUpgraded)
+                  ? 'Düş'
+                  : 'Misafir',
+              guestIcon: (!s.isHost && _coHostUpgraded)
+                  ? Icons.call_end_rounded
+                  : Icons.person_add_alt_1_rounded,
               onGuest: hasStream &&
                       (s.isHost ||
                           ref.watch(liveBroadcastSettingsProvider).guestsEnabled ||

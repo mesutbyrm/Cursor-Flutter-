@@ -20,26 +20,15 @@ class LiveBroadcastRoomGiftOverlays extends ConsumerWidget {
   final String streamId;
   final dynamic activeGift;
 
-  /// PK split: animasyonlar skor şeridinin üstünü kapatmasın.
+  /// PK split: yalnızca hediye kuyruk paneli konumu etkilenir (animasyon tam ekran).
   final bool clipToVideoRegion;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(liveBroadcastSettingsProvider);
-    final h = MediaQuery.sizeOf(context).height;
-    final giftClipHeight = clipToVideoRegion ? h * 0.58 : h;
-    Widget giftStack({required Widget child}) {
-      if (!clipToVideoRegion) {
-        return Positioned.fill(child: child);
-      }
-      return Positioned(
-        top: 0,
-        left: 0,
-        right: 0,
-        height: giftClipHeight,
-        child: ClipRect(child: child),
-      );
-    }
+    // Hediye animasyonları PK'da da TAM EKRAN oynar (şeffaf katman; PK sahnesi
+    // altında görünür kalır). Yalnızca kuyruk paneli PK'da aşağı konumlanır.
+    Widget giftStack({required Widget child}) => Positioned.fill(child: child);
 
     return Stack(
       fit: StackFit.expand,
