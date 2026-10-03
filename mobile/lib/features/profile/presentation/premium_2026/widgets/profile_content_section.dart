@@ -1,4 +1,3 @@
-import 'package:canlifal_social/core/performance/animation_perf.dart';
 import 'package:canlifal_social/core/performance/list_perf.dart';
 import 'package:canlifal_social/core/widgets/lazy_list_views.dart';
 import 'package:flutter/material.dart';
@@ -36,152 +35,177 @@ class ProfileContentSection extends ConsumerStatefulWidget {
       _ProfileContentSectionState();
 }
 
-class _ProfileContentSectionState extends ConsumerState<ProfileContentSection>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabs;
-  late final TabIndexListenable _tabIndex;
+class _ProfileContentSectionState extends ConsumerState<ProfileContentSection> {
+  /// 0 Gönderiler · 1 Videolar · 2 Hikâyeler · 3 Fal Aktiviteleri
+  /// 4+ → ⋮ menüsündeki ek içerikler.
+  var _view = 0;
 
-  /// Ana 5 sekme dışındaki içerikler (Kaydedilen, Canlı Yayınlarım…).
-  /// -1 → ana sekme gösterilir.
-  int _extra = -1;
-
-  static const _extras = <String>[
-    'Kaydedilen',
-    'Canlı Yayınlarım',
-    'İzlediklerim',
-    'Favoriler',
-    'Taslaklar',
+  static const _more = <(int, String, IconData)>[
+    (4, 'Beğeniler', Icons.favorite_border_rounded),
+    (5, 'Kaydedilen', Icons.bookmark_border_rounded),
+    (6, 'Canlı Yayınlarım', Icons.sensors_rounded),
+    (7, 'İzlediklerim', Icons.visibility_outlined),
+    (8, 'Favoriler', Icons.star_border_rounded),
+    (9, 'Taslaklar', Icons.drafts_outlined),
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    _tabs = TabController(length: 5, vsync: this);
-    _tabIndex = TabIndexListenable(_tabs);
-    _tabs.addListener(() {
-      if (_tabs.indexIsChanging && _extra != -1) {
-        setState(() => _extra = -1);
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _tabIndex.dispose();
-    _tabs.dispose();
-    super.dispose();
-  }
-
-  Widget _extraBody() => switch (_extra) {
-        0 => _ShortsSavedTab(userId: widget.userId),
-        1 => _LiveStreamsTab(),
-        2 => _WatchedTab(),
-        3 => _FavoritesTab(),
-        _ => _DraftsTab(userId: widget.userId),
+  Widget _body() => switch (_view) {
+        1 => _VideosTab(userId: widget.userId),
+        2 => _StoriesTab(userId: widget.userId),
+        3 => _FortunesTab(),
+        4 => _ShortsLikedTab(userId: widget.userId),
+        5 => _ShortsSavedTab(userId: widget.userId),
+        6 => _LiveStreamsTab(),
+        7 => _WatchedTab(),
+        8 => _FavoritesTab(),
+        9 => _DraftsTab(userId: widget.userId),
+        _ => _PostsTab(userId: widget.userId),
       };
+
+  Future<void> _openMore() async {
+    final picked = await showModalBottomSheet<int>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (ctx) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            for (final m in _more)
+              ListTile(
+                leading: Icon(m.$3),
+                title: Text(m.$2),
+                selected: _view == m.$1,
+                onTap: () => Navigator.pop(ctx, m.$1),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (picked != null && mounted) setState(() => _view = picked);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final accent = ProfilePremiumTheme.accentOf(context);
     return ColoredBox(
-      color: Theme.of(context).scaffoldBackgroundColor,
+      color: Colors.transparent,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const ProfileSectionTitle(title: 'İçeriklerim'),
-          // Kaymayan, ekrana yayılan 5 sekme (küçük ekranlarda taşmaz).
-          TabBar(
-            controller: _tabs,
-            isScrollable: false,
-            labelPadding: EdgeInsets.zero,
-            labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 10.5),
-            unselectedLabelStyle:
-                const TextStyle(fontWeight: FontWeight.w600, fontSize: 10.5),
-            indicatorColor: _extra == -1 ? accent : Colors.transparent,
-            labelColor: ProfilePremiumTheme.textOf(context),
-            unselectedLabelColor: ProfilePremiumTheme.textMutedOf(context),
-            dividerColor: Colors.transparent,
-            tabs: const [
-              Tab(
-                height: 58,
-                icon: Icon(Icons.grid_on_rounded, size: 20),
-                child: _TabLabel('Gönderiler'),
+          Row(
+            children: [
+              _MockTab(
+                icon: Icons.grid_view_rounded,
+                label: 'Gönderiler',
+                selected: _view == 0,
+                onTap: () => setState(() => _view = 0),
               ),
-              Tab(
-                height: 58,
-                icon: Icon(Icons.play_circle_outline_rounded, size: 21),
-                child: _TabLabel('Videolar'),
+              _MockTab(
+                icon: Icons.play_circle_outline_rounded,
+                label: 'Videolar',
+                selected: _view == 1,
+                onTap: () => setState(() => _view = 1),
               ),
-              Tab(
-                height: 58,
-                icon: Icon(Icons.auto_stories_rounded, size: 20),
-                child: _TabLabel('Hikâyeler'),
+              _MockTab(
+                icon: Icons.add_box_outlined,
+                label: 'Hikâyeler',
+                selected: _view == 2,
+                onTap: () => setState(() => _view = 2),
               ),
-              Tab(
-                height: 58,
-                icon: Icon(Icons.favorite_border_rounded, size: 20),
-                child: _TabLabel('Beğeniler'),
+              _MockTab(
+                icon: Icons.person_outline_rounded,
+                label: 'Fal Aktiviteleri',
+                selected: _view == 3,
+                onTap: () => setState(() => _view = 3),
               ),
-              Tab(
-                height: 58,
-                icon: Icon(Icons.auto_awesome_rounded, size: 20),
-                child: _TabLabel('Fal Aktiviteleri'),
+              _MockTab(
+                icon: Icons.more_vert_rounded,
+                label: '',
+                selected: _view >= 4,
+                onTap: _openMore,
+                narrow: true,
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 36,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: _extras.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 8),
-              itemBuilder: (context, i) => ChoiceChip(
-                label: Text(_extras[i], style: const TextStyle(fontSize: 12)),
-                selected: _extra == i,
-                visualDensity: VisualDensity.compact,
-                onSelected: (v) => setState(() => _extra = v ? i : -1),
-              ),
-            ),
+          const SizedBox(height: 10),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: KeyedSubtree(key: ValueKey(_view), child: _body()),
           ),
-          const SizedBox(height: 12),
-          if (_extra != -1)
-            _extraBody()
-          else
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: ListenableBuilder(
-                key: ValueKey(_tabIndex.index),
-                listenable: _tabIndex,
-                builder: (context, _) {
-                  return switch (_tabIndex.index) {
-                    1 => _VideosTab(userId: widget.userId),
-                    2 => _StoriesTab(userId: widget.userId),
-                    3 => _ShortsLikedTab(userId: widget.userId),
-                    4 => _FortunesTab(),
-                    _ => _PostsTab(userId: widget.userId),
-                  };
-                },
-              ),
-            ),
         ],
       ),
     );
   }
 }
 
-class _TabLabel extends StatelessWidget {
-  const _TabLabel(this.text);
-  final String text;
+/// Mockup sekmesi: seçiliyken mor yuvarlatılmış kare içinde ikon.
+class _MockTab extends StatelessWidget {
+  const _MockTab({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.narrow = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final bool narrow;
 
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2),
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(text, maxLines: 1, softWrap: false),
+  Widget build(BuildContext context) {
+    const purple = Color(0xFF8B5CF6);
+    final muted = ProfilePremiumTheme.textMutedOf(context);
+    final child = InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 38,
+              height: 34,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: selected ? purple.withValues(alpha: 0.28) : null,
+                border: selected
+                    ? Border.all(color: purple.withValues(alpha: 0.7))
+                    : null,
+              ),
+              child: Icon(
+                icon,
+                size: 21,
+                color: selected ? Colors.white : muted,
+              ),
+            ),
+            const SizedBox(height: 3),
+            SizedBox(
+              height: 14,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                    color: selected
+                        ? ProfilePremiumTheme.textOf(context)
+                        : muted,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-      );
+      ),
+    );
+    return narrow ? SizedBox(width: 44, child: child) : Expanded(child: child);
+  }
 }
 
 /// Gönderiler — kullanıcının sosyal paylaşımları (3 kolon ızgara).

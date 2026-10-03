@@ -64,7 +64,7 @@ void main() {
     );
     expect(find.text('Banlı'), findsOneWidget);
     expect(find.text('VIP'), findsOneWidget);
-    expect(find.text('moderator'), findsOneWidget);
+    expect(find.text('Moderatör'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.tap(find.byType(PopupMenuButton<String>));
     await tester.pumpAndSettle();

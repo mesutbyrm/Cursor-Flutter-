@@ -4,12 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/motion/canlifal_motion_tokens.dart';
 import '../../../../core/motion/canlifal_motion_widgets.dart';
 import '../../../membership/presentation/widgets/membership_pending_payment_banner.dart';
-import '../../../admin/presentation/widgets/admin_profile_toolbar.dart';
+import 'admin_profile_header.dart';
 import '../premium_2026/profile_screen_state.dart';
 import 'profile_hub_error_banner.dart';
-import 'profile_hub_header.dart';
+import 'mock_profile_header.dart';
 import 'profile_hub_tabbed_sections.dart';
-import '../../../shorts/presentation/widgets/shorts_profile_content.dart';
+import '../../../social/presentation/providers/social_providers.dart';
+import '../premium_2026/profile_lazy_sections.dart';
 
 /// Referans profil hub — tek scroll: Header → Avatar/Cover → Stats → rol bölümleri → üyelik/cüzdan → ayarlar.
 ///
@@ -37,27 +38,36 @@ class ProfileHubLayout extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final postCount =
+        ref.watch(userSocialPostsProvider(userId)).valueOrNull?.length;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (showAdmin) AdminProfileToolbar(user: state.user),
-        CanlifalEntranceFadeSlide(
-          child: ProfileHubHeader(state: state, onRefresh: onRefresh),
-        ),
-        const SizedBox(height: 12),
-        const ProfileHubErrorBanner(),
-        const SizedBox(height: 4),
-        CanlifalEntranceFadeSlide(
-          delay: CanlifalMotionTokens.staggerIndex(1, stepMs: 50),
-          child: ShortsProfileStatsRow(
-            userId: userId,
-            fallbackFollowers: state.followers,
-            fallbackFollowing: state.following,
-            fallbackLikes: state.stats.likes,
+        if (showAdmin) ...[
+          CanlifalEntranceFadeSlide(
+            child: AdminProfileHeader(user: state.user),
           ),
-        ),
-        const SizedBox(height: 14),
-        const MembershipPendingPaymentBanner(),
+          const SizedBox(height: 8),
+          const ProfileHubErrorBanner(),
+          const MembershipPendingPaymentBanner(),
+        ] else ...[
+          CanlifalEntranceFadeSlide(
+            child: MockProfileHeader(
+              state: state,
+              postCount: postCount,
+              onRefresh: onRefresh,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const ProfileHubErrorBanner(),
+          const MembershipPendingPaymentBanner(),
+          const SizedBox(height: 10),
+          CanlifalEntranceFadeSlide(
+            delay: CanlifalMotionTokens.staggerIndex(1, stepMs: 50),
+            child: ProfileLazyContent(userId: userId),
+          ),
+        ],
+        const SizedBox(height: 18),
         ProfileHubTabbedSections(
           state: state,
           userId: userId,

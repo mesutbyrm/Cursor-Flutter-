@@ -3,14 +3,14 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/ui/premium_2026/premium_2026.dart';
-import '../../../../core/widgets/discover_tab_layout.dart';
+import '../../../../core/theme/app_theme_extensions.dart';
+import '../../../../core/widgets/mock_ui_kit.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../auth/presentation/widgets/auth_shell.dart';
@@ -56,6 +56,7 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
         _zodiacCtrl.text = ext.zodiacSign ?? '';
         _favoriteTeam = TeamCatalog.labelForKey(ext.favoriteTeam) ?? ext.favoriteTeam;
       }
+      setState(() {});
     });
   }
 
@@ -160,6 +161,119 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
     }
   }
 
+  Future<void> _editField({
+    required String label,
+    required TextEditingController controller,
+    int maxLines = 1,
+    int? maxLength,
+    IconData? icon,
+  }) async {
+    final edit = TextEditingController(text: controller.text);
+    final ok = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          0,
+          20,
+          MediaQuery.viewInsetsOf(ctx).bottom + 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextField(
+              controller: edit,
+              autofocus: true,
+              maxLines: maxLines,
+              maxLength: maxLength,
+              decoration: authInputDecoration(
+                labelText: label,
+                prefixIcon: icon ?? Icons.edit_rounded,
+              ),
+            ),
+            const SizedBox(height: 12),
+            AuthPrimaryButton(
+              label: 'Tamam',
+              onPressed: () => Navigator.pop(ctx, true),
+            ),
+          ],
+        ),
+      ),
+    );
+    final value = edit.text;
+    edit.dispose();
+    if (ok == true && mounted) setState(() => controller.text = value);
+  }
+
+  Widget _fieldRow({
+    required String label,
+    required TextEditingController controller,
+    int maxLines = 1,
+    int? maxLength,
+    IconData? icon,
+    String placeholder = 'Ekle',
+  }) {
+    final c = context.colors;
+    final value = controller.text.trim();
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: _saving
+            ? null
+            : () => _editField(
+                  label: label,
+                  controller: controller,
+                  maxLines: maxLines,
+                  maxLength: maxLength,
+                  icon: icon,
+                ),
+        child: Ink(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          decoration: BoxDecoration(
+            color: mockCardColor(context),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: mockCardBorder(context)),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(fontSize: 11, color: c.onSurfaceMuted),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      value.isEmpty ? placeholder : value,
+                      maxLines: maxLines == 1 ? 1 : 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: value.isEmpty ? c.onSurfaceMuted : c.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 22,
+                color: c.onSurfaceMuted,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final previewUrl = _localAvatarDataUrl ?? _avatarUrlCtrl.text.trim();
@@ -167,177 +281,151 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
     final membershipSectionTitle = buildMembershipProfileEditSectionTitle(
       info: membershipInfo,
     );
+    final c = context.colors;
+    const gap = SizedBox(height: 8);
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: PremiumScreenShell(
-        child: DiscoverSubPage(
-          title: 'Profili Düzenle',
-          subtitle: 'Fotoğraf, kullanıcı adı ve hakkında',
-          body: ListView(
-            physics: PremiumMotion.listPhysics,
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
-            children: [
-              LiquidGlassCard(
-                elevated: true,
-                child: Column(
-                  children: [
-                    Center(
-                      child: GestureDetector(
-                        onTap: _pickAvatar,
-                        child: Stack(
-                          children: [
-                            UserAvatar(
-                              url: previewUrl.isEmpty ? null : previewUrl,
-                              radius: 52,
-                            ),
-                            Positioned(
-                              right: 0,
-                              bottom: 0,
-                              child: CircleAvatar(
-                                radius: 18,
-                                backgroundColor: AppThemeColors.accentPink,
-                                child: const Icon(
-                                  Icons.camera_alt_rounded,
-                                  size: 18,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: _pickAvatar,
-                      child: Text(
-                        'Profil fotoğrafını değiştir',
-                        style: PremiumTypography.label(context),
-                      ),
-                    ),
-                  ],
+    return MockScaffold(
+      title: 'Profil Düzenle',
+      body: ListView(
+        physics: PremiumMotion.listPhysics,
+        padding: const EdgeInsetsDirectional.fromSTEB(14, 4, 14, 32),
+        children: [
+          Center(
+            child: GestureDetector(
+              onTap: _pickAvatar,
+              child: Container(
+                padding: const EdgeInsets.all(3),
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [Color(0xFFF59E0B), Color(0xFF8B5CF6)],
+                  ),
+                ),
+                child: UserAvatar(
+                  url: previewUrl.isEmpty ? null : previewUrl,
+                  radius: 38,
                 ),
               ),
-              const SizedBox(height: 16),
-              LiquidGlassCard(
-                child: Column(
-                  children: [
-                    TextField(
-                      controller: _avatarUrlCtrl,
-                      decoration: authInputDecoration(
-                        labelText: 'Profil fotoğrafı URL (isteğe bağlı)',
-                        prefixIcon: Icons.link_rounded,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _displayCtrl,
-                      decoration: authInputDecoration(
-                        labelText: 'Görünen ad',
-                        prefixIcon: Icons.badge_outlined,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _usernameCtrl,
-                      decoration: authInputDecoration(
-                        labelText: 'Kullanıcı adı',
-                        prefixIcon: Icons.alternate_email_rounded,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _bioCtrl,
-                      maxLines: 4,
-                      maxLength: 500,
-                      decoration: authInputDecoration(
-                        labelText: 'Hakkında',
-                        prefixIcon: Icons.notes_rounded,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _cityCtrl,
-                      decoration: authInputDecoration(
-                        labelText: 'Şehir',
-                        prefixIcon: Icons.location_city_rounded,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<String?>(
-                      value: _favoriteTeam,
-                      decoration: authInputDecoration(
-                        labelText: 'Tuttuğu takım (giriş banner renkleri)',
-                        prefixIcon: Icons.sports_soccer_rounded,
-                      ),
-                      items: [
-                        const DropdownMenuItem<String?>(
-                          value: null,
-                          child: Text('Seçilmedi — 🇹🇷 varsayılan'),
-                        ),
-                        ...TeamCatalog.labels.map(
-                          (label) => DropdownMenuItem<String?>(
-                            value: label,
-                            child: Text(label),
-                          ),
-                        ),
-                      ],
-                      onChanged: _saving
-                          ? null
-                          : (v) => setState(() => _favoriteTeam = v),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _zodiacCtrl,
-                      decoration: authInputDecoration(
-                        labelText: 'Burç',
-                        prefixIcon: Icons.star_outline_rounded,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              LiquidGlassCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      membershipSectionTitle,
-                      style: PremiumTypography.label(context).copyWith(
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const ProfileMembershipManageTile(),
-                    if (ref.watch(
-                      membershipCapabilityAllowsProvider(
-                        MembershipCapabilityKeys.entranceEffect,
-                      ),
-                    )) ...[
-                      const SizedBox(height: 8),
-                      ListTile(
-                        leading: const Icon(Icons.vertical_align_top_rounded),
-                        title: const Text('Giriş efekti ayarları'),
-                        subtitle: const Text(
-                          'Takım amblemi, hız ve üstten geçiş',
-                        ),
-                        trailing: const Icon(Icons.chevron_right_rounded),
-                        onTap: () => context.push('/settings/entrance-effects'),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              AuthPrimaryButton(
-                label: 'Kaydet',
-                loading: _saving,
-                onPressed: _saving ? null : _save,
-              ),
-            ],
+            ),
           ),
-        ),
+          Center(
+            child: TextButton(
+              onPressed: _pickAvatar,
+              child: Text(
+                'Fotoğraf Değiştir',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: c.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ),
+          _fieldRow(label: 'Ad', controller: _displayCtrl, icon: Icons.badge_outlined),
+          gap,
+          _fieldRow(
+            label: 'Kullanıcı Adı',
+            controller: _usernameCtrl,
+            icon: Icons.alternate_email_rounded,
+          ),
+          gap,
+          _fieldRow(
+            label: 'Biyografi',
+            controller: _bioCtrl,
+            maxLines: 4,
+            maxLength: 500,
+            icon: Icons.notes_rounded,
+          ),
+          gap,
+          _fieldRow(
+            label: 'Konum',
+            controller: _cityCtrl,
+            icon: Icons.location_city_rounded,
+            placeholder: 'Şehir ekle',
+          ),
+          gap,
+          _fieldRow(label: 'Burç', controller: _zodiacCtrl, icon: Icons.star_outline_rounded),
+          gap,
+          _fieldRow(
+            label: 'Profil fotoğrafı URL (isteğe bağlı)',
+            controller: _avatarUrlCtrl,
+            icon: Icons.link_rounded,
+          ),
+          gap,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+            decoration: BoxDecoration(
+              color: mockCardColor(context),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: mockCardBorder(context)),
+            ),
+            child: DropdownButtonFormField<String?>(
+              initialValue: _favoriteTeam,
+              decoration: const InputDecoration(
+                labelText: 'Tuttuğu takım (giriş banner renkleri)',
+                filled: false,
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+              ),
+              items: [
+                const DropdownMenuItem<String?>(
+                  value: null,
+                  child: Text('Seçilmedi — 🇹🇷 varsayılan'),
+                ),
+                ...TeamCatalog.labels.map(
+                  (label) => DropdownMenuItem<String?>(
+                    value: label,
+                    child: Text(label),
+                  ),
+                ),
+              ],
+              onChanged: _saving ? null : (v) => setState(() => _favoriteTeam = v),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: mockCardColor(context),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: mockCardBorder(context)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  membershipSectionTitle,
+                  style: PremiumTypography.label(context).copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const ProfileMembershipManageTile(),
+                if (ref.watch(
+                  membershipCapabilityAllowsProvider(
+                    MembershipCapabilityKeys.entranceEffect,
+                  ),
+                )) ...[
+                  const SizedBox(height: 8),
+                  ListTile(
+                    leading: const Icon(Icons.vertical_align_top_rounded),
+                    title: const Text('Giriş efekti ayarları'),
+                    subtitle: const Text('Takım amblemi, hız ve üstten geçiş'),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => context.push('/settings/entrance-effects'),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          AuthPrimaryButton(
+            label: 'Kaydet',
+            loading: _saving,
+            onPressed: _saving ? null : _save,
+          ),
+        ],
       ),
     );
   }

@@ -558,6 +558,9 @@ abstract final class ApiEndpoints {
   static const userSiteProfile = '/api/user/profile';
   static const userSocialSettings = '/api/user/social-settings';
   static const userAccount = '/api/user/account';
+
+  /// Hesap silme (anonimleştirme) — `POST {confirm:true, password?}`.
+  static const userAccountDelete = '/api/user/account/delete';
   static String userAchievementsFor(String userId) =>
       '/api/user/$userId/achievements';
   static const userTheme = '/api/user/theme';
@@ -625,6 +628,9 @@ abstract final class ApiEndpoints {
 
   /// `GET /api/admin/statistics` — `streams.{total,active,totalGiftsValue,totalLikes}`.
   static const adminStatistics = '/api/admin/statistics';
+
+  /// `GET /api/admin/live-stats?days=7` — zaman serisi (backend prompt: BACKEND_PROMPT_ADMIN).
+  static const adminLiveStats = '/api/admin/live-stats';
   static const adminUsersStats = '/api/admin/users/stats';
   static const adminUsersCredits = '/api/admin/users/credits';
   static const adminUsersGrantMembership = '/api/admin/users/grant-membership';

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/network/api_endpoints.dart';
 import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/network/dio_provider.dart';
 import '../../../../../core/theme/app_theme_colors.dart';
@@ -14,8 +13,6 @@ import '../../providers/profile_providers.dart';
 import '../../widgets/premium/profile_glass.dart';
 import '../profile_theme.dart';
 import 'profile_action_tile.dart';
-import 'admin_profile_summary_card.dart';
-import 'profile_management_center_button.dart';
 
 /// Admin paneli — yalnızca yetkili kullanıcılarda.
 class ProfileAdminCard extends ConsumerWidget {
@@ -112,8 +109,6 @@ class ProfileAdminCard extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const AdminProfileSummaryCard(),
-        const ProfileManagementCenterButton(),
         ProfileSectionTitle(
           title: 'Admin Kontrol Merkezi',
             trailing: pending > 0

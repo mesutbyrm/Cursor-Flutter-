@@ -7,9 +7,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../../../core/push/notification_channels.dart';
 import '../../../../core/push/push_notification_service.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
-import '../../../../core/widgets/discover_tab_layout.dart';
-import '../../../../core/widgets/settings_kit.dart';
-import '../../../feed/presentation/widgets/discover/discover_background.dart';
+import '../../../../core/widgets/mock_ui_kit.dart';
 import '../widgets/notification_permission_banner.dart';
 
 /// Kanal bazlı bildirim tercihleri — Mesajlar, Canlı yayın başlatanlar,
@@ -59,64 +57,58 @@ class _NotificationChannelSettingsPageState
         AppNotificationChannel.other => Icons.notifications_rounded,
       };
 
-  Color _channelAccent(AppNotificationChannel c) => switch (c) {
-        AppNotificationChannel.messages => context.accentCyan,
-        AppNotificationChannel.liveStarters => context.liveRed,
-        AppNotificationChannel.dailyFortune => context.accentPurple,
-        AppNotificationChannel.other => context.coinGold,
+  Color _channelColor(AppNotificationChannel c) => switch (c) {
+        AppNotificationChannel.messages => const Color(0xFFEF4444),
+        AppNotificationChannel.liveStarters => const Color(0xFF22C55E),
+        AppNotificationChannel.dailyFortune => const Color(0xFF8B5CF6),
+        AppNotificationChannel.other => const Color(0xFFF59E0B),
       };
 
   @override
   Widget build(BuildContext context) {
     final values = _values;
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: DiscoverBackground(
-        child: DiscoverSubPage(
-          title: 'Bildirim ayarları',
-          subtitle: 'Hangi bildirimleri almak istediğini seç',
-          body: values == null
-              ? const Center(child: CircularProgressIndicator())
-              : ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
-                  children: [
-                    const NotificationPermissionBanner(),
-                    const SizedBox(height: 14),
-                    SettingsTileGrid(
-                      children: [
-                        for (final c in AppNotificationChannel.values)
-                          SettingsToggleTile(
-                            key: ValueKey('notif-switch-${c.name}'),
-                            icon: _channelIcon(c),
-                            label: c.label,
-                            subtitle: c.description,
-                            accent: _channelAccent(c),
-                            value: values[c] ?? true,
-                            onChanged: (v) => unawaited(_toggle(c, v)),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    OutlinedButton.icon(
-                      onPressed: () => unawaited(openAppSettings()),
-                      icon: const Icon(Icons.settings_outlined),
-                      label: const Text('Sistem bildirim ayarlarını aç'),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Tercihlerin bu cihazda saklanır. Uygulama kapalıyken '
-                      'sunucudan gelen bildirimleri tamamen kapatmak için sistem '
-                      'ayarlarındaki kanalları da kullanabilirsin.',
-                      style: TextStyle(
-                        color: context.colors.onSurfaceMuted,
-                        fontSize: 12,
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
+    return MockScaffold(
+      title: 'Bildirimler',
+      body: values == null
+          ? const Center(child: CircularProgressIndicator())
+          : ListView(
+              padding: const EdgeInsetsDirectional.fromSTEB(14, 6, 14, 32),
+              children: [
+                const NotificationPermissionBanner(),
+                const SizedBox(height: 10),
+                for (final c in AppNotificationChannel.values) ...[
+                  MockSwitchRow(
+                    key: ValueKey('notif-switch-${c.name}'),
+                    icon: _channelIcon(c),
+                    color: _channelColor(c),
+                    title: c.label,
+                    subtitle: c.description,
+                    value: values[c] ?? true,
+                    onChanged: (v) => unawaited(_toggle(c, v)),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                const SizedBox(height: 6),
+                MockListRow(
+                  icon: Icons.settings_rounded,
+                  color: const Color(0xFF6B7080),
+                  title: 'Sistem bildirim ayarları',
+                  subtitle: 'Android kanal ayarlarını aç',
+                  onTap: () => unawaited(openAppSettings()),
                 ),
-        ),
-      ),
+                const SizedBox(height: 12),
+                Text(
+                  'Tercihlerin bu cihazda saklanır. Uygulama kapalıyken '
+                  'sunucudan gelen bildirimleri tamamen kapatmak için sistem '
+                  'ayarlarındaki kanalları da kullanabilirsin.',
+                  style: TextStyle(
+                    color: context.colors.onSurfaceMuted,
+                    fontSize: 11.5,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
     );
   }
 }

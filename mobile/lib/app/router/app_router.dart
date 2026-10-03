@@ -163,6 +163,7 @@ import '../../features/notifications/presentation/pages/notification_channel_set
 import '../../features/profile/presentation/pages/settings_category_page.dart';
 import '../../features/profile/presentation/pages/settings_page.dart';
 import '../../features/debug/presentation/api_monitor_page.dart';
+import '../../features/profile/presentation/pages/blocked_users_page.dart';
 import '../../features/profile/presentation/pages/active_devices_page.dart';
 import '../../features/profile/presentation/pages/profile_transactions_page.dart';
 import '../../features/profile/presentation/pages/user_profile_page.dart';
@@ -936,6 +937,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings/devices',
         builder: (context, state) => const ActiveDevicesPage(),
+      ),
+      GoRoute(
+        path: '/settings/blocked',
+        builder: (context, state) => const BlockedUsersPage(),
       ),
       GoRoute(
         path: '/settings/voice-audio',
