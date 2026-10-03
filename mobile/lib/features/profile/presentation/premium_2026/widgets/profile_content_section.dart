@@ -17,6 +17,9 @@ import '../../../../shorts/domain/repositories/shorts_repository.dart';
 import '../../../../shorts/presentation/providers/shorts_providers.dart';
 import '../../../../shorts/presentation/studio/short_studio_providers.dart';
 import '../../../../shorts/presentation/widgets/shorts_profile_content.dart';
+import '../../../../social/presentation/providers/social_providers.dart';
+import '../../../../social/presentation/utils/story_navigation.dart';
+import '../../../../feed/domain/entities/post_entity.dart';
 import '../../../domain/entities/profile_stats_entity.dart';
 import '../../providers/broadcast_history_notifier.dart';
 import '../../widgets/premium/profile_glass.dart';
@@ -38,11 +41,28 @@ class _ProfileContentSectionState extends ConsumerState<ProfileContentSection>
   late final TabController _tabs;
   late final TabIndexListenable _tabIndex;
 
+  /// Ana 5 sekme dışındaki içerikler (Kaydedilen, Canlı Yayınlarım…).
+  /// -1 → ana sekme gösterilir.
+  int _extra = -1;
+
+  static const _extras = <String>[
+    'Kaydedilen',
+    'Canlı Yayınlarım',
+    'İzlediklerim',
+    'Favoriler',
+    'Taslaklar',
+  ];
+
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 8, vsync: this);
+    _tabs = TabController(length: 5, vsync: this);
     _tabIndex = TabIndexListenable(_tabs);
+    _tabs.addListener(() {
+      if (_tabs.indexIsChanging && _extra != -1) {
+        setState(() => _extra = -1);
+      }
+    });
   }
 
   @override
@@ -52,53 +72,295 @@ class _ProfileContentSectionState extends ConsumerState<ProfileContentSection>
     super.dispose();
   }
 
+  Widget _extraBody() => switch (_extra) {
+        0 => _ShortsSavedTab(userId: widget.userId),
+        1 => _LiveStreamsTab(),
+        2 => _WatchedTab(),
+        3 => _FavoritesTab(),
+        _ => _DraftsTab(userId: widget.userId),
+      };
+
   @override
   Widget build(BuildContext context) {
+    final accent = ProfilePremiumTheme.accentOf(context);
     return ColoredBox(
       color: Theme.of(context).scaffoldBackgroundColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const ProfileSectionTitle(title: 'İçeriklerim'),
+          // Kaymayan, ekrana yayılan 5 sekme (küçük ekranlarda taşmaz).
           TabBar(
             controller: _tabs,
-            isScrollable: true,
-            tabAlignment: TabAlignment.start,
-            labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
-            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
-            indicatorColor: ProfilePremiumTheme.accentOf(context),
+            isScrollable: false,
+            labelPadding: EdgeInsets.zero,
+            labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 10.5),
+            unselectedLabelStyle:
+                const TextStyle(fontWeight: FontWeight.w600, fontSize: 10.5),
+            indicatorColor: _extra == -1 ? accent : Colors.transparent,
             labelColor: ProfilePremiumTheme.textOf(context),
             unselectedLabelColor: ProfilePremiumTheme.textMutedOf(context),
             dividerColor: Colors.transparent,
             tabs: const [
-              Tab(text: 'Videolar'),
-              Tab(text: 'Beğenilen'),
-              Tab(text: 'Kaydedilen'),
-              Tab(text: 'Fallarım'),
-              Tab(text: 'Canlı Yayınlarım'),
-              Tab(text: 'İzlediklerim'),
-              Tab(text: 'Favoriler'),
-              Tab(text: 'Taslaklar'),
+              Tab(
+                height: 58,
+                icon: Icon(Icons.grid_on_rounded, size: 20),
+                child: _TabLabel('Gönderiler'),
+              ),
+              Tab(
+                height: 58,
+                icon: Icon(Icons.play_circle_outline_rounded, size: 21),
+                child: _TabLabel('Videolar'),
+              ),
+              Tab(
+                height: 58,
+                icon: Icon(Icons.auto_stories_rounded, size: 20),
+                child: _TabLabel('Hikâyeler'),
+              ),
+              Tab(
+                height: 58,
+                icon: Icon(Icons.favorite_border_rounded, size: 20),
+                child: _TabLabel('Beğeniler'),
+              ),
+              Tab(
+                height: 58,
+                icon: Icon(Icons.auto_awesome_rounded, size: 20),
+                child: _TabLabel('Fal Aktiviteleri'),
+              ),
             ],
           ),
-          const SizedBox(height: 12),
-          ListenableBuilder(
-            listenable: _tabIndex,
-            builder: (context, _) {
-              return switch (_tabIndex.index) {
-                1 => _ShortsLikedTab(userId: widget.userId),
-                2 => _ShortsSavedTab(userId: widget.userId),
-                3 => _FortunesTab(),
-                4 => _LiveStreamsTab(),
-                5 => _WatchedTab(),
-                6 => _FavoritesTab(),
-                7 => _DraftsTab(userId: widget.userId),
-                _ => _VideosTab(userId: widget.userId),
-              };
-            },
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 36,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _extras.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemBuilder: (context, i) => ChoiceChip(
+                label: Text(_extras[i], style: const TextStyle(fontSize: 12)),
+                selected: _extra == i,
+                visualDensity: VisualDensity.compact,
+                onSelected: (v) => setState(() => _extra = v ? i : -1),
+              ),
+            ),
           ),
+          const SizedBox(height: 12),
+          if (_extra != -1)
+            _extraBody()
+          else
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: ListenableBuilder(
+                key: ValueKey(_tabIndex.index),
+                listenable: _tabIndex,
+                builder: (context, _) {
+                  return switch (_tabIndex.index) {
+                    1 => _VideosTab(userId: widget.userId),
+                    2 => _StoriesTab(userId: widget.userId),
+                    3 => _ShortsLikedTab(userId: widget.userId),
+                    4 => _FortunesTab(),
+                    _ => _PostsTab(userId: widget.userId),
+                  };
+                },
+              ),
+            ),
         ],
       ),
+    );
+  }
+}
+
+class _TabLabel extends StatelessWidget {
+  const _TabLabel(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(text, maxLines: 1, softWrap: false),
+        ),
+      );
+}
+
+/// Gönderiler — kullanıcının sosyal paylaşımları (3 kolon ızgara).
+class _PostsTab extends ConsumerWidget {
+  const _PostsTab({required this.userId});
+
+  final String userId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final posts = ref.watch(userSocialPostsProvider(userId));
+    return posts.when(
+      loading: () => const _ContentSkeleton(),
+      error: (_, _) => const _EmptyMessage('Gönderiler yüklenemedi'),
+      data: (items) {
+        if (items.isEmpty) return const _EmptyMessage('Henüz gönderi yok');
+        return _MediaGrid(
+          count: items.length,
+          builder: (context, i) => _PostTile(post: items[i]),
+        );
+      },
+    );
+  }
+}
+
+class _PostTile extends StatelessWidget {
+  const _PostTile({required this.post});
+
+  final PostEntity post;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = post.mediaUrl;
+    final hasImage = url != null && url.startsWith('http');
+    return GestureDetector(
+      onTap: () => context.push('/social/post/${post.id}'),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: DecoratedBox(
+          decoration: const BoxDecoration(color: Color(0xFF1A0F3D)),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if (hasImage)
+                CanlifalNetworkImage(url: url, fit: BoxFit.cover)
+              else
+                Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Center(
+                    child: Text(
+                      post.caption ?? '',
+                      maxLines: 5,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 11, color: Colors.white70),
+                    ),
+                  ),
+                ),
+              Positioned(
+                left: 6,
+                bottom: 6,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.favorite_rounded, size: 12, color: Colors.white),
+                    const SizedBox(width: 3),
+                    Text(
+                      '${post.likesCount}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        shadows: [Shadow(blurRadius: 4, color: Colors.black87)],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Hikâyeler — oturum kullanıcısının aktif hikâyeleri (hikâye halkalarından).
+class _StoriesTab extends ConsumerWidget {
+  const _StoriesTab({required this.userId});
+
+  final String userId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final rings = ref.watch(socialStoryRingsProvider);
+    return rings.when(
+      loading: () => const _ContentSkeleton(),
+      error: (_, _) => const _EmptyMessage('Hikâyeler yüklenemedi'),
+      data: (all) {
+        final mine = all.where((r) => r.user.id == userId).toList();
+        final ring = mine.isEmpty ? null : mine.first;
+        if (ring == null || ring.stories.isEmpty) {
+          return const _EmptyMessage('Aktif hikâyen yok');
+        }
+        return _MediaGrid(
+          count: ring.stories.length,
+          builder: (context, i) {
+            final story = ring.stories[i];
+            final isVideo = story.type.toLowerCase().contains('video');
+            return GestureDetector(
+              onTap: () => openStoryViewer(
+                context,
+                ring,
+                initialIndex: i,
+                rings: all,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: DecoratedBox(
+                  decoration: const BoxDecoration(color: Color(0xFF1A0F3D)),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      if (!isVideo && story.mediaUrl.startsWith('http'))
+                        CanlifalNetworkImage(url: story.mediaUrl, fit: BoxFit.cover)
+                      else
+                        const Center(
+                          child: Icon(Icons.play_circle_outline_rounded, size: 30),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+/// Üç kolonlu, kaydırılmayan (iç içe) medya ızgarası.
+class _MediaGrid extends StatelessWidget {
+  const _MediaGrid({required this.count, required this.builder});
+
+  final int count;
+  final Widget Function(BuildContext, int) builder;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, c) {
+        const cols = 3;
+        const spacing = 8.0;
+        const aspect = 9 / 14;
+        final h = ListPerf.nestedGridHeight(
+          itemCount: count,
+          crossAxisCount: cols,
+          mainAxisSpacing: spacing,
+          crossAxisSpacing: spacing,
+          childAspectRatio: aspect,
+          crossAxisExtent: c.maxWidth,
+        );
+        return SizedBox(
+          height: h,
+          child: GridView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            addRepaintBoundaries: false,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: cols,
+              crossAxisSpacing: spacing,
+              mainAxisSpacing: spacing,
+              childAspectRatio: aspect,
+            ),
+            itemCount: count,
+            itemBuilder: builder,
+          ),
+        );
+      },
     );
   }
 }

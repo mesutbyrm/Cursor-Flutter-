@@ -47,6 +47,7 @@ import '../../features/admin/presentation/pages/admin_voice_room_backgrounds_pag
 import '../../features/admin/presentation/pages/admin_gift_collection_hub_page.dart';
 import '../../features/admin/presentation/providers/staff_access_provider.dart';
 import '../../features/profile/presentation/providers/profile_providers.dart' show walletBalancesProvider;
+import '../../features/admin/presentation/pages/admin_live_stats_page.dart';
 import '../../features/admin/presentation/pages/admin_management_center_page.dart';
 import '../../features/admin/presentation/pages/admin_hub_page.dart';
 import '../../features/admin/presentation/pages/admin_home_tab.dart';
@@ -732,6 +733,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           final focus = state.uri.queryParameters['focusRequest'];
           return AdminHubPage(focusRequestId: focus);
         },
+      ),
+      GoRoute(
+        path: '/admin/live-stats',
+        builder: (context, state) => const AdminLiveStatsPage(),
       ),
       GoRoute(
         path: '/admin/center',

@@ -1,3 +1,4 @@
+import '../widgets/admin_user_directory.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,10 +7,8 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
-import '../../domain/admin_user_util.dart';
 import '../providers/admin_panel_providers.dart';
 import '../providers/staff_access_provider.dart';
-import '../widgets/admin_user_search_list.dart';
 
 /// Admin — kullanıcı arama ve yönetim (anında arama + jeton/CFC/üyelik).
 class AdminUsersPage extends ConsumerWidget {
@@ -39,33 +38,17 @@ class AdminUsersPage extends ConsumerWidget {
                   const Expanded(
                     child: DiscoverTabHeader(
                       title: 'Kullanıcı Yönetimi',
-                      subtitle: 'Ara → tam komuta merkezi',
+                      subtitle: 'Ara, filtrele, yönet',
                     ),
                   ),
                 ],
               ),
             ),
-            Expanded(
-              child: AdminUserSearchList(
-                autofocus: true,
-                onUserSelected: (user) => _openManage(context, ref, user),
-              ),
-            ),
+            const Expanded(child: AdminUserDirectory()),
           ],
         ),
       ),
     );
-  }
-
-  Future<void> _openManage(
-    BuildContext context,
-    WidgetRef ref,
-    Map<String, dynamic> user,
-  ) async {
-    final userId = resolveAdminUserId(user);
-    if (userId.isEmpty) return;
-    await context.push('/admin/users/$userId');
-    ref.invalidate(adminUserSearchProvider);
   }
 
   Widget _locked(BuildContext context) {

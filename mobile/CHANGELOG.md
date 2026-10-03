@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.701+754 (2026-10-03) — Profil sekmeleri, admin profil, kullanıcı yönetimi, yayın istatistikleri
+
+- **Profil içerik sekmeleri:** kaymayan 5 ana sekme — Gönderiler (kullanıcının sosyal paylaşımları, 3 kolon ızgara) · Videolar · Hikâyeler (oturum kullanıcısının aktif hikâyeleri, dokununca görüntüleyici) · Beğeniler · Fal Aktiviteleri; eski sekmeler (Kaydedilen, Canlı Yayınlarım, İzlediklerim, Favoriler, Taslaklar) «diğer» çipleriyle korunur. Profil eylemleri: Profili Düzenle · Paylaş (profil bağlantısı) · QR · Ayarlar
+- **Admin profil:** ADMIN rozeti + yetki seviyesi + gerçek sayaçlar (yönetici işlemi, bekleyen ödeme, aktif yayın, aktif oda; veri yoksa «—»); normal kullanıcıda çizilmez
+- **Kullanıcı yönetimi:** sayfalı kullanıcı dizini (`GET /api/admin/users`) — arama + Tümü/Aktif/Pasif/Banlı/Yayıncı/Admin filtreleri; satırda avatar, ad, rol, çevrimiçi, VIP, durum, işlem menüsü (Profil, Ban/Unban, Mute, Rol, Şikâyetler, Aktiviteler)
+- **Canlı Yayın İstatistikleri (`/admin/live-stats`):** Aktif yayın, toplam izleyici, hediye geliri (toplam), aktif yayıncı; Yönetim Merkezi'ne kart eklendi. Son 7 gün grafiği sunucuda zaman serisi ucu olmadığından boş-durum gösterir (sahte veri yok)
+- **Backend gereksinimleri:** `docs/BACKEND_PROMPT_ADMIN_2026-10-03.md` (Bearer JWT'yi kabul etmeyen 110 admin rotası, ban/mute alanları ve filtre, canlı yayın zaman serisi, auth denetimi)
+
 ## 1.0.700+753 (2026-10-03) — Ayarlar kategori kartları + Yönetim Merkezi (1. aşama)
 
 - **Ayarlar:** 14 kategori, her biri ayrı tam genişlik kart (ikon · başlık · alt başlık · ok): Hesap, Bildirimler, Gizlilik ve Güvenlik, Dil ve Bölge, Görünüm, Cüzdan ve Ödemeler, Canlı Yayın, Sesli Odalar, Müzik, Video, Veri Kullanımı, Erişilebilirlik, Yardım ve Destek, Hakkında. Her kart gerçek detay sayfasına (`/settings/c/:slug`) ya da mevcut sayfaya gider; yalnızca gerçekten çalışan ayarlar listelenir (hesap silme/dondurma, engellenenler vb. sunucu ucu olmadığı için eklenmedi)

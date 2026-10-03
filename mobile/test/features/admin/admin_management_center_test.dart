@@ -45,7 +45,7 @@ void main() {
     expect(mod.contains('Kullanıcı Yönetimi'), isFalse);
     expect(mod.contains('Sistem Ayarları'), isFalse);
     expect(mod.contains('Acil Durum'), isFalse);
-    expect(adminCenterEntries(_access(admin: true)).where((e) => e.visible).length, 11);
+    expect(adminCenterEntries(_access(admin: true)).where((e) => e.visible).length, 12);
   });
 
   testWidgets('yetkisiz kullanıcı Yönetim Merkezi göremez', (tester) async {

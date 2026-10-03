@@ -97,6 +97,14 @@ List<AdminCenterEntry> adminCenterEntries(StaffAccess a) {
       visible: a.canViewReports || a.showAdminPanel,
     ),
     AdminCenterEntry(
+      title: 'Yayın İstatistikleri',
+      subtitle: 'Aktif yayın, izleyici, gelir',
+      icon: Icons.stacked_line_chart_rounded,
+      accent: const Color(0xFF19C37D),
+      route: '/admin/live-stats',
+      visible: a.canManageLiveStreams || a.canViewReports,
+    ),
+    AdminCenterEntry(
       title: 'Sistem Ayarları',
       subtitle: 'Genel ayarlar',
       icon: Icons.settings_suggest_rounded,
