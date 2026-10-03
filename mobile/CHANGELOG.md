@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.700+753 (2026-10-03) — Ayarlar kategori kartları + Yönetim Merkezi (1. aşama)
+
+- **Ayarlar:** 14 kategori, her biri ayrı tam genişlik kart (ikon · başlık · alt başlık · ok): Hesap, Bildirimler, Gizlilik ve Güvenlik, Dil ve Bölge, Görünüm, Cüzdan ve Ödemeler, Canlı Yayın, Sesli Odalar, Müzik, Video, Veri Kullanımı, Erişilebilirlik, Yardım ve Destek, Hakkında. Her kart gerçek detay sayfasına (`/settings/c/:slug`) ya da mevcut sayfaya gider; yalnızca gerçekten çalışan ayarlar listelenir (hesap silme/dondurma, engellenenler vb. sunucu ucu olmadığı için eklenmedi)
+- **Yönetim Merkezi (`/admin/center`):** yetkiye göre görünen 2 kolonlu (geniş ekranda 3) kart paneli — Kullanıcı, Canlı Yayın, Sesli Oda, PK, Hediye/Jeton, Şikâyetler, Bildirim Gönder, İstatistikler, Sistem Ayarları, Güvenlik, Acil Durum; hepsi mevcut admin ekranlarına gider. Yetkisiz kullanıcıya «yetkiniz yok» ekranı
+- **Profil:** admin/yetkili profilinde belirgin «YÖNETİM MERKEZİ» düğmesi (normal kullanıcıda çizilmez)
+- **Rota koruması:** `/admin/**` için istemci tarafı yönlendirme (rol bilgisi yüklüyse ve yetkisizse `/feed`); sunucu uçları ayrıca 401/403 döner
+- Testler: ayarlar kartları (küçük ekran, 1.6× yazı, RTL), Yönetim Merkezi yetki görünürlüğü
+
 ## 1.0.699+752 (2026-10-03) — Ayarlar ekranları tamamlandı
 
 - **Giriş efekti ayarı** ve **Ortak yayın davetleri** ekranları da kutucuk/panel düzenine taşındı (`settings_kit.dart`); ayarlar ailesinde yenilenmemiş ekran kalmadı

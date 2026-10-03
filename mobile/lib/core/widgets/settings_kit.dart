@@ -162,6 +162,85 @@ class SettingsTileCard extends StatelessWidget {
   }
 }
 
+/// Tam genişlik kategori kartı: renkli ikon rozeti + başlık + alt başlık + ok.
+/// RTL'de ok ve dolgular otomatik yön değiştirir.
+class SettingsCategoryCard extends StatelessWidget {
+  const SettingsCategoryCard({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    this.accent,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final Color? accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final tint = accent ?? c.primary;
+    final radius = BorderRadius.circular(18);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: radius,
+        onTap: onTap,
+        splashColor: tint.withValues(alpha: 0.12),
+        child: Ink(
+          padding: const EdgeInsetsDirectional.fromSTEB(12, 12, 10, 12),
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            color: c.surfaceContainer,
+            border: Border.all(color: c.glassBorder),
+          ),
+          child: Row(
+            children: [
+              _IconBadge(icon: icon, tint: tint, size: 42),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14.5,
+                        color: c.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 12, color: c.onSurfaceMuted),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Directionality.of(context) == TextDirection.rtl
+                    ? Icons.chevron_left_rounded
+                    : Icons.chevron_right_rounded,
+                color: c.onSurfaceMuted,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Açma/kapama kutucuğu — kutucuğun tamamına dokunmak anahtarı değiştirir.
 class SettingsToggleTile extends StatelessWidget {
   const SettingsToggleTile({

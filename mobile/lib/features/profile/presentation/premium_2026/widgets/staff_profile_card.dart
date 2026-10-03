@@ -1,3 +1,4 @@
+import 'profile_management_center_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -79,6 +80,7 @@ class StaffProfileCard extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        const ProfileManagementCenterButton(),
         ProfileSectionTitle(
           title: 'Yetkili Paneli',
           trailing: Text(

@@ -45,6 +45,9 @@ import '../../features/admin/presentation/pages/admin_site_animations_preview_pa
 import '../../features/admin/domain/admin_site_animation.dart';
 import '../../features/admin/presentation/pages/admin_voice_room_backgrounds_page.dart';
 import '../../features/admin/presentation/pages/admin_gift_collection_hub_page.dart';
+import '../../features/admin/presentation/providers/staff_access_provider.dart';
+import '../../features/profile/presentation/providers/profile_providers.dart' show walletBalancesProvider;
+import '../../features/admin/presentation/pages/admin_management_center_page.dart';
 import '../../features/admin/presentation/pages/admin_hub_page.dart';
 import '../../features/admin/presentation/pages/admin_home_tab.dart';
 import '../../features/admin/presentation/pages/admin_moderation_queue_page.dart';
@@ -156,6 +159,7 @@ import '../../features/profile/presentation/pages/profile_payment_notice_page.da
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/profile/presentation/pages/profile_visitors_page.dart';
 import '../../features/notifications/presentation/pages/notification_channel_settings_page.dart';
+import '../../features/profile/presentation/pages/settings_category_page.dart';
 import '../../features/profile/presentation/pages/settings_page.dart';
 import '../../features/debug/presentation/api_monitor_page.dart';
 import '../../features/profile/presentation/pages/active_devices_page.dart';
@@ -262,6 +266,20 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           hasUser: auth.valueOrNull != null,
           hasError: auth.hasError,
         );
+      }
+
+      // Yönetim alanı: yetkisiz kullanıcıyı istemcide de geri çevir. Cüzdan
+      // rolü henüz yüklenmediyse (bilinmiyor) engelleme — sunucu uçları zaten
+      // 401/403 döner; yalnızca rol bilgisi YÜKLÜ ve yetkisizse yönlendir.
+      if (path == '/admin' || path.startsWith('/admin/')) {
+        final signedIn = auth.valueOrNull != null;
+        final roleKnown = ref.read(walletBalancesProvider).valueOrNull != null;
+        if (signedIn &&
+            roleKnown &&
+            !ref.read(staffAccessProvider).canAccessAdminHome) {
+          AppStartupLog.route(loc, '/feed', reason: 'admin yetkisi yok');
+          return '/feed';
+        }
       }
 
       final target = AuthRedirect.targetFor(
@@ -716,6 +734,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+        path: '/admin/center',
+        builder: (context, state) => const AdminManagementCenterPage(),
+      ),
+      GoRoute(
         path: '/admin/home',
         builder: (context, state) => const AdminHomeTab(),
       ),
@@ -896,6 +918,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsPage(),
+      ),
+      GoRoute(
+        path: '/settings/c/:slug',
+        builder: (context, state) =>
+            SettingsCategoryPage(slug: state.pathParameters['slug'] ?? ''),
       ),
       GoRoute(
         path: '/settings/notifications',
