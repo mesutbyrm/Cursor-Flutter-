@@ -21,6 +21,17 @@ class FortuneFullscreenAdGate {
     final watched = await RewardedAdService.instance.show();
     if (!context.mounted) return watched;
 
+    if (!watched && RewardedAdService.instance.lastShowUnavailable) {
+      // Gösterilecek reklam yok (yükleme hatası / dolu envanter yok): kullanıcı
+      // reklamı izlemeyi reddetmedi, falı engelleme.
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Şu an reklam bulunamadı; falın açılıyor.'),
+        ),
+      );
+      return true;
+    }
+
     if (!watched) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

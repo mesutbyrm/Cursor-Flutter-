@@ -15,6 +15,12 @@ class RewardedAdService {
   RewardedInterstitialAd? _ad;
   bool _loading = false;
   LoadAdError? _lastLoadError;
+  bool _lastShowUnavailable = false;
+
+  /// Son `show()` çağrısında gösterilecek reklam hiç bulunamadıysa (yükleme
+  /// hatası / dolu envanter yok) `true`. Kullanıcının reklamı yarıda
+  /// kapatmasından farklıdır; çağıran bunu ayırt edip kullanıcıyı engellemez.
+  bool get lastShowUnavailable => _lastShowUnavailable;
 
   /// SSV için oturumdaki kullanıcı kimliği (AdMob `user_id`).
   String? _ssvUserId;
@@ -90,11 +96,13 @@ class RewardedAdService {
 
   /// Reklamı gösterir. Ödül kazanıldıysa `true`.
   Future<bool> show() async {
+    _lastShowUnavailable = false;
     if (kIsWeb) return false;
     await ensureInitialized();
     await preload();
 
     final ad = _ad;
+    _lastShowUnavailable = ad == null;
     if (ad == null) return false;
 
     _applySsv(ad);

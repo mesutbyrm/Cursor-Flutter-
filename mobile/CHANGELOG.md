@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.706+759 (2026-10-03) — Fal: reklam bulunamazsa «Reklam tamamlanmadan fal açılamaz» ile engellenmez
+
+- **Hata:** gösterilecek reklam hiç yüklenemediğinde (yeni birimin envanteri henüz dolmamış, ağ/AdMob hatası) fal «Reklam tamamlanmadan fal açılamaz» diyerek açılmıyordu; kullanıcı reklamı reddetmemiş olduğu halde engelleniyordu
+- **Düzeltme:** `RewardedAdService.lastShowUnavailable` ile «reklam yok» ile «reklam yarıda kapatıldı» ayrıldı. Reklam bulunamazsa fal **açılır** («Şu an reklam bulunamadı; falın açılıyor.»), ödül/kutlama gösterilmez. Reklam yarıda kapatılırsa eski davranış (fal açılmaz) sürer
+- Not: yeni AdMob biriminin reklam göstermeye başlaması 1 saate kadar sürebilir
+
 ## 1.0.705+758 (2026-10-03) — Animasyon paritesi: web (framer-motion) ile aynı giriş/geçiş ölçüleri
 
 - **Referans:** canlifal.com'daki giriş animasyonları (`opacity 0→1`, `y 20→0`, 0.3 sn; liste `delay: i×0.05`; modal scale 0.9→1). Uygulamada bunlar `CanlifalMotionTokens.web*` sabitleri olarak tanımlandı
