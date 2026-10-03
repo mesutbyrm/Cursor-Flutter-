@@ -50,6 +50,51 @@ class AdminRemoteDataSource {
     return const [];
   }
 
+  /// Sayfalı kullanıcı listesi (`GET /api/admin/users`).
+  /// Dönüş: kullanıcılar + sunucunun bildirdiği toplam sayfa sayısı.
+  Future<({List<Map<String, dynamic>> users, int totalPages})> fetchUsersPage({
+    String search = '',
+    String segment = 'all',
+    String role = '',
+    String adv = '',
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final res = await _adminTimeout(
+      _dio.safeGet<dynamic>(
+        ApiEndpoints.adminUsersList(
+          search: search,
+          segment: segment,
+          role: role,
+          adv: adv,
+          page: page,
+          limit: limit,
+        ),
+        forceRefresh: true,
+        options: _opts(),
+      ),
+    );
+    final body = res.data;
+    final map = body is Map ? Map<String, dynamic>.from(body) : <String, dynamic>{};
+    final rows = _flattenList(map['users'] ?? map['data'] ?? body);
+    final totalPages = (map['totalPages'] as num?)?.toInt() ?? 1;
+    return (users: normalizeAdminUserList(rows), totalPages: totalPages);
+  }
+
+  /// `GET /api/admin/statistics` → `streams` bölümü.
+  Future<Map<String, dynamic>> fetchStreamStatistics() async {
+    final res = await _adminTimeout(
+      _dio.safeGet<dynamic>(
+        ApiEndpoints.adminStatistics,
+        forceRefresh: true,
+        options: _opts(),
+      ),
+    );
+    final map = _unwrapMap(res.data);
+    final streams = map['streams'];
+    return streams is Map ? Map<String, dynamic>.from(streams) : const {};
+  }
+
   Future<Map<String, dynamic>> fetchUser(String userId) async {
     final res = await _adminTimeout(
       _dio.safeGet<dynamic>(

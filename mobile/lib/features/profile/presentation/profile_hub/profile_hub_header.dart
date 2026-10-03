@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -168,6 +171,13 @@ class ProfileHubHeader extends ConsumerWidget {
         const SizedBox(height: 14),
         _ProfileActionsRow(
           onEdit: () => context.push('/profile/edit'),
+          onShare: () => unawaited(
+            SharePlus.instance.share(
+              ShareParams(
+                text: 'https://canlifal.com/@${state.user.username}',
+              ),
+            ),
+          ),
           onQr: () => context.push('/profile/qr'),
           onSettings: () => context.push('/settings'),
         ),
@@ -594,11 +604,13 @@ class _VipPill extends StatelessWidget {
 class _ProfileActionsRow extends StatelessWidget {
   const _ProfileActionsRow({
     required this.onEdit,
+    required this.onShare,
     required this.onQr,
     required this.onSettings,
   });
 
   final VoidCallback onEdit;
+  final VoidCallback onShare;
   final VoidCallback onQr;
   final VoidCallback onSettings;
 
@@ -616,17 +628,37 @@ class _ProfileActionsRow extends StatelessWidget {
             style: compact,
             onPressed: onEdit,
             icon: const Icon(Icons.edit_rounded, size: 18),
-            label: const Text('Düzenle', maxLines: 1),
+            label: const FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text('Profili Düzenle', maxLines: 1),
+            ),
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: OutlinedButton.icon(
             style: compact,
-            onPressed: onQr,
-            icon: const Icon(Icons.qr_code_2_rounded, size: 18),
-            label: const Text('QR Kodum', maxLines: 1),
+            onPressed: onShare,
+            icon: const Icon(Icons.ios_share_rounded, size: 18),
+            label: const FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text('Paylaş', maxLines: 1),
+            ),
           ),
+        ),
+        const SizedBox(width: 8),
+        IconButton.outlined(
+          tooltip: 'QR Kodum',
+          onPressed: onQr,
+          constraints: const BoxConstraints.tightFor(width: 40, height: 40),
+          padding: EdgeInsets.zero,
+          style: IconButton.styleFrom(
+            side: BorderSide(color: Theme.of(context).colorScheme.outline),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+          icon: const Icon(Icons.qr_code_2_rounded, size: 20),
         ),
         const SizedBox(width: 8),
         IconButton.outlined(

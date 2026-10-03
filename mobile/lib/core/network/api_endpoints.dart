@@ -622,6 +622,9 @@ abstract final class ApiEndpoints {
   /// Admin panel — kullanıcı, kredi, finans (canlifal.com web ile aynı).
   static const adminUsers = '/api/admin/users';
   static const adminPlatformAnalytics = '/api/admin/platform-analytics';
+
+  /// `GET /api/admin/statistics` — `streams.{total,active,totalGiftsValue,totalLikes}`.
+  static const adminStatistics = '/api/admin/statistics';
   static const adminUsersStats = '/api/admin/users/stats';
   static const adminUsersCredits = '/api/admin/users/credits';
   static const adminUsersGrantMembership = '/api/admin/users/grant-membership';
@@ -697,6 +700,27 @@ abstract final class ApiEndpoints {
       '/api/admin/site-animations/$id';
   static String adminSiteAnimationUser(String userId) =>
       '/api/admin/site-animations/user/$userId';
+
+  /// Sayfalı kullanıcı listesi: `search`, `segment` (active|passive|vip|new),
+  /// `role`, `adv` (online|offline|broadcasting|inRoom|…), `page`, `limit`.
+  static String adminUsersList({
+    String search = '',
+    String segment = 'all',
+    String role = '',
+    String adv = '',
+    int page = 1,
+    int limit = 20,
+  }) {
+    final q = <String, String>{
+      if (search.trim().isNotEmpty) 'search': search.trim(),
+      if (segment != 'all') 'segment': segment,
+      if (role.isNotEmpty) 'role': role,
+      if (adv.isNotEmpty) 'adv': adv,
+      'page': '$page',
+      'limit': '$limit',
+    };
+    return Uri(path: '/api/admin/users', queryParameters: q).toString();
+  }
 
   static String adminUsersSearch(String query) =>
       '/api/admin/users/search?q=${Uri.encodeComponent(query.trim())}';

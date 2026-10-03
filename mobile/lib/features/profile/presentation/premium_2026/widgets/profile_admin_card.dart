@@ -14,6 +14,8 @@ import '../../providers/profile_providers.dart';
 import '../../widgets/premium/profile_glass.dart';
 import '../profile_theme.dart';
 import 'profile_action_tile.dart';
+import 'admin_profile_summary_card.dart';
+import 'profile_management_center_button.dart';
 
 /// Admin paneli — yalnızca yetkili kullanıcılarda.
 class ProfileAdminCard extends ConsumerWidget {
@@ -110,6 +112,8 @@ class ProfileAdminCard extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        const AdminProfileSummaryCard(),
+        const ProfileManagementCenterButton(),
         ProfileSectionTitle(
           title: 'Admin Kontrol Merkezi',
             trailing: pending > 0
