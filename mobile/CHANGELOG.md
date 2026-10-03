@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.699+752 (2026-10-03) — Ayarlar ekranları tamamlandı
+
+- **Giriş efekti ayarı** ve **Ortak yayın davetleri** ekranları da kutucuk/panel düzenine taşındı (`settings_kit.dart`); ayarlar ailesinde yenilenmemiş ekran kalmadı
+
 ## 1.0.698+751 (2026-10-02) — Misafir modunda sohbet alanı
 
 - **Misafir (bölünmüş) modu:** sohbet, sütun düzeninden bağımsız sabit bir alanda (ekranın alt yarısı, alt çubuğun üstü) çiziliyor; yayıncının yazdığı mesaj ve «Canlı yayına hoş geldin» satırı artık bu alanda görünür. Yan raylar (beğeni/paylaş) yerinde kalır. Kök neden cihazda doğrulanamadı — savunmacı düzeltme

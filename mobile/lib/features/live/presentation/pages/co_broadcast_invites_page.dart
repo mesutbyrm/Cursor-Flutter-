@@ -6,6 +6,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/providers/auth_selectors.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover/discover_tab_pages.dart';
+import '../../../../core/widgets/settings_kit.dart';
 import '../providers/co_broadcast_provider.dart';
 import '../utils/co_broadcast_invite_actions.dart';
 
@@ -110,9 +111,9 @@ class _CoBroadcastInvitesPageState
     final image = broadcaster is Map ? broadcaster['image']?.toString() : null;
     final title = invite['streamTitle']?.toString() ?? '';
     final busy = _busy.contains(streamId);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: SettingsPanel(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
