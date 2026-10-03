@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/images/canlifal_network_image.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
+import '../../../../core/widgets/mock_ui_kit.dart';
 import '../../domain/admin_user_util.dart';
 import '../providers/admin_panel_providers.dart';
 
@@ -151,13 +152,16 @@ class _AdminUserDirectoryState extends ConsumerState<AdminUserDirectory> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 0),
+          padding: const EdgeInsetsDirectional.fromSTEB(14, 0, 14, 0),
           child: TextField(
             controller: _search,
             onChanged: _onQuery,
             textInputAction: TextInputAction.search,
             decoration: InputDecoration(
               hintText: 'Kullanıcı ara…',
+              isDense: true,
+              filled: true,
+              fillColor: mockCardColor(context),
               prefixIcon: const Icon(Icons.search_rounded),
               suffixIcon: _search.text.isEmpty
                   ? null
@@ -168,24 +172,54 @@ class _AdminUserDirectoryState extends ConsumerState<AdminUserDirectory> {
                         _onQuery('');
                       },
                     ),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: mockCardBorder(context)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: mockCardBorder(context)),
+              ),
             ),
           ),
         ),
         const SizedBox(height: 10),
         SizedBox(
-          height: 38,
+          height: 34,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 0),
+            padding: const EdgeInsetsDirectional.fromSTEB(14, 0, 14, 0),
             itemCount: AdminUserFilter.values.length,
             separatorBuilder: (_, _) => const SizedBox(width: 8),
             itemBuilder: (context, i) {
               final f = AdminUserFilter.values[i];
-              return ChoiceChip(
-                label: Text(f.label),
-                selected: _filter == f,
-                onSelected: (_) => _setFilter(f),
+              final selected = _filter == f;
+              return InkWell(
+                borderRadius: BorderRadius.circular(999),
+                onTap: () => _setFilter(f),
+                child: Container(
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(999),
+                    color: selected
+                        ? const Color(0xFF7C5CFF)
+                        : mockCardColor(context),
+                    border: Border.all(
+                      color: selected
+                          ? const Color(0xFF9B83FF)
+                          : mockCardBorder(context),
+                    ),
+                  ),
+                  child: Text(
+                    f.label,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: selected ? Colors.white : c.onSurfaceVariant,
+                    ),
+                  ),
+                ),
               );
             },
           ),
@@ -238,9 +272,9 @@ class _AdminUserDirectoryState extends ConsumerState<AdminUserDirectory> {
       child: ListView.separated(
         controller: _scroll,
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 32),
+        padding: const EdgeInsetsDirectional.fromSTEB(14, 0, 14, 32),
         itemCount: rows.length + (_loadingMore ? 1 : 0),
-        separatorBuilder: (_, _) => const SizedBox(height: 8),
+        separatorBuilder: (_, _) => const SizedBox(height: 6),
         itemBuilder: (context, i) {
           if (i >= rows.length) {
             return const Padding(
@@ -258,18 +292,28 @@ class _AdminUserDirectoryState extends ConsumerState<AdminUserDirectory> {
   }
 }
 
-/// Kullanıcı satırı: avatar, ad, rol, çevrimiçi, VIP, durum, işlem menüsü.
+/// Kullanıcı satırı: avatar, ad + @kullanıcı adı, rol rozeti, durum, işlem menüsü.
 class AdminUserRow extends StatelessWidget {
   const AdminUserRow({super.key, required this.user, this.onChanged});
 
   final Map<String, dynamic> user;
   final VoidCallback? onChanged;
 
-  String get _name {
-    final u = user['username']?.toString().trim() ?? '';
-    if (u.isNotEmpty) return '@$u';
-    return (user['name'] ?? user['displayName'] ?? 'Kullanıcı').toString();
+  String get _username => user['username']?.toString().trim() ?? '';
+
+  String get _display {
+    final n = (user['name'] ?? user['displayName'])?.toString().trim() ?? '';
+    if (n.isNotEmpty) return n;
+    return _username.isNotEmpty ? _username : 'Kullanıcı';
   }
+
+  static String roleLabel(String role) => switch (role.toLowerCase()) {
+        'user' => 'Kullanıcı',
+        'admin' => 'Admin',
+        'moderator' => 'Moderatör',
+        'broadcaster' || 'streamer' => 'Yayıncı',
+        _ => role,
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -281,89 +325,111 @@ class AdminUserRow extends StatelessWidget {
     final online = adminUserIsOnline(user);
     final banned = adminUserIsBanned(user);
     final id = resolveAdminUserId(user);
+    final statusText = banned ? 'Banlı' : (online ? 'Aktif' : 'Pasif');
+    final statusColor = (banned || !online)
+        ? const Color(0xFFFF4D5E)
+        : const Color(0xFF2ECC71);
 
     Widget pill(String text, Color color) => Container(
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.18),
+            color: color.withValues(alpha: 0.22),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
             text,
-            style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: color),
+            maxLines: 1,
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+              color: Color.lerp(color, Colors.white, 0.35),
+            ),
           ),
         );
 
     return Material(
-      color: c.surfaceContainer,
+      color: mockCardColor(context),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: c.glassBorder),
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: mockCardBorder(context)),
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         onTap: id.isEmpty ? null : () => _open(context, id),
         child: Padding(
-          padding: const EdgeInsetsDirectional.fromSTEB(10, 10, 4, 10),
+          padding: const EdgeInsetsDirectional.fromSTEB(10, 8, 2, 8),
           child: Row(
             children: [
-              Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 22,
-                    backgroundColor: c.primary.withValues(alpha: 0.2),
-                    backgroundImage: (avatar != null && avatar.startsWith('http'))
-                        ? canlifalImageProvider(avatar)
-                        : null,
-                    child: (avatar == null || !avatar.startsWith('http'))
-                        ? const Icon(Icons.person_rounded)
-                        : null,
-                  ),
-                  PositionedDirectional(
-                    end: 0,
-                    bottom: 0,
-                    child: Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: online ? const Color(0xFF2ECC71) : c.onSurfaceMuted,
-                        border: Border.all(color: c.surfaceContainer, width: 2),
-                      ),
-                    ),
-                  ),
-                ],
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: c.primary.withValues(alpha: 0.2),
+                backgroundImage: (avatar != null && avatar.startsWith('http'))
+                    ? canlifalImageProvider(avatar)
+                    : null,
+                child: (avatar == null || !avatar.startsWith('http'))
+                    ? const Icon(Icons.person_rounded)
+                    : null,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _name,
+                      _display,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13.5,
+                        color: c.onSurface,
+                      ),
                     ),
-                    const SizedBox(height: 4),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
-                      children: [
-                        pill(role, const Color(0xFF8E6BFF)),
-                        if (isVip) pill('VIP', const Color(0xFFFFB020)),
-                        pill(
-                          banned ? 'Banlı' : (online ? 'Aktif' : 'Çevrimdışı'),
-                          banned ? const Color(0xFFFF3B30) : const Color(0xFF2ECC71),
-                        ),
-                      ],
-                    ),
+                    if (_username.isNotEmpty)
+                      Text(
+                        '@$_username',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 11, color: c.onSurfaceMuted),
+                      ),
                   ],
                 ),
               ),
+              const SizedBox(width: 6),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Wrap(
+                    spacing: 4,
+                    runSpacing: 3,
+                    alignment: WrapAlignment.end,
+                    children: [
+                      if (isVip) pill('VIP', const Color(0xFF8B5CF6)),
+                      pill(roleLabel(role), const Color(0xFF7C5CFF)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.circle, size: 7, color: statusColor),
+                      const SizedBox(width: 4),
+                      Text(
+                        statusText,
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                          color: statusColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
               PopupMenuButton<String>(
                 tooltip: 'İşlemler',
-                icon: const Icon(Icons.more_vert_rounded),
+                icon: const Icon(Icons.more_vert_rounded, size: 20),
                 onSelected: (v) => _onAction(context, id, v),
                 itemBuilder: (_) => const [
                   PopupMenuItem(value: 'profile', child: Text('Profil')),

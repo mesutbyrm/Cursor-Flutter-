@@ -246,8 +246,6 @@ class _ProfileHubTabbedSectionsState
             ],
           ),
         ),
-        const SizedBox(height: 16),
-        ProfileLazyContent(userId: widget.userId),
         if (widget.showStaff) ...[
           const SizedBox(height: 16),
           const ProfileLazyStaff(),

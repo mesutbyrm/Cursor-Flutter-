@@ -3,8 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme_extensions.dart';
-import '../../../../core/widgets/discover_tab_layout.dart';
-import '../../../feed/presentation/widgets/discover/discover_background.dart';
+import '../../../../core/widgets/mock_ui_kit.dart';
 import '../providers/staff_access_provider.dart';
 
 /// Yönetim Merkezi kartı tanımı. Görünürlük [StaffAccess] yetkilerinden gelir;
@@ -34,7 +33,7 @@ List<AdminCenterEntry> adminCenterEntries(StaffAccess a) {
   return [
     AdminCenterEntry(
       title: 'Kullanıcı Yönetimi',
-      subtitle: 'Kullanıcılar, rol, ban',
+      subtitle: 'Kullanıcılar, roller, ban',
       icon: Icons.groups_rounded,
       accent: const Color(0xFF3B82F6),
       route: '/admin/users',
@@ -58,7 +57,7 @@ List<AdminCenterEntry> adminCenterEntries(StaffAccess a) {
     ),
     AdminCenterEntry(
       title: 'PK Yönetimi',
-      subtitle: 'PK savaşları, moderasyon',
+      subtitle: 'PK savaşları, raporlar',
       icon: Icons.sports_mma_rounded,
       accent: const Color(0xFFFF7A45),
       route: '/admin/moderation',
@@ -73,7 +72,7 @@ List<AdminCenterEntry> adminCenterEntries(StaffAccess a) {
       visible: a.canManageGifts,
     ),
     AdminCenterEntry(
-      title: 'Şikâyetler',
+      title: 'Şikayetler',
       subtitle: 'Kullanıcı ve içerik',
       icon: Icons.report_gmailerrorred_rounded,
       accent: const Color(0xFFFF5A5F),
@@ -97,14 +96,6 @@ List<AdminCenterEntry> adminCenterEntries(StaffAccess a) {
       visible: a.canViewReports || a.showAdminPanel,
     ),
     AdminCenterEntry(
-      title: 'Yayın İstatistikleri',
-      subtitle: 'Aktif yayın, izleyici, gelir',
-      icon: Icons.stacked_line_chart_rounded,
-      accent: const Color(0xFF19C37D),
-      route: '/admin/live-stats',
-      visible: a.canManageLiveStreams || a.canViewReports,
-    ),
-    AdminCenterEntry(
       title: 'Sistem Ayarları',
       subtitle: 'Genel ayarlar',
       icon: Icons.settings_suggest_rounded,
@@ -113,16 +104,8 @@ List<AdminCenterEntry> adminCenterEntries(StaffAccess a) {
       visible: a.isSiteAdmin,
     ),
     AdminCenterEntry(
-      title: 'Güvenlik',
-      subtitle: 'Politika ve tehditler',
-      icon: Icons.shield_rounded,
-      accent: const Color(0xFF2ECC71),
-      route: '/admin/security',
-      visible: a.isSiteAdmin || a.canViewActivityLog,
-    ),
-    AdminCenterEntry(
       title: 'Acil Durum',
-      subtitle: 'Bakım modu ve sistem',
+      subtitle: 'Sistemi bakım moduna al',
       icon: Icons.warning_amber_rounded,
       accent: const Color(0xFFFF3B30),
       route: '/admin/system-config',
@@ -189,15 +172,19 @@ class AdminManagementCenterPage extends ConsumerWidget {
       );
     }
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: DiscoverBackground(
-        child: DiscoverSubPage(
-          title: 'Yönetim Merkezi',
-          subtitle: access.canAccessAdminHome ? access.roleLabel : null,
-          body: body,
-        ),
-      ),
+    return MockScaffold(
+      title: 'Yönetim Merkezi',
+      startAligned: true,
+      actions: [
+        if (access.canManageLiveStreams || access.canViewReports)
+          IconButton(
+            tooltip: 'Yayın İstatistikleri',
+            icon: const Icon(Icons.bar_chart_rounded),
+            color: const Color(0xFF8B8CFF),
+            onPressed: () => context.push('/admin/live-stats'),
+          ),
+      ],
+      body: body,
     );
   }
 }
@@ -219,7 +206,8 @@ class _CenterCardState extends State<_CenterCard> {
   Widget build(BuildContext context) {
     final c = context.colors;
     final e = widget.entry;
-    final radius = BorderRadius.circular(20);
+    final radius = BorderRadius.circular(16);
+    const danger = Color(0xFFFF3B30);
     return AnimatedScale(
       scale: _down ? 0.97 : 1,
       duration: const Duration(milliseconds: 110),
@@ -233,53 +221,45 @@ class _CenterCardState extends State<_CenterCard> {
           child: Ink(
             decoration: BoxDecoration(
               borderRadius: radius,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  e.accent.withValues(alpha: e.danger ? 0.22 : 0.16),
-                  c.surfaceContainer,
-                ],
-              ),
+              color: e.danger
+                  ? Color.alphaBlend(
+                      danger.withValues(alpha: 0.16),
+                      mockCardColor(context),
+                    )
+                  : mockCardColor(context),
               border: Border.all(
-                color: e.accent.withValues(alpha: e.danger ? 0.55 : 0.30),
+                color: e.danger
+                    ? danger.withValues(alpha: 0.55)
+                    : mockCardBorder(context),
               ),
             ),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 118),
+              constraints: const BoxConstraints(minHeight: 104),
               child: Padding(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
-                        color: e.accent.withValues(alpha: 0.22),
-                      ),
-                      child: Icon(e.icon, color: e.accent, size: 24),
-                    ),
-                    const SizedBox(height: 12),
+                    MockIconSquare(icon: e.icon, color: e.accent, size: 38),
+                    const SizedBox(height: 10),
                     Text(
                       e.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
-                        fontSize: 14,
+                        fontSize: 13.5,
                         height: 1.2,
                         color: c.onSurface,
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 2),
                     Text(
                       e.subtitle,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 11.5,
+                        fontSize: 11,
                         height: 1.25,
                         color: c.onSurfaceMuted,
                       ),

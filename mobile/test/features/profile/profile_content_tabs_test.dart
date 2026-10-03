@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('Profil içerik sekmeleri: 5 ana sekme, dar ekran + büyük yazıda taşmaz',
+  testWidgets('Profil içerik sekmeleri: 4 ana sekme + ⋮ menüsü, dar ekran + büyük yazıda taşmaz',
       (tester) async {
     tester.view.physicalSize = const Size(640, 1136); // 320x568 dp
     tester.view.devicePixelRatio = 2;
@@ -33,11 +33,17 @@ void main() {
     );
     await tester.pump(const Duration(milliseconds: 300));
 
-    for (final t in ['Gönderiler', 'Videolar', 'Hikâyeler', 'Beğeniler', 'Fal Aktiviteleri']) {
+    for (final t in ['Gönderiler', 'Videolar', 'Hikâyeler', 'Fal Aktiviteleri']) {
       expect(find.text(t), findsOneWidget, reason: t);
     }
-    // Diğer içerikler satırı korunur (kayıp yok).
-    expect(find.text('Kaydedilen'), findsOneWidget);
+    // Diğer içerikler ⋮ menüsünde korunur (kayıp yok).
+    await tester.tap(find.byIcon(Icons.more_vert_rounded));
+    await tester.pumpAndSettle();
+    for (final t in ['Beğeniler', 'Kaydedilen', 'Canlı Yayınlarım', 'İzlediklerim', 'Favoriler', 'Taslaklar']) {
+      expect(find.text(t), findsOneWidget, reason: t);
+    }
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
     expect(find.text('Henüz gönderi yok'), findsOneWidget);
 
     await tester.tap(find.text('Hikâyeler'));

@@ -95,6 +95,25 @@ class AdminRemoteDataSource {
     return streams is Map ? Map<String, dynamic>.from(streams) : const {};
   }
 
+  /// `GET /api/admin/live-stats?days=N`. Uç henüz dağıtılmadıysa (404 vb.)
+  /// `null` döner; çağıran mevcut sayaçlara düşer.
+  Future<Map<String, dynamic>?> fetchLiveStats(int days) async {
+    try {
+      final res = await _adminTimeout(
+        _dio.safeGet<dynamic>(
+          ApiEndpoints.adminLiveStats,
+          query: {'days': days},
+          forceRefresh: true,
+          options: _opts(),
+        ),
+      );
+      final map = _unwrapMap(res.data);
+      return map.isEmpty ? null : map;
+    } on ApiException {
+      return null;
+    }
+  }
+
   Future<Map<String, dynamic>> fetchUser(String userId) async {
     final res = await _adminTimeout(
       _dio.safeGet<dynamic>(

@@ -2,17 +2,19 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/bootstrap/app_cache_clear.dart';
 import '../../../../core/design_system/cds_colors.dart';
 import '../../../../core/design_system/cds_fx.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
-import '../../../../core/widgets/discover_tab_layout.dart';
+import '../../../../core/widgets/mock_ui_kit.dart';
 import '../../../../core/widgets/settings_kit.dart';
 import '../../../../core/widgets/theme_mode_selector.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../../feed/presentation/widgets/discover/discover_background.dart';
+import '../providers/account_privacy_providers.dart';
+import '../providers/profile_providers.dart';
 import '../../../fortune/presentation/widgets/fortune_auto_share_setting_tile.dart';
 import '../premium_2026/profile_membership_helpers.dart';
 import '../widgets/vip_privacy_settings_section.dart';
@@ -50,86 +52,86 @@ const settingsCategories = <SettingsCategoryData>[
   SettingsCategoryData(
     slug: 'hesap',
     title: 'Hesap',
-    subtitle: 'Hesap bilgileri, güvenlik, e-posta',
+    subtitle: 'Hesap bilgileri, güvenlik, telefon',
     icon: Icons.person_rounded,
-    accent: Color(0xFF7C5CFF),
+    accent: Color(0xFF6B7080),
   ),
   SettingsCategoryData(
     slug: 'bildirimler',
     title: 'Bildirimler',
     subtitle: 'Push ve bildirim tercihleri',
     icon: Icons.notifications_rounded,
-    accent: Color(0xFFFF7A45),
+    accent: Color(0xFFFF7A2F),
   ),
   SettingsCategoryData(
     slug: 'gizlilik',
     title: 'Gizlilik ve Güvenlik',
-    subtitle: 'Gizlilik ayarları, şifre, cihazlar',
+    subtitle: 'Gizlilik ayarları, engellenenler',
     icon: Icons.lock_rounded,
-    accent: Color(0xFF2ECC71),
+    accent: Color(0xFF22C55E),
   ),
   SettingsCategoryData(
     slug: 'dil',
     title: 'Dil ve Bölge',
-    subtitle: 'Uygulama dili ve bölge',
+    subtitle: 'Türkçe',
     icon: Icons.language_rounded,
-    accent: Color(0xFF8E6BFF),
+    accent: Color(0xFF7C5CFF),
   ),
   SettingsCategoryData(
     slug: 'gorunum',
     title: 'Görünüm',
     subtitle: 'Tema, karanlık mod, performans',
     icon: Icons.palette_rounded,
-    accent: Color(0xFF9B59FF),
+    accent: Color(0xFF8B5CF6),
   ),
   SettingsCategoryData(
     slug: 'cuzdan',
     title: 'Cüzdan ve Ödemeler',
     subtitle: 'Jeton, CFC, ödeme geçmişi',
     icon: Icons.account_balance_wallet_rounded,
-    accent: Color(0xFFFFB020),
+    accent: Color(0xFFF59E0B),
   ),
   SettingsCategoryData(
     slug: 'canli',
     title: 'Canlı Yayın',
-    subtitle: 'Yayın tercihleri ve davetler',
+    subtitle: 'Yayın tercihleri',
     icon: Icons.videocam_rounded,
-    accent: Color(0xFFFF3D71),
+    accent: Color(0xFF5B5BF6),
   ),
   SettingsCategoryData(
     slug: 'sesli',
     title: 'Sesli Odalar',
-    subtitle: 'Oda ayarları ve giriş efekti',
+    subtitle: 'Oda ayarları',
     icon: Icons.mic_rounded,
-    accent: Color(0xFF1ED6C4),
+    accent: Color(0xFF14B8A6),
   ),
   SettingsCategoryData(
     slug: 'muzik',
     title: 'Müzik',
     subtitle: 'Ses ve müzik ayarları',
     icon: Icons.music_note_rounded,
-    accent: Color(0xFFE056FD),
+    accent: Color(0xFFE11D9A),
   ),
   SettingsCategoryData(
     slug: 'video',
     title: 'Video',
     subtitle: 'Video kalitesi, otomatik oynatma',
     icon: Icons.play_circle_rounded,
-    accent: Color(0xFF19C37D),
+    accent: Color(0xFF10B981),
   ),
   SettingsCategoryData(
     slug: 'veri',
     title: 'Veri Kullanımı',
-    subtitle: 'Mobil veri ve önbellek',
+    subtitle: 'Mobil veri ve indirme ayarları',
     icon: Icons.bar_chart_rounded,
     accent: Color(0xFF3B82F6),
   ),
   SettingsCategoryData(
     slug: 'erisilebilirlik',
     title: 'Erişilebilirlik',
-    subtitle: 'Animasyon azaltma ve sadeleştirme',
+    subtitle: 'Yazı boyutu, kontrast',
     icon: Icons.accessibility_new_rounded,
-    accent: Color(0xFF00B4D8),
+    accent: Color(0xFF2D8CFF),
   ),
   SettingsCategoryData(
     slug: 'yardim',
@@ -143,7 +145,7 @@ const settingsCategories = <SettingsCategoryData>[
     title: 'Hakkında',
     subtitle: 'Sürüm, kullanım koşulları',
     icon: Icons.info_rounded,
-    accent: Color(0xFF94A3B8),
+    accent: Color(0xFF8A8FA3),
   ),
 ];
 
@@ -162,23 +164,21 @@ class SettingsCategoryPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cat = settingsCategoryBySlug(slug);
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: DiscoverBackground(
-        child: DiscoverSubPage(
-          title: cat?.title ?? 'Ayarlar',
-          subtitle: cat?.subtitle,
-          body: ListView(
-            padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 40),
-            children: cat == null
-                ? [
-                    const SettingsPanel(
-                      child: Text('Bu ayar kategorisi bulunamadı.'),
-                    ),
-                  ]
-                : _sections(context, ref, cat),
-          ),
-        ),
+    final title = switch (slug) {
+      'cuzdan' => 'Cüzdanım',
+      _ => cat?.title ?? 'Ayarlar',
+    };
+    return MockScaffold(
+      title: title,
+      body: ListView(
+        padding: const EdgeInsetsDirectional.fromSTEB(14, 6, 14, 40),
+        children: cat == null
+            ? [
+                const SettingsPanel(
+                  child: Text('Bu ayar kategorisi bulunamadı.'),
+                ),
+              ]
+            : _sections(context, ref, cat),
       ),
     );
   }
@@ -252,30 +252,45 @@ class SettingsCategoryPage extends ConsumerWidget {
           ),
         ];
       case 'gizlilik':
+        final sessions = ref.watch(activeSessionsProvider).valueOrNull;
+        final blocked = ref.watch(blockedUsersProvider).valueOrNull;
         return [
-          SettingsTileGrid(
-            children: [
-              SettingsTileCard(
-                icon: Icons.lock_outline_rounded,
-                label: 'Şifre Değiştir',
-                subtitle: 'Hesap güvenliği',
-                accent: cat.accent,
-                onTap: () => context.push('/profile/security'),
-              ),
-              SettingsTileCard(
-                icon: Icons.devices_rounded,
-                label: 'Aktif Cihazlar',
-                subtitle: 'Oturum açık cihazlar',
-                accent: cat.accent,
-                onTap: () => context.push('/settings/devices'),
-              ),
-            ],
+          MockListRow(
+            icon: Icons.block_rounded,
+            color: const Color(0xFFEF4444),
+            title: 'Engellenenler',
+            value: blocked == null ? null : '${blocked.length} kişi',
+            onTap: () => context.push('/settings/blocked'),
+          ),
+          const SizedBox(height: 8),
+          MockListRow(
+            icon: Icons.lock_rounded,
+            color: const Color(0xFF8B5CF6),
+            title: 'Şifre Değiştir',
+            onTap: () => context.push('/profile/security'),
+          ),
+          const SizedBox(height: 8),
+          MockListRow(
+            icon: Icons.devices_rounded,
+            color: const Color(0xFF3B82F6),
+            title: 'Giriş Cihazları',
+            value: sessions == null ? null : '${sessions.length} cihaz',
+            onTap: () => context.push('/settings/devices'),
           ),
           const SettingsSectionHeader(
             'Gizlilik & VIP',
             icon: Icons.visibility_off_rounded,
           ),
           const VipPrivacySettingsSection(),
+          const SizedBox(height: 14),
+          MockListRow(
+            icon: Icons.delete_forever_rounded,
+            color: const Color(0xFFEF4444),
+            title: 'Hesabı Sil',
+            subtitle: 'Hesabın kalıcı olarak silinir',
+            danger: true,
+            onTap: () => _confirmDeleteAccount(context, ref),
+          ),
         ];
       case 'dil':
         return [
@@ -317,52 +332,53 @@ class SettingsCategoryPage extends ConsumerWidget {
           ),
         ];
       case 'cuzdan':
+        final wallet = ref.watch(walletBalancesProvider).valueOrNull;
+        final nf = NumberFormat.decimalPattern('tr');
         return [
-          SettingsTileGrid(
-            children: [
-              SettingsTileCard(
-                icon: Icons.account_balance_wallet_rounded,
-                label: 'Cüzdan',
-                subtitle: 'Jeton ve CFC bakiyesi',
-                accent: cat.accent,
-                onTap: () => context.push('/wallet'),
-              ),
-              SettingsTileCard(
-                icon: Icons.add_card_rounded,
-                label: 'Jeton Satın Al',
-                subtitle: 'Jeton paketleri',
-                accent: cat.accent,
-                onTap: () => context.push('/jeton-store'),
-              ),
-              SettingsTileCard(
-                icon: Icons.currency_exchange_rounded,
-                label: 'CFC Satın Al',
-                subtitle: 'CFC paketleri',
-                accent: CdsColors.fortuneMystic,
-                onTap: () => context.push('/cfc-store'),
-              ),
-              SettingsTileCard(
-                icon: Icons.receipt_long_rounded,
-                label: 'İşlem Geçmişi',
-                subtitle: 'Tüm hareketler',
-                accent: CdsColors.accentCyan,
-                onTap: () => context.push('/profile/transactions'),
-              ),
-              SettingsTileCard(
-                icon: Icons.card_giftcard_rounded,
-                label: 'Hediye Geçmişi',
-                subtitle: 'Gönderilen ve alınan',
-                accent: CdsColors.accentPink,
-                onTap: () => context.push('/profile/gifts'),
-              ),
-              SettingsTileCard(
-                icon: Icons.payments_rounded,
-                label: 'Kazançlarım',
-                subtitle: 'Yayın kazançları',
-                accent: CdsColors.success,
-                onTap: () => context.push('/profile/earnings'),
-              ),
-            ],
+          _BalanceCard(
+            color: const Color(0xFFF59E0B),
+            icon: Icons.monetization_on_rounded,
+            amount: nf.format(wallet?.jeton ?? user?.coinBalance ?? 0),
+            unit: 'Jeton',
+            onBuy: () => context.push('/jeton-store'),
+          ),
+          const SizedBox(height: 10),
+          _BalanceCard(
+            color: const Color(0xFF8B5CF6),
+            icon: Icons.diamond_rounded,
+            amount: nf.format(wallet?.cfc ?? 0),
+            unit: 'CFC',
+            onBuy: () => context.push('/cfc-store'),
+          ),
+          const SizedBox(height: 14),
+          MockListRow(
+            icon: Icons.receipt_long_rounded,
+            color: const Color(0xFF3B82F6),
+            title: 'İşlem Geçmişi',
+            onTap: () => context.push('/profile/transactions'),
+          ),
+          const SizedBox(height: 8),
+          MockListRow(
+            icon: Icons.account_balance_wallet_rounded,
+            color: const Color(0xFFF59E0B),
+            title: 'Cüzdan',
+            subtitle: 'Jeton ve CFC bakiyesi',
+            onTap: () => context.push('/wallet'),
+          ),
+          const SizedBox(height: 8),
+          MockListRow(
+            icon: Icons.card_giftcard_rounded,
+            color: const Color(0xFFEC4899),
+            title: 'Hediye Geçmişi',
+            onTap: () => context.push('/profile/gifts'),
+          ),
+          const SizedBox(height: 8),
+          MockListRow(
+            icon: Icons.payments_rounded,
+            color: const Color(0xFF22C55E),
+            title: 'Kazançlarım',
+            subtitle: 'Yayın kazançları',
+            onTap: () => context.push('/profile/earnings'),
           ),
         ];
       case 'canli':
@@ -506,6 +522,63 @@ class SettingsCategoryPage extends ConsumerWidget {
     }
   }
 
+  Future<void> _confirmDeleteAccount(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final pw = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hesabı sil'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Hesabın kalıcı olarak silinir. Jeton, CFC ve üyelik '
+              'bakiyelerin iade edilmez.',
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: pw,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Şifre (şifreli hesaplar için)',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Hesabı sil'),
+          ),
+        ],
+      ),
+    );
+    final password = pw.text;
+    pw.dispose();
+    if (ok != true || !context.mounted) return;
+    try {
+      await deleteMyAccount(ref, password: password);
+      await ref.read(authControllerProvider.notifier).logout();
+      if (context.mounted) context.go('/auth/login');
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
+    }
+  }
+
   Future<void> _clearCache(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -539,5 +612,87 @@ class SettingsCategoryPage extends ConsumerWidget {
         SnackBar(content: Text(ApiException.userMessage(e))),
       );
     }
+  }
+}
+
+class _BalanceCard extends StatelessWidget {
+  const _BalanceCard({
+    required this.color,
+    required this.icon,
+    required this.amount,
+    required this.unit,
+    required this.onBuy,
+  });
+
+  final Color color;
+  final IconData icon;
+  final String amount;
+  final String unit;
+  final VoidCallback onBuy;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [color.withValues(alpha: 0.28), mockCardColor(context)],
+        ),
+        border: Border.all(color: color.withValues(alpha: 0.45)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+            child: Icon(icon, color: Colors.white, size: 24),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  amount,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: c.onSurface,
+                    height: 1.1,
+                  ),
+                ),
+                Text(
+                  unit,
+                  style: TextStyle(fontSize: 12, color: c.onSurfaceMuted),
+                ),
+              ],
+            ),
+          ),
+          FilledButton(
+            onPressed: onBuy,
+            style: FilledButton.styleFrom(
+              backgroundColor: color,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+            ),
+            child: const Text('Satın Al'),
+          ),
+        ],
+      ),
+    );
   }
 }

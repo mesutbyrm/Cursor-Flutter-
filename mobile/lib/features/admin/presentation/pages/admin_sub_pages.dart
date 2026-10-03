@@ -1,3 +1,4 @@
+import '../../../../core/widgets/mock_ui_kit.dart';
 import '../widgets/admin_user_directory.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,33 +22,10 @@ class AdminUsersPage extends ConsumerWidget {
       return _locked(context);
     }
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: DiscoverBackground(
-        child: Column(
-          children: [
-            SizedBox(height: MediaQuery.paddingOf(context).top + 4),
-            Padding(
-              padding: const EdgeInsets.only(left: 4, right: 12),
-              child: Row(
-                children: [
-                  DiscoverIconButton(
-                    icon: Icons.arrow_back_ios_new_rounded,
-                    onPressed: () => context.pop(),
-                  ),
-                  const Expanded(
-                    child: DiscoverTabHeader(
-                      title: 'Kullanıcı Yönetimi',
-                      subtitle: 'Ara, filtrele, yönet',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Expanded(child: AdminUserDirectory()),
-          ],
-        ),
-      ),
+    return const MockScaffold(
+      title: 'Kullanıcı Yönetimi',
+      startAligned: true,
+      body: AdminUserDirectory(),
     );
   }
 
