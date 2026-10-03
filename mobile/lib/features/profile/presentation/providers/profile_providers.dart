@@ -201,9 +201,21 @@ final referralInfoProvider = FutureProvider<ReferralInfoEntity>((ref) async {
   return ref.watch(walletRepositoryProvider).referralInfo();
 });
 
+/// Reklam ödülü: önce sunucu doğrulamalı (AdMob SSV) ödülü bekler; bakiye
+/// artarsa istemci ek çağrı yapmaz (çifte ödül yok). SSV ödülü gelmezse
+/// (bayrak kapalı / gecikme) eski `watch-ad` uç noktasına düşer.
 final watchAdCreditProvider = FutureProvider.autoDispose<int>((ref) async {
+  final notifier = ref.read(walletBalancesProvider.notifier);
+  int total(WalletBalances b) => b.jeton + b.cfc + (b.fortuneAdCredits ?? 0);
+
+  final before = total(await notifier.refresh(force: true));
+  for (var i = 0; i < 4; i++) {
+    await Future<void>.delayed(const Duration(milliseconds: 1500));
+    final gained = total(await notifier.refresh(force: true)) - before;
+    if (gained > 0) return gained;
+  }
   final reward = await ref.watch(walletRepositoryProvider).watchAdCredit();
-  await ref.read(walletBalancesProvider.notifier).refresh(force: true);
+  await notifier.refresh(force: true);
   return reward;
 });
 
