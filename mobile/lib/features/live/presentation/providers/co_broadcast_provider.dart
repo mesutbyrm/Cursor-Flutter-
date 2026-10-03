@@ -247,6 +247,17 @@ class CoBroadcastNotifier extends Notifier<CoBroadcastState> {
     return '';
   }
 
+  /// Yayıncı — misafiri yayından indirir (`/api/live/guest` kick; eski uçta
+  /// `remove`). Ardından liste yenilenir.
+  Future<void> removeGuest(String streamId, String userId) async {
+    await _guest.postCoBroadcastCompat(
+      streamId: streamId,
+      action: 'kick',
+      userId: userId,
+    );
+    await refreshStream(streamId);
+  }
+
   Future<void> leave(String streamId) async {
     await _guest.patchCoBroadcastCompat(streamId: streamId, action: 'leave');
   }

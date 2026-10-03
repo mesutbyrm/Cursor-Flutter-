@@ -137,6 +137,7 @@ class LiveMockupSideRail extends StatelessWidget {
           const SizedBox(height: 12),
         ],
         GestureDetector(
+          onTap: onLike,
           onDoubleTap: onLike,
           child: Column(
             children: [
@@ -161,16 +162,7 @@ class LiveMockupSideRail extends StatelessWidget {
                   size: 28,
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                likeLabel,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                  shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
-                ),
-              ),
+              // Beğeni sayısı/puanı kalbin altında gösterilmez (üstte profilde).
             ],
           ),
         ),

@@ -28,6 +28,8 @@ class LiveBroadcastRoomBottomChrome extends StatelessWidget {
     this.onShare,
     this.onSettings,
     this.multiLayoutActive = false,
+    this.guestLabel = 'Misafir',
+    this.guestIcon = Icons.person_add_alt_1_rounded,
   });
 
   final TextEditingController chatController;
@@ -51,6 +53,8 @@ class LiveBroadcastRoomBottomChrome extends StatelessWidget {
   final VoidCallback? onShare;
   final VoidCallback? onSettings;
   final bool multiLayoutActive;
+  final String guestLabel;
+  final IconData guestIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -82,6 +86,8 @@ class LiveBroadcastRoomBottomChrome extends StatelessWidget {
         onShare: onShare,
         onSettings: onSettings,
         multiLayoutActive: multiLayoutActive,
+        guestLabel: guestLabel,
+        guestIcon: guestIcon,
       ),
     );
   }

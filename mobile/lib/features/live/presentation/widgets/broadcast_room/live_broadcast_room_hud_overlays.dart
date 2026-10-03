@@ -70,14 +70,6 @@ class LiveBroadcastRoomHudOverlays extends ConsumerWidget {
               onTap: onTournamentTap,
             ),
           ),
-        if (userLikeCounts.isNotEmpty)
-          Positioned(
-            left: 12,
-            bottom: 268,
-            child: LiveBroadcastLikeContributorsChip(
-              counts: userLikeCounts,
-            ),
-          ),
         Positioned(
           left: 12,
           bottom: 210,

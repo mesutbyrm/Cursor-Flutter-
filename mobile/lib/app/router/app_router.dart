@@ -193,6 +193,7 @@ import '../../features/live_psychics/presentation/screens/psychics_list_screen.d
 import '../../features/live_psychics/presentation/screens/psychic_reviews_screen.dart';
 import '../../features/live_psychics/presentation/screens/psychic_sessions_screen.dart';
 import '../../features/agency/presentation/pages/agency_applications_page.dart';
+import '../../features/agency/presentation/pages/agency_apply_page.dart';
 import '../../features/agency/presentation/pages/agency_dashboard_screen.dart';
 import '../../features/agency/presentation/pages/agency_weekly_tasks_page.dart';
 import '../../features/cfc_arena/presentation/pages/cfc_arena_contest_page.dart';
@@ -1526,6 +1527,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           key: state.pageKey,
           child: const SvipLoungePage(),
         ),
+      ),
+      GoRoute(
+        path: '/ajans/basvur',
+        builder: (context, state) => const AgencyApplyPage(),
       ),
       GoRoute(
         path: '/ajans/dashboard',

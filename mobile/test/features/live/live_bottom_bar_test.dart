@@ -2,7 +2,12 @@ import 'package:canlifal_social/features/live/presentation/widgets/premium_2026/
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Widget _bar({required bool host, required bool multi}) => MaterialApp(
+Widget _bar({
+  required bool host,
+  required bool multi,
+  String guestLabel = 'Misafir',
+}) =>
+    MaterialApp(
       home: Scaffold(
         body: Align(
           alignment: Alignment.bottomCenter,
@@ -17,6 +22,7 @@ Widget _bar({required bool host, required bool multi}) => MaterialApp(
             onShare: () {},
             onSettings: host ? () {} : null,
             multiLayoutActive: multi,
+            guestLabel: guestLabel,
           ),
         ),
       ),
@@ -46,5 +52,11 @@ void main() {
     await t.tap(find.text('Hediye'));
     await t.pump();
     expect(find.textContaining('Elmas'), findsNothing);
+  });
+
+  testWidgets('misafirken düğme «Düş» yazar', (t) async {
+    await t.pumpWidget(_bar(host: false, multi: true, guestLabel: 'Düş'));
+    expect(find.text('Düş'), findsOneWidget);
+    expect(find.text('Misafir'), findsNothing);
   });
 }

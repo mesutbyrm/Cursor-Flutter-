@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.703+756 (2026-10-03) — Canlı yayın: kapatma, PK görüntüsü, hediye, beğeni, misafir; ana sayfada Ajans
+
+- **Ana sayfa:** Keşfet · Sesli Oda · Tanış & Kaynaş · Gold yanına **Ajans** kutusu (5 kompakt kutu, metin küçülür/sığar). Onaylı ajansı olan «Ajansım» (`/ajans/dashboard`), olmayan «Ajans Ol» görür → yeni başvuru ekranı (`POST /api/agency/apply`, admin onayına düşer)
+- **Canlı yayın kapatma:** çıkış, takılı kalan `_leaving` durumunda kilitlenmez (6 sn koruması, ön temizlik hataları yutulur); sunucuda yayını bitirme 3 kez denenir ve PATCH başarısızsa `/end` yedeği her hatada (401/403 hariç) denenir
+- **PK görüntüsü:** canlı yayın PK'sında iki yayın ayrı TRTC odasında olduğundan karşı tarafın videosu gelmiyordu (yalnız sesli oda PK'sı cross-room kuruyordu). Challenger host artık PK aktifken karşı odayı `connectOtherRoom` ile arar, PK bitince `disconnectOtherRoom`; iki yayının izleyicileri iki tarafı da görür. Kök neden cihazda doğrulanamadı
+- **Hediyeler:** hareketli (lottie/svga/rive/video) hediyeler canlı yayında ve PK'da **tam ekran** oynar (PK sahnesi altında görünür); PK'da animasyon artık video bölgesine kırpılmaz
+- **Beğeni:** kalbin altındaki sayı/«Sen: n» ve sol alttaki «kim kaç beğeni yaptı» çipi kaldırıldı; beğeni sayısı yalnızca üst profilde ve **her dokunuşta anında** artar. Kalp tek dokunuşla da beğenir. PK'da beğeni puanı ekranda **anında** artar (sunucu mutlak skoru gelince esas alınır)
+- **Misafir:** misafirken alt düğme **«Düş»** olur (`/api/live/guest` leave + TRTC izleyiciye dönüş); yayıncı misafir varken düğmeyle **«Misafirler»** listesini açıp **İndir** diyebilir, ızgara karesinde de «indir» düğmesi var (`kick`); son misafir inince yayıncı otomatik tekliye geçer
+- Testler: PK yerel skor, «Düş» etiketi, ana sayfa Ajans kutusu (dar ekran)
+
 ## 1.0.702+755 (2026-10-03) — Mockup'a birebir arayüz: profil, admin profil, ayarlar, yönetim
 
 - **Ortak görsel dil (`mock_ui_kit.dart`):** ortalanmış başlıklı üst çubuk, mor tonlu koyu kartlar, düz renkli ikon kareleri, mor anahtarlı satırlar

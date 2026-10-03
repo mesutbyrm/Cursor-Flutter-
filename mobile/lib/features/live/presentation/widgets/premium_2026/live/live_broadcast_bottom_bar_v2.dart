@@ -29,6 +29,8 @@ class LiveBroadcastBottomBarV2 extends StatefulWidget {
     this.onShare,
     this.onSettings,
     this.multiLayoutActive = false,
+    this.guestLabel = 'Misafir',
+    this.guestIcon = Icons.person_add_alt_1_rounded,
   });
 
   final TextEditingController chatController;
@@ -60,6 +62,10 @@ class LiveBroadcastBottomBarV2 extends StatefulWidget {
 
   /// Çoklu yayın (2+ kişi) açık mı — alt çubuk düzeni buna göre değişir.
   final bool multiLayoutActive;
+
+  /// Misafir düğmesi etiketi/ikonu — misafirken «Düş».
+  final String guestLabel;
+  final IconData guestIcon;
 
   @override
   State<LiveBroadcastBottomBarV2> createState() => _LiveBroadcastBottomBarV2State();
@@ -102,8 +108,8 @@ class _LiveBroadcastBottomBarV2State extends State<LiveBroadcastBottomBarV2> {
     final items = <Widget>[
       if (w.onGuest != null)
         _ActionIconButton(
-          icon: Icons.person_add_alt_1_rounded,
-          label: 'Misafir',
+          icon: w.guestIcon,
+          label: w.guestLabel,
           onTap: w.onGuest!,
         ),
       // Tekli yayında «Çoklu» (yalnız yayıncı).

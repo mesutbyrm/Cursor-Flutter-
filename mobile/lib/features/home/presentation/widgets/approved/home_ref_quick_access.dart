@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../agency/presentation/providers/agency_providers.dart';
 import '../../navigation/home_cta_navigation.dart';
 import '../../../../../core/motion/canlifal_motion_widgets.dart';
 import '../../theme/home_approved_design.dart';
 import '../home_motion_widgets.dart';
 
-/// Referans — Canlı / Sesli / Tanış / Gold hızlı erişim (4 kare kart).
-class HomeRefQuickAccess extends StatelessWidget {
+/// Referans — Keşfet / Sesli / Tanış / Gold / Ajans hızlı erişim (5 kompakt kart).
+/// Ajans kutusu: onaylı ajansı olan «Ajansım»ı, olmayan «Ajans Ol»u görür.
+class HomeRefQuickAccess extends ConsumerWidget {
   const HomeRefQuickAccess({super.key});
 
   static const _actions = <_QuickAccessItem>[
@@ -36,7 +40,19 @@ class HomeRefQuickAccess extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hasAgency = ref.watch(
+      approvedAgencyProvider.select((s) => s.isApprovedAgency),
+    );
+    final items = <_QuickAccessItem>[
+      ..._actions,
+      _QuickAccessItem(
+        label: hasAgency ? 'Ajansım' : 'Ajans Ol',
+        icon: Icons.apartment_rounded,
+        route: hasAgency ? '/ajans/dashboard' : '/ajans/basvur',
+        colors: const [Color(0xFF10B981), Color(0xFF06B6D4)],
+      ),
+    ];
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         HomeApprovedDesign.hPad,
@@ -46,16 +62,16 @@ class HomeRefQuickAccess extends StatelessWidget {
       ),
       child: Row(
         children: [
-          for (var i = 0; i < _actions.length; i++) ...[
-            if (i > 0) const SizedBox(width: 10),
+          for (var i = 0; i < items.length; i++) ...[
+            if (i > 0) const SizedBox(width: 6),
             Expanded(
               child: CanlifalEntranceFadeSlide(
                 delay: Duration(milliseconds: 40 * i),
-                child: _actions[i].route == '/premium-membership'
+                child: items[i].route == '/premium-membership'
                     ? HomeGoldShimmerBand(
-                        child: _QuickAccessTile(item: _actions[i]),
+                        child: _QuickAccessTile(item: items[i]),
                       )
-                    : _QuickAccessTile(item: _actions[i]),
+                    : _QuickAccessTile(item: items[i]),
               ),
             ),
           ],
@@ -89,11 +105,10 @@ class _QuickAccessTile extends StatelessWidget {
     return CanlifalPressable(
       onTap: () => pushFromHomeCta(context, item.route),
       child: AspectRatio(
-        aspectRatio: 1,
+        aspectRatio: 0.92,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            borderRadius:
-                BorderRadius.circular(HomeApprovedDesign.cardRadius),
+            borderRadius: BorderRadius.circular(14),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -114,21 +129,28 @@ class _QuickAccessTile extends StatelessWidget {
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.fromLTRB(6, 7, 6, 6),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(item.icon, color: Colors.white, size: 26),
+                Icon(item.icon, color: Colors.white, size: 20),
                 const Spacer(),
-                Text(
-                  item.label,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    height: 1.15,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
+                SizedBox(
+                  width: double.infinity,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(
+                      item.label,
+                      maxLines: 1,
+                      softWrap: false,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        height: 1.15,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
               ],

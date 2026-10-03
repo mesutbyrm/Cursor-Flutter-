@@ -26,6 +26,32 @@ class AgencyRemoteDataSource {
     }
   }
 
+  /// `POST /api/agency/apply` — ajans başvurusu (admin onayına düşer).
+  /// Sunucu hata mesajı [ApiException] olarak yukarı atılır.
+  Future<String> applyForAgency({
+    required String name,
+    String? description,
+    String? contactEmail,
+    String? contactPhone,
+  }) async {
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.agencyApply,
+      data: {
+        'name': name,
+        if (description != null && description.isNotEmpty)
+          'description': description,
+        if (contactEmail != null && contactEmail.isNotEmpty)
+          'contactEmail': contactEmail,
+        if (contactPhone != null && contactPhone.isNotEmpty)
+          'contactPhone': contactPhone,
+      },
+    );
+    final msg = asJsonMap(res.data)['message']?.toString();
+    return (msg == null || msg.isEmpty)
+        ? 'Ajans başvurunuz alındı. Admin onayı bekleniyor.'
+        : msg;
+  }
+
   Future<List<AgencyMemberEntity>> fetchMembers() async {
     try {
       final res = await _dio.safeGet<dynamic>(ApiEndpoints.agencyMembers);
