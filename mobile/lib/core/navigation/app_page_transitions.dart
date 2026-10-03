@@ -5,6 +5,13 @@ import '../motion/canlifal_motion_tokens.dart';
 import 'app_back_scope.dart';
 import '../ui/premium_2026/premium_motion.dart';
 
+/// Web'deki `initial={{ opacity: 0, y: 20 }}` — 20 px yükselme, ekran
+/// yüksekliğine oranlanmış `Offset` olarak.
+Offset webRiseOffset(BuildContext context) {
+  final h = MediaQuery.sizeOf(context).height;
+  return Offset(0, h <= 0 ? 0.03 : CanlifalMotionTokens.webRisePx / h);
+}
+
 /// Android varsayılan geçişleri modal barrier/scrim bırakabiliyor — barrier yok.
 class NoBarrierPageTransitionsBuilder extends PageTransitionsBuilder {
   const NoBarrierPageTransitionsBuilder();
@@ -23,7 +30,7 @@ class NoBarrierPageTransitionsBuilder extends PageTransitionsBuilder {
       child: SlideTransition(
         position: animation.drive(
           Tween<Offset>(
-            begin: const Offset(0, 0.02),
+            begin: webRiseOffset(context),
             end: Offset.zero,
           ).chain(CurveTween(curve: Curves.easeOutCubic)),
         ),
@@ -46,7 +53,7 @@ abstract final class AppPageTransitions {
   static CustomTransitionPage<T> fadeSlide<T>({
     required LocalKey? key,
     required Widget child,
-    Duration duration = CanlifalMotionTokens.page,
+    Duration duration = CanlifalMotionTokens.webEnter,
   }) {
     return CustomTransitionPage<T>(
       key: key,
@@ -60,7 +67,7 @@ abstract final class AppPageTransitions {
           reverseCurve: Curves.easeInCubic,
         );
         final offset = Tween<Offset>(
-          begin: const Offset(0, 0.035),
+          begin: webRiseOffset(context),
           end: Offset.zero,
         ).animate(curved);
         return FadeTransition(

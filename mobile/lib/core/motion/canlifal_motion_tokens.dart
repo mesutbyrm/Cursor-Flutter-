@@ -22,6 +22,13 @@ abstract final class CanlifalMotionTokens {
   static const Curve spring = Curves.easeOutBack;
   static const Curve expo = Curves.easeOutExpo;
 
+  // Web (canlifal.com, framer-motion) ile birebir: içerik `opacity 0 → 1`,
+  // `y 20 → 0`, 0.3 sn; liste elemanları `delay: i * 0.05`; modal scale 0.9 → 1.
+  static const Duration webEnter = Duration(milliseconds: 300);
+  static const Duration webStagger = Duration(milliseconds: 50);
+  static const double webRisePx = 20;
+  static const double webModalScale = 0.9;
+
   static const double pressScale = 0.96;
   static const double navActiveScale = 1.08;
 
