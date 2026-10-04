@@ -155,4 +155,19 @@ class ParityApi {
     );
     return asJsonList(parityUnwrap(res.data)).map(SupporterLevelRow.fromJson).toList();
   }
+
+  // ── Ham GET/POST (falcı paneli, ajans büyüme vb.) ───────────────────────
+  Future<Map<String, dynamic>> rawMap(String path, {Map<String, dynamic>? query}) async {
+    final res = await _dio.safeGet<dynamic>(path, query: query);
+    return asJsonMap(parityUnwrap(res.data));
+  }
+
+  Future<List<Map<String, dynamic>>> rawList(String path, {Map<String, dynamic>? query}) async {
+    final res = await _dio.safeGet<dynamic>(path, query: query);
+    return asJsonList(parityUnwrap(res.data));
+  }
+
+  Future<void> rawPost(String path, Map<String, dynamic> body) async {
+    await _dio.safePost<dynamic>(path, data: body);
+  }
 }

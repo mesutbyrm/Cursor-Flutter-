@@ -1126,4 +1126,16 @@ abstract final class ApiEndpoints {
   static const leaderboardsTop100 = '/api/leaderboards/top100';
   static const vipLeaderboard = '/api/vip/leaderboard';
   static const supporterLevels = '/api/supporter-levels';
+
+  // ── Web paritesi: falcı paneli / falcı sohbeti / ajans ──
+  static const tellerVerification = '/api/teller/verification';
+  static const tellerLevel = '/api/teller/level';
+  static const tellerAnalytics = '/api/teller/analytics';
+  static const tellerGifts = '/api/teller/gifts';
+  static const tellerReviews = '/api/teller/reviews';
+  static const tellerChatSessions = '/api/teller-chat';
+  static String tellerChatSession(String id) => '/api/teller-chat/$id';
+  static const agencyGrowth = '/api/agency/growth';
+  static String agencyApplicantScore(String userId) =>
+      '/api/agency/applicant-score/$userId';
 }

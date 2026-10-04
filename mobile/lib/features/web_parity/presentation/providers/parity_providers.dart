@@ -47,3 +47,14 @@ final mySupporterLevelsProvider =
     FutureProvider.autoDispose<List<SupporterLevelRow>>(
   (ref) => ref.watch(parityApiProvider).mySupporterLevels(),
 );
+
+/// Ham harita döndüren GET uçları (falcı paneli, ajans büyüme…).
+final parityMapProvider =
+    FutureProvider.autoDispose.family<Map<String, dynamic>, String>(
+  (ref, path) => ref.watch(parityApiProvider).rawMap(path),
+);
+
+final parityListProvider =
+    FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
+  (ref, path) => ref.watch(parityApiProvider).rawList(path),
+);

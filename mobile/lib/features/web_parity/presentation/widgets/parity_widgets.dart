@@ -156,15 +156,16 @@ class ParityCard extends StatelessWidget {
 }
 
 class ParityChip extends StatelessWidget {
-  const ParityChip(this.label, {super.key, required this.color});
+  const ParityChip(this.label, {super.key, this.color});
 
   final String label;
-  final Color color;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
+    final color = this.color ?? Theme.of(context).colorScheme.primary;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(10),
