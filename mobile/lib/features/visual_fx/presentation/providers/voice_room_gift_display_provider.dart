@@ -45,7 +45,7 @@ class VoiceRoomGiftDisplayState {
 /// Sesli oda hediye gösterimi — son 3 kuyruk + 1000+ banner.
 class VoiceRoomGiftDisplayController extends Notifier<VoiceRoomGiftDisplayState> {
   static const maxRecent = 3;
-  static const recentDisplayMs = 3000;
+  static const recentDisplayMs = 5000;
   static const bigGiftDisplayMs = 4500;
 
   final _dedupe = FxDedupeStore();
@@ -103,6 +103,8 @@ class VoiceRoomGiftDisplayController extends Notifier<VoiceRoomGiftDisplayState>
     _scheduleRecentRotation();
   }
 
+  /// Her hediye bildirimi [recentDisplayMs] gösterilir, sonra kuyruktan düşer;
+  /// kuyrukta başkası varsa o gösterilir, yoksa bildirim kaybolur (kalıcı kalmaz).
   void _scheduleRecentRotation() {
     _recentRotateTimer?.cancel();
     final queue = state.recentQueue;
@@ -110,19 +112,24 @@ class VoiceRoomGiftDisplayController extends Notifier<VoiceRoomGiftDisplayState>
     _recentRotateTimer = Timer(
       const Duration(milliseconds: recentDisplayMs),
       () {
-        if (state.recentQueue.isEmpty) {
-          state = state.copyWith(clearActiveRecent: true);
-          return;
-        }
-        if (state.recentQueue.length == 1) {
+        final active = state.activeRecent;
+        final rest = [
+          for (final g in state.recentQueue)
+            if (g != active) g,
+        ];
+        if (rest.isEmpty) {
+          _recentIndex = 0;
           state = state.copyWith(
             recentQueue: const [],
             clearActiveRecent: true,
           );
           return;
         }
-        _recentIndex = (_recentIndex + 1) % state.recentQueue.length;
-        state = state.copyWith(activeRecent: state.recentQueue[_recentIndex]);
+        _recentIndex = rest.length - 1;
+        state = state.copyWith(
+          recentQueue: rest,
+          activeRecent: rest[_recentIndex],
+        );
         _scheduleRecentRotation();
       },
     );

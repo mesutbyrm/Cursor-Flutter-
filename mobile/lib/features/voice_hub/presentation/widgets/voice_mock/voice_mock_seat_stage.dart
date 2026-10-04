@@ -287,7 +287,7 @@ class VoiceMockSeat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = isHost ? 64.0 : 54.0;
+    final size = isHost ? 56.0 : 52.0;
     final box = size + _pad;
     final u = user;
 
@@ -317,7 +317,7 @@ class VoiceMockSeat extends StatelessWidget {
       disc = avatar;
     }
 
-    final wide = isHost ? box + 18 : box;
+    final wide = box;
     final avatarArea = SizedBox(
       width: wide,
       height: box + (isHost ? 6 : 4),
@@ -325,17 +325,18 @@ class VoiceMockSeat extends StatelessWidget {
         clipBehavior: Clip.none,
         alignment: Alignment.center,
         children: [
-          if (isHost && u != null)
-            Positioned.fill(
-              child: CustomPaint(painter: _WingsPainter(size: box)),
-            ),
           Positioned(top: 6, child: SizedBox(width: box, height: box, child: Center(child: disc))),
-          if (u != null)
+          if (u != null && isHost)
+            const Positioned(
+              top: -6,
+              child: Text('👑', style: TextStyle(fontSize: 22)),
+            )
+          else if (u != null)
             Positioned(
-              top: isHost ? -6 : 0,
+              top: 0,
               child: Icon(
                 Icons.workspace_premium_rounded,
-                size: isHost ? 26 : 17,
+                size: 17,
                 color: VoiceRoomTokens.gold,
                 shadows: const [Shadow(color: Colors.black54, blurRadius: 4)],
               ),
@@ -366,13 +367,18 @@ class VoiceMockSeat extends StatelessWidget {
 
     final Widget label;
     if (isHost) {
-      label = Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _GoldPill(text: 'Oda Sahibi', filled: true),
-          const SizedBox(height: 3),
-          _GoldPill(text: u?.displayName ?? 'Boş', filled: false),
-        ],
+      label = Text(
+        u?.displayName ?? 'Boş',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        textScaler: TextScaler.noScaling,
+        style: const TextStyle(
+          fontSize: 12.5,
+          fontWeight: FontWeight.w800,
+          color: Color(0xFFFFE082),
+          shadows: [Shadow(color: Colors.black87, blurRadius: 4)],
+        ),
       );
     } else if (u == null) {
       label = Text(
@@ -512,39 +518,6 @@ class _MicBadge extends StatelessWidget {
   }
 }
 
-class _GoldPill extends StatelessWidget {
-  const _GoldPill({required this.text, required this.filled});
-
-  final String text;
-  final bool filled;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(maxWidth: 96),
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 2),
-      decoration: BoxDecoration(
-        color: filled
-            ? const Color(0xCC3A2A00)
-            : Colors.black.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: VoiceRoomTokens.gold, width: 1.1),
-      ),
-      child: Text(
-        text,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textScaler: TextScaler.noScaling,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          color: filled ? VoiceRoomTokens.gold : Colors.white,
-        ),
-      ),
-    );
-  }
-}
-
 class _EmptyDisc extends StatelessWidget {
   const _EmptyDisc({required this.size, required this.locked});
 
@@ -595,51 +568,3 @@ class _DashedRingPainter extends CustomPainter {
   bool shouldRepaint(_DashedRingPainter old) => old.color != color;
 }
 
-/// Oda sahibinin avatarı etrafındaki altın kanatlar.
-class _WingsPainter extends CustomPainter {
-  _WingsPainter({required this.size});
-
-  final double size;
-
-  @override
-  void paint(Canvas canvas, Size s) {
-    final c = Offset(s.width / 2, size / 2 + 6);
-    final r = size / 2;
-    for (final dir in [-1.0, 1.0]) {
-      for (var i = 0; i < 4; i++) {
-        final t = i / 3;
-        final len = r * (0.4 + 0.4 * (1 - t));
-        final start = Offset(c.dx + dir * (r * 0.78), c.dy - r * 0.55 + i * r * 0.42);
-        final end = Offset(
-          c.dx + dir * (r * 0.78 + len * 0.62),
-          c.dy - r * (0.95 - t * 0.35) - len * 0.15 + i * r * 0.1,
-        );
-        final path = Path()
-          ..moveTo(start.dx, start.dy)
-          ..quadraticBezierTo(
-            (start.dx + end.dx) / 2,
-            end.dy - len * 0.18,
-            end.dx,
-            end.dy,
-          )
-          ..quadraticBezierTo(
-            (start.dx + end.dx) / 2 + dir * 3,
-            start.dy + len * 0.2,
-            start.dx,
-            start.dy + 3,
-          )
-          ..close();
-        canvas.drawPath(
-          path,
-          Paint()
-            ..shader = const LinearGradient(
-              colors: [Color(0xFFFFF3B0), VoiceRoomTokens.gold, Color(0xFFB8860B)],
-            ).createShader(Rect.fromLTWH(0, 0, s.width, s.height)),
-        );
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(_WingsPainter old) => old.size != size;
-}
