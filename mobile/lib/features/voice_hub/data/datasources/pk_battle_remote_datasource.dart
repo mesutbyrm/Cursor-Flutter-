@@ -364,6 +364,7 @@ class PkBattleRemoteDataSource {
       'endsAt',
       'endTime',
       'startedAt',
+      'endedAt',
       'serverNow',
       'winnerId',
       'user1',

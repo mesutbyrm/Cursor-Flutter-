@@ -219,8 +219,18 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
       if (!wasEnded && nowEnded) {
         _onPkEndedTransition(next.battle?['id']?.toString());
       }
+      // PK bitti ya da hiç kalmadı: rakip odaya köprüyü HEMEN kes (build'e
+      // bağlı kalırsa karşı yayıncının sesi PK bittikten sonra da geliyordu).
+      if (next.battle == null || nowEnded) {
+        _disconnectBridge();
+      }
     });
     if (battle == null || !isLivePkBroadcastStage(battle, pk.status)) {
+      if (_bridgedBattleId != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _disconnectBridge();
+        });
+      }
       return const ColoredBox(color: Color(0xFF120A1E));
     }
     final ended = livePkBattleFinished(status: pk.status, battle: battle);

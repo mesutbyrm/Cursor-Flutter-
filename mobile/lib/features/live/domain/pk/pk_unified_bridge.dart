@@ -98,6 +98,9 @@ Map<String, dynamic> pkBattleRemoteToBattleMap(
     'opponentId': remote.opponentId,
     'targetUserId': remote.targetUserId,
     'guestUserId': remote.guestUserId,
+    if ((remote.winnerId ?? '').isNotEmpty) 'winnerId': remote.winnerId,
+    if (remote.endedAt != null)
+      'endedAt': remote.endedAt!.toUtc().toIso8601String(),
     'leftName': remote.challenger?.displayName,
     'rightName': remote.opponent?.displayName,
     'challengerName': remote.challenger?.displayName,

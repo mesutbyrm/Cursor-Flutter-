@@ -622,27 +622,45 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   }
 
   Future<void> _revertPkTwoWayRtc(String streamId) async {
-    if (!_pkTwoWayRtc || _leaving) return;
+    if (_leaving) return;
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null || _trtcCoordinator == null) return;
+    // `_pkTwoWayRtc` yanlış kalsa da (rejoin hatası) fiilen kendi odamızda
+    // değilsek geri dön — aksi halde rakibin sesi/odası takılı kalıyordu.
+    final mgr = _trtcCoordinator!.roomManager;
+    final joined = mgr.joinedStrRoomId?.trim() ?? '';
+    final inOwnRoom = joined.isNotEmpty && joined.endsWith(streamId);
+    if (!_pkTwoWayRtc && inOwnRoom) return;
     _pkTwoWayRtc = false;
     try {
-      _trtcCoordinator!.setReconnectSuspended(true);
-      await _trtcCoordinator!.leave();
-      await _trtcCoordinator!.join(
-        roomId: streamId,
-        roomType: 'stream',
-        userId: user.id,
-        isHost: widget.session.isHost,
-        twoWayVideo: widget.session.isHost || _coHostUpgraded,
-        expectedAnchorUserId: widget.session.hostUserId,
-        useCompoundJoin: true,
-      );
-      _applyRtcPublishPolicy();
-    } catch (_) {
-      _applyRtcPublishPolicy();
-    } finally {
-      _trtcCoordinator?.setReconnectSuspended(false);
+      _trtc.disconnectOtherRoom();
+    } catch (_) {}
+    for (var attempt = 0; attempt < 2; attempt++) {
+      try {
+        _trtcCoordinator!.setReconnectSuspended(true);
+        await _trtcCoordinator!.leave();
+        await _trtcCoordinator!.join(
+          roomId: streamId,
+          roomType: 'stream',
+          userId: user.id,
+          isHost: widget.session.isHost,
+          twoWayVideo: widget.session.isHost || _coHostUpgraded,
+          expectedAnchorUserId: widget.session.hostUserId,
+          useCompoundJoin: true,
+        );
+        _applyRtcPublishPolicy();
+        // Tekli görünüme dönünce yerel önizleme platform görünümü yeniden kurulur
+        // (aksi halde iki tarafta da görüntü boş kalıyordu).
+        if (mounted) setState(() => _localPreviewKey = UniqueKey());
+        break;
+      } catch (_) {
+        _applyRtcPublishPolicy();
+        if (attempt == 0) {
+          await Future<void>.delayed(const Duration(milliseconds: 1200));
+        }
+      } finally {
+        _trtcCoordinator?.setReconnectSuspended(false);
+      }
     }
   }
 
@@ -3076,6 +3094,21 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           }
         } else if (wasSplit && !nowSplit) {
           unawaited(_revertPkTwoWayRtc(streamId));
+        }
+        final wasDone = prev != null &&
+            livePkBattleFinished(status: prev.status, battle: prev.battle);
+        final nowDone =
+            livePkBattleFinished(status: next.status, battle: next.battle);
+        if (!wasDone && nowDone) {
+          // Sonuç ekranı kapanmasa/battle temizlenmese bile rakip odadan çık.
+          Future<void>.delayed(const Duration(seconds: 10), () {
+            if (!mounted || _leaving || !_pkTwoWayRtc) return;
+            final cur = ref.read(liveVideoPkProvider(streamId));
+            if (cur.battle == null ||
+                livePkBattleFinished(status: cur.status, battle: cur.battle)) {
+              unawaited(_revertPkTwoWayRtc(streamId));
+            }
+          });
         }
       });
       ref.listen(

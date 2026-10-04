@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.711+764 (2026-10-04) — Canlı PK düzeltmeleri · sesli oda koltuk/hediye/arka plan
+
+- **Canlı PK — kök neden:** uygulama PK durumunu eski `/api/live/pk` ucundan okuyordu (süre/bitiş/kazanan/taraf yok); kanonik `/api/video-streams/pk` yanıtı atılıyordu. Artık `endsAt`, `serverNow`, `winnerId`, `endedAt`, `stream1Id/stream2Id`, oyuncu adları buradan alınır → puanlar doğru tarafa işlenir, rakip taraf yanlış «sol» sayılmaz
+- **Geri sayım:** iki yayıncının cihaz saatinden bağımsız, sunucu saatiyle (`serverNow`) aynı saniyede akar; çift saat düzeltmesi kaldırıldı. Aktif PK'da skor 3–4 sn'de bir de yoklanır
+- **Kazanan:** sonuç ekranında herkese «🏆 X kazandı!» yazılır, sonuç ~5,5 sn görünür; erken «PK bitir» ile sunucunun bitirdiği maç artık istemcide «aktif» kalmaz
+- **PK sonrası ses/görüntü/kapatma:** rakip odaya köprü PK biter bitmez kesilir (karşı yayıncının sesi gelmeye devam etmiyordu); kendi odaya dönüş yeniden denenir, yerel önizleme yeniden kurulur, 10 sn güvenlik zamanlayıcısı eklendi
+- **Hediye bildirimleri:** PK panelinde üst düğmelerin arkasında kalıyordu → sol-ortaya alındı; bildirimler 5 sn sonra kaybolur (altta takılı kalmaz)
+- **Sesli oda:** koltuklar küçüldü, oda sahibinde kanat yok (yalnızca 👑); hediye bildirimi 5 sn sonra kaybolur, kalıcı «ilk destekçi» rozeti tam sayfadan kaldırıldı; «Daha Fazla → Oda arka planı» sahip/yönetici için görünür (hazır sunucu görselleri veya yükle)
+
 ## 1.0.710+763 (2026-10-04) — Sesli oda mockup ekranı gerçekten açılıyor · canlı yayın misafir düzeltmeleri · Google girişi
 
 - **Sesli oda:** uygulama şimdiye kadar mockup'a göre yazılan tam sayfa yerine eski sade sayfayı (`VoiceRoomBasicPage`) açıyordu; bu yüzden «olmamış» görünüyordu. Artık varsayılan **tam sayfa**: üst bar, 4 sütun koltuk ızgarası (oda sahibi büyük, «Koltuk Aç»), sağ düğmeler (Hediye · Müzik · PK · İstek · Daha Fazla), sohbet baloncukları ve alt dock (Açık · Kapalı · Konuş · Efektler · Oda Modu). Boş koltuk halkası mockup'taki gibi düz. Hediye hedefi çubuğu ve ilk destekçi rozeti tam sayfaya da eklendi. Eski sayfa için `--dart-define=VOICE_ROOM_BASIC_UI=true`
