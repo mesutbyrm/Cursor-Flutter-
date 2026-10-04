@@ -58,6 +58,22 @@ class CanlifalEntranceFadeSlide extends StatelessWidget {
     this.slideY = 0.04,
   });
 
+  /// Web'deki `delay: index * 0.05` kademeli liste girişi (en çok 5 öğe gecikir).
+  factory CanlifalEntranceFadeSlide.staggered({
+    Key? key,
+    required int index,
+    required Widget child,
+  }) {
+    return CanlifalEntranceFadeSlide(
+      key: key,
+      delay: Duration(
+        milliseconds:
+            CanlifalMotionTokens.webStagger.inMilliseconds * index.clamp(0, 5),
+      ),
+      child: child,
+    );
+  }
+
   final Widget child;
   final Duration delay;
   final double slideY;
@@ -67,13 +83,13 @@ class CanlifalEntranceFadeSlide extends StatelessWidget {
     return child
         .animate(delay: delay)
         .fadeIn(
-          duration: CanlifalMotionTokens.normal,
+          duration: CanlifalMotionTokens.webEnter,
           curve: CanlifalMotionTokens.easeOut,
         )
         .slideY(
           begin: slideY,
           end: 0,
-          duration: CanlifalMotionTokens.normal,
+          duration: CanlifalMotionTokens.webEnter,
           curve: CanlifalMotionTokens.easeOut,
         );
   }
