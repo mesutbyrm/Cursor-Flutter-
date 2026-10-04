@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../live/domain/pk/live_pk_server_clock.dart';
 import '../../../live/domain/pk/pk_status_helper.dart';
 
 /// Sunucu PK durumu — web ve Flutter ortak sözleşme.
@@ -31,6 +32,7 @@ class PkBattleRemote extends Equatable {
     this.endsAt,
     this.startedAt,
     this.expiresAt,
+    this.endedAt,
     this.inviteTimeoutSeconds = 0,
     this.serverNow,
     this.scope = '',
@@ -63,6 +65,9 @@ class PkBattleRemote extends Equatable {
   final DateTime? startedAt;
   /// Davet otomatik kapanma (genelde 60 sn).
   final DateTime? expiresAt;
+
+  /// Sunucunun maçı gerçekten bitirdiği an (erken «PK bitir» dahil).
+  final DateTime? endedAt;
   final int inviteTimeoutSeconds;
   /// PK_ENTEGRASYON — `endsAt − serverNow` geri sayımı için (oda GET /pk).
   final String? serverNow;
@@ -105,6 +110,7 @@ class PkBattleRemote extends Equatable {
       endsAt: endsAt,
       startedAt: startedAt,
       expiresAt: expiresAt,
+      endedAt: endedAt,
       inviteTimeoutSeconds: inviteTimeoutSeconds,
       serverNow: serverNow,
       scope: scope,
@@ -113,7 +119,7 @@ class PkBattleRemote extends Equatable {
 
   /// Sunucu `endsAt` / `startedAt` varsa öncelikli geri sayım.
   int resolvedSecondsLeft({DateTime? now}) {
-    final t = (now ?? DateTime.now()).toUtc();
+    final t = (now ?? livePkNow()).toUtc();
     if (endsAt != null) {
       return endsAt!.toUtc().difference(t).inSeconds.clamp(0, 86400);
     }
@@ -271,11 +277,12 @@ class PkBattleRemote extends Equatable {
           normalized['started_at'],
     );
     final expiresAt = _parseDate(normalized['expiresAt']);
+    final endedAt = _parseDate(normalized['endedAt']);
     final inviteTimeoutSeconds =
         _int(normalized['timeoutSeconds'], fallback: 0);
     var secondsLeft = _int(normalized['secondsLeft'], fallback: 300);
     if (endsAt != null) {
-      final left = endsAt.toUtc().difference(DateTime.now().toUtc()).inSeconds;
+      final left = endsAt.toUtc().difference(livePkNow()).inSeconds;
       if (left >= 0) secondsLeft = left;
     } else if (startedAt != null) {
       final duration = _int(
@@ -283,7 +290,7 @@ class PkBattleRemote extends Equatable {
         fallback: 180,
       );
       final elapsed =
-          DateTime.now().toUtc().difference(startedAt.toUtc()).inSeconds;
+          livePkNow().difference(startedAt.toUtc()).inSeconds;
       secondsLeft = (duration - elapsed).clamp(0, duration);
     }
     return PkBattleRemote(
@@ -343,6 +350,7 @@ class PkBattleRemote extends Equatable {
       endsAt: endsAt,
       startedAt: startedAt,
       expiresAt: expiresAt,
+      endedAt: endedAt,
       inviteTimeoutSeconds: inviteTimeoutSeconds,
       serverNow: normalized['serverNow']?.toString(),
       scope: normalized['scope']?.toString() ?? '',

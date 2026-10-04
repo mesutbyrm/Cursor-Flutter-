@@ -35,7 +35,6 @@ import '../../admin/presentation/providers/staff_access_provider.dart';
 import '../domain/voice_official_join.dart';
 import '../domain/voice_room_background_policy.dart';
 import '../../gifts/domain/premium_gift_catalog_2026.dart';
-import '../../gifts/presentation/widgets/first_gifter_badge.dart';
 import '../../gifts/presentation/widgets/gift_battle_strip.dart';
 import '../../gifts/presentation/widgets/gift_goal_bar.dart';
 import '../../gifts/presentation/widgets/lucky_gift_wins_ticker.dart';
@@ -1276,7 +1275,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                 unawaited(_shareRoom());
               },
             ),
-            if (perms.canChangeBackground)
+            if (perms.canChangeBackground || perms.isRoomOwner || perms.isSiteAdmin)
               ListTile(
                 leading: const Icon(Icons.wallpaper_rounded, color: Colors.white),
                 title: const Text('Oda arka planı'),
@@ -1890,12 +1889,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           ),
                         ),
                         GiftGoalBar(
-                          context: 'voice_room',
-                          contextId: room.apiRoomKey.isNotEmpty
-                              ? room.apiRoomKey
-                              : room.id,
-                        ),
-                        FirstGifterBadge(
                           context: 'voice_room',
                           contextId: room.apiRoomKey.isNotEmpty
                               ? room.apiRoomKey

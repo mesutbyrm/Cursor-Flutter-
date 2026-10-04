@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import '../../../live/domain/pk/live_pk_server_clock.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../../../core/network/api_endpoints.dart';
@@ -335,6 +336,52 @@ class PkBattleRemoteDataSource {
   }
 
   /// [finalizeExpired]: davet poll için `false` — 3 istek yerine hafif okuma.
+  /// `/api/live/pk` alanları + kanonik `/api/video-streams/pk` yanıtı birleşimi.
+  Map<String, dynamic> _streamBattleInput({
+    required String id,
+    required String fieldId,
+    required String fieldStatus,
+    required int fieldDuration,
+    required int fieldScore1,
+    required int fieldScore2,
+    Map<String, dynamic>? canon,
+  }) {
+    final input = <String, dynamic>{
+      'id': fieldId,
+      'status': fieldStatus,
+      'duration': fieldDuration,
+      'score1': fieldScore1,
+      'score2': fieldScore2,
+      'liveStreamId': id,
+    };
+    final c = canon;
+    if (c == null || c['id']?.toString() != fieldId) return input;
+    input['battleType'] = 'live_stream';
+    for (final k in const [
+      'status',
+      'score1',
+      'score2',
+      'endsAt',
+      'endTime',
+      'startedAt',
+      'endedAt',
+      'serverNow',
+      'winnerId',
+      'user1',
+      'user2',
+      'duration',
+    ]) {
+      final v = c[k];
+      if (v != null && '$v'.trim().isNotEmpty) input[k] = v;
+    }
+    // Taraf kimliği: stream1 = meydan okuyan (sol), stream2 = rakip (sağ).
+    final s1 = c['stream1Id']?.toString().trim() ?? '';
+    final s2 = c['stream2Id']?.toString().trim() ?? '';
+    if (s1.isNotEmpty) input['liveStreamId'] = s1;
+    if (s2.isNotEmpty) input['opponentLiveStreamId'] = s2;
+    return input;
+  }
+
   Future<PkBattleRemote?> fetchStreamBattle(
     String streamId, {
     bool finalizeExpired = true,
@@ -351,26 +398,39 @@ class PkBattleRemoteDataSource {
     }
     // `GET /api/live/pk` ve `/pk-battle` süresi dolan aktif PK'yı kapatmaz;
     // yalnızca `GET /api/video-streams/pk` `finalizeExpiredActivePKs` çalıştırır.
+    // Bu uç aynı zamanda KANONİK durumdur: `endsAt`, `serverNow`, `winnerId`,
+    // `stream1Id/stream2Id`, `user1/user2` — eskiden yanıtı atılıyor, sayaç/kazanan/
+    // taraf bilgisi eksik kalıyordu.
+    Map<String, dynamic>? canon;
     if (finalizeExpired) {
       try {
-        await _dio.safeGet<dynamic>(
+        final res = await _dio.safeGet<dynamic>(
           ApiEndpoints.videoStreamPk,
           query: {'streamId': id},
           forceRefresh: true,
         );
+        final d = res.data;
+        if (d is Map) {
+          final m = asJsonMap(d);
+          if ((m['id']?.toString() ?? '').isNotEmpty) canon = m;
+        }
       } catch (_) {}
+      livePkServerClock.observeIso(canon?['serverNow']?.toString());
     }
     try {
       final field = await _liveFieldPk.fetchPk(id);
       if (field != null && field.id.isNotEmpty) {
-        final battle = _parseBattle({
-          'id': field.id,
-          'status': field.status,
-          'duration': field.durationSeconds,
-          'score1': field.room1Score,
-          'score2': field.room2Score,
-          'liveStreamId': id,
-        });
+        final battle = _parseBattle(
+          _streamBattleInput(
+            id: id,
+            fieldId: field.id,
+            fieldStatus: field.status ?? '',
+            fieldDuration: field.durationSeconds ?? 180,
+            fieldScore1: field.room1Score ?? 0,
+            fieldScore2: field.room2Score ?? 0,
+            canon: canon,
+          ),
+        );
         if (battle != null) {
           if (!finalizeExpired) {
             _streamBattleLiteCache[id] =
@@ -380,6 +440,20 @@ class PkBattleRemoteDataSource {
         }
       }
     } catch (_) {}
+    if (canon != null) {
+      final battle = _parseBattle(
+        _streamBattleInput(
+          id: id,
+          fieldId: canon['id'].toString(),
+          fieldStatus: canon['status']?.toString() ?? '',
+          fieldDuration: 180,
+          fieldScore1: 0,
+          fieldScore2: 0,
+          canon: canon,
+        ),
+      );
+      if (battle != null) return battle;
+    }
     final res = await _dio.safeGet<dynamic>(ApiEndpoints.videoStreamPkBattle(id));
     final parsed = _parseBattle(res.data);
     if (!finalizeExpired) {

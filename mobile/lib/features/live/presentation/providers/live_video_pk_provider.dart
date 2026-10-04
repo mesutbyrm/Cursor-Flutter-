@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import '../../domain/pk/live_pk_local_score.dart';
+import '../../domain/pk/live_pk_server_clock.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -123,8 +124,9 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
   void _startPolling() {
     _poll?.cancel();
     final sse = ref.read(liveRoomProvider(arg)).sseConnected;
+    // SSE kaçsa da skor/sayaç gecikmesin: aktif PK'da sık yokla.
     final interval =
-        sse ? const Duration(seconds: 10) : const Duration(seconds: 5);
+        sse ? const Duration(seconds: 4) : const Duration(seconds: 3);
     _poll = Timer.periodic(interval, (_) {
       if (state.battle == null ||
           state.status == 'completed' ||
@@ -134,7 +136,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
       }
       final last = _lastRemoteBattleIngestAt;
       if (last != null &&
-          DateTime.now().difference(last) < const Duration(seconds: 12)) {
+          DateTime.now().difference(last) < const Duration(seconds: 3)) {
         return;
       }
       refresh();
@@ -154,7 +156,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
     _endsAtRefresh?.cancel();
     final endsAt = DateTime.tryParse(battle['endsAt']?.toString() ?? '');
     if (endsAt == null || attempt > 5) return;
-    var wait = endsAt.difference(DateTime.now().toUtc()) +
+    var wait = endsAt.toUtc().difference(livePkNow()) +
         const Duration(milliseconds: 1500);
     if (wait.isNegative) wait = Duration(seconds: 2 + attempt * 2);
     _endsAtRefresh = Timer(wait, () async {
@@ -313,9 +315,15 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
         isLivePkPausedStatus(prevStatus);
     if (!prevActive) return;
     if (!livePkBattleFinished(status: incStatus, battle: merged)) return;
+    // Sunucu maçı gerçekten bitirdiyse (endedAt / winnerId) erken «PK bitir»
+    // de dahil durum korunmaz — aksi halde iki taraf sonsuza dek PK ekranında
+    // kalıyordu (ses geliyor, yayın kapatılamıyor).
+    final endedAt = merged['endedAt']?.toString().trim() ?? '';
+    final winnerId = merged['winnerId']?.toString().trim() ?? '';
+    if (endedAt.isNotEmpty || winnerId.isNotEmpty) return;
     final endsAt =
         DateTime.tryParse(merged['endsAt']?.toString() ?? '')?.toUtc();
-    if (endsAt != null && DateTime.now().toUtc().isBefore(endsAt)) {
+    if (endsAt != null && livePkNow().isBefore(endsAt)) {
       merged['status'] = previous['status'];
     }
   }
@@ -349,6 +357,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
     }
     _lastIngestFingerprint = fp;
     _lastRemoteBattleIngestAt = DateTime.now();
+    livePkServerClock.observeIso(battle['serverNow']?.toString());
 
     final status = battle['status']?.toString() ?? '';
     // Pending davet split ekranı açmaz; yalnızca kabul sonrası aktif senkron.
@@ -392,7 +401,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
     final bid = battleId.trim();
     if (bid.isEmpty) return;
     _endedCleanup?.cancel();
-    _endedCleanup = Timer(const Duration(seconds: 4), () {
+    _endedCleanup = Timer(const Duration(seconds: 8), () {
       dismissEndedOverlay(expectedBattleId: bid);
     });
   }

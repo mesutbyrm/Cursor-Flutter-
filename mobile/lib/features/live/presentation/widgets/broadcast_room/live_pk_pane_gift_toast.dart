@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
@@ -7,7 +9,7 @@ import '../../../../gifts/presentation/sync/gift_session_state.dart';
 import '../../../domain/entities/live_gift_event.dart';
 
 /// Pane hediye bildirimi — gift session (gerçek realtime + API).
-class LivePkPaneGiftToast extends ConsumerWidget {
+class LivePkPaneGiftToast extends ConsumerStatefulWidget {
   const LivePkPaneGiftToast({
     super.key,
     required this.sessionKey,
@@ -19,8 +21,46 @@ class LivePkPaneGiftToast extends ConsumerWidget {
   final String? hostUserId;
   final String hostLabel;
 
+  /// Bildirim bu süre sonra kaybolur (kalıcı kalmaz).
+  static const displaySeconds = 5;
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LivePkPaneGiftToast> createState() =>
+      _LivePkPaneGiftToastState();
+}
+
+class _LivePkPaneGiftToastState extends ConsumerState<LivePkPaneGiftToast> {
+  Timer? _tick;
+
+  String get sessionKey => widget.sessionKey;
+  String? get hostUserId => widget.hostUserId;
+  String get hostLabel => widget.hostLabel;
+
+  @override
+  void initState() {
+    super.initState();
+    _tick = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _tick?.cancel();
+    super.dispose();
+  }
+
+  // Cihaz/sunucu saat farkından bağımsız: ilk görüldüğü andan itibaren sayılır.
+  final _seen = <String, DateTime>{};
+
+  bool _fresh(LiveGiftEvent e) {
+    final first = _seen.putIfAbsent(e.id, DateTime.now);
+    return DateTime.now().difference(first).inSeconds <
+        LivePkPaneGiftToast.displaySeconds;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     if (sessionKey.isEmpty) return const SizedBox.shrink();
 
     final latest = ref.watch(
@@ -31,22 +71,23 @@ class LivePkPaneGiftToast extends ConsumerWidget {
     );
 
     final events = <LiveGiftEvent>[];
-    if (latest != null && _targetsHost(latest)) {
+    if (latest != null && _targetsHost(latest) && _fresh(latest)) {
       events.add(latest);
     }
     for (final r in recent.take(4)) {
       if (events.any((e) => e.id == r.id)) continue;
       final ev = _eventFromRecent(r);
-      if (_targetsHost(ev)) events.add(ev);
+      if (_targetsHost(ev) && _fresh(ev)) events.add(ev);
     }
     if (events.isEmpty) return const SizedBox.shrink();
 
     final tail = events.length > 2 ? events.sublist(0, 2) : events;
 
+    // Üstteki düğme/çip satırlarının ALTINDA, panelin sol-ortasında göster.
     return Align(
-      alignment: Alignment.topLeft,
+      alignment: const Alignment(-1, -0.1),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(6, 56, 6, 0),
+        padding: const EdgeInsets.fromLTRB(6, 0, 6, 0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,

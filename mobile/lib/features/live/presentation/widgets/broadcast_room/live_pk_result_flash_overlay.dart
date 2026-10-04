@@ -10,6 +10,7 @@ class LivePkResultFlashOverlay extends StatelessWidget {
     required this.iWon,
     this.myScore = 0,
     this.opponentScore = 0,
+    this.winnerName,
   });
 
   final bool visible;
@@ -18,10 +19,14 @@ class LivePkResultFlashOverlay extends StatelessWidget {
   final int myScore;
   final int opponentScore;
 
+  /// Kazananın adı — herkese «X kazandı!» yazılır (yalnızca kendi sonucun değil).
+  final String? winnerName;
+
   @override
   Widget build(BuildContext context) {
     if (!visible) return const SizedBox.shrink();
 
+    final name = winnerName?.trim() ?? '';
     final (title, emoji, accent) = isDraw
         ? ('BERABERE', '⚔', const Color(0xFF7DD3FC))
         : iWon
@@ -48,6 +53,19 @@ class LivePkResultFlashOverlay extends StatelessWidget {
                 letterSpacing: 1,
               ),
             ),
+            if (!isDraw && name.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  '🏆 $name kazandı!',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFFFFD54F),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
             const SizedBox(height: 16),
             Row(
               mainAxisSize: MainAxisSize.min,

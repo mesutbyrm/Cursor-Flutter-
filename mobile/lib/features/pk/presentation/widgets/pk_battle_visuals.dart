@@ -1,3 +1,4 @@
+import '../../../live/domain/pk/live_pk_server_clock.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -251,7 +252,7 @@ int pkBattleSecondsLeftFromMap(Map<String, dynamic> battle) {
   if (endsRaw != null && endsRaw.isNotEmpty) {
     final ends = DateTime.tryParse(endsRaw);
     if (ends != null) {
-      return math.max(0, ends.difference(DateTime.now()).inSeconds);
+      return math.max(0, ends.toUtc().difference(livePkNow()).inSeconds);
     }
   }
   return 0;
