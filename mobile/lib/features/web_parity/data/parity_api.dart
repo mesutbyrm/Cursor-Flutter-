@@ -170,4 +170,12 @@ class ParityApi {
   Future<void> rawPost(String path, Map<String, dynamic> body) async {
     await _dio.safePost<dynamic>(path, data: body);
   }
+
+  /// POST, yanıt gövdesini (zarf açılmış) döndürür.
+  Future<Map<String, dynamic>> rawPostResult(String path, Map<String, dynamic> body) async {
+    final res = await _dio.safePost<dynamic>(path, data: body);
+    final raw = res.data;
+    if (raw is Map && raw['dream'] != null) return asJsonMap(raw);
+    return asJsonMap(parityUnwrap(raw));
+  }
 }

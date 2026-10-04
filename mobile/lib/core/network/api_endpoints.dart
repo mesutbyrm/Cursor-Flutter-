@@ -1138,4 +1138,12 @@ abstract final class ApiEndpoints {
   static const agencyGrowth = '/api/agency/growth';
   static String agencyApplicantScore(String userId) =>
       '/api/agency/applicant-score/$userId';
+
+  // ── Web paritesi: rüya topluluğu / oyunlar ──
+  static const dreamsTrends = '/api/dreams/trends';
+  static const dreamsGenerate = '/api/dreams/generate';
+  static String dreamComments(String slug) =>
+      '/api/dreams/${Uri.encodeComponent(slug)}/comments';
+  static const gamesLobby = '/api/games/lobby';
+  static const lambaCini = '/api/games/lamba-cini';
 }
