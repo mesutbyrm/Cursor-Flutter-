@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../../voice_hub/domain/pk/pk_battle_remote_models.dart';
+import '../../../domain/pk/live_pk_server_clock.dart';
 import '../../../../pk/presentation/widgets/pk_battle_visuals.dart';
 
 /// Sunucu `endsAt` / `startedAt` ile senkron geri sayım — yalnızca bu widget rebuild olur.
@@ -55,7 +56,7 @@ class _LivePkResolvedTimerState extends State<LivePkResolvedTimer> {
     if (remote != null) return remote.resolvedSecondsLeft();
     final ends = widget.endsAt;
     if (ends != null) {
-      return math.max(0, ends.difference(DateTime.now()).inSeconds);
+      return math.max(0, ends.toUtc().difference(livePkNow()).inSeconds);
     }
     return widget.fallbackSeconds.clamp(0, 86400);
   }

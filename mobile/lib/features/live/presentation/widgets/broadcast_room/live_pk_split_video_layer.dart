@@ -1,3 +1,4 @@
+import '../../../domain/pk/live_pk_server_clock.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -182,10 +183,10 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
       _resultFlashVisible = true;
     });
     _outcomeFx.forward(from: 0);
-    Future<void>.delayed(const Duration(milliseconds: 2600), () {
+    Future<void>.delayed(const Duration(milliseconds: 5500), () {
       if (mounted) setState(() => _resultFlashVisible = false);
     });
-    Future<void>.delayed(const Duration(seconds: 4), () {
+    Future<void>.delayed(const Duration(seconds: 7), () {
       if (!mounted) return;
       ref
           .read(liveVideoPkProvider(widget.streamId).notifier)
@@ -195,7 +196,7 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
 
   int _resolveDisplaySeconds(DateTime? endsAt, int fallback) {
     if (endsAt != null) {
-      return endsAt.difference(DateTime.now()).inSeconds.clamp(0, 86400);
+      return endsAt.toUtc().difference(livePkNow()).inSeconds.clamp(0, 86400);
     }
     return fallback;
   }
@@ -308,13 +309,11 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
     final burst = ref.watch(livePkScoreBurstProvider(streamId));
     final secondsLeft = pkBattleSecondsLeftFromMap(battleMap);
     final endsAtRaw = battleMap['endsAt']?.toString();
-    final skew = ref.read(pkServiceProvider).clockSkew;
+    // Sayaç sunucu saatiyle (livePkServerClock) hesaplanır; ayrıca cihaz
+    // sapması eklenmez (çift düzeltme iki tarafı farklı saniyeye götürüyordu).
     DateTime? endsAt;
     if (endsAtRaw != null && endsAtRaw.isNotEmpty) {
-      final parsed = DateTime.tryParse(endsAtRaw);
-      if (parsed != null) {
-        endsAt = parsed.add(skew);
-      }
+      endsAt = DateTime.tryParse(endsAtRaw);
     }
     final opponentUserId = layout.left.isLocalPane
         ? layout.right.userId
@@ -764,6 +763,12 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                 iWon: iWon,
                 myScore: myScore,
                 opponentScore: oppScore,
+                winnerName: livePkWinnerName(
+                  leftScore: leftScore,
+                  rightScore: rightScore,
+                  leftLabel: layout.left.label,
+                  rightLabel: layout.right.label,
+                ),
               ),
               LivePkReconnectBanner(
                 visible: sessionPhase == LiveSessionPhase.reconnecting,

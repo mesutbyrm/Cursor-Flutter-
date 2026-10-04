@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../live/domain/pk/live_pk_server_clock.dart';
 import '../../../live/domain/pk/pk_status_helper.dart';
 
 /// Sunucu PK durumu — web ve Flutter ortak sözleşme.
@@ -113,7 +114,7 @@ class PkBattleRemote extends Equatable {
 
   /// Sunucu `endsAt` / `startedAt` varsa öncelikli geri sayım.
   int resolvedSecondsLeft({DateTime? now}) {
-    final t = (now ?? DateTime.now()).toUtc();
+    final t = (now ?? livePkNow()).toUtc();
     if (endsAt != null) {
       return endsAt!.toUtc().difference(t).inSeconds.clamp(0, 86400);
     }
@@ -275,7 +276,7 @@ class PkBattleRemote extends Equatable {
         _int(normalized['timeoutSeconds'], fallback: 0);
     var secondsLeft = _int(normalized['secondsLeft'], fallback: 300);
     if (endsAt != null) {
-      final left = endsAt.toUtc().difference(DateTime.now().toUtc()).inSeconds;
+      final left = endsAt.toUtc().difference(livePkNow()).inSeconds;
       if (left >= 0) secondsLeft = left;
     } else if (startedAt != null) {
       final duration = _int(
@@ -283,7 +284,7 @@ class PkBattleRemote extends Equatable {
         fallback: 180,
       );
       final elapsed =
-          DateTime.now().toUtc().difference(startedAt.toUtc()).inSeconds;
+          livePkNow().difference(startedAt.toUtc()).inSeconds;
       secondsLeft = (duration - elapsed).clamp(0, duration);
     }
     return PkBattleRemote(
