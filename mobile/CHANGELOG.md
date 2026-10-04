@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.708+761 (2026-10-04) — Reklam ödülü beklemesi 6 sn → 3 sn
+
+- **Reklam ödülü:** reklamdan sonra SSV ödülünü bekleme süresi ~6 sn'den ~3 sn'ye indi (2 yoklama × 1,5 sn). SSV ödülü gelmezse eski `watch-ad` yedeği daha çabuk devreye girer; SSV bayrağı açılınca davranış aynı kalır
+
 ## 1.0.707+760 (2026-10-04) — Sesli oda ekranı mockup'a göre yeniden düzenlendi
 
 - **Üst bar:** geri · taçlı sahip avatarı · oda adı + `#sıra` rozeti + ID · jeton (1.6M) · çevrimiçi (·1.2K) · kırmızı çıkış; ikinci satırda «Popüler Oda ›» (sıralamayı açar) ve **Sıralama · Davet Et · Ayarlar** düğmeleri

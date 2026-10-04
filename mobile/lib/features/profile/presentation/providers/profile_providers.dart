@@ -209,7 +209,7 @@ final watchAdCreditProvider = FutureProvider.autoDispose<int>((ref) async {
   int total(WalletBalances b) => b.jeton + b.cfc + (b.fortuneAdCredits ?? 0);
 
   final before = total(await notifier.refresh(force: true));
-  for (var i = 0; i < 4; i++) {
+  for (var i = 0; i < 2; i++) {
     await Future<void>.delayed(const Duration(milliseconds: 1500));
     final gained = total(await notifier.refresh(force: true)) - before;
     if (gained > 0) return gained;
