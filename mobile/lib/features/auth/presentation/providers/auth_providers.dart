@@ -358,6 +358,9 @@ class AuthController extends AsyncNotifier<UserEntity?> {
         );
         final resolved = await _withSiteProfile(u);
         await _afterAuthSuccess(resolved);
+        // Web kaydı hoş geldin/doğrulama e-postası gönderir; `mobile-register`
+        // göndermez — mobil kayıtta da doğrulama e-postasını biz tetikleriz.
+        unawaited(_sendVerificationMailBestEffort());
         if (birthDate != null &&
             birthTime != null &&
             birthDate.isNotEmpty &&
@@ -383,6 +386,12 @@ class AuthController extends AsyncNotifier<UserEntity?> {
       });
       _clearGuestModeOnSuccess();
     });
+  }
+
+  Future<void> _sendVerificationMailBestEffort() async {
+    try {
+      await ref.read(authRepositoryProvider).sendEmailVerification();
+    } catch (_) {}
   }
 
   Future<void> loginWithGoogle() async {

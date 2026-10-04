@@ -160,6 +160,7 @@ import '../../features/profile/presentation/pages/profile_payment_notice_page.da
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/profile/presentation/pages/profile_visitors_page.dart';
 import '../../features/notifications/presentation/pages/notification_channel_settings_page.dart';
+import '../../features/notifications/presentation/pages/notification_diagnostics_page.dart';
 import '../../features/profile/presentation/pages/settings_category_page.dart';
 import '../../features/profile/presentation/pages/settings_page.dart';
 import '../../features/debug/presentation/api_monitor_page.dart';
@@ -934,6 +935,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings/notifications',
         builder: (context, state) => const NotificationChannelSettingsPage(),
+      ),
+      GoRoute(
+        path: '/settings/notifications/diagnostics',
+        builder: (context, state) => const NotificationDiagnosticsPage(),
       ),
       GoRoute(
         path: '/settings/devices',
