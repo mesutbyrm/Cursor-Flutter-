@@ -57,5 +57,24 @@ void main() {
       expect(reqs.first['userId'], 'u2');
       expect(reqs.first['displayName'], 'Ayşe');
     });
+
+    test('toCoBroadcasters yayıncının kapattığı mikrofon/kamerayı taşır', () {
+      final snap = LiveGuestListSnapshot.fromJson({
+        'guests': [
+          {
+            'userId': 'u1',
+            'status': 'active',
+            'isMuted': true,
+            'mutedByHost': true,
+            'isVideoOff': false,
+            'videoOffByHost': false,
+          },
+        ],
+      });
+      final g = snap.toCoBroadcasters().single;
+      expect(g['mutedByHost'], isTrue);
+      expect(g['isMuted'], isTrue);
+      expect(g['videoOffByHost'], isFalse);
+    });
   });
 }

@@ -707,7 +707,27 @@ class TrtcRoomManager {
     session._applyVoiceEffects(VoiceAudioSettingsStore.current);
   }
 
+  bool _micLockedByHost = false;
+  bool _cameraLockedByHost = false;
+
+  /// Yayıncı misafirin mikrofon/kamerasını kapattığında kilit konur; kilitliyken
+  /// yerel açma istekleri yok sayılır. Kilit koymak ilgili aygıtı da kapatır.
+  void setHostMediaLock({bool? mic, bool? camera}) {
+    if (mic != null) {
+      _micLockedByHost = mic;
+      if (mic) setMicEnabled(false);
+    }
+    if (camera != null) {
+      _cameraLockedByHost = camera;
+      if (camera) setCameraEnabled(false);
+    }
+  }
+
+  bool get micLockedByHost => _micLockedByHost;
+  bool get cameraLockedByHost => _cameraLockedByHost;
+
   void setMicEnabled(bool enabled) {
+    if (enabled && _micLockedByHost) return;
     if (!_inRoom && !_previewOnly) return;
     if (enabled) {
       _startLocalAudio();
@@ -730,6 +750,7 @@ class TrtcRoomManager {
   }
 
   void setCameraEnabled(bool enabled) {
+    if (enabled && _cameraLockedByHost) return;
     if (_cloud == null) return;
     if (!_inRoom && !_previewOnly) return;
     if (!_isHost && !_twoWayVideo && !_previewOnly) return;

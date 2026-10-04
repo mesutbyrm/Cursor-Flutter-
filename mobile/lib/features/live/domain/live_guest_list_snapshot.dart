@@ -65,6 +65,11 @@ class LiveGuestListSnapshot {
               'trtcUserId': pick(g, ['trtcUserId', 'rtcUserId', 'rtc_user_id']),
               'slotIndex': g['slotIndex'] ?? g['seatIndex'],
               'status': g['status'] ?? g['state'],
+              // Yayıncının kapattığı mikrofon/kamera (misafir yeniden açamaz).
+              'isMuted': g['isMuted'] == true,
+              'isVideoOff': g['isVideoOff'] == true,
+              'mutedByHost': g['mutedByHost'] == true,
+              'videoOffByHost': g['videoOffByHost'] == true,
               'jeton': parseGuestJeton(g),
               'jetonEarned': parseGuestJeton(g),
             })
