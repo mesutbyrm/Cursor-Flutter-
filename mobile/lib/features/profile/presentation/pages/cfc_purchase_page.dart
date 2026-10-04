@@ -15,11 +15,9 @@ import '../../../wallet/domain/cfc_payment_request_entity.dart';
 import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_providers.dart';
 import '../premium_2026/profile_membership_helpers.dart';
-import '../../../membership/presentation/widgets/membership_pending_payment_banner.dart';
 import '../../../membership/presentation/widgets/membership_store_teaser_banner.dart';
 import '../widgets/cfc_balance_header.dart';
 import '../widgets/cfc_native_checkout.dart';
-import '../widgets/pending_payment_banner.dart';
 import '../widgets/currency_usage_card.dart';
 
 /// CFC (CanlıFal Coin) yükleme — yalnızca CFC, jeton değil.
@@ -71,17 +69,14 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
     final config = ref.watch(paymentConfigProvider);
     final wallet = ref.watch(walletBalancesProvider);
     final history = ref.watch(paymentRequestsNotifierProvider);
-    final pendingCfc = history.valueOrNull
-            ?.where((r) => r.isCfc && r.status.toLowerCase() == 'pending')
-            .toList() ??
-        const [];
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: DiscoverSubPage(
           title: economyCfcTopUpShortLabel(ref, locale: locale),
-          subtitle: '$cfcLabel · ${CurrencyUsageInfo.cfcPriceHintFor(cfcLabel)}',
+          subtitle:
+              '$cfcLabel · ${CurrencyUsageInfo.cfcPriceHintFor(cfcLabel)}',
           onRefresh: _refresh,
           body: config.when(
             loading: () => const Center(child: DiscoverAccentLoader()),
@@ -93,13 +88,18 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Text(
                     'Ödeme ayarları çevrimdışı yüklendi: ${ApiException.userMessage(e)}',
-                    style: TextStyle(color: context.colors.onSurfaceMuted, fontSize: 12),
+                    style: TextStyle(
+                      color: context.colors.onSurfaceMuted,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
                 CfcNativeCheckout(
                   config: PaymentDefaults.config,
                   onSubmitted: () {
-                    ref.read(paymentRequestsNotifierProvider.notifier).refresh();
+                    ref
+                        .read(paymentRequestsNotifierProvider.notifier)
+                        .refresh();
                     ref.refreshWalletCache(force: true);
                   },
                 ),
@@ -125,16 +125,7 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
                 ),
                 const SizedBox(height: 16),
                 const CurrencyUsageCard.cfc(),
-                const MembershipPendingPaymentBanner(),
                 MembershipStoreTeaserBanner(store: MembershipStoreKind.cfc),
-                if (pendingCfc.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  PendingPaymentBanner(
-                    request: pendingCfc.first,
-                    kind: PendingPaymentKind.cfc,
-                    totalPending: pendingCfc.length,
-                  ),
-                ],
                 const SizedBox(height: 20),
                 ProGlassCard(
                   blur: 14,
@@ -143,7 +134,9 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
                   child: CfcNativeCheckout(
                     config: cfg,
                     onSubmitted: () {
-                      ref.read(paymentRequestsNotifierProvider.notifier).refresh();
+                      ref
+                          .read(paymentRequestsNotifierProvider.notifier)
+                          .refresh();
                       ref.refreshWalletCache(force: true);
                     },
                   ),
@@ -151,7 +144,10 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
                 const SizedBox(height: 28),
                 Text(
                   '$cfcLabel yükleme talepleriniz',
-                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
                 ),
                 const SizedBox(height: 10),
                 history.when(
@@ -166,12 +162,15 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
                       return Text(
                         'Henüz $cfcLabel talebi yok.',
                         style: TextStyle(
-                          color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
+                          color: context.colors.onSurfaceMuted.withValues(
+                            alpha: 0.9,
+                          ),
                         ),
                       );
                     }
-                    final hasMore =
-                        ref.read(paymentRequestsNotifierProvider.notifier).hasMore;
+                    final hasMore = ref
+                        .read(paymentRequestsNotifierProvider.notifier)
+                        .hasMore;
                     return Column(
                       children: [
                         ...cfcRows.map(
@@ -197,7 +196,6 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
       ),
     );
   }
-
 }
 
 class _HistoryTile extends ConsumerWidget {
@@ -271,19 +269,19 @@ class _HistoryTile extends ConsumerWidget {
 }
 
 String _statusTr(String s, {required String cfcLabel}) => switch (s) {
-      'approved' => 'Onaylandı — $cfcLabel yansıdı',
-      'rejected' => 'Reddedildi',
-      _ => 'Onay bekliyor',
-    };
+  'approved' => 'Onaylandı — $cfcLabel yansıdı',
+  'rejected' => 'Reddedildi',
+  _ => 'Onay bekliyor',
+};
 
 IconData _statusIcon(String s) => switch (s) {
-      'approved' => Icons.check_circle_rounded,
-      'rejected' => Icons.cancel_rounded,
-      _ => Icons.schedule_rounded,
-    };
+  'approved' => Icons.check_circle_rounded,
+  'rejected' => Icons.cancel_rounded,
+  _ => Icons.schedule_rounded,
+};
 
 Color _statusColor(String s) => switch (s) {
-      'approved' => AppThemeColors.accentCyan,
-      'rejected' => AppThemeColors.liveRed,
-      _ => AppThemeColors.diamondBlue,
-    };
+  'approved' => AppThemeColors.accentCyan,
+  'rejected' => AppThemeColors.liveRed,
+  _ => AppThemeColors.diamondBlue,
+};

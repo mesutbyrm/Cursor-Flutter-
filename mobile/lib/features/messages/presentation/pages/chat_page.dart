@@ -6,8 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
-import '../../../../core/membership/membership_capability_keys.dart';
-import '../../../../core/membership/membership_capability_providers.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/token_storage.dart';
@@ -67,7 +65,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
     _text.addListener(_onTextChanged);
     _typingPoll = Timer.periodic(const Duration(milliseconds: 3500), (_) async {
       if (!mounted) return;
-      final recentlyTyped = _lastTypedAt != null &&
+      final recentlyTyped =
+          _lastTypedAt != null &&
           DateTime.now().difference(_lastTypedAt!) < const Duration(seconds: 4);
       final peer = await ref
           .read(messagesRepositoryProvider)
@@ -83,19 +82,22 @@ class _ChatPageState extends ConsumerState<ChatPage>
           .markConversationReadLocally(widget.conversationId);
       _loadPeerMeta();
       ref
-          .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
+          .read(
+            chatMessagesListNotifierProvider(widget.conversationId).notifier,
+          )
           .refresh(silent: true, forceRefresh: false);
       unawaited(
         ref
-            .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
+            .read(
+              chatMessagesListNotifierProvider(widget.conversationId).notifier,
+            )
             .refresh(silent: true, forceRefresh: true),
       );
       ref.invalidate(conversationsProvider);
       unawaited(
-        ref.read(conversationsListNotifierProvider.notifier).refresh(
-              silent: true,
-              forceRefresh: true,
-            ),
+        ref
+            .read(conversationsListNotifierProvider.notifier)
+            .refresh(silent: true, forceRefresh: true),
       );
       unawaited(_connectDmSse());
       _startMessagePoll();
@@ -110,7 +112,9 @@ class _ChatPageState extends ConsumerState<ChatPage>
     _poll = Timer.periodic(interval, (_) {
       if (!mounted) return;
       ref
-          .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
+          .read(
+            chatMessagesListNotifierProvider(widget.conversationId).notifier,
+          )
           .refresh(silent: true, forceRefresh: !_dmSseActive);
     });
   }
@@ -118,24 +122,25 @@ class _ChatPageState extends ConsumerState<ChatPage>
   Future<void> _connectDmSse() async {
     try {
       final storage = ref.read(tokenStorageProvider);
-      final connected =
-          await ref.read(messageSseServiceProvider).connectToConversation(
-                conversationId: widget.conversationId,
-                accessToken: storage.readAccess,
-                refreshTokens: () =>
-                    tryRefreshAccessToken(ref.read(dioProvider), storage),
-                onEvent: (event) {
-                  if (!mounted) return;
-                  final uid =
-                      ref.read(authControllerProvider).valueOrNull?.id;
-                  ref
-                      .read(
-                        chatMessagesListNotifierProvider(widget.conversationId)
-                            .notifier,
-                      )
-                      .ingestFromSse(event, currentUserId: uid);
-                },
-              );
+      final connected = await ref
+          .read(messageSseServiceProvider)
+          .connectToConversation(
+            conversationId: widget.conversationId,
+            accessToken: storage.readAccess,
+            refreshTokens: () =>
+                tryRefreshAccessToken(ref.read(dioProvider), storage),
+            onEvent: (event) {
+              if (!mounted) return;
+              final uid = ref.read(authControllerProvider).valueOrNull?.id;
+              ref
+                  .read(
+                    chatMessagesListNotifierProvider(
+                      widget.conversationId,
+                    ).notifier,
+                  )
+                  .ingestFromSse(event, currentUserId: uid);
+            },
+          );
       if (!mounted) return;
       _dmSseActive = connected;
       _startMessagePoll();
@@ -183,7 +188,9 @@ class _ChatPageState extends ConsumerState<ChatPage>
     if (!_scroll.hasClients) return;
     if (_scroll.position.pixels <= 80) {
       ref
-          .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
+          .read(
+            chatMessagesListNotifierProvider(widget.conversationId).notifier,
+          )
           .loadOlder();
     }
   }
@@ -202,7 +209,9 @@ class _ChatPageState extends ConsumerState<ChatPage>
   void _onIncomingMessage(MessageEntity message) {
     final raw = message.rawText ?? message.text;
     if (DmMessageCodec.isSystemPayload(raw)) {
-      ref.read(dmVoiceCallServiceProvider).handleRawMessage(
+      ref
+          .read(dmVoiceCallServiceProvider)
+          .handleRawMessage(
             peerUserId: widget.conversationId,
             peerName: _peerName ?? 'Kullanıcı',
             peerAvatarUrl: _peerAvatar,
@@ -219,9 +228,17 @@ class _ChatPageState extends ConsumerState<ChatPage>
     final userId = ref.read(authControllerProvider).valueOrNull?.id;
     final reply = _replyTarget;
     final forward = _forwardTarget;
+    // Yazı hemen temizlenir: gönderim sürerken yazılan yeni metin silinmesin.
+    _text.clear();
+    setState(() {
+      _replyTarget = null;
+      _forwardTarget = null;
+    });
     try {
       await ref
-          .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
+          .read(
+            chatMessagesListNotifierProvider(widget.conversationId).notifier,
+          )
           .sendMessage(
             text: trimmed,
             currentUserId: userId,
@@ -234,46 +251,27 @@ class _ChatPageState extends ConsumerState<ChatPage>
           );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
-        );
+        // Başarısız gönderimde yazı geri gelir (yeni yazı yoksa).
+        if (_text.text.isEmpty) {
+          _text.text = trimmed;
+          _text.selection = TextSelection.collapsed(offset: trimmed.length);
+        }
+        setState(() {
+          _replyTarget ??= reply;
+          _forwardTarget ??= forward;
+        });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(ApiException.userMessage(e))));
       }
       return;
     }
-    _text.clear();
-    setState(() {
-      _replyTarget = null;
-      _forwardTarget = null;
-    });
     await DmMessageSoundService.instance.playOutgoing();
     ref.invalidate(conversationsProvider);
     ref
         .read(conversationsListNotifierProvider.notifier)
         .markConversationReadLocally(widget.conversationId);
     _scrollToEnd();
-  }
-
-  Future<void> _startVoiceCall() async {
-    if (!ref
-        .read(membershipCapabilitiesSyncProvider)
-        .allows(MembershipCapabilityKeys.adFree)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Sesli arama Gold üyelere özeldir.'),
-        ),
-      );
-      context.push('/vip-gold');
-      return;
-    }
-    await ref.read(dmVoiceCallServiceProvider).startOutgoingCall(
-          peerUserId: widget.conversationId,
-          peerName: _peerName ?? 'Kullanıcı',
-          peerAvatarUrl: _peerAvatar,
-        );
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Sesli arama isteği gönderildi')),
-    );
   }
 
   Future<void> _handleComposerAction(DmComposerAction action) async {
@@ -324,14 +322,16 @@ class _ChatPageState extends ConsumerState<ChatPage>
         audioUrl: url,
       );
       await ref
-          .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
+          .read(
+            chatMessagesListNotifierProvider(widget.conversationId).notifier,
+          )
           .refresh(silent: true, forceRefresh: true);
       _scrollToEnd();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(ApiException.userMessage(e))));
       }
     } finally {
       if (mounted) setState(() => _recordingVoiceNote = false);
@@ -345,10 +345,9 @@ class _ChatPageState extends ConsumerState<ChatPage>
       peerName: name,
       onDeleteChat: () async {
         final uid = ref.read(authControllerProvider).valueOrNull?.id;
-        await ref.read(messagesRepositoryProvider).hideConversation(
-              widget.conversationId,
-              currentUserId: uid,
-            );
+        await ref
+            .read(messagesRepositoryProvider)
+            .hideConversation(widget.conversationId, currentUserId: uid);
         ref.invalidate(conversationsProvider);
         if (mounted) Navigator.pop(context);
       },
@@ -358,15 +357,14 @@ class _ChatPageState extends ConsumerState<ChatPage>
               .read(messagesRepositoryProvider)
               .blockUser(widget.conversationId);
           final uid = ref.read(authControllerProvider).valueOrNull?.id;
-          await ref.read(messagesRepositoryProvider).hideConversation(
-                widget.conversationId,
-                currentUserId: uid,
-              );
+          await ref
+              .read(messagesRepositoryProvider)
+              .hideConversation(widget.conversationId, currentUserId: uid);
           ref.invalidate(conversationsProvider);
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('$name engellendi')),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text('$name engellendi')));
             Navigator.pop(context);
           }
         } catch (e) {
@@ -383,7 +381,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
   Future<void> _pickForwardTarget(MessageEntity message) async {
     final conversations =
         ref.read(conversationsListNotifierProvider).valueOrNull?.all ??
-            const [];
+        const [];
     if (!mounted) return;
     final targetId = await showModalBottomSheet<String>(
       context: context,
@@ -393,19 +391,32 @@ class _ChatPageState extends ConsumerState<ChatPage>
           mainAxisSize: MainAxisSize.min,
           children: [
             const ListTile(
-              title: Text('İletilecek sohbet',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+              title: Text(
+                'İletilecek sohbet',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ),
             ListTile(
               leading: const Icon(Icons.person_outline, color: Colors.white70),
-              title: const Text('Kendime kaydet',
-                  style: TextStyle(color: Colors.white)),
-              onTap: () => Navigator.pop(ctx, ref.read(authControllerProvider).valueOrNull?.id),
+              title: const Text(
+                'Kendime kaydet',
+                style: TextStyle(color: Colors.white),
+              ),
+              onTap: () => Navigator.pop(
+                ctx,
+                ref.read(authControllerProvider).valueOrNull?.id,
+              ),
             ),
             ...conversations.map(
               (c) => ListTile(
                 leading: UserAvatar(url: c.avatarUrl, radius: 18),
-                title: Text(c.title, style: const TextStyle(color: Colors.white)),
+                title: Text(
+                  c.title,
+                  style: const TextStyle(color: Colors.white),
+                ),
                 onTap: () => Navigator.pop(ctx, c.id),
               ),
             ),
@@ -415,7 +426,9 @@ class _ChatPageState extends ConsumerState<ChatPage>
     );
     if (targetId == null || targetId.isEmpty) return;
     final userId = ref.read(authControllerProvider).valueOrNull?.id;
-    await ref.read(messagesRepositoryProvider).sendMessage(
+    await ref
+        .read(messagesRepositoryProvider)
+        .sendMessage(
           targetId,
           message.text,
           currentUserId: userId,
@@ -423,9 +436,9 @@ class _ChatPageState extends ConsumerState<ChatPage>
           forwardFrom: message.isMine ? 'Siz' : (_peerName ?? 'Kullanıcı'),
         );
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mesaj iletildi')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Mesaj iletildi')));
     }
   }
 
@@ -437,8 +450,6 @@ class _ChatPageState extends ConsumerState<ChatPage>
         // Son görülme verisi yok; eskiden her çevrimdışı kişi için uydurma
         // "Son görülme yakın zamanda" yazılıyordu.
         : (_peerOnline ? 'Çevrimiçi' : '');
-    final isGold = ref
-        .watch(membershipCapabilityAllowsProvider(MembershipCapabilityKeys.adFree));
 
     ref.listen(conversationsListNotifierProvider, (_, __) => _loadPeerMeta());
 
@@ -506,35 +517,22 @@ class _ChatPageState extends ConsumerState<ChatPage>
                             if (statusLabel.isNotEmpty) ...[
                               const SizedBox(height: 2),
                               Text(
-                              statusLabel,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: _peerTyping
-                                    ? AppThemeColors.accentPink
-                                    : context.colors.onSurfaceMuted,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
+                                statusLabel,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: _peerTyping
+                                      ? AppThemeColors.accentPink
+                                      : context.colors.onSurfaceMuted,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
-                            ),
                             ],
                           ],
                         ),
                       ),
                     ),
-                    if (isGold)
-                      DiscoverIconButton(
-                        icon: Icons.call_rounded,
-                        tooltip: 'Sesli ara',
-                        onPressed: _startVoiceCall,
-                      ),
-                    if (isGold)
-                      DiscoverIconButton(
-                        icon: Icons.videocam_rounded,
-                        tooltip: 'Görüntülü konuşma (Gold)',
-                        onPressed: () =>
-                            _handleComposerAction(DmComposerAction.videoFortune),
-                      ),
                     DiscoverIconButton(
                       icon: Icons.more_horiz_rounded,
                       tooltip: 'Sohbet işlemleri',

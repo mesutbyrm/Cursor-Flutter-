@@ -50,8 +50,15 @@ class _LivePremiumChatFeedState extends State<LivePremiumChatFeed> {
     _syncTimer();
   }
 
+  /// GirLive Bot'un giriş selamı 10 sn sonra akıştan kalkar.
+  static const _botWelcomeFade = Duration(seconds: 10);
+
+  static bool _isBotWelcome(LiveRoomChatMessage m) =>
+      m.user.toLowerCase().contains('girlive') &&
+      m.text.toLowerCase().contains('hoş geldin');
+
   void _syncTimer() {
-    if (widget.fadeAfter == null) {
+    if (widget.fadeAfter == null && !widget.messages.any(_isBotWelcome)) {
       _tick?.cancel();
       _tick = null;
       return;
@@ -70,13 +77,14 @@ class _LivePremiumChatFeedState extends State<LivePremiumChatFeed> {
   List<LiveRoomChatMessage> _visible() {
     final merged = mergeGiftChatMessages(widget.messages);
     final fade = widget.fadeAfter;
-    if (fade == null) return merged;
+    if (fade == null && !merged.any(_isBotWelcome)) return merged;
     final now = DateTime.now();
     final live = Set<LiveRoomChatMessage>.of(merged);
     _firstSeen.removeWhere((k, _) => !live.contains(k));
     return merged.where((m) {
       final seen = _firstSeen.putIfAbsent(m, () => now);
-      return now.difference(seen) < fade;
+      final limit = _isBotWelcome(m) ? _botWelcomeFade : fade;
+      return limit == null || now.difference(seen) < limit;
     }).toList(growable: false);
   }
 

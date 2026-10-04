@@ -11,19 +11,19 @@ void main() {
   group('mergeMembershipTier', () {
     test('API fiyat ve jeton birleşir', () {
       const base = MembershipTierModel(
-        id: MembershipTierId.svip,
-        title: 'SVIP',
+        id: MembershipTierId.diamond,
+        title: 'Diamond',
         subtitle: 'Test',
-        monthlyTokens: 10000,
-        monthlyPriceTry: 3500,
+        monthlyTokens: 7500,
+        monthlyPriceTry: 2500,
         accent: Color(0xFFFF2D7A),
         badgeIcon: Icons.star,
         glow: Color(0xFFB832FF),
       );
       const api = MembershipPackageEntity(
-        id: 'svip',
-        planId: 'plan-svip-1',
-        title: 'SVIP Plus',
+        id: 'diamond',
+        planId: 'plan-diamond-1',
+        title: 'Diamond Plus',
         durationDays: 30,
         priceJeton: 6000,
         bonusJeton: 12000,
@@ -31,10 +31,10 @@ void main() {
         priceTry: 4000,
       );
       final merged = mergeMembershipTier(base, api);
-      expect(merged.title, 'SVIP Plus');
+      expect(merged.title, 'Diamond Plus');
       expect(merged.monthlyTokens, 12000);
       expect(merged.monthlyPriceTry, 4000);
-      expect(merged.resolvedPlanId, 'plan-svip-1');
+      expect(merged.resolvedPlanId, 'plan-diamond-1');
     });
 
     test('API popular ve aktif plan birleşir', () {

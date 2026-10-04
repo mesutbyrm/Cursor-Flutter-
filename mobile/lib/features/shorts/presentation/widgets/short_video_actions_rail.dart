@@ -372,12 +372,17 @@ class ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
 
   @override
   Widget build(BuildContext context) {
+    // Kendi videomda veya zaten takip ettiğim kişide «Takip et» çıkmaz.
+    final me = ref.watch(currentUserIdProvider);
+    final authorId =
+        video.userId.isNotEmpty ? video.userId : (video.author?.id ?? '');
+    final isOwnVideo = me != null && me.isNotEmpty && me == authorId;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         _AuthorAvatar(
           avatarUrl: video.author?.avatarUrl,
-          showFollow: !video.authorFollowedByMe,
+          showFollow: !video.authorFollowedByMe && !isOwnVideo,
           onTap: _openProfile,
           onFollow: _toggleFollow,
         ),

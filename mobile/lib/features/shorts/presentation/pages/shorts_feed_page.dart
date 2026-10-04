@@ -244,18 +244,8 @@ class _ShortsFeedTopBar extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  ShaderMask(
-                    shaderCallback: (b) =>
-                        CanlifalBrandColors.accentGradient.createShader(b),
-                    child: const Icon(
-                      Icons.auto_awesome,
-                      size: 28,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
                   const Text(
-                    'CanlıFal',
+                    'GirLive Video',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 24,

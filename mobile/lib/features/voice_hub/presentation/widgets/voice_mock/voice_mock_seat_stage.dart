@@ -21,7 +21,12 @@ import '../../utils/voice_seat_snapshot.dart';
 import '../premium_2026/voice_seat_avatar_frame.dart';
 import '../premium_2026/voice_seat_gift_flash_stack.dart';
 
-/// Misafir koltuk numaraları: 2..seatCount (>10 ise 2..10) + dolu admin koltuğu (11).
+/// Başlangıçta görünen koltuk sayısı (oda sahibi dahil).
+const int kVoiceMockBaseVisibleSeats = 8;
+
+/// Misafir koltuk numaraları: ilk 8 koltuk (sahip dahil) görünür; görünen
+/// misafir koltukları dolunca bir tane daha açılır (en fazla 10) + dolu admin
+/// koltuğu (11).
 List<int> voiceMockGuestSeatNumbers({
   required VoiceRoomEntity room,
   required List<VoiceRoomSeatSlot> seatSlots,
@@ -34,21 +39,32 @@ List<int> voiceMockGuestSeatNumbers({
     configuredSeatCount: configuredSeatCount,
   );
   if (micSeats <= 1) return const [];
-  final last = micSeats > 10 ? 10 : micSeats;
-  final nums = <int>[for (var i = 2; i <= last; i++) i];
+  final cap = micSeats > 10 ? 10 : micSeats;
+  final layout = VoiceRoomSeatLayout(
+    room: room,
+    presence: presence,
+    seatSlots: seatSlots,
+  ).build();
+  bool occupied(int n) => layout[n] != null;
+
+  var visible = math.min(cap, kVoiceMockBaseVisibleSeats);
+  // Görünen tüm misafir koltukları doluysa bir koltuk daha aç.
+  while (visible < cap &&
+      [for (var n = 2; n <= visible; n++) n].every(occupied)) {
+    visible++;
+  }
+  final nums = <int>[
+    for (var i = 2; i <= visible; i++) i,
+    // Daha ileri bir koltukta oturan varsa gizlenmesin.
+    for (var i = visible + 1; i <= cap; i++)
+      if (occupied(i)) i,
+  ];
   final adminSeat = voiceRoomAdminSeatIndex(
     room: room,
     seatSlots: seatSlots,
     configuredSeatCount: configuredSeatCount,
   );
-  if (adminSeat != null) {
-    final layout = VoiceRoomSeatLayout(
-      room: room,
-      presence: presence,
-      seatSlots: seatSlots,
-    ).build();
-    if (layout[adminSeat] != null) nums.add(adminSeat);
-  }
+  if (adminSeat != null && occupied(adminSeat)) nums.add(adminSeat);
   return nums;
 }
 
@@ -341,10 +357,10 @@ class VoiceMockSeat extends StatelessWidget {
                 shadows: const [Shadow(color: Colors.black54, blurRadius: 4)],
               ),
             ),
-          if (!isHost)
+          // Koltuk numarası yalnızca BOŞ koltukta görünür; oturan varsa kaybolur.
+          if (!isHost && u == null)
             Positioned(
-              bottom: u == null ? -2 : 10,
-              left: u == null ? null : (box - size) / 2 + 2,
+              bottom: -2,
               child: _NumberBadge(seatIndex),
             ),
           if (isHost && u != null)

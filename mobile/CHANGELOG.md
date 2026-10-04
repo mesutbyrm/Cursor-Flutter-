@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.712+765 (2026-10-04) — Ana sayfa sadeleşti · Gold/Diamond · gelen kutusu · video · sesli oda dock/koltuk/sandık
+
+- **Ana sayfa:** üst yazı «GirLive»; arama kutusu ve Keşfet/Canlı/Sesli/Fal/Tanış şeridi kaldırıldı; «Canlı Yayındakiler» altındaki kutular tek sıra 5 kutu (Keşfet · Tanış & Kaynaş · Gold · Ajans · Tüm Özellikler; Lamba Cini ve Sesli Oda çıktı); Günlük Burç bölümü Gold Üyeliklerin üstüne alındı
+- **Gold Üyelikler:** yalnızca Gold · Premium · Diamond; SVIP tamamen kaldırıldı (katalog, tablo, API paketleri), «giriş efekti» Diamond'a geçti; kart görselleri artık bulanık/koyu değil
+- **Jeton alma:** bekleyen talep bannerları jeton ve CFC sayfalarından kaldırıldı
+- **Gelen kutusu:** açılışta «Tümü» sekmesi; sohbette sesli/görüntülü arama, «+» ve mikrofon (sesli not) düğmeleri gizlendi; mesaj gönderilince yazı hemen temizlenir, yeni yazılan metin silinmez, gönderim sürerken yeni mesaj yazılabilir
+- **Keşfet videoları:** başlık «GirLive Video»; kendi videonda/takip ettiğin kişide «Takip et» yok; basılı tutunca video duraklar, bırakınca devam eder
+- **Sesli oda:** dock = Temizle (yetkili: süpürge, sohbeti siler; diğerleri Ses) · Mikrofon · Konuş (tam ortada, dock'a sığar) · Hediye · Oda Modu; «Efektler» ve sağ kenardaki Hediye düğmesi kaldırıldı; hediye paneli 4 sütun; klavye açılınca yalnız mesaj satırı klavyeye çıkar, dock yerinde kalır, gönderince klavye kapanır; oturan koltukta numara yok; ilk 8 koltuk görünür, dolunca bir koltuk daha açılır; GirLive Bot selamı 10 sn sonra kaybolur; «Popüler Oda» yanında aktif hediye kutusu varken hoplayan sandık (dokununca katılır, jeton görev/süreye göre sunucuda dağıtılır); oda arka planı (yükle / hazır görsel seç) ücretsiz odalarda da açık
+- **Canlı yayın:** yorum yazarken yalnız mesaj satırı klavyede kalır, klavyedeki «gönder» mesajı yollar ve klavye kapanır; GirLive Bot selamı 10 sn sonra kaybolur
+- **PK sonrası ses:** sesli oda PK sonuç ekranına geçerken karşı oda ses köprüsü hemen kesilir
+
 ## 1.0.711+764 (2026-10-04) — Canlı PK düzeltmeleri · sesli oda koltuk/hediye/arka plan
 
 - **Canlı PK — kök neden:** uygulama PK durumunu eski `/api/live/pk` ucundan okuyordu (süre/bitiş/kazanan/taraf yok); kanonik `/api/video-streams/pk` yanıtı atılıyordu. Artık `endsAt`, `serverNow`, `winnerId`, `endedAt`, `stream1Id/stream2Id`, oyuncu adları buradan alınır → puanlar doğru tarafa işlenir, rakip taraf yanlış «sol» sayılmaz

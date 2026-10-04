@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/bootstrap/startup_perf.dart';
 import 'approved/home_become_broadcaster_banner.dart';
-import 'approved/home_category_chips.dart';
 import 'approved/home_header.dart';
 import 'approved/home_horoscope_section.dart';
 import 'approved/home_popular_broadcasters_section.dart';
@@ -36,9 +35,7 @@ abstract final class HomePageSections {
     return [
       // Aşama 1 — header + arama
       const SliverToBoxAdapter(child: RepaintBoundary(child: HomeHeader())),
-      const SliverToBoxAdapter(child: SizedBox(height: 6)),
-      const SliverToBoxAdapter(child: HomeCategoryChips()),
-      const SliverToBoxAdapter(child: SizedBox(height: 10)),
+      const SliverToBoxAdapter(child: SizedBox(height: 4)),
       // Hero
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
@@ -127,6 +124,15 @@ abstract final class HomePageSections {
         ),
       ),
       // Aşama 6 — gold + oyun + burç
+      SliverToBoxAdapter(
+        child: HomeDeferredSection(
+          delay: StartupPerf.homeHoroscopeSectionDelay,
+          child: HomeViewportSection(
+            estimatedHeight: 160,
+            child: HomeHoroscopeSection(),
+          ),
+        ),
+      ),
       const SliverToBoxAdapter(
         child: HomeDeferredSection(
           delay: StartupPerf.homeFortuneSectionDelay,
@@ -148,15 +154,6 @@ abstract final class HomePageSections {
           child: HomeViewportSection(
             estimatedHeight: 140,
             child: HomeFootballSection(),
-          ),
-        ),
-      ),
-      SliverToBoxAdapter(
-        child: HomeDeferredSection(
-          delay: StartupPerf.homeHoroscopeSectionDelay,
-          child: HomeViewportSection(
-            estimatedHeight: 160,
-            child: HomeHoroscopeSection(),
           ),
         ),
       ),

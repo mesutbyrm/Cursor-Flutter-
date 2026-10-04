@@ -11,8 +11,8 @@ import '../../utils/voice_room_chat_flood_guard.dart';
 import '../voice_room/voice_room_join_toast_stack.dart';
 import '../voice_room/voice_room_mention_text_field.dart';
 
-/// Alt bölüm — mesaj satırı (emoji · alan · hediye · gönder) + 5'li dock
-/// (Açık · Kapalı · Konuş · Efektler · Oda Modu).
+/// Alt bölüm — mesaj satırı (emoji · alan · gönder) + 5'li dock
+/// (Temizle/Ses · Mikrofon · Konuş · Hediye · Oda Modu).
 class VoiceMockFooter extends ConsumerWidget {
   const VoiceMockFooter({
     super.key,
@@ -29,8 +29,11 @@ class VoiceMockFooter extends ConsumerWidget {
     required this.onGift,
     required this.onEmojiTap,
     required this.onChanged,
-    required this.onEffects,
     required this.onRoomMode,
+    required this.canClearChat,
+    required this.onClearChat,
+    this.showInput = true,
+    this.showDock = true,
     this.pkChatOpen = false,
   });
 
@@ -47,8 +50,15 @@ class VoiceMockFooter extends ConsumerWidget {
   final VoidCallback onGift;
   final VoidCallback onEmojiTap;
   final ValueChanged<String> onChanged;
-  final VoidCallback onEffects;
   final VoidCallback onRoomMode;
+
+  /// Yetkili (sahip/moderatör/admin) ise süpürge sohbeti temizler.
+  final bool canClearChat;
+  final VoidCallback onClearChat;
+
+  /// Mesaj satırı klavyeye sabitlenir; dock klavyenin ARKASINDA sabit kalır.
+  final bool showInput;
+  final bool showDock;
   final bool pkChatOpen;
 
   @override
@@ -101,8 +111,11 @@ class VoiceMockFooter extends ConsumerWidget {
       onGift: onGift,
       onEmojiTap: onEmojiTap,
       onChanged: onChanged,
-      onEffects: onEffects,
       onRoomMode: onRoomMode,
+      canClearChat: canClearChat,
+      onClearChat: onClearChat,
+      showInput: showInput,
+      showDock: showDock,
     );
   }
 }
@@ -127,8 +140,11 @@ class VoiceMockFooterView extends StatelessWidget {
     required this.onGift,
     required this.onEmojiTap,
     required this.onChanged,
-    required this.onEffects,
     required this.onRoomMode,
+    this.canClearChat = false,
+    this.onClearChat,
+    this.showInput = true,
+    this.showDock = true,
   });
 
   final List<ChatRoomPresence> presence;
@@ -147,85 +163,87 @@ class VoiceMockFooterView extends StatelessWidget {
   final VoidCallback onGift;
   final VoidCallback onEmojiTap;
   final ValueChanged<String> onChanged;
-  final VoidCallback onEffects;
   final VoidCallback onRoomMode;
+  final bool canClearChat;
+  final VoidCallback? onClearChat;
+  final bool showInput;
+  final bool showDock;
+
+  /// Dock yüksekliği (sabit): klavye açılınca mesaj satırını doğru kaldırmak için.
+  static const dockBodyHeight = 64.0;
+  static const _dockPadTop = 6.0;
+  static double dockHeight(BuildContext context) {
+    final bottom = MediaQuery.viewPaddingOf(context).bottom;
+    return _dockPadTop + dockBodyHeight + 12 + (bottom > 0 ? bottom : 8);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
 
-    return RepaintBoundary(
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(10, 6, 10, bottomInset > 0 ? bottomInset : 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (!hideInput)
-              Row(
-                children: [
-                  _RoundIcon(
-                    onTap: onEmojiTap,
-                    child: const Icon(
-                      Icons.sentiment_satisfied_alt_rounded,
-                      size: 24,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: VoiceRoomMentionTextField(
-                      controller: controller,
-                      focusNode: focusNode,
-                      presence: presence,
-                      excludeUserId: userId,
-                      onChanged: onChanged,
-                      onSubmitted: sendEnabled ? (_) => onSend() : null,
-                      hintText: 'Mesaj yaz... (istek)',
-                      decoration: _decoration(),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  GestureDetector(
-                    onTap: onGift,
-                    child: const Padding(
-                      padding: EdgeInsets.all(4),
-                      child: Text('🎁', style: TextStyle(fontSize: 30)),
-                    ),
-                  ),
-                  const SizedBox(width: 2),
-                  GestureDetector(
-                    onTap: sendEnabled ? onSend : null,
-                    child: Padding(
-                      padding: const EdgeInsets.all(6),
-                      child: Icon(
-                        Icons.send_rounded,
-                        size: 30,
-                        color: Colors.white.withValues(
-                          alpha: sendEnabled ? 1 : 0.4,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            toast,
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.55),
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(
-                  color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.55),
-                  width: 1.2,
-                ),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _DockBtn(
-                    label: headphonesOn ? 'Açık' : 'Kapalı',
+    final inputRow = Row(
+      children: [
+        _RoundIcon(
+          onTap: onEmojiTap,
+          child: const Icon(
+            Icons.sentiment_satisfied_alt_rounded,
+            size: 24,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: VoiceRoomMentionTextField(
+            controller: controller,
+            focusNode: focusNode,
+            presence: presence,
+            excludeUserId: userId,
+            onChanged: onChanged,
+            onSubmitted: sendEnabled ? (_) => onSend() : null,
+            hintText: 'Mesaj yaz... (istek)',
+            decoration: _decoration(),
+          ),
+        ),
+        const SizedBox(width: 6),
+        GestureDetector(
+          onTap: sendEnabled ? onSend : null,
+          child: Padding(
+            padding: const EdgeInsets.all(6),
+            child: Icon(
+              Icons.send_rounded,
+              size: 30,
+              color: Colors.white.withValues(alpha: sendEnabled ? 1 : 0.4),
+            ),
+          ),
+        ),
+      ],
+    );
+
+    // 5 eşit hücre: ortadaki hücre «Konuş» tam ortada durur.
+    Widget cell(Widget child) => Expanded(child: Center(child: child));
+    final dock = Container(
+      height: dockBodyHeight,
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(
+          color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.55),
+          width: 1.2,
+        ),
+      ),
+      child: Row(
+        children: [
+          cell(
+            canClearChat
+                ? _DockBtn(
+                    label: 'Temizle',
+                    onTap: onClearChat ?? () {},
+                    color: const Color(0xFF38BDF8),
+                    icon: Icons.cleaning_services_rounded,
+                  )
+                : _DockBtn(
+                    label: headphonesOn ? 'Ses açık' : 'Ses kapalı',
                     onTap: onToggleAudioOutput,
                     color: headphonesOn
                         ? const Color(0xFF22C55E)
@@ -234,35 +252,54 @@ class VoiceMockFooterView extends StatelessWidget {
                         ? Icons.volume_up_rounded
                         : Icons.volume_off_rounded,
                   ),
-                  _DockBtn(
-                    label: micOn ? 'Açık' : 'Kapalı',
-                    onTap: onMicToggle,
-                    color: micOn
-                        ? const Color(0xFF22C55E)
-                        : const Color(0xFFEF4444),
-                    icon: micOn ? Icons.mic_rounded : Icons.mic_off_rounded,
-                    strike: !micOn,
-                  ),
-                  _TalkBtn(
-                    active: micOn,
-                    enabled: micEnabled,
-                    onTap: onMicToggle,
-                  ),
-                  _DockBtn(
-                    label: 'Efektler',
-                    onTap: onEffects,
-                    color: VoiceRoomTokens.gold,
-                    icon: Icons.auto_awesome_rounded,
-                  ),
-                  _DockBtn(
-                    label: 'Oda Modu',
-                    onTap: onRoomMode,
-                    color: Colors.white,
-                    icon: Icons.grid_view_rounded,
-                  ),
-                ],
-              ),
+          ),
+          cell(
+            _DockBtn(
+              label: micOn ? 'Mikrofon' : 'Kapalı',
+              onTap: onMicToggle,
+              color: micOn ? const Color(0xFF22C55E) : const Color(0xFFEF4444),
+              icon: micOn ? Icons.mic_rounded : Icons.mic_off_rounded,
+              strike: !micOn,
             ),
+          ),
+          cell(
+            _TalkBtn(active: micOn, enabled: micEnabled, onTap: onMicToggle),
+          ),
+          cell(
+            _DockBtn(
+              label: 'Hediye',
+              onTap: onGift,
+              color: VoiceRoomTokens.gold,
+              icon: Icons.card_giftcard_rounded,
+            ),
+          ),
+          cell(
+            _DockBtn(
+              label: 'Oda Modu',
+              onTap: onRoomMode,
+              color: Colors.white,
+              icon: Icons.grid_view_rounded,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return RepaintBoundary(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          10,
+          showInput ? 6 : _dockPadTop,
+          10,
+          showDock ? (bottomInset > 0 ? bottomInset : 8) : 4,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (showInput && !hideInput) inputRow,
+            if (showInput) toast,
+            if (showInput && showDock) const SizedBox(height: 8),
+            if (showDock) dock,
           ],
         ),
       ),
@@ -341,13 +378,13 @@ class _DockBtn extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
-        width: 66,
+        width: 62,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 46,
-              height: 46,
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: color.withValues(alpha: 0.12),
@@ -356,7 +393,7 @@ class _DockBtn extends StatelessWidget {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  Icon(icon, size: 24, color: color),
+                  Icon(icon, size: 21, color: color),
                   if (strike)
                     Transform.rotate(
                       angle: -0.8,
@@ -372,7 +409,7 @@ class _DockBtn extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 2),
             FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(
@@ -380,7 +417,7 @@ class _DockBtn extends StatelessWidget {
                 maxLines: 1,
                 textScaler: TextScaler.noScaling,
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: 11,
                   fontWeight: FontWeight.w700,
                   color: Colors.white,
                 ),
@@ -412,15 +449,13 @@ class _TalkBtn extends StatelessWidget {
       child: Opacity(
         opacity: enabled ? 1 : 0.6,
         child: SizedBox(
-          width: 84,
+          width: 70,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Transform.translate(
-                offset: const Offset(0, -14),
-                child: Container(
-                  width: 78,
-                  height: 78,
+              Container(
+                  width: 58,
+                  height: 58,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: const LinearGradient(
@@ -433,29 +468,27 @@ class _TalkBtn extends StatelessWidget {
                       BoxShadow(
                         color: const Color(0xFFFF2D55)
                             .withValues(alpha: active ? 0.75 : 0.45),
-                        blurRadius: active ? 24 : 14,
-                        spreadRadius: active ? 3 : 1,
+                        blurRadius: active ? 18 : 10,
+                        spreadRadius: active ? 2 : 0,
                       ),
                     ],
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.mic_rounded, size: 34, color: Colors.white),
+                      const Icon(Icons.mic_rounded, size: 26, color: Colors.white),
                       Text(
                         active ? 'Konuşuyor' : 'Konuş',
                         textScaler: TextScaler.noScaling,
                         style: const TextStyle(
-                          fontSize: 12,
+                          fontSize: 10,
                           fontWeight: FontWeight.w800,
                           color: Colors.white,
                         ),
                       ),
                     ],
                   ),
-                ),
               ),
-              const SizedBox(height: 0),
             ],
           ),
         ),

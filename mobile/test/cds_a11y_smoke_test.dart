@@ -82,7 +82,9 @@ void main() {
     );
 
     expect(find.bySemanticsLabel('Mesaj gönder'), findsOneWidget);
-    expect(find.bySemanticsLabel('İstek ve davet gönder'), findsOneWidget);
+    // «+» ve sesli mesaj düğmeleri gizlendi.
+    expect(find.bySemanticsLabel('İstek ve davet gönder'), findsNothing);
+    expect(find.bySemanticsLabel('Sesli mesaj kaydet'), findsNothing);
     final fieldSemantics = tester.getSemantics(find.byType(TextField));
     expect(fieldSemantics.label, 'Mesaj yazın');
   });

@@ -16,14 +16,15 @@ final membershipRemoteProvider = Provider<MembershipRemoteDataSource>((ref) {
   return MembershipRemoteDataSource(ref.watch(dioProvider));
 });
 
-final membershipCatalogProvider =
-    FutureProvider<MembershipCatalogEntity>((ref) async {
+final membershipCatalogProvider = FutureProvider<MembershipCatalogEntity>((
+  ref,
+) async {
   ref.keepAlive();
   WalletBalances wallet;
   try {
-    wallet = await ref.watch(walletBalancesProvider.future).timeout(
-          const Duration(seconds: 6),
-        );
+    wallet = await ref
+        .watch(walletBalancesProvider.future)
+        .timeout(const Duration(seconds: 6));
   } catch (_) {
     wallet = const WalletBalances();
   }
@@ -96,9 +97,9 @@ class MembershipUiState {
   }
 
   ProfileMembershipInfo get membershipInfo => resolveProfileMembership(
-        rawMembership: currentMembership,
-        daysRemaining: daysRemaining,
-      );
+    rawMembership: currentMembership,
+    daysRemaining: daysRemaining,
+  );
 
   String get currentMembershipLabel => membershipInfo.tierLabel;
 
@@ -141,68 +142,60 @@ class MembershipController extends Notifier<MembershipUiState> {
       if (wallet == null) return;
       state = state.copyWith(
         membershipExpiresAt: wallet.membershipExpiresAt,
-        daysRemaining:
-            wallet.membershipDaysRemaining ?? state.daysRemaining,
+        daysRemaining: wallet.membershipDaysRemaining ?? state.daysRemaining,
         currentMembership: wallet.membership ?? state.currentMembership,
         jetonBalance: wallet.jeton,
         diamondBalance: wallet.jeton,
       );
     });
-    ref.listen<AsyncValue<MembershipCatalogEntity>>(
-      membershipCatalogProvider,
-      (_, next) {
-        final cat = next.valueOrNull;
-        if (cat == null) return;
-        final cur = cat.currentMembership.toLowerCase();
-        final selected = switch (cur) {
-          'gold' => MembershipTierId.gold,
-          'premium' => MembershipTierId.premium,
-          'diamond' => MembershipTierId.diamond,
-          'svip' || 'super_vip' => MembershipTierId.svip,
-          'basic' || 'free' || '' => MembershipTierId.basic,
-          _ => MembershipTierId.gold,
-        };
-        final recommended = recommendedTierFromPackages(cat.packages);
-        final initialTier = selected == MembershipTierId.basic
-            ? (recommended ?? MembershipTierId.gold)
-            : selected;
-        state = state.copyWith(
-          diamondBalance: cat.jetonBalance,
-          jetonBalance: cat.jetonBalance,
-          cfcBalance: cat.cfcBalance,
-          currentMembership: cat.currentMembership,
-          daysRemaining: cat.daysRemaining ?? cat.activePackage?.daysRemaining ?? 0,
-          membershipExpiresAt: ref
-                  .read(walletBalancesProvider)
-                  .valueOrNull
-                  ?.membershipExpiresAt ??
-              state.membershipExpiresAt,
-          apiPackages: cat.packages,
-          jetonTlRate: ref.read(walletBalancesProvider).valueOrNull?.jetonTlRate ??
-              kDefaultJetonTlRate,
-          selectedTier: _initialTierApplied ? state.selectedTier : initialTier,
-          selectedTokenPackage:
-              _initialTierApplied ? state.selectedTokenPackage : initialTier,
-        );
-        _initialTierApplied = true;
-      },
-      fireImmediately: true,
-    );
+    ref.listen<AsyncValue<MembershipCatalogEntity>>(membershipCatalogProvider, (
+      _,
+      next,
+    ) {
+      final cat = next.valueOrNull;
+      if (cat == null) return;
+      final cur = cat.currentMembership.toLowerCase();
+      final selected = switch (cur) {
+        'gold' => MembershipTierId.gold,
+        'premium' => MembershipTierId.premium,
+        'diamond' || 'svip' || 'super_vip' => MembershipTierId.diamond,
+        'basic' || 'free' || '' => MembershipTierId.basic,
+        _ => MembershipTierId.gold,
+      };
+      final recommended = recommendedTierFromPackages(cat.packages);
+      final initialTier = selected == MembershipTierId.basic
+          ? (recommended ?? MembershipTierId.gold)
+          : selected;
+      state = state.copyWith(
+        diamondBalance: cat.jetonBalance,
+        jetonBalance: cat.jetonBalance,
+        cfcBalance: cat.cfcBalance,
+        currentMembership: cat.currentMembership,
+        daysRemaining:
+            cat.daysRemaining ?? cat.activePackage?.daysRemaining ?? 0,
+        membershipExpiresAt:
+            ref.read(walletBalancesProvider).valueOrNull?.membershipExpiresAt ??
+            state.membershipExpiresAt,
+        apiPackages: cat.packages,
+        jetonTlRate:
+            ref.read(walletBalancesProvider).valueOrNull?.jetonTlRate ??
+            kDefaultJetonTlRate,
+        selectedTier: _initialTierApplied ? state.selectedTier : initialTier,
+        selectedTokenPackage: _initialTierApplied
+            ? state.selectedTokenPackage
+            : initialTier,
+      );
+      _initialTierApplied = true;
+    }, fireImmediately: true);
     return const MembershipUiState();
   }
 
   void selectTier(MembershipTierId id) {
-    state = state.copyWith(
-      selectedTier: id,
-      selectedTokenPackage: id,
-    );
+    state = state.copyWith(selectedTier: id, selectedTokenPackage: id);
   }
 
   void selectTokenPackage(MembershipTierId id) {
-    state = state.copyWith(
-      selectedTokenPackage: id,
-      selectedTier: id,
-    );
+    state = state.copyWith(selectedTokenPackage: id, selectedTier: id);
   }
 
   Future<void> refresh() async {
@@ -215,5 +208,5 @@ class MembershipController extends Notifier<MembershipUiState> {
 
 final membershipControllerProvider =
     NotifierProvider<MembershipController, MembershipUiState>(
-  MembershipController.new,
-);
+      MembershipController.new,
+    );

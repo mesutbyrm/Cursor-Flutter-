@@ -227,6 +227,9 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
     final ended = pk.isFinished || (remote?.isEnded ?? false);
     if (!ended) return;
     _resultNavigated = true;
+    // PK bitti: karşı odanın sesi köprüsü hemen kesilir (sonuç ekranında da
+    // rakip oda sesi gelmesin).
+    _disconnectOpponentAudio();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.pushReplacement('/pk/result');
@@ -278,6 +281,17 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
             userId: oppHost,
           );
       _bridgeConnected = true;
+    } catch (_) {}
+  }
+
+  void _disconnectOpponentAudio() {
+    if (!_bridgeConnected) return;
+    _bridgeConnected = false;
+    try {
+      ref
+          .read(voiceRoomAudioCoordinatorProvider)
+          .trtcManager
+          .disconnectOtherRoom();
     } catch (_) {}
   }
 

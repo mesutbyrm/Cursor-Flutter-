@@ -10,8 +10,14 @@ class MembershipFeatureHighlightEntity {
 
   factory MembershipFeatureHighlightEntity.fromJson(Map<String, dynamic> json) {
     final id = (pick(json, ['id', 'key', 'slug']) ?? '').toString().trim();
-    final title = (pick(json, ['title', 'name', 'label']) ?? id).toString().trim();
-    final subtitle = pick(json, ['subtitle', 'description', 'detail'])?.toString().trim();
+    final title = (pick(json, ['title', 'name', 'label']) ?? id)
+        .toString()
+        .trim();
+    final subtitle = pick(json, [
+      'subtitle',
+      'description',
+      'detail',
+    ])?.toString().trim();
     return MembershipFeatureHighlightEntity(
       id: id.isEmpty ? title.toLowerCase() : id,
       title: title.isEmpty ? 'Avantaj' : title,
@@ -59,8 +65,8 @@ class MembershipPackageEntity {
     return MembershipPackageEntity(
       id: (tier != null && tier.isNotEmpty ? tier : rawId) ?? '',
       planId: (rawId != null && rawId.isNotEmpty ? rawId : tier) ?? '',
-      title: (json['title'] ?? json['name'] ?? json['nameEn'])?.toString() ??
-          '',
+      title:
+          (json['title'] ?? json['name'] ?? json['nameEn'])?.toString() ?? '',
       durationDays: asInt(json['durationDays'] ?? json['duration_days'] ?? 30),
       priceJeton: asInt(
         json['priceJeton'] ?? json['price'] ?? json['price_jeton'],
@@ -74,15 +80,16 @@ class MembershipPackageEntity {
             json['fal_discount_percent'],
       ),
       isActive: json['isActive'] == true || json['is_active'] == true,
-      popular: json['popular'] == true ||
+      popular:
+          json['popular'] == true ||
           json['recommended'] == true ||
           json['isDefault'] == true ||
           json['is_default'] == true,
       daysRemaining: json['daysRemaining'] != null
           ? asInt(json['daysRemaining'])
           : json['days_remaining'] != null
-              ? asInt(json['days_remaining'])
-              : null,
+          ? asInt(json['days_remaining'])
+          : null,
       priceTry: asInt(
         pick(json, ['priceTry', 'price_try', 'priceTl', 'price_tl', 'price']),
       ),
@@ -113,7 +120,10 @@ class MembershipPackageEntity {
   }
 
   /// Satın alma için jeton — API öncelikli.
-  int resolvedPriceJeton({required int fallbackFromTry, double jetonTlRate = 0.5}) {
+  int resolvedPriceJeton({
+    required int fallbackFromTry,
+    double jetonTlRate = 0.5,
+  }) {
     if (priceJeton > 0) return priceJeton;
     if (fallbackFromTry > 0 && jetonTlRate > 0) {
       return (fallbackFromTry / jetonTlRate).round();
@@ -141,8 +151,10 @@ class MembershipCatalogEntity {
     return MembershipCatalogEntity(
       packages: list is List
           ? list
-              .map((e) => MembershipPackageEntity.fromJson(asJsonMap(e)))
-              .toList()
+                .map((e) => MembershipPackageEntity.fromJson(asJsonMap(e)))
+                // SVIP kaldırıldı — özellikleri Diamond'a taşındı.
+                .where((p) => !p.isSvip)
+                .toList()
           : const [],
       currentMembership:
           (json['currentMembership'] ?? json['current_membership'] ?? 'basic')

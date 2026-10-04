@@ -24,7 +24,7 @@ class MembershipFeatureTable extends ConsumerWidget {
     if (tiers != null && tiers!.length == MembershipCatalogData.tiers.length) {
       return [for (final t in tiers!) t.title];
     }
-    return const ['Basic', 'Gold', 'Premium', 'Diamond', 'SVIP'];
+    return const ['Basic', 'Gold', 'Premium', 'Diamond'];
   }
 
   int get _columnCount => _headers.length;
@@ -42,45 +42,44 @@ class MembershipFeatureTable extends ConsumerWidget {
             .clamp(compact ? 48.0 : 56.0, 88.0);
 
         return Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: MembershipCatalogData.glassBorder),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.white.withValues(alpha: 0.08),
-                Colors.white.withValues(alpha: 0.03),
-              ],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: MembershipCatalogData.purple.withValues(alpha: 0.18),
-                blurRadius: 24,
-                offset: const Offset(0, 10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: MembershipCatalogData.glassBorder),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withValues(alpha: 0.08),
+                    Colors.white.withValues(alpha: 0.03),
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: MembershipCatalogData.purple.withValues(alpha: 0.18),
+                    blurRadius: 24,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: SizedBox(
-                  width: labelW + colW * _columnCount + 24,
-                  child: Column(
-                    children: [
-                      _HeaderRow(
-                        labelWidth: labelW,
-                        colWidth: colW,
-                        selectedCol: _selectedCol,
-                        headers: _headers,
-                      ),
-                      ..._effectiveFeatureRows(jetonLabel)
-                          .asMap()
-                          .entries
-                          .map(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SizedBox(
+                      width: labelW + colW * _columnCount + 24,
+                      child: Column(
+                        children: [
+                          _HeaderRow(
+                            labelWidth: labelW,
+                            colWidth: colW,
+                            selectedCol: _selectedCol,
+                            headers: _headers,
+                          ),
+                          ..._effectiveFeatureRows(
+                            jetonLabel,
+                          ).asMap().entries.map(
                             (e) => _FeatureDataRow(
                               row: e.value,
                               labelWidth: labelW,
@@ -89,13 +88,13 @@ class MembershipFeatureTable extends ConsumerWidget {
                               zebra: e.key.isOdd,
                             ),
                           ),
-                    ],
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
-        )
+            )
             .animate()
             .fadeIn(delay: 180.ms, duration: 400.ms)
             .slideY(begin: 0.06, end: 0, duration: 420.ms);
@@ -124,8 +123,7 @@ class MembershipFeatureTable extends ConsumerWidget {
     rows[0] = MembershipFeatureRow(
       label: _tokenRowLabel(source, jetonLabel: jetonLabel),
       values: [
-        for (final t in source)
-          MembershipFeatureText('${t.monthlyTokens}'),
+        for (final t in source) MembershipFeatureText('${t.monthlyTokens}'),
       ],
     );
     final falRow = MembershipFeatureRow(
@@ -173,10 +171,7 @@ class MembershipFeatureTable extends ConsumerWidget {
       result.add(
         MembershipFeatureRow(
           label: label,
-          values: [
-            for (final tier in tiers)
-              _featureCellForTier(tier, id),
-          ],
+          values: [for (final tier in tiers) _featureCellForTier(tier, id)],
         ),
       );
     }
@@ -231,9 +226,7 @@ class _HeaderRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(
-            color: Colors.white.withValues(alpha: 0.08),
-          ),
+          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
         ),
       ),
       child: Row(
@@ -330,25 +323,25 @@ class _Cell extends StatelessWidget {
   Widget build(BuildContext context) {
     return switch (value) {
       MembershipFeatureText(:final text) => Text(
-          text,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: highlighted
-                ? MembershipCatalogData.gold
-                : Colors.white.withValues(alpha: 0.88),
-            fontWeight: FontWeight.w800,
-            fontSize: 12,
-          ),
+        text,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: highlighted
+              ? MembershipCatalogData.gold
+              : Colors.white.withValues(alpha: 0.88),
+          fontWeight: FontWeight.w800,
+          fontSize: 12,
         ),
+      ),
       MembershipFeatureBool(:final enabled) => Icon(
-          enabled ? Icons.check_circle_rounded : Icons.remove_rounded,
-          size: 18,
-          color: enabled
-              ? (highlighted
+        enabled ? Icons.check_circle_rounded : Icons.remove_rounded,
+        size: 18,
+        color: enabled
+            ? (highlighted
                   ? MembershipCatalogData.gold
                   : const Color(0xFF34D399))
-              : Colors.white.withValues(alpha: 0.28),
-        ),
+            : Colors.white.withValues(alpha: 0.28),
+      ),
     };
   }
 }

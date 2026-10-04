@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../../core/bootstrap/shell_header_badges_provider.dart';
-import '../../../../../core/motion/canlifal_motion_widgets.dart';
-import '../../../../../core/theme/app_theme_extensions.dart';
 import '../../../../../core/widgets/canlifal_logo.dart';
 import '../../../../inbox/presentation/inbox_routes.dart';
 import '../../../../inbox/presentation/providers/inbox_unread_providers.dart';
@@ -12,7 +9,7 @@ import '../../theme/home_approved_design.dart';
 import 'home_header_balance_chips.dart';
 import '../home_motion_widgets.dart';
 
-/// Onaylı mockup — logo, arama, bildirim, mesaj, jeton.
+/// Onaylı mockup — GirLive logosu, mesaj, jeton.
 class HomeHeader extends StatelessWidget {
   const HomeHeader({super.key});
 
@@ -32,70 +29,12 @@ class HomeHeader extends StatelessWidget {
         children: [
           Row(
             children: [
-              const CanlifalWordmark(fontSize: 24, compact: true),
+              const GirLiveWordmark(fontSize: 24),
               const Spacer(),
               const _HomeHeaderBadges(),
             ],
           ),
-          const SizedBox(height: 12),
-          const _HomeSearchBar(),
         ],
-      ),
-    );
-  }
-}
-
-/// Arama girişi — dokununca arama sayfasını açar.
-class _HomeSearchBar extends StatelessWidget {
-  const _HomeSearchBar();
-
-  @override
-  Widget build(BuildContext context) {
-    final dark = context.isDarkTheme;
-    final colors = context.colors;
-    final muted = colors.onSurfaceMuted;
-    return Semantics(
-      button: true,
-      label: 'Ara',
-      onTap: () => context.push('/search'),
-      excludeSemantics: true,
-      child: CanlifalPressable(
-        scale: 0.98,
-        onTap: () => context.push('/search'),
-        child: Container(
-          height: 46,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          decoration: BoxDecoration(
-            color: dark ? HomeApprovedDesign.searchFill : colors.surface,
-            borderRadius: BorderRadius.circular(
-              HomeApprovedDesign.searchRadius,
-            ),
-            border: Border.all(
-              color: dark
-                  ? Colors.white.withValues(alpha: 0.07)
-                  : colors.outlineVariant,
-            ),
-            boxShadow: dark ? null : colors.cardShadow,
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.search_rounded, size: 21, color: muted),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Kişi, oda veya içerik ara...',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: muted,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
