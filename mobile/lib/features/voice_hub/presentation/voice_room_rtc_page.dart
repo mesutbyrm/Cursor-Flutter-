@@ -115,12 +115,16 @@ import 'widgets/voice_room/voice_room_rtc_shell_widgets.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/voice_room/voice_room_center_music_panel.dart';
 import 'widgets/voice_room/voice_room_music_queue_mini_card.dart';
-import 'widgets/voice_room/voice_room_side_action_rail.dart';
 import 'widgets/voice_room/voice_room_bottom_dock.dart';
 import 'widgets/voice_room/voice_room_video_close_bar.dart';
 import 'widgets/voice_room_error_boundary.dart';
 import 'widgets/voice_room/voice_room_competition_rail_slot.dart';
 import 'sheets/voice_youtube_song_sheet.dart';
+import 'sheets/voice_room_ranking_sheet.dart';
+import 'widgets/voice_mock/voice_mock_footer.dart';
+import 'widgets/voice_mock/voice_mock_header.dart';
+import 'widgets/voice_mock/voice_mock_seat_stage.dart';
+import 'widgets/voice_mock/voice_mock_side_rail.dart';
 import 'widgets/premium_2026/voice_pk_invite_banner.dart';
 import 'widgets/voice_room_privileged_auto_seat_listener.dart';
 
@@ -1231,6 +1235,74 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     );
   }
 
+  void _openMoreSheet(
+    BuildContext context, {
+    required VoiceRoomEntity room,
+    required VoiceRoomLiveState live,
+    required VoiceRoomPermissions perms,
+    required bool isOwner,
+  }) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF12082A),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.people_alt_rounded, color: Colors.white),
+              title: const Text('Katılımcılar'),
+              onTap: () {
+                Navigator.pop(ctx);
+                showVoiceSpeakerListSheet(
+                  context,
+                  presence:
+                      ref.read(voiceRoomLiveProvider(_liveRoomKey)).presence,
+                  room: room,
+                  onUserTap: _openUser,
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.share_rounded, color: Colors.white),
+              title: const Text('Odayı paylaş'),
+              onTap: () {
+                Navigator.pop(ctx);
+                unawaited(_shareRoom());
+              },
+            ),
+            if (perms.canChangeBackground)
+              ListTile(
+                leading: const Icon(Icons.wallpaper_rounded, color: Colors.white),
+                title: const Text('Oda arka planı'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  unawaited(_pickBackground(context, room));
+                },
+              ),
+            ListTile(
+              leading: const Icon(Icons.tune_rounded, color: Colors.white),
+              title: const Text('Oda yönetimi ve ayarlar'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _openManagementPanel(
+                  context,
+                  room: room,
+                  live: live,
+                  perms: perms,
+                  isOwner: isOwner,
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _onSeatTap(
     BuildContext context, {
     required VoiceRoomEntity room,
@@ -1636,11 +1708,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                               ),
                             ),
                           ),
-                        VoiceRoomRtcHeaderBand(
+                        VoiceMockHeader(
                           roomLookupKey: roomLookupKey,
                           liveRoomKey: _liveRoomKey,
                           fallbackRoom: widget.room,
-                          galleryEnabled: perms.canChangeBackground,
                           onCoinsTap: () => openJetonStore(context, ref: ref),
                           onBack: _leave,
                           onExit: _leave,
@@ -1652,16 +1723,20 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             room: room,
                             onUserTap: _openUser,
                           ),
-                          onGallery: () => _pickBackground(context, room),
-                          onRoomPanel: () => showVoiceSpeakerListSheet(
-                            context,
-                            presence: ref
-                                .read(voiceRoomLiveProvider(_liveRoomKey))
-                                .presence,
-                            room: room,
-                            onUserTap: _openUser,
+                          onRanking: () => unawaited(
+                            showVoiceRoomRankingSheet(context, ref),
                           ),
-                          onShare: _shareRoom,
+                          onPopular: () => unawaited(
+                            showVoiceRoomRankingSheet(context, ref),
+                          ),
+                          onInvite: () => unawaited(_shareRoom()),
+                          onSettings: () => _openManagementPanel(
+                            context,
+                            room: room,
+                            live: live,
+                            perms: perms,
+                            isOwner: isOwner,
+                          ),
                         ),
                         Expanded(
                           child: Column(
@@ -1890,11 +1965,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                     ),
                   ),
                 ),
-                VoiceRoomRtcFooterBand(
+                VoiceMockFooter(
                   pkChatOpen: _pkChatOpen,
                   liveRoomKey: _liveRoomKey,
                   room: room,
-                  canSpeak: canSpeak,
                   userId: user?.id,
                   controller: _messageCtrl,
                   focusNode: _messageFocus,
@@ -1908,16 +1982,19 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                     room: room,
                     presence: ref.read(voiceRoomLiveProvider(_liveRoomKey)).presence,
                   ),
-                  onInvite: () => unawaited(_shareRoom()),
                   onEmojiTap: () => _showEmojiPicker(context, _messageCtrl),
                   onChanged: _onChatChanged,
-                  onSpeakRequest: () => unawaited(
-                    requestVoiceRoomBasicSpeak(
-                      context: context,
-                      ref: ref,
-                      liveKey: _liveRoomKey,
-                      pending: ref.read(voiceRoomUiProvider).requestSpeakPending,
-                    ),
+                  onEffects: () => unawaited(showVoiceEffectsSheet(context, ref)),
+                  onRoomMode: () => showVoiceRoomManagementPanel(
+                    context,
+                    ref,
+                    room: room,
+                    live: live,
+                    perms: perms,
+                    isOwner: isOwner,
+                    onUserTap: _openUser,
+                    onPkInvite: () => unawaited(_openPkInvite(room)),
+                    initial: VoiceMgmtInitial.roomMgmt,
                   ),
                 ),
               ],
@@ -1930,30 +2007,73 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                 configuredSeatCount: live.roomSeatCount ?? room.seatCount,
               ),
             ),
-            VoiceRoomSideActionRail(
-              onPk: ref.watch(pkFeatureEnabledProvider)
-                  ? () => unawaited(_openPkInvite(room))
-                  : null,
-              showPk: ref.watch(pkFeatureEnabledProvider),
-              onSettings: () => _openManagementPanel(
+            VoiceMockSideRail(
+              onGift: () => _openGiftShop(
+                context,
+                room: room,
+                presence: ref.read(voiceRoomLiveProvider(_liveRoomKey)).presence,
+              ),
+              onMusic: () {
+                if (showMusicRequestFab) {
+                  unawaited(showVoiceYoutubeSongSheet(context, ref, room: room));
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Bu odada müzik kapalı')),
+                  );
+                }
+              },
+              onPk: () {
+                if (ref.read(pkFeatureEnabledProvider)) {
+                  unawaited(_openPkInvite(room));
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('PK şu an kapalı')),
+                  );
+                }
+              },
+              requestPending: ref.watch(
+                voiceRoomUiProvider.select((s) => s.requestSpeakPending),
+              ),
+              onRequest: () {
+                if (!canSpeak) {
+                  unawaited(
+                    requestVoiceRoomBasicSpeak(
+                      context: context,
+                      ref: ref,
+                      liveKey: _liveRoomKey,
+                      pending: ref.read(voiceRoomUiProvider).requestSpeakPending,
+                    ),
+                  );
+                } else if (isOwner || perms.canModerate) {
+                  showVoiceSpeakerListSheet(
+                    context,
+                    presence: ref.read(voiceRoomLiveProvider(_liveRoomKey)).presence,
+                    room: room,
+                    onUserTap: _openUser,
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Zaten konuşma yetkiniz var'),
+                    ),
+                  );
+                }
+              },
+              onMore: () => _openMoreSheet(
                 context,
                 room: room,
                 live: live,
                 perms: perms,
                 isOwner: isOwner,
               ),
-              onMusic: showMusicRequestFab
-                  ? () => showVoiceYoutubeSongSheet(context, ref, room: room)
-                  : null,
-              showMusic: showMusicRequestFab,
-              // Yarışma kutuları Ayarlar/Müzik'in üstünde durur.
+              // Yarışma kutuları düğmelerin üstünde durur.
               topSlot: const VoiceRoomCompetitionRailSlot(),
             ),
             if (!keyboardOpen && showMusicRequestFab)
               Align(
                 alignment: Alignment.bottomRight,
                 child: Padding(
-                  padding: const EdgeInsets.only(bottom: 118, right: 4),
+                  padding: const EdgeInsets.only(bottom: 190, right: 4),
                   child: VoiceRoomMusicQueueMiniCard(
                     dj: live.dj,
                     liveKey: _liveRoomKey,
@@ -1970,7 +2090,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                 child: _VoiceRoomRtcSongMiniPlayer(
                   roomId: _liveRoomKey,
                   canControl: canControlMusic,
-                  bottomInset: 118,
+                  bottomInset: 190,
                 ),
               ),
             if (_liveRoomKey.isNotEmpty)
@@ -2156,7 +2276,7 @@ class _VoiceRoomRtcSeatStage extends ConsumerWidget {
         (s) => s.roomSeatCount,
       ),
     );
-    return VoiceWebOwnerStage(
+    return VoiceMockSeatStage(
       roomKey: liveRoomKey,
       room: room,
       seatSlots: seatSlice.seatSlots,
@@ -2164,7 +2284,6 @@ class _VoiceRoomRtcSeatStage extends ConsumerWidget {
       configuredSeatCount: configuredSeatCount ?? room.seatCount,
       djUserIds: mergedDjIds,
       speakingUserIds: speakingIds,
-      onUserTap: onUserTap,
       onSeatTap: onSeatTap,
       onSeatLongPress: onSeatLongPress,
       trtc: trtc,

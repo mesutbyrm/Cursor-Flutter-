@@ -1,5 +1,20 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.708+761 (2026-10-04) — Reklam ödülü beklemesi 6 sn → 3 sn
+
+- **Reklam ödülü:** reklamdan sonra SSV ödülünü bekleme süresi ~6 sn'den ~3 sn'ye indi (2 yoklama × 1,5 sn). SSV ödülü gelmezse eski `watch-ad` yedeği daha çabuk devreye girer; SSV bayrağı açılınca davranış aynı kalır
+
+## 1.0.707+760 (2026-10-04) — Sesli oda ekranı mockup'a göre yeniden düzenlendi
+
+- **Üst bar:** geri · taçlı sahip avatarı · oda adı + `#sıra` rozeti + ID · jeton (1.6M) · çevrimiçi (·1.2K) · kırmızı çıkış; ikinci satırda «Popüler Oda ›» (sıralamayı açar) ve **Sıralama · Davet Et · Ayarlar** düğmeleri
+- **Koltuklar:** 4 sütunlu ızgara; sol üstte kanatlı büyük **oda sahibi** («Oda Sahibi» + ad rozetleri), diğer koltuklarda taç, numara rozeti, mikrofon rozeti, isim ve **🎁 hediye değeri**; boş koltuklar kesikli halka + «+» ve **«Koltuk Aç»**, kilitli koltuklar «Kilitli». Artık tüm koltuklar baştan görünür (eski «en fazla bir +» kuralı kalktı)
+- **Sağ düğmeler:** Hediye · Müzik · PK · İstek (konuşma isteği; yetkililerde katılımcı listesi) · Daha Fazla (katılımcılar, paylaş, arka plan, yönetim)
+- **Sohbet:** avatarlı yuvarlak baloncuklar, sağda saat
+- **Alt bölüm:** emoji · «Mesaj yaz... (istek)» alanı · hediye · gönder; altında 5'li dock: **Açık** (hoparlör) · **Kapalı/Açık** (mikrofon) · büyük **Konuş** · **Efektler** · **Oda Modu**
+- Davranış değişmedi: koltuk, mikrofon, PK, hediye, müzik ve yönetim işlevleri mevcut akışlara bağlı
+- Not: cihazda doğrulanmadı; oda arka planı, kozmetik çerçeveler ve hediye animasyonları eskisi gibi
+- Testler: koltuk numaraları, koltuk/dock/düğme etiketleri ve davranışı, PK sırasında mesaj satırı gizleme
+
 ## 1.0.706+759 (2026-10-03) — Fal: reklam bulunamazsa «Reklam tamamlanmadan fal açılamaz» ile engellenmez
 
 - **Hata:** gösterilecek reklam hiç yüklenemediğinde (yeni birimin envanteri henüz dolmamış, ağ/AdMob hatası) fal «Reklam tamamlanmadan fal açılamaz» diyerek açılmıyordu; kullanıcı reklamı reddetmemiş olduğu halde engelleniyordu

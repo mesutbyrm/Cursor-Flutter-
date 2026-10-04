@@ -146,52 +146,77 @@ class _ChatMessageBody extends ConsumerWidget {
       onDoubleTap:
           user != null ? () => onUserDoubleTap?.call(user.id, name) : null,
       onLongPress: () => _showMessageActions(context),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: bubbleDecoration,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (showAvatar && user != null) ...[
-              UserAvatarWidget(url: _effectiveImage, radius: 14),
-              const SizedBox(width: 8),
-            ],
-            Expanded(
-              child: RichText(
-                text: TextSpan(
-                  style: const TextStyle(
-                    fontSize: 12,
-                    height: 1.35,
-                    color: Colors.white,
-                  ),
-                  children: [
-                    WidgetSpan(
-                      alignment: PlaceholderAlignment.middle,
-                      child: FxMembershipBadgeChip(tier: VipTier.fromMembership(user?.membership)),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Container(
+          padding: EdgeInsets.fromLTRB(showAvatar && user != null ? 4 : 10, 4, 10, 4),
+          decoration: bubbleItem != null
+              ? bubbleDecoration
+              : BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.38),
+                  borderRadius: BorderRadius.circular(22),
+                ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              if (showAvatar && user != null) ...[
+                UserAvatarWidget(url: _effectiveImage, radius: 16),
+                const SizedBox(width: 8),
+              ],
+              Flexible(
+                child: RichText(
+                  text: TextSpan(
+                    style: const TextStyle(
+                      fontSize: 13,
+                      height: 1.3,
+                      color: Colors.white,
                     ),
-                    WidgetSpan(
-                      alignment: PlaceholderAlignment.middle,
-                      child: FxAuthorityBadge(rank: rank),
-                    ),
-                    TextSpan(
-                      text: '$name ',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 12,
-                        color: nameColor,
+                    children: [
+                      WidgetSpan(
+                        alignment: PlaceholderAlignment.middle,
+                        child: FxMembershipBadgeChip(
+                          tier: VipTier.fromMembership(user?.membership),
+                        ),
                       ),
-                    ),
-                    TextSpan(text: message.content),
-                  ],
+                      WidgetSpan(
+                        alignment: PlaceholderAlignment.middle,
+                        child: FxAuthorityBadge(rank: rank),
+                      ),
+                      TextSpan(
+                        text: '$name  ',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                          color: nameColor,
+                        ),
+                      ),
+                      TextSpan(text: message.content),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            if (showIstek) _IstekBadge(),
-          ],
+              if (showIstek) _IstekBadge(),
+              const SizedBox(width: 10),
+              Text(
+                _hhmm(message.createdAt),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.white.withValues(alpha: 0.55),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+String _hhmm(DateTime t) {
+  final l = t.toLocal();
+  String two(int v) => v.toString().padLeft(2, '0');
+  return '${two(l.hour)}:${two(l.minute)}';
 }
 
 class _StaffChatLine extends StatelessWidget {
