@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../agency/presentation/providers/agency_providers.dart';
+import '../../../../web_parity/domain/feature_catalog.dart';
 import '../../navigation/home_cta_navigation.dart';
 import '../../../../../core/motion/canlifal_motion_widgets.dart';
 import '../../theme/home_approved_design.dart';
@@ -60,22 +61,50 @@ class HomeRefQuickAccess extends ConsumerWidget {
         HomeApprovedDesign.hPad,
         12,
       ),
-      child: Row(
-        children: [
-          for (var i = 0; i < items.length; i++) ...[
-            if (i > 0) const SizedBox(width: 6),
-            Expanded(
-              child: CanlifalEntranceFadeSlide(
-                delay: Duration(milliseconds: 40 * i),
-                child: items[i].route == '/premium-membership'
-                    ? HomeGoldShimmerBand(
-                        child: _QuickAccessTile(item: items[i]),
-                      )
-                    : _QuickAccessTile(item: items[i]),
+      child: LayoutBuilder(
+        builder: (context, c) {
+          // İlk ekranda 5 kutu birebir sığar; yenileri yanında kaydırılır.
+          const gap = 6.0;
+          final tileW = (c.maxWidth - gap * 4) / 5;
+          final extras = <_QuickAccessItem>[
+            for (final f in kFeatureCatalog.where((e) => e.onHome))
+              _QuickAccessItem(
+                label: f.label,
+                icon: f.icon,
+                route: f.route,
+                colors: f.colors,
               ),
+            const _QuickAccessItem(
+              label: 'Tüm Özellikler',
+              icon: Icons.apps_rounded,
+              route: '/ozellikler',
+              colors: [Color(0xFF475569), Color(0xFF8B5CF6)],
             ),
-          ],
-        ],
+          ];
+          final all = [...items, ...extras];
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            clipBehavior: Clip.none,
+            child: Row(
+              children: [
+                for (var i = 0; i < all.length; i++) ...[
+                  if (i > 0) const SizedBox(width: gap),
+                  SizedBox(
+                    width: tileW,
+                    child: CanlifalEntranceFadeSlide(
+                      delay: Duration(milliseconds: 40 * (i < 8 ? i : 8)),
+                      child: all[i].route == '/premium-membership'
+                          ? HomeGoldShimmerBand(
+                              child: _QuickAccessTile(item: all[i]),
+                            )
+                          : _QuickAccessTile(item: all[i]),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          );
+        },
       ),
     );
   }

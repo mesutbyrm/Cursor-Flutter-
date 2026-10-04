@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 
 import 'pages/agency_growth_pages.dart';
 import 'pages/dream_community_pages.dart';
+import 'pages/feature_hub_page.dart';
 import 'pages/game_pages.dart';
 import 'pages/leaderboard_page.dart';
 import 'pages/membership_pages.dart';
@@ -83,5 +84,9 @@ final List<RouteBase> webParityRoutes = [
   GoRoute(
     path: '/oyunlar/lobi',
     builder: (context, state) => const GamesLobbyPage(),
+  ),
+  GoRoute(
+    path: '/ozellikler',
+    builder: (context, state) => const FeatureHubPage(),
   ),
 ];

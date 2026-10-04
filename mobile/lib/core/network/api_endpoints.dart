@@ -1132,7 +1132,6 @@ abstract final class ApiEndpoints {
   static const tellerLevel = '/api/teller/level';
   static const tellerAnalytics = '/api/teller/analytics';
   static const tellerGifts = '/api/teller/gifts';
-  static const tellerReviews = '/api/teller/reviews';
   static const tellerChatSessions = '/api/teller-chat';
   static String tellerChatSession(String id) => '/api/teller-chat/$id';
   static const agencyGrowth = '/api/agency/growth';
