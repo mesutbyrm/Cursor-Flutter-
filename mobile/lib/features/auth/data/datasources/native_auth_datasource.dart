@@ -98,6 +98,16 @@ class NativeAuthDataSource {
       return _unwrapAuthResponse(res.data);
     } on ApiException catch (e) {
       debugPrint('mobile-google API: ${e.statusCode} ${e.message}');
+      if (e.statusCode == 401) {
+        // Backend, token'ın audience'ını GOOGLE_CLIENT_IDS içinde bulamadığında 401 döner.
+        final id = GoogleAuthConfig.serverClientId ?? '';
+        final short = id.length > 12 ? id.substring(0, id.indexOf('.')) : id;
+        throw ApiException(
+          '${e.message}\n\nGoogle Web client: $short\n'
+          'Bu ID sunucudaki GOOGLE_CLIENT_IDS listesinde olmalı.',
+          statusCode: e.statusCode,
+        );
+      }
       rethrow;
     }
   }
