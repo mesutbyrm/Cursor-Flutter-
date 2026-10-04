@@ -48,7 +48,7 @@ void main() {
     expect(withAdmin.last, 11);
   });
 
-  testWidgets('koltuk: boş «Koltuk Aç», kilitli «Kilitli», sahip «Oda Sahibi»', (t) async {
+  testWidgets('koltuk: boş «Koltuk Aç», kilitli «Kilitli», sahip 👑 + ad', (t) async {
     Widget seat({int i = 5, bool host = false, bool locked = false, ChatRoomPresence? u}) =>
         VoiceMockSeat(
           seatIndex: i, isHost: host, user: u, locked: locked, micOpen: true,
@@ -62,8 +62,10 @@ void main() {
     await t.pumpWidget(
       _host(seat(i: 1, host: true, u: const ChatRoomPresence(id: 'o', name: 'Admin', seatIndex: 1))),
     );
-    expect(find.text('Oda Sahibi'), findsOneWidget);
+    // Oda sahibi kanatsız: yalnızca 👑 + ad (eski «Oda Sahibi» etiketi kalktı).
+    expect(find.text('👑'), findsOneWidget);
     expect(find.text('Admin'), findsOneWidget);
+    expect(find.text('Oda Sahibi'), findsNothing);
   });
 
   testWidgets('dolu koltuk hediye değerini (12.3K) gösterir', (t) async {
