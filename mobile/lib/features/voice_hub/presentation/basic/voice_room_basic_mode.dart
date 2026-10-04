@@ -6,6 +6,12 @@ class VoiceRoomBasicMode {
 
   static const _full = bool.fromEnvironment('VOICE_ROOM_FULL', defaultValue: false);
 
+  /// Sayfa seçimi: varsayılan **tam sayfa** (mockup'taki koltuk ızgarası, üst bar,
+  /// sağ düğmeler, alt dock). `--dart-define=VOICE_ROOM_BASIC_UI=true` eski sade
+  /// sayfayı açar. Sağlayıcı davranışı (`enabled`/`musicEnabled`) buradan etkilenmez.
+  static const _basicUi = bool.fromEnvironment('VOICE_ROOM_BASIC_UI', defaultValue: false);
+  static bool get useBasicPage => _basicUi && enabled;
+
   /// `true` → `VoiceRoomBasicPage` (web parity istemci; backend değişmez).
   static bool get enabled => !_full;
 
