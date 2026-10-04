@@ -142,6 +142,28 @@ void main() {
   test('izin istemi: yalnızca verilmemiş ve daha önce sorulmamışsa', () {
     expect(NotificationPermissionPrompter.shouldPrompt(granted: false, prompted: false), isTrue);
     expect(NotificationPermissionPrompter.shouldPrompt(granted: true, prompted: false), isFalse);
-    expect(NotificationPermissionPrompter.shouldPrompt(granted: false, prompted: true), isFalse);
+    // Daha önce sorulmuş: aralık dolmadan tekrar sorulmaz, dolunca (en fazla 3 kez) sorulur.
+    final now = DateTime(2026, 10, 10);
+    expect(
+      NotificationPermissionPrompter.shouldPrompt(
+        granted: false, prompted: true, count: 1,
+        lastAt: now.subtract(const Duration(hours: 12)), now: now,
+      ),
+      isFalse,
+    );
+    expect(
+      NotificationPermissionPrompter.shouldPrompt(
+        granted: false, prompted: true, count: 1,
+        lastAt: now.subtract(const Duration(days: 3)), now: now,
+      ),
+      isTrue,
+    );
+    expect(
+      NotificationPermissionPrompter.shouldPrompt(
+        granted: false, prompted: true, count: 3,
+        lastAt: now.subtract(const Duration(days: 30)), now: now,
+      ),
+      isFalse,
+    );
   });
 }

@@ -13,7 +13,7 @@ abstract final class FirebaseOptionsGenerated {
   static const String apiKey = 'AIzaSyD-750KWT8pIvF5P0DdVfDmRCMQM90zssM';
   static const String appId = '1:24667749197:android:e220e714f4c5ff0aae1504';
   static const String androidPackageName = 'com.mesutbyrm.canlifal';
-  static const String googleWebClientId = '24667749197-u4d3ep5jdp8lcv4lqg4ngo2ckae4ueh4.apps.googleusercontent.com';
+  static const String googleWebClientId = '24667749197-04kfp7u42jgv5pkkdfo5lsnra2re73gb.apps.googleusercontent.com';
 
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {

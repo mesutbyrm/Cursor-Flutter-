@@ -2,8 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/api_exception.dart';
+import '../../../../core/network/dio_provider.dart';
 import '../../../../core/push/notification_channels.dart';
 import '../../../../core/push/push_notification_service.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
@@ -50,6 +54,34 @@ class _NotificationChannelSettingsPageState
     }
   }
 
+  var _sendingMail = false;
+
+  /// `POST /api/auth/email/send-verification` (Bearer) — doğrulanmamışsa
+  /// e-posta gönderir; doğrulanmışsa `alreadyVerified: true` döner.
+  Future<void> _sendVerificationMail() async {
+    setState(() => _sendingMail = true);
+    String msg;
+    try {
+      final res = await ref.read(dioProvider).safePost<dynamic>(
+            ApiEndpoints.authEmailSendVerification,
+            data: const <String, dynamic>{},
+          );
+      final body = res.data;
+      if (body is Map && body['alreadyVerified'] == true) {
+        msg = 'E-posta adresin zaten doğrulanmış.';
+      } else if (body is Map && body['message'] is String) {
+        msg = body['message'] as String;
+      } else {
+        msg = 'Doğrulama e-postası gönderildi. Gelen kutunu ve spam klasörünü kontrol et.';
+      }
+    } catch (e) {
+      msg = ApiException.userMessage(e);
+    }
+    if (!mounted) return;
+    setState(() => _sendingMail = false);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
   IconData _channelIcon(AppNotificationChannel c) => switch (c) {
         AppNotificationChannel.messages => Icons.chat_bubble_rounded,
         AppNotificationChannel.liveStarters => Icons.sensors_rounded,
@@ -89,6 +121,25 @@ class _NotificationChannelSettingsPageState
                   const SizedBox(height: 8),
                 ],
                 const SizedBox(height: 6),
+                MockListRow(
+                  icon: Icons.mark_email_read_rounded,
+                  color: const Color(0xFF3B82F6),
+                  title: 'E-posta bildirimleri',
+                  subtitle: 'Şifre sıfırlama, ödeme ve doğrulama e-postaları',
+                  value: _sendingMail ? 'Gönderiliyor…' : 'Doğrulama gönder',
+                  onTap: _sendingMail
+                      ? null
+                      : () => unawaited(_sendVerificationMail()),
+                ),
+                const SizedBox(height: 8),
+                MockListRow(
+                  icon: Icons.health_and_safety_rounded,
+                  color: const Color(0xFF22C55E),
+                  title: 'Bildirim tanılama',
+                  subtitle: 'Bildirim gelmiyorsa nedenini gör ve onar',
+                  onTap: () => context.push('/settings/notifications/diagnostics'),
+                ),
+                const SizedBox(height: 8),
                 MockListRow(
                   icon: Icons.settings_rounded,
                   color: const Color(0xFF6B7080),

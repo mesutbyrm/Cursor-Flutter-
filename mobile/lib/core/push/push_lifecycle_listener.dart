@@ -29,6 +29,7 @@ import '../../features/notifications/presentation/providers/notifications_list_n
 import '../../features/notifications/presentation/providers/notifications_providers.dart';
 import '../../features/voice_hub/presentation/utils/voice_room_session_utils.dart';
 import '../onesignal/onesignal_bootstrap.dart';
+import 'notification_permission_prompter.dart';
 import 'notification_reply_sender.dart';
 import 'push_notification_service.dart';
 import 'push_navigation_handler.dart';
@@ -49,6 +50,7 @@ class PushLifecycleListener extends ConsumerStatefulWidget {
 class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener>
     with WidgetsBindingObserver {
   Timer? _pushSyncTimer;
+  Timer? _permissionTimer;
   Timer? _adminPollTimer;
   bool _pushSyncing = false;
   int _lastPendingCount = -1;
@@ -289,12 +291,26 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener>
       }
 
       await OneSignalBootstrap.login(user.id);
-      // Bildirim izni girişten hemen sonra istenmez — Android activity restart
-      // + tekrar giriş ekranı. Kullanıcı Ayarlar / bildirim banner ile açar.
 
       await ref
           .read(pushRegistrarProvider)
           .registerIfPossible(allowTokenRetry: true);
+
+      // İzin, girişten hemen sonra değil (Android activity yeniden başlatma /
+      // giriş ekranına dönüş sorunu); kabuk oturduktan sonra gecikmeli sorulur.
+      _permissionTimer?.cancel();
+      _permissionTimer = Timer(const Duration(seconds: 8), () {
+        if (!mounted) return;
+        if (ref.read(authControllerProvider).valueOrNull == null) return;
+        unawaited(() async {
+          final asked = await NotificationPermissionPrompter.maybePrompt();
+          if (asked && mounted) {
+            await ref
+                .read(pushRegistrarProvider)
+                .registerIfPossible(allowTokenRetry: true);
+          }
+        }());
+      });
     } finally {
       _pushSyncing = false;
     }
@@ -323,6 +339,7 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener>
     WidgetsBinding.instance.removeObserver(this);
     _adminPollTimer?.cancel();
     _pushSyncTimer?.cancel();
+    _permissionTimer?.cancel();
     super.dispose();
   }
 
@@ -337,6 +354,9 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener>
     if (!mounted) return;
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) return;
+    // Eşleme/abonelik düşmüşse kendini onarır (idempotent).
+    unawaited(OneSignalBootstrap.login(user.id));
+    unawaited(OneSignalBootstrap.optInIfPermitted());
     ref.invalidate(notificationsUnreadApiProvider);
     unawaited(ref.read(notificationsListNotifierProvider.notifier).refresh());
     unawaited(

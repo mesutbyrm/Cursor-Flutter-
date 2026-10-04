@@ -14,7 +14,15 @@
       },
       "oauth_client": [
         {
-          "client_id": "24667749197-tguc33ao8j653f06c2l312rbkpirmj5t.apps.googleusercontent.com",
+          "client_id": "24667749197-2nm0m03ve7jk2usk46bsrleavjm9ok1s.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mesutbyrm.canlifal",
+            "certificate_hash": "3a63b9810aa727151be3e48188ce0dcfdb07440d"
+          }
+        },
+        {
+          "client_id": "24667749197-g1becho8ddf77ev0f0l6ig17p9b5r171.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.mesutbyrm.canlifal",
@@ -22,7 +30,7 @@
           }
         },
         {
-          "client_id": "24667749197-u4d3ep5jdp8lcv4lqg4ngo2ckae4ueh4.apps.googleusercontent.com",
+          "client_id": "24667749197-04kfp7u42jgv5pkkdfo5lsnra2re73gb.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
@@ -35,7 +43,7 @@
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "24667749197-u4d3ep5jdp8lcv4lqg4ngo2ckae4ueh4.apps.googleusercontent.com",
+              "client_id": "24667749197-04kfp7u42jgv5pkkdfo5lsnra2re73gb.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

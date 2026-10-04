@@ -18,6 +18,9 @@ class PushRegistrar {
   String? _lastSentToken;
   bool _registering = false;
 
+  /// Son kayıt denemesinin özeti (Bildirim tanılama ekranı için).
+  static String lastStatus = 'Henüz denenmedi';
+
   Future<void> registerIfPossible({bool allowTokenRetry = false}) async {
     if (_registering) return;
     _registering = true;
@@ -25,8 +28,14 @@ class PushRegistrar {
       await PushNotificationService.instance.init();
 
       final token = await _resolvePushToken(allowRetry: allowTokenRetry);
-      if (token == null || token.isEmpty) return;
-      if (token == _lastSentToken) return;
+      if (token == null || token.isEmpty) {
+        lastStatus = 'Push token yok (izin verilmemiş veya SDK hazır değil)';
+        return;
+      }
+      if (token == _lastSentToken) {
+        lastStatus = 'Sunucuya kayıtlı';
+        return;
+      }
 
       final payload = {
         'token': token,
@@ -45,6 +54,7 @@ class PushRegistrar {
         try {
           await _dio.safePost(path, data: payload);
           _lastSentToken = token;
+          lastStatus = 'Sunucuya kaydedildi';
           if (kDebugMode) debugPrint('Push token registered via $path');
           if (OneSignalBootstrap.isReady) {
             await _deregisterStaleFcmToken();
@@ -52,6 +62,7 @@ class PushRegistrar {
           return;
         } on ApiException catch (e) {
           if (e.statusCode == 404 || e.statusCode == 405) continue;
+          lastStatus = 'Kayıt hatası: ${e.message}';
           debugPrint('Push register $path failed: ${e.message}');
         } catch (e) {
           debugPrint('Push register $path failed: $e');
