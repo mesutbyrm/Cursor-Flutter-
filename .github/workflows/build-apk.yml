@@ -241,7 +241,13 @@ jobs:
           GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
         run: |
           set -eux
-          if [ -n "${GOOGLE_SERVICES_JSON_BASE64:-}" ]; then
+          # Depodaki (commit'li) google-services.json geçerliyse tek kaynak odur:
+          # eski GOOGLE_SERVICES_JSON_BASE64 secret'ı güncel Web client ID'yi ezmesin.
+          COMMITTED=mobile/android/app/google-services.json
+          if [ -f "$COMMITTED" ] && jq -e '.client[0].oauth_client[] | select(.client_type == 3)' "$COMMITTED" >/dev/null 2>&1; then
+            echo "Depodaki google-services.json kullanılıyor (secret yok sayıldı)"
+            bash scripts/generate-firebase-options.sh
+          elif [ -n "${GOOGLE_SERVICES_JSON_BASE64:-}" ]; then
             RAW=$(printf '%s' "$GOOGLE_SERVICES_JSON_BASE64" | tr -d '\r')
             TRIMMED=$(printf '%s' "$RAW" | tr -d ' \n\t')
             if [[ "$TRIMMED" == \{* ]]; then
@@ -255,6 +261,10 @@ jobs:
             bash scripts/generate-firebase-options.sh
           else
             echo "GOOGLE_SERVICES_JSON_BASE64 not set — skipping Firebase config"
+          fi
+          if [ -f "$COMMITTED" ]; then
+            echo "Web client: $(jq -r '.client[0].oauth_client[] | select(.client_type == 3) | .client_id' "$COMMITTED" | head -1)"
+            echo "SHA-1 sayısı: $(jq -r '[.client[0].oauth_client[] | select(.client_type == 1)] | length' "$COMMITTED")"
           fi
 
       - name: Release keystore (Google Sign-In SHA-1 tutarlılığı)

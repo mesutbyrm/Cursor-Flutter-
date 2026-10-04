@@ -582,17 +582,8 @@ class _DashedRingPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.6;
     final r = size.width / 2 - 1;
-    const dashes = 36;
-    const sweep = 2 * math.pi / dashes;
-    for (var i = 0; i < dashes; i++) {
-      canvas.drawArc(
-        Rect.fromCircle(center: size.center(Offset.zero), radius: r),
-        i * sweep,
-        sweep * 0.62,
-        false,
-        paint,
-      );
-    }
+    // Mockup: boş koltuk kesikli değil, ince düz halka.
+    canvas.drawCircle(size.center(Offset.zero), r, paint);
     canvas.drawCircle(
       size.center(Offset.zero),
       r,

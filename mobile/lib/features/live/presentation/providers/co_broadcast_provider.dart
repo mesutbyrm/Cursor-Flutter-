@@ -258,6 +258,40 @@ class CoBroadcastNotifier extends Notifier<CoBroadcastState> {
     await refreshStream(streamId);
   }
 
+  /// Yayıncı — misafirin mikrofonunu (`muted`) ve/veya kamerasını (`videoOff`)
+  /// sunucuda kapatır/açar (`/api/live/guest` mute|camera). Host tarafından
+  /// kapatılan medyayı misafir kendisi açamaz.
+  Future<void> setGuestMedia(
+    String streamId,
+    String userId, {
+    bool? muted,
+    bool? videoOff,
+  }) async {
+    if (muted == null && videoOff == null) return;
+    await _guest.postGuestAction(
+      {
+        'action': muted != null ? 'mute' : 'camera',
+        'streamId': streamId,
+        'guestId': userId,
+        'muted': ?muted,
+        'videoOff': ?videoOff,
+      },
+      streamId: streamId,
+    );
+    if (muted != null && videoOff != null) {
+      await _guest.postGuestAction(
+        {
+          'action': 'camera',
+          'streamId': streamId,
+          'guestId': userId,
+          'videoOff': videoOff,
+        },
+        streamId: streamId,
+      );
+    }
+    await refreshStream(streamId);
+  }
+
   Future<void> leave(String streamId) async {
     await _guest.patchCoBroadcastCompat(streamId: streamId, action: 'leave');
   }

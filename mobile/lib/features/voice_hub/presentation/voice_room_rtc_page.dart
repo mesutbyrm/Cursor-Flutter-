@@ -35,7 +35,9 @@ import '../../admin/presentation/providers/staff_access_provider.dart';
 import '../domain/voice_official_join.dart';
 import '../domain/voice_room_background_policy.dart';
 import '../../gifts/domain/premium_gift_catalog_2026.dart';
+import '../../gifts/presentation/widgets/first_gifter_badge.dart';
 import '../../gifts/presentation/widgets/gift_battle_strip.dart';
+import '../../gifts/presentation/widgets/gift_goal_bar.dart';
 import '../../gifts/presentation/widgets/lucky_gift_wins_ticker.dart';
 import '../../auth/domain/entities/user_entity.dart';
 import '../../vip_gold/domain/vip_tier.dart';
@@ -1886,6 +1888,18 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                 ? room.apiRoomKey
                                 : room.id,
                           ),
+                        ),
+                        GiftGoalBar(
+                          context: 'voice_room',
+                          contextId: room.apiRoomKey.isNotEmpty
+                              ? room.apiRoomKey
+                              : room.id,
+                        ),
+                        FirstGifterBadge(
+                          context: 'voice_room',
+                          contextId: room.apiRoomKey.isNotEmpty
+                              ? room.apiRoomKey
+                              : room.id,
                         ),
                         Consumer(
                           builder: (context, ref, _) {

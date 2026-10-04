@@ -7,7 +7,7 @@ import 'voice_room_basic_page.dart';
 
 /// Rota girişi — temel mod veya tam RTC sayfası.
 Widget buildVoiceRoomPage(VoiceRoomEntity room) {
-  if (VoiceRoomBasicMode.enabled) {
+  if (VoiceRoomBasicMode.useBasicPage) {
     return VoiceRoomBasicPage(room: room);
   }
   return VoiceRoomRtcPage(room: room);

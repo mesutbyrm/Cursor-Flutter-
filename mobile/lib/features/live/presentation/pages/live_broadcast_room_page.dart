@@ -218,6 +218,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
   var _coHostUpgraded = false;
   DateTime? _leavingSince;
   var _guestLayoutCollapsed = false;
+
+  /// Bu yayında en az bir onaylı misafir görüldü (son misafir düşünce tekliye dön).
+  var _sawApprovedGuest = false;
+  bool _hostLockedMic = false;
+  bool _hostLockedCamera = false;
   var _pkTwoWayRtc = false;
   var _joinRequestPending = false;
   String? _vipBannerName;
@@ -1585,6 +1590,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       selfUserId: user.id,
     );
     if (enabled == null) return;
+    _hostLockedCamera = !enabled;
+    _trtc.setHostMediaLock(camera: !enabled);
     _trtc.setCameraEnabled(enabled);
     if (!mounted) return;
     setState(() => _localPreviewKey = UniqueKey());
@@ -1936,7 +1943,15 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         useCompoundJoin: true,
       );
       _applyRtcPublishPolicy();
+      _trtc.setHostMediaLock(mic: false, camera: false);
+      _hostLockedMic = false;
+      _hostLockedCamera = false;
       ref.read(liveGuestGridProvider.notifier).reset();
+      // Düşen misafir artık izleyici: başka onaylı misafir yoksa tekli görünüme dön.
+      final others = filterApprovedCoGuests(
+        ref.read(coBroadcastProvider).coBroadcasters,
+      ).where((g) => (g['userId'] ?? g['id'])?.toString() != user.id);
+      if (others.isEmpty) _collapseGuestLayout();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Misafir yayını sonlandı')),
@@ -1964,6 +1979,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     List<Map<String, dynamic>> guests,
   ) {
     _guestLayoutCollapsed = false;
+    if (guests.isNotEmpty) _sawApprovedGuest = true;
     final settings = ref.read(liveBroadcastSettingsProvider.notifier);
     settings.toggleCoBroadcast(true);
     settings.toggleGuests(true);
@@ -2195,6 +2211,29 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     return widget.session.guestLayout;
   }
 
+  /// Yayıncı misafirin mikrofon/kamerasını kapattı/açtı: kilidi yerel
+  /// aygıta uygular ve değişimde kısa bilgi verir.
+  void _applyHostMediaLocks({
+    required bool micLocked,
+    required bool cameraLocked,
+  }) {
+    if (widget.session.isHost || _leaving) return;
+    final micChanged = micLocked != _hostLockedMic;
+    final camChanged = cameraLocked != _hostLockedCamera;
+    if (!micChanged && !camChanged) return;
+    _hostLockedMic = micLocked;
+    _hostLockedCamera = cameraLocked;
+    _trtc.setHostMediaLock(mic: micLocked, camera: cameraLocked);
+    if (camChanged) setState(() => _localPreviewKey = UniqueKey());
+    if (!mounted) return;
+    final msg = micChanged && micLocked
+        ? 'Yayıncı mikrofonunuzu kapattı'
+        : camChanged && cameraLocked
+            ? 'Yayıncı kameranızı kapattı'
+            : 'Yayıncı kısıtlamayı kaldırdı — dilerseniz açabilirsiniz';
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
   /// Hiç onaylı misafir kalmadığında çoklu yayın modunu kapatır ve tekli
   /// yayına döner (mod aksi halde sürekli açık kalıyordu).
   void _collapseGuestLayout() {
@@ -2242,6 +2281,21 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           if (userId != null && userId.isNotEmpty) {
             _trtc.muteRemoteAudio(userId, slots[slotIndex].mutedByHost);
           }
+          unawaited(_setGuestMediaOnServer(
+            slots[slotIndex].userId ?? slots[slotIndex].rtcUserId,
+            muted: slots[slotIndex].mutedByHost,
+          ));
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  slots[slotIndex].mutedByHost
+                      ? 'Konuk mikrofonu kapatıldı'
+                      : 'Konuk mikrofonu açıldı',
+                ),
+              ),
+            );
+          }
         }
       case 'cam':
         grid.toggleGuestCamera(slotIndex);
@@ -2252,6 +2306,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           if (userId != null && userId.isNotEmpty && !slots[slotIndex].cameraOn) {
             _trtc.stopRemoteView(userId);
           }
+          unawaited(_setGuestMediaOnServer(
+            slots[slotIndex].userId ?? slots[slotIndex].rtcUserId,
+            videoOff: !slots[slotIndex].cameraOn,
+          ));
           if (streamId.isNotEmpty && userId != null && userId.isNotEmpty) {
             unawaited(
               ref.read(liveStreamExtrasProvider).postSignal(
@@ -2584,6 +2642,31 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     }
   }
 
+  /// Yayıncı → sunucuda misafirin mikrofon/kamera durumunu değiştirir.
+  Future<void> _setGuestMediaOnServer(
+    String? userId, {
+    bool? muted,
+    bool? videoOff,
+  }) async {
+    final streamId = widget.session.streamId?.trim() ?? '';
+    if (streamId.isEmpty || userId == null || userId.isEmpty) return;
+    if (!widget.session.isHost) return;
+    try {
+      await ref.read(coBroadcastProvider.notifier).setGuestMedia(
+            streamId,
+            userId,
+            muted: muted,
+            videoOff: videoOff,
+          );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
+        );
+      }
+    }
+  }
+
   /// Yayıncı — aktif misafirleri listeler; «İndir» ile misafirlikten alır.
   void _openGuestManageSheet() {
     final guests =
@@ -2619,19 +2702,68 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                         .toString(),
                     style: const TextStyle(color: Colors.white),
                   ),
-                  trailing: FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFFC62828),
-                    ),
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      unawaited(
-                        _removeGuest(
-                          (g['userId'] ?? g['id'])?.toString() ?? '',
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        tooltip: g['mutedByHost'] == true
+                            ? 'Mikrofonu aç'
+                            : 'Mikrofonu kapat',
+                        icon: Icon(
+                          g['mutedByHost'] == true
+                              ? Icons.mic_off_rounded
+                              : Icons.mic_rounded,
+                          color: g['mutedByHost'] == true
+                              ? const Color(0xFFFF5A5F)
+                              : Colors.white70,
                         ),
-                      );
-                    },
-                    child: const Text('İndir'),
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          unawaited(
+                            _setGuestMediaOnServer(
+                              (g['userId'] ?? g['id'])?.toString(),
+                              muted: g['mutedByHost'] != true,
+                            ),
+                          );
+                        },
+                      ),
+                      IconButton(
+                        tooltip: g['videoOffByHost'] == true
+                            ? 'Kamerayı aç'
+                            : 'Kamerayı kapat',
+                        icon: Icon(
+                          g['videoOffByHost'] == true
+                              ? Icons.videocam_off_rounded
+                              : Icons.videocam_rounded,
+                          color: g['videoOffByHost'] == true
+                              ? const Color(0xFFFF5A5F)
+                              : Colors.white70,
+                        ),
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          unawaited(
+                            _setGuestMediaOnServer(
+                              (g['userId'] ?? g['id'])?.toString(),
+                              videoOff: g['videoOffByHost'] != true,
+                            ),
+                          );
+                        },
+                      ),
+                      FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFFC62828),
+                        ),
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          unawaited(
+                            _removeGuest(
+                              (g['userId'] ?? g['id'])?.toString() ?? '',
+                            ),
+                          );
+                        },
+                        child: const Text('İndir'),
+                      ),
+                    ],
                   ),
                 ),
               if (_canAddCoGuest())
@@ -2871,12 +3003,31 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       ref.listen(coBroadcastProvider, (prev, next) {
         final before = filterApprovedCoGuests(prev?.coBroadcasters ?? const []);
         final after = filterApprovedCoGuests(next.coBroadcasters);
-        if (before.isNotEmpty &&
+        if (after.isNotEmpty) _sawApprovedGuest = true;
+        // `before` boş kalsa da (anlık yenileme kaçsa) daha önce misafir
+        // görüldüyse son misafir ayrılınca tekliye dön.
+        if ((before.isNotEmpty || _sawApprovedGuest) &&
             after.isEmpty &&
             _resolveGuestLayout() != LiveGuestLayout.solo) {
+          _sawApprovedGuest = false;
           _collapseGuestLayout();
         }
       });
+      if (!s.isHost) {
+        ref.listen(coBroadcastProvider, (prev, next) {
+          final uid = ref.read(authControllerProvider).valueOrNull?.id;
+          if (uid == null) return;
+          Map<String, dynamic>? me;
+          for (final g in next.coBroadcasters) {
+            if ((g['userId'] ?? g['id'])?.toString() == uid) me = g;
+          }
+          if (me == null) return;
+          _applyHostMediaLocks(
+            micLocked: me['mutedByHost'] == true,
+            cameraLocked: me['videoOffByHost'] == true,
+          );
+        });
+      }
     }
 
     if (hasStream && s.isHost) {
