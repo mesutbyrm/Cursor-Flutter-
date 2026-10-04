@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 
 import 'pages/agency_growth_pages.dart';
+import 'pages/contact_page.dart';
 import 'pages/dream_community_pages.dart';
 import 'pages/feature_hub_page.dart';
 import 'pages/game_pages.dart';
@@ -88,5 +89,9 @@ final List<RouteBase> webParityRoutes = [
   GoRoute(
     path: '/ozellikler',
     builder: (context, state) => const FeatureHubPage(),
+  ),
+  GoRoute(
+    path: '/iletisim',
+    builder: (context, state) => const ContactPage(),
   ),
 ];

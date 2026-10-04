@@ -148,4 +148,11 @@ const kFeatureCatalog = <FeatureEntry>[
     colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
     group: 'Yardım',
   ),
+  FeatureEntry(
+    label: 'İletişim',
+    icon: Icons.mail_rounded,
+    route: '/iletisim',
+    colors: [Color(0xFF14B8A6), Color(0xFF3B82F6)],
+    group: 'Yardım',
+  ),
 ];
