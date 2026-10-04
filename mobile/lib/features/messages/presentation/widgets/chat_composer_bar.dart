@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'chat_composer.dart';
@@ -31,12 +33,8 @@ class _ChatComposerBarState extends State<ChatComposerBar> {
   Future<void> _handleSend() async {
     final t = widget.controller.text.trim();
     if (t.isEmpty || _sending) return;
-    setState(() => _sending = true);
-    try {
-      await widget.onSend(t);
-    } finally {
-      if (mounted) setState(() => _sending = false);
-    }
+    // Gönderim arka planda sürer; yeni mesaj yazmak engellenmez.
+    unawaited(widget.onSend(t));
   }
 
   @override

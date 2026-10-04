@@ -22,10 +22,7 @@ import '../widgets/inbox_system_notifications_panel.dart';
 
 /// TikTok tarzı birleşik gelen kutusu — mesajlar + sistem bildirimleri.
 class InboxPage extends ConsumerStatefulWidget {
-  const InboxPage({
-    super.key,
-    this.initialTab = InboxTab.messages,
-  });
+  const InboxPage({super.key, this.initialTab = InboxTab.all});
 
   final InboxTab initialTab;
 
@@ -80,7 +77,8 @@ class _InboxPageState extends ConsumerState<InboxPage> {
   @override
   void didUpdateWidget(covariant InboxPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.initialTab != widget.initialTab && _tab != widget.initialTab) {
+    if (oldWidget.initialTab != widget.initialTab &&
+        _tab != widget.initialTab) {
       setState(() => _tab = widget.initialTab);
     }
   }
@@ -103,9 +101,9 @@ class _InboxPageState extends ConsumerState<InboxPage> {
 
   Future<void> _refresh() async {
     await Future.wait([
-      ref.read(conversationsListNotifierProvider.notifier).refresh(
-            forceRefresh: true,
-          ),
+      ref
+          .read(conversationsListNotifierProvider.notifier)
+          .refresh(forceRefresh: true),
       ref.read(notificationsListNotifierProvider.notifier).refresh(),
     ]);
     ref.invalidate(conversationsProvider);
@@ -143,15 +141,10 @@ class _InboxPageState extends ConsumerState<InboxPage> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-              child: _InboxTabBar(
-                selected: _tab,
-                onSelect: _selectTab,
-              ),
+              child: _InboxTabBar(selected: _tab, onSelect: _selectTab),
             ),
             const Expanded(
-              child: InboxSystemNotificationsPanel(
-                showPermissionBanner: true,
-              ),
+              child: InboxSystemNotificationsPanel(showPermissionBanner: true),
             ),
           ],
         ),
@@ -198,10 +191,7 @@ class _InboxPageState extends ConsumerState<InboxPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _InboxTabBar(
-                  selected: _tab,
-                  onSelect: _selectTab,
-                ),
+                _InboxTabBar(selected: _tab, onSelect: _selectTab),
                 const SizedBox(height: 12),
                 _InboxSearchPanel(
                   controller: _search,
@@ -233,10 +223,7 @@ class _InboxPageState extends ConsumerState<InboxPage> {
 }
 
 class _InboxTabBar extends StatelessWidget {
-  const _InboxTabBar({
-    required this.selected,
-    required this.onSelect,
-  });
+  const _InboxTabBar({required this.selected, required this.onSelect});
 
   final InboxTab selected;
   final ValueChanged<InboxTab> onSelect;
@@ -394,10 +381,7 @@ class _InboxSearchPanel extends StatelessWidget {
 /// Gelen kutusu üst kartları — Mesajlar (okunmamış sayısı) ve Sistem Bildirimleri
 /// (okunmamış sayısı). Kartlardan birine dokununca ilgili bölüm açılır.
 class _InboxSectionCards extends ConsumerWidget {
-  const _InboxSectionCards({
-    required this.onMessages,
-    required this.onSystem,
-  });
+  const _InboxSectionCards({required this.onMessages, required this.onSystem});
 
   final VoidCallback onMessages;
   final VoidCallback onSystem;
@@ -472,7 +456,10 @@ class _InboxSectionCard extends StatelessWidget {
                 // Okunmamış sayısı — bölümün üstünde.
                 Container(
                   constraints: const BoxConstraints(minWidth: 22),
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2,
+                  ),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: count > 0
@@ -538,7 +525,9 @@ class _FilterChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
           gradient: selected
-              ? const LinearGradient(colors: [Color(0xFF7C3AED), Color(0xFFB832FF)])
+              ? const LinearGradient(
+                  colors: [Color(0xFF7C3AED), Color(0xFFB832FF)],
+                )
               : null,
           color: selected ? null : context.colors.glassFill,
           borderRadius: BorderRadius.circular(999),

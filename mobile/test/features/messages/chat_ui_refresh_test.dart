@@ -82,36 +82,28 @@ void main() {
   });
 
   group('ChatComposer', () {
-    testWidgets(
-      'ek menüsünde işlev görmeyen fotoğraf/video/dosya/konum/GIF/sticker yok',
-      (tester) async {
-        final actions = <DmComposerAction>[];
-        final controller = TextEditingController();
-        addTearDown(controller.dispose);
-        await tester.pumpWidget(
-          _host(
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: ChatComposer(
-                controller: controller,
-                onSend: () {},
-                sending: false,
-                onAction: actions.add,
-              ),
+    testWidgets('«+» ek menüsü ve mikrofon (sesli mesaj) düğmesi gizli', (
+      tester,
+    ) async {
+      final controller = TextEditingController();
+      addTearDown(controller.dispose);
+      await tester.pumpWidget(
+        _host(
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: ChatComposer(
+              controller: controller,
+              onSend: () {},
+              sending: false,
             ),
           ),
-        );
-        await tester.tap(find.bySemanticsLabel('İstek ve davet gönder'));
-        await tester.pumpAndSettle();
-        for (final fake in ['Fotoğraf', 'Video', 'Dosya', 'Konum', 'GIF', 'Sticker']) {
-          expect(find.text(fake), findsNothing, reason: fake);
-        }
-        expect(find.text('Fal İste'), findsOneWidget);
-        await tester.tap(find.text('Fal İste'));
-        await tester.pumpAndSettle();
-        expect(actions, [DmComposerAction.fortune]);
-      },
-    );
+        ),
+      );
+      expect(find.bySemanticsLabel('İstek ve davet gönder'), findsNothing);
+      expect(find.byIcon(Icons.add_circle_outline_rounded), findsNothing);
+      expect(find.byIcon(Icons.mic_rounded), findsNothing);
+      expect(find.bySemanticsLabel('Mesaj gönder'), findsOneWidget);
+    });
 
     testWidgets('açık temada emoji simgesi zeminde görünür', (tester) async {
       final controller = TextEditingController();

@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -61,17 +59,13 @@ class PremiumHomeGlassCard extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withValues(alpha: 0.05),
-                      Colors.black.withValues(alpha: 0.55),
-                      Colors.black.withValues(alpha: 0.88),
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.12),
+                      Colors.black.withValues(alpha: 0.78),
                     ],
-                    stops: const [0.0, 0.45, 1.0],
+                    stops: const [0.0, 0.55, 1.0],
                   ),
                 ),
-              ),
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-                child: const SizedBox.expand(),
               ),
               DecoratedBox(
                 decoration: BoxDecoration(
@@ -121,24 +115,25 @@ class PremiumHomeGlassCard extends StatelessWidget {
               if (shimmer)
                 Positioned.fill(
                   child: IgnorePointer(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            accentColor.withValues(alpha: 0.0),
-                            accentColor.withValues(alpha: 0.22),
-                            accentColor.withValues(alpha: 0.0),
-                          ],
-                        ),
-                      ),
-                    )
-                        .animate(onPlay: (c) => c.repeat())
-                        .shimmer(
-                          duration: 2200.ms,
-                          color: accentColor.withValues(alpha: 0.35),
-                        ),
+                    child:
+                        DecoratedBox(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    accentColor.withValues(alpha: 0.0),
+                                    accentColor.withValues(alpha: 0.22),
+                                    accentColor.withValues(alpha: 0.0),
+                                  ],
+                                ),
+                              ),
+                            )
+                            .animate(onPlay: (c) => c.repeat())
+                            .shimmer(
+                              duration: 2200.ms,
+                              color: accentColor.withValues(alpha: 0.35),
+                            ),
                   ),
                 ),
             ],

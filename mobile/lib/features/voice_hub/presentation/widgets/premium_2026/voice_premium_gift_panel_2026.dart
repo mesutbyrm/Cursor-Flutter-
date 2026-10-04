@@ -489,10 +489,10 @@ class _GiftsTab extends StatelessWidget {
           child: GridView.builder(
             padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
+              crossAxisCount: 4,
               mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 0.78,
+              crossAxisSpacing: 8,
+              childAspectRatio: 0.74,
             ),
             itemCount: gifts.length,
             itemBuilder: (ctx, i) {

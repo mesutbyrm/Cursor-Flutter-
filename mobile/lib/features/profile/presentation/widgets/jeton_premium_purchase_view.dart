@@ -21,7 +21,6 @@ import '../../../admin/presentation/providers/admin_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../notifications/presentation/providers/notifications_list_notifier.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';
-import '../../../membership/presentation/widgets/membership_pending_payment_banner.dart';
 import '../../../membership/presentation/widgets/membership_store_teaser_banner.dart';
 import '../premium_2026/profile_membership_helpers.dart';
 import '../utils/payment_pending_cleanup.dart';
@@ -34,7 +33,6 @@ import '../../domain/entities/payment_config_entity.dart';
 import '../../domain/entities/payment_method_entity.dart';
 import '../providers/payment_requests_notifier.dart';
 import 'payment_methods_summary_line.dart';
-import 'pending_payment_banner.dart';
 import '../providers/profile_providers.dart';
 
 /// Sabit kur: 1 Jeton = ₺0,50
@@ -128,7 +126,11 @@ class _JetonPremiumPurchaseViewState
       v == v.roundToDouble() ? v.toInt().toString() : v.toStringAsFixed(2);
 
   String _formatTryDisplay(double v) {
-    final fmt = NumberFormat.currency(locale: 'tr_TR', symbol: '₺', decimalDigits: 0);
+    final fmt = NumberFormat.currency(
+      locale: 'tr_TR',
+      symbol: '₺',
+      decimalDigits: 0,
+    );
     return fmt.format(v);
   }
 
@@ -146,20 +148,20 @@ class _JetonPremiumPurchaseViewState
   ) {
     return switch (method) {
       JetonPayMethod.whatsapp => (
-          color: const Color(0xFF25D366),
-          icon: Icons.chat_rounded,
-          subtitle: 'Tek tıkla destek hattı',
-        ),
+        color: const Color(0xFF25D366),
+        icon: Icons.chat_rounded,
+        subtitle: 'Tek tıkla destek hattı',
+      ),
       JetonPayMethod.papara => (
-          color: const Color(0xFF7C3AED),
-          icon: Icons.account_balance_wallet_rounded,
-          subtitle: 'Anında transfer',
-        ),
+        color: const Color(0xFF7C3AED),
+        icon: Icons.account_balance_wallet_rounded,
+        subtitle: 'Anında transfer',
+      ),
       JetonPayMethod.bank => (
-          color: const Color(0xFF2563EB),
-          icon: Icons.account_balance_rounded,
-          subtitle: 'IBAN ile transfer',
-        ),
+        color: const Color(0xFF2563EB),
+        icon: Icons.account_balance_rounded,
+        subtitle: 'IBAN ile transfer',
+      ),
     };
   }
 
@@ -208,7 +210,9 @@ class _JetonPremiumPurchaseViewState
 
   ({int jeton, double tl, bool valid, String? error}) _parseAmounts() {
     final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
-    final jetonRaw = int.tryParse(_jetonCtrl.text.trim().replaceAll(RegExp(r'[^\d]'), ''));
+    final jetonRaw = int.tryParse(
+      _jetonCtrl.text.trim().replaceAll(RegExp(r'[^\d]'), ''),
+    );
     final tlRaw = double.tryParse(_tlCtrl.text.trim().replaceAll(',', '.'));
     final jetonFromTl = tlRaw != null && tlRaw > 0
         ? (tlRaw / kJetonPurchaseTlRate).round()
@@ -216,7 +220,12 @@ class _JetonPremiumPurchaseViewState
 
     final jeton = jetonRaw ?? jetonFromTl;
     if (jeton == null || jeton < 1) {
-      return (jeton: 0, tl: 0, valid: false, error: 'En az 1 $jetonLabel girin');
+      return (
+        jeton: 0,
+        tl: 0,
+        valid: false,
+        error: 'En az 1 $jetonLabel girin',
+      );
     }
 
     final tl = tlRaw ?? (jeton * kJetonPurchaseTlRate);
@@ -234,11 +243,16 @@ class _JetonPremiumPurchaseViewState
 
   PaymentConfigEntity _config() {
     final remote = ref.read(paymentConfigProvider).valueOrNull;
-    return remote != null ? PaymentDefaults.merge(remote) : PaymentDefaults.config;
+    return remote != null
+        ? PaymentDefaults.merge(remote)
+        : PaymentDefaults.config;
   }
 
   Future<void> _pickReceipt(ImageSource source) async {
-    final file = await ImagePicker().pickImage(source: source, imageQuality: 82);
+    final file = await ImagePicker().pickImage(
+      source: source,
+      imageQuality: 82,
+    );
     if (file == null) return;
     setState(() => _receiptPath = file.path);
   }
@@ -271,9 +285,9 @@ class _JetonPremiumPurchaseViewState
     final uri = Uri.parse('https://wa.me/$phone?text=$msg');
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!ok && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('WhatsApp açılamadı')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('WhatsApp açılamadı')));
     }
   }
 
@@ -286,17 +300,17 @@ class _JetonPremiumPurchaseViewState
       return;
     }
     if (_method == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ödeme yöntemi seçin')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Ödeme yöntemi seçin')));
       return;
     }
 
     final me = ref.read(authControllerProvider).valueOrNull;
     if (me == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Oturum açmanız gerekiyor')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Oturum açmanız gerekiyor')));
       return;
     }
 
@@ -321,8 +335,9 @@ class _JetonPremiumPurchaseViewState
       };
       final username = me.display;
       final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
-      final remotePackages =
-          await ref.read(jetonPackagesProvider.future).catchError((_) => <JetonPackageEntity>[]);
+      final remotePackages = await ref
+          .read(jetonPackagesProvider.future)
+          .catchError((_) => <JetonPackageEntity>[]);
       final package = resolveJetonPackageForPurchase(
         coins: amounts.jeton,
         priceTry: amounts.tl,
@@ -368,8 +383,11 @@ class _JetonPremiumPurchaseViewState
       await showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(
-          icon: const Icon(Icons.check_circle_outline_rounded,
-              color: AppThemeColors.accentCyan, size: 36),
+          icon: const Icon(
+            Icons.check_circle_outline_rounded,
+            color: AppThemeColors.accentCyan,
+            size: 36,
+          ),
           title: const Text('Ödeme talebi oluşturuldu'),
           content: Text(
             'Talebiniz admin ekibine iletildi. Onay sonrası $jetonLabel hesabınıza yansır.',
@@ -385,9 +403,9 @@ class _JetonPremiumPurchaseViewState
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(ApiException.userMessage(e))));
       }
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -402,13 +420,10 @@ class _JetonPremiumPurchaseViewState
       authControllerProvider.select((a) => a.valueOrNull?.coinBalance),
     );
     final displayJeton = walletJeton ?? authJeton;
-    final pendingRequests = ref.watch(paymentRequestsNotifierProvider);
-    final pendingJeton = pendingRequests.valueOrNull
-            ?.where((r) => r.isJeton && r.status.toLowerCase() == 'pending')
-            .toList() ??
-        const [];
     final config = ref.watch(paymentConfigProvider).valueOrNull;
-    final cfg = config != null ? PaymentDefaults.merge(config) : PaymentDefaults.config;
+    final cfg = config != null
+        ? PaymentDefaults.merge(config)
+        : PaymentDefaults.config;
     final me = ref.watch(authControllerProvider).valueOrNull;
     final username = me?.display ?? me?.username ?? 'Kullanıcı';
     final amounts = _parseAmounts();
@@ -427,16 +442,7 @@ class _JetonPremiumPurchaseViewState
               loading: wallet.isLoading && displayJeton == null,
               jetonLabel: jetonLabel,
             ),
-            const MembershipPendingPaymentBanner(),
             MembershipStoreTeaserBanner(store: MembershipStoreKind.jeton),
-            if (pendingJeton.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              PendingPaymentBanner(
-                request: pendingJeton.first,
-                kind: PendingPaymentKind.jeton,
-                totalPending: pendingJeton.length,
-              ),
-            ],
             const SizedBox(height: 20),
             const _SectionTitle('Tutar Belirle'),
             const SizedBox(height: 4),
@@ -455,7 +461,9 @@ class _JetonPremiumPurchaseViewState
                     label: 'TL Tutarı',
                     controller: _tlCtrl,
                     icon: Icons.payments_outlined,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     onChanged: _syncFromTl,
                   ),
                 ),
@@ -588,7 +596,10 @@ class _JetonPremiumPurchaseViewState
                 _submitting
                     ? 'Gönderiliyor…'
                     : buildMembershipJetonStoreBuyActionLabel(),
-                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                ),
               ),
               style: FilledButton.styleFrom(
                 backgroundColor: AppThemeColors.accentPurple,
@@ -622,7 +633,11 @@ class _PaymentWarningCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.warning_amber_rounded, color: Color(0xFFFF5252), size: 22),
+              const Icon(
+                Icons.warning_amber_rounded,
+                color: Color(0xFFFF5252),
+                size: 22,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -789,7 +804,11 @@ class _PresetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fmt = NumberFormat.currency(locale: 'tr_TR', symbol: '₺', decimalDigits: 0);
+    final fmt = NumberFormat.currency(
+      locale: 'tr_TR',
+      symbol: '₺',
+      decimalDigits: 0,
+    );
     return ProGlassCard(
       onTap: onTap,
       blur: 12,
@@ -878,7 +897,10 @@ class _MethodTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
+                  Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
                   Text(
                     subtitle,
                     style: TextStyle(
@@ -957,7 +979,10 @@ class _CopyRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: TextStyle(color: context.colors.onSurfaceMuted)),
+              Text(
+                label,
+                style: TextStyle(color: context.colors.onSurfaceMuted),
+              ),
               const SizedBox(height: 4),
               Text(value, style: const TextStyle(fontWeight: FontWeight.w800)),
             ],
@@ -967,9 +992,9 @@ class _CopyRow extends StatelessWidget {
           onPressed: () async {
             await Clipboard.setData(ClipboardData(text: value));
             if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Kopyalandı')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Kopyalandı')));
             }
           },
           icon: const Icon(Icons.copy_rounded, size: 16),
@@ -1007,7 +1032,10 @@ class _ReceiptSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Dekont Yükle', style: TextStyle(fontWeight: FontWeight.w800)),
+            const Text(
+              'Dekont Yükle',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
             const SizedBox(height: 10),
             Wrap(
               spacing: 8,

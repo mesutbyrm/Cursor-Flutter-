@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../theme/voice_room_tokens.dart';
 
-/// Sağ kenar hızlı düğmeler — Hediye · Müzik · PK · İstek · Daha Fazla.
+/// Sağ kenar hızlı düğmeler — Müzik · PK · İstek · Daha Fazla.
 class VoiceMockSideRail extends StatelessWidget {
   const VoiceMockSideRail({
     super.key,
-    required this.onGift,
     required this.onMusic,
     required this.onPk,
     required this.onRequest,
@@ -15,7 +14,6 @@ class VoiceMockSideRail extends StatelessWidget {
     this.topSlot,
   });
 
-  final VoidCallback onGift;
   final VoidCallback onMusic;
   final VoidCallback onPk;
   final VoidCallback onRequest;
@@ -41,18 +39,6 @@ class VoiceMockSideRail extends StatelessWidget {
               topSlot!,
               const SizedBox(height: 8),
             ],
-            _RailBtn(
-              label: 'Hediye',
-              onTap: onGift,
-              border: const Color(0xFFFF4D6D),
-              fill: const Color(0x33FF4D6D),
-              child: const Icon(
-                Icons.diamond_rounded,
-                size: 28,
-                color: Color(0xFFFF7A59),
-              ),
-            ),
-            const SizedBox(height: 8),
             _RailBtn(
               label: 'Müzik',
               onTap: onMusic,

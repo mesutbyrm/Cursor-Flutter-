@@ -5,26 +5,20 @@ import 'package:canlifal_social/features/membership/domain/membership_package_en
 
 void main() {
   group('MembershipCatalogData', () {
-    test('SVIP tier katalogda yer alır', () {
-      final svip = MembershipCatalogData.tiers
-          .firstWhere((t) => t.id == MembershipTierId.svip);
-      expect(svip.title, 'SVIP');
-      expect(svip.wireId, 'svip');
-      expect(svip.monthlyTokens, greaterThan(7500));
+    test('SVIP tier katalogda yok (özellikleri Diamond\'da)', () {
+      expect(MembershipCatalogData.tiers.map((t) => t.wireId),
+          isNot(contains('svip')));
+      expect(MembershipCatalogData.tiers.length, 4);
     });
 
-    test('özellik tablosu 5 sütun', () {
+    test('özellik tablosu 4 sütun', () {
       for (final row in MembershipCatalogData.featureRows) {
-        expect(row.values.length, 5);
+        expect(row.values.length, 4);
       }
     });
 
-    test('token paketleri SVIP içerir', () {
-      expect(
-        MembershipCatalogData.tokenPackages
-            .any((p) => p.tierId == MembershipTierId.svip),
-        isTrue,
-      );
+    test('token paketleri SVIP içermez', () {
+      expect(MembershipCatalogData.tokenPackages.length, 4);
     });
   });
 

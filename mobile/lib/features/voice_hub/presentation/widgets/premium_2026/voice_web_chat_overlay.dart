@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
@@ -57,11 +59,35 @@ class _VoiceWebChatOverlayState extends State<VoiceWebChatOverlay> {
   var _pendingNewCount = 0;
   var _showNewMessageChip = false;
 
+  /// GirLive Bot selamı: ilk görüldüğü andan 10 sn sonra sohbetten kalkar.
+  final Map<String, DateTime> _welcomeFirstSeen = {};
+  Timer? _welcomeTimer;
+
+  bool _welcomeExpired(ChatRoomMessage m) {
+    final now = DateTime.now();
+    final seen = _welcomeFirstSeen.putIfAbsent(m.id, () => now);
+    return now.difference(seen) >= VoiceChatMessageFilters.botWelcomeVisible;
+  }
+
+  void _tickWelcome() {
+    if (!mounted) return;
+    final hasWelcome = widget.messages.any(VoiceChatMessageFilters.isBotWelcome);
+    if (!hasWelcome) return;
+    // Süresi dolan selam varsa listeyi yeniden hesapla.
+    final before = _visibleCache.length;
+    _sourceLen = -1;
+    final after = _visible.length;
+    if (before != after) setState(() {});
+  }
+
   ScrollController get _scroll =>
       widget.scrollController ?? (_ownedScroll ??= ScrollController());
 
   List<ChatRoomMessage> _computeVisible() {
     return widget.messages.where((m) {
+      if (VoiceChatMessageFilters.isBotWelcome(m) && _welcomeExpired(m)) {
+        return false;
+      }
       if (m.kind == ChatMessageKind.systemJoin ||
           m.kind == ChatMessageKind.systemLeave) {
         return true;
@@ -92,10 +118,15 @@ class _VoiceWebChatOverlayState extends State<VoiceWebChatOverlay> {
   void initState() {
     super.initState();
     _attachScrollListener();
+    _welcomeTimer = Timer.periodic(
+      const Duration(seconds: 2),
+      (_) => _tickWelcome(),
+    );
   }
 
   @override
   void dispose() {
+    _welcomeTimer?.cancel();
     _listenedScroll?.removeListener(_onScroll);
     _ownedScroll?.dispose();
     super.dispose();

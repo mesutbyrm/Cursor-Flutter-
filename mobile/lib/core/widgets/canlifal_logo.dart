@@ -3,7 +3,6 @@ import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-
 /// CanlıFal marka logosu — yıldız + gradyan wordmark (raster ikon gerekmez).
 class CanlifalLogo extends StatelessWidget {
   const CanlifalLogo({
@@ -25,7 +24,10 @@ class CanlifalLogo extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: context.colors.brandGradient,
-        boxShadow: AppThemeColors.glowShadow(AppThemeColors.accentPink, blur: size * 0.35),
+        boxShadow: AppThemeColors.glowShadow(
+          AppThemeColors.accentPink,
+          blur: size * 0.35,
+        ),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.35),
           width: 2,
@@ -81,11 +83,7 @@ class CanlifalLogo extends StatelessWidget {
 
 /// Yatay şekilli marka yazısı — ikon yok; ana sayfa ve üst barlar için.
 class CanlifalWordmark extends StatelessWidget {
-  const CanlifalWordmark({
-    super.key,
-    this.fontSize = 26,
-    this.compact = false,
-  });
+  const CanlifalWordmark({super.key, this.fontSize = 26, this.compact = false});
 
   final double fontSize;
   final bool compact;
@@ -121,18 +119,12 @@ class CanlifalWordmark extends StatelessWidget {
         children: [
           Text(
             'Canlı',
-            style: base.copyWith(
-              color: Colors.white.withValues(alpha: 0.96),
-            ),
+            style: base.copyWith(color: Colors.white.withValues(alpha: 0.96)),
           ),
           ShaderMask(
             blendMode: BlendMode.srcIn,
             shaderCallback: (bounds) => const LinearGradient(
-              colors: [
-                Color(0xFFFF4FD8),
-                Color(0xFFB832FF),
-                Color(0xFFE9D5FF),
-              ],
+              colors: [Color(0xFFFF4FD8), Color(0xFFB832FF), Color(0xFFE9D5FF)],
               begin: Alignment.bottomLeft,
               end: Alignment.topRight,
             ).createShader(bounds),
@@ -147,6 +139,52 @@ class CanlifalWordmark extends StatelessWidget {
                 color: Colors.white,
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// «GirLive» marka yazısı — ana sayfa üst barı.
+class GirLiveWordmark extends StatelessWidget {
+  const GirLiveWordmark({super.key, this.fontSize = 24});
+
+  final double fontSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final base = GoogleFonts.plusJakartaSans(
+      fontSize: fontSize,
+      fontWeight: FontWeight.w800,
+      letterSpacing: -0.6,
+      height: 1,
+    );
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: AppThemeColors.accentPurple.withValues(alpha: 0.35),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Gir',
+            style: base.copyWith(color: Colors.white.withValues(alpha: 0.96)),
+          ),
+          ShaderMask(
+            blendMode: BlendMode.srcIn,
+            shaderCallback: (bounds) => const LinearGradient(
+              colors: [Color(0xFFFF4FD8), Color(0xFFB832FF), Color(0xFFE9D5FF)],
+              begin: Alignment.bottomLeft,
+              end: Alignment.topRight,
+            ).createShader(bounds),
+            child: Text('Live', style: base.copyWith(color: Colors.white)),
           ),
         ],
       ),

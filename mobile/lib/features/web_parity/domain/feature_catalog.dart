@@ -52,7 +52,7 @@ const kFeatureCatalog = <FeatureEntry>[
     route: '/oyunlar/lamba-cini',
     colors: [Color(0xFFEAB308), Color(0xFFF97316)],
     group: 'Keşfet ve oyna',
-    onHome: true,
+    onHome: false,
   ),
   FeatureEntry(
     label: 'Oyun Lobisi',

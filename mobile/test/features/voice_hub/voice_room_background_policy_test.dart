@@ -11,9 +11,9 @@ VoiceRoomEntity _room({String? type, bool? vip}) => VoiceRoomEntity(
     );
 
 void main() {
-  test('ücretsiz oda kilitli, ücretli (NORMAL/VIP) açık', () {
-    expect(voiceRoomBackgroundUnlocked(_room(type: 'FREE')), isFalse);
-    expect(voiceRoomBackgroundUnlocked(_room(type: 'free')), isFalse);
+  test('ücretsiz dahil her odada arka plan açık', () {
+    expect(voiceRoomBackgroundUnlocked(_room(type: 'FREE')), isTrue);
+    expect(voiceRoomBackgroundUnlocked(_room(type: 'free')), isTrue);
     expect(voiceRoomBackgroundUnlocked(_room(type: 'NORMAL')), isTrue);
     expect(voiceRoomBackgroundUnlocked(_room(type: 'VIP')), isTrue);
   });

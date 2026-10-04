@@ -5,6 +5,16 @@ import '../../domain/voice_official_join.dart';
 /// Sohbet listesinde gösterilmeyecek mesajlar — komut, istek logları.
 /// Giriş/çıkış satırları sohbette gösterilir.
 abstract final class VoiceChatMessageFilters {
+  /// GirLive Bot'un giriş selamı («👋 Hoş geldin @isim!»).
+  static bool isBotWelcome(ChatRoomMessage message) {
+    final name = (message.user?.name ?? '').toLowerCase();
+    final lower = message.content.toLowerCase();
+    return name.contains('girlive') && lower.contains('hoş geldin');
+  }
+
+  /// Selam bu süre sonra sohbetten kalkar.
+  static const botWelcomeVisible = Duration(seconds: 10);
+
   static bool shouldShow(ChatRoomMessage message) {
     if (message.kind == ChatMessageKind.systemJoin ||
         message.kind == ChatMessageKind.systemLeave) {

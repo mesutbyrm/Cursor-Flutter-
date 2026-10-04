@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../gift_box/presentation/widgets/gift_box_chest_button.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../live/presentation/providers/live_providers.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
@@ -109,6 +110,12 @@ class VoiceMockHeader extends ConsumerWidget {
       onInvite: onInvite,
       onSettings: onSettings,
       onPopular: onPopular,
+      chest: GiftBoxChestButton(
+        scope: (
+          roomId: room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id,
+          streamId: null,
+        ),
+      ),
     );
   }
 }
@@ -132,8 +139,11 @@ class VoiceMockHeaderView extends StatelessWidget {
     required this.onInvite,
     required this.onSettings,
     required this.onPopular,
+    this.chest,
   });
 
+  /// «Popüler Oda» yanında hoplayan hediye sandığı (aktif kutu varsa).
+  final Widget? chest;
   final String title;
   final String roomKey;
   final String icon;
@@ -285,6 +295,10 @@ class VoiceMockHeaderView extends StatelessWidget {
                   ),
                 ),
               ),
+              if (chest != null) ...[
+                const SizedBox(width: 8),
+                chest!,
+              ],
               const Spacer(),
               _TopAction(
                 icon: Icons.emoji_events_rounded,

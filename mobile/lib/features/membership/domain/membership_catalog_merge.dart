@@ -11,7 +11,6 @@ MembershipPackageEntity? findMembershipApiPackage(
   for (final p in packages) {
     final pid = p.id.toLowerCase();
     if (pid == key) return p;
-    if (key == 'svip' && (pid == 'super_vip' || pid == 'svip')) return p;
   }
   return null;
 }
@@ -42,8 +41,9 @@ MembershipTierModel mergeMembershipTier(
         ? api.falDiscountPercent
         : base.falDiscountPercent,
     planId: api.planId.isNotEmpty ? api.planId : base.planId,
-    featureHighlights:
-        api.features.isNotEmpty ? api.features : base.featureHighlights,
+    featureHighlights: api.features.isNotEmpty
+        ? api.features
+        : base.featureHighlights,
   );
 }
 
@@ -57,8 +57,7 @@ MembershipTierId? recommendedTierFromPackages(
     return switch (id) {
       'gold' => MembershipTierId.gold,
       'premium' => MembershipTierId.premium,
-      'diamond' => MembershipTierId.diamond,
-      'svip' || 'super_vip' => MembershipTierId.svip,
+      'diamond' || 'svip' || 'super_vip' => MembershipTierId.diamond,
       'basic' || 'free' => MembershipTierId.basic,
       _ => null,
     };
@@ -73,8 +72,9 @@ List<MembershipTierModel> applyMembershipTierBadges({
   List<MembershipPackageEntity> packages = const [],
 }) {
   final hasApiPopular = tiers.any((t) => t.popular);
-  final recommended =
-      hasApiPopular ? null : recommendedTierFromPackages(packages);
+  final recommended = hasApiPopular
+      ? null
+      : recommendedTierFromPackages(packages);
 
   return [
     for (final tier in tiers)
@@ -87,10 +87,10 @@ List<MembershipTierModel> applyMembershipTierBadges({
         accent: tier.accent,
         badgeIcon: tier.badgeIcon,
         glow: tier.glow,
-        popular: tier.popular ||
+        popular:
+            tier.popular ||
             (recommended == tier.id && activeWireId != tier.wireId),
-        isActivePlan:
-            activeWireId != null && tier.wireId == activeWireId,
+        isActivePlan: activeWireId != null && tier.wireId == activeWireId,
         durationDays: tier.durationDays,
         falDiscountPercent: tier.falDiscountPercent,
         planId: tier.planId,

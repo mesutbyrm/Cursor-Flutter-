@@ -31,13 +31,14 @@ void main() {
     expect(n, [2, 3, 4, 5, 6, 7, 8]);
   });
 
-  test('seatCount > 10 → 2..10; admin koltuğu yalnız doluysa eklenir', () {
+  test('seatCount > 10: başta 8 koltuk görünür; admin koltuğu yalnız doluysa eklenir',
+      () {
     final empty = voiceMockGuestSeatNumbers(
       room: _room(12),
       seatSlots: const [],
       presence: const [],
     );
-    expect(empty, [2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(empty, [2, 3, 4, 5, 6, 7, 8]);
     final withAdmin = voiceMockGuestSeatNumbers(
       room: _room(12),
       seatSlots: const [],
@@ -46,6 +47,19 @@ void main() {
       ],
     );
     expect(withAdmin.last, 11);
+  });
+
+  test('görünen koltuklar dolunca bir koltuk daha açılır (hepsi değil)', () {
+    final full = [
+      for (var i = 2; i <= 8; i++)
+        ChatRoomPresence(id: 'u$i', name: 'U$i', seatIndex: i),
+    ];
+    final n = voiceMockGuestSeatNumbers(
+      room: _room(12),
+      seatSlots: const [],
+      presence: full,
+    );
+    expect(n, [2, 3, 4, 5, 6, 7, 8, 9]);
   });
 
   testWidgets('koltuk: boş «Koltuk Aç», kilitli «Kilitli», sahip 👑 + ad', (t) async {
@@ -84,12 +98,11 @@ void main() {
     expect(find.text('12.3K'), findsOneWidget);
   });
 
-  testWidgets('sağ düğmeler: Hediye · Müzik · PK · İstek · Daha Fazla', (t) async {
+  testWidgets('sağ düğmeler: Müzik · PK · İstek · Daha Fazla (Hediye dock\'ta)', (t) async {
     var taps = <String>[];
     await t.pumpWidget(
       _host(
         VoiceMockSideRail(
-          onGift: () => taps.add('gift'),
           onMusic: () => taps.add('music'),
           onPk: () => taps.add('pk'),
           onRequest: () => taps.add('req'),
@@ -97,17 +110,17 @@ void main() {
         ),
       ),
     );
-    for (final l in ['Hediye', 'Müzik', 'PK', 'İstek', 'Daha Fazla']) {
+    for (final l in ['Müzik', 'PK', 'İstek', 'Daha Fazla']) {
       expect(find.text(l), findsWidgets, reason: l);
     }
-    await t.tap(find.text('Hediye'));
+    expect(find.text('Hediye'), findsNothing);
     await t.tap(find.text('İstek'));
     await t.tap(find.text('Daha Fazla'));
-    expect(taps, ['gift', 'req', 'more']);
+    expect(taps, ['req', 'more']);
   });
 
-  testWidgets('alt dock: Açık · Kapalı · Konuş · Efektler · Oda Modu', (t) async {
-    var effects = 0;
+  testWidgets('alt dock: Ses · Mikrofon · Konuş · Hediye · Oda Modu', (t) async {
+    var gift = 0;
     var mode = 0;
     var mic = 0;
     await t.pumpWidget(
@@ -129,26 +142,26 @@ void main() {
               onSend: () {},
               onToggleAudioOutput: () {},
               onMicToggle: () => mic++,
-              onGift: () {},
+              onGift: () => gift++,
               onEmojiTap: () {},
               onChanged: (_) {},
-              onEffects: () => effects++,
               onRoomMode: () => mode++,
             ),
           ),
         ),
       ),
     );
-    expect(find.text('Açık'), findsOneWidget); // hoparlör açık
+    expect(find.text('Ses açık'), findsOneWidget); // hoparlör açık
     expect(find.text('Kapalı'), findsOneWidget); // mikrofon kapalı
     expect(find.text('Konuş'), findsOneWidget);
-    expect(find.text('Efektler'), findsOneWidget);
+    expect(find.text('Hediye'), findsOneWidget);
+    expect(find.text('Efektler'), findsNothing);
     expect(find.text('Oda Modu'), findsOneWidget);
     expect(find.text('Mesaj yaz... (istek)'), findsOneWidget);
-    await t.tap(find.text('Efektler'));
+    await t.tap(find.text('Hediye'));
     await t.tap(find.text('Oda Modu'));
     await t.tap(find.text('Konuş'));
-    expect([effects, mode, mic], [1, 1, 1]);
+    expect([gift, mode, mic], [1, 1, 1]);
   });
 
   testWidgets('PK sırasında mesaj satırı gizlenir, dock kalır', (t) async {
@@ -163,7 +176,7 @@ void main() {
             micOn: true, micEnabled: true,
             onSend: () {}, onToggleAudioOutput: () {}, onMicToggle: () {},
             onGift: () {}, onEmojiTap: () {}, onChanged: (_) {},
-            onEffects: () {}, onRoomMode: () {},
+                      onRoomMode: () {},
           ),
         ),
       ),

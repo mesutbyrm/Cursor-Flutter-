@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:canlifal_social/core/performance/list_perf.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/economy/presentation/providers/economy_providers.dart';
 
 /// Ek menüsü eylemleri. DM API'si yalnızca metin taşır; bu yüzden yalnızca
 /// niyet/davet mesajları var. Fotoğraf, video, dosya, konum, GIF ve sticker
@@ -38,13 +36,28 @@ class ChatComposer extends ConsumerWidget {
   final ValueChanged<String>? onChanged;
   final ValueChanged<DmComposerAction>? onAction;
   final VoidCallback? onVoiceNote;
+
   /// Sohbet tam ekran (/chat) — alt navbar yokken fazla boşluk bırakma.
   final bool tightBottomInset;
 
   void _showEmojiPicker(BuildContext context) {
     const emojis = [
-      '😀', '😂', '❤️', '🔥', '👏', '🎉', '💎', '🙏',
-      '✨', '😍', '🤣', '👋', '🌙', '⭐', '😊', '💜',
+      '😀',
+      '😂',
+      '❤️',
+      '🔥',
+      '👏',
+      '🎉',
+      '💎',
+      '🙏',
+      '✨',
+      '😍',
+      '🤣',
+      '👋',
+      '🌙',
+      '⭐',
+      '😊',
+      '💜',
     ];
     showModalBottomSheet<void>(
       context: context,
@@ -77,117 +90,6 @@ class ChatComposer extends ConsumerWidget {
     );
   }
 
-  void _showActionSheet(BuildContext context, WidgetRef ref) {
-    final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
-    final actions = [
-      (DmComposerAction.gift, Icons.card_giftcard_rounded, 'Hediye', AppThemeColors.coinGold),
-      (DmComposerAction.jeton, Icons.toll_rounded, jetonLabel, AppThemeColors.coinGold),
-      (DmComposerAction.fortune, Icons.auto_awesome_rounded, 'Fal İste', AppThemeColors.accentPurple),
-      (DmComposerAction.voiceFortune, Icons.mic_rounded, 'Sesli Fal', AppThemeColors.accentPink),
-      (DmComposerAction.videoFortune, Icons.video_call_rounded, 'Görüntülü Fal', Colors.cyanAccent),
-      (DmComposerAction.liveInvite, Icons.podcasts_rounded, 'Canlı Yayın', AppThemeColors.liveRed),
-      (DmComposerAction.voiceRoomInvite, Icons.groups_rounded, 'Sesli Oda', AppThemeColors.accentCyan),
-    ];
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      showDragHandle: false,
-      builder: (sheet) => SafeArea(
-        child: Container(
-          margin: const EdgeInsets.all(12),
-          padding: const EdgeInsets.fromLTRB(14, 14, 14, 18),
-          decoration: BoxDecoration(
-            color: const Color(0xFF09090B).withValues(alpha: 0.96),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: AppThemeColors.accentPurple.withValues(alpha: 0.32),
-            ),
-            boxShadow: AppThemeColors.glowShadow(
-              AppThemeColors.accentPurple,
-              blur: 24,
-            ),
-          ),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              const crossAxisCount = 4;
-              const spacing = 10.0;
-              const aspect = 0.92;
-              final gridHeight = ListPerf.nestedGridHeight(
-                itemCount: actions.length,
-                crossAxisCount: crossAxisCount,
-                mainAxisSpacing: spacing,
-                crossAxisSpacing: spacing,
-                childAspectRatio: aspect,
-                crossAxisExtent: constraints.maxWidth,
-              );
-              return SizedBox(
-                height: gridHeight,
-                child: GridView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: crossAxisCount,
-                    mainAxisSpacing: spacing,
-                    crossAxisSpacing: spacing,
-                    childAspectRatio: aspect,
-                  ),
-                  itemCount: actions.length,
-                  itemBuilder: (context, i) {
-                    final a = actions[i];
-                    return InkWell(
-                      borderRadius: BorderRadius.circular(18),
-                      onTap: () {
-                        Navigator.pop(sheet);
-                        onAction?.call(a.$1);
-                      },
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.055),
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 42,
-                              height: 42,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: LinearGradient(
-                                  colors: [
-                                    a.$4.withValues(alpha: 0.95),
-                                    AppThemeColors.accentPurple.withValues(alpha: 0.65),
-                                  ],
-                                ),
-                              ),
-                              child: Icon(a.$2, color: Colors.white, size: 22),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              a.$3,
-                              textAlign: TextAlign.center,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return SafeArea(
@@ -201,85 +103,68 @@ class ChatComposer extends ConsumerWidget {
           children: [
             Semantics(
               button: true,
-              label: 'İstek ve davet gönder',
-              child: IconButton(
-              tooltip: 'İstek ve davet',
-              onPressed: () => _showActionSheet(context, ref),
-              icon: Icon(
-                Icons.add_circle_outline_rounded,
-                color: AppThemeColors.accentPurple.withValues(alpha: 0.9),
-              ),
-            ),
-            ),
-            Semantics(
-              button: true,
               label: 'Emoji seç',
               child: IconButton(
-              tooltip: 'Emoji',
-              onPressed: () => _showEmojiPicker(context),
-              icon: Icon(
-                Icons.emoji_emotions_outlined,
-                color: context.colors.onSurfaceVariant,
+                tooltip: 'Emoji',
+                onPressed: () => _showEmojiPicker(context),
+                icon: Icon(
+                  Icons.emoji_emotions_outlined,
+                  color: context.colors.onSurfaceVariant,
+                ),
               ),
-            ),
             ),
             Expanded(
               child: Semantics(
                 textField: true,
                 label: 'Mesaj yazın',
                 child: TextField(
-                controller: controller,
-                onChanged: onChanged,
-                minLines: 1,
-                maxLines: 4,
-                style: TextStyle(
-                  color: context.colors.onSurface,
-                  fontSize: 17,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Mesaj yazın',
-                  hintStyle: TextStyle(
-                    color: context.colors.onSurfaceMuted.withValues(alpha: 0.8),
+                  controller: controller,
+                  onChanged: onChanged,
+                  minLines: 1,
+                  maxLines: 4,
+                  style: TextStyle(
+                    color: context.colors.onSurface,
+                    fontSize: 17,
                   ),
-                  filled: true,
-                  fillColor: context.colors.glassFill,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(22),
-                    borderSide: BorderSide(
-                      color: AppThemeColors.accentPurple.withValues(alpha: 0.3),
+                  decoration: InputDecoration(
+                    hintText: 'Mesaj yazın',
+                    hintStyle: TextStyle(
+                      color: context.colors.onSurfaceMuted.withValues(
+                        alpha: 0.8,
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: context.colors.glassFill,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(22),
+                      borderSide: BorderSide(
+                        color: AppThemeColors.accentPurple.withValues(
+                          alpha: 0.3,
+                        ),
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(22),
+                      borderSide: BorderSide(
+                        color: AppThemeColors.accentPurple.withValues(
+                          alpha: 0.25,
+                        ),
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(22),
+                      borderSide: const BorderSide(
+                        color: AppThemeColors.accentPink,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
                     ),
                   ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(22),
-                    borderSide: BorderSide(
-                      color: AppThemeColors.accentPurple.withValues(alpha: 0.25),
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(22),
-                    borderSide: const BorderSide(color: AppThemeColors.accentPink),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
+                  onSubmitted: (_) => onSend(),
                 ),
-                onSubmitted: (_) => onSend(),
               ),
-            ),
-            ),
-            const SizedBox(width: 8),
-            Semantics(
-              button: true,
-              label: 'Sesli mesaj kaydet',
-              child: IconButton.filled(
-              tooltip: 'Sesli mesaj',
-              onPressed: onVoiceNote,
-              style: IconButton.styleFrom(
-                backgroundColor: AppThemeColors.accentPurple.withValues(alpha: 0.72),
-              ),
-              icon: const Icon(Icons.mic_rounded, color: Colors.white),
-            ),
             ),
             const SizedBox(width: 8),
             Semantics(
@@ -287,36 +172,36 @@ class ChatComposer extends ConsumerWidget {
               label: 'Mesaj gönder',
               enabled: !sending,
               child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: sending ? null : onSend,
-                borderRadius: BorderRadius.circular(16),
-                child: Ink(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    gradient: context.colors.brandGradient,
-                  ),
-                  child: Center(
-                    child: sending
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: sending ? null : onSend,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Ink(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: context.colors.brandGradient,
+                    ),
+                    child: Center(
+                      child: sending
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(
+                              Icons.send_rounded,
                               color: Colors.white,
+                              size: 22,
                             ),
-                          )
-                        : const Icon(
-                            Icons.send_rounded,
-                            color: Colors.white,
-                            size: 22,
-                          ),
+                    ),
                   ),
                 ),
               ),
-            ),
             ),
           ],
         ),

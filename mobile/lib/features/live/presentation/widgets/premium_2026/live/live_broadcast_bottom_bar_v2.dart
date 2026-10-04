@@ -172,8 +172,9 @@ class _LiveBroadcastBottomBarV2State extends State<LiveBroadcastBottomBarV2> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Host kontrolleri (Mic, Kamera, Kamera Çevir, Bitir)
-              if (widget.isHost && hasRtc) ...[
+              // Host kontrolleri (Mic, Kamera, Kamera Çevir, Bitir).
+              // Yazarken gizlenir: klavyenin üstünde yalnız mesaj satırı kalır.
+              if (widget.isHost && hasRtc && !_messageExpanded) ...[
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -280,6 +281,11 @@ class _ExpandableMessageInput extends StatelessWidget {
               focusNode: focusNode,
               enabled: commentsEnabled,
               maxLines: isExpanded ? 2 : 1,
+              // Klavyedeki «gönder» de mesajı yollar ve klavyeyi kapatır.
+              textInputAction: TextInputAction.send,
+              onSubmitted: (_) {
+                if (controller.text.trim().isNotEmpty) onSend();
+              },
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 14,

@@ -51,8 +51,10 @@ class GoldSection extends ConsumerWidget {
           height: _cardH,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
-            itemCount: 4,
+            padding: const EdgeInsets.symmetric(
+              horizontal: HomeApprovedDesign.hPad,
+            ),
+            itemCount: 3,
             separatorBuilder: (_, _) => const SizedBox(width: _gap),
             itemBuilder: (_, _) => const PremiumSkeleton(
               width: _cardW,
@@ -65,7 +67,20 @@ class GoldSection extends ConsumerWidget {
     );
   }
 
-  Widget _content(BuildContext context, WidgetRef ref, List<MembershipPackageEntity> packages) {
+  static const _homeTiers = ['gold', 'premium', 'diamond'];
+
+  Widget _content(
+    BuildContext context,
+    WidgetRef ref,
+    List<MembershipPackageEntity> all,
+  ) {
+    // Ana sayfada yalnızca Gold · Premium · Diamond (SVIP/Basic yok).
+    final packages = <MembershipPackageEntity>[
+      for (final t in _homeTiers)
+        ...all.where(
+          (p) => (p.planId.isNotEmpty ? p.planId : p.id).toLowerCase() == t,
+        ),
+    ];
     final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     return Column(
       children: [
@@ -79,7 +94,9 @@ class GoldSection extends ConsumerWidget {
           height: _cardH,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
+            padding: const EdgeInsets.symmetric(
+              horizontal: HomeApprovedDesign.hPad,
+            ),
             physics: const BouncingScrollPhysics(
               parent: AlwaysScrollableScrollPhysics(),
             ),
@@ -91,7 +108,8 @@ class GoldSection extends ConsumerWidget {
               final theme = _tierTheme(pkg);
               return PremiumHomeGlassCard(
                 title: pkg.title,
-                subtitle: '₺${pkg.priceJeton ~/ 2}/ay · +${pkg.bonusJeton} $jetonLabel',
+                subtitle:
+                    '₺${pkg.priceJeton ~/ 2}/ay · +${pkg.bonusJeton} $jetonLabel',
                 coverSlug: SectionVisualCatalog.goldSlug(
                   pkg.planId.isNotEmpty ? pkg.planId : pkg.id,
                 ),
@@ -108,8 +126,7 @@ class GoldSection extends ConsumerWidget {
                 accentColor: theme.accent,
                 shimmer: theme.shimmer,
                 onTap: () {
-                  final plan =
-                      pkg.planId.isNotEmpty ? pkg.planId : pkg.id;
+                  final plan = pkg.planId.isNotEmpty ? pkg.planId : pkg.id;
                   context.push('/premium-membership?plan=$plan');
                 },
               );

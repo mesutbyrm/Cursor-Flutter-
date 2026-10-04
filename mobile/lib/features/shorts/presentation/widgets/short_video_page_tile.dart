@@ -274,7 +274,6 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
               controller: _ready ? c : null,
               isActive: widget.isActive,
               onDoubleTap: _doubleTapLike,
-              onLongPress: () => _railKey.currentState?.openMoreMenu(),
             ),
           ),
           for (final h in _hearts)
@@ -427,13 +426,11 @@ class _VideoTapLayer extends StatefulWidget {
     required this.controller,
     required this.isActive,
     required this.onDoubleTap,
-    required this.onLongPress,
   });
 
   final VideoPlayerController? controller;
   final bool isActive;
   final ValueChanged<Offset> onDoubleTap;
-  final VoidCallback onLongPress;
 
   @override
   State<_VideoTapLayer> createState() => _VideoTapLayerState();
@@ -441,6 +438,23 @@ class _VideoTapLayer extends StatefulWidget {
 
 class _VideoTapLayerState extends State<_VideoTapLayer> {
   var _lastDown = Offset.zero;
+
+  /// Basılı tutunca duraklatılan video bırakınca kaldığı yerden devam eder.
+  var _heldPause = false;
+
+  void _onHoldStart() {
+    final c = widget.controller;
+    if (c == null || !c.value.isPlaying) return;
+    _heldPause = true;
+    c.pause();
+  }
+
+  void _onHoldEnd() {
+    if (!_heldPause) return;
+    _heldPause = false;
+    final c = widget.controller;
+    if (c != null && widget.isActive) c.play();
+  }
 
   void _togglePlay() {
     final c = widget.controller;
@@ -459,7 +473,9 @@ class _VideoTapLayerState extends State<_VideoTapLayer> {
       behavior: HitTestBehavior.opaque,
       onDoubleTapDown: (d) => _lastDown = d.localPosition,
       onDoubleTap: () => widget.onDoubleTap(_lastDown),
-      onLongPress: widget.onLongPress,
+      onLongPressStart: (_) => _onHoldStart(),
+      onLongPressEnd: (_) => _onHoldEnd(),
+      onLongPressCancel: _onHoldEnd,
       onTap: _togglePlay,
       child: c == null
           ? const SizedBox.expand()

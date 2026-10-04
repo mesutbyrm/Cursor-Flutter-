@@ -31,10 +31,13 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(_app(null));
     await tester.pump(const Duration(milliseconds: 600));
-    for (final l in ['Keşfet', 'Sesli Oda', 'Tanış & Kaynaş', 'Gold Üyelik', 'Ajans Ol']) {
+    for (final l in ['Keşfet', 'Tanış & Kaynaş', 'Gold Üyelik', 'Ajans Ol', 'Tüm Özellikler']) {
       expect(find.text(l), findsOneWidget, reason: l);
     }
     expect(find.text('Ajansım'), findsNothing);
+    // Sesli Oda ve Lamba Cini kutuları kaldırıldı; tek sıra 5 kutu.
+    expect(find.text('Sesli Oda'), findsNothing);
+    expect(find.text('Lamba Cini'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

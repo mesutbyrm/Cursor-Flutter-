@@ -108,9 +108,9 @@ class MembershipPage extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            if (pendingRequests.valueOrNull
-                                    ?.any((r) =>
-                                        r.isMembershipCheckout && r.isPending) ==
+                            if (pendingRequests.valueOrNull?.any(
+                                  (r) => r.isMembershipCheckout && r.isPending,
+                                ) ==
                                 true) ...[
                               const MembershipPendingPaymentBanner(),
                             ],
@@ -151,8 +151,7 @@ class MembershipPage extends ConsumerWidget {
                                     animationIndex: i,
                                     onTap: () => ref
                                         .read(
-                                          membershipControllerProvider
-                                              .notifier,
+                                          membershipControllerProvider.notifier,
                                         )
                                         .selectTier(tier.id),
                                   );
@@ -227,8 +226,7 @@ class MembershipPage extends ConsumerWidget {
                                     animationIndex: i,
                                     onTap: () => ref
                                         .read(
-                                          membershipControllerProvider
-                                              .notifier,
+                                          membershipControllerProvider.notifier,
                                         )
                                         .selectTokenPackage(pkg.tierId),
                                   );
@@ -243,16 +241,14 @@ class MembershipPage extends ConsumerWidget {
                               apiPackage: ui.apiPackageFor(
                                 ui.selectedTierModel.wireId,
                               ),
-                              jetonTlRate: wallet?.jetonTlRate ?? ui.jetonTlRate,
-                              onPurchaseWithJeton: () => _purchaseSelected(
-                                context,
-                                ref,
-                              ),
+                              jetonTlRate:
+                                  wallet?.jetonTlRate ?? ui.jetonTlRate,
+                              onPurchaseWithJeton: () =>
+                                  _purchaseSelected(context, ref),
                             ),
                             const SizedBox(height: 12),
                             FilledButton(
-                              onPressed: () =>
-                                  _purchaseSelected(context, ref),
+                              onPressed: () => _purchaseSelected(context, ref),
                               style: FilledButton.styleFrom(
                                 backgroundColor: MembershipCatalogData.gold,
                                 foregroundColor: const Color(0xFF1A1030),
@@ -279,7 +275,7 @@ class MembershipPage extends ConsumerWidget {
                               highlights: mergeMembershipCommonHighlights(
                                 catalogFeatures:
                                     catalogAsync.valueOrNull?.features ??
-                                        const [],
+                                    const [],
                                 tierFeatures:
                                     ui.selectedTierModel.featureHighlights,
                               ),
@@ -311,7 +307,8 @@ class MembershipPage extends ConsumerWidget {
     final apiPkg = ui.apiPackageFor(tier.wireId);
     final wallet = ref.read(walletBalancesProvider).valueOrNull;
     final rate = wallet?.jetonTlRate ?? ui.jetonTlRate;
-    final priceJeton = apiPkg?.resolvedPriceJeton(
+    final priceJeton =
+        apiPkg?.resolvedPriceJeton(
           fallbackFromTry: tier.monthlyPriceTry,
           jetonTlRate: rate,
         ) ??
@@ -359,7 +356,9 @@ class MembershipPage extends ConsumerWidget {
         return false;
       }
       try {
-        await ref.read(membershipRemoteProvider).purchaseMembership(
+        await ref
+            .read(membershipRemoteProvider)
+            .purchaseMembership(
               planId,
               paymentMethod: paymentMethod,
               planLabel: tier.title,
@@ -367,7 +366,8 @@ class MembershipPage extends ConsumerWidget {
         await ref.read(membershipControllerProvider.notifier).refresh();
         await refreshMembershipAfterPurchase(ref);
         if (context.mounted) {
-          final isGold = tier.wireId.toLowerCase().contains('gold') ||
+          final isGold =
+              tier.wireId.toLowerCase().contains('gold') ||
               tier.title.toLowerCase().contains('gold');
           await showCanlifalPurchaseSuccessOverlay(
             context,
@@ -379,7 +379,8 @@ class MembershipPage extends ConsumerWidget {
         return true;
       } on ApiException catch (e) {
         if (!context.mounted) return false;
-        final insufficient = e.message.contains('Yetersiz jeton') ||
+        final insufficient =
+            e.message.contains('Yetersiz jeton') ||
             e.message.contains('Yetersiz CFC') ||
             e.message.toLowerCase().contains('insufficient');
         if (!insufficient) {
@@ -397,16 +398,15 @@ class MembershipPage extends ConsumerWidget {
                 duration: const Duration(seconds: 8),
                 action: SnackBarAction(
                   label: 'Ayrıntı',
-                  onPressed: () => unawaited(
-                    showMembershipPurchaseErrorDetails(context, e),
-                  ),
+                  onPressed: () =>
+                      unawaited(showMembershipPurchaseErrorDetails(context, e)),
                 ),
               ),
             );
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(e.message)),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(e.message)));
           }
           return false;
         }
@@ -539,15 +539,15 @@ class _GlowOrb extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(color: color, blurRadius: size * 0.55, spreadRadius: 8),
-        ],
-      ),
-    )
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(color: color, blurRadius: size * 0.55, spreadRadius: 8),
+            ],
+          ),
+        )
         .animate(onPlay: (c) => c.repeat(reverse: true))
         .scale(
           begin: const Offset(0.92, 0.92),
@@ -623,9 +623,7 @@ class _MembershipAppBar extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(999),
-                border: Border.all(
-                  color: MembershipCatalogData.glassBorder,
-                ),
+                border: Border.all(color: MembershipCatalogData.glassBorder),
                 gradient: LinearGradient(
                   colors: [
                     Colors.white.withValues(alpha: 0.12),
@@ -697,9 +695,7 @@ class _ExpiredMembershipBanner extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.25),
-            ),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
             color: const Color(0xFF3D2060).withValues(alpha: 0.65),
           ),
           child: Row(
@@ -719,10 +715,7 @@ class _ExpiredMembershipBanner extends StatelessWidget {
                   ),
                 ),
               ),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: Colors.white54,
-              ),
+              const Icon(Icons.chevron_right_rounded, color: Colors.white54),
             ],
           ),
         ),
@@ -823,124 +816,123 @@ class _UpgradeBanner extends ConsumerWidget {
     );
 
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: MembershipCatalogData.purple.withValues(alpha: 0.45),
-        ),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            MembershipCatalogData.purpleDeep.withValues(alpha: 0.55),
-            MembershipCatalogData.purple.withValues(alpha: 0.28),
-            const Color(0xFF1E1B4B).withValues(alpha: 0.7),
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: MembershipCatalogData.purple.withValues(alpha: 0.35),
-            blurRadius: 28,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-          child: Row(
-            children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFFFD54F), Color(0xFFB45309)],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: MembershipCatalogData.gold.withValues(alpha: 0.35),
-                      blurRadius: 16,
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.inventory_2_rounded,
-                  color: Colors.white,
-                  size: 32,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: GoogleFonts.plusJakartaSans(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 14,
-                        height: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.68),
-                        fontSize: 11.5,
-                        height: 1.35,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: onBuyTokens,
-                  borderRadius: BorderRadius.circular(14),
-                  child: Ink(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFFA78BFA),
-                          Color(0xFF6366F1),
-                        ],
-                      ),
-                    ),
-                    child: Text(
-                      actionLabel,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 11,
-                        height: 1.15,
-                      ),
-                    ),
-                  ),
-                ),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: MembershipCatalogData.purple.withValues(alpha: 0.45),
+            ),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                MembershipCatalogData.purpleDeep.withValues(alpha: 0.55),
+                MembershipCatalogData.purple.withValues(alpha: 0.28),
+                const Color(0xFF1E1B4B).withValues(alpha: 0.7),
+              ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: MembershipCatalogData.purple.withValues(alpha: 0.35),
+                blurRadius: 28,
+                offset: const Offset(0, 10),
               ),
             ],
           ),
-        ),
-      ),
-    ).animate().fadeIn(delay: 160.ms, duration: 420.ms).scale(
-          begin: const Offset(0.97, 0.97),
-          end: const Offset(1, 1),
-        );
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+              child: Row(
+                children: [
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(18),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFFD54F), Color(0xFFB45309)],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: MembershipCatalogData.gold.withValues(
+                            alpha: 0.35,
+                          ),
+                          blurRadius: 16,
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.inventory_2_rounded,
+                      color: Colors.white,
+                      size: 32,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: GoogleFonts.plusJakartaSans(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14,
+                            height: 1.2,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          subtitle,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.68),
+                            fontSize: 11.5,
+                            height: 1.35,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: onBuyTokens,
+                      borderRadius: BorderRadius.circular(14),
+                      child: Ink(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFA78BFA), Color(0xFF6366F1)],
+                          ),
+                        ),
+                        child: Text(
+                          actionLabel,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 11,
+                            height: 1.15,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        )
+        .animate()
+        .fadeIn(delay: 160.ms, duration: 420.ms)
+        .scale(begin: const Offset(0.97, 0.97), end: const Offset(1, 1));
   }
 }
 
@@ -963,7 +955,8 @@ class _JetonWalletPurchaseBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final priceJeton = apiPackage?.resolvedPriceJeton(
+    final priceJeton =
+        apiPackage?.resolvedPriceJeton(
           fallbackFromTry: tier.monthlyPriceTry,
           jetonTlRate: jetonTlRate,
         ) ??
@@ -976,13 +969,19 @@ class _JetonWalletPurchaseBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: MembershipCatalogData.gold.withValues(alpha: 0.35)),
+        border: Border.all(
+          color: MembershipCatalogData.gold.withValues(alpha: 0.35),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
           children: [
-            Icon(Icons.toll_rounded, color: MembershipCatalogData.gold, size: 28),
+            Icon(
+              Icons.toll_rounded,
+              color: MembershipCatalogData.gold,
+              size: 28,
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -1016,7 +1015,10 @@ class _JetonWalletPurchaseBanner extends StatelessWidget {
                 style: FilledButton.styleFrom(
                   backgroundColor: MembershipCatalogData.gold,
                   foregroundColor: const Color(0xFF1A1030),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                 ),
                 child: const Text(
                   'Jeton ile al',
@@ -1064,8 +1066,8 @@ class _PremiumMembershipPageState extends ConsumerState<PremiumMembershipPage> {
 
 MembershipTierId? membershipTierFromPlanSlug(String plan) {
   final p = plan.toLowerCase();
-  if (p.contains('svip')) return MembershipTierId.svip;
-  if (p.contains('diamond')) return MembershipTierId.diamond;
+  if (p.contains('svip') || p.contains('diamond'))
+    return MembershipTierId.diamond;
   if (p.contains('premium') || p.contains('platinum')) {
     return MembershipTierId.premium;
   }

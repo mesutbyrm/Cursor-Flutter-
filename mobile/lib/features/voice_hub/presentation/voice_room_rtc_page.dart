@@ -1,6 +1,7 @@
 import 'package:canlifal_social/core/design_system/cds_bottom_sheet.dart';
 import 'providers/voice_session_visitors_provider.dart';
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter/material.dart';
@@ -616,13 +617,42 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     _messageFocus.requestFocus();
   }
 
+  Future<void> _confirmClearRoomChat() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Sohbeti temizle'),
+        content: const Text('Odadaki tüm sohbet mesajları silinsin mi?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('İptal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Temizle'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final err = await ref
+        .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
+        .clearChatAsModerator();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(err ?? 'Sohbet temizlendi')),
+    );
+  }
+
   void _sendChatMessage(VoiceRoomEntity room) {
     final text = VoiceOfficialJoin.normalizeCommandInput(
       _messageCtrl.text.trim(),
     );
     if (text.isEmpty) return;
     _messageCtrl.clear();
-    _messageFocus.requestFocus();
+    // Gönderince klavye kapanır.
+    _messageFocus.unfocus();
     setState(() => _scrollChatToLatest = true);
     unawaited(
       ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).sendMessage(text),
@@ -1594,7 +1624,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       },
       child: Scaffold(
         backgroundColor: VoiceRoomTokens.bgDeep,
-        resizeToAvoidBottomInset: true,
+        // Alt dock klavyeyle yükselmez; yalnızca mesaj satırı klavyeye sabitlenir.
+        resizeToAvoidBottomInset: false,
         body: Stack(
           fit: StackFit.expand,
           children: [
@@ -1631,6 +1662,18 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
             ),
             Column(
               children: [
+                Expanded(
+                  child: Padding(
+                    // Klavye açıkken mesaj satırı klavyenin üstüne çıkar, dock yerinde kalır.
+                    padding: EdgeInsets.only(
+                      bottom: math.max(
+                        0.0,
+                        MediaQuery.viewInsetsOf(context).bottom -
+                            VoiceMockFooterView.dockHeight(context),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
                 Expanded(
                   child: SafeArea(
                     bottom: false,
@@ -1973,6 +2016,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                   ),
                 ),
                 VoiceMockFooter(
+                  showDock: false,
                   pkChatOpen: _pkChatOpen,
                   liveRoomKey: _liveRoomKey,
                   room: room,
@@ -1991,7 +2035,46 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                   ),
                   onEmojiTap: () => _showEmojiPicker(context, _messageCtrl),
                   onChanged: _onChatChanged,
-                  onEffects: () => unawaited(showVoiceEffectsSheet(context, ref)),
+                  canClearChat: perms.canModerate || isOwner,
+                  onClearChat: () => unawaited(_confirmClearRoomChat()),
+                  onRoomMode: () => showVoiceRoomManagementPanel(
+                    context,
+                    ref,
+                    room: room,
+                    live: live,
+                    perms: perms,
+                    isOwner: isOwner,
+                    onUserTap: _openUser,
+                    onPkInvite: () => unawaited(_openPkInvite(room)),
+                    initial: VoiceMgmtInitial.roomMgmt,
+                  ),
+                ),
+                      ],
+                    ),
+                  ),
+                ),
+                VoiceMockFooter(
+                  showInput: false,
+                  pkChatOpen: _pkChatOpen,
+                  liveRoomKey: _liveRoomKey,
+                  room: room,
+                  userId: user?.id,
+                  controller: _messageCtrl,
+                  focusNode: _messageFocus,
+                  micOn: !_isMicMuted,
+                  micEnabled: _audioReady,
+                  onSend: () => _sendChatMessage(room),
+                  onToggleAudioOutput: _toggleHeadphones,
+                  onMicToggle: _toggleMic,
+                  onGift: () => _openGiftShop(
+                    context,
+                    room: room,
+                    presence: ref.read(voiceRoomLiveProvider(_liveRoomKey)).presence,
+                  ),
+                  onEmojiTap: () => _showEmojiPicker(context, _messageCtrl),
+                  onChanged: _onChatChanged,
+                  canClearChat: perms.canModerate || isOwner,
+                  onClearChat: () => unawaited(_confirmClearRoomChat()),
                   onRoomMode: () => showVoiceRoomManagementPanel(
                     context,
                     ref,
@@ -2015,11 +2098,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
               ),
             ),
             VoiceMockSideRail(
-              onGift: () => _openGiftShop(
-                context,
-                room: room,
-                presence: ref.read(voiceRoomLiveProvider(_liveRoomKey)).presence,
-              ),
               onMusic: () {
                 if (showMusicRequestFab) {
                   unawaited(showVoiceYoutubeSongSheet(context, ref, room: room));
