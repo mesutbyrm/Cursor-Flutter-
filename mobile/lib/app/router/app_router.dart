@@ -161,6 +161,7 @@ import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/profile/presentation/pages/profile_visitors_page.dart';
 import '../../features/notifications/presentation/pages/notification_channel_settings_page.dart';
 import '../../features/notifications/presentation/pages/notification_diagnostics_page.dart';
+import '../../features/web_parity/presentation/web_parity_routes.dart';
 import '../../features/profile/presentation/pages/settings_category_page.dart';
 import '../../features/profile/presentation/pages/settings_page.dart';
 import '../../features/debug/presentation/api_monitor_page.dart';
@@ -923,6 +924,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           child: const ProfileCosmeticsPage(),
         ),
       ),
+      ...webParityRoutes,
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsPage(),

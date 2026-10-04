@@ -1,0 +1,39 @@
+import 'package:go_router/go_router.dart';
+
+import 'pages/leaderboard_page.dart';
+import 'pages/membership_pages.dart';
+import 'pages/refund_page.dart';
+import 'pages/support_pages.dart';
+
+/// Web paritesi ekranlarının rotaları (üst düzey).
+final List<RouteBase> webParityRoutes = [
+  GoRoute(
+    path: '/destek',
+    builder: (context, state) => const SupportTicketsPage(),
+  ),
+  GoRoute(
+    path: '/destek/yeni',
+    builder: (context, state) => const SupportCreatePage(),
+  ),
+  GoRoute(
+    path: '/destek/:id',
+    builder: (context, state) =>
+        SupportDetailPage(ticketId: state.pathParameters['id'] ?? ''),
+  ),
+  GoRoute(
+    path: '/iade',
+    builder: (context, state) => const RefundPage(),
+  ),
+  GoRoute(
+    path: '/uyelik/hediye',
+    builder: (context, state) => const MembershipGiftPage(),
+  ),
+  GoRoute(
+    path: '/uyelik/karsilastir',
+    builder: (context, state) => const MembershipComparisonPage(),
+  ),
+  GoRoute(
+    path: '/liderlik',
+    builder: (context, state) => const LeaderboardsPage(),
+  ),
+];

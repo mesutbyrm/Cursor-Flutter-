@@ -1113,4 +1113,17 @@ abstract final class ApiEndpoints {
       '/api/short-videos/user/$userId';
   static String shortVideosProfile(String userId) =>
       '/api/short-videos/profile/$userId';
+
+  // ── Web paritesi (destek, iade, üyelik hediye, liderlik …) ──────────────
+  static const supportTickets = '/api/support/tickets';
+  static String supportTicket(String id) => '/api/support/tickets/$id';
+  static String supportTicketMessages(String id) =>
+      '/api/support/tickets/$id/messages';
+  static const refunds = '/api/refunds';
+  static const membershipPlans = '/api/membership/plans';
+  static const membershipsComparison = '/api/memberships/comparison';
+  static const membershipsGift = '/api/memberships/gift';
+  static const leaderboardsTop100 = '/api/leaderboards/top100';
+  static const vipLeaderboard = '/api/vip/leaderboard';
+  static const supporterLevels = '/api/supporter-levels';
 }
