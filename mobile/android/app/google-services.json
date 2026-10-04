@@ -30,6 +30,14 @@
           }
         },
         {
+          "client_id": "24667749197-u92skvjsotp2ve56kps99q2oeogpfp54.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mesutbyrm.canlifal",
+            "certificate_hash": "bbd3f893065f6b2600d15e066d1ab8f006edac1a"
+          }
+        },
+        {
           "client_id": "24667749197-04kfp7u42jgv5pkkdfo5lsnra2re73gb.apps.googleusercontent.com",
           "client_type": 3
         }
