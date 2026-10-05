@@ -180,8 +180,6 @@ import '../../features/voice_hub/presentation/pages/pk_result_page.dart';
 import '../../features/voice_hub/presentation/pages/voice_pk_battle_page.dart';
 import '../../features/voice_hub/presentation/voice_room_route_page.dart';
 import '../../features/voice_hub/presentation/voice_room_gated_entry.dart';
-import '../../features/voice_hub/presentation/basic/voice_room_page.dart';
-import '../../features/voice_hub/presentation/widgets/voice_room_error_boundary.dart';
 import '../../features/voice_hub/presentation/voice_rooms_hub_page.dart';
 import '../../features/live_psychics/domain/entities/psychic_session_entity.dart';
 import '../../features/live_psychics/presentation/controllers/psychics_list_controller.dart';

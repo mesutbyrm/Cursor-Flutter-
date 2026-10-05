@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../gifts/data/gift_goal_remote_datasource.dart';
 import '../../../gifts/domain/gift_goal.dart';
 import '../../../gifts/presentation/providers/gift_goal_providers.dart';
 

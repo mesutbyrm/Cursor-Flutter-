@@ -5,7 +5,6 @@ import '../../../profile/presentation/providers/profile_hub_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../domain/entrance_theme.dart';
 import '../../domain/vip_tier.dart';
-import 'vip_membership_provider.dart';
 
 /// Profil + cüzdan tek kaynak — oda giriş banner'ı ve VIP tier.
 class UserRoomProfile extends Equatable {

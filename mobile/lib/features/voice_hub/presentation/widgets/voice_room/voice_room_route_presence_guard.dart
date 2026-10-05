@@ -2,8 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:riverpod/riverpod.dart' show Ref;
 
 import '../../../../../app/router/app_router.dart';
 import '../../providers/chat_room_providers.dart';

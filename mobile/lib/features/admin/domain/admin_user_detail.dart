@@ -1,5 +1,4 @@
 import '../../../core/util/json_util.dart';
-import 'admin_user_util.dart';
 
 /// Admin komuta merkezi — birleştirilmiş kullanıcı görünümü.
 class AdminUserDetail {

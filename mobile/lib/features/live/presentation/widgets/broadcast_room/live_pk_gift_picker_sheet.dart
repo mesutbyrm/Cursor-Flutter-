@@ -12,10 +12,8 @@ import '../../../domain/entities/live_gift_catalog.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
 import '../../../../gifts/presentation/sync/gift_session_controller.dart';
-import '../../../../gifts/presentation/providers/gift_providers.dart';
 import '../../../../gifts/presentation/widgets/gift_staff_finance_prompt.dart';
 import '../../../domain/entities/live_gift_type.dart';
-import '../../gifts/live_gift_controller.dart';
 
 class PkGiftTarget {
   const PkGiftTarget({

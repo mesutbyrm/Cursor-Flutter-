@@ -10,7 +10,6 @@ import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../messages/presentation/providers/conversations_list_notifier.dart';
 import '../../../messages/presentation/providers/messages_providers.dart';
-import '../../../messages/presentation/providers/messages_mark_read_providers.dart';
 import '../../../messages/presentation/widgets/conversations_list_sliver.dart';
 import '../../../messages/presentation/widgets/message_requests_sliver.dart';
 import '../../../notifications/presentation/providers/notifications_list_notifier.dart';

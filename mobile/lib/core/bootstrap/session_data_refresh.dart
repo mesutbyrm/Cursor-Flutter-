@@ -5,8 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/cosmetics/presentation/providers/cosmetics_providers.dart';
 import '../../features/fortune/presentation/providers/fortune_access_providers.dart';
 import '../../features/home/presentation/providers/home_providers.dart';
-import '../../features/live/presentation/providers/discover_live_streams.dart';
-import '../../features/live/presentation/providers/discover_voice_rooms.dart';
 import '../../features/live/presentation/providers/live_providers.dart';
 import '../../features/membership/presentation/controllers/membership_controller.dart';
 import '../../features/profile/presentation/providers/payment_requests_notifier.dart';

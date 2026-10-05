@@ -3,7 +3,6 @@ import 'package:cookie_jar/cookie_jar.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/loading_timeout.dart';
 import '../../../../core/auth/session_user_cache.dart';
-import '../../../../core/network/cookie_jar_provider.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../data/datasources/auth_service.dart';
 import '../../data/models/auth_response.dart';

@@ -1077,47 +1077,6 @@ class _PermissionsTab extends ConsumerWidget {
   }
 }
 
-class _ActivityTab extends StatelessWidget {
-  const _ActivityTab({required this.activities, required this.access});
-
-  final List<Map<String, dynamic>> activities;
-  final StaffAccess access;
-
-  @override
-  Widget build(BuildContext context) {
-    if (!AdminUserPermissions.canViewActivity(access)) {
-      return const Center(child: Text('Aktivite görüntüleme yetkiniz yok.'));
-    }
-    if (activities.isEmpty) {
-      return const Center(child: Text('Bu kullanıcı için aktivite bulunamadı.'));
-    }
-    return ListView.separated(
-      padding: const EdgeInsets.all(20),
-      itemCount: activities.length,
-      separatorBuilder: (_, __) => const Divider(height: 1),
-      itemBuilder: (_, i) {
-        final a = activities[i];
-        final type =
-            (a['activityType'] ?? a['type'] ?? 'aktivite').toString();
-        final at = a['createdAt']?.toString();
-        return ListTile(
-          dense: true,
-          title: Text(type, style: const TextStyle(fontWeight: FontWeight.w600)),
-          subtitle: Text(a['description']?.toString() ?? ''),
-          trailing: at != null
-              ? Text(
-                  DateFormat('dd.MM HH:mm').format(
-                    DateTime.tryParse(at)?.toLocal() ?? DateTime.now(),
-                  ),
-                  style: const TextStyle(fontSize: 10),
-                )
-              : null,
-        );
-      },
-    );
-  }
-}
-
 class _Stat {
   const _Stat(this.label, this.value);
   final String label;
@@ -1142,17 +1101,6 @@ class _StatGrid extends StatelessWidget {
           ),
       ],
     );
-  }
-}
-
-class _InfoTile extends StatelessWidget {
-  const _InfoTile({required this.label, required this.value});
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return PlatformSocialInfoRow(label: label, value: value);
   }
 }
 

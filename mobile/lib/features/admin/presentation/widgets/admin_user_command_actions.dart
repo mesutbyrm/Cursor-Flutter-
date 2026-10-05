@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../live/data/pk/pk_room_remote_datasource.dart';
 import '../widgets/admin_payment_reject_sheet.dart';
@@ -12,7 +11,6 @@ import '../../domain/admin_site_animation.dart';
 import '../../domain/admin_user_extended_data.dart';
 import '../providers/admin_panel_providers.dart';
 import '../providers/admin_site_animation_providers.dart';
-import '../providers/staff_access_provider.dart';
 
 /// Komuta merkezi eylem diyalogları (Faz 2–3).
 abstract final class AdminUserCommandActions {

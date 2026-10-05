@@ -96,18 +96,6 @@ class _ProfileAccountSecurityPageState
                 SettingsTileGrid(
                   children: [
                     SettingsTileCard(
-                      icon: Icons.verified_user_outlined,
-                      label: 'İki adımlı doğrulama',
-                      subtitle: 'Yakında — SMS / e-posta OTP',
-                      badge: 'Yakında',
-                      accent: Theme.of(context).disabledColor,
-                      onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('İki adımlı doğrulama yakında geliyor'),
-                        ),
-                      ),
-                    ),
-                    SettingsTileCard(
                       icon: Icons.devices_rounded,
                       label: 'Aktif cihazlar',
                       subtitle: 'Oturum açık cihazları yönet',

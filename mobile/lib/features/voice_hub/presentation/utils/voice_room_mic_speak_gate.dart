@@ -3,7 +3,6 @@ import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/entities/chat_room_my_permissions.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../providers/voice_room_live_side_effect_slices.dart';
-import '../providers/chat_room_providers.dart';
 import 'voice_room_permissions.dart';
 import 'voice_room_speak_access.dart';
 

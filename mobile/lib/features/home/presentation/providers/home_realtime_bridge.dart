@@ -4,8 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/config/env.dart';
 import 'home_providers.dart';
-import '../../../live/presentation/providers/discover_live_streams.dart';
-import '../../../live/presentation/providers/discover_voice_rooms.dart';
 
 /// Socket.IO olaylarında ana sayfa listelerini yeniler.
 final homeRealtimeBridgeProvider = Provider<HomeRealtimeBridge>((ref) {

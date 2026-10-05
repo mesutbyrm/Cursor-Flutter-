@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lottie/lottie.dart';
 
 import '../../../../core/video/video_cache_service.dart';
@@ -42,6 +43,30 @@ class _SiteAnimationMediaState extends State<SiteAnimationMedia> {
   Widget build(BuildContext context) {
     if (widget.useFallbackOnly || _failed) {
       return _fallback();
+    }
+
+    // Merkezi animasyon sistemi (backend kataloğu): görsel, kartın ARKASINDA
+    // geniş bir bant olarak gösterilir; kart ad/alt yazıyı taşır.
+    final remote = widget.command.asset;
+    if ((widget.command.type.isEntrance || widget.command.type.isExit) &&
+        remote.kind == SiteAnimationMediaKind.image &&
+        remote.hasRemote) {
+      final card = widget.command.type.isEntrance
+          ? SiteAnimationEntranceCard(
+              command: widget.command,
+              phase: widget.animationPhase,
+              compact: true,
+            )
+          : SiteAnimationExitCard(
+              command: widget.command,
+              phase: widget.animationPhase,
+            );
+      return _BackdropBanner(
+        url: remote.url!,
+        scale: widget.command.layout.scale,
+        child: card,
+        onFailed: () => setState(() => _failed = true),
+      );
     }
 
     if (widget.command.type.isEntrance) {
@@ -159,5 +184,56 @@ class _CachedVideoThumbState extends State<_CachedVideoThumb> {
     if (!_ready) return widget.fallback;
     // MP4 opaque arka plan — production'da native kart tercih edilir.
     return widget.fallback;
+  }
+}
+
+/// Kartın arkasında taşan, ölçeklenen backend görseli (SVG / PNG / GIF / APNG).
+class _BackdropBanner extends StatelessWidget {
+  const _BackdropBanner({
+    required this.url,
+    required this.scale,
+    required this.child,
+    required this.onFailed,
+  });
+
+  final String url;
+  final double scale;
+  final Widget child;
+  final VoidCallback onFailed;
+
+  @override
+  Widget build(BuildContext context) {
+    final isSvg = url.toLowerCase().split('?').first.endsWith('.svg');
+    void fail() => WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (context.mounted) onFailed();
+        });
+    final art = isSvg
+        ? SvgPicture.network(
+            url,
+            fit: BoxFit.contain,
+            placeholderBuilder: (_) => const SizedBox.shrink(),
+          )
+        : Image.network(
+            url,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) {
+              fail();
+              return const SizedBox.shrink();
+            },
+          );
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.center,
+      children: [
+        Positioned(
+          left: -16 * scale,
+          right: -16 * scale,
+          top: -34 * scale,
+          bottom: -34 * scale,
+          child: IgnorePointer(child: art),
+        ),
+        child,
+      ],
+    );
   }
 }

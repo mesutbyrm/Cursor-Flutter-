@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../site_animation_provider.dart';
 import 'site_animation_overlay_host.dart';
 
 /// Site animasyon bağlamı — sesli oda dışı ekranlar.

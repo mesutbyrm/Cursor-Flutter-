@@ -3,7 +3,6 @@ import 'package:lottie/lottie.dart';
 
 import '../../domain/site_animation_asset.dart';
 import '../../domain/site_animation_catalog_entry.dart';
-import '../../domain/site_animation_tier.dart';
 import '../../domain/site_animation_type.dart';
 import '../../data/site_animation_asset_registry.dart';
 import 'site_animation_profile_frame_fallback.dart';

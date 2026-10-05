@@ -24,11 +24,3 @@ bool _pkNoise(String t) {
   if (t.contains('saniye kaldı') && t.contains('pk')) return true;
   return false;
 }
-
-bool _giftNoise(String t) {
-  if (t.startsWith('gift-')) return true;
-  if (t.contains('hediye gönderdi')) return true;
-  if (t.contains('değerinde') && t.contains('gönderdi')) return true;
-  if (t.contains('jeton') && t.contains('gönderdi')) return true;
-  return false;
-}

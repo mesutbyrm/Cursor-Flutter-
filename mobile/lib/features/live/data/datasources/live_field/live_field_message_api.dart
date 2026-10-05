@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 
 import '../../../../../core/network/api_endpoints.dart';
 import '../../../../../core/network/dio_provider.dart';
-import '../../../../../core/util/json_util.dart';
 import 'live_field_api_util.dart';
 
 /// Saha 4 — Mesajlaşma (`POST/GET /api/live/message`).

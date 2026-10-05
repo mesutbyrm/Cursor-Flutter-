@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:canlifal_social/features/auth/data/models/auth_api_error.dart';
 import 'package:canlifal_social/features/auth/data/models/auth_response.dart';
-import 'package:canlifal_social/core/network/api_exception.dart';
 
 void main() {
   group('AuthResponse', () {

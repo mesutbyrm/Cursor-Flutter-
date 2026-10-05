@@ -15,7 +15,6 @@ import '../../live/domain/entities/live_stream_entity.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
 import '../../live/domain/entities/voice_room_sort.dart';
 import '../../live/presentation/providers/live_providers.dart';
-import '../../live/presentation/providers/discover_live_streams.dart';
 import '../../live/presentation/providers/voice_rooms_list_notifier.dart';
 import 'providers/voice_rooms_presence_provider.dart';
 import 'utils/open_voice_chat_room_flow.dart';

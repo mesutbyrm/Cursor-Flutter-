@@ -1,8 +1,6 @@
 import 'package:canlifal_social/core/network/cookie_jar_provider.dart';
-import 'package:canlifal_social/features/live/domain/entities/voice_room_entity.dart';
 import 'package:canlifal_social/features/voice_hub/domain/entities/chat_room_dj_state.dart';
 import 'package:canlifal_social/features/voice_hub/domain/entities/music_queue_item.dart';
-import 'package:canlifal_social/features/voice_hub/presentation/providers/chat_room_providers.dart';
 import 'package:canlifal_social/features/voice_hub/presentation/widgets/voice_room/voice_room_web_music_bar.dart';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:flutter/material.dart';

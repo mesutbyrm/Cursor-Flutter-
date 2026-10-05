@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'api_endpoints.dart';
 import 'dio_provider.dart';
-import 'user_presence_service.dart';
 import '../bootstrap/session_data_refresh.dart';
 
 /// Site geneli çevrimiçi kullanıcı kimlikleri — `GET /api/users/online`.

@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/pk_event_log.dart';
-import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../pk/presentation/providers/pk_providers.dart';
 import '../../../pk/presentation/providers/pk_session_notifier.dart';
 import '../../../pk/presentation/widgets/pk_invite_dialog.dart';

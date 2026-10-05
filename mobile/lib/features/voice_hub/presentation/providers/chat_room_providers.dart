@@ -71,7 +71,6 @@ import '../../domain/presence_canonical.dart';
 import '../../domain/voice_seat_pending_guard.dart';
 import 'voice_seat_action_lock_provider.dart';
 import '../../domain/room_event_scope.dart';
-import '../../domain/voice_playback_limits.dart';
 import '../../domain/voice_music_sync.dart';
 import '../../domain/utils/voice_banned_word_filter.dart';
 import '../../domain/voice_official_join.dart';
@@ -124,11 +123,9 @@ import '../../video/presentation/room_video_controller.dart';
 import '../../../gifts/presentation/providers/gift_providers.dart';
 import '../../../gifts/presentation/providers/gift_goal_providers.dart';
 import '../../../gifts/presentation/providers/gift_catalog_index_provider.dart';
-import '../../../gifts/presentation/sync/gift_session_controller.dart';
 import '../../../gifts/domain/gift_system_message.dart';
 import '../../../gifts/domain/session_gift_summary_builder.dart';
 import '../../../gifts/domain/session_summary_message.dart';
-import '../../../gifts/domain/gift_payload_util.dart';
 import '../../../gifts/presentation/sync/gift_sse_dispatch.dart';
 import '../../../gifts/presentation/sync/gift_sync_log.dart';
 import '../../../../core/site_animation/presentation/site_animation_provider.dart';
@@ -136,8 +133,6 @@ import '../../../../core/site_animation/presentation/site_animation_catalog_prov
 import '../../../../core/site_animation/presentation/site_animation_realtime_policy.dart';
 import '../../../../core/site_animation/domain/site_animation_type.dart';
 import 'voice_gift_leaderboard_provider.dart';
-import 'voice_recent_gifts_provider.dart';
-import 'voice_seat_gift_flash_provider.dart';
 import 'voice_seat_gift_totals_provider.dart';
 import 'voice_room_diagnostic_provider.dart';
 import 'voice_room_ui_provider.dart';
@@ -607,9 +602,6 @@ class VoiceRoomLiveController
 
   List<ChatRoomPresence> _presenceCopy() =>
       List<ChatRoomPresence>.from(state.presence);
-
-  List<VoiceRoomSeatSlot> _seatSlotsCopy() =>
-      List<VoiceRoomSeatSlot>.from(state.seatSlots);
 
   VoiceRoomEntity get _roomMeta {
     final key = _roomKey;
@@ -1307,15 +1299,6 @@ class VoiceRoomLiveController
     _entryBegun = false;
     _sessionActive = false;
     unawaited(_beginRoomSession());
-  }
-
-  Future<void> _leaveRoomBackend() async {
-    try {
-      await _leavePresenceWithSeatClear()
-          .timeout(const Duration(seconds: 5))
-          .catchError((_) => false);
-    } catch (_) {}
-    unawaited(_leaveVoiceSession());
   }
 
   bool _hasDjPlayableSource(
@@ -3192,17 +3175,6 @@ class VoiceRoomLiveController
     } catch (e) {
       return ApiException.userMessage(e);
     }
-  }
-
-  Future<void> _postChatLineOnly(String content) async {
-    final user = ref.read(authControllerProvider).valueOrNull;
-    try {
-      await ref.read(chatRoomRemoteProvider).sendMessage(
-            roomKey: _roomKey,
-            content: content,
-            nickname: _effectiveNickname(user),
-          );
-    } catch (_) {}
   }
 
   bool _canControlMusic() {

@@ -11,7 +11,6 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../membership/presentation/controllers/membership_controller.dart';
 import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
-import '../../../profile/presentation/providers/payment_requests_notifier.dart';
 import '../../../profile/presentation/widgets/payment_methods_summary_line.dart';
 import '../../../membership/presentation/widgets/membership_pending_payment_banner.dart';
 import '../widgets/wallet_balance_header.dart';

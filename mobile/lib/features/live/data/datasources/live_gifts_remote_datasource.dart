@@ -520,8 +520,6 @@ class LiveGiftsRemoteDataSource {
     return pick(json, ['giftTypeId', 'giftId', 'type', 'slug'])?.toString();
   }
 
-  String? _resolveGiftId(Map<String, dynamic> json) => _resolveCatalogGiftId(json);
-
   String? _resolveImageUrl(String? raw) {
     if (raw == null || raw.isEmpty) return null;
     if (CloudMediaUrl.isCloudStoragePath(raw)) {

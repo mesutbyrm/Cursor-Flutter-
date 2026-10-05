@@ -18,7 +18,6 @@ import '../providers/shorts_explore_providers.dart';
 import '../providers/shorts_providers.dart';
 import '../utils/reverse_geocode_helper.dart';
 import '../utils/shorts_count_format.dart';
-import 'short_music_feed_page.dart';
 import '../widgets/shorts_premium_theme.dart';
 
 /// Keşfet — trend, sana özel, AI, konum, hashtag ve müzik.

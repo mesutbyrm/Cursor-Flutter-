@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../live/presentation/gifts/providers/live_gift_providers.dart';
 import '../../../voice_hub/presentation/widgets/voice_room_gift_sheet.dart';
-import '../../data/gift_repository.dart';
 import '../../domain/gift_entity.dart';
 import 'gift_catalog_index_provider.dart';
 import 'gift_providers.dart';

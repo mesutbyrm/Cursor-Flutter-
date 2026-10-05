@@ -277,10 +277,6 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     return null;
   }
 
-  Future<void> _tryAutoPrivilegedSeat() async {
-    // Yetkili/moderatör girişinde otomatik koltuk kapalı — manuel oturma.
-  }
-
   /// Eski otomatik koltuk denemeleri devre dışı (kullanıcı manuel oturur).
   void schedulePrivilegedSeatAttempts() {}
 

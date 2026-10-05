@@ -29,7 +29,6 @@ import '../../providers/staff_entrance_marquee_provider.dart';
 import '../../providers/voice_gift_providers.dart';
 import '../../utils/voice_gift_pk_sync.dart';
 import '../voice_room_gift_sheet.dart';
-import '../../../../gift_box/presentation/providers/gift_box_scope_providers.dart';
 import '../../../../gift_box/presentation/widgets/gift_box_panel_section.dart';
 
 /// TikTok Live — blur panel, 8 premium hediye, combo, sıralama.
