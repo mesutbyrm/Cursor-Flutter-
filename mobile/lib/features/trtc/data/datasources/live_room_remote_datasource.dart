@@ -16,6 +16,8 @@ class LiveRoomRemoteDataSource {
     required String roomId,
     required String roomType,
     String? nickname,
+    String? password,
+    String? roomAccessToken,
   }) async {
     final started = DateTime.now();
     LiveDebugLog.log('live.join_room.request', {
@@ -29,6 +31,9 @@ class LiveRoomRemoteDataSource {
           'roomId': roomId,
           'roomType': roomType,
           if (nickname != null && nickname.isNotEmpty) 'nickname': nickname,
+          if (password != null && password.isNotEmpty) 'password': password,
+          if (roomAccessToken != null && roomAccessToken.isNotEmpty)
+            'roomAccessToken': roomAccessToken,
         },
       );
       final map = _unwrapData(res.data);

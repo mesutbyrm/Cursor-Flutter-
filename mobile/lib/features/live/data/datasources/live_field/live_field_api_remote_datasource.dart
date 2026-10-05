@@ -56,11 +56,15 @@ class LiveFieldApiRemoteDataSource {
     required String roomId,
     required String roomType,
     String? nickname,
+    String? password,
+    String? roomAccessToken,
   }) =>
       lifecycle.joinRoom(
         roomId: roomId,
         roomType: roomType,
         nickname: nickname,
+        password: password,
+        roomAccessToken: roomAccessToken,
       );
 
   Future<void> leaveRoom({

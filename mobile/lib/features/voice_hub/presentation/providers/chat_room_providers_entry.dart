@@ -104,7 +104,10 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
         _presenceApiKey,
         aliases: _roomKeyAliases,
       );
-      await _fetchAndApplyRoomState();
+      final liveJoinOk = await _performLiveJoinRoom();
+      if (!liveJoinOk) {
+        await _fetchAndApplyRoomState();
+      }
       await Future.wait<void>([
         _joinPresence(),
         refreshServerPermissions(),
@@ -113,10 +116,12 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
       _schedulePoll(sseConnected: state.sseConnected);
       await Future.wait<void>([
         _loadInitialMessages(),
-        _preloadPkStatus(),
+        if (!liveJoinOk) _preloadPkStatus(),
         _preloadGiftCatalog(),
       ], eagerError: false);
-      await _fetchAndApplySeats();
+      if (!liveJoinOk || state.seatSlots.isEmpty) {
+        await _fetchAndApplySeats();
+      }
       state = state.copyWith(backendSyncReady: true, loading: false);
       schedulePrivilegedSeatAttempts();
       await _bootstrapRoomData();

@@ -32,6 +32,7 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
 
   Future<void> _fetchAndApplyRoomState() async {
     if (_roomKey.isEmpty) return;
+    final gen = _liveSessionGeneration;
     VoiceRoomDebugLog.log('api.state.fetch', {'room': _roomKey});
     final remote = ref.read(chatRoomRemoteProvider);
     try {
@@ -39,6 +40,7 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
         _roomKey,
         alternateKey: _musicAlternateKey,
       );
+      if (gen != _liveSessionGeneration || !_sessionActive) return;
       _applyStateSnapshot(snapshot);
       VoiceRoomDebugLog.log('api.state.ok', {
         'room': _roomKey,

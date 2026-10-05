@@ -71,6 +71,9 @@ import '../../domain/presence_canonical.dart';
 import '../../domain/voice_seat_pending_guard.dart';
 import 'voice_seat_action_lock_provider.dart';
 import '../../domain/room_event_scope.dart';
+import '../../domain/voice_room_live_join_mapper.dart';
+import '../../../trtc/domain/entities/live_join_room_result.dart';
+import '../../../trtc/presentation/providers/trtc_providers.dart';
 import '../../domain/voice_music_sync.dart';
 import '../../domain/utils/voice_banned_word_filter.dart';
 import '../../domain/voice_official_join.dart';
@@ -149,6 +152,7 @@ part 'chat_room_providers_presence.dart';
 part 'chat_room_providers_dj_sync.dart';
 part 'chat_room_providers_sse.dart';
 part 'chat_room_providers_entry.dart';
+part 'chat_room_providers_live_lifecycle.dart';
 
 final youtubeStreamResolverProvider = Provider<YoutubeStreamResolver>((ref) {
   final resolver = YoutubeStreamResolver(ref.watch(dioProvider));
@@ -509,6 +513,10 @@ class VoiceRoomLiveController
   DateTime? _lastDuyuruShownAt;
   String? _presenceNickname;
   var _presenceJoined = false;
+  /// `POST /api/live/join-room` bu oturumda başarılı oldu mu.
+  var _liveJoinCompoundOk = false;
+  /// Oturum başına artar; geç async yanıtlar eski oturuma uygulanmaz.
+  var _liveSessionGeneration = 0;
   var _voiceJoined = false;
   var _typingActive = false;
   var _sseStarted = false;
@@ -1135,6 +1143,8 @@ class VoiceRoomLiveController
     _leaveInFlight = true;
     _sessionActive = false;
     _entryBegun = false;
+    _liveSessionGeneration++;
+    _liveJoinCompoundOk = false;
     _pendingSeatByUser.clear();
     _pendingSeatClaims.clear();
     _autoSeatContextAttempted = null;

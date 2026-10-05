@@ -650,6 +650,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     final alternateKey = _presenceAlternateKey;
     final remote = _presenceRemote;
     var cleared = false;
+    await _liveLeaveRoomBackend();
     try {
       cleared = await remote.leavePresence(apiKey, alternateKey: alternateKey);
     } catch (_) {
@@ -673,15 +674,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
   }
 
   void _startPresenceHeartbeat() {
-    _presenceHeartbeat?.cancel();
-    _presenceHeartbeat = Timer.periodic(
-      ChatRoomRemoteDataSource.presenceHeartbeatInterval,
-      (_) {
-        if (!_sessionActive || !_presenceJoined || !state.selfInRoom) return;
-        unawaited(_presenceHeartbeatTick());
-      },
-    );
-    _startNetworkRecoveryWatch();
+    _startLiveMembershipHeartbeat();
   }
 
   /// Ağ geri geldiğinde sesli TRTC kanalı sessizce düşmüşse yeniden bağlan.
@@ -701,7 +694,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       if (coordinator.isReconnecting) return;
       VoiceRoomDebugLog.log('audio.trtc.network_recovery', {'room': _roomKey});
       unawaited(coordinator.ensureConnected());
-      if (_presenceJoined) unawaited(_presenceHeartbeatTick());
+      if (_presenceJoined) unawaited(_liveMembershipHeartbeatTick());
     });
   }
 
@@ -1094,7 +1087,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
 
   /// RoomSessionManager callback — presence heartbeat
   Future<void> _presenceHeartbeatForManager() async {
-    return _presenceHeartbeatTick();
+    return _liveMembershipHeartbeatTick();
   }
 
   /// Host offline detection — oda sahibi çevrim dışı ise host koltuk boşalt

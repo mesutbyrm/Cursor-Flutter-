@@ -42,6 +42,8 @@ class LiveFieldRoomLifecycleApi {
     required String roomId,
     required String roomType,
     String? nickname,
+    String? password,
+    String? roomAccessToken,
   }) async {
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.liveJoinRoom,
@@ -49,6 +51,9 @@ class LiveFieldRoomLifecycleApi {
         'roomId': roomId,
         'roomType': roomType,
         if (nickname != null && nickname.isNotEmpty) 'nickname': nickname,
+        if (password != null && password.isNotEmpty) 'password': password,
+        if (roomAccessToken != null && roomAccessToken.isNotEmpty)
+          'roomAccessToken': roomAccessToken,
       },
     );
     final map = LiveFieldApiUtil.unwrapData(res.data);
