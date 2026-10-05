@@ -649,6 +649,11 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
       final selfId = ref.read(authControllerProvider).valueOrNull?.id;
       if (selfId != null && selfId == userId) {
         _lastConfirmedSelfSeatIndex = null;
+        // Koltuktan inen kişinin mikrofonu açık kalmasın (sesi odaya gitmeye
+        // devam ediyordu).
+        unawaited(
+          ref.read(voiceRoomAudioCoordinatorProvider).setMicEnabled(false),
+        );
       }
       await refresh();
       return null;

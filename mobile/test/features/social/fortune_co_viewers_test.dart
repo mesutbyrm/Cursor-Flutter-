@@ -14,7 +14,7 @@ PostEntity _p(String id, String uid, String? type, DateTime t) => PostEntity(
 
 void main() {
   final base = DateTime(2026, 10, 1, 12);
-  test('aynı türde son 3 farklı kullanıcı, en yeni önce, sahibi hariç', () {
+  test('aynı türde son 5 farklı kullanıcı, en yeni önce, sahibi hariç', () {
     final post = _p('p0', 'a', 'coffee', base);
     final feed = [
       post,
@@ -26,9 +26,12 @@ void main() {
       _p('p6', 'f', 'tarot', base.subtract(const Duration(minutes: 2))),
       _p('p7', 'g', null, base.subtract(const Duration(minutes: 3))),
       _p('p8', 'a', 'coffee', base.subtract(const Duration(minutes: 4))),
+      _p('p9', 'h', 'coffee', base.subtract(const Duration(minutes: 9))),
+      _p('p10', 'i', 'coffee', base.subtract(const Duration(minutes: 10))),
+      _p('p11', 'j', 'coffee', base.subtract(const Duration(minutes: 11))),
     ];
     final out = recentFortuneCoViewers(feed, post);
-    expect(out.map((u) => u.id), ['b', 'c', 'd']);
+    expect(out.map((u) => u.id), ['b', 'c', 'd', 'e', 'h']);
   });
 
   test('tür bilinmiyorsa veya akışta yoksa boş', () {

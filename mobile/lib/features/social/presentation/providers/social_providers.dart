@@ -227,7 +227,7 @@ final postCommentsProvider =
   return ref.read(socialRepositoryProvider).fetchComments(postId);
 });
 
-/// Bir fal gönderisi için "birlikte bakan" son 3 kullanıcı (akıştan türetilir).
+/// Bir fal gönderisi için "birlikte bakan" son 5 kullanıcı (akıştan türetilir).
 final fortuneCoViewersProvider =
     Provider.autoDispose.family<List<UserEntity>, PostEntity>((ref, post) {
   final feed = ref.watch(socialNotifierProvider).valueOrNull ?? const [];

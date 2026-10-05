@@ -34,6 +34,7 @@ class VoiceRoomAudioCoordinator {
 
   var _reconnecting = false;
   var _reconnectSuspended = false;
+  var _leaveEpoch = 0;
   var _desiredMicOn = false;
 
   VoidCallback? onReconnecting;
@@ -79,12 +80,19 @@ class VoiceRoomAudioCoordinator {
 
     try {
       await _trtc.leave();
+      // Yeniden bağlanma sürerken kullanıcı odadan çıktıysa ODAYA GERİ GİRME
+      // (çıktıktan sonra ses gidip gelmesinin kaynağı).
+      if (_reconnectSuspended) return;
       await _trtc.joinVoice(
         channel,
         publishMic: _desiredMicOn,
         userId: userId,
         role: _desiredMicOn ? 'host' : 'audience',
       );
+      if (_reconnectSuspended) {
+        await _trtc.leave();
+        return;
+      }
       if (!_desiredMicOn) {
         await _trtc.setMicEnabled(false);
       }
@@ -130,6 +138,7 @@ class VoiceRoomAudioCoordinator {
     _lastUserId = userId;
     _desiredMicOn = enableMic;
     _reconnectSuspended = false;
+    final epoch = _leaveEpoch;
 
     final role = enableMic ? 'host' : 'audience';
     final prefetched = backendTrtc ??
@@ -175,6 +184,11 @@ class VoiceRoomAudioCoordinator {
         role: role,
         userId: userId,
       );
+    }
+    // Katılma sürerken kullanıcı odadan çıktıysa bağlantıyı hemen kapat.
+    if (epoch != _leaveEpoch) {
+      await _trtc.leave();
+      return VoiceAudioEngineKind.trtc;
     }
     _engine = VoiceAudioEngineKind.trtc;
     _desiredMicOn = enableMic;
@@ -259,6 +273,7 @@ class VoiceRoomAudioCoordinator {
   void setHeadphonesOn(bool on) => _trtc.setRemoteAudioMuted(!on);
 
   Future<void> leave() async {
+    _leaveEpoch++;
     _reconnectSuspended = true;
     _trtc.manager.onConnectionLost = null;
     final ds = _remote;

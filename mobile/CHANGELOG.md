@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.718+771 (2026-10-05) — Sesli odada ses kesme, fal paylaşım görselleri, bildirim tanılama
+
+- **Sesli oda (koltuktan inince / çıkınca):** TRTC ses kesme artık işlem kapısını beklemiyor (uzak ses kapatılır, yerel yayın durur, `exitRoom` her durumda gönderilir); çıkış sırasında sürmekte olan yeniden bağlanma/katılma odaya GERİ girmiyor; koltuktan inen kişinin mikrofonu kapanıyor
+- **Sosyal fal paylaşımı:** backend fal türleri (askuyumu, gunluk-burc, 3-kart-tarot, yildizname… ) türüne uygun görsele eşlendi; bilinmeyen tür artık Tarot yerine genel fal görseli; medya yer tutucusu da türe uygun; «birlikte bakan» son **5** kişi
+- **Canlı falcı isteği:** mevcut seans kontrolü 12 sn, seans oluşturma 25 sn zaman aşımına bağlandı (sunucu yanıtı gelmezse ekran donmaz, mesaj gösterilir)
+- **Bildirim tanılama:** «Sunucudan test bildirimi gönder» — sunucu OneSignal'e istek atar, ham yanıtı (anahtar eksik / abone cihaz yok) ekranda gösterir
+
 ## 1.0.717+770 (2026-10-05) — Para çekme düzeltmesi + kesinti önizleme + ajans davetleri
 
 - **Para çekme (hata düzeltmesi):** istek `details` gönderiyordu, sunucu `accountDetails` bekliyor → talep hep «Yöntem ve hesap bilgileri gerekli» ile reddediliyordu; tutar TL gidiyordu, sunucu JETON bekliyor. Artık jeton adedi + `accountDetails`

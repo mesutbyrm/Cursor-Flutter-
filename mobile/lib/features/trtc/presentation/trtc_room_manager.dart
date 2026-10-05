@@ -233,6 +233,9 @@ class TrtcRoomManager {
 
     _cloud ??= await TRTCCloud.sharedInstance();
     _device ??= _cloud!.getDeviceManager();
+    // `forceSilenceNow` önceki çıkışta uzak sesi kapatmış olabilir: yeni
+    // oturum duyabilsin.
+    _cloud!.muteAllRemoteAudio(false);
     _isHost = isHost;
     _twoWayVideo = twoWayVideo;
     _localUserId = credentials.userId.trim();
@@ -773,7 +776,28 @@ class TrtcRoomManager {
     _device?.switchCamera(_cameraOn);
   }
 
-  Future<void> leave() => _opGate.run(_leaveUnlocked);
+  Future<void> leave() {
+    // Kapıdaki bir işlem (join/reconnect) takılsa bile ses ANINDA kesilir.
+    forceSilenceNow();
+    return _opGate.run(_leaveUnlocked);
+  }
+
+  /// İşlem kapısını beklemeden yerel yayını ve tüm uzak sesleri keser.
+  /// Odadan çıkarken / koltuktan inerken kullanıcı hâlâ duyuyor ve duyuluyordu.
+  void forceSilenceNow() {
+    final c = _cloud;
+    if (c == null) return;
+    try {
+      c.muteAllRemoteAudio(true);
+    } catch (_) {}
+    try {
+      c.stopLocalAudio();
+    } catch (_) {}
+    try {
+      c.muteLocalAudio(true);
+    } catch (_) {}
+    _micOn = false;
+  }
 
   Future<void> _leaveUnlocked() async {
     _trtcLog('leave', {'inRoom': _inRoom});
@@ -802,6 +826,12 @@ class TrtcRoomManager {
           );
         } catch (_) {}
         _exitRoomCompleter = null;
+      } else {
+        // `_inRoom` henüz true olmadan (enterRoom sürerken) çıkılırsa kanal
+        // açık kalıyordu; yine de çıkış komutu gönder.
+        try {
+          _cloud!.exitRoom();
+        } catch (_) {}
       }
       if (_listener != null) {
         _cloud!.unRegisterListener(_listener!);
