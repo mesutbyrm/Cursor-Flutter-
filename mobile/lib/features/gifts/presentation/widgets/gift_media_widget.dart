@@ -20,7 +20,8 @@ class GiftMediaWidget extends StatefulWidget {
     this.height,
     this.fit = BoxFit.contain,
     this.autoplay = true,
-    this.muted = true,
+    // Hediye videolarının kendi sesi çalınsın (eskiden varsayılan sessizdi).
+    this.muted = false,
     this.looping = true,
     this.fallbackEmoji = '🎁',
     this.onVideoControllerChanged,
@@ -118,7 +119,8 @@ class _GiftMediaWidgetState extends State<GiftMediaWidget> {
         return;
       }
       await c.setLooping(widget.looping);
-      if (widget.muted) await c.setVolume(0);
+      // Ön ısıtılmış controller sessiz kalmış olabilir: sesi açıkça ayarla.
+      await c.setVolume(widget.muted ? 0 : 1);
       await c.seekTo(Duration.zero);
       c.addListener(_onVideoTick);
       if (widget.autoplay) await c.play();

@@ -376,7 +376,11 @@ class VoiceMockSeat extends StatelessWidget {
               child: _MicBadge(open: micOpen),
             ),
           if (flash != null)
-            Positioned(top: box * 0.3, child: IgnorePointer(child: flash!)),
+            // Hediye yazısı koltuğun ALTINDA (ad/değer satırından sonra) görünür.
+            Positioned(
+              top: box + (isHost ? 6 : 4) + 36,
+              child: IgnorePointer(child: flash!),
+            ),
         ],
       ),
     );

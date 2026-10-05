@@ -174,7 +174,7 @@ class VoiceMockFooterView extends StatelessWidget {
   static const _dockPadTop = 6.0;
   static double dockHeight(BuildContext context) {
     final bottom = MediaQuery.viewPaddingOf(context).bottom;
-    return _dockPadTop + dockBodyHeight + 12 + (bottom > 0 ? bottom : 8);
+    return _dockPadTop + dockBodyHeight + (bottom > 0 ? bottom : 8);
   }
 
   @override

@@ -565,7 +565,8 @@ class SettingsCategoryPage extends ConsumerWidget {
       ),
     );
     final password = pw.text;
-    pw.dispose();
+    // Dialog kapanış animasyonu bitmeden dispose etme.
+    Future<void>.delayed(const Duration(milliseconds: 600), pw.dispose);
     if (ok != true || !context.mounted) return;
     try {
       await deleteMyAccount(ref, password: password);

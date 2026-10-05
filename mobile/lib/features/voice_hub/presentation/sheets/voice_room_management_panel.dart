@@ -925,7 +925,7 @@ class _VoiceRoomManagementPanelState
       final err = await _ctrl.updateRoomNickname(nick);
       await _snack(err ?? 'Takma ad güncellendi');
     } finally {
-      controller.dispose();
+      Future<void>.delayed(const Duration(milliseconds: 600), controller.dispose);
     }
   }
 
@@ -1660,7 +1660,7 @@ class _VoiceRoomManagementPanelState
       );
       await _snack(err ?? (pass.trim().isEmpty ? 'Şifre kaldırıldı' : 'Oda şifresi kaydedildi'));
     } finally {
-      controller.dispose();
+      Future<void>.delayed(const Duration(milliseconds: 600), controller.dispose);
     }
   }
 

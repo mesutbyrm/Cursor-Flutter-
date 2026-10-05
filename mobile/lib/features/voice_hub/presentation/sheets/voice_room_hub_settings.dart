@@ -14,6 +14,7 @@ import '../../../../core/membership/membership_capability_providers.dart';
 import '../../../vip_gold/domain/vip_tier.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/voice_room_background_policy.dart';
+import 'voice_room_background_colors.dart';
 import '../providers/chat_room_providers.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../widgets/premium/voice_glass.dart';
@@ -89,6 +90,65 @@ class _VoiceRoomBackgroundSheetState
     } finally {
       if (mounted) setState(() => _uploading = false);
     }
+  }
+
+  /// Oturum boyunca renk → yüklenmiş görsel adresi (aynı rengi tekrar yükleme).
+  static final _colorUrlCache = <int, String>{};
+
+  Future<void> _applyColor(Color color) async {
+    if (_uploading) return;
+    setState(() => _uploading = true);
+    try {
+      var url = _colorUrlCache[color.toARGB32()];
+      if (url == null) {
+        final file = await renderVoiceRoomBackgroundPng(color);
+        url = await _uploadFile(file);
+        _colorUrlCache[color.toARGB32()] = url;
+        try {
+          await file.delete();
+        } catch (_) {}
+      }
+      final err = await ref
+          .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
+          .setRoomBackground(url);
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(err ?? 'Arka plan rengi güncellendi')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
+
+  Widget _colorGrid() {
+    final colors = voiceRoomBackgroundColors();
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 10,
+        crossAxisSpacing: 5,
+        mainAxisSpacing: 5,
+      ),
+      itemCount: colors.length,
+      itemBuilder: (_, i) => GestureDetector(
+        onTap: _uploading ? null : () => _applyColor(colors[i]),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors[i],
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: Colors.white24, width: 0.6),
+          ),
+        ),
+      ),
+    );
   }
 
   Future<String> _uploadFile(File file) async {
@@ -206,6 +266,18 @@ class _VoiceRoomBackgroundSheetState
                 fontSize: 13,
                 height: 1.35,
               ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Renkler (100)',
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+            ),
+            const SizedBox(height: 8),
+            _colorGrid(),
+            const SizedBox(height: 16),
+            const Text(
+              'Hazır görseller',
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
             ),
             if (_loadingPresets)
               const Padding(
