@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.717+770 (2026-10-05) — Para çekme düzeltmesi + kesinti önizleme + ajans davetleri
+
+- **Para çekme (hata düzeltmesi):** istek `details` gönderiyordu, sunucu `accountDetails` bekliyor → talep hep «Yöntem ve hesap bilgileri gerekli» ile reddediliyordu; tutar TL gidiyordu, sunucu JETON bekliyor. Artık jeton adedi + `accountDetails`
+- **Kesinti önizleme:** `GET /api/withdrawals/quote` — «Toplam kazandığınız / Kesinti (%x) / Elinize geçecek tahmini tutar» sunucudan; bakiye ve minimum çekim jeton olarak
+- **Ajans davetleri:** `GET/POST /api/agency/invites` — onayınız olmadan ajansa eklenmezsiniz; Davetlerim ekranı (`/ajans/davetler`), Kabul/Reddet
+
 ## 1.0.716+769 (2026-10-05) — Odadan çıkınca ses, profil kaydı, admin ayrıcalıkları
 
 - **Sesli odadan çıkış:** TRTC bağlantısı ve uzak ses artık REST `voice leave` beklenmeden ilk adımda kesilir (yavaş ağda çıktıktan sonra da odada duyuluyor/duyuluyordu)

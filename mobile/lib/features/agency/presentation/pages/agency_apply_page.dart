@@ -78,6 +78,14 @@ class _AgencyApplyPageState extends ConsumerState<AgencyApplyPage> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(14, 8, 14, 32),
         children: [
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: TextButton.icon(
+              onPressed: () => context.push('/ajans/davetler'),
+              icon: const Icon(Icons.mail_outline_rounded, size: 18),
+              label: const Text('Ajans davetlerim'),
+            ),
+          ),
           const Text(
             'Ajansını kur, yayıncıları topla. Başvurun admin onayına gönderilir.',
             style: TextStyle(fontSize: 12.5, height: 1.4),

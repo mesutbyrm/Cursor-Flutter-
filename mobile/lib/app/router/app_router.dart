@@ -194,6 +194,7 @@ import '../../features/live_psychics/presentation/screens/psychic_reviews_screen
 import '../../features/live_psychics/presentation/screens/psychic_sessions_screen.dart';
 import '../../features/agency/presentation/pages/agency_applications_page.dart';
 import '../../features/agency/presentation/pages/agency_apply_page.dart';
+import '../../features/agency/presentation/pages/agency_invites_page.dart';
 import '../../features/agency/presentation/pages/agency_dashboard_screen.dart';
 import '../../features/agency/presentation/pages/agency_weekly_tasks_page.dart';
 import '../../features/cfc_arena/presentation/pages/cfc_arena_contest_page.dart';
@@ -1536,6 +1537,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/ajans/basvur',
         builder: (context, state) => const AgencyApplyPage(),
+      ),
+      GoRoute(
+        path: '/ajans/davetler',
+        builder: (context, state) => const AgencyInvitesPage(),
       ),
       GoRoute(
         path: '/ajans/dashboard',

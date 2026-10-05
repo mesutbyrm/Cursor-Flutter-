@@ -5,6 +5,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../../core/util/json_util.dart';
 import '../domain/platform_commission_rates.dart';
+import '../domain/withdrawal_quote.dart';
 import '../domain/withdrawal_request.dart';
 
 class WalletRemoteDataSourceExtended {
@@ -17,8 +18,24 @@ class WalletRemoteDataSourceExtended {
     return _parseWithdrawalList(res.data);
   }
 
+  /// Önizleme: kesinti ve net tutar sunucudan gelir (istemci vergi varsaymaz).
+  Future<WithdrawalQuote> fetchWithdrawalQuote(int jeton) async {
+    final res = await _dio.safeGet<Map<String, dynamic>>(
+      '${ApiEndpoints.withdrawals}/quote',
+      query: {'amount': jeton},
+      forceRefresh: true,
+    );
+    final body = res.data;
+    if (body is! Map<String, dynamic>) {
+      throw const ApiException('Hesaplama yapılamadı.');
+    }
+    return WithdrawalQuote.fromJson(body);
+  }
+
+  /// [amount] JETON adedidir (sunucu TL'ye kendisi çevirir); hesap bilgisi
+  /// `accountDetails` alanında gider.
   Future<WithdrawalRequest> requestWithdrawal({
-    required double amount,
+    required int amount,
     required String method,
     required Map<String, dynamic> details,
   }) async {
@@ -27,7 +44,7 @@ class WalletRemoteDataSourceExtended {
       data: {
         'amount': amount,
         'method': method,
-        'details': details,
+        'accountDetails': details,
       },
     );
     final body = res.data;

@@ -285,6 +285,8 @@ abstract final class ApiEndpoints {
   static const agencyApply = '/api/agency/apply';
   static const agencyMembers = '/api/agency/members';
   static const agencyInvite = '/api/agency/invite';
+  /// Kullanıcıya gelen onaylı üye davetleri: GET liste, POST {inviteId, action}.
+  static const agencyInvites = '/api/agency/invites';
   static const agencyJoin = '/api/agency/join';
   static const agencyEarnings = '/api/agency/earnings';
   static const agencyLeaderboard = '/api/agency/leaderboard';
