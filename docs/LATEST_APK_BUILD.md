@@ -4,21 +4,19 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.716+769` |
-| Tarih (UTC) | 2026-10-05 18:56 |
-| Commit | [`22d445091969be47f12ac4e36e86f41acef24d4b`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/22d445091969be47f12ac4e36e86f41acef24d4b) |
-| İş akışı | [Run 37356998354](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37356998354) |
+| Sürüm | `1.0.717+770` |
+| Tarih (UTC) | 2026-10-05 19:40 |
+| Commit | [`67f562b0e82f32677bf1a7279a0b52d549d27eae`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/67f562b0e82f32677bf1a7279a0b52d549d27eae) |
+| İş akışı | [Run 37362541843](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37362541843) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.716+769 (2026-10-05) — Odadan çıkınca ses, profil kaydı, admin ayrıcalıkları
+## 1.0.717+770 (2026-10-05) — Para çekme düzeltmesi + kesinti önizleme + ajans davetleri
 
-- **Sesli odadan çıkış:** TRTC bağlantısı ve uzak ses artık REST `voice leave` beklenmeden ilk adımda kesilir (yavaş ağda çıktıktan sonra da odada duyuluyor/duyuluyordu)
-- **Profil tamamlama:** Şehir/burç/takım kaydı hata yutmuyor; backend `city` alanını kaydediyor ve geri döndürüyor (daha önce «Kaydet» başarılı görünüp şehir boş kalıyordu)
-- **Profil ekranı:** Paylaş/Ayarlar çubuğu durum çubuğunun (pil/Wi‑Fi) altında kalmıyor
-- **Admin:** oda açarken jeton/bakiye sorusu yok (sunucu da ücret almaz); admin korumalı: admine sustur/at/yasakla girişiminde ilk seferde sesli uyarı, tekrarında girişimi yapanın kendisine uygulanır
-- **Bildirimler:** uygulama açıkken gelen bildirim sesli (+ titreşim)
+- **Para çekme (hata düzeltmesi):** istek `details` gönderiyordu, sunucu `accountDetails` bekliyor → talep hep «Yöntem ve hesap bilgileri gerekli» ile reddediliyordu; tutar TL gidiyordu, sunucu JETON bekliyor. Artık jeton adedi + `accountDetails`
+- **Kesinti önizleme:** `GET /api/withdrawals/quote` — «Toplam kazandığınız / Kesinti (%x) / Elinize geçecek tahmini tutar» sunucudan; bakiye ve minimum çekim jeton olarak
+- **Ajans davetleri:** `GET/POST /api/agency/invites` — onayınız olmadan ajansa eklenmezsiniz; Davetlerim ekranı (`/ajans/davetler`), Kabul/Reddet
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
