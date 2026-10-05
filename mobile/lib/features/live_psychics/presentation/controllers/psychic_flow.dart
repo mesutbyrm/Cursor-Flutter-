@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -33,7 +35,12 @@ abstract final class PsychicFlow {
   }) async {
     final repo = ref.read(livePsychicsRepositoryProvider);
 
-    final blocking = await _findBlockingSession(repo: repo);
+    // Sunucu yanıtı gelmezse ekran sonsuza dek bekleyip donmasın: 12 sn sonra
+    // «kontrol edilemedi» olarak ele alınır.
+    final blocking = await _findBlockingSession(repo: repo).timeout(
+      const Duration(seconds: 12),
+      onTimeout: () => (session: null, lookupFailed: true),
+    );
     if (blocking.lookupFailed) {
       // Ağ/sunucu hatası: mevcut seans kontrol edilemedi — çift rezervasyon
       // riskine girmeden kullanıcıya bildir.
@@ -98,11 +105,17 @@ abstract final class PsychicFlow {
         (psychic.specialties.isNotEmpty ? psychic.specialties.first : 'general');
     PsychicSessionCreateResult? created;
     try {
-      created = await repo.createSession(
-        tellerId: psychic.id,
-        durationMinutes: durationMinutes,
-        fortuneType: type,
-      );
+      created = await repo
+          .createSession(
+            tellerId: psychic.id,
+            durationMinutes: durationMinutes,
+            fortuneType: type,
+          )
+          .timeout(const Duration(seconds: 25));
+    } on TimeoutException {
+      ref.read(psychicBookingFeedbackProvider.notifier).state =
+          'Sunucu yanıt vermedi. Bağlantınızı kontrol edip tekrar deneyin.';
+      return null;
     } catch (e) {
       ref.read(psychicBookingFeedbackProvider.notifier).state =
           ApiException.userMessage(e);

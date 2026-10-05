@@ -2,14 +2,14 @@ import '../../../auth/domain/entities/user_entity.dart';
 import '../../../feed/domain/entities/post_entity.dart';
 import '../widgets/instagram/social_fortune_scene_card.dart';
 
-/// "Bu fala kimler baktı" — backend son bakanları vermez (`fortuneCount` yalnızca
+/// "Bu fala kimler baktı" (son 5 kişi) — backend son bakanları vermez (`fortuneCount` yalnızca
 /// toplam sayıdır). Yüklü akıştaki GERÇEK gönderilerden türetilir: aynı fal
 /// türünü paylaşan (otomatik fal paylaşımı = o fala bakmış kişi) son [max]
 /// farklı kullanıcı, gönderi sahibi hariç, en yeni önce. Akışta yoksa boş döner.
 List<UserEntity> recentFortuneCoViewers(
   List<PostEntity> feed,
   PostEntity post, {
-  int max = 3,
+  int max = 5,
 }) {
   final kind = fortuneSceneSlugFor(post.fortuneType ?? post.fortuneSlug);
   if (kind == null) return const [];

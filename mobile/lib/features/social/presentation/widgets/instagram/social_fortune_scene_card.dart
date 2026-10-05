@@ -28,7 +28,19 @@ String? fortuneSceneSlugFor(String? type) {
     'pendul' || 'pendul-fali' => 'pendul',
     'runik' || 'runik-fali' => 'runik',
     'cin-fali' => 'cin-fali',
-    'gunluk-fal' => 'gunluk-fal',
+    'gunluk-fal' || 'gunluk-kehanet' || 'gelecek-kehaneti' || 'para-kariyer' ||
+    'nazar-analizi' =>
+      'gunluk-fal',
+    // Backend "Bana Özel" ve ek slug'lar (social-helper FORTUNE_TYPE_LABELS)
+    'askuyumu' || 'iliski-gelecegi' || 'ruh-esi' || 'gizli-duygular' =>
+      'ask-fali',
+    'daily_horoscope' || 'gunluk-burc' || 'haftalik-burc' || 'ay-burcu' ||
+    'yukselen-burc' || 'yildizname' =>
+      'yildiz-haritasi',
+    '3-kart-tarot' || '7-kart-tarot' => 'tarot',
+    'enerji-analizi' => 'aura-analizi',
+    'evren-mesaj' || 'spiritüel-rehber' || 'gizli-mesaj' => 'melek-kartlari',
+    'sansli-sayilar' => 'numeroloji',
     _ => null,
   };
 }
@@ -57,8 +69,9 @@ class SocialFortuneSceneCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final slug = fortuneSceneSlugFor(fortuneType) ?? 'tarot';
+    final slug = fortuneSceneSlugFor(fortuneType) ?? 'gunluk-fal';
     final asset = FortuneTypeImages.assetPathFor(slug) ??
+        FortuneTypeImages.assetPathFor('gunluk-fal') ??
         FortuneTypeImages.assetPathFor('tarot')!;
     final overlay = FortuneTypeImages.overlayColors(slug);
     final glow = FortuneTypeImages.glowColor(slug);

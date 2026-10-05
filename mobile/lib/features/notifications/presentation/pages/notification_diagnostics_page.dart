@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import '../../../../core/network/dio_provider.dart';
 import '../../../../core/onesignal/onesignal_bootstrap.dart';
 import '../../../../core/push/push_notification_service.dart';
 import '../../../../core/push/push_registrar.dart';
@@ -59,6 +61,38 @@ class _NotificationDiagnosticsPageState
           const SnackBar(content: Text('Bildirim bağlantısı yenilendi')),
         );
       }
+    }
+  }
+
+  String? _serverTestResult;
+
+  /// Sunucudan kendi hesabına test push gönderir; OneSignal'in ham yanıtını
+  /// (anahtar eksik mi, abone cihaz var mı) ekrana yazar.
+  Future<void> _serverTest() async {
+    setState(() {
+      _busy = true;
+      _serverTestResult = null;
+    });
+    try {
+      final res = await ref.read(dioProvider).post<dynamic>(
+            '/api/notifications/test-push',
+            options: Options(validateStatus: (_) => true),
+          );
+      final d = res.data;
+      final m = d is Map ? Map<String, dynamic>.from(d) : <String, dynamic>{};
+      final ok = m['ok'] == true;
+      final reason = m['reason']?.toString();
+      final resp = m['response'];
+      final text = ok
+          ? 'Sunucu bildirimi gönderdi. Birkaç saniye içinde telefonuna düşmeli.'
+          : 'Gönderilemedi (HTTP ${res.statusCode}): '
+              '${reason ?? m['error'] ?? 'bilinmeyen hata'}'
+              '${resp != null ? '\n$resp' : ''}';
+      if (mounted) setState(() => _serverTestResult = text);
+    } catch (e) {
+      if (mounted) setState(() => _serverTestResult = 'İstek başarısız: $e');
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
@@ -155,6 +189,19 @@ class _NotificationDiagnosticsPageState
                 : const Icon(Icons.build_circle_rounded),
             label: const Text('Bildirimleri onar / yeniden bağla'),
           ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: _busy ? null : () => unawaited(_serverTest()),
+            icon: const Icon(Icons.send_rounded),
+            label: const Text('Sunucudan test bildirimi gönder'),
+          ),
+          if (_serverTestResult != null) ...[
+            const SizedBox(height: 8),
+            SelectableText(
+              _serverTestResult!,
+              style: TextStyle(color: c.onSurface, fontSize: 12, height: 1.4),
+            ),
+          ],
           const SizedBox(height: 4),
           Text(
             'Her satır yeşilse push uygulamaya ulaşır. Hepsi yeşil olduğu '

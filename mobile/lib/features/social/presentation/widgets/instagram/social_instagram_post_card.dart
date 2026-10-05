@@ -23,6 +23,7 @@ import '../../utils/social_caption_link_parser.dart';
 import '../../utils/social_post_detail_route.dart';
 import '../../utils/social_user_profile_route.dart';
 import '../../providers/social_providers.dart';
+import '../../../../fortune/presentation/data/fortune_type_images.dart';
 import 'social_fortune_scene_card.dart';
 import 'social_post_caption.dart';
 import 'social_post_comments_sheet.dart';
@@ -638,7 +639,7 @@ class _CoViewersBar extends StatelessWidget {
   final int count;
   final VoidCallback onTap;
 
-  /// Aynı fal türünü paylaşan son kullanıcılar (en çok 3, gerçek akıştan).
+  /// Aynı fal türünü paylaşan son kullanıcılar (en çok 5, gerçek akıştan).
   final List<UserEntity> viewers;
 
   @override
@@ -689,18 +690,18 @@ class _CoViewersBar extends StatelessWidget {
   }
 }
 
-/// Üst üste binen küçük avatarlar (en çok 3).
+/// Üst üste binen küçük avatarlar (en çok 5).
 class _AvatarStack extends StatelessWidget {
   const _AvatarStack({required this.users});
 
   final List<UserEntity> users;
 
   static const _r = 13.0;
-  static const _step = 20.0;
+  static const _step = 18.0;
 
   @override
   Widget build(BuildContext context) {
-    final n = users.length.clamp(0, 3);
+    final n = users.length.clamp(0, 5);
     return Semantics(
       label: 'Son bakanlar: ${users.take(n).map((u) => u.display).join(', ')}',
       child: SizedBox(
@@ -780,8 +781,8 @@ class _PostMediaBlock extends StatelessWidget {
                     CanlifalNetworkImage(
                       url: mediaUrl,
                       fit: BoxFit.cover,
-                      placeholder: const _MysticMediaPlaceholder(),
-                      errorWidget: const _MysticMediaPlaceholder(),
+                      placeholder: _MysticMediaPlaceholder(type: post.fortuneType),
+                      errorWidget: _MysticMediaPlaceholder(type: post.fortuneType),
                     ),
                     Center(child: DoubleTapHeart(token: heartToken)),
                     if (topOverlay != null)
@@ -816,12 +817,16 @@ class _PostMediaBlock extends StatelessWidget {
 }
 
 class _MysticMediaPlaceholder extends StatelessWidget {
-  const _MysticMediaPlaceholder();
+  const _MysticMediaPlaceholder({this.type});
+
+  /// Gönderinin fal türü — yer tutucu da türüne uygun görseli gösterir.
+  final String? type;
 
   @override
   Widget build(BuildContext context) {
+    final slug = fortuneSceneSlugFor(type) ?? 'gunluk-fal';
     return Image.asset(
-      'assets/fortune/tarot.webp',
+      FortuneTypeImages.assetPathFor(slug) ?? 'assets/fortune/tarot.webp',
       fit: BoxFit.cover,
       cacheWidth: 720,
       errorBuilder: (_, _, _) => const ColoredBox(color: Color(0xFF16161D)),
