@@ -37,9 +37,9 @@ class _WithdrawalPageState extends ConsumerState<WithdrawalPage> {
   }
 
   Future<void> _submit() async {
-    final amount = double.tryParse(_amountCtrl.text.replaceAll(',', '.'));
+    final amount = int.tryParse(_amountCtrl.text.replaceAll(RegExp(r'[^\d]'), ''));
     if (amount == null || amount <= 0) {
-      _showError('Geçerli bir tutar girin.');
+      _showError('Çekilecek jeton adedini girin.');
       return;
     }
     final name = _nameCtrl.text.trim();
@@ -88,11 +88,6 @@ class _WithdrawalPageState extends ConsumerState<WithdrawalPage> {
     );
     final pageSubtitle =
         buildMembershipWithdrawalPageSubtitle(info: membershipInfo);
-    final rates = ref.watch(platformCommissionRatesProvider).valueOrNull;
-    final minWithdraw = rates?.minWithdrawalTl ??
-        (wallet?.withdrawalLimit != null && wallet!.withdrawalLimit > 0
-            ? wallet.withdrawalLimit.toDouble()
-            : 3000.0);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -107,13 +102,7 @@ class _WithdrawalPageState extends ConsumerState<WithdrawalPage> {
           body: ListView(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
             children: [
-              Text(
-                'Minimum çekim: ${minWithdraw.toStringAsFixed(0)} TL',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: context.colors.onSurfaceMuted,
-                ),
-              ),
+              _WithdrawalQuoteCard(jeton: int.tryParse(_amountCtrl.text.replaceAll(RegExp(r'[^\d]'), '')) ?? 0),
               const SizedBox(height: 16),
               _field('Ad Soyad', _nameCtrl, TextInputType.name),
               const SizedBox(height: 10),
@@ -121,7 +110,8 @@ class _WithdrawalPageState extends ConsumerState<WithdrawalPage> {
               const SizedBox(height: 10),
               _field('IBAN', _ibanCtrl, TextInputType.text),
               const SizedBox(height: 10),
-              _field('Çekilecek Tutar (TL)', _amountCtrl, TextInputType.number),
+              _field('Çekilecek Jeton', _amountCtrl, TextInputType.number,
+                  onChanged: (_) => setState(() {})),
               const SizedBox(height: 20),
               FilledButton(
                 onPressed: _submitting ? null : _submit,
@@ -169,10 +159,16 @@ class _WithdrawalPageState extends ConsumerState<WithdrawalPage> {
     );
   }
 
-  Widget _field(String label, TextEditingController ctrl, TextInputType type) {
+  Widget _field(
+    String label,
+    TextEditingController ctrl,
+    TextInputType type, {
+    ValueChanged<String>? onChanged,
+  }) {
     return TextField(
       controller: ctrl,
       keyboardType: type,
+      onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
         filled: true,
@@ -205,7 +201,7 @@ class _WithdrawalTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${request.amount.toStringAsFixed(2)} TL',
+                  '${request.amount.toStringAsFixed(0)} Jeton',
                   style: const TextStyle(fontWeight: FontWeight.w900),
                 ),
                 if (request.createdAt != null)
@@ -227,6 +223,80 @@ class _WithdrawalTile extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Kesinti ve net tutar — tamamı sunucudan (`GET /api/withdrawals/quote`).
+class _WithdrawalQuoteCard extends ConsumerWidget {
+  const _WithdrawalQuoteCard({required this.jeton});
+
+  final int jeton;
+
+  static String _tl(double v) => '${v.toStringAsFixed(2).replaceAll('.', ',')} ₺';
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final quote = ref.watch(withdrawalQuoteProvider(jeton));
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: quote.when(
+        loading: () => const SizedBox(
+          height: 48,
+          child: Center(child: DiscoverAccentLoader()),
+        ),
+        error: (e, _) => Text(ApiException.userMessage(e)),
+        data: (q) {
+          Widget row(String label, String value, {bool strong = false}) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: strong ? 14 : 13,
+                        fontWeight: strong ? FontWeight.w900 : FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: strong ? 16 : 14,
+                      color: strong ? AppThemeColors.coinGold : null,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Bakiye: ${q.jetonBalance} jeton · Minimum çekim: ${q.minWithdrawal} jeton',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: context.colors.onSurfaceMuted,
+                ),
+              ),
+              const SizedBox(height: 6),
+              row(q.grossLabel, _tl(q.grossTL)),
+              row(q.taxLabel, _tl(q.taxAmount)),
+              row(q.netLabel, _tl(q.netAmountTL), strong: true),
+            ],
+          );
+        },
       ),
     );
   }
