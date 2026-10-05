@@ -395,9 +395,18 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     );
   }
 
+  /// Kombo: 3 adet seçildiyse hediye animasyonu 3 kez, 10 seçildiyse 10 kez
+  /// gösterilir (en fazla [_maxComboReplays]).
+  static const _maxComboReplays = 30;
+
   void _enqueueAnimation(LiveGiftEvent event) {
+    final reps = event.quantity.clamp(1, _maxComboReplays);
+    final copies = <LiveGiftEvent>[
+      event,
+      for (var i = 2; i <= reps; i++) event.copyWithId('${event.id}#$i'),
+    ];
     state = state.copyWith(
-      animationQueue: [...state.animationQueue, event],
+      animationQueue: [...state.animationQueue, ...copies],
     );
     _pumpAnimationQueue();
   }
@@ -431,9 +440,9 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       final animType = GiftEngineParser.fromEvent(next).animationType;
       final isVideo = animType == GiftEngineAnimationType.mp4 ||
           animType == GiftEngineAnimationType.webm;
-      final prefetchMs = backlog > 4
-          ? 1800
-          : (isVideo ? 3200 : 900);
+      // Cihazlar arası zamanlama farkı: ağ/ön-yükleme bekleme süresi kısa
+      // tutulur (iki telefon aynı anda başlasın).
+      final prefetchMs = backlog > 4 ? 500 : (isVideo ? 1200 : 400);
       try {
         await GiftEnginePreloader.prefetch(next).timeout(
           Duration(milliseconds: prefetchMs),

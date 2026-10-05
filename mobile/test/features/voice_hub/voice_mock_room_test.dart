@@ -110,11 +110,20 @@ void main() {
         ),
       ),
     );
+    // Panel kapalıyken yalnız tutamaç görünür; tutamaça dokununca açılır.
+    expect(find.text('Müzik'), findsNothing);
+    await t.tap(find.byIcon(Icons.chevron_right_rounded));
+    await t.pumpAndSettle();
     for (final l in ['Müzik', 'PK', 'İstek', 'Daha Fazla']) {
       expect(find.text(l), findsWidgets, reason: l);
     }
     expect(find.text('Hediye'), findsNothing);
     await t.tap(find.text('İstek'));
+    await t.pumpAndSettle();
+    // Seçince panel kapanır; yeniden aç.
+    expect(find.text('Daha Fazla'), findsNothing);
+    await t.tap(find.byIcon(Icons.chevron_right_rounded));
+    await t.pumpAndSettle();
     await t.tap(find.text('Daha Fazla'));
     expect(taps, ['req', 'more']);
   });

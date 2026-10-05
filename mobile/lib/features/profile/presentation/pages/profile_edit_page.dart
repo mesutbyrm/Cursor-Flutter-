@@ -141,16 +141,17 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
             );
       } catch (_) {}
       if (!mounted) return;
-      Navigator.of(context).pop(true);
+      // ref'i sayfa kapanmadan kullan (dispose sonrası ref erişimi hata verir).
+      ref.invalidate(profileExtendedProvider);
+      ref.invalidate(profileUserStatisticsProvider);
+      ref.invalidate(walletBalancesProvider);
       unawaited(
         ref.read(authControllerProvider.notifier).refreshMe(force: true).timeout(
               const Duration(seconds: 12),
               onTimeout: () => null,
             ),
       );
-      ref.invalidate(profileExtendedProvider);
-      ref.invalidate(profileUserStatisticsProvider);
-      ref.invalidate(walletBalancesProvider);
+      Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -204,7 +205,10 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
       ),
     );
     final value = edit.text;
-    edit.dispose();
+    // Sheet kapanış animasyonu sürerken TextField hâlâ bu controller'ı kullanır;
+    // hemen dispose etmek «used after being disposed» hatasıyla uygulamayı
+    // kilitliyordu. Animasyon bittikten sonra serbest bırak.
+    Future<void>.delayed(const Duration(milliseconds: 600), edit.dispose);
     if (ok == true && mounted) setState(() => controller.text = value);
   }
 

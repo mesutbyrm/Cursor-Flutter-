@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.713+766 (2026-10-05) — Hediye kombo/ses · sesli oda sol menü · 100 renk arka plan · profil donması
+
+- **Profil kaydetme donması:** düzenleme alanı sheet'i kapanırken controller hemen dispose ediliyordu (kullanım-sonrası hata → uygulama kilitleniyordu); aynı hata hesap silme, takma ad, oda şifresi ve klip başlığı diyaloglarında da düzeltildi
+- **Hediye sesi:** hediye videoları varsayılan olarak sessiz oynatılıyordu → videonun kendi sesi artık çalıyor
+- **Kombo:** 3 adet seçilen hediye 3 kez, 10 adet 10 kez gösterilir (en fazla 30); ön-yükleme beklemesi kısaltıldı (iki telefon arası zaman farkı azaldı)
+- **Hediye yazısı:** sesli odada «X → hediye» yazısı artık üstte «Popüler Oda» arkasında değil, alıcının koltuğu altında çıkar ve kaybolur
+- **Sesli oda:** Müzik/PK/İstek/Daha Fazla düğmeleri sol kenardaki açılır menüye alındı; mesaj satırı klavyeye tam oturur (dock yüksekliği hesabı düzeltildi)
+- **Oda arka planı:** 100 renk (gri tonlar + 9×10 renk tablosu); oda sahibi/admin seçtiği rengi arka plan yapar (PNG olarak yüklenir, web'de de aynı görünür)
+- **Falcı seansı sonu:** alınan hediye/bahşiş toplamı her zaman gösterilir
+- `docs/ADMOB_KURULUM.md` eklendi
+
 ## 1.0.712+765 (2026-10-04) — Ana sayfa sadeleşti · Gold/Diamond · gelen kutusu · video · sesli oda dock/koltuk/sandık
 
 - **Ana sayfa:** üst yazı «GirLive»; arama kutusu ve Keşfet/Canlı/Sesli/Fal/Tanış şeridi kaldırıldı; «Canlı Yayındakiler» altındaki kutular tek sıra 5 kutu (Keşfet · Tanış & Kaynaş · Gold · Ajans · Tüm Özellikler; Lamba Cini ve Sesli Oda çıktı); Günlük Burç bölümü Gold Üyeliklerin üstüne alındı

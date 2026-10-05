@@ -70,7 +70,11 @@ class _PsychicSessionEndedHostState extends ConsumerState<PsychicSessionEndedHos
         event.isTeller
             ? 'Seans geliri: $jeton $jetonLabel'
             : 'Harcanan $jetonLabel: $jeton',
-      if (tips != null && tips > 0) 'Bahşiş: $tips $jetonLabel',
+      // Falcıya seans sonunda alınan hediye/bahşiş toplamı her zaman gösterilir.
+      if (event.isTeller)
+        'Alınan hediye / bahşiş: ${tips ?? 0} $jetonLabel'
+      else if (tips != null && tips > 0)
+        'Bahşiş: $tips $jetonLabel',
       if (event.isTeller && (tips ?? 0) > 0 && (jeton ?? 0) > 0)
         'Toplam kazanç: ${(jeton ?? 0) + tips!} $jetonLabel',
     ];

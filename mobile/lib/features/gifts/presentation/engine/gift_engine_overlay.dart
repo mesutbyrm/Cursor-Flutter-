@@ -147,7 +147,10 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
               giftSize: giftSize,
               seatIndex: widget.seatIndex ?? ev.seatIndex,
             ),
-            if (config.displayArea != GiftEngineDisplayArea.seat &&
+            // Sesli odada «X → Y» yazısı alıcının koltuğu altında (3 sn) gösterilir;
+            // üst bant «Popüler Oda» satırının arkasında kalıyordu.
+            if (widget.stage != GiftStageContext.voiceRoom &&
+                config.displayArea != GiftEngineDisplayArea.seat &&
                 GiftRecipientBanner.shouldShow(ev))
               _positionedRecipientBanner(context, ev, config),
             if (config.showComboBadge && comboAllowed)

@@ -152,7 +152,7 @@ class _StudioComposePageState extends ConsumerState<StudioComposePage> {
         ],
       ),
     );
-    controller.dispose();
+    Future<void>.delayed(const Duration(milliseconds: 600), controller.dispose);
     if (edited == null || edited.isEmpty) return;
     ref.read(shortUploadDraftProvider.notifier).patch((d) {
       return d.copyWith(

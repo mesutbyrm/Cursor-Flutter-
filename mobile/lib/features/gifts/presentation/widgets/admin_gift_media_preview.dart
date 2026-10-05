@@ -56,6 +56,7 @@ class AdminGiftMediaPreview extends StatelessWidget {
       width: size,
       height: size,
       fit: BoxFit.contain,
+      muted: true,
     );
   }
 }
