@@ -17,6 +17,7 @@ import '../../../live/domain/entities/live_gift_type.dart';
 import '../../../gifts/domain/gift_staff_finance_mode.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
 import '../../domain/entities/voice_gift_revenue.dart';
+import '../../domain/voice_gift_send_authority.dart';
 
 /// Sesli oda hediyeleri — katalog canlı yayınla aynı, gönderim oda uç noktasına.
 class ChatRoomGiftsRemoteDataSource {
@@ -173,17 +174,12 @@ class ChatRoomGiftsRemoteDataSource {
             'senderBalance',
           ]),
         );
-    final spent = fallbackSpent ??
-        event?.jetonAmount ??
-        asInt(
-          pick(unwrapped, [
-            'spentAmount',
-            'coinCost',
-            'totalCoin',
-            'totalCost',
-            'price',
-          ]),
-        );
+    final spent = VoiceGiftSendAuthority.resolveSpentJeton(
+      body: body,
+      revenue: revenue,
+      giftEvent: event,
+      fieldApiSpent: fallbackSpent,
+    );
     final txId = transactionId ??
         pick(unwrapped, ['id', 'giftEventId', 'transactionId'])?.toString();
     final pkRaw = unwrapped['pkBattle'] ??
@@ -204,7 +200,7 @@ class ChatRoomGiftsRemoteDataSource {
                 : null,
           ),
       newBalance: balance == 0 ? null : balance,
-      spentAmount: spent == 0 ? null : spent,
+      spentAmount: spent,
       giftEvent: event,
       transactionId: txId,
       pkBattle: pkBattle,

@@ -144,6 +144,10 @@ class LiveFieldGiftSendResult {
           pick(json, ['giftId', 'giftTypeId', 'slug'])?.toString(),
       spentAmount: asInt(
         pick(json, [
+          'totalJeton',
+          'totalJetonSpent',
+          'jetonAmount',
+          'amount',
           'spentAmount',
           'coinCost',
           'totalCoin',

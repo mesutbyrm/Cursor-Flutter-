@@ -124,6 +124,7 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             );
           },
           onDjUpdate: (payload) {
+            if (!_sse._isSseEventForAttachedRoom(roomKey)) return;
             if (_sse._skipRemoteMusicSync) return;
             if (payload.isNotEmpty) {
               if (VoiceRoomBasicMode.musicEnabled) {
@@ -135,6 +136,7 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             }
           },
           onSong: (payload) {
+            if (!_sse._isSseEventForAttachedRoom(roomKey)) return;
             if (_sse._skipRemoteMusicSync) return;
             if (VoiceRoomBasicMode.musicEnabled) {
               _sse._applyRoomVideoPayload(payload);
@@ -142,6 +144,7 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             unawaited(_sse._applyDjRealtimePayload(payload));
           },
           onSongQueue: (payload) {
+            if (!_sse._isSseEventForAttachedRoom(roomKey)) return;
             if (_sse._skipRemoteMusicSync) return;
             final ev = RoomSongBloc.eventFromSse(payload);
             if (ev != null) {
@@ -154,6 +157,14 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             unawaited(_sse._applyDjRealtimePayload(normalized));
           },
           onGift: (payload) {
+            if (!_sse._isSseEventForAttachedRoom(roomKey)) return;
+            if (!roomEventMatchesActiveRoom(
+              payload,
+              _sse._presenceApiKey,
+              alternateRoomId: _sse._musicAlternateKey,
+            )) {
+              return;
+            }
             dispatchGiftSsePayloadRef(
               ref: ref,
               sessionKey: roomKey,

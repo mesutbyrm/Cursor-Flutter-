@@ -72,6 +72,7 @@ import '../../domain/voice_seat_pending_guard.dart';
 import 'voice_seat_action_lock_provider.dart';
 import '../../domain/room_event_scope.dart';
 import '../../domain/voice_room_live_join_mapper.dart';
+import '../../domain/voice_room_sse_session_guard.dart';
 import '../../../trtc/domain/entities/live_join_room_result.dart';
 import '../../../trtc/presentation/providers/trtc_providers.dart';
 import '../../domain/voice_music_sync.dart';
@@ -647,9 +648,16 @@ class VoiceRoomLiveController
   /// yükseltmesinden sonra eski akıştan gelen bir olay yeni odanın state'ine
   /// yazabiliyordu.
   bool _isSseEventForAttachedRoom(String eventRoomKey) {
-    final attached = _sseAttachedRoomKey?.trim();
-    if (attached == null || attached.isEmpty) return false;
-    return attached == eventRoomKey.trim();
+    final attached = _sseAttachedRoomKey?.trim() ?? '';
+    final active = ref.read(voiceRoomActiveLiveKeyProvider)?.trim();
+    return voiceRoomAcceptsAttachedSseEvent(
+      sessionActive: _sessionActive,
+      attachedRoomKey: attached,
+      eventRoomKey: eventRoomKey,
+      activeLiveKey: active,
+      presenceApiKey: _presenceApiKey,
+      alternateRoomId: _musicAlternateKey,
+    );
   }
 
   /// SSE aboneliğinin bağlı olduğu oda anahtarı (release için).

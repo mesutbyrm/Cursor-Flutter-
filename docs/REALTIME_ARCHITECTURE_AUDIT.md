@@ -367,4 +367,18 @@ Canlı probe / OpenAPI diff: `scripts/backend-route-parity.py`, `docs/BACKEND_FL
 
 ---
 
-_Bu belge FAZ 1 çıktısıdır; kod değişikliği FAZ 2+ ile başlar._
+## 13. FAZ 2 ilerleme (2026-10-05)
+
+| Madde | Durum |
+|--------|--------|
+| join-room bootstrap | ✅ |
+| live heartbeat + fallback | ✅ |
+| leave-room + presence | ✅ |
+| session generation (state fetch) | ✅ |
+| SSE oda guard (attached + active key) | ✅ |
+| Gift jeton `totalJeton` / revenue.total | ✅ |
+| Lifecycle testleri (kısmi) | ✅ guard, gift authority, leave coordinator |
+| PK timer birleştirme | ⏳ P1 |
+| Spec Test 1–20 tam paket | ⏳ P5 |
+
+_Bu belge FAZ 1 çıktısıdır; FAZ 2 kodu `cursor/flutter-realtime-parity-fix-dfca` dalındadır._
