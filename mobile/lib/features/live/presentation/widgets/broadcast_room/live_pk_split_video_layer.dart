@@ -23,7 +23,6 @@ import '../../../domain/pk/pk_status_helper.dart';
 import 'live_pk_reference_top_bar.dart';
 import 'live_pk_reference_battle_bar.dart';
 import '../live_playback_bridge.dart';
-import '../../../../pk/presentation/providers/pk_providers.dart';
 import '../../../../pk/presentation/widgets/pk_battle_visuals.dart';
 import '../../../../voice_hub/presentation/widgets/premium_2026/pk/pk_vs_emblem.dart';
 import 'live_pk_immersive_video_pane.dart';

@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../../profile/presentation/providers/profile_hub_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
-import '../../domain/membership_model.dart';
 import '../controllers/membership_controller.dart';
 
 /// Üyelik sayfası checkout alt ipucu — seçili plan özeti.

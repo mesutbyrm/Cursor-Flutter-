@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/env.dart';
-import '../../../../core/theme/canlifal_brand_colors.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../core/ui/premium_2026/premium_motion.dart';

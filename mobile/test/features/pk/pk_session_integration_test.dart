@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:canlifal_social/features/voice_hub/presentation/coordinators/room_session_manager.dart';
 import 'package:canlifal_social/features/voice_hub/domain/entities/chat_room_presence.dart';
-import 'package:canlifal_social/features/voice_hub/domain/entities/voice_room_seat_slot.dart';
 
 void main() {
   group('PK Session Manager Integration', () {

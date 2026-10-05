@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../domain/membership_model.dart';
-import '../../domain/membership_package_entity.dart';
 
 class MembershipFeatureTable extends ConsumerWidget {
   const MembershipFeatureTable({

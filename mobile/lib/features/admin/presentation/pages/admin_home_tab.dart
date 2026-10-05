@@ -16,7 +16,6 @@ import '../providers/staff_access_provider.dart';
 import '../providers/admin_live_broadcasts_providers.dart';
 import '../providers/admin_system_health_providers.dart';
 import '../providers/admin_team_management_providers.dart';
-import '../providers/admin_system_config_providers.dart';
 import '../providers/admin_advanced_reporting_providers.dart';
 
 /// Admin giriş sekmesi — bildirimler + hızlı işlemler birleşti.

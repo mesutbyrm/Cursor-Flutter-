@@ -4,6 +4,9 @@ enum SiteAnimationMediaKind {
   video,
   svga,
   rive,
+
+  /// Merkezi animasyon sistemi: statik/hareketli görsel (SVG, PNG, GIF, APNG).
+  image,
 }
 
 class SiteAnimationAsset {

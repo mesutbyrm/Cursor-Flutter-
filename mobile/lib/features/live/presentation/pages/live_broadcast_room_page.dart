@@ -1,9 +1,7 @@
 import 'dart:async';
 
-import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
@@ -18,10 +16,7 @@ import '../../../../core/network/live_event_log.dart';
 import '../../../../core/network/sse/sse_hub_provider.dart';
 import '../../../../core/network/token_storage.dart';
 import '../providers/live_room_music_provider.dart';
-import '../widgets/broadcast_room/live_pk_split_video_layer.dart';
-import '../widgets/broadcast_room/music_video_player.dart';
 import '../../../../core/network/pk_event_log.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../vip_gold/domain/entrance_theme.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -30,13 +25,11 @@ import '../../../live_psychics/presentation/controllers/psychic_flow.dart';
 import '../../../live_psychics/presentation/providers/live_psychics_providers.dart';
 import '../../../live_psychics/presentation/widgets/psychic_booking_sheet.dart';
 import '../../../live_psychics/presentation/widgets/psychic_fortune_types.dart';
-import '../../../cfc_arena/domain/cfc_arena_context.dart';
 import '../../../voice_hub/presentation/coordinators/room_leave_coordinator.dart';
 import '../../../pk/presentation/providers/pk_feature_enabled_provider.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
 import '../../../voice_hub/presentation/providers/voice_recent_gifts_provider.dart';
 import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
-import '../../../voice_hub/presentation/providers/voice_room_session_registry.dart';
 import '../../domain/live_co_guest_status.dart';
 import '../gifts/providers/live_seat_gift_totals_provider.dart';
 import '../../../gifts/domain/session_gift_summary.dart';
@@ -49,12 +42,6 @@ import '../../../../core/site_animation/presentation/widgets/site_animation_cont
 import '../../../gifts/presentation/sync/gift_event_listener.dart';
 import '../../../gifts/presentation/sync/gift_session_controller.dart';
 import '../../../gifts/presentation/sync/gift_session_state.dart';
-import '../../../gifts/presentation/engine/gift_engine_overlay.dart';
-import '../../../gifts/presentation/engine/gift_engine_seat_effects_overlay.dart';
-import '../../../gifts/presentation/engine/gift_feed_panel.dart';
-import '../../../gifts/presentation/widgets/gift_goal_bar.dart';
-import '../../../gifts/presentation/widgets/gift_stage_layout.dart';
-import '../../../gifts/presentation/widgets/premium_gift_panel.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../../../trtc/presentation/trtc_room_manager.dart';
@@ -63,9 +50,6 @@ import '../../../trtc/presentation/providers/trtc_providers.dart';
 import '../../domain/entities/live_fortune_request_entity.dart';
 import '../../data/host_live_stream_recovery.dart';
 import '../../domain/entities/live_broadcast_session.dart';
-import '../../domain/entities/live_swipe_feed_args.dart';
-import '../../domain/entities/live_gift_catalog.dart';
-import '../../domain/entities/live_gift_event.dart';
 import '../../domain/entities/live_guest_layout.dart';
 import '../../domain/pk/live_pk_invite_helper.dart';
 import '../../domain/pk/live_pk_side_resolver.dart';
@@ -73,7 +57,6 @@ import '../../domain/pk/live_pk_chat_stream.dart';
 import '../../domain/pk/live_pk_trtc_anchor.dart';
 import '../../domain/pk/live_pk_broadcast_stage.dart';
 import '../../domain/pk/pk_status_helper.dart';
-import '../../domain/pk/pk_unified_bridge.dart';
 import '../../domain/live_co_broadcast_constants.dart';
 import '../../domain/live_guest_layout_resolver.dart';
 import '../../domain/live_guest_list_snapshot.dart';
@@ -84,7 +67,6 @@ import '../../domain/utils/co_guest_camera_signal_util.dart';
 import '../../domain/utils/live_fortune_display_label.dart';
 import '../gifts/live_gift_controller.dart';
 import '../gifts/providers/live_gift_providers.dart';
-import '../gifts/providers/live_seat_gift_flash_provider.dart';
 import '../providers/live_host_rank_provider.dart';
 import '../../../games/presentation/providers/game_providers.dart';
 import '../providers/pk_room_providers.dart';
@@ -93,7 +75,6 @@ import '../providers/live_invite_dedup_provider.dart';
 import '../providers/live_co_guest_camera_signal_provider.dart';
 import '../providers/live_pk_invite_signal_provider.dart';
 import '../providers/live_providers.dart';
-import '../providers/discover_live_streams.dart';
 import '../providers/co_broadcast_provider.dart';
 import '../providers/pending_co_broadcast_join_provider.dart';
 import '../providers/live_beauty_provider.dart';
@@ -103,23 +84,15 @@ import '../providers/live_room_interaction_provider.dart'
     show LiveRoomInteractionNotifier, LiveRoomInteractionState, liveRoomInteractionProvider;
 import '../providers/live_room_providers.dart';
 import '../providers/live_video_pk_provider.dart';
-import '../providers/pk_session_phase_provider.dart';
 import '../utils/live_pk_invite_flow.dart';
 import '../../../pk/presentation/providers/pk_session_notifier.dart';
 import '../../../pk/presentation/widgets/pk_start_sheet.dart';
 import '../../../pk/presentation/widgets/pk_session_overlay_host.dart';
 import '../widgets/live_tiktok/live_background_picker_sheet.dart';
-import '../widgets/live_tiktok/live_guest_grid.dart';
-import '../widgets/broadcast_room/live_pk_score_bar.dart';
-import '../widgets/pk/pk_room_live_section.dart';
 import '../providers/live_fortune_request_provider.dart';
 import '../providers/live_stream_quality_provider.dart';
-import '../widgets/broadcast_room/live_host_fortune_request_center_overlay.dart';
 import '../widgets/broadcast_room/live_broadcast_ended_flow.dart';
-import '../widgets/broadcast_room/live_network_quality_pill.dart';
-import '../widgets/broadcast_room/live_host_away_viewer_banner.dart';
 import '../widgets/broadcast_room/live_stream_games_sheet.dart';
-import '../widgets/broadcast_room/live_broadcast_room_chips.dart';
 import '../widgets/broadcast_room/live_broadcast_room_connection_overlays.dart';
 import '../widgets/broadcast_room/live_broadcast_room_gift_overlays.dart';
 import '../widgets/broadcast_room/live_broadcast_room_host_overlays.dart';
@@ -132,13 +105,9 @@ import '../widgets/broadcast_room/live_broadcast_room_video_layer.dart';
 import '../widgets/broadcast_room/live_pk_broadcast_overlay.dart';
 import '../widgets/broadcast_room/live_pk_gift_picker_sheet.dart';
 import '../../domain/pk/live_pk_like_budget.dart';
-import '../widgets/live_gift_sheet.dart';
 import '../widgets/broadcast_room/live_broadcast_room_viewer_rail.dart';
 import 'live_session_phase.dart';
-import '../widgets/broadcast_room/live_reconnect_banner.dart';
-import '../widgets/broadcast_room/live_host_guest_request_center_overlay.dart';
 import '../providers/live_guest_request_blocklist_provider.dart';
-import '../widgets/broadcast_room/live_fortune_request_form.dart';
 import '../widgets/broadcast_room/live_like_realtime.dart';
 import '../widgets/broadcast_room/live_moderation_sheet.dart';
 import '../providers/live_broadcast_settings_provider.dart';
@@ -146,11 +115,7 @@ import '../widgets/broadcast_room/live_broadcast_settings_sheet.dart';
 import '../widgets/broadcast_room/live_viewers_sheet.dart';
 import '../widgets/broadcast_room/live_guest_invite_sheet.dart';
 import '../widgets/broadcast_room/live_fortune_request_popup.dart';
-import '../widgets/broadcast_room/live_room_chat_fal_panel.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
-import '../widgets/premium_2026/live/live_premium_chat_feed.dart';
-import '../widgets/broadcast_room/live_room_video_background.dart';
-import '../widgets/live_playback_bridge.dart';
 import '../widgets/premium_2026/live/live_star_tournament_sheet.dart';
 import '../widgets/premium_2026/live_premium_2026.dart';
 
@@ -1188,21 +1153,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         await Future<void>.delayed(Duration(seconds: 1 + attempt));
       }
     }
-  }
-
-  Future<void> _showViewerStreamEndedSummary(String streamId) async {
-    await _finalizeStreamEndedUi(
-      streamId: streamId,
-      endReason: 'stream_ended',
-    );
-  }
-
-  /// Sunucu SSE `streamEnded` — sessizlik / moderasyon ile otomatik kapanma.
-  Future<void> _showHostStreamEndedByServer(String streamId) async {
-    await _finalizeStreamEndedUi(
-      streamId: streamId,
-      endReason: 'server_ended',
-    );
   }
 
   Future<void> _enterHostGracePeriod({required bool notifyViewers}) async {
@@ -2265,14 +2215,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     if (mounted) setState(() {});
   }
 
-  int _nextEmptyGuestSlot() {
-    final slots = ref.read(liveGuestGridProvider).slots;
-    for (var i = 1; i < slots.length; i++) {
-      if (slots[i].isEmpty) return i;
-    }
-    return slots.length > 1 ? 1 : 1;
-  }
-
   void _onRemoteUidsChanged() {
     // Yalnızca onaylı ortak yayıncılar koltuklara yerleşir — ham TRTC UID değil.
     final co = ref.read(coBroadcastProvider).coBroadcasters;
@@ -2381,13 +2323,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       'mvpName': mvp?.toString(),
       'winnerSide': winner?.toString(),
     };
-  }
-
-  int? _pkOverlayInt(Map<String, dynamic>? extras, String key) {
-    final v = extras?[key];
-    if (v is int) return v;
-    if (v is num) return v.round();
-    return int.tryParse('$v');
   }
 
   Future<void> _openPkPanel() async {
@@ -2904,11 +2839,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           ? () => unawaited(_onFortuneRequest(s))
           : null,
     );
-  }
-
-  bool _isPkEndedStatus(String? status) {
-    final s = normalizePkStatus(status);
-    return s == 'ended' || s == 'completed' || s == 'finished';
   }
 
   String _pkOpponentUserId(

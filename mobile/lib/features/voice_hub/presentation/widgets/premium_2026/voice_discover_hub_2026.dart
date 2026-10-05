@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../../core/ui/premium_2026/liquid_glass.dart';
 import '../../../../feed/presentation/widgets/discover_premium_2026/discover_premium_room_card.dart';
 import '../../../../feed/presentation/widgets/discover_premium_2026/discover_premium_visual.dart';
 import '../../../../../core/performance/list_perf.dart';
-import '../../../../../core/performance/scroll_perf.dart';
 import '../../../../../core/widgets/lazy_list_views.dart';
 import '../../../../live/domain/entities/live_stream_entity.dart';
 import '../../../../live/presentation/utils/open_live_stream.dart';
@@ -1040,165 +1038,6 @@ class _SectionTitle extends StatelessWidget {
             ),
           ),
       ],
-    );
-  }
-}
-
-class _PopularRoomCard extends StatelessWidget {
-  const _PopularRoomCard({
-    required this.room,
-    required this.index,
-    required this.width,
-    required this.onTap,
-  });
-
-  final VoiceRoomEntity room;
-  final int index;
-  final double width;
-  final VoidCallback onTap;
-
-  String get _badge => switch (room.resolvedRoomType) {
-        'VIP' => 'VIP',
-        'FREE' => 'Ücretsiz',
-        _ => switch (index % 3) {
-            0 => 'Sıcak',
-            1 => 'Gece',
-            _ => 'Oyun',
-          },
-      };
-
-  Color get _badgeColor => switch (_badge) {
-        'VIP' => VipGoldTokens.goldMid,
-        'Ücretsiz' => const Color(0xFF22C55E),
-        'Sıcak' => AppThemeColors.liveRed,
-        'Gece' => VoiceRoomTokens.neonPurple,
-        _ => VoiceRoomTokens.neonBlue,
-      };
-
-  @override
-  Widget build(BuildContext context) {
-    final bg = room.backgroundImageUrl;
-    return SizedBox(
-      width: width,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius:
-              BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
-          child: Ink(
-            decoration: BoxDecoration(
-              borderRadius:
-                  BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
-              color: DiscoverPremiumVisual.glassFill,
-              boxShadow: DiscoverPremiumVisual.cardGlow(),
-            ),
-            child: ClipRRect(
-              borderRadius:
-                  BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        if (bg != null && bg.isNotEmpty)
-                          CanlifalNetworkImage(
-                            url: bg,
-                            width: width,
-                            thumbnailWidth: (width * 1.5).round().clamp(160, 400),
-                            fit: BoxFit.cover,
-                          )
-                        else
-                          const DecoratedBox(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [Color(0xFF4C1D95), Color(0xFF1E1033)],
-                              ),
-                            ),
-                          ),
-                        Positioned(
-                          top: 8,
-                          left: 8,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _badgeColor.withValues(alpha: 0.9),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              _badge,
-                              style: const TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          room.displayTitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 13,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            Icon(Icons.people_alt_rounded,
-                                size: 12, color: AppThemeColors.onlineGreen),
-                            const SizedBox(width: 4),
-                            VoiceRoomOnlineCount(
-                              room: room,
-                              builder: (context, count) => Text(
-                                VoiceLiveHeader2026Format.count(count),
-                                style: const TextStyle(fontSize: 10),
-                              ),
-                            ),
-                            const Spacer(),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                gradient: VoiceRoomTokens.fabGradient,
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              child: const Text(
-                                'Katıl',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

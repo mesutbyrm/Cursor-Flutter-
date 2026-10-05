@@ -2,7 +2,6 @@ import 'package:canlifal_social/core/site_animation/data/site_animation_resolver
 import 'package:canlifal_social/core/site_animation/domain/site_animation_catalog_entry.dart';
 import 'package:canlifal_social/core/site_animation/domain/site_animation_slot.dart';
 import 'package:canlifal_social/core/site_animation/domain/site_animation_tier.dart';
-import 'package:canlifal_social/core/site_animation/domain/site_animation_type.dart';
 import 'package:canlifal_social/core/site_animation/data/site_animation_parser.dart';
 import 'package:canlifal_social/features/admin/data/admin_site_animation_seed_catalog.dart';
 import 'package:flutter_test/flutter_test.dart';

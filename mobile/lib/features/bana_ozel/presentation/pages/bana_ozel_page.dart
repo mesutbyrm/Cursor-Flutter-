@@ -18,7 +18,6 @@ import '../../../fortune/presentation/data/fortune_type_images.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/bana_ozel_preferences_store.dart';
 import '../../domain/entities/bana_ozel_entities.dart';
-import '../data/bana_ozel_display_resolver.dart';
 import '../providers/bana_ozel_preferences_providers.dart';
 import '../providers/bana_ozel_providers.dart';
 import '../widgets/bana_ozel_premium_card.dart';

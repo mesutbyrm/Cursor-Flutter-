@@ -1,6 +1,5 @@
 import '../../cosmetics/domain/cosmetic_catalog_generators.dart';
 import '../../cosmetics/domain/cosmetic_item.dart';
-import '../../cosmetics/domain/cosmetic_slot.dart';
 import '../../voice_hub/domain/voice_room_background_catalog.dart';
 import '../../voice_hub/domain/voice_room_theme_catalog.dart';
 import 'achievement_badge_sample.dart';

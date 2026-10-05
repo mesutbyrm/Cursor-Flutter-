@@ -3,7 +3,6 @@ import 'dart:async';
 import '../../../../core/video/video_cache_service.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../data/gift_cache_service.dart';
-import '../../domain/gift_engine_models.dart';
 import '../../domain/gift_engine_parser.dart';
 import '../../domain/gift_media_type.dart';
 

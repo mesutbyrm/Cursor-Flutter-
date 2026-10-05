@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../../core/network/api_exception.dart';
 import '../../live/presentation/providers/live_providers.dart';
 import 'theme/voice_room_tokens.dart';
-import 'basic/voice_room_page.dart';
 import 'voice_room_gated_entry.dart';
 import 'widgets/voice_room_error_boundary.dart';
 

@@ -1,4 +1,3 @@
-import 'package:canlifal_social/core/performance/scroll_perf.dart';
 import 'package:canlifal_social/core/widgets/lazy_list_views.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

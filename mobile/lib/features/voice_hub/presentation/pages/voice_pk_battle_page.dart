@@ -11,7 +11,6 @@ import '../../../gifts/presentation/sync/gift_event_listener.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/pk/pk_team_label_helper.dart';
-import '../widgets/pk/pk_ends_at_countdown.dart';
 import '../widgets/pk/voice_pk_invite_action_card.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/pk/pk_battle_mode.dart';

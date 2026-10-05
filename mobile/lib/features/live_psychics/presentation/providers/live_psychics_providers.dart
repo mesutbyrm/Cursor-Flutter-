@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../data/live_fortune_session_manager.dart';
 import '../../data/repositories/live_psychics_remote_datasource.dart';

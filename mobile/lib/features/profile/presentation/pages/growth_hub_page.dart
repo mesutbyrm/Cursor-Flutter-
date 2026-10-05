@@ -26,7 +26,6 @@ import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_providers.dart';
 import '../../../cosmetics/presentation/providers/cosmetics_providers.dart';
 import '../../../membership/presentation/controllers/membership_controller.dart';
-import '../../../membership/domain/membership_model.dart';
 import '../premium_2026/profile_membership_helpers.dart';
 import '../widgets/premium/profile_glass.dart';
 

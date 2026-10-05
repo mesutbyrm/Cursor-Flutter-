@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.714+767 (2026-10-05) — Merkezi animasyon kataloğu (giriş/çıkış) · ölü kod temizliği
+
+- **Giriş/çıkış animasyonları backend kataloğundan:** sesli oda ve canlı yayında kullanıcı odaya girince/çıkınca `GET /api/animations/resolve` ile kullanıcıya atanmış/üyelik animasyonu çözülür (SVG/PNG/GIF/Lottie/video), kartın arkasında süre, ölçek ve ses ayarlarıyla oynar; atanmış animasyon yoksa eski tema akışı çalışır. `GET /api/animations/manifest` istemcisi eklendi
+- **Ölü kod:** 5 kullanılmayan dosya silindi (admin araç çubuğu, admin özet kartı, profil üst bilgi, eski kategori şeridi, boş barrel), 160+ kullanılmayan import, 17 çağrılmayan yöntem/sınıf kaldırıldı
+- **İşlevsiz özellik:** «İki adımlı doğrulama — Yakında» kutusu kaldırıldı
+
 ## 1.0.713+766 (2026-10-05) — Hediye kombo/ses · sesli oda sol menü · 100 renk arka plan · profil donması
 
 - **Profil kaydetme donması:** düzenleme alanı sheet'i kapanırken controller hemen dispose ediliyordu (kullanım-sonrası hata → uygulama kilitleniyordu); aynı hata hesap silme, takma ad, oda şifresi ve klip başlığı diyaloglarında da düzeltildi

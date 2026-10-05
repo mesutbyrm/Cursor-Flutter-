@@ -1,4 +1,3 @@
-import '../domain/site_animation_asset.dart';
 import '../domain/site_animation_catalog_entry.dart';
 import '../domain/site_animation_command.dart';
 import '../domain/site_animation_layout.dart';

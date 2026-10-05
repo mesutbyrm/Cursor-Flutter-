@@ -2,8 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/performance/network_perf.dart';
 import '../../../../core/network/dio_provider.dart';
-import '../../../live/presentation/providers/discover_live_streams.dart';
-import '../../../live/presentation/providers/discover_voice_rooms.dart';
 import '../../../live/presentation/providers/live_streams_list_notifier.dart';
 import '../../../live/presentation/providers/voice_rooms_list_notifier.dart';
 import '../../../live/presentation/providers/live_providers.dart';

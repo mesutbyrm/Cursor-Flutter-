@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/gift_repository.dart';
 import '../providers/gift_providers.dart';
 import 'gift_catalog_invalidate.dart';
 

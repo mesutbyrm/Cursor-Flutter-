@@ -7,7 +7,6 @@ import 'package:canlifal_social/features/live_psychics/domain/repositories/live_
 import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/screens/psychic_session_route.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';

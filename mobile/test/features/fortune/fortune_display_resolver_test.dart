@@ -1,7 +1,6 @@
 import 'package:canlifal_social/features/fortune/presentation/data/fortune_display_resolver.dart';
 import 'package:canlifal_social/features/home/domain/entities/home_fortune_card_entity.dart';
 import 'package:canlifal_social/features/platform/data/models/fortune_request_type.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

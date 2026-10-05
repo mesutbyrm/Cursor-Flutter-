@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/fortune_type_entity.dart';
 import '../widgets/fortune_hub_crystal_illustration.dart';
 import '../widgets/fortune_mystic_background.dart';

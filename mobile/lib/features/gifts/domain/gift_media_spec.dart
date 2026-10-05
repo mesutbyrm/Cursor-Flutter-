@@ -1,8 +1,6 @@
 import '../../../core/media/cloud_media_url.dart';
 import '../../../core/util/json_util.dart';
 import '../../live/domain/entities/live_gift_event.dart';
-import 'gift_animation_kind.dart';
-import 'gift_asset_type.dart';
 import 'gift_engine_models.dart';
 import 'gift_entity.dart';
 import 'gift_media_type.dart';

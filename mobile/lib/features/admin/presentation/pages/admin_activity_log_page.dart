@@ -3,9 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
-import '../../../../core/network/api_endpoints.dart';
-import '../../../../core/network/dio_provider.dart';
-import '../../../../core/network/api_exception.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../providers/admin_activity_log_providers.dart';

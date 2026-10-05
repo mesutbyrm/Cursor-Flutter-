@@ -392,64 +392,6 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     } catch (_) {}
   }
 
-  Future<void> _broadcastStaffEntryIfNeeded() async {
-    if (_roomKey.isEmpty) return;
-    final user = ref.read(authControllerProvider).valueOrNull;
-    if (user == null) return;
-    if (_roomMeta.ownerId != null &&
-        _roomMeta.ownerId!.trim().isNotEmpty &&
-        user.id == _roomMeta.ownerId!.trim()) {
-      return;
-    }
-    ChatRoomPresence? self;
-    for (final p in state.presence) {
-      if (p.id == user.id) {
-        self = p;
-        break;
-      }
-    }
-    final userRef = ChatRoomUserRef(
-      id: user.id,
-      name: user.display,
-      nickname: user.username,
-      image: user.avatarUrl,
-      chatRole: self?.chatRole,
-    );
-    if (!VoiceStaffChatStyle.isStaffEntry(
-      content: '',
-      user: userRef,
-    ) &&
-        !VoiceRoomPermissions.forUser(
-          user: user,
-          room: _roomMeta,
-          selfPresence: self,
-          server: state.serverPermissions,
-        ).isSiteAdmin &&
-        !VoiceRoomPermissions.forUser(
-          user: user,
-          room: _roomMeta,
-          selfPresence: self,
-          server: state.serverPermissions,
-        ).canModerate) {
-      return;
-    }
-    final name = user.display.trim().isNotEmpty
-        ? user.display.trim()
-        : (user.displayName?.trim().isNotEmpty == true
-            ? user.displayName!.trim()
-            : user.username);
-    final symbol = self?.roleSymbol?.trim() ?? '';
-    try {
-      await ref.read(chatRoomRemoteProvider).postEntryAnnouncement(
-            roomKey: _roomKey,
-            alternateKey: _roomMeta.slug,
-            userName: name,
-            roleSymbol: symbol.isNotEmpty ? symbol : null,
-            entryType: VoiceStaffChatStyle.entryRoleLabel(userRef),
-          );
-    } catch (_) {}
-  }
-
   Future<void> _joinPresence({bool rejoinAfterHeartbeat = false}) async {
     if (_roomKey.isEmpty) {
       state = state.copyWith(loading: false, error: 'Geçersiz oda kimliği');

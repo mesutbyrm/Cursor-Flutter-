@@ -1,6 +1,5 @@
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_tip_sheet.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/economy_test_scope.dart';

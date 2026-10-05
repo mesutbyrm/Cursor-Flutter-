@@ -319,18 +319,6 @@ class AdminGiftRemoteDataSource {
     }
   }
 
-  bool _shouldFallbackUpload(ApiException error) {
-    final code = error.statusCode;
-    if (code == 404 || code == 405) return true;
-    if (code != null && code >= 500) return true;
-    final msg = error.message.toLowerCase();
-    return msg.contains('zaman aşım') ||
-        msg.contains('bağlantı') ||
-        msg.contains('sunucu yanıt vermedi') ||
-        msg.contains('sunucuya bağlanılamadı') ||
-        msg.contains('yüklenemedi');
-  }
-
   Map<String, dynamic> _unwrapResponseMap(dynamic body) {
     if (body is! Map) return <String, dynamic>{};
     final map = asJsonMap(body);

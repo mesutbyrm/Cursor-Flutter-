@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../features/profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../features/profile/presentation/providers/profile_hub_providers.dart';
 import '../me/me_entitlements_providers.dart';
 import 'membership_capabilities.dart';

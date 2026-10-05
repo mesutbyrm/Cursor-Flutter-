@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../profile/data/jeton_packages_catalog.dart';
 import '../../profile/presentation/providers/profile_providers.dart';

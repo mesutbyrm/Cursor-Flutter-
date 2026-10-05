@@ -5,7 +5,6 @@ import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_r
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_review_entity.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_room_entity.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_history_entity.dart';
-import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_status.dart';
 import 'package:canlifal_social/features/live_psychics/domain/repositories/live_psychics_repository.dart';
 
 /// Minimal fake for push-flow unit tests.

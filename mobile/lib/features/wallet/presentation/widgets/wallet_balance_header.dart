@@ -8,7 +8,6 @@ import '../../../membership/presentation/controllers/membership_controller.dart'
 import '../../../profile/presentation/premium_2026/profile_membership_helpers.dart';
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/economy/presentation/widgets/branded_dual_balance_chips.dart';
-import '../../../../core/widgets/dual_balance_chips.dart';
 
 /// CFC + Jeton + kısa yönlendirme — CFC yükle / Premium üyelik.
 class WalletBalanceHeader extends ConsumerWidget {
