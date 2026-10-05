@@ -656,6 +656,15 @@ class WalletRemoteDataSource {
               !data.contains('<html')) {
             msg = data;
           }
+          if (code == 400 &&
+              data is Map &&
+              data['code']?.toString() == 'PRICE_MISMATCH') {
+            throw const ApiException(
+              'Fiyat güncellendi, lütfen tekrar deneyin.',
+              statusCode: 400,
+              errorCode: 'PRICE_MISMATCH',
+            );
+          }
           // Backend kullanıcı başına tek bekleyen talebe izin verir ve iptal
           // ucu sunmaz; yönetici onayı/reddi beklenmeli.
           if (_isPendingPaymentConflict(code, msg)) {
