@@ -261,15 +261,28 @@ class VoiceRoomAudioCoordinator {
   Future<void> leave() async {
     _reconnectSuspended = true;
     _trtc.manager.onConnectionLost = null;
-    await _micOp;
     final ds = _remote;
     final channel = _trtc.inChannel ? _lastRoomId : null;
+    // Ses önce kesilir: REST `voice leave` yavaş/asılı kalırsa (zaman aşımı
+    // çağıranı bekletmeden bırakır) TRTC odada kalıyor, kullanıcı çıktıktan
+    // sonra da duyuyor ve duyuluyordu.
+    try {
+      _trtc.setRemoteAudioMuted(true);
+    } catch (_) {}
+    try {
+      await _trtc.leave().timeout(const Duration(seconds: 3));
+    } catch (_) {}
     if (ds != null && channel != null && channel.isNotEmpty) {
-      try {
-        await ds.leaveVoiceSession(channel);
-      } catch (_) {}
+      unawaited(
+        ds
+            .leaveVoiceSession(channel)
+            .timeout(const Duration(seconds: 6))
+            .catchError((_) {}),
+      );
     }
-    await _trtc.leave();
+    try {
+      await _micOp;
+    } catch (_) {}
     _engine = null;
     _lastRoomId = null;
     _lastUserId = null;

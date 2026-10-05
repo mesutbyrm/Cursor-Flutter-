@@ -26,7 +26,6 @@ import '../../../notifications/presentation/providers/notifications_providers.da
 import '../../../membership/presentation/widgets/membership_store_teaser_banner.dart';
 import '../premium_2026/profile_membership_helpers.dart';
 import '../utils/payment_pending_cleanup.dart';
-import '../../../membership/presentation/widgets/membership_store_teaser_banner.dart';
 import '../../data/jeton_packages_catalog.dart';
 import '../../data/jeton_payment_request.dart';
 import '../../data/services/payment_receipt_upload_service.dart';

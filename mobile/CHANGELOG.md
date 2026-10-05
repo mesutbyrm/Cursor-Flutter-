@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.716+769 (2026-10-05) — Odadan çıkınca ses, profil kaydı, admin ayrıcalıkları
+
+- **Sesli odadan çıkış:** TRTC bağlantısı ve uzak ses artık REST `voice leave` beklenmeden ilk adımda kesilir (yavaş ağda çıktıktan sonra da odada duyuluyor/duyuluyordu)
+- **Profil tamamlama:** Şehir/burç/takım kaydı hata yutmuyor; backend `city` alanını kaydediyor ve geri döndürüyor (daha önce «Kaydet» başarılı görünüp şehir boş kalıyordu)
+- **Profil ekranı:** Paylaş/Ayarlar çubuğu durum çubuğunun (pil/Wi‑Fi) altında kalmıyor
+- **Admin:** oda açarken jeton/bakiye sorusu yok (sunucu da ücret almaz); admin korumalı: admine sustur/at/yasakla girişiminde ilk seferde sesli uyarı, tekrarında girişimi yapanın kendisine uygulanır
+- **Bildirimler:** uygulama açıkken gelen bildirim sesli (+ titreşim)
+
 ## 1.0.715+768 (2026-10-05) — Jeton fiyatı sunucudan
 
 - **Jeton satın alma:** ödeme tutarı artık istemcide hesaplanmaz; `GET /api/public/jeton-price?jeton=<adet>` → `quote.finalAmount` ödeme talebine `amount` olarak yazılır, TL alanı salt okunur
