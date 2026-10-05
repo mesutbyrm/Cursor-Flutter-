@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
@@ -90,6 +91,10 @@ class _NotificationsRealtimeListenerState
     final openDm = ref.read(openDmConversationIdProvider);
     final suppress = isMessageType && sender.isNotEmpty && sender == openDm;
     if (!suppress) {
+      // Uygulama açıkken gelen bildirim sesli olsun (arka planda sistem push
+      // kanalı zaten ses çalar).
+      unawaited(SystemSound.play(SystemSoundType.alert));
+      unawaited(HapticFeedback.mediumImpact());
       final target = notification.targetPath?.trim() ?? '';
       final peerId = sender.isNotEmpty
           ? sender

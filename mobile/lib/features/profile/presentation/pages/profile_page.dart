@@ -173,7 +173,11 @@ class _ProfileScrollBody extends ConsumerWidget {
           child: _profileScroll(
         context,
         [
-          // Kapak durum çubuğunun altına kadar uzanır; ekstra üst boşluk yok.
+          // Üst çubuk (Paylaş / Ayarlar) telefonun durum çubuğunun (pil, Wi‑Fi)
+          // altında kalmasın.
+          SliverToBoxAdapter(
+            child: SizedBox(height: MediaQuery.paddingOf(context).top),
+          ),
           SliverToBoxAdapter(
             child: ResponsiveConstrained(
               maxWidth: 1200,

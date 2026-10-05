@@ -13,6 +13,7 @@ import '../../../../core/auth/bot_account_provider.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/network/api_exception.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
@@ -187,7 +188,9 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
     return;
   }
 
-  if (cost > 0 && balance < cost) {
+  // Site yöneticisi bakiye/jeton sorusuna tabi değildir (sunucu da ücret almaz).
+  final isSiteAdmin = ref.read(staffAccessProvider).isSiteAdmin;
+  if (!isSiteAdmin && cost > 0 && balance < cost) {
     _dismissLoadingDialog();
     unawaited(
       showInsufficientJetonDialog(
@@ -666,8 +669,9 @@ Future<void> _createAndEnter(
       } catch (_) {}
     }
     if (!context.mounted) return;
-    if (msg.toLowerCase().contains('yetersiz') ||
-        msg.toLowerCase().contains('jeton')) {
+    if (!ref.read(staffAccessProvider).isSiteAdmin &&
+        (msg.toLowerCase().contains('yetersiz') ||
+            msg.toLowerCase().contains('jeton'))) {
       unawaited(showInsufficientJetonDialog(context, message: msg, ref: ref));
       return;
     }

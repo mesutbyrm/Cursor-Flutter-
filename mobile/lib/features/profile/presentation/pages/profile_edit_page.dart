@@ -129,17 +129,17 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
             avatarUrl: avatarUrl,
             favoriteTeam: _favoriteTeam,
           );
-      try {
-        await ref.read(profileRemoteProvider).updateProfile(
-              displayName: _displayCtrl.text.trim(),
-              bio: _bioCtrl.text.trim(),
-              avatarUrl: avatarUrl,
-              city: _cityCtrl.text.trim().isEmpty ? null : _cityCtrl.text.trim(),
-              zodiacSign:
-                  _zodiacCtrl.text.trim().isEmpty ? null : _zodiacCtrl.text.trim(),
-              favoriteTeam: _favoriteTeam,
-            );
-      } catch (_) {}
+      // Şehir / burç / takım `PATCH /api/user/profile` ile kaydedilir; hata
+      // artık yutulmaz (önceden «Kaydet» başarılı görünüp alanlar boş kalıyordu).
+      await ref.read(profileRemoteProvider).updateProfile(
+            displayName: _displayCtrl.text.trim(),
+            bio: _bioCtrl.text.trim(),
+            avatarUrl: avatarUrl,
+            city: _cityCtrl.text.trim().isEmpty ? null : _cityCtrl.text.trim(),
+            zodiacSign:
+                _zodiacCtrl.text.trim().isEmpty ? null : _zodiacCtrl.text.trim(),
+            favoriteTeam: _favoriteTeam,
+          );
       if (!mounted) return;
       // ref'i sayfa kapanmadan kullan (dispose sonrası ref erişimi hata verir).
       ref.invalidate(profileExtendedProvider);
