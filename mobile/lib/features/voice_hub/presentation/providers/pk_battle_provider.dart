@@ -13,8 +13,8 @@ import '../../../live/domain/pk/live_pk_like_budget.dart';
 
 /// PK savaş kontrolü — skor, zamanlayıcı, hediye gücü, kazanan.
 class PkBattleNotifier extends Notifier<PkBattleState> {
-  Timer? _tick;
-  Timer? _endsAtSync;
+  /// Tek periyodik sayaç — sunucu `endsAt` veya yerel geri sayım.
+  Timer? _countdownTimer;
   DateTime? _endsAtUtc;
   Duration _clockSkew = Duration.zero;
   VoiceRoomEntity? _room;
@@ -24,12 +24,7 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
 
   @override
   PkBattleState build() {
-    ref.onDispose(() {
-      _tick?.cancel();
-      _tick = null;
-      _endsAtSync?.cancel();
-      _endsAtSync = null;
-    });
+    ref.onDispose(_stopCountdownTimer);
     return const PkBattleState();
   }
 
@@ -43,7 +38,7 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
   }) {
     _room = room;
     _presence = presence;
-    _tick?.cancel();
+    _stopCountdownTimer();
 
     final sides = _buildSides(
       presence: presence,
@@ -80,9 +75,9 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
     state = state.copyWith(
       phase: PkBattlePhase.active,
       secondsLeft: durationSeconds,
+      serverAuthoritative: false,
     );
-    _tick?.cancel();
-    _tick = Timer.periodic(const Duration(seconds: 1), (_) => _onTick());
+    _startCountdownTimer();
   }
 
   (PkSideState, PkSideState) _buildSides({
@@ -338,7 +333,7 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
     PkBattleRemote remote, {
     required bool swapSides,
   }) {
-    _tick?.cancel();
+    _stopCountdownTimer();
     final phase = remote.isActive
         ? PkBattlePhase.active
         : remote.isEnded
@@ -439,43 +434,70 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
       reactionBurst:
           remote.isActive ? state.reactionBurst + 1 : state.reactionBurst,
     );
-    _tick?.cancel();
-    _startEndsAtSync(
+    _configureServerCountdown(
       endsAt: remote.endsAt,
       serverNow: remote.serverNow,
       phase: phase,
     );
   }
 
-  void _startEndsAtSync({
+  void _stopCountdownTimer() {
+    _countdownTimer?.cancel();
+    _countdownTimer = null;
+  }
+
+  void _startCountdownTimer() {
+    _stopCountdownTimer();
+    if (!state.isActive) return;
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _onCountdownTick();
+    });
+  }
+
+  void _configureServerCountdown({
     required DateTime? endsAt,
     required String? serverNow,
     required PkBattlePhase phase,
   }) {
-    _endsAtSync?.cancel();
-    _endsAtSync = null;
     _endsAtUtc = endsAt?.toUtc();
     _clockSkew = Duration.zero;
     final parsedNow = serverNow != null ? DateTime.tryParse(serverNow) : null;
     if (parsedNow != null) {
-      _clockSkew =
-          parsedNow.toUtc().difference(DateTime.now().toUtc());
+      _clockSkew = parsedNow.toUtc().difference(DateTime.now().toUtc());
     }
-    if (_endsAtUtc == null || phase != PkBattlePhase.active) return;
-    _endsAtSync = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!state.isActive || !state.serverAuthoritative) return;
-      final end = _endsAtUtc;
-      if (end == null) return;
-      final now = DateTime.now().toUtc().add(_clockSkew);
-      final sec = end.difference(now).inSeconds.clamp(0, 86400);
-      if (sec != state.secondsLeft) {
-        state = state.copyWith(secondsLeft: sec);
-      }
-    });
+    if (phase != PkBattlePhase.active) {
+      _stopCountdownTimer();
+      return;
+    }
+    _startCountdownTimer();
   }
 
-  void _onTick() {
-    if (!state.isActive || state.serverAuthoritative) return;
+  void _onCountdownTick() {
+    if (!state.isActive) {
+      _stopCountdownTimer();
+      return;
+    }
+    if (state.serverAuthoritative) {
+      _syncSecondsFromEndsAt();
+      return;
+    }
+    _onLocalTick();
+  }
+
+  void _syncSecondsFromEndsAt() {
+    final end = _endsAtUtc;
+    if (end == null) return;
+    final now = DateTime.now().toUtc().add(_clockSkew);
+    final sec = end.difference(now).inSeconds.clamp(0, 86400);
+    if (sec != state.secondsLeft) {
+      state = state.copyWith(secondsLeft: sec);
+    }
+    if (sec <= 0 && state.phase == PkBattlePhase.active) {
+      _finish();
+    }
+  }
+
+  void _onLocalTick() {
     if (state.secondsLeft <= 1) {
       _finish();
       return;
@@ -484,7 +506,7 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
   }
 
   void _finish() {
-    _tick?.cancel();
+    _stopCountdownTimer();
     final l = state.left.total;
     final r = state.right.total;
     final winner = l == r
@@ -501,10 +523,7 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
   }
 
   void reset() {
-    _tick?.cancel();
-    _tick = null;
-    _endsAtSync?.cancel();
-    _endsAtSync = null;
+    _stopCountdownTimer();
     _endsAtUtc = null;
     _room = null;
     _presence = const [];
@@ -527,11 +546,11 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
       phase: PkBattlePhase.active,
       secondsLeft: durationSeconds,
       winner: PkBattleWinner.none,
+      serverAuthoritative: false,
       left: state.left.copyWith(giftPower: 0, winStreak: leftStreak),
       right: state.right.copyWith(giftPower: 0, winStreak: rightStreak),
     );
-    _tick?.cancel();
-    _tick = Timer.periodic(const Duration(seconds: 1), (_) => _onTick());
+    _startCountdownTimer();
   }
 
 }

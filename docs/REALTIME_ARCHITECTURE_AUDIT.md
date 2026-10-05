@@ -378,7 +378,8 @@ Canlı probe / OpenAPI diff: `scripts/backend-route-parity.py`, `docs/BACKEND_FL
 | SSE oda guard (attached + active key) | ✅ |
 | Gift jeton `totalJeton` / revenue.total | ✅ |
 | Lifecycle testleri (kısmi) | ✅ guard, gift authority, leave coordinator |
-| PK timer birleştirme | ⏳ P1 |
-| Spec Test 1–20 tam paket | ⏳ P5 |
+| PK timer birleştirme | ✅ tek `_countdownTimer` |
+| Spec Test 1–20 tam paket | 🟡 contract test (`voice_room_realtime_lifecycle_contract_test.dart`) |
+| E2E TRTC/SSE/background | ⏳ P5 |
 
 _Bu belge FAZ 1 çıktısıdır; FAZ 2 kodu `cursor/flutter-realtime-parity-fix-dfca` dalındadır._
