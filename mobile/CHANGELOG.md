@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.719+772 (2026-10-05) — Realtime parity: join-room, heartbeat, SSE guard, PK timer
+
+- **Sesli oda giriş:** `POST /api/live/join-room` birincil bootstrap (katılımcı/koltuk/PK/TRTC snapshot); eski state/presence waterfall yedek
+- **Üyelik nabız:** `POST /api/live/heartbeat` (10 sn); chat presence heartbeat yedek
+- **Çıkış:** `POST /api/live/leave-room` + presence leave (idempotent koordinatör)
+- **SSE:** yanlış odaya sızma guard (`voiceRoomAcceptsAttachedSseEvent` + aktif oda anahtarı)
+- **Hediye:** sunucu `revenue.total` / `totalJeton` jeton harcaması otoritesi
+- **PK:** tek geri sayım timer’ı (`endsAt` sunucu senkronu)
+- **Test:** lifecycle contract + guard/gift/leave/PK birim testleri
+
 ## 1.0.718+771 (2026-10-05) — Sesli odada ses kesme, fal paylaşım görselleri, bildirim tanılama
 
 - **Sesli oda (koltuktan inince / çıkınca):** TRTC ses kesme artık işlem kapısını beklemiyor (uzak ses kapatılır, yerel yayın durur, `exitRoom` her durumda gönderilir); çıkış sırasında sürmekte olan yeniden bağlanma/katılma odaya GERİ girmiyor; koltuktan inen kişinin mikrofonu kapanıyor

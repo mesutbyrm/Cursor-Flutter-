@@ -1,10 +1,10 @@
 # Realtime / Backend Parity — Ara Rapor (FAZ 2–3 devam)
 
-**Dal:** `cursor/flutter-realtime-parity-fix-dfca`  
+**Dal:** `cursor/flutter-realtime-parity-fix-dfca` → **`main` (1.0.719+772)**  
 **PR:** [#446](https://github.com/mesutbyrm/Cursor-Flutter-/pull/446)  
 **Tarih:** 2026-10-05 (UTC)
 
-> Tam “FINAL” rapor Faz 6’da merge sonrası güncellenecek. Bu dosya şu ana kadarki değişiklikleri özetler.
+> Faz 6 (duplicate cleanup + E2E TRTC/SSE) merge sonrası devam eder. Bu dosya Faz 2–3 çıktısını özetler.
 
 ---
 

@@ -381,5 +381,6 @@ Canlı probe / OpenAPI diff: `scripts/backend-route-parity.py`, `docs/BACKEND_FL
 | PK timer birleştirme | ✅ tek `_countdownTimer` |
 | Spec Test 1–20 tam paket | 🟡 contract test (`voice_room_realtime_lifecycle_contract_test.dart`) |
 | E2E TRTC/SSE/background | ⏳ P5 |
+| `main` merge (1.0.719+772) | ✅ |
 
-_Bu belge FAZ 1 çıktısıdır; FAZ 2 kodu `cursor/flutter-realtime-parity-fix-dfca` dalındadır._
+_FAZ 2 kodu `main`'e alındı (2026-10-05); dal `cursor/flutter-realtime-parity-fix-dfca`._
