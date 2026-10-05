@@ -1,5 +1,5 @@
 import '../../../core/util/json_util.dart';
-import '../../../live/domain/entities/live_gift_event.dart';
+import '../../live/domain/entities/live_gift_event.dart';
 import 'entities/voice_gift_revenue.dart';
 
 /// Backend otoriteli jeton düşüşü — istemci fiyat×adet hesaplamaz.

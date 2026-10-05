@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.720+773 (2026-10-05) — Realtime parity CI fix (gift authority import)
+
+- **Derleme:** `voice_gift_send_authority.dart` `LiveGiftEvent` import yolu düzeltildi (analyze ERROR)
+
 ## 1.0.719+772 (2026-10-05) — Realtime parity: join-room, heartbeat, SSE guard, PK timer
 
 - **Sesli oda giriş:** `POST /api/live/join-room` birincil bootstrap (katılımcı/koltuk/PK/TRTC snapshot); eski state/presence waterfall yedek
