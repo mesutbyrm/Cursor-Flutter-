@@ -1,6 +1,6 @@
 # GitHub Temizlik Raporu
 
-Oluşturulma: 2026-09-28 10:15 UTC
+Oluşturulma: 2026-10-05 10:56 UTC
 Mod: APPLIED
 Repo: `mesutbyrm/Cursor-Flutter-`
 Base: `main`
@@ -11,7 +11,7 @@ Base: `main`
 |--------|------|
 | Kapatılan PR | 0 |
 | Silinen remote dal | 0 |
-| Kalan açık PR | 2 |
+| Kalan açık PR | 0 |
 | Korunan / aktif dal | 0 |
 
 ## Kapatılan PR'lar
@@ -30,8 +30,7 @@ Base: `main`
 
 | PR | Head | Base | Not |
 |----|------|------|-----|
-| #400 | feat/admob-real-ids | main | draft=false | feat(ads): gerçek AdMob uygulama kimliği + ödüllü geçiş reklamı birimi |
-| #400 | feat/admob-real-ids | main | draft=false | feat(ads): gerçek AdMob uygulama kimliği + ödüllü geçiş reklamı birimi |
+| — | — | — | — |
 
 ## Aktif / korunan dallar
 
