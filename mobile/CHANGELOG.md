@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.715+768 (2026-10-05) — Jeton fiyatı sunucudan
+
+- **Jeton satın alma:** ödeme tutarı artık istemcide hesaplanmaz; `GET /api/public/jeton-price?jeton=<adet>` → `quote.finalAmount` ödeme talebine `amount` olarak yazılır, TL alanı salt okunur
+- **PRICE_MISMATCH (400):** «Fiyat güncellendi, lütfen tekrar deneyin.» gösterilir
+
 ## 1.0.714+767 (2026-10-05) — Merkezi animasyon kataloğu (giriş/çıkış) · ölü kod temizliği
 
 - **Giriş/çıkış animasyonları backend kataloğundan:** sesli oda ve canlı yayında kullanıcı odaya girince/çıkınca `GET /api/animations/resolve` ile kullanıcıya atanmış/üyelik animasyonu çözülür (SVG/PNG/GIF/Lottie/video), kartın arkasında süre, ölçek ve ses ayarlarıyla oynar; atanmış animasyon yoksa eski tema akışı çalışır. `GET /api/animations/manifest` istemcisi eklendi

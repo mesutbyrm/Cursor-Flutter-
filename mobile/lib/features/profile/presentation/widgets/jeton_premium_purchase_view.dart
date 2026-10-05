@@ -8,6 +8,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import '../../../wallet/data/jeton_price_service.dart';
+import '../../../wallet/domain/jeton_price_quote.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/config/payment_defaults.dart';
@@ -316,6 +318,19 @@ class _JetonPremiumPurchaseViewState
 
     setState(() => _submitting = true);
     try {
+      // Tutar yalnızca sunucudan: GET /api/public/jeton-price → quote.finalAmount.
+      final JetonPriceQuote quote;
+      try {
+        quote = await ref
+            .read(jetonPriceServiceProvider)
+            .quote(amounts.jeton)
+            .timeout(const Duration(seconds: 12));
+      } catch (_) {
+        throw const ApiException('Fiyat alınamadı. Lütfen tekrar deneyin.');
+      }
+      if (mounted) {
+        setState(() => _tlCtrl.text = _formatTlInput(quote.finalAmount));
+      }
       String? receiptUrl;
       if (_receiptPath != null && _receiptPath!.isNotEmpty) {
         try {
@@ -340,7 +355,7 @@ class _JetonPremiumPurchaseViewState
           .catchError((_) => <JetonPackageEntity>[]);
       final package = resolveJetonPackageForPurchase(
         coins: amounts.jeton,
-        priceTry: amounts.tl,
+        priceTry: quote.finalAmount,
         remote: remotePackages,
         jetonLabel: jetonLabel,
       );
@@ -372,7 +387,7 @@ class _JetonPremiumPurchaseViewState
       if (_method == JetonPayMethod.whatsapp) {
         await _openWhatsApp(
           jeton: amounts.jeton,
-          tl: amounts.tl,
+          tl: quote.finalAmount,
           username: username,
           cfg: _config(),
           jetonLabel: jetonLabel,
@@ -460,6 +475,7 @@ class _JetonPremiumPurchaseViewState
                   child: _AmountField(
                     label: 'TL Tutarı',
                     controller: _tlCtrl,
+                    readOnly: true,
                     icon: Icons.payments_outlined,
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
@@ -752,8 +768,10 @@ class _AmountField extends StatelessWidget {
     required this.icon,
     required this.keyboardType,
     required this.onChanged,
+    this.readOnly = false,
   });
 
+  final bool readOnly;
   final String label;
   final TextEditingController controller;
   final IconData icon;
@@ -769,6 +787,7 @@ class _AmountField extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: TextField(
         controller: controller,
+        readOnly: readOnly,
         keyboardType: keyboardType,
         inputFormatters: [
           if (keyboardType == TextInputType.number)
