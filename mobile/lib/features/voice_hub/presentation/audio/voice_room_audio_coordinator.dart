@@ -272,6 +272,32 @@ class VoiceRoomAudioCoordinator {
 
   void setHeadphonesOn(bool on) => _trtc.setRemoteAudioMuted(!on);
 
+  /// Koltuktan inme — odada kalırken TRTC ve `/voice` oturumunu kapat.
+  Future<void> releaseSeatVoice() async {
+    _desiredMicOn = false;
+    _reconnectSuspended = true;
+    final ds = _remote;
+    final channel = _lastRoomId?.trim();
+    try {
+      _trtc.setRemoteAudioMuted(true);
+    } catch (_) {}
+    try {
+      await _trtc.setMicEnabled(false);
+    } catch (_) {}
+    if (ds != null && channel != null && channel.isNotEmpty) {
+      try {
+        await ds
+            .leaveVoiceSession(channel)
+            .timeout(const Duration(seconds: 4));
+      } catch (_) {}
+    }
+    try {
+      await _trtc.leave().timeout(const Duration(seconds: 3));
+    } catch (_) {}
+    _engine = null;
+    _reconnectSuspended = false;
+  }
+
   Future<void> leave() async {
     _leaveEpoch++;
     _reconnectSuspended = true;

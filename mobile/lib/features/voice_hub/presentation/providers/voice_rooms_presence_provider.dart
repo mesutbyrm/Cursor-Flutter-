@@ -95,9 +95,10 @@ class VoiceRoomsPresenceNotifier extends Notifier<VoiceRoomsPresenceState> {
     _lastMergedRooms = List<VoiceRoomEntity>.from(rooms);
     final activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim();
     final aliases = ref.read(voiceRoomActiveKeyAliasesProvider);
+    final inLiveSession = activeKey != null && activeKey.isNotEmpty;
     final keys = VoiceRoomDiscoverSsePolicy.roomKeysToTrack(
       rooms: rooms,
-      maxRooms: maxTrackedRooms,
+      maxRooms: inLiveSession ? homeTrackedRooms : maxTrackedRooms,
       activeLiveKey: activeKey,
       activeAliases: aliases,
     ).toSet();

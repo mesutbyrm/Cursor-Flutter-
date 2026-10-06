@@ -84,6 +84,10 @@ class SseConnectionHub {
     lease.refCount = 0;
     unawaited(lease.service.disconnect());
     _voiceRooms.remove(id);
+    final rid = lease.diagResourceId;
+    if (rid != null) {
+      CfResourceTracker.markDisposed(rid, reason: 'forceReleaseVoiceRoom');
+    }
   }
 
   int voiceRoomRefCount(String roomId) =>

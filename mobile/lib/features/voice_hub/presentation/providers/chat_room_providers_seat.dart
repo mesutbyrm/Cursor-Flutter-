@@ -277,8 +277,14 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     return null;
   }
 
-  /// Eski otomatik koltuk denemeleri devre dışı (kullanıcı manuel oturur).
-  void schedulePrivilegedSeatAttempts() {}
+  /// Sahip / site admin / oda moderatörü — boş uygun koltuğa otomatik otur.
+  void schedulePrivilegedSeatAttempts() {
+    _autoSeatContextAttempted = null;
+    _autoSeatAttempted = false;
+    _scheduleReactivePrivilegedAutoSeat();
+    unawaited(_evaluateReactivePrivilegedAutoSeat());
+    _maybeReconcileHostSeatIfNeeded();
+  }
 
   bool _isSelfSeated(String userId) {
     for (final p in _presenceCopy()) {
@@ -649,10 +655,10 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
       final selfId = ref.read(authControllerProvider).valueOrNull?.id;
       if (selfId != null && selfId == userId) {
         _lastConfirmedSelfSeatIndex = null;
-        // Koltuktan inen kişinin mikrofonu açık kalmasın (sesi odaya gitmeye
-        // devam ediyordu).
+        // Koltuktan inince TRTC tamamen bırakılır; yalnızca mic kapatmak
+        // yeniden bağlanma / host rolünde kalma ile ses sızıntısına yol açıyordu.
         unawaited(
-          ref.read(voiceRoomAudioCoordinatorProvider).setMicEnabled(false),
+          ref.read(voiceRoomAudioCoordinatorProvider).releaseSeatVoice(),
         );
       }
       await refresh();
