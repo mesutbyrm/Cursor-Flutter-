@@ -1,6 +1,4 @@
-import 'dart:io';
 
-import 'package:canlifal_social/features/live/domain/entities/voice_room_entity.dart';
 import 'package:canlifal_social/features/voice_hub/presentation/sheets/voice_room_background_designs.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -44,8 +42,7 @@ void main() {
     ]) {
       final f = await renderVoiceRoomBgDesignPng(d);
       expect(f.lengthSync(), greaterThan(2000));
-      final copy = File('/tmp/claude-0/bg_${d.id}.png')..writeAsBytesSync(f.readAsBytesSync());
-      out.add(copy.path);
+      out.add(f.path);
     }
     expect(out.length, 4);
   });
