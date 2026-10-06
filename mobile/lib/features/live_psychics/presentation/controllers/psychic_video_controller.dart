@@ -6,6 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:canlifal_social/core/config/env.dart';
 import 'package:canlifal_social/core/diagnostics/cf_diag.dart';
+import 'package:canlifal_social/core/diagnostics/cf_diagnostic_logger.dart';
+import 'package:canlifal_social/core/diagnostics/cf_diagnostic_session_monitor.dart';
+import 'package:canlifal_social/core/diagnostics/cf_resource_tracker.dart';
 import 'package:canlifal_social/core/diagnostics/cf_trace.dart';
 import 'package:canlifal_social/core/network/api_exception.dart';
 import 'package:canlifal_social/core/network/dio_provider.dart';
@@ -177,6 +180,11 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     _roomSse = ref.read(psychicRoomSseServiceProvider);
     _trtcConn.sessionId = session.sessionId;
     _watchNetwork();
+    CfDiagnosticSessionMonitor.transition(
+      type: 'LIVE_FORTUNE',
+      sessionKey: session.sessionId,
+      state: 'CREATE',
+    );
     _bootstrap();
   }
 
@@ -220,6 +228,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   static const _tipOverlayDismissDuration = Duration(seconds: 3);
   DateTime? _lastTipReceivedPopupAt;
   StreamSubscription<bool>? _onlineSub;
+  final _diagTimerResourceIds = <String, String>{};
 
   VoidCallback? _remoteVideoListener;
   VoidCallback? _remoteAudioListener;
@@ -231,6 +240,49 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     if (allowed == null) return;
     PsychicEventLog.phase(from.name, allowed.name, sessionId: session.sessionId);
     state = state.copyWith(phase: allowed);
+    CfDiagnosticSessionMonitor.transition(
+      type: 'LIVE_FORTUNE',
+      sessionKey: session.sessionId,
+      state: _sessionStateForPhase(allowed),
+      metadata: {'from': from.name, 'to': allowed.name},
+    );
+  }
+
+  static String _sessionStateForPhase(PsychicSessionPhase phase) =>
+      switch (phase) {
+        PsychicSessionPhase.joining => 'CONNECTING',
+        PsychicSessionPhase.connected => 'CONNECTED',
+        PsychicSessionPhase.reconnecting => 'CONNECTING',
+        PsychicSessionPhase.ending => 'ENDING',
+        PsychicSessionPhase.ended => 'ENDED',
+        PsychicSessionPhase.error => 'ERROR',
+        _ => 'ACTIVE',
+      };
+
+  Timer _periodic(
+    Duration interval,
+    void Function(Timer timer) onTick, {
+    required String label,
+  }) {
+    if (!CfDiagnosticLogger.active) {
+      return Timer.periodic(interval, onTick);
+    }
+    final tracked = CfResourceTracker.periodic(
+      interval,
+      onTick,
+      module: 'live_fortune',
+      label: label,
+    );
+    _diagTimerResourceIds[label] = tracked.resourceId;
+    return tracked.timer;
+  }
+
+  void _cancelPeriodic(Timer? timer, String label) {
+    timer?.cancel();
+    final rid = _diagTimerResourceIds.remove(label);
+    if (rid != null) {
+      CfResourceTracker.cancelTimer(null, rid);
+    }
   }
 
   void _attachRemoteMediaListeners() {
@@ -594,8 +646,8 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   }
 
   void _startTimers() {
-    _tick?.cancel();
-    _tick = Timer.periodic(const Duration(seconds: 1), (_) {
+    _cancelPeriodic(_tick, 'session_tick');
+    _tick = _periodic(const Duration(seconds: 1), (_) {
       if (_disposed || state.leaving) return;
       if (!state.timerStarted) return;
       final room = state.room;
@@ -617,17 +669,18 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
         remaining: Duration(seconds: secs),
         lowTimeWarningPending: lowTimeWarning,
       );
-    });
+    }, label: 'session_tick');
 
-    _ping?.cancel();
-    _ping = Timer.periodic(const Duration(seconds: 60), (_) => _sendPing());
+    _cancelPeriodic(_ping, 'session_ping');
+    _ping = _periodic(const Duration(seconds: 60), (_) => _sendPing(),
+        label: 'session_ping');
 
     _scheduleRoomPoll();
     _scheduleSignalPoll();
   }
 
   void _scheduleSignalPoll() {
-    _signalPoll?.cancel();
+    _cancelPeriodic(_signalPoll, 'signal_poll');
     if (_disposed) return;
     // Süre başlamadan önce süre-el-sıkışması sinyalleri (request/accept) hızlı
     // ulaşmalı → 2 sn. Süre başladıktan sonra sinyal poll yalnızca media_state
@@ -640,12 +693,25 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
                 ? const Duration(seconds: 10)
                 : const Duration(seconds: 8))
             : const Duration(seconds: 2);
-    _signalPoll = Timer.periodic(interval, (_) {
+    _signalPoll = _periodic(interval, (_) {
       unawaited(_pollRoomSignals());
       if (!state.timerStarted) {
         unawaited(_syncRoomInfo());
       }
-    });
+    }, label: 'signal_poll');
+    if (CfDiagnosticLogger.active) {
+      CfDiagnosticLogger.log(
+        level: CfFileLogLevel.info,
+        category: CfFileLogCategory.polling,
+        message: 'POLLING_START',
+        metadata: {
+          'id': _diagTimerResourceIds['signal_poll'],
+          'screen': 'LiveFortuneSession',
+          'intervalMs': interval.inMilliseconds,
+          'endpoint': 'room_signals',
+        },
+      );
+    }
     unawaited(_pollRoomSignals());
     if (!state.timerStarted) {
       unawaited(_syncRoomInfo());
@@ -653,7 +719,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   }
 
   void _scheduleRoomPoll() {
-    _roomPoll?.cancel();
+    _cancelPeriodic(_roomPoll, 'room_poll');
     if (_disposed) return;
     if (state.timerStarted && state.sseConnected) return;
     final interval = !state.timerStarted
@@ -661,9 +727,22 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
         : state.sseConnected
             ? const Duration(seconds: 20)
             : const Duration(seconds: 3);
-    _roomPoll = Timer.periodic(interval, (_) {
+    _roomPoll = _periodic(interval, (_) {
       unawaited(_syncRoomInfo());
-    });
+    }, label: 'room_poll');
+    if (CfDiagnosticLogger.active) {
+      CfDiagnosticLogger.log(
+        level: CfFileLogLevel.info,
+        category: CfFileLogCategory.polling,
+        message: 'POLLING_START',
+        metadata: {
+          'id': _diagTimerResourceIds['room_poll'],
+          'screen': 'LiveFortuneSession',
+          'intervalMs': interval.inMilliseconds,
+          'endpoint': 'room_info',
+        },
+      );
+    }
     if (!state.timerStarted) {
       unawaited(_syncRoomInfo());
     }
@@ -943,10 +1022,11 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   }
 
   void _startChatPoll() {
-    _chatPoll?.cancel();
+    _cancelPeriodic(_chatPoll, 'chat_poll');
     if (_disposed || state.sseConnected) return;
     const interval = Duration(seconds: 3);
-    _chatPoll = Timer.periodic(interval, (_) => unawaited(_pollChat()));
+    _chatPoll = _periodic(interval, (_) => unawaited(_pollChat()),
+        label: 'chat_poll');
     unawaited(_pollChat());
   }
 
@@ -975,8 +1055,8 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
             _sseAutoRetryTimer?.cancel();
             if (!state.sseConnected || state.sseFailed) {
               state = state.copyWith(sseConnected: true, sseFailed: false);
-              _chatPoll?.cancel();
-              _roomPoll?.cancel();
+              _cancelPeriodic(_chatPoll, 'chat_poll');
+              _cancelPeriodic(_roomPoll, 'room_poll');
               _scheduleSignalPoll();
             }
           },
@@ -1811,14 +1891,19 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   @override
   void dispose() {
     _disposed = true;
+    CfDiagnosticSessionMonitor.transition(
+      type: 'LIVE_FORTUNE',
+      sessionKey: session.sessionId,
+      state: 'ENDED',
+    );
     _trtcConn.markDisposed();
     _stopRemoteVideoWatchdog();
     _detachRemoteMediaListeners();
-    _tick?.cancel();
-    _chatPoll?.cancel();
-    _ping?.cancel();
-    _roomPoll?.cancel();
-    _signalPoll?.cancel();
+    _cancelPeriodic(_tick, 'session_tick');
+    _cancelPeriodic(_chatPoll, 'chat_poll');
+    _cancelPeriodic(_ping, 'session_ping');
+    _cancelPeriodic(_roomPoll, 'room_poll');
+    _cancelPeriodic(_signalPoll, 'signal_poll');
     _sseAutoRetryTimer?.cancel();
     _tipThankYouDismissTimer?.cancel();
     _tipReceivedDismissTimer?.cancel();

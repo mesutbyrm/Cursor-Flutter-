@@ -69,6 +69,15 @@ abstract final class CfResourceTracker {
   static int _created = 0;
   static int _disposed = 0;
 
+  /// Dosya diagnostic logger (cf_diagnostic_logger_install).
+  static void Function(
+    String event,
+    CfResourceKind kind,
+    String id,
+    String module,
+    String label,
+  )? onResourceEvent;
+
   static bool get enabled =>
       kDebugMode ||
       const bool.fromEnvironment('CANLIFAL_DIAGNOSTICS', defaultValue: false);
@@ -100,6 +109,7 @@ abstract final class CfResourceTracker {
         traceId: traceId,
       );
     }
+    onResourceEvent?.call('CREATE', kind, id, module, label);
     return id;
   }
 
@@ -115,6 +125,7 @@ abstract final class CfResourceTracker {
         data: {'resourceId': id, 'module': rec.module},
       );
     }
+    onResourceEvent?.call('CANCEL', rec.kind, id, rec.module, rec.label);
   }
 
   static void markDisposed(String id, {String? reason}) {
@@ -132,6 +143,7 @@ abstract final class CfResourceTracker {
         data: {'resourceId': id, 'module': rec.module},
       );
     }
+    onResourceEvent?.call('DISPOSE', rec.kind, id, rec.module, rec.label);
   }
 
   /// Periyodik zamanlayıcı — dispose/cancel ile eşleştirmek için id döner.

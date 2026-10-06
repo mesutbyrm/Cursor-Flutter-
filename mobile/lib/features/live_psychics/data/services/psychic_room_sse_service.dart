@@ -6,6 +6,8 @@ import 'package:flutter/foundation.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/diagnostics/cf_diag.dart';
+import '../../../../core/diagnostics/cf_diagnostic_logger.dart';
+import '../../../../core/diagnostics/cf_resource_tracker.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/sse/base_sse_service.dart';
 import '../../../../core/network/sse/sse_reconnect_policy.dart';
@@ -38,6 +40,8 @@ class PsychicRoomSseService {
   void Function()? _onFailed;
   var _stopped = false;
   var _reconnectAttempt = 0;
+  String? _diagSseResourceId;
+  var _disposedStream = false;
 
   Future<void> connect({
     required String sessionId,
@@ -107,14 +111,33 @@ class PsychicRoomSseService {
       }
       _reconnectAttempt = 0;
       _lastEventAt = DateTime.now();
+      _disposedStream = false;
+      _diagSseResourceId ??= CfResourceTracker.create(
+        CfResourceKind.sse,
+        module: 'live_fortune',
+        label: 'room_sse:$id',
+      );
       CfDiag.record(CfCategory.sse, 'room SSE connected',
           data: {'sessionId': id});
+      CfDiagnosticLogger.sseEvent(
+        'CONNECTED',
+        metadata: {'connectionId': _diagSseResourceId, 'sessionId': id, 'screen': 'LiveFortuneSession'},
+      );
       _startHeartbeatWatchdog();
       _onConnected?.call();
       final buffer = StringBuffer();
       final chunkDecoder = SseChunkDecoder();
       _bytesSub = stream.listen(
         (chunk) {
+          if (_stopped || _disposedStream) {
+            CfDiagnosticLogger.log(
+              level: CfFileLogLevel.leak,
+              category: CfFileLogCategory.sse,
+              message: 'SSE_AFTER_DISPOSE',
+              metadata: {'sessionId': _sessionId},
+            );
+            return;
+          }
           _lastEventAt = DateTime.now();
           CfDiag.lastRoomSseEventAt = _lastEventAt;
           buffer.write(chunkDecoder.convert(chunk));
@@ -229,6 +252,14 @@ class PsychicRoomSseService {
     _reconnectAttempt++;
     CfDiag.record(CfCategory.sse, 'room SSE reconnect #$_reconnectAttempt',
         level: CfLevel.warn);
+    CfDiagnosticLogger.sseEvent(
+      'RECONNECT',
+      metadata: {
+        'attempt': _reconnectAttempt,
+        'sessionId': _sessionId,
+        'connectionId': _diagSseResourceId,
+      },
+    );
     _reconnectTimer = Timer(
       SseReconnectPolicy.delayForAttempt(_reconnectAttempt),
       () {
@@ -238,6 +269,7 @@ class PsychicRoomSseService {
   }
 
   Future<void> _closeStreamOnly() async {
+    _disposedStream = true;
     _reconnectTimer?.cancel();
     _heartbeatWatchdog?.cancel();
     _heartbeatWatchdog = null;
@@ -271,5 +303,14 @@ class PsychicRoomSseService {
     CfDiag.lastRoomSseEventAt = null;
     _refreshTokens = null;
     await _closeStreamOnly();
+    final rid = _diagSseResourceId;
+    if (rid != null) {
+      CfResourceTracker.markDisposed(rid, reason: 'disconnect');
+      CfDiagnosticLogger.sseEvent(
+        'DISCONNECT',
+        metadata: {'connectionId': rid, 'sessionId': forSessionId ?? _sessionId},
+      );
+      _diagSseResourceId = null;
+    }
   }
 }

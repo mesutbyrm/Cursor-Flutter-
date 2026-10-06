@@ -7,7 +7,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/diagnostics/cf_diag.dart';
+import '../../../../core/diagnostics/cf_diagnostic_export.dart';
+import '../../../../core/diagnostics/cf_diagnostic_logger.dart';
 import '../../../../core/diagnostics/cf_monitors.dart';
+import '../../../../core/diagnostics/cf_resource_tracker.dart';
 import '../../../../core/diagnostics/cf_self_check.dart';
 import '../../../../core/diagnostics/cf_trace.dart';
 import '../../../../core/network/api_endpoints.dart';
@@ -38,18 +41,24 @@ class _CfDiagnosticsPageState extends ConsumerState<CfDiagnosticsPage> {
   void initState() {
     super.initState();
     CfDiag.addListener(_onDiag);
+    CfDiagnosticLogger.fileLoggingEnabled.addListener(_onDiag);
+    CfDiagnosticLogger.revision.addListener(_onDiag);
   }
 
   @override
   void dispose() {
     _cancelled = true;
     CfDiag.removeListener(_onDiag);
+    CfDiagnosticLogger.fileLoggingEnabled.removeListener(_onDiag);
+    CfDiagnosticLogger.revision.removeListener(_onDiag);
     super.dispose();
   }
 
   void _onDiag() {
     if (mounted) setState(() {});
   }
+
+  var _exporting = false;
 
   List<CfCheckSpec> _specs() {
     final container = ProviderScope.containerOf(context, listen: false);
@@ -226,48 +235,149 @@ class _CfDiagnosticsPageState extends ConsumerState<CfDiagnosticsPage> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 6,
+      length: 11,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('CANLIFAL DIAGNOSTICS'),
           bottom: const TabBar(
             isScrollable: true,
             tabs: [
-              Tab(text: 'Diagnostics'),
-              Tab(text: 'Performance'),
-              Tab(text: 'Network'),
-              Tab(text: 'TRTC'),
-              Tab(text: 'SSE'),
+              Tab(text: 'Overview'),
               Tab(text: 'Errors'),
+              Tab(text: 'Network'),
+              Tab(text: 'Timer'),
+              Tab(text: 'Polling'),
+              Tab(text: 'SSE'),
+              Tab(text: 'TRTC'),
+              Tab(text: 'Requests'),
+              Tab(text: 'Freeze'),
+              Tab(text: 'Resources'),
+              Tab(text: 'Self check'),
             ],
           ),
         ),
         body: TabBarView(
           children: [
-            _diagnosticsTab(),
-            _performanceTab(),
+            _overviewTab(),
+            _combinedErrorsTab(),
             _networkTab(),
-            _logTab({CfCategory.trtc}),
+            _fileCategoryTab(CfFileLogCategory.timer),
+            _fileCategoryTab(CfFileLogCategory.polling),
             _logTab({CfCategory.sse}),
-            _errorsTab(),
+            _logTab({CfCategory.trtc}),
+            _fileCategoryTab(CfFileLogCategory.request),
+            _freezeTab(),
+            _resourcesTab(),
+            _diagnosticsTab(),
           ],
         ),
       ),
     );
   }
 
-  Widget _diagnosticsTab() {
+  String _healthStatus() {
+    final snap = CfResourceTracker.snapshot();
+    final bad = snap.activeTimers > 3 ||
+        snap.activePollers > 2 ||
+        snap.activeSse > 1 ||
+        snap.activeTrtc > 1 ||
+        snap.activeRequests > 3 ||
+        CfFreezeWatchdog.freezeCount > 0 ||
+        CfDiagnosticLogger.errors.isNotEmpty;
+    if (bad) return 'CRITICAL';
+    if (snap.activeTimers > 1 ||
+        snap.activePollers > 0 ||
+        CfFrameMonitor.stats.janky > 5) {
+      return 'WARNING';
+    }
+    return 'HEALTHY';
+  }
+
+  Widget _overviewTab() {
+    final snap = CfResourceTracker.snapshot();
+    final lf = CfResourceTracker.snapshot(module: 'live_fortune');
+    final ls = CfResourceTracker.snapshot(module: 'live_stream');
+    final vr = CfResourceTracker.snapshot(module: 'voice_room');
+    final status = _healthStatus();
+    final statusColor = switch (status) {
+      'HEALTHY' => Colors.greenAccent,
+      'WARNING' => Colors.amberAccent,
+      _ => Colors.redAccent,
+    };
+    String row(String label, int n, {int okMax = 1}) =>
+        '$label  $n ${n <= okMax ? '✓' : '🔴'}';
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        Text('STATUS: $status',
+            style: TextStyle(
+                fontWeight: FontWeight.w800, fontSize: 18, color: statusColor)),
+        if (CfDiagnosticLogger.sessionId != null)
+          Text('Session: ${CfDiagnosticLogger.sessionId}',
+              style: const TextStyle(fontSize: 12)),
+        const SizedBox(height: 12),
+        const Text('LIVE FORTUNE', style: TextStyle(fontWeight: FontWeight.w800)),
+        Text(row('Timer', lf.activeTimers, okMax: 2)),
+        Text(row('Polling', lf.activePollers, okMax: 1)),
+        Text(row('SSE', lf.activeSse)),
+        Text(row('TRTC', lf.activeTrtc)),
+        Text(row('Requests', lf.activeRequests, okMax: 2)),
+        const SizedBox(height: 8),
+        const Text('LIVE STREAM', style: TextStyle(fontWeight: FontWeight.w800)),
+        Text(row('Timer', ls.activeTimers, okMax: 2)),
+        Text(row('SSE', ls.activeSse)),
+        Text(row('TRTC', ls.activeTrtc)),
+        const SizedBox(height: 8),
+        const Text('VOICE ROOM', style: TextStyle(fontWeight: FontWeight.w800)),
+        Text(row('Timer', vr.activeTimers, okMax: 2)),
+        Text(row('SSE', vr.activeSse)),
+        Text(row('TRTC', vr.activeTrtc)),
+        const SizedBox(height: 8),
+        Text(
+          'Global · Timer ${snap.activeTimers} · SSE ${snap.activeSse} · '
+          'TRTC ${snap.activeTrtc} · Freeze ${CfFreezeWatchdog.freezeCount}',
+        ),
+        const Divider(height: 24),
+        ValueListenableBuilder<bool>(
+          valueListenable: CfDiagnosticLogger.fileLoggingEnabled,
+          builder: (context, fileOn, _) => SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Dosyaya kaydet (Redmi test)'),
+            subtitle: const Text(
+              'canlifal_diagnostic.log — gerçek cihaz kullanımını kaydeder. '
+              'Mock/integration testleri ayrı kalır.',
+            ),
+            value: fileOn,
+            onChanged: (v) => unawaited(CfDiagnosticLogger.setFileLogging(v)),
+          ),
+        ),
+        FilledButton.icon(
+          onPressed: _exporting
+              ? null
+              : () async {
+                  setState(() => _exporting = true);
+                  final err = await CfDiagnosticExport.exportAndShare();
+                  if (mounted && err != null) {
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(SnackBar(content: Text(err)));
+                  }
+                  if (mounted) setState(() => _exporting = false);
+                },
+          icon: _exporting
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.upload_file_rounded),
+          label: const Text('LOGU DIŞA AKTAR (ZIP)'),
+        ),
+        const SizedBox(height: 8),
         ValueListenableBuilder<bool>(
           valueListenable: CfDiag.verbose,
           builder: (context, on, _) => SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Ayrıntılı izleme'),
-            subtitle: const Text(
-              'Kare süresi ve UI donma izleyicileri. Kapalıyken ek yük yok.',
-            ),
+            title: const Text('Ayrıntılı izleme (kare / donma)'),
             value: on,
             onChanged: (v) {
               unawaited(CfDiag.setVerbose(v));
@@ -275,7 +385,124 @@ class _CfDiagnosticsPageState extends ConsumerState<CfDiagnosticsPage> {
             },
           ),
         ),
-        const SizedBox(height: 8),
+      ],
+    );
+  }
+
+  Widget _combinedErrorsTab() {
+    final fileErrs = CfDiagnosticLogger.errors.reversed.take(40).toList();
+    final diagErrs = CfDiag.entries
+        .where((e) => e.level == CfLevel.error)
+        .toList()
+        .reversed
+        .take(40)
+        .toList();
+    if (fileErrs.isEmpty && diagErrs.isEmpty) {
+      return const Center(child: Text('Hata kaydı yok.'));
+    }
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        if (fileErrs.isNotEmpty) ...[
+          const Text('Dosya logger', style: TextStyle(fontWeight: FontWeight.w800)),
+          for (final e in fileErrs)
+            Text(
+              '${e['at']} [${e['level']}] ${e['message']}',
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
+            ),
+          const Divider(height: 24),
+        ],
+        const Text('CfDiag', style: TextStyle(fontWeight: FontWeight.w800)),
+        for (final e in diagErrs) _entryText(e),
+      ],
+    );
+  }
+
+  Widget _fileCategoryTab(CfFileLogCategory cat) {
+    final events = CfDiagnosticLogger.recentEvents
+        .where((e) => e['category'] == cat.name)
+        .toList()
+        .reversed
+        .toList();
+    final diag = CfDiag.byCategories(_cfCategoriesFor(cat)).reversed.take(30);
+    if (events.isEmpty && diag.isEmpty) {
+      return Center(child: Text('${cat.name} kaydı yok.'));
+    }
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        if (events.isNotEmpty) ...[
+          const Text('Dosya (son olaylar)', style: TextStyle(fontWeight: FontWeight.w800)),
+          for (final e in events)
+            Text('${e['at']} [${e['level']}] ${e['message']}',
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 11)),
+          const Divider(height: 16),
+        ],
+        for (final e in diag) _entryText(e),
+      ],
+    );
+  }
+
+  Set<CfCategory> _cfCategoriesFor(CfFileLogCategory cat) => switch (cat) {
+        CfFileLogCategory.timer || CfFileLogCategory.polling => {CfCategory.ui},
+        CfFileLogCategory.request => {CfCategory.network},
+        CfFileLogCategory.sse => {CfCategory.sse},
+        CfFileLogCategory.trtc => {CfCategory.trtc},
+        _ => {CfCategory.unknown},
+      };
+
+  Widget _freezeTab() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Text(
+          'Donma: ${CfFreezeWatchdog.freezeCount} · en uzun: '
+          '${CfFreezeWatchdog.worstFreezeMs} ms\n'
+          'Jank: ${CfFrameMonitor.stats.janky} · en kötü kare: '
+          '${CfFrameMonitor.stats.worstMs} ms',
+        ),
+        const Divider(height: 16),
+        ...CfDiagnosticLogger.recentEvents
+            .where((e) => e['level'] == 'freeze' || e['level'] == 'warning')
+            .map(
+              (e) => Text('${e['at']} ${e['message']}',
+                  style: const TextStyle(fontFamily: 'monospace', fontSize: 11)),
+            ),
+        const Divider(height: 16),
+        for (final e
+            in CfDiag.byCategories({CfCategory.ui}).reversed.take(25))
+          _entryText(e),
+      ],
+    );
+  }
+
+  Widget _resourcesTab() {
+    final snap = CfResourceTracker.snapshot();
+    final records = snap.activeRecords;
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Text(
+          'timers=${snap.activeTimers} pollers=${snap.activePollers} '
+          'sse=${snap.activeSse} trtc=${snap.activeTrtc} '
+          'requests=${snap.activeRequests} subscriptions=${snap.activeSubscriptions}',
+          style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+        ),
+        const Divider(height: 16),
+        if (records.isEmpty) const Text('Aktif kaynak yok.'),
+        for (final r in records)
+          Text(
+            '${r.kind.name} ${r.id} · ${r.module} · ${r.label}',
+            style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
+          ),
+      ],
+    );
+  }
+
+  Widget _diagnosticsTab() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
         FilledButton.icon(
           onPressed: _running ? null : _run,
           icon: _running
@@ -333,34 +560,6 @@ class _CfDiagnosticsPageState extends ConsumerState<CfDiagnosticsPage> {
     );
   }
 
-  Widget _performanceTab() {
-    final stats = CfFrameMonitor.stats;
-    final traces = CfTrace.recent;
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Text(
-          'Kare: ${stats.frames} · jank: ${stats.janky} · en kötü: ${stats.worstMs} ms\n'
-          'Donma: ${CfFreezeWatchdog.freezeCount} · en uzun: ${CfFreezeWatchdog.worstFreezeMs} ms\n'
-          'İzleme: ${CfDiag.verbose.value ? 'açık' : 'kapalı'}',
-        ),
-        const Divider(height: 24),
-        const Text('Son işlemler', style: TextStyle(fontWeight: FontWeight.w800)),
-        const SizedBox(height: 8),
-        if (traces.isEmpty) const Text('Henüz kayıt yok.'),
-        for (final t in traces.take(15))
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Text(t.format(), style: const TextStyle(fontFamily: 'monospace', fontSize: 12)),
-          ),
-        const Divider(height: 24),
-        const Text('Uyarılar', style: TextStyle(fontWeight: FontWeight.w800)),
-        for (final e in CfDiag.byCategories({CfCategory.ui}).reversed.take(20))
-          Text('${_time(e.at)} ${e.message}', style: const TextStyle(fontSize: 12)),
-      ],
-    );
-  }
-
   Widget _networkTab() {
     final items = AppPerfMetrics.slowest(limit: 40, group: 'api');
     return ListView(
@@ -382,20 +581,6 @@ class _CfDiagnosticsPageState extends ConsumerState<CfDiagnosticsPage> {
   Widget _logTab(Set<CfCategory> cats) {
     final list = CfDiag.byCategories(cats).reversed.toList();
     if (list.isEmpty) return const Center(child: Text('Kayıt yok.'));
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: list.length,
-      itemBuilder: (_, i) => _entryText(list[i]),
-    );
-  }
-
-  Widget _errorsTab() {
-    final list = CfDiag.entries
-        .where((e) => e.level == CfLevel.error)
-        .toList()
-        .reversed
-        .toList();
-    if (list.isEmpty) return const Center(child: Text('Hata kaydı yok.'));
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: list.length,

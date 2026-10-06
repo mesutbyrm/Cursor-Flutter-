@@ -23,6 +23,7 @@ import 'json_content_type_guard_interceptor.dart';
 import 'payment_request_interceptor.dart';
 import 'token_storage.dart';
 import 'voice_room_api_log_interceptor.dart';
+import 'cf_diagnostic_dio_interceptor.dart';
 
 bool _isPublicAuthPath(String path) {
   return path == ApiEndpoints.authMobileLogin ||
@@ -132,6 +133,7 @@ Dio _createApiDio(Ref ref, {required Dio tokenRefreshDio}) {
     ),
   );
 
+  dio.interceptors.add(CfDiagnosticDioInterceptor());
   dio.interceptors.add(GatewayFallbackInterceptor(dioGetter: () => dio));
   dio.interceptors.add(ApiCacheInterceptor());
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../diagnostics/cf_diag.dart';
+import '../diagnostics/cf_diagnostic_logger.dart';
 import '../performance/app_perf_metrics.dart';
 import 'app_startup_log.dart';
 import 'root_overlay_purge.dart';
@@ -10,7 +11,13 @@ class StartupRouteObserver extends NavigatorObserver {
   DateTime? _lastNavAt;
 
   void _recordTransition(String? from, String? to) {
-    if (to != null) CfDiag.screen = to;
+    if (to != null) {
+      CfDiag.screen = to;
+      CfDiagnosticLogger.screenLifecycle('ENTER', route: to);
+    }
+    if (from != null && to != null && from != to) {
+      CfDiagnosticLogger.screenLifecycle('EXIT', route: from);
+    }
     if (from == null || to == null) {
       _lastNavAt = DateTime.now();
       return;

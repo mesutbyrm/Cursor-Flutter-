@@ -3,6 +3,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 
 import 'cf_diag.dart';
+import 'cf_diagnostic_logger.dart';
 
 /// Kare istatistiği — saf mantık (test edilebilir).
 class CfFrameStats {
@@ -62,6 +63,17 @@ abstract final class CfFrameMonitor {
         rasterMs: t.rasterDuration.inMilliseconds,
       );
       if (jank == null) continue;
+      CfFrameMonitorRef.janky = stats.janky;
+      CfFrameMonitorRef.worstMs = stats.worstMs;
+      if (jank >= 1000) {
+        CfDiagnosticLogger.freezeDetected(Duration(milliseconds: jank));
+      } else if (jank >= 100) {
+        CfDiagnosticLogger.log(
+          level: CfFileLogLevel.warning,
+          category: CfFileLogCategory.ui,
+          message: 'SEVERE_JANK frame=${jank}ms',
+        );
+      }
       final now = DateTime.now();
       // En fazla saniyede bir uyarı — log baskısı yaratmaz.
       if (_lastLog != null &&
@@ -129,6 +141,7 @@ abstract final class CfFreezeWatchdog {
       if (f == null) return;
       freezeCount++;
       if (f.inMilliseconds > worstFreezeMs) worstFreezeMs = f.inMilliseconds;
+      CfDiagnosticLogger.freezeDetected(f);
       CfDiag.record(
         CfCategory.ui,
         'UI FREEZE DETECTED duration=${f.inMilliseconds}ms',

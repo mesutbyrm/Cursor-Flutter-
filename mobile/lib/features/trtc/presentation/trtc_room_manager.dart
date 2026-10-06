@@ -12,6 +12,7 @@ import 'package:tencent_rtc_sdk/trtc_cloud_video_view.dart';
 import 'package:tencent_rtc_sdk/tx_audio_effect_manager.dart';
 import 'package:tencent_rtc_sdk/tx_device_manager.dart';
 
+import '../../../core/diagnostics/cf_diagnostic_logger.dart';
 import '../../../core/diagnostics/cf_resource_tracker.dart';
 import '../../voice_hub/data/services/voice_room_debug_log.dart';
 import '../domain/entities/trtc_credentials.dart';
@@ -101,11 +102,14 @@ class TrtcRoomManager {
   }
 
   static void _logTrtc(String event, [Map<String, Object?> fields = const {}]) {
-    if (!kDebugMode) return;
     final safe = Map<String, Object?>.from(fields)
       ..remove('userSig')
       ..remove('token')
       ..remove('accessToken');
+    if (CfDiagnosticLogger.active) {
+      CfDiagnosticLogger.trtcEvent(event, metadata: safe);
+    }
+    if (!kDebugMode) return;
     debugPrint('[TRTC] $event $safe');
   }
 

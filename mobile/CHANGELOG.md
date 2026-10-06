@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.729+782 (2026-10-06) — Gerçek cihaz Diagnostic Logger (dosya + ZIP)
+
+- **CfDiagnosticLogger:** `diagnostics/session_*/canlifal_diagnostic.log`, `summary.json`, `errors.json`, `DIAG-*` oturum kimliği; son 100 aksiyon + kritik an snapshot
+- **İzleme:** Dio istekleri, timer/polling (canlı fal), oda SSE/TRTC olayları, oturum durumu, donma/jank (mevcut CfMonitors üzerine)
+- **Diagnostics ekranı:** Overview / Errors / Network / Timer / Polling / SSE / TRTC / Requests / Freeze / Resources sekmeleri; «Dosyaya kaydet» + **LOGU DIŞA AKTAR (ZIP)** (`AI_DEBUG_SUMMARY.md` dahil)
+- Mevcut Performance Monitor, Freeze Watchdog, ResourceTracker, CfDiag **korundu** — silinmedi
+
 ## 1.0.728+781 (2026-10-06) — Gerçek cihaz diagnostic harness (4 modül)
 
 - **CfResourceTracker** + kök neden raporu; SSE/TRTC hook

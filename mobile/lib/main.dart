@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'app/app.dart';
 import 'core/diagnostics/cf_diag.dart';
+import 'core/diagnostics/cf_diagnostic_logger.dart';
 import 'core/bootstrap/app_deferred_bootstrap.dart';
 import 'core/bootstrap/app_session_reset.dart';
 import 'core/bootstrap/app_startup_log.dart';
@@ -103,6 +104,7 @@ Future<void> main() async {
     (error, stack) {
       VoiceRoomDebugLog.recordZoneError(error, stack);
       CfDiag.recordError(error, stack, fatal: true);
+      CfDiagnosticLogger.exception(error, stack);
     },
   );
 }
