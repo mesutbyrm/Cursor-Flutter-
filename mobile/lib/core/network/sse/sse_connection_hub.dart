@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../../diagnostics/cf_resource_tracker.dart';
 import '../../../features/live/data/datasources/live_gifts_remote_datasource.dart';
 import '../../../features/voice_hub/data/services/chat_room_sse_service.dart';
 import '../../../features/live/data/services/video_stream_sse_service.dart';
@@ -40,7 +41,18 @@ class SseConnectionHub {
   void attachVoiceRoom(String roomId) {
     final id = roomId.trim();
     if (id.isEmpty) return;
-    _voiceRooms.putIfAbsent(id, () => _VoiceRoomLease(ChatRoomSseService())).refCount++;
+    final lease = _voiceRooms.putIfAbsent(
+      id,
+      () => _VoiceRoomLease(ChatRoomSseService()),
+    );
+    if (lease.diagResourceId == null) {
+      lease.diagResourceId = CfResourceTracker.create(
+        CfResourceKind.sse,
+        module: 'voice_room',
+        label: 'voice_sse:$id',
+      );
+    }
+    lease.refCount++;
   }
 
   /// Abone sayacı sıfırlanınca bağlantıyı kapatır (başka sayfa hâlâ dinliyorsa açık kalır).
@@ -52,6 +64,10 @@ class SseConnectionHub {
     if (lease.refCount <= 0) {
       unawaited(lease.service.disconnect());
       _voiceRooms.remove(id);
+      final rid = lease.diagResourceId;
+      if (rid != null) {
+        CfResourceTracker.markDisposed(rid, reason: 'releaseVoiceRoom');
+      }
     }
   }
 
@@ -177,6 +193,7 @@ class _VoiceRoomLease {
 
   final ChatRoomSseService service;
   int refCount = 0;
+  String? diagResourceId;
 }
 
 class _VideoStreamLease {

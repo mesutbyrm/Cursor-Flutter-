@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.728+781 (2026-10-06) — Gerçek cihaz diagnostic harness (4 modül)
+
+- **CfResourceTracker** + kök neden raporu; SSE/TRTC hook
+- **Senaryolar:** `lib/core/diagnostics/scenarios/`
+- **Integration test:** `integration_test/*_real_device_test.dart` (cihaz yoksa TEST NOT RUN)
+- **Script:** `scripts/run-canlifal-diagnostics.sh` → kök `CANLIFAL_*.md`
+
 ## 1.0.727+780 (2026-10-06) — Canlı falcı donma önlemleri + Canlifal Diagnostics
 
 - **Canlı falcı isteği:** tüm çağıranlarda tek rezervasyon kapısı (çift dokunuş/başka falcı ikinci istek atmaz); ekran kapanınca `ref` StateError'u giderildi; zaman aşımı mesajı net

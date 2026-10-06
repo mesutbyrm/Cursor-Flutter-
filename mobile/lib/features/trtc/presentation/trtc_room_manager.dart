@@ -12,6 +12,7 @@ import 'package:tencent_rtc_sdk/trtc_cloud_video_view.dart';
 import 'package:tencent_rtc_sdk/tx_audio_effect_manager.dart';
 import 'package:tencent_rtc_sdk/tx_device_manager.dart';
 
+import '../../../core/diagnostics/cf_resource_tracker.dart';
 import '../../voice_hub/data/services/voice_room_debug_log.dart';
 import '../domain/entities/trtc_credentials.dart';
 import '../domain/voice_audio_settings.dart';
@@ -39,6 +40,7 @@ class TrtcRoomManager {
   bool _audioOnly = false;
   bool _notifiersDisposed = false;
   String? _localUserId;
+  String? _diagTrtcResourceId;
 
   String? remoteAnchorUserId;
   final ValueNotifier<String?> remoteAnchorUserIdNotifier =
@@ -411,6 +413,11 @@ class TrtcRoomManager {
 
     await VoiceAudioSettingsStore.ensureLoaded();
     _cloud!.enterRoom(params, scene);
+    _diagTrtcResourceId ??= CfResourceTracker.create(
+      CfResourceKind.trtc,
+      module: 'trtc',
+      label: 'room:$roomId',
+    );
 
     final enterResult = await _enterRoomCompleter!.future.timeout(
       const Duration(seconds: 20),
@@ -849,6 +856,11 @@ class TrtcRoomManager {
     _cameraOn = false;
     if (_activeSession == this) {
       _activeSession = null;
+    }
+    final rid = _diagTrtcResourceId;
+    if (rid != null) {
+      CfResourceTracker.markDisposed(rid, reason: 'leave');
+      _diagTrtcResourceId = null;
     }
   }
 
