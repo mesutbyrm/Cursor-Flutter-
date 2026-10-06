@@ -14,18 +14,21 @@ bool voiceRoomAcceptsAttachedSseEvent({
   if (attached.isEmpty) return false;
 
   final eventKey = eventRoomKey.trim();
-  if (eventKey.isNotEmpty && attached != eventKey) {
-    return false;
-  }
-
   final canonical = (presenceApiKey ?? activeLiveKey ?? attached).trim();
-  if (canonical.isEmpty) return attached == eventKey || eventKey.isEmpty;
-
   if (eventKey.isEmpty) return true;
+  if (canonical.isEmpty) {
+    return attached == eventKey ||
+        roomEventMatchesActiveRoom(
+          {'roomId': eventKey},
+          attached,
+          alternateRoomId: alternateRoomId,
+        );
+  }
 
   return roomEventMatchesActiveRoom(
     {'roomId': eventKey},
     canonical,
     alternateRoomId: alternateRoomId,
+    extraAlternateRoomIds: [attached],
   );
 }

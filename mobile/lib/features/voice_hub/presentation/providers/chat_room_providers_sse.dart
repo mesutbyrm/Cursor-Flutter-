@@ -158,11 +158,7 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
           },
           onGift: (payload) {
             if (!_sse._isSseEventForAttachedRoom(roomKey)) return;
-            if (!roomEventMatchesActiveRoom(
-              payload,
-              _sse._presenceApiKey,
-              alternateRoomId: _sse._musicAlternateKey,
-            )) {
+            if (!_sse._roomEventMatchesActiveRoomPayload(payload)) {
               return;
             }
             dispatchGiftSsePayloadRef(
