@@ -4,17 +4,18 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.720+773` |
-| Tarih (UTC) | 2026-10-06 00:07 |
-| Commit | [`9002fead81af6f409238c4a3837680067383d556`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/9002fead81af6f409238c4a3837680067383d556) |
-| İş akışı | [Run 37390387283](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37390387283) |
+| Sürüm | `1.0.722+775` |
+| Tarih (UTC) | 2026-10-06 01:02 |
+| Commit | [`b4215f567d930a551ea07fe3fc1f5876e1488a1c`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/b4215f567d930a551ea07fe3fc1f5876e1488a1c) |
+| İş akışı | [Run 37395279641](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37395279641) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.720+773 (2026-10-05) — Realtime parity CI fix (gift authority import)
+## 1.0.723+776 (2026-10-06) — Realtime Faz 5: lifecycle integration testleri
 
-- **Derleme:** `voice_gift_send_authority.dart` `LiveGiftEvent` import yolu düzeltildi (analyze ERROR)
+- **Test:** JWT refresh single-flight; leave pipeline step sözleşmesi; keşif SSE + hub lease; hediye dedupe; RoomSessionManager host delegate
+- **Sözleşme:** `voice_room_leave_pipeline_spec.dart` (Spec 14–17)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
