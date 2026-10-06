@@ -24,6 +24,7 @@ void main() {
 
       final hub = SseConnectionHub();
       hub.attachVoiceRoom(active);
+      hub.attachVoiceRoom(active);
       hub.attachVoiceRoom('room-other');
       expect(hub.voiceRoomRefCount(active), 2);
 
