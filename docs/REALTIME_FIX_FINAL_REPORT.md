@@ -65,6 +65,14 @@
 - Keşif SSE: aktif oda + alias seti keşif `connectedRooms` dışında; hub `releaseHub: false` ile oturum korunur.
 - SSE olay tipi contract: Spec 7–10 (`connected`, join/leave, music/DJ).
 
+## Faz 5 (Test) — 2026-10-06
+
+- Auth JWT refresh **single-flight** (Spec 1).
+- Leave pipeline **step sözleşmesi** (Spec 14–17): `voice_room_leave_pipeline_spec.dart`.
+- Hub + keşif + SSE guard entegrasyon testleri (Spec 7–10).
+- Hediye realtime **dedupe** (id + fingerprint).
+- `RoomSessionManager.delegateLifecycleToHost` doğrulama (Faz 6 öncesi).
+
 ## Production backend beklentileri
 
 - `join-room` voice yanıtında eksik alanlar için fallback stratejisi canlı doğrulama.

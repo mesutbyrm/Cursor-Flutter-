@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.723+776 (2026-10-06) — Realtime Faz 5: lifecycle integration testleri
+
+- **Test:** JWT refresh single-flight; leave pipeline step sözleşmesi; keşif SSE + hub lease; hediye dedupe; RoomSessionManager host delegate
+- **Sözleşme:** `voice_room_leave_pipeline_spec.dart` (Spec 14–17)
+
 ## 1.0.722+775 (2026-10-06) — Realtime Faz 4: keşif SSE import düzeltmesi
 
 - **Derleme:** `voice_room_discover_sse_policy` `VoiceRoomEntity` import yolu

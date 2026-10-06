@@ -384,5 +384,11 @@ Canlı probe / OpenAPI diff: `scripts/backend-route-parity.py`, `docs/BACKEND_FL
 | `main` merge (1.0.720+773) | ✅ |
 | Keşif SSE — aktif oda hariç (P2) | ✅ `voice_room_discover_sse_policy.dart` |
 | Spec 7–10 SSE type contract | ✅ lifecycle contract test |
+| Spec 1 auth refresh single-flight | ✅ `auth_token_refresh_coordinator_single_flight_test` |
+| Spec 14–17 leave pipeline spec | ✅ `voice_room_leave_pipeline_spec.dart` |
+| Spec 7–10 hub+discover integration | ✅ `voice_room_sse_hub_discover_integration_test` |
+| Gift SSE/poll dedupe | ✅ `voice_room_gift_realtime_dedupe_test` |
+| RoomSessionManager delegate host | ✅ integration test |
+| E2E TRTC/background (Spec 20) | ⏳ Faz 6 |
 
-_FAZ 2–3 kodu `main`'de; FAZ 4 P2 keşif SSE (2026-10-06)._
+_FAZ 5 test paketi genişletildi (2026-10-06); Faz 6 E2E + duplicate cleanup kaldı._

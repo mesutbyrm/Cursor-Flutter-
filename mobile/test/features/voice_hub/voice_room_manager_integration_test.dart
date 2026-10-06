@@ -324,4 +324,37 @@ void main() {
       expect(manager.state, isNotNull);
     });
   });
+
+  group('RoomSessionManager delegateLifecycleToHost (Faz 6 prep)', () {
+    test('host-delegated manager skips API join/heartbeat', () async {
+      var joinCalls = 0;
+      var heartbeatStarted = false;
+      final manager = RoomSessionManager(
+        roomId: 'room-delegate',
+        userId: 'user-1',
+        delegateLifecycleToHost: true,
+        onJoinPresence: () async {
+          joinCalls++;
+        },
+        onLeavePresence: () async {},
+        onHeartbeat: () async {
+          heartbeatStarted = true;
+        },
+      );
+      addTearDown(manager.dispose);
+
+      await manager.join(onError: (_) {});
+      expect(joinCalls, 0);
+      expect(manager.state, RoomSessionState.idle);
+
+      manager.syncHostJoined();
+      expect(manager.state, RoomSessionState.joined);
+
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(heartbeatStarted, isFalse);
+
+      await manager.leave(onError: (_) {});
+      expect(manager.state, RoomSessionState.idle);
+    });
+  });
 }
