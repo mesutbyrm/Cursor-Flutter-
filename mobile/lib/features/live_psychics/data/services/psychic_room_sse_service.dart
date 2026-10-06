@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../../../core/config/env.dart';
+import '../../../../core/diagnostics/cf_diag.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/sse/base_sse_service.dart';
 import '../../../../core/network/sse/sse_reconnect_policy.dart';
@@ -106,6 +107,8 @@ class PsychicRoomSseService {
       }
       _reconnectAttempt = 0;
       _lastEventAt = DateTime.now();
+      CfDiag.record(CfCategory.sse, 'room SSE connected',
+          data: {'sessionId': id});
       _startHeartbeatWatchdog();
       _onConnected?.call();
       final buffer = StringBuffer();
@@ -113,6 +116,7 @@ class PsychicRoomSseService {
       _bytesSub = stream.listen(
         (chunk) {
           _lastEventAt = DateTime.now();
+          CfDiag.lastRoomSseEventAt = _lastEventAt;
           buffer.write(chunkDecoder.convert(chunk));
           _drain(buffer);
         },
@@ -121,6 +125,10 @@ class PsychicRoomSseService {
         cancelOnError: false,
       );
     } on DioException catch (e) {
+      // Bilerek iptal edilen (yeni bağlantı açılırken kapatılan) istek hata
+      // değildir; ek bir yeniden bağlanma döngüsü başlatmasın.
+      if (CancelToken.isCancel(e)) return;
+      CfDiag.recordError(e, null, category: CfCategory.sse);
       if (kDebugMode) debugPrint('PsychicRoomSse: $e');
       if (e.response?.statusCode == 401 && _refreshTokens != null) {
         final ok = await _refreshTokens!();
@@ -199,6 +207,8 @@ class PsychicRoomSseService {
         if (kDebugMode) {
           debugPrint('PsychicRoomSse: heartbeat timeout — reconnecting');
         }
+        CfDiag.record(CfCategory.sse, 'room SSE heartbeat timeout',
+            level: CfLevel.warn);
         timer.cancel();
         _heartbeatWatchdog = null;
         _scheduleReconnect();
@@ -217,6 +227,8 @@ class PsychicRoomSseService {
     }
     _reconnectTimer?.cancel();
     _reconnectAttempt++;
+    CfDiag.record(CfCategory.sse, 'room SSE reconnect #$_reconnectAttempt',
+        level: CfLevel.warn);
     _reconnectTimer = Timer(
       SseReconnectPolicy.delayForAttempt(_reconnectAttempt),
       () {
@@ -234,8 +246,29 @@ class PsychicRoomSseService {
     _dio?.close(force: true);
   }
 
-  Future<void> disconnect() async {
+  /// Eski bir seansın kapatma isteği mi (servis artık başka seansa bağlı)?
+  @visibleForTesting
+  static bool isStaleDisconnect({
+    required String? activeSessionId,
+    required String? requested,
+  }) =>
+      requested != null &&
+      activeSessionId != null &&
+      activeSessionId != requested.trim();
+
+  /// [forSessionId] verilirse ve servis o sırada BAŞKA bir seansa bağlıysa
+  /// hiçbir şey yapmaz. Servis uygulama genelinde tek örnektir; eski seansın
+  /// geç gelen `disconnect()` çağrısı yeni seansın bağlantısını kapatıp
+  /// geri çağrılarını silmesin diye.
+  Future<void> disconnect({String? forSessionId}) async {
+    if (isStaleDisconnect(activeSessionId: _sessionId, requested: forSessionId)) {
+      CfDiag.record(CfCategory.sse,
+          'stale disconnect ignored (active session differs)',
+          level: CfLevel.warn);
+      return;
+    }
     _stopped = true;
+    CfDiag.lastRoomSseEventAt = null;
     _refreshTokens = null;
     await _closeStreamOnly();
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -88,12 +89,17 @@ class ProfileAboutPage extends ConsumerWidget {
                 ],
               ),
               SizedBox(height: 12),
-              Text(
-                'Sürüm 1.0 · © CanlıFal',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: context.colors.onSurfaceMuted.withValues(alpha: 0.8),
+              // İç kullanım: uzun basınca Canlifal Diagnostics açılır.
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onLongPress: () => context.push('/settings/diagnostics'),
+                child: Text(
+                  'Sürüm 1.0 · © CanlıFal',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: context.colors.onSurfaceMuted.withValues(alpha: 0.8),
+                  ),
                 ),
               ),
             ],

@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'app/app.dart';
+import 'core/diagnostics/cf_diag.dart';
 import 'core/bootstrap/app_deferred_bootstrap.dart';
 import 'core/bootstrap/app_session_reset.dart';
 import 'core/bootstrap/app_startup_log.dart';
@@ -99,6 +100,9 @@ Future<void> main() async {
       scheduleDeferredAppBootstrap();
       unawaited(runDeferredStorageInit());
     },
-    (error, stack) => VoiceRoomDebugLog.recordZoneError(error, stack),
+    (error, stack) {
+      VoiceRoomDebugLog.recordZoneError(error, stack);
+      CfDiag.recordError(error, stack, fatal: true);
+    },
   );
 }

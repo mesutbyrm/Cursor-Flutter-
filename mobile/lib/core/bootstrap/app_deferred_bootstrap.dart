@@ -5,6 +5,8 @@ import 'package:flutter/scheduler.dart';
 
 import '../../features/fortune/data/services/rewarded_ad_service.dart';
 import '../crash/crash_reporting_bootstrap.dart';
+import '../diagnostics/cf_diag.dart';
+import '../diagnostics/cf_monitors.dart';
 import '../firebase/firebase_bootstrap.dart';
 import '../network/api.dart';
 import '../onesignal/onesignal_bootstrap.dart';
@@ -20,6 +22,9 @@ void scheduleDeferredAppBootstrap() {
 
 Future<void> _run() async {
   await Future<void>.delayed(StartupPerf.deferredSdkDelay);
+  // Kare/donma izleyicileri yalnızca debug veya tanılama ekranından açıldığında.
+  await CfDiag.loadPrefs();
+  CfMonitors.init();
   unawaited(_probeApiHealth());
   await _initPushAndCrashReporting();
   await FirebaseBootstrap.runDeferredTasks();
