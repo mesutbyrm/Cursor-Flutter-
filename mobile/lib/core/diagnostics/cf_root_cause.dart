@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import 'cf_resource_tracker.dart';
 
 enum CfBugSeverity { low, medium, high, critical }

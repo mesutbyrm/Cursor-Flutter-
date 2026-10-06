@@ -114,12 +114,12 @@ class CfDiagnosticReport {
       b.writeln();
     }
     final snap = CfResourceTracker.snapshot();
-    b.writeln('## Resource snapshot (end)')
-      ..writeln('- activeTimers: ${snap.activeTimers}')
-      ..writeln('- activePollers: ${snap.activePollers}')
-      ..writeln('- activeSse: ${snap.activeSse}')
-      ..writeln('- activeTrtc: ${snap.activeTrtc}')
-      ..writeln('- activeRequests: ${snap.activeRequests}');
+    b.writeln('## Resource snapshot (end)');
+    b.writeln('- activeTimers: ${snap.activeTimers}');
+    b.writeln('- activePollers: ${snap.activePollers}');
+    b.writeln('- activeSse: ${snap.activeSse}');
+    b.writeln('- activeTrtc: ${snap.activeTrtc}');
+    b.writeln('- activeRequests: ${snap.activeRequests}');
     return b.toString();
   }
 
