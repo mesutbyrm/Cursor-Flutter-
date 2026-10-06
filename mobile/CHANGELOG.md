@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.730+783 (2026-10-07) — Sesli oda: koltuk ses sızıntısı + admin otomatik koltuk
+
+- **Koltuktan inince** TRTC + `/voice` oturumu tam kapatılır (`releaseSeatVoice`) — karşı tarafa ses gitmesi / yeniden bağlanma sızıntısı
+- **Admin/sahip otomatik koltuk** yeniden etkin (`schedulePrivilegedSeatAttempts` boş stub kaldırıldı)
+- **Keşif SSE:** canlı oda oturumundayken eşzamanlı izlenen oda sayısı 6→4 (Redmi yük azaltma)
+- **SSE hub:** `forceReleaseVoiceRoom` diagnostic kaynağını dispose eder
+
 ## 1.0.729+782 (2026-10-06) — Gerçek cihaz Diagnostic Logger (dosya + ZIP)
 
 - **CfDiagnosticLogger:** `diagnostics/session_*/canlifal_diagnostic.log`, `summary.json`, `errors.json`, `DIAG-*` oturum kimliği; son 100 aksiyon + kritik an snapshot
