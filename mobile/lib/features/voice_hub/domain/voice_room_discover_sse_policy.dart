@@ -1,4 +1,4 @@
-import '../../../live/domain/entities/voice_room_entity.dart';
+import '../../live/domain/entities/voice_room_entity.dart';
 
 /// Keşif listesi SSE — aktif oda [VoiceRoomLiveController] tarafından dinlenir;
 /// çift abone ve sayaç yarışını önlemek için keşif bu odayı izlemez.
