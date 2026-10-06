@@ -4,19 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.724+777` |
-| Tarih (UTC) | 2026-10-06 01:32 |
-| Commit | [`59335ea1fdc90a91a907c11179d0a43d3680dd44`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/59335ea1fdc90a91a907c11179d0a43d3680dd44) |
-| İş akışı | [Run 37397879611](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37397879611) |
+| Sürüm | `1.0.726+779` |
+| Tarih (UTC) | 2026-10-06 13:26 |
+| Commit | [`9f0072cac7dbfb8b491e9ffaf3ee7db0b83e6b96`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/9f0072cac7dbfb8b491e9ffaf3ee7db0b83e6b96) |
+| İş akışı | [Run 37467895320](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37467895320) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.724+777 (2026-10-06) — Realtime Faz 6: arka plan Spec 20 + final rapor
+## 1.0.725+778 (2026-10-06) — Psychic P0 FAIL hotfix: falcı donma + sesli oda hayalet/PK hediye
 
-- **Spec 20:** `VoiceRoomBackgroundRecoverySpec` (45 sn arka plan leave, SSE resume debounce 450 ms); lifecycle host + SSE hub hizalı
-- **Doküman:** `REALTIME_ROOM_SESSION_OWNERSHIP.md`, `REALTIME_FIX_FINAL_REPORT.md` (FINAL)
-- **Test:** `sse_hub_lifecycle_binding_test`, `voice_room_background_recovery_spec_test`
+- **Canlı falcı:** bitmiş seans diskten açılmadan sunucu durumu doğrulanır; `_syncRoomInfo` terminal seansı TRTC öncesi kapatır; uygulama ön plana dönünce oda/sinyal yenilenir
+- **Sesli keşif:** boş odada hayalet «1 kişi» — keşif hub `countFor` ile hizalı
+- **Odadan çıkış:** ses hemen kesilir (leave adım 1 erken TRTC/audio)
+- **PK hediye:** SSE `roomId` PK karşı oda alias’ı ile eşleşir (görsel + karşı taraf sesi)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
