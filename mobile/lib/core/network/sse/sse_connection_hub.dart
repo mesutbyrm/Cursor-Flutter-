@@ -167,6 +167,9 @@ class SseConnectionHub {
 
   int get activeVoiceRoomCount => _voiceRooms.length;
   int get activeVideoStreamCount => _videoStreams.length;
+
+  /// Test / tanı — arka planda SSE duraklatıldı mı.
+  bool get backgroundPaused => _backgroundPaused;
 }
 
 class _VoiceRoomLease {

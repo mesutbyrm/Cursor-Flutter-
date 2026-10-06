@@ -389,6 +389,8 @@ Canlı probe / OpenAPI diff: `scripts/backend-route-parity.py`, `docs/BACKEND_FL
 | Spec 7–10 hub+discover integration | ✅ `voice_room_sse_hub_discover_integration_test` |
 | Gift SSE/poll dedupe | ✅ `voice_room_gift_realtime_dedupe_test` |
 | RoomSessionManager delegate host | ✅ integration test |
-| E2E TRTC/background (Spec 20) | ⏳ Faz 6 |
+| E2E TRTC/background (Spec 20) | 🟡 sözleşme + hub lifecycle test (cihaz E2E manuel) |
+| Session ownership doc (Faz 6) | ✅ `REALTIME_ROOM_SESSION_OWNERSHIP.md` |
+| FINAL rapor | ✅ `REALTIME_FIX_FINAL_REPORT.md` |
 
-_FAZ 5 test paketi genişletildi (2026-10-06); Faz 6 E2E + duplicate cleanup kaldı._
+_Faz 1–6 tamamlandı (2026-10-06); TRTC cihaz doğrulaması release gate dışında._

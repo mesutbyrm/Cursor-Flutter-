@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../domain/voice_room_background_recovery_spec.dart';
 import '../../providers/chat_room_providers.dart';
 import '../../providers/voice_room_session_registry.dart';
 
@@ -20,7 +21,8 @@ class VoiceRoomSessionLifecycleHost extends ConsumerStatefulWidget {
 class _VoiceRoomSessionLifecycleHostState
     extends ConsumerState<VoiceRoomSessionLifecycleHost>
     with WidgetsBindingObserver {
-  static const _backgroundSeatRelease = Duration(seconds: 45);
+  static const _backgroundSeatRelease =
+      VoiceRoomBackgroundRecoverySpec.backgroundSeatRelease;
   Timer? _backgroundTimer;
   var _backgrounded = false;
 
@@ -59,7 +61,7 @@ class _VoiceRoomSessionLifecycleHostState
       if (key == null) return;
       unawaited(
         ref.read(voiceRoomLiveProvider(key).notifier).leaveRoomSession(
-              source: 'app_background',
+              source: VoiceRoomBackgroundRecoverySpec.leaveSourceBackground,
               awaitBackend: true,
             ),
       );
@@ -91,7 +93,7 @@ class _VoiceRoomSessionLifecycleHostState
         if (liveKey != null) {
           unawaited(
             ref.read(voiceRoomLiveProvider(liveKey).notifier).leaveRoomSession(
-                  source: 'app_detached',
+                  source: VoiceRoomBackgroundRecoverySpec.leaveSourceDetached,
                   awaitBackend: true,
                   force: true,
                 ),

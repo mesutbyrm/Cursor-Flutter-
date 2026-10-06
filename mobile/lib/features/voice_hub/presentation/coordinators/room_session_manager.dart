@@ -88,7 +88,10 @@ class _RoomSessionLock {
   }
 }
 
-/// Centralized room session manager — idempotency ve state consistency garantisi
+/// Canonical presence/koltuk + durum makinesi.
+///
+/// Sesli odada [`delegateLifecycleToHost: true`] — API join/heartbeat
+/// [VoiceRoomLiveController] tarafında; bkz. `docs/REALTIME_ROOM_SESSION_OWNERSHIP.md`.
 class RoomSessionManager {
   RoomSessionManager({
     required this.roomId,

@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.724+777 (2026-10-06) — Realtime Faz 6: arka plan Spec 20 + final rapor
+
+- **Spec 20:** `VoiceRoomBackgroundRecoverySpec` (45 sn arka plan leave, SSE resume debounce 450 ms); lifecycle host + SSE hub hizalı
+- **Doküman:** `REALTIME_ROOM_SESSION_OWNERSHIP.md`, `REALTIME_FIX_FINAL_REPORT.md` (FINAL)
+- **Test:** `sse_hub_lifecycle_binding_test`, `voice_room_background_recovery_spec_test`
+
 ## 1.0.723+776 (2026-10-06) — Realtime Faz 5: lifecycle integration testleri
 
 - **Test:** JWT refresh single-flight; leave pipeline step sözleşmesi; keşif SSE + hub lease; hediye dedupe; RoomSessionManager host delegate

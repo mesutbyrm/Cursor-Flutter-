@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 
+import '../../../features/voice_hub/domain/voice_room_background_recovery_spec.dart';
 import '../../bootstrap/app_startup_log.dart';
 import 'sse_connection_hub.dart';
 
@@ -30,7 +31,7 @@ class SseHubLifecycleBinding with WidgetsBindingObserver {
 
   void _scheduleResume() {
     _resumeDebounce?.cancel();
-    _resumeDebounce = Timer(const Duration(milliseconds: 450), () {
+    _resumeDebounce = Timer(VoiceRoomBackgroundRecoverySpec.sseHubResumeDebounce, () {
       if (!_backgrounded) return;
       _backgrounded = false;
       AppStartupLog.appResume();
