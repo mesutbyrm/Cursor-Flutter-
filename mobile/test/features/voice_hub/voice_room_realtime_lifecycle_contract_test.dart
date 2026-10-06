@@ -103,7 +103,7 @@ void main() {
 
     test('membership events map to join/leave/presence', () {
       expect(chatRoomSseEventTypeFrom('user_join'), ChatRoomSseEventType.userJoin);
-      expect(chatRoomSseEventTypeFrom('userleave'), ChatRoomSseEventType.userLeave);
+      expect(chatRoomSseEventTypeFrom('user_leave'), ChatRoomSseEventType.userLeave);
       expect(chatRoomSseEventTypeFrom('presence'), ChatRoomSseEventType.presence);
     });
 
