@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.722+775 (2026-10-06) — Realtime Faz 4: keşif SSE import düzeltmesi
+
+- **Derleme:** `voice_room_discover_sse_policy` `VoiceRoomEntity` import yolu
+
 ## 1.0.721+774 (2026-10-06) — Realtime Faz 4: keşif SSE önceliği
 
 - **Keşif SSE:** kullanıcı bir odadaysa o oda keşif listesinde ayrı SSE dinlenmez (hub refCount / sayaç yarışı önleme); oda alias’ları dahil
