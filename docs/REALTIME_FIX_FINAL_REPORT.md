@@ -56,10 +56,14 @@
 
 ## Kalan problemler
 
-- `main` merge + CI APK bekliyor.
 - Tam Spec 1–20 integration test paketi (mock server / golden SSE).
 - `RoomSessionManager` vs `VoiceRoomLiveController` duplicate canonical (Faz 6 cleanup).
-- Discover SSE + aktif oda lease yarışları — izleme.
+- TRTC / background recovery E2E (Spec 20).
+
+## Faz 4 (P2) — 2026-10-06
+
+- Keşif SSE: aktif oda + alias seti keşif `connectedRooms` dışında; hub `releaseHub: false` ile oturum korunur.
+- SSE olay tipi contract: Spec 7–10 (`connected`, join/leave, music/DJ).
 
 ## Production backend beklentileri
 

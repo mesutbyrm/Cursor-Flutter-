@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.721+774 (2026-10-06) — Realtime Faz 4: keşif SSE önceliği
+
+- **Keşif SSE:** kullanıcı bir odadaysa o oda keşif listesinde ayrı SSE dinlenmez (hub refCount / sayaç yarışı önleme); oda alias’ları dahil
+- **Test:** `voice_room_discover_sse_policy_test`, Spec 7–10 SSE tip contract
+
 ## 1.0.720+773 (2026-10-05) — Realtime parity CI fix (gift authority import)
 
 - **Derleme:** `voice_gift_send_authority.dart` `LiveGiftEvent` import yolu düzeltildi (analyze ERROR)

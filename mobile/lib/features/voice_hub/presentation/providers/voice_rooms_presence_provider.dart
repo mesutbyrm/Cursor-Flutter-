@@ -8,8 +8,10 @@ import '../../../../core/network/token_storage.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/voice_rooms_list_notifier.dart';
 import '../../domain/entities/chat_room_sse_event.dart';
+import '../../domain/voice_room_discover_sse_policy.dart';
 import '../utils/voice_room_ranking_sse.dart';
 import 'voice_room_ranking_provider.dart';
+import 'voice_room_session_registry.dart';
 
 /// Keşfet listesinde anlık çevrimiçi sayıları — merkezi SSE hub (oda başına tek bağlantı).
 class VoiceRoomsPresenceState {
@@ -57,9 +59,18 @@ class VoiceRoomsPresenceNotifier extends Notifier<VoiceRoomsPresenceState> {
   final Map<String, StreamSubscription<ChatRoomSseEvent>> _subs = {};
   var _syncGeneration = 0;
   Timer? _rankingRefreshDebounce;
+  List<VoiceRoomEntity> _lastMergedRooms = const [];
 
   @override
   VoiceRoomsPresenceState build() {
+    ref.listen(voiceRoomActiveLiveKeyProvider, (previous, next) {
+      final a = previous?.trim() ?? '';
+      final b = next?.trim() ?? '';
+      if (a == b) return;
+      if (_lastMergedRooms.isNotEmpty) {
+        _syncRooms(_lastMergedRooms);
+      }
+    });
     ref.onDispose(() {
       _rankingRefreshDebounce?.cancel();
       _disposeAll();
@@ -81,17 +92,23 @@ class VoiceRoomsPresenceNotifier extends Notifier<VoiceRoomsPresenceState> {
   }
 
   void _syncRooms(List<VoiceRoomEntity> rooms) {
-    final top = rooms.take(maxTrackedRooms).toList();
-    final keys = <String>{};
-    for (final room in top) {
-      final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
-      if (key.isEmpty) continue;
-      keys.add(key);
-    }
+    _lastMergedRooms = List<VoiceRoomEntity>.from(rooms);
+    final activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim();
+    final aliases = ref.read(voiceRoomActiveKeyAliasesProvider);
+    final keys = VoiceRoomDiscoverSsePolicy.roomKeysToTrack(
+      rooms: rooms,
+      maxRooms: maxTrackedRooms,
+      activeLiveKey: activeKey,
+      activeAliases: aliases,
+    ).toSet();
     final generation = ++_syncGeneration;
     unawaited(_staggerConnectRooms(keys.toList(growable: false), generation));
     for (final key in _subs.keys.toList()) {
-      if (!keys.contains(key)) _disconnectRoom(key);
+      if (keys.contains(key)) continue;
+      final isActiveLease = activeKey != null &&
+          activeKey.isNotEmpty &&
+          (key == activeKey || aliases.contains(key));
+      _disconnectRoom(key, releaseHub: !isActiveLease);
     }
     state = state.copyWith(connectedRooms: keys);
   }

@@ -5,6 +5,7 @@ import 'package:canlifal_social/features/voice_hub/domain/pk/pk_battle_remote_mo
 import 'package:canlifal_social/features/voice_hub/domain/room_event_scope.dart';
 import 'package:canlifal_social/features/voice_hub/domain/voice_gift_send_authority.dart';
 import 'package:canlifal_social/features/voice_hub/domain/voice_room_live_join_mapper.dart';
+import 'package:canlifal_social/features/voice_hub/domain/entities/chat_room_sse_event.dart';
 import 'package:canlifal_social/features/voice_hub/domain/voice_room_sse_session_guard.dart';
 import 'package:canlifal_social/features/voice_hub/presentation/coordinators/room_leave_coordinator.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -90,6 +91,26 @@ void main() {
         c.leave(roomId: 'r', source: 't', steps: [() async => n++]),
       ]);
       expect(n, 1);
+    });
+  });
+
+  group('Spec 7–10 — SSE lifecycle event types', () {
+    test('connected and heartbeat wire types', () {
+      expect(chatRoomSseEventTypeFrom('connected'), ChatRoomSseEventType.connected);
+      expect(chatRoomSseEventTypeFrom('heartbeat'), ChatRoomSseEventType.heartbeat);
+      expect(chatRoomSseEventTypeFrom('ping'), ChatRoomSseEventType.heartbeat);
+    });
+
+    test('membership events map to join/leave/presence', () {
+      expect(chatRoomSseEventTypeFrom('user_join'), ChatRoomSseEventType.userJoin);
+      expect(chatRoomSseEventTypeFrom('userleave'), ChatRoomSseEventType.userLeave);
+      expect(chatRoomSseEventTypeFrom('presence'), ChatRoomSseEventType.presence);
+    });
+
+    test('music/DJ events for P2 discover patches', () {
+      expect(chatRoomSseEventTypeFrom('music_started'), ChatRoomSseEventType.musicStarted);
+      expect(chatRoomSseEventTypeFrom('music_stopped'), ChatRoomSseEventType.musicStopped);
+      expect(chatRoomSseEventTypeFrom('dj_update'), ChatRoomSseEventType.dj);
     });
   });
 

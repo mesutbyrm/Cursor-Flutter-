@@ -381,6 +381,8 @@ Canlı probe / OpenAPI diff: `scripts/backend-route-parity.py`, `docs/BACKEND_FL
 | PK timer birleştirme | ✅ tek `_countdownTimer` |
 | Spec Test 1–20 tam paket | 🟡 contract test (`voice_room_realtime_lifecycle_contract_test.dart`) |
 | E2E TRTC/SSE/background | ⏳ P5 |
-| `main` merge (1.0.719+772) | ✅ |
+| `main` merge (1.0.720+773) | ✅ |
+| Keşif SSE — aktif oda hariç (P2) | ✅ `voice_room_discover_sse_policy.dart` |
+| Spec 7–10 SSE type contract | ✅ lifecycle contract test |
 
-_FAZ 2 kodu `main`'e alındı (2026-10-05); dal `cursor/flutter-realtime-parity-fix-dfca`._
+_FAZ 2–3 kodu `main`'de; FAZ 4 P2 keşif SSE (2026-10-06)._
