@@ -31,7 +31,9 @@
 
 - **Derleme:** `voice_gift_send_authority.dart` `LiveGiftEvent` import yolu düzeltildi (analyze ERROR)
 
-## 1.0.719+772 (2026-10-05) — Realtime parity: join-room, heartbeat, SSE guard, PK timer
+## 1.0.726+779 (2026-10-05) — Realtime parity: join-room, heartbeat, SSE guard, PK timer
+
+- **Düzeltme:** Oda SSE olay kapsamı — alias aktif odaya eşitse tüm olayların kabul edilmesi (eski oda olaylarının sızması) giderildi.
 
 - **Sesli oda giriş:** `POST /api/live/join-room` birincil bootstrap (katılımcı/koltuk/PK/TRTC snapshot); eski state/presence waterfall yedek
 - **Üyelik nabız:** `POST /api/live/heartbeat` (10 sn); chat presence heartbeat yedek
@@ -40,6 +42,12 @@
 - **Hediye:** sunucu `revenue.total` / `totalJeton` jeton harcaması otoritesi
 - **PK:** tek geri sayım timer’ı (`endsAt` sunucu senkronu)
 - **Test:** lifecycle contract + guard/gift/leave/PK birim testleri
+
+## 1.0.726+779 (2026-10-06) — Sesli oda arka planları: 3 × 50 + varsayılan
+
+- **Oda arka planı:** Ücretsiz / Ücretli / VIP oda türlerinin her biri için 50 hazır arka plan (toplam 150); oda içinde Ayarlar → Oda arka planı sekmelerinden istediğiniz an değiştirilir. Üst tür alt türün setlerini de kullanır, alt tür üst seti kilitli görür; site admini hepsini kullanır
+- **Varsayılan GirLive arka planı:** sohbet bölgesinde şeffaf «GirLive Sesli Odaları» yazısı; arka planı olmayan odalarda da aynı yazı görünür
+- Seçilen tasarım PNG olarak yüklenip odaya kaydedilir (web ve mobilde aynı görünür)
 
 ## 1.0.718+771 (2026-10-05) — Sesli odada ses kesme, fal paylaşım görselleri, bildirim tanılama
 

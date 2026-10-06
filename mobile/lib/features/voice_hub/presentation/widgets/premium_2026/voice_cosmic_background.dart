@@ -124,6 +124,16 @@ class _VoiceCosmicBackgroundState extends State<VoiceCosmicBackground>
           left: MediaQuery.sizeOf(context).width * 0.2,
           child: _orb(VoiceRoomTokens.neonBlue, 120, opacity: 0.2),
         ),
+        // Varsayılan arka plan: sohbet bölgesinde şeffaf marka yazısı.
+        const IgnorePointer(
+          child: Align(
+            alignment: Alignment(0, 0.30),
+            child: Opacity(
+              opacity: 1,
+              child: _GirLiveWatermark(),
+            ),
+          ),
+        ),
         if (widget.showParticles)
           AnimatedBuilder(
             animation: _drift,
@@ -192,4 +202,37 @@ class _ParticlePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _ParticlePainter oldDelegate) =>
       oldDelegate.progress != progress;
+}
+
+/// Varsayılan oda arka planında sohbet alanına denk gelen şeffaf yazı.
+class _GirLiveWatermark extends StatelessWidget {
+  const _GirLiveWatermark();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'GirLive',
+          style: TextStyle(
+            fontSize: 40,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1.2,
+            height: 1.05,
+            color: Colors.white.withValues(alpha: 0.12),
+          ),
+        ),
+        Text(
+          'Sesli Odaları',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 2,
+            color: Colors.white.withValues(alpha: 0.10),
+          ),
+        ),
+      ],
+    );
+  }
 }
