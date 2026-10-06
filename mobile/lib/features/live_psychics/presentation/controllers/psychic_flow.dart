@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/bootstrap/auth_route_paths.dart';
+import '../../../../core/diagnostics/cf_diag.dart';
+import '../../../../core/diagnostics/cf_trace.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/psychic_event_log.dart';
 import '../../domain/psychic_client_session_guard.dart';
@@ -23,6 +25,21 @@ abstract final class PsychicFlow {
         path.contains('/session');
   }
 
+  /// Aynı anda tek rezervasyon isteği (profil, hızlı seans ve yayın
+  /// ekranındaki çağrıların hepsi bu kapıdan geçer): çift dokunuş veya başka
+  /// falcıya geçiş ikinci bir istek göndermez.
+  static String? _bookingTellerId;
+  static DateTime? _bookingStartedAt;
+
+  /// Takılı kalmış bir isteğin kapıyı sonsuza dek kilitlememesi için üst sınır.
+  static const _bookingGateMaxAge = Duration(seconds: 60);
+
+  static bool get isBookingInFlight {
+    final started = _bookingStartedAt;
+    if (_bookingTellerId == null || started == null) return false;
+    return DateTime.now().difference(started) < _bookingGateMaxAge;
+  }
+
   static Future<PsychicSessionEntity?> bookAndOpenWaiting({
     required WidgetRef ref,
     required GoRouter router,
@@ -33,20 +50,96 @@ abstract final class PsychicFlow {
     bool staffExempt = false,
     bool preferVideo = false,
   }) async {
+    // `ref`, widget kapandıktan sonra kullanılamaz (StateError). İstek ekran
+    // kapandıktan sonra da sürebildiğinden gereken her şey await'lerden ÖNCE
+    // alınır.
     final repo = ref.read(livePsychicsRepositoryProvider);
+    final feedback = ref.read(psychicBookingFeedbackProvider.notifier);
 
+    if (isBookingInFlight) {
+      CfDiag.record(
+        CfCategory.fortune,
+        'FORTUNE_REQUEST ignored: already in flight',
+        level: CfLevel.warn,
+        data: {'tellerId': psychic.id, 'activeTellerId': _bookingTellerId},
+      );
+      _setFeedback(
+        feedback,
+        'İsteğiniz işleniyor, lütfen bekleyin.',
+      );
+      return null;
+    }
+    _bookingTellerId = psychic.id;
+    _bookingStartedAt = DateTime.now();
+
+    final trace = CfTrace.start('FORTUNE_REQUEST', CfCategory.fortune);
+    trace.step('validation');
+    String? outcome;
+    try {
+      final result = await _bookImpl(
+        repo: repo,
+        feedback: feedback,
+        router: router,
+        psychic: psychic,
+        durationMinutes: durationMinutes,
+        totalJeton: totalJeton,
+        fortuneType: fortuneType,
+        preferVideo: preferVideo,
+        trace: trace,
+      );
+      outcome = result == null ? 'no-session' : 'ok';
+      return result;
+    } catch (e, st) {
+      outcome = 'error';
+      CfDiag.recordError(e, st,
+          category: CfCategory.fortune, traceId: trace.traceId);
+      _setFeedback(feedback, ApiException.userMessage(e));
+      return null;
+    } finally {
+      _bookingTellerId = null;
+      _bookingStartedAt = null;
+      trace.finish(outcome: outcome);
+    }
+  }
+
+  /// Bildirim sağlayıcısı kapanmış olabilir; hata yutulur, akış bozulmaz.
+  static void _setFeedback(
+    StateController<String?> feedback,
+    String message,
+  ) {
+    try {
+      feedback.state = message;
+    } catch (_) {}
+  }
+
+  static Future<PsychicSessionEntity?> _bookImpl({
+    required LivePsychicsRepository repo,
+    required StateController<String?> feedback,
+    required GoRouter router,
+    required PsychicEntity psychic,
+    required int durationMinutes,
+    required int totalJeton,
+    required String? fortuneType,
+    required bool preferVideo,
+    required CfTrace trace,
+  }) async {
     // Sunucu yanıtı gelmezse ekran sonsuza dek bekleyip donmasın: 12 sn sonra
     // «kontrol edilemedi» olarak ele alınır.
-    final blocking = await _findBlockingSession(repo: repo).timeout(
-      const Duration(seconds: 12),
-      onTimeout: () => (session: null, lookupFailed: true),
+    final blocking = await trace.timed(
+      'blocking-session lookup',
+      () => _findBlockingSession(repo: repo).timeout(
+        const Duration(seconds: 12),
+        onTimeout: () => (session: null, lookupFailed: true),
+      ),
     );
     if (blocking.lookupFailed) {
       // Ağ/sunucu hatası: mevcut seans kontrol edilemedi — çift rezervasyon
       // riskine girmeden kullanıcıya bildir.
-      ref.read(psychicBookingFeedbackProvider.notifier).state =
-          'Bağlantı sorunu: mevcut seans kontrol edilemedi. '
-          'Lütfen tekrar deneyin.';
+      _setFeedback(
+        feedback,
+        'Bağlantı zaman aşımına uğradı veya mevcut seans kontrol edilemedi. '
+        'Tekrar deneyin.',
+      );
       return null;
     }
     final existing = blocking.session;
@@ -55,9 +148,12 @@ abstract final class PsychicFlow {
       final existingTellerId =
           existing.tellerProfileId?.trim() ?? stored?.psychic.id ?? '';
       final sameTeller = existingTellerId == psychic.id;
-      ref.read(psychicBookingFeedbackProvider.notifier).state = sameTeller
-          ? 'Bu falcı ile zaten bekleyen veya aktif bir seansınız var.'
-          : 'Başka bir canlı fal seansınız devam ediyor. Önce onu tamamlayın.';
+      _setFeedback(
+        feedback,
+        sameTeller
+            ? 'Bu falcı ile zaten bekleyen veya aktif bir seansınız var.'
+            : 'Başka bir canlı fal seansınız devam ediyor. Önce onu tamamlayın.',
+      );
 
       final tellerPsychic = sameTeller
           ? psychic
@@ -105,25 +201,28 @@ abstract final class PsychicFlow {
         (psychic.specialties.isNotEmpty ? psychic.specialties.first : 'general');
     PsychicSessionCreateResult? created;
     try {
-      created = await repo
-          .createSession(
-            tellerId: psychic.id,
-            durationMinutes: durationMinutes,
-            fortuneType: type,
-          )
-          .timeout(const Duration(seconds: 25));
+      created = await trace.timed(
+        'API createSession',
+        () => repo
+            .createSession(
+              tellerId: psychic.id,
+              durationMinutes: durationMinutes,
+              fortuneType: type,
+            )
+            .timeout(const Duration(seconds: 25)),
+      );
     } on TimeoutException {
-      ref.read(psychicBookingFeedbackProvider.notifier).state =
-          'Sunucu yanıt vermedi. Bağlantınızı kontrol edip tekrar deneyin.';
+      _setFeedback(
+        feedback,
+        'Bağlantı zaman aşımına uğradı. Tekrar deneyin.',
+      );
       return null;
     } catch (e) {
-      ref.read(psychicBookingFeedbackProvider.notifier).state =
-          ApiException.userMessage(e);
+      _setFeedback(feedback, ApiException.userMessage(e));
       return null;
     }
     if (created == null) {
-      ref.read(psychicBookingFeedbackProvider.notifier).state =
-          'Seans oluşturulamadı. Lütfen tekrar deneyin.';
+      _setFeedback(feedback, 'Seans oluşturulamadı. Lütfen tekrar deneyin.');
       return null;
     }
     final session = PsychicSessionEntity(
@@ -146,8 +245,9 @@ abstract final class PsychicFlow {
       sessionId: created.sessionId,
       roomId: created.trtcRoomId,
     );
-    await PsychicSessionStore.save(session);
+    await trace.timed('session store save', () => PsychicSessionStore.save(session));
     router.push('/canli-falcilar/${psychic.id}/waiting', extra: session);
+    trace.step('navigate waiting');
     return session;
   }
 

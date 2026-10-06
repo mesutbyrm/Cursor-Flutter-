@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../../../core/config/env.dart';
+import '../../../../core/diagnostics/cf_diag.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/sse/sse_reconnect_policy.dart';
 import '../../domain/entities/psychic_request_entity.dart';
@@ -90,6 +91,7 @@ class PsychicIncomingSseService {
       }
       _reconnectAttempt = 0;
       _streamActive = true;
+      CfDiag.record(CfCategory.sse, 'incoming SSE connected');
       final buffer = StringBuffer();
       final chunkDecoder = SseChunkDecoder();
       _bytesSub = stream.listen(
@@ -102,6 +104,8 @@ class PsychicIncomingSseService {
         cancelOnError: false,
       );
     } on DioException catch (e) {
+      if (CancelToken.isCancel(e)) return;
+      CfDiag.recordError(e, null, category: CfCategory.sse);
       if (kDebugMode) debugPrint('PsychicIncomingSse: $e');
       if (e.response?.statusCode == 401 && _refreshTokens != null) {
         final ok = await _refreshTokens!();
@@ -175,6 +179,8 @@ class PsychicIncomingSseService {
     }
     _reconnectTimer?.cancel();
     _reconnectAttempt++;
+    CfDiag.record(CfCategory.sse, 'incoming SSE reconnect #$_reconnectAttempt',
+        level: CfLevel.warn);
     _reconnectTimer = Timer(
       SseReconnectPolicy.delayForAttempt(_reconnectAttempt),
       () {

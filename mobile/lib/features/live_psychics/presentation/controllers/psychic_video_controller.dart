@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:canlifal_social/core/config/env.dart';
+import 'package:canlifal_social/core/diagnostics/cf_diag.dart';
+import 'package:canlifal_social/core/diagnostics/cf_trace.dart';
 import 'package:canlifal_social/core/network/api_exception.dart';
 import 'package:canlifal_social/core/network/dio_provider.dart';
 import 'package:canlifal_social/core/network/live_debug_log.dart';
@@ -192,6 +194,15 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   Timer? _ping;
   Timer? _roomPoll;
   Timer? _signalPoll;
+
+  /// Yoklama zamanlayıcıları (0,9 sn / 2 sn / 3 sn) yavaş ağda eski istek
+  /// bitmeden yenisini başlatıp istekleri biriktiriyordu; her yoklama türü
+  /// aynı anda tek istekle sınırlandı.
+  final _roomSync = CfSingleFlight<bool>();
+  final _signalsFlight = CfSingleFlight<void>();
+  final _chatFlight = CfSingleFlight<void>();
+  final _pingFlight = CfSingleFlight<void>();
+  DateTime? _lastRoomSyncAt;
   DateTime? _lastTimerStartRequestAt;
   var _disposed = false;
   var _remoteEndHandled = false;
@@ -465,7 +476,11 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     if (!await _syncRoomInfo()) return;
     await _waitForRoomBootstrap();
     if (_disposed || state.leaving) return;
-    if (!await _syncRoomInfo()) return;
+    // _waitForRoomBootstrap az önce senkronladıysa aynı veriyi tekrar çekme.
+    final syncedAt = _lastRoomSyncAt;
+    final fresh = syncedAt != null &&
+        DateTime.now().difference(syncedAt) < const Duration(seconds: 2);
+    if (!fresh && !await _syncRoomInfo()) return;
     await _joinRtc();
     if (_disposed || state.leaving) return;
     await _connectRoomSse();
@@ -650,7 +665,9 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     }
   }
 
-  Future<void> _pollRoomSignals() async {
+  Future<void> _pollRoomSignals() => _signalsFlight.run(_pollRoomSignalsOnce);
+
+  Future<void> _pollRoomSignalsOnce() async {
     if (_disposed || state.leaving) return;
     final repo = ref.read(livePsychicsRepositoryProvider);
     final signals = await repo.fetchRoomSignals(session.sessionId);
@@ -785,10 +802,20 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   }
 
   /// `false` → seans sunucuda bitmiş / ayrılıyor; TRTC/SSE başlatma.
-  Future<bool> _syncRoomInfo() async {
+  Future<bool> _syncRoomInfo() => _roomSync.run(() async {
+        final ok = await _syncRoomInfoOnce();
+        _lastRoomSyncAt = DateTime.now();
+        return ok;
+      });
+
+  Future<bool> _syncRoomInfoOnce() async {
     if (_disposed || state.leaving) return false;
     final repo = ref.read(livePsychicsRepositoryProvider);
-    final info = await repo.fetchRoom(session.sessionId);
+    // Oda ve durum sorguları birbirinden bağımsız: sırayla değil birlikte.
+    final roomFuture = repo.fetchRoom(session.sessionId);
+    final statusFuture = repo.fetchSessionStatus(session.sessionId).then<
+        PsychicSessionStatusResult?>((v) => v, onError: (_) => null);
+    final info = await roomFuture;
     if (_disposed) return false;
     if (info == null) return true;
 
@@ -800,7 +827,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       return false;
     }
 
-    final statusResult = await repo.fetchSessionStatus(session.sessionId);
+    final statusResult = await statusFuture;
     if (_disposed) return false;
     if (statusResult != null &&
         (statusResult.status == PsychicSessionStatus.cancelled ||
@@ -870,7 +897,9 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     return true;
   }
 
-  Future<void> _sendPing() async {
+  Future<void> _sendPing() => _pingFlight.run(_sendPingOnce);
+
+  Future<void> _sendPingOnce() async {
     if (_disposed || state.leaving || !state.timerStarted) return;
     final result = await ref
         .read(livePsychicsRepositoryProvider)
@@ -1114,7 +1143,9 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     unawaited(_broadcastMediaState());
   }
 
-  Future<void> _pollChat() async {
+  Future<void> _pollChat() => _chatFlight.run(_pollChatOnce);
+
+  Future<void> _pollChatOnce() async {
     if (_disposed || state.leaving) return;
     final user = ref.read(authControllerProvider).valueOrNull;
     final incoming = await ref.read(livePsychicsRepositoryProvider).fetchMessages(
@@ -1231,11 +1262,21 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
         }
       }
 
-      final creds = await ref.read(trtcRemoteProvider).fetchToken(
+      final tokenWatch = Stopwatch()..start();
+      // Token isteği sonsuza dek beklemesin (join bu yüzden hiç başlamıyordu).
+      final creds = await ref
+          .read(trtcRemoteProvider)
+          .fetchToken(
             roomId: requestRoomId,
             role: session.isClient ? 'audience' : 'host',
             userId: user.id,
-          );
+          )
+          .timeout(const Duration(seconds: 20));
+      CfDiag.record(
+        CfCategory.trtc,
+        'TRTC token ${tokenWatch.elapsedMilliseconds}ms',
+        data: {'sessionId': session.sessionId},
+      );
       if (!creds.isValid) {
         throw StateError('TRTC token geçersiz');
       }
@@ -1249,11 +1290,17 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
         userId: creds.userId,
       );
 
+      final joinWatch = Stopwatch()..start();
       await _trtc.join(
         credentials: creds,
         isHost: !session.isClient,
         twoWayVideo: true,
         expectedAnchorUserId: session.remotePeerIdFor(room: state.room),
+      );
+      CfDiag.record(
+        CfCategory.trtc,
+        'TRTC join ${joinWatch.elapsedMilliseconds}ms',
+        data: {'sessionId': session.sessionId},
       );
       _wireTrtcCallbacks();
       PsychicEventLog.trtcJoin(
@@ -1310,7 +1357,8 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       _gateMediaUntilTimerStart();
       unawaited(_broadcastMediaState());
       _maybeSendTimerStartRequest();
-    } catch (e) {
+    } catch (e, st) {
+      CfDiag.recordError(e, st, category: CfCategory.trtc);
       PsychicEventLog.error('join', e, sessionId: session.sessionId);
       PsychicEventLog.trtcState(
         sessionId: session.sessionId,

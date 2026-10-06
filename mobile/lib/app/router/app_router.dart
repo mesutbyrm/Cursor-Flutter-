@@ -165,6 +165,7 @@ import '../../features/web_parity/presentation/web_parity_routes.dart';
 import '../../features/profile/presentation/pages/settings_category_page.dart';
 import '../../features/profile/presentation/pages/settings_page.dart';
 import '../../features/debug/presentation/api_monitor_page.dart';
+import '../../features/debug/presentation/pages/cf_diagnostics_page.dart';
 import '../../features/profile/presentation/pages/blocked_users_page.dart';
 import '../../features/profile/presentation/pages/active_devices_page.dart';
 import '../../features/profile/presentation/pages/profile_transactions_page.dart';
@@ -936,6 +937,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings/notifications',
         builder: (context, state) => const NotificationChannelSettingsPage(),
+      ),
+      GoRoute(
+        path: '/settings/diagnostics',
+        builder: (context, state) => const CfDiagnosticsPage(),
       ),
       GoRoute(
         path: '/settings/notifications/diagnostics',

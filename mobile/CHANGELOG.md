@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.727+780 (2026-10-06) — Canlı falcı donma önlemleri + Canlifal Diagnostics
+
+- **Canlı falcı isteği:** tüm çağıranlarda tek rezervasyon kapısı (çift dokunuş/başka falcı ikinci istek atmaz); ekran kapanınca `ref` StateError'u giderildi; zaman aşımı mesajı net
+- **Seans bağlantısı:** yoklamalar (sinyal/oda/sohbet/ping) aynı anda tek istekle sınırlı; oda+durum sorgusu paralel; gereksiz senkron atlanır; TRTC token 20 sn zaman aşımı
+- **SSE:** bilerek iptal edilen bağlantı artık ek yeniden bağlanma başlatmıyor
+- **Yeni:** CANLIFAL DIAGNOSTICS (Hakkında → sürüm satırına uzun bas): kendi kendine tanı, kare/donma izleyici, iz kimliği (CF-TRACE), kategorili hata kaydı
+- **Rapor:** `docs/CANLIFAL_PERFORMANCE_DIAGNOSTIC_REPORT.md`
+
 ## 1.0.725+778 (2026-10-06) — Psychic P0 FAIL hotfix: falcı donma + sesli oda hayalet/PK hediye
 
 - **Canlı falcı:** bitmiş seans diskten açılmadan sunucu durumu doğrulanır; `_syncRoomInfo` terminal seansı TRTC öncesi kapatır; uygulama ön plana dönünce oda/sinyal yenilenir

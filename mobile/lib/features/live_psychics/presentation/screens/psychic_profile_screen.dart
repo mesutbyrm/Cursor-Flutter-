@@ -159,7 +159,10 @@ class PsychicProfileScreen extends ConsumerWidget {
       return;
     }
 
-    ref.read(_profileBookingProvider.notifier).state = true;
+    // Ekran istek sürerken kapanırsa `ref` kullanılamaz; bildirici önceden alınır.
+    final booking = ref.read(_profileBookingProvider.notifier);
+    if (booking.state || PsychicFlow.isBookingInFlight) return;
+    booking.state = true;
     try {
       await PsychicFlow.bookAndOpenWaiting(
         ref: ref,
@@ -171,7 +174,9 @@ class PsychicProfileScreen extends ConsumerWidget {
         staffExempt: isStaff,
       );
     } finally {
-      ref.read(_profileBookingProvider.notifier).state = false;
+      try {
+        booking.state = false;
+      } catch (_) {}
     }
   }
 

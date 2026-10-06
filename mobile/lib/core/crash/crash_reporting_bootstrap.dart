@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 
+import '../diagnostics/cf_diag.dart';
 import '../firebase/firebase_bootstrap.dart';
 import '../firebase/firebase_options.dart';
 import '../../features/voice_hub/data/services/voice_room_debug_log.dart';
@@ -50,6 +51,9 @@ abstract final class CrashReportingBootstrap {
     if (kDebugMode) {
       debugPrint('CrashReporting: $error\n$stack');
     }
+
+    // Kategorili, gizli veri içermeyen yerel tanılama kaydı.
+    CfDiag.recordError(error, stack, fatal: fatal);
 
     if (FirebaseBootstrap.isReady && DefaultFirebaseOptions.enabled) {
       unawaited(
