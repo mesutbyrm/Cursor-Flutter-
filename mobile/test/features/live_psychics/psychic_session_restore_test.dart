@@ -68,7 +68,9 @@ void main() {
       );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
-      await tester.pumpAndSettle(const Duration(milliseconds: 200));
+      // Bekleme ekranında sonsuz animasyon var; pumpAndSettle zaman aşımına düşer.
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump(const Duration(milliseconds: 200));
 
       expect(find.text('Lütfen Bekleyiniz...'), findsOneWidget);
       expect(find.text('Restore Falcı'), findsOneWidget);

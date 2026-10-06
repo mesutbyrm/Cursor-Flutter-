@@ -15,6 +15,7 @@ import '../../../vip_gold/domain/vip_tier.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/voice_room_background_policy.dart';
 import 'voice_room_background_colors.dart';
+import 'voice_room_background_designs.dart';
 import '../providers/chat_room_providers.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../widgets/premium/voice_glass.dart';
@@ -48,6 +49,164 @@ class _VoiceRoomBackgroundSheet extends ConsumerStatefulWidget {
 class _VoiceRoomBackgroundSheetState
     extends ConsumerState<_VoiceRoomBackgroundSheet> {
   var _uploading = false;
+  VoiceRoomBgTier? _tab;
+
+  /// Oturum boyunca tasarım → yüklenmiş görsel adresi (aynı tasarımı tekrar yükleme).
+  static final _designUrlCache = <String, String>{};
+
+  Future<void> _applyDesign(VoiceRoomBgDesign d) async {
+    if (_uploading) return;
+    setState(() => _uploading = true);
+    try {
+      var url = _designUrlCache[d.id];
+      if (url == null) {
+        final file = await renderVoiceRoomBgDesignPng(d);
+        url = await _uploadFile(file);
+        _designUrlCache[d.id] = url;
+        try {
+          await file.delete();
+        } catch (_) {}
+      }
+      final err = await ref
+          .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
+          .setRoomBackground(url);
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(err ?? '«${d.name}» arka planı uygulandı')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
+
+  Widget _designTile(VoiceRoomBgDesign d, {required bool locked}) {
+    return GestureDetector(
+      onTap: _uploading
+          ? null
+          : () {
+              if (locked) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Bu arka planlar ${d.tier.roomLabel} odalarda kullanılabilir.',
+                    ),
+                  ),
+                );
+                return;
+              }
+              _applyDesign(d);
+            },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            RepaintBoundary(
+              child: CustomPaint(painter: VoiceRoomBgPainter(d)),
+            ),
+            if (locked)
+              const ColoredBox(
+                color: Color(0x88000000),
+                child: Center(child: Icon(Icons.lock_rounded, size: 20)),
+              ),
+            Positioned(
+              left: 4,
+              bottom: 3,
+              child: Text(
+                d.index == 0 && d.watermark ? 'Varsayılan' : '${d.index + 1}',
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white70,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _designsSection(bool isAdmin) {
+    final roomTier = voiceRoomBgTierFor(widget.room);
+    final tab = _tab ?? roomTier;
+    final designs = voiceRoomBgDesigns(tab);
+    final locked = !voiceRoomBgTierAllowed(roomTier, tab, isSiteAdmin: isAdmin);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            for (final t in VoiceRoomBgTier.values) ...[
+              Expanded(
+                child: ChoiceChip(
+                  label: SizedBox(
+                    width: double.infinity,
+                    child: Text(
+                      '${t.label} (50)',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ),
+                  selected: tab == t,
+                  onSelected: (_) => setState(() => _tab = t),
+                ),
+              ),
+              if (t != VoiceRoomBgTier.vip) const SizedBox(width: 6),
+            ],
+          ],
+        ),
+        const SizedBox(height: 10),
+        // Varsayılan GirLive arka planı (şeffaf «GirLive Sesli Odaları» yazılı).
+        SizedBox(
+          height: 64,
+          child: GestureDetector(
+            onTap: _uploading ? null : () => _applyDesign(voiceRoomBgDefaultDesign),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  CustomPaint(
+                    painter: VoiceRoomBgPainter(voiceRoomBgDefaultDesign),
+                  ),
+                  const Center(
+                    child: Text(
+                      'Varsayılan · GirLive Sesli Odaları',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.zero,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 5,
+            crossAxisSpacing: 6,
+            mainAxisSpacing: 6,
+            childAspectRatio: 0.56,
+          ),
+          itemCount: designs.length,
+          itemBuilder: (_, i) => _designTile(designs[i], locked: locked),
+        ),
+      ],
+    );
+  }
   List<String> _presets = const [];
   var _loadingPresets = false;
 
@@ -242,9 +401,9 @@ class _VoiceRoomBackgroundSheetState
       );
     }
     return DraggableScrollableSheet(
-      initialChildSize: 0.55,
+      initialChildSize: 0.72,
       minChildSize: 0.35,
-      maxChildSize: 0.85,
+      maxChildSize: 0.95,
       expand: false,
       builder: (_, scroll) => VoiceGlass(
         borderRadius: 24,
@@ -267,6 +426,13 @@ class _VoiceRoomBackgroundSheetState
                 height: 1.35,
               ),
             ),
+            const SizedBox(height: 14),
+            const Text(
+              'Hazır arka planlar',
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+            ),
+            const SizedBox(height: 8),
+            _designsSection(isAdmin),
             const SizedBox(height: 16),
             const Text(
               'Renkler (100)',
@@ -276,7 +442,7 @@ class _VoiceRoomBackgroundSheetState
             _colorGrid(),
             const SizedBox(height: 16),
             const Text(
-              'Hazır görseller',
+              'Site görselleri',
               style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
             ),
             if (_loadingPresets)

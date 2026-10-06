@@ -29,7 +29,9 @@ bool roomEventMatchesActiveRoom(
   bool matchesAlternate(String alt) {
     final a = alt.trim();
     if (a.isEmpty) return false;
-    if (matchesCandidate(a)) return true;
+    // Takma ad, ETKİN odanın başka bir kimliğidir: olayın oda kimliği bu takma
+    // adla eşleşmeli. (Önceden `takma ad == etkin oda` ise HER olay kabul
+    // ediliyordu → önceki odanın bayat olayları yeni odada işleniyordu.)
     if (raw == a || raw.endsWith(a) || a.endsWith(raw)) return true;
     return false;
   }
