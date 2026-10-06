@@ -5,6 +5,7 @@
 - **Canlı falcı isteği:** tüm çağıranlarda tek rezervasyon kapısı (çift dokunuş/başka falcı ikinci istek atmaz); ekran kapanınca `ref` StateError'u giderildi; zaman aşımı mesajı net
 - **Seans bağlantısı:** yoklamalar (sinyal/oda/sohbet/ping) aynı anda tek istekle sınırlı; oda+durum sorgusu paralel; gereksiz senkron atlanır; TRTC token 20 sn zaman aşımı
 - **SSE:** bilerek iptal edilen bağlantı artık ek yeniden bağlanma başlatmıyor
+- **Bekleme/oturum güvenliği:** bekleme ekranı kapandıktan sonra gelen yanıt `StateError` vermiyor; eski seansın SSE `disconnect`'i yeni seansın bağlantısını kapatmıyor; SSE ve sohbet yoklaması TRTC join'i beklemiyor; yoklama hataları yakalanmamış async hataya dönüşmüyor
 - **Yeni:** CANLIFAL DIAGNOSTICS (Hakkında → sürüm satırına uzun bas): kendi kendine tanı, kare/donma izleyici, iz kimliği (CF-TRACE), kategorili hata kaydı
 - **Rapor:** `docs/CANLIFAL_PERFORMANCE_DIAGNOSTIC_REPORT.md`
 

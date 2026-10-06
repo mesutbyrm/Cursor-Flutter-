@@ -481,10 +481,14 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     final fresh = syncedAt != null &&
         DateTime.now().difference(syncedAt) < const Duration(seconds: 2);
     if (!fresh && !await _syncRoomInfo()) return;
+    // Sohbet yoklaması ve SSE, TRTC join'e bağlı değil: join (token + SDK)
+    // yavaş/geç olsa da sohbet ve oda olayları beklemesin. SSE bağlanınca
+    // yoklama kendini iptal eder.
+    _startChatPoll();
+    final sseConnect = _guarded<void>(null, _connectRoomSse);
     await _joinRtc();
     if (_disposed || state.leaving) return;
-    await _connectRoomSse();
-    _startChatPoll();
+    await sseConnect;
   }
 
   /// Peer kimliği için oda bilgisi — TRTC join sessionId ile kilitlenir.
@@ -665,7 +669,19 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     }
   }
 
-  Future<void> _pollRoomSignals() => _signalsFlight.run(_pollRoomSignalsOnce);
+  /// Zamanlayıcıdan `unawaited` çağrılan yoklamalardaki hata yakalanmamış
+  /// async hataya dönüşmesin; kaydedilir ve güvenli değer döner.
+  Future<T> _guarded<T>(T fallback, Future<T> Function() body) async {
+    try {
+      return await body();
+    } catch (e, st) {
+      CfDiag.recordError(e, st, category: CfCategory.fortune);
+      return fallback;
+    }
+  }
+
+  Future<void> _pollRoomSignals() =>
+      _signalsFlight.run(() => _guarded<void>(null, _pollRoomSignalsOnce));
 
   Future<void> _pollRoomSignalsOnce() async {
     if (_disposed || state.leaving) return;
@@ -803,7 +819,9 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
 
   /// `false` → seans sunucuda bitmiş / ayrılıyor; TRTC/SSE başlatma.
   Future<bool> _syncRoomInfo() => _roomSync.run(() async {
-        final ok = await _syncRoomInfoOnce();
+        // Hata → «devam et» (true): API geçici hatasında bağlantı akışı
+        // sessizce yarım kalmasın.
+        final ok = await _guarded<bool>(true, _syncRoomInfoOnce);
         _lastRoomSyncAt = DateTime.now();
         return ok;
       });
@@ -812,10 +830,25 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     if (_disposed || state.leaving) return false;
     final repo = ref.read(livePsychicsRepositoryProvider);
     // Oda ve durum sorguları birbirinden bağımsız: sırayla değil birlikte.
-    final roomFuture = repo.fetchRoom(session.sessionId);
+    // İkisi de BİTMEDEN dönülmez: biri hata verirse diğeri havada kalıp bir
+    // sonraki senkronla üst üste binmesin.
+    Object? roomError;
+    StackTrace? roomStack;
+    final roomFuture = repo.fetchRoom(session.sessionId).then<PsychicRoomEntity?>(
+      (v) => v,
+      onError: (Object e, StackTrace st) {
+        roomError = e;
+        roomStack = st;
+        return null;
+      },
+    );
     final statusFuture = repo.fetchSessionStatus(session.sessionId).then<
         PsychicSessionStatusResult?>((v) => v, onError: (_) => null);
     final info = await roomFuture;
+    final statusResult = await statusFuture;
+    if (roomError != null) {
+      Error.throwWithStackTrace(roomError!, roomStack ?? StackTrace.current);
+    }
     if (_disposed) return false;
     if (info == null) return true;
 
@@ -827,8 +860,6 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       return false;
     }
 
-    final statusResult = await statusFuture;
-    if (_disposed) return false;
     if (statusResult != null &&
         (statusResult.status == PsychicSessionStatus.cancelled ||
             statusResult.status == PsychicSessionStatus.rejected ||
@@ -897,7 +928,8 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     return true;
   }
 
-  Future<void> _sendPing() => _pingFlight.run(_sendPingOnce);
+  Future<void> _sendPing() =>
+      _pingFlight.run(() => _guarded<void>(null, _sendPingOnce));
 
   Future<void> _sendPingOnce() async {
     if (_disposed || state.leaving || !state.timerStarted) return;
@@ -1143,7 +1175,8 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     unawaited(_broadcastMediaState());
   }
 
-  Future<void> _pollChat() => _chatFlight.run(_pollChatOnce);
+  Future<void> _pollChat() =>
+      _chatFlight.run(() => _guarded<void>(null, _pollChatOnce));
 
   Future<void> _pollChatOnce() async {
     if (_disposed || state.leaving) return;
@@ -1722,7 +1755,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       await repo.clearRoomSignals(sessionId).timeout(t);
     } catch (_) {}
     try {
-      await sse.disconnect().timeout(t);
+      await sse.disconnect(forSessionId: sessionId).timeout(t);
     } catch (_) {}
   }
 
@@ -1792,7 +1825,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     unawaited(_onlineSub?.cancel());
     _onlineSub = null;
     _trtc.onConnectionLost = null;
-    unawaited(_roomSse.disconnect());
+    unawaited(_roomSse.disconnect(forSessionId: session.sessionId));
     unawaited(_trtc.leave());
     super.dispose();
   }

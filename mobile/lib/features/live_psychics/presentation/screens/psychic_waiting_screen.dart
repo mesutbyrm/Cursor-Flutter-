@@ -86,6 +86,10 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
   var _navigated = false;
   var _checking = false;
 
+  /// Controller kapandıysa (ekran/geri tuşu) `state` okumak StateError verir;
+  /// await'ten dönen yanıtlar bu yüzden önce `mounted` kontrol eder.
+  bool get _closed => !mounted || state.closed;
+
   /// Bekleme başlangıcı — geri sayım duvar saatinden hesaplanır; uygulama
   /// arka plana alınınca Timer durduğunda süre uzamaz.
   final _startedAt = DateTime.now();
@@ -106,17 +110,17 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
   }
 
   void onRemoteCancelled() {
-    if (!state.closed) unawaited(_onRejected());
+    if (!_closed) unawaited(_onRejected());
   }
 
   void onAppResumed() {
-    if (state.closed) return;
+    if (_closed) return;
     _tickTimeout();
     unawaited(_checkStatus());
   }
 
   void _tickTimeout() {
-    if (state.closed || state.phase != PsychicWaitingPhase.waiting) return;
+    if (_closed || state.phase != PsychicWaitingPhase.waiting) return;
     final elapsed = DateTime.now().difference(_startedAt).inSeconds;
     final next = psychicWaitingTimeoutSeconds - elapsed;
     if (next <= 0) {
@@ -132,7 +136,7 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
   /// Zamanlayıcılar (0,5 sn + 1 sn) tetiklese de aynı anda tek tur çalışır;
   /// her tur 3 istek attığından yavaş ağda istekler birikip kabulü geciktiriyordu.
   Future<void> _checkStatus() async {
-    if (state.closed || _checking) return;
+    if (_closed || _checking) return;
     _checking = true;
     try {
       await _checkStatusOnce();
@@ -142,12 +146,12 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
   }
 
   Future<void> _checkStatusOnce() async {
-    if (state.closed) return;
+    if (_closed) return;
     final repo = ref.read(livePsychicsRepositoryProvider);
     _pollCount++;
 
     final lookup = await repo.fetchSessionStatusLookup(session.sessionId);
-    if (state.closed) return;
+    if (_closed) return;
 
     if (lookup.isNotFound) {
       // Sunucu seansı bilmiyor (silinmiş/bitmiş): art arda 3 turda onaylanırsa
@@ -209,7 +213,7 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
   }
 
   Future<void> _onAccepted([PsychicSessionStatusResult? status]) async {
-    if (state.closed || _navigated) return;
+    if (_closed || _navigated) return;
     _navigated = true;
     state = state.copyWith(phase: PsychicWaitingPhase.accepted, closed: true);
     _poll?.cancel();
@@ -235,7 +239,7 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
   }
 
   Future<void> _onRejected() async {
-    if (state.closed) return;
+    if (_closed) return;
     state = state.copyWith(phase: PsychicWaitingPhase.rejected, closed: true);
     _poll?.cancel();
     _timeout?.cancel();
@@ -252,12 +256,12 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
   }
 
   Future<void> _onExpired() async {
-    if (state.closed) return;
+    if (_closed) return;
     // Son saniyede kabul edilmiş olabilir — iptal etmeden önce bir kez sor.
     final last = await ref
         .read(livePsychicsRepositoryProvider)
         .fetchSessionStatusLookup(session.sessionId);
-    if (state.closed) return;
+    if (_closed) return;
     final lastStatus = last.status;
     if (lastStatus != null && lastStatus.status.isActive) {
       await _onAccepted(lastStatus);
@@ -277,7 +281,7 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
   }
 
   Future<void> cancel(BuildContext context) async {
-    if (state.closed) return;
+    if (_closed) return;
 
     final confirmed = await showPsychicCloseDialog(
       context,
@@ -298,7 +302,7 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
   }
 
   Future<void> _exitImmediate() async {
-    if (state.closed) return;
+    if (_closed) return;
     state = state.copyWith(closed: true);
     _poll?.cancel();
     _timeout?.cancel();

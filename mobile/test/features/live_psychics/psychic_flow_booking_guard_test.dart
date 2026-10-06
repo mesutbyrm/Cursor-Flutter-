@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:canlifal_social/app/router/app_router.dart';
+import 'package:canlifal_social/core/diagnostics/cf_trace.dart';
+import 'package:dio/dio.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_entity.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_entity.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_status.dart';
@@ -64,6 +66,14 @@ void main() {
     ]);
   });
 
+  String traceLine(String scenario, Stopwatch sw) {
+    final t = CfTrace.recent.isEmpty ? null : CfTrace.recent.first;
+    return 'METRIC $scenario | süre=${sw.elapsedMilliseconds}ms(gerçek) '
+        '| traceId=${t?.traceId} | toplam=${t?.totalMs}ms '
+        '| adımlar=${t?.steps.map((e) => '${e.name}:${e.ms}').join(',')} '
+        '| createSession=${repo.createCalls}';
+  }
+
   Future<void> pumpHost(WidgetTester tester) async {
     await tester.pumpWidget(
       wrapEconomyScope(
@@ -126,7 +136,9 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     repo.gate.complete(_created);
 
+    final sw0 = Stopwatch()..start();
     final session = await settle(tester, first); // StateError fırlatmamalı
+    debugPrint(traceLine('T3-istek-sırasında-geri', sw0));
     expect(session?.sessionId, 'sess_1');
     expect(PsychicFlow.isBookingInFlight, isFalse);
   });
@@ -135,12 +147,103 @@ void main() {
     await pumpHost(tester);
     final f = book(); // gate hiç tamamlanmıyor
     await tester.pump(const Duration(seconds: 26));
+    final sw1 = Stopwatch()..start();
     final r = await settle(tester, f);
+    debugPrint('${traceLine('T6-api-timeout(25sn+)', sw1)} | mesaj=${container.read(psychicBookingFeedbackProvider)}');
     expect(r, isNull);
     expect(
       container.read(psychicBookingFeedbackProvider),
       contains('zaman aşımına'),
     );
+    expect(PsychicFlow.isBookingInFlight, isFalse);
+  });
+
+  testWidgets('T1 tek tık → 1 istek, seans açılır, kapı açılır', (tester) async {
+    await pumpHost(tester);
+    final sw = Stopwatch()..start();
+    final f = book();
+    repo.gate.complete(_created);
+    final r = await settle(tester, f);
+    debugPrint(traceLine('T1-tek-tık', sw));
+    expect(r?.sessionId, 'sess_1');
+    expect(repo.createCalls, 1);
+    expect(PsychicFlow.isBookingInFlight, isFalse);
+  });
+
+  testWidgets('T2 10 kez hızlı tıklama → yalnız 1 istek', (tester) async {
+    await pumpHost(tester);
+    final sw = Stopwatch()..start();
+    final first = book();
+    await tester.pump(const Duration(milliseconds: 5));
+    var rejected = 0;
+    for (var i = 0; i < 9; i++) {
+      final r = await settle(tester, book());
+      if (r == null) rejected++;
+    }
+    repo.gate.complete(_created);
+    final r1 = await settle(tester, first);
+    debugPrint('${traceLine('T2-10x-tık', sw)} | reddedilen=$rejected');
+    expect(r1?.sessionId, 'sess_1');
+    expect(rejected, 9);
+    expect(repo.createCalls, 1);
+    expect(waitingPushes, greaterThanOrEqualTo(1));
+  });
+
+  testWidgets('T4 yavaş internet (8 sn) → UI kilitlenmez, istek tamamlanır',
+      (tester) async {
+    await pumpHost(tester);
+    final sw = Stopwatch()..start();
+    final f = book();
+    var worstPump = 0;
+    final pumpWatch = Stopwatch();
+    for (var i = 0; i < 80; i++) {
+      pumpWatch
+        ..reset()
+        ..start();
+      await tester.pump(const Duration(milliseconds: 100));
+      pumpWatch.stop();
+      if (pumpWatch.elapsedMilliseconds > worstPump) {
+        worstPump = pumpWatch.elapsedMilliseconds;
+      }
+    }
+    expect(PsychicFlow.isBookingInFlight, isTrue);
+    repo.gate.complete(_created);
+    final r = await settle(tester, f);
+    debugPrint('${traceLine('T4-yavaş-internet', sw)} | enUzunKareMs=$worstPump');
+    expect(r?.sessionId, 'sess_1');
+    expect(repo.createCalls, 1);
+    expect(worstPump, lessThan(200), reason: 'bekleme sırasında UI bloklandı');
+  });
+
+  testWidgets('T5 internet kesik → anlaşılır hata, yükleme kapanır, tekrar denenir',
+      (tester) async {
+    await pumpHost(tester);
+    final sw = Stopwatch()..start();
+    repo.createError = DioException(
+      requestOptions: RequestOptions(path: '/api/fortune-tellers/sessions'),
+      type: DioExceptionType.connectionError,
+    );
+    final r = await settle(tester, book());
+    debugPrint('${traceLine('T5-internet-kesik', sw)} '
+        '| mesaj=${container.read(psychicBookingFeedbackProvider)}');
+    expect(r, isNull);
+    expect(container.read(psychicBookingFeedbackProvider), isNotNull);
+    expect(PsychicFlow.isBookingInFlight, isFalse);
+  });
+
+  testWidgets('T10 aynı falcıya tekrar istek → 2. istek ancak 1. bitince', (tester) async {
+    await pumpHost(tester);
+    final sw = Stopwatch()..start();
+    repo.gate.complete(_created);
+    final a = await settle(tester, book());
+    repo.gate = Completer();
+    final f = book();
+    repo.gate.complete(_created);
+    final b = await settle(tester, f);
+    debugPrint(traceLine('T10-aynı-falcı-tekrar', sw));
+    expect(a?.sessionId, 'sess_1');
+    expect(b?.sessionId, 'sess_1');
+    expect(repo.createCalls, 2);
     expect(PsychicFlow.isBookingInFlight, isFalse);
   });
 

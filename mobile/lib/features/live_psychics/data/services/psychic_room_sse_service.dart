@@ -246,7 +246,27 @@ class PsychicRoomSseService {
     _dio?.close(force: true);
   }
 
-  Future<void> disconnect() async {
+  /// Eski bir seansın kapatma isteği mi (servis artık başka seansa bağlı)?
+  @visibleForTesting
+  static bool isStaleDisconnect({
+    required String? activeSessionId,
+    required String? requested,
+  }) =>
+      requested != null &&
+      activeSessionId != null &&
+      activeSessionId != requested.trim();
+
+  /// [forSessionId] verilirse ve servis o sırada BAŞKA bir seansa bağlıysa
+  /// hiçbir şey yapmaz. Servis uygulama genelinde tek örnektir; eski seansın
+  /// geç gelen `disconnect()` çağrısı yeni seansın bağlantısını kapatıp
+  /// geri çağrılarını silmesin diye.
+  Future<void> disconnect({String? forSessionId}) async {
+    if (isStaleDisconnect(activeSessionId: _sessionId, requested: forSessionId)) {
+      CfDiag.record(CfCategory.sse,
+          'stale disconnect ignored (active session differs)',
+          level: CfLevel.warn);
+      return;
+    }
     _stopped = true;
     CfDiag.lastRoomSseEventAt = null;
     _refreshTokens = null;
