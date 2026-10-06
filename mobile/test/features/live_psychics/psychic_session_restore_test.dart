@@ -68,6 +68,7 @@ void main() {
       );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle(const Duration(milliseconds: 200));
 
       expect(find.text('Lütfen Bekleyiniz...'), findsOneWidget);
       expect(find.text('Restore Falcı'), findsOneWidget);

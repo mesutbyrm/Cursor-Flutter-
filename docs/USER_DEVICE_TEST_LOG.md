@@ -103,3 +103,14 @@ Agent: hotfix gerekir — logcat / ekran kaydı ekleyin.
 
 Agent: hotfix gerekir — logcat / ekran kaydı ekleyin.
 
+## 2026-10-06 02:52 UTC — Psychic P0 **FAIL**
+
+| Alan | Değer |
+|------|--------|
+| Sürüm | `1.0.725+778` |
+| Faz | Psychic P0 |
+| Sonuç | **FAIL** |
+| Not | Falcı TRTC donma/bağlanıyor takılması; danışan bitirdi falcı UI; sesli oda hayalet 1 kişi + çıkışta ses; PK hediye yalnız gönderende |
+
+Agent: hotfix gerekir — logcat / ekran kaydı ekleyin.
+

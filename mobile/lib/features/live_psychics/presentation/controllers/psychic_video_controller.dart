@@ -462,9 +462,12 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     });
     await PsychicSessionStore.save(session);
     _startTimers();
+    if (!await _syncRoomInfo()) return;
     await _waitForRoomBootstrap();
     if (_disposed || state.leaving) return;
+    if (!await _syncRoomInfo()) return;
     await _joinRtc();
+    if (_disposed || state.leaving) return;
     await _connectRoomSse();
     _startChatPoll();
   }
@@ -472,7 +475,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   /// Peer kimliği için oda bilgisi — TRTC join sessionId ile kilitlenir.
   Future<void> _waitForRoomBootstrap() async {
     for (var attempt = 0; attempt < 6; attempt++) {
-      await _syncRoomInfo();
+      if (!await _syncRoomInfo()) return;
       if (_disposed || state.leaving) return;
       final peer = session.remotePeerIdFor(room: state.room);
       if (peer.isNotEmpty) return;
@@ -781,29 +784,31 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     );
   }
 
-  Future<void> _syncRoomInfo() async {
-    if (_disposed || state.leaving) return;
+  /// `false` → seans sunucuda bitmiş / ayrılıyor; TRTC/SSE başlatma.
+  Future<bool> _syncRoomInfo() async {
+    if (_disposed || state.leaving) return false;
     final repo = ref.read(livePsychicsRepositoryProvider);
     final info = await repo.fetchRoom(session.sessionId);
-    if (_disposed || info == null) return;
+    if (_disposed) return false;
+    if (info == null) return true;
 
     if (info.status == PsychicSessionStatus.cancelled ||
         info.status == PsychicSessionStatus.rejected ||
         info.status == PsychicSessionStatus.ended ||
         info.status == PsychicSessionStatus.expired) {
-      unawaited(_handleRemoteSessionEnded(info.status));
-      return;
+      await _handleRemoteSessionEnded(info.status);
+      return false;
     }
 
     final statusResult = await repo.fetchSessionStatus(session.sessionId);
-    if (_disposed) return;
+    if (_disposed) return false;
     if (statusResult != null &&
         (statusResult.status == PsychicSessionStatus.cancelled ||
             statusResult.status == PsychicSessionStatus.rejected ||
             statusResult.status == PsychicSessionStatus.ended ||
             statusResult.status == PsychicSessionStatus.expired)) {
-      unawaited(_handleRemoteSessionEnded(statusResult.status));
-      return;
+      await _handleRemoteSessionEnded(statusResult.status);
+      return false;
     }
 
     final wasTimerStarted = state.timerStarted;
@@ -862,6 +867,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
         _logSkipRejoin(incomingRoomId);
       }
     }
+    return true;
   }
 
   Future<void> _sendPing() async {
@@ -1696,9 +1702,21 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
 
   void onAppResumed() {
     if (_disposed || state.leaving) return;
-    if (state.sseFailed || !state.sseConnected) {
-      unawaited(retryRoomSse());
-    }
+    unawaited(() async {
+      final active = await _syncRoomInfo();
+      if (_disposed || state.leaving || !active) return;
+      await _pollRoomSignals();
+      if (_disposed || state.leaving) return;
+      if (state.sseFailed || !state.sseConnected) {
+        await retryRoomSse();
+      }
+      if (!state.timerStarted || !state.sseConnected) {
+        _scheduleRoomPoll();
+      }
+      if (!_trtc.inRoom) {
+        await _reconnectTrtc(PsychicTrtcReconnectReason.appResumedNotInRoom);
+      }
+    }());
     PsychicEventLog.trtcState(
       sessionId: session.sessionId,
       connectionState: 'app_resumed',
@@ -1707,11 +1725,6 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       userId: _trtcConn.joinedUserId,
       inRoom: _trtc.inRoom,
     );
-    if (!_trtc.inRoom) {
-      unawaited(
-        _reconnectTrtc(PsychicTrtcReconnectReason.appResumedNotInRoom),
-      );
-    }
   }
 
   @override

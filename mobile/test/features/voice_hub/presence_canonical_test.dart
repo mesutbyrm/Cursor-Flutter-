@@ -81,6 +81,17 @@ void main() {
     test('accepts empty roomId in payload for backward compat', () {
       expect(roomEventMatchesActiveRoom({}, 'room-abc'), isTrue);
     });
+
+    test('accepts PK opponent room via extra alternates', () {
+      expect(
+        roomEventMatchesActiveRoom(
+          {'roomId': 'room-opponent'},
+          'room-home',
+          extraAlternateRoomIds: ['room-opponent'],
+        ),
+        isTrue,
+      );
+    });
   });
 
   group('resolveRoomOnlineCount', () {

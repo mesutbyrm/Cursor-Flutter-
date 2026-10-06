@@ -641,6 +641,30 @@ class VoiceRoomLiveController
     return slug;
   }
 
+  /// PK sırasında hediye SSE `roomId` karşı taraf odasıyla gelebilir.
+  Iterable<String> get _pkGiftAlternateRoomKeys {
+    final battle = ref.read(pkBattleRemoteProvider);
+    if (battle == null) return const [];
+    final keys = <String>[];
+    void add(String? value) {
+      final t = value?.trim() ?? '';
+      if (t.isNotEmpty) keys.add(t);
+    }
+
+    add(battle.voiceRoomId);
+    add(battle.opponentVoiceRoomId);
+    return keys;
+  }
+
+  bool _roomEventMatchesActiveRoomPayload(Map<String, dynamic> payload) {
+    return roomEventMatchesActiveRoom(
+      payload,
+      _presenceApiKey,
+      alternateRoomId: _musicAlternateKey,
+      extraAlternateRoomIds: _pkGiftAlternateRoomKeys,
+    );
+  }
+
   /// SSE geri çağrısı hâlâ bağlı olduğumuz odaya mı ait?
   ///
   /// Hub servisi oda anahtarı başına paylaşıldığı ve geri çağrılar bağlanma
@@ -1189,6 +1213,15 @@ class VoiceRoomLiveController
           _cancelSessionTimers();
           _announceSelfLeave();
           state = state.copyWith(loading: false);
+          ref.read(voiceRoomAudioCoordinatorProvider).setReconnectSuspended(true);
+          ref.read(voiceRoomAudioCoordinatorProvider).setHeadphonesOn(false);
+          unawaited(
+            ref
+                .read(voiceRoomAudioCoordinatorProvider)
+                .leave()
+                .timeout(const Duration(milliseconds: 400))
+                .catchError((_) {}),
+          );
         },
         () async {
           final backendLeave = _leavePresenceWithSeatClear(force: forcePresenceLeave)

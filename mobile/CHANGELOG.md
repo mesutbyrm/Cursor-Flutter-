@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.725+778 (2026-10-06) — Psychic P0 FAIL hotfix: falcı donma + sesli oda hayalet/PK hediye
+
+- **Canlı falcı:** bitmiş seans diskten açılmadan sunucu durumu doğrulanır; `_syncRoomInfo` terminal seansı TRTC öncesi kapatır; uygulama ön plana dönünce oda/sinyal yenilenir
+- **Sesli keşif:** boş odada hayalet «1 kişi» — keşif hub `countFor` ile hizalı
+- **Odadan çıkış:** ses hemen kesilir (leave adım 1 erken TRTC/audio)
+- **PK hediye:** SSE `roomId` PK karşı oda alias’ı ile eşleşir (görsel + karşı taraf sesi)
+
 ## 1.0.724+777 (2026-10-06) — Realtime Faz 6: arka plan Spec 20 + final rapor
 
 - **Spec 20:** `VoiceRoomBackgroundRecoverySpec` (45 sn arka plan leave, SSE resume debounce 450 ms); lifecycle host + SSE hub hizalı
