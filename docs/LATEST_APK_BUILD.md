@@ -4,22 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.727+780` |
-| Tarih (UTC) | 2026-10-06 16:46 |
-| Commit | [`bebc24be4a1e8b29811d739a566a8e5b96a8537f`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/bebc24be4a1e8b29811d739a566a8e5b96a8537f) |
-| İş akışı | [Run 37495416350](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37495416350) |
+| Sürüm | `1.0.729+782` |
+| Tarih (UTC) | 2026-10-06 20:47 |
+| Commit | [`caacbdf303868670f0bd5bbc3424e2e448b03e51`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/caacbdf303868670f0bd5bbc3424e2e448b03e51) |
+| İş akışı | [Run 37526193211](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37526193211) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.727+780 (2026-10-06) — Canlı falcı donma önlemleri + Canlifal Diagnostics
+## 1.0.729+782 (2026-10-06) — Gerçek cihaz Diagnostic Logger (dosya + ZIP)
 
-- **Canlı falcı isteği:** tüm çağıranlarda tek rezervasyon kapısı (çift dokunuş/başka falcı ikinci istek atmaz); ekran kapanınca `ref` StateError'u giderildi; zaman aşımı mesajı net
-- **Seans bağlantısı:** yoklamalar (sinyal/oda/sohbet/ping) aynı anda tek istekle sınırlı; oda+durum sorgusu paralel; gereksiz senkron atlanır; TRTC token 20 sn zaman aşımı
-- **SSE:** bilerek iptal edilen bağlantı artık ek yeniden bağlanma başlatmıyor
-- **Bekleme/oturum güvenliği:** bekleme ekranı kapandıktan sonra gelen yanıt `StateError` vermiyor; eski seansın SSE `disconnect`'i yeni seansın bağlantısını kapatmıyor; SSE ve sohbet yoklaması TRTC join'i beklemiyor; yoklama hataları yakalanmamış async hataya dönüşmüyor
-- **Yeni:** CANLIFAL DIAGNOSTICS (Hakkında → sürüm satırına uzun bas): kendi kendine tanı, kare/donma izleyici, iz kimliği (CF-TRACE), kategorili hata kaydı
-- **Rapor:** `docs/CANLIFAL_PERFORMANCE_DIAGNOSTIC_REPORT.md`
+- **CfDiagnosticLogger:** `diagnostics/session_*/canlifal_diagnostic.log`, `summary.json`, `errors.json`, `DIAG-*` oturum kimliği; son 100 aksiyon + kritik an snapshot
+- **İzleme:** Dio istekleri, timer/polling (canlı fal), oda SSE/TRTC olayları, oturum durumu, donma/jank (mevcut CfMonitors üzerine)
+- **Diagnostics ekranı:** Overview / Errors / Network / Timer / Polling / SSE / TRTC / Requests / Freeze / Resources sekmeleri; «Dosyaya kaydet» + **LOGU DIŞA AKTAR (ZIP)** (`AI_DEBUG_SUMMARY.md` dahil)
+- Mevcut Performance Monitor, Freeze Watchdog, ResourceTracker, CfDiag **korundu** — silinmedi
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
