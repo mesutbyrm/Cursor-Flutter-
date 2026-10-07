@@ -121,6 +121,7 @@ import '../coordinators/room_leave_coordinator.dart';
 import '../coordinators/room_session_manager.dart';
 import '../utils/voice_room_presence_self_sync.dart';
 import '../utils/voice_room_presence_persistence.dart';
+import '../utils/voice_room_server_leave.dart';
 import '../utils/voice_room_presence_tombstone.dart';
 import '../services/voice_room_music_control_delegate.dart';
 import '../../video/domain/youtube_video_id.dart';
@@ -915,7 +916,7 @@ class VoiceRoomLiveController
         clearVoiceRoomLiveSession(ref, _roomKey);
         _removeSelfFromPresenceOptimistic();
         unawaited(_leaveVoiceSession());
-        unawaited(_leavePresenceWithSeatClear());
+        unawaited(_leavePresenceWithSeatClear(force: true));
         unawaited(_stopTyping());
         ref.read(sseConnectionHubProvider).forceReleaseVoiceRoom(_sseReleaseKey);
         ref.read(voiceRoomGiftRealtimeProvider).stop();

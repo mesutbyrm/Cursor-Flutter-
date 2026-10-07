@@ -71,7 +71,9 @@ class VoiceRoomAudioCoordinator {
     if (channel == null || channel.isEmpty) return;
 
     _reconnecting = true;
-    _desiredMicOn = _trtc.micOn;
+    // `_desiredMicOn` kullanıcı niyetini taşır (koltuktan inme / leave); TRTC
+    // `micOn` geçici olarak true kalabildiği için yeniden bağlanmada mic açılmamalı.
+    final publishMic = _desiredMicOn;
     onReconnecting?.call();
     VoiceRoomDebugLog.log('audio.trtc.reconnect.start', {
       'roomId': channel,
@@ -85,15 +87,15 @@ class VoiceRoomAudioCoordinator {
       if (_reconnectSuspended) return;
       await _trtc.joinVoice(
         channel,
-        publishMic: _desiredMicOn,
+        publishMic: publishMic,
         userId: userId,
-        role: _desiredMicOn ? 'host' : 'audience',
+        role: publishMic ? 'host' : 'audience',
       );
       if (_reconnectSuspended) {
         await _trtc.leave();
         return;
       }
-      if (!_desiredMicOn) {
+      if (!publishMic) {
         await _trtc.setMicEnabled(false);
       }
       VoiceRoomDebugLog.log('audio.trtc.reconnect.ok', {'roomId': channel});
@@ -295,7 +297,7 @@ class VoiceRoomAudioCoordinator {
       await _trtc.leave().timeout(const Duration(seconds: 3));
     } catch (_) {}
     _engine = null;
-    _reconnectSuspended = false;
+    // Yeniden bağlanmayı çağıran (audience join / leave) açana kadar kapalı tut.
   }
 
   Future<void> leave() async {

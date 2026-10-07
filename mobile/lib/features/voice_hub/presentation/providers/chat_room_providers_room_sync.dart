@@ -54,6 +54,7 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
 
   Future<void> _fetchAndApplySeats() async {
     if (_roomKey.isEmpty) return;
+    final gen = _liveSessionGeneration;
     final remote = ref.read(chatRoomRemoteProvider);
     try {
       final seats = await remote.fetchSeats(
@@ -61,6 +62,7 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
         alternateKey: _musicAlternateKey,
         targetSeatCount: state.roomSeatCount ?? _roomMeta.seatCount,
       );
+      if (gen != _liveSessionGeneration || !_sessionActive) return;
       if (shouldApplyCanonicalSeats(seats)) {
         final nextPresence = _syncPresenceSeatIndexFromSlots(
           state.presence,

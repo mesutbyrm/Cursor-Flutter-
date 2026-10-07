@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.739+792 (2026-10-07) — Sesli oda presence/koltuk/TRTC yaşam döngüsü (P0)
+
+- **Oda değiştirme (hata):** A→B geçişinde eski odada yalnızca `leavePresence` deneniyordu; koltuk + live üyelik kalıyordu → kullanıcı A’da hayalet görünüyordu. Tam sunucu çıkışı: `clearSeat` + live `leaveRoom` + `DELETE presence?leave=1` (alternatif anahtarlar dahil)
+- **Provider dispose (hata):** `_leavePresenceWithSeatClear` `force` olmadan erken dönüyordu → backend leave atlanabiliyordu; artık `force: true`
+- **Koltuktan inme / ses (hata):** TRTC yeniden bağlanma `_trtc.micOn` ile mic’i tekrar açıyordu; `_desiredMicOn` otoriter. `releaseSeatVoice` sonrası reconnect askıda; audience `join` öncesi `setReconnectSuspended(true)`
+- **Yarış:** seat fetch yanıtları oda değişiminden sonra uygulanmaz (`_liveSessionGeneration` koruması)
+- **Açılış temizliği:** bekleyen presence kayıtları için de tam sunucu çıkışı
+- Gerçek cihaz: kullanıcı Test 1–6
+
 ## 1.0.738+791 (2026-10-07) — Oyun lobisi düzeltmesi + masaya katılma
 
 - **Oyun lobisi (hata):** «Masalar» ve «Son kazananlar» sekmeleri backend'de olmayan bölüm adlarını istiyordu (`tables`, `winners` → canlıda «Geçersiz section»). Doğru adlar: `live_tables`, `recent_winners`
