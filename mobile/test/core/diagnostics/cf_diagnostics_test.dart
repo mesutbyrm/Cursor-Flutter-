@@ -49,6 +49,20 @@ void main() {
       expect(CfDiag.entries.single.message, isNot(contains('abc.def.ghi')));
     });
 
+    test('CORE-001: yutulan hata warn olarak ve maskeli kaydedilir', () {
+      CfDiag.swallowed(
+        StateError('token Bearer abc.def.ghi düştü'),
+        StackTrace.current,
+        CfCategory.trtc,
+        'trtc_room_manager:leave',
+      );
+      final e = CfDiag.entries.single;
+      expect(e.category, CfCategory.trtc);
+      expect(e.level, CfLevel.warn);
+      expect(e.message, contains('swallowed@trtc_room_manager:leave'));
+      expect(e.message, isNot(contains('abc.def.ghi')));
+    });
+
     test('halka tampon sınırı aşılmaz', () {
       for (var i = 0; i < CfDiag.maxEntries + 50; i++) {
         CfDiag.record(CfCategory.ui, 'e$i');

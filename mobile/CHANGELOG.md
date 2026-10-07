@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.734+787 (2026-10-07) — Tanı + dayanıklılık (FORTUNE-003, CORE-001, CORE-002, otomatik tespit, fal timer)
+
+- **FORTUNE-003:** Falcı gelen-istek SSE'sine 40 sn kalp atışı bekçisi; yarı açık bağlantı kapatılıp yeniden bağlanır
+- **Fal timer:** sunucu `elapsedSeconds` gönderdiğinde saniyelik sayaç bir sonraki senkrona kadar donuyordu; artık anlık alınan değerden ilerler (`PsychicRoomEntity.snapshotAt`)
+- **CORE-001:** TRTC, canlı fal, hediye ve ağ katmanındaki 52 sessiz `catch (_) {}` artık `CfDiag.swallowed` ile Diagnostics'e (warn, maskeli) yazılır; davranış değişmez
+- **Otomatik tespit (`CfAutoDetect`):** TIMER_DRIFT, AUDIO_ACTIVE_WITHOUT_SEAT, TRTC_JOINED_TWICE, DUPLICATE_GIFT kuralları; 30 sn tekrar sınırı
+- **CORE-002:** Hiçbir akışın bağlanmadığı eski `core/sse_client.dart` + sağlayıcı + yaşam döngüsü bağlaması kaldırıldı (realtime `BaseSseService` / SSE hub üzerinden)
+- Gerçek cihaz: **BLOCKED**
+
 ## 1.0.733+786 (2026-10-07) — Backend gerektirmeyen düzeltmeler (GIFT-001, BG-002, PK-001, VOICE-006)
 
 - **GIFT-001 video hediye:** süre (backend varsayılanı 3000 ms) veya `gift_finished` olayı oynayan videoyu artık kesmiyor; bitiş videonun sonuna ertelenir (`GiftVideoHold`, en fazla +60 sn). Canlı yayın, sesli oda ve PK overlay'leri

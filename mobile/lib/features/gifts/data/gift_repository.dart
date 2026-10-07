@@ -16,6 +16,7 @@ import '../domain/gift_platform.dart';
 import '../domain/lucky_gift_entities.dart';
 import 'gift_catalog_sync_cache.dart';
 import 'lucky_gift_remote_datasource.dart';
+import '../../../core/diagnostics/cf_diag.dart';
 
 class GiftRepository {
   GiftRepository(this._dio, {LuckyGiftRemoteDataSource? luckyDs}) 
@@ -44,14 +45,18 @@ class GiftRepository {
         forceRefresh: forceRefresh,
       );
       if (synced.isNotEmpty) return synced;
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.gift, 'gift_repository:47');
+    }
     try {
       final cms = await _luckyDs.fetchCatalogCms(
         platform: platform,
         context: context,
       );
       if (cms.isNotEmpty) return cms;
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.gift, 'gift_repository:54');
+    }
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.videoStreamGiftsCatalog,
       query: {'platform': platform.queryValue},
@@ -216,7 +221,9 @@ class GiftRepository {
           }
         }
       }
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.gift, 'gift_repository:219');
+    }
     return const [];
   }
 }

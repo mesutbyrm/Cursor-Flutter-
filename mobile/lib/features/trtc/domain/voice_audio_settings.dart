@@ -1,6 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tencent_rtc_sdk/trtc_cloud_def.dart';
 import 'package:tencent_rtc_sdk/tx_audio_effect_manager.dart';
+import '../../../core/diagnostics/cf_diag.dart';
 
 /// Sesli oda / canlı yayın mikrofon ayarları — backend ucu yok, TRTC SDK'ya
 /// cihazda uygulanır.
@@ -98,7 +99,9 @@ abstract final class VoiceAudioSettingsStore {
         captureVolume: (p.getInt(_kVolume) ?? d.captureVolume).clamp(0, 150),
         earMonitor: p.getBool(_kEar) ?? d.earMonitor,
       );
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.trtc, 'voice_audio_settings:101');
+    }
     _loaded = true;
     return _current;
   }
@@ -113,6 +116,8 @@ abstract final class VoiceAudioSettingsStore {
       await p.setInt(_kChanger, s.changer.index);
       await p.setInt(_kVolume, s.captureVolume);
       await p.setBool(_kEar, s.earMonitor);
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.trtc, 'voice_audio_settings:116');
+    }
   }
 }

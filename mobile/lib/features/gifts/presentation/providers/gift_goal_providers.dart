@@ -6,6 +6,7 @@ import '../../../../core/network/dio_provider.dart';
 import '../../data/gift_goal_dismiss_storage.dart';
 import '../../data/gift_goal_remote_datasource.dart';
 import '../../domain/gift_goal.dart';
+import '../../../../core/diagnostics/cf_diag.dart';
 
 final giftGoalRemoteProvider = Provider<GiftGoalRemoteDataSource>((ref) {
   return GiftGoalRemoteDataSource(ref.watch(dioProvider));
@@ -169,7 +170,9 @@ class GiftGoalController
     _timer?.cancel();
     try {
       await ref.read(giftGoalRemoteProvider).closeGoal(goal.id);
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.gift, 'gift_goal_providers:172');
+    }
   }
 
   /// Kullanıcı X ile kapattı — aynı goalId tekrar gösterilmez.
@@ -187,7 +190,9 @@ class GiftGoalController
     if (goal.isCompleted) {
       try {
         await ref.read(giftGoalRemoteProvider).closeGoal(goal.id);
-      } catch (_) {}
+      } catch (err, st) {
+        CfDiag.swallowed(err, st, CfCategory.gift, 'gift_goal_providers:190');
+      }
     }
   }
 

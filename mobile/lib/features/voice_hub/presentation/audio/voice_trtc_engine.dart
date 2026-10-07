@@ -6,6 +6,7 @@ import '../../../trtc/presentation/trtc_room_manager.dart';
 import '../../data/services/voice_room_debug_log.dart';
 import 'voice_trtc_exception.dart';
 import 'voice_audio_level_monitor.dart';
+import '../../../../core/diagnostics/cf_auto_detect.dart';
 
 /// Sesli sohbet — Tencent TRTC (`POST /api/trtc/token`).
 class VoiceTrtcEngine {
@@ -134,6 +135,7 @@ class VoiceTrtcEngine {
       _lastCredentials = credentials;
       _publishMic = publishMic;
       // Dinleyici katılımı yerel ses yakalamayı hiç başlatmaz (manager).
+      _checkAudioInvariant();
 
       VoiceRoomDebugLog.log('audio.trtc.joined', {
         'roomId': trtcRoom,
@@ -192,10 +194,20 @@ class VoiceTrtcEngine {
     // Yakalama + yayın hemen durur; ardından dinleyici rolüne geçilir.
     _manager.stopLocalAudioPublish();
     final switched = await _manager.setAnchorPublishing(false);
+    _checkAudioInvariant();
     VoiceRoomDebugLog.log('audio.trtc.switch_role', {
       'anchor': false,
       'ok': switched,
     });
+  }
+
+  /// AUDIO_ACTIVE_WITHOUT_SEAT — koltuk/yayın yokken yerel ses açık olmamalı.
+  void _checkAudioInvariant() {
+    CfAutoDetect.audioWithoutSeat(
+      roomId: _roomId,
+      publishing: _publishMic,
+      localAudioOn: micOn,
+    );
   }
 
   void setRemoteAudioMuted(bool muted) {

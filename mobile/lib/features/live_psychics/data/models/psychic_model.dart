@@ -308,6 +308,7 @@ abstract final class PsychicModel {
       maxMinutes: maxMin,
       timerStarted: data['timerStarted'] == true,
       elapsedSeconds: elapsed,
+      snapshotAt: DateTime.now(),
       roomId: roomId,
       timerStartedAt: timerStartedAt,
       peerId: peerId,

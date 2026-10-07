@@ -6,6 +6,7 @@ import '../../../../core/util/json_util.dart';
 import '../../../notifications/domain/entities/app_notification_entity.dart';
 import '../../domain/entities/psychic_request_entity.dart';
 import '../../domain/entities/psychic_session_status.dart';
+import '../../../../core/diagnostics/cf_diag.dart';
 
 Map<String, dynamic> flattenPsychicPushPayload(Map<String, dynamic> raw) {
   var map = Map<String, dynamic>.from(raw);
@@ -17,7 +18,9 @@ Map<String, dynamic> flattenPsychicPushPayload(Map<String, dynamic> raw) {
         if (decoded is Map) {
           map = {...map, ...asJsonMap(decoded)};
         }
-      } catch (_) {}
+      } catch (err, st) {
+        CfDiag.swallowed(err, st, CfCategory.fortune, 'psychic_push_payload:20');
+      }
     } else if (nested is Map) {
       map = {...map, ...asJsonMap(nested)};
     }

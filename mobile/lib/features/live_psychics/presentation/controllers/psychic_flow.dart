@@ -109,7 +109,9 @@ abstract final class PsychicFlow {
   ) {
     try {
       feedback.state = message;
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.fortune, 'psychic_flow:112');
+    }
   }
 
   static Future<PsychicSessionEntity?> _bookImpl({
