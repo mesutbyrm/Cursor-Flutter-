@@ -15,3 +15,6 @@ storeFile=release.keystore
 storePassword=YOUR_STORE_PASSWORD
 keyAlias=canlifal
 keyPassword=YOUR_KEY_PASSWORD
+
+# YOUR_* bırakılırsa release build bilerek reddedilir (debug imza yasak).
+# Gradle hata mesajında Diagnostics satırları görünür.
