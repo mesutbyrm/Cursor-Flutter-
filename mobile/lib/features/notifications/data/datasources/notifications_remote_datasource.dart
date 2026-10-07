@@ -5,6 +5,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../domain/entities/app_notification_entity.dart';
+import '../../../../core/diagnostics/cf_diag.dart';
 
 class NotificationsRemoteDataSource {
   NotificationsRemoteDataSource(this._dio);
@@ -103,6 +104,16 @@ class NotificationsRemoteDataSource {
   }
 
   Future<int?> fetchUnreadCount() async {
+    // Kanonik sayaç: `GET /api/notifications/unread` → `{count, unreadCount}`.
+    // Tüm listeyi çekmeden yalnız sayı döner (rozet için ucuz).
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.notificationsUnread);
+      final count = _unreadCountFromBody(res.data);
+      if (count != null) return count;
+    } catch (err, st) {
+      // Eski sunucu sürümü: liste sorgusuna düşülür.
+      CfDiag.swallowed(err, st, CfCategory.network, 'notifications_unread');
+    }
     for (final query in <Map<String, dynamic>>[
       const {'unreadOnly': 'true', 'limit': '1'},
       const {'unreadOnly': true},

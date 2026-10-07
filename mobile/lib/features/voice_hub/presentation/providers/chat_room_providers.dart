@@ -144,6 +144,7 @@ import 'voice_room_ui_provider.dart';
 import 'voice_room_mention_notice_provider.dart';
 import 'voice_room_ranking_provider.dart';
 import 'voice_room_rank_celebration_provider.dart';
+import '../../domain/voice_vip_pin.dart';
 part 'chat_room_providers_music.dart';
 part 'chat_room_providers_playback.dart';
 part 'chat_room_providers_moderation.dart';
@@ -238,6 +239,7 @@ class VoiceRoomLiveState {
     this.pendingMusicSearchSkipPayment = false,
     this.moderatorAnnouncement,
     this.pinnedAnnouncement,
+    this.vipPinText,
     this.chatClearedBannerNonce = 0,
     this.moderationToast,
     this.kickStrikeWarning,
@@ -274,6 +276,9 @@ class VoiceRoomLiveState {
   final bool pendingMusicSearchSkipPayment;
   final String? moderatorAnnouncement;
   final String? pinnedAnnouncement;
+
+  /// Premium+ geçici sabitleme (`POST pin-message` → SSE `VIP_PIN`, TTL'li).
+  final String? vipPinText;
   final int chatClearedBannerNonce;
   final String? moderationToast;
   final String? kickStrikeWarning;
@@ -340,6 +345,8 @@ class VoiceRoomLiveState {
     bool clearModeratorAnnouncement = false,
     String? pinnedAnnouncement,
     bool clearPinnedAnnouncement = false,
+    String? vipPinText,
+    bool clearVipPin = false,
     int? chatClearedBannerNonce,
     String? moderationToast,
     bool clearModerationToast = false,
@@ -396,6 +403,7 @@ class VoiceRoomLiveState {
       pinnedAnnouncement: clearPinnedAnnouncement
           ? null
           : (pinnedAnnouncement ?? this.pinnedAnnouncement),
+      vipPinText: clearVipPin ? null : (vipPinText ?? this.vipPinText),
       chatClearedBannerNonce:
           chatClearedBannerNonce ?? this.chatClearedBannerNonce,
       moderationToast: clearModerationToast
@@ -473,6 +481,7 @@ class VoiceRoomLiveController
   Timer? _musicRequestFlashTimer;
   Timer? _announcementTimer;
   Timer? _pinnedAnnouncementTimer;
+  Timer? _vipPinTimer;
   Timer? _moderationToastTimer;
   Timer? _kickWarningTimer;
   Timer? _seatRefreshDebounce;
@@ -1141,6 +1150,7 @@ class VoiceRoomLiveController
     _musicRequestFlashTimer?.cancel();
     _announcementTimer?.cancel();
     _pinnedAnnouncementTimer?.cancel();
+    _vipPinTimer?.cancel();
     _moderationToastTimer?.cancel();
     _kickWarningTimer?.cancel();
     _seatRefreshDebounce?.cancel();
@@ -1420,6 +1430,18 @@ class VoiceRoomLiveController
     } catch (_) {}
   }
 
+  /// SSE `system` `{event: VIP_PIN, text, ttl}` — süre dolunca kendiliğinden düşer.
+  void _applyVipPin(Map<String, dynamic> payload) {
+    final pin = VoiceVipPin.fromPayload(payload);
+    if (pin == null) return;
+    _vipPinTimer?.cancel();
+    state = state.copyWith(vipPinText: pin.text);
+    _vipPinTimer = Timer(pin.ttl, () {
+      if (!_sessionActive) return;
+      state = state.copyWith(clearVipPin: true);
+    });
+  }
+
   void _handleSseAnnouncement(Map<String, dynamic> payload) {
     final text = payload['message']?.toString().trim() ??
         payload['content']?.toString().trim() ??
@@ -1514,6 +1536,9 @@ class VoiceRoomLiveController
     switch (event) {
       case 'ANNOUNCEMENT':
         _handleSseAnnouncement(payload);
+        return;
+      case 'VIP_PIN':
+        _applyVipPin(payload);
         return;
       case 'CHAT_CLEARED':
       case 'MESSAGES_CLEARED':

@@ -14,7 +14,8 @@ const _forbiddenInLib = <String>{
   '/api/devices/fcm',
   '/api/daily-rewards',
   '/api/fortune-access/consume',
-  '/api/notifications/unread',
+  // `/api/notifications/unread` çıkarıldı: 2026-10-07 canlı yoklama GET → 401
+  // (uç mevcut, oturum ister). Rozet sayacı önce bu ucu kullanır.
   '/api/social/public-stats',
   '/api/users/me/gifts-received',
   '/api/users/me/stats',
