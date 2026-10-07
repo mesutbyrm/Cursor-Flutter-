@@ -16,10 +16,32 @@ const _nativeAliases = {
   '/futbol': '/football',
 };
 
+final _blogDetail = RegExp(r'^/blog/([^/?#]+)/?$');
+final _dreamSymbolDetail = RegExp(r'^/ruya-sozlugu/([^/?#]+)/?$');
+final _tiktok = RegExp(r'^/tiktok(/[^/?#]+)?/?$');
+
+/// İçerik detay yolu (blog yazısı, burç blogu, rüya sembolü, TikTok) —
+/// native sayfa varsa yolu, yoksa `null` döner.
+String? nativeContentDetailPath(String path) {
+  final p = path.trim();
+  if (p == '/blog/burclar' || p.startsWith('/blog/burclar?')) return p;
+  final blog = _blogDetail.firstMatch(p);
+  if (blog != null && blog.group(1) != 'kategori') return p;
+  if (_dreamSymbolDetail.hasMatch(p)) return p;
+  if (_tiktok.hasMatch(p)) return p;
+  return null;
+}
+
 /// Site yolu → native Flutter route (WebView yok).
 void openNativeSitePath(BuildContext context, String path) {
   final p = path.trim();
   if (p.isEmpty) return;
+
+  final detail = nativeContentDetailPath(p);
+  if (detail != null) {
+    context.push(detail);
+    return;
+  }
 
   final alias = _nativeAliases[p];
   if (alias != null) {

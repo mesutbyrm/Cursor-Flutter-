@@ -58,7 +58,7 @@ class NativeFeatureRemoteDataSource {
       await _fetchPath(
         ApiEndpoints.dreamSymbols,
         fallbackIcon: Icons.auto_stories_rounded,
-        fallbackRoute: '/dreams-hub',
+        fallbackRoute: '/ruya-sozlugu',
         badge: 'Sözlük',
       ),
     );
@@ -260,6 +260,9 @@ class NativeFeatureRemoteDataSource {
     if (fallback == '/dreams/contest') return '/dreams/contest/$id';
     if (fallback == '/blog-hub' && slug != null && slug.isNotEmpty) {
       return '/blog/$slug';
+    }
+    if (fallback == '/ruya-sozlugu' && slug != null && slug.isNotEmpty) {
+      return '/ruya-sozlugu/${Uri.encodeComponent(slug)}';
     }
     if (fallback == '/dreams-hub' && slug != null && slug.isNotEmpty) {
       return '/ruya/$slug';

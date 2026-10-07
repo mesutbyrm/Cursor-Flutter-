@@ -163,7 +163,13 @@ class NativeFeatureHubPage extends ConsumerWidget {
               'Burç blogları',
               'Burç ve astroloji yazıları.',
               Icons.star_rounded,
-              '/blog-hub',
+              '/blog/burclar',
+            ),
+            _HubItem(
+              'TikTok videoları',
+              'Editörün seçtiği kısa videolar.',
+              Icons.ondemand_video_rounded,
+              '/tiktok',
             ),
             _HubItem(
               'Fal rehberleri',

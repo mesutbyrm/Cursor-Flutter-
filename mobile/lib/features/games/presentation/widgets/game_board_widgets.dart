@@ -20,6 +20,9 @@ class GameBoardPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rows = (board.length / columns).ceil();
+    // NxN XOX (6/8/10): küçük boşluk, kare hücre, ölçekli yazı.
+    final gap = columns <= 3 ? 8.0 : 2.0;
+    final compact = columns > 3;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -32,7 +35,7 @@ class GameBoardPanel extends StatelessWidget {
       child: Column(
         children: List.generate(rows, (row) {
           return Padding(
-            padding: EdgeInsets.only(bottom: row == rows - 1 ? 0 : 8),
+            padding: EdgeInsets.only(bottom: row == rows - 1 ? 0 : gap),
             child: Row(
               children: List.generate(columns, (col) {
                 final index = row * columns + col;
@@ -42,8 +45,11 @@ class GameBoardPanel extends StatelessWidget {
                 final value = board[index];
                 return Expanded(
                   child: Padding(
-                    padding: EdgeInsets.only(right: col == columns - 1 ? 0 : 8),
+                    padding:
+                        EdgeInsets.only(right: col == columns - 1 ? 0 : gap),
                     child: _BoardCell(
+                      compact: compact,
+                      fontSize: compact ? (84 / columns).clamp(10, 20) : 28,
                       value: value,
                       enabled: enabled && (value == null || value.isEmpty),
                       onTap: () => onCellTap(index),
@@ -64,8 +70,12 @@ class _BoardCell extends StatelessWidget {
     required this.value,
     required this.enabled,
     required this.onTap,
+    this.compact = false,
+    this.fontSize = 28,
   });
 
+  final bool compact;
+  final double fontSize;
   final String? value;
   final bool enabled;
   final VoidCallback onTap;
@@ -73,15 +83,20 @@ class _BoardCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = value?.trim();
+    final cell = _cell(context, label);
+    return compact ? AspectRatio(aspectRatio: 1, child: cell) : cell;
+  }
+
+  Widget _cell(BuildContext context, String? label) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: enabled ? onTap : null,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(compact ? 4 : 16),
         child: Ink(
-          height: 72,
+          height: compact ? null : 72,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(compact ? 4 : 16),
             color: context.colors.surfaceContainer.withValues(alpha: 0.65),
             border: Border.all(
               color: const Color(0xFF8B5CF6).withValues(alpha: 0.25),
@@ -91,7 +106,7 @@ class _BoardCell extends StatelessWidget {
             child: Text(
               label == null || label.isEmpty ? '' : label,
               style: TextStyle(
-                fontSize: 28,
+                fontSize: fontSize,
                 fontWeight: FontWeight.w900,
                 color: label == 'X'
                     ? const Color(0xFF8B5CF6)

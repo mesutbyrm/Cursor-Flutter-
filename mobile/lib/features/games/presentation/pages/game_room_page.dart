@@ -42,6 +42,28 @@ class _GameRoomPageState extends ConsumerState<GameRoomPage>
     super.dispose();
   }
 
+  var _reclaimBusy = false;
+
+  /// `POST /api/games/room/{id}/replace-ai` — masayı yapay zekâdan geri al.
+  Future<void> _reclaim() async {
+    if (_reclaimBusy) return;
+    setState(() => _reclaimBusy = true);
+    try {
+      await ref.read(gameRemoteProvider).reclaimFromAi(widget.roomId);
+      await ref
+          .read(gameRoomControllerProvider(widget.roomId).notifier)
+          .refresh();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _reclaimBusy = false);
+    }
+  }
+
   Future<void> _sendMove(Map<String, dynamic> move) async {
     if (_moveBusy) return;
     setState(() => _moveBusy = true);
@@ -96,6 +118,8 @@ class _GameRoomPageState extends ConsumerState<GameRoomPage>
               gameHint: widget.gameHint,
               moveBusy: _moveBusy,
               onMove: _sendMove,
+              reclaimBusy: _reclaimBusy,
+              onReclaim: _reclaim,
             ),
           ),
           const SizedBox(height: 14),
@@ -114,8 +138,12 @@ class _RoomBody extends StatelessWidget {
     required this.gameHint,
     required this.moveBusy,
     required this.onMove,
+    required this.reclaimBusy,
+    required this.onReclaim,
   });
 
+  final bool reclaimBusy;
+  final VoidCallback onReclaim;
   final GameRoomStateSnapshot snapshot;
   final String? userId;
   final String? gameHint;
@@ -148,6 +176,14 @@ class _RoomBody extends StatelessWidget {
           winner: winner,
           scores: scores,
         ),
+        if (GameStateParser.canReclaimFromAi(raw, userId)) ...[
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            onPressed: reclaimBusy ? null : onReclaim,
+            icon: const Icon(Icons.login_rounded),
+            label: const Text('Bağlantın koptu — masaya geri dön'),
+          ),
+        ],
         if (players.isNotEmpty) ...[
           const SizedBox(height: 12),
           _PlayersRow(players: players, currentUserId: userId),
@@ -156,6 +192,7 @@ class _RoomBody extends StatelessWidget {
         if (GameStateParser.supportsBoard(gameType))
           GameBoardPanel(
             board: board,
+            columns: GameStateParser.boardColumns(raw),
             enabled: myTurn && !finished && !moveBusy,
             onCellTap: (index) => onMove({
               'type': 'move',
