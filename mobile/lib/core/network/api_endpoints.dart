@@ -224,6 +224,11 @@ abstract final class ApiEndpoints {
 
   /// Üretimde oda oluşturma (çoğu sürümde `/rooms` yerine bu uç).
   static const gameRoomCreate = '/api/games/room';
+  /// XOX/SOS izinli ızgara boyutları — `{xoxGridSizes, sosGridSizes}`.
+  static const gameGridSettings = '/api/games/grid-settings';
+  /// Bağlantısı kopan oyuncu yapay zekâdan masayı geri alır.
+  static String gameRoomReplaceAi(String roomId) =>
+      '/api/games/room/${Uri.encodeComponent(roomId)}/replace-ai';
   static const gamePlay = '/api/games/play';
   static const gameAutoMatch = '/api/games/auto-match';
   static const gameLeaderboard = '/api/games/leaderboard';
@@ -257,6 +262,11 @@ abstract final class ApiEndpoints {
 
   static const dreams = '/api/dreams';
   static const dreamSymbols = '/api/dream-symbols';
+  static String dreamSymbol(String slug) =>
+      '/api/dream-symbols/${Uri.encodeComponent(slug)}';
+  static const tiktokVideos = '/api/tiktok-videos';
+  static String tiktokVideo(String id) =>
+      '/api/tiktok-videos/${Uri.encodeComponent(id)}';
   static const dreamContest = '/api/dream-contest';
   static String dreamContestEntries(String contestId) =>
       '/api/dream-contest/$contestId/entries';
@@ -279,6 +289,9 @@ abstract final class ApiEndpoints {
   static const blogLike = '/api/blog/like';
   static const blogFavorite = '/api/blog/favorite';
   static const blogComments = '/api/blog/comments';
+  static const blogRelated = '/api/blog/related';
+  static const blogInteractions = '/api/blog/interactions';
+  static const blogZodiac = '/api/blog/zodiac';
 
   /// Ajans sistemi (canlifal.com §17).
   static const agencyMy = '/api/agency/my';

@@ -24,13 +24,37 @@ class GameRemoteDataSource {
     return _parseRooms(res.data);
   }
 
+  /// `GET /api/games/grid-settings` — sunucu hiç hata dönmez (varsayılan
+  /// listeyi döner); ağ hatası çağırana iletilir.
+  Future<GameGridSettings> fetchGridSettings() async {
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.gameGridSettings);
+    return GameGridSettings.fromJson(_map(res.data));
+  }
+
+  /// `POST /api/games/room/{id}/replace-ai` — bağlantısı kopan oyuncu
+  /// yapay zekânın devraldığı masaya geri döner.
+  Future<void> reclaimFromAi(String roomId) async {
+    await _dio.safePost<dynamic>(ApiEndpoints.gameRoomReplaceAi(roomId));
+  }
+
+  /// Oda oluşturma. Üretim sözleşmesi `POST /api/games/room
+  /// {gameType, gridSize?}` (XOX 3–30); `/api/games/rooms` yalnız GET (405).
   Future<GameRoomItem?> createRoom(
     GameCatalogItem game, {
     String? videoStreamId,
+    int? gridSize,
   }) async {
     final gameType = _gameType(game);
     final streamFields = _videoStreamFields(videoStreamId);
     final attempts = <({String path, Map<String, dynamic> data})>[
+      (
+        path: ApiEndpoints.gameRoomCreate,
+        data: {
+          'gameType': gameType,
+          if (gridSize != null && gameType == 'xox') 'gridSize': gridSize,
+          ...streamFields,
+        },
+      ),
       (
         path: ApiEndpoints.gameRooms,
         data: {'gameType': gameType, ...streamFields},

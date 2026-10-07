@@ -280,6 +280,17 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       case 'room_closed':
         _applyRoomEventRoomClosed(payload);
         return;
+      case 'room_updated':
+      case 'background_changed':
+        // BG-002 — backend `room_event {event: room_updated, backgroundImage}`.
+        final bg = VoiceRoomBackgroundCatalog.fromRoomPayload(payload);
+        if (bg != null) {
+          state = state.copyWith(backgroundUrl: bg);
+        } else {
+          // Varsayılana dönüş (null) — kanonik değer oda durumundan gelsin.
+          _scheduleSseRoomRefresh();
+        }
+        return;
       case 'gift_box_created':
       case 'gift_box_started':
       case 'gift_box_joined':

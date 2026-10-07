@@ -1,5 +1,10 @@
 import 'package:go_router/go_router.dart';
 
+import '../../content_detail/presentation/pages/blog_post_page.dart';
+import '../../content_detail/presentation/pages/blog_zodiac_page.dart';
+import '../../content_detail/presentation/pages/dream_symbol_page.dart';
+import '../../content_detail/presentation/pages/tiktok_videos_page.dart';
+
 import 'pages/agency_growth_pages.dart';
 import 'pages/contact_page.dart';
 import 'pages/dream_community_pages.dart';
@@ -14,6 +19,31 @@ import 'pages/teller_pages.dart';
 
 /// Web paritesi ekranlarının rotaları (üst düzey).
 final List<RouteBase> webParityRoutes = [
+  // İçerik detayları — web yollarıyla aynı (`/blog/burclar` slug'dan önce).
+  GoRoute(
+    path: '/blog/burclar',
+    builder: (context, state) =>
+        BlogZodiacPage(initialSign: state.uri.queryParameters['burc']),
+  ),
+  GoRoute(
+    path: '/blog/:slug',
+    builder: (context, state) =>
+        BlogPostPage(slug: state.pathParameters['slug'] ?? ''),
+  ),
+  GoRoute(
+    path: '/ruya-sozlugu/:slug',
+    builder: (context, state) =>
+        DreamSymbolPage(slug: state.pathParameters['slug'] ?? ''),
+  ),
+  GoRoute(
+    path: '/tiktok',
+    builder: (context, state) => const TiktokVideosPage(),
+  ),
+  GoRoute(
+    path: '/tiktok/:id',
+    builder: (context, state) =>
+        TiktokVideoPage(id: state.pathParameters['id'] ?? ''),
+  ),
   GoRoute(
     path: '/destek',
     builder: (context, state) => const SupportTicketsPage(),

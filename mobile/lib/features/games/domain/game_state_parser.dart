@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:math' as math;
+
 import '../../../core/util/json_util.dart';
 
 /// Backend oyun state alanlarını canonical biçimde okur.
@@ -42,13 +45,62 @@ abstract final class GameStateParser {
     return true;
   }
 
-  static List<String?> parseBoard(Map<String, dynamic> raw, {int size = 9}) {
+  /// Oyun durumu nesnesi. `GET /api/games/room/{id}` `state` alanını JSON
+  /// **metni** olarak döner (`JSON.stringify`); hem Map hem metin okunur.
+  static Map<String, dynamic>? stateMap(Map<String, dynamic> raw) {
+    for (final key in const ['state', 'gameState']) {
+      final v = raw[key];
+      if (v is Map) return asJsonMap(v);
+      if (v is String && v.trimLeft().startsWith('{')) {
+        try {
+          final decoded = jsonDecode(v);
+          if (decoded is Map) return asJsonMap(decoded);
+        } on FormatException {
+          continue;
+        }
+      }
+    }
+    return null;
+  }
+
+  /// Kare tahtanın kenar uzunluğu — XOX NxN (`state.size`, 3–30), yoksa
+  /// tam kare hücre sayısından; bilinmiyorsa 3.
+  static int boardColumns(Map<String, dynamic> raw) {
+    final size = asInt(stateMap(raw)?['size'] ?? raw['gridSize']);
+    if (size >= 3 && size <= 30) return size;
+    final board = _rawBoard(raw);
+    if (board is List && board.length > 9) {
+      final n = math.sqrt(board.length).round();
+      if (n * n == board.length) return n;
+    }
+    return 3;
+  }
+
+  static dynamic _rawBoard(Map<String, dynamic> raw) {
+    final state = stateMap(raw);
+    return raw['board'] ?? raw['grid'] ?? raw['cells'] ?? state?['board'];
+  }
+
+  /// Bağlantı koptuğunda masayı yapay zekâ devralır (`isAI` + kopan
+  /// oyuncu `disconnectedPlayerId`); o oyuncu `replace-ai` ile geri döner.
+  static bool canReclaimFromAi(Map<String, dynamic> raw, String? userId) {
+    final uid = userId?.trim() ?? '';
+    if (uid.isEmpty) return false;
+    final status = raw['status']?.toString().toLowerCase() ?? '';
+    return asBool(raw['isAI']) &&
+        status == 'active' &&
+        raw['disconnectedPlayerId']?.toString() == uid;
+  }
+
+  static List<String?> parseBoard(Map<String, dynamic> raw, {int? size}) {
+    final cols = boardColumns(raw);
+    size ??= cols * cols;
+    final state = stateMap(raw);
     final candidates = [
       raw['board'],
       raw['grid'],
       raw['cells'],
-      raw['state'] is Map ? asJsonMap(raw['state'])['board'] : null,
-      raw['gameState'] is Map ? asJsonMap(raw['gameState'])['board'] : null,
+      state?['board'],
     ];
 
     for (final candidate in candidates) {

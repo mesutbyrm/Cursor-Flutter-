@@ -344,3 +344,36 @@ abstract final class GameCatalogFallback {
 
   static List<GameCatalogItem> get all => [...multiplayer, ...mini];
 }
+
+/// `GET /api/games/grid-settings` — XOX ve SOS için izinli ızgara boyutları.
+class GameGridSettings {
+  const GameGridSettings({
+    this.xoxSizes = defaultXox,
+    this.sosSizes = defaultSos,
+  });
+
+  factory GameGridSettings.fromJson(Map<String, dynamic> json) {
+    List<int> sizes(dynamic raw, List<int> fallback, int min) {
+      if (raw is! List) return fallback;
+      final out = raw
+          .map(asInt)
+          .where((n) => n >= min && n <= 30)
+          .toSet()
+          .toList()
+        ..sort();
+      return out.isEmpty ? fallback : out;
+    }
+
+    return GameGridSettings(
+      xoxSizes: sizes(json['xoxGridSizes'], defaultXox, 3),
+      sosSizes: sizes(json['sosGridSizes'], defaultSos, 6),
+    );
+  }
+
+  /// Sunucu varsayılanlarıyla aynı (`app/api/games/grid-settings`).
+  static const defaultXox = [3, 6, 8, 10];
+  static const defaultSos = [6, 8, 10];
+
+  final List<int> xoxSizes;
+  final List<int> sosSizes;
+}
