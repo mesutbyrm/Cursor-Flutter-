@@ -7,6 +7,7 @@ import '../../../../core/util/json_util.dart';
 import '../../../../core/widgets/mock_ui_kit.dart';
 import '../providers/parity_providers.dart';
 import '../widgets/parity_widgets.dart';
+import '../../../games/presentation/widgets/lobby_table_actions.dart';
 
 /// Lamba Cini: günlük 3 hak, 3 sandıktan birini seç.
 class LambaCiniPage extends ConsumerStatefulWidget {
@@ -120,9 +121,11 @@ class _LambaCiniPageState extends ConsumerState<LambaCiniPage> {
 class GamesLobbyPage extends ConsumerWidget {
   const GamesLobbyPage({super.key});
 
+  // Backend bölüm adları: `live_tables` → {tables}, `recent_winners` →
+  // {winners}, `stats` → sayılar (eski `tables`/`winners` 400 dönüyordu).
   static const _sections = [
-    ('tables', 'Masalar', 'tables'),
-    ('winners', 'Son kazananlar', 'winners'),
+    ('live_tables', 'Masalar', 'tables'),
+    ('recent_winners', 'Son kazananlar', 'winners'),
     ('stats', 'İstatistik', ''),
   ];
 
@@ -202,7 +205,11 @@ class _Section extends ConsumerWidget {
                 e['player2Name'],
               ].where((x) => x != null && '$x'.isNotEmpty).join(' vs ');
               final bet = asInt(e['betAmount'] ?? e['amount']);
+              final table = listKey == 'tables' ? LobbyTable.fromJson(e) : null;
               return ParityCard(
+                onTap: table == null || table.id.isEmpty
+                    ? null
+                    : () => openLobbyTable(context, ref, table),
                 child: Row(
                   children: [
                     Expanded(
@@ -216,6 +223,13 @@ class _Section extends ConsumerWidget {
                       ),
                     ),
                     if (bet > 0) Text('$bet'),
+                    if (table != null) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                        table.isWaiting ? 'Katıl' : 'İzle',
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ],
                   ],
                 ),
               );
