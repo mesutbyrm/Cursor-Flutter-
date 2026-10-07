@@ -21,8 +21,8 @@ void main() {
     );
 
     expect(ran, VoiceRoomLeavePipelineSpec.orderedStepIds);
-    expect(ran.first, 'session_timers_and_leave_banner');
-    expect(ran, contains('backend_live_leave_and_presence'));
+    expect(ran.first, 'session_timers_and_heartbeat_stop');
+    expect(ran, contains('backend_seat_clear_live_leave_presence'));
     expect(ran, contains('hub_force_release_and_gift_pk_reset'));
   });
 
