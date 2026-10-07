@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.735+788 (2026-10-07) — Backend'de olup Flutter'da eksik olan uçlar
+
+- **VIP mesaj sabitleme:** sesli oda mesajına uzun bas → «Sabitle (Premium+)» (`POST /api/chat/rooms/{id}/pin-message`); SSE `VIP_PIN` olayı sohbetin üstünde süreli (TTL) sabit bant gösterir. Yetki/bekleme/saatlik sınır sunucuda
+- **Müzik geçmişi:** müzik panelinde yeni «Geçmiş» sekmesi (`GET /api/music/history`); satıra dokunmak şarkıyı arama sekmesine taşır
+- **Ödeme bildirimlerim + itiraz:** `GET /api/payments/notify` listesi (durum, admin açıklaması) ve reddedilen/düzeltilen ödeme için «İtiraz et» (`POST /api/payments/notifications/{id}/dispute` → destek talebi). Ödeme Bildirimi sayfasından bağlantı
+- **Bildirim rozeti:** önce `GET /api/notifications/unread` (yalnız sayı); eski liste sorgusu yedek
+- **Hata düzeltmesi:** yasaklı kelime silme kelimeyi iki kez URL-encode ediyordu (Türkçe karakterli/boşluklu kelime silinemiyordu)
+- Gerçek cihaz: **BLOCKED**
+
 ## 1.0.734+787 (2026-10-07) — Tanı + dayanıklılık (FORTUNE-003, CORE-001, CORE-002, otomatik tespit, fal timer)
 
 - **FORTUNE-003:** Falcı gelen-istek SSE'sine 40 sn kalp atışı bekçisi; yarı açık bağlantı kapatılıp yeniden bağlanır

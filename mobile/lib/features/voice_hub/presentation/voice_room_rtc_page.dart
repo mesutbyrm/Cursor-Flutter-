@@ -2402,6 +2402,7 @@ class _VoiceRoomChatSection extends ConsumerWidget {
         (s) => (
           messages: s.messages,
           pinned: s.pinnedAnnouncement,
+          vipPin: s.vipPinText,
           typing: s.isAnyoneTyping,
           typingUsers: s.typingUsers,
         ),
@@ -2419,6 +2420,16 @@ class _VoiceRoomChatSection extends ConsumerWidget {
             welcomeMarquee: null,
             roomName: room.nameTr,
             pinnedAnnouncement: chat.pinned,
+            vipPinText: chat.vipPin,
+            onPinMessage: (msg) async {
+              final err = await ref
+                  .read(voiceRoomLiveProvider(liveRoomKey).notifier)
+                  .pinVipMessage(msg);
+              if (err != null && context.mounted) {
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(SnackBar(content: Text(err)));
+              }
+            },
             scrollController: scrollCtrl,
             scrollToLatest: scrollToLatest,
             onUserTap: (id, name, msg) => onUserTap(

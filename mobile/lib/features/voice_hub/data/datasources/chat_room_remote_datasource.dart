@@ -27,6 +27,7 @@ import '../../domain/entities/popular_music_suggestion.dart';
 import '../../domain/entities/chat_room_my_permissions.dart';
 import '../../domain/entities/voice_room_seat_slot.dart';
 import '../../domain/entities/voice_room_state_snapshot.dart';
+import '../../domain/entities/room_music_history_entry.dart';
 
 class ChatRoomPresencePage {
   const ChatRoomPresencePage({required this.users, this.onlineCount});
@@ -2739,9 +2740,10 @@ class ChatRoomRemoteDataSource {
     required String word,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      final encoded = Uri.encodeComponent(word);
+      // `chatRoomBannedWord` yolu kendisi encode eder; burada tekrar encode
+      // etmek "kötü kelime" → %25C3… gönderip silmeyi bozuyordu.
       final res = await _dio.safeDelete<dynamic>(
-        ApiEndpoints.chatRoomBannedWord(key, encoded),
+        ApiEndpoints.chatRoomBannedWord(key, word),
       );
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       final raw = map['words'];
@@ -2749,6 +2751,43 @@ class ChatRoomRemoteDataSource {
         return raw.map((e) => e.toString()).toList();
       }
       return const [];
+    });
+  }
+
+  /// Oda müzik geçmişi — `GET /api/music/history?roomId=&limit=`.
+  Future<List<RoomMusicHistoryEntry>> fetchMusicHistory(
+    String roomId, {
+    int limit = 50,
+  }) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.musicHistory,
+      query: {'roomId': roomId, 'limit': limit},
+    );
+    return RoomMusicHistoryEntry.listFromResponse(res.data);
+  }
+
+  /// Premium+ geçici sabitleme — `POST /api/chat/rooms/{id}/pin-message`
+  /// `{messageId?, text?, ttl?}`. Yetki (`vip.message_pin`), bekleme ve
+  /// saatlik sınır sunucuda; yanıt `{pinned, ttl, remaining}`.
+  Future<({int ttl, int remaining})> pinMessage({
+    required String roomKey,
+    String? alternateKey,
+    String? messageId,
+    String? text,
+  }) async {
+    return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final res = await _dio.safePost<dynamic>(
+        ApiEndpoints.chatRoomPinMessage(key),
+        data: {
+          if (messageId != null && messageId.isNotEmpty) 'messageId': messageId,
+          if (text != null && text.trim().isNotEmpty) 'text': text.trim(),
+        },
+      );
+      final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+      return (
+        ttl: asInt(map['ttl'] ?? 60),
+        remaining: asInt(map['remaining'] ?? 0),
+      );
     });
   }
 

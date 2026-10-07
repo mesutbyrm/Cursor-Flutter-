@@ -5,11 +5,12 @@ import '../../../../moderation/domain/entities/report_target.dart';
 import '../../../../moderation/presentation/utils/open_report_flow.dart';
 import '../../../domain/entities/chat_room_message.dart';
 
-/// Sesli oda sohbet — uzun bas: yanıtla / kopyala / raporla.
+/// Sesli oda sohbet — uzun bas: yanıtla / sabitle / kopyala / raporla.
 Future<void> showVoiceRoomChatMessageActions({
   required BuildContext context,
   required ChatRoomMessage message,
   VoidCallback? onReply,
+  VoidCallback? onPin,
   String? reportContextLabel,
 }) {
   if (message.kind != ChatMessageKind.text) {
@@ -35,6 +36,18 @@ Future<void> showVoiceRoomChatMessageActions({
               onTap: () {
                 Navigator.pop(ctx);
                 onReply();
+              },
+            ),
+          if (onPin != null)
+            ListTile(
+              leading: const Icon(Icons.push_pin_rounded, color: Color(0xFFFFD700)),
+              title: const Text(
+                'Sabitle (Premium+)',
+                style: TextStyle(color: Colors.white),
+              ),
+              onTap: () {
+                Navigator.pop(ctx);
+                onPin();
               },
             ),
           ListTile(

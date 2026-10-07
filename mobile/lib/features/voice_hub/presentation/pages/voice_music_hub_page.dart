@@ -25,6 +25,7 @@ import '../utils/voice_music_access.dart';
 import '../utils/voice_music_submit.dart';
 import '../utils/voice_room_permissions.dart';
 import '../widgets/premium/voice_glass.dart';
+import '../widgets/music/voice_music_history_tab.dart';
 
 /// Web ile aynı: oda üstünde blur’lu modal (sayfa değişmez).
 Future<void> showVoiceMusicHubPage(
@@ -134,7 +135,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 2, vsync: this)
+    _tabs = TabController(length: 3, vsync: this)
       ..addListener(() {
         if (!_tabs.indexIsChanging) {
           setState(() => _tabIndex = _tabs.index);
@@ -347,6 +348,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
           tabs: const [
             Tab(text: 'Ara'),
             Tab(text: 'Kuyruk'),
+            Tab(text: 'Geçmiş'),
           ],
         ),
       ),
@@ -372,9 +374,18 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
                 top: kToolbarHeight + 32,
                 bottom: _tabIndex == 0 ? 88 : 0,
               ),
-              child: _tabIndex == 0
-                  ? _buildSearchTab(jeton, live.dj)
-                  : _buildQueueTab(canMod),
+              child: switch (_tabIndex) {
+                0 => _buildSearchTab(jeton, live.dj),
+                1 => _buildQueueTab(canMod),
+                _ => VoiceMusicHistoryTab(
+                    roomId: widget.room.apiRoomKey,
+                    onRequestAgain: (title) {
+                      _queryCtrl.text = title;
+                      _tabs.animateTo(0);
+                      _onQueryChanged(title);
+                    },
+                  ),
+              },
             ),
           ),
         ],

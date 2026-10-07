@@ -255,6 +255,29 @@ extension VoiceRoomModerationControls on VoiceRoomLiveController {
     }
   }
 
+  /// VIP mesaj sabitleme. Başarıda `null`; hata/yetki yoksa kullanıcı mesajı.
+  Future<String?> pinVipMessage(ChatRoomMessage message) async {
+    try {
+      final res = await ref.read(chatRoomRemoteProvider).pinMessage(
+            roomKey: _roomKey,
+            alternateKey: _musicAlternateKey,
+            messageId: message.id.isNotEmpty ? message.id : null,
+            text: message.id.isEmpty ? message.content : null,
+          );
+      showModerationToast(
+        'Mesaj ${res.ttl} sn sabitlendi · kalan hak: ${res.remaining}',
+      );
+      return null;
+    } on ApiException catch (e) {
+      if (e.statusCode == 403) {
+        return 'Mesaj sabitleme Premium+ üyelere özel.';
+      }
+      return ApiException.userMessage(e);
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
   Future<String?> removeBannedWord(String word) async {
     try {
       final words = await ref

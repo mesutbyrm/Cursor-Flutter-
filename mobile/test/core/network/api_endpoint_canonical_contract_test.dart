@@ -32,7 +32,6 @@ bool _isLegacyCanlifalPath(String path) {
       path == '/api/devices/fcm' ||
       path == '/api/users/me/gifts-received' ||
       path == '/api/users/me/stats' ||
-      path == '/api/notifications/unread' ||
       path.startsWith('/api/pk/battles') ||
       path == '/api/daily-rewards' ||
       path == '/api/fortune-access/consume') {

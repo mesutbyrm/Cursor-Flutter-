@@ -22,6 +22,7 @@ import '../../domain/entities/payment_method_entity.dart';
 import '../../domain/entities/profile_extended_entity.dart';
 import '../../domain/entities/profile_stats_entity.dart';
 import '../../domain/entities/referral_info_entity.dart';
+import '../../domain/entities/payment_notification_entity.dart';
 
 class ProfileRemoteDataSource {
   ProfileRemoteDataSource(this._dio, this._compound);
@@ -790,6 +791,34 @@ class WalletRemoteDataSource {
       'veya destek ile iletişime geçin.',
       statusCode: 405,
     );
+  }
+
+  /// Ödeme bildirimlerim (havale/EFT) — `GET /api/payments/notify`.
+  Future<List<PaymentNotificationEntity>> myPaymentNotifications({
+    int page = 1,
+    int limit = 30,
+  }) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.paymentNotify,
+      query: {'page': page, 'limit': limit},
+    );
+    return PaymentNotificationEntity.listFromResponse(res.data);
+  }
+
+  /// Reddedilen / düzeltilen ödeme için itiraz — destek talebi açar.
+  /// Dönen değer: açılan destek talebi kimliği (varsa).
+  Future<String?> disputePaymentNotification(
+    String notificationId,
+    String message,
+  ) async {
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.paymentNotificationDispute(notificationId),
+      data: {'message': message.trim()},
+    );
+    final map = asJsonMap(res.data);
+    final data = asJsonMap(map['data']);
+    final ticket = asJsonMap(data['ticket'] ?? map['ticket']);
+    return ticket['id']?.toString() ?? data['ticketId']?.toString();
   }
 
   Future<List<CfcPaymentRequestEntity>> myPaymentRequests() async {

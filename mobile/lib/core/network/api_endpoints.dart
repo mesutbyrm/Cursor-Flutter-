@@ -475,6 +475,10 @@ abstract final class ApiEndpoints {
   static String chatRoomBannedWords(String roomId) =>
       '/api/chat/rooms/$roomId/banned-words';
 
+  /// Premium+ geçici mesaj sabitleme — `POST {messageId?, text?, ttl?}`.
+  static String chatRoomPinMessage(String roomId) =>
+      '/api/chat/rooms/$roomId/pin-message';
+
   static String chatRoomBannedWord(String roomId, String word) =>
       '${chatRoomBannedWords(roomId)}/${Uri.encodeComponent(word)}';
 
@@ -554,6 +558,9 @@ abstract final class ApiEndpoints {
   /// Merkezi PK daveti — oda uçları 404 ise fallback.
   static const musicSearch = '/api/music/search';
 
+  /// Odada çalınmış şarkılar — `GET ?roomId=&limit=` → `{history, count}`.
+  static const musicHistory = '/api/music/history';
+
   static const chatYoutubeStream = '/api/chat/youtube-stream';
 
   /// Oturumlu kullanıcı profili (takipçi, bio, görsel — NextAuth çerezi).
@@ -606,6 +613,13 @@ abstract final class ApiEndpoints {
   static const paymentConfig = '/api/payments/config';
   static const paymentMethods = '/api/payments/methods';
   static const paymentRequests = '/api/payments/requests';
+
+  /// Ödeme bildirimlerim — `GET ?page=&limit=&status=` (düz dizi döner).
+  static const paymentNotify = '/api/payments/notify';
+
+  /// Ödeme itirazı (destek talebi) — `GET` mevcut talep, `POST {message}`.
+  static String paymentNotificationDispute(String notificationId) =>
+      '/api/payments/notifications/$notificationId/dispute';
   static const adminCfcPaymentRequests = '/api/admin/cfc-payment-requests';
   static const adminCfcPaymentPatch = '/api/admin/cfc-payment-requests';
   static const adminCfcSettings = '/api/admin/cfc-settings';
@@ -1049,6 +1063,9 @@ abstract final class ApiEndpoints {
 
   static const notifications = '/api/notifications';
   static const notificationsStream = '/api/notifications/stream';
+
+  /// Okunmamış bildirim sayısı — `GET` → `{count, unreadCount}`.
+  static const notificationsUnread = '/api/notifications/unread';
   static const notificationsPaymentClear = '/api/notifications/payment';
   static String notificationRead(String id) => '/api/notifications/$id/read';
 

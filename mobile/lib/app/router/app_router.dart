@@ -157,6 +157,7 @@ import '../../features/profile/presentation/pages/growth_hub_page.dart';
 import '../../features/cosmetics/presentation/pages/profile_cosmetics_page.dart';
 import '../../features/profile/presentation/pages/profile_help_support_page.dart';
 import '../../features/profile/presentation/pages/profile_payment_notice_page.dart';
+import '../../features/profile/presentation/pages/profile_payment_notifications_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/profile/presentation/pages/profile_visitors_page.dart';
 import '../../features/notifications/presentation/pages/notification_channel_settings_page.dart';
@@ -893,6 +894,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile/payment-notice',
         builder: (context, state) => const ProfilePaymentNoticePage(),
+      ),
+      GoRoute(
+        path: '/profile/payment-notifications',
+        builder: (context, state) => const ProfilePaymentNotificationsPage(),
       ),
       GoRoute(
         path: '/profile/broadcast-history',

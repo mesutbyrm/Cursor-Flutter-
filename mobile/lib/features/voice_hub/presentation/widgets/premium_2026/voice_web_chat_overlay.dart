@@ -23,6 +23,8 @@ class VoiceWebChatOverlay extends StatefulWidget {
     this.welcomeMarquee,
     this.roomName,
     this.pinnedAnnouncement,
+    this.vipPinText,
+    this.onPinMessage,
     this.scrollController,
     this.scrollToLatest = false,
     this.showAvatar = true,
@@ -39,6 +41,10 @@ class VoiceWebChatOverlay extends StatefulWidget {
   final String? welcomeMarquee;
   final String? roomName;
   final String? pinnedAnnouncement;
+
+  /// Premium+ geçici sabit mesaj (SSE `VIP_PIN`, TTL'li).
+  final String? vipPinText;
+  final void Function(ChatRoomMessage message)? onPinMessage;
   final ScrollController? scrollController;
   final bool scrollToLatest;
   final bool showAvatar;
@@ -279,6 +285,9 @@ class _VoiceWebChatOverlayState extends State<VoiceWebChatOverlay> {
 
     final pinned = widget.pinnedAnnouncement?.trim();
     final hasPinned = pinned != null && pinned.isNotEmpty;
+    final vipPin = widget.vipPinText?.trim();
+    final hasVipPin = vipPin != null && vipPin.isNotEmpty;
+    final headerCount = (hasVipPin ? 1 : 0) + (hasPinned ? 1 : 0);
 
     final list = ListView.builder(
       controller: _scroll,
@@ -292,12 +301,15 @@ class _VoiceWebChatOverlayState extends State<VoiceWebChatOverlay> {
             )
           : const ClampingScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      itemCount: slice.length + (hasPinned ? 1 : 0),
+      itemCount: slice.length + headerCount,
       itemBuilder: (context, i) {
-        if (hasPinned && i == 0) {
+        if (hasVipPin && i == 0) {
+          return _PinnedAnnouncementBar(text: vipPin, vip: true);
+        }
+        if (hasPinned && i == (hasVipPin ? 1 : 0)) {
           return _PinnedAnnouncementBar(text: pinned);
         }
-        final msgIndex = hasPinned ? i - 1 : i;
+        final msgIndex = i - headerCount;
         final msg = slice[slice.length - 1 - msgIndex];
         if (_isMusicSystemLine(msg.content)) {
           return MusicSystemChatLine(
@@ -313,6 +325,7 @@ class _VoiceWebChatOverlayState extends State<VoiceWebChatOverlay> {
               ? null
               : (id, name) => widget.onUserTap!(id, name, msg),
           onReplyToMessage: widget.onReplyToMessage,
+          onPinMessage: widget.onPinMessage,
           reportContextLabel: widget.reportContextLabel,
         );
       },
@@ -374,9 +387,10 @@ bool _isMusicSystemLine(String content) {
 
 /// !duyuru — sohbet listesinin üstünde sabit duyuru şeridi.
 class _PinnedAnnouncementBar extends StatelessWidget {
-  const _PinnedAnnouncementBar({required this.text});
+  const _PinnedAnnouncementBar({required this.text, this.vip = false});
 
   final String text;
+  final bool vip;
 
   @override
   Widget build(BuildContext context) {
@@ -397,7 +411,11 @@ class _PinnedAnnouncementBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.campaign_rounded, color: Color(0xFFFFD700), size: 18),
+          Icon(
+            vip ? Icons.push_pin_rounded : Icons.campaign_rounded,
+            color: const Color(0xFFFFD700),
+            size: 18,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(

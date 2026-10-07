@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
@@ -252,6 +253,12 @@ class _ProfilePaymentNoticePageState
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Text('Bildirimi gönder'),
+              ),
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: () => context.push('/profile/payment-notifications'),
+                icon: const Icon(Icons.receipt_long_rounded),
+                label: const Text('Ödeme bildirimlerim ve itiraz'),
               ),
             ],
           ),

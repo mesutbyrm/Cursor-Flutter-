@@ -25,6 +25,7 @@ class ChatMessageWidget extends StatelessWidget {
     this.onUserTap,
     this.onUserDoubleTap,
     this.onReplyToMessage,
+    this.onPinMessage,
     this.reportContextLabel,
     this.showAvatar = false,
     this.avatarUrl,
@@ -34,6 +35,7 @@ class ChatMessageWidget extends StatelessWidget {
   final void Function(String userId, String name)? onUserTap;
   final void Function(String userId, String name)? onUserDoubleTap;
   final void Function(ChatRoomMessage message)? onReplyToMessage;
+  final void Function(ChatRoomMessage message)? onPinMessage;
   final String? reportContextLabel;
   final bool showAvatar;
   /// Presence'tan çözülen profil resmi — mesajda görsel yoksa kullanılır.
@@ -49,6 +51,7 @@ class ChatMessageWidget extends StatelessWidget {
           onUserTap: onUserTap,
           onUserDoubleTap: onUserDoubleTap,
           onReplyToMessage: onReplyToMessage,
+          onPinMessage: onPinMessage,
           reportContextLabel: reportContextLabel,
           showAvatar: showAvatar,
           avatarUrl: avatarUrl,
@@ -64,6 +67,7 @@ class _ChatMessageBody extends ConsumerWidget {
     this.onUserTap,
     this.onUserDoubleTap,
     this.onReplyToMessage,
+    this.onPinMessage,
     this.reportContextLabel,
     this.showAvatar = false,
     this.avatarUrl,
@@ -73,6 +77,7 @@ class _ChatMessageBody extends ConsumerWidget {
   final void Function(String userId, String name)? onUserTap;
   final void Function(String userId, String name)? onUserDoubleTap;
   final void Function(ChatRoomMessage message)? onReplyToMessage;
+  final void Function(ChatRoomMessage message)? onPinMessage;
   final String? reportContextLabel;
   final bool showAvatar;
   final String? avatarUrl;
@@ -87,6 +92,7 @@ class _ChatMessageBody extends ConsumerWidget {
         onReply: onReplyToMessage == null
             ? null
             : () => onReplyToMessage!(message),
+        onPin: onPinMessage == null ? null : () => onPinMessage!(message),
       ),
     );
   }
