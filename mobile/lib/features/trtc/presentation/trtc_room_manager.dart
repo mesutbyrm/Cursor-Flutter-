@@ -23,18 +23,36 @@ import 'trtc_operation_gate.dart';
 class TrtcRoomManager {
   /// Tek `TRTCCloud.sharedInstance()` — eşzamanlı çoklu manager oturumu engelle.
   static TrtcRoomManager? _activeSession;
-  final _opGate = TrtcOperationGate();
+
+  /// Tüm yöneticiler AYNI native `TRTCCloud.sharedInstance()`'ı kullanır.
+  /// Kapı önceden örnek başınaydı: sesli oda motoru ile canlı yayın/falcı
+  /// yöneticisinin enterRoom/exitRoom çağrıları birbirini beklemiyordu.
+  static final _opGate = TrtcOperationGate();
+
+  /// Native motoru şu an bu yönetici mi kullanıyor? Başka bir yönetici
+  /// odadayken bu yöneticinin geç gelen leave/susturma çağrısı onun sesini
+  /// kesmemeli ve onu odadan çıkarmamalı.
+  bool get _ownsNative => ownsNative(_activeSession, this);
+
+  @visibleForTesting
+  static bool ownsNative(TrtcRoomManager? active, TrtcRoomManager me) =>
+      active == null || identical(active, me);
+
+  @visibleForTesting
+  static TrtcOperationGate get sharedGateForTest => _opGate;
   String? _joinedStrRoomId;
 
   TRTCCloud? _cloud;
   TXDeviceManager? _device;
   TRTCCloudListener? _listener;
   Completer<int>? _enterRoomCompleter;
+  Completer<int>? _switchRoleCompleter;
   Completer<void>? _exitRoomCompleter;
 
   bool _inRoom = false;
   bool _previewOnly = false;
-  bool _micOn = true;
+  /// Yerel mikrofon yayını — yalnız gerçekten yayın başlatılınca true.
+  bool _micOn = false;
   bool _cameraOn = true;
   bool _isHost = false;
   bool _twoWayVideo = false;
@@ -231,7 +249,10 @@ class TrtcRoomManager {
 
     final other = _activeSession;
     if (other != null && other != this && other._inRoom) {
-      await other.leave();
+      // Ortak kapının içindeyiz: `other.leave()` kapıyı tekrar bekleyip
+      // kilitlenirdi; doğrudan kilitsiz çıkış yapılır.
+      other.forceSilenceNow();
+      await other._leaveUnlocked();
     }
 
     _previewOnly = false;
@@ -302,6 +323,11 @@ class TrtcRoomManager {
         if (remoteAnchorUserId == userId) {
           _clearRemoteAnchor();
         }
+      },
+      onSwitchRole: (errCode, errMsg) {
+        _trtcLog('switch_role', {'code': errCode, 'message': errMsg});
+        final c = _switchRoleCompleter;
+        if (c != null && !c.isCompleted) c.complete(errCode);
       },
       onExitRoom: (reason) {
         _trtcLog('exit_room', {'reason': reason});
@@ -438,10 +464,19 @@ class TrtcRoomManager {
     _joinedStrRoomId = roomId;
 
     if (audioOnly) {
-      _startLocalAudio();
       _device?.setAudioRoute(TXAudioRoute.speakerPhone);
-      _micOn = true;
-      _trtcLog('local_audio', {'roomId': roomId, 'enabled': true});
+      if (publishAsAnchor) {
+        _startLocalAudio();
+        _cloud!.muteLocalAudio(false);
+        _micOn = true;
+      } else {
+        // Dinleyici (koltuksuz): mikrofon yakalaması hiç başlamaz. Önceden
+        // her girişte açılıp sonradan kapatılıyordu.
+        _cloud!.muteLocalAudio(true);
+        _cloud!.stopLocalAudio();
+        _micOn = false;
+      }
+      _trtcLog('local_audio', {'roomId': roomId, 'enabled': _micOn});
     } else if (publishAsAnchor) {
       _startLocalAudio();
       _cloud!.muteLocalVideo(TRTCVideoStreamType.big, false);
@@ -754,6 +789,50 @@ class TrtcRoomManager {
     _trtcLog('mute_unmute', {'micEnabled': enabled, 'stoppedPublish': !enabled});
   }
 
+  /// Odadan çıkmadan rol değiştirir (audience ↔ anchor). Sesli odada koltuğa
+  /// oturup mikrofon açmak artık TRTC çık + yeniden gir gerektirmez.
+  /// `false` dönerse çağıran eski yeniden-katılım yoluna düşebilir.
+  Future<bool> setAnchorPublishing(bool on) {
+    return _opGate.run(() async {
+      final cloud = _cloud;
+      if (cloud == null || !_inRoom || !_ownsNative) {
+        _trtcLog('switch_role_skipped', {'on': on, 'inRoom': _inRoom});
+        return false;
+      }
+      if (on && _micLockedByHost) return false;
+      if (!on) {
+        cloud.muteLocalAudio(true);
+        cloud.stopLocalAudio();
+        _micOn = false;
+      }
+      if (on != _isHost) {
+        final c = Completer<int>();
+        _switchRoleCompleter = c;
+        cloud.switchRole(on ? TRTCRoleType.anchor : TRTCRoleType.audience);
+        final code = await c.future.timeout(
+          switchRoleTimeout,
+          onTimeout: () => -1,
+        );
+        if (identical(_switchRoleCompleter, c)) _switchRoleCompleter = null;
+        if (code != 0) {
+          _trtcLog('switch_role_failed', {'on': on, 'code': code});
+          return false;
+        }
+        _isHost = on;
+      }
+      if (on) {
+        _startLocalAudio();
+        cloud.muteLocalAudio(false);
+        _micOn = true;
+      }
+      _trtcLog('local_audio', {'enabled': _micOn, 'role': on ? 'anchor' : 'audience'});
+      return true;
+    });
+  }
+
+  @visibleForTesting
+  static Duration switchRoleTimeout = const Duration(seconds: 3);
+
   /// Koltuk kaybında ses yayınını tamamen durdur.
   void stopLocalAudioPublish() {
     if (_cloud == null) return;
@@ -798,6 +877,12 @@ class TrtcRoomManager {
   void forceSilenceNow() {
     final c = _cloud;
     if (c == null) return;
+    if (!_ownsNative) {
+      // Motor başka bir oturumda: onun sesini kesme.
+      _micOn = false;
+      _trtcLog('force_silence_skipped', {'reason': 'not_owner'});
+      return;
+    }
     try {
       c.muteAllRemoteAudio(true);
     } catch (_) {}
@@ -824,7 +909,15 @@ class TrtcRoomManager {
     remoteUserIdsNotifier.value = const [];
     remoteVideoByUser.value = const {};
     remoteAudioByUser.value = const {};
-    if (_cloud != null) {
+    final owns = _ownsNative;
+    if (_cloud != null && !owns) {
+      // Başka yönetici motoru devralmış; yalnız kendi dinleyicimizi bırak.
+      _trtcLog('leave_native_skipped', {'reason': 'not_owner'});
+      if (_listener != null) {
+        _cloud!.unRegisterListener(_listener!);
+        _listener = null;
+      }
+    } else if (_cloud != null) {
       _cloud!.stopLocalPreview();
       _cloud!.stopLocalAudio();
       if (_inRoom) {
