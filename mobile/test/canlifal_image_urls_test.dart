@@ -38,5 +38,13 @@ void main() {
       const raw = 'https://i.ytimg.com/vi/abc/hqdefault.jpg';
       expect(CanlifalImageUrls.thumbnail(raw, width: 320), raw);
     });
+
+    test('unwraps upload get-url to CDN (no JWT GET)', () {
+      const api =
+          'https://canlifal.com/api/upload/get-url?path=gift%2Fuploads%2Fab.png';
+      final resolved = CanlifalImageUrls.resolve(api);
+      expect(resolved, isNot(contains('get-url')));
+      expect(resolved, contains('gift/uploads/ab.png'));
+    });
   });
 }

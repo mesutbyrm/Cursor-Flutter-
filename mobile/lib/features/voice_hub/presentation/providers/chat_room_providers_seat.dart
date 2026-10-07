@@ -655,11 +655,22 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
       final selfId = ref.read(authControllerProvider).valueOrNull?.id;
       if (selfId != null && selfId == userId) {
         _lastConfirmedSelfSeatIndex = null;
-        // Koltuktan inince TRTC tamamen bırakılır; yalnızca mic kapatmak
-        // yeniden bağlanma / host rolünde kalma ile ses sızıntısına yol açıyordu.
-        unawaited(
-          ref.read(voiceRoomAudioCoordinatorProvider).releaseSeatVoice(),
-        );
+        // Koltuktan inince yayın kesilir; odada izleyici olarak yeniden dinleme
+        // (mic kapalı audience TRTC) — tam leave sonrası sessiz kalma/sızıntı önlenir.
+        unawaited(() async {
+          final audio = ref.read(voiceRoomAudioCoordinatorProvider);
+          await audio.releaseSeatVoice();
+          if (!_sessionActive || _roomKey.isEmpty || !state.selfInRoom) return;
+          try {
+            await audio.join(
+              roomId: _roomKey,
+              remote: ref.read(chatRoomRemoteProvider),
+              enableMic: false,
+              userId: selfId,
+              backendTrtc: state.roomTrtc,
+            );
+          } catch (_) {}
+        }());
       }
       await refresh();
       return null;

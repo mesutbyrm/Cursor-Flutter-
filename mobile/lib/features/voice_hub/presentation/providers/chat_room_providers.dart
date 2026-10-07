@@ -1215,13 +1215,14 @@ class VoiceRoomLiveController
           state = state.copyWith(loading: false);
           ref.read(voiceRoomAudioCoordinatorProvider).setReconnectSuspended(true);
           ref.read(voiceRoomAudioCoordinatorProvider).setHeadphonesOn(false);
-          unawaited(
-            ref
+          // TRTC leave en az birkaç saniye sürebilir; 400ms kesinti çıktıktan sonra
+          // sesin devam etmesine yol açıyordu (A cihazı diagnostic).
+          try {
+            await ref
                 .read(voiceRoomAudioCoordinatorProvider)
                 .leave()
-                .timeout(const Duration(milliseconds: 400))
-                .catchError((_) {}),
-          );
+                .timeout(const Duration(seconds: 4));
+          } catch (_) {}
         },
         () async {
           final backendLeave = _leavePresenceWithSeatClear(force: forcePresenceLeave)

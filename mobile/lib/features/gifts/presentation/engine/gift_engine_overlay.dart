@@ -397,7 +397,7 @@ class _ComboBadgeState extends State<_ComboBadge>
       TweenSequenceItem(tween: Tween(begin: 1.35, end: 1.0), weight: 55),
     ]).animate(CurvedAnimation(parent: _pulse, curve: Curves.easeOutCubic));
     if (widget.combo >= 2) {
-      unawaited(_pulse.forward(from: 0));
+      unawaited(_replayPulse());
     }
   }
 
@@ -405,8 +405,14 @@ class _ComboBadgeState extends State<_ComboBadge>
   void didUpdateWidget(covariant _ComboBadge oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.combo != widget.combo && widget.combo >= 2) {
-      unawaited(_pulse.forward(from: 0));
+      unawaited(_replayPulse());
     }
+  }
+
+  Future<void> _replayPulse() async {
+    _pulse.stop();
+    _pulse.reset();
+    await _pulse.forward();
   }
 
   @override

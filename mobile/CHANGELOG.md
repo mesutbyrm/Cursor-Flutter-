@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.731+784 (2026-10-07) — Canlı falcı görselleri + odadan çıkış sesi
+
+- **Avatar/hediye logoları:** `/api/upload/get-url?path=…` URL'leri CDN yoluna çevrilir (CachedNetworkImage 401 giderildi — Canlı Falcılar kartları)
+- **Sesli odadan çıkış:** TRTC `leave()` artık 400ms'de kesilmiyor; tamamlanana kadar beklenir (çıktıktan sonra ses devamı)
+- **Koltuktan inme:** TRTC bırakıldıktan sonra izleyici (mic kapalı) yeniden bağlanır
+- **Hediye combo animasyonu:** TweenSequence `t>1` StateError düzeltmesi (canlı fal UI donması)
+
 ## 1.0.730+783 (2026-10-07) — Sesli oda: koltuk ses sızıntısı + admin otomatik koltuk
 
 - **Koltuktan inince** TRTC + `/voice` oturumu tam kapatılır (`releaseSeatVoice`) — karşı tarafa ses gitmesi / yeniden bağlanma sızıntısı

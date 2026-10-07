@@ -14,6 +14,8 @@ abstract final class CanlifalImageUrls {
     final trimmed = raw.trim();
     if (trimmed.isEmpty) return '';
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      final unwrapped = _unwrapUploadGetUrl(trimmed);
+      if (unwrapped != null) return unwrapped;
       return trimmed;
     }
     if (trimmed.startsWith('//')) return 'https:$trimmed';
@@ -112,5 +114,17 @@ abstract final class CanlifalImageUrls {
 
   static String _withQuery(Uri uri, Map<String, String> params) {
     return uri.replace(queryParameters: {...uri.queryParameters, ...params}).toString();
+  }
+
+  /// `GET /api/upload/get-url?path=…` JWT gerektirir; [CachedNetworkImage] Bearer
+  /// göndermez → 401. Yol parametresini CDN URL'sine çevir (Canlı Falcılar avatar/hediye).
+  static String? _unwrapUploadGetUrl(String absoluteUrl) {
+    final uri = Uri.tryParse(absoluteUrl);
+    if (uri == null) return null;
+    final path = uri.path;
+    if (!path.contains('upload/get-url')) return null;
+    final cloudPath = uri.queryParameters['path']?.trim();
+    if (cloudPath == null || cloudPath.isEmpty) return null;
+    return CloudMediaUrl.resolve(cloudPath) ?? resolve(cloudPath);
   }
 }
