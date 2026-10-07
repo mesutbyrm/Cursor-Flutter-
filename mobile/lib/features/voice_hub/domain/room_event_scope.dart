@@ -1,3 +1,5 @@
+import '../../../core/room/room_event_scope.dart' show roomKeysEquivalent;
+
 /// SSE / gift / PK event'lerinde oda izolasyonu.
 bool roomEventMatchesActiveRoom(
   Map<String, dynamic> payload,
@@ -18,25 +20,13 @@ bool roomEventMatchesActiveRoom(
     return true;
   }
 
-  bool matchesCandidate(String candidate) {
-    final c = candidate.trim();
-    if (c.isEmpty) return false;
-    if (c == active) return true;
-    if (c.endsWith(active) || active.endsWith(c)) return true;
-    return false;
-  }
+  // Takma ad, ETKİN odanın başka bir kimliğidir: olayın oda kimliği bu takma
+  // adla eşleşmeli. (Önceden `takma ad == etkin oda` ise HER olay kabul
+  // ediliyordu → önceki odanın bayat olayları yeni odada işleniyordu.)
+  // Eşleştirme kuralı gift köprüsüyle ortak: [roomKeysEquivalent].
+  bool matchesAlternate(String alt) => roomKeysEquivalent(raw, alt);
 
-  bool matchesAlternate(String alt) {
-    final a = alt.trim();
-    if (a.isEmpty) return false;
-    // Takma ad, ETKİN odanın başka bir kimliğidir: olayın oda kimliği bu takma
-    // adla eşleşmeli. (Önceden `takma ad == etkin oda` ise HER olay kabul
-    // ediliyordu → önceki odanın bayat olayları yeni odada işleniyordu.)
-    if (raw == a || raw.endsWith(a) || a.endsWith(raw)) return true;
-    return false;
-  }
-
-  if (matchesCandidate(raw)) return true;
+  if (roomKeysEquivalent(raw, active)) return true;
   final alt = alternateRoomId?.trim();
   if (alt != null && alt.isNotEmpty && matchesAlternate(alt)) return true;
   if (extraAlternateRoomIds != null) {

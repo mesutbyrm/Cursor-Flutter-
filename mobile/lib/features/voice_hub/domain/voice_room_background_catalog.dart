@@ -31,6 +31,30 @@ abstract final class VoiceRoomBackgroundCatalog {
     return out;
   }
 
+  /// SSE `room_update` / oda yükü içinden arka plan URL'si (BG-002).
+  /// Backend sütunu `backgroundImage`; eski istemci anahtarları da desteklenir,
+  /// iç içe `room` nesnesi de okunur. Boş değer bir sonraki anahtara düşer.
+  static String? fromRoomPayload(Map<String, dynamic> payload) {
+    const keys = [
+      'backgroundImage',
+      'backgroundImageUrl',
+      'backgroundUrl',
+      'background_image',
+    ];
+    for (final key in keys) {
+      final v = payload[key];
+      if (v is String) {
+        final url = _normalizeUrl(v);
+        if (url != null) return url;
+      }
+    }
+    final room = payload['room'];
+    if (room is Map) {
+      return fromRoomPayload(Map<String, dynamic>.from(room));
+    }
+    return null;
+  }
+
   static String? _parseEntry(dynamic e) {
     if (e is String) return _normalizeUrl(e);
     if (e is Map) {
