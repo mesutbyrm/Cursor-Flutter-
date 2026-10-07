@@ -184,6 +184,9 @@ abstract final class GameStateParser {
 
     final p1 = pick(raw, ['player1Id', 'player1'])?.toString();
     final p2 = pick(raw, ['player2Id', 'player2'])?.toString();
+    // `/api/games/room` ve `/api/games/sos` sırayı oyuncu numarası (1/2) tutar.
+    if (turn == '1') return p1 == userId;
+    if (turn == '2') return p2 == userId;
     if (turn == 'player1' || turn == p1) return p1 == userId;
     if (turn == 'player2' || turn == p2) return p2 == userId;
     return false;

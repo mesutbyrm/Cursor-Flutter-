@@ -12,6 +12,7 @@ import '../../domain/game_models.dart';
 import '../providers/game_providers.dart';
 import '../widgets/game_catalog_card.dart';
 import '../widgets/game_grid_size_picker.dart';
+import '../widgets/sos_start_sheet.dart';
 
 class GamesHubPage extends ConsumerWidget {
   const GamesHubPage({super.key});
@@ -261,6 +262,14 @@ class _GameTile extends ConsumerWidget {
     WidgetRef ref,
     GameCatalogItem game,
   ) async {
+    if (isSosGame(game)) {
+      final router = GoRouter.of(context);
+      final id = await createSosGameFlow(context, ref);
+      if (id == null || !context.mounted) return;
+      Navigator.pop(context);
+      router.push(sosGamePath(id));
+      return;
+    }
     try {
       final grid = await pickGameGridSize(context, ref, game);
       if (!grid.proceed || !context.mounted) return;

@@ -5,6 +5,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../../core/util/json_util.dart';
 import '../domain/game_models.dart';
+import '../domain/sos/sos_game.dart';
 
 class GameRemoteDataSource {
   GameRemoteDataSource(this._dio);
@@ -35,6 +36,47 @@ class GameRemoteDataSource {
   /// yapay zekânın devraldığı masaya geri döner.
   Future<void> reclaimFromAi(String roomId) async {
     await _dio.safePost<dynamic>(ApiEndpoints.gameRoomReplaceAi(roomId));
+  }
+
+  /// SOS — `POST /api/games/sos {gridSize, isAI}` (6–30) → `{success, gameId}`.
+  /// Yapay zekâ masası ücretsiz ve hemen `active`; arkadaş masası `waiting`.
+  Future<String> createSosGame({
+    required int gridSize,
+    required bool vsAi,
+  }) async {
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.gameSosEconomy,
+      data: {'gridSize': gridSize, 'isAI': vsAi},
+    );
+    final body = _map(res.data);
+    final id = (body['gameId'] ?? body['id'])?.toString() ?? '';
+    if (id.isEmpty) throw ApiException('SOS oyunu oluşturulamadı');
+    return id;
+  }
+
+  /// `GET /api/games/sos/{id}` — durum (sunucu kopma/AI devri burada işler).
+  Future<SosGameState> fetchSosGame(String gameId) async {
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.gameSos(gameId));
+    return SosGameState.fromJson(_map(res.data));
+  }
+
+  /// `POST /api/games/sos/{id}` — bekleyen masaya ikinci oyuncu olarak katıl.
+  Future<SosGameState> joinSosGame(String gameId) async {
+    final res = await _dio.safePost<dynamic>(ApiEndpoints.gameSos(gameId));
+    return SosGameState.fromJson(_map(res.data));
+  }
+
+  /// `PATCH /api/games/sos/{id}` — `{row, col, letter}`; yapay zekâ masasında
+  /// gövde `SosEngine.playAgainstAi` ile (`aiMoves`) gelir.
+  Future<SosGameState> sendSosMove(
+    String gameId,
+    Map<String, dynamic> body,
+  ) async {
+    final res = await _dio.safePatch<dynamic>(
+      ApiEndpoints.gameSos(gameId),
+      data: body,
+    );
+    return SosGameState.fromJson(_map(res.data));
   }
 
   /// Oda oluşturma. Üretim sözleşmesi `POST /api/games/room

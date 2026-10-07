@@ -93,6 +93,9 @@ ChatRoomSseEventType chatRoomSseEventTypeFrom(String? raw) {
       return ChatRoomSseEventType.userLeave;
     case 'room_update':
     case 'roomupdate':
+    // BG-002 — canlı sunucu arka plan değişimini ayrı tip olarak da yollayabilir.
+    case 'background_changed':
+    case 'backgroundchanged':
       return ChatRoomSseEventType.roomUpdate;
     case 'moderation':
     case 'ban':
