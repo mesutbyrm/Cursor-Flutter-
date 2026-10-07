@@ -122,6 +122,7 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
         _presenceApiKey,
         aliases: _roomKeyAliases,
       );
+      bindAudioMicPublishGate();
       final liveJoinOk = await _performLiveJoinRoom();
       if (!liveJoinOk) {
         await _fetchAndApplyRoomState();

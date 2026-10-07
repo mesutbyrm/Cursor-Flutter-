@@ -913,6 +913,7 @@ class VoiceRoomLiveController
       }
       _cancelSessionTimers();
       if (_sessionActive) {
+        clearAudioMicPublishGate();
         clearVoiceRoomLiveSession(ref, _roomKey);
         _removeSelfFromPresenceOptimistic();
         unawaited(_leaveVoiceSession());
@@ -1224,6 +1225,7 @@ class VoiceRoomLiveController
           _cancelSessionTimers();
           _announceSelfLeave();
           state = state.copyWith(loading: false);
+          clearAudioMicPublishGate();
           ref.read(voiceRoomAudioCoordinatorProvider).setReconnectSuspended(true);
           ref.read(voiceRoomAudioCoordinatorProvider).setHeadphonesOn(false);
           // TRTC leave en az birkaç saniye sürebilir; 400ms kesinti çıktıktan sonra
