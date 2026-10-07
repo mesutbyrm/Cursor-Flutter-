@@ -428,7 +428,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
     if (!wasPlaying && nowPlaying && !isOwner && _audioReady) {
       if (!_isMicMuted) {
-        _audio?.setMicEnabled(false);
+        unawaited(
+          ref
+              .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
+              .setSelfMicPublishEnabled(false),
+        );
         if (mounted) {
           setState(() {
             _isMicMuted = true;
