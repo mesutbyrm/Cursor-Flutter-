@@ -36,6 +36,8 @@ class VoiceRoomAudioCoordinator {
   var _reconnectSuspended = false;
   var _leaveEpoch = 0;
   var _desiredMicOn = false;
+  var _micGeneration = 0;
+  bool Function()? _micPublishGate;
 
   VoidCallback? onReconnecting;
   VoidCallback? onReconnected;
@@ -43,6 +45,18 @@ class VoiceRoomAudioCoordinator {
   void setReconnectSuspended(bool suspended) {
     _reconnectSuspended = suspended;
   }
+
+  /// Koltuk yokken TRTC mic publish engeli — aktif oda controller bağlar.
+  void setMicPublishGate(bool Function()? gate) {
+    _micPublishGate = gate;
+  }
+
+  void invalidatePendingMicEnable() {
+    _micGeneration++;
+    _desiredMicOn = false;
+  }
+
+  bool _mayPublishMic() => _micPublishGate?.call() ?? false;
 
   void _bindConnectionLostHandler() {
     _trtc.manager.onConnectionLost = () {
@@ -130,19 +144,20 @@ class VoiceRoomAudioCoordinator {
       throw StateError('Oda kimliği boş');
     }
 
+    _lastRoomId = channel;
+    _lastUserId = userId;
+    final publishMic = enableMic && _mayPublishMic();
     VoiceRoomDebugLog.log('audio.trtc.prepare', {
       'roomId': channel,
       'trtcRoom': backendTrtc?.effectiveStrRoomId,
-      'enableMic': enableMic,
+      'enableMic': publishMic,
       'fromBackend': backendTrtc != null,
     });
-    _lastRoomId = channel;
-    _lastUserId = userId;
-    _desiredMicOn = enableMic;
+    _desiredMicOn = publishMic;
     _reconnectSuspended = false;
     final epoch = _leaveEpoch;
 
-    final role = enableMic ? 'host' : 'audience';
+    final role = publishMic ? 'host' : 'audience';
     final prefetched = backendTrtc ??
         (userId != null && userId.isNotEmpty
             ? VoiceRoomEntryPerf.takeTrtc(
@@ -154,7 +169,7 @@ class VoiceRoomAudioCoordinator {
 
     try {
       await Future.wait<void>([
-        if (enableMic)
+        if (publishMic)
           () async {
             try {
               await ds.joinVoiceSession(channel);
@@ -170,7 +185,7 @@ class VoiceRoomAudioCoordinator {
           Future<void>.value(),
         _trtc.joinVoice(
           channel,
-          publishMic: enableMic,
+          publishMic: publishMic,
           prefetchedCredentials: prefetched,
           role: role,
           userId: userId,
@@ -181,7 +196,7 @@ class VoiceRoomAudioCoordinator {
       VoiceRoomDebugLog.log('audio.join.partial', {'error': e.toString()});
       await _trtc.joinVoice(
         channel,
-        publishMic: enableMic,
+        publishMic: publishMic,
         prefetchedCredentials: prefetched,
         role: role,
         userId: userId,
@@ -193,22 +208,34 @@ class VoiceRoomAudioCoordinator {
       return VoiceAudioEngineKind.trtc;
     }
     _engine = VoiceAudioEngineKind.trtc;
-    _desiredMicOn = enableMic;
-    if (!enableMic) {
+    _desiredMicOn = publishMic;
+    if (!publishMic) {
       await _trtc.setMicEnabled(false);
     }
     _bindConnectionLostHandler();
     VoiceRoomDebugLog.log('audio.trtc.joined', {
       'roomId': channel,
-      'mic': enableMic,
+      'mic': publishMic,
     });
     return _engine!;
   }
 
   Future<void> setMicEnabled(bool enabled) async {
+    final gen = _micGeneration;
+    if (enabled && !_mayPublishMic()) {
+      VoiceRoomDebugLog.log('audio.trtc.mic_blocked.no_seat', {});
+      _desiredMicOn = false;
+      _micOp = _setMicEnabledSafe(false);
+      await _micOp;
+      return;
+    }
     _desiredMicOn = enabled;
     _micOp = _setMicEnabledSafe(enabled);
     await _micOp;
+    if (gen != _micGeneration && enabled) {
+      _desiredMicOn = false;
+      await _setMicEnabledSafe(false);
+    }
   }
 
   var _staffBypassVoiceApi = false;
@@ -222,6 +249,11 @@ class VoiceRoomAudioCoordinator {
       if (channel == null || channel.isEmpty) return;
 
       if (enabled) {
+        if (!_mayPublishMic()) {
+          _desiredMicOn = false;
+          await _trtc.setMicEnabled(false);
+          return;
+        }
         final ds = _remote;
         if (ds != null && !_trtc.inChannel) {
           try {
@@ -276,7 +308,7 @@ class VoiceRoomAudioCoordinator {
 
   /// Koltuktan inme — odada kalırken TRTC ve `/voice` oturumunu kapat.
   Future<void> releaseSeatVoice() async {
-    _desiredMicOn = false;
+    invalidatePendingMicEnable();
     _reconnectSuspended = true;
     final ds = _remote;
     final channel = _lastRoomId?.trim();

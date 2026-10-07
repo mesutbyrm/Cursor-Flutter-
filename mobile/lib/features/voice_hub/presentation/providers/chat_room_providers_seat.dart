@@ -657,6 +657,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
         _lastConfirmedSelfSeatIndex = null;
         // Koltuktan inince yayın kesilir; odada izleyici olarak yeniden dinleme
         // (mic kapalı audience TRTC) — tam leave sonrası sessiz kalma/sızıntı önlenir.
+        applySelfMicOpen(false);
         unawaited(() async {
           final audio = ref.read(voiceRoomAudioCoordinatorProvider);
           audio.setReconnectSuspended(true);
@@ -721,5 +722,36 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     } finally {
       _roleGrantSeatInFlight = false;
     }
+  }
+
+  /// Koltuk haritası + presence — TRTC mic publish için tek kaynak.
+  bool selfOccupiesSeat() => _currentSelfSeatIndex() != null;
+
+  int? selfSeatIndex() => _currentSelfSeatIndex();
+
+  void bindAudioMicPublishGate() {
+    ref.read(voiceRoomAudioCoordinatorProvider).setMicPublishGate(() {
+      if (!_sessionActive) return false;
+      return _currentSelfSeatIndex() != null;
+    });
+  }
+
+  void clearAudioMicPublishGate() {
+    ref.read(voiceRoomAudioCoordinatorProvider).setMicPublishGate(null);
+  }
+
+  /// TRTC yerel ses yayını — koltuk yoksa publish edilmez (UI ayrı kalabilir).
+  Future<bool> setSelfMicPublishEnabled(bool publish) async {
+    final audio = ref.read(voiceRoomAudioCoordinatorProvider);
+    if (publish && !selfOccupiesSeat()) {
+      audio.invalidatePendingMicEnable();
+      await audio.setMicEnabled(false);
+      applySelfMicOpen(false);
+      return false;
+    }
+    await audio.setMicEnabled(publish);
+    final actuallyOn = publish && audio.micOn;
+    applySelfMicOpen(actuallyOn);
+    return actuallyOn;
   }
 }

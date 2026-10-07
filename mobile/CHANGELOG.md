@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.740+793 (2026-10-07) — Koltuksuz mikrofon TRTC publish engeli
+
+- **Hata:** Koltuktan indikten sonra mic kapat-aç ile TRTC yeniden yayın yapıyordu; `canSpeak` (oda sahibi/admin) veya doğrudan `setMicEnabled(true)` koltuk kontrolünü atlıyordu
+- **Düzeltme:** `setMicPublishGate` + `setSelfMicPublishEnabled` — TRTC publish yalnızca `selfOccupiesSeat()` iken; coordinator’da async race için `invalidatePendingMicEnable`
+- UI: koltuksuz açma → «Konuşmak için koltuğa oturun»; koltuk düşünce otomatik publish kapatma
+- Gerçek cihaz: mic off-seat senaryoları
+
 ## 1.0.739+792 (2026-10-07) — Sesli oda presence/koltuk/TRTC yaşam döngüsü (P0)
 
 - **Oda değiştirme (hata):** A→B geçişinde eski odada yalnızca `leavePresence` deneniyordu; koltuk + live üyelik kalıyordu → kullanıcı A’da hayalet görünüyordu. Tam sunucu çıkışı: `clearSeat` + live `leaveRoom` + `DELETE presence?leave=1` (alternatif anahtarlar dahil)

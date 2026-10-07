@@ -328,8 +328,9 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       );
       return;
     }
-    final muted = !_isMicMuted;
-    if (!muted) {
+    final wantPublish = _isMicMuted;
+    final notifier = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
+    if (wantPublish) {
       final micOk = await VoiceTrtcEngine.requestMicrophonePermission();
       if (!micOk) {
         if (!mounted) return;
@@ -342,35 +343,13 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
         );
         return;
       }
-      final user = ref.read(authControllerProvider).valueOrNull;
-      final live = ref.read(voiceRoomLiveProvider(_liveRoomKey));
-      final room = _effectiveRoom();
-      ChatRoomPresence? selfPresence;
-      for (final p in live.presence) {
-        if (p.id == user?.id) {
-          selfPresence = p;
-          break;
-        }
-      }
-      final perms = VoiceRoomPermissions.forUser(
-        user: user,
-        room: room,
-        selfPresence: selfPresence,
-        server: live.serverPermissions,
-      );
-      if (!VoiceRoomSpeakAccess.canSpeak(
-        user: user,
-        perms: perms,
-        room: room,
-        presence: live.presence,
-      )) {
-        final notifier = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
+      if (!notifier.selfOccupiesSeat()) {
         final seated = await notifier.ensureSelfOnSeatForMic();
         if (!mounted) return;
         if (!seated) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Konuşmak için boş bir koltuğa oturmalısınız'),
+              content: Text('Konuşmak için koltuğa oturun'),
             ),
           );
           return;
@@ -379,8 +358,16 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       }
     }
     try {
-      await _audio!.setMicEnabled(!muted);
-      if (mounted) setState(() => _isMicMuted = muted);
+      final published = await notifier.setSelfMicPublishEnabled(wantPublish);
+      if (!mounted) return;
+      if (wantPublish && !published) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Konuşmak için koltuğa oturun')),
+        );
+        setState(() => _isMicMuted = true);
+        return;
+      }
+      setState(() => _isMicMuted = !published);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -411,19 +398,13 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       walletRole: ref.read(staffAccessProvider).siteRole ??
           ref.read(walletBalancesProvider).valueOrNull?.role,
     );
-    if (!VoiceRoomSpeakAccess.canSpeak(
-      user: user,
-      perms: perms,
-      room: room,
-      presence: live.presence,
-    )) {
-      return;
-    }
+    final notifier = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
+    if (!notifier.selfOccupiesSeat()) return;
     final micOk = await VoiceTrtcEngine.requestMicrophonePermission();
     if (!micOk || !mounted) return;
     try {
-      await _audio!.setMicEnabled(true);
-      if (mounted) setState(() => _isMicMuted = false);
+      final published = await notifier.setSelfMicPublishEnabled(true);
+      if (mounted && published) setState(() => _isMicMuted = false);
     } catch (_) {}
   }
 

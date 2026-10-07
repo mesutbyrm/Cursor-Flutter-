@@ -321,11 +321,23 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
       }
     }
     try {
-      await coord.setMicEnabled(turnOn);
+      final notifier =
+          ref.read(voiceRoomLiveProvider(widget.room.liveKey).notifier);
+      if (turnOn && !notifier.selfOccupiesSeat()) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Konuşmak için koltuğa oturun')),
+        );
+        return;
+      }
+      final published = await notifier.setSelfMicPublishEnabled(turnOn);
       if (!mounted) return;
-      ref
-          .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
-          .applySelfMicOpen(turnOn);
+      if (turnOn && !published) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Konuşmak için koltuğa oturun')),
+        );
+        return;
+      }
       setState(() {});
     } catch (e) {
       if (!mounted) return;
