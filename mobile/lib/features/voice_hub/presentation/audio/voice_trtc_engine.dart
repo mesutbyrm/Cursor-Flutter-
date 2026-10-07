@@ -19,7 +19,6 @@ class VoiceTrtcEngine {
   final VoiceAudioLevelMonitor _audioMonitor;
 
   var _inRoom = false;
-  var _micOn = true;
   var _publishMic = false;
   String _roomId = '';
   TrtcCredentials? _lastCredentials;
@@ -27,7 +26,8 @@ class VoiceTrtcEngine {
   TrtcRoomManager get manager => _manager;
   bool get isSupported => _manager.isSupported;
   bool get inChannel => _inRoom;
-  bool get micOn => _micOn;
+  /// Tek kaynak: native ile birebir tutulan `TrtcRoomManager.micOn`.
+  bool get micOn => _inRoom && _manager.micOn;
   TrtcCredentials? get lastCredentials => _lastCredentials;
   VoiceAudioLevelMonitor get audioMonitor => _audioMonitor;
 
@@ -133,12 +133,7 @@ class VoiceTrtcEngine {
       _roomId = credentials.effectiveStrRoomId;
       _lastCredentials = credentials;
       _publishMic = publishMic;
-      if (!publishMic) {
-        _manager.setMicEnabled(false);
-        _micOn = false;
-      } else {
-        _micOn = true;
-      }
+      // Dinleyici katılımı yerel ses yakalamayı hiç başlatmaz (manager).
 
       VoiceRoomDebugLog.log('audio.trtc.joined', {
         'roomId': trtcRoom,
@@ -163,9 +158,16 @@ class VoiceTrtcEngine {
 
   Future<void> setMicEnabled(bool enabled) async {
     if (!_inRoom) return;
-    if (enabled == _micOn && enabled == _publishMic) return;
+    if (enabled == micOn && enabled == _publishMic) return;
 
     if (enabled && !_publishMic) {
+      // Önce odadan çıkmadan rol değiştir (audience → anchor).
+      if (await _manager.setAnchorPublishing(true)) {
+        _publishMic = true;
+        VoiceRoomDebugLog.log('audio.trtc.switch_role', {'anchor': true});
+        return;
+      }
+      // Yedek: eski çık + host token ile yeniden gir yolu.
       final tokenSource = _tokenSource;
       final roomId = _roomId;
       if (tokenSource != null && roomId.isNotEmpty) {
@@ -178,17 +180,22 @@ class VoiceTrtcEngine {
         );
         _lastCredentials = cred;
         _publishMic = true;
-        _micOn = true;
         return;
       }
     }
 
-    _manager.setMicEnabled(enabled);
-    _micOn = enabled;
-    if (!enabled) {
-      _publishMic = false;
-      _manager.stopLocalAudioPublish();
+    if (enabled) {
+      _manager.setMicEnabled(true);
+      return;
     }
+    _publishMic = false;
+    // Yakalama + yayın hemen durur; ardından dinleyici rolüne geçilir.
+    _manager.stopLocalAudioPublish();
+    final switched = await _manager.setAnchorPublishing(false);
+    VoiceRoomDebugLog.log('audio.trtc.switch_role', {
+      'anchor': false,
+      'ok': switched,
+    });
   }
 
   void setRemoteAudioMuted(bool muted) {
@@ -255,9 +262,10 @@ class VoiceTrtcEngine {
   Future<void> leave() async {
     try {
       await _manager.leave();
-    } catch (_) {}
+    } catch (e) {
+      VoiceRoomDebugLog.log('audio.trtc.leave.fail', {'error': e.toString()});
+    }
     _inRoom = false;
-    _micOn = false;
     _publishMic = false;
     _roomId = '';
     _lastCredentials = null;

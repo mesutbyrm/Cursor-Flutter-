@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.732+785 (2026-10-07) — PHASE 1: TRTC ses güvenliği (denetim VOICE-001/002/003/005)
+
+- **VOICE-001:** Sesli odaya dinleyici olarak girmek artık mikrofon yakalamasını başlatmıyor (`audioOnly` join yalnız anchor iken `startLocalAudio`); `micOn` varsayılanı kapalı
+- **VOICE-002:** Tüm `TrtcRoomManager` örnekleri ortak (statik) işlem kapısını kullanır; native sahibi olmayan yönetici `stopLocalAudio`/`exitRoom` çağırıp başka oturumu (canlı yayın/fal/DM) susturamaz
+- **VOICE-003:** Koltukta mikrofon açma = `switchRole(anchor)` (TRTC çık + yeniden gir yok, 3 sn zaman aşımında eski yola düşer); mikrofonu kapatma yayını durdurup dinleyici rolüne geçer
+- **VOICE-005:** `VoiceTrtcEngine.micOn` artık native ile birebir tutulan `TrtcRoomManager.micOn`'dan okunur (çift alan kaldırıldı)
+- Sessiz `catch (_) {}` (TRTC leave) loglanıyor; yeni birim testleri: `test/features/trtc/trtc_room_manager_ownership_test.dart`
+- Gerçek cihaz: **BLOCKED** (VOICE-001…006 testleri `docs/CANLIFAL_REAL_DEVICE_TEST_PLAN_2026.md`)
+
 ## 1.0.731+784 (2026-10-07) — Canlı falcı görselleri + odadan çıkış sesi
 
 - **Avatar/hediye logoları:** `/api/upload/get-url?path=…` URL'leri CDN yoluna çevrilir (CachedNetworkImage 401 giderildi — Canlı Falcılar kartları)
