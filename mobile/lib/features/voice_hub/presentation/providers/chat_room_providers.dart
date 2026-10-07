@@ -74,6 +74,7 @@ import 'voice_seat_action_lock_provider.dart';
 import '../../domain/room_event_scope.dart';
 import '../../domain/voice_room_live_join_mapper.dart';
 import '../../domain/voice_room_sse_session_guard.dart';
+import '../../../trtc/data/datasources/live_room_remote_datasource.dart';
 import '../../../trtc/domain/entities/live_join_room_result.dart';
 import '../../../trtc/presentation/providers/trtc_providers.dart';
 import '../../domain/voice_music_sync.dart';
@@ -122,6 +123,7 @@ import '../coordinators/room_session_manager.dart';
 import '../utils/voice_room_presence_self_sync.dart';
 import '../utils/voice_room_presence_persistence.dart';
 import '../utils/voice_room_server_leave.dart';
+import '../utils/voice_room_leave_trace.dart';
 import '../utils/voice_room_local_audio_publish.dart';
 import '../utils/voice_room_presence_tombstone.dart';
 import '../services/voice_room_music_control_delegate.dart';
@@ -467,6 +469,7 @@ class VoiceRoomLiveController
   /// Kaynak kök `Provider` olduğundan örnek dispose'tan sonra da geçerlidir;
   /// build sırasında bir kez yakalanır.
   ChatRoomRemoteDataSource? _presenceRemoteRef;
+  LiveRoomRemoteDataSource? _liveRoomRemoteRef;
 
   /// `selfInRoom` — tek bir eksik sunucu anlık görüntüsünde düşürülmez.
   final _selfPresenceTracker = SelfPresenceTracker();
@@ -852,6 +855,7 @@ class VoiceRoomLiveController
     final room = _roomMeta;
     // Çıkış yolu dispose sonrasına sarkabildiği için istemci burada yakalanır.
     _presenceRemoteRef = ref.read(chatRoomRemoteProvider);
+    _liveRoomRemoteRef = ref.read(liveRoomRemoteProvider);
     ref.listen(staffAccessProvider, (prev, next) {
       if (!state.selfInRoom) return;
       final wasPrivileged =
@@ -1165,7 +1169,7 @@ class VoiceRoomLiveController
     _networkRecoverySub = null;
   }
 
-  /// Odadan çıkış — TRTC/ses kesilir, ardından backend leave, sonra SSE/state.
+  /// Odadan çıkış — heartbeat durur, backend leave (koltuk+presence), TRTC, SSE/state.
   Future<void> leaveRoomSession({
     String source = 'ui_leave',
     bool awaitBackend = true,
@@ -1216,6 +1220,13 @@ class VoiceRoomLiveController
           VoiceSessionPhase.leaving,
         );
     VoiceRoomDebugLog.roomLeave(roomId: roomKey, source: source);
+    final leaveUserId = ref.read(authControllerProvider).valueOrNull?.id;
+    VoiceRoomLeaveTrace.started(
+      roomId: _presenceApiKey,
+      userId: leaveUserId,
+      seatId: _selfSeatIndexFromSlotsOnly(),
+      source: source,
+    );
 
     await _leaveCoordinator.leave(
       roomId: roomKey,
@@ -1224,33 +1235,45 @@ class VoiceRoomLiveController
         () async {
           _postVoiceSessionEndSummary(endedLabel: 'Odadan ayrıldınız');
           _cancelSessionTimers();
+          _presenceJoined = false;
+          _presenceHeartbeat?.cancel();
+          _presenceHeartbeat = null;
+          VoiceRoomLeaveTrace.log('heartbeat stopped');
           _announceSelfLeave();
           state = state.copyWith(loading: false);
           clearAudioMicPublishGate();
           ref.read(voiceRoomAudioCoordinatorProvider).setReconnectSuspended(true);
           ref.read(voiceRoomAudioCoordinatorProvider).setHeadphonesOn(false);
-          // TRTC leave en az birkaç saniye sürebilir; 400ms kesinti çıktıktan sonra
-          // sesin devam etmesine yol açıyordu (A cihazı diagnostic).
-          try {
-            await ref
-                .read(voiceRoomAudioCoordinatorProvider)
-                .leave()
-                .timeout(const Duration(seconds: 4));
-          } catch (_) {}
         },
         () async {
-          final backendLeave = _leavePresenceWithSeatClear(force: forcePresenceLeave)
-              .timeout(const Duration(seconds: 4))
-              .catchError((_) => false);
-          if (awaitBackend) {
-            await backendLeave;
-          } else {
-            unawaited(backendLeave);
+          VoiceRoomLeaveTrace.log('backend leave started');
+          var cleared = false;
+          try {
+            cleared = await _leavePresenceWithSeatClear(force: forcePresenceLeave)
+                .timeout(const Duration(seconds: 6));
+          } catch (e) {
+            VoiceRoomLeaveTrace.log('backend leave failed', {
+              'error': e.toString(),
+            });
+            cleared = false;
+          }
+          VoiceRoomLeaveTrace.log('backend leave finished', {
+            'presenceAccepted': cleared,
+          });
+          if (awaitBackend && !cleared) {
+            // Bir kez daha — ağ/geçici hata (sunucuda hayalet üyelik kalmasın).
+            try {
+              cleared = await _leavePresenceWithSeatClear(force: true)
+                  .timeout(const Duration(seconds: 6));
+            } catch (_) {}
+          } else if (!awaitBackend) {
+            unawaited(_leavePresenceWithSeatClear(force: forcePresenceLeave));
           }
           _removeSelfFromPresenceOptimistic();
           state = state.copyWith(selfInRoom: false);
         },
         () async {
+          VoiceRoomLeaveTrace.log('trtc exit started');
           ref.read(roomMusicServiceProvider).bindRoom(null);
           ref.read(voiceRoomAudioCoordinatorProvider).setReconnectSuspended(true);
           try {
@@ -1263,8 +1286,9 @@ class VoiceRoomLiveController
             await ref
                 .read(voiceRoomAudioCoordinatorProvider)
                 .leave()
-                .timeout(const Duration(milliseconds: 600));
+                .timeout(const Duration(seconds: 4));
           } catch (_) {}
+          VoiceRoomLeaveTrace.log('trtc exit completed');
           unawaited(_leaveVoiceSession());
         },
         () async {
@@ -1293,9 +1317,13 @@ class VoiceRoomLiveController
             clearHubOnlineCount: true,
           );
           ref.read(voiceRoomActiveSseConnectedProvider.notifier).state = false;
+          VoiceRoomLeaveTrace.log('local state cleared');
         },
         () async {
           ref.read(sseConnectionHubProvider).forceReleaseVoiceRoom(sseReleaseKey);
+          VoiceRoomLeaveTrace.log('SSE disposed');
+          _poll?.cancel();
+          VoiceRoomLeaveTrace.log('polling disposed');
           ref.read(voiceRoomGiftRealtimeProvider).stop();
           ref.read(voiceRoomGiftRealtimeProvider).setSseActive(false);
           ref.read(voiceRoomGiftRealtimeProvider).resetDedupeState();

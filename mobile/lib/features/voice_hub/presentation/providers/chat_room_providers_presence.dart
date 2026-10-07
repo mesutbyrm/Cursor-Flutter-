@@ -646,16 +646,41 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     _presenceJoined = false;
     _presenceHeartbeat?.cancel();
     _presenceHeartbeat = null;
+
     final apiKey = _presenceApiKey;
     final alternateKey = _presenceAlternateKey;
-    final remote = _presenceRemote;
-    var cleared = false;
-    await _liveLeaveRoomBackend();
-    try {
-      cleared = await remote.leavePresence(apiKey, alternateKey: alternateKey);
-    } catch (_) {
-      cleared = false;
+    final chat = _presenceRemote;
+    LiveRoomRemoteDataSource? live = _liveRoomRemoteRef;
+    if (live == null) {
+      try {
+        live = ref.read(liveRoomRemoteProvider);
+      } catch (_) {}
     }
+    String? userId;
+    try {
+      userId = ref.read(authControllerProvider).valueOrNull?.id;
+    } catch (_) {}
+
+    var cleared = false;
+    if (chat != null && live != null) {
+      cleared = await leaveVoiceRoomOnServerWithClients(
+        chatRemote: chat,
+        liveRemote: live,
+        roomKey: apiKey,
+        alternateKey: alternateKey,
+        userId: userId,
+      );
+      if (!cleared && _roomKey.trim().isNotEmpty && _roomKey.trim() != apiKey) {
+        cleared = await leaveVoiceRoomOnServerWithClients(
+          chatRemote: chat,
+          liveRemote: live,
+          roomKey: _roomKey.trim(),
+          alternateKey: _musicAlternateKey,
+          userId: userId,
+        );
+      }
+    }
+
     VoiceRoomDebugLog.log('api.presence.leave', {
       'room': apiKey,
       'accepted': cleared,
@@ -663,6 +688,9 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     _roomSessionManager?.syncHostLeft(reason: 'Backend presence leave');
     if (cleared) {
       unawaited(VoiceRoomPresencePersistence.clearRoom(apiKey));
+      if (alternateKey != null && alternateKey.isNotEmpty) {
+        unawaited(VoiceRoomPresencePersistence.clearRoom(alternateKey));
+      }
     }
     // Dispose sonrası `ref` kullanılamaz; çıkış isteği zaten gönderildi.
     try {
@@ -745,16 +773,8 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     } catch (_) {
       userId = null;
     }
-    final remote = _presenceRemote;
     if (userId != null && userId.isNotEmpty) {
       _clearSeatForUser(userId);
-      try {
-        await remote.clearSeat(
-          roomKey: _roomKey,
-          alternateKey: _musicAlternateKey,
-          userId: userId,
-        );
-      } catch (_) {}
     }
     return _leavePresence(force: force);
   }
@@ -796,7 +816,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
   }
 
   Future<void> _presenceHeartbeatTick() async {
-    if (_roomKey.isEmpty) return;
+    if (_roomKey.isEmpty || !_sessionActive || _leaveInFlight) return;
     if (_presenceHeartbeatInFlight) return;
     _presenceHeartbeatInFlight = true;
     _presenceHeartbeatCount++;
@@ -829,6 +849,10 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         unawaited(_joinPresence(rejoinAfterHeartbeat: true));
       }
     } finally {
+      if (!_sessionActive || _leaveInFlight) {
+        _presenceHeartbeatInFlight = false;
+        return;
+      }
       final last = _lastSseEventAt;
       final sseSilent = last == null ||
           DateTime.now().difference(last) > const Duration(seconds: 45);

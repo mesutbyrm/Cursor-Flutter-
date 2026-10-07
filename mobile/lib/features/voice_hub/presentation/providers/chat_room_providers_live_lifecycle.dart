@@ -124,7 +124,7 @@ extension VoiceRoomLiveLifecycle on VoiceRoomLiveController {
   }
 
   Future<void> _liveMembershipHeartbeatTick() async {
-    if (_roomKey.isEmpty) return;
+    if (_roomKey.isEmpty || !_sessionActive || _leaveInFlight) return;
     if (_presenceHeartbeatInFlight) return;
     _presenceHeartbeatInFlight = true;
     _presenceHeartbeatCount++;
@@ -162,6 +162,10 @@ extension VoiceRoomLiveLifecycle on VoiceRoomLiveController {
         }
       }
     } finally {
+      if (!_sessionActive || _leaveInFlight) {
+        _presenceHeartbeatInFlight = false;
+        return;
+      }
       final last = _lastSseEventAt;
       final sseSilent = last == null ||
           DateTime.now().difference(last) > const Duration(seconds: 45);
