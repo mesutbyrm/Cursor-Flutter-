@@ -1,6 +1,17 @@
-# Kopyalayın: cp key.properties.example key.properties
-# release.keystore dosyasını android/app/ altına koyun.
+# Kopyalayın (Git'e eklenmez):
+#   cp key.properties.example key.properties
+#
+# Upload keystore:
+#   mobile/android/app/release.keystore
+#
+# Alias (sabit): canlifal
+#
+# ─── ŞİFRELERİ BURAYA SİZ YAZIN (GitHub / commit YOK) ───
+# storePassword → release.keystore oluştururken verdiğiniz keystore şifresi
+# keyPassword   → genelde storePassword ile aynı (keytool -keypass)
+# Bu dosyayı asla push etmeyin; yalnızca kendi makinenizde doldurun.
+
 storeFile=release.keystore
 storePassword=YOUR_STORE_PASSWORD
-keyAlias=YOUR_KEY_ALIAS
+keyAlias=canlifal
 keyPassword=YOUR_KEY_PASSWORD
