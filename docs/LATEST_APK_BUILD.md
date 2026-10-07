@@ -4,20 +4,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.733+786` |
-| Tarih (UTC) | 2026-10-07 08:24 |
-| Commit | [`2358b3e953c58d9cf444c78f2fd8df1583580cee`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/2358b3e953c58d9cf444c78f2fd8df1583580cee) |
-| İş akışı | [Run 37591278226](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37591278226) |
+| Sürüm | `1.0.734+787` |
+| Tarih (UTC) | 2026-10-07 09:59 |
+| Commit | [`a460695fd1426c6779a289e8e3691416d08c6fbf`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/a460695fd1426c6779a289e8e3691416d08c6fbf) |
+| İş akışı | [Run 37602025847](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37602025847) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.733+786 (2026-10-07) — Backend gerektirmeyen düzeltmeler (GIFT-001, BG-002, PK-001, VOICE-006)
+## 1.0.734+787 (2026-10-07) — Tanı + dayanıklılık (FORTUNE-003, CORE-001, CORE-002, otomatik tespit, fal timer)
 
-- **GIFT-001 video hediye:** süre (backend varsayılanı 3000 ms) veya `gift_finished` olayı oynayan videoyu artık kesmiyor; bitiş videonun sonuna ertelenir (`GiftVideoHold`, en fazla +60 sn). Canlı yayın, sesli oda ve PK overlay'leri
-- **BG-002 arka plan:** SSE `room_update` içindeki `backgroundImage` (backend sütunu) ve iç içe `room.backgroundImage` okunuyor; eski anahtarlar korunuyor
-- **PK-001:** `/api/pk/active`, `/leaderboard`, `/{matchId}`, `/{matchId}/stream` ana backend'e (SSE ile aynı veritabanı). Canlı karşılaştırma: games backend sıralaması boş, ana site dolu. Yalnız games'te olan `POST /api/pk/request` games'te kalır
-- **VOICE-006 / GIFT-003:** gift köprüsü ve sesli oda SSE süzgeci tek eşleştirme kuralını (`roomKeysEquivalent`) kullanır; rastgele sonek eşleşmesi (`"11"`≈`"1"`) kaldırıldı
+- **FORTUNE-003:** Falcı gelen-istek SSE'sine 40 sn kalp atışı bekçisi; yarı açık bağlantı kapatılıp yeniden bağlanır
+- **Fal timer:** sunucu `elapsedSeconds` gönderdiğinde saniyelik sayaç bir sonraki senkrona kadar donuyordu; artık anlık alınan değerden ilerler (`PsychicRoomEntity.snapshotAt`)
+- **CORE-001:** TRTC, canlı fal, hediye ve ağ katmanındaki 52 sessiz `catch (_) {}` artık `CfDiag.swallowed` ile Diagnostics'e (warn, maskeli) yazılır; davranış değişmez
+- **Otomatik tespit (`CfAutoDetect`):** TIMER_DRIFT, AUDIO_ACTIVE_WITHOUT_SEAT, TRTC_JOINED_TWICE, DUPLICATE_GIFT kuralları; 30 sn tekrar sınırı
+- **CORE-002:** Hiçbir akışın bağlanmadığı eski `core/sse_client.dart` + sağlayıcı + yaşam döngüsü bağlaması kaldırıldı (realtime `BaseSseService` / SSE hub üzerinden)
 - Gerçek cihaz: **BLOCKED**
 
 
