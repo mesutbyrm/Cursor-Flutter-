@@ -5,11 +5,19 @@ set +u
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT" 2>/dev/null || exit 0
 
-# Flutter / Android (Cloud Agent — AGENTS.md /opt/flutter yoksa ~/flutter)
-for d in /opt/flutter/bin "${HOME}/flutter/bin" "${ANDROID_HOME:-/opt/android-sdk}/platform-tools"; do
-  [ -d "$d" ] && PATH="$d:${PATH:-}"
+# Flutter / Android (Cloud Agent — /opt/android-sdk yoksa ~/Android/Sdk)
+if [ -z "${ANDROID_HOME:-}" ] || [ ! -d "${ANDROID_HOME}" ]; then
+  if [ -d /opt/android-sdk ]; then
+    export ANDROID_HOME=/opt/android-sdk
+  elif [ -d "${HOME}/Android/Sdk" ]; then
+    export ANDROID_HOME="${HOME}/Android/Sdk"
+  fi
+fi
+for d in /opt/flutter/bin "${HOME}/flutter/bin" \
+  "${ANDROID_HOME:+$ANDROID_HOME/cmdline-tools/latest/bin}" \
+  "${ANDROID_HOME:+$ANDROID_HOME/platform-tools}"; do
+  [ -n "$d" ] && [ -d "$d" ] && PATH="$d:${PATH:-}"
 done
-[ -d "${ANDROID_HOME:-/opt/android-sdk}" ] && export ANDROID_HOME="${ANDROID_HOME:-/opt/android-sdk}"
 export PATH
 
 if [ -d "$ROOT/api" ]; then

@@ -93,7 +93,7 @@ fun releaseKeystoreDiagnostic(): String {
         "(exists=${keystorePropertiesFile.isFile})"
     val storePath = keystoreProperties.getProperty("storeFile").orEmpty()
     if (storePath.isNotBlank()) {
-        lines += "storeFile resolved: $storePath (exists=${java.io.File(storePath).isFile})"
+        lines += "storeFile resolved: $storePath (exists=${file(storePath).isFile})"
     } else {
         lines += "storeFile: (missing or not resolved)"
         lines += "Expected keystore: ${rootProject.file("app/release.keystore").absolutePath}"
