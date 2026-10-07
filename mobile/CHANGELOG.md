@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.738+791 (2026-10-07) — Oyun lobisi düzeltmesi + masaya katılma
+
+- **Oyun lobisi (hata):** «Masalar» ve «Son kazananlar» sekmeleri backend'de olmayan bölüm adlarını istiyordu (`tables`, `winners` → canlıda «Geçersiz section»). Doğru adlar: `live_tables`, `recent_winners`
+- **Masaya katıl / izle:** lobideki masaya dokununca bekleyen masaya katılır (`POST /api/games/room/{id}` veya SOS için `POST /api/games/sos/{id}`), aktif masa izlenir; web'de açılan masalara mobilden girilebilir
+- **SOS:** «Otomatik eşleş» düğmesi SOS'ta gizlendi (`/api/games/auto-match` SOS'u kabul etmiyor)
+- Gerçek cihaz: **BLOCKED**
+
 ## 1.0.737+790 (2026-10-07) — XOX sıra düzeltmesi, SOS oyunu, arka plan olayı
 
 - **XOX (hata):** sunucu sırayı oyuncu numarası (`currentTurn: 1/2`) olarak tutuyor; Flutter bunu oyuncu kimliği sandığı için sıra hep «rakipte» görünüyor, tahta tıklanmıyordu. Artık 1/2 doğru okunuyor (tüm `/api/games/room` oyunları)

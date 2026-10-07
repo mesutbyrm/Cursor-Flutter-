@@ -244,12 +244,16 @@ class _GameTile extends ConsumerWidget {
                 icon: const Icon(Icons.add_rounded),
                 label: const Text('Oda oluştur'),
               ),
-              const SizedBox(height: 8),
-              OutlinedButton.icon(
-                onPressed: () => _autoMatch(ctx, ref, game),
-                icon: const Icon(Icons.shuffle_rounded),
-                label: const Text('Otomatik eşleş'),
-              ),
+              // SOS'un otomatik eşleşmesi yok (`/api/games/auto-match` SOS
+              // kabul etmez); SOS masaları «Oda oluştur» ve lobiden.
+              if (!isSosGame(game)) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () => _autoMatch(ctx, ref, game),
+                  icon: const Icon(Icons.shuffle_rounded),
+                  label: const Text('Otomatik eşleş'),
+                ),
+              ],
             ],
           ),
         ),
