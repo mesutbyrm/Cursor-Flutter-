@@ -17,6 +17,7 @@ class PsychicRoomEntity extends Equatable {
     this.isClient = true,
     this.isTeller = false,
     this.elapsedSeconds = 0,
+    this.snapshotAt,
   });
 
   final String sessionId;
@@ -24,6 +25,11 @@ class PsychicRoomEntity extends Equatable {
   final int maxMinutes;
   final bool timerStarted;
   final int elapsedSeconds;
+
+  /// [elapsedSeconds] değerinin sunucudan alındığı yerel an. Saniyelik sayaç
+  /// bir sonraki senkrona kadar donmasın diye geçen süre eklenir. Eşitlikte
+  /// yer almaz (her yoklama yeniden çizim tetiklemesin).
+  final DateTime? snapshotAt;
   final String? roomId;
   final DateTime? timerStartedAt;
   final String? peerId;
@@ -32,18 +38,23 @@ class PsychicRoomEntity extends Equatable {
   final bool isClient;
   final bool isTeller;
 
-  int get remainingSeconds {
+  int get remainingSeconds => remainingSecondsAt(DateTime.now());
+
+  int remainingSecondsAt(DateTime now) {
     if (!timerStarted) return maxMinutes * 60;
     final total = maxMinutes * 60;
     if (elapsedSeconds > 0) {
-      return (total - elapsedSeconds).clamp(0, total);
+      final since = snapshotAt == null
+          ? 0
+          : now.difference(snapshotAt!).inSeconds.clamp(0, total);
+      return (total - elapsedSeconds - since).clamp(0, total);
     }
     if (timerStartedAt != null) {
       final started = timerStartedAt!.isUtc
           ? timerStartedAt!
           : timerStartedAt!.toUtc();
       final elapsed =
-          DateTime.now().toUtc().difference(started).inSeconds;
+          now.toUtc().difference(started).inSeconds;
       return (total - elapsed).clamp(0, total);
     }
     return total;
@@ -62,6 +73,7 @@ class PsychicRoomEntity extends Equatable {
     bool? isClient,
     bool? isTeller,
     int? elapsedSeconds,
+    DateTime? snapshotAt,
   }) {
     return PsychicRoomEntity(
       sessionId: sessionId ?? this.sessionId,
@@ -76,6 +88,7 @@ class PsychicRoomEntity extends Equatable {
       isClient: isClient ?? this.isClient,
       isTeller: isTeller ?? this.isTeller,
       elapsedSeconds: elapsedSeconds ?? this.elapsedSeconds,
+      snapshotAt: snapshotAt ?? this.snapshotAt,
     );
   }
 

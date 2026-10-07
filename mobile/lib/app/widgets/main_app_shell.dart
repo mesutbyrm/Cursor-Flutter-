@@ -34,7 +34,6 @@ import '../../features/voice_hub/presentation/widgets/global_site_marquee_listen
 import '../router/app_router.dart';
 import '../../core/network/sse/connectivity_sse_reconnect_provider.dart';
 import '../../core/network/sse/sse_hub_provider.dart';
-import '../../core/sse_client_provider.dart';
 import '../../core/widgets/exit_confirm_dialog.dart';
 import '../../core/widgets/offline_status_banner.dart';
 import '../../features/gifts/presentation/providers/gift_catalog_version_watcher.dart';
@@ -62,7 +61,6 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
   String _location = '/feed';
   var _listenerAttached = false;
   Timer? _realtimeTimer;
-  SseClientLifecycleBinding? _sseLifecycle;
   SseHubLifecycleBinding? _sseHubLifecycle;
 
   @override
@@ -73,8 +71,6 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _attachRouter(ref.read(goRouterProvider));
-      _sseLifecycle = ref.read(sseClientLifecycleProvider);
-      _sseLifecycle?.attach();
       _sseHubLifecycle = ref.read(sseHubLifecycleProvider);
       _sseHubLifecycle?.attach();
       // Mikrofon/kamera: ilk açılışta bir kez; odalarda tekrar sorulmaz.
@@ -90,7 +86,6 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
   @override
   void dispose() {
     _realtimeTimer?.cancel();
-    _sseLifecycle?.dispose();
     _sseHubLifecycle?.dispose();
     _detachRouter();
     super.dispose();

@@ -18,6 +18,8 @@ import '../../voice_hub/data/services/voice_room_debug_log.dart';
 import '../domain/entities/trtc_credentials.dart';
 import '../domain/voice_audio_settings.dart';
 import 'trtc_operation_gate.dart';
+import '../../../core/diagnostics/cf_diag.dart';
+import '../../../core/diagnostics/cf_auto_detect.dart';
 
 /// Tencent TRTC oda oturumu — canlı yayın ve sesli sohbet.
 class TrtcRoomManager {
@@ -249,6 +251,10 @@ class TrtcRoomManager {
 
     final other = _activeSession;
     if (other != null && other != this && other._inRoom) {
+      CfAutoDetect.trtcJoinedTwice(
+        activeRoomId: other._joinedStrRoomId ?? '',
+        newRoomId: roomId,
+      );
       // Ortak kapının içindeyiz: `other.leave()` kapıyı tekrar bekleyip
       // kilitlenirdi; doğrudan kilitsiz çıkış yapılır.
       other.forceSilenceNow();
@@ -590,7 +596,9 @@ class TrtcRoomManager {
     try {
       _cloud?.disconnectOtherRoom();
       _trtcLog('disconnect_other_room', const {});
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.trtc, 'trtc_room_manager:593');
+    }
   }
 
   void muteRemoteAudio(String userId, bool mute) {
@@ -885,13 +893,19 @@ class TrtcRoomManager {
     }
     try {
       c.muteAllRemoteAudio(true);
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.trtc, 'trtc_room_manager:888');
+    }
     try {
       c.stopLocalAudio();
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.trtc, 'trtc_room_manager:891');
+    }
     try {
       c.muteLocalAudio(true);
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.trtc, 'trtc_room_manager:894');
+    }
     _micOn = false;
   }
 
@@ -928,14 +942,18 @@ class TrtcRoomManager {
             const Duration(seconds: 2),
             onTimeout: () {},
           );
-        } catch (_) {}
+        } catch (err, st) {
+          CfDiag.swallowed(err, st, CfCategory.trtc, 'trtc_room_manager:931');
+        }
         _exitRoomCompleter = null;
       } else {
         // `_inRoom` henüz true olmadan (enterRoom sürerken) çıkılırsa kanal
         // açık kalıyordu; yine de çıkış komutu gönder.
         try {
           _cloud!.exitRoom();
-        } catch (_) {}
+        } catch (err, st) {
+          CfDiag.swallowed(err, st, CfCategory.trtc, 'trtc_room_manager:938');
+        }
       }
       if (_listener != null) {
         _cloud!.unRegisterListener(_listener!);
@@ -1009,7 +1027,9 @@ class TrtcRoomManager {
     if (_cloud == null) return;
     try {
       _cloud!.getAudioEffectManager().stopPlayMusic(voiceRoomMusicId);
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.trtc, 'trtc_room_manager:1012');
+    }
     _publishedMusicPlaying = false;
   }
 

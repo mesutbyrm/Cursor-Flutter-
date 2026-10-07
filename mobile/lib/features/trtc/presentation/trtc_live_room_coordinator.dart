@@ -9,6 +9,7 @@ import '../data/trtc_session_store.dart';
 import '../domain/entities/live_join_room_result.dart';
 import '../domain/entities/trtc_credentials.dart';
 import 'trtc_room_manager.dart';
+import '../../../core/diagnostics/cf_diag.dart';
 
 typedef TrtcJoinRoomFn = Future<void> Function({
   required TrtcCredentials credentials,
@@ -224,12 +225,16 @@ class TrtcLiveRoomCoordinator {
     if (roomId != null && roomType != null) {
       try {
         await _liveRoom.leaveRoom(roomId: roomId, roomType: roomType);
-      } catch (_) {}
+      } catch (err, st) {
+        CfDiag.swallowed(err, st, CfCategory.trtc, 'trtc_live_room_coordinator:227');
+      }
     }
 
     try {
       await _roomManager.leave();
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.trtc, 'trtc_live_room_coordinator:232');
+    }
 
     TrtcSessionStore.clear();
     joinSnapshot = null;

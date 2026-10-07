@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../network/api_endpoints.dart';
 import '../network/dio_provider.dart';
+import '../diagnostics/cf_diag.dart';
 
 /// Site geneli çevrimiçi durumu — kılavuz §9.2 `POST /api/presence`.
 class UserPresenceService {
@@ -19,7 +20,9 @@ class UserPresenceService {
           'platform': 'mobile',
         },
       );
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.network, 'user_presence_service:22');
+    }
   }
 
   Future<void> leave() async {
@@ -31,6 +34,8 @@ class UserPresenceService {
           'platform': 'mobile',
         },
       );
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.network, 'user_presence_service:34');
+    }
   }
 }

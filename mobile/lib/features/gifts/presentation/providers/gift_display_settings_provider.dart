@@ -7,6 +7,7 @@ import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../domain/gift_display_settings.dart';
+import '../../../../core/diagnostics/cf_diag.dart';
 
 class GiftDisplaySettingsRemoteDataSource {
   GiftDisplaySettingsRemoteDataSource(this._dio);
@@ -25,7 +26,9 @@ class GiftDisplaySettingsRemoteDataSource {
         }
         return GiftDisplaySettings.fromJson(map);
       }
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.gift, 'gift_display_settings_provider:28');
+    }
     return const GiftDisplaySettings();
   }
 }

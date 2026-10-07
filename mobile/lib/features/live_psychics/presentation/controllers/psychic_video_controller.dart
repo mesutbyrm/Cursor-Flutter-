@@ -41,6 +41,7 @@ import 'package:canlifal_social/features/live_psychics/presentation/providers/ps
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_ended_provider.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/diagnostics/psychic_rtc_session_report.dart';
 import 'package:canlifal_social/features/profile/presentation/providers/profile_providers.dart';
+import '../../../../core/diagnostics/cf_auto_detect.dart';
 
 enum PsychicRtcBackend { none, trtc }
 
@@ -651,9 +652,17 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       if (_disposed || state.leaving) return;
       if (!state.timerStarted) return;
       final room = state.room;
+      final local = state.remaining.inSeconds - 1;
       final secs = room != null && room.timerStarted
           ? room.remainingSeconds
-          : state.remaining.inSeconds - 1;
+          : local;
+      if (room != null && room.timerStarted && state.remaining > Duration.zero) {
+        CfAutoDetect.timerDrift(
+          sessionId: session.sessionId,
+          clientRemaining: local,
+          serverRemaining: secs,
+        );
+      }
       if (secs <= 0) {
         unawaited(_onTimeUp());
         return;
@@ -1766,7 +1775,9 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     _trtcConn.tryBeginLeave();
     try {
       await _trtc.leave().timeout(const Duration(seconds: 2));
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.fortune, 'psychic_video_controller:1769');
+    }
     _trtcConn.markLeft();
     TrtcSessionStore.clear();
 
@@ -1830,13 +1841,19 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
           if (endedBy != null) 'endedBy': endedBy,
         },
       ).timeout(t);
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.fortune, 'psychic_video_controller:1833');
+    }
     try {
       await repo.clearRoomSignals(sessionId).timeout(t);
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.fortune, 'psychic_video_controller:1836');
+    }
     try {
       await sse.disconnect(forSessionId: sessionId).timeout(t);
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.fortune, 'psychic_video_controller:1839');
+    }
   }
 
   Future<UserEntity?> _waitForAuth() async {

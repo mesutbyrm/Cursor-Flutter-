@@ -161,6 +161,24 @@ abstract final class CfDiag {
     } catch (_) {}
   }
 
+  /// Bilerek yutulan hata (eski `catch (_) {}`) — akış devam eder ama
+  /// Diagnostics'te görünür (CORE-001). Ucuz: yalnız bellek içi halka kayıt.
+  static void swallowed(
+    Object error,
+    StackTrace? stack,
+    CfCategory category,
+    String where,
+  ) {
+    try {
+      record(
+        category,
+        'swallowed@$where ${error.runtimeType}: ${_short(error.toString())}',
+        level: CfLevel.warn,
+        data: {if (stack != null) 'at': _firstAppFrame(stack)},
+      );
+    } catch (_) {}
+  }
+
   /// Çalışan işlem kaydı — donma raporunda «Pending API» olarak görünür.
   static void beginPending(String name) => _pending[name] = DateTime.now();
   static void endPending(String name) => _pending.remove(name);

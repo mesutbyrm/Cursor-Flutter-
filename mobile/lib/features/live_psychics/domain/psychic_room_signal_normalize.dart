@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../../core/diagnostics/cf_diag.dart';
 
 /// `/api/room/signal` — üretim `signalType` / `signalData`, kılavuz `type` / `data`.
 Map<String, dynamic> normalizePsychicRoomSignalMap(Map<String, dynamic> raw) {
@@ -16,7 +17,9 @@ Map<String, dynamic> normalizePsychicRoomSignalMap(Map<String, dynamic> raw) {
     if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
       try {
         dataRaw = jsonDecode(trimmed);
-      } catch (_) {}
+      } catch (err, st) {
+        CfDiag.swallowed(err, st, CfCategory.fortune, 'psychic_room_signal_normalize:19');
+      }
     }
   }
   if (dataRaw is Map) {

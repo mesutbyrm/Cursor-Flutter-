@@ -12,6 +12,7 @@ import 'package:canlifal_social/features/auth/presentation/providers/auth_provid
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychics_list_controller.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_fortune_types.dart';
+import '../../../../core/diagnostics/cf_diag.dart';
 
 enum _ApplyPhase { form, pending, approved, rejected }
 
@@ -50,7 +51,9 @@ class _PsychicApplyScreenState extends ConsumerState<PsychicApplyScreen> {
         timeout: const Duration(seconds: 12),
         message: 'Falcı profili kontrol edilemedi',
       );
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.fortune, 'psychic_apply_screen:53');
+    }
   }
 
   @override

@@ -6,6 +6,7 @@ import 'package:just_audio/just_audio.dart';
 import '../domain/gift_entity.dart';
 import '../domain/gift_rarity.dart';
 import '../../live/domain/entities/live_gift_event.dart';
+import '../../../core/diagnostics/cf_diag.dart';
 
 /// Kısa hediye SFX havuzu — eşzamanlı çalma, önbellekli kaynak.
 class GiftSoundPool {
@@ -30,7 +31,9 @@ class GiftSoundPool {
     if (_preloaded.containsKey(url)) return;
     try {
       _preloaded[url] = AudioSource.uri(Uri.parse(url));
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.gift, 'gift_sound_pool:33');
+    }
   }
 
   Future<void> preloadGift(GiftEntity gift) async {
@@ -149,7 +152,9 @@ class GiftSoundPool {
             ? SystemSoundType.alert
             : SystemSoundType.click,
       );
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.gift, 'gift_sound_pool:152');
+    }
   }
 
   void _haptic(GiftRarity rarity) {

@@ -22,6 +22,7 @@ import 'package:canlifal_social/features/live_psychics/presentation/widgets/psyc
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_fortune_types.dart';
 import 'package:canlifal_social/features/profile/presentation/providers/profile_providers.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
+import '../../../../core/diagnostics/cf_diag.dart';
 
 final _profileBookingProvider = StateProvider.autoDispose<bool>((ref) => false);
 
@@ -176,7 +177,9 @@ class PsychicProfileScreen extends ConsumerWidget {
     } finally {
       try {
         booking.state = false;
-      } catch (_) {}
+      } catch (err, st) {
+        CfDiag.swallowed(err, st, CfCategory.fortune, 'psychic_profile_screen:179');
+      }
     }
   }
 

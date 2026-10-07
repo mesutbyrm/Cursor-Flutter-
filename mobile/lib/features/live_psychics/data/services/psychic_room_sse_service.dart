@@ -218,7 +218,9 @@ class PsychicRoomSseService {
         case PsychicRoomSseSignal(:final type, :final data):
           _onSignal?.call(type, data);
       }
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.fortune, 'psychic_room_sse_service:221');
+    }
   }
 
   void _startHeartbeatWatchdog() {

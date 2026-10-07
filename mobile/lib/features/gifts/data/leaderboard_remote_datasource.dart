@@ -4,6 +4,7 @@ import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../domain/gift_leaderboard_entry.dart';
+import '../../../core/diagnostics/cf_diag.dart';
 
 enum GiftLeaderboardPeriod {
   session('session', 'Bu yayın'),
@@ -52,7 +53,9 @@ class LeaderboardRemoteDataSource {
         },
       );
       return _parseEntries(res.data);
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.gift, 'leaderboard_remote_datasource:55');
+    }
     return const [];
   }
 

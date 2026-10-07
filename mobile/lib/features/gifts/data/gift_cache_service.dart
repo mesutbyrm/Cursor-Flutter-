@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import '../../../core/diagnostics/cf_diag.dart';
 
 /// Uzak animasyon / ikon önbelleği — FPS dostu tekrar kullanım.
 class GiftCacheService {
@@ -31,7 +32,9 @@ class GiftCacheService {
       debugPrint('GiftCacheService: $url — $e');
       try {
         await _fileCache.removeFile(url);
-      } catch (_) {}
+      } catch (err, st) {
+        CfDiag.swallowed(err, st, CfCategory.gift, 'gift_cache_service:34');
+      }
       return null;
     }
   }
@@ -52,7 +55,9 @@ class GiftCacheService {
   Future<void> pruneCorruptEntries() async {
     try {
       await _fileCache.emptyCache();
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.gift, 'gift_cache_service:55');
+    }
   }
 }
 

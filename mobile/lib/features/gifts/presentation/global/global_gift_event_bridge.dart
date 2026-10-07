@@ -17,6 +17,7 @@ import '../../../../core/site_animation/presentation/site_animation_gift_bridge.
 import '../providers/gift_display_settings_provider.dart';
 import 'global_gift_notification.dart';
 import 'global_gift_overlay_notifier.dart';
+import '../../../../core/diagnostics/cf_diag.dart';
 
 /// Insights feed kapısı — ilk poll geçmişi overlay'e basmaz.
 final globalGiftFeedGateProvider = Provider<GlobalGiftFeedGate>((ref) {
@@ -80,7 +81,9 @@ class _GlobalGiftEventBridgeState extends ConsumerState<GlobalGiftEventBridge> {
         ref.read(globalGiftOverlayProvider.notifier).enqueue(item);
         dispatchSiteAnimationGiftFromNotification(ref, item);
       }
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.gift, 'global_gift_event_bridge:83');
+    }
   }
 
   Future<void> _pollInsightsFeed() async {
@@ -95,7 +98,9 @@ class _GlobalGiftEventBridgeState extends ConsumerState<GlobalGiftEventBridge> {
             .read(globalGiftOverlayProvider.notifier)
             .enqueue(GlobalGiftNotification.fromFeedItem(item));
       }
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.gift, 'global_gift_event_bridge:98');
+    }
   }
 
   @override

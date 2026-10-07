@@ -17,6 +17,7 @@ import '../../domain/entities/psychic_session_history_entity.dart';
 import '../../domain/psychic_room_signal_normalize.dart';
 import '../../domain/repositories/live_psychics_repository.dart';
 import '../models/psychic_model.dart';
+import '../../../../core/diagnostics/cf_diag.dart';
 
 /// Canlı falcı API — üretim uçları (JWT Bearer), backend değiştirilmez.
 class LivePsychicsRemoteDataSource {
@@ -54,7 +55,9 @@ class LivePsychicsRemoteDataSource {
             .where((p) => p.id.isNotEmpty)
             .toList(growable: false);
       }
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.fortune, 'live_psychics_remote_datasource:57');
+    }
     if (onlineOnly == true) {
       try {
         final fallbackParams = <String, dynamic>{'page': page, 'limit': limit};
@@ -79,7 +82,9 @@ class LivePsychicsRemoteDataSource {
               .where((p) => p.isOnline)
               .toList(growable: false);
         }
-      } catch (_) {}
+      } catch (err, st) {
+        CfDiag.swallowed(err, st, CfCategory.fortune, 'live_psychics_remote_datasource:82');
+      }
     }
     return const [];
   }
@@ -129,7 +134,9 @@ class LivePsychicsRemoteDataSource {
         final teller = data['teller'] ?? data['fortuneTeller'] ?? data;
         return PsychicModel.psychicFromJson(teller);
       }
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.fortune, 'live_psychics_remote_datasource:132');
+    }
     final list = await fetchPsychics();
     for (final p in list) {
       if (p.id == key) return p;
@@ -181,7 +188,9 @@ class LivePsychicsRemoteDataSource {
         ApiEndpoints.fortuneTellerToggleOnline,
       );
       if (res.data is Map) return asJsonMap(res.data);
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.fortune, 'live_psychics_remote_datasource:184');
+    }
     return null;
   }
 
@@ -247,7 +256,9 @@ class LivePsychicsRemoteDataSource {
           return findTellerByAuthUserId(uid, username: username, maxPages: 2);
         }
       }
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.fortune, 'live_psychics_remote_datasource:250');
+    }
     return null;
   }
 
@@ -319,7 +330,9 @@ class LivePsychicsRemoteDataSource {
             .where((r) => r.id.isNotEmpty)
             .toList(growable: false);
       }
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.fortune, 'live_psychics_remote_datasource:322');
+    }
     return const [];
   }
 
@@ -443,7 +456,9 @@ class LivePsychicsRemoteDataSource {
             .where((p) => p.id.isNotEmpty)
             .toList(growable: false);
       }
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.fortune, 'live_psychics_remote_datasource:446');
+    }
     return const [];
   }
 
@@ -545,7 +560,9 @@ class LivePsychicsRemoteDataSource {
         final status = PsychicModel.sessionStatusFromJson(data, sessionMap);
         if (status != null) return status;
       }
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.fortune, 'live_psychics_remote_datasource:548');
+    }
     final room = await fetchRoom(key);
     if (room == null) return null;
     return PsychicSessionStatusResult(
@@ -673,7 +690,9 @@ class LivePsychicsRemoteDataSource {
       }
     } on ApiException catch (e) {
       if (e.statusCode != 404 && e.statusCode != 405) rethrow;
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.fortune, 'live_psychics_remote_datasource:676');
+    }
     final uid = currentUserId?.trim() ?? '';
     final profileId = tellerProfileId?.trim() ?? '';
     return merged
@@ -829,7 +848,9 @@ class LivePsychicsRemoteDataSource {
         }
       }
       return rows.map(normalizePsychicRoomSignalMap).toList(growable: false);
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.fortune, 'live_psychics_remote_datasource:832');
+    }
     return const [];
   }
 
@@ -841,7 +862,9 @@ class LivePsychicsRemoteDataSource {
       await _dio.safeDelete<dynamic>(
         ApiEndpoints.liveFortuneRoomSignalQuery(key),
       );
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.fortune, 'live_psychics_remote_datasource:844');
+    }
   }
 
   /// Anlık seans sinyali — karşı tarafa hızlı bildirim (bahşiş, sonlandırma).
@@ -870,7 +893,9 @@ class LivePsychicsRemoteDataSource {
             'receiverId': receiverId.trim(),
         },
       );
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.fortune, 'live_psychics_remote_datasource:873');
+    }
   }
 
   Future<PsychicRoomEntity?> fetchRoom(String sessionId) async {
@@ -888,7 +913,9 @@ class LivePsychicsRemoteDataSource {
         if (room.roomId != null && room.roomId!.trim().isNotEmpty) return room;
         if (room.peerId != null && room.peerId!.trim().isNotEmpty) return room;
       }
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.fortune, 'live_psychics_remote_datasource:891');
+    }
 
     try {
       final res = await _dio.safeGet<dynamic>(
@@ -906,7 +933,9 @@ class LivePsychicsRemoteDataSource {
         if (room.roomId != null && room.roomId!.trim().isNotEmpty) return room;
         if (room.tellerUserId != null || room.clientId != null) return room;
       }
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.fortune, 'live_psychics_remote_datasource:909');
+    }
     return null;
   }
 
@@ -1020,7 +1049,9 @@ class LivePsychicsRemoteDataSource {
             extra: {'amount': amount},
           );
           if (fallback != null) return true;
-        } catch (_) {}
+        } catch (err, st) {
+          CfDiag.swallowed(err, st, CfCategory.fortune, 'live_psychics_remote_datasource:1023');
+        }
         return false;
       }
     }

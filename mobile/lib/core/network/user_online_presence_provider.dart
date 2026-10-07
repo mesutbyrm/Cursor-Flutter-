@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'api_endpoints.dart';
 import 'dio_provider.dart';
 import '../bootstrap/session_data_refresh.dart';
+import '../diagnostics/cf_diag.dart';
 
 /// Site geneli çevrimiçi kullanıcı kimlikleri — `GET /api/users/online`.
 class UserOnlinePresenceNotifier extends Notifier<Set<String>> {
@@ -52,7 +53,9 @@ class UserOnlinePresenceNotifier extends Notifier<Set<String>> {
       final res = await dio.safeGet<dynamic>(ApiEndpoints.usersOnline);
       final ids = parseOnlineUserIds(res.data);
       state = ids;
-    } catch (_) {}
+    } catch (err, st) {
+      CfDiag.swallowed(err, st, CfCategory.network, 'user_online_presence_provider:55');
+    }
   }
 
   Future<void> leave() async {

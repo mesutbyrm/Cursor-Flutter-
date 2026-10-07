@@ -20,6 +20,8 @@ class PsychicIncomingSseService {
   CancelToken? _cancel;
   StreamSubscription<List<int>>? _bytesSub;
   Timer? _reconnectTimer;
+  Timer? _heartbeatWatchdog;
+  DateTime? _lastChunkAt;
   Future<String?> Function()? _accessToken;
   Future<bool> Function()? _refreshTokens;
   void Function(PsychicRequestEntity request)? _onRequest;
@@ -31,6 +33,16 @@ class PsychicIncomingSseService {
   var _reconnectAttempt = 0;
 
   bool get isStreamActive => _streamActive && !_stopped;
+
+  /// Sunucu 15 sn'de bir `: heartbeat` + 6 sn'de bir `pending_sessions`
+  /// gönderir; oda SSE'siyle aynı 40 sn eşiği (FORTUNE-003).
+  static const heartbeatTimeout = Duration(seconds: 40);
+  static const _watchdogInterval = Duration(seconds: 5);
+
+  /// Yarı açık bağlantı: son bayttan bu yana [heartbeatTimeout] geçti mi.
+  @visibleForTesting
+  static bool isStale(DateTime? lastChunkAt, DateTime now) =>
+      lastChunkAt != null && now.difference(lastChunkAt) > heartbeatTimeout;
 
   Future<void> connect({
     required Future<String?> Function() accessToken,
@@ -91,11 +103,14 @@ class PsychicIncomingSseService {
       }
       _reconnectAttempt = 0;
       _streamActive = true;
+      _lastChunkAt = DateTime.now();
+      _startHeartbeatWatchdog();
       CfDiag.record(CfCategory.sse, 'incoming SSE connected');
       final buffer = StringBuffer();
       final chunkDecoder = SseChunkDecoder();
       _bytesSub = stream.listen(
         (chunk) {
+          _lastChunkAt = DateTime.now();
           buffer.write(chunkDecoder.convert(chunk));
           _drain(buffer);
         },
@@ -164,7 +179,30 @@ class PsychicIncomingSseService {
             _onSessionCancelled?.call(sessionId);
         }
       }
-    } catch (_) {}
+    } catch (e, st) {
+      CfDiag.recordError(e, st, category: CfCategory.sse);
+    }
+  }
+
+  void _startHeartbeatWatchdog() {
+    _heartbeatWatchdog?.cancel();
+    _heartbeatWatchdog = Timer.periodic(_watchdogInterval, (timer) {
+      if (_stopped || !_streamActive) {
+        timer.cancel();
+        return;
+      }
+      if (!isStale(_lastChunkAt, DateTime.now())) return;
+      timer.cancel();
+      _heartbeatWatchdog = null;
+      _streamActive = false;
+      CfDiag.record(
+        CfCategory.sse,
+        'incoming SSE heartbeat timeout — reconnecting',
+        level: CfLevel.warn,
+      );
+      // Yarı açık akışı hemen kapat (geç onDone ikinci yeniden bağlanma açmasın).
+      unawaited(_closeStreamOnly().then((_) => _scheduleReconnect()));
+    });
   }
 
   void _scheduleReconnect() {
@@ -191,6 +229,9 @@ class PsychicIncomingSseService {
 
   Future<void> _closeStreamOnly() async {
     _streamActive = false;
+    _heartbeatWatchdog?.cancel();
+    _heartbeatWatchdog = null;
+    _lastChunkAt = null;
     _reconnectTimer?.cancel();
     _cancel?.cancel('reconnect');
     await _bytesSub?.cancel();
