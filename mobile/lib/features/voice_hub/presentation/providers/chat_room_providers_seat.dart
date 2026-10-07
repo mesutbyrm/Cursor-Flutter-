@@ -7,13 +7,22 @@ part of 'chat_room_providers.dart';
 /// Sesli oda koltuk/mikrofon-sırası API'si — [VoiceRoomLiveController]'dan ayrıldı.
 /// `part of` — aynı kütüphane; private erişim ve davranış birebir korunur.
 extension VoiceRoomSeatControls on VoiceRoomLiveController {
-  /// Kullanıcının o anki koltuk numarası — koltuk haritası, yoksa presence.
-  int? _currentSelfSeatIndex() {
+  /// TRTC / yayın yetkisi — yalnızca sunucu koltuk haritası (presence gecikmesi sayılmaz).
+  int? _selfSeatIndexFromSlotsOnly() {
     final userId = ref.read(authControllerProvider).valueOrNull?.id;
     if (userId == null || userId.isEmpty) return null;
     for (final slot in state.seatSlots) {
       if (slot.userId == userId && slot.index >= 1) return slot.index;
     }
+    return null;
+  }
+
+  /// Heartbeat / yeniden oturma — koltuk haritası, yoksa presence yedeği.
+  int? _currentSelfSeatIndex() {
+    final fromSlots = _selfSeatIndexFromSlotsOnly();
+    if (fromSlots != null) return fromSlots;
+    final userId = ref.read(authControllerProvider).valueOrNull?.id;
+    if (userId == null || userId.isEmpty) return null;
     for (final p in _presenceCopy()) {
       if (p.id != userId) continue;
       final seat = p.seatIndex;
@@ -413,9 +422,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
   Future<bool> ensureSelfOnSeatForMic() async {
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) return false;
-    for (final p in _presenceCopy()) {
-      if (p.id == user.id && p.seatIndex != null) return true;
-    }
+    if (_selfSeatIndexFromSlotsOnly() != null) return true;
     final empty = state.seatSlots
         .where((s) => s.isEmpty)
         .map((s) => s.index)
@@ -724,15 +731,22 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
     }
   }
 
-  /// Koltuk haritası + presence — TRTC mic publish için tek kaynak.
-  bool selfOccupiesSeat() => _currentSelfSeatIndex() != null;
+  /// Koltuk haritası — TRTC publish yetkisi (presence.seatIndex tek başına yetmez).
+  bool selfOccupiesSeat() => _selfSeatIndexFromSlotsOnly() != null;
 
-  int? selfSeatIndex() => _currentSelfSeatIndex();
+  int? selfSeatIndex() => _selfSeatIndexFromSlotsOnly();
+
+  bool canPublishLocalAudio({required bool micIntentOn}) =>
+      VoiceRoomLocalAudioPublish.evaluate(
+        sessionActive: _sessionActive,
+        userId: ref.read(authControllerProvider).valueOrNull?.id,
+        seatIndexFromSlots: _selfSeatIndexFromSlotsOnly(),
+        micIntentOn: micIntentOn,
+      ).allowed;
 
   void bindAudioMicPublishGate() {
     ref.read(voiceRoomAudioCoordinatorProvider).setMicPublishGate(() {
-      if (!_sessionActive) return false;
-      return _currentSelfSeatIndex() != null;
+      return canPublishLocalAudio(micIntentOn: true);
     });
   }
 
@@ -743,14 +757,24 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
   /// TRTC yerel ses yayını — koltuk yoksa publish edilmez (UI ayrı kalabilir).
   Future<bool> setSelfMicPublishEnabled(bool publish) async {
     final audio = ref.read(voiceRoomAudioCoordinatorProvider);
-    if (publish && !selfOccupiesSeat()) {
+    if (publish && !canPublishLocalAudio(micIntentOn: true)) {
       audio.invalidatePendingMicEnable();
       await audio.setMicEnabled(false);
       applySelfMicOpen(false);
       return false;
     }
-    await audio.setMicEnabled(publish);
-    final actuallyOn = publish && audio.micOn;
+    if (!publish) {
+      await audio.setMicEnabled(false);
+      applySelfMicOpen(false);
+      return false;
+    }
+    await audio.setMicEnabled(true);
+    if (!canPublishLocalAudio(micIntentOn: true)) {
+      await audio.setMicEnabled(false);
+      applySelfMicOpen(false);
+      return false;
+    }
+    final actuallyOn = audio.micOn;
     applySelfMicOpen(actuallyOn);
     return actuallyOn;
   }

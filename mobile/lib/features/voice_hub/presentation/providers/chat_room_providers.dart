@@ -122,6 +122,7 @@ import '../coordinators/room_session_manager.dart';
 import '../utils/voice_room_presence_self_sync.dart';
 import '../utils/voice_room_presence_persistence.dart';
 import '../utils/voice_room_server_leave.dart';
+import '../utils/voice_room_local_audio_publish.dart';
 import '../utils/voice_room_presence_tombstone.dart';
 import '../services/voice_room_music_control_delegate.dart';
 import '../../video/domain/youtube_video_id.dart';

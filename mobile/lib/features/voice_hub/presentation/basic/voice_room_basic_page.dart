@@ -344,17 +344,11 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
         return;
       }
       if (!notifier.selfOccupiesSeat()) {
-        final seated = await notifier.ensureSelfOnSeatForMic();
         if (!mounted) return;
-        if (!seated) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Konuşmak için koltuğa oturun'),
-            ),
-          );
-          return;
-        }
-        await notifier.refresh();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Konuşmak için koltuğa oturun')),
+        );
+        return;
       }
     }
     try {

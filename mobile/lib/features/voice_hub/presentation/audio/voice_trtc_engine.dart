@@ -23,6 +23,7 @@ class VoiceTrtcEngine {
   var _publishMic = false;
   String _roomId = '';
   TrtcCredentials? _lastCredentials;
+  bool Function()? _localPublishGuard;
 
   TrtcRoomManager get manager => _manager;
   bool get isSupported => _manager.isSupported;
@@ -34,6 +35,21 @@ class VoiceTrtcEngine {
 
   static Future<bool> requestMicrophonePermission() =>
       TrtcRoomManager.requestPermissions(video: false);
+
+  void setLocalPublishGuard(bool Function()? guard) {
+    _localPublishGuard = guard;
+    _manager.voiceSeatPublishGuard = guard;
+  }
+
+  bool _guardAllowsPublish() => _localPublishGuard?.call() ?? false;
+
+  Future<void> _denyLocalPublish() async {
+    _publishMic = false;
+    if (!_inRoom) return;
+    _manager.stopLocalAudioPublish();
+    await _manager.setAnchorPublishing(false);
+    _checkAudioInvariant();
+  }
 
   static String trtcRoomIdFor(String rawRoomId) {
     // Yalnızca geriye dönük yedek — yeni akış backend `trtcRoomId` kullanır.
@@ -90,7 +106,8 @@ class VoiceTrtcEngine {
       }
 
       if (_inRoom && _roomId == trtcRoom) {
-        await setMicEnabled(publishMic);
+        final effectivePublish = publishMic && _guardAllowsPublish();
+        await setMicEnabled(effectivePublish);
         return;
       }
 
@@ -99,7 +116,8 @@ class VoiceTrtcEngine {
         await Future<void>.delayed(const Duration(milliseconds: 250));
       }
 
-      final effectiveRole = publishMic ? 'host' : role;
+      final effectivePublishMic = publishMic && _guardAllowsPublish();
+      final effectiveRole = effectivePublishMic ? 'host' : role;
       TrtcCredentials? credentials = prefetchedCredentials;
       final tokenSource = _tokenSource;
       if (credentials == null && tokenSource != null) {
@@ -126,14 +144,18 @@ class VoiceTrtcEngine {
 
       await _manager.join(
         credentials: credentials,
-        isHost: publishMic,
+        isHost: effectivePublishMic,
         audioOnly: true,
       );
 
       _inRoom = true;
       _roomId = credentials.effectiveStrRoomId;
       _lastCredentials = credentials;
-      _publishMic = publishMic;
+      if (effectivePublishMic && !_guardAllowsPublish()) {
+        await _denyLocalPublish();
+      } else {
+        _publishMic = effectivePublishMic;
+      }
       // Dinleyici katılımı yerel ses yakalamayı hiç başlatmaz (manager).
       _checkAudioInvariant();
 
@@ -160,11 +182,23 @@ class VoiceTrtcEngine {
 
   Future<void> setMicEnabled(bool enabled) async {
     if (!_inRoom) return;
+    if (enabled && !_guardAllowsPublish()) {
+      await _denyLocalPublish();
+      return;
+    }
     if (enabled == micOn && enabled == _publishMic) return;
 
     if (enabled && !_publishMic) {
+      if (!_guardAllowsPublish()) {
+        await _denyLocalPublish();
+        return;
+      }
       // Önce odadan çıkmadan rol değiştir (audience → anchor).
       if (await _manager.setAnchorPublishing(true)) {
+        if (!_guardAllowsPublish()) {
+          await _denyLocalPublish();
+          return;
+        }
         _publishMic = true;
         VoiceRoomDebugLog.log('audio.trtc.switch_role', {'anchor': true});
         return;
@@ -181,12 +215,20 @@ class VoiceTrtcEngine {
           audioOnly: true,
         );
         _lastCredentials = cred;
+        if (!_guardAllowsPublish()) {
+          await _denyLocalPublish();
+          return;
+        }
         _publishMic = true;
         return;
       }
     }
 
     if (enabled) {
+      if (!_guardAllowsPublish()) {
+        await _denyLocalPublish();
+        return;
+      }
       _manager.setMicEnabled(true);
       return;
     }

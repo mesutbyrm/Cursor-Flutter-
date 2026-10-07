@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.741+794 (2026-10-07) — TRTC mic publish: slot-koltuk + SDK guard
+
+- **Kök neden:** `selfOccupiesSeat` / `ensureSelfOnSeatForMic` stale `presence.seatIndex` ile koltukta sayılıyordu; `VoiceTrtcEngine.setAnchorPublishing(true)` coordinator gate’ini atlayarak `startLocalAudio` açıyordu
+- **`canPublishLocalAudio`:** `VoiceRoomLocalAudioPublish.evaluate` — oturum + kullanıcı + **yalnızca seatSlots** + mic niyeti
+- **SDK:** guard `VoiceTrtcEngine` + `TrtcRoomManager.setMicEnabled` / `setAnchorPublishing`; async sonrası yeniden kontrol
+- Mic toggle: otomatik boş koltuğa oturtma kaldırıldı — «Konuşmak için koltuğa oturun»
+- Gerçek cihaz: koltuksuz mic kapat-aç
+
 ## 1.0.740+793 (2026-10-07) — Koltuksuz mikrofon TRTC publish engeli
 
 - **Hata:** Koltuktan indikten sonra mic kapat-aç ile TRTC yeniden yayın yapıyordu; `canSpeak` (oda sahibi/admin) veya doğrudan `setMicEnabled(true)` koltuk kontrolünü atlıyordu

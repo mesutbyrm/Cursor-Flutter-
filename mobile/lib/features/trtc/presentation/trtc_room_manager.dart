@@ -767,6 +767,9 @@ class TrtcRoomManager {
   bool _micLockedByHost = false;
   bool _cameraLockedByHost = false;
 
+  /// Sesli oda: koltuk yetkisi yoksa yerel yayın açılamaz. `null` = kısıt yok (canlı yayın vb.).
+  bool Function()? voiceSeatPublishGuard;
+
   /// Yayıncı misafirin mikrofon/kamerasını kapattığında kilit konur; kilitliyken
   /// yerel açma istekleri yok sayılır. Kilit koymak ilgili aygıtı da kapatır.
   void setHostMediaLock({bool? mic, bool? camera}) {
@@ -785,6 +788,11 @@ class TrtcRoomManager {
 
   void setMicEnabled(bool enabled) {
     if (enabled && _micLockedByHost) return;
+    if (enabled &&
+        voiceSeatPublishGuard != null &&
+        !voiceSeatPublishGuard!()) {
+      return;
+    }
     if (!_inRoom && !_previewOnly) return;
     if (enabled) {
       _startLocalAudio();
@@ -808,6 +816,11 @@ class TrtcRoomManager {
         return false;
       }
       if (on && _micLockedByHost) return false;
+      if (on &&
+          voiceSeatPublishGuard != null &&
+          !voiceSeatPublishGuard!()) {
+        return false;
+      }
       if (!on) {
         cloud.muteLocalAudio(true);
         cloud.stopLocalAudio();
