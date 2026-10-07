@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/presentation/gifts/widgets/floating_gift_particles.dart';
@@ -12,6 +13,7 @@ import '../../domain/gift_engine_models.dart';
 import '../../domain/gift_engine_parser.dart';
 import '../../domain/gift_media_spec.dart';
 import '../../domain/gift_media_type.dart';
+import '../../domain/gift_video_hold.dart';
 import '../providers/gift_catalog_index_provider.dart';
 import '../sync/gift_session_controller.dart';
 import '../widgets/gift_animation_player.dart';
@@ -49,6 +51,8 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
   Timer? _finishTimer;
   var _visible = false;
   String? _gateEventId;
+  VideoPlayerController? _video;
+  int _finishCapMs = 0;
 
   @override
   void didUpdateWidget(covariant GiftEngineOverlay oldWidget) {
@@ -73,6 +77,7 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
 
   void _schedule() {
     _finishTimer?.cancel();
+    _video = null;
     _releaseGate();
     _visible = false;
     final ev = widget.event;
@@ -96,17 +101,63 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
       if (key != null && key.isNotEmpty) {
         ref.read(giftSessionProvider(key).notifier).playActiveGiftSound(ev);
       }
-      _finishTimer = Timer(duration, () {
-        if (!mounted) return;
-        _releaseGate();
-        widget.onFinished?.call(ev.id);
-      });
+      _finishCapMs = DateTime.now().millisecondsSinceEpoch +
+          duration.inMilliseconds +
+          GiftVideoHold.maxHold.inMilliseconds;
+      _finishTimer = Timer(duration, () => _finish(ev.id));
     });
+  }
+
+  /// Süre dolduğunda video hâlâ oynuyorsa bitişi videonun sonuna ertele
+  /// (GIFT-001: backend varsayılanı 3000 ms videoyu kesiyordu).
+  void _finish(String eventId) {
+    if (!mounted || widget.event?.id != eventId) return;
+    final rem = _videoRemaining();
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (rem != null && now + rem.inMilliseconds <= _finishCapMs) {
+      _reportVideoHold(eventId, rem);
+      _finishTimer = Timer(rem, () => _finish(eventId));
+      return;
+    }
+    _releaseGate();
+    widget.onFinished?.call(eventId);
+  }
+
+  Duration? _videoRemaining() {
+    final c = _video;
+    if (c == null) return null;
+    final v = c.value;
+    if (v.hasError) return null;
+    return GiftVideoHold.remaining(
+      initialized: v.isInitialized,
+      position: v.position,
+      duration: v.duration,
+    );
+  }
+
+  void _reportVideoHold(String eventId, Duration remaining) {
+    final key = widget.sessionKey?.trim();
+    if (key == null || key.isEmpty) return;
+    ref.read(giftSessionProvider(key).notifier).holdActiveForVideo(
+          eventId,
+          remaining,
+        );
+  }
+
+  void _bindVideo(VideoPlayerController? controller) {
+    _video = controller;
+    if (!mounted) return;
+    final ev = widget.event;
+    if (controller == null || ev == null) return;
+    // Video hazır: kuyruk bekçisi / `gift_finished` videoyu kesmesin.
+    final rem = _videoRemaining();
+    if (rem != null) _reportVideoHold(ev.id, rem);
   }
 
   @override
   void dispose() {
     _finishTimer?.cancel();
+    _video = null;
     _releaseGate();
     super.dispose();
   }
@@ -220,6 +271,7 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
       config: config,
       size: giftSize,
       fullScreen: isFullScreen,
+      onVideoControllerChanged: _bindVideo,
     );
 
     // Koltuk efektleri küçük ve konumlu — dokunmuyoruz.
@@ -311,12 +363,14 @@ class _GiftEngineAnimation extends StatelessWidget {
     required this.config,
     required this.size,
     this.fullScreen = false,
+    this.onVideoControllerChanged,
   });
 
   final LiveGiftEvent event;
   final GiftEngineConfig config;
   final double size;
   final bool fullScreen;
+  final ValueChanged<VideoPlayerController?>? onVideoControllerChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -340,6 +394,7 @@ class _GiftEngineAnimation extends StatelessWidget {
         size: size,
         preferPremiumVisual: false,
         fit: fit,
+        onVideoControllerChanged: onVideoControllerChanged,
       );
     }
 
@@ -352,6 +407,7 @@ class _GiftEngineAnimation extends StatelessWidget {
         event: event,
         size: size,
         preferPremiumVisual: false,
+        onVideoControllerChanged: onVideoControllerChanged,
       );
     }
 
@@ -363,6 +419,7 @@ class _GiftEngineAnimation extends StatelessWidget {
       fit: fit,
       fallbackEmoji: emoji,
       looping: false,
+      onVideoControllerChanged: onVideoControllerChanged,
     );
   }
 }

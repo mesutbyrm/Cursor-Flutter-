@@ -11,6 +11,7 @@ import '../../domain/gift_engine_parser.dart';
 import '../../domain/gift_entity.dart';
 import '../../domain/gift_media_spec.dart';
 import '../../domain/gift_media_type.dart';
+import '../../domain/gift_video_hold.dart';
 import '../providers/gift_catalog_index_provider.dart';
 import '../sync/gift_session_controller.dart';
 import '../widgets/gift_animation_player.dart';
@@ -95,6 +96,40 @@ class _VoiceGiftAmbientOverlayState extends ConsumerState<VoiceGiftAmbientOverla
     _videoController?.removeListener(_onVideoProgress);
     _videoController = controller;
     controller?.addListener(_onVideoProgress);
+    if (!mounted) return;
+    final id = _activeId;
+    final rem = _videoRemaining();
+    if (id != null && rem != null) {
+      // Kuyruk bekçisi / `gift_finished` videoyu yarıda kesmesin (GIFT-001).
+      ref
+          .read(giftSessionProvider(widget.sessionKey).notifier)
+          .holdActiveForVideo(id, rem);
+    }
+  }
+
+  Duration? _videoRemaining() {
+    final c = _videoController;
+    if (c == null || c.value.hasError) return null;
+    return GiftVideoHold.remaining(
+      initialized: c.value.isInitialized,
+      position: c.value.position,
+      duration: c.value.duration,
+    );
+  }
+
+  /// Süre dolduğunda video sürüyorsa sönmeyi videonun sonuna ertele.
+  void _onPlayTimeout(String eventId, int capAtMs) {
+    if (!mounted || _activeId != eventId) return;
+    final rem = _videoRemaining();
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (rem != null && now + rem.inMilliseconds <= capAtMs) {
+      ref
+          .read(giftSessionProvider(widget.sessionKey).notifier)
+          .holdActiveForVideo(eventId, rem);
+      _playTimer = Timer(rem, () => _onPlayTimeout(eventId, capAtMs));
+      return;
+    }
+    _scheduleFadeOut();
   }
 
   void _bindEvent(LiveGiftEvent? ev, bool enabled) {
@@ -132,10 +167,13 @@ class _VoiceGiftAmbientOverlayState extends ConsumerState<VoiceGiftAmbientOverla
           .read(giftSessionProvider(widget.sessionKey).notifier)
           .playActiveGiftSound(ev);
 
-      _playTimer = Timer(Duration(milliseconds: playMs), () {
-        if (!mounted || _activeId != ev.id) return;
-        _scheduleFadeOut();
-      });
+      final capAtMs = DateTime.now().millisecondsSinceEpoch +
+          playMs +
+          GiftVideoHold.maxHold.inMilliseconds;
+      _playTimer = Timer(
+        Duration(milliseconds: playMs),
+        () => _onPlayTimeout(ev.id, capAtMs),
+      );
     });
   }
 

@@ -14,7 +14,10 @@ abstract final class ApiBackendRouter {
   ///
   /// Çoğu üretim API trafiği ana backend'e gider (`https://canlifal.com`).
   /// Sesli oda + canlı PK REST ana sitede; SSE ile aynı origin (STAGE16 parity 2026-09).
-  /// Yalnız oyun PK namespace (`/api/pk/*`) games backend'de kalır.
+  /// Birleşik PK okuma uçları (`/api/pk/active`, `/leaderboard`, `/{matchId}`,
+  /// `/{matchId}/stream`) da ana sitede — SSE ile aynı veritabanı (PK-001,
+  /// 2026-10: games backend ayrı DB, sıralama boş dönüyordu). Yalnız ana sitede
+  /// olmayan oyun PK yazma uçları (ör. `POST /api/pk/request`) games'te kalır.
   ///
   /// §8 dokunulmayanlar (zaten ana backend): `/api/live/gift/send`,
   /// `/api/trtc/token`, `/api/trtc/usersig`.
@@ -23,6 +26,7 @@ abstract final class ApiBackendRouter {
     if (_isMainLivePkPath(p)) return ApiBackendKind.main;
     if (_isVoiceRoomPkPath(p)) return ApiBackendKind.main;
     if (_isMainPkUserPath(p)) return ApiBackendKind.main;
+    if (_isMainUnifiedPkPath(p)) return ApiBackendKind.main;
     if (_isGamesPkNamespacePath(p)) return ApiBackendKind.game;
     return ApiBackendKind.main;
   }
@@ -64,6 +68,23 @@ abstract final class ApiBackendRouter {
     if (path == '/api/pk/me/matches') return true;
     return false;
   }
+
+  /// Ana sitedeki birleşik PK uçları (nextjs `app/api/pk/*`):
+  /// `active`, `leaderboard`, `{matchId}`, `{matchId}/stream`.
+  static bool _isMainUnifiedPkPath(String path) {
+    if (!path.startsWith('/api/pk/')) return false;
+    final segments =
+        path.split('/').where((segment) => segment.isNotEmpty).toList();
+    // api, pk, ...
+    if (segments.length == 3) {
+      return !_gamesOnlyPkSegments.contains(segments[2]);
+    }
+    if (segments.length == 4) return segments[3] == 'stream';
+    return false;
+  }
+
+  /// Yalnız games backend'de bulunan `/api/pk/{x}` uçları.
+  static const _gamesOnlyPkSegments = {'request'};
 
   /// Games backend PK — `/api/pk/*` (sesli oda `/chat/rooms/{id}/pk` ayrı).
   static bool _isGamesPkNamespacePath(String path) {

@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/util/json_util.dart';
@@ -8,6 +10,7 @@ import '../../domain/gift_entity.dart';
 import '../../domain/gift_engine_parser.dart';
 import '../../domain/gift_engine_sse_router.dart';
 import '../../domain/gift_revenue_display.dart';
+import '../../domain/gift_video_hold.dart';
 import '../engine/gift_engine_preloader.dart';
 import '../providers/gift_catalog_index_provider.dart';
 import '../providers/gift_providers.dart';
@@ -29,6 +32,8 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
   final _engineGiftKeys = <String>{};
   final _legacyBlockedKeys = <String>{};
   Timer? _animationTimer;
+  String? _videoHoldId;
+  int _videoHoldUntilMs = 0;
   void Function()? _cancelHourlyReset;
   var _pumping = false;
   late String _roomId;
@@ -142,7 +147,7 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
   void onEngineGiftFinished(Map<String, dynamic> payload) {
     final id = GiftEngineSseRouter.finishedItemId(payload);
     if (id == null || id.isEmpty) return;
-    dequeueAnimation(id);
+    _dequeueUnlessVideoHeld(id);
     GiftSyncLog.pipelineStage(id, 'engine_gift_finished');
   }
 
@@ -302,7 +307,46 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     state = const GiftSessionState();
   }
 
+  /// Oynayan video hediye için kuyruk bitişini erteler (GIFT-001): backend
+  /// `gift_finished` / bekçi zamanlayıcısı videoyu yarıda kesmesin.
+  void holdActiveForVideo(String eventId, Duration remaining) {
+    if (state.activeAnimation?.id != eventId) return;
+    final capped =
+        remaining > GiftVideoHold.maxHold ? GiftVideoHold.maxHold : remaining;
+    final until = DateTime.now().millisecondsSinceEpoch + capped.inMilliseconds;
+    if (_videoHoldId == eventId && until <= _videoHoldUntilMs) return;
+    _videoHoldId = eventId;
+    _videoHoldUntilMs = until;
+  }
+
+  @visibleForTesting
+  bool isVideoHeld(String eventId) =>
+      _videoHoldId == eventId &&
+      DateTime.now().millisecondsSinceEpoch < _videoHoldUntilMs;
+
+  void _dequeueUnlessVideoHeld(String eventId) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (_videoHoldId == eventId &&
+        state.activeAnimation?.id == eventId &&
+        now < _videoHoldUntilMs) {
+      _animationTimer?.cancel();
+      _animationTimer = Timer(
+        Duration(milliseconds: _videoHoldUntilMs - now),
+        () {
+          if (state.activeAnimation?.id == eventId) dequeueAnimation(eventId);
+        },
+      );
+      GiftSyncLog.pipelineStage(eventId, 'finish_deferred_for_video');
+      return;
+    }
+    dequeueAnimation(eventId);
+  }
+
   void dequeueAnimation(String eventId) {
+    if (_videoHoldId == eventId) {
+      _videoHoldId = null;
+      _videoHoldUntilMs = 0;
+    }
     final clearingActive = state.activeAnimation?.id == eventId;
     final filteredQueue =
         state.animationQueue.where((e) => e.id != eventId).toList();
@@ -480,7 +524,7 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       _animationTimer?.cancel();
       _animationTimer = Timer(Duration(milliseconds: watchdogMs), () {
         if (state.activeAnimation?.id == next.id) {
-          dequeueAnimation(next.id);
+          _dequeueUnlessVideoHeld(next.id);
         }
       });
     } finally {

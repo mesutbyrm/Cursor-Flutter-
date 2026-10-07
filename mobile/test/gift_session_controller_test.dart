@@ -77,6 +77,20 @@ void _clearPathProviderForTests() {
   );
 }
 
+Future<void> _waitActive(
+  ProviderContainer container,
+  String key,
+  String id,
+) async {
+  for (var i = 0; i < 100; i++) {
+    if (container.read(giftSessionProvider(key)).activeAnimation?.id == id) {
+      return;
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+  }
+  fail('aktif animasyon $id olmadı');
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -153,5 +167,55 @@ void main() {
     expect(queued?.id, 'voice-1');
 
     await Future<void>.delayed(const Duration(milliseconds: 100));
+  });
+
+  test('GIFT-001: video sürerken gift_finished kuyruğu kapatmaz', () async {
+    _mockPathProviderForTests();
+    addTearDown(_clearPathProviderForTests);
+
+    final container = _isolatedGiftContainer();
+    addTearDown(container.dispose);
+
+    final sub = container.listen(giftSessionProvider('room-g'), (_, __) {});
+    addTearDown(sub.close);
+    final notifier = container.read(giftSessionProvider('room-g').notifier);
+    notifier.onVoiceGiftSent(_event(id: 'vid-1', jeton: 100),
+        source: 'voice_realtime');
+    await _waitActive(container, 'room-g', 'vid-1');
+    var state = container.read(giftSessionProvider('room-g'));
+
+    notifier.holdActiveForVideo('vid-1', const Duration(milliseconds: 300));
+    expect(notifier.isVideoHeld('vid-1'), isTrue);
+
+    // Backend varsayılan 3000 ms sonunda gift_finished gönderir.
+    notifier.onEngineGiftFinished({'event': 'gift_finished', 'id': 'vid-1'});
+    state = container.read(giftSessionProvider('room-g'));
+    expect(state.activeAnimation?.id, 'vid-1',
+        reason: 'video bitmeden kapatılmamalı');
+
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+    state = container.read(giftSessionProvider('room-g'));
+    expect(state.activeAnimation?.id, isNot('vid-1'));
+    expect(notifier.isVideoHeld('vid-1'), isFalse);
+  });
+
+  test('GIFT-001: overlay açık bitişi tutmayı da temizler', () async {
+    _mockPathProviderForTests();
+    addTearDown(_clearPathProviderForTests);
+
+    final container = _isolatedGiftContainer();
+    addTearDown(container.dispose);
+
+    final sub = container.listen(giftSessionProvider('room-h'), (_, __) {});
+    addTearDown(sub.close);
+    final notifier = container.read(giftSessionProvider('room-h').notifier);
+    notifier.onVoiceGiftSent(_event(id: 'vid-2', jeton: 100),
+        source: 'voice_realtime');
+    await _waitActive(container, 'room-h', 'vid-2');
+    notifier.holdActiveForVideo('vid-2', const Duration(seconds: 5));
+    notifier.dequeueAnimation('vid-2');
+    final state = container.read(giftSessionProvider('room-h'));
+    expect(state.activeAnimation?.id, isNot('vid-2'));
+    expect(notifier.isVideoHeld('vid-2'), isFalse);
   });
 }

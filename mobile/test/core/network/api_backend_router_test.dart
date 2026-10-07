@@ -137,18 +137,26 @@ void main() {
       );
     });
 
-    test('birleşik PK uçları Games backend', () {
-      expect(ApiBackendRouter.resolve('/api/pk/active'), ApiBackendKind.game);
+    test('birleşik PK okuma uçları ana backend (SSE ile aynı DB, PK-001)', () {
+      expect(ApiBackendRouter.resolve('/api/pk/active'), ApiBackendKind.main);
+      expect(
+        ApiBackendRouter.resolve('/api/pk/cm123/stream'),
+        ApiBackendKind.main,
+      );
+      expect(ApiBackendRouter.resolve('/api/pk/cm123'), ApiBackendKind.main);
+      expect(
+        ApiBackendRouter.resolve('/api/pk/leaderboard?period=weekly'),
+        ApiBackendKind.main,
+      );
+    });
+
+    test('yalnız games backend\'de olan PK yazma ucu games\'te kalır', () {
       expect(
         ApiBackendRouter.resolve('/api/pk/request', method: 'POST'),
         ApiBackendKind.game,
       );
       expect(
-        ApiBackendRouter.resolve('/api/pk/cm123/stream'),
-        ApiBackendKind.game,
-      );
-      expect(
-        ApiBackendRouter.resolve('/api/pk/leaderboard?period=weekly'),
+        ApiBackendRouter.resolve('/api/pk/cm123/accept', method: 'POST'),
         ApiBackendKind.game,
       );
     });

@@ -51,6 +51,7 @@ import '../pk_room/pk_room_controller.dart';
 import '../../../pk/presentation/providers/pk_session_notifier.dart';
 import '../utils/pk_invite_dialog_helper.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
+import '../../domain/voice_room_background_catalog.dart';
 import '../../domain/voice_room_background_policy.dart';
 import '../../domain/pk/pk_opponent_room_filter.dart';
 import '../../../../core/network/sse/sse_hub_provider.dart';
@@ -1116,9 +1117,8 @@ class VoiceRoomLiveController
       );
     }
 
-    final bg = payload['backgroundImageUrl']?.toString().trim() ??
-        payload['backgroundUrl']?.toString().trim();
-    if (bg != null && bg.isNotEmpty) {
+    final bg = VoiceRoomBackgroundCatalog.fromRoomPayload(payload);
+    if (bg != null) {
       state = state.copyWith(backgroundUrl: bg);
     }
 
