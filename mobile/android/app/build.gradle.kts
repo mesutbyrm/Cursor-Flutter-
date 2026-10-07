@@ -13,34 +13,98 @@ val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 val releaseKeystoreFile = file("release.keystore")
 
+fun isPlaceholderSecret(value: String): Boolean {
+    val v = value.trim()
+    return v.isEmpty() ||
+        v.equals("YOUR_STORE_PASSWORD", ignoreCase = true) ||
+        v.equals("YOUR_KEY_PASSWORD", ignoreCase = true) ||
+        v.equals("YOUR_KEY_ALIAS", ignoreCase = true) ||
+        v.startsWith("YOUR_", ignoreCase = true)
+}
+
+/** [storeFile] — app modülüne göre; `release.keystore` → android/app/release.keystore */
+fun resolveReleaseKeystoreFile(storeFilePath: String): java.io.File? {
+    val p = storeFilePath.trim()
+    if (p.isEmpty()) return null
+    val candidates = listOf(
+        file(p),
+        rootProject.file("app/$p"),
+        rootProject.file(p),
+    )
+    return candidates.firstOrNull { it.isFile }
+}
+
 /**
  * Upload keystore: local [key.properties] + [release.keystore], or CI env vars
  * (ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS,
  * ANDROID_KEY_PASSWORD). Release builds must never fall back to debug signing.
  */
 fun ensureReleaseKeystoreConfigured(): Boolean {
-    if (keystorePropertiesFile.exists()) {
-        keystoreProperties.load(FileInputStream(keystorePropertiesFile))
-        return true
-    }
-    val base64 = System.getenv("ANDROID_KEYSTORE_BASE64")?.trim().orEmpty()
-    if (base64.isEmpty()) return false
+    keystoreProperties.clear()
+    if (keystorePropertiesFile.isFile) {
+        keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
+    } else {
+        val base64 = System.getenv("ANDROID_KEYSTORE_BASE64")?.trim().orEmpty()
+        if (base64.isEmpty()) return false
 
-    val storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")?.trim().orEmpty()
-    val keyAlias = System.getenv("ANDROID_KEY_ALIAS")?.trim().orEmpty()
-    val keyPassword = System.getenv("ANDROID_KEY_PASSWORD")?.trim().orEmpty()
-    if (storePassword.isEmpty() || keyAlias.isEmpty() || keyPassword.isEmpty()) {
+        val storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")?.trim().orEmpty()
+        val keyAlias = System.getenv("ANDROID_KEY_ALIAS")?.trim().orEmpty()
+        val keyPassword = System.getenv("ANDROID_KEY_PASSWORD")?.trim().orEmpty()
+        if (
+            storePassword.isEmpty() ||
+            keyAlias.isEmpty() ||
+            keyPassword.isEmpty() ||
+            isPlaceholderSecret(storePassword) ||
+            isPlaceholderSecret(keyPassword)
+        ) {
+            return false
+        }
+
+        val decoded = Base64.getDecoder().decode(base64.replace(Regex("\\s"), ""))
+        releaseKeystoreFile.outputStream().use { it.write(decoded) }
+
+        keystoreProperties["storeFile"] = releaseKeystoreFile.name
+        keystoreProperties["storePassword"] = storePassword
+        keystoreProperties["keyAlias"] = keyAlias
+        keystoreProperties["keyPassword"] = keyPassword
+    }
+
+    val storePassword = keystoreProperties.getProperty("storePassword").orEmpty()
+    val keyPassword = keystoreProperties.getProperty("keyPassword").orEmpty()
+    val keyAlias = keystoreProperties.getProperty("keyAlias").orEmpty()
+    val storeFilePath = keystoreProperties.getProperty("storeFile").orEmpty()
+    if (
+        isPlaceholderSecret(storePassword) ||
+        isPlaceholderSecret(keyPassword) ||
+        keyAlias.isBlank() ||
+        storeFilePath.isBlank()
+    ) {
         return false
     }
 
-    val decoded = Base64.getDecoder().decode(base64.replace(Regex("\\s"), ""))
-    releaseKeystoreFile.outputStream().use { it.write(decoded) }
-
-    keystoreProperties["storeFile"] = releaseKeystoreFile.name
-    keystoreProperties["storePassword"] = storePassword
-    keystoreProperties["keyAlias"] = keyAlias
-    keystoreProperties["keyPassword"] = keyPassword
+    val storeFile = resolveReleaseKeystoreFile(storeFilePath) ?: return false
+    keystoreProperties["storeFile"] = storeFile.absolutePath
     return true
+}
+
+fun releaseKeystoreDiagnostic(): String {
+    val lines = mutableListOf<String>()
+    lines += "key.properties path: ${keystorePropertiesFile.absolutePath} " +
+        "(exists=${keystorePropertiesFile.isFile})"
+    val storePath = keystoreProperties.getProperty("storeFile").orEmpty()
+    if (storePath.isNotBlank()) {
+        lines += "storeFile resolved: $storePath (exists=${java.io.File(storePath).isFile})"
+    } else {
+        lines += "storeFile: (missing or not resolved)"
+        lines += "Expected keystore: ${rootProject.file("app/release.keystore").absolutePath}"
+    }
+    val alias = keystoreProperties.getProperty("keyAlias").orEmpty()
+    lines += "keyAlias: ${if (alias.isBlank()) "(missing)" else alias}"
+    val sp = keystoreProperties.getProperty("storePassword").orEmpty()
+    val kp = keystoreProperties.getProperty("keyPassword").orEmpty()
+    lines += "storePassword: ${if (isPlaceholderSecret(sp)) "PLACEHOLDER or empty" else "set"}"
+    lines += "keyPassword: ${if (isPlaceholderSecret(kp)) "PLACEHOLDER or empty" else "set"}"
+    return lines.joinToString("\n  ")
 }
 
 val hasReleaseKeystore = ensureReleaseKeystoreConfigured()
@@ -108,10 +172,11 @@ android {
     signingConfigs {
         if (hasReleaseKeystore) {
             create("release") {
-                keyAlias = keystoreProperties["keyAlias"] as String?
-                keyPassword = keystoreProperties["keyPassword"] as String?
-                storeFile = (keystoreProperties["storeFile"] as String?)?.let { file(it) }
-                storePassword = keystoreProperties["storePassword"] as String?
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+                storePassword = keystoreProperties.getProperty("storePassword")
+                val storePath = keystoreProperties.getProperty("storeFile").orEmpty()
+                storeFile = if (storePath.isNotBlank()) file(storePath) else null
             }
         }
     }
@@ -154,8 +219,11 @@ afterEvaluate {
                 n.contains("package", ignoreCase = true))
     }.configureEach {
         doFirst {
-            if (!hasReleaseKeystore) {
-                throw GradleException(releaseKeystoreErrorMessage)
+            if (!ensureReleaseKeystoreConfigured()) {
+                throw GradleException(
+                    releaseKeystoreErrorMessage +
+                        "\n\nDiagnostics:\n  ${releaseKeystoreDiagnostic()}",
+                )
             }
         }
     }
