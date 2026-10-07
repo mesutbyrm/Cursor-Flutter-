@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.737+790 (2026-10-07) — XOX sıra düzeltmesi, SOS oyunu, arka plan olayı
+
+- **XOX (hata):** sunucu sırayı oyuncu numarası (`currentTurn: 1/2`) olarak tutuyor; Flutter bunu oyuncu kimliği sandığı için sıra hep «rakipte» görünüyor, tahta tıklanmıyordu. Artık 1/2 doğru okunuyor (tüm `/api/games/room` oyunları)
+- **SOS (yeni):** oyun merkezinden SOS → tahta boyutu (`grid-settings` → `sosGridSizes`) + «Yapay zekâya karşı» veya «Masa aç». `POST /api/games/sos`, `GET/PATCH /api/games/sos/{id}` (2 sn yoklama, web ile aynı); yapay zekâ hamlesi web'deki kuralla istemcide (`aiMoves`). Bekleyen masaya «Oyuna katıl» (`POST /api/games/sos/{id}`). Eskiden SOS «Geçersiz oyun tipi» hatası veriyordu
+- **Arka plan (BG-002):** sunucu olayı `background_changed` tipiyle de gelse sesli oda arka planı anında güncellenir
+- Gerçek cihaz: **BLOCKED**
+
 ## 1.0.736+789 (2026-10-07) — İçerik detayları, oyun tahtası düzeltmesi, arka plan SSE
 
 - **Blog yazısı (yeni sayfa `/blog/{slug}`):** `GET /api/blog?slug=` tam metin; beğeni/kaydet (`POST /api/blog/like`, `/favorite`, durum `GET /api/blog/interactions`); ilgili yazılar (`GET /api/blog/related`). Daha önce `/blog/...` bağlantıları blog merkezine geri dönüyordu

@@ -12,6 +12,7 @@ import '../providers/game_center_providers.dart';
 import '../widgets/game_center_widgets.dart';
 import '../../widgets/game_catalog_card.dart';
 import '../../widgets/game_grid_size_picker.dart';
+import '../../widgets/sos_start_sheet.dart';
 import 'package:canlifal_social/features/live/presentation/widgets/broadcast_room/live_stream_game_return_banner.dart';
 
 /// Profesyonel Oyun Merkezi — canlifal.com jeton ve skor API'leriyle entegre.
@@ -183,6 +184,11 @@ class GameCenterPage extends ConsumerWidget {
     final route = game.route;
     if (route != null && route.isNotEmpty) {
       context.push(route);
+      return;
+    }
+    if (isSosGame(game)) {
+      final id = await createSosGameFlow(context, ref);
+      if (id != null && context.mounted) context.push(sosGamePath(id));
       return;
     }
     try {

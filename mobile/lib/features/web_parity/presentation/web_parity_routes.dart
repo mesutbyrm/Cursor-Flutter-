@@ -4,6 +4,7 @@ import '../../content_detail/presentation/pages/blog_post_page.dart';
 import '../../content_detail/presentation/pages/blog_zodiac_page.dart';
 import '../../content_detail/presentation/pages/dream_symbol_page.dart';
 import '../../content_detail/presentation/pages/tiktok_videos_page.dart';
+import '../../games/presentation/pages/sos_game_page.dart';
 
 import 'pages/agency_growth_pages.dart';
 import 'pages/contact_page.dart';
@@ -34,6 +35,11 @@ final List<RouteBase> webParityRoutes = [
     path: '/ruya-sozlugu/:slug',
     builder: (context, state) =>
         DreamSymbolPage(slug: state.pathParameters['slug'] ?? ''),
+  ),
+  GoRoute(
+    path: '/games-sos/:id',
+    builder: (context, state) =>
+        SosGamePage(gameId: state.pathParameters['id'] ?? ''),
   ),
   GoRoute(
     path: '/tiktok',
