@@ -659,6 +659,7 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
         // (mic kapalı audience TRTC) — tam leave sonrası sessiz kalma/sızıntı önlenir.
         unawaited(() async {
           final audio = ref.read(voiceRoomAudioCoordinatorProvider);
+          audio.setReconnectSuspended(true);
           await audio.releaseSeatVoice();
           if (!_sessionActive || _roomKey.isEmpty || !state.selfInRoom) return;
           try {

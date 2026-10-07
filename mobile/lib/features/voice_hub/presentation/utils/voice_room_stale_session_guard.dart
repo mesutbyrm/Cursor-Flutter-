@@ -6,6 +6,7 @@ import '../providers/chat_room_providers.dart';
 import '../providers/voice_room_session_registry.dart';
 import '../providers/voice_rooms_presence_provider.dart';
 import 'voice_room_presence_persistence.dart';
+import 'voice_room_server_leave.dart';
 
 /// Oturum açılışında sunucuda kalmış presence kayıtlarını temizle
 /// (backend: `DELETE .../presence`, ardından `POST {action: leave}`).
@@ -49,10 +50,12 @@ Future<void> clearStaleVoicePresenceOnAuth(Ref ref) async {
         await Future<void>.delayed(const Duration(seconds: 2));
       }
       try {
-        cleared = await ref.read(chatRoomRemoteProvider).leavePresence(
-              record.roomId,
-              alternateKey: record.alternate,
-            );
+        cleared = await leaveVoiceRoomOnServer(
+          ref,
+          roomKey: record.roomId,
+          alternateKey: record.alternate,
+          userId: record.userId ?? currentUserId,
+        );
       } catch (_) {
         cleared = false;
       }

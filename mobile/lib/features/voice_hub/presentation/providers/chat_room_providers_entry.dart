@@ -22,31 +22,49 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
       'previous': previous,
       'next': _presenceApiKey,
     });
+    var roomToLeave = previous;
+    String? alternate;
+    final pending = await VoiceRoomPresencePersistence.readPendingAll();
+    for (final record in pending) {
+      if (record.roomId == previous ||
+          (record.alternate != null && record.alternate == previous)) {
+        alternate = record.alternate;
+        roomToLeave = record.roomId;
+        break;
+      }
+    }
+    final userId = ref.read(authControllerProvider).valueOrNull?.id;
     var cleared = false;
     try {
-      cleared = await ref
-          .read(chatRoomRemoteProvider)
-          .leavePresence(previous)
-          .timeout(const Duration(seconds: 3));
+      cleared = await leaveVoiceRoomOnServer(
+        ref,
+        roomKey: roomToLeave,
+        alternateKey: alternate,
+        userId: userId,
+      ).timeout(const Duration(seconds: 5));
     } catch (_) {
       cleared = false;
     }
     if (cleared) {
-      await VoiceRoomPresencePersistence.clearRoom(previous);
+      await VoiceRoomPresencePersistence.clearRoom(roomToLeave);
+      if (alternate != null && alternate.isNotEmpty) {
+        await VoiceRoomPresencePersistence.clearRoom(alternate);
+      }
     } else {
       // Çıkış kabul edilmedi: kayıt korunur ki açılıştaki temizlik muhafızı
       // yeniden denesin. Aksi halde kullanıcı eski odada asılı kalıyordu.
       VoiceRoomDebugLog.log('room.switch.leave_previous.failed', {
-        'previous': previous,
+        'previous': roomToLeave,
       });
       await VoiceRoomPresencePersistence.recordJoin(
-        roomId: previous,
+        roomId: roomToLeave,
+        alternateRoomId: alternate,
         userId: ref.read(authControllerProvider).valueOrNull?.id,
       );
     }
 
     final stillActive = ref.read(voiceRoomActiveLiveKeyProvider)?.trim() ?? '';
-    if (stillActive == previous) {
+    if (stillActive == previous || stillActive == roomToLeave) {
       ref.read(voiceRoomActiveLiveKeyProvider.notifier).state = null;
       ref.read(voiceRoomActiveKeyAliasesProvider.notifier).state = const {};
     }
