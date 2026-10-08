@@ -151,7 +151,11 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       if (widget.room.apiRoomKey.isEmpty) {
         unawaited(ref.read(voiceRoomsProvider.future));
       }
-      ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).ensureActiveSession();
+      unawaited(
+        ref
+            .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
+            .joinRoomSession(source: 'basic_page'),
+      );
       unawaited(ref.read(siteAnimationCatalogProvider.future));
       _startPremiumRealtime(ref.read(authControllerProvider).valueOrNull);
       unawaited(_joinAudioBackground());

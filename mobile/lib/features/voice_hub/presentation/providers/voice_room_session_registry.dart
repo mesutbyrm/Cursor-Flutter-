@@ -14,6 +14,9 @@ import 'voice_seat_gift_totals_provider.dart';
 /// Aktif sesli oda oturumu — oda değişiminde eski bağlantıları kapatmak için.
 final voiceRoomActiveLiveKeyProvider = StateProvider<String?>((ref) => null);
 
+/// Navigasyon / push öncesi hedef oda — sunucu presence.join onayından önce aktif sayılmaz.
+final voiceRoomPendingLiveKeyProvider = StateProvider<String?>((ref) => null);
+
 /// Aktif sesli odada SSE bağlı mı (PK REST poll seyreltme; döngüsel import önleme).
 final voiceRoomActiveSseConnectedProvider = StateProvider<bool>((ref) => false);
 
@@ -47,6 +50,10 @@ void clearVoiceRoomLiveSession(Ref ref, String liveKey) {
     ref.read(voiceRoomActiveLiveKeyProvider.notifier).state = null;
     ref.read(voiceRoomActiveKeyAliasesProvider.notifier).state = const {};
     ref.read(voiceRoomActiveSseConnectedProvider.notifier).state = false;
+  }
+  final pending = ref.read(voiceRoomPendingLiveKeyProvider)?.trim();
+  if (pending == key) {
+    ref.read(voiceRoomPendingLiveKeyProvider.notifier).state = null;
   }
   if (key.isEmpty) return;
   try {

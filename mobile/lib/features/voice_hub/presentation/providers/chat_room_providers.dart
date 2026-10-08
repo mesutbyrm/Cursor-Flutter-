@@ -544,6 +544,8 @@ class VoiceRoomLiveController
   String? _sseAttachedRoomKey;
   var _sessionActive = false;
   var _entryBegun = false;
+  /// Kullanıcı oda sayfasında explicit joinRoomSession çağırmadan oturum yok.
+  var _explicitJoinConfirmed = false;
   var _leaveInFlight = false;
   Future<void>? _ongoingLeaveRoomSession;
   final RoomLeaveCoordinator _leaveCoordinator = RoomLeaveCoordinator();
@@ -1059,7 +1061,6 @@ class VoiceRoomLiveController
         _closeRoomKeepAlive();
       }
     });
-    Future.microtask(() => _beginRoomSession());
     return VoiceRoomLiveState(
       backgroundUrl: room.backgroundImageUrl?.trim().isNotEmpty == true
           ? room.backgroundImageUrl
@@ -1315,6 +1316,7 @@ class VoiceRoomLiveController
     _leaveInFlight = true;
     _sessionActive = false;
     _entryBegun = false;
+    _explicitJoinConfirmed = false;
     _liveSessionGeneration++;
     _liveJoinCompoundOk = false;
     _pendingSeatByUser.clear();
@@ -1339,6 +1341,7 @@ class VoiceRoomLiveController
     final sseReleaseKey = _sseReleaseKey;
 
     VoiceEventLog.leaveStart(roomId: roomKey);
+    VoiceRoomDebugLog.leaveStart(roomId: roomKey, source: source);
     VoiceRoomLifecycleTrace.lifecycle(
       roomId: roomKey,
       generation: _liveSessionGeneration,
@@ -1530,6 +1533,7 @@ class VoiceRoomLiveController
         },
         () async {
           VoiceEventLog.leaveSuccess(roomId: roomKey);
+          VoiceRoomDebugLog.leaveComplete(roomId: roomKey);
           VoiceRoomLifecycleTrace.lifecycle(
             roomId: roomKey,
             generation: _liveSessionGeneration,
@@ -1557,20 +1561,16 @@ class VoiceRoomLiveController
     }
   }
 
-  /// Müzik PiP sonrası aynı odaya dönüş — oturumu yeniden başlat.
+  /// Müzik PiP sonrası aynı odaya dönüş — yalnızca daha önce explicit join yapıldıysa.
   void ensureActiveSession() {
-    if (_sessionActive) return;
-    final hub = ref.read(sseConnectionHubProvider);
-    final key = _sseReleaseKey;
-    if (_sseStarted &&
-        _sseAttachedRoomKey != null &&
-        hub.voiceRoomRefCount(key) > 0) {
-      _sessionActive = true;
-      _entryBegun = true;
+    if (!_explicitJoinConfirmed) {
+      VoiceRoomDebugLog.blockedImplicitJoin(
+        reason: 'ensureActiveSession_without_intent',
+        roomId: _roomKey,
+      );
       return;
     }
-    _entryBegun = false;
-    _sessionActive = false;
+    if (_sessionActive) return;
     unawaited(_beginRoomSession());
   }
 
@@ -2139,12 +2139,6 @@ class VoiceRoomLiveController
     final room = _roomMeta;
     final remote = ref.read(chatRoomRemoteProvider);
     final user = ref.read(authControllerProvider).valueOrNull;
-    if (user != null &&
-        _sessionActive &&
-        !_leaveInFlight &&
-        (!_presenceJoined || !state.selfInRoom)) {
-      unawaited(_joinPresence());
-    }
     Object? refreshError;
     try {
       final since = _lastMessageAt?.toUtc().toIso8601String();

@@ -45,6 +45,13 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
   void _startSse() {
     final roomKey = _sse._canonicalRoomKey;
     if (roomKey.isEmpty) return;
+    if (!_sse._explicitJoinConfirmed || !_sse._sessionActive || _sse._leaveInFlight) {
+      VoiceRoomDebugLog.blockedImplicitJoin(
+        reason: 'sse_start_without_session',
+        roomId: roomKey,
+      );
+      return;
+    }
     if (_sse._sseStarted) {
       VoiceRoomDebugLog.log('sse.subscribe.skip', {'roomId': roomKey});
       return;
@@ -58,6 +65,7 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
         );
     _sse._sseStarted = true;
     _sse._sseAttachedRoomKey = roomKey;
+    VoiceRoomDebugLog.sseStart(roomId: roomKey);
     VoiceRoomLifecycleTrace.lifecycle(
       roomId: roomKey,
       generation: boundGen,
@@ -105,12 +113,6 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             ref.read(voiceRoomActiveSseConnectedProvider.notifier).state =
                 true;
             ref.read(voiceRoomGiftRealtimeProvider).setSseActive(true);
-            // Yalnızca aktif oda oturumunda presence join (SSE lease / önizleme
-            // yeniden bağlanınca kullanıcı hiç girmediği halde listede görünmesin).
-            if (_sse._sessionActive &&
-                (!state.selfInRoom || !_sse._presenceJoined)) {
-              unawaited(_sse._joinPresence());
-            }
             // Signal manager that SSE reconnected
             // Manager canonical state sync on SSE reconnect (safe: checks null and handles closed)
             try {

@@ -4,6 +4,15 @@ part of 'chat_room_providers.dart';
 
 /// Oda girişi, bootstrap ve ilk yükleme — [VoiceRoomLiveController]'dan ayrıldı.
 extension VoiceRoomEntryControls on VoiceRoomLiveController {
+  /// Kullanıcı oda ekranında explicit giriş — tek izinli oturum başlatıcı.
+  Future<void> joinRoomSession({String source = 'user'}) async {
+    if (_roomKey.isEmpty) return;
+    if (_sessionActive && _entryBegun) return;
+    VoiceRoomDebugLog.joinIntent(roomId: _roomKey, source: source);
+    _explicitJoinConfirmed = true;
+    await _beginRoomSession();
+  }
+
   /// Başka bir odada aktif kayıt varsa yeni odaya katılmadan önce onu sunucudan
   /// düşür.
   ///
@@ -72,8 +81,16 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
 
   /// Contract: auth → state → presence → SSE → messages → seats → TRTC.
   Future<void> _beginRoomSession() async {
+    if (!_explicitJoinConfirmed) {
+      VoiceRoomDebugLog.blockedImplicitJoin(
+        reason: 'begin_room_session',
+        roomId: _roomKey,
+      );
+      return;
+    }
     if (_entryBegun) return;
     _entryBegun = true;
+    VoiceRoomDebugLog.joinStart(roomId: _roomKey);
     _autoSeatAttempted = false;
     _sseStarted = false;
     _sseAttachedRoomKey = null;
@@ -113,15 +130,6 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
     try {
       await _leaveStalePreviousRoom();
       await _ensureRoomsCatalogForCanonicalKey();
-      // Oturum anahtarı presence onayından **önce** yazılır. `VoicePkInviteListener`
-      // aktif oda PK'sını bu anahtarla yokluyor; kayıt yalnızca join başarılı
-      // olunca yapıldığı için join yavaşladığında ya da düştüğünde odadaki
-      // diğer kullanıcı başlayan PK'yı hiç görmüyordu.
-      registerVoiceRoomLiveSession(
-        ref,
-        _presenceApiKey,
-        aliases: _roomKeyAliases,
-      );
       bindAudioMicPublishGate();
       final liveJoinOk = await _performLiveJoinRoom();
       if (!liveJoinOk) {
@@ -148,6 +156,8 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
         roomId: _roomKey,
         presenceCount: state.presence.length,
       );
+      VoiceRoomDebugLog.joinSuccess(roomId: _roomKey);
+      ref.read(voiceRoomPendingLiveKeyProvider.notifier).state = null;
       ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
             VoiceSessionPhase.connected,
           );

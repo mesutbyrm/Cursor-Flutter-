@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.745+798 (2026-10-08) — P0: explicit voice room join (implicit provider bootstrap kaldırıldı)
+
+- **P0:** `voiceRoomLiveProvider.build()` artık `_beginRoomSession()` çağırmıyor; oturum yalnızca `joinRoomSession()` (oda RTC/Basic sayfası) ile başlar
+- **active key:** `prepareVoiceRoomSwitch` → `voiceRoomPendingLiveKeyProvider`; `registerVoiceRoomLiveSession` yalnızca presence.join başarısından sonra
+- **SSE/poll:** reconnect ve `_refreshImpl` artık yeni `presence.join` tetiklemez; `_startSse` / `_joinPresence` explicit session guard
+- **Log:** `JOIN_INTENT`, `JOIN_START`, `JOIN_SUCCESS`, `BLOCKED_IMPLICIT_JOIN`, `LEAVE_*`, `SSE_START`, `PRESENCE_JOIN`
+
 ## 1.0.744+797 (2026-10-08) — Oda çıkışı: sunucu leave sırası + SSE alias + duplicate leave
 
 - **Kök neden (ek):** `DELETE presence?leave=1` öncesi `PATCH /seats` çift gidiyordu (409); slug/cuid çift SSE lease leave sonrası açık kalabiliyordu; eşzamanlı `leaveRoomSession` (dispose + UI) ikinci sunucu leave tetikliyordu; poll/refresh async yanıtları leave sonrası state yazabiliyordu

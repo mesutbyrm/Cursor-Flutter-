@@ -192,7 +192,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       if (roomKey.isEmpty) {
         unawaited(ref.read(voiceRoomsProvider.future));
       }
-      ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).ensureActiveSession();
+      unawaited(
+        ref
+            .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
+            .joinRoomSession(source: 'rtc_page'),
+      );
       _startGiftRealtimePoll();
       unawaited(ref.read(siteAnimationCatalogProvider.future));
       final user = ref.read(authControllerProvider).valueOrNull;

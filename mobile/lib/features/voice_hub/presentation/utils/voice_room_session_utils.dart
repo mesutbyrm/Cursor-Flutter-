@@ -63,6 +63,5 @@ Future<void> prepareVoiceRoomSwitch(
   if (active != null && active.isNotEmpty && active != next) {
     await teardownVoiceRoomBeforeSwitch(ref, liveKey: active, source: source);
   }
-  ref.read(voiceRoomActiveLiveKeyProvider.notifier).state = next;
-  ref.read(voiceRoomActiveKeyAliasesProvider.notifier).state = {next};
+  ref.read(voiceRoomPendingLiveKeyProvider.notifier).state = next;
 }
