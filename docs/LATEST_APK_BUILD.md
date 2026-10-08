@@ -4,20 +4,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.740+793` |
-| Tarih (UTC) | 2026-10-07 22:53 |
-| Commit | [`2288a59a91ca833639a29bd9589c57f0fcddeb55`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/2288a59a91ca833639a29bd9589c57f0fcddeb55) |
-| İş akışı | [Run 37697092065](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37697092065) |
+| Sürüm | `1.0.742+795` |
+| Tarih (UTC) | 2026-10-08 00:48 |
+| Commit | [`2b875aa57ab705e1edd80164a1c48fb319394cca`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/2b875aa57ab705e1edd80164a1c48fb319394cca) |
+| İş akışı | [Run 37707868745](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37707868745) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.740+793 (2026-10-07) — Koltuksuz mikrofon TRTC publish engeli
+## 1.0.742+795 (2026-10-07) — Oda çıkışı: presence + koltuk + heartbeat yarışı
 
-- **Hata:** Koltuktan indikten sonra mic kapat-aç ile TRTC yeniden yayın yapıyordu; `canSpeak` (oda sahibi/admin) veya doğrudan `setMicEnabled(true)` koltuk kontrolünü atlıyordu
-- **Düzeltme:** `setMicPublishGate` + `setSelfMicPublishEnabled` — TRTC publish yalnızca `selfOccupiesSeat()` iken; coordinator’da async race için `invalidatePendingMicEnable`
-- UI: koltuksuz açma → «Konuşmak için koltuğa oturun»; koltuk düşünce otomatik publish kapatma
-- Gerçek cihaz: mic off-seat senaryoları
+- **Kök neden:** Çıkışta TRTC önce kapanıyordu; heartbeat timer iptal edilse bile uçuştaki tick veya `finally` içindeki resync, sunucuda presence/koltuk yeniden yazıyordu. `clearSeat`/`leavePresence` bazen farklı oda anahtarları (route slug vs canonical cuid) ile gidiyordu; `presence leave` kabul edilmeden kalıcı kayıt siliniyordu (dispose’da `ref.read` ile leave hiç gitmiyordu).
+- **Sıra:** heartbeat/timer dur → `clearSeat` + live `leaveRoom` + `DELETE presence?leave=1` (retry + alternatif anahtar) → TRTC → SSE/polling → yerel state
+- **`[ROOM_LEAVE]`** release logcat: roomId, userId, seatId, seat/presence/live yanıtları (HTTP status + body)
+- Heartbeat: `_leaveInFlight` / `!_sessionActive` iken tick ve resync yok
+- Gerçek cihaz: odaya gir → koltuk → tam çıkış; A→B→C hızlı geçiş; owner çıkışı
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
