@@ -47,6 +47,7 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
   var _presenting = false;
   var _inviteDialogVisible = false;
   var _inviteUiReady = false;
+  var _pollingApi = false;
   var _isFortuneTeller = false;
   String? _tellerProfileId;
   String? _activePresentingSessionId;
@@ -283,52 +284,65 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
   }
 
   Future<void> _pollApi() async {
-    if (!mounted || _presenting || !_mayRunTellerBackgroundSync()) return;
-    final liveStreamId = ref.read(liveActiveBroadcastStreamIdProvider);
-    if (_isFortuneTeller &&
-        liveStreamId != null &&
-        liveStreamId.trim().isNotEmpty) {
+    if (_pollingApi ||
+        !mounted ||
+        _presenting ||
+        !_mayRunTellerBackgroundSync()) {
       return;
     }
+    _pollingApi = true;
+    try {
+      final liveStreamId = ref.read(liveActiveBroadcastStreamIdProvider);
+      if (_isFortuneTeller &&
+          liveStreamId != null &&
+          liveStreamId.trim().isNotEmpty) {
+        return;
+      }
 
-    if (_tellerProfileId == null) {
-      await _ensureTellerProfile();
-    }
+      if (_tellerProfileId == null) {
+        await _ensureTellerProfile();
+      }
 
-    final userId = ref.read(authControllerProvider).valueOrNull?.id;
-    final incoming = await ref
-        .read(livePsychicsRepositoryProvider)
-        .fetchIncomingRequests(
-          currentUserId: userId,
+      final userId = ref.read(authControllerProvider).valueOrNull?.id;
+      final incoming = await ref
+          .read(livePsychicsRepositoryProvider)
+          .fetchIncomingRequests(
+            currentUserId: userId,
+            tellerProfileId: _tellerProfileId,
+          );
+      if (!mounted) return;
+      final freshIds = _pollGate.takeNewPendingSessionIds(
+        incoming.where((r) => r.isPending).map((r) => r.sessionId),
+      );
+      for (final req in incoming) {
+        if (!req.isPending) continue;
+        if (!freshIds.contains(req.sessionId)) {
+          _pollGate.noteSeen(req.sessionId);
+          continue;
+        }
+        final uid = ref.read(authControllerProvider).valueOrNull?.id;
+        if (!shouldPresentPsychicIncomingInvite(
+          authUserId: uid,
+          invite: req,
           tellerProfileId: _tellerProfileId,
-        );
-    if (!mounted) return;
-    final freshIds = _pollGate.takeNewPendingSessionIds(
-      incoming.where((r) => r.isPending).map((r) => r.sessionId),
-    );
-    for (final req in incoming) {
-      if (!req.isPending) continue;
-      if (!freshIds.contains(req.sessionId)) {
-        _pollGate.noteSeen(req.sessionId);
-        continue;
+          isFortuneTeller: _isFortuneTeller,
+        )) {
+          continue;
+        }
+        if (_isSessionAlreadyQueued(req.sessionId)) {
+          continue;
+        }
+        ref.read(psychicIncomingQueueProvider.notifier).enqueue(req);
+        PsychicInviteCoordinator.requestPresent(sessionId: req.sessionId);
       }
-      final uid = ref.read(authControllerProvider).valueOrNull?.id;
-      if (!shouldPresentPsychicIncomingInvite(
-        authUserId: uid,
-        invite: req,
-        tellerProfileId: _tellerProfileId,
-        isFortuneTeller: _isFortuneTeller,
-      )) {
-        continue;
+      if (_mayPresentInvites()) {
+        await _tryPresentNext();
       }
-      if (_isSessionAlreadyQueued(req.sessionId)) {
-        continue;
-      }
-      ref.read(psychicIncomingQueueProvider.notifier).enqueue(req);
-      PsychicInviteCoordinator.requestPresent(sessionId: req.sessionId);
-    }
-    if (_mayPresentInvites()) {
-      await _tryPresentNext();
+    } catch (_) {
+      // The periodic poll retries on its next tick; do not leave an unhandled
+      // async exception or keep the single-flight lock held.
+    } finally {
+      _pollingApi = false;
     }
   }
 

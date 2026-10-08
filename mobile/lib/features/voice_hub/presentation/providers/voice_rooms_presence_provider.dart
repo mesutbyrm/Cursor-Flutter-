@@ -57,7 +57,9 @@ class VoiceRoomsPresenceNotifier extends Notifier<VoiceRoomsPresenceState> {
   static const _connectStagger = Duration(milliseconds: 250);
 
   final Map<String, StreamSubscription<ChatRoomSseEvent>> _subs = {};
+  final Map<String, Future<void>> _connecting = {};
   var _syncGeneration = 0;
+  var _disposed = false;
   Timer? _rankingRefreshDebounce;
   List<VoiceRoomEntity> _lastMergedRooms = const [];
 
@@ -72,6 +74,7 @@ class VoiceRoomsPresenceNotifier extends Notifier<VoiceRoomsPresenceState> {
       }
     });
     ref.onDispose(() {
+      _disposed = true;
       _rankingRefreshDebounce?.cancel();
       _disposeAll();
     });
@@ -103,6 +106,9 @@ class VoiceRoomsPresenceNotifier extends Notifier<VoiceRoomsPresenceState> {
       activeAliases: aliases,
     ).toSet();
     final generation = ++_syncGeneration;
+    // Publish the target set before starting async connects so an already-live
+    // shared stream is not mistaken for an obsolete lease.
+    state = state.copyWith(connectedRooms: keys);
     unawaited(_staggerConnectRooms(keys.toList(growable: false), generation));
     for (final key in _subs.keys.toList()) {
       if (keys.contains(key)) continue;
@@ -111,7 +117,6 @@ class VoiceRoomsPresenceNotifier extends Notifier<VoiceRoomsPresenceState> {
           (key == activeKey || aliases.contains(key));
       _disconnectRoom(key, releaseHub: !isActiveLease);
     }
-    state = state.copyWith(connectedRooms: keys);
   }
 
   Future<void> _staggerConnectRooms(List<String> keys, int generation) async {
@@ -137,24 +142,52 @@ class VoiceRoomsPresenceNotifier extends Notifier<VoiceRoomsPresenceState> {
     }
   }
 
-  Future<void> _connectRoom(String roomId) async {
-    final hub = ref.read(sseConnectionHubProvider);
-    hub.attachVoiceRoom(roomId);
-    final service = hub.voiceRoom(roomId);
-    final tokens = ref.read(tokenStorageProvider);
-    if (!service.isLiveForRoom(roomId)) {
-      await service.connect(
-        roomId: roomId,
-        accessToken: tokens.readAccess,
-      );
-    }
-    _subs[roomId]?.cancel();
-    _subs[roomId] = service.events.listen((event) {
-      _handleDiscoverHubEvent(event, roomId);
-      final update = _presenceFromEvent(event, fallbackRoomId: roomId);
-      if (update == null) return;
-      patchRoomCount(update.roomId, update.onlineUsers);
+  Future<void> _connectRoom(String roomId) {
+    if (_subs.containsKey(roomId)) return Future<void>.value();
+    final pending = _connecting[roomId];
+    if (pending != null) return pending;
+
+    final connection = _connectRoomOnce(roomId);
+    _connecting[roomId] = connection;
+    return connection.whenComplete(() {
+      if (identical(_connecting[roomId], connection)) {
+        _connecting.remove(roomId);
+      }
     });
+  }
+
+  Future<void> _connectRoomOnce(String roomId) async {
+    if (_disposed) return;
+    final hub = ref.read(sseConnectionHubProvider);
+    var attached = false;
+    try {
+      hub.attachVoiceRoom(roomId);
+      attached = true;
+      final service = hub.voiceRoom(roomId);
+      final tokens = ref.read(tokenStorageProvider);
+      if (!service.isLiveForRoom(roomId)) {
+        await service.connect(
+          roomId: roomId,
+          accessToken: tokens.readAccess,
+        );
+      }
+      // The visible room set can change while the SSE handshake is pending.
+      // Release this lease instead of subscribing to a room nobody tracks.
+      if (_disposed || !state.connectedRooms.contains(roomId)) {
+        hub.releaseVoiceRoom(roomId);
+        return;
+      }
+      _subs[roomId]?.cancel();
+      _subs[roomId] = service.events.listen((event) {
+        _handleDiscoverHubEvent(event, roomId);
+        final update = _presenceFromEvent(event, fallbackRoomId: roomId);
+        if (update == null) return;
+        patchRoomCount(update.roomId, update.onlineUsers);
+      });
+    } catch (_) {
+      // A failed connection must not leave an extra hub reference behind.
+      if (attached) hub.releaseVoiceRoom(roomId);
+    }
   }
 
   void _handleDiscoverHubEvent(ChatRoomSseEvent event, String fallbackRoomId) {

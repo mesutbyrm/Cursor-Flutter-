@@ -51,34 +51,43 @@ const tkPurposes = <TkPurpose>[
 /// (`/api/user/social-settings` yalnızca hobbies/görünürlük alır). Seçim
 /// şimdilik cihazda saklanır.
 class TkPurposeNotifier extends StateNotifier<Set<String>> {
-  TkPurposeNotifier() : super(const {}) {
-    unawaited(_load());
+  TkPurposeNotifier({required String? userId})
+      : _storageKey = 'tanis_kaynas_purposes_v1_${userId ?? 'guest'}',
+        super(const {}) {
+    _ready = _load();
   }
 
-  static const _key = 'tanis_kaynas_purposes_v1';
+  final String _storageKey;
+  late final Future<void> _ready;
 
   Future<void> _load() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final saved = prefs.getStringList(_key);
+      final saved = prefs.getStringList(_storageKey);
       if (saved != null && mounted) state = saved.toSet();
     } catch (_) {}
   }
 
   Future<void> toggle(String id) async {
+    // Do not let the initial async read overwrite a tap made immediately
+    // after the discovery screen opens.
+    await _ready;
+    if (!mounted) return;
     final next = {...state};
     if (!next.remove(id)) next.add(id);
     state = next;
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList(_key, next.toList());
+      await prefs.setStringList(_storageKey, next.toList());
     } catch (_) {}
   }
 }
 
 final tkPurposeProvider =
     StateNotifierProvider<TkPurposeNotifier, Set<String>>(
-  (_) => TkPurposeNotifier(),
+  (ref) => TkPurposeNotifier(
+    userId: ref.watch(authControllerProvider).valueOrNull?.id,
+  ),
 );
 
 // ─────────────────────────── Keşif destesi ───────────────────────────

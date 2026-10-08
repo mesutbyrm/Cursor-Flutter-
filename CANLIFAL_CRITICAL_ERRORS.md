@@ -8,7 +8,7 @@
 
 | Alan | Değer |
 |------|--------|
-| **Durum** | FAIL |
+| **Durum** | **Kodda düzeltildi (731+784); cihaz retesti bekliyor** |
 | **Test** | Canlı fal veya hediye paneli açıkken görsel yükleme |
 | **Ekran** | Canlı Falcılar / canlı fal oturumu |
 | **Event** | `[API]` `HttpException: Invalid statusCode: 401` |
@@ -28,7 +28,7 @@
 
 | Alan | Değer |
 |------|--------|
-| **Durum** | FAIL (kullanıcı) + kod kök neden |
+| **Durum** | **Kod düzeltmesi mevcut (731+); kullanıcı cihaz retesti bekliyor** |
 | **Test** | Sesli oda → odadan çık / koltuktan in |
 | **Ekran** | Voice room RTC |
 | **Event** | `[TRTC]` / `[VOICE_ROOM]` |
@@ -46,7 +46,7 @@
 
 | Alan | Değer |
 |------|--------|
-| **Durum** | FAIL |
+| **Durum** | **Kodda azaltıldı (2026-10-08); cihaz retesti bekliyor** |
 | **Test** | Oda değiştir / ana sayfaya dön |
 | **Event** | `[SSE]` DUPLICATE_SSE |
 | **Log** | `voice_sse:cmuvuazea…`, `cmuvu9e2n…`, `cmuviw5ug…` eşzamanlı CREATE |
@@ -54,7 +54,8 @@
 | **Fonksiyon** | `forceReleaseVoiceRoom` |
 | **Satır** | ~80+ |
 | **Muhtemel neden** | Keşif SSE + in-room SSE ref-count; route leave ile yarış |
-| **Önerilen çözüm** | Tek tüketici politikası; exit’te `sseReleaseKey` yakalama (leave pipeline ~1199) — retest Diagnostics SSE sekmesi |
+| **Kod düzeltmesi** | Keşif SSE bağlantıları oda başına tekilleştirildi; artık izlenmeyen oda el sıkışması tamamlanınca lease bırakılıyor. |
+| **Retest** | Oda değiştir / ana sayfaya dön; Diagnostics SSE sekmesinde duplicate ve açık lease sayısını kontrol et. |
 | **Önem** | P2 |
 
 ---
@@ -63,11 +64,12 @@
 
 | Alan | Değer |
 |------|--------|
-| **Durum** | FAIL |
+| **Durum** | **Kodda azaltıldı (2026-10-08); cihaz retesti bekliyor** |
 | **Test** | Ekrandan çık (EXIT) |
 | **Event** | `[SSE]` / resource leak |
 | **Snapshot** | `sse: 3` oturum sonu |
 | **Dosya** | `mobile/lib/core/diagnostics/cf_diagnostic_logger.dart` |
+| **Kod düzeltmesi** | Bağlantı kurulurken oda izleme listeden çıkarsa tamamlanan SSE lease'i bırakılıyor. |
 | **Önem** | P2 — performans + hayalet olaylar |
 
 ---
@@ -76,7 +78,7 @@
 
 | Alan | Değer |
 |------|--------|
-| **Durum** | FAIL |
+| **Durum** | **Kodda düzeltildi (731+); cihaz retesti bekliyor** |
 | **Timestamp** | 2026-10-07T03:26:22.950751Z |
 | **Test** | Canlı fal hediye combo animasyonu |
 | **Exception** | `StateError: Bad state: TweenSequence.evaluate() could not find an interval for 1.029…` |
@@ -104,10 +106,11 @@
 
 | Alan | Değer |
 |------|--------|
-| **Durum** | FAIL (log) |
+| **Durum** | **Kodda düzeltildi (2026-10-08); cihaz retesti bekliyor** |
 | **Endpoint** | `GET /api/fortune-tellers/sessions?status=pending` |
 | **Event** | `[POLLING]` / `[API]` aynı saniyede çoklu REQUEST_CREATE |
 | **Dosya** | `mobile/lib/features/live_psychics/presentation/widgets/psychic_incoming_host.dart` (ve ilgili provider) |
+| **Düzeltme** | Poll çağrıları tek uçuş kilidiyle sınırlandı; istek hatasında kilit `finally` ile bırakılıyor. |
 | **Önem** | P2 |
 
 ---
