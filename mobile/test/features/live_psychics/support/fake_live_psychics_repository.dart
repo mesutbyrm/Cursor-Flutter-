@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_award_entity.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_entity.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_gift_entity.dart';
@@ -56,7 +58,10 @@ class FakeLivePsychicsRepository implements LivePsychicsRepository {
   }
 
   @override
-  Future<PsychicSessionStatusResult?> fetchSessionStatus(String sessionId) async =>
+  Future<PsychicSessionStatusResult?> fetchSessionStatus(
+    String sessionId, {
+    CancelToken? cancelToken,
+  }) async =>
       statusResult;
 
   @override
@@ -72,7 +77,11 @@ class FakeLivePsychicsRepository implements LivePsychicsRepository {
       lookupsFail ? null : activeSessions;
 
   @override
-  Future<PsychicRoomEntity?> fetchRoom(String sessionId) async => roomResult;
+  Future<PsychicRoomEntity?> fetchRoom(
+    String sessionId, {
+    CancelToken? cancelToken,
+  }) async =>
+      roomResult;
 
   @override
   Future<PsychicEntity?> fetchPsychic(String id) async => psychicResult;
@@ -177,7 +186,10 @@ class FakeLivePsychicsRepository implements LivePsychicsRepository {
   Future<void> clearRoomSignals(String sessionId) => throw UnimplementedError();
 
   @override
-  Future<List<Map<String, dynamic>>> fetchRoomSignals(String sessionId) =>
+  Future<List<Map<String, dynamic>>> fetchRoomSignals(
+    String sessionId, {
+    CancelToken? cancelToken,
+  }) =>
       throw UnimplementedError();
 
   @override

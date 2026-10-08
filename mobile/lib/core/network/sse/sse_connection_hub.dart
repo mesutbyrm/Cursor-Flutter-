@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../../diagnostics/cf_diagnostic_logger.dart';
 import '../../diagnostics/cf_resource_tracker.dart';
 import '../../../features/live/data/datasources/live_gifts_remote_datasource.dart';
 import '../../../features/voice_hub/data/services/chat_room_sse_service.dart';
@@ -51,8 +52,10 @@ class SseConnectionHub {
         module: 'voice_room',
         label: 'voice_sse:$id',
       );
+      _logVoiceSse('CREATE', id, refCount: lease.refCount);
     }
     lease.refCount++;
+    _logVoiceSse('ATTACH', id, refCount: lease.refCount);
   }
 
   /// Abone sayacı sıfırlanınca bağlantıyı kapatır (başka sayfa hâlâ dinliyorsa açık kalır).
@@ -61,9 +64,11 @@ class SseConnectionHub {
     final lease = _voiceRooms[id];
     if (lease == null) return;
     lease.refCount--;
+    _logVoiceSse('RELEASE', id, refCount: lease.refCount);
     if (lease.refCount <= 0) {
       lease.service.clearLiveEventHandlers();
       unawaited(lease.service.disconnect());
+      _logVoiceSse('DISCONNECT', id, refCount: 0);
       _voiceRooms.remove(id);
       final rid = lease.diagResourceId;
       if (rid != null) {
@@ -83,8 +88,10 @@ class SseConnectionHub {
     final lease = _voiceRooms[id];
     if (lease == null) return;
     lease.refCount = 0;
+    _logVoiceSse('RELEASE', id, refCount: 0, extra: 'force');
     lease.service.clearLiveEventHandlers();
     unawaited(lease.service.disconnect());
+    _logVoiceSse('DISCONNECT', id, refCount: 0, extra: 'force');
     _voiceRooms.remove(id);
     final rid = lease.diagResourceId;
     if (rid != null) {
@@ -192,6 +199,39 @@ class SseConnectionHub {
 
   /// Test / tanı — arka planda SSE duraklatıldı mı.
   bool get backgroundPaused => _backgroundPaused;
+
+  /// Oda SSE bağlantısı kurulduğunda (provider `connect` sonrası) tanı kaydı.
+  void markVoiceRoomConnected(String roomId) {
+    final id = roomId.trim();
+    if (id.isEmpty) return;
+    _logVoiceSse(
+      'CONNECT',
+      id,
+      refCount: _voiceRooms[id]?.refCount ?? 0,
+    );
+  }
+
+  static void _logVoiceSse(
+    String event,
+    String roomId, {
+    required int refCount,
+    String? extra,
+  }) {
+    if (!CfDiagnosticLogger.active) return;
+    CfDiagnosticLogger.log(
+      level: event == 'DUPLICATE'
+          ? CfFileLogLevel.duplicate
+          : CfFileLogLevel.info,
+      category: CfFileLogCategory.sse,
+      message: '[SSE][$event]',
+      metadata: {
+        'roomId': roomId,
+        'refCount': refCount,
+        if (extra != null) 'detail': extra,
+        'activeVoiceLeases': 'diag_only',
+      },
+    );
+  }
 }
 
 class _VoiceRoomLease {

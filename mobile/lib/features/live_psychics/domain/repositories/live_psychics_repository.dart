@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import '../entities/psychic_award_entity.dart';
 import '../entities/psychic_entity.dart';
 import '../entities/psychic_gift_entity.dart';
@@ -144,7 +146,10 @@ abstract class LivePsychicsRepository {
     required String fortuneType,
   });
 
-  Future<PsychicSessionStatusResult?> fetchSessionStatus(String sessionId);
+  Future<PsychicSessionStatusResult?> fetchSessionStatus(
+    String sessionId, {
+    CancelToken? cancelToken,
+  });
 
   /// [fetchSessionStatus] ile aynı, ama 404/410 («yok») ile ağ/sunucu
   /// hatasını ayırır.
@@ -170,14 +175,20 @@ abstract class LivePsychicsRepository {
   /// Aktif seans sonlandırma — `PATCH /api/room/{id}` `{action: end}`.
   Future<bool> endSession(String sessionId);
   Future<void> clearRoomSignals(String sessionId);
-  Future<List<Map<String, dynamic>>> fetchRoomSignals(String sessionId);
+  Future<List<Map<String, dynamic>>> fetchRoomSignals(
+    String sessionId, {
+    CancelToken? cancelToken,
+  });
   Future<void> sendRoomSignal({
     required String sessionId,
     required String type,
     Map<String, dynamic>? data,
     String? receiverId,
   });
-  Future<PsychicRoomEntity?> fetchRoom(String sessionId);
+  Future<PsychicRoomEntity?> fetchRoom(
+    String sessionId, {
+    CancelToken? cancelToken,
+  });
   Future<Map<String, dynamic>?> roomAction(
     String sessionId,
     String action, {

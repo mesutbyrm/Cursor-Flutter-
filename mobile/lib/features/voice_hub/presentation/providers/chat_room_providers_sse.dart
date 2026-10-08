@@ -92,6 +92,7 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
           refreshTokens: () => tryRefreshAccessToken(refreshDio, storage),
           onConnected: () {
             if (!acceptCallback('sse.onConnected')) return;
+            ref.read(sseConnectionHubProvider).markVoiceRoomConnected(roomKey);
             _sse._markSseActivity();
             GiftSyncLog.sseConnected(roomKey);
             final wasConnected = state.sseConnected;

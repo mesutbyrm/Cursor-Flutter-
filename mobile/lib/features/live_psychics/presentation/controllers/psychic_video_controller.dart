@@ -230,6 +230,8 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   DateTime? _lastTipReceivedPopupAt;
   StreamSubscription<bool>? _onlineSub;
   final _diagTimerResourceIds = <String, String>{};
+  CancelToken? _roomSyncHttpCancel;
+  CancelToken? _signalsHttpCancel;
 
   VoidCallback? _remoteVideoListener;
   VoidCallback? _remoteAudioListener;
@@ -704,9 +706,6 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
             : const Duration(seconds: 2);
     _signalPoll = _periodic(interval, (_) {
       unawaited(_pollRoomSignals());
-      if (!state.timerStarted) {
-        unawaited(_syncRoomInfo());
-      }
     }, label: 'signal_poll');
     if (CfDiagnosticLogger.active) {
       CfDiagnosticLogger.log(
@@ -722,9 +721,6 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       );
     }
     unawaited(_pollRoomSignals());
-    if (!state.timerStarted) {
-      unawaited(_syncRoomInfo());
-    }
   }
 
   void _scheduleRoomPoll() {
@@ -773,9 +769,21 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
 
   Future<void> _pollRoomSignalsOnce() async {
     if (_disposed || state.leaving) return;
+    _signalsHttpCancel?.cancel('superseded');
+    final token = CancelToken();
+    _signalsHttpCancel = token;
     final repo = ref.read(livePsychicsRepositoryProvider);
-    final signals = await repo.fetchRoomSignals(session.sessionId);
-    if (_disposed) return;
+    List<Map<String, dynamic>> signals;
+    try {
+      signals = await repo.fetchRoomSignals(
+        session.sessionId,
+        cancelToken: token,
+      );
+    } on DioException catch (e) {
+      if (CancelToken.isCancel(e)) return;
+      rethrow;
+    }
+    if (_disposed || state.leaving || token.isCancelled) return;
     for (final sig in signals) {
       // Signal ID: backend tarafından sağlanan 'id' veya timestamp + type + index oluştur.
       final id = sig['id']?.toString() ??
@@ -916,28 +924,38 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
 
   Future<bool> _syncRoomInfoOnce() async {
     if (_disposed || state.leaving) return false;
+    _roomSyncHttpCancel?.cancel('superseded');
+    final token = CancelToken();
+    _roomSyncHttpCancel = token;
     final repo = ref.read(livePsychicsRepositoryProvider);
     // Oda ve durum sorguları birbirinden bağımsız: sırayla değil birlikte.
     // İkisi de BİTMEDEN dönülmez: biri hata verirse diğeri havada kalıp bir
     // sonraki senkronla üst üste binmesin.
     Object? roomError;
     StackTrace? roomStack;
-    final roomFuture = repo.fetchRoom(session.sessionId).then<PsychicRoomEntity?>(
+    final roomFuture = repo
+        .fetchRoom(session.sessionId, cancelToken: token)
+        .then<PsychicRoomEntity?>(
       (v) => v,
       onError: (Object e, StackTrace st) {
+        if (e is DioException && CancelToken.isCancel(e)) return null;
         roomError = e;
         roomStack = st;
         return null;
       },
     );
-    final statusFuture = repo.fetchSessionStatus(session.sessionId).then<
-        PsychicSessionStatusResult?>((v) => v, onError: (_) => null);
+    final statusFuture = repo
+        .fetchSessionStatus(session.sessionId, cancelToken: token)
+        .then<PsychicSessionStatusResult?>((v) => v, onError: (Object e, _) {
+      if (e is DioException && CancelToken.isCancel(e)) return null;
+      return null;
+    });
     final info = await roomFuture;
     final statusResult = await statusFuture;
     if (roomError != null) {
       Error.throwWithStackTrace(roomError!, roomStack ?? StackTrace.current);
     }
-    if (_disposed) return false;
+    if (_disposed || state.leaving || token.isCancelled) return false;
     if (info == null) return true;
 
     if (info.status == PsychicSessionStatus.cancelled ||
@@ -1908,6 +1926,10 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   @override
   void dispose() {
     _disposed = true;
+    _roomSyncHttpCancel?.cancel('dispose');
+    _roomSyncHttpCancel = null;
+    _signalsHttpCancel?.cancel('dispose');
+    _signalsHttpCancel = null;
     CfDiagnosticSessionMonitor.transition(
       type: 'LIVE_FORTUNE',
       sessionKey: session.sessionId,
