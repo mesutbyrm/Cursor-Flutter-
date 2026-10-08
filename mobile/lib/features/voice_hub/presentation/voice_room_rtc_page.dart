@@ -524,7 +524,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
             .leaveRoomSession(
               source: 'rtc_dispose',
               awaitBackend: true,
-              force: true,
+              force: false,
             )
             .timeout(const Duration(seconds: 6))
             .catchError((_) {}),

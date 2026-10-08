@@ -139,9 +139,18 @@ class ChatRoomSseService extends BaseSseService {
     if (onTyping != null) _onTyping = onTyping;
     if (onRoomEvent != null) _onRoomEvent = onRoomEvent;
     if (isLiveForRoom(id)) {
+      final discoverOnly = onPresence == null &&
+          onRoomEvent == null &&
+          onUserJoin == null &&
+          onUserLeave == null &&
+          onMessage == null;
+      if (discoverOnly) {
+        clearLiveEventHandlers();
+      }
       VoiceRoomDebugLog.log('sse.connect.skip', {
         'roomId': id,
         'reason': 'already_connected',
+        'discoverOnly': discoverOnly,
       });
       if (status.value.phase == SseConnectionPhase.connected) {
         onConnected?.call();

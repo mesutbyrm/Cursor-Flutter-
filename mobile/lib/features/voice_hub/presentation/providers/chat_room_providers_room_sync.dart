@@ -62,7 +62,9 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
         alternateKey: _musicAlternateKey,
         targetSeatCount: state.roomSeatCount ?? _roomMeta.seatCount,
       );
-      if (gen != _liveSessionGeneration || !_sessionActive) return;
+      if (gen != _liveSessionGeneration || !_sessionActive || _leaveInFlight) {
+        return;
+      }
       if (shouldApplyCanonicalSeats(seats)) {
         final nextPresence = _syncPresenceSeatIndexFromSlots(
           state.presence,

@@ -34,7 +34,7 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
       'from': attached,
       'to': canonical,
     });
-    ref.read(sseConnectionHubProvider).releaseVoiceRoom(attached);
+    ref.read(sseConnectionHubProvider).forceReleaseVoiceRoom(attached);
     _sse._sseStarted = false;
     _sse._sseAttachedRoomKey = null;
     state = state.copyWith(sseConnected: false);

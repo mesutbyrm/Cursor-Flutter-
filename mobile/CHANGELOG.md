@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.744+797 (2026-10-08) — Oda çıkışı: sunucu leave sırası + SSE alias + duplicate leave
+
+- **Kök neden (ek):** `DELETE presence?leave=1` öncesi `PATCH /seats` çift gidiyordu (409); slug/cuid çift SSE lease leave sonrası açık kalabiliyordu; eşzamanlı `leaveRoomSession` (dispose + UI) ikinci sunucu leave tetikliyordu; poll/refresh async yanıtları leave sonrası state yazabiliyordu
+- **Sunucu:** Önce `presence?leave=1` (koltuk + user_left); yalnızca kabul edilmezse `clearSeat`; `VoiceRoomServerLeaveDedupe` ile tek uçuş
+- **SSE:** Tüm oda alias'larında `forceRelease`; keşif-only `connect` stale live handler'ları temizler; SSE key upgrade `forceRelease`
+- **Leave:** `_ongoingLeaveRoomSession` birleştirme; erken `clearVoiceRoomLiveSession`; poll/refresh generation + `_leaveInFlight` guard
+- **Log:** `ROOM_LIFECYCLE` LEAVE_* / SSE_CANCEL; `STALE_CALLBACK_IGNORED`; `SEAT_REQUEST duplicate=`
+
 ## 1.0.743+796 (2026-10-08) — Leave sonrası SSE callback / ref dispose
 
 - **Kök neden:** `ChatRoomSseService.connect` yalnızca verilen handler'ları güncelliyordu; keşif hub yeniden bağlanınca eski oda live callback'leri (`onPresence`, `onRoomEvent`) bellekte kalıyordu → backend leave başarılı olsa bile eski oda SSE snapshot state'e yazılıyordu

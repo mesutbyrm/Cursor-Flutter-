@@ -7,6 +7,7 @@ import '../../data/datasources/chat_room_remote_datasource.dart';
 import '../providers/chat_room_providers.dart';
 import 'voice_room_leave_trace.dart';
 import 'voice_room_lifecycle_trace.dart';
+import 'voice_room_server_leave_dedupe.dart';
 
 /// Sunucuda tek bir sesli oda için tam çıkış: koltuk, live üyelik, presence (`leave=1`).
 Future<bool> leaveVoiceRoomOnServer(
@@ -34,19 +35,87 @@ Future<bool> leaveVoiceRoomOnServerWithClients({
   final key = roomKey.trim();
   if (key.isEmpty) return false;
   final uid = userId?.trim();
-  if (uid != null && uid.isNotEmpty) {
+
+  return VoiceRoomServerLeaveDedupe.run(
+    roomKey: key,
+    userId: uid,
+    operation: () => _leaveVoiceRoomOnServerOnce(
+      chatRemote: chatRemote,
+      liveRemote: liveRemote,
+      roomKey: key,
+      alternateKey: alternateKey,
+      userId: uid,
+      trace: trace,
+    ),
+  );
+}
+
+Future<bool> _leaveVoiceRoomOnServerOnce({
+  required ChatRoomRemoteDataSource chatRemote,
+  required LiveRoomRemoteDataSource liveRemote,
+  required String roomKey,
+  String? alternateKey,
+  String? userId,
+  required bool trace,
+}) async {
+  if (trace) {
+    VoiceRoomLifecycleTrace.lifecycle(
+      roomId: roomKey,
+      generation: -1,
+      active: false,
+      step: 'LEAVE_PRESENCE',
+    );
+    VoiceRoomLeaveTrace.log('presence leave started', {
+      'roomId': roomKey,
+      'alternateKey': alternateKey ?? '',
+    });
+  }
+  var presenceAccepted = false;
+  try {
+    presenceAccepted =
+        await chatRemote.leavePresence(roomKey, alternateKey: alternateKey);
     if (trace) {
+      VoiceRoomLeaveTrace.log('presence leave response', {
+        'accepted': presenceAccepted,
+      });
+    }
+  } on ApiException catch (e) {
+    if (trace) {
+      VoiceRoomLeaveTrace.log('presence leave response', {
+        'accepted': false,
+        'httpStatus': e.statusCode ?? 0,
+        'body': e.message,
+      });
+    }
+  } catch (e) {
+    if (trace) {
+      VoiceRoomLeaveTrace.log('presence leave response', {
+        'accepted': false,
+        'error': e.toString(),
+      });
+    }
+  }
+
+  if (userId != null && userId.isNotEmpty && !presenceAccepted) {
+    if (trace) {
+      VoiceRoomLifecycleTrace.lifecycle(
+        roomId: roomKey,
+        generation: -1,
+        active: false,
+        step: 'LEAVE_SEAT',
+      );
       VoiceRoomLeaveTrace.log('seat leave started', {
-        'roomId': key,
-        'userId': uid,
+        'roomId': roomKey,
+        'userId': userId,
         'alternateKey': alternateKey ?? '',
+        'reason': 'presence_not_accepted',
       });
     }
     try {
       await chatRemote.clearSeat(
-        roomKey: key,
+        roomKey: roomKey,
         alternateKey: alternateKey,
-        userId: uid,
+        userId: userId,
       );
       if (trace) VoiceRoomLeaveTrace.log('seat leave response', {'ok': true});
     } on ApiException catch (e) {
@@ -57,14 +126,14 @@ Future<bool> leaveVoiceRoomOnServerWithClients({
           'body': e.message,
           'note': e.statusCode == 409 ? 'already_clear_conflict' : null,
         });
-        if (e.statusCode == 409) {
-          VoiceRoomLifecycleTrace.seatRequest(
-            action: 'clearSeat',
-            roomId: key,
-            httpStatus: 409,
-            detail: e.message,
-          );
-        }
+        VoiceRoomLifecycleTrace.seatRequest(
+          action: 'clearSeat',
+          roomId: roomKey,
+          userId: userId,
+          httpStatus: e.statusCode,
+          detail: e.message,
+          duplicate: e.statusCode == 409,
+        );
       }
     } catch (e) {
       if (trace) {
@@ -75,12 +144,13 @@ Future<bool> leaveVoiceRoomOnServerWithClients({
       }
     }
   }
+
   if (trace) {
-    VoiceRoomLeaveTrace.log('live leave-room started', {'roomId': key});
+    VoiceRoomLeaveTrace.log('live leave-room started', {'roomId': roomKey});
   }
   try {
     await liveRemote
-        .leaveRoom(roomId: key, roomType: 'voice')
+        .leaveRoom(roomId: roomKey, roomType: 'voice')
         .timeout(const Duration(seconds: 4));
     if (trace) VoiceRoomLeaveTrace.log('live leave-room response', {'ok': true});
   } on ApiException catch (e) {
@@ -99,37 +169,6 @@ Future<bool> leaveVoiceRoomOnServerWithClients({
       });
     }
   }
-  if (trace) {
-    VoiceRoomLeaveTrace.log('presence leave started', {
-      'roomId': key,
-      'alternateKey': alternateKey ?? '',
-    });
-  }
-  try {
-    final accepted =
-        await chatRemote.leavePresence(key, alternateKey: alternateKey);
-    if (trace) {
-      VoiceRoomLeaveTrace.log('presence leave response', {
-        'accepted': accepted,
-      });
-    }
-    return accepted;
-  } on ApiException catch (e) {
-    if (trace) {
-      VoiceRoomLeaveTrace.log('presence leave response', {
-        'accepted': false,
-        'httpStatus': e.statusCode ?? 0,
-        'body': e.message,
-      });
-    }
-    return false;
-  } catch (e) {
-    if (trace) {
-      VoiceRoomLeaveTrace.log('presence leave response', {
-        'accepted': false,
-        'error': e.toString(),
-      });
-    }
-    return false;
-  }
+
+  return presenceAccepted;
 }

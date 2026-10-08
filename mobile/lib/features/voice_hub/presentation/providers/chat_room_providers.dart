@@ -545,6 +545,7 @@ class VoiceRoomLiveController
   var _sessionActive = false;
   var _entryBegun = false;
   var _leaveInFlight = false;
+  Future<void>? _ongoingLeaveRoomSession;
   final RoomLeaveCoordinator _leaveCoordinator = RoomLeaveCoordinator();
   var _autoSeatAttempted = false;
   /// Odaya girince eski giriş/çıkış mesajları duyurulmasın.
@@ -750,6 +751,37 @@ class VoiceRoomLiveController
     return accepted;
   }
 
+  /// Tüm bilinen oda anahtarları için SSE lease'lerini kapat (slug/cuid çift bağlantı).
+  void _forceReleaseAllVoiceRoomSseLeases(String primaryKey) {
+    final keys = <String>{
+      primaryKey.trim(),
+      _sseAttachedRoomKey?.trim() ?? '',
+      _canonicalRoomKey.trim(),
+      _presenceApiKey.trim(),
+      _roomKey.trim(),
+    };
+    for (final alias in _roomKeyAliases) {
+      keys.add(alias.trim());
+    }
+    keys.removeWhere((k) => k.isEmpty);
+    final hub = _sseHubRef;
+    for (final k in keys) {
+      if (hub != null) {
+        hub.forceReleaseVoiceRoom(k);
+      } else {
+        try {
+          ref.read(sseConnectionHubProvider).forceReleaseVoiceRoom(k);
+        } catch (_) {}
+      }
+      VoiceRoomLifecycleTrace.lifecycle(
+        roomId: k,
+        generation: _liveSessionGeneration,
+        active: false,
+        step: 'SSE_CANCEL',
+      );
+    }
+  }
+
   /// Leave başında SSE'yi hemen kes — geç gelen olaylar state yazmasın.
   void _tearDownLiveSseImmediately(String releaseKey) {
     _sseStarted = false;
@@ -761,14 +793,7 @@ class VoiceRoomLiveController
       ref.read(voiceRoomActiveSseConnectedProvider.notifier).state = false;
       ref.read(voiceRoomGiftRealtimeProvider).setSseActive(false);
     } catch (_) {}
-    final hub = _sseHubRef;
-    if (hub != null) {
-      hub.forceReleaseVoiceRoom(releaseKey);
-    } else {
-      try {
-        ref.read(sseConnectionHubProvider).forceReleaseVoiceRoom(releaseKey);
-      } catch (_) {}
-    }
+    _forceReleaseAllVoiceRoomSseLeases(releaseKey);
     VoiceRoomLifecycleTrace.lifecycle(
       roomId: releaseKey,
       generation: _liveSessionGeneration,
@@ -1264,11 +1289,16 @@ class VoiceRoomLiveController
     bool awaitBackend = true,
     bool force = false,
   }) async {
+    if (_ongoingLeaveRoomSession != null) {
+      if (!force) {
+        await _ongoingLeaveRoomSession;
+        return;
+      }
+      await _ongoingLeaveRoomSession;
+    }
     if (_leaveInFlight || _leaveCoordinator.isLeaving) {
-      if (force) {
-        _leaveCoordinator.reset(force: true);
-        _leaveInFlight = false;
-      } else {
+      if (!force) {
+        await _ongoingLeaveRoomSession ?? Future<void>.value();
         return;
       }
     }
@@ -1278,6 +1308,10 @@ class VoiceRoomLiveController
         state.sseConnected ||
         state.selfInRoom;
     if (!force && !_sessionActive && !stillConnected) return;
+
+    final leaveCompleter = Completer<void>();
+    _ongoingLeaveRoomSession = leaveCompleter.future;
+
     _leaveInFlight = true;
     _sessionActive = false;
     _entryBegun = false;
@@ -1305,6 +1339,15 @@ class VoiceRoomLiveController
     final sseReleaseKey = _sseReleaseKey;
 
     VoiceEventLog.leaveStart(roomId: roomKey);
+    VoiceRoomLifecycleTrace.lifecycle(
+      roomId: roomKey,
+      generation: _liveSessionGeneration,
+      active: false,
+      step: 'LEAVE_START',
+    );
+    try {
+      clearVoiceRoomLiveSession(ref, _presenceApiKey);
+    } catch (_) {}
     ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
           VoiceSessionPhase.leaving,
         );
@@ -1317,13 +1360,20 @@ class VoiceRoomLiveController
       source: source,
     );
 
-    await _leaveCoordinator.leave(
+    try {
+      await _leaveCoordinator.leave(
       roomId: roomKey,
       source: source,
       steps: [
         () async {
           _postVoiceSessionEndSummary(endedLabel: 'Odadan ayrıldınız');
           _cancelSessionTimers();
+          VoiceRoomLifecycleTrace.lifecycle(
+            roomId: roomKey,
+            generation: _liveSessionGeneration,
+            active: false,
+            step: 'POLLING_CANCEL',
+          );
           _tearDownLiveSseImmediately(sseReleaseKey);
           _presenceJoined = false;
           _presenceHeartbeat?.cancel();
@@ -1336,6 +1386,12 @@ class VoiceRoomLiveController
           ref.read(voiceRoomAudioCoordinatorProvider).setHeadphonesOn(false);
         },
         () async {
+          VoiceRoomLifecycleTrace.lifecycle(
+            roomId: roomKey,
+            generation: _liveSessionGeneration,
+            active: false,
+            step: 'LEAVE_SERVER',
+          );
           VoiceRoomLeaveTrace.log('backend leave started');
           var cleared = false;
           try {
@@ -1363,6 +1419,12 @@ class VoiceRoomLiveController
           state = state.copyWith(selfInRoom: false);
         },
         () async {
+          VoiceRoomLifecycleTrace.lifecycle(
+            roomId: roomKey,
+            generation: _liveSessionGeneration,
+            active: false,
+            step: 'TRTC_EXIT',
+          );
           VoiceRoomLeaveTrace.log('trtc exit started');
           ref.read(roomMusicServiceProvider).bindRoom(null);
           ref.read(voiceRoomAudioCoordinatorProvider).setReconnectSuspended(true);
@@ -1407,6 +1469,12 @@ class VoiceRoomLiveController
             clearHubOnlineCount: true,
           );
           ref.read(voiceRoomActiveSseConnectedProvider.notifier).state = false;
+          VoiceRoomLifecycleTrace.lifecycle(
+            roomId: roomKey,
+            generation: _liveSessionGeneration,
+            active: false,
+            step: 'STATE_CLEAR',
+          );
           VoiceRoomLeaveTrace.log('local state cleared');
         },
         () async {
@@ -1415,6 +1483,12 @@ class VoiceRoomLiveController
           }
           VoiceRoomLeaveTrace.log('SSE disposed');
           _poll?.cancel();
+          VoiceRoomLifecycleTrace.lifecycle(
+            roomId: roomKey,
+            generation: _liveSessionGeneration,
+            active: false,
+            step: 'POLLING_CANCEL',
+          );
           VoiceRoomLeaveTrace.log('polling disposed');
           ref.read(voiceRoomGiftRealtimeProvider).stop();
           ref.read(voiceRoomGiftRealtimeProvider).setSseActive(false);
@@ -1456,6 +1530,12 @@ class VoiceRoomLiveController
         },
         () async {
           VoiceEventLog.leaveSuccess(roomId: roomKey);
+          VoiceRoomLifecycleTrace.lifecycle(
+            roomId: roomKey,
+            generation: _liveSessionGeneration,
+            active: false,
+            step: 'LEAVE_COMPLETE',
+          );
           unawaited(_refreshDiscoverCountAfterLeave(roomKey));
           unawaited(
             ref.read(voiceRoomsListNotifierProvider.notifier).refresh(),
@@ -1466,8 +1546,15 @@ class VoiceRoomLiveController
         },
       ],
     );
-
-    _leaveInFlight = false;
+    } finally {
+      _leaveInFlight = false;
+      if (!leaveCompleter.isCompleted) {
+        leaveCompleter.complete();
+      }
+      if (identical(_ongoingLeaveRoomSession, leaveCompleter.future)) {
+        _ongoingLeaveRoomSession = null;
+      }
+    }
   }
 
   /// Müzik PiP sonrası aynı odaya dönüş — oturumu yeniden başlat.
@@ -1965,8 +2052,10 @@ class VoiceRoomLiveController
     final sse = sseConnected ?? state.sseConnected;
     // SSE tek realtime kanalı — bağlıyken presence/mesaj poll yok.
     if (sse) return;
+    final pollGeneration = _liveSessionGeneration;
     _poll = Timer.periodic(const Duration(seconds: 8), (_) {
-      if (_pollPaused) return;
+      if (_pollPaused || !_sessionActive || _leaveInFlight) return;
+      if (pollGeneration != _liveSessionGeneration) return;
       _pollTick++;
       final djActive = musicActive ??
           (state.dj.playing || state.dj.nowPlaying != null);
@@ -2045,6 +2134,8 @@ class VoiceRoomLiveController
     bool includeDj = true,
     bool skipPresenceAndMessages = false,
   }) async {
+    if (!_sessionActive || _leaveInFlight) return;
+    final refreshGeneration = _liveSessionGeneration;
     final room = _roomMeta;
     final remote = ref.read(chatRoomRemoteProvider);
     final user = ref.read(authControllerProvider).valueOrNull;
@@ -2234,6 +2325,11 @@ class VoiceRoomLiveController
         final ui = ref.read(voiceRoomUiProvider);
         final sig = _djPlaybackSignature(dj, muted: ui.effectiveMusicMuted);
         playDjInBackground = sig != _lastDjPlaybackSignature;
+      }
+      if (refreshGeneration != _liveSessionGeneration ||
+          !_sessionActive ||
+          _leaveInFlight) {
+        return;
       }
       final previousMessages = state.messages;
       final messages =

@@ -2488,11 +2488,23 @@ class ChatRoomRemoteDataSource {
     String? alternateKey,
     String? userId,
   }) async {
-    await _withRoomKeyFallback(
-      roomKey,
-      alternateKey,
-      (key) => _patchSeat(key, seatIndex: -1, targetUserId: userId),
-    );
+    try {
+      await _withRoomKeyFallback(
+        roomKey,
+        alternateKey,
+        (key) => _patchSeat(key, seatIndex: -1, targetUserId: userId),
+      );
+    } on ApiException catch (e) {
+      final alt = alternateKey?.trim();
+      if (e.statusCode == 409 &&
+          alt != null &&
+          alt.isNotEmpty &&
+          alt != roomKey.trim()) {
+        await _patchSeat(alt, seatIndex: -1, targetUserId: userId);
+        return;
+      }
+      rethrow;
+    }
   }
 
   /// Koltuk değiştir — backend aynı kullanıcının koltuğunu günceller.

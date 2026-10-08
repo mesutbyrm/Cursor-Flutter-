@@ -34,6 +34,14 @@ abstract final class VoiceRoomLifecycleTrace {
       if (generation != null) 'generation': generation,
       if (boundGeneration != null) 'boundGeneration': boundGeneration,
     });
+    if (!accepted) {
+      VoiceRoomDebugLog.log('ROOM_CALLBACK', {
+        'event': 'STALE_CALLBACK_IGNORED',
+        'type': type,
+        'callbackRoomId': callbackRoomId,
+        'activeRoomId': activeRoomId ?? '',
+      });
+    }
   }
 
   static void seatRequest({
@@ -43,6 +51,8 @@ abstract final class VoiceRoomLifecycleTrace {
     int? generation,
     int? httpStatus,
     String? detail,
+    bool? duplicate,
+    String? userId,
   }) {
     VoiceRoomDebugLog.log('SEAT_REQUEST', {
       'action': action,
@@ -51,6 +61,8 @@ abstract final class VoiceRoomLifecycleTrace {
       if (generation != null) 'generation': generation,
       if (httpStatus != null) 'httpStatus': httpStatus,
       if (detail != null) 'detail': detail,
+      if (duplicate != null) 'duplicate': duplicate,
+      if (userId != null && userId.isNotEmpty) 'userId': userId,
     });
   }
 }
