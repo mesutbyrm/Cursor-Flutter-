@@ -621,6 +621,14 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
   }
 
   Future<String?> clearUserSeat({required String userId}) async {
+    if (_leaveInFlight) {
+      VoiceRoomLifecycleTrace.seatRequest(
+        action: 'clearUserSeat.skip_leave_in_flight',
+        roomId: _roomKey,
+        generation: _liveSessionGeneration,
+      );
+      return null;
+    }
     final prev = [
       for (final p in _presenceCopy())
         if (p.id == userId)

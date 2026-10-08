@@ -2460,13 +2460,27 @@ class ChatRoomRemoteDataSource {
     String? targetUserId,
   }) async {
     final uid = targetUserId?.trim();
-    await _dio.safePatch<dynamic>(
-      seatsPath(key),
-      data: {
-        'seatIndex': seatIndex,
-        if (uid != null && uid.isNotEmpty) 'targetUserId': uid,
-      },
-    );
+    try {
+      await _dio.safePatch<dynamic>(
+        seatsPath(key),
+        data: {
+          'seatIndex': seatIndex,
+          if (uid != null && uid.isNotEmpty) 'targetUserId': uid,
+        },
+      );
+    } on ApiException catch (e) {
+      if (e.statusCode == 409) {
+        VoiceRoomDebugLog.log('SEAT_REQUEST', {
+          'action': seatIndex < 0 ? 'clear' : 'patch',
+          'roomId': key,
+          'seatId': seatIndex,
+          'httpStatus': 409,
+          'detail': e.message,
+          if (uid != null && uid.isNotEmpty) 'targetUserId': uid,
+        });
+      }
+      rethrow;
+    }
   }
 
   Future<void> clearSeat({

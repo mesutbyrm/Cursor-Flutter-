@@ -184,6 +184,12 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
   }
 
   void _handleRoomEvent(Map<String, dynamic> payload) {
+    if (!_acceptRoomLifecycleCallback(
+      type: 'room_event',
+      callbackRoomId: _roomKey,
+    )) {
+      return;
+    }
     if (!_acceptSseEvent(payload)) return;
     _markSseActivity();
     final event = (payload['event'] ?? payload['type'] ?? '')
@@ -686,6 +692,7 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     _seatRefreshDebounce?.cancel();
     _seatRefreshDebounce = Timer(const Duration(milliseconds: 300), () {
       if (_shouldPauseSeatSyncForPk()) return;
+      if (!_sessionActive || _leaveInFlight) return;
       unawaited(_refreshSeatsFromBackend());
     });
   }
@@ -699,13 +706,17 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
   }
 
   Future<void> _refreshSeatsFromBackend() async {
-    if (_roomKey.isEmpty) return;
+    if (_roomKey.isEmpty || !_sessionActive || _leaveInFlight) return;
+    final gen = _liveSessionGeneration;
     try {
       final seats = await ref.read(chatRoomRemoteProvider).fetchSeats(
             _roomKey,
             alternateKey: _musicAlternateKey,
             targetSeatCount: state.roomSeatCount ?? _roomMeta.seatCount,
           );
+      if (gen != _liveSessionGeneration || !_sessionActive || _leaveInFlight) {
+        return;
+      }
       final hadOccupied =
           state.seatSlots.any((s) => (s.userId?.trim().isNotEmpty ?? false));
       final incomingOccupied =

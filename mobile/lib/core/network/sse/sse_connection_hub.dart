@@ -62,6 +62,7 @@ class SseConnectionHub {
     if (lease == null) return;
     lease.refCount--;
     if (lease.refCount <= 0) {
+      lease.service.clearLiveEventHandlers();
       unawaited(lease.service.disconnect());
       _voiceRooms.remove(id);
       final rid = lease.diagResourceId;
@@ -82,6 +83,7 @@ class SseConnectionHub {
     final lease = _voiceRooms[id];
     if (lease == null) return;
     lease.refCount = 0;
+    lease.service.clearLiveEventHandlers();
     unawaited(lease.service.disconnect());
     _voiceRooms.remove(id);
     final rid = lease.diagResourceId;

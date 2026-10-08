@@ -54,6 +54,7 @@ import '../../domain/pk/pk_battle_remote_models.dart';
 import '../../domain/voice_room_background_catalog.dart';
 import '../../domain/voice_room_background_policy.dart';
 import '../../domain/pk/pk_opponent_room_filter.dart';
+import '../../../../core/network/sse/sse_connection_hub.dart';
 import '../../../../core/network/sse/sse_hub_provider.dart';
 import '../../data/youtube_music_search_cache.dart';
 import '../../../live/presentation/providers/live_pk_invite_signal_provider.dart';
@@ -124,6 +125,7 @@ import '../utils/voice_room_presence_self_sync.dart';
 import '../utils/voice_room_presence_persistence.dart';
 import '../utils/voice_room_server_leave.dart';
 import '../utils/voice_room_leave_trace.dart';
+import '../utils/voice_room_lifecycle_trace.dart';
 import '../utils/voice_room_local_audio_publish.dart';
 import '../utils/voice_room_presence_tombstone.dart';
 import '../services/voice_room_music_control_delegate.dart';
@@ -470,6 +472,9 @@ class VoiceRoomLiveController
   /// build sırasında bir kez yakalanır.
   ChatRoomRemoteDataSource? _presenceRemoteRef;
   LiveRoomRemoteDataSource? _liveRoomRemoteRef;
+  SseConnectionHub? _sseHubRef;
+  /// [_startSse] bağlandığında yakalanır; eski SSE geri çağrıları elenir.
+  int _sseBoundGeneration = 0;
 
   /// `selfInRoom` — tek bir eksik sunucu anlık görüntüsünde düşürülmez.
   final _selfPresenceTracker = SelfPresenceTracker();
@@ -688,15 +693,89 @@ class VoiceRoomLiveController
   /// yazabiliyordu.
   bool _isSseEventForAttachedRoom(String eventRoomKey) {
     final attached = _sseAttachedRoomKey?.trim() ?? '';
-    final active = ref.read(voiceRoomActiveLiveKeyProvider)?.trim();
+    String? active;
+    try {
+      active = ref.read(voiceRoomActiveLiveKeyProvider)?.trim();
+    } catch (_) {
+      active = null;
+    }
     return voiceRoomAcceptsAttachedSseEvent(
       sessionActive: _sessionActive,
+      leaveInFlight: _leaveInFlight,
       attachedRoomKey: attached,
       eventRoomKey: eventRoomKey,
       activeLiveKey: active,
       presenceApiKey: _presenceApiKey,
       alternateRoomId: _musicAlternateKey,
     );
+  }
+
+  /// SSE / presence / seat geri çağrıları — dispose veya eski nesil/state yazmasın.
+  bool _acceptRoomLifecycleCallback({
+    required String type,
+    required String callbackRoomId,
+    int? boundGeneration,
+  }) {
+    final gen = _liveSessionGeneration;
+    final genOk =
+        boundGeneration == null || boundGeneration == gen;
+    final sessionOk = _sessionActive && !_leaveInFlight && _sseStarted;
+    String? activeKey;
+    try {
+      activeKey = ref.read(voiceRoomActiveLiveKeyProvider)?.trim();
+    } catch (_) {
+      activeKey = null;
+    }
+    var roomOk = true;
+    if (activeKey != null &&
+        activeKey.isNotEmpty &&
+        callbackRoomId.trim().isNotEmpty) {
+      roomOk = roomEventMatchesActiveRoom(
+        {'roomId': callbackRoomId.trim()},
+        activeKey,
+        alternateRoomId: _musicAlternateKey,
+        extraAlternateRoomIds: [_roomKey, _presenceApiKey],
+      );
+    }
+    final accepted = sessionOk && genOk && roomOk;
+    VoiceRoomLifecycleTrace.callback(
+      type: type,
+      callbackRoomId: callbackRoomId,
+      activeRoomId: activeKey,
+      accepted: accepted,
+      generation: gen,
+      boundGeneration: boundGeneration,
+      disposed: !sessionOk,
+    );
+    return accepted;
+  }
+
+  /// Leave başında SSE'yi hemen kes — geç gelen olaylar state yazmasın.
+  void _tearDownLiveSseImmediately(String releaseKey) {
+    _sseStarted = false;
+    _sseAttachedRoomKey = null;
+    _seatRefreshDebounce?.cancel();
+    _sseEventDedupe.clear();
+    state = state.copyWith(sseConnected: false);
+    try {
+      ref.read(voiceRoomActiveSseConnectedProvider.notifier).state = false;
+      ref.read(voiceRoomGiftRealtimeProvider).setSseActive(false);
+    } catch (_) {}
+    final hub = _sseHubRef;
+    if (hub != null) {
+      hub.forceReleaseVoiceRoom(releaseKey);
+    } else {
+      try {
+        ref.read(sseConnectionHubProvider).forceReleaseVoiceRoom(releaseKey);
+      } catch (_) {}
+    }
+    VoiceRoomLifecycleTrace.lifecycle(
+      roomId: releaseKey,
+      generation: _liveSessionGeneration,
+      active: false,
+      step: 'sse torn down',
+    );
+    VoiceRoomLeaveTrace.log('SSE disposed (early)');
   }
 
   /// SSE aboneliğinin bağlı olduğu oda anahtarı (release için).
@@ -856,6 +935,7 @@ class VoiceRoomLiveController
     // Çıkış yolu dispose sonrasına sarkabildiği için istemci burada yakalanır.
     _presenceRemoteRef = ref.read(chatRoomRemoteProvider);
     _liveRoomRemoteRef = ref.read(liveRoomRemoteProvider);
+    _sseHubRef = ref.read(sseConnectionHubProvider);
     ref.listen(staffAccessProvider, (prev, next) {
       if (!state.selfInRoom) return;
       final wasPrivileged =
@@ -924,7 +1004,16 @@ class VoiceRoomLiveController
         unawaited(_leaveVoiceSession());
         unawaited(_leavePresenceWithSeatClear(force: true));
         unawaited(_stopTyping());
-        ref.read(sseConnectionHubProvider).forceReleaseVoiceRoom(_sseReleaseKey);
+        final cachedHub = _sseHubRef;
+        if (cachedHub != null) {
+          cachedHub.forceReleaseVoiceRoom(_sseReleaseKey);
+        } else {
+          try {
+            ref
+                .read(sseConnectionHubProvider)
+                .forceReleaseVoiceRoom(_sseReleaseKey);
+          } catch (_) {}
+        }
         ref.read(voiceRoomGiftRealtimeProvider).stop();
         ref.read(pkBattleRemoteProvider.notifier).clear();
         unawaited(() async {
@@ -1235,6 +1324,7 @@ class VoiceRoomLiveController
         () async {
           _postVoiceSessionEndSummary(endedLabel: 'Odadan ayrıldınız');
           _cancelSessionTimers();
+          _tearDownLiveSseImmediately(sseReleaseKey);
           _presenceJoined = false;
           _presenceHeartbeat?.cancel();
           _presenceHeartbeat = null;
@@ -1320,7 +1410,9 @@ class VoiceRoomLiveController
           VoiceRoomLeaveTrace.log('local state cleared');
         },
         () async {
-          ref.read(sseConnectionHubProvider).forceReleaseVoiceRoom(sseReleaseKey);
+          if (_sseStarted || _sseAttachedRoomKey != null) {
+            _tearDownLiveSseImmediately(sseReleaseKey);
+          }
           VoiceRoomLeaveTrace.log('SSE disposed');
           _poll?.cancel();
           VoiceRoomLeaveTrace.log('polling disposed');

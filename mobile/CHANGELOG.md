@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.743+796 (2026-10-08) — Leave sonrası SSE callback / ref dispose
+
+- **Kök neden:** `ChatRoomSseService.connect` yalnızca verilen handler'ları güncelliyordu; keşif hub yeniden bağlanınca eski oda live callback'leri (`onPresence`, `onRoomEvent`) bellekte kalıyordu → backend leave başarılı olsa bile eski oda SSE snapshot state'e yazılıyordu
+- **SSE:** `disconnect` / `forceRelease` → `clearLiveEventHandlers()`; leave adım 1'de erken `_tearDownLiveSseImmediately`
+- **Guard:** `_liveSessionGeneration` + `_acceptRoomLifecycleCallback` (`ROOM_CALLBACK`); presence merge / seat refresh / room_event leave sırasında no-op
+- **409:** `PATCH /seats` çakışması loglanır (`SEAT_REQUEST`); leave pipeline `clearSeat` 409 = zaten boş; `clearUserSeat` leave sırasında atlanır
+- **UI:** RTC dispose'da notifier önce yakalanır; listener'larda `mounted` guard
+
 ## 1.0.742+795 (2026-10-07) — Oda çıkışı: presence + koltuk + heartbeat yarışı
 
 - **Kök neden:** Çıkışta TRTC önce kapanıyordu; heartbeat timer iptal edilse bile uçuştaki tick veya `finally` içindeki resync, sunucuda presence/koltuk yeniden yazıyordu. `clearSeat`/`leavePresence` bazen farklı oda anahtarları (route slug vs canonical cuid) ile gidiyordu; `presence leave` kabul edilmeden kalıcı kayıt siliniyordu (dispose’da `ref.read` ile leave hiç gitmiyordu).

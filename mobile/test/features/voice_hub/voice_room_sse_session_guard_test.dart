@@ -2,6 +2,18 @@ import 'package:canlifal_social/features/voice_hub/domain/voice_room_sse_session
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('rejects events when leave in flight', () {
+    expect(
+      voiceRoomAcceptsAttachedSseEvent(
+        sessionActive: true,
+        leaveInFlight: true,
+        attachedRoomKey: 'room-a',
+        eventRoomKey: 'room-a',
+      ),
+      isFalse,
+    );
+  });
+
   test('rejects events when session inactive', () {
     expect(
       voiceRoomAcceptsAttachedSseEvent(

@@ -207,6 +207,17 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
     List<ChatRoomPresence> incoming, {
     required String source,
   }) {
+    if (!_sessionActive || _leaveInFlight) {
+      VoiceRoomLifecycleTrace.callback(
+        type: 'presence.merge',
+        callbackRoomId: _roomKey,
+        activeRoomId: null,
+        accepted: false,
+        generation: _liveSessionGeneration,
+        disposed: true,
+      );
+      return List<ChatRoomPresence>.from(state.presence);
+    }
     incoming = _presenceTombstone.filter(incoming);
     incoming = _filterSelfWhenNotJoined(incoming);
     final previous = List<ChatRoomPresence>.from(state.presence);

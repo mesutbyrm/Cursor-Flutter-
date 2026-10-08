@@ -6,6 +6,7 @@ import '../../../trtc/presentation/providers/trtc_providers.dart';
 import '../../data/datasources/chat_room_remote_datasource.dart';
 import '../providers/chat_room_providers.dart';
 import 'voice_room_leave_trace.dart';
+import 'voice_room_lifecycle_trace.dart';
 
 /// Sunucuda tek bir sesli oda için tam çıkış: koltuk, live üyelik, presence (`leave=1`).
 Future<bool> leaveVoiceRoomOnServer(
@@ -51,10 +52,19 @@ Future<bool> leaveVoiceRoomOnServerWithClients({
     } on ApiException catch (e) {
       if (trace) {
         VoiceRoomLeaveTrace.log('seat leave response', {
-          'ok': false,
+          'ok': e.statusCode == 409,
           'httpStatus': e.statusCode ?? 0,
           'body': e.message,
+          'note': e.statusCode == 409 ? 'already_clear_conflict' : null,
         });
+        if (e.statusCode == 409) {
+          VoiceRoomLifecycleTrace.seatRequest(
+            action: 'clearSeat',
+            roomId: key,
+            httpStatus: 409,
+            detail: e.message,
+          );
+        }
       }
     } catch (e) {
       if (trace) {

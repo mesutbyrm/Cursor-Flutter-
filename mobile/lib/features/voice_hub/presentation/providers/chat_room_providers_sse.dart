@@ -49,8 +49,21 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
       VoiceRoomDebugLog.log('sse.subscribe.skip', {'roomId': roomKey});
       return;
     }
+    _sse._sseBoundGeneration = _sse._liveSessionGeneration;
+    final boundGen = _sse._sseBoundGeneration;
+    bool acceptCallback(String type) => _sse._acceptRoomLifecycleCallback(
+          type: type,
+          callbackRoomId: roomKey,
+          boundGeneration: boundGen,
+        );
     _sse._sseStarted = true;
     _sse._sseAttachedRoomKey = roomKey;
+    VoiceRoomLifecycleTrace.lifecycle(
+      roomId: roomKey,
+      generation: boundGen,
+      active: true,
+      step: 'sse subscribe',
+    );
     final storage = ref.read(tokenStorageProvider);
     final hub = ref.read(sseConnectionHubProvider);
     hub.attachVoiceRoom(roomKey);
@@ -78,6 +91,7 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
           accessToken: storage.readAccess,
           refreshTokens: () => tryRefreshAccessToken(refreshDio, storage),
           onConnected: () {
+            if (!acceptCallback('sse.onConnected')) return;
             _sse._markSseActivity();
             GiftSyncLog.sseConnected(roomKey);
             final wasConnected = state.sseConnected;
@@ -208,6 +222,7 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             }
           },
           onPresence: (users) {
+            if (!acceptCallback('sse.presence')) return;
             if (!_sse._isSseEventForAttachedRoom(roomKey)) return;
             final merged = _sse._ensureSelfInPresenceList(
               _sse._mergePresenceStable(users, source: 'sse'),
@@ -254,14 +269,17 @@ mixin VoiceRoomSseMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String>
             }
           },
           onUserJoin: (payload) {
+            if (!acceptCallback('sse.userJoin')) return;
             if (!_sse._isSseEventForAttachedRoom(roomKey)) return;
             _sse._handleSseUserJoin(payload);
           },
           onUserLeave: (payload) {
+            if (!acceptCallback('sse.userLeave')) return;
             if (!_sse._isSseEventForAttachedRoom(roomKey)) return;
             _sse._handleSseUserLeave(payload);
           },
           onRoomEvent: (payload) {
+            if (!acceptCallback('sse.roomEvent')) return;
             if (!_sse._isSseEventForAttachedRoom(roomKey)) return;
             _sse._handleRoomEvent(payload);
           },

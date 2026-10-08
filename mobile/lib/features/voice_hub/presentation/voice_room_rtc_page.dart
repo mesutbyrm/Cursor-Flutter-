@@ -326,6 +326,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     ref.listenManual(
       voiceRoomLiveProvider(_liveRoomKey).select(voiceRoomDjPlaybackSignalsSlice),
       (prev, next) {
+        if (!mounted) return;
         _handleMusicAutoMute(prev, next);
       },
     );
@@ -353,6 +354,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     ref.listenManual(
       voiceRoomUiProvider.select((s) => s.autoOpenMic),
       (prev, next) {
+        if (!mounted) return;
         if (next && !(prev ?? false)) {
           unawaited(_maybeAutoOpenMic());
         }
@@ -364,6 +366,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         (s) => (s.headphonesOn, s.backgroundMusicEnabled),
       ),
       (prev, next) {
+        if (!mounted) return;
         if (prev == null) return;
         if (prev.$2 != next.$2) {
           unawaited(
@@ -381,6 +384,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     );
 
     ref.listenManual(authControllerProvider, (prev, next) {
+      if (!mounted) return;
       final wasGuest = prev?.valueOrNull == null;
       final nowUser = next.valueOrNull;
       if (wasGuest && nowUser != null && _loginError != null && !_audioReady) {
@@ -389,6 +393,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     });
 
     ref.listenManual(voiceRoomsProvider, (prev, next) {
+      if (!mounted) return;
       final synced = _roomSynced(next.valueOrNull);
       if (synced.apiRoomKey.isEmpty) return;
       final hadKey = _roomSynced(prev?.valueOrNull).apiRoomKey.isNotEmpty;
@@ -501,14 +506,21 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
   @override
   void dispose() {
+    VoiceRoomLiveController? leaveNotifier;
+    final leaveKey = _liveRoomKey;
+    if (!_leaveSessionStarted && leaveKey.isNotEmpty) {
+      try {
+        leaveNotifier = ref.read(voiceRoomLiveProvider(leaveKey).notifier);
+        _leaveSessionStarted = true;
+      } catch (_) {}
+    }
     _giftRealtimeStarted = false;
     _messageCtrl.dispose();
     _chatScrollCtrl.dispose();
     _messageFocus.dispose();
-    if (!_leaveSessionStarted && _liveRoomKey.isNotEmpty) {
+    if (leaveNotifier != null) {
       unawaited(
-        ref
-            .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
+        leaveNotifier
             .leaveRoomSession(
               source: 'rtc_dispose',
               awaitBackend: true,

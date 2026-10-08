@@ -8,13 +8,25 @@ bool voiceRoomAcceptsAttachedSseEvent({
   String? activeLiveKey,
   String? presenceApiKey,
   String? alternateRoomId,
+  bool leaveInFlight = false,
 }) {
-  if (!sessionActive) return false;
+  if (!sessionActive || leaveInFlight) return false;
   final attached = attachedRoomKey.trim();
   if (attached.isEmpty) return false;
 
   final eventKey = eventRoomKey.trim();
   final canonical = (presenceApiKey ?? activeLiveKey ?? attached).trim();
+  final active = activeLiveKey?.trim() ?? '';
+  if (active.isNotEmpty &&
+      eventKey.isNotEmpty &&
+      !roomEventMatchesActiveRoom(
+        {'roomId': eventKey},
+        active,
+        alternateRoomId: alternateRoomId,
+        extraAlternateRoomIds: [attached],
+      )) {
+    return false;
+  }
   if (eventKey.isEmpty) return true;
   if (canonical.isEmpty) {
     return attached == eventKey ||

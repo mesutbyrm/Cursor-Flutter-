@@ -67,6 +67,29 @@ class ChatRoomSseService extends BaseSseService {
         phase == SseConnectionPhase.connecting;
   }
 
+  void clearLiveEventHandlers() {
+    _onConnected = null;
+    _onMessage = null;
+    _onPresence = null;
+    _onUserJoin = null;
+    _onUserLeave = null;
+    _onDjUpdate = null;
+    _onSong = null;
+    _onSongQueue = null;
+    _onGift = null;
+    _onRoomUpdate = null;
+    _onModeration = null;
+    _onAnnouncement = null;
+    _onSystem = null;
+    _onFortuneRequest = null;
+    _onSpeakRequest = null;
+    _onPk = null;
+    _onPkRoom = null;
+    _onPkScore = null;
+    _onTyping = null;
+    _onRoomEvent = null;
+  }
+
   Future<void> connect({
     required String roomId,
     required Future<String?> Function() accessToken,
@@ -442,6 +465,7 @@ class ChatRoomSseService extends BaseSseService {
   @override
   Future<void> disconnect() async {
     _roomId = null;
+    clearLiveEventHandlers();
     await super.disconnect();
   }
 
