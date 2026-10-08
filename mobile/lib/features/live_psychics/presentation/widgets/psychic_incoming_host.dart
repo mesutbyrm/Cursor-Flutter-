@@ -338,22 +338,8 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
           _pollGate.noteSeen(req.sessionId);
           continue;
         }
-        final uid = ref.read(authControllerProvider).valueOrNull?.id;
-        if (!shouldPresentPsychicIncomingInvite(
-          authUserId: uid,
-          invite: req,
-          tellerProfileId: _tellerProfileId,
-          isFortuneTeller: _isFortuneTeller,
-        )) {
-          continue;
-        }
-        if (_isSessionAlreadyQueued(req.sessionId)) {
-          continue;
-        }
-        ref.read(psychicIncomingQueueProvider.notifier).enqueue(req);
-        PsychicInviteCoordinator.requestPresent(sessionId: req.sessionId);
+        _ingestIncomingRequest(req, PsychicIncomingRequestSource.poll);
       }
-<<<<<<< Updated upstream
       if (_mayPresentInvites()) {
         await _tryPresentNext();
       }
@@ -362,12 +348,6 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
       // async exception or keep the single-flight lock held.
     } finally {
       _pollingApi = false;
-=======
-      _ingestIncomingRequest(req, PsychicIncomingRequestSource.poll);
-    }
-    if (_mayPresentInvites()) {
-      await _tryPresentNext();
->>>>>>> Stashed changes
     }
   }
 
