@@ -4,21 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.744+797` |
-| Tarih (UTC) | 2026-10-08 21:14 |
-| Commit | [`70ec65edefab7118f03e669df1d3dc87714da5e3`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/70ec65edefab7118f03e669df1d3dc87714da5e3) |
-| İş akışı | [Run 37843319008](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37843319008) |
+| Sürüm | `1.0.745+798` |
+| Tarih (UTC) | 2026-10-08 23:22 |
+| Commit | [`227f353b3b0a64d56747dafd168c87a0708ebda3`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/227f353b3b0a64d56747dafd168c87a0708ebda3) |
+| İş akışı | [Run 37856785644](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37856785644) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.744+797 (2026-10-08) — Oda çıkışı: sunucu leave sırası + SSE alias + duplicate leave
+## 1.0.745+798 (2026-10-08) — P0: explicit voice room join (implicit provider bootstrap kaldırıldı)
 
-- **Kök neden (ek):** `DELETE presence?leave=1` öncesi `PATCH /seats` çift gidiyordu (409); slug/cuid çift SSE lease leave sonrası açık kalabiliyordu; eşzamanlı `leaveRoomSession` (dispose + UI) ikinci sunucu leave tetikliyordu; poll/refresh async yanıtları leave sonrası state yazabiliyordu
-- **Sunucu:** Önce `presence?leave=1` (koltuk + user_left); yalnızca kabul edilmezse `clearSeat`; `VoiceRoomServerLeaveDedupe` ile tek uçuş
-- **SSE:** Tüm oda alias'larında `forceRelease`; keşif-only `connect` stale live handler'ları temizler; SSE key upgrade `forceRelease`
-- **Leave:** `_ongoingLeaveRoomSession` birleştirme; erken `clearVoiceRoomLiveSession`; poll/refresh generation + `_leaveInFlight` guard
-- **Log:** `ROOM_LIFECYCLE` LEAVE_* / SSE_CANCEL; `STALE_CALLBACK_IGNORED`; `SEAT_REQUEST duplicate=`
+- **P0:** `voiceRoomLiveProvider.build()` artık `_beginRoomSession()` çağırmıyor; oturum yalnızca `joinRoomSession()` (oda RTC/Basic sayfası) ile başlar
+- **active key:** `prepareVoiceRoomSwitch` → `voiceRoomPendingLiveKeyProvider`; `registerVoiceRoomLiveSession` yalnızca presence.join başarısından sonra
+- **SSE/poll:** reconnect ve `_refreshImpl` artık yeni `presence.join` tetiklemez; `_startSse` / `_joinPresence` explicit session guard
+- **Log:** `JOIN_INTENT`, `JOIN_START`, `JOIN_SUCCESS`, `BLOCKED_IMPLICIT_JOIN`, `LEAVE_*`, `SSE_START`, `PRESENCE_JOIN`
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
