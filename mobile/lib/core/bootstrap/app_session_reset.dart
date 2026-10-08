@@ -11,6 +11,8 @@ abstract final class AppSessionReset {
     VideoCacheService.instance.disposeAllWarm();
     GiftCacheService.instance.clearMemory();
     CanlifalImageCache.trimIfNeeded();
-    TrtcRoomManager.destroyEngine();
+    if (TrtcRoomManager.isNativeEngineInitialized) {
+      TrtcRoomManager.destroyEngine();
+    }
   }
 }

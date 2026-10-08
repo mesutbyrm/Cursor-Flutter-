@@ -45,7 +45,7 @@ class _FakeLiveRemote extends LiveRoomRemoteDataSource {
 }
 
 void main() {
-  test('leaveVoiceRoomOnServer clears seat, live leave, then presence', () async {
+  test('leaveVoiceRoomOnServer presence first; clearSeat skipped when accepted', () async {
     final chat = _FakeChatRemote();
     final live = _FakeLiveRemote();
 
@@ -58,10 +58,38 @@ void main() {
     );
 
     expect(ok, isTrue);
-    expect(chat.clearSeatCalls, 1);
-    expect(live.leaveRoomCalls, 1);
     expect(chat.leavePresenceCalls, 1);
     expect(chat.lastLeaveKey, 'room-a');
     expect(chat.lastLeaveAlt, 'slug-a');
+    expect(chat.clearSeatCalls, 0);
+    expect(live.leaveRoomCalls, 1);
   });
+
+  test('leaveVoiceRoomOnServer clearSeat when presence not accepted', () async {
+    final chat = _PresenceRejectedChatRemote();
+    final live = _FakeLiveRemote();
+
+    final ok = await leaveVoiceRoomOnServerWithClients(
+      chatRemote: chat,
+      liveRemote: live,
+      roomKey: 'room-b',
+      alternateKey: 'slug-b',
+      userId: 'user-2',
+    );
+
+    expect(ok, isFalse);
+    expect(chat.leavePresenceCalls, 1);
+    expect(chat.clearSeatCalls, 1);
+    expect(live.leaveRoomCalls, 1);
+  });
+}
+
+class _PresenceRejectedChatRemote extends _FakeChatRemote {
+  @override
+  Future<bool> leavePresence(String roomKey, {String? alternateKey}) async {
+    leavePresenceCalls++;
+    lastLeaveKey = roomKey;
+    lastLeaveAlt = alternateKey;
+    return false;
+  }
 }

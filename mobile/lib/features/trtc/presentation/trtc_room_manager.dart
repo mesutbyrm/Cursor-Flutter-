@@ -31,6 +31,17 @@ class TrtcRoomManager {
   /// yöneticisinin enterRoom/exitRoom çağrıları birbirini beklemiyordu.
   static final _opGate = TrtcOperationGate();
 
+  /// `TRTCCloud.sharedInstance()` en az bir kez başarılı oldu mu (soğuk reset guard).
+  static var _nativeEngineInitialized = false;
+
+  static bool get isNativeEngineInitialized => _nativeEngineInitialized;
+
+  static Future<TRTCCloud> _acquireSharedCloud() async {
+    final cloud = await TRTCCloud.sharedInstance();
+    _nativeEngineInitialized = true;
+    return cloud;
+  }
+
   /// Native motoru şu an bu yönetici mi kullanıyor? Başka bir yönetici
   /// odadayken bu yöneticinin geç gelen leave/susturma çağrısı onun sesini
   /// kesmemeli ve onu odadan çıkarmamalı.
@@ -167,7 +178,7 @@ class TrtcRoomManager {
     final ok = await requestPermissions(video: true);
     if (!ok) throw StateError('Kamera izni gerekli');
 
-    _cloud ??= await TRTCCloud.sharedInstance();
+    _cloud ??= await _acquireSharedCloud();
     _device ??= _cloud!.getDeviceManager();
     _previewOnly = true;
     _isHost = true;
@@ -225,7 +236,7 @@ class TrtcRoomManager {
 
     try {
       _trtcLog('initialize', {'roomId': roomId});
-      await TRTCCloud.sharedInstance();
+      await _acquireSharedCloud();
     } catch (e) {
       throw StateError(
         'Tencent RTC bu cihazda başlatılamadı. Lütfen uygulamayı yeniden başlatın.',
@@ -264,7 +275,7 @@ class TrtcRoomManager {
     _previewOnly = false;
     _audioOnly = audioOnly;
 
-    _cloud ??= await TRTCCloud.sharedInstance();
+    _cloud ??= await _acquireSharedCloud();
     _device ??= _cloud!.getDeviceManager();
     // `forceSilenceNow` önceki çıkışta uzak sesi kapatmış olabilir: yeni
     // oturum duyabilsin.
@@ -1069,12 +1080,15 @@ class TrtcRoomManager {
   }
 
   static void destroyEngine() {
+    if (!_nativeEngineInitialized) return;
     try {
       TRTCCloud.destroySharedInstance();
     } catch (e) {
       if (kDebugMode) {
         debugPrint('TRTC destroy: $e');
       }
+    } finally {
+      _nativeEngineInitialized = false;
     }
   }
 }
