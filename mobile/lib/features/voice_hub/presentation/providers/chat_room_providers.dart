@@ -1298,7 +1298,7 @@ class VoiceRoomLiveController
     }
     if (_leaveInFlight || _leaveCoordinator.isLeaving) {
       if (!force) {
-        await _ongoingLeaveRoomSession ?? Future<void>.value();
+        await (_ongoingLeaveRoomSession ?? Future<void>.value());
         return;
       }
     }
