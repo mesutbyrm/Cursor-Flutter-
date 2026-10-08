@@ -28,6 +28,7 @@ abstract final class VoiceRoomDebugLog {
     'audio.trtc.enter_room',
     'ROOM JOIN',
     'ROOM LEAVE',
+    'ROOM_LEAVE',
     'SSE CONNECT',
     'SSE DISCONNECT',
     'SSE RECONNECT',

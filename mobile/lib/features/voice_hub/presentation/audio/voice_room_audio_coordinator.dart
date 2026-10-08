@@ -49,6 +49,7 @@ class VoiceRoomAudioCoordinator {
   /// Koltuk yokken TRTC mic publish engeli — aktif oda controller bağlar.
   void setMicPublishGate(bool Function()? gate) {
     _micPublishGate = gate;
+    _trtc.setLocalPublishGuard(gate);
   }
 
   void invalidatePendingMicEnable() {
@@ -87,7 +88,7 @@ class VoiceRoomAudioCoordinator {
     _reconnecting = true;
     // `_desiredMicOn` kullanıcı niyetini taşır (koltuktan inme / leave); TRTC
     // `micOn` geçici olarak true kalabildiği için yeniden bağlanmada mic açılmamalı.
-    final publishMic = _desiredMicOn;
+    final publishMic = _desiredMicOn && _mayPublishMic();
     onReconnecting?.call();
     VoiceRoomDebugLog.log('audio.trtc.reconnect.start', {
       'roomId': channel,
@@ -265,19 +266,38 @@ class VoiceRoomAudioCoordinator {
             });
             if (!_staffBypassVoiceApi) rethrow;
           }
+          if (!_mayPublishMic()) {
+            _desiredMicOn = false;
+            await _trtc.setMicEnabled(false);
+            return;
+          }
         }
         if (!_trtc.inChannel) {
+          if (!_mayPublishMic()) {
+            _desiredMicOn = false;
+            return;
+          }
           await _trtc.joinVoice(
             channel,
             publishMic: true,
             userId: _lastUserId,
           );
+          if (!_mayPublishMic()) {
+            _desiredMicOn = false;
+            await _trtc.setMicEnabled(false);
+            return;
+          }
           _engine = VoiceAudioEngineKind.trtc;
           _bindConnectionLostHandler();
         } else {
+          if (!_mayPublishMic()) {
+            _desiredMicOn = false;
+            await _trtc.setMicEnabled(false);
+            return;
+          }
           await _trtc.setMicEnabled(true);
         }
-        _desiredMicOn = true;
+        _desiredMicOn = _mayPublishMic();
         return;
       }
 

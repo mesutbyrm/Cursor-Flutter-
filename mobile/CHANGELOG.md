@@ -1,5 +1,21 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.742+795 (2026-10-07) — Oda çıkışı: presence + koltuk + heartbeat yarışı
+
+- **Kök neden:** Çıkışta TRTC önce kapanıyordu; heartbeat timer iptal edilse bile uçuştaki tick veya `finally` içindeki resync, sunucuda presence/koltuk yeniden yazıyordu. `clearSeat`/`leavePresence` bazen farklı oda anahtarları (route slug vs canonical cuid) ile gidiyordu; `presence leave` kabul edilmeden kalıcı kayıt siliniyordu (dispose’da `ref.read` ile leave hiç gitmiyordu).
+- **Sıra:** heartbeat/timer dur → `clearSeat` + live `leaveRoom` + `DELETE presence?leave=1` (retry + alternatif anahtar) → TRTC → SSE/polling → yerel state
+- **`[ROOM_LEAVE]`** release logcat: roomId, userId, seatId, seat/presence/live yanıtları (HTTP status + body)
+- Heartbeat: `_leaveInFlight` / `!_sessionActive` iken tick ve resync yok
+- Gerçek cihaz: odaya gir → koltuk → tam çıkış; A→B→C hızlı geçiş; owner çıkışı
+
+## 1.0.741+794 (2026-10-07) — TRTC mic publish: slot-koltuk + SDK guard
+
+- **Kök neden:** `selfOccupiesSeat` / `ensureSelfOnSeatForMic` stale `presence.seatIndex` ile koltukta sayılıyordu; `VoiceTrtcEngine.setAnchorPublishing(true)` coordinator gate’ini atlayarak `startLocalAudio` açıyordu
+- **`canPublishLocalAudio`:** `VoiceRoomLocalAudioPublish.evaluate` — oturum + kullanıcı + **yalnızca seatSlots** + mic niyeti
+- **SDK:** guard `VoiceTrtcEngine` + `TrtcRoomManager.setMicEnabled` / `setAnchorPublishing`; async sonrası yeniden kontrol
+- Mic toggle: otomatik boş koltuğa oturtma kaldırıldı — «Konuşmak için koltuğa oturun»
+- Gerçek cihaz: koltuksuz mic kapat-aç
+
 ## 1.0.740+793 (2026-10-07) — Koltuksuz mikrofon TRTC publish engeli
 
 - **Hata:** Koltuktan indikten sonra mic kapat-aç ile TRTC yeniden yayın yapıyordu; `canSpeak` (oda sahibi/admin) veya doğrudan `setMicEnabled(true)` koltuk kontrolünü atlıyordu
