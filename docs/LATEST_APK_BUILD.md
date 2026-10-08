@@ -4,21 +4,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.743+796` |
-| Tarih (UTC) | 2026-10-08 01:43 |
-| Commit | [`53b1d5b2d6b655c280383225feb770afd8c21bac`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/53b1d5b2d6b655c280383225feb770afd8c21bac) |
-| İş akışı | [Run 37712360431](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37712360431) |
+| Sürüm | `1.0.744+797` |
+| Tarih (UTC) | 2026-10-08 19:27 |
+| Commit | [`d86292838c25fead4f1dae949c1e8c529f8080cf`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/d86292838c25fead4f1dae949c1e8c529f8080cf) |
+| İş akışı | [Run 37829723559](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37829723559) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.743+796 (2026-10-08) — Leave sonrası SSE callback / ref dispose
+## 1.0.744+797 (2026-10-08) — Oda çıkışı: sunucu leave sırası + SSE alias + duplicate leave
 
-- **Kök neden:** `ChatRoomSseService.connect` yalnızca verilen handler'ları güncelliyordu; keşif hub yeniden bağlanınca eski oda live callback'leri (`onPresence`, `onRoomEvent`) bellekte kalıyordu → backend leave başarılı olsa bile eski oda SSE snapshot state'e yazılıyordu
-- **SSE:** `disconnect` / `forceRelease` → `clearLiveEventHandlers()`; leave adım 1'de erken `_tearDownLiveSseImmediately`
-- **Guard:** `_liveSessionGeneration` + `_acceptRoomLifecycleCallback` (`ROOM_CALLBACK`); presence merge / seat refresh / room_event leave sırasında no-op
-- **409:** `PATCH /seats` çakışması loglanır (`SEAT_REQUEST`); leave pipeline `clearSeat` 409 = zaten boş; `clearUserSeat` leave sırasında atlanır
-- **UI:** RTC dispose'da notifier önce yakalanır; listener'larda `mounted` guard
+- **Kök neden (ek):** `DELETE presence?leave=1` öncesi `PATCH /seats` çift gidiyordu (409); slug/cuid çift SSE lease leave sonrası açık kalabiliyordu; eşzamanlı `leaveRoomSession` (dispose + UI) ikinci sunucu leave tetikliyordu; poll/refresh async yanıtları leave sonrası state yazabiliyordu
+- **Sunucu:** Önce `presence?leave=1` (koltuk + user_left); yalnızca kabul edilmezse `clearSeat`; `VoiceRoomServerLeaveDedupe` ile tek uçuş
+- **SSE:** Tüm oda alias'larında `forceRelease`; keşif-only `connect` stale live handler'ları temizler; SSE key upgrade `forceRelease`
+- **Leave:** `_ongoingLeaveRoomSession` birleştirme; erken `clearVoiceRoomLiveSession`; poll/refresh generation + `_leaveInFlight` guard
+- **Log:** `ROOM_LIFECYCLE` LEAVE_* / SSE_CANCEL; `STALE_CALLBACK_IGNORED`; `SEAT_REQUEST duplicate=`
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
