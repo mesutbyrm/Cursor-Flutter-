@@ -154,6 +154,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   var _pkChatOpen = false;
   var _vipEntrancePlayed = false;
   var _giftRealtimeStarted = false;
+  /// Sayfa dispose/leave sonrası TRTC ve manuel listener'lar ref kullanmaz.
+  var _pageActive = true;
+  final List<ProviderSubscription<dynamic>> _roomListenerSubs = [];
+  StateController<Set<String>>? _trtcSpeakingIdsNotifier;
   /// Riverpod oturum anahtarı — metadata değişince provider dispose olmasın.
   String? _pinnedLiveRoomKey;
 
@@ -205,8 +209,31 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     });
   }
 
+  void _trackRoomListener(ProviderSubscription<dynamic> sub) {
+    _roomListenerSubs.add(sub);
+  }
+
+  void _detachTrtcPageHooks() {
+    _pageActive = false;
+    final audio = _audio;
+    if (audio != null) {
+      audio.onReconnecting = null;
+      audio.onReconnected = null;
+      audio.trtcManager.onUserVoiceVolume = null;
+    }
+    _trtcSpeakingIdsNotifier = null;
+  }
+
+  ProviderContainer? _providerContainerOrNull() {
+    try {
+      return ProviderScope.containerOf(context, listen: false);
+    } catch (_) {
+      return null;
+    }
+  }
+
   void _setupRoomListeners() {
-    ref.listenManual(
+    _trackRoomListener(ref.listenManual(
       voiceRoomLiveProvider(_liveRoomKey).select(voiceRoomExitSignalsSlice),
       (prev, next) {
         if (!mounted) return;
@@ -226,9 +253,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           );
         }
       },
-    );
+    ));
 
-    ref.listenManual(
+    _trackRoomListener(ref.listenManual(
       voiceRoomLiveProvider(_liveRoomKey).select((s) => s.error),
       (prev, next) {
         if (next != null && next != prev && mounted) {
@@ -236,9 +263,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).clearError();
         }
       },
-    );
+    ));
 
-    ref.listenManual(
+    _trackRoomListener(ref.listenManual(
       voiceRoomLiveProvider(_liveRoomKey).select((s) => s.openCommandsPanel),
       (prev, next) {
         if (!next || (prev ?? false) || !mounted) return;
@@ -253,9 +280,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           ),
         );
       },
-    );
+    ));
 
-    ref.listenManual(
+    _trackRoomListener(ref.listenManual(
       voiceRoomLiveProvider(_liveRoomKey).select(voiceRoomMusicSearchRequestSlice),
       (prev, next) {
         final q = next.query;
@@ -273,9 +300,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           ).whenComplete(() => _musicSearchOpen = false),
         );
       },
-    );
+    ));
 
-    ref.listenManual(
+    _trackRoomListener(ref.listenManual(
       voiceRoomLiveProvider(_liveRoomKey).select(voiceRoomModerationSignalsSlice),
       (prev, next) {
         if (!mounted) return;
@@ -321,17 +348,17 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           );
         }
       },
-    );
+    ));
 
-    ref.listenManual(
+    _trackRoomListener(ref.listenManual(
       voiceRoomLiveProvider(_liveRoomKey).select(voiceRoomDjPlaybackSignalsSlice),
       (prev, next) {
         if (!mounted) return;
         _handleMusicAutoMute(prev, next);
       },
-    );
+    ));
 
-    ref.listenManual(
+    _trackRoomListener(ref.listenManual(
       voiceRoomSeatSliceProvider(_liveRoomKey),
       (prev, next) {
         if (!_audioReady || !mounted) return;
@@ -349,9 +376,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           unawaited(_maybeAutoOpenMic());
         }
       },
-    );
+    ));
 
-    ref.listenManual(
+    _trackRoomListener(ref.listenManual(
       voiceRoomUiProvider.select((s) => s.autoOpenMic),
       (prev, next) {
         if (!mounted) return;
@@ -359,9 +386,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           unawaited(_maybeAutoOpenMic());
         }
       },
-    );
+    ));
 
-    ref.listenManual(
+    _trackRoomListener(ref.listenManual(
       voiceRoomUiProvider.select(
         (s) => (s.headphonesOn, s.backgroundMusicEnabled),
       ),
@@ -381,18 +408,18 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           _audio?.setHeadphonesOn(next.$1);
         }
       },
-    );
+    ));
 
-    ref.listenManual(authControllerProvider, (prev, next) {
+    _trackRoomListener(ref.listenManual(authControllerProvider, (prev, next) {
       if (!mounted) return;
       final wasGuest = prev?.valueOrNull == null;
       final nowUser = next.valueOrNull;
       if (wasGuest && nowUser != null && _loginError != null && !_audioReady) {
         unawaited(_joinAudioBackground());
       }
-    });
+    }));
 
-    ref.listenManual(voiceRoomsProvider, (prev, next) {
+    _trackRoomListener(ref.listenManual(voiceRoomsProvider, (prev, next) {
       if (!mounted) return;
       final synced = _roomSynced(next.valueOrNull);
       if (synced.apiRoomKey.isEmpty) return;
@@ -411,7 +438,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
               .syncSseRoomKeyFromCatalog();
         }
       }
-    });
+    }));
   }
 
   VoiceRoomPermissions _permsFromLive(VoiceRoomEntity room) {
@@ -506,11 +533,18 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
   @override
   void dispose() {
+    _detachTrtcPageHooks();
+    for (final sub in _roomListenerSubs) {
+      sub.close();
+    }
+    _roomListenerSubs.clear();
+
+    final container = _providerContainerOrNull();
     VoiceRoomLiveController? leaveNotifier;
     final leaveKey = _liveRoomKey;
-    if (!_leaveSessionStarted && leaveKey.isNotEmpty) {
+    if (!_leaveSessionStarted && leaveKey.isNotEmpty && container != null) {
       try {
-        leaveNotifier = ref.read(voiceRoomLiveProvider(leaveKey).notifier);
+        leaveNotifier = container.read(voiceRoomLiveProvider(leaveKey).notifier);
         _leaveSessionStarted = true;
       } catch (_) {}
     }
@@ -518,6 +552,13 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     _messageCtrl.dispose();
     _chatScrollCtrl.dispose();
     _messageFocus.dispose();
+
+    final audio = _audio;
+    _audio = null;
+    if (audio != null) {
+      unawaited(audio.leave());
+    }
+
     if (leaveNotifier != null) {
       unawaited(
         leaveNotifier
@@ -529,17 +570,15 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
             .timeout(const Duration(seconds: 6))
             .catchError((_) {}),
       );
-    } else if (_liveRoomKey.isEmpty) {
-      final audio = _audio;
-      _audio = null;
-      if (audio != null) unawaited(audio.leave());
     }
-    ref.read(voiceRoomGiftRealtimeProvider).stop();
-    ref.read(pkBattleRemoteProvider.notifier).clear();
-    // Oda içi PK yerel durumu (sayaç, kuyruk, yerel susturma) odadan çıkınca temizlenir.
-    final pkKey = _liveRoomKey;
-    if (pkKey.isNotEmpty) {
-      ref.read(pkRoomControllerProvider(pkKey).notifier).reset();
+
+    if (container != null) {
+      container.read(voiceRoomGiftRealtimeProvider).stop();
+      container.read(pkBattleRemoteProvider.notifier).clear();
+      final pkKey = _liveRoomKey;
+      if (pkKey.isNotEmpty) {
+        container.read(pkRoomControllerProvider(pkKey).notifier).reset();
+      }
     }
     super.dispose();
   }
@@ -945,9 +984,15 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
   void _wireAudioReconnectCallbacks() {
     final audio = _audio;
-    if (audio == null) return;
+    if (audio == null || !_pageActive) return;
+    _trtcSpeakingIdsNotifier =
+        ref.read(voiceRoomTrtcSpeakingIdsProvider(_liveRoomKey).notifier);
+    final selfId = ref.read(authControllerProvider).valueOrNull?.id ?? '';
+    final scopedContainer = ProviderScope.containerOf(context, listen: false);
+    final liveKey = _liveRoomKey;
+
     audio.onReconnecting = () {
-      if (!mounted || _leaving) return;
+      if (!_pageActive || !mounted || _leaving) return;
       ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
             VoiceSessionPhase.reconnecting,
           );
@@ -959,23 +1004,25 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       );
     };
     audio.onReconnected = () {
-      if (!mounted || _leaving) return;
+      if (!_pageActive || !mounted || _leaving) return;
       ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
             VoiceSessionPhase.connected,
           );
     };
     final mgr = audio.trtcManager;
     mgr.onUserVoiceVolume = (userVolumes, _) {
-      if (!mounted || _leaving) return;
-      final selfId = ref.read(authControllerProvider).valueOrNull?.id;
-      final presence = ref.read(voiceRoomLiveProvider(_liveRoomKey)).presence;
+      if (!_pageActive || _leaving) return;
+      final speakingNotifier = _trtcSpeakingIdsNotifier;
+      if (speakingNotifier == null) return;
+      final presence =
+          scopedContainer.read(voiceRoomLiveProvider(liveKey)).presence;
       final speaking = <String>{};
       for (final sample in userVolumes) {
         final active = sample.volume >= 8 || sample.vad == 1;
         if (!active) continue;
         var uid = sample.userId.trim();
         if (uid.isEmpty) {
-          if (selfId != null && selfId.isNotEmpty) speaking.add(selfId);
+          if (selfId.isNotEmpty) speaking.add(selfId);
           continue;
         }
         for (final p in presence) {
@@ -987,8 +1034,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         }
         if (uid.isNotEmpty) speaking.add(uid);
       }
-      ref.read(voiceRoomTrtcSpeakingIdsProvider(_liveRoomKey).notifier).state =
-          speaking;
+      speakingNotifier.state = speaking;
     };
   }
 
@@ -1018,10 +1064,15 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         room: room,
         source: 'rtc_leave',
         prepareLeave: () async {
+          _detachTrtcPageHooks();
           ref.read(voiceRoomTrtcMusicMixerProvider).bind(null);
           ref.read(voiceRoomTrtcMusicMixerProvider).stop();
           ref.read(voiceRoomAudioCoordinatorProvider).setReconnectSuspended(true);
+          final leavingAudio = _audio;
           _audio = null;
+          if (leavingAudio != null) {
+            unawaited(leavingAudio.leave());
+          }
         },
       );
     } finally {

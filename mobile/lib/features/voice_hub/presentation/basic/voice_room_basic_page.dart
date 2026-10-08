@@ -109,6 +109,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   String? _loginError;
   var _isMicMuted = true;
   var _leaving = false;
+  var _pageActive = true;
   var _leaveSessionStarted = false;
   var _forcedExitHandled = false;
   var _musicSearchOpen = false;
@@ -165,16 +166,30 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
 
   @override
   void dispose() {
+    _pageActive = false;
+    final audio = _audio;
+    if (audio != null) {
+      audio.onReconnecting = null;
+      audio.onReconnected = null;
+      audio.trtcManager.onUserVoiceVolume = null;
+    }
     _messageCtrl.dispose();
     _messageFocus.dispose();
-    ref.read(voiceRoomGiftRealtimeProvider).stop();
-    ref.read(pkBattleRemoteProvider.notifier).clear();
+    ProviderContainer? container;
+    try {
+      container = ProviderScope.containerOf(context, listen: false);
+    } catch (_) {}
+    if (container != null) {
+      container.read(voiceRoomGiftRealtimeProvider).stop();
+      container.read(pkBattleRemoteProvider.notifier).clear();
+    }
     final liveKey = _pinnedLiveRoomKey;
     if (!_leaveSessionStarted &&
         liveKey != null &&
-        liveKey.isNotEmpty) {
+        liveKey.isNotEmpty &&
+        container != null) {
       unawaited(
-        ref
+        container
             .read(voiceRoomLiveProvider(liveKey).notifier)
             .leaveRoomSession(
               source: 'basic_dispose',
@@ -185,7 +200,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
             .catchError((_) {}),
       );
     }
-    final audio = _audio;
     _audio = null;
     if (audio != null) {
       unawaited(audio.leave());
@@ -216,7 +230,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final audio = _audio;
     if (audio == null) return;
     audio.onReconnecting = () {
-      if (!mounted || _leaving) return;
+      if (!_pageActive || !mounted || _leaving) return;
       ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
             VoiceSessionPhase.reconnecting,
           );
@@ -228,7 +242,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       );
     };
     audio.onReconnected = () {
-      if (!mounted || _leaving) return;
+      if (!_pageActive || !mounted || _leaving) return;
       ref.read(voiceSessionPhaseProvider.notifier).transitionTo(
             VoiceSessionPhase.connected,
           );

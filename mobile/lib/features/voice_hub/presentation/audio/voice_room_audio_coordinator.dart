@@ -355,7 +355,10 @@ class VoiceRoomAudioCoordinator {
   Future<void> leave() async {
     _leaveEpoch++;
     _reconnectSuspended = true;
+    onReconnecting = null;
+    onReconnected = null;
     _trtc.manager.onConnectionLost = null;
+    _trtc.manager.onUserVoiceVolume = null;
     final ds = _remote;
     final channel = _trtc.inChannel ? _lastRoomId : null;
     // Ses önce kesilir: REST `voice leave` yavaş/asılı kalırsa (zaman aşımı

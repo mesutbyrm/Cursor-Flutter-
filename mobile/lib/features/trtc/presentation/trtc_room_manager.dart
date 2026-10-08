@@ -937,6 +937,7 @@ class TrtcRoomManager {
     _trtcLog('leave', {'inRoom': _inRoom});
     stopPublishedMusic();
     onConnectionLost = null;
+    onUserVoiceVolume = null;
     networkQuality.value = null;
     remoteVideoAvailable.value = false;
     _expectedAnchorUserId = null;
@@ -956,6 +957,14 @@ class TrtcRoomManager {
         _listener = null;
       }
     } else if (_cloud != null) {
+      try {
+        _cloud!.enableAudioVolumeEvaluation(
+          false,
+          TRTCAudioVolumeEvaluateParams(interval: 0),
+        );
+      } catch (err, st) {
+        CfDiag.swallowed(err, st, CfCategory.trtc, 'trtc_room_manager:disable_volume_eval');
+      }
       _cloud!.stopLocalPreview();
       _cloud!.stopLocalAudio();
       if (_inRoom) {

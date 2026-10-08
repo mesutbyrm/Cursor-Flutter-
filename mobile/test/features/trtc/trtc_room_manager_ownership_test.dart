@@ -51,5 +51,15 @@ void main() {
       expect(engine.micOn, isFalse);
       expect(engine.manager.micOn, isFalse);
     });
+
+    test('leave clears external onUserVoiceVolume hook', () async {
+      final m = TrtcRoomManager();
+      var calls = 0;
+      m.onUserVoiceVolume = (_, __) => calls++;
+      await m.leave();
+      expect(m.onUserVoiceVolume, isNull);
+      m.onUserVoiceVolume?.call([], 0);
+      expect(calls, 0);
+    });
   });
 }
