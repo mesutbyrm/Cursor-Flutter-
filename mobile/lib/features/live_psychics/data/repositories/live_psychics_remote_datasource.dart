@@ -542,13 +542,15 @@ class LivePsychicsRemoteDataSource {
   }
 
   Future<PsychicSessionStatusResult?> fetchSessionStatus(
-    String sessionId,
-  ) async {
+    String sessionId, {
+    CancelToken? cancelToken,
+  }) async {
     final key = sessionId.trim();
     if (key.isEmpty) return null;
     try {
       final res = await _dio.safeGet<dynamic>(
         ApiEndpoints.fortuneTellerSessionQuery(key),
+        cancelToken: cancelToken,
       );
       final body = res.data;
       if (body is Map) {
@@ -827,12 +829,16 @@ class LivePsychicsRemoteDataSource {
   }
 
   /// GET `/api/room/signal?sessionId=` — bahşiş vb. yedek kanal (SSE kaçarsa).
-  Future<List<Map<String, dynamic>>> fetchRoomSignals(String sessionId) async {
+  Future<List<Map<String, dynamic>>> fetchRoomSignals(
+    String sessionId, {
+    CancelToken? cancelToken,
+  }) async {
     final key = sessionId.trim();
     if (key.isEmpty) return const [];
     try {
       final res = await _dio.safeGet<dynamic>(
         ApiEndpoints.liveFortuneRoomSignalQuery(key),
+        cancelToken: cancelToken,
       );
       final body = res.data;
       List<Map<String, dynamic>> rows = const [];
@@ -898,12 +904,16 @@ class LivePsychicsRemoteDataSource {
     }
   }
 
-  Future<PsychicRoomEntity?> fetchRoom(String sessionId) async {
+  Future<PsychicRoomEntity?> fetchRoom(
+    String sessionId, {
+    CancelToken? cancelToken,
+  }) async {
     final key = sessionId.trim();
     if (key.isEmpty) return null;
     try {
       final res = await _dio.safeGet<dynamic>(
         ApiEndpoints.liveFortuneRoom(key),
+        cancelToken: cancelToken,
       );
       final body = res.data;
       if (body is Map) {
@@ -920,6 +930,7 @@ class LivePsychicsRemoteDataSource {
     try {
       final res = await _dio.safeGet<dynamic>(
         ApiEndpoints.fortuneTellerSessionQuery(key),
+        cancelToken: cancelToken,
       );
       final body = res.data;
       if (body is Map) {

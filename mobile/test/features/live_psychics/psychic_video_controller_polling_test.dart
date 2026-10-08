@@ -6,6 +6,8 @@
 // public provider kullanır); bkz. docs/CANLIFAL_PERFORMANCE_DIAGNOSTIC_REPORT.md.
 import 'dart:async';
 
+import 'package:dio/dio.dart';
+
 import 'package:canlifal_social/core/network/connectivity/connectivity_service.dart';
 import 'package:canlifal_social/features/auth/domain/entities/user_entity.dart';
 import 'package:canlifal_social/features/auth/presentation/providers/auth_providers.dart';
@@ -63,15 +65,24 @@ class _ProbeRepo extends FakeLivePsychicsRepository {
   }
 
   @override
-  Future<PsychicRoomEntity?> fetchRoom(String sessionId) =>
+  Future<PsychicRoomEntity?> fetchRoom(
+    String sessionId, {
+    CancelToken? cancelToken,
+  }) =>
       _call<PsychicRoomEntity?>('fetchRoom', null);
 
   @override
-  Future<PsychicSessionStatusResult?> fetchSessionStatus(String sessionId) =>
+  Future<PsychicSessionStatusResult?> fetchSessionStatus(
+    String sessionId, {
+    CancelToken? cancelToken,
+  }) =>
       _call<PsychicSessionStatusResult?>('fetchSessionStatus', null);
 
   @override
-  Future<List<Map<String, dynamic>>> fetchRoomSignals(String sessionId) =>
+  Future<List<Map<String, dynamic>>> fetchRoomSignals(
+    String sessionId, {
+    CancelToken? cancelToken,
+  }) =>
       _call<List<Map<String, dynamic>>>('fetchRoomSignals', const []);
 
   @override

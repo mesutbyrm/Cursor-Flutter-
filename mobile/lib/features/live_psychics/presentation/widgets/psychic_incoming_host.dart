@@ -20,6 +20,7 @@ import 'package:canlifal_social/features/live_psychics/presentation/controllers/
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychic_incoming_controller.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychic_invite_coordinator.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychic_invite_poll_gate.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychic_incoming_ingest.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychics_list_controller.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_live_event_bus.dart';
@@ -52,6 +53,7 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
   String? _tellerProfileId;
   String? _activePresentingSessionId;
   final _pollGate = PsychicInvitePollGate();
+  final _ingestGate = PsychicIncomingIngestGate();
   PsychicIncomingSseService? _sseService;
   GoRouter? _router;
   String _routePath = '/feed';
@@ -147,16 +149,6 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
     return !AuthRoutePaths.isPublicAuthPath(path);
   }
 
-  bool _isSessionAlreadyQueued(String sessionId) {
-    if (sessionId.isEmpty) return true;
-    final queue = ref.read(psychicIncomingQueueProvider);
-    if (queue.any((r) => r.sessionId == sessionId)) return true;
-    final dismissed = ref.read(psychicDismissedSessionsProvider);
-    if (dismissed.contains(sessionId)) return true;
-    if (_activePresentingSessionId == sessionId) return true;
-    return false;
-  }
-
   Future<void> _bootstrap() async {
     await _ensureTellerProfile();
     await _connectSse();
@@ -227,7 +219,10 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
     await service.connect(
           accessToken: tokens.readAccess,
           refreshTokens: () => tryRefreshAccessToken(refreshDio, tokens),
-          onRequest: _onSseRequest,
+          onRequest: (req) => _ingestIncomingRequest(
+                req,
+                PsychicIncomingRequestSource.sse,
+              ),
           onSessionCancelled: (sessionId) {
             if (!mounted) return;
             ref.read(psychicSessionCancelSignalProvider.notifier).signal(sessionId);
@@ -249,21 +244,45 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
     final bus = ref.read(psychicLiveEventBusProvider);
     _liveEventSub = bus.stream.listen((req) {
       if (!mounted) return;
-      _onSseRequest(req);
+      _ingestIncomingRequest(req, PsychicIncomingRequestSource.eventBus);
     });
   }
 
-  void _onSseRequest(PsychicRequestEntity req) {
+  /// Tek giriş: SSE doğrudan buraya; event bus yalnızca harici (sesli oda vb.).
+  /// Asla bu bus'a tekrar publish etme — senkron self-feedback ANR yapıyordu.
+  void _ingestIncomingRequest(
+    PsychicRequestEntity req,
+    PsychicIncomingRequestSource source,
+  ) {
     if (!mounted || !_mayRunTellerBackgroundSync()) return;
-    if (!req.isPending) return;
+    final sessionId = req.sessionId.trim();
+    if (sessionId.isEmpty) return;
+
     final liveStreamId = ref.read(liveActiveBroadcastStreamIdProvider);
     if (_isFortuneTeller &&
         liveStreamId != null &&
         liveStreamId.trim().isNotEmpty) {
       return;
     }
-    final bus = ref.read(psychicLiveEventBusProvider);
-    if (!bus.isClosed) bus.add(req);
+
+    final queue = ref.read(psychicIncomingQueueProvider);
+    final alreadyQueued = queue.any((r) => r.sessionId == sessionId);
+    final dismissed = ref.read(psychicDismissedSessionsProvider).contains(sessionId);
+    final presentingThisSession =
+        _presenting && _activePresentingSessionId == sessionId;
+
+    final decision = PsychicIncomingIngestDecision.evaluate(
+      request: req,
+      gate: _ingestGate,
+      alreadyQueued: alreadyQueued,
+      dismissed: dismissed,
+      presentingThisSession: presentingThisSession,
+    );
+
+    _pollGate.noteSeen(sessionId);
+
+    if (!decision.accept) return;
+
     final uid = ref.read(authControllerProvider).valueOrNull?.id;
     if (!shouldPresentPsychicIncomingInvite(
       authUserId: uid,
@@ -271,13 +290,12 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
       tellerProfileId: _tellerProfileId,
       isFortuneTeller: _isFortuneTeller,
     )) {
+      _ingestGate.forget(sessionId);
       return;
     }
-    if (_isSessionAlreadyQueued(req.sessionId)) {
-      return;
-    }
+
     ref.read(psychicIncomingQueueProvider.notifier).enqueue(req);
-    PsychicInviteCoordinator.requestPresent(sessionId: req.sessionId);
+    PsychicInviteCoordinator.requestPresent(sessionId: sessionId);
     if (_mayPresentInvites()) {
       unawaited(_tryPresentNext());
     }
@@ -320,20 +338,7 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
           _pollGate.noteSeen(req.sessionId);
           continue;
         }
-        final uid = ref.read(authControllerProvider).valueOrNull?.id;
-        if (!shouldPresentPsychicIncomingInvite(
-          authUserId: uid,
-          invite: req,
-          tellerProfileId: _tellerProfileId,
-          isFortuneTeller: _isFortuneTeller,
-        )) {
-          continue;
-        }
-        if (_isSessionAlreadyQueued(req.sessionId)) {
-          continue;
-        }
-        ref.read(psychicIncomingQueueProvider.notifier).enqueue(req);
-        PsychicInviteCoordinator.requestPresent(sessionId: req.sessionId);
+        _ingestIncomingRequest(req, PsychicIncomingRequestSource.poll);
       }
       if (_mayPresentInvites()) {
         await _tryPresentNext();

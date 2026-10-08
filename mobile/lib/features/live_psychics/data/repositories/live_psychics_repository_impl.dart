@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import '../../domain/entities/psychic_award_entity.dart';
 import '../../domain/entities/psychic_entity.dart';
 import '../../domain/entities/psychic_gift_entity.dart';
@@ -116,8 +118,11 @@ class LivePsychicsRepositoryImpl implements LivePsychicsRepository {
       );
 
   @override
-  Future<PsychicSessionStatusResult?> fetchSessionStatus(String sessionId) =>
-      _remote.fetchSessionStatus(sessionId);
+  Future<PsychicSessionStatusResult?> fetchSessionStatus(
+    String sessionId, {
+    CancelToken? cancelToken,
+  }) =>
+      _remote.fetchSessionStatus(sessionId, cancelToken: cancelToken);
 
   @override
   Future<PsychicStatusLookup> fetchSessionStatusLookup(String sessionId) =>
@@ -166,8 +171,11 @@ class LivePsychicsRepositoryImpl implements LivePsychicsRepository {
       _remote.clearRoomSignals(sessionId);
 
   @override
-  Future<List<Map<String, dynamic>>> fetchRoomSignals(String sessionId) =>
-      _remote.fetchRoomSignals(sessionId);
+  Future<List<Map<String, dynamic>>> fetchRoomSignals(
+    String sessionId, {
+    CancelToken? cancelToken,
+  }) =>
+      _remote.fetchRoomSignals(sessionId, cancelToken: cancelToken);
 
   @override
   Future<void> sendRoomSignal({
@@ -184,8 +192,11 @@ class LivePsychicsRepositoryImpl implements LivePsychicsRepository {
       );
 
   @override
-  Future<PsychicRoomEntity?> fetchRoom(String sessionId) =>
-      _remote.fetchRoom(sessionId);
+  Future<PsychicRoomEntity?> fetchRoom(
+    String sessionId, {
+    CancelToken? cancelToken,
+  }) =>
+      _remote.fetchRoom(sessionId, cancelToken: cancelToken);
 
   @override
   Future<Map<String, dynamic>?> roomAction(
