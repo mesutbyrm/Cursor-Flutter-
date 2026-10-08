@@ -45,6 +45,15 @@ abstract final class VoiceRoomDebugLog {
     'api.presence.join',
     'api.presence.join.ok',
     'api.presence.join.fail',
+    'JOIN_INTENT',
+    'JOIN_START',
+    'JOIN_SUCCESS',
+    'PRESENCE_JOIN',
+    'SSE_START',
+    'TRTC_START',
+    'LEAVE_START',
+    'LEAVE_COMPLETE',
+    'BLOCKED_IMPLICIT_JOIN',
     'api.presence.heartbeat',
     'api.error',
     'sse.connecting',
@@ -100,6 +109,45 @@ abstract final class VoiceRoomDebugLog {
       'source': source,
       'count': _roomLeaveCount,
     });
+  }
+
+  static void joinIntent({required String roomId, String source = 'user'}) {
+    log('JOIN_INTENT', {'roomId': roomId, 'source': source});
+  }
+
+  static void joinStart({required String roomId}) {
+    log('JOIN_START', {'roomId': roomId});
+  }
+
+  static void joinSuccess({required String roomId}) {
+    log('JOIN_SUCCESS', {'roomId': roomId});
+  }
+
+  static void presenceJoinPhase({required String roomId}) {
+    log('PRESENCE_JOIN', {'roomId': roomId});
+  }
+
+  static void sseStart({required String roomId}) {
+    log('SSE_START', {'roomId': roomId});
+  }
+
+  static void trtcStart({required String roomId}) {
+    log('TRTC_START', {'roomId': roomId});
+  }
+
+  static void leaveStart({required String roomId, String source = 'ui'}) {
+    log('LEAVE_START', {'roomId': roomId, 'source': source});
+  }
+
+  static void leaveComplete({required String roomId}) {
+    log('LEAVE_COMPLETE', {'roomId': roomId});
+  }
+
+  static void blockedImplicitJoin({
+    required String reason,
+    required String roomId,
+  }) {
+    log('BLOCKED_IMPLICIT_JOIN', {'reason': reason, 'roomId': roomId});
   }
 
   static void sseConnect({required String roomId, String? url}) {

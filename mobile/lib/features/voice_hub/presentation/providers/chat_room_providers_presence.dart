@@ -404,6 +404,20 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
   }
 
   Future<void> _joinPresence({bool rejoinAfterHeartbeat = false}) async {
+    if (_leaveInFlight || !_sessionActive) {
+      VoiceRoomDebugLog.blockedImplicitJoin(
+        reason: 'join_presence_inactive_session',
+        roomId: _roomKey,
+      );
+      return;
+    }
+    if (!_explicitJoinConfirmed) {
+      VoiceRoomDebugLog.blockedImplicitJoin(
+        reason: 'join_presence_without_intent',
+        roomId: _roomKey,
+      );
+      return;
+    }
     if (_roomKey.isEmpty) {
       state = state.copyWith(loading: false, error: 'Geçersiz oda kimliği');
       return;
@@ -478,6 +492,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
       final hasJwt = token != null && token.isNotEmpty;
       VoiceRoomDebugLog.jwtStatus(hasToken: hasJwt, tokenLength: token?.length);
       ref.read(voiceRoomDiagnosticProvider.notifier).setJwt(hasJwt: hasJwt);
+      VoiceRoomDebugLog.presenceJoinPhase(roomId: _roomKey);
       VoiceRoomDebugLog.log('api.presence.join', {'room': _roomKey});
       final user = ref.read(authControllerProvider).valueOrNull;
       final nick = _effectiveNickname(user);
@@ -519,6 +534,7 @@ extension VoiceRoomPresenceEngine on VoiceRoomLiveController {
         _presenceApiKey,
         aliases: _roomKeyAliases,
       );
+      ref.read(voiceRoomPendingLiveKeyProvider.notifier).state = null;
       unawaited(
         VoiceRoomPresencePersistence.recordJoin(
           roomId: _presenceApiKey,
