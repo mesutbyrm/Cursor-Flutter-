@@ -1103,6 +1103,9 @@ abstract final class ApiEndpoints {
   /// @deprecated — `musicSearch` kullanın.
   static const youtubeSearch = '/api/youtube/search';
 
+  /// Kullanıcıdan kullanıcıya Jeton/CFC hediyesi (Hediye Yolla).
+  static const walletTransfer = '/api/wallet/transfer';
+
   /// Sitenin resmi sosyal medya hesapları (herkese açık / admin düzenleme).
   static const socialAccounts = '/api/social-accounts';
   static const adminSocialAccounts = '/api/admin/social-accounts';

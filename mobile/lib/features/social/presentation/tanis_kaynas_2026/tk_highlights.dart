@@ -174,7 +174,7 @@ class TkQuickActionsGrid extends StatelessWidget {
         label: 'Hediye Gönder',
         image: 'assets/games/scratch.webp',
         colors: const [Color(0xFFF43F5E), Color(0xFFEC4899)],
-        onTap: () => context.push('/gift-send'),
+        onTap: () => context.push('/hediye-yolla'),
       ),
     ];
     return Padding(

@@ -104,7 +104,7 @@ class HomeRefQuickAccess extends ConsumerWidget {
       const _QuickAccessItem(
         label: 'Hediye Yolla',
         icon: Icons.card_giftcard_rounded,
-        route: '/gift-send',
+        route: '/hediye-yolla',
         image: 'assets/tiles/home-hediye-yolla.webp',
         colors: [Color(0xFFEC4899), Color(0xFFF43F5E)],
       ),

@@ -68,6 +68,7 @@ import '../../features/admin/presentation/pages/admin_system_health_page.dart';
 import '../../features/admin/presentation/pages/admin_team_management_page.dart';
 import '../../features/admin/presentation/pages/admin_system_config_page.dart';
 import '../../features/social_accounts/presentation/admin_social_accounts_page.dart';
+import '../../features/wallet_transfer/presentation/wallet_transfer_page.dart';
 import '../../features/admin/presentation/pages/admin_advanced_reporting_page.dart';
 import '../../features/admin/presentation/pages/admin_preferences_page.dart';
 import '../../features/admin/presentation/pages/admin_notification_manager_page.dart';
@@ -811,6 +812,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin/system-config',
         builder: (context, state) => const AdminSystemConfigPage(),
+      ),
+      GoRoute(
+        path: '/hediye-yolla',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const WalletTransferPage(),
+        ),
       ),
       GoRoute(
         path: '/admin/social-accounts',
