@@ -74,6 +74,11 @@ abstract final class VoiceRoomDebugLog {
     'music.player.started',
     'music.player.failed',
     'music.player.no_stream',
+    // Sürüm derlemesinde de görünür — 403 sonrası istek kesildi kanıtı.
+    'VOICE_BLOCKED_403',
+    'SPEAK_REQUESTS_BLOCKED_403',
+    'VOICE_JOIN_SKIPPED_NO_SEAT',
+    'PRESENCE_SNAPSHOT_EMPTY_IGNORED',
   };
 
   static void log(String phase, [Map<String, Object?>? data]) {

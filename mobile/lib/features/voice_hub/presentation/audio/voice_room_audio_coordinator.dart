@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../../../../core/performance/voice_room_entry_perf.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../trtc/domain/entities/trtc_credentials.dart';
 import '../../../trtc/presentation/trtc_room_manager.dart';
 import '../../data/datasources/chat_room_remote_datasource.dart';
@@ -58,6 +59,119 @@ class VoiceRoomAudioCoordinator {
   }
 
   bool _mayPublishMic() => _micPublishGate?.call() ?? false;
+
+  // ── `/voice` sunucu oturumu (POST {type: join|leave}) ──────────────────
+  // Yalnız gerçekten yayın başlarken (koltuk + mic) tek kez join; leave yalnız
+  // join edilmişse. 403 = yetki yok → aynı oda için bir daha denenmez.
+  Future<void>? _voiceJoinInFlight;
+  String? _voiceJoinInFlightChannel;
+  String? _voiceSessionChannel;
+  String? _voiceBlockedChannel;
+  ApiException? _voiceBlockedError;
+
+  @visibleForTesting
+  bool get voiceSessionJoined => _voiceSessionChannel != null;
+
+  @visibleForTesting
+  bool isVoiceBlocked(String channel) => _voiceBlockedChannel == channel.trim();
+
+  /// Koltuk tekrar alındığında / yetki değişince yeni deneme hakkı.
+  void resetVoiceApiBlock() {
+    _voiceBlockedChannel = null;
+    _voiceBlockedError = null;
+  }
+
+  /// Tek uçuşlu `/voice join`. Koltuk yoksa çağrı yapılmaz; aynı oda için
+  /// eşzamanlı ikinci istek mevcut Future'ı bekler; 403 sonrası ağ yok.
+  Future<void> _ensureVoiceSession(
+    ChatRoomRemoteDataSource ds,
+    String channel,
+  ) {
+    if (_voiceSessionChannel == channel) return Future<void>.value();
+    if (_voiceBlockedChannel == channel) {
+      return Future<void>.error(
+        _voiceBlockedError ?? const ApiException('No voice permission', statusCode: 403),
+      );
+    }
+    if (!_mayPublishMic()) {
+      VoiceRoomDebugLog.log('VOICE_JOIN_SKIPPED_NO_SEAT', {'roomId': channel});
+      return Future<void>.value();
+    }
+    final inFlight = _voiceJoinInFlight;
+    if (inFlight != null && _voiceJoinInFlightChannel == channel) {
+      return inFlight;
+    }
+    final epoch = _leaveEpoch;
+    late final Future<void> op;
+    op = () async {
+      try {
+        await ds.joinVoiceSession(channel);
+        if (epoch != _leaveEpoch || !_mayPublishMic()) {
+          // Join sürerken çıkış / koltuktan inme: açılan oturumu kapat.
+          unawaited(
+            ds.leaveVoiceSession(channel).catchError((Object _) {}),
+          );
+          return;
+        }
+        _voiceSessionChannel = channel;
+      } on ApiException catch (e) {
+        if (e.statusCode == 403) {
+          _voiceBlockedChannel = channel;
+          _voiceBlockedError = e;
+          VoiceRoomDebugLog.log('VOICE_BLOCKED_403', {
+            'roomId': channel,
+            'endpoint': '/voice',
+          });
+        }
+        rethrow;
+      } finally {
+        if (identical(_voiceJoinInFlight, op)) {
+          _voiceJoinInFlight = null;
+          _voiceJoinInFlightChannel = null;
+        }
+      }
+    }();
+    _voiceJoinInFlight = op;
+    _voiceJoinInFlightChannel = channel;
+    return op;
+  }
+
+  /// `/voice leave` yalnız bu cihaz oturumu açtıysa — koltuksuz kullanıcı için
+  /// her seat/presence tikinde gereksiz 400/403 POST'unun kaynağıydı.
+  Future<void> _leaveVoiceSessionIfJoined(
+    ChatRoomRemoteDataSource ds,
+    String channel, {
+    Duration timeout = const Duration(seconds: 4),
+  }) async {
+    final inFlight = _voiceJoinInFlight;
+    if (inFlight != null && _voiceJoinInFlightChannel == channel) {
+      try {
+        await inFlight;
+      } catch (_) {}
+    }
+    if (_voiceSessionChannel != channel) {
+      VoiceRoomDebugLog.log('voice.leave.skip_not_joined', {'roomId': channel});
+      return;
+    }
+    _voiceSessionChannel = null;
+    try {
+      await ds.leaveVoiceSession(channel).timeout(timeout);
+    } catch (_) {}
+  }
+
+  @visibleForTesting
+  Future<void> ensureVoiceSessionForTest(
+    ChatRoomRemoteDataSource ds,
+    String channel,
+  ) =>
+      _ensureVoiceSession(ds, channel);
+
+  @visibleForTesting
+  Future<void> leaveVoiceSessionIfJoinedForTest(
+    ChatRoomRemoteDataSource ds,
+    String channel,
+  ) =>
+      _leaveVoiceSessionIfJoined(ds, channel);
 
   void _bindConnectionLostHandler() {
     _trtc.manager.onConnectionLost = () {
@@ -173,7 +287,7 @@ class VoiceRoomAudioCoordinator {
         if (publishMic)
           () async {
             try {
-              await ds.joinVoiceSession(channel);
+              await _ensureVoiceSession(ds, channel);
             } on Object catch (e) {
               VoiceRoomDebugLog.log('audio.voice_api.join.warn', {
                 'error': e.toString(),
@@ -258,7 +372,7 @@ class VoiceRoomAudioCoordinator {
         final ds = _remote;
         if (ds != null && !_trtc.inChannel) {
           try {
-            await ds.joinVoiceSession(channel);
+            await _ensureVoiceSession(ds, channel);
           } on Object catch (e) {
             VoiceRoomDebugLog.log('audio.voice_api.mic.warn', {
               'error': e.toString(),
@@ -306,9 +420,7 @@ class VoiceRoomAudioCoordinator {
       }
       final ds = _remote;
       if (ds != null) {
-        try {
-          await ds.leaveVoiceSession(channel);
-        } catch (_) {}
+        await _leaveVoiceSessionIfJoined(ds, channel);
       }
       _desiredMicOn = false;
       return;
@@ -339,16 +451,14 @@ class VoiceRoomAudioCoordinator {
       await _trtc.setMicEnabled(false);
     } catch (_) {}
     if (ds != null && channel != null && channel.isNotEmpty) {
-      try {
-        await ds
-            .leaveVoiceSession(channel)
-            .timeout(const Duration(seconds: 4));
-      } catch (_) {}
+      await _leaveVoiceSessionIfJoined(ds, channel);
     }
     try {
       await _trtc.leave().timeout(const Duration(seconds: 3));
     } catch (_) {}
     _engine = null;
+    // Koltuk tekrar alınınca bir `/voice join` denemesi hakkı.
+    resetVoiceApiBlock();
     // Yeniden bağlanmayı çağıran (audience join / leave) açana kadar kapalı tut.
   }
 
@@ -360,7 +470,7 @@ class VoiceRoomAudioCoordinator {
     _trtc.manager.onConnectionLost = null;
     _trtc.manager.onUserVoiceVolume = null;
     final ds = _remote;
-    final channel = _trtc.inChannel ? _lastRoomId : null;
+    final channel = _lastRoomId?.trim();
     // Ses önce kesilir: REST `voice leave` yavaş/asılı kalırsa (zaman aşımı
     // çağıranı bekletmeden bırakır) TRTC odada kalıyor, kullanıcı çıktıktan
     // sonra da duyuyor ve duyuluyordu.
@@ -372,10 +482,11 @@ class VoiceRoomAudioCoordinator {
     } catch (_) {}
     if (ds != null && channel != null && channel.isNotEmpty) {
       unawaited(
-        ds
-            .leaveVoiceSession(channel)
-            .timeout(const Duration(seconds: 6))
-            .catchError((_) {}),
+        _leaveVoiceSessionIfJoined(
+          ds,
+          channel,
+          timeout: const Duration(seconds: 6),
+        ),
       );
     }
     try {
@@ -385,6 +496,7 @@ class VoiceRoomAudioCoordinator {
     _lastRoomId = null;
     _lastUserId = null;
     _desiredMicOn = false;
+    resetVoiceApiBlock();
   }
 
   String? _lastRoomId;

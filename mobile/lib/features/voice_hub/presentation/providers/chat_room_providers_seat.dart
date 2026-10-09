@@ -354,13 +354,22 @@ extension VoiceRoomSeatControls on VoiceRoomLiveController {
   /// Giriş / yenileme sonrası konuşma isteği kuyruğu ile UI senkronu.
   Future<void> _syncSpeakRequestPending() async {
     final user = ref.read(authControllerProvider).valueOrNull;
-    if (user == null || _roomKey.isEmpty) return;
+    if (user == null || _roomKey.isEmpty || _leaveInFlight) return;
     for (final p in _presenceCopy()) {
       if (p.id == user.id && p.seatIndex != null) {
         ref.read(voiceRoomUiProvider.notifier).setRequestSpeakPending(false);
         return;
       }
     }
+    // `GET speak-requests` yalnız moderatöre açık (diğerlerine 403); normal
+    // kullanıcı kendi bekleyen isteğini SSE/yerel durumdan izler.
+    final perms = state.serverPermissions;
+    final canModerate = perms != null &&
+        (perms.canGiveVoice ||
+            perms.canManageRoom ||
+            perms.isGlobalAdmin ||
+            perms.isRoomOwner);
+    if (!canModerate) return;
     try {
       final ids = await fetchSpeakRequests();
       ref

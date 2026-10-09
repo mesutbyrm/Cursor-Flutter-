@@ -108,6 +108,8 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   String? _audioError;
   String? _loginError;
   var _isMicMuted = true;
+  // Konuşma izni kenar tetiği — her presence tikinde mic aç/kapa denenmesin.
+  bool? _lastSelfCanSpeak;
   var _leaving = false;
   var _pageActive = true;
   var _leaveSessionStarted = false;
@@ -784,6 +786,8 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
           walletRole: ref.read(staffAccessProvider).siteRole ??
               ref.read(walletBalancesProvider).valueOrNull?.role,
         );
+        if (_lastSelfCanSpeak == gate.selfCanSpeak) return;
+        _lastSelfCanSpeak = gate.selfCanSpeak;
         if (!gate.selfCanSpeak && !_isMicMuted) {
           _audio?.setMicEnabled(false);
           setState(() => _isMicMuted = true);

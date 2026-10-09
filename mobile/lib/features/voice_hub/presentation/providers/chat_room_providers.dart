@@ -461,6 +461,39 @@ class VoiceRoomLiveController
     with VoiceRoomDjSyncMixin, VoiceRoomSseMixin {
   Timer? _poll;
 
+  /// Son bilinen durum — dispose/rebuild sırasında async geri çağrılar
+  /// `state` okuduğunda "Tried to read the state of an uninitialized
+  /// provider" (StateError) fırlatmasın diye yedek.
+  VoiceRoomLiveState? _lastState;
+  var _controllerDisposed = false;
+
+  @override
+  VoiceRoomLiveState get state {
+    if (_controllerDisposed) return _lastState ?? const VoiceRoomLiveState();
+    try {
+      return _lastState = super.state;
+    } on StateError {
+      final fallback = _lastState;
+      if (fallback == null) rethrow;
+      VoiceRoomDebugLog.log('provider.state_uninitialized', {
+        'roomId': _roomKey,
+      });
+      return fallback;
+    }
+  }
+
+  @override
+  set state(VoiceRoomLiveState value) {
+    if (_controllerDisposed) {
+      VoiceRoomDebugLog.log('provider.state_after_dispose', {
+        'roomId': _roomKey,
+      });
+      return;
+    }
+    _lastState = value;
+    super.state = value;
+  }
+
   /// Dispose sonrası da kullanılabilen presence istemcisi.
   ///
   /// `ref.read`, provider dispose edildikten sonra fırlatır. Odadan çıkış
@@ -958,6 +991,7 @@ class VoiceRoomLiveController
 
   @override
   VoiceRoomLiveState build(String roomKey) {
+    _controllerDisposed = false;
     final room = _roomMeta;
     // Çıkış yolu dispose sonrasına sarkabildiği için istemci burada yakalanır.
     _presenceRemoteRef = ref.read(chatRoomRemoteProvider);
@@ -1060,8 +1094,10 @@ class VoiceRoomLiveController
         ref.read(voiceRoomMusicSessionProvider.notifier).closePlayer();
         _closeRoomKeepAlive();
       }
+      // Dispose sonrası async geri çağrılar state'e yazmaz; okuma son değeri döner.
+      _controllerDisposed = true;
     });
-    return VoiceRoomLiveState(
+    return _lastState = VoiceRoomLiveState(
       backgroundUrl: room.backgroundImageUrl?.trim().isNotEmpty == true
           ? room.backgroundImageUrl
           : null,
@@ -1589,7 +1625,12 @@ class VoiceRoomLiveController
   }
 
   Future<void> joinVoiceSession() async {
-    if (_roomKey.isEmpty || _voiceJoined) return;
+    if (_roomKey.isEmpty || _voiceJoined || _leaveInFlight) return;
+    // Koltuksuz kullanıcı `/voice join` yapmaz (TRTC audience kalır).
+    if (!selfOccupiesSeat()) {
+      VoiceRoomDebugLog.log('VOICE_JOIN_SKIPPED_NO_SEAT', {'roomId': _roomKey});
+      return;
+    }
     try {
       await ref.read(chatRoomRemoteProvider).joinVoiceSession(_roomKey);
       _voiceJoined = true;

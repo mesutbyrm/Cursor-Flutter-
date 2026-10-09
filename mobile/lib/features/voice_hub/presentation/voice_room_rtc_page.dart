@@ -143,6 +143,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   String? _audioError;
   String? _loginError;
   var _isMicMuted = true;
+  // Koltuk kenar tetiği — seat slice her presence/SSE tikinde değişir; mic
+  // kapat/aç yalnız koltuk durumu değişince (her tikte /voice ve TRTC çağrısı
+  // gidiyordu).
+  bool? _lastSelfOnSeat;
   var _micAutoMutedByMusic = false;
   var _leaving = false;
   var _leaveSessionStarted = false;
@@ -371,6 +375,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         final notifier =
             ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
         final onSeat = notifier.selfOccupiesSeat();
+        if (_lastSelfOnSeat == onSeat) return;
+        _lastSelfOnSeat = onSeat;
         if (!onSeat) {
           unawaited(notifier.setSelfMicPublishEnabled(false));
           if (!_isMicMuted && mounted) {
