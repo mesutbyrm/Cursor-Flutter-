@@ -201,6 +201,11 @@ import '../../features/agency/presentation/pages/agency_apply_page.dart';
 import '../../features/agency/presentation/pages/agency_invites_page.dart';
 import '../../features/agency/presentation/pages/agency_dashboard_screen.dart';
 import '../../features/agency/presentation/pages/agency_wallet_page.dart';
+import '../../features/agency/presentation/pages/agencies_page.dart';
+import '../../features/agency/presentation/pages/agency_performance_pages.dart';
+import '../../features/agency/presentation/pages/agency_promises_page.dart';
+import '../../features/agency/presentation/pages/agency_tools_pages.dart';
+import '../../features/agency/presentation/pages/broadcaster_panel_page.dart';
 import '../../features/agency/presentation/pages/agency_weekly_tasks_page.dart';
 import '../../features/cfc_arena/presentation/pages/cfc_arena_contest_page.dart';
 import '../../features/cfc_arena/presentation/pages/cfc_arena_hub_page.dart';
@@ -1571,6 +1576,76 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
           child: const AgencyDashboardScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/ajanslar',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const AgenciesPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/ajanslar/:agencyId',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: AgencyDetailPage(agencyId: state.pathParameters['agencyId'] ?? ''),
+        ),
+      ),
+      GoRoute(
+        path: '/ajans/yayinci',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const BroadcasterPanelPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/ajans/performans',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const AgencyPerformancePage(),
+        ),
+      ),
+      GoRoute(
+        path: '/ajans/performans/:userId',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: AgencyMemberPerformancePage(userId: state.pathParameters['userId'] ?? ''),
+        ),
+      ),
+      GoRoute(
+        path: '/ajans/basvurular',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const AgencyJoinRequestsPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/ajans/vaatler',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const AgencyPromisesPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/ajans/duyurular',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const AgencyAnnouncementsPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/ajans/hak-edisler',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const AgencyAccrualsPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/ajans/calisanlar',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const AgencyStaffPage(),
         ),
       ),
       GoRoute(

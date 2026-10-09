@@ -312,6 +312,22 @@ const kFeatureCatalog = <FeatureEntry>[
     image: 'assets/tiles/feature-ortak-yayin-davetleri.webp',
   ),
   FeatureEntry(
+    label: 'Ajanslar',
+    icon: Icons.apartment_rounded,
+    route: '/ajanslar',
+    colors: [Color(0xFF10B981), Color(0xFF06B6D4)],
+    group: 'Yayıncı ve ajans',
+    image: 'assets/tiles/home-ajans.webp',
+  ),
+  FeatureEntry(
+    label: 'Ajans Yayıncı Panelim',
+    icon: Icons.badge_rounded,
+    route: '/ajans/yayinci',
+    colors: [Color(0xFF6366F1), Color(0xFF10B981)],
+    group: 'Yayıncı ve ajans',
+    image: 'assets/tiles/feature-ajans-buyumesi.webp',
+  ),
+  FeatureEntry(
     label: 'Ajans Görevleri',
     icon: Icons.task_alt_rounded,
     route: '/ajans/weekly-tasks',

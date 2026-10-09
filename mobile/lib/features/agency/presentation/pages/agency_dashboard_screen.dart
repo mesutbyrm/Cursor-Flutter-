@@ -166,6 +166,8 @@ class AgencyDashboardScreen extends ConsumerWidget {
               weeklyPercent: dash.tasks?.current?.completionPercent,
               jetonLabel: jetonLabel,
             ),
+            const SizedBox(height: 14),
+            const _ManagementGrid(),
             if (dash.lastApiLog != null) ...[
               const SizedBox(height: 8),
               Text(
@@ -477,3 +479,50 @@ class _EarningTile extends StatelessWidget {
   }
 }
 
+
+/// Ajans yönetim araçları (performans, başvuru, vaat, duyuru, hak ediş, çalışan).
+class _ManagementGrid extends StatelessWidget {
+  const _ManagementGrid();
+
+  static const _items = <(String, IconData, String)>[
+    ('Performans', Icons.insights_rounded, '/ajans/performans'),
+    ('Başvurular', Icons.how_to_reg_rounded, '/ajans/basvurular'),
+    ('Vaatler', Icons.handshake_rounded, '/ajans/vaatler'),
+    ('Duyurular', Icons.campaign_rounded, '/ajans/duyurular'),
+    ('Hak edişler', Icons.emoji_events_rounded, '/ajans/hak-edisler'),
+    ('Çalışanlar', Icons.admin_panel_settings_rounded, '/ajans/calisanlar'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.count(
+      key: const Key('agency-management-grid'),
+      crossAxisCount: 3,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 8,
+      crossAxisSpacing: 8,
+      childAspectRatio: 1.35,
+      children: [
+        for (final it in _items)
+          Material(
+            color: Colors.white.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(14),
+            child: InkWell(
+              key: Key('agency-tool-${it.$3}'),
+              borderRadius: BorderRadius.circular(14),
+              onTap: () => context.push(it.$3),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(it.$2, color: const Color(0xFFFFC94D)),
+                  const SizedBox(height: 6),
+                  Text(it.$1, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
