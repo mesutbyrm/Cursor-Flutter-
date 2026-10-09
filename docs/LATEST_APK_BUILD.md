@@ -4,20 +4,19 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.747+800` |
-| Tarih (UTC) | 2026-10-09 10:33 |
-| Commit | [`091ba0d93ba38296802839dc22fe08df3a8cfe94`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/091ba0d93ba38296802839dc22fe08df3a8cfe94) |
-| İş akışı | [Run 37916364756](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37916364756) |
+| Sürüm | `1.0.748+801` |
+| Tarih (UTC) | 2026-10-09 11:16 |
+| Commit | [`62f38b260f83024fdd5261965d0bc34bb18bd75b`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/62f38b260f83024fdd5261965d0bc34bb18bd75b) |
+| İş akışı | [Run 37920400345](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37920400345) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.747+800 (2026-10-09) — Sesli oda → Ana sayfa: presence temizlenmiyordu
+## 1.0.748+801 (2026-10-09) — Teşhis: yakalanmayan hata logu (401 ucu + çözülebilir yığın)
 
-- **Kök neden (log + kod):** Kapatma tuşu → `leaveWithSummary` içinde `leaveRoomSession` öncesi atılan istisna (hediye özeti) dış `catch`'e düşüyor, `leaveRoomSession` hiç çağrılmadan sayfadan çıkılıyordu (cihaz logunda `LEAVE_START` yok); sayfa dispose'u `_leaveSessionStarted` yüzünden leave'i atlıyordu
-- **Düzeltme:** Özet hatası yutulur (`LEAVE_SUMMARY_SKIPPED`); sunucu leave her durumda çalışır; hata `LEAVE_FAILED` ile loglanır; `LEAVE_UI` tıklama logu
-- **Route guard:** Gezinmeyi gerçekten dinliyor (önce hiç tetiklenmiyordu); yığında oda sayfası varsa (profil push) çıkmaz; `WidgetRef as Ref` çalışma anı hatası kaldırıldı; `force:false` ile devam eden leave'e katılır (çift leave yok) — `ROUTE_LEFT_VOICE_ROOM`
-- **Test:** Room → Home, Room A → Room B, oda üstüne push, UI leave sonrası çift leave yok
+- **Neden:** Canlı falcı seansı bitiminde `Cannot use "ref" after the widget was disposed` ve 2× `401` logda görünüyor ama kaynak bulunamıyordu: `ui.zone` yalnız ilk 3 başlık satırını yazıyordu (çerçeve yok), DioException'da uç yolu yoktu
+- **Değişiklik:** `ui.zone` / `ui.flutter` / `ui.platform` → DioException için `YÖNTEM /yol status=…` (sorgu dizesi/başlık yok → token sızmaz); obfuscated yığında `flutter symbolize` için başlık + ilk 12 çerçeve
+- Davranış değişikliği yok; bir sonraki cihaz logu hatanın tam yerini gösterecek
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
