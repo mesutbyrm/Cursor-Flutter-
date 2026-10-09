@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.755+808 (2026-10-09) — Ajans yönetimi: keşif, performans, vaatler, hedefler, yayıncı paneli
+
+- **Ajanslar (`/ajanslar`, yeni):** Ajansları sırala/ara (önerilen, yayın saati, yayıncı sayısı, hedef başarısı, seviye, en yeni). İstatistikler gerçek veriden: son 30 gün doğrulanmış video yayını, son 90 gün hedef başarısı (veri yoksa «Hedef verisi yok»)
+- **Ajans detayı:** Yönetici onaylı vaatler (hedef, bonus, ölçüm yöntemi, geçerlilik), yayıncılar, **ajansa başvur** / başvuruyu geri çek
+- **Yayıncı Paneli (`/ajans/yayinci`, yeni):** Ajans ve üyelik, bugün/hafta/ay doğrulanmış yayın süresi, hedef ilerlemesi ve kalan süre, vaatleri **açık onayla kabul** (sürüm kaydı), kabul geçmişi, bonus/hak edişler, duyurular, ajans geçmişi, başvuru/davet geçmişi, kurallar, destek/itiraz, ayrılma talebi
+- **Ajans paneli araçları:** Performans (yayıncı bazında saat, gün, kesinti, hediye, hedef durumu) ve yayıncı ayrıntısı (günlük dağılım, oturumlar, hedef ata, hak ediş öde/iptal, üyelik geçmişi, moderasyon kayıtları); katılma başvuruları; vaatler (taslak → yönetici onayı, yeni sürüm, geri çek, arşivle); duyurular; hak edişler (dönem kapat); çalışan yetkileri
+- **Düzeltme:** Metin girişli pencereler kapanırken denetleyici erken dispose ediliyordu (hata ekranı riski)
+- **Backend deploy + `prisma db push` gerekli** (yalnız yeni tablolar)
+
 ## 1.0.754+807 (2026-10-09) — Ajans Jeton cüzdanı, toplu alım, talep iptali
 
 - **Ajans Cüzdanı (`/ajans/cuzdan`, yeni):** Ajans panelindeki cüzdan kartından açılır

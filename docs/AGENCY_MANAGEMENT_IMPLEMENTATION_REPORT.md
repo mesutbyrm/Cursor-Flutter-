@@ -1,7 +1,7 @@
 # Ajans Yönetimi — Uygulama Raporu
 
-> **Durum: Aşama 1 + 6 + 7 + 8 uygulandı** (para güvenliği, ajans toplu Jeton alımı, herhangi kullanıcıya yükleme, üç tür talep iptali). Şema değişikliği **yok**.
-> Kalan aşamalar (2–5, 9) yeni tablo gerektirir → `db push` için ayrıca onay istenecek.
+> **Durum: Aşama 1–10 kod olarak tamam.** Aşama 2–5 ve 9 yalnız **yeni tablolar** ekler. Bu tablolar ancak Abacus'ta `prisma db push` çalıştırılınca oluşur (§8). Push'u kullanıcı onaylayıp uygular.
+> Gerçek cihaz doğrulaması ve üretim veritabanında yarış testi yapılmadı: **BLOCKED** (§9).
 > Backend: `mesutbyrm/canlifal` `full-source` @ `7590554` · Mobil: `main` @ `72d7fdfc` (1.0.753+806) · Tarih: 2026-10-09
 
 ---
@@ -183,29 +183,184 @@ Her ajans ucu `agencyId`'yi oturumdan çözer; istemciden gelen `agencyId` yaln�
 |---|---|---|---|
 | 0 | Denetim + plan (bu dosya) | — | ✅ |
 | 1 | **H1/H2 düzeltmeleri** (çekim onayı atomik, cüzdan idempotency) + H5–H8 | Hayır | ✅ |
-| 2 | Üyelik geçmişi + Ajanslar keşif/detay sayfası (gerçek istatistik, admin sıralama ayarı) | Evet (1 tablo) | Bekliyor |
-| 3 | Ajans paneli: başvuru/davet akışları, çalışan rolleri, duyurular | Evet | Bekliyor |
-| 4 | Vaatler + sürümleme + kabul; yayıncı hedefleri | Evet | K1–K7 sonrası |
-| 5 | Performans raporları (doğrulanmış yayın süresi) | Hayır | K6 sonrası |
+| 2 | Üyelik geçmişi + Ajanslar keşif/detay sayfası (gerçek istatistik, admin sıralama ayarı) + katılma başvurusu | Evet | ✅ kod · db push bekliyor |
+| 3 | Ajans paneli: başvuru değerlendirme, çalışan yetkileri, duyurular | Evet | ✅ kod · db push bekliyor |
+| 4 | Vaatler + sürümleme + kabul; yayıncı hedefleri + hak ediş | Evet | ✅ kod · db push bekliyor |
+| 5 | Performans raporları (doğrulanmış video yayın süresi) | Hayır (hedef/hak ediş tabloları hariç) | ✅ |
 | 6 | Ajans Jeton satın alma + indirim | **Hayır** (platformSettings + bildirim notu) | ✅ |
 | 7 | Herhangi kullanıcıya yükleme (komisyonsuz) | Hayır | ✅ |
 | 8 | Ödeme talebi iptali (çekim, Jeton/CFC bildirimleri) | Hayır (`cancelled` durumu + not) | ✅ |
-| 9 | Admin Ajans Yönetimi: raporlar, CSV, şüpheli işlem, denetim | Hayır | — |
-| 10 | Flutter ekranlarının tamamı + cihaz doğrulaması | — | — |
+| 9 | Admin Ajans Yönetimi: vaat onayı, CSV raporlar, şüpheli işlem, ayarlar | Hayır | ✅ |
+| 10 | Flutter ekranlarının tamamı + cihaz doğrulaması | — | ✅ ekranlar · cihaz testi BLOCKED |
+
+## 7.1 Aşama 2–10 — uygulananlar
+
+### Yeni tablolar (yalnız ekleme; `Agency`/`User`/mevcut tablolar değişmedi)
+
+| Tablo | Amaç |
+|---|---|
+| `agency_membership_history` | Her katılma/ayrılma (kim, ne zaman, kim sonlandırdı). AgencyUser silinse de kalır |
+| `agency_join_requests` | Kullanıcının ajansa katılma başvurusu (pending/accepted/rejected/cancelled) |
+| `agency_staff_permissions` | Çalışana sınırlı yetki: members, invites, reports, announce, targets |
+| `agency_announcements` | Ajans içi duyuru (silme = gizleme, kayıt kalır) |
+| `agency_promises` / `agency_promise_versions` / `agency_promise_acceptances` | Vaat, değişmez sürümler, kabul kaydı (sürüm + kullanıcı + tarih + IP) |
+| `broadcaster_targets` | Yayıncı hedefi (günlük/haftalık/aylık dakika, en az gün, bonus). Değişince eski kapanır |
+| `broadcaster_accruals` | Dönem kapanışında hak ediş; `(targetId, periodStart)` benzersiz |
+
+Geçmiş yazımı ana işlemden **sonra** ve en iyi çaba ile yapılır. Tablo yoksa ya da yazım başarısızsa katılma/ayrılma bozulmaz. Bu yazım 8 mevcut noktaya eklendi:
+- admin ajans ekle/çıkar/transfer/sahip değiştir
+- admin kullanıcı yönetimi
+- ajans üye çıkarma
+- ayrılma onayı
+- davet kabulü
+- davet kodu
+- otomatik ayrılma
+
+### Doğrulanmış yayın süresi (`lib/agency-performance.ts`)
+- **Hangi yayınlar sayılır:** Yalnız `VideoStream` sayılır; `isImageMode` (görsel yayın) sayılmaz.
+- **Bitiş zamanı:**
+  - Normalde bitiş `endedAt` alanıdır.
+  - Yayın sürüyorsa son medya sinyali + 2 dk tolerans, sinyal yoksa şimdiki zaman alınır.
+  - Medya, bitişten önce kesilmişse süre son sinyal + 2 dk'da biter ve bu bir "kesinti" sayılır.
+- **Aralık işlemleri:**
+  - Ajans üyelik dönemlerine ve istenen tarih aralığına kırpılır.
+  - Çakışan oturumlar birleştirilir, aynı dakika iki kez sayılmaz.
+  - Gün sınırları Türkiye saatine göredir (UTC+3).
+- Test: `nextjs_space/scripts/test-agency-performance.ts` → **10/10 geçti** (DB gerektirmez).
+
+### Vaat sürümleme
+1. **Taslak:** Ajans sahibi taslak önerir. Bu, sürüm 1'i `pending` durumunda oluşturur ve adminlere bildirim gider.
+2. **Yönetici kararı:**
+   - Onaylanan sürüm yayımlanır ve artık **değiştirilemez**.
+   - Bir önceki onaylı sürüm `superseded` olur.
+   - Ret gerekçesi zorunludur.
+3. **Yeni şartlar:** Yeni sürüm olarak gönderilir.
+   - Aynı vaatte aynı anda tek bekleyen sürüm olabilir.
+   - `requiresReaccept` açıksa önceki sürümü kabul etmiş aktif üyelere yeniden kabul bildirimi gider.
+   - Eski kabul kayıtları saklanır.
+4. **Kabul:**
+   - Kabul açık onay ister (`confirm: true`).
+   - Yalnız güncel sürüm ve yalnız ajansın aktif üyesi kabul edebilir.
+   - Sürümde hedef varsa yayıncıya o sürüme bağlı hedef açılır.
+5. **Arşiv:** Arşivlenen vaat yeni üyelere gösterilmez; kabul kayıtları ve hedefler korunur.
+6. **Admin sınırları** (`platformSettings`): vaat açık/kapalı, en yüksek bonus, en yüksek hedef dakika, izinli dönemler.
+
+### Hedef ve hak ediş
+- **Dönem kapatma:** Kapanmış önceki dönem bir kez değerlendirilir. Benzersiz anahtar sayesinde aynı dönem tekrar kapatılırsa çift kayıt oluşmaz.
+- **Ödeme akışı:**
+  1. `earned → paying` koşullu geçiş yapılır.
+  2. Ajans cüzdanından aktarım yapılır (`idempotencyKey = accrual:<id>`).
+  3. Sonuç `paid` olur.
+  4. Hata olursa durum `earned`'a döner. Aynı anahtar ikinci kez Jeton aktarmaz.
+- **İptal:** Yalnız ödenmemiş hak ediş, gerekçeyle iptal edilir; kayıt kalır.
+
+### Keşif sıralaması
+- **Sıralamalar:** önerilen, saat, yayıncı, başarı, seviye, en yeni.
+- **Önerilen sıralama:** öne çıkan > seviye > 30 gün saat > yayıncı sayısı.
+- **Admin ayarları:** varsayılan sıralama, öne çıkan ajanslar, gizlenen ajanslar.
+- Hedef verisi yoksa başarı oranı `null` döner ve ekranda "Hedef verisi yok" yazar. Sahte değer üretilmez.
+
+### Şüpheli işlem kuralları (anlık hesap, kayıt üretmez; eşikler admin ayarı)
+- Tek seferde büyük aktarım
+- Aynı gün aynı kullanıcıya N+ aktarım
+- Günlük toplam çıkış eşiği
+- Yeni açılmış hesaba aktarım
+- Ajans sahibi/yönetici/çalışanına aktarım
+- 3+ iptal edilen toplu sipariş
+
+### Yeni API uçları ve yetkiler
+
+| Uç | Yetki |
+|---|---|
+| `GET /api/agencies`, `GET /api/agencies/{id}` | Herkes (ilişki bilgisi için oturum isteğe bağlı) |
+| `POST/DELETE /api/agencies/{id}/join-request` | Oturum; zaten üye/başka ajansta → 409; en fazla 3 açık başvuru |
+| `GET/POST /api/agency/join-requests` | Ajans `members` izni; kabul atomik, tek aktif ajans (`userId` benzersiz) |
+| `GET /api/agency/performance`, `/performance/{userId}` | Ajans `reports` izni; yalnız ajansın üyesi olmuş kullanıcı, üyelik dönemine kırpılmış veri; moderasyon kayıtlarında mesaj içeriği yok |
+| `GET/POST/DELETE /api/agency/targets` | Okuma `reports`, yazma `targets` |
+| `GET/POST /api/agency/accruals` | Okuma `reports`; dönem kapatma `targets`; öde/iptal **yalnız sahip** |
+| `GET/POST/DELETE /api/agency/announcements` | Okuma: ajans üyesi; yazma `announce` (saatte en çok 5) |
+| `GET/PUT/DELETE /api/agency/staff` | Yalnız sahip; yalnız ajansın aktif üyesine |
+| `GET/POST /api/agency/promises` | Okuma `reports`; yazma yalnız sahip |
+| `POST /api/agency/promises/{versionId}/accept` | Ajansın aktif üyesi, açık onay |
+| `GET /api/agency/broadcaster` | Oturum (kendi verisi) |
+| `GET/POST /api/admin/agency-management/promises` | RBAC `agency.manage` |
+| `GET /api/admin/agency-management/alerts` | RBAC `agency.report.view` |
+| `GET /api/admin/agency-management/reports?type=` | RBAC `agency.report.view`. Tipler: wallet, purchases, performance, accruals, history, acceptances. CSV (UTF-8 BOM, formül enjeksiyonu korumalı) veya JSON; dışa aktarım denetim kaydına yazılır |
+| `GET/PUT /api/admin/agency-management/settings` | RBAC `agency.manage` |
+
+Her ajans ucu `agencyId`'yi **oturumdan** çözer (`lib/agency-access.ts`). İstemciden gelen `agencyId` yalnız admin uçlarında kabul edilir.
+
+### Web admin
+`/admin/ajans-yonetimi` sayfasının sekmeleri:
+- Vaat Onayı (yayındaki sürümle karşılaştırma dahil)
+- Şüpheli İşlemler
+- Raporlar (CSV)
+- Ayarlar
+
+Yönetim merkezine kart eklendi.
+
+### Flutter ekranları
+
+| Rota | Ekran |
+|---|---|
+| `/ajanslar` | Ajanslar keşfi (sıralama, arama) |
+| `/ajanslar/{id}` | Ajans detayı, vaatler, başvuru |
+| `/ajans/yayinci` | Yayıncı paneli |
+| `/ajans/performans`, `/ajans/performans/{userId}` | Performans ve yayıncı ayrıntısı (hedef ata, hak ediş öde/iptal) |
+| `/ajans/basvurular` | Katılma başvuruları |
+| `/ajans/vaatler` | Vaatler ve sürüm formu |
+| `/ajans/duyurular` | Duyurular |
+| `/ajans/hak-edisler` | Hak edişler ve dönem kapatma |
+| `/ajans/calisanlar` | Çalışan yetkileri |
+
+**Giriş noktaları:**
+- Ajans panelinde "Yönetim" ızgarası
+- "Ajans Ol" sayfasında keşif kartı
+- "Tüm Özellikler" menüsünde Ajanslar ve Ajans Yayıncı Panelim kutuları
+
+Ana sayfadaki "Ajans Ol" kutusu önceki karar gereği aynı kaldı.
 
 ## 8. Abacus'a uygulanacaklar
 
-**Aşama 1+6+7+8 (şema yok, `db push` gerekmez):**
+**Aşama 1+6+7+8:** canlifal#28 ile yayına alındı (şema yok).
+
+**Aşama 2–10 (yeni tablolar → `db push` GEREKLİ, yalnız ekleme):**
 
 1. `full-source` dalını çek
-2. `npm install` → `npx prisma generate` → `npm run build`
-3. Uygulamayı yeniden başlat
-4. Admin → Ajans Finans: genel indirim %, en az Jeton (varsayılan 1000), alım açık/kapalı; Komisyon sekmesinde ajansa özel indirim
-5. Doğrula: ajans sahibi `GET /api/agency/purchase?jeton=100000` → teklif; sipariş → Admin Ödemeler'de "Ajans Jetonu" → onay → ajans cüzdanı artar; ajans → kullanıcı yükleme fazla miktarda "N jeton eksik" döner
+2. `npm install` → `npx prisma generate`
+3. **Yedek al**, sonra `npx prisma db push`
+   - Yalnız 10 yeni tablo oluşmalı; mevcut tablo/kolon silme veya değiştirme olmamalı.
+   - Push "data loss" uyarısı verirse **durdur** ve uygulama.
+4. `npm run build` → yeniden başlat
+5. **Doğrulama:**
+   - `GET /api/agencies` istatistik döner.
+   - Kullanıcı başvuru yapar, ajans kabul eder; bu sırada `agency_membership_history`'ye satır yazılır.
+   - Vaat taslağı → `/admin/ajans-yonetimi` üzerinden onay → yayıncı kabul eder.
+   - Hedef atanır → dönem kapatılır → bonus ödenir; ikinci ödeme denemesi tekrar Jeton aktarmaz.
+   - CSV indirilir.
+
+Sıra önemlidir: db push yapılmadan yeni kod çalıştırılırsa yeni uçlar hata döner. Mevcut katılma/ayrılma akışları bozulmaz (geçmiş yazımı en iyi çaba ile yapılır).
 
 ## 9. Test sonuçları
 
-- **Flutter:** `dart analyze lib test` → 0 hata · `flutter test` → **2275 geçti**, 2 atlandı
+- **Aşama 2–10 Flutter:** `dart analyze lib test` → 0 hata · `flutter test` → **2286 geçti**, 2 atlandı
+  - `test/features/agency/agency_management_test.dart` (11 test):
+    - Modeller: hedef verisi yokken `null`, dakika biçimi.
+    - Liste ve 409 mesajı.
+    - Vaat kabulü `confirm:true` gönderir.
+    - Keşif ekranında "Hedef verisi yok" yazar.
+    - Başvuru mesajı gönderilir.
+    - Yayıncı paneli: onay vermeden istek gitmez; kalan süre gösterilir.
+    - Ajansı olmayan kullanıcıya keşif önerilir.
+    - Hedef saat → dakika çevrimi (12,5 → 750).
+    - Hak ediş ödeme onayı.
+- **Aşama 2–10 backend:**
+  - `tsc --noEmit` → yeni hata yok.
+  - `scripts/test-agency-performance.ts` → 10/10.
+- **Ajanslar arası erişim (A ajansı B'nin verisini göremez):**
+  - Kodda: `agencyId` her zaman oturumdan çözülür; yayıncı ayrıntısı yalnız üyelik geçmişi olan kullanıcı için döner.
+  - Gerçek DB ile **test edilmedi → BLOCKED**.
+- **Aşama 1–8 (önceki):**
   - `test/features/agency/agency_wallet_page_test.dart`: 10.001 / 10.000 → "1 jeton eksik" ve sunucuya istek gitmez; tam miktar seçilen kullanıcıya; sunucu hatası aynen; teklif (%10, 180.000 TL), sipariş, yalnız bekleyen sipariş iptali
   - `test/features/wallet/payment_cancel_datasource_test.dart`: çekim iptali ucu + 409 mesajı; CFC talebi yoksa bildirim iptaline düşme; 400 mesajı aynen
 - **Backend:** `tsc --noEmit` → yeni hata yok (önceden var olan: `admin/withdrawals` `@/lib/admin-auth`, `payments/notify` 234. satır)
@@ -215,4 +370,8 @@ Her ajans ucu `agencyId`'yi oturumdan çözer; istemciden gelen `agencyId` yaln�
 
 - Ajansın kullanıcılara Jeton satması ve platformun komisyon alması **elektronik para / ödeme hizmeti** sayılabilir. K1(c)/(d) seçilirse hukuk ve muhasebe görüşü **zorunlu**.
 - Vaatlerin bağlayıcılığı (yayıncı ile ajans arasında sözleşme niteliği) için hukuki inceleme ayrı iş olarak gerekir; sistem yalnızca sürüm, kabul ve hak ediş kaydını tutar.
+- Doğrulanmış yayın süresi `lastMediaAt` sinyaline dayanır. İstemci heartbeat göndermiyorsa süre `endedAt`'a göre hesaplanır; bu durumda medya kesintisi tespit edilemez.
+- Keşif istatistikleri 10 dk önbelleklenir. Çok sayıda ajansta (300+) hesap süresi izlenmeli.
+- Sesli oda süresi sayılmıyor (karar K6). Ajans isterse ayrı iş olarak eklenebilir.
+- `admin/payments` iade ve elle düzeltme yolları hâlâ mutlak bakiye yazıyor (§2).
 - Şema `db push` ile yönetildiği için geri alma planı: yeni tablolar boş başlar; geri almak gerekirse kod geri alınır, tablolar zarar vermeden kalır.

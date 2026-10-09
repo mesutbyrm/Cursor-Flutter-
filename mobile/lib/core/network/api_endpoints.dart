@@ -321,6 +321,21 @@ abstract final class ApiEndpoints {
   static String cfcPaymentRequestCancel(String id) => '/api/payments/requests/$id/cancel';
   static String withdrawalCancel(String id) => '/api/withdrawals/$id/cancel';
   static const agencyLeave = '/api/agency/leave';
+
+  /// Ajans yönetimi (2026-10): keşif, başvuru, performans, vaat, hedef, hak ediş, duyuru, çalışan, yayıncı paneli.
+  static const agencies = '/api/agencies';
+  static String agencyDetail(String id) => '/api/agencies/$id';
+  static String agencyJoinRequest(String id) => '/api/agencies/$id/join-request';
+  static const agencyJoinRequests = '/api/agency/join-requests';
+  static const agencyPerformance = '/api/agency/performance';
+  static String agencyMemberPerformance(String userId) => '/api/agency/performance/$userId';
+  static const agencyTargets = '/api/agency/targets';
+  static const agencyAccruals = '/api/agency/accruals';
+  static const agencyAnnouncements = '/api/agency/announcements';
+  static const agencyStaff = '/api/agency/staff';
+  static const agencyPromises = '/api/agency/promises';
+  static String agencyPromiseAccept(String versionId) => '/api/agency/promises/$versionId/accept';
+  static const agencyBroadcaster = '/api/agency/broadcaster';
   static const agencyLivePresence = '/api/agency/live-status';
 
   static const celebrities = '/api/celebrities';

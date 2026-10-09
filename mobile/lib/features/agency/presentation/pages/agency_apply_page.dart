@@ -78,13 +78,30 @@ class _AgencyApplyPageState extends ConsumerState<AgencyApplyPage> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(14, 8, 14, 32),
         children: [
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: TextButton.icon(
-              onPressed: () => context.push('/ajans/davetler'),
-              icon: const Icon(Icons.mail_outline_rounded, size: 18),
-              label: const Text('Ajans davetlerim'),
+          Card(
+            child: ListTile(
+              key: const Key('apply-discover-agencies'),
+              leading: const Icon(Icons.travel_explore_rounded),
+              title: const Text('Bir ajansa katılmak mı istiyorsun?'),
+              subtitle: const Text('Ajansları, vaatlerini ve gerçek performanslarını incele; başvur.'),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () => context.push('/ajanslar'),
             ),
+          ),
+          Wrap(
+            spacing: 4,
+            children: [
+              TextButton.icon(
+                onPressed: () => context.push('/ajans/davetler'),
+                icon: const Icon(Icons.mail_outline_rounded, size: 18),
+                label: const Text('Ajans davetlerim'),
+              ),
+              TextButton.icon(
+                onPressed: () => context.push('/ajans/yayinci'),
+                icon: const Icon(Icons.badge_outlined, size: 18),
+                label: const Text('Yayıncı panelim'),
+              ),
+            ],
           ),
           const Text(
             'Ajansını kur, yayıncıları topla. Başvurun admin onayına gönderilir.',
