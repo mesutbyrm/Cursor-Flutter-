@@ -5,6 +5,7 @@ import 'package:canlifal_social/features/web_parity/domain/feature_catalog.dart'
 import 'package:canlifal_social/features/web_parity/domain/parity_models.dart';
 import 'package:canlifal_social/features/web_parity/presentation/pages/feature_hub_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -49,9 +50,11 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
-      MaterialApp(theme: AppTheme.dark(), home: const FeatureHubPage()),
+      ProviderScope(
+        child: MaterialApp(theme: AppTheme.dark(), home: const FeatureHubPage()),
+      ),
     );
-    await tester.pump();
+    await tester.pumpAndSettle();
     for (final f in kFeatureCatalog) {
       expect(find.text(f.label), findsOneWidget, reason: f.label);
     }
