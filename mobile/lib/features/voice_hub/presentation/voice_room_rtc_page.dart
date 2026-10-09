@@ -54,6 +54,7 @@ import '../domain/entities/voice_room_seat_slot.dart';
 import 'audio/voice_room_audio_coordinator.dart';
 import 'audio/voice_room_music_audio_session.dart';
 import 'providers/chat_room_providers.dart';
+import 'providers/girlive_rules_notice_provider.dart';
 import 'providers/room_fragment_providers.dart';
 import '../music/presentation/providers/room_music_providers.dart';
 import '../music/presentation/widgets/room_song_mini_player.dart';
@@ -2448,10 +2449,16 @@ class _VoiceRoomChatSection extends ConsumerWidget {
       ),
     );
 
+    // GirLive kural/duyuru: yalnız bu kullanıcının sohbetinde, geçici satır.
+    final notice = ref.watch(girLiveRulesNoticeProvider);
+    final botNotice =
+        notice != null && notice.belongsTo(liveRoomKey) ? notice.text : null;
+
     return Column(
       children: [
         Expanded(
           child: VoiceWebChatOverlay(
+            botNotice: botNotice,
             messages: chat.messages,
             hideOfficialJoinInChat: false,
             maxHeight: chatH,

@@ -880,7 +880,10 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     if (me == null || me.isEmpty || target != me) return;
     ref
         .read(girLiveRulesNoticeProvider.notifier)
-        .show(payload['text']?.toString() ?? '');
+        .show(
+          payload['text']?.toString() ?? '',
+          roomKey: _resolveRoomKeyFromEvent(payload) ?? _roomKey,
+        );
   }
 
   /// `join_request_resolved` — başka bir yönetici yanıtladı: popup kapanır.
