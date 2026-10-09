@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+
 import '../../domain/entities/live_gift_event.dart';
 import '../datasources/live_gifts_remote_datasource.dart';
 
@@ -10,7 +12,6 @@ class LiveGiftRealtimeService {
   final LiveGiftsRemoteDataSource _remote;
   final _local = StreamController<LiveGiftEvent>.broadcast();
   final Set<String> _seen = {};
-  final Map<String, DateTime> _fingerprints = {};
 
   Timer? _pollTimer;
   String? _streamId;
@@ -49,7 +50,7 @@ class LiveGiftRealtimeService {
 
   void resetDedupeState() {
     _seen.clear();
-    _fingerprints.clear();
+    _realtimeFingerprints.clear();
   }
 
   String _fingerprint(LiveGiftEvent e) {
@@ -59,19 +60,39 @@ class LiveGiftRealtimeService {
     return '$sender|$receiver|$gift|${e.quantity}|${e.jetonAmount}';
   }
 
-  bool _isDuplicateFingerprint(LiveGiftEvent event) {
-    final fp = _fingerprint(event);
-    final prev = _fingerprints[fp];
-    final now = event.timestamp;
-    if (prev != null && now.difference(prev).inMilliseconds.abs() < 4000) {
-      return true;
+  /// SSE/socket ile gelen her hediyenin parmak izi (aynı hediye art arda
+  /// gönderilebilir — her biri ayrı kayıt).
+  final Map<String, List<DateTime>> _realtimeFingerprints = {};
+
+  void _recordRealtimeFingerprint(LiveGiftEvent event) {
+    final list = _realtimeFingerprints.putIfAbsent(
+      _fingerprint(event),
+      () => <DateTime>[],
+    );
+    list.add(event.timestamp);
+    if (list.length > 32) list.removeAt(0);
+    if (_realtimeFingerprints.length > 64) {
+      final cutoff = event.timestamp.subtract(const Duration(seconds: 30));
+      _realtimeFingerprints.removeWhere((_, ts) {
+        ts.removeWhere((t) => t.isBefore(cutoff));
+        return ts.isEmpty;
+      });
     }
-    _fingerprints[fp] = now;
-    if (_fingerprints.length > 64) {
-      final cutoff = now.subtract(const Duration(seconds: 30));
-      _fingerprints.removeWhere((_, t) => t.isBefore(cutoff));
-    }
-    return false;
+  }
+
+  /// REST yedek poll'u SSE'de farklı id ile gelmiş aynı hediyeyi tekrar
+  /// üretmesin: eşleşen bir SSE kaydı tüketilir. Önceden süzgeç SSE olaylarına
+  /// da uygulanıyordu → aynı hediye 4 sn içinde ikinci kez gönderilince
+  /// ikinci hediye tamamen düşüyordu (video/feed yok).
+  bool _consumeRealtimeFingerprint(LiveGiftEvent event) {
+    final list = _realtimeFingerprints[_fingerprint(event)];
+    if (list == null || list.isEmpty) return false;
+    final i = list.indexWhere(
+      (t) => event.timestamp.difference(t).inMilliseconds.abs() < 4000,
+    );
+    if (i < 0) return false;
+    list.removeAt(i);
+    return true;
   }
 
   /// Yerel animasyon devre dışı — hediyeler yalnızca SSE/socket/poll üzerinden oynar.
@@ -79,7 +100,14 @@ class LiveGiftRealtimeService {
 
   void publishRemote(LiveGiftEvent event) {
     if (!_seen.add(event.id)) return;
-    if (_isDuplicateFingerprint(event)) return;
+    _recordRealtimeFingerprint(event);
+    if (!_local.isClosed) _local.add(event);
+  }
+
+  @visibleForTesting
+  void publishPolled(LiveGiftEvent event) {
+    if (!_seen.add(event.id)) return;
+    if (_consumeRealtimeFingerprint(event)) return;
     if (!_local.isClosed) _local.add(event);
   }
 
@@ -92,7 +120,7 @@ class LiveGiftRealtimeService {
         since: _since,
       );
       for (final e in batch) {
-        publishRemote(e);
+        publishPolled(e);
         if (e.timestamp.isAfter(_since ?? e.timestamp)) {
           _since = e.timestamp;
         }

@@ -24,6 +24,7 @@ import 'short_gift_sheet.dart';
 import 'short_playback_speed_sheet.dart';
 import 'short_share_sheet.dart';
 import 'short_video_analytics_sheet.dart';
+import 'short_video_edit_sheet.dart';
 import 'short_video_pip_overlay.dart';
 import 'shorts_profile_content.dart';
 
@@ -238,6 +239,17 @@ class ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
     }, errorPrefix: 'Silme');
   }
 
+  Future<void> _editVideo({required bool asAdmin}) async {
+    final updated = await showShortVideoEditSheet(
+      context,
+      video,
+      asAdmin: asAdmin,
+    );
+    if (updated == null || !mounted) return;
+    widget.onVideoUpdated(updated);
+    showShortsSnackBar(context, 'Video güncellendi.');
+  }
+
   void _startVideoReply() {
     openShortStudio(
       GoRouter.of(context),
@@ -306,6 +318,20 @@ class ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
                 _activatePip();
               },
             ),
+            if (canManage)
+              ListTile(
+                key: const Key('short-more-edit'),
+                leading: const Icon(Icons.edit_outlined),
+                title: Text(
+                  isAdmin && !isOwner
+                      ? 'Videoyu düzenle (admin)'
+                      : 'Videoyu düzenle — kapak ve ayarlar',
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _editVideo(asAdmin: isAdmin && !isOwner);
+                },
+              ),
             if (canManage)
               ListTile(
                 leading: const Icon(Icons.insights_outlined),
@@ -377,6 +403,7 @@ class ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
     final authorId =
         video.userId.isNotEmpty ? video.userId : (video.author?.id ?? '');
     final isOwnVideo = me != null && me.isNotEmpty && me == authorId;
+    final isAdmin = ref.watch(staffAccessProvider).isSiteAdmin;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -419,6 +446,16 @@ class ShortVideoActionsRailState extends ConsumerState<ShortVideoActionsRail> {
         ),
         const SizedBox(height: 14),
         _GiftButton(onTap: _openGifts),
+        if (isOwnVideo || isAdmin) ...[
+          const SizedBox(height: 14),
+          _ActionButton(
+            key: const Key('short-rail-edit'),
+            icon: Icons.edit_rounded,
+            label: 'Düzenle',
+            semanticLabel: 'Videoyu düzenle',
+            onTap: () => _editVideo(asAdmin: isAdmin && !isOwnVideo),
+          ),
+        ],
         const SizedBox(height: 18),
         _MusicDisc(
           coverUrl: video.music?.coverUrl ?? video.author?.avatarUrl,
@@ -495,6 +532,7 @@ class _AuthorAvatar extends StatelessWidget {
 
 class _ActionButton extends StatelessWidget {
   const _ActionButton({
+    super.key,
     required this.icon,
     required this.label,
     required this.onTap,

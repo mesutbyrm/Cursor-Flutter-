@@ -96,6 +96,14 @@ List<AdminCenterEntry> adminCenterEntries(StaffAccess a) {
       visible: a.canViewReports || a.showAdminPanel,
     ),
     AdminCenterEntry(
+      title: 'Sosyal Medya',
+      subtitle: 'Resmi hesaplar ve bağlantılar',
+      icon: Icons.share_rounded,
+      accent: const Color(0xFFEC4899),
+      route: '/admin/social-accounts',
+      visible: a.isSiteAdmin,
+    ),
+    AdminCenterEntry(
       title: 'Sistem Ayarları',
       subtitle: 'Genel ayarlar',
       icon: Icons.settings_suggest_rounded,

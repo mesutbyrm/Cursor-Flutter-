@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/navigation/native_site_routes.dart';
 import '../../../../core/widgets/canlifal_logo.dart';
 import '../../../platform/data/models/platform_popup.dart';
+import '../../../social_accounts/data/social_accounts_repository.dart';
 import '../../domain/entities/home_blog_post_entity.dart';
 import '../../domain/home_site_catalog.dart';
 import '../providers/home_providers.dart';
@@ -151,11 +152,24 @@ class _AnnouncementRow extends StatelessWidget {
   }
 }
 
-class _SocialMediaRow extends StatelessWidget {
+class _SocialMediaRow extends ConsumerWidget {
   const _SocialMediaRow();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Admin panelinden yönetilen hesaplar; yoksa yerleşik varsayılanlar.
+    final remote = ref.watch(siteSocialAccountsProvider).valueOrNull;
+    final channels = remote != null && remote.isNotEmpty
+        ? [
+            for (final a in remote)
+              HomeSocialChannel(
+                id: a.platform,
+                label: a.label,
+                url: a.url,
+                icon: socialPlatformIcon(a.platform),
+              ),
+          ]
+        : HomeSiteCatalog.socialChannels;
     return Column(
       children: [
         const HomeSectionTitle(emoji: '🌐', title: 'Sosyal Medyada Biz'),
@@ -179,11 +193,12 @@ class _SocialMediaRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(
             horizontal: HomeApprovedDesign.hPad,
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          child: Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 14,
+            runSpacing: 10,
             children: [
-              for (final ch in HomeSiteCatalog.socialChannels)
-                _SocialIconButton(channel: ch),
+              for (final ch in channels) _SocialIconButton(channel: ch),
             ],
           ),
         ),

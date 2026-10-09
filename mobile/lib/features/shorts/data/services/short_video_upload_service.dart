@@ -41,10 +41,18 @@ class ShortVideoUploadService {
         cancelToken: cancelToken,
       );
     } catch (_) {
+      // Yedek yol da kullanıcının ayarlarını gönderir; önceden yalnız
+      // açıklama gidiyordu → «Sadece ben» videolar herkese açık yayınlanıyordu.
       return _remote.uploadVideo(
         videoPath: videoPath,
         thumbnailPath: draft.thumbnailPath,
         description: draft.description,
+        visibility: draft.visibility.wireValue,
+        commentSetting: draft.commentSetting.wireValue,
+        allowDuet: draft.allowDuet,
+        locationName: draft.locationLabel,
+        musicId: draft.musicId,
+        duetOfId: draft.duetOfId,
       );
     }
   }
@@ -68,6 +76,7 @@ class ShortVideoUploadService {
     final uploadRes = await _dio.safePost<dynamic>(
       ApiEndpoints.shortVideosUploadUrl,
       data: {
+        'type': 'video',
         'contentType': videoMime,
         'extension': videoExt,
         'fileSize': videoBytes.length,
@@ -78,9 +87,11 @@ class ShortVideoUploadService {
     final uploadData = _unwrapMap(uploadRes.data);
     final videoUploadUrl = uploadData['uploadUrl']?.toString() ??
         uploadData['videoUploadUrl']?.toString();
-    final videoKey = uploadData['videoKey']?.toString() ??
-        uploadData['key']?.toString() ??
-        uploadData['videoUrl']?.toString();
+    // `register` bir URL bekler (`videoUrl`); anahtar yalnız yedek.
+    final videoKey = uploadData['publicUrl']?.toString() ??
+        uploadData['videoUrl']?.toString() ??
+        uploadData['videoKey']?.toString() ??
+        uploadData['key']?.toString();
 
     if (videoUploadUrl == null ||
         videoUploadUrl.isEmpty ||
@@ -101,31 +112,13 @@ class ShortVideoUploadService {
 
     String? thumbKey;
     if (draft.thumbnailPath != null) {
-      final thumbFile = File(draft.thumbnailPath!);
-      if (await thumbFile.exists()) {
-        final thumbBytes = await thumbFile.readAsBytes();
-        final thumbRes = await _dio.safePost<dynamic>(
-          ApiEndpoints.shortVideosUploadUrl,
-          data: {
-            'contentType': 'image/jpeg',
-            'extension': 'jpg',
-            'fileSize': thumbBytes.length,
-            'kind': 'thumbnail',
-          },
+      try {
+        thumbKey = await uploadThumbnail(
+          draft.thumbnailPath!,
           cancelToken: cancelToken,
         );
-        final thumbData = _unwrapMap(thumbRes.data);
-        final thumbUrl = thumbData['uploadUrl']?.toString();
-        thumbKey = thumbData['thumbnailKey']?.toString() ??
-            thumbData['key']?.toString();
-        if (thumbUrl != null && thumbUrl.isNotEmpty) {
-          await _putBytes(
-            thumbUrl,
-            thumbBytes,
-            'image/jpeg',
-            cancelToken: cancelToken,
-          );
-        }
+      } catch (_) {
+        thumbKey = null; // kapak opsiyonel — video yine kaydedilir
       }
     }
 
@@ -134,8 +127,13 @@ class ShortVideoUploadService {
     final registerRes = await _dio.safePost<dynamic>(
       ApiEndpoints.shortVideosRegister,
       data: {
+        'videoUrl': videoKey,
         'videoKey': videoKey,
+        if (thumbKey != null) 'thumbnailUrl': thumbKey,
         if (thumbKey != null) 'thumbnailKey': thumbKey,
+        if (draft.locationLabel != null) 'locationName': draft.locationLabel,
+        if (draft.locationLat != null) 'locationLat': draft.locationLat,
+        if (draft.locationLng != null) 'locationLng': draft.locationLng,
         'description': draft.description.trim(),
         'visibility': draft.visibility.wireValue,
         'commentSetting': draft.commentSetting.wireValue,
@@ -172,6 +170,41 @@ class ShortVideoUploadService {
       return _remote.parseVideo(Map<String, dynamic>.from(raw));
     }
     throw const ApiException('Video kaydı tamamlanamadı.');
+  }
+
+  /// Kapak görselini R2'ye yükler (`upload-url` type=thumbnail) ve herkese
+  /// açık URL'yi döndürür. Düzenleme ekranı da bunu kullanır.
+  Future<String> uploadThumbnail(
+    String imagePath, {
+    CancelToken? cancelToken,
+  }) async {
+    final file = File(imagePath);
+    if (!await file.exists()) {
+      throw const ApiException('Kapak görseli bulunamadı.');
+    }
+    final bytes = await file.readAsBytes();
+    if (bytes.length > 5 * 1024 * 1024) {
+      throw const ApiException('Kapak görseli en fazla 5 MB olabilir.');
+    }
+    final isPng = imagePath.toLowerCase().endsWith('.png');
+    final mime = isPng ? 'image/png' : 'image/jpeg';
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.shortVideosUploadUrl,
+      data: {'type': 'thumbnail', 'contentType': mime},
+      cancelToken: cancelToken,
+    );
+    final data = _unwrapMap(res.data);
+    final uploadUrl = data['uploadUrl']?.toString();
+    final publicUrl = data['publicUrl']?.toString();
+    final ct = data['contentType']?.toString() ?? mime;
+    if (uploadUrl == null ||
+        uploadUrl.isEmpty ||
+        publicUrl == null ||
+        publicUrl.isEmpty) {
+      throw const ApiException('Kapak yükleme adresi alınamadı.');
+    }
+    await _putBytes(uploadUrl, bytes, ct, cancelToken: cancelToken);
+    return publicUrl;
   }
 
   Future<void> _putBytes(

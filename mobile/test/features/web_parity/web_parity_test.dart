@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:canlifal_social/core/theme/app_theme.dart';
 import 'package:canlifal_social/features/web_parity/domain/feature_catalog.dart';
 import 'package:canlifal_social/features/web_parity/domain/parity_models.dart';
@@ -30,10 +32,20 @@ void main() {
       expect(f.route.startsWith('/'), isTrue);
     }
     expect(kFeatureCatalog.where((e) => e.onHome), isNotEmpty);
+    // Lamba Cini ve Futbol «Tüm Özellikler»den kaldırıldı.
+    expect(routes, isNot(contains('/oyunlar/lamba-cini')));
+    expect(routes, isNot(contains('/football')));
+  });
+
+  test('her özellik kutusunun mevcut bir görseli var', () {
+    for (final f in kFeatureCatalog) {
+      expect(f.image, isNotNull, reason: f.label);
+      expect(File(f.image!).existsSync(), isTrue, reason: f.image);
+    }
   });
 
   testWidgets('Tüm Özellikler sayfası her kataloğu çizer', (tester) async {
-    tester.view.physicalSize = const Size(400, 3000);
+    tester.view.physicalSize = const Size(400, 6000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(

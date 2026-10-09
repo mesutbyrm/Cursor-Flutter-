@@ -1,3 +1,4 @@
+import 'package:canlifal_social/features/gifts/data/gift_sound_pool.dart';
 import 'package:canlifal_social/features/gifts/domain/gift_engine_sse_router.dart';
 import 'package:canlifal_social/features/gifts/domain/gift_entity.dart';
 import 'package:canlifal_social/features/gifts/presentation/providers/gift_providers.dart';
@@ -39,9 +40,26 @@ LiveGiftEvent _event({
   );
 }
 
+/// Testte just_audio eklentisi yok — ses çağrıları sessizce yutulur
+/// (aksi halde zamanlamaya bağlı MissingPluginException testi düşürür).
+class _SilentSoundPool implements GiftSoundPool {
+  @override
+  Future<void> preloadGift(GiftEntity gift) async {}
+
+  @override
+  Future<void> playForEvent(LiveGiftEvent event, {GiftEntity? catalog}) async {}
+
+  @override
+  Future<void> dispose() async {}
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => null;
+}
+
 ProviderContainer _isolatedGiftContainer() {
   return ProviderContainer(
     overrides: [
+      giftSoundPoolProvider.overrideWithValue(_SilentSoundPool()),
       liveGiftCatalogProvider.overrideWith((ref) async => const <GiftEntity>[]),
       voiceRoomGiftCatalogProvider.overrideWith(
         (ref) async => const <GiftEntity>[],
@@ -217,5 +235,61 @@ void main() {
     final state = container.read(giftSessionProvider('room-h'));
     expect(state.activeAnimation?.id, isNot('vid-2'));
     expect(notifier.isVideoHeld('vid-2'), isFalse);
+  });
+
+  test('K1: gift_finished bekleyen (oynamamış) hediyeyi kuyruktan silmez',
+      () async {
+    _mockPathProviderForTests();
+    addTearDown(_clearPathProviderForTests);
+
+    final container = _isolatedGiftContainer();
+    addTearDown(container.dispose);
+
+    final sub = container.listen(giftSessionProvider('room-k'), (_, __) {});
+    addTearDown(sub.close);
+    final notifier = container.read(giftSessionProvider('room-k').notifier);
+    notifier.onGiftSent(_event(id: 'a'), source: 'live_realtime');
+    notifier.onGiftSent(_event(id: 'b'), source: 'live_realtime');
+    await _waitActive(container, 'room-k', 'a');
+
+    // Sunucu zaman çizelgesi önde: henüz oynamamış «b» için bitti.
+    notifier.onEngineGiftFinished({'event': 'gift_finished', 'id': 'b'});
+    var state = container.read(giftSessionProvider('room-k'));
+    expect(state.animationQueue.map((e) => e.id), contains('b'));
+
+    notifier.onEngineGiftFinished({'event': 'gift_finished', 'id': 'a'});
+    await _waitActive(container, 'room-k', 'b');
+    state = container.read(giftSessionProvider('room-k'));
+    expect(state.activeAnimation?.id, 'b');
+  });
+
+  test('K1: REST yanıtıyla işlenen hediye SSE gelince yine de oynar',
+      () async {
+    _mockPathProviderForTests();
+    addTearDown(_clearPathProviderForTests);
+
+    final container = _isolatedGiftContainer();
+    addTearDown(container.dispose);
+
+    final sub = container.listen(giftSessionProvider('room-s'), (_, __) {});
+    addTearDown(sub.close);
+    final notifier = container.read(giftSessionProvider('room-s').notifier);
+    notifier.onGiftSent(_event(id: 'own-1', jeton: 100), source: 'api_response');
+    var state = container.read(giftSessionProvider('room-s'));
+    expect(state.activeAnimation, isNull);
+    expect(state.roomTotalJeton, 100);
+
+    notifier.onGiftSent(_event(id: 'own-1', jeton: 100), source: 'live_realtime');
+    await _waitActive(container, 'room-s', 'own-1');
+    state = container.read(giftSessionProvider('room-s'));
+    expect(state.roomTotalJeton, 100, reason: 'jeton iki kez sayılmaz');
+    expect(state.recentGifts.length, 1);
+
+    // Üçüncü kopya artık gerçek tekrar.
+    notifier.dequeueAnimation('own-1');
+    notifier.onGiftSent(_event(id: 'own-1', jeton: 100), source: 'live_realtime');
+    state = container.read(giftSessionProvider('room-s'));
+    expect(state.activeAnimation, isNull);
+    expect(state.animationQueue, isEmpty);
   });
 }

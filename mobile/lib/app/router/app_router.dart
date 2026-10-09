@@ -67,6 +67,7 @@ import '../../features/admin/presentation/pages/admin_live_broadcasts_control_pa
 import '../../features/admin/presentation/pages/admin_system_health_page.dart';
 import '../../features/admin/presentation/pages/admin_team_management_page.dart';
 import '../../features/admin/presentation/pages/admin_system_config_page.dart';
+import '../../features/social_accounts/presentation/admin_social_accounts_page.dart';
 import '../../features/admin/presentation/pages/admin_advanced_reporting_page.dart';
 import '../../features/admin/presentation/pages/admin_preferences_page.dart';
 import '../../features/admin/presentation/pages/admin_notification_manager_page.dart';
@@ -810,6 +811,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin/system-config',
         builder: (context, state) => const AdminSystemConfigPage(),
+      ),
+      GoRoute(
+        path: '/admin/social-accounts',
+        builder: (context, state) => const AdminSocialAccountsPage(),
       ),
       GoRoute(
         path: '/admin/advanced-reporting',
