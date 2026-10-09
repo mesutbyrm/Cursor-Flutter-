@@ -1,3 +1,4 @@
+import 'package:canlifal_social/features/gifts/data/gift_sound_pool.dart';
 import 'package:canlifal_social/features/gifts/domain/gift_engine_sse_router.dart';
 import 'package:canlifal_social/features/gifts/domain/gift_entity.dart';
 import 'package:canlifal_social/features/gifts/presentation/providers/gift_providers.dart';
@@ -39,9 +40,26 @@ LiveGiftEvent _event({
   );
 }
 
+/// Testte just_audio eklentisi yok — ses çağrıları sessizce yutulur
+/// (aksi halde zamanlamaya bağlı MissingPluginException testi düşürür).
+class _SilentSoundPool implements GiftSoundPool {
+  @override
+  Future<void> preloadGift(GiftEntity gift) async {}
+
+  @override
+  Future<void> playForEvent(LiveGiftEvent event, {GiftEntity? catalog}) async {}
+
+  @override
+  Future<void> dispose() async {}
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => null;
+}
+
 ProviderContainer _isolatedGiftContainer() {
   return ProviderContainer(
     overrides: [
+      giftSoundPoolProvider.overrideWithValue(_SilentSoundPool()),
       liveGiftCatalogProvider.overrideWith((ref) async => const <GiftEntity>[]),
       voiceRoomGiftCatalogProvider.overrideWith(
         (ref) async => const <GiftEntity>[],
