@@ -26,11 +26,21 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
   static const _maxRecent = 8;
   static const _maxProcessedIds = 512;
   static const _joinGraceMs = 15000;
+  static const _animatedSources = {
+    'sse',
+    'live_realtime',
+    'voice_realtime',
+    'voice_announce',
+  };
 
   final _feedExpiryTimers = <String, Timer>{};
   final _receivedAtMs = <String, int>{};
   final _engineGiftKeys = <String>{};
   final _legacyBlockedKeys = <String>{};
+
+  /// Animasyonsuz kaynaktan (ör. gönderenin REST yanıtı) işlenmiş, sunucu
+  /// SSE olayı geldiğinde yalnız animasyonu oynatılacak hediyeler.
+  final _awaitingAnimationKeys = <String>{};
   Timer? _animationTimer;
   String? _videoHoldId;
   int _videoHoldUntilMs = 0;
@@ -76,6 +86,7 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     _receivedAtMs.clear();
     _engineGiftKeys.clear();
     _legacyBlockedKeys.clear();
+    _awaitingAnimationKeys.clear();
   }
 
   /// SSE ham payload — motor/legacy ayrımı (web ile aynı).
@@ -147,6 +158,13 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
   void onEngineGiftFinished(Map<String, dynamic> payload) {
     final id = GiftEngineSseRouter.finishedItemId(payload);
     if (id == null || id.isEmpty) return;
+    // Yalnız şu an oynayan hediye için geçerli. Sunucu zaman çizelgesi
+    // istemcinin önünde olabilir; bekleyen (henüz oynamamış) hediyeyi
+    // kuyruktan silmek videoların bir kısmının hiç görünmemesine yol açıyordu.
+    if (state.activeAnimation?.id != id) {
+      GiftSyncLog.pipelineStage(id, 'engine_gift_finished_ignored_not_active');
+      return;
+    }
     _dequeueUnlessVideoHeld(id);
     GiftSyncLog.pipelineStage(id, 'engine_gift_finished');
   }
@@ -214,6 +232,18 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
         event.queueItemId!,
     };
     if (dedupeKeys.any(state.processedEventIds.contains)) {
+      // Gönderen kendi hediyesini önce REST yanıtıyla (animasyonsuz) işler;
+      // aynı hediyenin SSE olayı gelince jeton/feed tekrar sayılmaz ama video
+      // oynatılır. Önceden bu olay «duplicate» sayılıp gönderen videoyu hiç
+      // görmüyordu.
+      final awaiting = dedupeKeys.any(_awaitingAnimationKeys.contains);
+      if (awaiting && _animatedSources.contains(source)) {
+        _awaitingAnimationKeys.removeAll(dedupeKeys);
+        _receivedAtMs[event.id] = DateTime.now().millisecondsSinceEpoch;
+        _enqueueAnimation(event);
+        GiftSyncLog.pipelineStage(event.id, 'animate_after_api_response');
+        return;
+      }
       GiftSyncLog.dedupeSkipped(roomId, event.id, 'duplicate_id');
       return;
     }
@@ -238,15 +268,9 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       ids.remove(ids.first);
     }
 
-    const animatedSources = {
-      'sse',
-      'live_realtime',
-      'voice_realtime',
-      'voice_announce',
-    };
     // Jeton/hediye animasyonu yalnızca sunucu SSE/socket olaylarından —
     // REST yanıtı veya local-* id ile client-side animasyon yok.
-    final canAnimate = animatedSources.contains(source);
+    final canAnimate = _animatedSources.contains(source);
     final joinedMs = _joinTimestampMs;
     final beforeJoin = joinedMs != null &&
         event.eventTimestampMs > 0 &&
@@ -273,6 +297,10 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
       if (beforeJoin) {
         GiftSyncLog.dedupeSkipped(roomId, event.id, 'before_join');
       } else if (!canAnimate) {
+        _awaitingAnimationKeys.addAll(dedupeKeys);
+        if (_awaitingAnimationKeys.length > _maxProcessedIds) {
+          _awaitingAnimationKeys.remove(_awaitingAnimationKeys.first);
+        }
         GiftSyncLog.dedupeSkipped(roomId, event.id, 'non_animated_source');
       }
       GiftSyncLog.eventProcessed(roomId, event.id, combo: event.combo);
@@ -467,9 +495,6 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
 
     _pumping = true;
     final next = state.animationQueue.first;
-    final rest = state.animationQueue.length > 1
-        ? state.animationQueue.sublist(1)
-        : <LiveGiftEvent>[];
 
     try {
       final catalog = lookupGiftCatalog(
@@ -498,6 +523,15 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
         DateTime.now().difference(tPrefetch).inMilliseconds,
       );
 
+      // Kalan kuyruk ön yüklemeden SONRA hesaplanır: bekleme sırasında gelen
+      // hediyeler önceden eski liste ile eziliyor ve hiç oynamıyordu.
+      final current = state.animationQueue;
+      final i = current.indexWhere((e) => e.id == next.id);
+      if (i < 0 || state.activeAnimation != null) {
+        // Bekleme sırasında kaldırıldı / başka biri başladı.
+        return;
+      }
+      final rest = [...current]..removeAt(i);
       state = state.copyWith(activeAnimation: next, animationQueue: rest);
       GiftSyncLog.uiRender(
         _roomId,
