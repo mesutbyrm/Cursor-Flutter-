@@ -529,6 +529,22 @@ class VoiceRoomLiveController
   Timer? _kickWarningTimer;
   Timer? _seatRefreshDebounce;
   Timer? _sseRoomRefreshDebounce;
+
+  /// Sunucudan (SSE `room_updated`) ya da kendi değişikliğimizden gelen son
+  /// arka plan. Oda listesi önbelleği ([_roomMeta]) bayat kalabildiği için
+  /// [refresh] bunu oda listesindeki değerin önünde tutar; aksi halde diğer
+  /// kullanıcılarda yeni arka plan 450 ms sonra eskisine dönüyordu.
+  var _hasPushedBackground = false;
+  String? _pushedBackground;
+
+  void _applyPushedBackground(String? url) {
+    final u = url?.trim();
+    _hasPushedBackground = true;
+    _pushedBackground = (u == null || u.isEmpty) ? null : u;
+    state = _pushedBackground == null
+        ? state.copyWith(clearBackgroundUrl: true)
+        : state.copyWith(backgroundUrl: _pushedBackground);
+  }
   Timer? _rankingRefreshDebounce;
   final _pollPaused = false;
   var _pollTick = 0;
@@ -1286,7 +1302,7 @@ class VoiceRoomLiveController
 
     final bg = VoiceRoomBackgroundCatalog.fromRoomPayload(payload);
     if (bg != null) {
-      state = state.copyWith(backgroundUrl: bg);
+      _applyPushedBackground(bg);
     }
 
     _scheduleSseRoomRefresh();
@@ -2384,9 +2400,14 @@ class VoiceRoomLiveController
         // gölgeliyordu; arkaplan değişimi ancak yeniden girişte görünüyordu.
         backgroundUrl: (bgFromDj != null && bgFromDj.isNotEmpty)
             ? bgFromDj
+            : _hasPushedBackground
+            ? _pushedBackground
             : (room.backgroundImageUrl?.trim().isNotEmpty == true)
             ? room.backgroundImageUrl
             : state.backgroundUrl,
+        clearBackgroundUrl: (bgFromDj == null || bgFromDj.isEmpty) &&
+            _hasPushedBackground &&
+            _pushedBackground == null,
         selfInRoom: _resolveSelfInRoom(
           presence,
           snapshotHasMembers: presence.isNotEmpty,
@@ -3567,6 +3588,7 @@ class VoiceRoomLiveController
             alternateKey: _settingsAlternateKey,
             backgroundImage: trimmed,
           );
+      _applyPushedBackground(trimmed);
       _invalidateRoomCaches();
       unawaited(ref.read(voiceRoomsListNotifierProvider.notifier).refresh());
       return null;

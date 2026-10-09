@@ -55,6 +55,13 @@ abstract final class VoiceRoomBackgroundCatalog {
     return null;
   }
 
+  /// `room_updated {backgroundImage: null}` — arka plan varsayılana döndü.
+  static bool payloadClearsBackground(Map<String, dynamic> payload) {
+    if (!payload.containsKey('backgroundImage')) return false;
+    final v = payload['backgroundImage'];
+    return v == null || (v is String && v.trim().isEmpty);
+  }
+
   static String? _parseEntry(dynamic e) {
     if (e is String) return _normalizeUrl(e);
     if (e is Map) {

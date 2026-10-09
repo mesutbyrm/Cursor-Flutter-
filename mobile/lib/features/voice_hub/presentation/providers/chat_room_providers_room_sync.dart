@@ -315,11 +315,17 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
         // BG-002 — backend `room_event {event: room_updated, backgroundImage}`.
         final bg = VoiceRoomBackgroundCatalog.fromRoomPayload(payload);
         if (bg != null) {
-          state = state.copyWith(backgroundUrl: bg);
+          _applyPushedBackground(bg);
+        } else if (VoiceRoomBackgroundCatalog.payloadClearsBackground(
+          payload,
+        )) {
+          // `backgroundImage: null` — varsayılana dön (herkeste anında).
+          _applyPushedBackground(null);
         } else {
-          // Varsayılana dönüş (null) — kanonik değer oda durumundan gelsin.
           _scheduleSseRoomRefresh();
         }
+        // Oda listesi (giriş kartları) da yeni arka planı görsün.
+        _invalidateRoomCaches();
         return;
       case 'gift_box_created':
       case 'gift_box_started':
