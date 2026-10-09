@@ -383,18 +383,12 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     }
     _lastTimerStartRequestAt = DateTime.now();
     state = state.copyWith(timerStartRequestSent: true);
-    final peerId = session.remotePeerIdFor(room: state.room);
-    unawaited(
-      ref.read(livePsychicsRepositoryProvider).sendRoomSignal(
-            sessionId: session.sessionId,
-            type: PsychicTimerHandshake.signalRequest,
-            data: const {'action': 'timer_start_request'},
-            receiverId: peerId.isNotEmpty ? peerId : null,
-          ),
-    );
+    // Onay adımı yok: iki taraf odadayken falcı süreyi doğrudan başlatır;
+    // sunucu `timer_started` yayınlar → iki tarafta A/V ve süre aynı anda açılır.
+    unawaited(_ensureTimerStarted());
     PsychicEventLog.trtcState(
       sessionId: session.sessionId,
-      connectionState: 'timer_start_request_sent',
+      connectionState: 'timer_auto_start',
       roomId: _trtcConn.tokenRequestRoomId,
       trtcRoomId: _trtcConn.joinedTrtcRoomId,
       userId: _trtcConn.joinedUserId,
@@ -873,7 +867,8 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     )) {
       return;
     }
-    state = state.copyWith(timerStartPrompt: true);
+    // Onay istemi kaldırıldı: eski sürüm falcıdan istek gelirse otomatik kabul.
+    unawaited(acceptTimerStart());
   }
 
   /// Falcı: danışan onayladı → süreyi (ve ücreti) başlat.

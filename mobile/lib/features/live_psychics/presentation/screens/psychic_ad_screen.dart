@@ -137,11 +137,14 @@ final _psychicAdInitProvider = FutureProvider.autoDispose
 
   final paidWithJeton = session.totalJeton > 0;
   if (!paidWithJeton) {
-    final watched = await RewardedAdService.instance.show();
-    if (!watched) {
-      ref.read(_psychicAdLoadingProvider.notifier).state = false;
-      return;
-    }
+    // Reklam yüklenemese/izlenmese de seansa geçilir: falcı zaten kabul etti.
+    // Önceden `return` ile ekranda takılıyor, falcı "Kullanıcı bekleniyor"da
+    // kalıyordu (ücretsiz/admin seansı — totalJeton 0).
+    try {
+      await RewardedAdService.instance
+          .show()
+          .timeout(const Duration(seconds: 20), onTimeout: () => false);
+    } catch (_) {}
   }
 
   ref.read(_psychicAdLoadingProvider.notifier).state = false;
