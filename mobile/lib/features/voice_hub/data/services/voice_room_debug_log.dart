@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
 /// Sesli oda akışı — yapılandırılmış log (kritik olaylar release'te de yazılır).
@@ -320,21 +321,54 @@ abstract final class VoiceRoomDebugLog {
   static void recordFlutterError(Object error, StackTrace? stack) {
     log('ui.flutter', {
       'error': error.toString(),
-      if (stack != null) 'stack': stack.toString().split('\n').take(3).join(' | '),
+      if (stack != null) 'stack': stackSummary(stack),
     });
   }
 
   static void recordPlatformError(Object error, StackTrace stack) {
     log('ui.platform', {
-      'error': error.toString(),
-      'stack': stack.toString().split('\n').take(3).join(' | '),
+      'error': describeError(error),
+      'stack': stackSummary(stack),
     });
   }
 
   static void recordZoneError(Object error, StackTrace stack) {
     log('ui.zone', {
-      'error': error.toString(),
-      'stack': stack.toString().split('\n').take(3).join(' | '),
+      'error': describeError(error),
+      'stack': stackSummary(stack),
     });
+  }
+
+  /// DioException için yöntem + yol + durum (sorgu dizesi/başlık yok → token
+  /// sızmaz). Önceden yalnız "status code of 401" yazıyor, uç bilinmiyordu.
+  @visibleForTesting
+  static String describeError(Object error) {
+    if (error is DioException) {
+      final o = error.requestOptions;
+      final status = error.response?.statusCode;
+      return 'DioException[${error.type.name}] ${o.method} ${o.uri.path}'
+          '${status != null ? ' status=$status' : ''}';
+    }
+    return error.toString();
+  }
+
+  /// Obfuscated release yığını: `flutter symbolize` için gereken başlık
+  /// (`*** ***`, os/arch, `build_id`, `*_dso_base`) + ilk çerçeveler (`#00 abs …`).
+  /// ` | ` yerine satır sonu koyup CI sembolleriyle çözülebilir. Önceden yalnız
+  /// ilk 3 başlık satırı yazılıyor, çerçeve hiç yoktu.
+  @visibleForTesting
+  static String stackSummary(StackTrace stack, {int maxFrames = 12}) {
+    final lines = stack
+        .toString()
+        .split('\n')
+        .map((l) => l.trim())
+        .where((l) => l.isNotEmpty)
+        .toList();
+    final frames = lines.where((l) => l.startsWith('#')).take(maxFrames).toList();
+    if (frames.isEmpty || !lines.first.startsWith('***')) {
+      return lines.take(3).join(' | ');
+    }
+    final header = lines.where((l) => !l.startsWith('#')).take(8);
+    return [...header, ...frames].join(' | ');
   }
 }

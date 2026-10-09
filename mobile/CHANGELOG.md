@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.748+801 (2026-10-09) — Teşhis: yakalanmayan hata logu (401 ucu + çözülebilir yığın)
+
+- **Neden:** Canlı falcı seansı bitiminde `Cannot use "ref" after the widget was disposed` ve 2× `401` logda görünüyor ama kaynak bulunamıyordu: `ui.zone` yalnız ilk 3 başlık satırını yazıyordu (çerçeve yok), DioException'da uç yolu yoktu
+- **Değişiklik:** `ui.zone` / `ui.flutter` / `ui.platform` → DioException için `YÖNTEM /yol status=…` (sorgu dizesi/başlık yok → token sızmaz); obfuscated yığında `flutter symbolize` için başlık + ilk 12 çerçeve
+- Davranış değişikliği yok; bir sonraki cihaz logu hatanın tam yerini gösterecek
+
 ## 1.0.747+800 (2026-10-09) — Sesli oda → Ana sayfa: presence temizlenmiyordu
 
 - **Kök neden (log + kod):** Kapatma tuşu → `leaveWithSummary` içinde `leaveRoomSession` öncesi atılan istisna (hediye özeti) dış `catch`'e düşüyor, `leaveRoomSession` hiç çağrılmadan sayfadan çıkılıyordu (cihaz logunda `LEAVE_START` yok); sayfa dispose'u `_leaveSessionStarted` yüzünden leave'i atlıyordu
