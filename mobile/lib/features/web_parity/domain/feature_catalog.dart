@@ -9,6 +9,7 @@ class FeatureEntry {
     required this.colors,
     required this.group,
     this.onHome = false,
+    this.image,
   });
 
   final String label;
@@ -19,6 +20,9 @@ class FeatureEntry {
 
   /// Ana sayfadaki 5 kutunun yanında (kaydırmalı satır) görünsün mü?
   final bool onHome;
+
+  /// Kutu arka plan görseli (yerel asset); yoksa yalnız degrade + ikon.
+  final String? image;
 }
 
 const kFeatureGroups = <String>[
@@ -37,6 +41,7 @@ const kFeatureCatalog = <FeatureEntry>[
     colors: [Color(0xFFF59E0B), Color(0xFFEF4444)],
     group: 'Keşfet ve oyna',
     onHome: true,
+    image: 'assets/membership/diamond.webp',
   ),
   FeatureEntry(
     label: 'Rüya Trendleri',
@@ -45,14 +50,7 @@ const kFeatureCatalog = <FeatureEntry>[
     colors: [Color(0xFF6366F1), Color(0xFFA855F7)],
     group: 'Rüya ve fal',
     onHome: true,
-  ),
-  FeatureEntry(
-    label: 'Lamba Cini',
-    icon: Icons.auto_awesome_rounded,
-    route: '/oyunlar/lamba-cini',
-    colors: [Color(0xFFEAB308), Color(0xFFF97316)],
-    group: 'Keşfet ve oyna',
-    onHome: false,
+    image: 'assets/fortune/ruya-tabiri.webp',
   ),
   FeatureEntry(
     label: 'Oyun Lobisi',
@@ -61,6 +59,7 @@ const kFeatureCatalog = <FeatureEntry>[
     colors: [Color(0xFF22C55E), Color(0xFF0EA5E9)],
     group: 'Keşfet ve oyna',
     onHome: true,
+    image: 'assets/games/okey.webp',
   ),
   FeatureEntry(
     label: 'Falcı Sohbeti',
@@ -69,6 +68,7 @@ const kFeatureCatalog = <FeatureEntry>[
     colors: [Color(0xFFEC4899), Color(0xFF8B5CF6)],
     group: 'Rüya ve fal',
     onHome: true,
+    image: 'assets/fortune/kahve-fali.webp',
   ),
   FeatureEntry(
     label: 'Destek',
@@ -77,6 +77,7 @@ const kFeatureCatalog = <FeatureEntry>[
     colors: [Color(0xFF0EA5E9), Color(0xFF6366F1)],
     group: 'Yardım',
     onHome: true,
+    image: 'assets/fortune/melek-kartlari.webp',
   ),
   FeatureEntry(
     label: 'Rüya Üret',
@@ -84,6 +85,7 @@ const kFeatureCatalog = <FeatureEntry>[
     route: '/ruya/uret',
     colors: [Color(0xFF8B5CF6), Color(0xFF06B6D4)],
     group: 'Rüya ve fal',
+    image: 'assets/fortune/istihare.webp',
   ),
   FeatureEntry(
     label: 'Rüya Yarışması',
@@ -91,6 +93,7 @@ const kFeatureCatalog = <FeatureEntry>[
     route: '/dreams/contest',
     colors: [Color(0xFF7C3AED), Color(0xFFDB2777)],
     group: 'Rüya ve fal',
+    image: 'assets/fortune/yildiz-haritasi.webp',
   ),
   FeatureEntry(
     label: 'Burç Uyumu',
@@ -98,13 +101,7 @@ const kFeatureCatalog = <FeatureEntry>[
     route: '/astrology/compatibility',
     colors: [Color(0xFFEC4899), Color(0xFFF97316)],
     group: 'Rüya ve fal',
-  ),
-  FeatureEntry(
-    label: 'Futbol',
-    icon: Icons.sports_soccer_rounded,
-    route: '/football',
-    colors: [Color(0xFF16A34A), Color(0xFF65A30D)],
-    group: 'Keşfet ve oyna',
+    image: 'assets/fortune/ask-fali.webp',
   ),
   FeatureEntry(
     label: 'Üyelik Hediye Et',
@@ -112,6 +109,7 @@ const kFeatureCatalog = <FeatureEntry>[
     route: '/uyelik/hediye',
     colors: [Color(0xFFF43F5E), Color(0xFFF59E0B)],
     group: 'Üyelik ve cüzdan',
+    image: 'assets/membership/gold.webp',
   ),
   FeatureEntry(
     label: 'Plan Karşılaştır',
@@ -119,6 +117,7 @@ const kFeatureCatalog = <FeatureEntry>[
     route: '/uyelik/karsilastir',
     colors: [Color(0xFFFFD700), Color(0xFFFF8A00)],
     group: 'Üyelik ve cüzdan',
+    image: 'assets/membership/premium.webp',
   ),
   FeatureEntry(
     label: 'İade Talebi',
@@ -126,6 +125,7 @@ const kFeatureCatalog = <FeatureEntry>[
     route: '/iade',
     colors: [Color(0xFF64748B), Color(0xFF0EA5E9)],
     group: 'Üyelik ve cüzdan',
+    image: 'assets/fortune/evet-hayir.webp',
   ),
   FeatureEntry(
     label: 'Falcı Paneli',
@@ -133,6 +133,7 @@ const kFeatureCatalog = <FeatureEntry>[
     route: '/falci-paneli',
     colors: [Color(0xFFA855F7), Color(0xFFEC4899)],
     group: 'Yayıncı ve ajans',
+    image: 'assets/fortune/tarot.webp',
   ),
   FeatureEntry(
     label: 'Ajans Büyümesi',
@@ -140,6 +141,7 @@ const kFeatureCatalog = <FeatureEntry>[
     route: '/ajans/buyume',
     colors: [Color(0xFF10B981), Color(0xFF06B6D4)],
     group: 'Yayıncı ve ajans',
+    image: 'assets/fortune/numeroloji.webp',
   ),
   FeatureEntry(
     label: 'Bildirim Tanılama',
@@ -147,6 +149,7 @@ const kFeatureCatalog = <FeatureEntry>[
     route: '/settings/notifications/diagnostics',
     colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
     group: 'Yardım',
+    image: 'assets/fortune/pendul.webp',
   ),
   FeatureEntry(
     label: 'İletişim',
@@ -154,5 +157,166 @@ const kFeatureCatalog = <FeatureEntry>[
     route: '/iletisim',
     colors: [Color(0xFF14B8A6), Color(0xFF3B82F6)],
     group: 'Yardım',
+    image: 'assets/fortune/runik.webp',
+  ),
+  FeatureEntry(
+    label: 'Fal Baktır',
+    icon: Icons.local_cafe_rounded,
+    route: '/fortune',
+    colors: [Color(0xFF92400E), Color(0xFFF59E0B)],
+    group: 'Rüya ve fal',
+    image: 'assets/fortune/kahve-fali.webp',
+  ),
+  FeatureEntry(
+    label: 'Canlı Falcılar',
+    icon: Icons.videocam_rounded,
+    route: '/canli-falcilar',
+    colors: [Color(0xFFEF4444), Color(0xFFF97316)],
+    group: 'Rüya ve fal',
+    image: 'assets/fortune/tarot.webp',
+  ),
+  FeatureEntry(
+    label: 'Rüya Merkezi',
+    icon: Icons.cloud_rounded,
+    route: '/dreams-hub',
+    colors: [Color(0xFF4F46E5), Color(0xFF06B6D4)],
+    group: 'Rüya ve fal',
+    image: 'assets/fortune/ruya-tabiri.webp',
+  ),
+  FeatureEntry(
+    label: 'Sesli Odalar',
+    icon: Icons.mic_rounded,
+    route: '/voice-rooms',
+    colors: [Color(0xFF8B5CF6), Color(0xFF3B82F6)],
+    group: 'Keşfet ve oyna',
+    image: 'assets/fortune/aura-analizi.webp',
+  ),
+  FeatureEntry(
+    label: 'Canlı Yayınlar',
+    icon: Icons.live_tv_rounded,
+    route: '/live',
+    colors: [Color(0xFFFF2D7A), Color(0xFF8B5CF6)],
+    group: 'Keşfet ve oyna',
+    image: 'assets/membership/svip.webp',
+  ),
+  FeatureEntry(
+    label: 'Oyunlar',
+    icon: Icons.casino_rounded,
+    route: '/games-hub',
+    colors: [Color(0xFF22C55E), Color(0xFF14B8A6)],
+    group: 'Keşfet ve oyna',
+    image: 'assets/games/tavla.webp',
+  ),
+  FeatureEntry(
+    label: 'Ödül Kazan',
+    icon: Icons.donut_large_rounded,
+    route: '/ad-rewards',
+    colors: [Color(0xFFF59E0B), Color(0xFFEF4444)],
+    group: 'Keşfet ve oyna',
+    image: 'assets/games/carkifelek.webp',
+  ),
+  FeatureEntry(
+    label: 'PK Liderliği',
+    icon: Icons.military_tech_rounded,
+    route: '/pk/leaderboard',
+    colors: [Color(0xFFEF4444), Color(0xFF7C3AED)],
+    group: 'Keşfet ve oyna',
+    image: 'assets/games/quiz-1v1.webp',
+  ),
+  FeatureEntry(
+    label: 'Fan Kulüpleri',
+    icon: Icons.groups_rounded,
+    route: '/fan-club-hub',
+    colors: [Color(0xFFEC4899), Color(0xFFA855F7)],
+    group: 'Keşfet ve oyna',
+    image: 'assets/games/kelime-duellosu.webp',
+  ),
+  FeatureEntry(
+    label: 'Ünlüler',
+    icon: Icons.star_rounded,
+    route: '/celebrities-hub',
+    colors: [Color(0xFFFFD700), Color(0xFFEC4899)],
+    group: 'Keşfet ve oyna',
+    image: 'assets/zodiac/aslan.webp',
+  ),
+  FeatureEntry(
+    label: 'Blog',
+    icon: Icons.article_rounded,
+    route: '/blog-hub',
+    colors: [Color(0xFF0EA5E9), Color(0xFF6366F1)],
+    group: 'Keşfet ve oyna',
+    image: 'assets/fortune/katina.webp',
+  ),
+  FeatureEntry(
+    label: 'Cüzdanım',
+    icon: Icons.account_balance_wallet_rounded,
+    route: '/wallet',
+    colors: [Color(0xFF10B981), Color(0xFF0EA5E9)],
+    group: 'Üyelik ve cüzdan',
+    image: 'assets/games/slot.webp',
+  ),
+  FeatureEntry(
+    label: 'Hediye Koleksiyonu',
+    icon: Icons.redeem_rounded,
+    route: '/gifts/collection',
+    colors: [Color(0xFFF43F5E), Color(0xFFEC4899)],
+    group: 'Üyelik ve cüzdan',
+    image: 'assets/games/scratch.webp',
+  ),
+  FeatureEntry(
+    label: 'Hediye Liderliği',
+    icon: Icons.leaderboard_rounded,
+    route: '/gifts/leaderboard',
+    colors: [Color(0xFFF59E0B), Color(0xFFF43F5E)],
+    group: 'Üyelik ve cüzdan',
+    image: 'assets/games/tombala.webp',
+  ),
+  FeatureEntry(
+    label: 'Arkadaş Davet Et',
+    icon: Icons.person_add_alt_1_rounded,
+    route: '/invite-friends',
+    colors: [Color(0xFF22C55E), Color(0xFF3B82F6)],
+    group: 'Üyelik ve cüzdan',
+    image: 'assets/fortune/el-fali.webp',
+  ),
+  FeatureEntry(
+    label: 'Yayın Takvimi',
+    icon: Icons.event_rounded,
+    route: '/live/schedule',
+    colors: [Color(0xFF6366F1), Color(0xFFEC4899)],
+    group: 'Yayıncı ve ajans',
+    image: 'assets/fortune/dogum-haritasi.webp',
+  ),
+  FeatureEntry(
+    label: 'Yayın Geçmişi',
+    icon: Icons.history_rounded,
+    route: '/profile/broadcast-history',
+    colors: [Color(0xFF475569), Color(0xFF8B5CF6)],
+    group: 'Yayıncı ve ajans',
+    image: 'assets/fortune/iskambil.webp',
+  ),
+  FeatureEntry(
+    label: 'Kazançlarım',
+    icon: Icons.payments_rounded,
+    route: '/profile/earnings',
+    colors: [Color(0xFF16A34A), Color(0xFFEAB308)],
+    group: 'Yayıncı ve ajans',
+    image: 'assets/fortune/gunluk-fal.webp',
+  ),
+  FeatureEntry(
+    label: 'Ortak Yayın Davetleri',
+    icon: Icons.connected_tv_rounded,
+    route: '/co-broadcast-invites',
+    colors: [Color(0xFF06B6D4), Color(0xFF8B5CF6)],
+    group: 'Yayıncı ve ajans',
+    image: 'assets/fortune/cin-fali.webp',
+  ),
+  FeatureEntry(
+    label: 'Ajans Görevleri',
+    icon: Icons.task_alt_rounded,
+    route: '/ajans/weekly-tasks',
+    colors: [Color(0xFF10B981), Color(0xFF6366F1)],
+    group: 'Yayıncı ve ajans',
+    image: 'assets/fortune/kursundokme.webp',
   ),
 ];

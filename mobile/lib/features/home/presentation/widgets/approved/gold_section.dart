@@ -69,18 +69,26 @@ class GoldSection extends ConsumerWidget {
 
   static const _homeTiers = ['gold', 'premium', 'diamond'];
 
+  static String _tierKey(MembershipPackageEntity p) =>
+      (p.id.isNotEmpty ? p.id : p.planId).trim().toLowerCase();
+
   Widget _content(
     BuildContext context,
     WidgetRef ref,
     List<MembershipPackageEntity> all,
   ) {
     // Ana sayfada yalnızca Gold · Premium · Diamond (SVIP/Basic yok).
-    final packages = <MembershipPackageEntity>[
+    // Kademe `id`'de ("gold"); `planId` sunucu cuid'i — eşleme/görsel için
+    // `id` kullanılır. Önceden planId ile filtrelendiğinden canlı veride hiçbir
+    // paket eşleşmiyor, bölüm boş kalıyor ve tüm kartlar aynı görseli alıyordu.
+    var packages = <MembershipPackageEntity>[
       for (final t in _homeTiers)
-        ...all.where(
-          (p) => (p.planId.isNotEmpty ? p.planId : p.id).toLowerCase() == t,
-        ),
+        ...all.where((p) => _tierKey(p) == t),
     ];
+    if (packages.isEmpty) {
+      packages = all.where((p) => _tierKey(p) != 'basic').toList();
+    }
+    if (packages.isEmpty) return const SizedBox.shrink();
     final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     return Column(
       children: [
@@ -110,14 +118,10 @@ class GoldSection extends ConsumerWidget {
                 title: pkg.title,
                 subtitle:
                     '₺${pkg.priceJeton ~/ 2}/ay · +${pkg.bonusJeton} $jetonLabel',
-                coverSlug: SectionVisualCatalog.goldSlug(
-                  pkg.planId.isNotEmpty ? pkg.planId : pkg.id,
-                ),
-                coverAsset: MembershipTierArt.assetFor(
-                  pkg.planId.isNotEmpty ? pkg.planId : pkg.id,
-                ),
+                coverSlug: SectionVisualCatalog.goldSlug(_tierKey(pkg)),
+                coverAsset: MembershipTierArt.assetFor(_tierKey(pkg)),
                 networkUrl: SectionVisualCatalog.goldTier(
-                  pkg.planId.isNotEmpty ? pkg.planId : pkg.id,
+                  _tierKey(pkg),
                   width: 400,
                 ),
                 heroTag: 'home-gold-${pkg.id}',
@@ -126,8 +130,7 @@ class GoldSection extends ConsumerWidget {
                 accentColor: theme.accent,
                 shimmer: theme.shimmer,
                 onTap: () {
-                  final plan = pkg.planId.isNotEmpty ? pkg.planId : pkg.id;
-                  context.push('/premium-membership?plan=$plan');
+                  context.push('/premium-membership?plan=${_tierKey(pkg)}');
                 },
               );
             },
@@ -146,10 +149,10 @@ class _TierTheme {
 }
 
 _TierTheme _tierTheme(MembershipPackageEntity pkg) {
-  final key = pkg.planId.isNotEmpty ? pkg.planId : pkg.id;
+  final key = (pkg.id.isNotEmpty ? pkg.id : pkg.planId).toLowerCase();
   return switch (key) {
     'basic' => const _TierTheme(accent: Color(0xFFCD7F32)),
-    'premium' => const _TierTheme(accent: Color(0xFF38BDF8)),
+    'premium' => const _TierTheme(accent: Color(0xFF34D399)),
     'gold' => const _TierTheme(accent: Color(0xFFFFD700)),
     'diamond' => const _TierTheme(accent: Color(0xFFA855F7)),
     'svip' => const _TierTheme(accent: Color(0xFFFF2D7A), shimmer: true),
