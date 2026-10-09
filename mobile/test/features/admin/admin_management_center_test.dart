@@ -45,7 +45,8 @@ void main() {
     expect(mod.contains('Kullanıcı Yönetimi'), isFalse);
     expect(mod.contains('Sistem Ayarları'), isFalse);
     expect(mod.contains('Acil Durum'), isFalse);
-    expect(adminCenterEntries(_access(admin: true)).where((e) => e.visible).length, 10);
+    expect(mod.contains('Sosyal Medya'), isFalse);
+    expect(adminCenterEntries(_access(admin: true)).where((e) => e.visible).length, 11);
   });
 
   testWidgets('yetkisiz kullanıcı Yönetim Merkezi göremez', (tester) async {
@@ -55,7 +56,7 @@ void main() {
     expect(find.text('Kullanıcı Yönetimi'), findsNothing);
   });
 
-  testWidgets('admin: 10 kart küçük ekranda 2 kolon, taşma yok', (tester) async {
+  testWidgets('admin: 11 kart küçük ekranda 2 kolon, taşma yok', (tester) async {
     tester.view.physicalSize = const Size(720, 1280);
     tester.view.devicePixelRatio = 2;
     addTearDown(tester.view.reset);
