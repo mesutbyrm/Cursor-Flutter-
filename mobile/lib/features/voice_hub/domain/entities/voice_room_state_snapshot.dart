@@ -35,6 +35,11 @@ class VoiceRoomStateSnapshot {
     Map<String, dynamic> json, {
     required String roomId,
   }) {
+    // `{success, data}` zarfı — çağıran açmadıysa burada aç.
+    final data = json['data'];
+    if (json['success'] == true && data is Map) {
+      json = Map<String, dynamic>.from(data);
+    }
     final room = json['room'] is Map
         ? Map<String, dynamic>.from(json['room'] as Map)
         : json;
@@ -59,9 +64,15 @@ class VoiceRoomStateSnapshot {
     }
 
     ChatRoomMyPermissions? me;
-    final meRaw = json['me'] ?? json['myPermissions'];
+    final meRaw = json['myPermissions'] ?? json['me'];
     if (meRaw is Map) {
-      me = ChatRoomMyPermissions.fromJson(Map<String, dynamic>.from(meRaw));
+      final m = Map<String, dynamic>.from(meRaw);
+      // Üretim `/state` → `me` = katılımcı kaydı (id, seatIndex, chatRole…),
+      // izin bayrağı taşımaz; izin olarak okunursa moderatör yetkileri false'a
+      // düşerdi. Yalnız `can*` alanı varsa izin kabul et.
+      if (m.keys.any((k) => k.startsWith('can'))) {
+        me = ChatRoomMyPermissions.fromJson(m);
+      }
     }
 
     final online = _int(json['onlineCount'] ?? room['onlineCount']);

@@ -381,6 +381,15 @@ jobs:
           retention-days: 30
           if-no-files-found: error
 
+      - name: Dart sembolleri yükle (obfuscated stack trace çözümü)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: canlifal-${{ steps.meta.outputs.version }}-symbols
+          path: mobile/build/app/outputs/symbols
+          retention-days: 30
+          if-no-files-found: warn
+
       - name: Release notları (minimal)
         if: always() && steps.meta.outputs.version != ''
         working-directory: ${{ github.workspace }}

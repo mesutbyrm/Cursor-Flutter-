@@ -461,14 +461,11 @@ class ChatRoomRemoteDataSource {
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final res = await _dio.safeGet<dynamic>(statePath(key));
-      final body = res.data;
-      if (body is Map) {
-        return VoiceRoomStateSnapshot.fromJson(
-          Map<String, dynamic>.from(body),
-          roomId: key,
-        );
-      }
-      if (body is Map<String, dynamic>) {
+      // Üretim `{success, data: {participants, seats, me, trtc, …}}` döner;
+      // zarf açılmadan ayrıştırılınca participants hep 0 geliyor ve SSE
+      // presence'ını siliyordu (SSE=1 ↔ state_snapshot=0 salınımı).
+      final body = _unwrapMap(res.data);
+      if (body != null) {
         return VoiceRoomStateSnapshot.fromJson(body, roomId: key);
       }
       throw ApiException('Geçersiz oda state yanıtı', statusCode: 502);
@@ -664,41 +661,24 @@ class ChatRoomRemoteDataSource {
     });
   }
 
+  /// `POST /voice` gövdesi — üretim yalnız `type` okur (`join` | `leave`;
+  /// başka değer → 400 «Invalid type»). `action` eski istemcilerle uyum için
+  /// aynı değeri taşır. Tek istek: eskiden `{action}` önce gidip 400 alıyor,
+  /// leave hiç `type` taşımadığından sunucuda hiç kapanmıyordu.
+  static Map<String, String> voiceBody(String type) =>
+      {'type': type, 'action': type};
+
+  /// Yetki yoksa (oda sahibi / global admin / voice rolü değil) sunucu 403
+  /// döner; çağıran tekrar denememeli (`VoiceRoomAudioCoordinator`).
   Future<void> joinVoiceSession(String roomKey, {String? alternateKey}) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      final bodies = <Map<String, dynamic>>[
-        const {'action': 'join'},
-        const {'type': 'join'},
-        const {'action': 'join', 'type': 'join'},
-      ];
-      ApiException? lastError;
-      for (final body in bodies) {
-        try {
-          await _dio.safePost<dynamic>(voicePath(key), data: body);
-          return;
-        } on ApiException catch (e) {
-          lastError = e;
-          final msg = e.message.toLowerCase();
-          if (e.statusCode == 404 || e.statusCode == 405) rethrow;
-          if (e.statusCode == 400 ||
-              e.statusCode == 422 ||
-              msg.contains('invalid type') ||
-              msg.contains('geçersiz alan')) {
-            continue;
-          }
-          rethrow;
-        }
-      }
-      if (lastError != null) throw lastError;
+      await _dio.safePost<dynamic>(voicePath(key), data: voiceBody('join'));
     });
   }
 
   Future<void> leaveVoiceSession(String roomKey, {String? alternateKey}) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      await _dio.safePost<dynamic>(
-        voicePath(key),
-        data: const {'action': 'leave'},
-      );
+      await _dio.safePost<dynamic>(voicePath(key), data: voiceBody('leave'));
     });
   }
 
@@ -1316,21 +1296,43 @@ class ChatRoomRemoteDataSource {
     });
   }
 
+  /// `GET speak-requests` yalnız moderatör (sahip/admin/ses verebilen) içindir;
+  /// diğerlerine 403. 403 alınan oda için bu oturumda bir daha istek atılmaz
+  /// (5 sn polling + giriş senkronu 403 spam'i).
+  final Set<String> _speakRequestsBlockedKeys = <String>{};
+
+  @visibleForTesting
+  bool isSpeakRequestsBlocked(String roomKey) =>
+      _speakRequestsBlockedKeys.contains(roomKey.trim());
+
+  /// Yetki değişince (rol verildi) yeniden deneme hakkı.
+  void clearSpeakRequestsBlock(String roomKey) =>
+      _speakRequestsBlockedKeys.remove(roomKey.trim());
+
   Future<List<String>> fetchSpeakRequests(
     String roomKey, {
     String? alternateKey,
   }) async {
+    final blockKey = roomKey.trim();
+    if (_speakRequestsBlockedKeys.contains(blockKey)) return const [];
     List<String> result = [];
-    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      final res = await _dio.safeGet<dynamic>(
-        ApiEndpoints.chatRoomSpeakRequests(key),
-      );
-      final data = res.data;
-      if (data is Map) {
-        final ids = data['userIds'];
-        if (ids is List) result = ids.map((e) => e.toString()).toList();
-      }
-    });
+    try {
+      await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+        final res = await _dio.safeGet<dynamic>(
+          ApiEndpoints.chatRoomSpeakRequests(key),
+        );
+        final data = res.data;
+        if (data is Map) {
+          final ids = data['userIds'];
+          if (ids is List) result = ids.map((e) => e.toString()).toList();
+        }
+      });
+    } on ApiException catch (e) {
+      if (e.statusCode != 403) rethrow;
+      _speakRequestsBlockedKeys.add(blockKey);
+      VoiceRoomDebugLog.log('SPEAK_REQUESTS_BLOCKED_403', {'roomId': blockKey});
+      return const [];
+    }
     return result;
   }
 

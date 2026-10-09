@@ -90,6 +90,26 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
 
   void _applyStateSnapshot(VoiceRoomStateSnapshot snapshot) {
     final participants = snapshot.participants;
+    // SSE sağlıklıyken presence için gerçek zamanlı kaynak SSE'dir: boş bir
+    // state yanıtı (geçici/eksik) canlı listeyi ezmez. Koltuk, izin, TRTC gibi
+    // diğer alanlar yine uygulanır.
+    if (participants.isEmpty &&
+        state.sseConnected &&
+        state.presence.isNotEmpty) {
+      VoiceRoomDebugLog.log('PRESENCE_SNAPSHOT_EMPTY_IGNORED', {
+        'roomId': _roomKey,
+        'sse': state.presence.length,
+      });
+      state = state.copyWith(
+        seatSlots: snapshot.seats.isNotEmpty ? snapshot.seats : state.seatSlots,
+        ownerId: snapshot.ownerId,
+        roomTrtc: snapshot.trtc ?? state.roomTrtc,
+        serverPermissions: snapshot.me ?? state.serverPermissions,
+        roomSeatCount: snapshot.seatCount ?? state.roomSeatCount,
+        roomMaxUsers: snapshot.maxUsers ?? state.roomMaxUsers,
+      );
+      return;
+    }
     _knownPresenceIds
       ..clear()
       ..addAll(participants.map((p) => p.id).where((id) => id.isNotEmpty));

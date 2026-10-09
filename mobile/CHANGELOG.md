@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.746+799 (2026-10-09) — Sesli oda P0/P1: /voice kapısı, 403 durdurma, presence salınımı
+
+- **/voice gövdesi:** backend yalnız `type` okuyor; eski gövde leave'i hep 400 yapıyordu → `{type, action}` tek istek
+- **/voice join:** koltuk/konuşma izni yoksa hiç gönderilmez (`VOICE_JOIN_SKIPPED_NO_SEAT`); tek uçuş; 403 sonrası aynı oda için yeniden deneme yok (`VOICE_BLOCKED_403`); leave yalnız join edilmişse
+- **Koltuk dinleyicisi:** her presence/SSE tikinde mic kapat → `/voice` leave spam'i; artık yalnız koltuk/izin değişiminde (kenar tetik)
+- **speak-requests:** yalnız moderatör yetkisiyle; 403 sonrası oda için polling durur (`SPEAK_REQUESTS_BLOCKED_403`)
+- **Presence:** `/state` `{success,data}` zarfı açılıyor; SSE sağlıklıyken boş snapshot SSE listesini ezmiyor (`PRESENCE_SNAPSHOT_EMPTY_IGNORED`); katılımcı `me` yetki sanılmıyor
+- **Provider:** dispose/rebuild sırasında async geri çağrılar "uninitialized provider" StateError fırlatmıyor; dispose sonrası state yazımı yok sayılıyor
+- **CI:** obfuscation sembolleri artifact olarak yükleniyor (cihaz stack trace çözümü)
+
 ## 1.0.745+798 (2026-10-08) — P0: explicit voice room join (implicit provider bootstrap kaldırıldı)
 
 - **P0:** `voiceRoomLiveProvider.build()` artık `_beginRoomSession()` çağırmıyor; oturum yalnızca `joinRoomSession()` (oda RTC/Basic sayfası) ile başlar
