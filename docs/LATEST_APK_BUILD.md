@@ -4,22 +4,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.754+807` |
-| Tarih (UTC) | 2026-10-09 20:49 |
-| Commit | [`55889e8c1c30b68547f7926f51fa6196a78226d3`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/55889e8c1c30b68547f7926f51fa6196a78226d3) |
-| İş akışı | [Run 37987006938](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37987006938) |
+| Sürüm | `1.0.755+808` |
+| Tarih (UTC) | 2026-10-09 21:32 |
+| Commit | [`40c64679bdd968019a18014ad7ed2e51a8e9c164`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/40c64679bdd968019a18014ad7ed2e51a8e9c164) |
+| İş akışı | [Run 37991886815](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37991886815) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.754+807 (2026-10-09) — Ajans Jeton cüzdanı, toplu alım, talep iptali
+## 1.0.755+808 (2026-10-09) — Ajans yönetimi: keşif, performans, vaatler, hedefler, yayıncı paneli
 
-- **Ajans Cüzdanı (`/ajans/cuzdan`, yeni):** Ajans panelindeki cüzdan kartından açılır
-  - **Kullanıcıya Yükle:** Herhangi bir kullanıcıyı ara, Jeton miktarı gir, onayla; miktar ajans bakiyesinden aynen düşer (komisyon yok). Bakiye yetmezse «N jeton eksik» der. Çift dokunma çift yükleme yapmaz (idempotency)
-  - **Toplu Jeton Al:** Sunucunun hesapladığı normal fiyat, ajans indirimi ve ödenecek tutar; havale/Papara/WhatsApp ile ödeme bildirimi; yönetici onaylayınca Jeton ajans cüzdanına geçer; bekleyen sipariş iptal edilebilir
-- **Düzeltme:** Üye satırındaki Jeton gönderme yanlış alan (`userId`) gönderdiği için çalışmıyordu → `targetUserId`
-- **Talep iptali:** Bekleyen para çekme talebi, ödeme bildirimi ve CFC ödeme talebi kullanıcı tarafından iptal edilebilir (önceden CFC iptali «desteklenmiyor» hatası veriyordu)
-- **Backend deploy gerekli** (`mesutbyrm/canlifal` — şema değişikliği yok)
+- **Ajanslar (`/ajanslar`, yeni):** Ajansları sırala/ara (önerilen, yayın saati, yayıncı sayısı, hedef başarısı, seviye, en yeni). İstatistikler gerçek veriden: son 30 gün doğrulanmış video yayını, son 90 gün hedef başarısı (veri yoksa «Hedef verisi yok»)
+- **Ajans detayı:** Yönetici onaylı vaatler (hedef, bonus, ölçüm yöntemi, geçerlilik), yayıncılar, **ajansa başvur** / başvuruyu geri çek
+- **Yayıncı Paneli (`/ajans/yayinci`, yeni):** Ajans ve üyelik, bugün/hafta/ay doğrulanmış yayın süresi, hedef ilerlemesi ve kalan süre, vaatleri **açık onayla kabul** (sürüm kaydı), kabul geçmişi, bonus/hak edişler, duyurular, ajans geçmişi, başvuru/davet geçmişi, kurallar, destek/itiraz, ayrılma talebi
+- **Ajans paneli araçları:** Performans (yayıncı bazında saat, gün, kesinti, hediye, hedef durumu) ve yayıncı ayrıntısı (günlük dağılım, oturumlar, hedef ata, hak ediş öde/iptal, üyelik geçmişi, moderasyon kayıtları); katılma başvuruları; vaatler (taslak → yönetici onayı, yeni sürüm, geri çek, arşivle); duyurular; hak edişler (dönem kapat); çalışan yetkileri
+- **Düzeltme:** Metin girişli pencereler kapanırken denetleyici erken dispose ediliyordu (hata ekranı riski)
+- **Backend deploy + `prisma db push` gerekli** (yalnız yeni tablolar)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
