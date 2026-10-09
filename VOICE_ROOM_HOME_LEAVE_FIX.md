@@ -67,19 +67,19 @@ Yeni testler:
 - UI leave sonrası (aktif oda temizlenmiş) çift leave yok
 
 Unit testle doğrulanamayanlar:
-- Çıkıştan sonra SSE reconnect veya heartbeat ile yeniden join olmaması: controller tam DI gerektiriyor; mevcut generation/`_sessionActive` korumaları değiştirilmedi. → Cihazda **BLOCKED**.
-- Özet istisnası senaryosu (`leaveWithSummary` BuildContext + gerçek provider'lar ister). → Cihazda **BLOCKED**.
+- Çıkıştan sonra SSE reconnect veya heartbeat ile yeniden join olmaması: controller tam DI gerektiriyor; mevcut generation/`_sessionActive` korumaları değiştirilmedi. → Cihazda **PASS** (kullanıcı, 2026-10-09).
+- Özet istisnası senaryosu (`leaveWithSummary` BuildContext + gerçek provider'lar ister). → Cihazda **PASS** (kullanıcı, 2026-10-09).
 
-## 5. Cihazda doğrulanması gerekenler (hepsi BLOCKED)
+## 5. Cihaz doğrulaması — PASS (kullanıcı cihaz testi, 2026-10-09; agent logu görmedi)
 
-| # | Senaryo | Beklenen log |
-|---|---------|--------------|
-| 1 | Odaya gir → sağ üst kapatma → Evet → Ana sayfa | `LEAVE_UI` → (varsa `LEAVE_SUMMARY_SKIPPED error=…`) → `LEAVE_START source=rtc_leave` → `presence leave response accepted=true` → `live leave-room ok=true` → `LEAVE_COMPLETE` |
-| 2 | Çıkıştan 30 sn sonra | `PRESENCE_JOIN`, `SSE_START`, `JOIN_START` veya `api.presence.join` **yok** |
-| 3 | İkinci cihazda oda listesi | Kullanıcı ≤ 60 sn içinde (normalde anında) listeden düşer; oda online sayısı azalır |
-| 4 | Oda A → Oda B | Öncekiyle aynı `room_switch` zinciri; tek leave |
-| 5 | Oda içinden profil aç → geri dön | `ROUTE_LEFT_VOICE_ROOM` **yok**, odada kalır |
-| 6 | Odadayken bildirime tıkla → ana sayfa | `ROUTE_LEFT_VOICE_ROOM` + tek `LEAVE_START` |
+| # | Senaryo | Beklenen log | Sonuç |
+|---|---------|--------------|-------|
+| 1 | Odaya gir → sağ üst kapatma → Evet → Ana sayfa | `LEAVE_UI` → (varsa `LEAVE_SUMMARY_SKIPPED error=…`) → `LEAVE_START source=rtc_leave` → `presence leave response accepted=true` → `live leave-room ok=true` → `LEAVE_COMPLETE` | PASS |
+| 2 | Çıkıştan 30 sn sonra | `PRESENCE_JOIN`, `SSE_START`, `JOIN_START` veya `api.presence.join` **yok** | PASS |
+| 3 | İkinci cihazda oda listesi | Kullanıcı ≤ 60 sn içinde (normalde anında) listeden düşer; oda online sayısı azalır | PASS |
+| 4 | Oda A → Oda B | Öncekiyle aynı `room_switch` zinciri; tek leave | PASS |
+| 5 | Oda içinden profil aç → geri dön | `ROUTE_LEFT_VOICE_ROOM` **yok**, odada kalır | PASS |
+| 6 | Odadayken bildirime tıkla → ana sayfa | `ROUTE_LEFT_VOICE_ROOM` + tek `LEAVE_START` | PASS |
 
 Logcat filtresi:
 

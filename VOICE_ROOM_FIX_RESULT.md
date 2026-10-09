@@ -56,23 +56,22 @@ Loglarda token/JWT/secret/userSig/e-posta yok; yalnız `roomId` ve `endpoint`.
 
 ## 5. Gerçek cihaz kabulü
 
-Bu ortamda cihaz/emülatör yok. **Hiçbiri PASS değildir.**
+Sonuçlar kullanıcının gerçek cihaz testine dayanır (2026-10-09); agent logu görmedi.
 
 | # | Senaryo | Durum |
 |---|---------|-------|
-| A | Koltuksuz kullanıcı odaya girer → `/voice` POST yok, yalnız dinleyici TRTC | BLOCKED |
-| B | Koltuk al → izin → tek `/voice` join → publish | BLOCKED |
-| C | Koltuktan in → publish stop → mic false → tek `/voice` leave | BLOCKED |
-| D | Yetkisiz kullanıcı 403 → tek log, retry/polling yok | BLOCKED |
-| E | Moderatör olmayan → speak-requests isteği yok / 403 sonrası durur | BLOCKED |
-| F | Online sayısı SSE 1 ↔ snapshot 0 salınımı yok | BLOCKED |
-| G | Oda→Ana sayfa leave zinciri tam (LEAVE_COMPLETE), sonra istek yok | BLOCKED |
-| H | Oda→Oda geçişi aynı teardown, tek SSE | BLOCKED |
-| I | "uninitialized provider" / `NoSuchMethodError` crash tekrar etmiyor | BLOCKED |
+| A | Koltuksuz kullanıcı odaya girer → `/voice` POST yok, yalnız dinleyici TRTC | PASS (kullanıcı cihaz testi, 2026-10-09) |
+| B | Koltuk al → izin → tek `/voice` join → publish | PASS (kullanıcı cihaz testi, 2026-10-09) |
+| C | Koltuktan in → publish stop → mic false → tek `/voice` leave | PASS (kullanıcı cihaz testi, 2026-10-09) |
+| D | Yetkisiz kullanıcı 403 → tek log, retry/polling yok | PASS (kullanıcı cihaz testi, 2026-10-09) |
+| E | Moderatör olmayan → speak-requests isteği yok / 403 sonrası durur | PASS (kullanıcı cihaz testi, 2026-10-09) |
+| F | Online sayısı SSE 1 ↔ snapshot 0 salınımı yok | PASS (kullanıcı cihaz testi, 2026-10-09) |
+| G | Oda→Ana sayfa leave zinciri tam (LEAVE_COMPLETE), sonra istek yok | PASS (kullanıcı cihaz testi, 2026-10-09) |
+| H | Oda→Oda geçişi aynı teardown, tek SSE | PASS (kullanıcı cihaz testi, 2026-10-09) |
+| I | "uninitialized provider" / `NoSuchMethodError` crash tekrar etmiyor | PASS (kullanıcı: çökme/donma yok, 2026-10-09). Not: 1.0.746+799 logunda bu hatalar `ui.zone` altında **ölümcül olmayan** şekilde hâlâ görülüyor; ayrı iş |
 
 ## 6. Kalan BLOCKED maddeler
 
-- A–I gerçek cihaz testleri (kullanıcı).
 - `NoSuchMethodError: Class 'xHc<List<Mya>>' has no instance getter 'OCh'` — statik olarak kaynak bulunamadı. Yeni CI derlemesinin `canlifal-<sürüm>-symbols` artifact'ı ile `flutter symbolize -i <stack.txt> -d <symbols>/app.android-arm64.symbols` çalıştırılıp çözülmüş trace gerekli.
 - Referans verilen log dosyası ("Yapıştırılan metin(4).txt") konuşmaya eklenmedi; log bazlı doğrulama yapılamadı.
 - Backend (öneri, zorunlu değil): `/voice` `action` alanını da kabul edebilir; `/state` `me` alanı yetki objesiyle karıştırılmamalı.
