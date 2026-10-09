@@ -19,7 +19,6 @@ import '../../features/live/presentation/widgets/live_pk_invite_listener.dart';
 import '../../features/voice_hub/presentation/widgets/voice_pk_invite_listener.dart';
 import '../../features/voice_hub/presentation/widgets/voice_speak_request_listener.dart';
 import '../../features/vip_gold/presentation/widgets/voice_room_join_request_listener.dart';
-import '../../features/voice_hub/presentation/widgets/girlive_rules_listener.dart';
 import '../../features/messages/presentation/widgets/dm_realtime_listener.dart';
 import '../../features/messages/presentation/widgets/dm_voice_call_host.dart';
 import '../../features/video_call/presentation/incoming_video_call_screen.dart';
@@ -67,7 +66,7 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
   void initState() {
     super.initState();
     final router = ref.read(goRouterProvider);
-    _location = router.routerDelegate.currentConfiguration.uri.path;
+    _location = _routeKey(router);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _attachRouter(ref.read(goRouterProvider));
@@ -91,6 +90,14 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
     super.dispose();
   }
 
+  /// Görünen sayfa (push dahil) + kabuk içi mi — alt bar kararı için.
+  static String _routeKey(GoRouter router) {
+    final v = AppBottomNavHost.visibleRoute(
+      router.routerDelegate.currentConfiguration,
+    );
+    return '${v.path}|${v.inShell}';
+  }
+
   void _detachRouter() {
     _router?.routerDelegate.removeListener(_onRouteChanged);
     _router = null;
@@ -101,7 +108,7 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
     if (identical(_router, router) && _listenerAttached) return;
     _detachRouter();
     _router = router;
-    _location = router.routerDelegate.currentConfiguration.uri.path;
+    _location = _routeKey(router);
     router.routerDelegate.addListener(_onRouteChanged);
     _listenerAttached = true;
   }
@@ -110,13 +117,12 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
     if (!mounted) return;
     final router = _router;
     if (router == null) return;
-    final next = router.routerDelegate.currentConfiguration.uri.path;
+    final next = _routeKey(router);
     if (next == _location) return;
     // GoRouter ilk mount sırasında build fazında notifyListeners gönderir.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _router == null) return;
-      final latest =
-          _router!.routerDelegate.currentConfiguration.uri.path;
+      final latest = _routeKey(_router!);
       if (latest != _location) {
         setState(() => _location = latest);
       }
@@ -155,9 +161,15 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
       body = VoicePkInviteListener(child: body);
       body = VoiceSpeakRequestListener(child: body);
       body = VoiceRoomJoinRequestListener(child: body);
-      body = GirLiveRulesListener(child: body);
       body = VideoCallIncomingHost(child: body);
-      body = AppBottomNavHost(location: location, child: body);
+      final visible = AppBottomNavHost.visibleRoute(
+        router.routerDelegate.currentConfiguration,
+      );
+      body = AppBottomNavHost(
+        location: visible.path,
+        inShell: visible.inShell,
+        child: body,
+      );
     }
 
     return PopScope(

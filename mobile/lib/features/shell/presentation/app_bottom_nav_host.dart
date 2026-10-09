@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../app/router/app_router.dart';
 import '../../../core/theme/app_theme_extensions.dart';
 import '../../../core/ui/responsive/responsive_layout.dart';
 import 'shell_ui.dart';
+import '../../home/presentation/providers/home_providers.dart';
 import '../../home/presentation/widgets/approved/bottom_navigation_widget.dart';
 
 /// Sesli sohbet odası (RTC) dışındaki sayfalarda alt navigasyon.
@@ -12,10 +14,31 @@ class AppBottomNavHost extends ConsumerWidget {
     super.key,
     required this.child,
     required this.location,
+    this.inShell,
   });
 
   final Widget child;
+
+  /// Ekranda en üstte görünen sayfanın yolu ([visibleRoute]).
   final String location;
+
+  /// Görünen sayfa alt barlı kabuğun (MainShellPage) içinde mi?
+  /// `null` → yalnız yola bakılır ([shellHasBottomNav]).
+  final bool? inShell;
+
+  /// go_router `push` URI'yi değiştirmez (`/feed` üstüne itilen `/shorts`
+  /// hâlâ `/feed` görünür). Bu yüzden eşleşme listesinin en sonuna bakılır:
+  /// görünen sayfanın yolu ve kabuk navigatöründe olup olmadığı.
+  static ({String path, bool inShell}) visibleRoute(RouteMatchList config) {
+    final top = config.matches.isEmpty ? null : config.matches.last;
+    RouteMatchBase? m = top;
+    while (m is ShellRouteMatch && m.matches.isNotEmpty) {
+      m = m.matches.last;
+    }
+    final path =
+        m is ImperativeRouteMatch ? m.matches.uri.path : config.uri.path;
+    return (path: path, inShell: top is ShellRouteMatch);
+  }
 
   static bool hidesBottomNav(String location) {
     final path = Uri.tryParse(location)?.path ?? location;
@@ -38,6 +61,21 @@ class AppBottomNavHost extends ConsumerWidget {
     if (path.contains('/ad-transition') && path.startsWith('/canli-falcilar')) {
       return true;
     }
+    // Tam ekran / kamera / oyun masası — kendi alt kontrolleri var.
+    const immersive = [
+      '/live/prep',
+      '/live/pk',
+      '/live/swipe',
+      '/shorts/upload',
+      '/dm-voice-call',
+      '/games-room/',
+      '/social/stories/view',
+    ];
+    for (final p in immersive) {
+      if (path == p || path.startsWith(p.endsWith('/') ? p : '$p/')) {
+        return true;
+      }
+    }
     return false;
   }
 
@@ -56,9 +94,9 @@ class AppBottomNavHost extends ConsumerWidget {
     return false;
   }
 
-  static bool shouldShowBottomNav(String location) {
+  static bool shouldShowBottomNav(String location, {bool? inShell}) {
     if (hidesBottomNav(location)) return false;
-    if (shellHasBottomNav(location)) return false;
+    if (inShell ?? shellHasBottomNav(location)) return false;
     return true;
   }
 
@@ -93,8 +131,10 @@ class AppBottomNavHost extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(goRouterProvider);
-    final showNav = shouldShowBottomNav(location);
-    if (!showNav) return child;
+    final showNav = shouldShowBottomNav(location, inShell: inShell);
+    // Klavye açıkken bar gizlenir; sayfa kendi composer'ını klavyeye oturtur.
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+    if (!showNav || keyboardOpen) return child;
 
     final tab = activeTabFor(location);
     final width = MediaQuery.sizeOf(context).width;
@@ -120,6 +160,7 @@ class AppBottomNavHost extends ConsumerWidget {
                 switch (i) {
                   case 0:
                     router.go('/feed');
+                    ref.read(homeReselectProvider.notifier).state++;
                   case 1:
                     router.go('/social');
                   case 2:
@@ -189,7 +230,10 @@ class AppBottomNavHost extends ConsumerWidget {
           Expanded(child: child),
           BottomNavigationWidget(
             activeTab: tab,
-            onHome: () => router.go('/feed'),
+            onHome: () {
+              router.go('/feed');
+              ref.read(homeReselectProvider.notifier).state++;
+            },
             onSocial: () => router.go('/social'),
             onVoice: () => router.go('/voice-rooms'),
             onCreate: () => ShellUi.showPublishNavSheet(context, router),

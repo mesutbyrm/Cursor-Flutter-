@@ -8,9 +8,20 @@ abstract final class VoiceChatMessageFilters {
   /// GirLive Bot'un giriş selamı («👋 Hoş geldin @isim!»).
   static bool isBotWelcome(ChatRoomMessage message) {
     final name = (message.user?.name ?? '').toLowerCase();
-    final lower = message.content.toLowerCase();
-    return name.contains('girlive') && lower.contains('hoş geldin');
+    return name.contains('girlive') && looksLikeWelcome(message.content);
   }
+
+  static bool looksLikeWelcome(String content) {
+    final lower = content.toLowerCase();
+    return lower.contains('hoş geldin') ||
+        lower.contains('hoşgeldin') ||
+        lower.contains('hos geldin');
+  }
+
+  /// Selamın sayaç başlangıcı: mesaj zamanı (geçmişten yüklenen eski selam
+  /// hemen gizlenir); sunucu saati ilerideyse şimdi.
+  static DateTime welcomeClockStart(DateTime createdAt, DateTime now) =>
+      createdAt.isBefore(now) ? createdAt : now;
 
   /// Selam bu süre sonra sohbetten kalkar.
   static const botWelcomeVisible = Duration(seconds: 10);

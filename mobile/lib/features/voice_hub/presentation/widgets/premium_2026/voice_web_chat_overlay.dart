@@ -30,6 +30,7 @@ class VoiceWebChatOverlay extends StatefulWidget {
     this.showAvatar = true,
     this.onReplyToMessage,
     this.reportContextLabel,
+    this.botNotice,
   });
 
   final List<ChatRoomMessage> messages;
@@ -51,6 +52,9 @@ class VoiceWebChatOverlay extends StatefulWidget {
   final void Function(ChatRoomMessage message)? onReplyToMessage;
   final String? reportContextLabel;
 
+  /// GirLive Bot kural/duyuru satırı — yalnızca bu kullanıcıya, geçici.
+  final String? botNotice;
+
   @override
   State<VoiceWebChatOverlay> createState() => _VoiceWebChatOverlayState();
 }
@@ -71,7 +75,10 @@ class _VoiceWebChatOverlayState extends State<VoiceWebChatOverlay> {
 
   bool _welcomeExpired(ChatRoomMessage m) {
     final now = DateTime.now();
-    final seen = _welcomeFirstSeen.putIfAbsent(m.id, () => now);
+    final seen = _welcomeFirstSeen.putIfAbsent(
+      m.id,
+      () => VoiceChatMessageFilters.welcomeClockStart(m.createdAt, now),
+    );
     return now.difference(seen) >= VoiceChatMessageFilters.botWelcomeVisible;
   }
 
@@ -240,7 +247,10 @@ class _VoiceWebChatOverlayState extends State<VoiceWebChatOverlay> {
         ? visible.sublist(visible.length - 40)
         : visible;
 
-    if (slice.isEmpty) {
+    final botNotice = widget.botNotice?.trim();
+    final hasBotNotice = botNotice != null && botNotice.isNotEmpty;
+
+    if (slice.isEmpty && !hasBotNotice) {
       final marquee = widget.welcomeMarquee?.trim();
       if (marquee != null && marquee.isNotEmpty) {
         return Padding(
@@ -287,7 +297,8 @@ class _VoiceWebChatOverlayState extends State<VoiceWebChatOverlay> {
     final hasPinned = pinned != null && pinned.isNotEmpty;
     final vipPin = widget.vipPinText?.trim();
     final hasVipPin = vipPin != null && vipPin.isNotEmpty;
-    final headerCount = (hasVipPin ? 1 : 0) + (hasPinned ? 1 : 0);
+    final headerCount =
+        (hasBotNotice ? 1 : 0) + (hasVipPin ? 1 : 0) + (hasPinned ? 1 : 0);
 
     final list = ListView.builder(
       controller: _scroll,
@@ -303,10 +314,18 @@ class _VoiceWebChatOverlayState extends State<VoiceWebChatOverlay> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       itemCount: slice.length + headerCount,
       itemBuilder: (context, i) {
-        if (hasVipPin && i == 0) {
+        // Ters liste: 0 en altta (en yeni mesaj gibi).
+        if (hasBotNotice && i == 0) {
+          return _GirLiveNoticeLine(
+            key: const ValueKey('girlive-notice'),
+            text: botNotice,
+          );
+        }
+        final h = i - (hasBotNotice ? 1 : 0);
+        if (hasVipPin && h == 0) {
           return _PinnedAnnouncementBar(text: vipPin, vip: true);
         }
-        if (hasPinned && i == (hasVipPin ? 1 : 0)) {
+        if (hasPinned && h == (hasVipPin ? 1 : 0)) {
           return _PinnedAnnouncementBar(text: pinned);
         }
         final msgIndex = i - headerCount;
@@ -386,6 +405,59 @@ bool _isMusicSystemLine(String content) {
 }
 
 /// !duyuru — sohbet listesinin üstünde sabit duyuru şeridi.
+/// GirLive Bot'un yalnızca girene gösterdiği kural/duyuru satırı.
+class _GirLiveNoticeLine extends StatelessWidget {
+  const _GirLiveNoticeLine({super.key, required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.38),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: const Color(0xFF7B2FF7).withValues(alpha: 0.6),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.smart_toy_rounded,
+            color: Color(0xFFB18CFF),
+            size: 16,
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  const TextSpan(
+                    text: 'GirLive Bot · yalnızca sana  ',
+                    style: TextStyle(
+                      color: Color(0xFFB18CFF),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 11,
+                    ),
+                  ),
+                  TextSpan(
+                    text: text,
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _PinnedAnnouncementBar extends StatelessWidget {
   const _PinnedAnnouncementBar({required this.text, this.vip = false});
 

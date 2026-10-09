@@ -218,9 +218,9 @@ class _SocialInstagramPostCardState
                 ),
               ),
               if (!mediaIsImage && !useScene) actions(),
-              if (_isFortunePost && post.fortuneCount > 0)
+              if (_isFortunePost && ref.watch(fortuneViewCountProvider(post)) > 0)
                 _CoViewersBar(
-                  count: post.fortuneCount,
+                  count: ref.watch(fortuneViewCountProvider(post)),
                   viewers: ref.watch(fortuneCoViewersProvider(post)),
                   onTap: () => _openPostDetail(context),
                 ),

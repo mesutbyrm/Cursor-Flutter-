@@ -49,8 +49,44 @@ void main() {
       await tester.pump(const Duration(milliseconds: 600));
       expect(tester.takeException(), isNull);
       expect(find.text('Kahve Falı'), findsOneWidget);
+      // Metin görselin üst kısmında (tür etiketinin hemen altında).
+      final cardTop = tester.getTopLeft(find.byType(SocialFortuneSceneCard)).dy;
+      final textTop = tester
+          .getTopLeft(find.textContaining('Sevgili dostum'))
+          .dy;
+      expect(textTop - cardTop, lessThan(80));
+      // «daha fazla» detaya gitmez, metnin tamamını kartta açar.
+      final closedH = tester.getSize(find.byType(SocialFortuneSceneCard)).height;
       await tester.tap(find.text('daha fazla'));
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(tapped, isFalse);
+      expect(find.text('daha az'), findsOneWidget);
+      final openH = tester.getSize(find.byType(SocialFortuneSceneCard)).height;
+      expect(openH, greaterThan(closedH));
+      expect(tester.takeException(), isNull);
+      // Kartın başka yerine dokunmak detayı açar.
+      await tester.tap(find.text('Kahve Falı'));
+      await tester.pump(const Duration(milliseconds: 400));
       expect(tapped, isTrue);
     });
   }
+
+  testWidgets('kısa metinde «daha fazla» görünmez', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: SocialFortuneSceneCard(
+              fortuneType: 'tarot',
+              typeLabel: 'Tarot',
+              body: 'Kısa bir fal.',
+              onTap: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(find.text('daha fazla'), findsNothing);
+  });
 }

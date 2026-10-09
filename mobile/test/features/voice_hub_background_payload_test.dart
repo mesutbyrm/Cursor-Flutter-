@@ -52,4 +52,23 @@ void main() {
       );
     });
   });
+
+  test('backgroundImage: null varsayılana dönüş olarak tanınır', () {
+    expect(
+      VoiceRoomBackgroundCatalog.payloadClearsBackground(
+        {'event': 'room_updated', 'backgroundImage': null},
+      ),
+      isTrue,
+    );
+    expect(
+      VoiceRoomBackgroundCatalog.payloadClearsBackground(
+        {'event': 'room_updated', 'backgroundImage': 'https://a/b.jpg'},
+      ),
+      isFalse,
+    );
+    expect(
+      VoiceRoomBackgroundCatalog.payloadClearsBackground({'event': 'x'}),
+      isFalse,
+    );
+  });
 }

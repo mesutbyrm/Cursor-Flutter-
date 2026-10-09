@@ -23,35 +23,35 @@ class HomeRefQuickAccess extends ConsumerWidget {
       label: 'Keşfet',
       icon: Icons.explore_rounded,
       route: '/shorts',
-      image: 'assets/fortune/yildiz-haritasi.webp',
+      image: 'assets/tiles/home-kesfet.webp',
       colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
     ),
     _QuickAccessItem(
       label: 'Tanış & Kaynaş',
       icon: Icons.favorite_rounded,
       route: '/social/tanis-kaynas',
-      image: 'assets/fortune/ask-fali.webp',
+      image: 'assets/tiles/home-tanis-kaynas.webp',
       colors: [Color(0xFFA855F7), Color(0xFFEC4899)],
     ),
     _QuickAccessItem(
       label: 'Gold Üyelik',
       icon: Icons.workspace_premium_rounded,
       route: '/premium-membership',
-      image: 'assets/membership/gold.webp',
+      image: 'assets/tiles/home-gold-uyelik.webp',
       colors: [Color(0xFFFFD700), Color(0xFFFF8A00)],
     ),
     _QuickAccessItem(
       label: 'Canlı Falcılar',
       icon: Icons.videocam_rounded,
       route: '/canli-falcilar',
-      image: 'assets/fortune/kahve-fali.webp',
+      image: 'assets/tiles/home-canli-falcilar.webp',
       colors: [Color(0xFFEF4444), Color(0xFFF97316)],
     ),
     _QuickAccessItem(
       label: 'Tüm Özellikler',
       icon: Icons.apps_rounded,
       route: '/ozellikler',
-      image: 'assets/fortune/melek-kartlari.webp',
+      image: 'assets/tiles/home-tum-ozellikler.webp',
       colors: [Color(0xFF475569), Color(0xFF8B5CF6)],
     ),
   ];
@@ -69,42 +69,43 @@ class HomeRefQuickAccess extends ConsumerWidget {
     );
     // Ayrı yayıncı rolü yok (canBroadcast varsayılan açık): en az bir yayın
     // geçmişi olan kullanıcı «Yayıncı Paneli»ni görür.
-    final isBroadcaster = loggedIn &&
+    final isBroadcaster =
+        loggedIn &&
         (ref.watch(broadcastHistoryProvider).valueOrNull?.isNotEmpty ?? false);
     final row2 = <_QuickAccessItem>[
       _QuickAccessItem(
         label: isTeller ? 'Falcı Panelim' : 'Falcı Ol',
         icon: Icons.auto_awesome_rounded,
         route: isTeller ? '/falci-panel' : '/falci-ol',
-        image: 'assets/fortune/tarot.webp',
+        image: 'assets/tiles/home-falci.webp',
         colors: const [Color(0xFF7C3AED), Color(0xFFDB2777)],
       ),
       _QuickAccessItem(
         label: hasAgency ? 'Ajansım' : 'Ajans Ol',
         icon: Icons.apartment_rounded,
         route: hasAgency ? '/ajans/dashboard' : '/ajans/basvur',
-        image: 'assets/fortune/numeroloji.webp',
+        image: 'assets/tiles/home-ajans.webp',
         colors: const [Color(0xFF10B981), Color(0xFF06B6D4)],
       ),
       _QuickAccessItem(
         label: isBroadcaster ? 'Yayıncı Paneli' : 'Yayıncı Ol',
         icon: Icons.live_tv_rounded,
         route: isBroadcaster ? '/profile/broadcaster-stats' : '/live/prep',
-        image: 'assets/membership/svip.webp',
+        image: 'assets/tiles/home-yayinci.webp',
         colors: const [Color(0xFFFF2D7A), Color(0xFF8B5CF6)],
       ),
       const _QuickAccessItem(
         label: 'Jeton Al',
         icon: Icons.toll_rounded,
         route: '/jeton-store',
-        image: 'assets/games/slot.webp',
+        image: 'assets/tiles/home-jeton-al.webp',
         colors: [Color(0xFFF59E0B), Color(0xFFEAB308)],
       ),
       const _QuickAccessItem(
         label: 'Hediye Yolla',
         icon: Icons.card_giftcard_rounded,
-        route: '/gift-send',
-        image: 'assets/games/scratch.webp',
+        route: '/hediye-yolla',
+        image: 'assets/tiles/home-hediye-yolla.webp',
         colors: [Color(0xFFEC4899), Color(0xFFF43F5E)],
       ),
     ];
@@ -120,23 +121,23 @@ class HomeRefQuickAccess extends ConsumerWidget {
           const gap = 6.0;
           final tileW = (c.maxWidth - gap * 4) / 5;
           Widget row(List<_QuickAccessItem> items, int delayBase) => Row(
-                children: [
-                  for (var i = 0; i < items.length; i++) ...[
-                    if (i > 0) const SizedBox(width: gap),
-                    SizedBox(
-                      width: tileW,
-                      child: CanlifalEntranceFadeSlide(
-                        delay: Duration(milliseconds: 40 * (delayBase + i)),
-                        child: items[i].route == '/premium-membership'
-                            ? HomeGoldShimmerBand(
-                                child: _QuickAccessTile(item: items[i]),
-                              )
-                            : _QuickAccessTile(item: items[i]),
-                      ),
-                    ),
-                  ],
-                ],
-              );
+            children: [
+              for (var i = 0; i < items.length; i++) ...[
+                if (i > 0) const SizedBox(width: gap),
+                SizedBox(
+                  width: tileW,
+                  child: CanlifalEntranceFadeSlide(
+                    delay: Duration(milliseconds: 40 * (delayBase + i)),
+                    child: items[i].route == '/premium-membership'
+                        ? HomeGoldShimmerBand(
+                            child: _QuickAccessTile(item: items[i]),
+                          )
+                        : _QuickAccessTile(item: items[i]),
+                  ),
+                ),
+              ],
+            ],
+          );
           return Column(
             children: [
               row(_row1, 0),
@@ -217,11 +218,11 @@ class _QuickAccessTile extends StatelessWidget {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        item.colors.first.withValues(alpha: 0.10),
-                        item.colors.last.withValues(alpha: 0.35),
-                        Colors.black.withValues(alpha: 0.78),
+                        Colors.transparent,
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.82),
                       ],
-                      stops: const [0, 0.5, 1],
+                      stops: const [0, 0.55, 1],
                     ),
                   ),
                 ),
@@ -230,14 +231,9 @@ class _QuickAccessTile extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(3),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.32),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(item.icon, color: Colors.white, size: 15),
-                      ),
+                      // Amblem görseli ikonu zaten içerir; görsel yoksa ikon.
+                      if (item.image == null)
+                        Icon(item.icon, color: Colors.white, size: 15),
                       const Spacer(),
                       SizedBox(
                         width: double.infinity,

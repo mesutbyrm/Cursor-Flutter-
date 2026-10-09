@@ -1,5 +1,24 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.753+806 (2026-10-09) — Mistik kutular, Hediye Yolla, alt bar, GirLive, arka plan senkronu, sosyal ve profil
+
+- **Mistik kutu görselleri:** Ana sayfadaki 10 kutu ve «Tüm Özellikler»deki tüm kutular adına uygun mistik amblemle (ör. Jeton Al → altın jeton, Canlı Falcılar → göz)
+- **Hediye Yolla (yeni):** Kendi bakiyenden bir kullanıcıya Jeton veya CFC gönder; en az 100, komisyon admin panelinden (`POST /api/wallet/transfer` — **backend deploy gerekli**)
+- **Ana sayfa düğmesi:** Ana sayfadayken tekrar dokununca en üste kayar ve sayfa yenilenir
+- **Alt bar (kök neden):** `push` ile açılan sayfalarda go_router adresi değişmediği için (ör. Trend Videolar) alt bar gizleniyordu → görünen sayfa eşleşme listesinden okunur; kendi barı olan / tam ekran sayfalarda ve klavye açıkken eklenmez
+- **GirLive Bot:** Selam 10 sn sonra kalkar, odaya girince geçmişteki eski selamlar yeniden görünmez; kurallar/duyuru artık popup değil, yalnız girene sohbet içinde 15 sn görünür
+- **Sesli oda arka planı (kök neden):** Diğer kullanıcılarda yeni arka plan 450 ms sonra önbellekteki eski arka plana dönüyordu → anında ve kalıcı; varsayılana dönüş de herkese yansır
+- **Koltuk değiştirme / koltuğa oturma efekti kaldırıldı**
+- **GirLive Sosyal:** Başlıktaki yıldız kaldırıldı; fal kartında yazı görselin üstünde, «daha fazla» metnin tamamını kartta açar; «kaç kişi baktı» + son 5 kişinin avatarı (`GET /api/social/fortune-viewers` — **backend deploy gerekli**, yoksa akıştan)
+- **Profil:** Aşağı açılan bölümler (Bakiye & Üyelik, İstatistikler & Sosyal, Yayın & Sesli Oda, Ayarlar & Güvenlik) düğme oldu; hızlı menü kaydırmasız ızgara
+
+## 1.0.752+805 (2026-10-09) — Animasyon pilotu: sayfa geçişi (`animations` 2.2.0)
+
+- **Yeni bağımlılık:** `animations` 2.2.0 (BSD-3, Flutter ekibi) — 3.x `material_ui` getirdiği için 2.x'e sabitlendi
+- **`AppPageTransitions.premiumAxis`:** Material ölçekli «shared axis» geçişi; hareket azaltılmışsa (sistem ayarı veya performans modu) animasyonsuz açılır
+- Yalnız pilot rotası **«Tüm Özellikler» (`/ozellikler`)** — diğer rotalar değişmedi
+- **Test:** normal / hareketi azalt / performans modu / geri dönüş
+
 ## 1.0.751+804 (2026-10-09) — Animasyon pilotu: «Tüm Özellikler»
 
 - **Ortak hareket politikası (`CanlifalMotionPolicy`):** Sistem «hareketi azalt» ayarı veya uygulama performans modu (düşük donanımda varsayılan açık) → dekoratif hareket kapalı, işlev aynı

@@ -9,6 +9,7 @@ import '../../../../domain/live_chat_gift_merge.dart';
 
 import '../../broadcast_room/live_room_chat_message.dart';
 import '../live_vip_chat_badge.dart';
+import '../../../../../voice_hub/presentation/utils/voice_chat_message_filters.dart';
 
 /// Canlı yorum akışı — opak baloncuklar (liste içinde blur yok).
 ///
@@ -55,7 +56,7 @@ class _LivePremiumChatFeedState extends State<LivePremiumChatFeed> {
 
   static bool _isBotWelcome(LiveRoomChatMessage m) =>
       m.user.toLowerCase().contains('girlive') &&
-      m.text.toLowerCase().contains('hoş geldin');
+      VoiceChatMessageFilters.looksLikeWelcome(m.text);
 
   void _syncTimer() {
     if (widget.fadeAfter == null && !widget.messages.any(_isBotWelcome)) {

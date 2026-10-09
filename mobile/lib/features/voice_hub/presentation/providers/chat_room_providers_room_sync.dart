@@ -315,11 +315,17 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
         // BG-002 — backend `room_event {event: room_updated, backgroundImage}`.
         final bg = VoiceRoomBackgroundCatalog.fromRoomPayload(payload);
         if (bg != null) {
-          state = state.copyWith(backgroundUrl: bg);
+          _applyPushedBackground(bg);
+        } else if (VoiceRoomBackgroundCatalog.payloadClearsBackground(
+          payload,
+        )) {
+          // `backgroundImage: null` — varsayılana dön (herkeste anında).
+          _applyPushedBackground(null);
         } else {
-          // Varsayılana dönüş (null) — kanonik değer oda durumundan gelsin.
           _scheduleSseRoomRefresh();
         }
+        // Oda listesi (giriş kartları) da yeni arka planı görsün.
+        _invalidateRoomCaches();
         return;
       case 'gift_box_created':
       case 'gift_box_started':
@@ -553,7 +559,7 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       occupantImage: payload['image']?.toString(),
     );
     state = state.copyWith(presence: nextPresence, seatSlots: nextSeats);
-    _dispatchSiteAnimation('seat_changed', payload);
+    // Koltuk değiştirme/oturma efekti yok — yalnızca koltuk durumu güncellenir.
   }
 
   void _applyRoomEventOwnerChanged(Map<String, dynamic> payload) {
@@ -880,7 +886,10 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     if (me == null || me.isEmpty || target != me) return;
     ref
         .read(girLiveRulesNoticeProvider.notifier)
-        .show(payload['text']?.toString() ?? '');
+        .show(
+          payload['text']?.toString() ?? '',
+          roomKey: _resolveRoomKeyFromEvent(payload) ?? _roomKey,
+        );
   }
 
   /// `join_request_resolved` — başka bir yönetici yanıtladı: popup kapanır.
