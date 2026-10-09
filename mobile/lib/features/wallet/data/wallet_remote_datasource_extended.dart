@@ -13,6 +13,27 @@ class WalletRemoteDataSourceExtended {
 
   final Dio _dio;
 
+  /// `POST /api/withdrawals/{id}/cancel` — yalnızca bekleyen kendi talebini iptal eder.
+  /// Admin aynı anda onayladıysa sunucu 409 döner (mesaj aynen iletilir).
+  Future<void> cancelWithdrawal(String id, {String? reason}) async {
+    try {
+      await _dio.post<dynamic>(
+        ApiEndpoints.withdrawalCancel(id),
+        data: {if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim()},
+      );
+    } on DioException catch (e) {
+      final body = e.response?.data;
+      final err = body is Map ? body['error'] : null;
+      final msg = err is Map
+          ? err['message']?.toString()
+          : (body is Map ? (err ?? body['message'])?.toString() : null);
+      throw ApiException(
+        msg != null && msg.isNotEmpty ? msg : ApiException.fromDio(e).message,
+        statusCode: e.response?.statusCode,
+      );
+    }
+  }
+
   Future<List<WithdrawalRequest>> fetchWithdrawals() async {
     final res = await _dio.safeGet<dynamic>(ApiEndpoints.withdrawals);
     return _parseWithdrawalList(res.data);

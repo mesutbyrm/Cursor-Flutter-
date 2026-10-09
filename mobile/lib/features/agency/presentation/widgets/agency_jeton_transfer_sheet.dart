@@ -64,21 +64,17 @@ class AgencyJetonTransferSheet {
                   final amount = int.tryParse(amountCtrl.text.trim()) ?? 0;
                   if (amount <= 0) return;
                   final ds = AgencyWalletDataSource(ref.read(dioProvider));
-                  final ok = await ds.transferToMember(
-                    userId: memberUserId,
+                  final res = await ds.transfer(
+                    targetUserId: memberUserId,
                     amount: amount,
                     reason: reasonCtrl.text,
                   );
+                  final ok = res.ok;
                   if (!ctx.mounted) return;
                   Navigator.pop(ctx);
+                  // Sunucunun mesajı aynen: ör. "Ajans bakiyesi yetersiz: 1 jeton eksik".
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        ok
-                            ? 'Transfer kaydedildi (sunucu onayı gerekir).'
-                            : 'Transfer başarısız — bakiye veya yetki kontrol edin.',
-                      ),
-                    ),
+                    SnackBar(content: Text(res.message)),
                   );
                   if (ok) onSuccess();
                 },

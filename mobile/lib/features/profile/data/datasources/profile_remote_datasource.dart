@@ -778,18 +778,50 @@ class WalletRemoteDataSource {
         );
   }
 
-  /// Bekleyen ödeme talebini iptal.
+  /// Bekleyen ödeme talebini iptal (yalnız bekleyen; kayıt silinmez).
   ///
-  /// Backend'de iptal ucu yok (`/api/payments/requests` yalnız GET/POST); eski
-  /// `PATCH` her seferinde 405 dönüyordu. İstek atmadan açık hata verilir.
-  Future<void> cancelPaymentRequest(String requestId) async {
-    if (requestId.trim().isEmpty) {
-      throw const ApiException('Geçersiz talep kimliği');
+  /// Önce CFC talebi (`POST /api/payments/requests/{id}/cancel`); kimlik bir
+  /// Jeton/CFC ödeme bildirimine aitse (404) `POST /api/payments/notify/{id}/cancel`.
+  /// Admin aynı anda onayladıysa sunucu 409 döner — mesaj aynen iletilir.
+  Future<void> cancelPaymentRequest(String requestId, {String? reason}) async {
+    final id = requestId.trim();
+    if (id.isEmpty) throw const ApiException('Geçersiz talep kimliği');
+    final body = {if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim()};
+    try {
+      await _dio.post<dynamic>(ApiEndpoints.cfcPaymentRequestCancel(id), data: body);
+      return;
+    } on DioException catch (e) {
+      if (e.response?.statusCode != 404) throw _cancelError(e);
     }
-    throw const ApiException(
-      'Bekleyen talep uygulamadan iptal edilemiyor. Yönetici onayını bekleyin '
-      'veya destek ile iletişime geçin.',
-      statusCode: 405,
+    try {
+      await _dio.post<dynamic>(ApiEndpoints.paymentNotificationCancel(id), data: body);
+    } on DioException catch (e) {
+      throw _cancelError(e);
+    }
+  }
+
+  /// Ödeme bildirimi (havale/EFT) iptali — yalnız bekleyen.
+  Future<void> cancelPaymentNotification(String notificationId, {String? reason}) async {
+    try {
+      await _dio.post<dynamic>(
+        ApiEndpoints.paymentNotificationCancel(notificationId),
+        data: {if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim()},
+      );
+    } on DioException catch (e) {
+      throw _cancelError(e);
+    }
+  }
+
+  ApiException _cancelError(DioException e) {
+    final b = e.response?.data;
+    String? msg;
+    if (b is Map) {
+      final err = b['error'];
+      msg = err is Map ? err['message']?.toString() : (err ?? b['message'])?.toString();
+    }
+    return ApiException(
+      msg != null && msg.trim().isNotEmpty ? msg : ApiException.fromDio(e).message,
+      statusCode: e.response?.statusCode,
     );
   }
 

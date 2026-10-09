@@ -312,6 +312,14 @@ abstract final class ApiEndpoints {
   /// Ajans jeton kredisi cüzdanı (ledger — üretim probe).
   static const agencyWallet = '/api/agency/wallet';
   static const agencyWalletTransfer = '/api/agency/wallet/transfer';
+
+  /// Ajans toplu Jeton satın alma: GET teklif+geçmiş, POST sipariş.
+  static const agencyPurchase = '/api/agency/purchase';
+
+  /// Bekleyen talepleri kullanıcı iptali (yalnız bekleyen; kayıt silinmez).
+  static String paymentNotificationCancel(String id) => '/api/payments/notify/$id/cancel';
+  static String cfcPaymentRequestCancel(String id) => '/api/payments/requests/$id/cancel';
+  static String withdrawalCancel(String id) => '/api/withdrawals/$id/cancel';
   static const agencyLeave = '/api/agency/leave';
   static const agencyLivePresence = '/api/agency/live-status';
 
