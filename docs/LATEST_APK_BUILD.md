@@ -4,23 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.746+799` |
-| Tarih (UTC) | 2026-10-09 01:02 |
-| Commit | [`5b77e5aa7526c59260e789ea4869c6d227baf34b`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/5b77e5aa7526c59260e789ea4869c6d227baf34b) |
-| İş akışı | [Run 37866001194](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37866001194) |
+| Sürüm | `1.0.747+800` |
+| Tarih (UTC) | 2026-10-09 02:51 |
+| Commit | [`735b807afd06baf0e2077aa315bae754833fee9c`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/735b807afd06baf0e2077aa315bae754833fee9c) |
+| İş akışı | [Run 37874804647](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37874804647) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.746+799 (2026-10-09) — Sesli oda P0/P1: /voice kapısı, 403 durdurma, presence salınımı
+## 1.0.747+800 (2026-10-09) — Sesli oda → Ana sayfa: presence temizlenmiyordu
 
-- **/voice gövdesi:** backend yalnız `type` okuyor; eski gövde leave'i hep 400 yapıyordu → `{type, action}` tek istek
-- **/voice join:** koltuk/konuşma izni yoksa hiç gönderilmez (`VOICE_JOIN_SKIPPED_NO_SEAT`); tek uçuş; 403 sonrası aynı oda için yeniden deneme yok (`VOICE_BLOCKED_403`); leave yalnız join edilmişse
-- **Koltuk dinleyicisi:** her presence/SSE tikinde mic kapat → `/voice` leave spam'i; artık yalnız koltuk/izin değişiminde (kenar tetik)
-- **speak-requests:** yalnız moderatör yetkisiyle; 403 sonrası oda için polling durur (`SPEAK_REQUESTS_BLOCKED_403`)
-- **Presence:** `/state` `{success,data}` zarfı açılıyor; SSE sağlıklıyken boş snapshot SSE listesini ezmiyor (`PRESENCE_SNAPSHOT_EMPTY_IGNORED`); katılımcı `me` yetki sanılmıyor
-- **Provider:** dispose/rebuild sırasında async geri çağrılar "uninitialized provider" StateError fırlatmıyor; dispose sonrası state yazımı yok sayılıyor
-- **CI:** obfuscation sembolleri artifact olarak yükleniyor (cihaz stack trace çözümü)
+- **Kök neden (log + kod):** Kapatma tuşu → `leaveWithSummary` içinde `leaveRoomSession` öncesi atılan istisna (hediye özeti) dış `catch`'e düşüyor, `leaveRoomSession` hiç çağrılmadan sayfadan çıkılıyordu (cihaz logunda `LEAVE_START` yok); sayfa dispose'u `_leaveSessionStarted` yüzünden leave'i atlıyordu
+- **Düzeltme:** Özet hatası yutulur (`LEAVE_SUMMARY_SKIPPED`); sunucu leave her durumda çalışır; hata `LEAVE_FAILED` ile loglanır; `LEAVE_UI` tıklama logu
+- **Route guard:** Gezinmeyi gerçekten dinliyor (önce hiç tetiklenmiyordu); yığında oda sayfası varsa (profil push) çıkmaz; `WidgetRef as Ref` çalışma anı hatası kaldırıldı; `force:false` ile devam eden leave'e katılır (çift leave yok) — `ROUTE_LEFT_VOICE_ROOM`
+- **Test:** Room → Home, Room A → Room B, oda üstüne push, UI leave sonrası çift leave yok
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
