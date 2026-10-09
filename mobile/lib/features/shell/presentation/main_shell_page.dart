@@ -9,6 +9,7 @@ import 'shell_ui.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../messages/presentation/providers/messages_providers.dart';
 import '../../notifications/presentation/providers/notification_event_gate_provider.dart';
+import '../../home/presentation/providers/home_providers.dart';
 import '../../home/presentation/widgets/approved/bottom_navigation_widget.dart';
 
 class MainShellPage extends ConsumerStatefulWidget {
@@ -136,7 +137,11 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
         body: widget.navigationShell,
         bottomNavigationBar: BottomNavigationWidget(
           activeTab: _activeTab(context, widget.navigationShell.currentIndex),
-          onHome: () => _goBranch(0),
+          onHome: () {
+            _goBranch(0);
+            // Ana sayfa: en üste dön + yenile.
+            ref.read(homeReselectProvider.notifier).state++;
+          },
           onSocial: () => _goBranch(1),
           onVoice: () => context.go('/voice-rooms'),
           onCreate: () => ShellUi.showPublishNavSheet(context, router),

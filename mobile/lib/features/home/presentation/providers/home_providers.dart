@@ -330,6 +330,10 @@ final homeDisplayedPsychicsProvider =
   return ref.watch(homeOnlinePsychicsProvider.future);
 });
 
+/// Alt bardaki «Ana sayfa» düğmesine her dokunuşta artar; [HomePage] dinler,
+/// en üste kaydırır ve verileri yeniler.
+final homeReselectProvider = StateProvider<int>((ref) => 0);
+
 /// Tüm ana sayfa verilerini yenile (yalnızca ekranda görünen bölümler).
 Future<void> refreshHomeData(WidgetRef ref) async {
   ref.read(homeRemoteProvider).invalidateMobileHomeCache();

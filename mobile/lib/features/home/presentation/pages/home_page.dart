@@ -23,6 +23,8 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class _HomePageState extends ConsumerState<HomePage> {
+  final _scroll = ScrollController();
+  final _refreshKey = GlobalKey<RefreshIndicatorState>();
   HomeRealtimeBridge? _realtimeBridge;
   Timer? _realtimeStartTimer;
 
@@ -41,8 +43,28 @@ class _HomePageState extends ConsumerState<HomePage> {
     });
   }
 
+  /// Alt bar «Ana sayfa» dokunuşu: en üste kaydır, sonra yenile.
+  Future<void> _onReselect() async {
+    if (!mounted) return;
+    if (_scroll.hasClients && _scroll.offset > 0) {
+      await _scroll.animateTo(
+        0,
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOutCubic,
+      );
+    }
+    if (!mounted) return;
+    final indicator = _refreshKey.currentState;
+    if (indicator != null) {
+      await indicator.show();
+    } else {
+      await refreshHomeData(ref);
+    }
+  }
+
   @override
   void dispose() {
+    _scroll.dispose();
     _realtimeStartTimer?.cancel();
     _realtimeBridge?.dispose();
     _realtimeBridge = null;
@@ -59,12 +81,16 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
+    ref.listen<int>(homeReselectProvider, (prev, next) {
+      if (prev != next) unawaited(_onReselect());
+    });
 
     return Scaffold(
       backgroundColor: context.isDarkTheme
           ? HomeApprovedDesign.background
           : context.colors.scaffoldBackground,
       body: RefreshIndicator(
+        key: _refreshKey,
         displacement: 28,
         color: context.isDarkTheme
             ? HomeApprovedDesign.purple
@@ -74,6 +100,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             : context.colors.surface,
         onRefresh: _onRefresh,
         child: CustomScrollView(
+          controller: _scroll,
           scrollCacheExtent: ScrollPerf.scrollCache(ScrollPerf.feedCacheExtent),
           physics: const AlwaysScrollableScrollPhysics(
             parent: BouncingScrollPhysics(),
