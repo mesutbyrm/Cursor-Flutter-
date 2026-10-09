@@ -66,30 +66,35 @@ class ProfileHubQuickMenu extends ConsumerWidget {
       ),
     ];
 
-    return SizedBox(
-      height: ProfileActionTile.compactHeight,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: items.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 10),
-        itemBuilder: (context, i) {
-          final item = items[i];
-          return SizedBox(
-            width: 78,
-            child: ProfileActionTile(
-              compact: true,
-              icon: item.icon,
-              label: item.label,
-              onTap: item.onTap,
-              badge: item.badge,
-              gradient: [
-                ProfilePremiumTheme.neonPurple.withValues(alpha: 0.25),
-                ProfilePremiumTheme.deepBg,
-              ],
-            ),
-          );
-        },
-      ),
+    // Kaydırma yok: tüm kısayollar düğme ızgarasında (satır başına 4).
+    return LayoutBuilder(
+      builder: (context, c) {
+        const gap = 10.0;
+        final cols = c.maxWidth >= 600 ? 7 : 4;
+        final w = (c.maxWidth - gap * (cols - 1)) / cols;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: [
+            for (final item in items)
+              SizedBox(
+                width: w,
+                height: ProfileActionTile.compactHeight,
+                child: ProfileActionTile(
+                  compact: true,
+                  icon: item.icon,
+                  label: item.label,
+                  onTap: item.onTap,
+                  badge: item.badge,
+                  gradient: [
+                    ProfilePremiumTheme.neonPurple.withValues(alpha: 0.25),
+                    ProfilePremiumTheme.deepBg,
+                  ],
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }
