@@ -7,7 +7,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../_render/harness.dart';
+import 'package:canlifal_social/features/auth/domain/entities/user_entity.dart';
+import 'package:canlifal_social/features/wallet/domain/wallet_balances.dart';
+
+const kTestUser = UserEntity(id: 'u1', username: 'tester');
+
+class FakeWallet extends WalletBalancesNotifier {
+  @override
+  Future<WalletBalances> build() async =>
+      const WalletBalances(jeton: 1250, cfc: 520);
+}
+
+class FakeAuth extends AuthController {
+  FakeAuth(this.u);
+  final UserEntity u;
+  @override
+  Future<UserEntity?> build() async => u;
+}
 
 void main() {
   testWidgets('profil bölümleri düğme; dokununca alttan sayfada açılır',
