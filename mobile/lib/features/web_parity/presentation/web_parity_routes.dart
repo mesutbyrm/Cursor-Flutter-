@@ -1,5 +1,7 @@
 import 'package:go_router/go_router.dart';
 
+import '../../../core/navigation/app_page_transitions.dart';
+
 import '../../content_detail/presentation/pages/blog_post_page.dart';
 import '../../content_detail/presentation/pages/blog_zodiac_page.dart';
 import '../../content_detail/presentation/pages/dream_symbol_page.dart';
@@ -124,7 +126,11 @@ final List<RouteBase> webParityRoutes = [
   ),
   GoRoute(
     path: '/ozellikler',
-    builder: (context, state) => const FeatureHubPage(),
+    // Animasyon pilotu: `animations` shared-axis geçişi.
+    pageBuilder: (context, state) => AppPageTransitions.premiumAxis(
+      key: state.pageKey,
+      child: const FeatureHubPage(),
+    ),
   ),
   GoRoute(
     path: '/iletisim',

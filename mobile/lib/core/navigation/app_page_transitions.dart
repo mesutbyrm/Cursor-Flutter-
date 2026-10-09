@@ -1,6 +1,10 @@
+import 'package:animations/animations.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../design_system/cds_fx.dart';
+import '../motion/canlifal_motion_policy.dart';
 import '../motion/canlifal_motion_tokens.dart';
 import 'app_back_scope.dart';
 import '../ui/premium_2026/premium_motion.dart';
@@ -107,6 +111,43 @@ abstract final class AppPageTransitions {
         );
       },
     );
+  }
+
+  /// Material «shared axis» (ölçekli) geçişi — `animations` paketi.
+  ///
+  /// Hareket azaltılmışsa ([CanlifalMotionPolicy]) animasyonsuz açılır.
+  /// Geçiş yalnız sayfa açılıp kapanırken çalışır; sürekli animasyon yok.
+  static CustomTransitionPage<T> premiumAxis<T>({
+    required LocalKey? key,
+    required Widget child,
+    SharedAxisTransitionType type = SharedAxisTransitionType.scaled,
+  }) {
+    return CustomTransitionPage<T>(
+      key: key,
+      child: AppBackScope(child: child),
+      transitionDuration: CanlifalMotionTokens.premium,
+      reverseTransitionDuration: CanlifalMotionTokens.normalMax,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        if (_reducedMotion(context)) return child;
+        return SharedAxisTransition(
+          animation: animation,
+          secondaryAnimation: secondaryAnimation,
+          transitionType: type,
+          fillColor: const Color(0x00000000),
+          child: child,
+        );
+      },
+    );
+  }
+
+  static bool _reducedMotion(BuildContext context) {
+    var performance = false;
+    try {
+      performance = ProviderScope.containerOf(context, listen: false)
+          .read(cdsFxProvider)
+          .performanceMode;
+    } catch (_) {}
+    return CanlifalMotionPolicy.reduced(context, performanceMode: performance);
   }
 
   /// Tam ekran modal — Threads / Revolut tarzı.

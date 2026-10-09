@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.752+805 (2026-10-09) — Animasyon pilotu: sayfa geçişi (`animations` 2.2.0)
+
+- **Yeni bağımlılık:** `animations` 2.2.0 (BSD-3, Flutter ekibi) — 3.x `material_ui` getirdiği için 2.x'e sabitlendi
+- **`AppPageTransitions.premiumAxis`:** Material ölçekli «shared axis» geçişi; hareket azaltılmışsa (sistem ayarı veya performans modu) animasyonsuz açılır
+- Yalnız pilot rotası **«Tüm Özellikler» (`/ozellikler`)** — diğer rotalar değişmedi
+- **Test:** normal / hareketi azalt / performans modu / geri dönüş
+
 ## 1.0.751+804 (2026-10-09) — Animasyon pilotu: «Tüm Özellikler»
 
 - **Ortak hareket politikası (`CanlifalMotionPolicy`):** Sistem «hareketi azalt» ayarı veya uygulama performans modu (düşük donanımda varsayılan açık) → dekoratif hareket kapalı, işlev aynı
