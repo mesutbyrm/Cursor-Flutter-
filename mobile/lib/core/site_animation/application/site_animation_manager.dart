@@ -117,11 +117,9 @@ class SiteAnimationManager {
     final command = parse();
     if (command == null || command.roomId != roomId) return;
 
-    if (command.type.isSeatAnchored &&
-        command.type.name.contains('seat') &&
-        command.layout.fromSeatIndex != null) {
-      _emit(_state.copyWith(seatTransition: command));
-    }
+    // Koltuk değiştirme / koltuğa oturma efekti kaldırıldı (ürün kararı):
+    // koltuk durumu anında güncellenir, üstüne animasyon oynatılmaz.
+    if (command.type == SiteAnimationType.seatChanged) return;
 
     play(command);
   }

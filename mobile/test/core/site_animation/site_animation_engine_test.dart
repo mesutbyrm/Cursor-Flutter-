@@ -1,5 +1,6 @@
 import 'package:canlifal_social/core/site_animation/application/site_animation_manager.dart';
 import 'package:canlifal_social/core/site_animation/data/site_animation_parser.dart';
+import 'package:canlifal_social/core/site_animation/domain/site_animation_command.dart';
 import 'package:canlifal_social/core/site_animation/domain/site_animation_tier.dart';
 import 'package:canlifal_social/core/site_animation/domain/site_animation_type.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -236,6 +237,26 @@ void main() {
       expect(manager.state.active?.eventId, 'c1');
       expect(manager.state.queueLength, 0);
 
+      manager.dispose();
+    });
+
+    test('koltuk değiştirme/oturma olayı efekt oynatmaz', () {
+      final manager = SiteAnimationManager();
+      SiteAnimationCommand? parse() => SiteAnimationParser.fromRoomEvent(
+            roomId: 'r',
+            event: 'seat_changed',
+            payload: {
+              'eventId': 's1',
+              'userId': 'u1',
+              'seatIndex': 3,
+              'previousSeatIndex': 1,
+            },
+          );
+      manager.handleRoomEvent('seat_changed', const {},
+          roomId: 'r', parse: parse);
+      expect(manager.state.active, isNull);
+      expect(manager.state.seatTransition, isNull);
+      expect(manager.state.queueLength, 0);
       manager.dispose();
     });
   });
