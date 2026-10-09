@@ -10,6 +10,7 @@ import '../../../gifts/domain/session_gift_summary.dart';
 import '../../../gifts/domain/session_gift_summary_builder.dart';
 import '../../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
+import '../../data/services/voice_room_debug_log.dart';
 import '../pages/voice_room_owner_summary_page.dart';
 import '../providers/chat_room_providers.dart';
 import '../providers/voice_session_visitors_provider.dart';
@@ -42,6 +43,11 @@ abstract final class VoiceRoomLeaveFlow {
     );
     return leave == true;
   }
+
+  /// Gezinme yığınında (push edilmiş sayfalar dahil) hâlâ bir oda sayfası var mı?
+  /// Odanın üstüne profil vb. açıldığında oturum kapatılmamalı.
+  static bool voiceRoomInStack(Iterable<String> matchedLocations) =>
+      matchedLocations.any(shouldLeaveVoiceRoomRoute);
 
   static bool shouldLeaveVoiceRoomRoute(String location) {
     if (location == '/voice-rooms') return false;
@@ -96,6 +102,7 @@ abstract final class VoiceRoomLeaveFlow {
   }) async {
     final key = liveKey.trim();
     var navigated = false;
+    VoiceRoomDebugLog.log('LEAVE_UI', {'roomId': key, 'source': source});
 
     try {
       try {
@@ -104,45 +111,60 @@ abstract final class VoiceRoomLeaveFlow {
 
       SessionGiftSummary? leaveSummary;
       VoiceRoomOwnerSummaryData? ownerSummary;
-      final user = ref.read(authControllerProvider).valueOrNull;
-      final visitors = key.isNotEmpty
-          ? ref.read(voiceSessionVisitorsProvider.notifier).takeAndReset(key)
-          : null;
-      if (key.isNotEmpty && user != null) {
-        final live = ref.read(voiceRoomLiveProvider(key));
-        final ownerId = (live.ownerId ?? room.ownerId)?.trim() ?? '';
-        leaveSummary = SessionGiftSummaryBuilder.forVoiceRoom(
-          ref: ref,
-          roomTitle: room.displayTitle,
-          ownerUserId: live.ownerId ?? room.ownerId,
-          ownerDisplayName: room.ownerName,
-          myUserId: user.id,
-          myDisplayName: user.display,
-        );
-        if (ownerId.isNotEmpty && ownerId == user.id) {
-          ownerSummary = VoiceRoomOwnerSummaryData(
+      // Özet yalnız gösterim içindir; hata atarsa sunucu leave'i ATLANMAMALI.
+      // Önceden buradaki istisna dış `catch`'e düşüyor, `leaveRoomSession` hiç
+      // çağrılmadan sayfadan çıkılıyordu (logda LEAVE_START yok) ve sayfa
+      // dispose'u da `_leaveSessionStarted` yüzünden leave atlıyordu.
+      try {
+        final user = ref.read(authControllerProvider).valueOrNull;
+        final visitors = key.isNotEmpty
+            ? ref.read(voiceSessionVisitorsProvider.notifier).takeAndReset(key)
+            : null;
+        if (key.isNotEmpty && user != null) {
+          final live = ref.read(voiceRoomLiveProvider(key));
+          final ownerId = (live.ownerId ?? room.ownerId)?.trim() ?? '';
+          leaveSummary = SessionGiftSummaryBuilder.forVoiceRoom(
+            ref: ref,
             roomTitle: room.displayTitle,
-            startedAt: visitors?.startedAt ?? DateTime.now(),
-            endedAt: DateTime.now(),
-            visitors: visitors?.visitors.values.toList() ?? const [],
-            senders: leaveSummary.senders,
-            totalGrossJeton: leaveSummary.totalGrossJeton,
-            estimatedOwnerNetJeton: leaveSummary.myNetJeton,
+            ownerUserId: live.ownerId ?? room.ownerId,
+            ownerDisplayName: room.ownerName,
+            myUserId: user.id,
+            myDisplayName: user.display,
           );
+          if (ownerId.isNotEmpty && ownerId == user.id) {
+            ownerSummary = VoiceRoomOwnerSummaryData(
+              roomTitle: room.displayTitle,
+              startedAt: visitors?.startedAt ?? DateTime.now(),
+              endedAt: DateTime.now(),
+              visitors: visitors?.visitors.values.toList() ?? const [],
+              senders: leaveSummary.senders,
+              totalGrossJeton: leaveSummary.totalGrossJeton,
+              estimatedOwnerNetJeton: leaveSummary.myNetJeton,
+            );
+          }
         }
+      } catch (e) {
+        leaveSummary = null;
+        ownerSummary = null;
+        VoiceRoomDebugLog.log('LEAVE_SUMMARY_SKIPPED', {
+          'roomId': key,
+          'error': e.runtimeType.toString(),
+        });
       }
 
       if (key.isNotEmpty) {
         try {
           await ref
               .read(voiceRoomLiveProvider(key).notifier)
-              .leaveRoomSession(
-                source: source,
-                awaitBackend: true,
-                force: true,
-              )
+              .leaveRoomSession(source: source, awaitBackend: true, force: true)
               .timeout(const Duration(seconds: 8));
-        } catch (_) {}
+        } catch (e) {
+          VoiceRoomDebugLog.log('LEAVE_FAILED', {
+            'roomId': key,
+            'source': source,
+            'error': e.runtimeType.toString(),
+          });
+        }
       }
 
       if (context.mounted) {
