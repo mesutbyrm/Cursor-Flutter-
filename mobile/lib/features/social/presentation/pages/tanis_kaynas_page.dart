@@ -13,6 +13,7 @@ import '../providers/social_discovery_providers.dart';
 import '../sheets/social_discovery_profile_sheet.dart';
 import '../tanis_kaynas_2026/tk_common.dart';
 import '../tanis_kaynas_2026/tk_discovery_card.dart';
+import '../tanis_kaynas_2026/tk_highlights.dart';
 import '../tanis_kaynas_2026/tk_palette.dart';
 import '../tanis_kaynas_2026/tk_providers.dart';
 import '../tanis_kaynas_2026/tk_sections.dart';
@@ -55,6 +56,9 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage> {
 
   Future<void> _refresh() async {
     ref.invalidate(tkOnlineUsersProvider);
+    ref.invalidate(socialDiscoveryIncomingLikesProvider);
+    ref.invalidate(socialDiscoverySentLikesProvider);
+    ref.invalidate(socialDiscoveryMatchesProvider);
     ref.invalidate(userLocationSettingsProvider);
     ref.invalidate(voiceRoomsProvider);
     final online = ref.read(tkCategoryProvider) == TkCategory.online;
@@ -252,6 +256,8 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage> {
                 SliverToBoxAdapter(
                   child: TanisKaynasCategoryTabs(onSelected: _selectCategory),
                 ),
+                const SliverToBoxAdapter(child: SizedBox(height: 14)),
+                const SliverToBoxAdapter(child: TkActivityStatsStrip()),
                 const SliverToBoxAdapter(child: SizedBox(height: 18)),
                 SliverToBoxAdapter(
                   child: OnlineUsersSection(
@@ -276,7 +282,15 @@ class _TanisKaynasPageState extends ConsumerState<TanisKaynasPage> {
                   ),
                 ),
                 const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                const SliverToBoxAdapter(child: TkIcebreakerCard()),
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
                 const SliverToBoxAdapter(child: MeetingPurposeSection()),
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                SliverToBoxAdapter(
+                  child: TkQuickActionsGrid(
+                    onAddStory: () => showStoryCreateSheet(context, ref),
+                  ),
+                ),
                 const SliverToBoxAdapter(child: SizedBox(height: 16)),
                 SliverToBoxAdapter(
                   child: Padding(

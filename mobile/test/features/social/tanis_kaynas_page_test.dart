@@ -52,6 +52,12 @@ class _FakeRemote extends SocialDiscoveryRemoteDataSource {
   Future<List<SocialDiscoveryUser>> fetchMatches() async => const [];
 
   @override
+  Future<List<SocialDiscoveryUser>> fetchIncomingLikes() async => users;
+
+  @override
+  Future<List<SocialDiscoveryUser>> fetchSentLikes() async => const [];
+
+  @override
   Future<UserLocationSettings> fetchLocationSettings() async =>
       const UserLocationSettings();
 }
@@ -62,7 +68,7 @@ Future<void> _pump(
   required _FakeRemote remote,
   ThemeData? theme,
 }) async {
-  tester.view.physicalSize = Size(width, 2400);
+  tester.view.physicalSize = Size(width, 3600);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   final router = GoRouter(
@@ -125,9 +131,28 @@ void main() {
       expect(find.text('Gece Muhabbeti'), findsOneWidget);
       expect(find.text('Odaya Katıl'), findsOneWidget);
       expect(find.text('Seninle Aynı Şeyleri Sevenler'), findsOneWidget);
+      // Yeni bölümler: etkinlik sayaçları, buz kırıcı, hızlı erişim.
+      expect(find.text('Seni beğenen'), findsOneWidget);
+      expect(find.text('Günün buz kırıcı sorusu'), findsOneWidget);
+      expect(find.text('Burç Uyumu'), findsOneWidget);
+      expect(find.text('Hikâye Paylaş'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
     });
   }
+
+  testWidgets('seni beğenen sayısı gerçek veriden gelir', (tester) async {
+    await _pump(
+      tester,
+      width: 400,
+      remote: _FakeRemote(users: [_u('1'), _u('2')]),
+    );
+    final tile = find.byKey(const Key('tk-stat-incoming'));
+    expect(
+      find.descendant(of: tile, matching: find.text('2')),
+      findsOneWidget,
+    );
+    await tester.pumpWidget(const SizedBox());
+  });
 
   testWidgets('açık tema da çizilir', (tester) async {
     await _pump(
