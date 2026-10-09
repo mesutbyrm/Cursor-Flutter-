@@ -56,7 +56,7 @@ Leave başında `_sessionActive=false` ve `_liveSessionGeneration++` yapılıyor
 | `dart analyze lib` | 0 error. 435 info/warning; değişiklik öncesiyle aynı, yeni uyarı yok |
 | `flutter test test/features/voice_hub/voice_room_home_leave_test.dart` | PASS 6/6 |
 | `flutter test` (tam) | PASS: 2225 geçti, 2 atlandı |
-| Release derleme (`flutter build apk --release --obfuscate`) | Bkz. PR / yanıt (yerel derleme sonucu) |
+| Release derleme (`flutter build apk --release --obfuscate`) | **BLOCKED (yerel):** Dart derlendi, Gradle `assembleRelease` ağdan artifact indiremedi ("Gradle threw an error while downloading artifacts from the network"). Release APK merge sonrası CI `build-apk.yml` ile derlenecek. PR CI: Flutter test gate ✅, API + Flutter analyze ✅ |
 
 Yeni testler:
 - `/feed` ve `/voice-rooms` route kontrolü
