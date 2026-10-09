@@ -4,25 +4,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.753+806` |
-| Tarih (UTC) | 2026-10-09 17:38 |
-| Commit | [`72d7fdfcaa227d83521d79320f74251063808771`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/72d7fdfcaa227d83521d79320f74251063808771) |
-| İş akışı | [Run 37965097774](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37965097774) |
+| Sürüm | `1.0.754+807` |
+| Tarih (UTC) | 2026-10-09 20:49 |
+| Commit | [`55889e8c1c30b68547f7926f51fa6196a78226d3`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/55889e8c1c30b68547f7926f51fa6196a78226d3) |
+| İş akışı | [Run 37987006938](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37987006938) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.753+806 (2026-10-09) — Mistik kutular, Hediye Yolla, alt bar, GirLive, arka plan senkronu, sosyal ve profil
+## 1.0.754+807 (2026-10-09) — Ajans Jeton cüzdanı, toplu alım, talep iptali
 
-- **Mistik kutu görselleri:** Ana sayfadaki 10 kutu ve «Tüm Özellikler»deki tüm kutular adına uygun mistik amblemle (ör. Jeton Al → altın jeton, Canlı Falcılar → göz)
-- **Hediye Yolla (yeni):** Kendi bakiyenden bir kullanıcıya Jeton veya CFC gönder; en az 100, komisyon admin panelinden (`POST /api/wallet/transfer` — **backend deploy gerekli**)
-- **Ana sayfa düğmesi:** Ana sayfadayken tekrar dokununca en üste kayar ve sayfa yenilenir
-- **Alt bar (kök neden):** `push` ile açılan sayfalarda go_router adresi değişmediği için (ör. Trend Videolar) alt bar gizleniyordu → görünen sayfa eşleşme listesinden okunur; kendi barı olan / tam ekran sayfalarda ve klavye açıkken eklenmez
-- **GirLive Bot:** Selam 10 sn sonra kalkar, odaya girince geçmişteki eski selamlar yeniden görünmez; kurallar/duyuru artık popup değil, yalnız girene sohbet içinde 15 sn görünür
-- **Sesli oda arka planı (kök neden):** Diğer kullanıcılarda yeni arka plan 450 ms sonra önbellekteki eski arka plana dönüyordu → anında ve kalıcı; varsayılana dönüş de herkese yansır
-- **Koltuk değiştirme / koltuğa oturma efekti kaldırıldı**
-- **GirLive Sosyal:** Başlıktaki yıldız kaldırıldı; fal kartında yazı görselin üstünde, «daha fazla» metnin tamamını kartta açar; «kaç kişi baktı» + son 5 kişinin avatarı (`GET /api/social/fortune-viewers` — **backend deploy gerekli**, yoksa akıştan)
-- **Profil:** Aşağı açılan bölümler (Bakiye & Üyelik, İstatistikler & Sosyal, Yayın & Sesli Oda, Ayarlar & Güvenlik) düğme oldu; hızlı menü kaydırmasız ızgara
+- **Ajans Cüzdanı (`/ajans/cuzdan`, yeni):** Ajans panelindeki cüzdan kartından açılır
+  - **Kullanıcıya Yükle:** Herhangi bir kullanıcıyı ara, Jeton miktarı gir, onayla; miktar ajans bakiyesinden aynen düşer (komisyon yok). Bakiye yetmezse «N jeton eksik» der. Çift dokunma çift yükleme yapmaz (idempotency)
+  - **Toplu Jeton Al:** Sunucunun hesapladığı normal fiyat, ajans indirimi ve ödenecek tutar; havale/Papara/WhatsApp ile ödeme bildirimi; yönetici onaylayınca Jeton ajans cüzdanına geçer; bekleyen sipariş iptal edilebilir
+- **Düzeltme:** Üye satırındaki Jeton gönderme yanlış alan (`userId`) gönderdiği için çalışmıyordu → `targetUserId`
+- **Talep iptali:** Bekleyen para çekme talebi, ödeme bildirimi ve CFC ödeme talebi kullanıcı tarafından iptal edilebilir (önceden CFC iptali «desteklenmiyor» hatası veriyordu)
+- **Backend deploy gerekli** (`mesutbyrm/canlifal` — şema değişikliği yok)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
