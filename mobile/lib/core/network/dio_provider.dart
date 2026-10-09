@@ -124,8 +124,15 @@ Dio _createApiDio(Ref ref, {required Dio tokenRefreshDio}) {
             if (token != null && token.isNotEmpty) {
               e.requestOptions.headers['Authorization'] = 'Bearer $token';
             }
-            final res = await dio.fetch(e.requestOptions);
-            return handler.resolve(res);
+            // Yeniden deneme de hata verirse (ör. uç yine 401) istisna burada
+            // yakalanmalı: aksi halde interceptor dışına sızıp `ui.zone`
+            // hatası olur ve asıl istek hiç tamamlanmaz (handler çağrılmaz).
+            try {
+              final res = await dio.fetch(e.requestOptions);
+              return handler.resolve(res);
+            } on DioException catch (retryError) {
+              return handler.next(retryError);
+            }
           }
         }
         handler.next(e);

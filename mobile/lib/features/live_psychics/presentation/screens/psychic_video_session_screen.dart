@@ -190,10 +190,10 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                           Text(
                             session.isClient
                                 ? (clientPeerLive
-                                    ? 'Falcı bağlandı. Süre isteği bekleniyor…'
+                                    ? 'Falcı bağlandı. Görüşme başlıyor…'
                                     : 'Falcıya bağlanılıyor…')
                                 : (state.timerStartRequestSent
-                                    ? 'Kullanıcının onayı bekleniyor…'
+                                    ? 'Görüşme başlıyor…'
                                     : 'Kullanıcı bekleniyor…'),
                             textAlign: TextAlign.center,
                             style: TextStyle(
@@ -204,10 +204,8 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                           const SizedBox(height: 6),
                           Text(
                             session.isClient
-                                ? (clientPeerLive
-                                    ? 'Falcı süre başlatma isteği gönderince onaylayın; onaydan sonra görüntü, ses, süre ve ücret başlar.'
-                                    : 'İki taraf hazır olunca süre başlatma isteği gelecek. Onaylayana kadar süre ve ücret başlamaz.')
-                                : 'İki taraf da bağlanınca kullanıcıya süre başlatma isteği gider; kullanıcı onaylayınca süre başlar.',
+                                ? 'İki taraf da bağlanınca görüntü, ses ve süre aynı anda başlar.'
+                                : 'Kullanıcı bağlanınca görüntü, ses ve süre aynı anda başlar.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 12,
@@ -594,21 +592,6 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                           onTap: ctrl.toggleCamera,
                         ),
                       ],
-                      if (!session.isClient && !state.timerStarted)
-                        _ControlBtn(
-                          icon: Icons.play_arrow_rounded,
-                          label: 'Süre iste',
-                          onTap: () {
-                            ctrl.requestTimerStart();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Kullanıcıya süre başlatma isteği gönderildi',
-                                ),
-                              ),
-                            );
-                          },
-                        ),
                       if (!session.isClient && state.timerStarted)
                         _ControlBtn(
                           icon: Icons.schedule_rounded,

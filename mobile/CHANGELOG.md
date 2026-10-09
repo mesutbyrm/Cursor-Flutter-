@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.749+802 (2026-10-09) — Canlı falcı: reklam ekranında takılma + süre isteği kaldırıldı + 401 retry sızıntısı
+
+- **Takılma (kök neden):** Ücretsiz/admin seansında (totalJeton 0) ödüllü reklam yüklenemeyince/izlenmeyince `ad-transition` ekranı `return` ediyor, danışan "Canlı fal deneyiminiz başlıyor…"da, falcı "Kullanıcı bekleniyor…"da kalıyordu → reklam sonucu ne olursa olsun (20 sn zaman aşımı) seansa geçilir
+- **Süre isteği kaldırıldı:** Danışan odaya girince falcı `start_timer`'ı doğrudan çağırır; sunucu `timer_started` ile iki tarafta görüntü/ses/süre aynı anda başlar. "Süre iste" düğmesi ve danışan onay penceresi kaldırıldı (eski sürüm falcıdan gelen istek otomatik kabul)
+- **401 sızıntısı:** JWT yenileme sonrası tekrar deneme de hata verirse istisna interceptor dışına sızıp `ui.zone` hatası oluyor ve istek hiç tamamlanmıyordu → yakalanıp hata olarak iletiliyor
+- **Backend (canlifal):** `GET /api/pk/me/invites` mobil JWT'de `mobile.user.id` okuyordu (her zaman boş) → her çağrı 401; `mobile.id` ile düzeltildi
+
 ## 1.0.748+801 (2026-10-09) — Teşhis: yakalanmayan hata logu (401 ucu + çözülebilir yığın)
 
 - **Neden:** Canlı falcı seansı bitiminde `Cannot use "ref" after the widget was disposed` ve 2× `401` logda görünüyor ama kaynak bulunamıyordu: `ui.zone` yalnız ilk 3 başlık satırını yazıyordu (çerçeve yok), DioException'da uç yolu yoktu
