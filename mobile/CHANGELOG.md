@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.751+804 (2026-10-09) — Animasyon pilotu: «Tüm Özellikler»
+
+- **Ortak hareket politikası (`CanlifalMotionPolicy`):** Sistem «hareketi azalt» ayarı veya uygulama performans modu (düşük donanımda varsayılan açık) → dekoratif hareket kapalı, işlev aynı
+- **«Tüm Özellikler» pilotu:** Kutular oturumda yalnız ilk açılışta kademeli girer (en çok 5 adım), ikon bir kez zıplar, basınca küçülür + hafif titreşim; sürekli dönen animasyon yok; hareket azaltılmışsa hiçbiri çalışmaz
+- Yeni bağımlılık yok (`flutter_animate` mevcut); `animations` eklenmedi, Rive ertelendi
+- **Test:** ilk açılış / ikinci açılış / hareketi azalt / performans modu / animasyon ortasında kapanma / dokununca gezinme
+
 ## 1.0.750+803 (2026-10-09) — Hediye videoları, ana sayfa kutuları, video düzenleme, Tanış Kaynaş, sosyal medya
 
 - **Canlı yayın hediye videoları (kök neden):** Kuyruk pompası kalan listeyi ön yükleme beklemesinden (videoda 1,2 sn) önce alıp sonra eziyordu → bu sürede gelen hediyeler hiç oynamıyordu. Ayrıca sunucunun `gift_finished` olayı henüz oynamamış hediyeyi kuyruktan siliyordu; aynı hediye 4 sn içinde tekrar gönderilince parmak izi süzgeci ikincisini düşürüyordu; PK panelinden gönderen kendi videosunu görmüyordu → dördü düzeltildi
