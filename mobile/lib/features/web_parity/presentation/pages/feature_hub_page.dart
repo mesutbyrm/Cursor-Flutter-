@@ -97,16 +97,24 @@ class _HubTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final radius = BorderRadius.circular(16);
-    Widget icon = Icon(f.icon, color: Colors.white, size: 20);
+    // Amblem görseli (isme uygun mistik ikon) — yoksa düz ikon.
+    Widget emblem = f.image != null
+        ? Image.asset(
+            f.image!,
+            fit: BoxFit.cover,
+            cacheWidth: 240,
+            errorBuilder: (_, _, _) => const SizedBox.shrink(),
+          )
+        : Center(child: Icon(f.icon, color: Colors.white, size: 28));
     if (animateIn) {
-      icon = icon
+      emblem = emblem
           .animate(
             delay:
                 CanlifalMotionTokens.webStagger * index.clamp(0, 5) +
                 CanlifalMotionTokens.micro,
           )
           .scale(
-            begin: const Offset(0.6, 0.6),
+            begin: const Offset(0.85, 0.85),
             end: const Offset(1, 1),
             duration: CanlifalMotionTokens.normalMax,
             curve: CanlifalMotionTokens.spring,
@@ -140,24 +148,18 @@ class _HubTile extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                if (f.image != null)
-                  Image.asset(
-                    f.image!,
-                    fit: BoxFit.cover,
-                    cacheWidth: 240,
-                    errorBuilder: (_, _, _) => const SizedBox.shrink(),
-                  ),
-                DecoratedBox(
+                emblem,
+                const DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        f.colors.first.withValues(alpha: 0.12),
-                        f.colors.last.withValues(alpha: 0.35),
-                        Colors.black.withValues(alpha: 0.80),
+                        Colors.transparent,
+                        Colors.transparent,
+                        Color(0xD1000000),
                       ],
-                      stops: const [0, 0.5, 1],
+                      stops: [0, 0.55, 1],
                     ),
                   ),
                 ),
@@ -166,14 +168,6 @@ class _HubTile extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(5),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.30),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: icon,
-                      ),
                       const Spacer(),
                       FittedBox(
                         fit: BoxFit.scaleDown,

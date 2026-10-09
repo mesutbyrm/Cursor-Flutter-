@@ -98,6 +98,7 @@ flutter:
     - assets/splash/
     - assets/brand/
     - assets/fortune/
+    - assets/tiles/
     - assets/games/
     - assets/membership/
     - assets/zodiac/
