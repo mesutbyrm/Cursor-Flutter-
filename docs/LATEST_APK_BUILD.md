@@ -4,19 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.748+801` |
-| Tarih (UTC) | 2026-10-09 11:16 |
-| Commit | [`62f38b260f83024fdd5261965d0bc34bb18bd75b`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/62f38b260f83024fdd5261965d0bc34bb18bd75b) |
-| İş akışı | [Run 37920400345](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37920400345) |
+| Sürüm | `1.0.749+802` |
+| Tarih (UTC) | 2026-10-09 12:49 |
+| Commit | [`d0f8b8c13e7d46e484fff280c2c1cea89a27a490`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/d0f8b8c13e7d46e484fff280c2c1cea89a27a490) |
+| İş akışı | [Run 37930239481](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/37930239481) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.748+801 (2026-10-09) — Teşhis: yakalanmayan hata logu (401 ucu + çözülebilir yığın)
+## 1.0.749+802 (2026-10-09) — Canlı falcı: reklam ekranında takılma + süre isteği kaldırıldı + 401 retry sızıntısı
 
-- **Neden:** Canlı falcı seansı bitiminde `Cannot use "ref" after the widget was disposed` ve 2× `401` logda görünüyor ama kaynak bulunamıyordu: `ui.zone` yalnız ilk 3 başlık satırını yazıyordu (çerçeve yok), DioException'da uç yolu yoktu
-- **Değişiklik:** `ui.zone` / `ui.flutter` / `ui.platform` → DioException için `YÖNTEM /yol status=…` (sorgu dizesi/başlık yok → token sızmaz); obfuscated yığında `flutter symbolize` için başlık + ilk 12 çerçeve
-- Davranış değişikliği yok; bir sonraki cihaz logu hatanın tam yerini gösterecek
+- **Takılma (kök neden):** Ücretsiz/admin seansında (totalJeton 0) ödüllü reklam yüklenemeyince/izlenmeyince `ad-transition` ekranı `return` ediyor, danışan "Canlı fal deneyiminiz başlıyor…"da, falcı "Kullanıcı bekleniyor…"da kalıyordu → reklam sonucu ne olursa olsun (20 sn zaman aşımı) seansa geçilir
+- **Süre isteği kaldırıldı:** Danışan odaya girince falcı `start_timer`'ı doğrudan çağırır; sunucu `timer_started` ile iki tarafta görüntü/ses/süre aynı anda başlar. "Süre iste" düğmesi ve danışan onay penceresi kaldırıldı (eski sürüm falcıdan gelen istek otomatik kabul)
+- **401 sızıntısı:** JWT yenileme sonrası tekrar deneme de hata verirse istisna interceptor dışına sızıp `ui.zone` hatası oluyor ve istek hiç tamamlanmıyordu → yakalanıp hata olarak iletiliyor
+- **Backend (canlifal):** `GET /api/pk/me/invites` mobil JWT'de `mobile.user.id` okuyordu (her zaman boş) → her çağrı 401; `mobile.id` ile düzeltildi
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
