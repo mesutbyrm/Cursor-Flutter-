@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
-import 'package:canlifal_social/core/theme/canlifal_brand_colors.dart';
 
 import '../../../../inbox/domain/inbox_tab.dart';
 import '../../../../inbox/presentation/inbox_routes.dart';
@@ -34,7 +33,7 @@ class SocialInstagramAppBar extends ConsumerWidget {
             child: Semantics(
               header: true,
               button: onTitleTap != null,
-              label: 'Sosyal',
+              label: 'GirLive Sosyal',
               onTap: onTitleTap,
               excludeSemantics: true,
               child: GestureDetector(
@@ -42,19 +41,9 @@ class SocialInstagramAppBar extends ConsumerWidget {
                 behavior: HitTestBehavior.opaque,
                 child: Row(
                   children: [
-                    ShaderMask(
-                      shaderCallback: (b) =>
-                          CanlifalBrandColors.accentGradient.createShader(b),
-                      child: const Icon(
-                        Icons.auto_awesome,
-                        size: 30,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        'Sosyal',
+                        'GirLive Sosyal',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(

@@ -8,6 +8,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../../auth/data/models/user_dto.dart';
+import '../../../auth/domain/entities/user_entity.dart';
 import '../../../feed/domain/entities/post_entity.dart';
 import '../../../feed/data/models/post_dto.dart';
 import '../../domain/entities/create_social_post_input.dart';
@@ -15,12 +16,51 @@ import '../../domain/entities/share_fortune_input.dart';
 import '../../domain/entities/social_comment_entity.dart';
 import '../../domain/entities/social_story_ring_entity.dart';
 
+/// GET `/api/social/fortune-viewers` yanıtı.
+class FortuneViewers {
+  const FortuneViewers({required this.count, required this.users});
+  final int count;
+  final List<UserEntity> users;
+}
+
 class SocialRemoteDataSource {
   SocialRemoteDataSource(this._dio, {CloudMediaUploadService? upload})
     : _upload = upload;
 
   final Dio _dio;
   final CloudMediaUploadService? _upload;
+
+  /// GET `/api/social/fortune-viewers?type=` — bu fal türüne kaç kez
+  /// baktırıldığı ve türü herkese açık paylaşan son kullanıcılar.
+  /// Uç yoksa / hata olursa `null` (çağıran akıştan türetir).
+  Future<FortuneViewers?> fetchFortuneViewers(String type, {int limit = 6}) async {
+    final t = type.trim();
+    if (t.isEmpty) return null;
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.socialFortuneViewers,
+        query: {'type': t, 'limit': limit},
+      );
+      final body = res.data;
+      if (body is! Map) return null;
+      final data = body['data'];
+      if (data is! Map) return null;
+      final raw = data['users'];
+      final users = <UserEntity>[
+        if (raw is List)
+          for (final u in raw)
+            if (u is Map)
+              UserDto.fromApiMap(Map<String, dynamic>.from(u)).toEntity(),
+      ];
+      final c = data['count'];
+      return FortuneViewers(
+        count: c is num ? c.toInt() : int.tryParse('$c') ?? 0,
+        users: users.where((u) => u.id.isNotEmpty).toList(growable: false),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
 
   /// GET `/api/social/posts` — canlifal.com web `/sosyal` ile aynı JSON.
   Future<({List<PostEntity> posts, bool hasMore})> fetch({

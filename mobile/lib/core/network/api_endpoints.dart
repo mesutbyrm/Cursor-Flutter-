@@ -95,6 +95,9 @@ abstract final class ApiEndpoints {
 
   /// canlifal.com sosyal akış (web `/sosyal` ile aynı veri).
   static const socialPosts = '/api/social/posts';
+
+  /// Fal türü toplamı + son açık paylaşanlar (sosyal fal kartı).
+  static const socialFortuneViewers = '/api/social/fortune-viewers';
   static const socialStories = '/api/social/stories';
 
   /// BÖLÜM 21/A6 — Tanış & Kaynaş keşif listesi.

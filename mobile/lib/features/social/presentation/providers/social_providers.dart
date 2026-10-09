@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import '../utils/fortune_co_viewers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -227,9 +229,38 @@ final postCommentsProvider =
   return ref.read(socialRepositoryProvider).fetchComments(postId);
 });
 
-/// Bir fal gönderisi için "birlikte bakan" son 5 kullanıcı (akıştan türetilir).
+/// Fal türü başına sunucu verisi (aynı türdeki kartlar tek istek paylaşır;
+/// 2 dk önbellek).
+final fortuneViewersByTypeProvider =
+    FutureProvider.autoDispose.family<FortuneViewers?, String>((ref, type) async {
+  final link = ref.keepAlive();
+  final timer = Timer(const Duration(minutes: 2), link.close);
+  ref.onDispose(timer.cancel);
+  return ref.read(socialRemoteProvider).fetchFortuneViewers(type);
+});
+
+/// Bir fal gönderisi için "o fala bakan" son 5 kullanıcı: önce sunucu
+/// (`/api/social/fortune-viewers`), yoksa yüklü akıştan türetilir.
 final fortuneCoViewersProvider =
     Provider.autoDispose.family<List<UserEntity>, PostEntity>((ref, post) {
+  final type = post.fortuneType?.trim() ?? '';
+  if (type.isNotEmpty) {
+    final remote = ref.watch(fortuneViewersByTypeProvider(type)).valueOrNull;
+    final users = [
+      for (final u in remote?.users ?? const <UserEntity>[])
+        if (u.id != post.author.id) u,
+    ];
+    if (users.isNotEmpty) return users.take(5).toList(growable: false);
+  }
   final feed = ref.watch(socialNotifierProvider).valueOrNull ?? const [];
   return recentFortuneCoViewers(feed, post);
+});
+
+/// Bu fal türüne baktıran toplam kişi: gönderideki sayı, yoksa sunucu.
+final fortuneViewCountProvider =
+    Provider.autoDispose.family<int, PostEntity>((ref, post) {
+  if (post.fortuneCount > 0) return post.fortuneCount;
+  final type = post.fortuneType?.trim() ?? '';
+  if (type.isEmpty) return 0;
+  return ref.watch(fortuneViewersByTypeProvider(type)).valueOrNull?.count ?? 0;
 });
