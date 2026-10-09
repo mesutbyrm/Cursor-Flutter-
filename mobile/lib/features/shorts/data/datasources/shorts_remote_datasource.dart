@@ -171,6 +171,15 @@ class ShortsRemoteDataSource {
           .toString(),
       aiSummary: pick(json, ['aiSummary', 'summary'])?.toString(),
       subtitlesUrl: pick(json, ['subtitlesUrl', 'subtitles_url'])?.toString(),
+      visibility: (pick(json, ['visibility']) ?? 'everyone').toString(),
+      commentSetting:
+          (pick(json, ['commentSetting', 'comment_setting']) ?? 'everyone')
+              .toString(),
+      locationName: () {
+        final loc = pick(json, ['location']);
+        if (loc is Map) return loc['name']?.toString();
+        return pick(json, ['locationName'])?.toString();
+      }(),
     );
   }
 
@@ -520,12 +529,25 @@ class ShortsRemoteDataSource {
     required String videoPath,
     String? thumbnailPath,
     String? description,
+    String? visibility,
+    String? commentSetting,
+    bool? allowDuet,
+    String? locationName,
+    String? musicId,
+    String? duetOfId,
   }) async {
     final videoExt = _videoExtension(videoPath);
     final videoMime = _videoContentType(videoPath);
     final form = FormData.fromMap({
       if (description != null && description.trim().isNotEmpty)
         'description': description.trim(),
+      if (visibility != null) 'visibility': visibility,
+      if (commentSetting != null) 'commentSetting': commentSetting,
+      if (allowDuet != null) 'allowDuet': allowDuet.toString(),
+      if (locationName != null && locationName.trim().isNotEmpty)
+        'locationName': locationName.trim(),
+      if (musicId != null && musicId.isNotEmpty) 'musicId': musicId,
+      if (duetOfId != null && duetOfId.isNotEmpty) 'duetOfId': duetOfId,
       'video': await MultipartFile.fromFile(
         videoPath,
         filename: 'short_${DateTime.now().millisecondsSinceEpoch}.$videoExt',
@@ -670,6 +692,34 @@ class ShortsRemoteDataSource {
 
   Future<void> deleteVideo(String videoId) async {
     await _dio.safeDelete(ApiEndpoints.shortVideoDelete(videoId));
+  }
+
+  /// `PATCH /api/short-videos/{id}` — sahibi veya admin; yalnız verilen
+  /// alanlar değişir (kapak, açıklama, görünürlük, yorum, düet, konum).
+  Future<ShortVideoEntity> updateVideo(
+    String videoId, {
+    String? description,
+    String? thumbnailUrl,
+    String? visibility,
+    String? commentSetting,
+    bool? allowDuet,
+    String? locationName,
+  }) async {
+    final res = await _dio.safePatch<dynamic>(
+      ApiEndpoints.shortVideoDelete(videoId),
+      data: {
+        if (description != null) 'description': description,
+        if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
+        if (visibility != null) 'visibility': visibility,
+        if (commentSetting != null) 'commentSetting': commentSetting,
+        if (allowDuet != null) 'allowDuet': allowDuet,
+        if (locationName != null) 'locationName': locationName,
+      },
+    );
+    final m = _unwrap(res.data);
+    final raw = m != null ? pick(m, ['video', 'item']) : null;
+    if (raw is Map) return _videoFrom(asJsonMap(raw));
+    throw ApiException('Video güncelleme yanıtı okunamadı.');
   }
 
   Future<List<ShortVideoEntity>> fetchByUser(

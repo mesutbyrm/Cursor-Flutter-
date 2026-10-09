@@ -10,7 +10,8 @@ extension ShortVisibilityWire on ShortVisibility {
         ShortVisibility.everyone => 'everyone',
         ShortVisibility.followers => 'followers',
         ShortVisibility.closeFriends => 'close_friends',
-        ShortVisibility.onlyMe => 'only_me',
+        // Sunucu `private` bekler; `only_me` tanınmayıp «herkes» sayılıyordu.
+        ShortVisibility.onlyMe => 'private',
       };
 
   String get label => switch (this) {
@@ -398,6 +399,7 @@ class ShortUploadDraft extends Equatable {
 
   factory ShortUploadDraft.fromJson(Map<String, dynamic> json) {
     ShortVisibility parseVisibility(String? raw) {
+      if (raw == 'only_me') return ShortVisibility.onlyMe;
       return ShortVisibility.values.firstWhere(
         (v) => v.wireValue == raw,
         orElse: () => ShortVisibility.everyone,

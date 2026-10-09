@@ -69,6 +69,9 @@ class ShortVideoEntity extends Equatable {
     this.contentRating = 'all',
     this.aiSummary,
     this.subtitlesUrl,
+    this.visibility = 'everyone',
+    this.commentSetting = 'everyone',
+    this.locationName,
   });
 
   final String id;
@@ -96,6 +99,13 @@ class ShortVideoEntity extends Equatable {
   final String contentRating;
   final String? aiSummary;
   final String? subtitlesUrl;
+
+  /// Sunucu değeri: everyone | followers | close_friends | private
+  final String visibility;
+
+  /// Sunucu değeri: everyone | followers | off
+  final String commentSetting;
+  final String? locationName;
 
   bool get isMatureContent =>
       contentRating == 'mature' || contentRating == 'restricted';
@@ -148,6 +158,9 @@ class ShortVideoEntity extends Equatable {
       contentRating: contentRating,
       aiSummary: aiSummary,
       subtitlesUrl: subtitlesUrl,
+      visibility: visibility,
+      commentSetting: commentSetting,
+      locationName: locationName,
     );
   }
 
@@ -178,5 +191,8 @@ class ShortVideoEntity extends Equatable {
         contentRating,
         aiSummary,
         subtitlesUrl,
+        visibility,
+        commentSetting,
+        locationName,
       ];
 }
