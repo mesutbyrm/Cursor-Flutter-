@@ -115,6 +115,10 @@ class AgencyDashboardScreen extends ConsumerWidget {
                 if (w == null) return const SizedBox.shrink();
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
+                  child: InkWell(
+                  key: const Key('agency-dashboard-wallet'),
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () => context.push('/ajans/cuzdan'),
                   child: PlatformSocialGlassCard(
                   padding: const EdgeInsets.all(14),
                   gradient: LinearGradient(
@@ -139,8 +143,14 @@ class AgencyDashboardScreen extends ConsumerWidget {
                           ),
                         ),
                       ),
+                      const Text(
+                        'Yükle · Satın al',
+                        style: TextStyle(fontSize: 12, color: Colors.white70),
+                      ),
+                      const Icon(Icons.chevron_right_rounded, color: Colors.white54),
                     ],
                   ),
+                ),
                 ),
                 );
               },

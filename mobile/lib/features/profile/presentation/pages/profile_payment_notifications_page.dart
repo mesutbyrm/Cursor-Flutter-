@@ -120,6 +120,45 @@ class _PaymentCard extends ConsumerWidget {
     }
   }
 
+  bool get _cancellable => item.status == 'pending' || item.status == 'corrected';
+
+  Future<void> _cancel(BuildContext context, WidgetRef ref) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Bildirimi iptal et'),
+        content: const Text(
+          'Bu ödeme bildirimi iptal edilecek ve onaya gönderilmeyecek. Devam edilsin mi?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            key: const ValueKey('payment-cancel-confirm'),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('İptal et'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    try {
+      await ref.read(walletRemoteProvider).cancelPaymentNotification(item.id);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ödeme bildirimi iptal edildi')),
+      );
+      ref.invalidate(myPaymentNotificationsProvider);
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final color = _statusColor(item.status);
@@ -177,6 +216,18 @@ class _PaymentCard extends ConsumerWidget {
             Text(
               item.adminMessage!,
               style: const TextStyle(fontStyle: FontStyle.italic),
+            ),
+          ],
+          if (_cancellable) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                key: ValueKey('payment-cancel-${item.id}'),
+                onPressed: () => _cancel(context, ref),
+                icon: const Icon(Icons.cancel_outlined, size: 18),
+                label: const Text('İptal et'),
+              ),
             ),
           ],
           if (item.hasDispute) ...[

@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.754+807 (2026-10-09) — Ajans Jeton cüzdanı, toplu alım, talep iptali
+
+- **Ajans Cüzdanı (`/ajans/cuzdan`, yeni):** Ajans panelindeki cüzdan kartından açılır
+  - **Kullanıcıya Yükle:** Herhangi bir kullanıcıyı ara, Jeton miktarı gir, onayla; miktar ajans bakiyesinden aynen düşer (komisyon yok). Bakiye yetmezse «N jeton eksik» der. Çift dokunma çift yükleme yapmaz (idempotency)
+  - **Toplu Jeton Al:** Sunucunun hesapladığı normal fiyat, ajans indirimi ve ödenecek tutar; havale/Papara/WhatsApp ile ödeme bildirimi; yönetici onaylayınca Jeton ajans cüzdanına geçer; bekleyen sipariş iptal edilebilir
+- **Düzeltme:** Üye satırındaki Jeton gönderme yanlış alan (`userId`) gönderdiği için çalışmıyordu → `targetUserId`
+- **Talep iptali:** Bekleyen para çekme talebi, ödeme bildirimi ve CFC ödeme talebi kullanıcı tarafından iptal edilebilir (önceden CFC iptali «desteklenmiyor» hatası veriyordu)
+- **Backend deploy gerekli** (`mesutbyrm/canlifal` — şema değişikliği yok)
+
 ## 1.0.753+806 (2026-10-09) — Mistik kutular, Hediye Yolla, alt bar, GirLive, arka plan senkronu, sosyal ve profil
 
 - **Mistik kutu görselleri:** Ana sayfadaki 10 kutu ve «Tüm Özellikler»deki tüm kutular adına uygun mistik amblemle (ör. Jeton Al → altın jeton, Canlı Falcılar → göz)

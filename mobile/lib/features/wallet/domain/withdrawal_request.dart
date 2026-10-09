@@ -45,11 +45,20 @@ class WithdrawalRequest extends Equatable {
 
   String get statusLabel => switch (status.toLowerCase()) {
         'pending' || 'beklemede' => 'Beklemede',
+        'agency_approved' => 'Ajans onayladı · yönetici onayı bekleniyor',
+        'cancelled' || 'canceled' => 'İptal edildi',
+        'completed' => 'Ödendi',
         'approved' || 'onaylandi' || 'onaylandı' => 'Onaylandı',
         'rejected' || 'reddedildi' => 'Reddedildi',
         'paid' || 'odendi' || 'ödendi' => 'Ödendi',
         _ => status,
       };
+
+  /// Yalnızca jeton henüz düşülmemiş (bekleyen) talepler iptal edilebilir.
+  bool get cancellable {
+    final s = status.toLowerCase();
+    return s == 'pending' || s == 'agency_approved';
+  }
 
   @override
   List<Object?> get props =>

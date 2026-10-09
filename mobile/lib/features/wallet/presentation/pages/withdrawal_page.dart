@@ -148,7 +148,10 @@ class _WithdrawalPageState extends ConsumerState<WithdrawalPage> {
                     : Column(
                         children: [
                           for (final w in items)
-                            _WithdrawalTile(request: w),
+                            _WithdrawalTile(
+                              request: w,
+                              onCancel: w.cancellable ? () => _cancel(w) : null,
+                            ),
                         ],
                       ),
               ),
@@ -157,6 +160,43 @@ class _WithdrawalPageState extends ConsumerState<WithdrawalPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _cancel(WithdrawalRequest w) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Çekim talebini iptal et'),
+        content: Text(
+          '${w.amount.toStringAsFixed(0)} Jeton tutarındaki talebiniz iptal edilsin mi? '
+          'Bakiyenizden jeton düşülmemişti; talep kaydı silinmez.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Vazgeç')),
+          FilledButton(
+            key: const Key('withdrawal-cancel-confirm'),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('İptal et'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    try {
+      await ref.read(walletRemoteExtendedProvider).cancelWithdrawal(w.id);
+      ref.invalidate(withdrawalHistoryProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Çekim talebi iptal edildi')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
+        );
+      }
+    }
   }
 
   Widget _field(
@@ -180,9 +220,10 @@ class _WithdrawalPageState extends ConsumerState<WithdrawalPage> {
 }
 
 class _WithdrawalTile extends StatelessWidget {
-  const _WithdrawalTile({required this.request});
+  const _WithdrawalTile({required this.request, this.onCancel});
 
   final WithdrawalRequest request;
+  final VoidCallback? onCancel;
 
   @override
   Widget build(BuildContext context) {
@@ -215,13 +256,22 @@ class _WithdrawalTile extends StatelessWidget {
               ],
             ),
           ),
-          Text(
-            request.statusLabel,
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              color: AppThemeColors.coinGold,
+          Flexible(
+            child: Text(
+              request.statusLabel,
+              textAlign: TextAlign.end,
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                color: AppThemeColors.coinGold,
+              ),
             ),
           ),
+          if (onCancel != null)
+            TextButton(
+              key: Key('withdrawal-cancel-${request.id}'),
+              onPressed: onCancel,
+              child: const Text('İptal'),
+            ),
         ],
       ),
     );

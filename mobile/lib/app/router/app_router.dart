@@ -200,6 +200,7 @@ import '../../features/agency/presentation/pages/agency_applications_page.dart';
 import '../../features/agency/presentation/pages/agency_apply_page.dart';
 import '../../features/agency/presentation/pages/agency_invites_page.dart';
 import '../../features/agency/presentation/pages/agency_dashboard_screen.dart';
+import '../../features/agency/presentation/pages/agency_wallet_page.dart';
 import '../../features/agency/presentation/pages/agency_weekly_tasks_page.dart';
 import '../../features/cfc_arena/presentation/pages/cfc_arena_contest_page.dart';
 import '../../features/cfc_arena/presentation/pages/cfc_arena_hub_page.dart';
@@ -1570,6 +1571,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
           child: const AgencyDashboardScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/ajans/cuzdan',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const AgencyWalletPage(),
         ),
       ),
       GoRoute(
