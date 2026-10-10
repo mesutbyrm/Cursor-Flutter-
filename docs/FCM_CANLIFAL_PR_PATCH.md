@@ -33,3 +33,9 @@ Mobil **1.0.759+** / **760+** — `USE_FCM_ONLY=true` (varsayılan), token `prov
 Commit mesajı: `feat(push): FCM provider via PUSH_PROVIDER=fcm; notify uses sendPush; test-push`
 
 Parity kopyası Flutter repo: `backend-parity/nextjs_space/` (aynı içerik).
+
+## Tek komut (yerel canlifal klonu)
+
+```bash
+bash scripts/apply-canlifal-fcm-push-parity.sh /path/to/canlifal
+```
