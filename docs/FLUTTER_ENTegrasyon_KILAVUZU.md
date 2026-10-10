@@ -2129,6 +2129,12 @@ Auth gerektiren endpoint'ler `Authorization: Bearer <accessToken>` header'ı bek
 - Mesaj POST uçları (`/api/chat/rooms/{id}/messages`, `/api/live/message`, `/api/video-streams/{id}/comments|messages`) mesajı sunucuda denetler; ihlalde **422** `{code: "MODERATION_BLOCKED", moderation: {verdict, severity}}`.
 - LOW → uyarı · MEDIUM → uyarı + geçici mute · HIGH → odadan at · CRITICAL → ban; tekrar eden ihlaller kademeli yükselir. Oda sahibi / yönetici / oda op+ / yayın moderatörü bot tarafından cezalandırılmaz.
 - `GET /api/chat/rooms/{id}/moderation/violations` (moderatör) · `PATCH /api/chat/rooms/{id}/settings {autoModeration}` · Admin: `GET/PUT /api/admin/girlive-bot`.
+- **Yayıncı Asistanı (özel):** yalnızca oda sahibi / yayın sahibi — genel sohbet veya herkese açık SSE'ye yazılmaz.
+  - `GET /api/chat/rooms/{roomId}/girlive/publisher-assistant?scope=session|day|week|month&sessionId?` → `{ report: { startedAt, endedAt, totalVisits, uniqueVisitors, returnVisitors, avgDwellSeconds, peakHourLocal, grossGiftJeton, netOwnerJeton, giftCount, topGifts[], topGifters[], pkCompleted, pkWon, pkLost, pkDraw, tips[], comparePrevious? } }`
+  - `GET /api/chat/rooms/{roomId}/girlive/publisher-assistant/end-report?sessionId?` — oda kapanış özeti (mükerrer rapor üretmez).
+  - SSE `room_event` → `girlive_publisher` · `{ targetUserId, kind?, text|message, sessionId? }` (hedef = yayıncı).
+- **Herkese açık bot mesajları:** Jeton tanıtımı, PK başlangıç/ara/bitiş — normal sohbet mesajı veya `room_event`; admin `GET/PUT /api/admin/girlive-bot` altında `publicMessages` (Jeton promos, PK olayları, min aralık, şablonlar).
+- **Patron hitabı:** yalnızca backend doğrulamalı `admin` / `yonetici`; Gold/SVIP/moderatör «Patron» almaz.
 
 ### 9.3 ChatRoomRepository
 

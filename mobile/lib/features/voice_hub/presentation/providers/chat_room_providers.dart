@@ -22,6 +22,7 @@ import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../../vip_gold/presentation/providers/room_access_providers.dart';
 import '../../../vip_gold/domain/room_access_models.dart';
 import 'girlive_rules_notice_provider.dart';
+import '../../girlive/presentation/providers/girlive_publisher_notice_provider.dart';
 import '../../../vip_gold/domain/voice_room_access.dart';
 import '../../../vip_gold/presentation/providers/voice_room_join_request_provider.dart';
 import '../../../vip_gold/presentation/providers/vip_membership_provider.dart';

@@ -467,6 +467,13 @@ abstract final class ApiEndpoints {
   static String chatRoomModerationViolations(String roomId) =>
       '/api/chat/rooms/$roomId/moderation/violations';
 
+  /// GirLive Yayıncı Asistanı — yalnızca oda sahibi (kılavuz §9.3.2).
+  static String chatRoomGirLivePublisherAssistant(String roomId) =>
+      '/api/chat/rooms/$roomId/girlive/publisher-assistant';
+
+  static String chatRoomGirLivePublisherEndReport(String roomId) =>
+      '/api/chat/rooms/$roomId/girlive/publisher-assistant/end-report';
+
   static String chatRoomSettings(String roomId) =>
       '/api/chat/rooms/$roomId/settings';
 

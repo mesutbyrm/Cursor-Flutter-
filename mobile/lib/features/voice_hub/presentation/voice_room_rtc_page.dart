@@ -55,11 +55,13 @@ import 'audio/voice_room_audio_coordinator.dart';
 import 'audio/voice_room_music_audio_session.dart';
 import 'providers/chat_room_providers.dart';
 import 'providers/girlive_rules_notice_provider.dart';
+import '../girlive/presentation/providers/girlive_publisher_notice_provider.dart';
+import '../girlive/presentation/providers/girlive_publisher_session_provider.dart';
+import 'providers/pk_battle_remote_provider.dart';
 import 'providers/room_fragment_providers.dart';
 import '../music/presentation/providers/room_music_providers.dart';
 import '../music/presentation/widgets/room_song_mini_player.dart';
 import 'sheets/voice_room_hub_settings.dart';
-import 'providers/pk_battle_remote_provider.dart';
 import 'pk_room/pk_room_controller.dart';
 import 'pk_room/voice_pk_room_panel.dart';
 import 'utils/voice_room_image_prefetch.dart';
@@ -214,6 +216,32 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         _liveRoomKey,
         presence: voiceRoomLiveProvider(_liveRoomKey).select((s) => s.presence),
         myUserId: ref.read(authControllerProvider).valueOrNull?.id,
+      );
+      final live = ref.read(voiceRoomLiveProvider(_liveRoomKey));
+      trackGirLivePublisherSession(
+        ref,
+        _liveRoomKey,
+        presence: voiceRoomLiveProvider(_liveRoomKey).select((s) => s.presence),
+        pkBattle: pkBattleRemoteProvider,
+        ownerUserId: live.ownerId ?? widget.room.ownerId,
+        myUserId: ref.read(authControllerProvider).valueOrNull?.id,
+      );
+      _trackRoomListener(
+        ref.listenManual<GirLivePublisherNotice?>(
+          girLivePublisherNoticeProvider,
+          (prev, next) {
+            if (next == null || !mounted) return;
+            if (next.roomKey != _liveRoomKey) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(next.text),
+                duration: const Duration(seconds: 8),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+            ref.read(girLivePublisherNoticeProvider.notifier).clear();
+          },
+        ),
       );
     });
   }

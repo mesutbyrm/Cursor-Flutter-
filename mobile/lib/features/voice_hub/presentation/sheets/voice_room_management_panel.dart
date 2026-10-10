@@ -48,6 +48,7 @@ import 'voice_room_voice_users_sheet.dart';
 import 'voice_youtube_song_sheet.dart';
 import 'voice_room_speak_queue_sheet.dart';
 import 'voice_room_tools_sheet.dart';
+import '../../girlive/presentation/sheets/girlive_publisher_assistant_sheet.dart';
 import '../widgets/voice_room/voice_gift_goal_start_modal.dart';
 
 enum VoiceMgmtInitial { home, userMgmt, users, chatMgmt, roomMgmt, userSettings }
@@ -1209,6 +1210,20 @@ class _VoiceRoomManagementPanelState
             'Odayı başka bir kullanıcıya ver',
             () => _pickUserForTransfer(ScrollController()),
             accent: VoiceRoomTokens.gold,
+          ),
+        if (isOwner)
+          _hubTile(
+            Icons.smart_toy_outlined,
+            'Yayıncı Asistanım',
+            'GirLive — yayın süresi, hediye ve PK özeti (yalnızca size)',
+            () => _closeAndVoid(() {
+              showGirLivePublisherAssistantSheet(
+                context: context,
+                ref: ref,
+                roomKey: room.liveKey,
+              );
+            }),
+            accent: const Color(0xFF7C3AED),
           ),
       ],
     );

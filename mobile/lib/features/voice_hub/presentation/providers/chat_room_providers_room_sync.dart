@@ -304,6 +304,9 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       case 'girlive_rules':
         _handleGirLiveRules(payload);
         return;
+      case 'girlive_publisher':
+        _handleGirLivePublisher(payload);
+        return;
       case 'join_request_resolved':
         _resolveJoinRequestFromSse(payload);
         return;
@@ -889,6 +892,18 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
         .show(
           payload['text']?.toString() ?? '',
           roomKey: _resolveRoomKeyFromEvent(payload) ?? _roomKey,
+        );
+  }
+
+  /// `girlive_publisher` — yayıncı asistanı; genel sohbete düşmez.
+  void _handleGirLivePublisher(Map<String, dynamic> payload) {
+    final me = ref.read(authControllerProvider).valueOrNull?.id.trim();
+    final target = payload['targetUserId']?.toString().trim();
+    if (me == null || me.isEmpty || target != me) return;
+    ref.read(girLivePublisherNoticeProvider.notifier).show(
+          payload['text']?.toString() ?? payload['message']?.toString() ?? '',
+          roomKey: _resolveRoomKeyFromEvent(payload) ?? _roomKey,
+          kind: payload['kind']?.toString(),
         );
   }
 

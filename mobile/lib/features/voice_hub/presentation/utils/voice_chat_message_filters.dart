@@ -26,6 +26,19 @@ abstract final class VoiceChatMessageFilters {
   /// Selam bu süre sonra sohbetten kalkar.
   static const botWelcomeVisible = Duration(seconds: 10);
 
+  /// Yayıncı asistanına ait metin genel sohbette görünmemeli.
+  static bool isPublisherPrivateLeak(ChatRoomMessage message) {
+    final content = message.content;
+    if (content.contains('[GIRLIVE_PUBLISHER]')) return true;
+    final lower = content.toLowerCase();
+    if (lower.contains('yayıncı asistanım') &&
+        (lower.contains('jeton değerinde hediye') ||
+            lower.contains('tekil ziyaretçi'))) {
+      return true;
+    }
+    return false;
+  }
+
   static bool shouldShow(ChatRoomMessage message) {
     if (message.kind == ChatMessageKind.systemJoin ||
         message.kind == ChatMessageKind.systemLeave) {
@@ -34,6 +47,8 @@ abstract final class VoiceChatMessageFilters {
 
     final content = message.content.trim();
     if (content.isEmpty) return true;
+
+    if (isPublisherPrivateLeak(message)) return false;
 
     if (ChatRoomMessage.isSystemProtocol(content)) return false;
 
