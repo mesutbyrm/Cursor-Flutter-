@@ -114,3 +114,24 @@ Agent: hotfix gerekir — logcat / ekran kaydı ekleyin.
 
 Agent: hotfix gerekir — logcat / ekran kaydı ekleyin.
 
+## 2026-10-10 20:39 UTC — Psychic P0 **PASS**
+
+| Alan | Değer |
+|------|--------|
+| Sürüm | `1.0.761+816` |
+| Faz | Psychic P0 |
+| Sonuç | **PASS** |
+| Not | Kullanıcı: hepsi geçti (cihaz) |
+
+Sonraki: `bash scripts/p1-go.sh` · `docs/P1_DEVICE_START.md`
+
+## 2026-10-10 20:39 UTC — Psychic P0 **PASS**
+
+| Alan | Değer |
+|------|--------|
+| Sürüm | `1.0.761+816` |
+| Faz | Psychic P0 |
+| Sonuç | **PASS** |
+
+Sonraki: `bash scripts/p1-go.sh` · `docs/P1_DEVICE_START.md`
+
