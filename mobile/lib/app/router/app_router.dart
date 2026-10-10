@@ -202,6 +202,8 @@ import '../../features/agency/presentation/pages/agency_invites_page.dart';
 import '../../features/agency/presentation/pages/agency_dashboard_screen.dart';
 import '../../features/agency/presentation/pages/agency_wallet_page.dart';
 import '../../features/agency/presentation/pages/agencies_page.dart';
+import '../../features/agency/presentation/pages/admin_agency_management_page.dart';
+import '../../features/agency/presentation/pages/agency_members_page.dart';
 import '../../features/agency/presentation/pages/agency_performance_pages.dart';
 import '../../features/agency/presentation/pages/agency_promises_page.dart';
 import '../../features/agency/presentation/pages/agency_tools_pages.dart';
@@ -1639,6 +1641,20 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
           child: const AgencyAccrualsPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/ajans/uyeler',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const AgencyMembersPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/admin/ajans-yonetimi',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const AdminAgencyManagementPage(),
         ),
       ),
       GoRoute(

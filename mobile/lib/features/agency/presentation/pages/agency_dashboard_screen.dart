@@ -485,6 +485,7 @@ class _ManagementGrid extends StatelessWidget {
   const _ManagementGrid();
 
   static const _items = <(String, IconData, String)>[
+    ('Üyeler', Icons.groups_rounded, '/ajans/uyeler'),
     ('Performans', Icons.insights_rounded, '/ajans/performans'),
     ('Başvurular', Icons.how_to_reg_rounded, '/ajans/basvurular'),
     ('Vaatler', Icons.handshake_rounded, '/ajans/vaatler'),

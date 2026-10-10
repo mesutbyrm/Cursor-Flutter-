@@ -1,7 +1,9 @@
 import 'package:canlifal_social/core/network/api_exception.dart';
 import 'package:canlifal_social/features/agency/data/datasources/agency_management_datasource.dart';
 import 'package:canlifal_social/features/agency/domain/entities/agency_management_models.dart';
+import 'package:canlifal_social/features/agency/presentation/pages/admin_agency_management_page.dart';
 import 'package:canlifal_social/features/agency/presentation/pages/agencies_page.dart';
+import 'package:canlifal_social/features/agency/presentation/pages/agency_members_page.dart';
 import 'package:canlifal_social/features/agency/presentation/pages/agency_performance_pages.dart';
 import 'package:canlifal_social/features/agency/presentation/pages/broadcaster_panel_page.dart';
 import 'package:canlifal_social/features/agency/presentation/providers/agency_management_providers.dart';
@@ -110,6 +112,43 @@ class _FakeDs extends AgencyManagementDataSource {
   Future<String> payAccrual(String id) async {
     calls.add('pay:$id');
     return '300 Jeton bonus ödendi';
+  }
+
+  @override
+  Future<AgencyRoster> roster() async => AgencyRoster.fromJson({
+        'active': [
+          {'user': {'id': 'o1', 'name': 'Sahip'}, 'role': 'owner', 'since': '2026-01-01T00:00:00Z'},
+          {'user': {'id': 'u1', 'name': 'Ayşe'}, 'role': 'member', 'since': '2026-09-01T00:00:00Z'},
+        ],
+        'inactive': const [],
+        'pending': const [],
+        'left': const [],
+        'blocked': [
+          {'user': {'id': 'u9', 'name': 'Engelli'}, 'since': '2026-10-01T00:00:00Z', 'note': 'spam'},
+        ],
+      });
+
+  @override
+  Future<String> blockUser(String userId, {String? reason}) async {
+    calls.add('block:$userId:${reason ?? ''}');
+    return 'Kullanıcı ajanstan çıkarıldı ve engellendi';
+  }
+
+  @override
+  Future<String> unblockUser(String userId) async {
+    calls.add('unblock:$userId');
+    return 'Engel kaldırıldı';
+  }
+
+  @override
+  Future<List<AdminPromiseVersion>> adminPromises({String status = 'pending'}) async => [
+        AdminPromiseVersion.fromJson({..._version(id: 'v9'), 'status': 'pending', 'agencyName': 'Yıldız Ajans', 'agencyId': 'a1'}),
+      ];
+
+  @override
+  Future<String> adminReviewPromise(String versionId, {required bool approve, String? note}) async {
+    calls.add('${approve ? 'approve' : 'reject'}:$versionId:${note ?? ''}');
+    return approve ? 'Sürüm onaylandı ve yayımlandı' : 'Sürüm reddedildi';
   }
 }
 
@@ -260,5 +299,63 @@ void main() {
     await tester.tap(find.byKey(const Key('accrual-pay-confirm')));
     await tester.pumpAndSettle();
     expect(ds.calls.last, 'pay:c1');
+  });
+
+  testWidgets('üyeler: aktif üye gerekçeyle engellenir, engel kaldırılır; sahip menüsüz', (tester) async {
+    final ds = _FakeDs();
+    await tester.pumpWidget(_wrap(ds, const AgencyMembersPage()));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('member-menu-o1')), findsNothing);
+    await tester.tap(find.byKey(const Key('member-menu-u1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Engelle ve çıkar'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('block-reason')), 'kural ihlali');
+    await tester.tap(find.text('Gönder'));
+    await tester.pumpAndSettle();
+    expect(ds.calls, ['block:u1:kural ihlali']);
+
+    await tester.tap(find.byKey(const Key('tab-blocked')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('unblock-u9')));
+    await tester.pumpAndSettle();
+    expect(ds.calls.last, 'unblock:u9');
+  });
+
+  testWidgets('mobil admin: vaat onayı onay penceresiyle gönderilir', (tester) async {
+    tester.view.physicalSize = const Size(800, 2000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final ds = _FakeDs();
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        agencyManagementProvider.overrideWithValue(ds),
+        agenciesListProvider.overrideWith((ref, args) async => const <AgencyCard>[]),
+      ],
+      child: const MaterialApp(home: AdminAgencyManagementPage()),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Yıldız Ajans · Onay bekliyor'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('admin-approve-v9')));
+    await tester.pumpAndSettle();
+    expect(ds.calls, isEmpty);
+    await tester.tap(find.byKey(const Key('admin-promise-approve-confirm')));
+    await tester.pumpAndSettle();
+    expect(ds.calls, ['approve:v9:']);
+  });
+
+  test('üye listesi ayrıştırma', () {
+    final r = AgencyRoster.fromJson({
+      'active': [
+        {'user': {'id': 'a'}, 'role': 'member'},
+      ],
+      'pending': [
+        {'kind': 'request', 'id': 'j1', 'user': {'id': 'b'}},
+      ],
+      'blocked': const [],
+    });
+    expect(r.active.single.user.id, 'a');
+    expect(r.pending.single.kind, 'request');
+    expect(r.left, isEmpty);
   });
 }

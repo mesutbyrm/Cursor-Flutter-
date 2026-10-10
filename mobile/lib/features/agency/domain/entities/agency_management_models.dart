@@ -789,3 +789,98 @@ class BroadcasterPanel {
     );
   }
 }
+
+/// Üye listesi satırı (aktif, pasif, bekleyen, ayrılmış, engellenmiş).
+class RosterEntry {
+  const RosterEntry({required this.user, this.role, this.kind, this.id, this.since, this.until, this.endedBy, this.note});
+  final AgencyUserRef user;
+  final String? role;
+
+  /// Bekleyenlerde: `request` (başvuru) | `invite` (gönderilen davet).
+  final String? kind;
+  final String? id;
+  final DateTime? since;
+  final DateTime? until;
+  final String? endedBy;
+  final String? note;
+
+  static RosterEntry fromJson(dynamic raw) {
+    final m = asJsonMap(raw);
+    return RosterEntry(
+      user: AgencyUserRef.fromJson(m['user']),
+      role: _str(m['role']),
+      kind: _str(m['kind']),
+      id: _str(m['id']),
+      since: _date(m['since']),
+      until: _date(m['until']),
+      endedBy: _str(m['endedBy']),
+      note: _str(m['note']),
+    );
+  }
+}
+
+class AgencyRoster {
+  const AgencyRoster({required this.active, required this.inactive, required this.pending, required this.left, required this.blocked});
+  final List<RosterEntry> active;
+  final List<RosterEntry> inactive;
+  final List<RosterEntry> pending;
+  final List<RosterEntry> left;
+  final List<RosterEntry> blocked;
+
+  static AgencyRoster fromJson(dynamic raw) {
+    final m = asJsonMap(raw);
+    List<RosterEntry> l(String k) => asJsonList(m[k]).map(RosterEntry.fromJson).toList();
+    return AgencyRoster(active: l('active'), inactive: l('inactive'), pending: l('pending'), left: l('left'), blocked: l('blocked'));
+  }
+}
+
+/// Yönetici: onay bekleyen / işlenmiş vaat sürümü.
+class AdminPromiseVersion {
+  const AdminPromiseVersion({required this.version, required this.agencyName, required this.agencyId, this.currentApproved});
+  final PromiseVersionView version;
+  final String agencyName;
+  final String agencyId;
+  final PromiseVersionView? currentApproved;
+
+  static AdminPromiseVersion fromJson(dynamic raw) {
+    final m = asJsonMap(raw);
+    return AdminPromiseVersion(
+      version: PromiseVersionView.fromJson(m),
+      agencyName: '${m['agencyName'] ?? 'Ajans'}',
+      agencyId: '${m['agencyId'] ?? ''}',
+      currentApproved: m['currentApproved'] == null ? null : PromiseVersionView.fromJson(m['currentApproved'], title: '${m['title'] ?? ''}'),
+    );
+  }
+}
+
+class AgencyAlertView {
+  const AgencyAlertView({required this.kind, required this.severity, required this.agencyName, required this.message, this.at, required this.refCount});
+  final String kind;
+  final String severity;
+  final String agencyName;
+  final String message;
+  final DateTime? at;
+  final int refCount;
+
+  String get kindLabel => switch (kind) {
+        'large_transfer' => 'Büyük aktarım',
+        'repeat_target' => 'Aynı kullanıcıya sık aktarım',
+        'new_account' => 'Yeni hesaba aktarım',
+        'self_dealing' => 'Sahibine/yetkilisine aktarım',
+        'daily_outflow' => 'Günlük çıkış eşiği',
+        'cancelled_orders' => 'İptal edilen siparişler',
+        _ => kind,
+      };
+
+  static AgencyAlertView fromJson(dynamic raw) {
+    final m = asJsonMap(raw);
+    return AgencyAlertView(
+      kind: '${m['kind'] ?? ''}',
+      severity: '${m['severity'] ?? 'medium'}',
+      agencyName: '${m['agencyName'] ?? 'Ajans'}',
+      message: '${m['message'] ?? ''}',
+      at: _date(m['at']),
+      refCount: (m['refs'] is List) ? (m['refs'] as List).length : 0,
+    );
+  }
+}
