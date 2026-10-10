@@ -156,3 +156,13 @@ Sonraki: `bash scripts/on-release-ready-candidate.sh` · `bash scripts/print-pla
 
 Sonraki: `bash scripts/on-release-ready-candidate.sh` · `bash scripts/print-play-upload-day-checklist.sh`
 
+## 2026-10-10 — P1 Platform (Hediye/Jeton + Müzik) **PASS**
+
+| Alan | Değer |
+|------|--------|
+| Sürüm | `1.0.761+816` |
+| Faz | P1 Platform |
+| Sonuç | **PASS** |
+| Not | Canlı Hediye & Jeton Düşümü (2 cihazda animasyon + bakiye düşümü) ve Müzik/Şarkı İsteği (M5/M7 fiziki cihaz kontrolü) testi BAŞARILI geçti. |
+
+
