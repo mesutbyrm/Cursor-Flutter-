@@ -1,7 +1,7 @@
 # Canlifal — Agent talimatları
 
 
-> **Güncel (2026-10-10):** **`1.0.761+816`** · Release gate **FINAL PASS** · **Psychic P0 PASS** · **RELEASE READY: NO** (P1 cihaz + Play) · [`docs/DOCS_RELEASE_INDEX.md`](docs/DOCS_RELEASE_INDEX.md)
+> **Güncel (2026-10-10):** **`1.0.761+816`** · **P0+P1 PASS** · **RELEASE READY: NO** (Play AAB + Console) · [`docs/DOCS_RELEASE_INDEX.md`](docs/DOCS_RELEASE_INDEX.md)
 
 ## Flutter entegrasyon kılavuzu (tek kaynak — zorunlu)
 

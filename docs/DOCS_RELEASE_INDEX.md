@@ -3,8 +3,9 @@
 **Son güncelleme:** 2026-10-10
 **Sürüm:** `1.0.761+816`  
 **Release gate:** **FINAL PASS** (CI Flutter test gate)  
-**Psychic P0:** **PASS** (cihaz — 2026-10-10, bkz. [`USER_DEVICE_TEST_LOG.md`](USER_DEVICE_TEST_LOG.md))  
-**RELEASE READY:** `NO` — **P1 platform** 2-cihaz + Play yükleme adımları kaldı
+**Psychic P0:** **PASS** (cihaz — 2026-10-10)  
+**P1 platform:** **PASS** (cihaz — 2026-10-10, «hepsi ok») · [`USER_DEVICE_TEST_LOG.md`](USER_DEVICE_TEST_LOG.md)  
+**RELEASE READY:** `NO` — **Play:** AAB + Console formları (P0+P1 cihaz ✅)
 
 > Tüm `docs/**/*.md`, kök `*.md` parity raporları ve `mobile/docs/*.md` dosyalarına **2026-09-07** güncel durum banner'ı eklendi. Gövde metni tarihsel olabilir; karar için **birincil** tabloya bakın.
 

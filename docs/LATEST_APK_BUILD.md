@@ -1,6 +1,10 @@
 # Son APK derlemesi
 
+<<<<<<< HEAD
 > **Güncel:** Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+=======
+> **Güncel:** Release gate **FINAL PASS** · **P0+P1 PASS** · **RELEASE READY: NO** (Play AAB + Console) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+>>>>>>> 7063b424b (docs: P1 Platform PASS — RELEASE adayı, Play sırada [skip ci])
 
 | Alan | Değer |
 |------|--------|
