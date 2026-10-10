@@ -9,7 +9,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../features/notifications/data/local_notification_store.dart';
-import '../onesignal/onesignal_bootstrap.dart';
+import 'push_delivery.dart';
 import 'message_notification_data.dart';
 import 'notification_channels.dart';
 import 'notification_reply_sender.dart';
@@ -187,7 +187,7 @@ class PushNotificationService {
   }
 
   Future<void> bindForegroundFcm(FirebaseMessaging messaging) async {
-    if (OneSignalBootstrap.isReady) return;
+    if (PushDelivery.oneSignalActive) return;
     FirebaseMessaging.onMessage.listen((msg) async {
       await showRemoteMessage(msg);
     });
@@ -195,7 +195,7 @@ class PushNotificationService {
   }
 
   Future<void> bindOpenedAppHandlers(FirebaseMessaging messaging) async {
-    if (OneSignalBootstrap.isReady) return;
+    if (PushDelivery.oneSignalActive) return;
     FirebaseMessaging.onMessageOpenedApp.listen((msg) {
       PushNavigationHandler.handleNotificationTap(msg.data);
     });
@@ -207,8 +207,7 @@ class PushNotificationService {
 
   Future<void> showRemoteMessage(RemoteMessage msg) async {
     if (!_initialized) await init();
-    // OneSignal aktifken FCM foreground bildirimi gösterme — çift bildirim önlenir.
-    if (OneSignalBootstrap.isReady) return;
+    if (PushDelivery.oneSignalActive) return;
 
     final data = Map<String, dynamic>.from(msg.data);
     if (PushNavigationHandler.handleFortuneInviteData(

@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../firebase/firebase_bootstrap.dart';
 import '../onesignal/onesignal_bootstrap.dart';
-import '../onesignal/onesignal_config.dart';
+import '../push/push_delivery.dart';
 import '../network/api_endpoints.dart';
 import '../network/api_exception.dart';
 import '../network/dio_provider.dart';
@@ -42,7 +42,10 @@ class PushRegistrar {
         'fcmToken': token,
         'deviceToken': token,
         'platform': _platformLabel(),
-        if (OneSignalBootstrap.isReady) 'provider': 'onesignal',
+        if (PushDelivery.oneSignalActive)
+          'provider': 'onesignal'
+        else
+          'provider': 'fcm',
       };
 
       final endpoints = [
@@ -56,7 +59,7 @@ class PushRegistrar {
           _lastSentToken = token;
           lastStatus = 'Sunucuya kaydedildi';
           if (kDebugMode) debugPrint('Push token registered via $path');
-          if (OneSignalBootstrap.isReady) {
+          if (PushDelivery.oneSignalActive) {
             await _deregisterStaleFcmToken();
           }
           return;
@@ -116,7 +119,7 @@ class PushRegistrar {
   }
 
   Future<String?> _resolvePushTokenOnce() async {
-    if (OneSignalConfig.enabled) {
+    if (PushDelivery.usesOneSignal) {
       if (!OneSignalBootstrap.isReady) return null;
       final osToken = OneSignalBootstrap.pushToken;
       if (osToken != null && osToken.isNotEmpty) return osToken;
@@ -127,7 +130,7 @@ class PushRegistrar {
   }
 
   String _platformLabel() {
-    if (OneSignalBootstrap.isReady) {
+    if (PushDelivery.oneSignalActive) {
       return 'onesignal_${defaultTargetPlatform.name}';
     }
     return defaultTargetPlatform.name;

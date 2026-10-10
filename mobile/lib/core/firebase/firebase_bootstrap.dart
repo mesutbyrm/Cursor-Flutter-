@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
 import '../onesignal/onesignal_bootstrap.dart';
+import '../push/push_delivery.dart';
 import '../push/push_notification_service.dart';
 import 'firebase_options.dart';
 
@@ -12,7 +13,13 @@ import 'firebase_options.dart';
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   if (!DefaultFirebaseOptions.enabled) return;
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  debugPrint('FCM background: ${message.messageId}');
+  if (PushDelivery.oneSignalActive) return;
+  try {
+    await PushNotificationService.instance.init();
+    await PushNotificationService.instance.showRemoteMessage(message);
+  } catch (e) {
+    debugPrint('FCM background handler failed: $e');
+  }
 }
 
 /// Firebase init — yapılandırma yoksa sessizce atlanır (CI güvenli).
@@ -44,8 +51,7 @@ class FirebaseBootstrap {
       analytics = FirebaseAnalytics.instance;
       messaging = FirebaseMessaging.instance;
 
-      // Push teslimatı yalnızca OneSignal — FCM bildirim dinleyicileri bağlanmaz.
-      if (!OneSignalBootstrap.isReady) {
+      if (!PushDelivery.oneSignalActive) {
         await PushNotificationService.instance.init();
         if (messaging != null) {
           messaging!.onTokenRefresh.listen((token) {
@@ -68,9 +74,7 @@ class FirebaseBootstrap {
   static Future<void> runDeferredTasks() async {
     if (!_ready) return;
     try {
-      if (!kIsWeb &&
-          !OneSignalBootstrap.isReady &&
-          messaging != null) {
+      if (!kIsWeb && !PushDelivery.oneSignalActive && messaging != null) {
         final token = await messaging!.getToken();
         if (token != null && kDebugMode) {
           debugPrint('FCM token: ${token.substring(0, 12)}…');

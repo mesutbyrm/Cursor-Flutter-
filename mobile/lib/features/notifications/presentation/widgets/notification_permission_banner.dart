@@ -3,6 +3,7 @@ import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/onesignal/onesignal_bootstrap.dart';
+import '../../../../core/push/push_delivery.dart';
 import '../../../../core/push/push_notification_service.dart';
 import '../../../../core/push/push_registrar.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
@@ -32,13 +33,13 @@ class _NotificationPermissionBannerState
   }
 
   void _syncGranted() {
-    _granted = OneSignalBootstrap.isReady
+    _granted = PushDelivery.oneSignalActive
         ? OneSignalBootstrap.permissionGranted
         : PushNotificationService.instance.permissionGranted;
   }
 
   Future<void> _refreshGranted() async {
-    final granted = OneSignalBootstrap.isReady
+    final granted = PushDelivery.oneSignalActive
         ? OneSignalBootstrap.permissionGranted
         : await PushNotificationService.instance.refreshPermissionStatus();
     if (!mounted) return;
@@ -48,7 +49,7 @@ class _NotificationPermissionBannerState
   Future<void> _enable() async {
     setState(() => _loading = true);
     var ok = false;
-    if (OneSignalBootstrap.isReady) {
+    if (PushDelivery.oneSignalActive) {
       ok = await OneSignalBootstrap.requestPermission();
       if (ok) {
         await ref

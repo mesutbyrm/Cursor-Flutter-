@@ -6,7 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../../core/network/dio_provider.dart';
+import '../../../../core/firebase/firebase_bootstrap.dart';
 import '../../../../core/onesignal/onesignal_bootstrap.dart';
+import '../../../../core/push/push_delivery.dart';
 import '../../../../core/push/push_notification_service.dart';
 import '../../../../core/push/push_registrar.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
@@ -14,8 +16,7 @@ import '../../../../core/widgets/mock_ui_kit.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 
 /// Bildirim tanılama — push neden gelmiyor? Her adımı gösterir ve onarır:
-/// izin → OneSignal SDK → kullanıcı eşlemesi (external_id) → abonelik →
-/// sunucu kaydı.
+/// izin → FCM (veya legacy OneSignal) → sunucu token kaydı.
 class NotificationDiagnosticsPage extends ConsumerStatefulWidget {
   const NotificationDiagnosticsPage({super.key});
 
@@ -34,9 +35,15 @@ class _NotificationDiagnosticsPageState
     unawaited(_refresh());
   }
 
+  String? _fcmTokenPreview;
+
   Future<void> _refresh() async {
-    if (!OneSignalBootstrap.isReady) {
+    if (!PushDelivery.oneSignalActive) {
       await PushNotificationService.instance.refreshPermissionStatus();
+      if (FirebaseBootstrap.isReady) {
+        final t = await PushNotificationService.instance.currentFcmToken();
+        _fcmTokenPreview = t;
+      }
     }
     if (mounted) setState(() {});
   }
@@ -45,15 +52,20 @@ class _NotificationDiagnosticsPageState
     setState(() => _busy = true);
     try {
       final user = ref.read(authControllerProvider).valueOrNull;
-      if (!OneSignalBootstrap.isReady) await OneSignalBootstrap.init();
-      if (user != null) await OneSignalBootstrap.login(user.id);
-      if (!OneSignalBootstrap.permissionGranted) {
-        await OneSignalBootstrap.requestPermission(fallbackToSettings: true);
+      if (PushDelivery.usesOneSignal) {
+        if (!OneSignalBootstrap.isReady) await OneSignalBootstrap.init();
+        if (user != null) await OneSignalBootstrap.login(user.id);
+        if (!OneSignalBootstrap.permissionGranted) {
+          await OneSignalBootstrap.requestPermission(fallbackToSettings: true);
+        }
+        await OneSignalBootstrap.optInIfPermitted();
+      } else {
+        await PushNotificationService.instance.requestSystemPermission();
       }
-      await OneSignalBootstrap.optInIfPermitted();
       await ref
           .read(pushRegistrarProvider)
           .registerIfPossible(allowTokenRetry: true);
+      await _refresh();
     } finally {
       if (mounted) {
         setState(() => _busy = false);
@@ -66,7 +78,7 @@ class _NotificationDiagnosticsPageState
 
   String? _serverTestResult;
 
-  /// Sunucudan kendi hesabına test push gönderir; OneSignal'in ham yanıtını
+  /// Sunucudan kendi hesabına test push gönderir; sunucunun ham yanıtını
   /// (anahtar eksik mi, abone cihaz var mı) ekrana yazar.
   Future<void> _serverTest() async {
     setState(() {
@@ -105,15 +117,21 @@ class _NotificationDiagnosticsPageState
   Widget build(BuildContext context) {
     final c = context.colors;
     final user = ref.watch(authControllerProvider).valueOrNull;
-    final ready = OneSignalBootstrap.isReady;
-    final granted = ready
+    final fcmOnly = !PushDelivery.usesOneSignal;
+    final registered = PushRegistrar.lastStatus.startsWith('Sunucuya');
+    final ready = fcmOnly
+        ? FirebaseBootstrap.isReady
+        : OneSignalBootstrap.isReady;
+    final granted = PushDelivery.oneSignalActive
         ? OneSignalBootstrap.permissionGranted
         : PushNotificationService.instance.permissionGranted;
-    final externalOk = user != null &&
-        OneSignalBootstrap.externalUserId == user.id;
-    final subOk = OneSignalBootstrap.optedIn &&
-        OneSignalBootstrap.subscriptionId != null;
-    final registered = PushRegistrar.lastStatus.startsWith('Sunucuya');
+    final externalOk = fcmOnly
+        ? (user != null && registered)
+        : user != null && OneSignalBootstrap.externalUserId == user.id;
+    final subOk = fcmOnly
+        ? (_fcmTokenPreview != null && _fcmTokenPreview!.length > 20)
+        : OneSignalBootstrap.optedIn &&
+            OneSignalBootstrap.subscriptionId != null;
 
     Widget row(
       IconData icon,
@@ -155,20 +173,24 @@ class _NotificationDiagnosticsPageState
           ),
           row(
             Icons.hub_rounded,
-            'Push servisi (OneSignal)',
+            fcmOnly ? 'Firebase / FCM' : 'Push servisi (OneSignal)',
             ready ? 'Hazır' : 'Başlatılmadı',
             ready,
           ),
           row(
             Icons.person_pin_rounded,
-            'Hesap eşlemesi (external_id)',
-            externalOk ? _short(user.id) : 'Eşlenmedi',
+            fcmOnly ? 'Hesap + token kaydı' : 'Hesap eşlemesi (external_id)',
+            user != null && externalOk ? _short(user.id) : 'Eşlenmedi',
             externalOk,
           ),
           row(
             Icons.cell_tower_rounded,
-            'Abonelik',
-            subOk ? _short(OneSignalBootstrap.subscriptionId) : 'Kapalı',
+            fcmOnly ? 'FCM cihaz tokenı' : 'Abonelik',
+            subOk
+                ? _short(
+                    fcmOnly ? _fcmTokenPreview : OneSignalBootstrap.subscriptionId,
+                  )
+                : 'Kapalı',
             subOk,
           ),
           row(
@@ -205,8 +227,9 @@ class _NotificationDiagnosticsPageState
           const SizedBox(height: 4),
           Text(
             'Her satır yeşilse push uygulamaya ulaşır. Hepsi yeşil olduğu '
-            'halde bildirim gelmiyorsa sorun sunucudadır (OneSignal anahtarları '
-            'veya App ID eşleşmesi) — destek ekibine bu ekranın görüntüsünü gönder.',
+            'halde bildirim gelmiyorsa sorun sunucudadır (FCM Admin / '
+            'PUSH_PROVIDER veya legacy OneSignal anahtarları) — destek '
+            'ekibine bu ekranın görüntüsünü gönder.',
             style: TextStyle(color: c.onSurfaceMuted, fontSize: 11.5, height: 1.4),
           ),
         ],

@@ -1,3 +1,5 @@
+import '../push/push_config.dart';
+
 /// OneSignal uygulama kimliği — Dashboard → Settings → Keys & IDs.
 abstract final class OneSignalConfig {
   /// Varsayılan App ID (override: `--dart-define=ONESIGNAL_APP_ID=...`).
@@ -8,5 +10,7 @@ abstract final class OneSignalConfig {
     defaultValue: defaultAppId,
   );
 
-  static bool get enabled => appId.trim().isNotEmpty;
+  /// FCM-only modda SDK başlatılmaz (`PushConfig.useFcmOnly`).
+  static bool get enabled =>
+      !PushConfig.useFcmOnly && appId.trim().isNotEmpty;
 }

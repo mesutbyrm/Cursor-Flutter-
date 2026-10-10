@@ -10,6 +10,7 @@ import '../diagnostics/cf_diagnostic_logger_install.dart';
 import '../diagnostics/cf_monitors.dart';
 import '../firebase/firebase_bootstrap.dart';
 import '../network/api.dart';
+import '../push/push_config.dart';
 import '../onesignal/onesignal_bootstrap.dart';
 import 'app_startup_log.dart';
 import 'startup_perf.dart';
@@ -38,13 +39,17 @@ Future<void> _run() async {
   }
 }
 
-/// OneSignal + Firebase + Sentry — paralel; soğuk açılışta runApp öncesi beklenmez.
+/// Push (FCM veya legacy OneSignal) + Firebase + Sentry — paralel.
 Future<void> _initPushAndCrashReporting() async {
-  try {
-    await OneSignalBootstrap.init();
-    AppStartupLog.log('OneSignal init done (deferred)');
-  } catch (e) {
-    debugPrint('OneSignal deferred init failed: $e');
+  if (!PushConfig.useFcmOnly) {
+    try {
+      await OneSignalBootstrap.init();
+      AppStartupLog.log('OneSignal init done (deferred)');
+    } catch (e) {
+      debugPrint('OneSignal deferred init failed: $e');
+    }
+  } else {
+    AppStartupLog.log('OneSignal skipped (FCM-only mode)');
   }
   await Future.wait<void>([
     () async {

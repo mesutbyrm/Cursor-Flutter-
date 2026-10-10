@@ -14,6 +14,7 @@ import '../../../../core/config/env.dart';
 import '../../../../core/network/api_http_cache.dart';
 import '../../../../core/offline/api_cache_store.dart';
 import '../../../../core/onesignal/onesignal_bootstrap.dart';
+import '../../../../core/push/push_delivery.dart';
 import '../../../../core/network/cookie_jar_provider.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/loading_timeout.dart';
@@ -128,7 +129,9 @@ class AuthController extends AsyncNotifier<UserEntity?> {
 
     final id = base.id;
     if (id.isNotEmpty) {
-      unawaited(OneSignalBootstrap.login(id));
+      if (PushDelivery.usesOneSignal) {
+        unawaited(OneSignalBootstrap.login(id));
+      }
       unawaited(ref.read(userThemeSyncProvider).pullFromServer());
     }
   }
@@ -259,7 +262,9 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     await ref.read(sessionUserCacheProvider).write(user);
     invalidateAuthenticatedShellData(ref, skipPresenceHeartbeat: true);
     unawaited(clearStaleVoicePresenceOnAuth(ref));
-    unawaited(OneSignalBootstrap.login(user.id));
+    if (PushDelivery.usesOneSignal) {
+      unawaited(OneSignalBootstrap.login(user.id));
+    }
     unawaited(
       Future<void>.delayed(const Duration(seconds: 2), () {
         unawaited(TrtcBootstrapService.prewarmAfterAuth());
@@ -449,7 +454,9 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     _sessionEpoch++;
     AuthTokenRefreshCoordinator.instance.reset();
     final userId = state.valueOrNull?.id;
-    await OneSignalBootstrap.logout();
+    if (PushDelivery.usesOneSignal) {
+      await OneSignalBootstrap.logout();
+    }
     await NetworkPerf.parallel([
       ApiHttpCache.clearAll(),
       ApiCacheStore.clearAll(),

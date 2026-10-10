@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.759+812 (2026-10-10) — Push: FCM-only (OneSignal SDK pasif)
+
+- **Varsayılan mod:** `USE_FCM_ONLY=true` — OneSignal SDK başlatılmaz; FCM token `provider: fcm` ile `/api/user/device-token` kaydı
+- **Foreground / arka plan / soğuk açılış:** FCM dinleyicileri ve arka plan handler yerel bildirim + deep link (çift bildirim yalnızca legacy OneSignal modunda)
+- **Oturum:** Girişte FCM kaydı; çıkışta token silme (mevcut); OneSignal login/logout yalnız `--dart-define=USE_FCM_ONLY=false`
+- **Tanılama ekranı:** FCM token ve Firebase satırları; backend hâlâ OneSignal gönderiyorsa deploy gerekir — `docs/FCM_BACKEND_DEPLOY_FCM_ONLY.md`
+- **Analiz:** `docs/FCM_ONLY_PUSH_ANALYSIS.md` · backend şablon: `backend-parity/nextjs_space/lib/fcm-push.ts`
+
 ## 1.0.758+811 (2026-10-10) — apk-latest senkron, backend tsc eksik modüller
 
 - **APK:** `1.0.757+810` gelen kutusu / son görülme / sistem mesajları paketi `apk-latest` ile hizalandı (CI `[skip ci]` sonrası atlanan derleme)

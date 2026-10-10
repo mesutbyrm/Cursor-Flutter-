@@ -53,7 +53,7 @@ Push için OneSignal kullanılıyor; ayrıntılar: [ONESIGNAL_SETUP.md](./ONESIG
 
 ## Backend
 
-Oturum açıldığında uygulama `POST /api/user/device-token` ile token kaydı dener (yedek: `POST /api/auth/mobile/device-token`). OneSignal veya FCM token; uç yanıt vermezse kayıt atlanır.
+Oturum açıldığında uygulama `POST /api/user/device-token` ile token kaydı dener (yedek: `POST /api/auth/mobile/device-token`). Varsayılan **FCM-only** (`USE_FCM_ONLY=true`, `provider: fcm`). Legacy OneSignal: `--dart-define=USE_FCM_ONLY=false`. Üretim push gönderimi için `docs/FCM_BACKEND_DEPLOY_FCM_ONLY.md`.
 
 ## Analytics
 

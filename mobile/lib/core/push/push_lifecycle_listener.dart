@@ -29,6 +29,7 @@ import '../../features/notifications/presentation/providers/notifications_list_n
 import '../../features/notifications/presentation/providers/notifications_providers.dart';
 import '../../features/voice_hub/presentation/utils/voice_room_session_utils.dart';
 import '../onesignal/onesignal_bootstrap.dart';
+import 'push_delivery.dart';
 import 'notification_permission_prompter.dart';
 import 'notification_reply_sender.dart';
 import 'push_notification_service.dart';
@@ -245,7 +246,7 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener>
       final count = requests.length;
       if (_lastPendingCount >= 0 && count > _lastPendingCount) {
         final newCount = count - _lastPendingCount;
-        if (!OneSignalBootstrap.isReady) {
+        if (!PushDelivery.oneSignalActive) {
           unawaited(
             PushNotificationService.instance.showLocal(
               id: 9001,
@@ -285,12 +286,16 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener>
       if (user == null) {
         if (previous?.valueOrNull != null) {
           ref.read(pushRegistrarProvider).forgetLastRegistration();
-          await OneSignalBootstrap.logout();
+          if (PushDelivery.usesOneSignal) {
+            await OneSignalBootstrap.logout();
+          }
         }
         return;
       }
 
-      await OneSignalBootstrap.login(user.id);
+      if (PushDelivery.usesOneSignal) {
+        await OneSignalBootstrap.login(user.id);
+      }
 
       await ref
           .read(pushRegistrarProvider)

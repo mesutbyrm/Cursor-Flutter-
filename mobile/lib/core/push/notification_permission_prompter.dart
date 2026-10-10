@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../onesignal/onesignal_bootstrap.dart';
+import 'push_delivery.dart';
 import 'push_notification_service.dart';
 
 /// Android 13+ (POST_NOTIFICATIONS) / iOS bildirim izni.
@@ -44,11 +45,13 @@ abstract final class NotificationPermissionPrompter {
     final lastAt =
         lastMs == null ? null : DateTime.fromMillisecondsSinceEpoch(lastMs);
 
-    final granted = OneSignalBootstrap.isReady
+    final granted = PushDelivery.oneSignalActive
         ? OneSignalBootstrap.permissionGranted
         : await PushNotificationService.instance.refreshPermissionStatus();
     if (granted) {
-      await OneSignalBootstrap.optInIfPermitted();
+      if (PushDelivery.oneSignalActive) {
+        await OneSignalBootstrap.optInIfPermitted();
+      }
       return false;
     }
     if (!shouldPrompt(
@@ -64,7 +67,7 @@ abstract final class NotificationPermissionPrompter {
     await prefs.setInt(_countKey, count + 1);
     await prefs.setInt(_lastAtKey, DateTime.now().millisecondsSinceEpoch);
     final lastAttempt = count + 1 >= maxPrompts;
-    if (OneSignalBootstrap.isReady) {
+    if (PushDelivery.oneSignalActive) {
       await OneSignalBootstrap.requestPermission(fallbackToSettings: lastAttempt);
     } else {
       await PushNotificationService.instance.requestSystemPermission();
