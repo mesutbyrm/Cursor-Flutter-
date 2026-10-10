@@ -65,7 +65,15 @@ class FortuneTypeCoverImage extends StatelessWidget {
             child: Image.asset(
               assetPath!,
               fit: fit,
-              errorBuilder: (_, _, _) => const SizedBox.shrink(),
+              errorBuilder: (_, _, _) {
+                final legacy = FortuneTypeImages.legacyAssetPathFor(slug);
+                if (legacy == null) return const SizedBox.shrink();
+                return Image.asset(
+                  legacy,
+                  fit: fit,
+                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                );
+              },
             ),
           )
         else

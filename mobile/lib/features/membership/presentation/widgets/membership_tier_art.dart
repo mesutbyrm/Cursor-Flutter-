@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/visual/premium/premium_asset_paths.dart';
+import '../../../../core/visual/premium/premium_glass_image.dart';
+
 /// Üyelik kademesine özel kapak illüstrasyonu (`assets/membership/<id>.webp`).
 /// Kademe değişince yumuşak geçiş yapar; dosya yoksa [fallback] gösterilir.
 class MembershipTierArt extends StatelessWidget {
@@ -26,7 +29,12 @@ class MembershipTierArt extends StatelessWidget {
 
   static String? assetFor(String tierId) {
     final id = tierId.trim().toLowerCase();
-    return knownTiers.contains(id) ? 'assets/membership/$id.webp' : null;
+    return knownTiers.contains(id) ? PremiumAssetPaths.membership(id) : null;
+  }
+
+  static String? legacyAssetFor(String tierId) {
+    final id = tierId.trim().toLowerCase();
+    return knownTiers.contains(id) ? PremiumAssetPaths.legacyMembership(id) : null;
   }
 
   @override
@@ -59,13 +67,15 @@ class MembershipTierArt extends StatelessWidget {
                 switchInCurve: Curves.easeOut,
                 child: asset == null
                     ? (fallback ?? const SizedBox.shrink(key: ValueKey('none')))
-                    : Image.asset(
-                        asset,
+                    : PremiumGlassImage(
                         key: ValueKey(asset),
-                        fit: BoxFit.cover,
+                        assetPath: asset,
+                        fallbackAssetPath: legacyAssetFor(tierId),
+                        borderRadius: radius - 1,
+                        glowColor: glow,
                         cacheWidth: (420 * dpr).round().clamp(320, 1000),
-                        errorBuilder: (_, _, _) =>
-                            fallback ?? const SizedBox.shrink(),
+                        fit: BoxFit.cover,
+                        fallbackIcon: Icons.workspace_premium_rounded,
                       ),
               ),
               if (title != null)

@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.761+814 (2026-10-10) — Premium Visual 2026 (Liquid Glass 3D görseller)
+
+- **Ana sayfa 10 kutu:** Yeni 3D cam/kristal ikonlar (`assets/images/premium/home/` + `assets/tiles/`)
+- **12 burç + 19 fal türü + 5 üyelik rozeti:** AI üretimi premium WebP; fal/burç/üyelik ekranları otomatik bağlandı
+- **Ortak bileşenler:** `PremiumGlassImage`, `PremiumAssetPaths`; Tüm Özellikler grid cam çerçeve
+- **Rapor:** `docs/PREMIUM_VISUAL_REDESIGN_2026_REPORT.md` · kurulum: `scripts/premium-install-generated-assets.sh`
+- **Kalan (Faz 2):** ~45 özellik kutusu, oyun kapakları, sosyal banner/boş durum illüstrasyonları
+
 ## 1.0.760+813 (2026-10-10) — FCM arka plan çift bildirim + backend test-push şablonu
 
 - **Arka plan:** FCM `notification` payload varken yerel kopya gösterilmez (Android zaten gösterir)

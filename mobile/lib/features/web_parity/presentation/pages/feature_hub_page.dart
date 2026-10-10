@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/motion/canlifal_motion.dart';
+import '../../../../core/visual/premium/premium_glass_image.dart';
 import '../../../../core/widgets/mock_ui_kit.dart';
 import '../../domain/feature_catalog.dart';
 
@@ -99,11 +100,12 @@ class _HubTile extends StatelessWidget {
     final radius = BorderRadius.circular(16);
     // Amblem görseli (isme uygun mistik ikon) — yoksa düz ikon.
     Widget emblem = f.image != null
-        ? Image.asset(
-            f.image!,
-            fit: BoxFit.cover,
+        ? PremiumGlassImage(
+            assetPath: f.image!,
+            borderRadius: 16,
             cacheWidth: 240,
-            errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            glowColor: Theme.of(context).colorScheme.primary,
+            fallbackIcon: f.icon,
           )
         : Center(child: Icon(f.icon, color: Colors.white, size: 28));
     if (animateIn) {
