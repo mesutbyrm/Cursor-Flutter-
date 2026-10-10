@@ -12,24 +12,26 @@
 
 Oda yönetimi → **Yayıncı Asistanım** (yalnızca oda sahibi).
 
-## Backend (canlifal.com — deploy gerekli)
+## Backend (canlifal.com)
+
+**Merge:** [canlifal PR #36](https://github.com/mesutbyrm/canlifal/pull/36) (API + bot çekirdeği) · [PR #37](https://github.com/mesutbyrm/canlifal/pull/37) (leave + PK tetikleyiciler) · `full-source` → `dcdc156e73`.
 
 Şablon: `backend-parity/girlive-publisher-assistant/README.md`
 
-Üretim uçları kılavuz §9.3.2 ile tanımlı. Deploy öncesi mobil panel yerel oturum verisi + 404 toleransı kullanır.
+Mobil: deploy sonrası oda sahibi → **Yenile** → `GET …/publisher-assistant` **200** + isteğe bağlı SSE `girlive_publisher`. 404 ise henüz canlıya alınmamış dal/commit.
 
 ## Kabul testleri (§50)
 
 | Madde | Durum |
 |-------|--------|
 | Yayıncı oda süresini görür | ✅ yerel oturum |
-| Açılış/kapanış sunucudan | ⏳ backend `end-report` |
-| Hediye özeti gerçek işlem | ⚠️ oturum leaderboard; net cüzdan `VoiceRoomOwnerSummaryPage` |
-| PK kazan/kaybet | ✅ yalnız backend doğrulanmış `winnerId` ile oturum |
-| Başka yayıncı verisi görünmez | ✅ hedefli SSE + owner UI |
-| Gün sonu mükerrer rapor | ⏳ backend idempotent `end-report` |
-| Tavsiyeler veri destekli | ✅ `GirLivePublisherAdvice` |
-| Jeton/PK herkese açık mesajlar | ⏳ admin `girlive-bot` + sunucu scheduler |
-| Patron yalnız admin/yönetici | ✅ istemci kural + test; selam sunucuda doğrulanmalı |
+| Açılış/kapanış sunucudan | ✅ canlifal PR #36 — cihazda doğrula |
+| Hediye özeti gerçek işlem | ✅ backend rapor + mobil oturum; cihazda brüt/net eşleştir |
+| PK kazan/kaybet | ✅ backend + oturum; PK bot mesajları PR #37 |
+| Başka yayıncı verisi görünmez | ✅ hedefli SSE + owner-only GET |
+| Gün sonu mükerrer rapor | ✅ PR #36 idempotent `end-report` — cihazda tekrar dene |
+| Tavsiyeler veri destekli | ✅ sunucu `tips[]` veya mobil `GirLivePublisherAdvice` |
+| Jeton/PK herkese açık mesajlar | ✅ PR #36–#37 — admin `publicMessages` + PK/leave hook |
+| Patron yalnız admin/yönetici | ✅ `resolveGreetingName` (backend) + mobil kural |
 
 **Not:** Repo içi PR #19 (Navbar) GirLive ile ilgili değildir; entegrasyon §9.3.2 + bu dokümandır.
