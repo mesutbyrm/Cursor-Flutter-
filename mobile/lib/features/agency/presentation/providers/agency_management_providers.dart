@@ -52,3 +52,21 @@ final agencyStaffProvider = FutureProvider.autoDispose<List<StaffEntry>>((ref) {
 final broadcasterPanelProvider = FutureProvider.autoDispose<BroadcasterPanel>((ref) {
   return ref.read(agencyManagementProvider).broadcasterPanel();
 });
+
+final agencyRosterProvider = FutureProvider.autoDispose<AgencyRoster>((ref) {
+  return ref.read(agencyManagementProvider).roster();
+});
+
+final adminAgencyPromisesProvider = FutureProvider.autoDispose.family<List<AdminPromiseVersion>, String>((ref, status) {
+  return ref.read(agencyManagementProvider).adminPromises(status: status);
+});
+
+final adminAgencyAlertsProvider = FutureProvider.autoDispose.family<List<AgencyAlertView>, int>((ref, days) {
+  return ref.read(agencyManagementProvider).adminAlerts(days: days);
+});
+
+/// (agencyId, period) → performans satırları.
+final adminAgencyPerformanceProvider =
+    FutureProvider.autoDispose.family<List<Map<String, dynamic>>, (String, String)>((ref, args) {
+  return ref.read(agencyManagementProvider).adminPerformance(args.$1, period: args.$2);
+});

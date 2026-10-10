@@ -96,6 +96,14 @@ List<AdminCenterEntry> adminCenterEntries(StaffAccess a) {
       visible: a.canViewReports || a.showAdminPanel,
     ),
     AdminCenterEntry(
+      title: 'Ajans Yönetimi',
+      subtitle: 'Vaat onayı, şüpheli işlem, performans',
+      icon: Icons.apartment_rounded,
+      accent: const Color(0xFF10B981),
+      route: '/admin/ajans-yonetimi',
+      visible: a.isSiteAdmin,
+    ),
+    AdminCenterEntry(
       title: 'Sosyal Medya',
       subtitle: 'Resmi hesaplar ve bağlantılar',
       icon: Icons.share_rounded,

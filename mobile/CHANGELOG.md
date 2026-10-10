@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.756+809 (2026-10-10) — Ajans: üye engelleme, günlük limitler, otomatik dönem kapanışı, mobil admin
+
+- **Üyeler (`/ajans/uyeler`, yeni):** Aktif / Bekleyen / Ayrılmış / Engellenmiş sekmeleri; üyeyi gerekçeyle **engelle ve çıkar** (geçmiş kayıtlar silinmez), engeli kaldır; bekleyen başvuruyu buradan kabul/ret
+- **Engel:** Engellenen kullanıcı aynı ajansa başvuru, davet kabulü veya davet koduyla katılamaz
+- **Günlük limitler:** Ajans → kullanıcı günlük toplam aktarım ve günlük toplu alım limiti (admin ayarı; aşılırsa «bugün en fazla N jeton daha» mesajı)
+- **Hedef dönemleri otomatik kapanır:** Panel açılınca ve günlük cron ile; aynı dönem iki kez kapanmaz
+- **Mobil admin «Ajans Yönetimi» (`/admin/ajans-yonetimi`):** Vaat onayı/ret, şüpheli işlem uyarıları, ajans performansı (Yönetim Merkezi kartı)
+- **Para güvenliği (backend):** Admin iade ve elle bakiye düzeltme artık eşzamanlı işlemde bakiye kaybettirmiyor
+- **Backend deploy + `prisma db push` gerekli** (yalnız yeni tablolar)
+
 ## 1.0.755+808 (2026-10-09) — Ajans yönetimi: keşif, performans, vaatler, hedefler, yayıncı paneli
 
 - **Ajanslar (`/ajanslar`, yeni):** Ajansları sırala/ara (önerilen, yayın saati, yayıncı sayısı, hedef başarısı, seviye, en yeni). İstatistikler gerçek veriden: son 30 gün doğrulanmış video yayını, son 90 gün hedef başarısı (veri yoksa «Hedef verisi yok»)

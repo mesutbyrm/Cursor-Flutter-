@@ -89,7 +89,9 @@ Ek bulunan ve düzeltilen yarışlar:
 | H7 | `agency-wallet` `topUpWallet` / `adjustWallet` | Mutlak bakiye yazımı (eşzamanlı işlemde kayıp) | `increment` / koşullu `decrement`; negatife düşemez |
 | H8 | `agency/withdrawals` approve/reject | Kullanıcı iptalini ezebiliyordu | Koşullu `status:'pending'` → 409 |
 
-**Henüz düzeltilmedi (bilinen):** `admin/payments` iade yolu (~568. satır) ve elle bakiye düzeltme (~663. satır) hâlâ mutlak değer yazıyor. Yalnız admin kullanır; sonraki aşamada `increment`'e çevrilecek.
+**H9 (1.0.756'da düzeltildi):** `admin/payments` iade ve elle bakiye düzeltme mutlak değer yazıyordu.
+- **İade:** Durum geçişi koşullu yapılıyor (`approved → refunded`, tek kez). Düşüm, işlem içinde okunan bakiyeden koşullu `decrement` ile yapılıyor (kalan bakiye kadar).
+- **Elle düzeltme:** Ekleme `increment` ile yapılıyor. Çıkarma koşullu `decrement`; bakiye yetmezse işlem reddediliyor.
 
 ---
 
@@ -320,6 +322,25 @@ Yönetim merkezine kart eklendi.
 
 Ana sayfadaki "Ajans Ol" kutusu önceki karar gereği aynı kaldı.
 
+### 1.0.756 ekleri
+- **Üye engelleme:**
+  - Yeni tablo: `agency_member_blocks`.
+  - Uçlar: `/api/agency/blocks` (`members` izni) ve `/api/agency/roster` (aktif / pasif / bekleyen / ayrılmış / engellenmiş).
+  - Engel 5 noktada kontrol ediliyor: başvuru oluşturma, başvuru kabulü, davet kabulü, davet kodu, ajans daveti gönderme.
+  - Engellenen üye çıkarılıyor; geçmişe `endedBy: agency` yazılıyor; bekleyen başvuru ve davetleri kapatılıyor.
+  - Sahip engellenemez. Yöneticiyi yalnız sahip engelleyebilir.
+- **Günlük limitler** (`platformSettings`):
+  - `agency.wallet.daily_transfer_limit`: genel değer, ajansa özel değer `….<agencyId>` anahtarıyla.
+  - `agency.purchase.daily_max_jeton`.
+  - Admin → Ajans Finans üzerinden ayarlanıyor; ajansa özel değer Komisyon sekmesinde.
+- **Otomatik dönem kapanışı:**
+  - `POST /api/cron/agency-accruals` (`CRON_SECRET` veya süper admin). Önerilen çalışma: günde bir.
+  - Ayrıca ajans panelinde hak edişler veya yayıncı paneli açılınca ajans bazında 10 dakikada bir tetikleniyor.
+  - Zaten kapanmış dönemler yeniden hesaplanmıyor.
+- **Admin performans:**
+  - Web: `/admin/ajans-yonetimi` → Performans sekmesi.
+  - Mobil: `/admin/ajans-yonetimi` sayfası (vaat onayı, şüpheli işlem, performans). Yönetim Merkezi'nde kartı var (yalnız site admini).
+
 ## 8. Abacus'a uygulanacaklar
 
 **Aşama 1+6+7+8:** canlifal#28 ile yayına alındı (şema yok).
@@ -343,6 +364,10 @@ Sıra önemlidir: db push yapılmadan yeni kod çalıştırılırsa yeni uçlar 
 
 ## 9. Test sonuçları
 
+- **1.0.756:**
+  - `flutter test` → **2289 geçti**, `dart analyze` 0 hata.
+  - Yeni testler (ajans testleri toplam 14): engelleme ve engel kaldırma, mobil admin vaat onayı (onay penceresi olmadan istek gitmiyor), üye listesi ayrıştırma.
+  - Backend `tsc` yeni hata yok.
 - **Aşama 2–10 Flutter:** `dart analyze lib test` → 0 hata · `flutter test` → **2286 geçti**, 2 atlandı
   - `test/features/agency/agency_management_test.dart` (11 test):
     - Modeller: hedef verisi yokken `null`, dakika biçimi.
@@ -373,5 +398,5 @@ Sıra önemlidir: db push yapılmadan yeni kod çalıştırılırsa yeni uçlar 
 - Doğrulanmış yayın süresi `lastMediaAt` sinyaline dayanır. İstemci heartbeat göndermiyorsa süre `endedAt`'a göre hesaplanır; bu durumda medya kesintisi tespit edilemez.
 - Keşif istatistikleri 10 dk önbelleklenir. Çok sayıda ajansta (300+) hesap süresi izlenmeli.
 - Sesli oda süresi sayılmıyor (karar K6). Ajans isterse ayrı iş olarak eklenebilir.
-- `admin/payments` iade ve elle düzeltme yolları hâlâ mutlak bakiye yazıyor (§2).
+- Günlük limit kontrolü (aktarım ve alım) okuma + yazma olarak yapılıyor, tek kilitle değil. Aynı saniyede gelen iki istek limiti en fazla bir işlem tutarı kadar aşabilir. Bakiye kontrolü ise atomik; para kaybı riski yok.
 - Şema `db push` ile yönetildiği için geri alma planı: yeni tablolar boş başlar; geri almak gerekirse kod geri alınır, tablolar zarar vermeden kalır.

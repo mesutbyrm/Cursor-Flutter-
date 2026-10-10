@@ -159,4 +159,38 @@ class AgencyManagementDataSource {
       );
 
   Future<String> cancelLeave() => _send('DELETE', ApiEndpoints.agencyLeave, ok: 'Ayrılma talebi iptal edildi');
+
+  // ── Üye listesi ve engelleme ────────────────────────────
+  Future<AgencyRoster> roster() async => AgencyRoster.fromJson(await _get(ApiEndpoints.agencyRoster));
+
+  Future<String> blockUser(String userId, {String? reason}) => _send(
+        'POST',
+        ApiEndpoints.agencyBlocks,
+        data: {'userId': userId, if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim()},
+      );
+
+  Future<String> unblockUser(String userId) => _send('DELETE', ApiEndpoints.agencyBlocks, query: {'userId': userId});
+
+  // ── Yönetici (RBAC; sunucu yetki denetler) ──────────────
+  Future<List<AdminPromiseVersion>> adminPromises({String status = 'pending'}) async =>
+      asJsonList(await _get(ApiEndpoints.adminAgencyPromises, {'status': status})).map(AdminPromiseVersion.fromJson).toList();
+
+  Future<String> adminReviewPromise(String versionId, {required bool approve, String? note}) => _send(
+        'POST',
+        ApiEndpoints.adminAgencyPromises,
+        data: {'versionId': versionId, 'action': approve ? 'approve' : 'reject', if (note != null && note.isNotEmpty) 'note': note},
+      );
+
+  Future<List<AgencyAlertView>> adminAlerts({int days = 7}) async =>
+      asJsonList(asJsonMap(await _get(ApiEndpoints.adminAgencyAlerts, {'days': days}))['alerts']).map(AgencyAlertView.fromJson).toList();
+
+  /// Ajans performans satırları (sunucu raporu, JSON).
+  Future<List<Map<String, dynamic>>> adminPerformance(String agencyId, {String period = 'weekly'}) async => asJsonList(
+        asJsonMap(await _get(ApiEndpoints.adminAgencyReports, {
+          'type': 'performance',
+          'format': 'json',
+          'agencyId': agencyId,
+          'period': period,
+        }))['rows'],
+      );
 }

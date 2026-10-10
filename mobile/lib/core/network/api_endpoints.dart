@@ -336,6 +336,11 @@ abstract final class ApiEndpoints {
   static const agencyPromises = '/api/agency/promises';
   static String agencyPromiseAccept(String versionId) => '/api/agency/promises/$versionId/accept';
   static const agencyBroadcaster = '/api/agency/broadcaster';
+  static const agencyRoster = '/api/agency/roster';
+  static const agencyBlocks = '/api/agency/blocks';
+  static const adminAgencyPromises = '/api/admin/agency-management/promises';
+  static const adminAgencyAlerts = '/api/admin/agency-management/alerts';
+  static const adminAgencyReports = '/api/admin/agency-management/reports';
   static const agencyLivePresence = '/api/agency/live-status';
 
   static const celebrities = '/api/celebrities';
