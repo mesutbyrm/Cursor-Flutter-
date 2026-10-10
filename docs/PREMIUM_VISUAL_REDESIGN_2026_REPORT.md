@@ -1,6 +1,6 @@
 # Canlifal Premium Visual Redesign 2026 — rapor
 
-**Dal:** `cursor/premium-visual-redesign-dfca` · **Sürüm:** `1.0.761+814`
+**Dal:** `main` · **Sürüm:** `1.0.761+815`
 
 ## Envanter özeti (tarama)
 
