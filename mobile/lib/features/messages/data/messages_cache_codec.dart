@@ -7,8 +7,8 @@ Map<String, dynamic> encodeConversation(ConversationEntity c) => {
       'subtitle': c.subtitle,
       'avatarUrl': c.avatarUrl,
       'unreadCount': c.unreadCount,
-      'isOnline': c.isOnline,
       'lastMessageAt': c.lastMessageAt?.toIso8601String(),
+      'lastSeenAt': c.lastSeenAt?.toIso8601String(),
     };
 
 ConversationEntity decodeConversation(Map<String, dynamic> json) {
@@ -18,8 +18,10 @@ ConversationEntity decodeConversation(Map<String, dynamic> json) {
     subtitle: json['subtitle']?.toString(),
     avatarUrl: json['avatarUrl']?.toString(),
     unreadCount: (json['unreadCount'] as num?)?.toInt() ?? 0,
-    isOnline: json['isOnline'] == true,
+    // Çevrimiçi durumu önbelleğe yazılmaz: bayat yeşil nokta göstermemek için
+    // sunucu yanıtı gelene kadar çevrimdışı kabul edilir.
     lastMessageAt: DateTime.tryParse(json['lastMessageAt']?.toString() ?? ''),
+    lastSeenAt: DateTime.tryParse(json['lastSeenAt']?.toString() ?? ''),
   );
 }
 

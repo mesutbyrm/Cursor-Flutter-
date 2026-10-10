@@ -107,15 +107,7 @@ class ConversationsListNotifier extends AsyncNotifier<ConversationsListState> {
             _readLocallyAt[c.id] != null &&
             (c.lastMessageAt == null ||
                 !c.lastMessageAt!.isAfter(_readLocallyAt[c.id]!)))
-          ConversationEntity(
-            id: c.id,
-            title: c.title,
-            subtitle: c.subtitle,
-            avatarUrl: c.avatarUrl,
-            unreadCount: 0,
-            isOnline: c.isOnline,
-            lastMessageAt: c.lastMessageAt,
-          )
+          c.copyWith(unreadCount: 0)
         else
           c,
     ];
@@ -130,15 +122,7 @@ class ConversationsListNotifier extends AsyncNotifier<ConversationsListState> {
     final updated = [
       for (final c in cur.all)
         if (c.id == id)
-          ConversationEntity(
-            id: c.id,
-            title: c.title,
-            subtitle: c.subtitle,
-            avatarUrl: c.avatarUrl,
-            unreadCount: 0,
-            isOnline: c.isOnline,
-            lastMessageAt: c.lastMessageAt,
-          )
+          c.copyWith(unreadCount: 0)
         else
           c,
     ];
@@ -148,15 +132,7 @@ class ConversationsListNotifier extends AsyncNotifier<ConversationsListState> {
   static List<ConversationEntity> _zeroUnread(List<ConversationEntity> all) {
     return [
       for (final c in all)
-        ConversationEntity(
-          id: c.id,
-          title: c.title,
-          subtitle: c.subtitle,
-          avatarUrl: c.avatarUrl,
-          unreadCount: 0,
-          isOnline: c.isOnline,
-          lastMessageAt: c.lastMessageAt,
-        ),
+        c.copyWith(unreadCount: 0),
     ];
   }
 }

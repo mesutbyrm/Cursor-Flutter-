@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ConversationDto {
 
- String get id; String get title; String? get subtitle; String? get avatarUrl; int get unreadCount; bool get isOnline; DateTime? get lastMessageAt;
+ String get id; String get title; String? get subtitle; String? get avatarUrl; int get unreadCount; bool get isOnline; DateTime? get lastMessageAt; DateTime? get lastSeenAt;
 /// Create a copy of ConversationDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $ConversationDtoCopyWith<ConversationDto> get copyWith => _$ConversationDtoCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ConversationDto&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.subtitle, subtitle) || other.subtitle == subtitle)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.unreadCount, unreadCount) || other.unreadCount == unreadCount)&&(identical(other.isOnline, isOnline) || other.isOnline == isOnline)&&(identical(other.lastMessageAt, lastMessageAt) || other.lastMessageAt == lastMessageAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ConversationDto&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.subtitle, subtitle) || other.subtitle == subtitle)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.unreadCount, unreadCount) || other.unreadCount == unreadCount)&&(identical(other.isOnline, isOnline) || other.isOnline == isOnline)&&(identical(other.lastMessageAt, lastMessageAt) || other.lastMessageAt == lastMessageAt)&&(identical(other.lastSeenAt, lastSeenAt) || other.lastSeenAt == lastSeenAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,title,subtitle,avatarUrl,unreadCount,isOnline,lastMessageAt);
+int get hashCode => Object.hash(runtimeType,id,title,subtitle,avatarUrl,unreadCount,isOnline,lastMessageAt,lastSeenAt);
 
 @override
 String toString() {
-  return 'ConversationDto(id: $id, title: $title, subtitle: $subtitle, avatarUrl: $avatarUrl, unreadCount: $unreadCount, isOnline: $isOnline, lastMessageAt: $lastMessageAt)';
+  return 'ConversationDto(id: $id, title: $title, subtitle: $subtitle, avatarUrl: $avatarUrl, unreadCount: $unreadCount, isOnline: $isOnline, lastMessageAt: $lastMessageAt, lastSeenAt: $lastSeenAt)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $ConversationDtoCopyWith<$Res>  {
   factory $ConversationDtoCopyWith(ConversationDto value, $Res Function(ConversationDto) _then) = _$ConversationDtoCopyWithImpl;
 @useResult
 $Res call({
- String id, String title, String? subtitle, String? avatarUrl, int unreadCount, bool isOnline, DateTime? lastMessageAt
+ String id, String title, String? subtitle, String? avatarUrl, int unreadCount, bool isOnline, DateTime? lastMessageAt, DateTime? lastSeenAt
 });
 
 
@@ -62,7 +62,7 @@ class _$ConversationDtoCopyWithImpl<$Res>
 
 /// Create a copy of ConversationDto
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? subtitle = freezed,Object? avatarUrl = freezed,Object? unreadCount = null,Object? isOnline = null,Object? lastMessageAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? subtitle = freezed,Object? avatarUrl = freezed,Object? unreadCount = null,Object? isOnline = null,Object? lastMessageAt = freezed,Object? lastSeenAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -71,6 +71,7 @@ as String?,avatarUrl: freezed == avatarUrl ? _self.avatarUrl : avatarUrl // igno
 as String?,unreadCount: null == unreadCount ? _self.unreadCount : unreadCount // ignore: cast_nullable_to_non_nullable
 as int,isOnline: null == isOnline ? _self.isOnline : isOnline // ignore: cast_nullable_to_non_nullable
 as bool,lastMessageAt: freezed == lastMessageAt ? _self.lastMessageAt : lastMessageAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,lastSeenAt: freezed == lastSeenAt ? _self.lastSeenAt : lastSeenAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,
   ));
 }
@@ -156,10 +157,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  String? subtitle,  String? avatarUrl,  int unreadCount,  bool isOnline,  DateTime? lastMessageAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  String? subtitle,  String? avatarUrl,  int unreadCount,  bool isOnline,  DateTime? lastMessageAt,  DateTime? lastSeenAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ConversationDto() when $default != null:
-return $default(_that.id,_that.title,_that.subtitle,_that.avatarUrl,_that.unreadCount,_that.isOnline,_that.lastMessageAt);case _:
+return $default(_that.id,_that.title,_that.subtitle,_that.avatarUrl,_that.unreadCount,_that.isOnline,_that.lastMessageAt,_that.lastSeenAt);case _:
   return orElse();
 
 }
@@ -177,10 +178,10 @@ return $default(_that.id,_that.title,_that.subtitle,_that.avatarUrl,_that.unread
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  String? subtitle,  String? avatarUrl,  int unreadCount,  bool isOnline,  DateTime? lastMessageAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  String? subtitle,  String? avatarUrl,  int unreadCount,  bool isOnline,  DateTime? lastMessageAt,  DateTime? lastSeenAt)  $default,) {final _that = this;
 switch (_that) {
 case _ConversationDto():
-return $default(_that.id,_that.title,_that.subtitle,_that.avatarUrl,_that.unreadCount,_that.isOnline,_that.lastMessageAt);case _:
+return $default(_that.id,_that.title,_that.subtitle,_that.avatarUrl,_that.unreadCount,_that.isOnline,_that.lastMessageAt,_that.lastSeenAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -197,10 +198,10 @@ return $default(_that.id,_that.title,_that.subtitle,_that.avatarUrl,_that.unread
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  String? subtitle,  String? avatarUrl,  int unreadCount,  bool isOnline,  DateTime? lastMessageAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  String? subtitle,  String? avatarUrl,  int unreadCount,  bool isOnline,  DateTime? lastMessageAt,  DateTime? lastSeenAt)?  $default,) {final _that = this;
 switch (_that) {
 case _ConversationDto() when $default != null:
-return $default(_that.id,_that.title,_that.subtitle,_that.avatarUrl,_that.unreadCount,_that.isOnline,_that.lastMessageAt);case _:
+return $default(_that.id,_that.title,_that.subtitle,_that.avatarUrl,_that.unreadCount,_that.isOnline,_that.lastMessageAt,_that.lastSeenAt);case _:
   return null;
 
 }
@@ -212,7 +213,7 @@ return $default(_that.id,_that.title,_that.subtitle,_that.avatarUrl,_that.unread
 
 
 class _ConversationDto extends ConversationDto {
-  const _ConversationDto({required this.id, this.title = 'Sohbet', this.subtitle, this.avatarUrl, this.unreadCount = 0, this.isOnline = false, this.lastMessageAt}): super._();
+  const _ConversationDto({required this.id, this.title = 'Sohbet', this.subtitle, this.avatarUrl, this.unreadCount = 0, this.isOnline = false, this.lastMessageAt, this.lastSeenAt}): super._();
   
 
 @override final  String id;
@@ -222,6 +223,7 @@ class _ConversationDto extends ConversationDto {
 @override@JsonKey() final  int unreadCount;
 @override@JsonKey() final  bool isOnline;
 @override final  DateTime? lastMessageAt;
+@override final  DateTime? lastSeenAt;
 
 /// Create a copy of ConversationDto
 /// with the given fields replaced by the non-null parameter values.
@@ -233,16 +235,16 @@ _$ConversationDtoCopyWith<_ConversationDto> get copyWith => __$ConversationDtoCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ConversationDto&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.subtitle, subtitle) || other.subtitle == subtitle)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.unreadCount, unreadCount) || other.unreadCount == unreadCount)&&(identical(other.isOnline, isOnline) || other.isOnline == isOnline)&&(identical(other.lastMessageAt, lastMessageAt) || other.lastMessageAt == lastMessageAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ConversationDto&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.subtitle, subtitle) || other.subtitle == subtitle)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.unreadCount, unreadCount) || other.unreadCount == unreadCount)&&(identical(other.isOnline, isOnline) || other.isOnline == isOnline)&&(identical(other.lastMessageAt, lastMessageAt) || other.lastMessageAt == lastMessageAt)&&(identical(other.lastSeenAt, lastSeenAt) || other.lastSeenAt == lastSeenAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,title,subtitle,avatarUrl,unreadCount,isOnline,lastMessageAt);
+int get hashCode => Object.hash(runtimeType,id,title,subtitle,avatarUrl,unreadCount,isOnline,lastMessageAt,lastSeenAt);
 
 @override
 String toString() {
-  return 'ConversationDto(id: $id, title: $title, subtitle: $subtitle, avatarUrl: $avatarUrl, unreadCount: $unreadCount, isOnline: $isOnline, lastMessageAt: $lastMessageAt)';
+  return 'ConversationDto(id: $id, title: $title, subtitle: $subtitle, avatarUrl: $avatarUrl, unreadCount: $unreadCount, isOnline: $isOnline, lastMessageAt: $lastMessageAt, lastSeenAt: $lastSeenAt)';
 }
 
 
@@ -253,7 +255,7 @@ abstract mixin class _$ConversationDtoCopyWith<$Res> implements $ConversationDto
   factory _$ConversationDtoCopyWith(_ConversationDto value, $Res Function(_ConversationDto) _then) = __$ConversationDtoCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String title, String? subtitle, String? avatarUrl, int unreadCount, bool isOnline, DateTime? lastMessageAt
+ String id, String title, String? subtitle, String? avatarUrl, int unreadCount, bool isOnline, DateTime? lastMessageAt, DateTime? lastSeenAt
 });
 
 
@@ -270,7 +272,7 @@ class __$ConversationDtoCopyWithImpl<$Res>
 
 /// Create a copy of ConversationDto
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? subtitle = freezed,Object? avatarUrl = freezed,Object? unreadCount = null,Object? isOnline = null,Object? lastMessageAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? subtitle = freezed,Object? avatarUrl = freezed,Object? unreadCount = null,Object? isOnline = null,Object? lastMessageAt = freezed,Object? lastSeenAt = freezed,}) {
   return _then(_ConversationDto(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -279,6 +281,7 @@ as String?,avatarUrl: freezed == avatarUrl ? _self.avatarUrl : avatarUrl // igno
 as String?,unreadCount: null == unreadCount ? _self.unreadCount : unreadCount // ignore: cast_nullable_to_non_nullable
 as int,isOnline: null == isOnline ? _self.isOnline : isOnline // ignore: cast_nullable_to_non_nullable
 as bool,lastMessageAt: freezed == lastMessageAt ? _self.lastMessageAt : lastMessageAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,lastSeenAt: freezed == lastSeenAt ? _self.lastSeenAt : lastSeenAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,
   ));
 }

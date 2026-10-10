@@ -78,6 +78,34 @@ class NotificationsListNotifier extends AsyncNotifier<NotificationsListState> {
     );
   }
 
+  /// Yalnız verilen bildirimleri yerelde okundu yapar (sunucu onayından sonra).
+  void markIdsReadLocally(Set<String> ids) {
+    final cur = state.valueOrNull;
+    if (cur == null || ids.isEmpty) return;
+    state = AsyncValue.data(
+      cur.copyWith(
+        all: [
+          for (final n in cur.all)
+            if (!n.read && ids.contains(n.id))
+              AppNotificationEntity(
+                id: n.id,
+                title: n.title,
+                body: n.body,
+                read: true,
+                createdAt: n.createdAt,
+                type: n.type,
+                targetPath: n.targetPath,
+                targetId: n.targetId,
+                imageUrl: n.imageUrl,
+                senderId: n.senderId,
+              )
+            else
+              n,
+        ],
+      ),
+    );
+  }
+
   void markAllReadLocally() {
     final cur = state.valueOrNull;
     if (cur == null) return;

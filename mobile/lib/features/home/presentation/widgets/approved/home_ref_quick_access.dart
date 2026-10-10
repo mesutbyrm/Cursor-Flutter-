@@ -175,94 +175,65 @@ class _QuickAccessTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final radius = BorderRadius.circular(14);
+    // Görsel kare ve olduğu gibi gösterilir: üstüne karartma/degrade binmez,
+    // kırpılmaz; etiket görselin altında durur.
     return CanlifalPressable(
       onTap: () => pushFromHomeCta(context, item.route),
-      child: AspectRatio(
-        aspectRatio: 0.92,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: radius,
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                item.colors.first.withValues(alpha: 0.92),
-                item.colors.last.withValues(alpha: 0.78),
-              ],
-            ),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
-            boxShadow: [
-              BoxShadow(
-                color: item.colors.first.withValues(alpha: 0.28),
-                blurRadius: 14,
-                offset: const Offset(0, 4),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AspectRatio(
+            aspectRatio: 1,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: radius,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [item.colors.first, item.colors.last],
+                ),
+                border: Border.all(color: item.colors.first.withValues(alpha: 0.55)),
+                boxShadow: [
+                  BoxShadow(
+                    color: item.colors.first.withValues(alpha: 0.22),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: radius,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                if (item.image != null)
-                  Image.asset(
-                    item.image!,
-                    fit: BoxFit.cover,
-                    cacheWidth: 200,
-                    errorBuilder: (_, _, _) => const SizedBox.shrink(),
-                  ),
-                // Görsel üstünde okunabilirlik için renkli alt degrade.
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.transparent,
-                        Colors.black.withValues(alpha: 0.82),
-                      ],
-                      stops: const [0, 0.55, 1],
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(6, 7, 6, 6),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Amblem görseli ikonu zaten içerir; görsel yoksa ikon.
-                      if (item.image == null)
-                        Icon(item.icon, color: Colors.white, size: 15),
-                      const Spacer(),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          alignment: AlignmentDirectional.centerStart,
-                          child: Text(
-                            item.label,
-                            maxLines: 1,
-                            softWrap: false,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              height: 1.15,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              shadows: [
-                                Shadow(color: Colors.black54, blurRadius: 4),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              child: ClipRRect(
+                borderRadius: radius,
+                child: item.image != null
+                    ? Image.asset(
+                        item.image!,
+                        fit: BoxFit.cover,
+                        cacheWidth: 240,
+                        errorBuilder: (_, _, _) => Center(child: Icon(item.icon, color: Colors.white, size: 22)),
+                      )
+                    : Center(child: Icon(item.icon, color: Colors.white, size: 22)),
+              ),
             ),
           ),
-        ),
+          const SizedBox(height: 5),
+          SizedBox(
+            width: double.infinity,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                item.label,
+                maxLines: 1,
+                softWrap: false,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 10.5,
+                  height: 1.15,
+                  fontWeight: FontWeight.w800,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
