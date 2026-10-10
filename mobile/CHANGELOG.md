@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.762+818 (2026-10-10) — CI/APK: main tip derleme + GirLive merge
+
+- **APK workflow:** gecikmiş `workflow_run` tetiklemesinde main ucu (tip) derlenir; boş SHA commit status 404 düzeltmesi
+- **GirLive Yayıncı Asistanı** (#476 → main)
+
 ## 1.0.762+817 (2026-10-10) — GirLive Yayıncı Asistanı (§37–50, mobil)
 
 - **🤖 GirLive — Yayıncı Asistanım:** oda sahibi paneli (yayın süresi, ziyaret, hediye brüt Jeton, PK oturum özeti, veriye dayalı öneriler)

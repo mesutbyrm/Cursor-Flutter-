@@ -103,12 +103,11 @@ jobs:
               done < <(git log --format=%s "$HEAD..$TIP")
               if [[ "$SKIP_ONLY" == "1" ]]; then
                 echo "Main ucu $TIP — yalnızca [skip ci] commit(ler); tip'ten derleniyor."
-                git checkout -f "$TIP"
-                BUILD_SHA="$TIP"
               else
-                echo "::error::CI commit ($HEAD) main ucunda değil ($TIP). Ara commit'lerde kod değişikliği var — latest main CI bekleyin veya workflow_dispatch."
-                exit 1
+                echo "CI commit ($HEAD) main ucunun gerisinde; apk-latest için tip ($TIP) derleniyor."
               fi
+              git checkout -f "$TIP"
+              BUILD_SHA="$TIP"
             else
               echo "::error::CI commit ($HEAD) main ucunda değil ($TIP). Eski APK yayını engellendi."
               exit 1
@@ -586,7 +585,14 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const sha = '${{ steps.build_sha.outputs.sha }}';
+            const sha =
+              '${{ steps.build_sha.outputs.sha }}'.trim() ||
+              context.sha ||
+              '${{ github.event.workflow_run.head_sha }}'.trim();
+            if (!sha || sha.length < 7) {
+              core.warning('Commit status atlandı: SHA yok');
+              return;
+            }
             const ok = '${{ job.status }}' === 'success';
             await github.rest.repos.createCommitStatus({
               owner: context.repo.owner,
