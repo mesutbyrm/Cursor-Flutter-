@@ -1,3 +1,5 @@
+import '../../../../core/visual/premium/premium_asset_paths.dart';
+
 /// Ana sayfa bölümleri — yerel mistik kapaklar + isteğe bağlı Unsplash katmanı.
 abstract final class SectionVisualCatalog {
   static const _base = 'https://images.unsplash.com';
@@ -19,7 +21,17 @@ abstract final class SectionVisualCatalog {
       'yay': 'yay', 'oğlak': 'oglak', 'kova': 'kova', 'balık': 'balik',
     };
     final f = ascii[signName.trim().toLowerCase()];
-    return f == null ? null : 'assets/zodiac/$f.webp';
+    return f == null ? null : PremiumAssetPaths.zodiac(f);
+  }
+
+  static String? horoscopeLegacyAsset(String signName) {
+    const ascii = {
+      'koç': 'koc', 'boğa': 'boga', 'ikizler': 'ikizler', 'yengeç': 'yengec',
+      'aslan': 'aslan', 'başak': 'basak', 'terazi': 'terazi', 'akrep': 'akrep',
+      'yay': 'yay', 'oğlak': 'oglak', 'kova': 'kova', 'balık': 'balik',
+    };
+    final f = ascii[signName.trim().toLowerCase()];
+    return f == null ? null : PremiumAssetPaths.legacyZodiac(f);
   }
 
   static const _horoscopePhotos = <String, String>{

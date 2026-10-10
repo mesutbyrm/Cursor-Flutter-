@@ -7,6 +7,8 @@ import '../../../../live_psychics/presentation/controllers/psychics_list_control
 import '../../../../profile/presentation/providers/profile_providers.dart';
 import '../../navigation/home_cta_navigation.dart';
 import '../../../../../core/motion/canlifal_motion_widgets.dart';
+import '../../../../../core/visual/premium/premium_asset_paths.dart';
+import '../../../../../core/visual/premium/premium_glass_image.dart';
 import '../../theme/home_approved_design.dart';
 import '../home_motion_widgets.dart';
 
@@ -23,35 +25,35 @@ class HomeRefQuickAccess extends ConsumerWidget {
       label: 'Keşfet',
       icon: Icons.explore_rounded,
       route: '/shorts',
-      image: 'assets/tiles/home-kesfet.webp',
+      legacyImage: 'home-kesfet.webp',
       colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
     ),
     _QuickAccessItem(
       label: 'Tanış & Kaynaş',
       icon: Icons.favorite_rounded,
       route: '/social/tanis-kaynas',
-      image: 'assets/tiles/home-tanis-kaynas.webp',
+      legacyImage: 'home-tanis-kaynas.webp',
       colors: [Color(0xFFA855F7), Color(0xFFEC4899)],
     ),
     _QuickAccessItem(
       label: 'Gold Üyelik',
       icon: Icons.workspace_premium_rounded,
       route: '/premium-membership',
-      image: 'assets/tiles/home-gold-uyelik.webp',
+      legacyImage: 'home-gold-uyelik.webp',
       colors: [Color(0xFFFFD700), Color(0xFFFF8A00)],
     ),
     _QuickAccessItem(
       label: 'Canlı Falcılar',
       icon: Icons.videocam_rounded,
       route: '/canli-falcilar',
-      image: 'assets/tiles/home-canli-falcilar.webp',
+      legacyImage: 'home-canli-falcilar.webp',
       colors: [Color(0xFFEF4444), Color(0xFFF97316)],
     ),
     _QuickAccessItem(
       label: 'Tüm Özellikler',
       icon: Icons.apps_rounded,
       route: '/ozellikler',
-      image: 'assets/tiles/home-tum-ozellikler.webp',
+      legacyImage: 'home-tum-ozellikler.webp',
       colors: [Color(0xFF475569), Color(0xFF8B5CF6)],
     ),
   ];
@@ -77,35 +79,35 @@ class HomeRefQuickAccess extends ConsumerWidget {
         label: isTeller ? 'Falcı Panelim' : 'Falcı Ol',
         icon: Icons.auto_awesome_rounded,
         route: isTeller ? '/falci-panel' : '/falci-ol',
-        image: 'assets/tiles/home-falci.webp',
+        legacyImage: 'home-falci.webp',
         colors: const [Color(0xFF7C3AED), Color(0xFFDB2777)],
       ),
       _QuickAccessItem(
         label: hasAgency ? 'Ajansım' : 'Ajans Ol',
         icon: Icons.apartment_rounded,
         route: hasAgency ? '/ajans/dashboard' : '/ajans/basvur',
-        image: 'assets/tiles/home-ajans.webp',
+        legacyImage: 'home-ajans.webp',
         colors: const [Color(0xFF10B981), Color(0xFF06B6D4)],
       ),
       _QuickAccessItem(
         label: isBroadcaster ? 'Yayıncı Paneli' : 'Yayıncı Ol',
         icon: Icons.live_tv_rounded,
         route: isBroadcaster ? '/profile/broadcaster-stats' : '/live/prep',
-        image: 'assets/tiles/home-yayinci.webp',
+        legacyImage: 'home-yayinci.webp',
         colors: const [Color(0xFFFF2D7A), Color(0xFF8B5CF6)],
       ),
       const _QuickAccessItem(
         label: 'Jeton Al',
         icon: Icons.toll_rounded,
         route: '/jeton-store',
-        image: 'assets/tiles/home-jeton-al.webp',
+        legacyImage: 'home-jeton-al.webp',
         colors: [Color(0xFFF59E0B), Color(0xFFEAB308)],
       ),
       const _QuickAccessItem(
         label: 'Hediye Yolla',
         icon: Icons.card_giftcard_rounded,
         route: '/hediye-yolla',
-        image: 'assets/tiles/home-hediye-yolla.webp',
+        legacyImage: 'home-hediye-yolla.webp',
         colors: [Color(0xFFEC4899), Color(0xFFF43F5E)],
       ),
     ];
@@ -157,14 +159,19 @@ class _QuickAccessItem {
     required this.icon,
     required this.route,
     required this.colors,
-    this.image,
+    required this.legacyImage,
   });
 
   final String label;
   final IconData icon;
   final String route;
   final List<Color> colors;
-  final String? image;
+  final String legacyImage;
+
+  String get imagePath =>
+      PremiumAssetPaths.homeQuickAccess(legacyImage);
+
+  String get legacyImagePath => 'assets/tiles/$legacyImage';
 }
 
 class _QuickAccessTile extends StatelessWidget {
@@ -174,9 +181,6 @@ class _QuickAccessTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(14);
-    // Görsel kare ve olduğu gibi gösterilir: üstüne karartma/degrade binmez,
-    // kırpılmaz; etiket görselin altında durur.
     return CanlifalPressable(
       onTap: () => pushFromHomeCta(context, item.route),
       child: Column(
@@ -184,34 +188,12 @@ class _QuickAccessTile extends StatelessWidget {
         children: [
           AspectRatio(
             aspectRatio: 1,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: radius,
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [item.colors.first, item.colors.last],
-                ),
-                border: Border.all(color: item.colors.first.withValues(alpha: 0.55)),
-                boxShadow: [
-                  BoxShadow(
-                    color: item.colors.first.withValues(alpha: 0.22),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: radius,
-                child: item.image != null
-                    ? Image.asset(
-                        item.image!,
-                        fit: BoxFit.cover,
-                        cacheWidth: 240,
-                        errorBuilder: (_, _, _) => Center(child: Icon(item.icon, color: Colors.white, size: 22)),
-                      )
-                    : Center(child: Icon(item.icon, color: Colors.white, size: 22)),
-              ),
+            child: PremiumGlassImage(
+              assetPath: item.imagePath,
+              fallbackAssetPath: item.legacyImagePath,
+              glowColor: item.colors.first,
+              fallbackIcon: item.icon,
+              semanticLabel: item.label,
             ),
           ),
           const SizedBox(height: 5),

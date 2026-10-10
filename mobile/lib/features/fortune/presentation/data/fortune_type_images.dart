@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/visual/premium/premium_asset_paths.dart';
+
 /// Sinematik fal görselleri — premium 2026 (Unsplash CDN).
 abstract final class FortuneTypeImages {
   static const _base = 'https://images.unsplash.com';
@@ -9,7 +11,17 @@ abstract final class FortuneTypeImages {
   static String? assetPathFor(String slug) {
     final scene = _sceneSlug(slug);
     final file = _assetFiles[scene];
-    return file != null ? 'assets/fortune/$file' : null;
+    if (file == null) return null;
+    final premium = PremiumAssetPaths.fortuneFromSlug(scene) ??
+        PremiumAssetPaths.fortune(file);
+    return premium;
+  }
+
+  /// Yerel yedek (premium yüklenmezse).
+  static String? legacyAssetPathFor(String slug) {
+    final scene = _sceneSlug(slug);
+    final file = _assetFiles[scene];
+    return file != null ? PremiumAssetPaths.legacyFortune(file) : null;
   }
 
   static String urlFor(String slug, {int width = 1400}) {
