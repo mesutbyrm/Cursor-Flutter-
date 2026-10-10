@@ -1,6 +1,6 @@
 # Son APK derlemesi
 
-> **Güncel:** Release gate **FINAL PASS** · **RELEASE READY: NO** (Psychic P0 cihaz) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
+> **Güncel:** Release gate **FINAL PASS** · **Psychic P0 PASS** · **RELEASE READY: NO** (P1 + Play) · [`DOCS_RELEASE_INDEX.md`](DOCS_RELEASE_INDEX.md)
 
 | Alan | Değer |
 |------|--------|

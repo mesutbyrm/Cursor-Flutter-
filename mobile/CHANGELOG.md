@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.761+816 (2026-10-10) — CI/APK tetik: build numarası
+
+- APK `workflow_run` main ucu koruması güncellendi (yalnızca `[skip ci]` ara commit)
+
 ## 1.0.761+815 (2026-10-10) — Premium asset manifest (CI test gate)
 
 - **pubspec:** `assets/images/premium/*` alt dizinleri ayrı tanımlandı (Flutter alt klasörleri otomatik dahil etmez)
