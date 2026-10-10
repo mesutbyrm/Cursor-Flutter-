@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.758+811 (2026-10-10) — apk-latest senkron, backend tsc eksik modüller
+
+- **APK:** `1.0.757+810` gelen kutusu / son görülme / sistem mesajları paketi `apk-latest` ile hizalandı (CI `[skip ci]` sonrası atlanan derleme)
+- **Backend (`mesutbyrm/canlifal` full-source):** `@/lib/admin-auth`, `@/lib/presence`, `@/lib/jeton-source` eklendi; `payments/notify` tip hatası ve fal oturumu `atomicDebitJeton` imzası düzeltildi (TS2307 kapıları)
+- **Dal durumu:** Claude/cursor sesli oda P0, inbox ve ajans dalları `main` ile birleşik; eski `psychic-p0-voice-hotfix` dalı geride kaldı (çakışma — içerik `main`'de)
+
 ## 1.0.757+810 (2026-10-10) — WhatsApp tarzı gelen kutusu, sistem mesajları okundu, ana sayfa kutuları
 
 - **Gelen kutusu:** Büyük, renkli halkalı avatar; yalnız sunucu «çevrimiçi» dediğinde yeşil nokta; kalın isim, altında son mesaj, sağ üstte saat, yeşil yuvarlak okunmamış rozeti. «Tümü» ve «Mesajlar» aynı satırı kullanır
