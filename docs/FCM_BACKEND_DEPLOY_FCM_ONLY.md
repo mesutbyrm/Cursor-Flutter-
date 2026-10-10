@@ -14,7 +14,8 @@ Flutter **1.0.759+** varsayılan `USE_FCM_ONLY=true` ile FCM token kaydeder. Ür
 
 1. `nextjs_space/lib/fcm-push.ts` — şablon: `backend-parity/nextjs_space/lib/fcm-push.ts`
 2. `nextjs_space/lib/push.ts` — FCM dalı: `backend-parity/nextjs_space/lib/push.ts`
-3. `POST /api/notifications/test-push` — FCM `messageId` / hata gövdesi döndürsün
+3. `nextjs_space/lib/push-test.ts` + `app/api/notifications/test-push/route.ts` — şablon repoda (`backend-parity/...`)
+4. `POST /api/notifications/test-push` yanıtında `provider: fcm` ve `ok` alanları (mobil tanılama ekranı)
 
 ## Doğrulama
 

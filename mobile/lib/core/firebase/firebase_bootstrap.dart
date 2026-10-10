@@ -14,6 +14,11 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   if (!DefaultFirebaseOptions.enabled) return;
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   if (PushDelivery.oneSignalActive) return;
+  // Notification payload: Android zaten sistem tepsisinde gösterir — yerel kopya yok.
+  if (message.notification != null &&
+      (message.notification!.title ?? '').trim().isNotEmpty) {
+    return;
+  }
   try {
     await PushNotificationService.instance.init();
     await PushNotificationService.instance.showRemoteMessage(message);

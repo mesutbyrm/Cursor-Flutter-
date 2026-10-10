@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.760+813 (2026-10-10) — FCM arka plan çift bildirim + backend test-push şablonu
+
+- **Arka plan:** FCM `notification` payload varken yerel kopya gösterilmez (Android zaten gösterir)
+- **Backend parity:** `push-test.ts`, `test-push` route şablonu (FCM `provider` yanıtı)
+- **Test:** `fcm_background_handler_test`
+
 ## 1.0.759+812 (2026-10-10) — Push: FCM-only (OneSignal SDK pasif)
 
 - **Varsayılan mod:** `USE_FCM_ONLY=true` — OneSignal SDK başlatılmaz; FCM token `provider: fcm` ile `/api/user/device-token` kaydı
