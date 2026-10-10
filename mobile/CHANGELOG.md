@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.762+817 (2026-10-10) — GirLive Yayıncı Asistanı (§37–50, mobil)
+
+- **🤖 GirLive — Yayıncı Asistanım:** oda sahibi paneli (yayın süresi, ziyaret, hediye brüt Jeton, PK oturum özeti, veriye dayalı öneriler)
+- **Gizlilik:** SSE `girlive_publisher` yalnız hedef yayıncıda; özel rapor sızıntı filtresi
+- **Patron hitabı:** yalnız admin/yönetici (Gold/SVIP/moderatör değil) — `GirLivePatronAddress`
+- **Backend handoff:** kılavuz §9.3.2 uçları + `backend-parity/girlive-publisher-assistant/` (canlifal deploy bekliyor)
+
 ## 1.0.761+816 (2026-10-10) — CI/APK tetik: build numarası
 
 - APK `workflow_run` main ucu koruması güncellendi (yalnızca `[skip ci]` ara commit)
