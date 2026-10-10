@@ -36,7 +36,11 @@ class InboxSystemNotificationsPanel extends ConsumerStatefulWidget {
     this.scrollController,
     this.showPermissionBanner = true,
     this.padding = const EdgeInsets.fromLTRB(20, 0, 20, 32),
+    this.autoMarkSystemRead = true,
   });
+
+  /// Açılışta yalnız sistem bildirimlerini okundu yap (Sistem Mesajları ekranı).
+  final bool autoMarkSystemRead;
 
   final ScrollController? scrollController;
   final bool showPermissionBanner;
@@ -69,7 +73,37 @@ class _InboxSystemNotificationsPanelState
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref.invalidate(notificationsUnreadApiProvider);
+      if (widget.autoMarkSystemRead) unawaited(_syncSystemRead());
     });
+  }
+
+  /// Ekran açılınca yalnız sistem bildirimleri okundu yapılır. Aynı anda tek
+  /// istek; hata olursa öğeler okunmamış kalır ve "Tekrar dene" gösterilir.
+  var _syncing = false;
+  String? _syncError;
+
+  Future<void> _syncSystemRead({bool announce = false}) async {
+    if (_syncing) return;
+    setState(() {
+      _syncing = true;
+      _syncError = null;
+    });
+    try {
+      final n = await markSystemNotificationsRead(ref);
+      if (!mounted) return;
+      setState(() => _syncing = false);
+      if (announce) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(n == 0 ? 'Okunmamış sistem bildirimi yok' : 'Sistem bildirimleri okundu')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _syncing = false;
+        _syncError = ApiException.userMessage(e);
+      });
+    }
   }
 
   @override
@@ -84,14 +118,8 @@ class _InboxSystemNotificationsPanelState
     ref.invalidate(notificationsListProvider);
   }
 
-  Future<void> _markAllRead() async {
-    await markAllNotificationsRead(ref);
-    await _refresh();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Tüm sistem bildirimleri okundu')),
-    );
-  }
+  // Eskiden `markAll` ile DM bildirimleri de okunuyordu; artık yalnız sistem.
+  Future<void> _markAllRead() => _syncSystemRead(announce: true);
 
   Future<void> _onNotificationTap(
     AppNotificationEntity n,
@@ -199,13 +227,41 @@ class _InboxSystemNotificationsPanelState
                   ),
                 ),
               ),
-              TextButton(
-                onPressed: _markAllRead,
-                child: const Text('Tümünü oku'),
-              ),
+              if (_syncing)
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                )
+              else
+                TextButton(
+                  onPressed: _markAllRead,
+                  child: const Text('Tümünü oku'),
+                ),
             ],
           ),
         ),
+        if (_syncError != null)
+          Padding(
+            key: const Key('system-read-sync-error'),
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Row(
+              children: [
+                const Icon(Icons.error_outline_rounded, size: 18, color: Color(0xFFEF4444)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Okundu olarak işaretlenemedi: $_syncError',
+                    style: TextStyle(fontSize: 12, color: context.colors.onSurface),
+                  ),
+                ),
+                TextButton(
+                  key: const Key('system-read-sync-retry'),
+                  onPressed: _syncSystemRead,
+                  child: const Text('Tekrar dene'),
+                ),
+              ],
+            ),
+          ),
         Expanded(child: listBody),
       ],
     );

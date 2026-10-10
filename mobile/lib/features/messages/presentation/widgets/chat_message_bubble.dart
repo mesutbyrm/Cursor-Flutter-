@@ -8,7 +8,8 @@ import '../../../../core/theme/app_theme_colors.dart';
 import '../../domain/entities/message_entities.dart';
 import '../../domain/utils/dm_message_codec.dart';
 import 'dm_voice_note_bubble.dart';
-/// WhatsApp tarzı mesaj balonu — büyük yazı, alıntı.
+/// WhatsApp tarzı mesaj balonu: benim mesajlarım sağda yeşil, karşı tarafınki
+/// solda nötr gri (açık/koyu temaya göre); saat ve iletim durumu sağ altta.
 class ChatMessageBubble extends ConsumerWidget {
   const ChatMessageBubble({
     super.key,
@@ -23,7 +24,9 @@ class ChatMessageBubble extends ConsumerWidget {
   final VoidCallback? onReply;
   final VoidCallback? onForward;
 
-  static const _theirsColor = Color(0xFF1A1A22);
+  static const _mineGradient = [Color(0xFF0B8F6A), Color(0xFF16A36F)];
+  static const _theirsDark = Color(0xFF262B35);
+  static const _theirsLight = Color(0xFFEEF1F5);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -35,6 +38,8 @@ class ChatMessageBubble extends ConsumerWidget {
             jetonLabel: economyCurrencyLabel(ref, key: 'jeton'),
           )
         : null;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final fg = m.isMine || dark ? Colors.white : const Color(0xFF111B21);
     return Column(
       crossAxisAlignment:
           m.isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
@@ -51,36 +56,31 @@ class ChatMessageBubble extends ConsumerWidget {
               ),
               padding: const EdgeInsets.fromLTRB(12, 9, 10, 7),
               decoration: BoxDecoration(
-                color: m.isMine ? null : _theirsColor,
-                gradient: m.isMine
-                    ? const LinearGradient(
-                        colors: [Color(0xFF7C3AED), Color(0xFFB832FF)],
-                      )
-                    : null,
+                color: m.isMine ? null : (dark ? _theirsDark : _theirsLight),
+                gradient: m.isMine ? const LinearGradient(colors: _mineGradient) : null,
                 borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(20),
-                  topRight: const Radius.circular(20),
-                  bottomLeft: Radius.circular(m.isMine ? 20 : 6),
-                  bottomRight: Radius.circular(m.isMine ? 6 : 20),
+                  topLeft: const Radius.circular(18),
+                  topRight: const Radius.circular(18),
+                  bottomLeft: Radius.circular(m.isMine ? 18 : 4),
+                  bottomRight: Radius.circular(m.isMine ? 4 : 18),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: (m.isMine ? const Color(0xFFB832FF) : Colors.black)
-                        .withValues(alpha: m.isMine ? 0.24 : 0.22),
-                    blurRadius: m.isMine ? 16 : 8,
-                    offset: const Offset(0, 4),
+                    color: Colors.black.withValues(alpha: dark ? 0.22 : 0.08),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.end,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (m.forwardedFrom != null) ...[
                     Text(
                       'İletildi · ${m.forwardedFrom}',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.72),
+                        color: fg.withValues(alpha: 0.72),
                         fontSize: 12,
                         fontStyle: FontStyle.italic,
                         fontWeight: FontWeight.w600,
@@ -94,7 +94,7 @@ class ChatMessageBubble extends ConsumerWidget {
                       margin: const EdgeInsets.only(bottom: 6),
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.22),
+                        color: Colors.black.withValues(alpha: m.isMine || dark ? 0.22 : 0.06),
                         borderRadius: BorderRadius.circular(8),
                         border: const Border(
                           left: BorderSide(color: Color(0xFF25D366), width: 3),
@@ -105,7 +105,7 @@ class ChatMessageBubble extends ConsumerWidget {
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.9),
+                          color: fg.withValues(alpha: 0.9),
                           fontSize: 14,
                           height: 1.3,
                         ),
@@ -115,12 +115,12 @@ class ChatMessageBubble extends ConsumerWidget {
                   if (voiceNote != null)
                     DmVoiceNoteBubble(meta: voiceNote)
                   else if (action != null)
-                    _CanlifalActionCard(meta: action)
+                    _CanlifalActionCard(meta: action, fg: fg)
                   else
                     Text(
                       m.text,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: fg,
                         fontSize: 16.5,
                         height: 1.35,
                         letterSpacing: 0.05,
@@ -128,14 +128,16 @@ class ChatMessageBubble extends ConsumerWidget {
                     ),
                   const SizedBox(height: 3),
                   Row(
+                    key: const Key('chat-bubble-meta'),
+                    mainAxisAlignment: MainAxisAlignment.end,
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (m.createdAt != null)
                         Text(
                           DateFormat.Hm('tr').format(m.createdAt!.toLocal()),
                           style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white.withValues(alpha: 0.72),
+                            fontSize: 11,
+                            color: fg.withValues(alpha: 0.72),
                           ),
                         ),
                       if (m.isMine) ...[
@@ -260,9 +262,10 @@ class _ActionMeta {
 }
 
 class _CanlifalActionCard extends StatelessWidget {
-  const _CanlifalActionCard({required this.meta});
+  const _CanlifalActionCard({required this.meta, this.fg = Colors.white});
 
   final _ActionMeta meta;
+  final Color fg;
 
   @override
   Widget build(BuildContext context) {
@@ -298,8 +301,8 @@ class _CanlifalActionCard extends StatelessWidget {
               children: [
                 Text(
                   meta.title,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: fg,
                     fontWeight: FontWeight.w900,
                     fontSize: 13,
                   ),
@@ -310,7 +313,7 @@ class _CanlifalActionCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.72),
+                    color: fg.withValues(alpha: 0.72),
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),

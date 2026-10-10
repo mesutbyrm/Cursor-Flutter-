@@ -3,7 +3,7 @@
 
 Her kutunun kendi Material ikonu (ör. Jeton Al → coin) altın parıltılı amblem
 olarak kozmik zemin + kutsal geometri halkaları üzerine çizilir. Çıktı:
-assets/tiles/<slug>.webp. Kullanım: python3 tool/gen_mystic_tiles.py
+assets/tiles/<slug>.webp. Kullanım: python3 tool/gen_mystic_tiles.py [--home-only]
 """
 import hashlib, math, os, random, re, sys
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
@@ -42,7 +42,8 @@ def hexcol(v):
 def mix(a, b, t):
     return tuple(int(a[i] + (b[i] - a[i]) * t) for i in range(3))
 
-def render(slug, icon, c1, c2):
+def render(slug, icon, c1, c2, colored=False):
+    """colored=True: amblem ve halkalar kutunun kendi renginde (altın yerine)."""
     rnd = random.Random(int(hashlib.md5(slug.encode()).hexdigest()[:8], 16))
     W = SIZE
     deep = (11, 8, 32)
@@ -77,7 +78,8 @@ def render(slug, icon, c1, c2):
         d.line([x - L, y, x + L, y], fill=(255, 240, 200, 200), width=1)
         d.line([x, y - L, x, y + L], fill=(255, 240, 200, 200), width=1)
     # Kutsal geometri halkaları
-    gold = (232, 199, 122)
+    white = (255, 255, 255)
+    gold = mix(mix(c1, c2, 0.35), white, 0.5) if colored else (232, 199, 122)
     cx, cy = W / 2, W * 0.46
     ring = Image.new('RGBA', (W, W), (0, 0, 0, 0))
     rd = ImageDraw.Draw(ring)
@@ -114,13 +116,17 @@ def render(slug, icon, c1, c2):
         bbox = md.textbbox((0, 0), ch, font=font)
         gw, gh = bbox[2] - bbox[0], bbox[3] - bbox[1]
         md.text((cx - gw / 2 - bbox[0], cy - gh / 2 - bbox[1]), ch, font=font, fill=255)
-    for blur, col, alpha in [(W // 14, c2, 210), (W // 30, (255, 214, 120), 230)]:
+    inner_glow = mix(c1, white, 0.45) if colored else (255, 214, 120)
+    for blur, col, alpha in [(W // 14, c2, 210), (W // 30, inner_glow, 230)]:
         glow = Image.new('RGBA', (W, W), col + (0,))
         glow.putalpha(mask.filter(ImageFilter.GaussianBlur(blur)).point(lambda v: min(255, int(v * alpha / 255 * 1.6))))
         img = Image.alpha_composite(img, glow)
     grad = Image.new('RGBA', (W, W))
     gd = ImageDraw.Draw(grad)
-    top, mid, bot = (255, 246, 214), (240, 196, 92), (176, 120, 40)
+    if colored:
+        top, mid, bot = mix(c1, white, 0.82), mix(mix(c1, c2, 0.4), white, 0.25), mix(c2, (20, 10, 40), 0.15)
+    else:
+        top, mid, bot = (255, 246, 214), (240, 196, 92), (176, 120, 40)
     for y in range(W):
         t = (y - (cy - gh / 2)) / max(1, gh)
         t = max(0.0, min(1.0, t))
@@ -170,14 +176,18 @@ HOME = [
     ('home-hediye-yolla', 'card_giftcard_rounded', 'EC4899', 'F43F5E'),
 ]
 
+# Altın kalması anlamlı olanlar; diğer ana sayfa kutuları kendi renginde.
+GOLD_HOME = {'home-gold-uyelik', 'home-jeton-al'}
+
 def main():
     os.makedirs(OUT, exist_ok=True)
-    jobs = [(s, i, a, b) for s, i, a, b in HOME]
-    for label, icon, a, b in parse_entries(os.path.join(ROOT, 'lib/features/web_parity/domain/feature_catalog.dart')):
-        slug = 'feature-' + slugify(label)
-        jobs.append((slug, OVERRIDES.get(slug, icon), a, b))
-    for slug, icon, a, b in jobs:
-        img = render(slug, icon, hexcol(a), hexcol(b))
+    jobs = [(s, i, a, b, s not in GOLD_HOME) for s, i, a, b in HOME]
+    if '--home-only' not in sys.argv:
+        for label, icon, a, b in parse_entries(os.path.join(ROOT, 'lib/features/web_parity/domain/feature_catalog.dart')):
+            slug = 'feature-' + slugify(label)
+            jobs.append((slug, OVERRIDES.get(slug, icon), a, b, False))
+    for slug, icon, a, b, colored in jobs:
+        img = render(slug, icon, hexcol(a), hexcol(b), colored)
         img.save(os.path.join(OUT, slug + '.webp'), 'WEBP', quality=80, method=6)
         print(slug, icon)
     print(len(jobs), 'görsel')

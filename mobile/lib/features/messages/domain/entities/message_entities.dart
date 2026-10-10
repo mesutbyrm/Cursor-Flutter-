@@ -14,6 +14,7 @@ class ConversationEntity extends Equatable {
     this.unreadCount = 0,
     this.isOnline = false,
     this.lastMessageAt,
+    this.lastSeenAt,
   });
 
   final String id;
@@ -21,12 +22,28 @@ class ConversationEntity extends Equatable {
   final String? subtitle;
   final String? avatarUrl;
   final int unreadCount;
+
+  /// Sunucunun gizlilik kurallarını uygulayarak döndüğü gerçek çevrimiçi durumu.
   final bool isOnline;
   final DateTime? lastMessageAt;
 
+  /// Karşı tarafın son görülmesi; çevrimiçiyken, gizlenmişse veya veri yoksa null.
+  final DateTime? lastSeenAt;
+
+  ConversationEntity copyWith({int? unreadCount}) => ConversationEntity(
+        id: id,
+        title: title,
+        subtitle: subtitle,
+        avatarUrl: avatarUrl,
+        unreadCount: unreadCount ?? this.unreadCount,
+        isOnline: isOnline,
+        lastMessageAt: lastMessageAt,
+        lastSeenAt: lastSeenAt,
+      );
+
   @override
   List<Object?> get props =>
-      [id, title, subtitle, avatarUrl, unreadCount, isOnline, lastMessageAt];
+      [id, title, subtitle, avatarUrl, unreadCount, isOnline, lastMessageAt, lastSeenAt];
 }
 
 /// Gelen mesaj isteği — `GET /api/messages` yanıtındaki `requests` dizisi.

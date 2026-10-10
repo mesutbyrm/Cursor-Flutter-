@@ -8,6 +8,7 @@ import '../../domain/repositories/notifications_repository.dart';
 import '../../data/datasources/notifications_remote_datasource.dart';
 import '../../data/repositories/notifications_repository_impl.dart';
 import 'notifications_list_notifier.dart';
+import '../../../inbox/domain/system_notifications_read_sync.dart';
 
 final notificationsRemoteProvider =
     Provider<NotificationsRemoteDataSource>((ref) {
@@ -71,4 +72,24 @@ Future<void> markNotificationRead(WidgetRef ref, String id) async {
   } catch (_) {
     await ref.read(notificationsListNotifierProvider.notifier).refresh();
   }
+}
+
+/// Sistem Mesajları ekranı: yalnız sistem bildirimlerini sunucuda okundu yapar,
+/// başarıdan SONRA yerel listeyi ve rozetleri günceller. Hata fırlatır; yerel
+/// durum değişmez (öğeler okunmuş gibi gösterilmez).
+Future<int> markSystemNotificationsRead(WidgetRef ref) async {
+  // Önce liste yüklensin (görünen öğeler sunucu durumuyla gelir), sonra işaretle.
+  try {
+    await ref.read(notificationsListNotifierProvider.future);
+  } catch (_) {}
+  final remote = ref.read(notificationsRemoteProvider);
+  final ids = await SystemNotificationsReadSync(
+    fetchUnreadPage: remote.fetchUnreadPage,
+    markReadIds: remote.markReadIds,
+    pageSize: NotificationsRemoteDataSource.unreadPageSize,
+  ).run();
+  ref.read(notificationsListNotifierProvider.notifier).markIdsReadLocally(ids);
+  ref.invalidate(notificationsListProvider);
+  ref.invalidate(notificationsUnreadApiProvider);
+  return ids.length;
 }

@@ -13,8 +13,8 @@ import '../../../../core/performance/scroll_perf.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/widgets/canlifal_logo.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
-import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../messages/presentation/widgets/conversation_tile.dart';
 import '../../../messages/domain/entities/message_entities.dart';
 import '../../../messages/presentation/providers/chat_messages_list_notifier.dart';
 import '../../../messages/presentation/providers/conversations_list_notifier.dart';
@@ -45,21 +45,6 @@ class InboxAllFeedSliver extends ConsumerWidget {
 
   final String query;
   final bool unreadOnly;
-
-  String _formatTime(DateTime? dt) {
-    if (dt == null) return '';
-    final local = dt.toLocal();
-    final now = DateTime.now();
-    if (local.year == now.year &&
-        local.month == now.month &&
-        local.day == now.day) {
-      return DateFormat.Hm('tr').format(local);
-    }
-    if (now.difference(local).inDays < 7) {
-      return DateFormat.E('tr').format(local);
-    }
-    return DateFormat('d MMM', 'tr').format(local);
-  }
 
   Future<void> _onSystemTap(
     BuildContext context,
@@ -172,9 +157,8 @@ class InboxAllFeedSliver extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: switch (entry) {
-                InboxDmEntry(:final conversation) => _DmTile(
+                InboxDmEntry(:final conversation) => ConversationTile(
                     conversation: conversation,
-                    formatTime: _formatTime,
                     onTap: () {
                       unawaited(
                         ref
@@ -243,125 +227,6 @@ class InboxAllFeedSliver extends ConsumerWidget {
           }
         }
       },
-    );
-  }
-}
-
-class _DmTile extends StatelessWidget {
-  const _DmTile({
-    required this.conversation,
-    required this.formatTime,
-    required this.onTap,
-    required this.onLongPress,
-  });
-
-  final ConversationEntity conversation;
-  final String Function(DateTime?) formatTime;
-  final VoidCallback onTap;
-  final VoidCallback onLongPress;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = conversation;
-    final unread = c.unreadCount > 0;
-
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(22),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(22),
-        onTap: onTap,
-        onLongPress: onLongPress,
-        child: Ink(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          decoration: BoxDecoration(
-            color: unread
-                ? AppThemeColors.accentPurple.withValues(alpha: 0.18)
-                : context.colors.glassFill,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: unread
-                  ? AppThemeColors.accentPurple.withValues(alpha: 0.42)
-                  : context.colors.glassBorder,
-            ),
-          ),
-          child: Row(
-            children: [
-              UserAvatar(url: c.avatarUrl, radius: 28),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      c.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontWeight: unread ? FontWeight.w900 : FontWeight.w700,
-                        fontSize: 16,
-                        color: context.colors.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      c.subtitle ?? '',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: unread
-                            ? context.colors.onSurface
-                            : context.colors.onSurfaceMuted,
-                        fontSize: 13,
-                        fontWeight: unread ? FontWeight.w700 : FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    formatTime(c.lastMessageAt),
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: unread
-                          ? AppThemeColors.accentPink
-                          : context.colors.onSurfaceMuted,
-                      fontWeight: unread ? FontWeight.w800 : FontWeight.w500,
-                    ),
-                  ),
-                  if (unread) ...[
-                    const SizedBox(height: 7),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 7,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF7C3AED), Color(0xFFFF2D8D)],
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        UnreadBadgeFormat.label(c.unreadCount),
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

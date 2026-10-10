@@ -176,6 +176,33 @@ class NotificationsRemoteDataSource {
     } catch (_) {}
   }
 
+  /// Sunucu sayfa boyutu (`GET /api/notifications?page=n` → 50 kayıt).
+  static const unreadPageSize = 50;
+
+  /// Okunmamış bildirimlerin bir sayfası — `GET /api/notifications?unreadOnly=true&page=n`.
+  /// Hata yutulmaz; çağıran yeniden deneme gösterir.
+  Future<List<AppNotificationEntity>> fetchUnreadPage(int page) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.notifications,
+      query: {'unreadOnly': 'true', 'page': '$page'},
+    );
+    final parsed = _parseList(res.data);
+    if (parsed == null) {
+      throw const ApiException('Bildirimler alınamadı');
+    }
+    return parsed;
+  }
+
+  /// Yalnız verilen kimlikleri okundu yapar — `POST /api/notifications {notificationIds}`.
+  /// Sunucu `userId` ile sınırlar ve idempotenttir. Hata fırlatır (geri alma için).
+  Future<void> markReadIds(List<String> ids) async {
+    if (ids.isEmpty) return;
+    await _dio.safePost<dynamic>(
+      ApiEndpoints.notifications,
+      data: {'notificationIds': ids},
+    );
+  }
+
   Future<void> markAllRead() async {
     final bodies = [
       const {'markAll': true},

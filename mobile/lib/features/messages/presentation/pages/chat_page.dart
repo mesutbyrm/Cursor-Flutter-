@@ -17,12 +17,14 @@ import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../data/services/dm_message_sound_service.dart';
+import '../../domain/utils/last_seen_format.dart';
 import '../../domain/entities/message_entities.dart';
 import '../../domain/utils/dm_message_codec.dart';
 import '../providers/chat_messages_list_notifier.dart';
 import '../providers/conversations_list_notifier.dart';
 import '../providers/messages_providers.dart';
 import '../services/dm_voice_call_service.dart';
+import '../widgets/conversation_tile.dart' show PresenceRingAvatar;
 import '../widgets/dm_realtime_listener.dart';
 import '../widgets/chat_composer.dart';
 import '../widgets/chat_composer_bar.dart';
@@ -54,6 +56,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
   String? _peerName;
   String? _peerAvatar;
   var _peerOnline = false;
+  DateTime? _peerLastSeen;
   var _dmSseActive = false;
   var _recordingVoiceNote = false;
 
@@ -159,6 +162,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
         _peerName = peer.title;
         _peerAvatar = peer.avatarUrl;
         _peerOnline = peer.isOnline;
+        _peerLastSeen = peer.lastSeenAt;
       });
     }
   }
@@ -447,9 +451,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
     final peerLabel = _peerName ?? 'Sohbet';
     final statusLabel = _peerTyping
         ? 'Yazıyor...'
-        // Son görülme verisi yok; eskiden her çevrimdışı kişi için uydurma
-        // "Son görülme yakın zamanda" yazılıyordu.
-        : (_peerOnline ? 'Çevrimiçi' : '');
+        // Yalnız sunucunun döndüğü gerçek veri; yoksa boş (uydurma ifade yok).
+        : presenceLabel(isOnline: _peerOnline, lastSeenAt: _peerLastSeen);
 
     ref.listen(conversationsListNotifierProvider, (_, __) => _loadPeerMeta());
 
@@ -469,32 +472,9 @@ class _ChatPageState extends ConsumerState<ChatPage>
                       icon: Icons.arrow_back_ios_new_rounded,
                       onPressed: () => Navigator.of(context).maybePop(),
                     ),
-                    Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        GestureDetector(
-                          onLongPress: _showPeerActions,
-                          child: UserAvatar(url: _peerAvatar, radius: 20),
-                        ),
-                        Positioned(
-                          right: -1,
-                          bottom: -1,
-                          child: Container(
-                            width: 10,
-                            height: 10,
-                            decoration: BoxDecoration(
-                              color: _peerOnline
-                                  ? const Color(0xFF22C55E)
-                                  : Colors.grey.shade700,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: context.scaffoldBg,
-                                width: 2,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                    GestureDetector(
+                      onLongPress: _showPeerActions,
+                      child: PresenceRingAvatar(url: _peerAvatar, radius: 18, isOnline: _peerOnline),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -523,7 +503,9 @@ class _ChatPageState extends ConsumerState<ChatPage>
                                 style: TextStyle(
                                   color: _peerTyping
                                       ? AppThemeColors.accentPink
-                                      : context.colors.onSurfaceMuted,
+                                      : _peerOnline
+                                          ? const Color(0xFF22C55E)
+                                          : context.colors.onSurfaceMuted,
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                 ),
