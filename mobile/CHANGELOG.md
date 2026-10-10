@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.761+815 (2026-10-10) — Premium asset manifest (CI test gate)
+
+- **pubspec:** `assets/images/premium/*` alt dizinleri ayrı tanımlandı (Flutter alt klasörleri otomatik dahil etmez)
+- **Test:** premium kahve-fali manifest doğrulaması; `fortune_ui_refresh_test` precache düzeltmesi
+
 ## 1.0.761+814 (2026-10-10) — Premium Visual 2026 (Liquid Glass 3D görseller)
 
 - **Ana sayfa 10 kutu:** Yeni 3D cam/kristal ikonlar (`assets/images/premium/home/` + `assets/tiles/`)
