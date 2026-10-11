@@ -7,6 +7,7 @@ import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../data/gift_client_price.dart';
 import '../gift_send_failure.dart';
 import '../../../live/domain/entities/live_gift_catalog.dart';
