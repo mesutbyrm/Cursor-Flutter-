@@ -11,28 +11,24 @@ fi
 WF="https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-aab.yml"
 
 cat <<EOF
-=== GitHub Actions — Build release AAB (${VERSION}) ===
+=== Play Store AAB (${VERSION}) ===
 
-1. Secrets (Settings → Secrets and variables → Actions):
-   ANDROID_KEYSTORE_BASE64
-   ANDROID_KEYSTORE_PASSWORD
-   ANDROID_KEY_ALIAS
-   ANDROID_KEY_PASSWORD
-   (opsiyonel) GOOGLE_SERVICES_JSON_BASE64
+Önerilen (otomatik — main CI sonrası APK workflow ile birlikte):
+  https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml
+  → Son başarılı run → Artifacts → canlifal-release-aab-${VERSION} → app-release.aab
 
-   Rehber: bash scripts/play-keystore-secrets-cheatsheet.sh
+Manuel yalnızca AAB:
+  ${WF}
+  → Run workflow → branch: main
+  → Artifact: canlifal-release-aab
 
-2. Workflow çalıştır:
-   ${WF}
-   → Run workflow → branch: main
+Secrets (APK/AAB ortak):
+  ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD,
+  ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+  Rehber: bash scripts/play-keystore-secrets-cheatsheet.sh
 
-3. Bitince artifact indir:
-   canlifal-release-aab → app-release.aab
-
-4. Play Console → Closed testing → Create release → AAB yükle
+Play Console → Testing / Production → Create release → AAB yükle
 
 Yerel (keystore varsa): bash scripts/build-play-aab.sh
 Ön kontrol:            bash scripts/play-aab-readiness.sh
-
-Workflow dosyası: .github/workflows/build-aab.yml
 EOF

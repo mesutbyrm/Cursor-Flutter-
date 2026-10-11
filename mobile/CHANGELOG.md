@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.773+829 (2026-10-11) — CI Play Store AAB
+
+- **CI:** `Build release APK` workflow artık aynı imza ile **release AAB** (`app-release.aab`) üretir; artifact adı `canlifal-release-aab-<sürüm>`
+- **Build release AAB** workflow: `google-services.json` adımı APK ile hizalandı (bozuk base64 secret artık derlemeyi düşürmez)
+
 ## 1.0.772+828 (2026-10-11) — PK davet/erken berabere + videolu hediye kuyruk
 
 - **Canlı PK:** `fetchStreamBattle` yenilemede `finalizeExpired: false` — kabul sonrası sunucunun PK'yı hemen «berabere» bitirmesi engellendi; erken `endedAt`/`winnerId` süre dolmadan yok sayılır
