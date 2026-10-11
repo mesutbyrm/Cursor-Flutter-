@@ -771,7 +771,7 @@ class AdminRemoteDataSource {
     return const AdminFinanceSummary();
   }
 
-  Future<AdminGirLiveBotPublicMessages> fetchGirLiveBotPublicMessages() async {
+  Future<AdminGirLiveBotConfig> fetchGirLiveBotConfig() async {
     final res = await _adminTimeout(
       _dio.safeGet<dynamic>(
         ApiEndpoints.adminGirLiveBot,
@@ -780,22 +780,14 @@ class AdminRemoteDataSource {
       ),
     );
     final root = _unwrapMap(res.data);
-    final pm = root['publicMessages'];
-    if (pm is Map) {
-      return AdminGirLiveBotPublicMessages.fromJson(
-        Map<String, dynamic>.from(pm),
-      );
-    }
-    return const AdminGirLiveBotPublicMessages();
+    return AdminGirLiveBotConfig.fromJson(root);
   }
 
-  Future<void> updateGirLiveBotPublicMessages(
-    Map<String, dynamic> publicMessages,
-  ) async {
+  Future<void> updateGirLiveBotConfig(AdminGirLiveBotConfig config) async {
     await _adminTimeout(
       _dio.safePut<dynamic>(
         ApiEndpoints.adminGirLiveBot,
-        data: {'publicMessages': publicMessages},
+        data: config.toJson(),
         options: _opts(),
       ),
     );

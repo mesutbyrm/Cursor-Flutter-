@@ -131,7 +131,7 @@ List<AdminCenterEntry> adminCenterEntries(
       icon: Icons.smart_toy_outlined,
       accent: const Color(0xFF6366F1),
       route: '/admin/girlive-bot',
-      visible: a.isSiteAdmin,
+      visible: a.isSiteAdmin || a.isFounder,
     ),
     AdminCenterEntry(
       title: 'Sistem Ayarları',

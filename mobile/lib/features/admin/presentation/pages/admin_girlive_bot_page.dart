@@ -7,7 +7,7 @@ import '../providers/admin_girlive_bot_providers.dart';
 import '../providers/admin_panel_providers.dart';
 import '../providers/staff_access_provider.dart';
 
-/// `GET/PUT /api/admin/girlive-bot` — herkese açık bot mesaj ayarları.
+/// `GET/PUT /api/admin/girlive-bot` — bot aç/kapa + herkese açık mesaj ayarları.
 class AdminGirLiveBotPage extends ConsumerStatefulWidget {
   const AdminGirLiveBotPage({super.key});
 
@@ -17,7 +17,7 @@ class AdminGirLiveBotPage extends ConsumerStatefulWidget {
 }
 
 class _AdminGirLiveBotPageState extends ConsumerState<AdminGirLiveBotPage> {
-  AdminGirLiveBotPublicMessages? _draft;
+  AdminGirLiveBotConfig? _draft;
   final _intervalCtrl = TextEditingController(text: '30');
   final _templateCtrls = <String, TextEditingController>{};
   var _saving = false;
@@ -40,27 +40,30 @@ class _AdminGirLiveBotPageState extends ConsumerState<AdminGirLiveBotPage> {
     super.dispose();
   }
 
-  void _bindDraft(AdminGirLiveBotPublicMessages cfg) {
+  void _bindDraft(AdminGirLiveBotConfig cfg) {
     _draft = cfg;
-    _intervalCtrl.text = '${cfg.minMessageIntervalSec}';
+    final pm = cfg.publicMessages;
+    _intervalCtrl.text = '${pm.minMessageIntervalSec}';
     for (final key in _templateKeys) {
       _templateCtrls.putIfAbsent(key, () => TextEditingController());
-      _templateCtrls[key]!.text = cfg.templates[key] ?? '';
+      _templateCtrls[key]!.text = pm.templates[key] ?? '';
     }
   }
 
-  AdminGirLiveBotPublicMessages _collectDraft() {
-    final base = _draft ?? const AdminGirLiveBotPublicMessages();
+  AdminGirLiveBotConfig _collectDraft() {
+    final base = _draft ?? const AdminGirLiveBotConfig();
+    final pm = base.publicMessages;
     final templates = <String, String>{};
     for (final key in _templateKeys) {
       final t = _templateCtrls[key]?.text.trim() ?? '';
       if (t.isNotEmpty) templates[key] = t;
     }
-    return base.copyWith(
+    final nextPm = pm.copyWith(
       minMessageIntervalSec:
-          int.tryParse(_intervalCtrl.text.trim()) ?? base.minMessageIntervalSec,
+          int.tryParse(_intervalCtrl.text.trim()) ?? pm.minMessageIntervalSec,
       templates: templates,
     );
+    return base.copyWith(publicMessages: nextPm);
   }
 
   Future<void> _save() async {
@@ -68,9 +71,7 @@ class _AdminGirLiveBotPageState extends ConsumerState<AdminGirLiveBotPage> {
     setState(() => _saving = true);
     try {
       final next = _collectDraft();
-      await ref.read(adminRemoteProvider).updateGirLiveBotPublicMessages(
-            next.toJson(),
-          );
+      await ref.read(adminRemoteProvider).updateGirLiveBotConfig(next);
       _draft = next;
       ref.invalidate(adminGirLiveBotConfigProvider);
       if (mounted) {
@@ -92,10 +93,12 @@ class _AdminGirLiveBotPageState extends ConsumerState<AdminGirLiveBotPage> {
   @override
   Widget build(BuildContext context) {
     final access = ref.watch(staffAccessProvider);
-    if (!access.isSiteAdmin) {
+    if (!access.isSiteAdmin && !access.isFounder) {
       return Scaffold(
         appBar: AppBar(title: const Text('GirLive Bot')),
-        body: const Center(child: Text('Bu alan yalnızca site yöneticileri içindir.')),
+        body: const Center(
+          child: Text('Bu alan yalnızca site yöneticileri içindir.'),
+        ),
       );
     }
 
@@ -105,7 +108,9 @@ class _AdminGirLiveBotPageState extends ConsumerState<AdminGirLiveBotPage> {
         title: const Text('GirLive Bot'),
         actions: [
           IconButton(
-            onPressed: _saving ? null : () => ref.invalidate(adminGirLiveBotConfigProvider),
+            onPressed: _saving
+                ? null
+                : () => ref.invalidate(adminGirLiveBotConfigProvider),
             icon: const Icon(Icons.refresh_rounded),
           ),
         ],
@@ -121,7 +126,8 @@ class _AdminGirLiveBotPageState extends ConsumerState<AdminGirLiveBotPage> {
                 Text(ApiException.userMessage(e)),
                 const SizedBox(height: 12),
                 FilledButton(
-                  onPressed: () => ref.invalidate(adminGirLiveBotConfigProvider),
+                  onPressed: () =>
+                      ref.invalidate(adminGirLiveBotConfigProvider),
                   child: const Text('Yeniden dene'),
                 ),
               ],
@@ -135,52 +141,130 @@ class _AdminGirLiveBotPageState extends ConsumerState<AdminGirLiveBotPage> {
             });
           }
           final d = _draft ?? cfg;
+          final pm = d.publicMessages;
+          final detailControls = d.publicMessageControlsActive;
+
+          void setDraft(AdminGirLiveBotConfig next) =>
+              setState(() => _draft = next);
+
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
             children: [
+              Text(
+                'Genel',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              SwitchListTile(
+                title: const Text('GirLive Bot'),
+                subtitle: const Text(
+                  'Kapalıyken bot tetikleyicileri ve otomatik mesajlar çalışmaz.',
+                ),
+                value: d.enabled,
+                onChanged: (v) => setDraft(d.copyWith(enabled: v)),
+              ),
+              SwitchListTile(
+                title: const Text('Sesli odalarda bot'),
+                value: d.voiceRoomEnabled,
+                onChanged: d.enabled
+                    ? (v) => setDraft(d.copyWith(voiceRoomEnabled: v))
+                    : null,
+              ),
+              SwitchListTile(
+                title: const Text('Canlı yayında bot'),
+                value: d.liveStreamEnabled,
+                onChanged: d.enabled
+                    ? (v) => setDraft(d.copyWith(liveStreamEnabled: v))
+                    : null,
+              ),
+              const Divider(height: 28),
+              Text(
+                'Herkese açık mesajlar',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              SwitchListTile(
+                title: const Text('Otomatik mesajlar'),
+                subtitle: const Text('PK, jeton tanıtımı, hoş geldin / görüşürüz'),
+                value: pm.enabled,
+                onChanged: d.enabled
+                    ? (v) => setDraft(
+                          d.copyWith(
+                            publicMessages: pm.copyWith(enabled: v),
+                          ),
+                        )
+                    : null,
+              ),
               SwitchListTile(
                 title: const Text('Jeton tanıtım mesajları'),
-                value: d.jetonPromoEnabled,
-                onChanged: (v) => setState(
-                  () => _draft = d.copyWith(jetonPromoEnabled: v),
-                ),
+                value: pm.jetonPromoEnabled,
+                onChanged: detailControls
+                    ? (v) => setDraft(
+                          d.copyWith(
+                            publicMessages: pm.copyWith(jetonPromoEnabled: v),
+                          ),
+                        )
+                    : null,
               ),
               SwitchListTile(
                 title: const Text('PK başlangıç'),
-                value: d.pkStartEnabled,
-                onChanged: (v) =>
-                    setState(() => _draft = d.copyWith(pkStartEnabled: v)),
+                value: pm.pkStartEnabled,
+                onChanged: detailControls
+                    ? (v) => setDraft(
+                          d.copyWith(
+                            publicMessages: pm.copyWith(pkStartEnabled: v),
+                          ),
+                        )
+                    : null,
               ),
               SwitchListTile(
                 title: const Text('PK ara hatırlatma'),
-                value: d.pkMidReminderEnabled,
-                onChanged: (v) => setState(
-                  () => _draft = d.copyWith(pkMidReminderEnabled: v),
-                ),
+                value: pm.pkMidReminderEnabled,
+                onChanged: detailControls
+                    ? (v) => setDraft(
+                          d.copyWith(
+                            publicMessages:
+                                pm.copyWith(pkMidReminderEnabled: v),
+                          ),
+                        )
+                    : null,
               ),
               SwitchListTile(
                 title: const Text('PK bitiş'),
-                value: d.pkEndEnabled,
-                onChanged: (v) =>
-                    setState(() => _draft = d.copyWith(pkEndEnabled: v)),
+                value: pm.pkEndEnabled,
+                onChanged: detailControls
+                    ? (v) => setDraft(
+                          d.copyWith(
+                            publicMessages: pm.copyWith(pkEndEnabled: v),
+                          ),
+                        )
+                    : null,
               ),
               SwitchListTile(
                 title: const Text('Geçmiş PK motivasyonu'),
-                value: d.pastPkMotivationEnabled,
-                onChanged: (v) => setState(
-                  () => _draft = d.copyWith(pastPkMotivationEnabled: v),
-                ),
+                value: pm.pastPkMotivationEnabled,
+                onChanged: detailControls
+                    ? (v) => setDraft(
+                          d.copyWith(
+                            publicMessages:
+                                pm.copyWith(pastPkMotivationEnabled: v),
+                          ),
+                        )
+                    : null,
               ),
               SwitchListTile(
                 title: const Text('Hoş geldin / görüşürüz'),
-                value: d.welcomeLeaveEnabled,
-                onChanged: (v) => setState(
-                  () => _draft = d.copyWith(welcomeLeaveEnabled: v),
-                ),
+                value: pm.welcomeLeaveEnabled,
+                onChanged: detailControls
+                    ? (v) => setDraft(
+                          d.copyWith(
+                            publicMessages: pm.copyWith(welcomeLeaveEnabled: v),
+                          ),
+                        )
+                    : null,
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: _intervalCtrl,
+                enabled: detailControls,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
                   labelText: 'Minimum mesaj aralığı (sn)',
@@ -194,9 +278,10 @@ class _AdminGirLiveBotPageState extends ConsumerState<AdminGirLiveBotPage> {
               const SizedBox(height: 8),
               for (final key in _templateKeys) ...[
                 TextField(
+                  enabled: detailControls,
                   controller: _templateCtrls.putIfAbsent(
                     key,
-                    () => TextEditingController(text: d.templates[key] ?? ''),
+                    () => TextEditingController(text: pm.templates[key] ?? ''),
                   ),
                   maxLines: 2,
                   decoration: InputDecoration(

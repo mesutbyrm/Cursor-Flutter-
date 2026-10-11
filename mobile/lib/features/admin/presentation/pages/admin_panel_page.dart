@@ -186,6 +186,18 @@ class _AdminPanelPageState extends ConsumerState<AdminPanelPage> {
                         onTap: () => context.push('/admin/users'),
                       ),
                     ]),
+                    if (access.isSiteAdmin || access.isFounder) ...[
+                      const SizedBox(height: 20),
+                      _SectionTitle('Bot & moderasyon'),
+                      _ActionGrid(items: [
+                        _PanelItem(
+                          icon: Icons.smart_toy_outlined,
+                          label: 'GirLive Bot',
+                          subtitle: 'Aç / kapa ve mesaj ayarları',
+                          onTap: () => context.push('/admin/girlive-bot'),
+                        ),
+                      ]),
+                    ],
                     if (access.canManageGifts) ...[
                       const SizedBox(height: 20),
                       _SectionTitle('Hediye & içerik'),

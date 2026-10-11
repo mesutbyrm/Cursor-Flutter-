@@ -4,6 +4,6 @@ import '../../domain/admin_girlive_bot_config.dart';
 import 'admin_panel_providers.dart';
 
 final adminGirLiveBotConfigProvider =
-    FutureProvider.autoDispose<AdminGirLiveBotPublicMessages>((ref) async {
-  return ref.read(adminRemoteProvider).fetchGirLiveBotPublicMessages();
+    FutureProvider.autoDispose<AdminGirLiveBotConfig>((ref) async {
+  return ref.read(adminRemoteProvider).fetchGirLiveBotConfig();
 });

@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.769+825 (2026-10-11) — GirLive Bot admin aç/kapa + panel girişi
+
+- **Admin paneli:** «Bot & moderasyon» → GirLive Bot (site admin / kurucu)
+- **GirLive Bot:** genel aç/kapa, sesli oda / canlı yayın bayrakları, herkese açık mesaj ana anahtarı; `PUT` tam gövde (`enabled`, `voiceRoomEnabled`, `liveStreamEnabled`, `publicMessages`)
+
 ## 1.0.768+824 (2026-10-11) — Sosyal fal kartı, paylaşım sayacı, push, GirLive uyarı
 
 - **Sosyal:** fal kartında başlık/metin görsel üstünde ortalı; metin görsele sığacak şekilde ölçeklenir; «kaç kişi baktı» akış + `/api/social/fortune-viewers` yedekleri; paylaşım sayacı akıştan güncellenir

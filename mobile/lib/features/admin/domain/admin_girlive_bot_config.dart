@@ -1,6 +1,89 @@
-/// Admin `GET/PUT /api/admin/girlive-bot` — `publicMessages` alanı.
+/// Admin `GET/PUT /api/admin/girlive-bot` — kök bayraklar + `publicMessages`.
+class AdminGirLiveBotConfig {
+  const AdminGirLiveBotConfig({
+    this.enabled = true,
+    this.voiceRoomEnabled = true,
+    this.liveStreamEnabled = true,
+    this.publicMessages = const AdminGirLiveBotPublicMessages(),
+  });
+
+  /// Genel GirLive bot (PK, karşılama, moderasyon tetikleyicileri).
+  final bool enabled;
+
+  /// Sesli sohbet odalarında herkese açık bot mesajları.
+  final bool voiceRoomEnabled;
+
+  /// Canlı yayın / video akışında herkese açık bot mesajları.
+  final bool liveStreamEnabled;
+
+  final AdminGirLiveBotPublicMessages publicMessages;
+
+  bool get publicMessageControlsActive =>
+      enabled && publicMessages.enabled;
+
+  AdminGirLiveBotConfig copyWith({
+    bool? enabled,
+    bool? voiceRoomEnabled,
+    bool? liveStreamEnabled,
+    AdminGirLiveBotPublicMessages? publicMessages,
+  }) {
+    return AdminGirLiveBotConfig(
+      enabled: enabled ?? this.enabled,
+      voiceRoomEnabled: voiceRoomEnabled ?? this.voiceRoomEnabled,
+      liveStreamEnabled: liveStreamEnabled ?? this.liveStreamEnabled,
+      publicMessages: publicMessages ?? this.publicMessages,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'enabled': enabled,
+        'voiceRoomEnabled': voiceRoomEnabled,
+        'liveStreamEnabled': liveStreamEnabled,
+        'publicMessages': publicMessages.toJson(),
+      };
+
+  factory AdminGirLiveBotConfig.fromJson(Map<String, dynamic>? json) {
+    final root = json ?? const <String, dynamic>{};
+    final pmRaw = root['publicMessages'];
+    return AdminGirLiveBotConfig(
+      enabled: _boolFromMap(
+        root,
+        const ['enabled', 'botEnabled', 'girliveBotEnabled'],
+        defaultValue: true,
+      ),
+      voiceRoomEnabled: _boolFromMap(
+        root,
+        const [
+          'voiceRoomEnabled',
+          'chatRoomEnabled',
+          'roomEnabled',
+          'voiceEnabled',
+        ],
+        defaultValue: true,
+      ),
+      liveStreamEnabled: _boolFromMap(
+        root,
+        const [
+          'liveStreamEnabled',
+          'streamEnabled',
+          'videoStreamEnabled',
+          'liveEnabled',
+        ],
+        defaultValue: true,
+      ),
+      publicMessages: pmRaw is Map
+          ? AdminGirLiveBotPublicMessages.fromJson(
+              Map<String, dynamic>.from(pmRaw),
+            )
+          : const AdminGirLiveBotPublicMessages(),
+    );
+  }
+}
+
+/// `publicMessages` alt alanı.
 class AdminGirLiveBotPublicMessages {
   const AdminGirLiveBotPublicMessages({
+    this.enabled = true,
     this.jetonPromoEnabled = true,
     this.pkStartEnabled = true,
     this.pkMidReminderEnabled = false,
@@ -10,6 +93,9 @@ class AdminGirLiveBotPublicMessages {
     this.minMessageIntervalSec = 30,
     this.templates = const {},
   });
+
+  /// Herkese açık otomatik mesajlar (PK, jeton, hoş geldin).
+  final bool enabled;
 
   final bool jetonPromoEnabled;
   final bool pkStartEnabled;
@@ -21,6 +107,7 @@ class AdminGirLiveBotPublicMessages {
   final Map<String, String> templates;
 
   AdminGirLiveBotPublicMessages copyWith({
+    bool? enabled,
     bool? jetonPromoEnabled,
     bool? pkStartEnabled,
     bool? pkMidReminderEnabled,
@@ -31,6 +118,7 @@ class AdminGirLiveBotPublicMessages {
     Map<String, String>? templates,
   }) {
     return AdminGirLiveBotPublicMessages(
+      enabled: enabled ?? this.enabled,
       jetonPromoEnabled: jetonPromoEnabled ?? this.jetonPromoEnabled,
       pkStartEnabled: pkStartEnabled ?? this.pkStartEnabled,
       pkMidReminderEnabled:
@@ -46,6 +134,7 @@ class AdminGirLiveBotPublicMessages {
   }
 
   Map<String, dynamic> toJson() => {
+        'enabled': enabled,
         'jetonPromoEnabled': jetonPromoEnabled,
         'pkStartEnabled': pkStartEnabled,
         'pkMidReminderEnabled': pkMidReminderEnabled,
@@ -57,7 +146,9 @@ class AdminGirLiveBotPublicMessages {
       };
 
   factory AdminGirLiveBotPublicMessages.fromJson(Map<String, dynamic>? json) {
-    if (json == null || json.isEmpty) return const AdminGirLiveBotPublicMessages();
+    if (json == null || json.isEmpty) {
+      return const AdminGirLiveBotPublicMessages();
+    }
     final tplRaw = json['templates'];
     final templates = <String, String>{};
     if (tplRaw is Map) {
@@ -66,6 +157,11 @@ class AdminGirLiveBotPublicMessages {
       }
     }
     return AdminGirLiveBotPublicMessages(
+      enabled: _boolFromMap(
+        json,
+        const ['enabled', 'publicMessagesEnabled'],
+        defaultValue: true,
+      ),
       jetonPromoEnabled: json['jetonPromoEnabled'] == true,
       pkStartEnabled: json['pkStartEnabled'] != false,
       pkMidReminderEnabled: json['pkMidReminderEnabled'] == true,
@@ -77,4 +173,19 @@ class AdminGirLiveBotPublicMessages {
       templates: templates,
     );
   }
+}
+
+bool _boolFromMap(
+  Map<String, dynamic> map,
+  List<String> keys, {
+  required bool defaultValue,
+}) {
+  for (final key in keys) {
+    if (!map.containsKey(key)) continue;
+    final v = map[key];
+    if (v is bool) return v;
+    if (v == true || v == 1 || v == 'true' || v == '1') return true;
+    if (v == false || v == 0 || v == 'false' || v == '0') return false;
+  }
+  return defaultValue;
 }
