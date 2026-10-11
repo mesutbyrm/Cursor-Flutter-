@@ -11,6 +11,7 @@ import '../../../../core/network/sse/sse_reconnect_policy.dart';
 import '../../../gifts/presentation/sync/gift_sync_log.dart';
 import '../../../gifts/domain/gift_payload_util.dart';
 import '../../domain/entities/live_stream_chat_message.dart';
+import '../../../voice_hub/girlive/girlive_bot_sse.dart';
 import '../../../live_psychics/domain/entities/psychic_request_entity.dart';
 import '../../../live_psychics/presentation/providers/psychic_live_event_bus.dart';
 import '../datasources/live_gifts_remote_datasource.dart';
@@ -51,6 +52,7 @@ class VideoStreamSseService {
   var _paused = false;
   var _reconnectAttempt = 0;
   String? _lastEventId;
+  final Set<String> _girliveBotDedupe = {};
 
   void Function()? _onConnected;
   void Function(int viewerCount)? _onViewerCount;
@@ -304,6 +306,10 @@ class VideoStreamSseService {
           if (msg.content.isNotEmpty) _onMessage?.call(msg);
         }
         return;
+      case 'girlive_bot':
+      case 'girlivebot':
+        _dispatchGirLiveBot(map);
+        return;
       case 'gift':
       case 'giftsent':
       case 'gift_sent':
@@ -418,6 +424,10 @@ class VideoStreamSseService {
       }
       default:
         final typeLower = type.toLowerCase();
+        if (typeLower == 'girlive_bot' || typeLower == 'girlivebot') {
+          _dispatchGirLiveBot(map);
+          return;
+        }
         if (typeLower == 'co_guest_camera' || typeLower == 'coguestcamera') {
           _onCoGuestCamera?.call(map);
           return;
@@ -438,6 +448,17 @@ class VideoStreamSseService {
           _onGift?.call(GiftPayloadUtil.unwrap(map));
         }
     }
+  }
+
+  void _dispatchGirLiveBot(Map<String, dynamic> map) {
+    final msg = GirLiveBotSse.toLiveMessage(map);
+    if (msg.content.isEmpty) return;
+    if (_girliveBotDedupe.contains(msg.id)) return;
+    _girliveBotDedupe.add(msg.id);
+    if (_girliveBotDedupe.length > 400) {
+      _girliveBotDedupe.remove(_girliveBotDedupe.first);
+    }
+    _onMessage?.call(msg);
   }
 
   Future<void> disconnect() async {

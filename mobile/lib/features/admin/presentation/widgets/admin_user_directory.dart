@@ -9,6 +9,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/mock_ui_kit.dart';
 import '../../domain/admin_user_util.dart';
+import '../providers/admin_module_ui_store.dart';
 import '../providers/admin_panel_providers.dart';
 
 /// Kullanıcı dizini filtresi → sunucu parametreleri (`GET /api/admin/users`).
@@ -60,6 +61,9 @@ class _AdminUserDirectoryState extends ConsumerState<AdminUserDirectory> {
   final _search = TextEditingController();
   final _scroll = ScrollController();
   Timer? _debounce;
+  Timer? _scrollSave;
+
+  static const _uiModule = 'admin.users';
 
   var _filter = AdminUserFilter.all;
   var _items = <Map<String, dynamic>>[];
@@ -75,13 +79,43 @@ class _AdminUserDirectoryState extends ConsumerState<AdminUserDirectory> {
     super.initState();
     _scroll.addListener(() {
       if (_scroll.position.extentAfter < 400) unawaited(_loadMore());
+      _scrollSave?.cancel();
+      _scrollSave = Timer(const Duration(milliseconds: 400), () {
+        if (!_scroll.hasClients) return;
+        unawaited(
+          AdminModuleUiStore.saveScroll(_uiModule, _scroll.offset),
+        );
+      });
     });
-    unawaited(_load(reset: true));
+    unawaited(() async {
+      await _restoreUi();
+      if (mounted) await _load(reset: true);
+    }());
+  }
+
+  Future<void> _restoreUi() async {
+    final ui = await AdminModuleUiStore.loadAll();
+    final saved = AdminModuleUiStore.filterFor(ui, _uiModule);
+    if (saved != null) {
+      final match = AdminUserFilter.values.where((f) => f.name == saved);
+      if (match.isNotEmpty && mounted) {
+        setState(() => _filter = match.first);
+      }
+    }
+    final offset = AdminModuleUiStore.scrollFor(ui, _uiModule);
+    if (offset > 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_scroll.hasClients) return;
+        final max = _scroll.position.maxScrollExtent;
+        _scroll.jumpTo(offset.clamp(0, max));
+      });
+    }
   }
 
   @override
   void dispose() {
     _debounce?.cancel();
+    _scrollSave?.cancel();
     _search.dispose();
     _scroll.dispose();
     super.dispose();
@@ -137,6 +171,7 @@ class _AdminUserDirectoryState extends ConsumerState<AdminUserDirectory> {
   void _setFilter(AdminUserFilter f) {
     if (f == _filter) return;
     setState(() => _filter = f);
+    unawaited(AdminModuleUiStore.saveFilter(_uiModule, f.name));
     unawaited(_load(reset: true));
   }
 

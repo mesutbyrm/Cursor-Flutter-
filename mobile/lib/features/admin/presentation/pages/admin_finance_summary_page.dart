@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +8,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
+import '../providers/admin_module_ui_store.dart';
 import '../providers/admin_finance_summary_providers.dart';
 import '../providers/staff_access_provider.dart';
 
@@ -18,7 +21,23 @@ class AdminFinanceSummaryPage extends ConsumerStatefulWidget {
 }
 
 class _AdminFinanceSummaryPageState extends ConsumerState<AdminFinanceSummaryPage> {
+  static const _uiModule = 'admin.finance';
+
   String _period = 'monthly';
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_restorePeriod());
+  }
+
+  Future<void> _restorePeriod() async {
+    final ui = await AdminModuleUiStore.loadAll();
+    final saved = AdminModuleUiStore.filterFor(ui, _uiModule);
+    if (saved != null && saved.isNotEmpty && mounted) {
+      setState(() => _period = saved);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +97,10 @@ class _AdminFinanceSummaryPageState extends ConsumerState<AdminFinanceSummaryPag
                       child: FilterChip(
                         label: Text(p),
                         selected: _period == p,
-                        onSelected: (_) => setState(() => _period = p),
+                        onSelected: (_) {
+                          setState(() => _period = p);
+                          unawaited(AdminModuleUiStore.saveFilter(_uiModule, p));
+                        },
                       ),
                     ),
                 ],

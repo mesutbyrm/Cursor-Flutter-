@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +8,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../domain/admin_complaint.dart';
+import '../providers/admin_module_ui_store.dart';
 import '../providers/admin_complaints_providers.dart';
 import '../providers/admin_panel_providers.dart';
 import '../providers/staff_access_provider.dart';
@@ -19,7 +22,23 @@ class AdminComplaintsPage extends ConsumerStatefulWidget {
 }
 
 class _AdminComplaintsPageState extends ConsumerState<AdminComplaintsPage> {
+  static const _uiModule = 'admin.complaints';
+
   String _status = 'pending';
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_restoreFilter());
+  }
+
+  Future<void> _restoreFilter() async {
+    final ui = await AdminModuleUiStore.loadAll();
+    final saved = AdminModuleUiStore.filterFor(ui, _uiModule);
+    if (saved != null && saved.isNotEmpty && mounted) {
+      setState(() => _status = saved);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +93,10 @@ class _AdminComplaintsPageState extends ConsumerState<AdminComplaintsPage> {
                       child: FilterChip(
                         label: Text(_statusLabel(s)),
                         selected: _status == s,
-                        onSelected: (_) => setState(() => _status = s),
+                        onSelected: (_) {
+                          setState(() => _status = s);
+                          unawaited(AdminModuleUiStore.saveFilter(_uiModule, s));
+                        },
                       ),
                     ),
                 ],

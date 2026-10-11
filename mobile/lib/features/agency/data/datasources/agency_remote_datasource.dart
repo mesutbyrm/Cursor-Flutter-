@@ -12,18 +12,26 @@ class AgencyRemoteDataSource {
   final Dio _dio;
 
   Future<AgencyEntity?> fetchMyAgency() async {
-    try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.agencyMy);
-      final body = res.data;
-      if (body is! Map) return null;
-      final map = asJsonMap(body);
-      final data = map['data'] is Map ? asJsonMap(map['data']) : map;
-      final agency = data['agency'] ?? data['myAgency'] ?? data['liveAgency'] ?? data['agencyProfile'] ?? data['profile'] ?? data;
-      if (agency is! Map) return null;
-      return _mapAgency(asJsonMap(agency));
-    } catch (_) {
-      return null;
+    for (final path in [ApiEndpoints.agencyRoot, ApiEndpoints.agencyMy]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(path);
+        final body = res.data;
+        if (body is! Map) continue;
+        final map = asJsonMap(body);
+        final data = map['data'] is Map ? asJsonMap(map['data']) : map;
+        final agency = data['agency'] ??
+            data['myAgency'] ??
+            data['liveAgency'] ??
+            data['agencyProfile'] ??
+            data['profile'] ??
+            data;
+        if (agency is! Map) continue;
+        return _mapAgency(asJsonMap(agency));
+      } catch (_) {
+        continue;
+      }
     }
+    return null;
   }
 
   /// `POST /api/agency/apply` — ajans başvurusu (admin onayına düşer).
@@ -34,18 +42,21 @@ class AgencyRemoteDataSource {
     String? contactEmail,
     String? contactPhone,
   }) async {
-    final res = await _dio.safePost<dynamic>(
-      ApiEndpoints.agencyApply,
-      data: {
-        'name': name,
-        if (description != null && description.isNotEmpty)
-          'description': description,
-        if (contactEmail != null && contactEmail.isNotEmpty)
-          'contactEmail': contactEmail,
-        if (contactPhone != null && contactPhone.isNotEmpty)
-          'contactPhone': contactPhone,
-      },
-    );
+    final body = {
+      'name': name,
+      if (description != null && description.isNotEmpty)
+        'description': description,
+      if (contactEmail != null && contactEmail.isNotEmpty)
+        'contactEmail': contactEmail,
+      if (contactPhone != null && contactPhone.isNotEmpty)
+        'contactPhone': contactPhone,
+    };
+    Response<dynamic> res;
+    try {
+      res = await _dio.safePost<dynamic>(ApiEndpoints.agencyRoot, data: body);
+    } catch (_) {
+      res = await _dio.safePost<dynamic>(ApiEndpoints.agencyApply, data: body);
+    }
     final msg = asJsonMap(res.data)['message']?.toString();
     return (msg == null || msg.isEmpty)
         ? 'Ajans başvurunuz alındı. Admin onayı bekleniyor.'
@@ -178,15 +189,19 @@ class AgencyRemoteDataSource {
 
   Future<bool> sendInvite(String userId) async {
     if (userId.trim().isEmpty) return false;
-    try {
-      await _dio.safePost<dynamic>(
-        ApiEndpoints.agencyInvite,
-        data: {'userId': userId.trim()},
-      );
-      return true;
-    } catch (_) {
-      return false;
+    final data = {'userId': userId.trim()};
+    for (final path in [
+      ApiEndpoints.agencyMembersInvite,
+      ApiEndpoints.agencyInvite,
+    ]) {
+      try {
+        await _dio.safePost<dynamic>(path, data: data);
+        return true;
+      } catch (_) {
+        continue;
+      }
     }
+    return false;
   }
 
   AgencyEntity mapAgencyPublic(Map<String, dynamic> m) => _mapAgency(m);

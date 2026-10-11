@@ -100,6 +100,7 @@ import 'voice_session_phase_provider.dart';
 import '../../domain/voice/voice_session_phase.dart';
 import 'staff_entrance_marquee_provider.dart';
 import '../utils/voice_room_message_merge.dart';
+import '../../girlive/girlive_bot_sse.dart';
 import 'voice_rooms_presence_provider.dart';
 import '../widgets/voice_room/voice_room_music_request_flash.dart';
 import '../basic/voice_room_basic_mode.dart';
@@ -1149,6 +1150,15 @@ class VoiceRoomLiveController
 
   void _notifyRealtimeIfBasic(VoiceRoomRealtimeKind kind, String message) {
     _pushRealtimeEvent(kind, message);
+  }
+
+  void _appendGirLiveBotChat(Map<String, dynamic> payload) {
+    final msg = GirLiveBotSse.toVoiceMessage(payload);
+    if (msg.content.isEmpty) return;
+    if (state.messages.any((m) => m.id == msg.id)) return;
+    state = state.copyWith(
+      messages: VoiceRoomMessageMerge.append(state.messages, msg),
+    );
   }
 
   void _appendSyntheticSystemMessage(

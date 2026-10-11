@@ -164,9 +164,40 @@ class AgencyWalletDataSource {
       if (body is! Map) return null;
       final map = asJsonMap(body);
       final data = map['data'] is Map ? asJsonMap(map['data']) : map;
-      return AgencyWalletSnapshot.fromJson(data);
+      var snap = AgencyWalletSnapshot.fromJson(data);
+      if (snap.transactions.isEmpty) {
+        final tx = await fetchWalletTransactions(limit: 30);
+        if (tx.isNotEmpty) {
+          snap = AgencyWalletSnapshot(
+            jetonBalance: snap.jetonBalance,
+            totalBonus: snap.totalBonus,
+            isLocked: snap.isLocked,
+            transactions: tx,
+          );
+        }
+      }
+      return snap;
     } catch (_) {
       return null;
+    }
+  }
+
+  /// PR #33 — `GET /api/agency/wallet/transactions`
+  Future<List<Map<String, dynamic>>> fetchWalletTransactions({int limit = 50}) async {
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.agencyWalletTransactions,
+        query: {'limit': limit},
+      );
+      final body = res.data;
+      if (body is! Map) return const [];
+      final map = asJsonMap(body);
+      final data = map['data'] is Map ? asJsonMap(map['data']) : map;
+      return AgencyWalletSnapshot._txnList(
+        data['transactions'] ?? data['items'] ?? data,
+      );
+    } catch (_) {
+      return const [];
     }
   }
 

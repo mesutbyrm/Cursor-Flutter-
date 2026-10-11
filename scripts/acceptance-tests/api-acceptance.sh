@@ -491,6 +491,51 @@ test_17_push() {
   fi
 }
 
+# --- 18. Episode 29 — bekleyen ödeme (PR #39) ---
+test_18_pending_payment() {
+  skip_unless_user_token 18 "Bekleyen ödeme (pending)" || return 0
+  local code resp has
+  code=$(http_code "$BASE/api/payments/requests/pending" \
+    -H "Authorization: Bearer $USER_TOKEN")
+  if [[ "$code" != "200" ]]; then
+    record 18 "Bekleyen ödeme (pending)" FAIL "HTTP $code"
+    return
+  fi
+  resp=$(curl_json "$BASE/api/payments/requests/pending" \
+    -H "Authorization: Bearer $USER_TOKEN")
+  has=$(printf '%s' "$resp" | python3 -c "import json,sys; d=json.load(sys.stdin); print('hasPending' in d or (isinstance(d.get('data'),dict) and 'hasPending' in d['data']))" 2>/dev/null || echo "0")
+  if [[ "$has" == "True" || "$has" == "1" ]]; then
+    record 18 "Bekleyen ödeme (pending)" PASS "hasPending alanı OK"
+  else
+    record 18 "Bekleyen ödeme (pending)" FAIL "hasPending yok"
+  fi
+}
+
+# --- 19. Episode 29 — admin permissions + pending-counts (PR #40) ---
+test_19_admin_episode29() {
+  if ! require_secret ADMIN_EMAIL 19 "Admin episode29" || ! require_secret ADMIN_PASSWORD 19 "Admin episode29"; then
+    return 0
+  fi
+  local resp code
+  resp=$(mobile_login "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}")
+  ADMIN_TOKEN=$(extract_token "$resp")
+  if [[ -z "$ADMIN_TOKEN" ]]; then
+    record 19 "Admin episode29 uçları" FAIL "admin token yok"
+    return
+  fi
+  code=$(http_code "$BASE/api/me/permissions" -H "Authorization: Bearer $ADMIN_TOKEN")
+  if [[ "$code" != "200" ]]; then
+    record 19 "Admin episode29 uçları" FAIL "/me/permissions HTTP $code"
+    return
+  fi
+  code=$(http_code "$BASE/api/admin/pending-counts" -H "Authorization: Bearer $ADMIN_TOKEN")
+  if [[ "$code" == "200" || "$code" == "403" ]]; then
+    record 19 "Admin episode29 uçları" PASS "permissions 200 · pending-counts $code"
+  else
+    record 19 "Admin episode29 uçları" FAIL "pending-counts HTTP $code"
+  fi
+}
+
 # --- 20. Performans (API gecikme) ---
 test_20_performance() {
   local start end ms code
@@ -507,6 +552,16 @@ test_20_performance() {
     record 20 "Uygulama performans testi" FAIL "HTTP $code"
   fi
 }
+
+if [[ -n "${EPISODE29_PROBE_ONLY:-}" ]]; then
+  test_01_login_email
+  test_18_pending_payment
+  test_19_admin_episode29
+  export RESULT_LINES_RAW="$(printf '%s\n' "${RESULT_LINES[@]}")"
+  export REPORT_MD
+  finalize_reports || exit 1
+  exit 0
+fi
 
 test_01_login_email
 test_02_login_username
@@ -525,6 +580,8 @@ test_14_video_session
 test_15_jeton_deduction
 test_16_admin_notification
 test_17_push
+test_18_pending_payment
+test_19_admin_episode29
 test_20_performance
 
 export RESULT_LINES_RAW="$(printf '%s\n' "${RESULT_LINES[@]}")"

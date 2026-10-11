@@ -307,6 +307,10 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
       case 'girlive_publisher':
         _handleGirLivePublisher(payload);
         return;
+      case 'girlive_bot':
+      case 'girlivebot':
+        _handleGirLiveBot(payload);
+        return;
       case 'join_request_resolved':
         _resolveJoinRequestFromSse(payload);
         return;
@@ -893,6 +897,12 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
           payload['text']?.toString() ?? '',
           roomKey: _resolveRoomKeyFromEvent(payload) ?? _roomKey,
         );
+  }
+
+  /// `girlive_bot` — herkese açık bot mesajı (PK, karşılama, uğurlama).
+  void _handleGirLiveBot(Map<String, dynamic> payload) {
+    if (!_acceptSseEvent(payload)) return;
+    _appendGirLiveBotChat(payload);
   }
 
   /// `girlive_publisher` — yayıncı asistanı; genel sohbete düşmez.

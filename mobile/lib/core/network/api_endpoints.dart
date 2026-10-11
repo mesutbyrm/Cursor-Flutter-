@@ -298,9 +298,14 @@ abstract final class ApiEndpoints {
   static const blogInteractions = '/api/blog/interactions';
   static const blogZodiac = '/api/blog/zodiac';
 
-  /// Ajans sistemi (canlifal.com §17).
+  /// Ajans sistemi (canlifal.com §17 / PR #33).
+  static const agencyRoot = '/api/agency';
   static const agencyMy = '/api/agency/my';
   static const agencyApply = '/api/agency/apply';
+  static const agencyMembersInvite = '/api/agency/members/invite';
+  static const agencyMembersRemove = '/api/agency/members/remove';
+  static const agencyWalletTransactions = '/api/agency/wallet/transactions';
+  static const agencyPeriods = '/api/agency/periods';
   static const agencyMembers = '/api/agency/members';
   static const agencyInvite = '/api/agency/invite';
   /// Kullanıcıya gelen onaylı üye davetleri: GET liste, POST {inviteId, action}.

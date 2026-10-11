@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.766+822 (2026-10-11) — Episode 29 tur 2: ajans, GirLive bot, admin UI restore, E2E
+
+- **Ajans PR #33:** `/api/agency` kök uç fallback; `members/invite`, `wallet/transactions`, `periods` sabitleri
+- **SSE:** `girlive_bot` sesli oda + canlı yayın sohbetine (eventId dedup)
+- **Admin:** modül scroll/filtre geri yükleme (`AdminModuleUiStore`)
+- **CI:** acceptance #18 pending payment, #19 admin permissions/pending-counts · `scripts/probe-episode29-e2e.sh`
+
 ## 1.0.765+821 (2026-10-11) — Episode 29 UI: admin bar, şikâyet, finans, checkout 409
 
 - **Yetki:** `/api/me/permissions` → `StaffAccess.mergeServerPermissions` (admin menü + panel)
