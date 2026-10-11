@@ -6,6 +6,33 @@ abstract final class GirLiveBotSse {
   static const botUserId = 'girlive-bot';
   static const botDisplayName = 'GirLive Bot';
 
+  static bool isBotEventType(String? type) {
+    final t = type?.toLowerCase().trim() ?? '';
+    return t == 'girlive_bot' || t == 'girlivebot';
+  }
+
+  /// SSE sarmalayıcı (`room_event`, `stream_signal`) içindeki bot yükü.
+  static Map<String, dynamic>? unwrapPayload(Map<String, dynamic> outer) {
+    if (isBotEventType(outer['type']?.toString()) &&
+        extractText(outer).isNotEmpty) {
+      return outer;
+    }
+    if (isBotEventType(outer['event']?.toString()) &&
+        extractText(outer).isNotEmpty) {
+      return outer;
+    }
+    for (final key in ['payload', 'data', 'signal', 'message']) {
+      final inner = outer[key];
+      if (inner is! Map) continue;
+      final m = Map<String, dynamic>.from(inner);
+      if (isBotEventType(m['type']?.toString()) ||
+          isBotEventType(m['event']?.toString())) {
+        if (extractText(m).isNotEmpty) return m;
+      }
+    }
+    return null;
+  }
+
   static String messageIdFromPayload(Map<String, dynamic> payload) {
     final eid = payload['eventId'];
     if (eid != null && eid.toString().trim().isNotEmpty) {

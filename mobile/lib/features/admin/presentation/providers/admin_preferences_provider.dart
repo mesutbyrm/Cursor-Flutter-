@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -70,20 +72,36 @@ class AdminPreferences {
 }
 
 class AdminPreferencesNotifier extends StateNotifier<AdminPreferences> {
-  AdminPreferencesNotifier(AdminPreferences initial) : super(initial);
+  AdminPreferencesNotifier() : super(const AdminPreferences()) {
+    _hydrate();
+  }
+
+  static const _storageKey = 'admin_preferences';
+
+  Future<void> _hydrate() async {
+    final sp = await SharedPreferences.getInstance();
+    final raw = sp.getString(_storageKey);
+    if (raw == null || raw.trim().isEmpty) return;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map<String, dynamic>) {
+        state = AdminPreferences.fromJson(decoded);
+      } else if (decoded is Map) {
+        state = AdminPreferences.fromJson(Map<String, dynamic>.from(decoded));
+      }
+    } catch (_) {
+      // Bozuk kayıt — varsayılan tercihler.
+    }
+  }
 
   Future<void> update(AdminPreferences prefs) async {
     state = prefs;
     final sp = await SharedPreferences.getInstance();
-    await sp.setString('admin_preferences', _jsonEncode(prefs.toJson()));
-  }
-
-  String _jsonEncode(Map<String, dynamic> data) {
-    return data.toString(); // Basit JSON encode
+    await sp.setString(_storageKey, jsonEncode(prefs.toJson()));
   }
 }
 
 final adminPreferencesProvider =
     StateNotifierProvider<AdminPreferencesNotifier, AdminPreferences>((ref) {
-  return AdminPreferencesNotifier(const AdminPreferences());
+  return AdminPreferencesNotifier();
 });

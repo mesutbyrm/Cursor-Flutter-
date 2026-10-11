@@ -884,3 +884,32 @@ class AgencyAlertView {
     );
   }
 }
+
+/// `GET /api/agency/periods` — kapanmış dönem özeti.
+class AgencyPeriodView {
+  const AgencyPeriodView({
+    required this.period,
+    this.closedAt,
+    this.memberCount = 0,
+    this.totalJeton = 0,
+    this.status = '',
+  });
+
+  final String period;
+  final DateTime? closedAt;
+  final int memberCount;
+  final int totalJeton;
+  final String status;
+
+  static AgencyPeriodView fromJson(Map<String, dynamic> m) {
+    return AgencyPeriodView(
+      period: '${m['period'] ?? m['id'] ?? ''}',
+      closedAt: _date(m['closedAt'] ?? m['closed_at']),
+      memberCount: (m['memberCount'] as num?)?.toInt() ?? 0,
+      totalJeton: (m['totalJeton'] as num?)?.toInt() ??
+          (m['total'] as num?)?.toInt() ??
+          0,
+      status: '${m['status'] ?? ''}',
+    );
+  }
+}

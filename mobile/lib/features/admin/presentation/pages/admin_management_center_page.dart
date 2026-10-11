@@ -126,6 +126,14 @@ List<AdminCenterEntry> adminCenterEntries(
       visible: a.isSiteAdmin,
     ),
     AdminCenterEntry(
+      title: 'GirLive Bot',
+      subtitle: 'Herkese açık bot mesajları',
+      icon: Icons.smart_toy_outlined,
+      accent: const Color(0xFF6366F1),
+      route: '/admin/girlive-bot',
+      visible: a.isSiteAdmin,
+    ),
+    AdminCenterEntry(
       title: 'Sistem Ayarları',
       subtitle: 'Genel ayarlar',
       icon: Icons.settings_suggest_rounded,

@@ -171,6 +171,41 @@ class AgencyManagementDataSource {
 
   Future<String> unblockUser(String userId) => _send('DELETE', ApiEndpoints.agencyBlocks, query: {'userId': userId});
 
+  /// PR #33 — üye çıkarma (engellemeden bağımsız).
+  Future<String> removeMember(String userId, {String? reason}) => _send(
+        'POST',
+        ApiEndpoints.agencyMembersRemove,
+        data: {
+          'userId': userId,
+          if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
+        },
+        ok: 'Üye ajans kadrosundan çıkarıldı',
+      );
+
+  /// `GET /api/agency/periods` — kapanmış dönem geçmişi.
+  Future<List<AgencyPeriodView>> fetchPeriods() async {
+    final raw = await _get(ApiEndpoints.agencyPeriods);
+    final map = raw is Map ? asJsonMap(raw) : <String, dynamic>{};
+    final list = asJsonList(map['periods'] ?? map['items'] ?? raw);
+    return list.map((e) => AgencyPeriodView.fromJson(asJsonMap(e))).toList();
+  }
+
+  /// `PATCH /api/agency` — ajans profil güncelleme.
+  Future<String> patchAgencyProfile({
+    String? name,
+    String? description,
+    String? contactEmail,
+    String? contactPhone,
+  }) =>
+      _send('PATCH', ApiEndpoints.agencyRoot, data: {
+        if (name != null && name.trim().isNotEmpty) 'name': name.trim(),
+        if (description != null) 'description': description.trim(),
+        if (contactEmail != null && contactEmail.trim().isNotEmpty)
+          'contactEmail': contactEmail.trim(),
+        if (contactPhone != null && contactPhone.trim().isNotEmpty)
+          'contactPhone': contactPhone.trim(),
+      }, ok: 'Ajans bilgileri güncellendi');
+
   // ── Yönetici (RBAC; sunucu yetki denetler) ──────────────
   Future<List<AdminPromiseVersion>> adminPromises({String status = 'pending'}) async =>
       asJsonList(await _get(ApiEndpoints.adminAgencyPromises, {'status': status})).map(AdminPromiseVersion.fromJson).toList();

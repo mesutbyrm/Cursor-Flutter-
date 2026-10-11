@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,6 +8,7 @@ import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../providers/admin_advanced_reporting_providers.dart';
+import '../providers/admin_module_ui_store.dart';
 import '../providers/staff_access_provider.dart';
 
 /// Gelişmiş raporlama — detaylı istatistikler ve export.
@@ -19,8 +22,48 @@ class AdminAdvancedReportingPage extends ConsumerStatefulWidget {
 
 class _AdminAdvancedReportingPageState
     extends ConsumerState<AdminAdvancedReportingPage> {
+  static const _uiModule = 'admin.reports';
+
   ReportType _selectedType = ReportType.user;
   DateRangeType _selectedDateRange = DateRangeType.week;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_restoreFilters());
+  }
+
+  Future<void> _restoreFilters() async {
+    final ui = await AdminModuleUiStore.loadAll();
+    final typeName = AdminModuleUiStore.filterFor(ui, '$_uiModule.type');
+    final rangeName = AdminModuleUiStore.filterFor(ui, '$_uiModule.range');
+    if (!mounted) return;
+    setState(() {
+      if (typeName != null) {
+        for (final t in ReportType.values) {
+          if (t.name == typeName) {
+            _selectedType = t;
+            break;
+          }
+        }
+      }
+      if (rangeName != null) {
+        for (final r in DateRangeType.values) {
+          if (r.name == rangeName) {
+            _selectedDateRange = r;
+            break;
+          }
+        }
+      }
+    });
+  }
+
+  void _persistFilters() {
+    unawaited(AdminModuleUiStore.saveFilter('$_uiModule.type', _selectedType.name));
+    unawaited(
+      AdminModuleUiStore.saveFilter('$_uiModule.range', _selectedDateRange.name),
+    );
+  }
 
   void _generateReport() {
     ref.refresh(adminReportDataProvider((_selectedType, _selectedDateRange)));
@@ -96,6 +139,7 @@ class _AdminAdvancedReportingPageState
                               isSelected: _selectedType == type,
                               onTap: () {
                                 setState(() => _selectedType = type);
+                                _persistFilters();
                                 _generateReport();
                               },
                             ),
@@ -110,6 +154,7 @@ class _AdminAdvancedReportingPageState
                       selectedRange: _selectedDateRange,
                       onRangeChanged: (range) {
                         setState(() => _selectedDateRange = range);
+                        _persistFilters();
                         _generateReport();
                       },
                     ),

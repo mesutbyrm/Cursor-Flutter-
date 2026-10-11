@@ -346,6 +346,11 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
         _refreshGiftBoxFromRoomSse();
         return;
       default:
+        final botPayload = GirLiveBotSse.unwrapPayload(payload);
+        if (botPayload != null) {
+          _handleGirLiveBot(botPayload);
+          return;
+        }
         if (event.startsWith('gift_box_') ||
             (payload['type']?.toString() == 'gift_box')) {
           _refreshGiftBoxFromRoomSse();
@@ -901,8 +906,9 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
 
   /// `girlive_bot` — herkese açık bot mesajı (PK, karşılama, uğurlama).
   void _handleGirLiveBot(Map<String, dynamic> payload) {
-    if (!_acceptSseEvent(payload)) return;
-    _appendGirLiveBotChat(payload);
+    final bot = GirLiveBotSse.unwrapPayload(payload) ?? payload;
+    if (!_acceptSseEvent(bot)) return;
+    _appendGirLiveBotChat(bot);
   }
 
   /// `girlive_publisher` — yayıncı asistanı; genel sohbete düşmez.

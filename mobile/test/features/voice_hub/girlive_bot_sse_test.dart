@@ -10,6 +10,19 @@ void main() {
     expect(id, 'girlive-bot-42');
   });
 
+  test('unwrapPayload finds nested stream_signal bot message', () {
+    final inner = GirLiveBotSse.unwrapPayload({
+      'type': 'stream_signal',
+      'signal': {
+        'type': 'girlive_bot',
+        'text': 'PK bitti!',
+        'eventId': 99,
+      },
+    });
+    expect(inner, isNotNull);
+    expect(GirLiveBotSse.extractText(inner!), 'PK bitti!');
+  });
+
   test('toVoiceMessage maps bot display name', () {
     final msg = GirLiveBotSse.toVoiceMessage({
       'eventId': 7,

@@ -32,6 +32,20 @@ class _AgencyMembersPageState extends ConsumerState<AgencyMembersPage> {
     }
   }
 
+  Future<void> _remove(RosterEntry e) async {
+    final reason = await textInputDialog(
+      context,
+      title: '${e.user.display} ajans kadrosundan çıkarılsın mı?',
+      hint: 'Gerekçe (isteğe bağlı). Engelleme yapılmaz.',
+      fieldKey: const Key('remove-reason'),
+    );
+    if (reason == null || !mounted) return;
+    await _run(() => ref.read(agencyManagementProvider).removeMember(
+          e.user.id,
+          reason: reason.isEmpty ? null : reason,
+        ));
+  }
+
   Future<void> _block(RosterEntry e) async {
     final reason = await textInputDialog(
       context,
@@ -80,10 +94,12 @@ class _AgencyMembersPageState extends ConsumerState<AgencyMembersPage> {
                         enabled: !_busy,
                         onSelected: (v) {
                           if (v == 'perf') context.push('/ajans/performans/${e.user.id}');
+                          if (v == 'remove') _remove(e);
                           if (v == 'block') _block(e);
                         },
                         itemBuilder: (_) => const [
                           PopupMenuItem(value: 'perf', child: Text('Performans')),
+                          PopupMenuItem(value: 'remove', child: Text('Üyeden çıkar')),
                           PopupMenuItem(value: 'block', child: Text('Engelle ve çıkar')),
                         ],
                       ),

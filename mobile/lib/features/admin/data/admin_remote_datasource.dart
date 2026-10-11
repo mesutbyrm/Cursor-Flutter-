@@ -6,6 +6,7 @@ import '../../../core/network/dio_provider.dart';
 import '../../../core/util/json_util.dart';
 import '../domain/admin_complaint.dart';
 import '../domain/admin_finance_summary.dart';
+import '../domain/admin_girlive_bot_config.dart';
 import '../domain/admin_user_extended_data.dart';
 import '../domain/admin_user_util.dart';
 
@@ -768,6 +769,36 @@ class AdminRemoteDataSource {
       return AdminFinanceSummary.fromJson(Map<String, dynamic>.from(body));
     }
     return const AdminFinanceSummary();
+  }
+
+  Future<AdminGirLiveBotPublicMessages> fetchGirLiveBotPublicMessages() async {
+    final res = await _adminTimeout(
+      _dio.safeGet<dynamic>(
+        ApiEndpoints.adminGirLiveBot,
+        forceRefresh: true,
+        options: _opts(),
+      ),
+    );
+    final root = _unwrapMap(res.data);
+    final pm = root['publicMessages'];
+    if (pm is Map) {
+      return AdminGirLiveBotPublicMessages.fromJson(
+        Map<String, dynamic>.from(pm),
+      );
+    }
+    return const AdminGirLiveBotPublicMessages();
+  }
+
+  Future<void> updateGirLiveBotPublicMessages(
+    Map<String, dynamic> publicMessages,
+  ) async {
+    await _adminTimeout(
+      _dio.safePut<dynamic>(
+        ApiEndpoints.adminGirLiveBot,
+        data: {'publicMessages': publicMessages},
+        options: _opts(),
+      ),
+    );
   }
 
   Map<String, dynamic> _unwrapMap(dynamic data) {

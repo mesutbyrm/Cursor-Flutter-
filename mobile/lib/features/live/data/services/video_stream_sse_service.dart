@@ -414,6 +414,10 @@ class VideoStreamSseService {
             });
             return;
           }
+          if (GirLiveBotSse.isBotEventType(innerType)) {
+            _dispatchGirLiveBot(innerMap);
+            return;
+          }
         }
         final signalType = (map['signalType'] ?? '').toString().toLowerCase();
         if (signalType == 'co_guest_camera') {
@@ -451,7 +455,8 @@ class VideoStreamSseService {
   }
 
   void _dispatchGirLiveBot(Map<String, dynamic> map) {
-    final msg = GirLiveBotSse.toLiveMessage(map);
+    final bot = GirLiveBotSse.unwrapPayload(map) ?? map;
+    final msg = GirLiveBotSse.toLiveMessage(bot);
     if (msg.content.isEmpty) return;
     if (_girliveBotDedupe.contains(msg.id)) return;
     _girliveBotDedupe.add(msg.id);

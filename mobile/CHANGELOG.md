@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.767+823 (2026-10-11) — Episode 29 tamamlama: ajans PR #33, admin bot, checkout guard
+
+- **Ajans:** dönem geçmişi (`GET /api/agency/periods`), profil düzenleme (`PATCH /api/agency`), üyeden çıkar (`POST members/remove`)
+- **Admin:** GirLive Bot ayar ekranı (`GET/PUT /api/admin/girlive-bot`); tercihler JSON kalıcılığı düzeltildi
+- **Ödeme:** checkout öncesi bekleyen talep diyaloğu (409’a ek proaktif guard)
+- **SSE:** sarmalanmış `girlive_bot` (`room_event` / `stream_signal`) ayrıştırma
+- **Ajans cüzdan:** HTTP 429 kullanıcı mesajı
+
 ## 1.0.766+822 (2026-10-11) — Episode 29 tur 2: ajans, GirLive bot, admin UI restore, E2E
 
 - **Ajans PR #33:** `/api/agency` kök uç fallback; `members/invite`, `wallet/transactions`, `periods` sabitleri

@@ -167,7 +167,7 @@ class AgencyDashboardScreen extends ConsumerWidget {
               jetonLabel: jetonLabel,
             ),
             const SizedBox(height: 14),
-            const _ManagementGrid(),
+            _ManagementGrid(agency: agency),
             if (dash.lastApiLog != null) ...[
               const SizedBox(height: 8),
               Text(
@@ -278,6 +278,17 @@ class _AgencyHeader extends StatelessWidget {
                     : null,
               ),
               const SizedBox(width: 14),
+              IconButton(
+                tooltip: 'Ajans bilgilerini düzenle',
+                onPressed: () => context.push(
+                  '/ajans/profil-duzenle',
+                  extra: {
+                    'name': agency.name,
+                    'description': agency.description,
+                  },
+                ),
+                icon: const Icon(Icons.edit_outlined, color: Colors.white70),
+              ),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -482,7 +493,9 @@ class _EarningTile extends StatelessWidget {
 
 /// Ajans yönetim araçları (performans, başvuru, vaat, duyuru, hak ediş, çalışan).
 class _ManagementGrid extends StatelessWidget {
-  const _ManagementGrid();
+  const _ManagementGrid({required this.agency});
+
+  final AgencyEntity agency;
 
   static const _items = <(String, IconData, String)>[
     ('Üyeler', Icons.groups_rounded, '/ajans/uyeler'),
@@ -491,8 +504,24 @@ class _ManagementGrid extends StatelessWidget {
     ('Vaatler', Icons.handshake_rounded, '/ajans/vaatler'),
     ('Duyurular', Icons.campaign_rounded, '/ajans/duyurular'),
     ('Hak edişler', Icons.emoji_events_rounded, '/ajans/hak-edisler'),
+    ('Dönemler', Icons.date_range_rounded, '/ajans/donemler'),
     ('Çalışanlar', Icons.admin_panel_settings_rounded, '/ajans/calisanlar'),
+    ('Ajans bilgileri', Icons.edit_note_rounded, '/ajans/profil-duzenle'),
   ];
+
+  void _open(BuildContext context, String route) {
+    if (route == '/ajans/profil-duzenle') {
+      context.push(
+        route,
+        extra: {
+          'name': agency.name,
+          'description': agency.description,
+        },
+      );
+      return;
+    }
+    context.push(route);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -512,7 +541,7 @@ class _ManagementGrid extends StatelessWidget {
             child: InkWell(
               key: Key('agency-tool-${it.$3}'),
               borderRadius: BorderRadius.circular(14),
-              onTap: () => context.push(it.$3),
+              onTap: () => _open(context, it.$3),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

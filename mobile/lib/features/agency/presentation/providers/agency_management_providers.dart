@@ -57,6 +57,10 @@ final agencyRosterProvider = FutureProvider.autoDispose<AgencyRoster>((ref) {
   return ref.read(agencyManagementProvider).roster();
 });
 
+final agencyPeriodsProvider = FutureProvider.autoDispose<List<AgencyPeriodView>>((ref) {
+  return ref.read(agencyManagementProvider).fetchPeriods();
+});
+
 final adminAgencyPromisesProvider = FutureProvider.autoDispose.family<List<AdminPromiseVersion>, String>((ref, status) {
   return ref.read(agencyManagementProvider).adminPromises(status: status);
 });

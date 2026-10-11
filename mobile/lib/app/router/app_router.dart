@@ -63,6 +63,7 @@ import '../../features/admin/presentation/pages/admin_voice_rooms_page.dart';
 import '../../features/admin/presentation/pages/admin_voice_room_finance_page.dart';
 import '../../features/admin/presentation/pages/admin_complaints_page.dart';
 import '../../features/admin/presentation/pages/admin_finance_summary_page.dart';
+import '../../features/admin/presentation/pages/admin_girlive_bot_page.dart';
 import '../../features/admin/presentation/pages/admin_sub_pages.dart';
 import '../../features/admin/presentation/pages/admin_user_command_center_page.dart';
 import '../../features/admin/presentation/pages/admin_live_broadcasts_control_page.dart';
@@ -206,6 +207,8 @@ import '../../features/agency/presentation/pages/agency_wallet_page.dart';
 import '../../features/agency/presentation/pages/agencies_page.dart';
 import '../../features/agency/presentation/pages/admin_agency_management_page.dart';
 import '../../features/agency/presentation/pages/agency_members_page.dart';
+import '../../features/agency/presentation/pages/agency_periods_page.dart';
+import '../../features/agency/presentation/pages/agency_profile_edit_page.dart';
 import '../../features/agency/presentation/pages/agency_performance_pages.dart';
 import '../../features/agency/presentation/pages/agency_promises_page.dart';
 import '../../features/agency/presentation/pages/agency_tools_pages.dart';
@@ -868,6 +871,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin/complaints',
         builder: (context, state) => const AdminComplaintsPage(),
+      ),
+      GoRoute(
+        path: '/admin/girlive-bot',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const AdminGirLiveBotPage(),
+        ),
       ),
       GoRoute(
         path: '/admin/finance-summary',
@@ -1659,6 +1669,32 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           key: state.pageKey,
           child: const AgencyMembersPage(),
         ),
+      ),
+      GoRoute(
+        path: '/ajans/donemler',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const AgencyPeriodsPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/ajans/profil-duzenle',
+        pageBuilder: (context, state) {
+          final extra = state.extra;
+          var name = '';
+          String? description;
+          if (extra is Map) {
+            name = extra['name']?.toString() ?? '';
+            description = extra['description']?.toString();
+          }
+          return AppPageTransitions.fadeSlide(
+            key: state.pageKey,
+            child: AgencyProfileEditPage(
+              initialName: name,
+              initialDescription: description,
+            ),
+          );
+        },
       ),
       GoRoute(
         path: '/admin/ajans-yonetimi',

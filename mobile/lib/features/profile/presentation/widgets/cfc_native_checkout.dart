@@ -255,6 +255,7 @@ class _CfcNativeCheckoutState extends ConsumerState<CfcNativeCheckout> {
       );
       return;
     }
+    if (!await guardCheckoutNoPendingPayment(context, ref)) return;
     setState(() => _submitting = true);
     try {
       await ref.read(walletRepositoryProvider).submitPaymentRequest(

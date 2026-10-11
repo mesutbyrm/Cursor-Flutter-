@@ -591,6 +591,7 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
 
   Future<void> _submitAndClose({String? extraReceiptRef}) async {
     if (_submitting) return;
+    if (!await guardCheckoutNoPendingPayment(context, ref)) return;
     setState(() => _submitting = true);
     try {
       await _submitRequest(extraReceiptRef: extraReceiptRef);

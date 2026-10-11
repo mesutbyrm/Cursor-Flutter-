@@ -51,6 +51,9 @@ int _asInt(dynamic v) => v is num ? v.toInt() : int.tryParse('$v') ?? 0;
 /// Sunucunun yazdığı Türkçe hata (`{error:{message}}`, `{error:'..'}`, `{message}`).
 String serverErrorMessage(Object e, {String fallback = 'İşlem tamamlanamadı'}) {
   if (e is DioException) {
+    if (e.response?.statusCode == 429) {
+      return 'Çok fazla istek gönderildi. Lütfen bir süre sonra tekrar deneyin.';
+    }
     final body = e.response?.data;
     if (body is Map) {
       final err = body['error'];

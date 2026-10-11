@@ -696,6 +696,7 @@ abstract final class ApiEndpoints {
   static const adminHealth = '/api/admin/health';
   static const adminComplaints = '/api/admin/complaints';
   static const adminFinanceSummary = '/api/admin/finance/summary';
+  static const adminGirLiveBot = '/api/admin/girlive-bot';
   static const adminMembershipTiers = '/api/admin/membership-tiers';
   static const adminMembershipFeatures = '/api/admin/membership-features';
   static const adminVoiceRoomSettings = '/api/admin/voice-room-settings';
