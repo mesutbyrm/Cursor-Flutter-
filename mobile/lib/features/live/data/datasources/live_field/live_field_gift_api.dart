@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../../../../../core/network/api_endpoints.dart';
 import '../../../../../core/network/dio_provider.dart';
 import '../../../../../core/util/json_util.dart';
+import '../../../../gifts/data/gift_client_price.dart';
 import '../../../../gifts/data/gift_idempotency.dart';
 import '../../../../gifts/domain/gift_staff_finance_mode.dart';
 import '../../../../gifts/data/lucky_gift_remote_datasource.dart';
@@ -32,6 +33,7 @@ class LiveFieldGiftApi {
     int quantity = 1,
     bool isLucky = false,
     GiftStaffFinanceMode? staffFinanceMode,
+    int? clientPrice,
   }) async {
     if (isLucky) {
       final luckyDs = LuckyGiftRemoteDataSource(_dio);
@@ -59,6 +61,7 @@ class LiveFieldGiftApi {
         if (recipientId != null && recipientId.isNotEmpty)
           'recipientId': recipientId,
         if (staffFinanceMode != null) ...staffFinanceMode.toRequestFields(),
+        ...giftClientPriceFields(clientPrice),
       },
       options: giftIdempotentPostOptions(idempotencyKey),
     );

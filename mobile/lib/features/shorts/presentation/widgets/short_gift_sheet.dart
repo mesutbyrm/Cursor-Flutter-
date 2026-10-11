@@ -5,6 +5,7 @@ import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../gifts/domain/gift_platform.dart';
+import '../../../gifts/presentation/gift_send_failure.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../live/data/datasources/live_gifts_remote_datasource.dart';
 import '../../../live/domain/entities/live_gift_catalog.dart';
@@ -101,6 +102,7 @@ class _ShortGiftSheetState extends ConsumerState<_ShortGiftSheet> {
       showShortsSnackBar(context, '${gift.name} gönderildi!');
     } catch (e) {
       if (mounted) {
+        await handleGiftSendFailure(ref, e);
         showShortsSnackBar(context, shortsErrorMessage(e));
       }
     } finally {

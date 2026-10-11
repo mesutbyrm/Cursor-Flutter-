@@ -7,7 +7,8 @@ import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
-import '../../../../core/network/api_exception.dart';
+import '../../data/gift_client_price.dart';
+import '../gift_send_failure.dart';
 import '../../../live/domain/entities/live_gift_catalog.dart';
 import '../../../live/domain/entities/live_gift_type.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
@@ -109,6 +110,7 @@ class RoomGiftPanel extends ConsumerWidget {
             roomId: roomId,
             giftTypeId: g.id,
             staffFinanceMode: financeMode,
+            clientPrice: g.price,
           );
       if (!context.mounted) return;
       ref.refreshWalletCache(force: true);
@@ -120,7 +122,8 @@ class RoomGiftPanel extends ConsumerWidget {
       );
     } catch (e) {
       if (!context.mounted) return;
-      showJetonAwareError(context, ApiException.userMessage(e), ref: ref);
+      await handleGiftSendFailure(ref, e);
+      showJetonAwareError(context, giftSendUserMessage(e), ref: ref);
     }
   }
 }

@@ -1057,6 +1057,7 @@ class ShortsRemoteDataSource {
         'recipientUsername': receiverId,
         'giftTypeId': giftTypeId,
         'type': 'gift',
+        if (unitPrice > 0) 'clientPrice': unitPrice,
       },
       options: giftIdempotentPostOptions(),
     );

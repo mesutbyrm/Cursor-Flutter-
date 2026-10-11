@@ -12,6 +12,8 @@ import '../../../../../core/config/env.dart';
 import '../../../../../core/navigation/wallet_navigation.dart';
 import '../../../../../core/network/api_exception.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
+import '../../../../gifts/data/gift_client_price.dart';
+import '../../../../gifts/presentation/gift_send_failure.dart';
 import '../../../../gifts/presentation/sync/gift_sync_log.dart';
 import '../../../../gifts/presentation/widgets/gift_staff_finance_prompt.dart';
 import '../../../../gifts/domain/gift_rarity.dart';
@@ -350,6 +352,7 @@ class _VoicePremiumGiftPanel2026State
             battleId: pkBattleId,
             isLucky: g.isLucky,
             staffFinanceMode: financeMode,
+            clientPrice: g.price,
           )
           .timeout(const Duration(seconds: 25));
       if (result.luckyResult != null) {
@@ -402,9 +405,10 @@ class _VoicePremiumGiftPanel2026State
       }
     } catch (e) {
       if (mounted) {
+        await handleGiftSendFailure(ref, e);
         final msg = e is TimeoutException
             ? 'Hediye gönderimi zaman aşımına uğradı. Tekrar deneyin.'
-            : ApiException.userMessage(e);
+            : giftSendUserMessage(e);
         showJetonAwareError(context, msg, ref: ref);
       }
     } finally {

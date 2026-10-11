@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../gifts/data/gift_client_price.dart';
 
 String shortsErrorMessage(Object error) {
+  if (isGiftPriceMismatch(error)) return giftPriceMismatchUserMessage;
   if (error is ApiException) return error.message;
   final s = error.toString();
   if (s.startsWith('ApiException:')) {

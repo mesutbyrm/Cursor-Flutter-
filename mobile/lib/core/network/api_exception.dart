@@ -71,6 +71,14 @@ class ApiException implements Exception {
       );
     }
 
+    if (code == 409 && body is Map) {
+      final parsed409 = _parsePriceMismatch(
+        Map<String, dynamic>.from(body),
+        statusCode: code,
+      );
+      if (parsed409 != null) return parsed409;
+    }
+
     if (e.type == DioExceptionType.receiveTimeout ||
         e.type == DioExceptionType.sendTimeout ||
         e.type == DioExceptionType.connectionTimeout) {
@@ -116,6 +124,38 @@ class ApiException implements Exception {
       }
     }
     return ApiException(msg, statusCode: code);
+  }
+
+  static ApiException? _parsePriceMismatch(
+    Map<String, dynamic> body, {
+    int? statusCode,
+  }) {
+    final topCode = body['code']?.toString();
+    if (topCode == 'PRICE_MISMATCH') {
+      final msg = body['message']?.toString().trim();
+      return ApiException(
+        msg != null && msg.isNotEmpty
+            ? msg
+            : 'Fiyat güncellendi, lütfen tekrar deneyin.',
+        statusCode: statusCode,
+        errorCode: 'PRICE_MISMATCH',
+      );
+    }
+    final nested = body['error'];
+    if (nested is Map) {
+      final err = Map<String, dynamic>.from(nested);
+      if (err['code']?.toString() == 'PRICE_MISMATCH') {
+        final msg = (err['message'] ?? err['detail'])?.toString().trim();
+        return ApiException(
+          msg != null && msg.isNotEmpty
+              ? msg
+              : 'Fiyat güncellendi, lütfen tekrar deneyin.',
+          statusCode: statusCode,
+          errorCode: 'PRICE_MISMATCH',
+        );
+      }
+    }
+    return null;
   }
 
   /// Yeni `{ success: false, error: { code, message } }` ve eski `{ error: "..." }`.

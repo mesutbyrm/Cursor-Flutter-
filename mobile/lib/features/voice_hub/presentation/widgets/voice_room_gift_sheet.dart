@@ -10,6 +10,8 @@ import '../../../../core/config/env.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../gifts/data/gift_client_price.dart';
+import '../../../gifts/presentation/gift_send_failure.dart';
 import '../../../gifts/presentation/providers/gift_providers.dart';
 import '../../../gifts/presentation/widgets/gift_staff_finance_prompt.dart';
 import '../../../gifts/domain/premium_gift_catalog_2026.dart';
@@ -161,6 +163,7 @@ Future<void> showVoiceRoomGiftPickerLegacy(
                                             room.ownerName ?? 'Yayıncı',
                                         receiverId: room.ownerId,
                                         staffFinanceMode: financeMode,
+                                        clientPrice: g.price,
                                       );
                                   await ref
                                       .read(giftSoundServiceProvider)
@@ -171,9 +174,10 @@ Future<void> showVoiceRoomGiftPickerLegacy(
                                   }
                                 } catch (e) {
                                   if (context.mounted) {
+                                    await handleGiftSendFailure(ref, e);
                                     showJetonAwareError(
                                       context,
-                                      ApiException.userMessage(e),
+                                      giftSendUserMessage(e),
                                       ref: ref,
                                     );
                                   }

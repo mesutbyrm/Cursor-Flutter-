@@ -10,6 +10,8 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../gifts/data/gift_client_price.dart';
+import '../../../gifts/presentation/gift_send_failure.dart';
 import '../../../gifts/presentation/widgets/lucky_gift_badge.dart';
 import '../../../gifts/presentation/widgets/lucky_gift_spin_overlay.dart';
 import '../../../gifts/presentation/providers/gift_providers.dart';
@@ -222,9 +224,10 @@ Future<void> showLiveGiftPicker(
                                         }
                                       } catch (e) {
                                         if (context.mounted) {
+                                          await handleGiftSendFailure(ref, e);
                                           showJetonAwareError(
                                             context,
-                                            ApiException.userMessage(e),
+                                            giftSendUserMessage(e),
                                             ref: ref,
                                           );
                                         }

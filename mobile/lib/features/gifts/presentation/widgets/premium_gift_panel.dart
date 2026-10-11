@@ -11,7 +11,8 @@ import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/theme/dark_lane_theme.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
-import '../../../../core/network/api_exception.dart';
+import '../../data/gift_client_price.dart';
+import '../gift_send_failure.dart';
 import '../../../live/domain/entities/live_gift_type.dart';
 import '../../../live/presentation/gifts/live_gift_controller.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
@@ -192,7 +193,8 @@ class _PremiumGiftPanelState extends ConsumerState<PremiumGiftPanel> {
       ref.refreshWalletCache(force: true);
     } catch (e) {
       if (!mounted) return;
-      showJetonAwareError(context, ApiException.userMessage(e), ref: ref);
+      await handleGiftSendFailure(ref, e);
+      showJetonAwareError(context, giftSendUserMessage(e), ref: ref);
     }
   }
 }

@@ -4,6 +4,7 @@ import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
+import '../../../gifts/data/gift_client_price.dart';
 import '../../../gifts/data/gift_idempotency.dart';
 import '../../../gifts/data/gift_reciprocal_guard.dart';
 import '../../../gifts/domain/gift_leaderboard_entry.dart';
@@ -76,6 +77,7 @@ class ChatRoomGiftsRemoteDataSource {
     String? battleId,
     bool isLucky = false,
     GiftStaffFinanceMode? staffFinanceMode,
+    int? clientPrice,
   }) async {
     if (isLucky) {
       final lucky = await _lucky.sendLuckyGift(
@@ -105,6 +107,7 @@ class ChatRoomGiftsRemoteDataSource {
             quantity: quantity,
             isLucky: isLucky,
             staffFinanceMode: staffFinanceMode,
+            clientPrice: clientPrice,
           );
       return _mapSendResponse(
         body: field.raw,
@@ -135,6 +138,7 @@ class ChatRoomGiftsRemoteDataSource {
         'platform': platform,
         'idempotencyKey': idempotencyKey,
         if (staffFinanceMode != null) ...staffFinanceMode.toRequestFields(),
+        ...giftClientPriceFields(clientPrice),
       },
       options: giftIdempotentPostOptions(idempotencyKey),
     );

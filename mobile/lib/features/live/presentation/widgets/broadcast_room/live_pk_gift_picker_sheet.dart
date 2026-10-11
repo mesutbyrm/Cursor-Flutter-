@@ -2,7 +2,8 @@ import '../../providers/live_video_pk_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../../core/network/api_exception.dart';
+import '../../../../gifts/data/gift_client_price.dart';
+import '../../../../gifts/presentation/gift_send_failure.dart';
 import '../../../domain/pk/live_pk_side_resolver.dart';
 import '../../gifts/providers/live_gift_providers.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
@@ -255,8 +256,9 @@ class _PkGiftPickerBodyState extends ConsumerState<_PkGiftPickerBody> {
       ref.refreshWalletCache(force: true);
     } catch (e) {
       if (mounted) {
+        await handleGiftSendFailure(ref, e);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
+          SnackBar(content: Text(giftSendUserMessage(e))),
         );
       }
     }

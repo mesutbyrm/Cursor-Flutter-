@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.763+819 (2026-10-11) — Hediye clientPrice + 409 PRICE_MISMATCH (canlifal PR #38)
+
+- **clientPrice:** oda, yayın, kısa video ve live/gift/send gövdelerinde birim fiyat doğrulaması
+- **409 PRICE_MISMATCH:** kullanıcı mesajı + otomatik katalog yenileme (`handleGiftSendFailure`)
+- **Rehber:** `docs/CANLIFAL_HEDIYE_SISTEMI_FLUTTER_REHBER.md`
+
 ## 1.0.762+818 (2026-10-10) — CI/APK: main tip derleme + GirLive merge
 
 - **APK workflow:** gecikmiş `workflow_run` tetiklemesinde main ucu (tip) derlenir; boş SHA commit status 404 düzeltmesi
@@ -382,7 +388,7 @@
 ## 1.0.715+768 (2026-10-05) — Jeton fiyatı sunucudan
 
 - **Jeton satın alma:** ödeme tutarı artık istemcide hesaplanmaz; `GET /api/public/jeton-price?jeton=<adet>` → `quote.finalAmount` ödeme talebine `amount` olarak yazılır, TL alanı salt okunur
-- **PRICE_MISMATCH (400):** «Fiyat güncellendi, lütfen tekrar deneyin.» gösterilir
+- **PRICE_MISMATCH (409 hediye / jeton ödeme):** «Fiyat güncellendi, lütfen tekrar deneyin.» + katalog yenileme
 
 ## 1.0.714+767 (2026-10-05) — Merkezi animasyon kataloğu (giriş/çıkış) · ölü kod temizliği
 

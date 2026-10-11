@@ -5,6 +5,7 @@ import '../../../../core/media/cloud_media_url.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
+import '../../../gifts/data/gift_client_price.dart';
 import '../../../gifts/data/gift_idempotency.dart';
 import '../../../gifts/data/lucky_gift_remote_datasource.dart';
 import '../../../gifts/domain/lucky_gift_entities.dart';
@@ -156,6 +157,7 @@ class LiveGiftsRemoteDataSource {
         if (toUserId != null && toUserId.isNotEmpty) 'toUserId': toUserId,
         if (pkMatchId != null && pkMatchId.isNotEmpty) 'pkMatchId': pkMatchId,
         if (staffFinanceMode != null) ...staffFinanceMode.toRequestFields(),
+        ...giftClientPriceFields(unitPrice),
       },
       options: giftIdempotentPostOptions(idempotencyKey),
     );
