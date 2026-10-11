@@ -4,18 +4,19 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.771+827` |
-| Tarih (UTC) | 2026-10-11 19:36 |
-| Commit | [`8adf00844015f4e1025e7675b44f98a5a996e92d`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/8adf00844015f4e1025e7675b44f98a5a996e92d) |
-| İş akışı | [Run 38167197830](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/38167197830) |
+| Sürüm | `1.0.772+828` |
+| Tarih (UTC) | 2026-10-11 20:35 |
+| Commit | [`c5a3dbb823f7701be5bccde5714e92a4c85d503c`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/c5a3dbb823f7701be5bccde5714e92a4c85d503c) |
+| İş akışı | [Run 38171245517](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/38171245517) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.771+827 (2026-10-11) — PR #41 ajans satın alma (TL bonus modu)
+## 1.0.772+828 (2026-10-11) — PK davet/erken berabere + videolu hediye kuyruk
 
-- **Ajans cüzdanı:** Toplu Jeton — «Jeton → TL» (indirim) ve «TL → bonus» modları; `GET/POST /api/agency/purchase` PR #41 gövdesi
-- **Doküman:** `output/CANLIFAL_HEDIYE_AJANS_AUDIT_RAPOR.md` (hediye dağılım + ajans parity)
+- **Canlı PK:** `fetchStreamBattle` yenilemede `finalizeExpired: false` — kabul sonrası sunucunun PK'yı hemen «berabere» bitirmesi engellendi; erken `endedAt`/`winnerId` süre dolmadan yok sayılır
+- **Sesli PK davet:** meydan okuyana yankı diyaloğu ve «her oda sahibine davet» fallback kaldırıldı; `isPkChallengerUser` ile alıcı netleştirildi
+- **Videolu hediye:** `gift_queue_updated` REST sonrası bekleyen animasyonları yine kuyruğa alır
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
