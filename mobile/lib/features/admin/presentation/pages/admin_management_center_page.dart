@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/mock_ui_kit.dart';
+import '../../../auth/domain/me_permissions.dart';
+import '../../../auth/presentation/providers/me_permissions_provider.dart';
 import '../providers/staff_access_provider.dart';
 
 /// Yönetim Merkezi kartı tanımı. Görünürlük [StaffAccess] yetkilerinden gelir;
@@ -29,7 +31,11 @@ class AdminCenterEntry {
 }
 
 /// Yetkiye göre görünen Yönetim Merkezi kartları.
-List<AdminCenterEntry> adminCenterEntries(StaffAccess a) {
+List<AdminCenterEntry> adminCenterEntries(
+  StaffAccess a, {
+  MePermissions? serverPerms,
+}) {
+  bool sp(String p) => serverPerms?.can(p) ?? false;
   return [
     AdminCenterEntry(
       title: 'Kullanıcı Yönetimi',
@@ -76,8 +82,16 @@ List<AdminCenterEntry> adminCenterEntries(StaffAccess a) {
       subtitle: 'Kullanıcı ve içerik',
       icon: Icons.report_gmailerrorred_rounded,
       accent: const Color(0xFFFF5A5F),
-      route: '/admin/reports',
-      visible: a.canViewReports,
+      route: '/admin/complaints',
+      visible: a.canViewReports || sp('moderation.report.handle'),
+    ),
+    AdminCenterEntry(
+      title: 'Finans Özeti',
+      subtitle: 'Gelir, harcama, net',
+      icon: Icons.account_balance_rounded,
+      accent: const Color(0xFF22C55E),
+      route: '/admin/finance-summary',
+      visible: a.canManagePayments || sp('finance.report.view'),
     ),
     AdminCenterEntry(
       title: 'Bildirim Gönder',
@@ -161,7 +175,10 @@ class AdminManagementCenterPage extends ConsumerWidget {
         ),
       );
     } else {
-      final entries = adminCenterEntries(access).where((e) => e.visible).toList();
+      final perms = ref.watch(mePermissionsProvider).valueOrNull;
+      final entries = adminCenterEntries(access, serverPerms: perms)
+          .where((e) => e.visible)
+          .toList();
       body = LayoutBuilder(
         builder: (context, box) {
           final cols = box.maxWidth >= 900 ? 3 : 2;

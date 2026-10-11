@@ -4,6 +4,8 @@ import '../../../core/network/api_endpoints.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../../core/util/json_util.dart';
+import '../domain/admin_complaint.dart';
+import '../domain/admin_finance_summary.dart';
 import '../domain/admin_user_extended_data.dart';
 import '../domain/admin_user_util.dart';
 
@@ -698,6 +700,74 @@ class AdminRemoteDataSource {
       if (e.statusCode == 403 || e.statusCode == 404) return const [];
       rethrow;
     }
+  }
+
+  Future<AdminComplaintsPageResult> fetchComplaints({
+    String status = 'pending',
+    int page = 1,
+    int limit = 50,
+    String search = '',
+  }) async {
+    final res = await _adminTimeout(
+      _dio.safeGet<dynamic>(
+        ApiEndpoints.adminComplaints,
+        query: {
+          'status': status,
+          'page': '$page',
+          'limit': '$limit',
+          if (search.trim().isNotEmpty) 'search': search.trim(),
+        },
+        forceRefresh: true,
+        options: _opts(),
+      ),
+    );
+    final body = res.data;
+    if (body is Map) {
+      return AdminComplaintsPageResult.fromJson(Map<String, dynamic>.from(body));
+    }
+    return const AdminComplaintsPageResult();
+  }
+
+  Future<AdminComplaint> patchComplaint({
+    required String reportId,
+    required String action,
+    String? reason,
+  }) async {
+    final res = await _adminTimeout(
+      _dio.safePatch<dynamic>(
+        ApiEndpoints.adminComplaints,
+        data: {
+          'reportId': reportId,
+          'action': action,
+          if (reason != null && reason.isNotEmpty) 'reason': reason,
+        },
+        options: _opts(),
+      ),
+    );
+    final map = _unwrapMap(res.data);
+    return AdminComplaint.fromJson(map);
+  }
+
+  Future<AdminFinanceSummary> fetchFinanceSummary({
+    String period = 'monthly',
+    bool excludeTest = true,
+  }) async {
+    final res = await _adminTimeout(
+      _dio.safeGet<dynamic>(
+        ApiEndpoints.adminFinanceSummary,
+        query: {
+          'period': period,
+          'excludeTest': excludeTest ? 'true' : 'false',
+        },
+        forceRefresh: true,
+        options: _opts(),
+      ),
+    );
+    final body = res.data;
+    if (body is Map) {
+      return AdminFinanceSummary.fromJson(Map<String, dynamic>.from(body));
+    }
+    return const AdminFinanceSummary();
   }
 
   Map<String, dynamic> _unwrapMap(dynamic data) {

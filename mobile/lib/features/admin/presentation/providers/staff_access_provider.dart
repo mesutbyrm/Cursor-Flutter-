@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/auth/staff_roles.dart';
+import '../../../auth/domain/me_permissions.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../auth/presentation/providers/me_permissions_provider.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 
 /// Site + oturumdan staff yetkileri (`/api/user/credits` + `/api/me`).
@@ -92,10 +94,46 @@ class StaffAccess {
     }
     return isSiteAdmin ? 'Site Admin' : 'Yönetici';
   }
+
+  StaffAccess mergeServerPermissions(MePermissions? perms) {
+    if (perms == null || (!perms.isSuper && perms.permissions.isEmpty)) {
+      return this;
+    }
+    bool c(String p) => perms.can(p);
+    final finance =
+        canManagePayments || c('finance.report.view') || c('finance.payment.handle');
+    final moderation = canModerate || c('moderation.report.handle');
+    final audit = canViewActivityLog || c('system.audit.view');
+    final staff = isStaffMember ||
+        perms.isSuper ||
+        perms.role != 'user' ||
+        perms.permissions.isNotEmpty;
+    return StaffAccess(
+      canManagePayments: finance,
+      isSiteAdmin: isSiteAdmin || perms.isSuper || perms.role == 'admin',
+      showAdminPanel: showAdminPanel || audit || perms.isSuper,
+      canManageGifts: canManageGifts,
+      canManageSiteAnimations: canManageSiteAnimations,
+      isStaffMember: staff,
+      canModerate: moderation,
+      canManageVoiceRooms: canManageVoiceRooms,
+      canManageLiveStreams: canManageLiveStreams,
+      canManageUsers: canManageUsers || c('user.profile.edit'),
+      canViewReports: canViewReports || c('moderation.report.handle'),
+      canManageNotifications: canManageNotifications,
+      isSupportStaff: isSupportStaff,
+      canViewActivityLog: audit,
+      siteRole: siteRole ?? (perms.role != 'user' ? perms.role : null),
+      username: username,
+      isFounder: isFounder,
+    );
+  }
 }
 
 final staffAccessProvider = Provider<StaffAccess>((ref) {
   final user = ref.watch(authControllerProvider).valueOrNull;
+  final serverPerms = ref.watch(mePermissionsProvider).valueOrNull;
+
   if (user == null) {
     return const StaffAccess(
       canManagePayments: false,
@@ -154,7 +192,7 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
       siteRole: siteRole?.trim().isNotEmpty == true ? siteRole : 'admin',
       username: username,
       isFounder: usernameIsFounder,
-    );
+    ).mergeServerPermissions(serverPerms);
   }
 
   final canManagePayments = StaffRoles.canManageFinance(
@@ -256,5 +294,5 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
     siteRole: effectiveRole,
     username: username,
     isFounder: isFounder,
-  );
+  ).mergeServerPermissions(serverPerms);
 });

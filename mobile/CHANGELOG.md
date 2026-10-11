@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.765+821 (2026-10-11) — Episode 29 UI: admin bar, şikâyet, finans, checkout 409
+
+- **Yetki:** `/api/me/permissions` → `StaffAccess.mergeServerPermissions` (admin menü + panel)
+- **Admin:** `pending-counts` yatay şerit; `/admin/complaints`, `/admin/finance-summary`; `GET /api/admin/health` öncelikli sağlık
+- **Ödeme:** Jeton/CFC checkout’ta 409 — iptal edip yeniden dene diyaloğu
+
 ## 1.0.764+820 (2026-10-11) — Backend episode 29 rehber + ödeme/yetki uçları
 
 - **Rehber:** `docs/CANLIFAL_YENi_ENDPOINTLER_FLUTTER_REHBER.md` (canlifal PR #30–#40)

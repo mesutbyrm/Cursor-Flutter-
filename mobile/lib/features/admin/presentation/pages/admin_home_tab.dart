@@ -17,6 +17,8 @@ import '../providers/admin_live_broadcasts_providers.dart';
 import '../providers/admin_system_health_providers.dart';
 import '../providers/admin_team_management_providers.dart';
 import '../providers/admin_advanced_reporting_providers.dart';
+import '../providers/admin_pending_counts_provider.dart';
+import '../widgets/admin_pending_ops_bar.dart';
 
 /// Admin giriş sekmesi — bildirimler + hızlı işlemler birleşti.
 class AdminHomeTab extends ConsumerStatefulWidget {
@@ -62,6 +64,7 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
     ref.invalidate(adminPaymentRequestsProvider);
     ref.invalidate(adminPaymentNotificationsProvider);
     ref.invalidate(adminPanelBadgeCountsProvider);
+    ref.invalidate(adminPendingCountsProvider);
   }
 
   @override
@@ -126,6 +129,8 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
             _AllToolsBanner(onTap: () => context.push('/admin/tools')),
+            const SizedBox(height: 16),
+            const AdminPendingOpsBar(),
             const SizedBox(height: 20),
             // Bekleyen işlemler
             if (pendingCount > 0 || activityMonitoringCount > 0 || fraudAlertCount > 0) ...[

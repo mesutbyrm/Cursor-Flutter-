@@ -27,6 +27,7 @@ import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_hub_providers.dart';
 import '../providers/profile_providers.dart';
 import 'payment_methods_summary_line.dart';
+import 'pending_payment_checkout_helper.dart';
 
 /// Jeton satın alma — mockup: ödeme yöntemi → WhatsApp / Papara / Havale.
 void openJetonCheckoutFlow(
@@ -599,11 +600,24 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
       Navigator.of(context).pop(true);
       widget.onDone();
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
+      if (!mounted) return;
+      if (isPendingPaymentConflict(e)) {
+        final retried = await handlePendingPaymentCheckoutConflict(
+          context,
+          ref,
+          retrySubmit: () => _submitRequest(extraReceiptRef: extraReceiptRef),
         );
+        if (retried && mounted) {
+          await _showWaitDialog();
+          if (!mounted) return;
+          Navigator.of(context).pop(true);
+          widget.onDone();
+        }
+        return;
       }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

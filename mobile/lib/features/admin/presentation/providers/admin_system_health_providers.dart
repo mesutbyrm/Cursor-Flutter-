@@ -2,23 +2,28 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
+import '../../../../core/util/json_util.dart';
 
-/// Sistem sağlığı istatistikleri.
+/// Sistem sağlığı — önce PR #40 `GET /api/admin/health`, yoksa legacy uç.
 final adminSystemHealthProvider =
     FutureProvider.autoDispose<AdminSystemHealth>((ref) async {
   final dio = ref.watch(dioProvider);
-  try {
-    final res = await dio.safeGet<dynamic>(
-      '${ApiEndpoints.adminUsers}/system-health',
-    );
-    if (res.data is Map) {
-      final data = res.data as Map<String, dynamic>;
-      return AdminSystemHealth.fromJson(data);
+  for (final path in [
+    ApiEndpoints.adminHealth,
+    '${ApiEndpoints.adminUsers}/system-health',
+  ]) {
+    try {
+      final res = await dio.safeGet<dynamic>(path, forceRefresh: true);
+      if (res.data is Map) {
+        return AdminSystemHealth.fromJson(
+          Map<String, dynamic>.from(res.data as Map),
+        );
+      }
+    } catch (_) {
+      continue;
     }
-    return const AdminSystemHealth();
-  } catch (e) {
-    return const AdminSystemHealth();
   }
+  return const AdminSystemHealth();
 });
 
 /// Sistem sağlığı bilgileri.
@@ -31,6 +36,7 @@ class AdminSystemHealth {
   final int pendingOperations;
   final double errorRate; // %
   final String lastUpdated;
+  final String serverStatus;
 
   const AdminSystemHealth({
     this.totalUsers = 0,
@@ -41,19 +47,47 @@ class AdminSystemHealth {
     this.pendingOperations = 0,
     this.errorRate = 0.0,
     this.lastUpdated = '',
+    this.serverStatus = '',
   });
 
   factory AdminSystemHealth.fromJson(Map<String, dynamic> json) {
+    final root = json['data'] is Map ? asJsonMap(json['data']) : asJsonMap(json);
+
+    // Legacy snake_case flat map
+    if (root.containsKey('total_users') || root.containsKey('api_response_time')) {
+      return AdminSystemHealth(
+        totalUsers: root['total_users'] as int? ?? 0,
+        activeUsers: root['active_users'] as int? ?? 0,
+        totalTransactions: root['total_transactions'] as int? ?? 0,
+        apiResponseTime: (root['api_response_time'] as num?)?.toDouble() ?? 0.0,
+        databaseLoadPercentage:
+            (root['database_load_percentage'] as num?)?.toDouble() ?? 0.0,
+        pendingOperations: root['pending_operations'] as int? ?? 0,
+        errorRate: (root['error_rate'] as num?)?.toDouble() ?? 0.0,
+        lastUpdated: root['last_updated']?.toString() ?? '',
+        serverStatus: root['status']?.toString() ?? '',
+      );
+    }
+
+    final db = root['database'] is Map ? asJsonMap(root['database']) : {};
+    final users = root['users'] is Map ? asJsonMap(root['users']) : {};
+    final payments = root['payments'] is Map ? asJsonMap(root['payments']) : {};
+    final moderation =
+        root['moderation'] is Map ? asJsonMap(root['moderation']) : {};
+    final latency = (db['latencyMs'] as num?)?.toDouble() ?? 0.0;
+    final pending = (payments['pending'] as num?)?.toInt() ?? 0;
+    final modPending = (moderation['pendingReports'] as num?)?.toInt() ?? 0;
+
     return AdminSystemHealth(
-      totalUsers: json['total_users'] as int? ?? 0,
-      activeUsers: json['active_users'] as int? ?? 0,
-      totalTransactions: json['total_transactions'] as int? ?? 0,
-      apiResponseTime: (json['api_response_time'] as num?)?.toDouble() ?? 0.0,
-      databaseLoadPercentage:
-          (json['database_load_percentage'] as num?)?.toDouble() ?? 0.0,
-      pendingOperations: json['pending_operations'] as int? ?? 0,
-      errorRate: (json['error_rate'] as num?)?.toDouble() ?? 0.0,
-      lastUpdated: json['last_updated'] as String? ?? '',
+      totalUsers: (users['total'] as num?)?.toInt() ?? 0,
+      activeUsers: (users['activeLastHour'] as num?)?.toInt() ?? 0,
+      totalTransactions: (payments['total'] as num?)?.toInt() ?? 0,
+      apiResponseTime: latency,
+      databaseLoadPercentage: db['connected'] == false ? 100 : latency / 5,
+      pendingOperations: pending + modPending,
+      errorRate: (payments['failedToday'] as num?)?.toDouble() ?? 0,
+      lastUpdated: root['timestamp']?.toString() ?? '',
+      serverStatus: root['status']?.toString() ?? '',
     );
   }
 }
@@ -107,18 +141,26 @@ class DailyStat {
 
 /// Sistem sağlığı durumu.
 enum HealthStatus {
-  excellent,  // Mükemmel
-  good,       // İyi
-  fair,       // Orta
-  poor,       // Zayıf
-  critical,   // Kritik
+  excellent,
+  good,
+  fair,
+  poor,
+  critical,
 }
 
 HealthStatus calculateHealthStatus(AdminSystemHealth health) {
-  // Basit hesaplama: API yanıt süresi, DB yükü, hata oranı
-  final apiScore = health.apiResponseTime < 100 ? 1.0 : health.apiResponseTime < 300 ? 0.75 : 0.5;
-  final dbScore = health.databaseLoadPercentage < 50 ? 1.0 : health.databaseLoadPercentage < 80 ? 0.75 : 0.5;
-  final errorScore = health.errorRate < 1 ? 1.0 : health.errorRate < 5 ? 0.75 : 0.5;
+  if (health.serverStatus == 'healthy') return HealthStatus.excellent;
+  if (health.serverStatus == 'degraded') return HealthStatus.fair;
+
+  final apiScore =
+      health.apiResponseTime < 100 ? 1.0 : health.apiResponseTime < 300 ? 0.75 : 0.5;
+  final dbScore = health.databaseLoadPercentage < 50
+      ? 1.0
+      : health.databaseLoadPercentage < 80
+          ? 0.75
+          : 0.5;
+  final errorScore =
+      health.errorRate < 1 ? 1.0 : health.errorRate < 5 ? 0.75 : 0.5;
 
   final avgScore = (apiScore + dbScore + errorScore) / 3;
 

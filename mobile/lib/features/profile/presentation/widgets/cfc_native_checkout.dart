@@ -17,6 +17,7 @@ import '../../../admin/presentation/providers/admin_providers.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';
 import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_providers.dart';
+import 'pending_payment_checkout_helper.dart';
 
 enum CfcPaymentMethod { whatsapp, papara, bank_transfer }
 
@@ -287,11 +288,18 @@ class _CfcNativeCheckoutState extends ConsumerState<CfcNativeCheckout> {
         ),
       );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
+      if (!mounted) return;
+      if (isPendingPaymentConflict(e)) {
+        await handlePendingPaymentCheckoutConflict(
+          context,
+          ref,
+          retrySubmit: () => _submit(cfg),
         );
+        return;
       }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

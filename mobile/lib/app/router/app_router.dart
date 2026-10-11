@@ -61,6 +61,8 @@ import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
 import '../../features/admin/presentation/pages/admin_live_streams_page.dart';
 import '../../features/admin/presentation/pages/admin_voice_rooms_page.dart';
 import '../../features/admin/presentation/pages/admin_voice_room_finance_page.dart';
+import '../../features/admin/presentation/pages/admin_complaints_page.dart';
+import '../../features/admin/presentation/pages/admin_finance_summary_page.dart';
 import '../../features/admin/presentation/pages/admin_sub_pages.dart';
 import '../../features/admin/presentation/pages/admin_user_command_center_page.dart';
 import '../../features/admin/presentation/pages/admin_live_broadcasts_control_page.dart';
@@ -862,6 +864,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin/reports',
         builder: (context, state) => const AdminReportsPage(),
+      ),
+      GoRoute(
+        path: '/admin/complaints',
+        builder: (context, state) => const AdminComplaintsPage(),
+      ),
+      GoRoute(
+        path: '/admin/finance-summary',
+        builder: (context, state) => const AdminFinanceSummaryPage(),
       ),
       GoRoute(
         path: '/admin/moderation',

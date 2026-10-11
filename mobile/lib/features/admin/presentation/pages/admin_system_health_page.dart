@@ -15,7 +15,7 @@ class AdminSystemHealthPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final access = ref.watch(staffAccessProvider);
-    if (!access.isSiteAdmin) {
+    if (!access.isSiteAdmin && !access.canViewActivityLog) {
       return Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: DiscoverBackground(
