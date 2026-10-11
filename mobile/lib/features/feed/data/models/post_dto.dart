@@ -224,7 +224,7 @@ abstract class PostDto with _$PostDto {
         'share_count',
       ]),
     );
-    if (direct != null && direct > 0) return direct;
+    if (direct > 0) return direct;
     final meta = json['metadata'];
     if (meta is Map) {
       final nested = asInt(
@@ -235,9 +235,9 @@ abstract class PostDto with _$PostDto {
           'repostCount',
         ]),
       );
-      if (nested != null && nested > 0) return nested;
+      if (nested > 0) return nested;
     }
-    return direct ?? 0;
+    return direct;
   }
 
   static DateTime? _parseDate(dynamic v) {
