@@ -49,6 +49,7 @@ abstract class WalletRepository {
   Future<List<PaymentMethodEntity>> paymentMethods();
   Future<void> submitPaymentRequest(Map<String, dynamic> body);
   Future<void> cancelPaymentRequest(String requestId);
+  Future<CfcPaymentRequestEntity?> fetchActivePendingPaymentRequest();
   Future<List<CfcPaymentRequestEntity>> myPaymentRequests();
   Future<PagedResult<CfcPaymentRequestEntity>> myPaymentRequestsPage({
     int page,

@@ -248,4 +248,4 @@ adminPaymentRequestsProvider birleştirme mantığı.
 
 ---
 
-**Son güncelleme:** 2026-10-11 · Flutter analiz commit: `main` (hediye clientPrice + admin mevcut kodu)
+**Son güncelleme:** 2026-10-11 · Backend **PR #39–#40** `full-source` merge edildi → Flutter rehber: [`CANLIFAL_YENi_ENDPOINTLER_FLUTTER_REHBER.md`](CANLIFAL_YENi_ENDPOINTLER_FLUTTER_REHBER.md)

@@ -68,6 +68,8 @@ abstract final class ApiEndpoints {
   static const meVipPreferences = '/api/me/vip-preferences';
   static const meVipXp = '/api/me/vip-xp';
   static const meAdminCapabilities = '/api/me/admin-capabilities';
+  /// PR #39/#40 — granüler yetki listesi (mobil admin menü).
+  static const mePermissions = '/api/me/permissions';
 
   /// Kılavuz §9.2 — alınan hediyeler (eski `/api/users/me/gifts-received` yedek).
   static const userReceivedGifts = '/api/user/received-gifts';
@@ -664,6 +666,8 @@ abstract final class ApiEndpoints {
   static const paymentConfig = '/api/payments/config';
   static const paymentMethods = '/api/payments/methods';
   static const paymentRequests = '/api/payments/requests';
+  /// Aktif bekleyen talep (24h TTL sunucu); jeton + CFC.
+  static const paymentRequestsPending = '/api/payments/requests/pending';
 
   /// Ödeme bildirimlerim — `GET ?page=&limit=&status=` (düz dizi döner).
   static const paymentNotify = '/api/payments/notify';
@@ -682,6 +686,11 @@ abstract final class ApiEndpoints {
   static const adminNotifications = '/api/admin/notifications';
   static const adminPaymentNotifications = '/api/admin/payment-notifications';
   static const adminPaymentsStream = '/api/admin/payments/stream';
+  /// PR #40 — admin üst bar bekleyen iş sayıları.
+  static const adminPendingCounts = '/api/admin/pending-counts';
+  static const adminHealth = '/api/admin/health';
+  static const adminComplaints = '/api/admin/complaints';
+  static const adminFinanceSummary = '/api/admin/finance/summary';
   static const adminMembershipTiers = '/api/admin/membership-tiers';
   static const adminMembershipFeatures = '/api/admin/membership-features';
   static const adminVoiceRoomSettings = '/api/admin/voice-room-settings';

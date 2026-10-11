@@ -606,9 +606,56 @@ class WalletRemoteDataSource {
   }
 
   bool _isPendingPaymentConflict(int code, String msg) {
-    if (code != 400) return false;
+    if (code != 400 && code != 409) return false;
     final lower = msg.toLowerCase();
     return lower.contains('bekleyen') && lower.contains('talep');
+  }
+
+  ApiException _pendingPaymentConflictException(
+    int code,
+    Map<String, dynamic>? data,
+  ) {
+    String message =
+        'Zaten bekleyen bir ödeme talebiniz var. Talebi iptal edip tekrar '
+        'deneyebilir veya yönetici onayını bekleyebilirsiniz.';
+    if (data != null) {
+      final existing = data['existingRequest'];
+      if (existing is Map) {
+        final ex = Map<String, dynamic>.from(existing);
+        final id = ex['id']?.toString();
+        final amount = asInt(pick(ex, ['amount', 'coins']));
+        if (id != null && id.isNotEmpty) {
+          message =
+              'Bekleyen talep: $amount birim (no: ${id.substring(0, id.length.clamp(0, 8))}…). '
+              'İptal edip yeni talep oluşturabilirsiniz.';
+        }
+      }
+    }
+    return ApiException(
+      message,
+      statusCode: code,
+      errorCode: 'PENDING_PAYMENT_EXISTS',
+    );
+  }
+
+  /// PR #39 — sunucu TTL ile tek aktif pending.
+  Future<CfcPaymentRequestEntity?> fetchActivePendingPaymentRequest() async {
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.paymentRequestsPending,
+      );
+      final body = res.data;
+      if (body is! Map) return null;
+      final map = Map<String, dynamic>.from(body);
+      if (map['hasPending'] != true) return null;
+      final req = map['request'];
+      if (req is! Map) return null;
+      return CfcPaymentRequestEntity.fromJson(
+        Map<String, dynamic>.from(req),
+      );
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> submitPaymentRequest(Map<String, dynamic> rawBody) async {
@@ -669,10 +716,17 @@ class WalletRemoteDataSource {
           // Backend kullanıcı başına tek bekleyen talebe izin verir ve iptal
           // ucu sunmaz; yönetici onayı/reddi beklenmeli.
           if (_isPendingPaymentConflict(code, msg)) {
-            throw ApiException(
-              'Zaten bekleyen bir ödeme talebiniz var. Yönetici onayını '
-              'bekleyin veya destek ile iletişime geçin.',
-              statusCode: code,
+            throw _pendingPaymentConflictException(
+              code,
+              data is Map ? Map<String, dynamic>.from(data) : null,
+            );
+          }
+          if (code == 409 &&
+              data is Map &&
+              data['existingRequest'] is Map) {
+            throw _pendingPaymentConflictException(
+              code,
+              Map<String, dynamic>.from(data),
             );
           }
           if (code == 400 && msg.toLowerCase().contains('geçersiz miktar')) {

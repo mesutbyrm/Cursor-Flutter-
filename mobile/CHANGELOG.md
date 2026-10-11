@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.764+820 (2026-10-11) — Backend episode 29 rehber + ödeme/yetki uçları
+
+- **Rehber:** `docs/CANLIFAL_YENi_ENDPOINTLER_FLUTTER_REHBER.md` (canlifal PR #30–#40)
+- **API:** `/api/me/permissions`, `/api/payments/requests/pending`, admin pending-counts/health/complaints/finance
+- **Ödeme:** 409 `existingRequest`, pending endpoint ile banner senkronu; TTL 24 saat gösterimi
+
 ## 1.0.763+819 (2026-10-11) — Hediye clientPrice + 409 PRICE_MISMATCH (canlifal PR #38)
 
 - **clientPrice:** oda, yayın, kısa video ve live/gift/send gövdelerinde birim fiyat doğrulaması

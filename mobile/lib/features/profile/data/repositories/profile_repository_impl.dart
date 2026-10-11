@@ -261,6 +261,10 @@ class WalletRepositoryImpl implements WalletRepository {
       _remote.cancelPaymentRequest(requestId);
 
   @override
+  Future<CfcPaymentRequestEntity?> fetchActivePendingPaymentRequest() =>
+      _remote.fetchActivePendingPaymentRequest();
+
+  @override
   Future<List<CfcPaymentRequestEntity>> myPaymentRequests() async {
     final page = await myPaymentRequestsPage(page: 1);
     return page.items;

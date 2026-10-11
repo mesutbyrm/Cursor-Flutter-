@@ -21,6 +21,10 @@ class _FakeWallet implements WalletRepository {
   bool fail = false;
 
   @override
+  Future<CfcPaymentRequestEntity?> fetchActivePendingPaymentRequest() async =>
+      null;
+
+  @override
   Future<PagedResult<CfcPaymentRequestEntity>> myPaymentRequestsPage({
     int page = 1,
   }) async {

@@ -54,7 +54,8 @@ class CfcPaymentRequestEntity {
 
   DateTime? get expiresAt {
     final created = createdDate;
-    return created == null ? null : created.add(const Duration(hours: 1));
+    // Sunucu TTL 24 saat (PR #39); eski kayıtlar için güvenli üst sınır.
+    return created == null ? null : created.add(const Duration(hours: 24));
   }
 
   Duration? get timeLeft {

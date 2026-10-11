@@ -23,9 +23,13 @@ class PaymentRequestsNotifier
     // Hesap değişince (çıkış/giriş) önceki kullanıcının talepleri kalmasın.
     final uid = ref.watch(currentUserIdProvider);
     if (uid == null || uid.isEmpty) return const [];
-    final bundle = await ref
-        .read(walletRepositoryProvider)
-        .myPaymentRequestsPage(page: 1);
+    final wallet = ref.read(walletRepositoryProvider);
+    final active = await wallet.fetchActivePendingPaymentRequest();
+    if (active != null && active.isPending) {
+      _end = true;
+      return [active];
+    }
+    final bundle = await wallet.myPaymentRequestsPage(page: 1);
     _end = !bundle.hasMore;
     return bundle.items;
   }
@@ -40,9 +44,13 @@ class PaymentRequestsNotifier
     final next = await AsyncValue.guard(() async {
       _page = 1;
       _end = false;
-      final bundle = await ref
-          .read(walletRepositoryProvider)
-          .myPaymentRequestsPage(page: 1);
+      final wallet = ref.read(walletRepositoryProvider);
+      final active = await wallet.fetchActivePendingPaymentRequest();
+      if (active != null && active.isPending) {
+        _end = true;
+        return [active];
+      }
+      final bundle = await wallet.myPaymentRequestsPage(page: 1);
       _end = !bundle.hasMore;
       return bundle.items;
     });
