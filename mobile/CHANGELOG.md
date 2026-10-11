@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.770+826 (2026-10-11) — CI: Yönetim Merkezi kart sayısı testi
+
+- **Test:** GirLive Bot kartı sonrası admin Yönetim Merkezi görünür kart sayısı 14
+
 ## 1.0.769+825 (2026-10-11) — GirLive Bot admin aç/kapa + panel girişi
 
 - **Admin paneli:** «Bot & moderasyon» → GirLive Bot (site admin / kurucu)
