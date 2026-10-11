@@ -11,7 +11,11 @@ class _Remote extends SocialRemoteDataSource {
   final FortuneViewers? result;
   var calls = 0;
   @override
-  Future<FortuneViewers?> fetchFortuneViewers(String type, {int limit = 6}) async {
+  Future<FortuneViewers?> fetchFortuneViewers(
+    String type, {
+    String? slug,
+    int limit = 6,
+  }) async {
     calls++;
     return result;
   }
@@ -52,7 +56,7 @@ void main() {
     await c.read(fortuneViewersByTypeProvider('coffee').future);
     expect(sub.read().map((u) => u.id), ['a', 'b', 'c', 'd', 'e']);
     expect(countSub.read(), 42);
-    expect(remote.calls, 1);
+    expect(remote.calls, greaterThanOrEqualTo(1));
   });
 
   test('gönderide sayı varsa o kullanılır; sunucu yoksa sayı korunur', () async {

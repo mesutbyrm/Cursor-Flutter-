@@ -33,33 +33,55 @@ class SocialRemoteDataSource {
   /// GET `/api/social/fortune-viewers?type=` — bu fal türüne kaç kez
   /// baktırıldığı ve türü herkese açık paylaşan son kullanıcılar.
   /// Uç yoksa / hata olursa `null` (çağıran akıştan türetir).
-  Future<FortuneViewers?> fetchFortuneViewers(String type, {int limit = 6}) async {
-    final t = type.trim();
-    if (t.isEmpty) return null;
-    try {
-      final res = await _dio.safeGet<dynamic>(
-        ApiEndpoints.socialFortuneViewers,
-        query: {'type': t, 'limit': limit},
-      );
-      final body = res.data;
-      if (body is! Map) return null;
-      final data = body['data'];
-      if (data is! Map) return null;
-      final raw = data['users'];
-      final users = <UserEntity>[
-        if (raw is List)
-          for (final u in raw)
-            if (u is Map)
-              UserDto.fromApiMap(Map<String, dynamic>.from(u)).toEntity(),
-      ];
-      final c = data['count'];
-      return FortuneViewers(
-        count: c is num ? c.toInt() : int.tryParse('$c') ?? 0,
-        users: users.where((u) => u.id.isNotEmpty).toList(growable: false),
-      );
-    } catch (_) {
-      return null;
+  Future<FortuneViewers?> fetchFortuneViewers(
+    String type, {
+    String? slug,
+    int limit = 6,
+  }) async {
+    final queries = <String>{
+      type.trim(),
+      if (slug != null && slug.trim().isNotEmpty) slug.trim(),
+    }.where((q) => q.isNotEmpty).toList();
+    if (queries.isEmpty) return null;
+
+    for (final q in queries) {
+      try {
+        final res = await _dio.safeGet<dynamic>(
+          ApiEndpoints.socialFortuneViewers,
+          query: {'type': q, 'limit': limit},
+        );
+        final parsed = _parseFortuneViewersBody(res.data);
+        if (parsed != null &&
+            (parsed.count > 0 || parsed.users.isNotEmpty)) {
+          return parsed;
+        }
+      } catch (_) {
+        continue;
+      }
     }
+    return null;
+  }
+
+  FortuneViewers? _parseFortuneViewersBody(dynamic body) {
+    if (body is! Map) return null;
+    final root = asJsonMap(body);
+    final data = root['data'] is Map
+        ? asJsonMap(root['data'])
+        : root;
+    final raw = data['users'] ?? data['viewers'] ?? data['recentUsers'];
+    final users = <UserEntity>[
+      if (raw is List)
+        for (final u in raw)
+          if (u is Map)
+            UserDto.fromApiMap(asJsonMap(u)).toEntity(),
+    ];
+    final c = data['count'] ?? data['total'] ?? data['viewerCount'];
+    final count = c is num ? c.toInt() : int.tryParse('$c') ?? 0;
+    if (count == 0 && users.isEmpty) return null;
+    return FortuneViewers(
+      count: count,
+      users: users.where((u) => u.id.isNotEmpty).toList(growable: false),
+    );
   }
 
   /// GET `/api/social/posts` — canlifal.com web `/sosyal` ile aynı JSON.

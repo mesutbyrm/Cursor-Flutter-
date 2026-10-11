@@ -79,6 +79,14 @@ class ApiException implements Exception {
       if (parsed409 != null) return parsed409;
     }
 
+    if (body is Map) {
+      final modBlocked = _parseModerationBlocked(
+        Map<String, dynamic>.from(body),
+        statusCode: code,
+      );
+      if (modBlocked != null) return modBlocked;
+    }
+
     if (e.type == DioExceptionType.receiveTimeout ||
         e.type == DioExceptionType.sendTimeout ||
         e.type == DioExceptionType.connectionTimeout) {
@@ -124,6 +132,45 @@ class ApiException implements Exception {
       }
     }
     return ApiException(msg, statusCode: code);
+  }
+
+  /// GirLive Bot — `422` + `MODERATION_BLOCKED` (kılavuz §9.3.2).
+  static ApiException? _parseModerationBlocked(
+    Map<String, dynamic> body, {
+    int? statusCode,
+  }) {
+    final topCode = body['code']?.toString();
+    final mod = body['moderation'];
+    if (topCode != 'MODERATION_BLOCKED' && mod is! Map) return null;
+
+    final moderation = mod is Map ? Map<String, dynamic>.from(mod) : null;
+    final severity =
+        moderation?['severity']?.toString().toUpperCase() ?? 'LOW';
+    final verdict = moderation?['verdict']?.toString();
+    final serverMsg = body['message']?.toString().trim();
+    final word = moderation?['word']?.toString().trim();
+
+    String msg = serverMsg ?? '';
+    if (msg.isEmpty) {
+      msg = switch (severity) {
+        'LOW' => word != null && word.isNotEmpty
+            ? 'GirLive Bot: «$word» yasaklı kelime uyarısı — lütfen kurallara uyun.'
+            : 'GirLive Bot: mesajınız kurallara aykırı (uyarı).',
+        'MEDIUM' =>
+          'GirLive Bot: geçici susturma — yasaklı veya uygunsuz ifade.',
+        'HIGH' => 'GirLive Bot: odadan çıkarıldınız (ciddi ihlal).',
+        'CRITICAL' => 'GirLive Bot: odadan yasaklandınız.',
+        _ => 'GirLive Bot: mesaj moderasyon nedeniyle işlenemedi.',
+      };
+    }
+    if (verdict != null && verdict.isNotEmpty && !msg.contains(verdict)) {
+      msg = '$msg ($verdict)';
+    }
+    return ApiException(
+      msg,
+      statusCode: statusCode ?? 422,
+      errorCode: 'MODERATION_BLOCKED',
+    );
   }
 
   static ApiException? _parsePriceMismatch(

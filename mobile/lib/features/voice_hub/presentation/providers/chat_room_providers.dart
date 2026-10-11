@@ -1797,6 +1797,13 @@ class VoiceRoomLiveController
               '${payload['userName'] ?? 'Kullanıcı'} yasaklandı',
         );
         return;
+      case 'USER_WARNED':
+      case 'MODERATION_WARN':
+      case 'MODERATION_WARNING':
+      case 'AUTO_MODERATION_WARN':
+      case 'GIRLIVE_MODERATION':
+        _deliverGirLiveModerationNotice(payload);
+        return;
       case 'ANNOUNCEMENT':
         _handleSseAnnouncement(payload);
         return;
@@ -1804,7 +1811,7 @@ class VoiceRoomLiveController
         final msg = payload['message']?.toString().trim();
         if (msg != null && msg.isNotEmpty) {
           _notifyRealtimeIfBasic(VoiceRoomRealtimeKind.moderation, msg);
-          if (VoiceRoomBasicMode.enabled) showModerationToast(msg);
+          _deliverGirLiveModerationNotice(payload, fallbackMessage: msg);
         }
         return;
     }
@@ -2047,6 +2054,34 @@ class VoiceRoomLiveController
   void clearModeratorAnnouncement() {
     _announcementTimer?.cancel();
     state = state.copyWith(clearModeratorAnnouncement: true);
+  }
+
+  void _deliverGirLiveModerationNotice(
+    Map<String, dynamic> payload, {
+    String? fallbackMessage,
+  }) {
+    final me = ref.read(authControllerProvider).valueOrNull?.id.trim();
+    final target = (payload['targetUserId'] ??
+            payload['userId'] ??
+            payload['offenderId'])
+        ?.toString()
+        .trim();
+    if (me != null &&
+        me.isNotEmpty &&
+        target != null &&
+        target.isNotEmpty &&
+        target != me) {
+      return;
+    }
+    final msg = (payload['message'] ??
+            payload['text'] ??
+            payload['content'] ??
+            fallbackMessage)
+        ?.toString()
+        .trim();
+    if (msg == null || msg.isEmpty) return;
+    showModerationToast(msg);
+    ref.read(girLiveRulesNoticeProvider.notifier).show(msg, roomKey: _roomKey);
   }
 
   void showModerationToast(String text) {
@@ -3294,6 +3329,20 @@ class VoiceRoomLiveController
         canModerate: perms.canModerate || perms.isRoomOwner,
       );
     } catch (e) {
+      if (e is ApiException && e.errorCode == 'MODERATION_BLOCKED') {
+        state = state.copyWith(
+          messages: optimistic != null
+              ? state.messages.where((m) => m.id != optimisticId).toList()
+              : state.messages,
+          clearError: true,
+        );
+        showModerationToast(e.message);
+        ref.read(girLiveRulesNoticeProvider.notifier).show(
+              e.message,
+              roomKey: _roomKey,
+            );
+        return;
+      }
       if (_shouldQueueOutboundChat(e) && !trimmed.startsWith('!')) {
         _pendingOutboundChat.add(trimmed);
         state = state.copyWith(clearError: true);

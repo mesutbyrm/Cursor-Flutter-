@@ -205,9 +205,12 @@ class _SocialFortuneSceneCardState extends State<SocialFortuneSceneCard> {
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          _TypeChip(label: widget.typeLabel, glow: glow),
+                          Align(
+                            alignment: Alignment.topCenter,
+                            child: _TypeChip(label: widget.typeLabel, glow: glow),
+                          ),
                           const SizedBox(height: 12),
                           TweenAnimationBuilder<double>(
                             tween: Tween(begin: 0, end: 1),
@@ -220,14 +223,27 @@ class _SocialFortuneSceneCardState extends State<SocialFortuneSceneCard> {
                                 child: child,
                               ),
                             ),
-                            child: Text(
-                              widget.body,
-                              maxLines: _expanded ? null : lines,
-                              overflow: _expanded
-                                  ? TextOverflow.visible
-                                  : TextOverflow.ellipsis,
-                              style: _bodyStyle,
-                            ),
+                            child: _expanded
+                                ? Text(
+                                    widget.body,
+                                    textAlign: TextAlign.center,
+                                    style: _bodyStyle,
+                                  )
+                                : FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.topCenter,
+                                    child: ConstrainedBox(
+                                      constraints:
+                                          BoxConstraints(maxWidth: textWidth),
+                                      child: Text(
+                                        widget.body,
+                                        maxLines: lines,
+                                        textAlign: TextAlign.center,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: _bodyStyle,
+                                      ),
+                                    ),
+                                  ),
                           ),
                           if (canExpand) ...[
                             const SizedBox(height: 6),

@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.768+824 (2026-10-11) — Sosyal fal kartı, paylaşım sayacı, push, GirLive uyarı
+
+- **Sosyal:** fal kartında başlık/metin görsel üstünde ortalı; metin görsele sığacak şekilde ölçeklenir; «kaç kişi baktı» akış + `/api/social/fortune-viewers` yedekleri; paylaşım sayacı akıştan güncellenir
+- **Push:** uygulama ön plana dönünce FCM token yeniden kaydı + izin durumu
+- **GirLive Bot:** `MODERATION_BLOCKED` (422) ve SSE moderasyon uyarıları — snackbar + sohbet bot satırı
+
 ## 1.0.767+823 (2026-10-11) — Episode 29 tamamlama: ajans PR #33, admin bot, checkout guard
 
 - **Ajans:** dönem geçmişi (`GET /api/agency/periods`), profil düzenleme (`PATCH /api/agency`), üyeden çıkar (`POST members/remove`)

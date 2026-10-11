@@ -360,8 +360,14 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener>
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) return;
     // Eşleme/abonelik düşmüşse kendini onarır (idempotent).
-    unawaited(OneSignalBootstrap.login(user.id));
-    unawaited(OneSignalBootstrap.optInIfPermitted());
+    if (PushDelivery.usesOneSignal) {
+      unawaited(OneSignalBootstrap.login(user.id));
+      unawaited(OneSignalBootstrap.optInIfPermitted());
+    }
+    unawaited(PushNotificationService.instance.refreshPermissionStatus());
+    unawaited(
+      ref.read(pushRegistrarProvider).registerIfPossible(allowTokenRetry: true),
+    );
     ref.invalidate(notificationsUnreadApiProvider);
     unawaited(ref.read(notificationsListNotifierProvider.notifier).refresh());
     unawaited(

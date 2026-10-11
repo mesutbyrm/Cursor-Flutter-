@@ -231,19 +231,35 @@ final postCommentsProvider =
 
 /// Fal türü başına sunucu verisi (aynı türdeki kartlar tek istek paylaşır;
 /// 2 dk önbellek).
+/// Akış listesinde güncellenmiş gönderi (paylaşım/beğeni sayacı).
+final socialPostFromFeedProvider =
+    Provider.autoDispose.family<PostEntity?, String>((ref, postId) {
+  final id = postId.trim();
+  if (id.isEmpty) return null;
+  final list = ref.watch(socialNotifierProvider).valueOrNull;
+  if (list == null) return null;
+  for (final p in list) {
+    if (p.id == id) return p;
+  }
+  return null;
+});
+
 final fortuneViewersByTypeProvider =
     FutureProvider.autoDispose.family<FortuneViewers?, String>((ref, type) async {
   final link = ref.keepAlive();
   final timer = Timer(const Duration(minutes: 2), link.close);
   ref.onDispose(timer.cancel);
-  return ref.read(socialRemoteProvider).fetchFortuneViewers(type);
+  return ref.read(socialRemoteProvider).fetchFortuneViewers(
+        type,
+        slug: type,
+      );
 });
 
 /// Bir fal gönderisi için "o fala bakan" son 5 kullanıcı: önce sunucu
 /// (`/api/social/fortune-viewers`), yoksa yüklü akıştan türetilir.
 final fortuneCoViewersProvider =
     Provider.autoDispose.family<List<UserEntity>, PostEntity>((ref, post) {
-  final type = post.fortuneType?.trim() ?? '';
+  final type = fortuneViewersQueryType(post);
   if (type.isNotEmpty) {
     final remote = ref.watch(fortuneViewersByTypeProvider(type)).valueOrNull;
     final users = [
@@ -260,7 +276,14 @@ final fortuneCoViewersProvider =
 final fortuneViewCountProvider =
     Provider.autoDispose.family<int, PostEntity>((ref, post) {
   if (post.fortuneCount > 0) return post.fortuneCount;
-  final type = post.fortuneType?.trim() ?? '';
-  if (type.isEmpty) return 0;
-  return ref.watch(fortuneViewersByTypeProvider(type)).valueOrNull?.count ?? 0;
+  final type = fortuneViewersQueryType(post);
+  if (type.isNotEmpty) {
+    final remote =
+        ref.watch(fortuneViewersByTypeProvider(type)).valueOrNull?.count ?? 0;
+    if (remote > 0) return remote;
+  }
+  final feed = ref.watch(socialNotifierProvider).valueOrNull ?? const [];
+  final co = recentFortuneCoViewers(feed, post);
+  if (co.isEmpty) return 0;
+  return co.length + 1;
 });

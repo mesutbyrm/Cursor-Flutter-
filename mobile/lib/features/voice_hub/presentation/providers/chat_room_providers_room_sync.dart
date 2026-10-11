@@ -302,6 +302,9 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
         ref.read(voiceJoinRequestSignalProvider.notifier).bump();
         return;
       case 'girlive_rules':
+      case 'girlive_moderation':
+      case 'moderation_warn':
+      case 'moderation_warning':
         _handleGirLiveRules(payload);
         return;
       case 'girlive_publisher':
@@ -896,12 +899,18 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     final me = ref.read(authControllerProvider).valueOrNull?.id.trim();
     final target = payload['targetUserId']?.toString().trim();
     if (me == null || me.isEmpty || target != me) return;
-    ref
-        .read(girLiveRulesNoticeProvider.notifier)
-        .show(
-          payload['text']?.toString() ?? '',
+    final text = (payload['text'] ??
+            payload['message'] ??
+            payload['content'] ??
+            '')
+        .toString()
+        .trim();
+    if (text.isEmpty) return;
+    ref.read(girLiveRulesNoticeProvider.notifier).show(
+          text,
           roomKey: _resolveRoomKeyFromEvent(payload) ?? _roomKey,
         );
+    showModerationToast(text);
   }
 
   /// `girlive_bot` — herkese açık bot mesajı (PK, karşılama, uğurlama).

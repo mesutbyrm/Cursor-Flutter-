@@ -6,6 +6,14 @@ import '../widgets/instagram/social_fortune_scene_card.dart';
 /// toplam sayıdır). Yüklü akıştaki GERÇEK gönderilerden türetilir: aynı fal
 /// türünü paylaşan (otomatik fal paylaşımı = o fala bakmış kişi) son [max]
 /// farklı kullanıcı, gönderi sahibi hariç, en yeni önce. Akışta yoksa boş döner.
+/// Sunucu `fortune-viewers?type=` sorgusu için kanonik anahtar.
+String fortuneViewersQueryType(PostEntity post) {
+  return fortuneSceneSlugFor(post.fortuneType ?? post.fortuneSlug) ??
+      post.fortuneType?.trim() ??
+      post.fortuneSlug?.trim() ??
+      '';
+}
+
 List<UserEntity> recentFortuneCoViewers(
   List<PostEntity> feed,
   PostEntity post, {

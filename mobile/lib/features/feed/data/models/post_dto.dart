@@ -167,9 +167,7 @@ abstract class PostDto with _$PostDto {
   }) {
     final dto = PostDto.fromApiMap(json, currentUserId: currentUserId);
     return dto.toEntity().copyWith(
-      shareCount: asInt(
-        pick(json, ['shareCount', 'sharesCount', 'shares', 'repostCount']),
-      ),
+      shareCount: _shareCountFromJson(json),
       fortuneId: pick(json, [
         'fortuneId',
         'fortune_id',
@@ -212,6 +210,34 @@ abstract class PostDto with _$PostDto {
       if (nested is String && nested.trim().isNotEmpty) return nested.trim();
     }
     return null;
+  }
+
+  static int _shareCountFromJson(Map<String, dynamic> json) {
+    final direct = asInt(
+      pick(json, [
+        'shareCount',
+        'sharesCount',
+        'shares',
+        'repostCount',
+        'sharedByCount',
+        'shared_by_count',
+        'share_count',
+      ]),
+    );
+    if (direct != null && direct > 0) return direct;
+    final meta = json['metadata'];
+    if (meta is Map) {
+      final nested = asInt(
+        pick(asJsonMap(meta), [
+          'shareCount',
+          'sharesCount',
+          'shares',
+          'repostCount',
+        ]),
+      );
+      if (nested != null && nested > 0) return nested;
+    }
+    return direct ?? 0;
   }
 
   static DateTime? _parseDate(dynamic v) {

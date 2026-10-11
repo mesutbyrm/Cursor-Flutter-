@@ -84,7 +84,8 @@ class _SocialInstagramPostCardState
     _likeCount = p.likesCount;
   }
 
-  PostEntity get post => widget.post;
+  PostEntity get post =>
+      ref.watch(socialPostFromFeedProvider(widget.post.id)) ?? widget.post;
 
   bool get _isFortunePost => post.isFortunePost;
 
@@ -218,12 +219,26 @@ class _SocialInstagramPostCardState
                 ),
               ),
               if (!mediaIsImage && !useScene) actions(),
-              if (_isFortunePost && ref.watch(fortuneViewCountProvider(post)) > 0)
-                _CoViewersBar(
-                  count: ref.watch(fortuneViewCountProvider(post)),
-                  viewers: ref.watch(fortuneCoViewersProvider(post)),
-                  onTap: () => _openPostDetail(context),
+              if (_isFortunePost) ...[
+                Builder(
+                  builder: (context) {
+                    final viewers =
+                        ref.watch(fortuneCoViewersProvider(post));
+                    final count =
+                        ref.watch(fortuneViewCountProvider(post));
+                    final displayCount =
+                        count > 0 ? count : (viewers.isEmpty ? 0 : viewers.length + 1);
+                    if (displayCount <= 0 && viewers.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    return _CoViewersBar(
+                      count: displayCount,
+                      viewers: viewers,
+                      onTap: () => _openPostDetail(context),
+                    );
+                  },
                 ),
+              ],
             ],
           ),
         ),
