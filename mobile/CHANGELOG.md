@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.772+828 (2026-10-11) — PK davet/erken berabere + videolu hediye kuyruk
+
+- **Canlı PK:** `fetchStreamBattle` yenilemede `finalizeExpired: false` — kabul sonrası sunucunun PK'yı hemen «berabere» bitirmesi engellendi; erken `endedAt`/`winnerId` süre dolmadan yok sayılır
+- **Sesli PK davet:** meydan okuyana yankı diyaloğu ve «her oda sahibine davet» fallback kaldırıldı; `isPkChallengerUser` ile alıcı netleştirildi
+- **Videolu hediye:** `gift_queue_updated` REST sonrası bekleyen animasyonları yine kuyruğa alır
+
 ## 1.0.771+827 (2026-10-11) — PR #41 ajans satın alma (TL bonus modu)
 
 - **Ajans cüzdanı:** Toplu Jeton — «Jeton → TL» (indirim) ve «TL → bonus» modları; `GET/POST /api/agency/purchase` PR #41 gövdesi

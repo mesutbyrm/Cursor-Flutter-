@@ -79,7 +79,7 @@ void main() {
     );
     expect(
       isPkInviteTarget(battle, eligible, userId: 'other'),
-      isTrue,
+      isFalse,
     );
     expect(isPkChallengerRoom(battle, self), isTrue);
   });
@@ -120,6 +120,30 @@ void main() {
     );
   });
 
+  test('isPkChallengerUser blocks invite echo to sender', () {
+    const battle = PkBattleRemote(
+      id: 'pk-ch',
+      battleType: 'voice_room',
+      status: 'pending',
+      challengerScore: 0,
+      opponentScore: 0,
+      secondsLeft: 300,
+      durationSeconds: 180,
+      targetScore: 1000,
+      voiceRoomId: 'room-a',
+      opponentVoiceRoomId: 'room-b',
+      challengerId: 'owner-a',
+    );
+    expect(
+      isPkChallengerUser(battle, userId: 'owner-a', room: self),
+      isTrue,
+    );
+    expect(
+      isPkInviteRecipientInActiveRoom(battle, self, userId: 'owner-a'),
+      isFalse,
+    );
+  });
+
   test('isPkInviteRecipientInActiveRoom when opponentVoiceRoomId missing', () {
     const battle = PkBattleRemote(
       id: 'pk-scoped',
@@ -134,7 +158,7 @@ void main() {
     );
     expect(
       isPkInviteRecipientInActiveRoom(battle, eligible, userId: 'owner-b'),
-      isTrue,
+      isFalse,
     );
     expect(
       isPkInviteRecipientInActiveRoom(battle, self, userId: 'owner-a'),

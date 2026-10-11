@@ -116,7 +116,10 @@ class _VoicePkInviteListenerState extends ConsumerState<VoicePkInviteListener> {
       final recipient = isPkInviteTarget(battle, room, userId: user.id) ||
           isPkInviteRecipientInActiveRoom(battle, room, userId: user.id);
       if (!recipient) return;
-      if (isPkChallengerRoom(battle, room)) return;
+      if (isPkChallengerRoom(battle, room) ||
+          isPkChallengerUser(battle, userId: user.id, room: room)) {
+        return;
+      }
       final inviteId = battle.effectiveId;
       if (inviteId.isNotEmpty) {
         PkEventLog.incomingRequest(inviteId: inviteId);

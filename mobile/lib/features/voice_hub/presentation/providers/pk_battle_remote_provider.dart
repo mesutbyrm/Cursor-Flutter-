@@ -143,7 +143,11 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
   }
 
   Future<PkBattleRemote?> loadStreamBattle(String streamId) async {
-    final battle = await _api.fetchStreamBattle(streamId);
+    final battle = await _api.fetchStreamBattle(
+      streamId,
+      finalizeExpired: false,
+      forceRefresh: true,
+    );
     if (battle != null) _apply(battle, 'load');
     return battle;
   }

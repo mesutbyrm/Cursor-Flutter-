@@ -46,6 +46,26 @@ bool isPkChallengerRoom(PkBattleRemote battle, VoiceRoomEntity room) {
   return challengerRoom.isNotEmpty && keys.contains(challengerRoom);
 }
 
+/// Meydan okuyan kullanıcı — davet diyaloğu yalnızca rakibe gösterilir.
+bool isPkChallengerUser(
+  PkBattleRemote battle, {
+  String? userId,
+  VoiceRoomEntity? room,
+}) {
+  final uid = userId?.trim() ?? '';
+  if (uid.isEmpty) return false;
+  final challengerId = battle.challengerId?.trim() ?? '';
+  if (challengerId.isNotEmpty && challengerId == uid) return true;
+  final challUser = battle.challenger?.userId.trim() ?? '';
+  if (challUser.isNotEmpty && challUser == uid) return true;
+  if (room != null &&
+      isPkChallengerRoom(battle, room) &&
+      room.ownerId?.trim() == uid) {
+    return true;
+  }
+  return false;
+}
+
 /// Gelen PK daveti bu oda sahibine mi ait?
 bool isPkInviteTarget(
   PkBattleRemote battle,
@@ -69,7 +89,11 @@ bool isPkInviteTarget(
   final ownerId = room.ownerId?.trim() ?? '';
   final uid = userId?.trim() ?? '';
   final opponentId = battle.opponentId?.trim() ?? '';
-  if (ownerId.isNotEmpty && opponentId.isNotEmpty && ownerId == opponentId) {
+  if (ownerId.isNotEmpty &&
+      opponentId.isNotEmpty &&
+      ownerId == opponentId &&
+      uid.isNotEmpty &&
+      (uid == ownerId || uid == opponentId)) {
     return true;
   }
   final targetUserId = battle.targetUserId?.trim() ?? '';
@@ -94,13 +118,6 @@ bool isPkInviteTarget(
   }
   if (roomMatches(battle.opponent?.roomId)) return true;
 
-  // Challenger odası değilsek ve oda sahibiysek: hedef biziz (alanlar eksik gelse bile).
-  if (!isPkChallengerRoom(battle, room) &&
-      uid.isNotEmpty &&
-      ownerId.isNotEmpty &&
-      uid == ownerId) {
-    return true;
-  }
   return false;
 }
 
@@ -113,11 +130,10 @@ bool isPkInviteRecipientInActiveRoom(
 }) {
   if (!battle.isPending || activeRoom == null) return false;
   if (isPkChallengerRoom(battle, activeRoom)) return false;
-  if (isPkInviteTarget(battle, activeRoom, userId: userId)) return true;
-  if (pkBattleBelongsToRoom(battle, activeRoom)) return true;
-  final ownerId = activeRoom.ownerId?.trim() ?? '';
-  final uid = userId?.trim() ?? '';
-  return uid.isNotEmpty && ownerId.isNotEmpty && uid == ownerId;
+  if (isPkChallengerUser(battle, userId: userId, room: activeRoom)) {
+    return false;
+  }
+  return isPkInviteTarget(battle, activeRoom, userId: userId);
 }
 
 /// Menüde PK savaş ekranına gitmek için gerçekten aktif savaş var mı?

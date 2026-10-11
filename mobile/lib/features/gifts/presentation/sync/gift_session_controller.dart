@@ -128,12 +128,25 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     for (final raw in items) {
       final key = GiftEngineSseRouter.dedupeKey(raw);
       if (key != null) _engineGiftKeys.add(key);
-      final id = pick(raw, ['id', 'queueItemId', 'giftHistoryId'])?.toString();
-      if (id != null && state.processedEventIds.contains(id)) continue;
       if (parseItem == null) continue;
       final ev = parseItem(raw);
       if (ev == null || !_isDisplayable(ev)) continue;
-      if (state.processedEventIds.contains(ev.id)) continue;
+      final dedupeKeys = <String>{
+        ev.id,
+        if (ev.giftHistoryId != null && ev.giftHistoryId!.isNotEmpty)
+          ev.giftHistoryId!,
+        if (ev.queueItemId != null && ev.queueItemId!.isNotEmpty)
+          ev.queueItemId!,
+      };
+      if (state.animationQueue.any((e) => dedupeKeys.contains(e.id))) continue;
+      if (state.activeAnimation != null &&
+          dedupeKeys.contains(state.activeAnimation!.id)) {
+        continue;
+      }
+      if (dedupeKeys.any(state.processedEventIds.contains)) {
+        final awaiting = dedupeKeys.any(_awaitingAnimationKeys.contains);
+        if (!awaiting) continue;
+      }
       pending.add(ev);
     }
     if (pending.isEmpty) return;

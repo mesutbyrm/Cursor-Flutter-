@@ -175,7 +175,12 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
     // Canlı 1v1 PK — GET stream battle (davet: LivePkInviteListener + SSE).
     try {
       final api = ref.read(pkBattleRemoteDataSourceProvider);
-      final remote = await api.fetchStreamBattle(arg);
+      // `finalizeExpired: true` yeni başlayan PK'yı sunucuda «berabere» bitiriyordu.
+      final remote = await api.fetchStreamBattle(
+        arg,
+        finalizeExpired: false,
+        forceRefresh: true,
+      );
       if (remote != null) {
         final fresh = pkBattleRemoteToBattleMap(remote, myStreamId: arg);
         if (_isClosed(fresh) ||
@@ -320,12 +325,20 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
     // kalıyordu (ses geliyor, yayın kapatılamıyor).
     final endedAt = merged['endedAt']?.toString().trim() ?? '';
     final winnerId = merged['winnerId']?.toString().trim() ?? '';
-    if (endedAt.isNotEmpty || winnerId.isNotEmpty) return;
     final endsAt =
         DateTime.tryParse(merged['endsAt']?.toString() ?? '')?.toUtc();
-    if (endsAt != null && livePkNow().isBefore(endsAt)) {
+    final clock = livePkNow();
+    if (endsAt != null && clock.isBefore(endsAt)) {
+      if (endedAt.isNotEmpty && winnerId.isEmpty) {
+        merged.remove('endedAt');
+      }
+      if (winnerId.isNotEmpty && !livePkBattleFinished(status: incStatus, battle: merged)) {
+        merged.remove('winnerId');
+      }
       merged['status'] = previous['status'];
+      return;
     }
+    if (endedAt.isNotEmpty || winnerId.isNotEmpty) return;
   }
 
   void _ensurePkEndsAt(Map<String, dynamic> battle) {

@@ -17,9 +17,11 @@ LiveGiftEvent _event({
   String? assetUrl,
   String? assetType,
   String? engineAnimationType,
+  String? giftHistoryId,
 }) {
   return LiveGiftEvent(
     id: id,
+    giftHistoryId: giftHistoryId,
     senderId: senderId,
     senderName: 'Ali',
     receiverName: 'Ayşe',
@@ -261,6 +263,39 @@ void main() {
     await _waitActive(container, 'room-k', 'b');
     state = container.read(giftSessionProvider('room-k'));
     expect(state.activeAnimation?.id, 'b');
+  });
+
+  test('queue sync animates gift awaiting SSE after api_response', () async {
+    _mockPathProviderForTests();
+    addTearDown(_clearPathProviderForTests);
+
+    final container = _isolatedGiftContainer();
+    addTearDown(container.dispose);
+
+    final sub = container.listen(giftSessionProvider('room-q'), (_, __) {});
+    addTearDown(sub.close);
+    final notifier = container.read(giftSessionProvider('room-q').notifier);
+    notifier.onGiftSent(
+      _event(id: 'q-1', jeton: 80, giftHistoryId: 'hist-q1'),
+      source: 'api_response',
+    );
+
+    notifier.onEngineQueueUpdated(
+      {
+        'engine': true,
+        'event': 'gift_queue_updated',
+        'queue': [
+          {'id': 'q-1', 'giftHistoryId': 'hist-q1'},
+        ],
+      },
+      parseItem: (item) => _event(
+        id: item['id']?.toString() ?? 'q-1',
+        jeton: 80,
+        giftHistoryId: item['giftHistoryId']?.toString(),
+      ),
+    );
+
+    await _waitActive(container, 'room-q', 'q-1');
   });
 
   test('K1: REST yanıtıyla işlenen hediye SSE gelince yine de oynar',
