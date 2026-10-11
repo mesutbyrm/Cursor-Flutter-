@@ -4,19 +4,18 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.772+828` |
-| Tarih (UTC) | 2026-10-11 20:35 |
-| Commit | [`c5a3dbb823f7701be5bccde5714e92a4c85d503c`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/c5a3dbb823f7701be5bccde5714e92a4c85d503c) |
-| İş akışı | [Run 38171245517](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/38171245517) |
+| Sürüm | `1.0.773+829` |
+| Tarih (UTC) | 2026-10-11 22:18 |
+| Commit | [`1821729095f44fcd209121733300440bcab9fab8`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/1821729095f44fcd209121733300440bcab9fab8) |
+| İş akışı | [Run 38178261367](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/38178261367) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.772+828 (2026-10-11) — PK davet/erken berabere + videolu hediye kuyruk
+## 1.0.773+829 (2026-10-11) — CI Play Store AAB
 
-- **Canlı PK:** `fetchStreamBattle` yenilemede `finalizeExpired: false` — kabul sonrası sunucunun PK'yı hemen «berabere» bitirmesi engellendi; erken `endedAt`/`winnerId` süre dolmadan yok sayılır
-- **Sesli PK davet:** meydan okuyana yankı diyaloğu ve «her oda sahibine davet» fallback kaldırıldı; `isPkChallengerUser` ile alıcı netleştirildi
-- **Videolu hediye:** `gift_queue_updated` REST sonrası bekleyen animasyonları yine kuyruğa alır
+- **CI:** `Build release APK` workflow artık aynı imza ile **release AAB** (`app-release.aab`) üretir; artifact adı `canlifal-release-aab-<sürüm>`
+- **Build release AAB** workflow: `google-services.json` adımı APK ile hizalandı (bozuk base64 secret artık derlemeyi düşürmez)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
