@@ -798,7 +798,7 @@ PR #33 ile gelen ajans endpoint'leri:
 | GET | `/api/agency/wallet/transactions` | İşlem geçmişi |
 | POST/GET/DELETE | `/api/agency/blocks` | Üye engelleme |
 | GET | `/api/agency/roster` | Kadro (aktif/pasif/bekleyen/ayrılmış/engelli) |
-| POST | `/api/agency/purchase` | Toplu jeton satın alma |
+| GET/POST | `/api/agency/purchase` | Toplu jeton (Mod A: `?jeton=` indirim · Mod B: `?tl=` bonus) |
 | GET | `/api/agency/periods` | Dönem geçmişi |
 | POST | `/api/cron/agency-accruals` | Otomatik dönem kapanışı |
 
@@ -838,6 +838,21 @@ final res = await dio.get('/api/agency/roster');
 //   "blocked": [...]
 // }
 ```
+
+### Ajans toplu Jeton (PR #41)
+
+```dart
+// Mod A — jeton gir, indirimli TL al
+final qA = await dio.get('/api/agency/purchase', queryParameters: {'jeton': 100000});
+// Mod B — TL gir, bonus jeton al
+final qB = await dio.get('/api/agency/purchase', queryParameters: {'tl': 50000});
+// quote: mode, jetonAmount, bonusJeton, totalJeton, finalPriceTl, discountPercent, bonusPercent
+
+await dio.post('/api/agency/purchase', data: {'jeton': 100000, 'paymentMethod': 'bank_transfer'});
+await dio.post('/api/agency/purchase', data: {'tl': 50000, 'paymentMethod': 'papara'});
+```
+
+Mobil: `AgencyWalletPage` → «Toplu Jeton Al» sekmesi (`agency_wallet_page.dart`).
 
 ### Günlük Limitler
 - **Günlük transfer limiti:** `agency.wallet.daily_transfer_limit` (platform ayarı)

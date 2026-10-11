@@ -19,8 +19,12 @@ final agencyWalletDataSourceProvider = Provider<AgencyWalletDataSource>(
 );
 
 final agencyPurchaseInfoProvider =
-    FutureProvider.autoDispose.family<AgencyPurchaseInfo, int>((ref, jeton) {
-  return ref.read(agencyWalletDataSourceProvider).fetchPurchase(jeton: jeton);
+    FutureProvider.autoDispose.family<AgencyPurchaseInfo, AgencyPurchaseQuoteRequest>(
+        (ref, req) {
+  return ref.read(agencyWalletDataSourceProvider).fetchPurchase(
+        jeton: req.jeton,
+        tl: req.tl,
+      );
 });
 
 final _num = NumberFormat.decimalPattern('tr_TR');
@@ -315,7 +319,8 @@ class _PurchaseTabState extends ConsumerState<_PurchaseTab> {
   final _ref = TextEditingController();
   final _sender = TextEditingController();
   Timer? _debounce;
-  var _quoteFor = 100000;
+  AgencyPurchaseQuoteMode _inputMode = AgencyPurchaseQuoteMode.jeton;
+  var _quoteRequest = const AgencyPurchaseQuoteRequest.jeton(100000);
   var _method = 'bank_transfer';
   var _busy = false;
   String? _error;
@@ -332,27 +337,72 @@ class _PurchaseTabState extends ConsumerState<_PurchaseTab> {
   void _onAmount(String v) {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 400), () {
-      final n = int.tryParse(v.trim()) ?? 0;
-      if (n > 0 && mounted) setState(() => _quoteFor = n);
+      if (!mounted) return;
+      if (_inputMode == AgencyPurchaseQuoteMode.tl) {
+        final tl = double.tryParse(v.trim().replaceAll(',', '.')) ?? 0;
+        if (tl > 0) setState(() => _quoteRequest = AgencyPurchaseQuoteRequest.tl(tl));
+      } else {
+        final n = int.tryParse(v.trim()) ?? 0;
+        if (n > 0) setState(() => _quoteRequest = AgencyPurchaseQuoteRequest.jeton(n));
+      }
     });
     setState(() => _error = null);
   }
 
-  Future<void> _order(AgencyPurchaseInfo info) async {
-    final jeton = int.tryParse(_amount.text.trim()) ?? 0;
-    if (jeton < info.minJeton) {
-      return setState(() => _error = 'En az ${_num.format(info.minJeton)} Jeton alınabilir');
+  void _setInputMode(AgencyPurchaseQuoteMode mode) {
+    if (_inputMode == mode) return;
+    setState(() {
+      _inputMode = mode;
+      _amount.text = mode == AgencyPurchaseQuoteMode.jeton ? '100000' : '50000';
+      _quoteRequest = mode == AgencyPurchaseQuoteMode.jeton
+          ? const AgencyPurchaseQuoteRequest.jeton(100000)
+          : const AgencyPurchaseQuoteRequest.tl(50000);
+      _error = null;
+    });
+  }
+
+  bool _quoteMatchesInput(AgencyPurchaseQuote q) {
+    if (_inputMode == AgencyPurchaseQuoteMode.tl) {
+      final tl = double.tryParse(_amount.text.trim().replaceAll(',', '.')) ?? 0;
+      return (tl - q.finalPriceTl).abs() < 0.02;
     }
+    final jeton = int.tryParse(_amount.text.trim()) ?? 0;
+    return q.jetonAmount == jeton;
+  }
+
+  Future<void> _order(AgencyPurchaseInfo info) async {
     final q = info.quote;
+    if (_inputMode == AgencyPurchaseQuoteMode.tl) {
+      final tl = double.tryParse(_amount.text.trim().replaceAll(',', '.')) ?? 0;
+      if (tl <= 0) {
+        return setState(() => _error = 'Geçerli bir TL tutarı girin');
+      }
+      if (q.loadedJeton < info.minJeton) {
+        return setState(
+          () => _error = 'Bu tutar en az ${_num.format(info.minJeton)} Jeton karşılığı vermeli',
+        );
+      }
+    } else {
+      final jeton = int.tryParse(_amount.text.trim()) ?? 0;
+      if (jeton < info.minJeton) {
+        return setState(() => _error = 'En az ${_num.format(info.minJeton)} Jeton alınabilir');
+      }
+    }
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Siparişi onayla'),
         content: Text(
-          '${_num.format(jeton)} Jeton\n'
-          'Ödenecek: ${_tl.format(q.jetonAmount == jeton ? q.finalPriceTl : 0)}\n\n'
-          'Ödemeyi yaptıktan sonra siparişi gönderin. Yönetici ödemeyi onaylayınca '
-          'Jetonlar ajans cüzdanına yüklenir.',
+          _inputMode == AgencyPurchaseQuoteMode.tl
+              ? 'Ödenecek: ${_tl.format(q.finalPriceTl)}\n'
+                  'Cüzdana: ${_num.format(q.loadedJeton)} Jeton'
+                  '${q.bonusJeton > 0 ? ' (${_num.format(q.jetonAmount)} + ${_num.format(q.bonusJeton)} bonus)' : ''}\n\n'
+                  'Ödemeyi yaptıktan sonra siparişi gönderin. Yönetici onaylayınca '
+                  'Jetonlar ajans cüzdanına yüklenir.'
+              : '${_num.format(q.jetonAmount)} Jeton\n'
+                  'Ödenecek: ${_tl.format(q.finalPriceTl)}\n\n'
+                  'Ödemeyi yaptıktan sonra siparişi gönderin. Yönetici ödemeyi onaylayınca '
+                  'Jetonlar ajans cüzdanına yüklenir.',
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Vazgeç')),
@@ -370,12 +420,23 @@ class _PurchaseTabState extends ConsumerState<_PurchaseTab> {
       _error = null;
     });
     try {
-      await ref.read(agencyWalletDataSourceProvider).createPurchase(
-            jeton: jeton,
-            paymentMethod: _method,
-            transactionId: _ref.text,
-            senderName: _sender.text,
-          );
+      if (_inputMode == AgencyPurchaseQuoteMode.tl) {
+        final tl = double.tryParse(_amount.text.trim().replaceAll(',', '.')) ?? 0;
+        await ref.read(agencyWalletDataSourceProvider).createPurchase(
+              tl: tl,
+              paymentMethod: _method,
+              transactionId: _ref.text,
+              senderName: _sender.text,
+            );
+      } else {
+        final jeton = int.tryParse(_amount.text.trim()) ?? 0;
+        await ref.read(agencyWalletDataSourceProvider).createPurchase(
+              jeton: jeton,
+              paymentMethod: _method,
+              transactionId: _ref.text,
+              senderName: _sender.text,
+            );
+      }
       if (!mounted) return;
       _ref.clear();
       ref.invalidate(agencyPurchaseInfoProvider);
@@ -416,7 +477,7 @@ class _PurchaseTabState extends ConsumerState<_PurchaseTab> {
 
   @override
   Widget build(BuildContext context) {
-    final infoAsync = ref.watch(agencyPurchaseInfoProvider(_quoteFor));
+    final infoAsync = ref.watch(agencyPurchaseInfoProvider(_quoteRequest));
     final theme = Theme.of(context);
     return infoAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -443,16 +504,39 @@ class _PurchaseTabState extends ConsumerState<_PurchaseTab> {
           children: [
             if (!info.enabled)
               const Card(child: ListTile(title: Text('Toplu Jeton alımı şu anda kapalı'))),
+            SegmentedButton<AgencyPurchaseQuoteMode>(
+              segments: const [
+                ButtonSegment(
+                  value: AgencyPurchaseQuoteMode.jeton,
+                  label: Text('Jeton → TL'),
+                  icon: Icon(Icons.token_outlined, size: 18),
+                ),
+                ButtonSegment(
+                  value: AgencyPurchaseQuoteMode.tl,
+                  label: Text('TL → bonus'),
+                  icon: Icon(Icons.payments_outlined, size: 18),
+                ),
+              ],
+              selected: {_inputMode},
+              onSelectionChanged: (s) => _setInputMode(s.first),
+            ),
+            const SizedBox(height: 12),
             TextField(
               key: const Key('agency-buy-amount'),
               controller: _amount,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: _inputMode == AgencyPurchaseQuoteMode.jeton
+                  ? [FilteringTextInputFormatter.digitsOnly]
+                  : [FilteringTextInputFormatter.allow(RegExp(r'[\d.,]'))],
               onChanged: _onAmount,
               decoration: InputDecoration(
-                labelText: 'Alınacak Jeton',
-                helperText: 'En az ${_num.format(info.minJeton)} Jeton',
-                suffixText: 'Jeton',
+                labelText: _inputMode == AgencyPurchaseQuoteMode.jeton
+                    ? 'Alınacak Jeton'
+                    : 'Ödeyeceğiniz tutar (TL)',
+                helperText: _inputMode == AgencyPurchaseQuoteMode.jeton
+                    ? 'En az ${_num.format(info.minJeton)} Jeton · ajans indirimi uygulanır'
+                    : 'TL girin · bonus jeton sunucuda hesaplanır',
+                suffixText: _inputMode == AgencyPurchaseQuoteMode.jeton ? 'Jeton' : 'TL',
               ),
             ),
             const SizedBox(height: 12),
@@ -463,17 +547,33 @@ class _PurchaseTabState extends ConsumerState<_PurchaseTab> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _row('Jeton', '${_num.format(q.jetonAmount)} Jeton'),
-                    _row('Normal fiyat', _tl.format(q.normalPriceTl), strike: q.savedTl > 0),
-                    if (q.discountPercent > 0) _row('Ajans indirimi', '%${q.discountPercent.toStringAsFixed(q.discountPercent % 1 == 0 ? 0 : 1)}'),
-                    const Divider(),
-                    _row('Ödenecek tutar', _tl.format(q.finalPriceTl), bold: true),
-                    if (q.savedTl > 0) _row('Kazancınız', _tl.format(q.savedTl)),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Cüzdana yüklenecek: ${_num.format(q.jetonAmount)} Jeton',
-                      style: theme.textTheme.bodySmall,
-                    ),
+                    if (q.mode == AgencyPurchaseQuoteMode.tl) ...[
+                      _row('Temel Jeton', '${_num.format(q.jetonAmount)} Jeton'),
+                      if (q.bonusPercent > 0)
+                        _row(
+                          'Bonus (%${q.bonusPercent.toStringAsFixed(q.bonusPercent % 1 == 0 ? 0 : 1)})',
+                          '+${_num.format(q.bonusJeton)} Jeton',
+                        ),
+                      const Divider(),
+                      _row('Ödenecek tutar', _tl.format(q.finalPriceTl), bold: true),
+                      _row('Cüzdana toplam', '${_num.format(q.loadedJeton)} Jeton', bold: true),
+                    ] else ...[
+                      _row('Jeton', '${_num.format(q.jetonAmount)} Jeton'),
+                      _row('Normal fiyat', _tl.format(q.normalPriceTl), strike: q.savedTl > 0),
+                      if (q.discountPercent > 0)
+                        _row(
+                          'Ajans indirimi',
+                          '%${q.discountPercent.toStringAsFixed(q.discountPercent % 1 == 0 ? 0 : 1)}',
+                        ),
+                      const Divider(),
+                      _row('Ödenecek tutar', _tl.format(q.finalPriceTl), bold: true),
+                      if (q.savedTl > 0) _row('Kazancınız', _tl.format(q.savedTl)),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Cüzdana yüklenecek: ${_num.format(q.loadedJeton)} Jeton',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -506,7 +606,7 @@ class _PurchaseTabState extends ConsumerState<_PurchaseTab> {
             const SizedBox(height: 16),
             FilledButton.icon(
               key: const Key('agency-buy-send'),
-              onPressed: _busy || !info.enabled || q.jetonAmount != (int.tryParse(_amount.text.trim()) ?? 0)
+              onPressed: _busy || !info.enabled || !_quoteMatchesInput(q)
                   ? null
                   : () => _order(info),
               icon: const Icon(Icons.shopping_bag_rounded),

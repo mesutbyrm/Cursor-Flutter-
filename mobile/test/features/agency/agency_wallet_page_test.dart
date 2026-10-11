@@ -39,11 +39,12 @@ class _FakeWalletDs extends AgencyWalletDataSource {
   }
 
   @override
-  Future<AgencyPurchaseInfo> fetchPurchase({int? jeton}) async {
+  Future<AgencyPurchaseInfo> fetchPurchase({int? jeton, double? tl}) async {
     final j = jeton ?? 100000;
     return AgencyPurchaseInfo(
       quote: AgencyPurchaseQuote(
         jetonAmount: j,
+        totalJeton: j,
         normalPriceTl: j * 2.0,
         finalPriceTl: j * 2.0 * 0.9,
         discountPercent: 10,
@@ -60,13 +61,14 @@ class _FakeWalletDs extends AgencyWalletDataSource {
 
   @override
   Future<void> createPurchase({
-    required int jeton,
+    int? jeton,
+    double? tl,
     required String paymentMethod,
     String? transactionId,
     String? senderName,
     String? notes,
   }) async {
-    purchases.add((jeton, paymentMethod));
+    purchases.add((jeton ?? tl?.round() ?? 0, paymentMethod));
   }
 
   @override

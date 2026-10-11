@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
 
@@ -76,29 +77,55 @@ class AgencyTransferResult {
   final double? walletBalance;
 }
 
+/// PR #41 — `jeton` (indirimli TL) veya `tl` (bonus jeton) modu.
+enum AgencyPurchaseQuoteMode { jeton, tl }
+
 /// `GET /api/agency/purchase` fiyat teklifi (sunucu hesaplar).
 class AgencyPurchaseQuote {
   const AgencyPurchaseQuote({
+    this.mode = AgencyPurchaseQuoteMode.jeton,
     required this.jetonAmount,
+    this.bonusJeton = 0,
+    this.totalJeton,
     required this.normalPriceTl,
     required this.finalPriceTl,
     required this.discountPercent,
+    this.bonusPercent = 0,
     required this.savedTl,
   });
 
+  final AgencyPurchaseQuoteMode mode;
   final int jetonAmount;
+  final int bonusJeton;
+  final int? totalJeton;
   final double normalPriceTl;
   final double finalPriceTl;
   final double discountPercent;
+  final double bonusPercent;
   final double savedTl;
 
-  static AgencyPurchaseQuote fromJson(Map<String, dynamic> m) => AgencyPurchaseQuote(
-        jetonAmount: _asInt(m['jetonAmount']),
-        normalPriceTl: asDouble(m['normalPriceTl']) ?? 0,
-        finalPriceTl: asDouble(m['finalPriceTl']) ?? 0,
-        discountPercent: asDouble(m['discountPercent']) ?? 0,
-        savedTl: asDouble(m['savedTl']) ?? 0,
-      );
+  int get loadedJeton => totalJeton ?? (jetonAmount + bonusJeton);
+
+  static AgencyPurchaseQuote fromJson(Map<String, dynamic> m) {
+    final modeRaw = '${m['mode'] ?? 'jeton'}';
+    final mode = modeRaw == 'tl'
+        ? AgencyPurchaseQuoteMode.tl
+        : AgencyPurchaseQuoteMode.jeton;
+    final baseJeton = _asInt(m['jetonAmount']);
+    final bonus = _asInt(m['bonusJeton']);
+    final total = m['totalJeton'] != null ? _asInt(m['totalJeton']) : baseJeton + bonus;
+    return AgencyPurchaseQuote(
+      mode: mode,
+      jetonAmount: baseJeton,
+      bonusJeton: bonus,
+      totalJeton: total,
+      normalPriceTl: asDouble(m['normalPriceTl']) ?? 0,
+      finalPriceTl: asDouble(m['finalPriceTl']) ?? 0,
+      discountPercent: asDouble(m['discountPercent']) ?? 0,
+      bonusPercent: asDouble(m['bonusPercent']) ?? 0,
+      savedTl: asDouble(m['savedTl']) ?? 0,
+    );
+  }
 }
 
 class AgencyPurchaseOrder {
@@ -152,6 +179,32 @@ class AgencyPurchaseInfo {
   final int minJeton;
   final bool enabled;
   final List<AgencyPurchaseOrder> orders;
+}
+
+/// Riverpod aile anahtarı — GET `?jeton=` veya `?tl=`.
+@immutable
+class AgencyPurchaseQuoteRequest {
+  const AgencyPurchaseQuoteRequest.jeton(this.jeton)
+      : tl = null,
+        mode = AgencyPurchaseQuoteMode.jeton;
+
+  const AgencyPurchaseQuoteRequest.tl(this.tl)
+      : jeton = null,
+        mode = AgencyPurchaseQuoteMode.tl;
+
+  final AgencyPurchaseQuoteMode mode;
+  final int? jeton;
+  final double? tl;
+
+  @override
+  bool operator ==(Object other) =>
+      other is AgencyPurchaseQuoteRequest &&
+      other.mode == mode &&
+      other.jeton == jeton &&
+      other.tl == tl;
+
+  @override
+  int get hashCode => Object.hash(mode, jeton, tl);
 }
 
 class AgencyWalletDataSource {
@@ -250,10 +303,13 @@ class AgencyWalletDataSource {
   }) async =>
       (await transfer(targetUserId: userId, amount: amount, reason: reason)).ok;
 
-  Future<AgencyPurchaseInfo> fetchPurchase({int? jeton}) async {
+  Future<AgencyPurchaseInfo> fetchPurchase({int? jeton, double? tl}) async {
+    final useTl = tl != null && tl > 0;
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.agencyPurchase,
-      query: {if (jeton != null && jeton > 0) 'jeton': jeton},
+      query: useTl
+          ? {'tl': tl}
+          : {if (jeton != null && jeton > 0) 'jeton': jeton},
     );
     final body = asJsonMap(res.data);
     final data = body['data'] is Map ? asJsonMap(body['data']) : body;
@@ -274,18 +330,23 @@ class AgencyWalletDataSource {
   /// `POST /api/agency/purchase` — ödeme bildirimiyle toplu Jeton siparişi.
   /// Tutarı sunucu hesaplar; Jeton admin onayından sonra cüzdana geçer.
   Future<void> createPurchase({
-    required int jeton,
+    int? jeton,
+    double? tl,
     required String paymentMethod,
     String? transactionId,
     String? senderName,
     String? notes,
   }) async {
+    final useTl = tl != null && tl > 0;
+    if (!useTl && (jeton == null || jeton <= 0)) {
+      throw ApiException('Jeton veya TL tutarı girin');
+    }
     final key = _uuid.v4();
     try {
       await _dio.post<dynamic>(
         ApiEndpoints.agencyPurchase,
         data: {
-          'jeton': jeton,
+          if (useTl) 'tl': tl else 'jeton': jeton,
           'paymentMethod': paymentMethod,
           if (transactionId != null && transactionId.trim().isNotEmpty) 'transactionId': transactionId.trim(),
           if (senderName != null && senderName.trim().isNotEmpty) 'senderName': senderName.trim(),

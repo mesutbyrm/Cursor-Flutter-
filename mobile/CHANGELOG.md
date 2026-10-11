@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.771+827 (2026-10-11) — PR #41 ajans satın alma (TL bonus modu)
+
+- **Ajans cüzdanı:** Toplu Jeton — «Jeton → TL» (indirim) ve «TL → bonus» modları; `GET/POST /api/agency/purchase` PR #41 gövdesi
+- **Doküman:** `output/CANLIFAL_HEDIYE_AJANS_AUDIT_RAPOR.md` (hediye dağılım + ajans parity)
+
 ## 1.0.770+826 (2026-10-11) — CI: Yönetim Merkezi kart sayısı testi
 
 - **Test:** GirLive Bot kartı sonrası admin Yönetim Merkezi görünür kart sayısı 14
