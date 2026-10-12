@@ -4,20 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.777+833` |
-| Tarih (UTC) | 2026-10-12 15:58 |
-| Commit | [`208d2eced4b9f0682dba4f60905ea0e5f47f22a5`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/208d2eced4b9f0682dba4f60905ea0e5f47f22a5) |
-| İş akışı | [Run 38271553019](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/38271553019) |
+| Sürüm | `1.0.778+834` |
+| Tarih (UTC) | 2026-10-12 19:31 |
+| Commit | [`700ae1ad8b0d51eaa876656d328786855388708c`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/700ae1ad8b0d51eaa876656d328786855388708c) |
+| İş akışı | [Run 38295556167](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/38295556167) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.777+833 (2026-10-12) — Canlı PK + yayın ayarları + oturum özeti
+## 1.0.778+834 (2026-10-12) — Bekleyen dal birleştirmeleri (P0 ses + PK TRTC)
 
-- **Canlı PK:** `completed`/`ended` yalnızca süre dolduktan sonra bitmiş sayılır — kabul sonrası erken «berabere» ve anında kapanma düzeltildi; kabul/refresh merge guard
-- **Yayın kapatma:** PK davet/aktif maç varken yayın bitirme — iptal veya `endAndExit`; yayıncı çıkışta özet önce gösterilir
-- **Yayın ayarları:** Üst üste kutular (2 sütun anahtarlar, kamera/mikrofon kartları)
-- **Oturum özeti:** Canlı ve sesli odada süre, jeton, kim ne attı, PK kazandı/kaybetti/berabere
+- **Psychic P0 hotfix dalı:** main ile birleştirildi — sesli odadan çıkışta erken TRTC/audio leave (400 ms)
+- **PK video:** `resolveLivePkTrtcRemoteUserId` + twoWay rejoin iyileştirmeleri (`pk-video-result-voice-live-dfca` cherry-pick)
+- **Zaten main'de:** `backend-parity-router` (STAGE16 PK yönlendirme); `features-visibility-hub` (admin/falcı araç kataloğu ekranları)
+- **Docs:** P1 cihaz test PASS kaydı (`feature/p1-device-test-pass`)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
