@@ -313,6 +313,9 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
     VoiceEventLog.socketReconnected(roomId: _roomKey);
     unawaited(resyncChatMessagesAfterSse());
     try {
+      if (_presenceJoined && !_selfListedIn(_presenceCopy())) {
+        await _joinPresence(rejoinAfterHeartbeat: true);
+      }
       await Future.wait<void>([
         refreshServerPermissions(),
         _loadBackendSnapshot(),
@@ -323,13 +326,47 @@ extension VoiceRoomEntryControls on VoiceRoomLiveController {
       ], eagerError: false);
       _autoSeatAttempted = false;
       _maybeReconcileHostSeatIfNeeded();
+      schedulePrivilegedSeatAttempts();
       unawaited(_syncSpeakRequestPending());
       unawaited(_syncMusicFromServerIfNeeded(force: true));
       if (_roomKey.isNotEmpty) {
         ref.read(roomSongBlocProvider(_roomKey)).add(RoomSongJoinSync(_roomKey));
       }
+      ref.read(voiceRoomAudioCoordinatorProvider).setReconnectSuspended(false);
+      unawaited(ref.read(voiceRoomAudioCoordinatorProvider).ensureConnected());
     } catch (e) {
       VoiceEventLog.error('sse_resync', e);
+    }
+  }
+
+  /// Uygulama ön plana döndüğünde — arka planda presence/TRTC düşmüş oturumu
+  /// veya arka plan leave sonrası hâlâ açık oda ekranını toparlar.
+  Future<void> recoverAfterAppForeground({String source = 'app_foreground'}) async {
+    if (_roomKey.isEmpty || _leaveInFlight) return;
+    VoiceRoomDebugLog.log('session.foreground.recover', {
+      'room': _roomKey,
+      'source': source,
+      'sessionActive': _sessionActive,
+      'presenceJoined': _presenceJoined,
+    });
+
+    if (!_sessionActive) {
+      _explicitJoinConfirmed = true;
+      _entryBegun = false;
+      await _beginRoomSession();
+      return;
+    }
+
+    ref.read(voiceRoomAudioCoordinatorProvider).setReconnectSuspended(false);
+
+    if (!_presenceJoined || !_selfListedIn(_presenceCopy())) {
+      await _joinPresence(rejoinAfterHeartbeat: true);
+    }
+
+    await resyncAfterSseReconnect();
+
+    if (!state.sseConnected && _sessionActive) {
+      _startSse();
     }
   }
 }
