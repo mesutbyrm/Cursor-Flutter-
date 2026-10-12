@@ -174,6 +174,7 @@ import '../../features/debug/presentation/api_monitor_page.dart';
 import '../../features/debug/presentation/pages/cf_diagnostics_page.dart';
 import '../../features/profile/presentation/pages/blocked_users_page.dart';
 import '../../features/profile/presentation/pages/active_devices_page.dart';
+import '../../features/auth/presentation/pages/saved_accounts_page.dart';
 import '../../features/profile/presentation/pages/profile_transactions_page.dart';
 import '../../features/profile/presentation/pages/user_profile_page.dart';
 import '../../features/shell/presentation/main_shell_page.dart';
@@ -995,6 +996,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings/devices',
         builder: (context, state) => const ActiveDevicesPage(),
+      ),
+      GoRoute(
+        path: '/settings/accounts',
+        builder: (context, state) => const SavedAccountsPage(),
       ),
       GoRoute(
         path: '/settings/blocked',

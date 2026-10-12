@@ -9,6 +9,7 @@ import '../../../../core/network/pk_event_log.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../gifts/presentation/sync/gift_event_listener.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
+import '../../../live/presentation/providers/pk_session_phase_provider.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/pk/pk_team_label_helper.dart';
 import '../widgets/pk/voice_pk_invite_action_card.dart';
@@ -45,6 +46,7 @@ import '../widgets/premium_2026/pk/pk_mode_switcher.dart';
 import '../widgets/premium_2026/pk/pk_player_hud_frame.dart';
 import '../widgets/premium_2026/pk/pk_team_battle_strip.dart';
 import '../widgets/premium_2026/pk/pk_vs_emblem.dart';
+import '../widgets/premium_2026/pk/voice_pk_inline_result_strip.dart';
 import '../widgets/voice_room_gift_sheet.dart';
 import '../../../pk/presentation/widgets/pk_start_sheet.dart';
 import '../../../pk/presentation/widgets/pk_battle_visuals.dart';
@@ -74,7 +76,8 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
   var _soundMuted = false;
   var _opponentMuted = false;
   var _bridgeConnected = false;
-  var _resultNavigated = false;
+  var _pkEndHandled = false;
+  var _inlineResultVisible = false;
 
   @override
   void initState() {
@@ -218,21 +221,30 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
     }
   }
 
-  void _openResultPageIfNeeded({
+  void _showInlineResultIfNeeded({
     required PkBattleState pk,
     PkBattleRemote? remote,
   }) {
-    if (_resultNavigated || !mounted) return;
+    if (_pkEndHandled || !mounted) return;
     final ended = pk.isFinished || (remote?.isEnded ?? false);
-    if (!ended) return;
-    _resultNavigated = true;
-    // PK bitti: karşı odanın sesi köprüsü hemen kesilir (sonuç ekranında da
-    // rakip oda sesi gelmesin).
+    if (!ended || remote == null) return;
+    _pkEndHandled = true;
     _disconnectOpponentAudio();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      context.pushReplacement('/pk/result');
-    });
+    setState(() => _inlineResultVisible = true);
+  }
+
+  void _dismissInlinePkResult() {
+    if (!mounted) return;
+    setState(() => _inlineResultVisible = false);
+    ref.read(pkBattleRemoteProvider.notifier).clear();
+    ref.read(pkSessionPhaseProvider.notifier).reset();
+    _pkEndHandled = false;
+  }
+
+  Future<void> _rematchPk() async {
+    _dismissInlinePkResult();
+    if (!mounted) return;
+    await openVoicePkInviteSheet(context, ref, widget.room);
   }
 
   /// Karşı odanın kullanıcıları: PK katılımcılarından benim tarafım dışındakiler
@@ -407,7 +419,7 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
         perms.isRoomOwner || perms.canModerate || perms.isSiteAdmin;
 
     ref.listen<PkBattleState>(pkBattleProvider, (prev, next) {
-      _openResultPageIfNeeded(pk: next, remote: remote);
+      _showInlineResultIfNeeded(pk: next, remote: remote);
     });
     ref.listen<PkBattleRemote?>(pkBattleForRoomProvider(widget.room), (prev, next) {
       if (next != null && pkBattleBelongsToRoom(next, widget.room)) {
@@ -415,7 +427,7 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
             .read(pkBattleProvider.notifier)
             .applyRemoteBattleForVoiceRoom(next, widget.room);
       }
-      _openResultPageIfNeeded(pk: pk, remote: next);
+      _showInlineResultIfNeeded(pk: pk, remote: next);
     });
 
     return GiftEventListener(
@@ -460,6 +472,14 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
             token: pk.reactionBurst,
             toLeft: _lastGiftSideLeft,
           ),
+          if (_inlineResultVisible && remote != null && remote.isEnded)
+            VoicePkInlineResultStrip(
+              remote: remote,
+              room: widget.room,
+              myUserId: user?.id,
+              onDismiss: _dismissInlinePkResult,
+              onRematch: canControlPk ? _rematchPk : null,
+            ),
           SafeArea(
             child: Column(
               children: [

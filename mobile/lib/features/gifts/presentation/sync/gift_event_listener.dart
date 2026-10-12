@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import '../../../profile/presentation/providers/profile_providers.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -13,7 +15,6 @@ import '../../../voice_hub/presentation/gifts/voice_room_gift_orchestrator.dart'
 import '../../../voice_hub/presentation/providers/voice_gift_combo_tracker.dart';
 import '../../../voice_hub/presentation/providers/voice_gift_leaderboard_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../voice_hub/presentation/providers/voice_room_session_registry.dart';
 import '../../../../core/room/room_event_scope.dart';
 import '../global/global_gift_event_bridge.dart';
@@ -154,13 +155,28 @@ class _GiftEventListenerState extends ConsumerState<GiftEventListener> {
   }
 
   void _syncWalletFromGift(LiveGiftEvent event) {
-    final balance = event.remainingBalance;
-    if (balance == null || balance < 0) return;
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) return;
     final sid = event.senderId?.trim() ?? '';
-    if (sid.isNotEmpty && sid != user.id) return;
-    ref.read(walletBalancesProvider.notifier).applyJetonFromServer(balance);
+    final rid = event.receiverId?.trim() ?? '';
+    final balance = event.remainingBalance;
+
+    if (sid.isNotEmpty && sid == user.id) {
+      if (balance != null && balance >= 0) {
+        ref.read(walletBalancesProvider.notifier).applyJetonFromServer(balance);
+      }
+      return;
+    }
+
+    if (rid.isNotEmpty && rid == user.id) {
+      if (balance != null && balance >= 0) {
+        ref.read(walletBalancesProvider.notifier).applyJetonFromServer(balance);
+      } else {
+        unawaited(ref.read(walletBalancesProvider.notifier).refresh(force: true));
+      }
+      ref.invalidate(profileStatsProvider);
+      ref.invalidate(giftsReceivedSummaryProvider);
+    }
   }
 
   @override

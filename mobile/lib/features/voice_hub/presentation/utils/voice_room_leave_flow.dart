@@ -186,10 +186,17 @@ abstract final class VoiceRoomLeaveFlow {
       }
 
       final rootCtx = rootNavigatorKey.currentContext ?? context;
-      if (leaveSummary != null &&
-          (leaveSummary.hasData || leaveSummary.isHostOrOwner) &&
-          rootCtx.mounted) {
-        await showSessionGiftSummarySheet(rootCtx, summary: leaveSummary);
+      if (leaveSummary != null && rootCtx.mounted) {
+        final showSummary = leaveSummary.hasData ||
+            leaveSummary.isHostOrOwner ||
+            (leaveSummary.duration != null && leaveSummary.duration! > Duration.zero);
+        if (showSummary) {
+          await showSessionGiftSummarySheet(rootCtx, summary: leaveSummary);
+          await SessionGiftSummaryBuilder.refreshWalletIfRecipient(
+            ref,
+            leaveSummary,
+          );
+        }
       }
 
       if (key.isNotEmpty) {
