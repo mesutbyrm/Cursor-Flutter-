@@ -9,10 +9,7 @@ import '../../../domain/entities/live_guest_layout.dart';
 import '../../providers/live_broadcast_settings_provider.dart';
 import 'live_stream_quality_picker.dart';
 
-/// Yayıncı — «Yayın Ayarları» bottom sheet'i.
-///
-/// Üst: yayıncı kartı · hızlı eylemler (kamera, mikrofon, güzellik/filtre,
-/// paylaş) · etkileşim anahtarları · «Yayını Bitir».
+/// Yayıncı — «Yayın Ayarları» bottom sheet'i (üst üste kutular).
 Future<void> showLiveBroadcastSettingsSheet({
   required BuildContext context,
   required WidgetRef ref,
@@ -86,141 +83,135 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
             children: [
               Flexible(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      ListTile(
-                        leading: UserAvatar(
-                          url: widget.hostAvatarUrl,
-                          radius: 22,
-                        ),
-                        title: Text(
-                          widget.hostName?.isNotEmpty == true
-                              ? widget.hostName!
-                              : 'Yayın Ayarları',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 17,
-                          ),
-                        ),
-                        subtitle: const Text('Yayın Ayarları'),
+                      _HostHeaderBox(
+                        hostName: widget.hostName,
+                        hostAvatarUrl: widget.hostAvatarUrl,
                       ),
-                      if (trtc != null) ...[
-                        _ActionRow(
-                          icon: trtc.cameraOn
-                              ? Icons.videocam_rounded
-                              : Icons.videocam_off_rounded,
-                          label: 'Kamera Aç/Kapat',
-                          value: trtc.cameraOn ? 'Açık' : 'Kapalı',
-                          onTap: () {
-                            trtc.setCameraEnabled(!trtc.cameraOn);
-                            widget.onRtcChanged?.call();
-                            setState(() {});
-                          },
+                      const SizedBox(height: 10),
+                      if (trtc != null)
+                        _TwoColumnRow(
+                          children: [
+                            _ActionBox(
+                              icon: trtc.cameraOn
+                                  ? Icons.videocam_rounded
+                                  : Icons.videocam_off_rounded,
+                              label: 'Kamera',
+                              subtitle: trtc.cameraOn ? 'Açık' : 'Kapalı',
+                              onTap: () {
+                                trtc.setCameraEnabled(!trtc.cameraOn);
+                                widget.onRtcChanged?.call();
+                                setState(() {});
+                              },
+                            ),
+                            _ActionBox(
+                              icon: trtc.micOn
+                                  ? Icons.mic_rounded
+                                  : Icons.mic_off_rounded,
+                              label: 'Mikrofon',
+                              subtitle: trtc.micOn ? 'Açık' : 'Kapalı',
+                              onTap: () {
+                                trtc.setMicEnabled(!trtc.micOn);
+                                widget.onRtcChanged?.call();
+                                setState(() {});
+                              },
+                            ),
+                          ],
                         ),
-                        _ActionRow(
-                          icon: trtc.micOn
-                              ? Icons.mic_rounded
-                              : Icons.mic_off_rounded,
-                          label: 'Mikrofon Aç/Kapat',
-                          value: trtc.micOn ? 'Açık' : 'Kapalı',
-                          onTap: () {
-                            trtc.setMicEnabled(!trtc.micOn);
-                            widget.onRtcChanged?.call();
-                            setState(() {});
-                          },
-                        ),
-                      ],
-                      if (widget.onBeautyFilter != null)
-                        _ActionRow(
+                      if (widget.onBeautyFilter != null) ...[
+                        const SizedBox(height: 10),
+                        _ActionBox(
                           icon: Icons.auto_awesome_rounded,
-                          label: 'Güzellik Efektleri ve Filtreler',
+                          label: 'Güzellik ve filtreler',
+                          fullWidth: true,
                           onTap: () => closeThen(widget.onBeautyFilter),
                         ),
-                      if (widget.onShare != null)
-                        _ActionRow(
+                      ],
+                      if (widget.onShare != null) ...[
+                        const SizedBox(height: 10),
+                        _ActionBox(
                           icon: Icons.ios_share_rounded,
                           label: 'Paylaş',
+                          fullWidth: true,
                           onTap: () => closeThen(widget.onShare),
                         ),
-                      const Divider(height: 20),
-                      _SwitchRow(
-                        icon: Icons.person_add_alt_1_rounded,
-                        label: 'Misafir Kabul Et',
-                        value: settings.guestsEnabled,
-                        onChanged: notifier.toggleGuests,
-                      ),
-                      _SwitchRow(
-                        icon: Icons.chat_bubble_outline_rounded,
-                        label: 'Yorumlar',
-                        value: settings.commentsEnabled,
-                        onChanged: notifier.toggleComments,
-                      ),
-                      _SwitchRow(
-                        icon: Icons.card_giftcard_rounded,
-                        label: 'Hediyeler',
-                        value: settings.giftsEnabled,
-                        onChanged: notifier.toggleGifts,
-                      ),
-                      _SwitchRow(
-                        icon: Icons.auto_fix_high_rounded,
-                        label: 'Fal isteği kabul et',
-                        value: settings.fortuneRequestsEnabled,
-                        onChanged: notifier.toggleFortuneRequests,
-                      ),
-                      _SwitchRow(
-                        icon: Icons.sports_mma_rounded,
-                        label: 'PK Battle',
-                        value: settings.pkEnabled,
-                        onChanged: notifier.togglePk,
-                      ),
-                      _SwitchRow(
-                        icon: Icons.grid_view_rounded,
-                        label: 'Çoklu yayın',
-                        value: settings.coBroadcastEnabled,
-                        onChanged: notifier.toggleCoBroadcast,
-                      ),
-                      if (settings.coBroadcastEnabled)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                          child: Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              for (final g in LiveGuestLayout.values)
-                                ChoiceChip(
-                                  label: Text(g.label),
-                                  selected: settings.guestLayout == g,
-                                  onSelected: (_) => notifier.setGuestLayout(g),
-                                ),
-                            ],
-                          ),
-                        ),
-                      const Padding(
-                        padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'Video kalitesi (düşük gecikme)',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 13,
-                            ),
-                          ),
+                      ],
+                      const SizedBox(height: 14),
+                      const Text(
+                        'Etkileşim',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 14,
+                          color: Colors.white70,
                         ),
                       ),
-                      const LiveStreamQualityPicker(
-                        compact: true,
-                        showTitle: false,
+                      const SizedBox(height: 8),
+                      _TwoColumnRow(
+                        children: [
+                          _ToggleBox(
+                            icon: Icons.person_add_alt_1_rounded,
+                            label: 'Misafir kabul',
+                            value: settings.guestsEnabled,
+                            onChanged: notifier.toggleGuests,
+                          ),
+                          _ToggleBox(
+                            icon: Icons.chat_bubble_outline_rounded,
+                            label: 'Yorumlar',
+                            value: settings.commentsEnabled,
+                            onChanged: notifier.toggleComments,
+                          ),
+                        ],
                       ),
+                      const SizedBox(height: 10),
+                      _TwoColumnRow(
+                        children: [
+                          _ToggleBox(
+                            icon: Icons.card_giftcard_rounded,
+                            label: 'Hediyeler',
+                            value: settings.giftsEnabled,
+                            onChanged: notifier.toggleGifts,
+                          ),
+                          _ToggleBox(
+                            icon: Icons.auto_fix_high_rounded,
+                            label: 'Fal isteği',
+                            value: settings.fortuneRequestsEnabled,
+                            onChanged: notifier.toggleFortuneRequests,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      _TwoColumnRow(
+                        children: [
+                          _ToggleBox(
+                            icon: Icons.sports_mma_rounded,
+                            label: 'PK Battle',
+                            value: settings.pkEnabled,
+                            onChanged: notifier.togglePk,
+                          ),
+                          _ToggleBox(
+                            icon: Icons.grid_view_rounded,
+                            label: 'Çoklu yayın',
+                            value: settings.coBroadcastEnabled,
+                            onChanged: notifier.toggleCoBroadcast,
+                          ),
+                        ],
+                      ),
+                      if (settings.coBroadcastEnabled) ...[
+                        const SizedBox(height: 10),
+                        _LayoutBox(
+                          layout: settings.guestLayout,
+                          onPick: notifier.setGuestLayout,
+                        ),
+                      ],
+                      const SizedBox(height: 14),
+                      _QualityBox(),
                     ],
                   ),
                 ),
               ),
-              // Sabit alt: kaydırma uzunluğundan bağımsız her zaman erişilebilir.
               if (widget.onEndBroadcast != null)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
@@ -254,35 +245,137 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
   }
 }
 
-class _ActionRow extends StatelessWidget {
-  const _ActionRow({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.value,
-  });
+class _HostHeaderBox extends StatelessWidget {
+  const _HostHeaderBox({this.hostName, this.hostAvatarUrl});
 
-  final IconData icon;
-  final String label;
-  final String? value;
-  final VoidCallback onTap;
+  final String? hostName;
+  final String? hostAvatarUrl;
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      dense: true,
-      leading: Icon(icon, size: 22),
-      title: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-      trailing: value != null
-          ? Text(value!, style: const TextStyle(color: Colors.white60))
-          : const Icon(Icons.chevron_right_rounded, color: Colors.white38),
-      onTap: onTap,
+    return _BoxShell(
+      child: Row(
+        children: [
+          UserAvatar(url: hostAvatarUrl, radius: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  hostName?.isNotEmpty == true ? hostName! : 'Yayın Ayarları',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 17,
+                  ),
+                ),
+                const Text(
+                  'Yayın Ayarları',
+                  style: TextStyle(color: Colors.white60, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _SwitchRow extends StatelessWidget {
-  const _SwitchRow({
+class _TwoColumnRow extends StatelessWidget {
+  const _TwoColumnRow({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < children.length; i++) ...[
+          if (i > 0) const SizedBox(width: 10),
+          Expanded(child: children[i]),
+        ],
+      ],
+    );
+  }
+}
+
+class _BoxShell extends StatelessWidget {
+  const _BoxShell({required this.child, this.onTap});
+
+  final Widget child;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final inner = Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: child,
+    );
+    if (onTap == null) return inner;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: inner,
+      ),
+    );
+  }
+}
+
+class _ActionBox extends StatelessWidget {
+  const _ActionBox({
+    required this.icon,
+    required this.label,
+    this.subtitle,
+    required this.onTap,
+    this.fullWidth = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final String? subtitle;
+  final VoidCallback onTap;
+  final bool fullWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    return _BoxShell(
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 26, color: AppThemeColors.accentPink),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5),
+          ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              subtitle!,
+              style: const TextStyle(color: Colors.white54, fontSize: 12),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ToggleBox extends StatelessWidget {
+  const _ToggleBox({
     required this.icon,
     required this.label,
     required this.value,
@@ -296,13 +389,83 @@ class _SwitchRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SwitchListTile(
-      dense: true,
-      secondary: Icon(icon, size: 22),
-      title: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-      value: value,
-      activeThumbColor: AppThemeColors.accentPink,
-      onChanged: onChanged,
+    return _BoxShell(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 22, color: Colors.white70),
+              const Spacer(),
+              Switch.adaptive(
+                value: value,
+                activeTrackColor: AppThemeColors.accentPink.withValues(alpha: 0.45),
+                activeThumbColor: AppThemeColors.accentPink,
+                onChanged: onChanged,
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LayoutBox extends StatelessWidget {
+  const _LayoutBox({required this.layout, required this.onPick});
+
+  final LiveGuestLayout layout;
+  final ValueChanged<LiveGuestLayout> onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    return _BoxShell(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Misafir düzeni',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final g in LiveGuestLayout.values)
+                ChoiceChip(
+                  label: Text(g.label),
+                  selected: layout == g,
+                  onSelected: (_) => onPick(g),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QualityBox extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return _BoxShell(
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Video kalitesi (düşük gecikme)',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+          ),
+          SizedBox(height: 8),
+          LiveStreamQualityPicker(compact: true, showTitle: false),
+        ],
+      ),
     );
   }
 }

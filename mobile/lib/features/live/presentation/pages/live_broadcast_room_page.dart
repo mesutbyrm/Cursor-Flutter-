@@ -56,6 +56,7 @@ import '../../domain/pk/live_pk_side_resolver.dart';
 import '../../domain/pk/live_pk_chat_stream.dart';
 import '../../domain/pk/live_pk_trtc_anchor.dart';
 import '../../domain/pk/live_pk_broadcast_stage.dart';
+import '../../domain/pk/live_pk_local_score.dart';
 import '../../domain/pk/pk_status_helper.dart';
 import '../../domain/live_co_broadcast_constants.dart';
 import '../../domain/live_guest_layout_resolver.dart';
@@ -509,17 +510,22 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     if (streamId.isEmpty) return;
     try {
       final pkState = ref.read(liveVideoPkProvider(streamId));
-      final status = pkState.status.toLowerCase();
-      if (status != 'active' && status != 'pending') return;
+      final battle = pkState.battle;
+      if (battle == null) return;
       PkEventLog.ending(
         matchId: pkState.unifiedMatchId,
-        battleId: pkState.battle?['id']?.toString(),
+        battleId: battle['id']?.toString(),
       );
       final notifier = ref.read(liveVideoPkProvider(streamId).notifier);
-      if (status == 'pending') {
+      if (isPkInvitePendingStatus(pkState.status)) {
         await notifier.cancel();
+      } else if (!livePkBattleFinished(
+        status: pkState.status,
+        battle: battle,
+      )) {
+        await notifier.endAndExit();
       } else {
-        await notifier.end();
+        notifier.forceExitPk();
       }
       PkEventLog.ended(
         matchId: pkState.unifiedMatchId,
@@ -990,6 +996,19 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     );
   }
 
+  String? _livePkOutcomeLabel(String streamId) {
+    final pk = ref.read(liveVideoPkProvider(streamId));
+    final battle = pk.battle;
+    if (battle == null) return null;
+    if (!livePkBattleFinished(status: pk.status, battle: battle)) return null;
+    final left = pk.leftScore;
+    final right = pk.rightScore;
+    if (left == right) return 'Berabere';
+    final side = pkSideForStream(battle, streamId);
+    final iWon = side == 'left' ? left > right : right > left;
+    return iWon ? 'Kazandınız' : 'Kaybettiniz';
+  }
+
   SessionGiftSummary? _buildSessionSummary() {
     final streamId = widget.session.streamId?.trim() ?? '';
     final user = ref.read(authControllerProvider).valueOrNull;
@@ -1007,6 +1026,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           ? DateTime.now().difference(_sessionJoinedAt!)
           : null,
       peakViewerCount: _peakViewerCount,
+      pkOutcomeLabel: _livePkOutcomeLabel(streamId),
     );
   }
 
@@ -1066,17 +1086,35 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     _streamEndUiHandled = true;
     _leaving = true;
     _leavingSince = DateTime.now();
+    final streamId = widget.session.streamId?.trim() ?? '';
+    final user = ref.read(authControllerProvider).valueOrNull;
+    final summary =
+        streamId.isNotEmpty && user != null ? _buildSessionSummary() : null;
+
     try {
       ref.read(liveGiftControllerProvider).detach();
     } catch (_) {}
-    final streamId = widget.session.streamId?.trim() ?? '';
-    final user = ref.read(authControllerProvider).valueOrNull;
 
-    // Önce navigasyon — kullanıcı anında çıksın; temizlik arka planda.
+    // Oturum özeti — provider verisi temizlenmeden önce tam ekran / sheet.
+    if (summary != null) {
+      final rootCtx = rootNavigatorKey.currentContext ?? context;
+      if (rootCtx.mounted) {
+        if (widget.session.isHost) {
+          await showLiveBroadcastEndedFlow(
+            context: rootCtx,
+            isHost: true,
+            streamerName: widget.session.streamerName,
+            summary: summary,
+          );
+        } else if (summary.hasData) {
+          await showSessionGiftSummarySheet(rootCtx, summary: summary);
+        }
+      }
+    }
+
     if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
       widget.onSwipeClose!();
     } else if (context.mounted) {
-      // Önceki sayfaya dön (liste/ana sayfa); yığın boşsa ana sayfa.
       if (context.canPop()) {
         context.pop();
       } else {
@@ -1092,9 +1130,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 content: 'Yayıncı yayını kapattı.',
               ),
         );
-        // Sunucuda yayını bitir: başarısızsa kısa aralıklarla 3 kez dene; yayın
-        // sunucuda açık kalırsa kurtarma kaydı silinmez (uygulama yeniden
-        // açıldığında «Sonlandır» sorulur).
         unawaited(_endStreamOnServerWithRetry(streamId));
         ref.read(liveRoomProvider(streamId).notifier).markStreamEnded();
         await _leaveLiveSession(endReason: 'host_exit');
@@ -1102,12 +1137,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         await _leaveLiveSession();
       }
 
-      if (streamId.isNotEmpty && user != null) {
-        final hostId = widget.session.hostUserId?.trim().isNotEmpty == true
-            ? widget.session.hostUserId!.trim()
-            : (widget.session.isHost ? user.id : '');
-        final summary = _buildSessionSummary();
-        if (summary != null) {
+      if (streamId.isNotEmpty && user != null && summary != null) {
+        try {
           final roomSnap = ref.read(liveRoomProvider(streamId));
           ref
               .read(liveRoomProvider(streamId).notifier)
@@ -1121,17 +1152,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                     ? 'Yayını kapattınız'
                     : 'Yayından ayrıldınız',
               );
-          await SessionGiftSummaryBuilder.refreshWalletIfRecipient(
-            ref,
-            summary,
-          );
-          if (summary.hasData || widget.session.isHost) {
-            final rootCtx = rootNavigatorKey.currentContext;
-            if (rootCtx != null && rootCtx.mounted) {
-              unawaited(showSessionGiftSummarySheet(rootCtx, summary: summary));
-            }
-          }
-        }
+        } catch (_) {}
+        await SessionGiftSummaryBuilder.refreshWalletIfRecipient(ref, summary);
         invalidateDiscoverLiveStreams(ref);
       } else {
         await ref.refreshWalletCache(force: true);

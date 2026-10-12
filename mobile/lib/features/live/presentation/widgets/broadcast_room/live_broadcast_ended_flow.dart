@@ -123,6 +123,12 @@ class LiveBroadcastEndedCard extends ConsumerWidget {
                 value: '${s.myNetJeton}',
                 highlight: true,
               ),
+              if (s.pkOutcomeLabel?.trim().isNotEmpty == true)
+                _StatTile(
+                  emoji: '🥊',
+                  label: 'PK sonucu',
+                  value: s.pkOutcomeLabel!.trim(),
+                ),
             ],
             const SizedBox(height: 16),
             SizedBox(

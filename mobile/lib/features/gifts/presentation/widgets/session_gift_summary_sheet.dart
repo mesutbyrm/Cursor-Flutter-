@@ -95,6 +95,12 @@ class _SessionGiftSummaryBody extends ConsumerWidget {
                       'Fal isteği',
                       '${summary.fortuneAcceptedCount}/${summary.fortuneRequestCount}',
                     ),
+                  if (summary.pkOutcomeLabel?.trim().isNotEmpty == true)
+                    _chip(
+                      Icons.sports_mma_rounded,
+                      'PK',
+                      summary.pkOutcomeLabel!.trim(),
+                    ),
                 ],
               ),
               const SizedBox(height: 14),

@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../live/domain/pk/live_pk_broadcast_stage.dart';
 import '../../../live/domain/pk/live_pk_server_clock.dart';
 import '../../../live/domain/pk/pk_status_helper.dart';
 
@@ -132,12 +133,18 @@ class PkBattleRemote extends Equatable {
 
   bool get isPending => isPkInvitePendingStatus(status);
   bool get isActive => isLivePkActiveStatus(status);
-  bool get isEnded =>
-      status == 'ended' ||
-      status == 'rejected' ||
-      status == 'cancelled' ||
-      status == 'completed' ||
-      status == 'canceled';
+  bool get isEnded {
+    final s = normalizePkStatus(status);
+    if (s == 'rejected' || s == 'cancelled' || s == 'canceled') return true;
+    if (isPending || isActive || isLivePkStartingStatus(status)) return false;
+    if (isLivePkPausedStatus(status)) return false;
+    final battleMap = <String, dynamic>{
+      if (endsAt != null) 'endsAt': endsAt!.toUtc().toIso8601String(),
+      if (startedAt != null) 'startedAt': startedAt!.toUtc().toIso8601String(),
+      'durationSeconds': durationSeconds,
+    };
+    return livePkBattleFinished(status: status, battle: battleMap);
+  }
 
   /// Üretim PK/SSE alan adlarını tek modele indirger (`stream1Id`, `room1`, …).
   static Map<String, dynamic> normalizeWireMap(Map<String, dynamic> json) {

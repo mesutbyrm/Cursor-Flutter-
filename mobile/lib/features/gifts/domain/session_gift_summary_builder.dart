@@ -23,6 +23,7 @@ abstract final class SessionGiftSummaryBuilder {
     required String? myUserId,
     Duration? duration,
     int peakViewerCount = 0,
+    String? pkOutcomeLabel,
   }) {
     final senders = ref.read(liveGiftLeaderboardProvider(streamId));
     final totalGross =
@@ -90,6 +91,7 @@ abstract final class SessionGiftSummaryBuilder {
       giftEventCount: giftCtrl.notifications.length,
       fortuneRequestCount: fortuneTotal,
       fortuneAcceptedCount: fortuneAccepted,
+      pkOutcomeLabel: pkOutcomeLabel,
     );
   }
 
@@ -100,6 +102,8 @@ abstract final class SessionGiftSummaryBuilder {
     required String? ownerDisplayName,
     required String? myUserId,
     required String? myDisplayName,
+    Duration? duration,
+    String? pkOutcomeLabel,
   }) {
     final senders = ref.read(voiceSessionGiftLeaderboardProvider);
     final totalGross =
@@ -169,6 +173,8 @@ abstract final class SessionGiftSummaryBuilder {
       jetonTlRate: rate ?? kDefaultJetonTlRate,
       isHostOrOwner: isOwner,
       recipientOnly: !isOwner && myNet > 0,
+      duration: duration,
+      pkOutcomeLabel: pkOutcomeLabel,
     );
   }
 

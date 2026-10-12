@@ -18,6 +18,7 @@ class SessionGiftSummary {
     this.giftEventCount = 0,
     this.fortuneRequestCount = 0,
     this.fortuneAcceptedCount = 0,
+    this.pkOutcomeLabel,
   });
 
   final String title;
@@ -39,6 +40,8 @@ class SessionGiftSummary {
   final int giftEventCount;
   final int fortuneRequestCount;
   final int fortuneAcceptedCount;
+  /// Oturumda bitmiş PK varsa: «PK: Kazandınız» / «Kaybettiniz» / «Berabere».
+  final String? pkOutcomeLabel;
 
   double tlForJeton(int jeton) =>
       jeton <= 0 ? 0 : (jeton * jetonTlRate);
@@ -67,6 +70,7 @@ class SessionGiftSummary {
       myNetJeton > 0 ||
       likeCount > 0 ||
       fortuneRequestCount > 0 ||
+      (pkOutcomeLabel?.trim().isNotEmpty == true) ||
       (isHostOrOwner && duration != null);
 }
 

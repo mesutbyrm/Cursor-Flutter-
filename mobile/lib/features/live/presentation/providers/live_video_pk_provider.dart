@@ -193,7 +193,7 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
           fresh,
           previous: state.battle,
         );
-        final finished = remote.isEnded ||
+        final finished =
             livePkBattleFinished(status: remote.status, battle: map);
         state = state.copyWith(
           battle: map,
@@ -587,14 +587,25 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
       }
       if (remote != null) {
         ref.read(pkBattleRemoteDataSourceProvider).invalidatePkPollCaches();
+        final fresh = pkBattleRemoteToBattleMap(remote, myStreamId: arg);
+        final map = _mergeBattleMap(fresh, previous: state.battle);
+        final mergedStatus = map['status']?.toString() ?? '';
+        final finished =
+            livePkBattleFinished(status: mergedStatus, battle: map);
         state = state.copyWith(
-          battle: pkBattleRemoteToBattleMap(remote, myStreamId: arg),
+          battle: map,
           unifiedMatchId: remote.effectiveId,
           loading: false,
         );
-        if (remote.isEnded) {
+        if (finished) {
           _stopPolling();
           _scheduleEndedCleanup(remote.effectiveId);
+        } else if (isLivePkActiveStatus(mergedStatus) ||
+            isLivePkStartingStatus(mergedStatus)) {
+          _startPolling();
+          _scheduleEndsAtRefresh(map);
+        } else if (isPkInvitePendingStatus(mergedStatus)) {
+          _stopPolling();
         }
         return;
       }

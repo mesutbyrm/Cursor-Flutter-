@@ -34,29 +34,43 @@ bool isLivePkEndedStatus(String? status) {
       s == 'canceled';
 }
 
-/// PK gerçekten bitti mi — `tie`/`draw` yalnızca süre dolduktan sonra.
+/// Süre / `endsAt` doldu mu — sunucu erken `completed`/`ended` gönderse bile
+/// maç devam ediyor sayılır.
+bool livePkClockAllowsFinish(Map<String, dynamic>? battle, DateTime clock) {
+  if (battle == null || battle.isEmpty) return true;
+  final endsRaw = battle['endsAt']?.toString().trim() ?? '';
+  final endsAt =
+      endsRaw.isNotEmpty ? DateTime.tryParse(endsRaw)?.toUtc() : null;
+  if (endsAt != null) {
+    return !clock.isBefore(endsAt);
+  }
+  final startedRaw = battle['startedAt']?.toString().trim() ?? '';
+  final started =
+      startedRaw.isNotEmpty ? DateTime.tryParse(startedRaw)?.toUtc() : null;
+  if (started != null) {
+    final dur = int.tryParse(
+          '${battle['durationSeconds'] ?? battle['duration'] ?? 180}',
+        ) ??
+        180;
+    return !clock.isBefore(started.add(Duration(seconds: dur)));
+  }
+  return true;
+}
+
+/// PK gerçekten bitti mi — `tie`/`draw` ve `completed` yalnızca süre dolduktan sonra.
 bool livePkBattleFinished({
   required String? status,
   Map<String, dynamic>? battle,
   DateTime? now,
 }) {
-  if (isLivePkEndedStatus(status)) return true;
-  if (!isLivePkOutcomeOnlyStatus(status)) return false;
   final clock = (now ?? DateTime.now()).toUtc();
-  final endsRaw = battle?['endsAt']?.toString().trim() ?? '';
-  final endsAt = endsRaw.isNotEmpty ? DateTime.tryParse(endsRaw)?.toUtc() : null;
-  if (endsAt != null && clock.isAfter(endsAt)) return true;
-  final startedRaw = battle?['startedAt']?.toString().trim() ?? '';
-  final started =
-      startedRaw.isNotEmpty ? DateTime.tryParse(startedRaw)?.toUtc() : null;
-  if (started != null) {
-    final dur = int.tryParse(
-          '${battle?['durationSeconds'] ?? battle?['duration'] ?? 180}',
-        ) ??
-        180;
-    if (clock.isAfter(started.add(Duration(seconds: dur)))) return true;
+  final s = normalizePkStatus(status);
+  if (s == 'rejected' || s == 'cancelled' || s == 'canceled') return true;
+  if (isLivePkEndedStatus(status)) {
+    return livePkClockAllowsFinish(battle, clock);
   }
-  return false;
+  if (!isLivePkOutcomeOnlyStatus(status)) return false;
+  return livePkClockAllowsFinish(battle, clock);
 }
 
 /// Aktif veya bitti — split video + skor çubuğu (tam ekran sonuç overlay yok).

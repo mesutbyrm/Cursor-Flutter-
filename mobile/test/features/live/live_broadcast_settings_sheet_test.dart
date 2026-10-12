@@ -34,9 +34,9 @@ void main() {
 
     expect(find.text('Selin'), findsOneWidget);
     for (final l in [
-      'Güzellik Efektleri ve Filtreler',
+      'Güzellik ve filtreler',
       'Paylaş',
-      'Misafir Kabul Et',
+      'Misafir kabul',
       'Yorumlar',
       'Hediyeler',
       'Yayını Bitir',

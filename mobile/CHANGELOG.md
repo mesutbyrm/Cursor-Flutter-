@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.777+833 (2026-10-12) — Canlı PK + yayın ayarları + oturum özeti
+
+- **Canlı PK:** `completed`/`ended` yalnızca süre dolduktan sonra bitmiş sayılır — kabul sonrası erken «berabere» ve anında kapanma düzeltildi; kabul/refresh merge guard
+- **Yayın kapatma:** PK davet/aktif maç varken yayın bitirme — iptal veya `endAndExit`; yayıncı çıkışta özet önce gösterilir
+- **Yayın ayarları:** Üst üste kutular (2 sütun anahtarlar, kamera/mikrofon kartları)
+- **Oturum özeti:** Canlı ve sesli odada süre, jeton, kim ne attı, PK kazandı/kaybetti/berabere
+
 ## 1.0.774+830 (2026-10-12) — Sesli oda moderasyon + şifre + GirLive
 
 - **Şifreli oda:** `hasPassword` tüm oda tiplerinde giriş kapısı ve sahip join-request senkronu; «Odaya giriş kontrolü»nde şifre koy/kaldır

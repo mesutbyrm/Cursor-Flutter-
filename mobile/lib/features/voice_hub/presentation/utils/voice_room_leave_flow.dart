@@ -10,6 +10,8 @@ import '../../../gifts/domain/session_gift_summary.dart';
 import '../../../gifts/domain/session_gift_summary_builder.dart';
 import '../../../gifts/presentation/widgets/session_gift_summary_sheet.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
+import '../../../live/domain/pk/live_pk_broadcast_stage.dart';
+import '../providers/pk_battle_remote_provider.dart';
 import '../../data/services/voice_room_debug_log.dart';
 import '../pages/voice_room_owner_summary_page.dart';
 import '../providers/chat_room_providers.dart';
@@ -17,6 +19,32 @@ import '../providers/voice_session_visitors_provider.dart';
 
 /// Sesli oda çıkış — onay diyalogu ve hediye özeti (Basic + RTC ortak).
 abstract final class VoiceRoomLeaveFlow {
+  static String? pkOutcomeForRoom(WidgetRef ref, String roomId) {
+    final battle = ref.read(pkBattleRemoteProvider);
+    if (battle == null) return null;
+    final id = roomId.trim();
+    final hostRoom = battle.voiceRoomId?.trim() ?? '';
+    final guestRoom = battle.opponentVoiceRoomId?.trim() ?? '';
+    if (id.isEmpty || (hostRoom != id && guestRoom != id)) return null;
+    final battleMap = <String, dynamic>{
+      if (battle.endsAt != null)
+        'endsAt': battle.endsAt!.toUtc().toIso8601String(),
+      if (battle.startedAt != null)
+        'startedAt': battle.startedAt!.toUtc().toIso8601String(),
+      'durationSeconds': battle.durationSeconds,
+    };
+    if (!livePkBattleFinished(status: battle.status, battle: battleMap)) {
+      return null;
+    }
+    final left = battle.challengerScore;
+    final right = battle.opponentScore;
+    if (left == right) return 'Berabere';
+    final myRoomIsChallenger = hostRoom == id;
+    final myScore = myRoomIsChallenger ? left : right;
+    final theirScore = myRoomIsChallenger ? right : left;
+    return myScore > theirScore ? 'Kazandınız' : 'Kaybettiniz';
+  }
+
   static Future<bool> confirmLeave(BuildContext context) async {
     final dialogContext = rootNavigatorKey.currentContext ?? context;
     if (!dialogContext.mounted) return false;
@@ -123,6 +151,9 @@ abstract final class VoiceRoomLeaveFlow {
         if (key.isNotEmpty && user != null) {
           final live = ref.read(voiceRoomLiveProvider(key));
           final ownerId = (live.ownerId ?? room.ownerId)?.trim() ?? '';
+          final sessionDuration = visitors != null
+              ? DateTime.now().difference(visitors.startedAt)
+              : null;
           leaveSummary = SessionGiftSummaryBuilder.forVoiceRoom(
             ref: ref,
             roomTitle: room.displayTitle,
@@ -130,6 +161,8 @@ abstract final class VoiceRoomLeaveFlow {
             ownerDisplayName: room.ownerName,
             myUserId: user.id,
             myDisplayName: user.display,
+            duration: sessionDuration,
+            pkOutcomeLabel: pkOutcomeForRoom(ref, key),
           );
           if (ownerId.isNotEmpty && ownerId == user.id) {
             ownerSummary = VoiceRoomOwnerSummaryData(
@@ -150,6 +183,13 @@ abstract final class VoiceRoomLeaveFlow {
           'roomId': key,
           'error': e.runtimeType.toString(),
         });
+      }
+
+      final rootCtx = rootNavigatorKey.currentContext ?? context;
+      if (leaveSummary != null &&
+          (leaveSummary.hasData || leaveSummary.isHostOrOwner) &&
+          rootCtx.mounted) {
+        await showSessionGiftSummarySheet(rootCtx, summary: leaveSummary);
       }
 
       if (key.isNotEmpty) {
@@ -175,22 +215,10 @@ abstract final class VoiceRoomLeaveFlow {
       if (ownerSummary != null) {
         final data = ownerSummary;
         unawaited(
-          Future<void>.delayed(const Duration(milliseconds: 350), () async {
-            final rootCtx = rootNavigatorKey.currentContext;
-            if (rootCtx != null && rootCtx.mounted) {
-              await showVoiceRoomOwnerSummaryPage(rootCtx, data);
-            }
-          }),
-        );
-      } else if (leaveSummary != null && leaveSummary.hasData) {
-        unawaited(
-          Future<void>.delayed(const Duration(milliseconds: 350), () async {
-            final rootCtx = rootNavigatorKey.currentContext;
-            if (rootCtx != null && rootCtx.mounted) {
-              await showSessionGiftSummarySheet(
-                rootCtx,
-                summary: leaveSummary!,
-              );
+          Future<void>.delayed(const Duration(milliseconds: 250), () async {
+            final navCtx = rootNavigatorKey.currentContext;
+            if (navCtx != null && navCtx.mounted) {
+              await showVoiceRoomOwnerSummaryPage(navCtx, data);
             }
           }),
         );

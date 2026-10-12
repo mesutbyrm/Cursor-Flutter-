@@ -28,7 +28,33 @@ void main() {
     );
   });
 
-  test('completed status always finished', () {
+  test('completed status not finished before endsAt', () {
+    final endsAt =
+        DateTime.now().toUtc().add(const Duration(minutes: 2)).toIso8601String();
+    expect(
+      livePkBattleFinished(
+        status: 'completed',
+        battle: {'endsAt': endsAt, 'status': 'completed'},
+      ),
+      isFalse,
+    );
+  });
+
+  test('completed status finished after endsAt', () {
+    final endsAt = DateTime.now()
+        .toUtc()
+        .subtract(const Duration(seconds: 5))
+        .toIso8601String();
+    expect(
+      livePkBattleFinished(
+        status: 'completed',
+        battle: {'endsAt': endsAt},
+      ),
+      isTrue,
+    );
+  });
+
+  test('completed without timing info still finished', () {
     expect(livePkBattleFinished(status: 'completed', battle: const {}), isTrue);
   });
 }
