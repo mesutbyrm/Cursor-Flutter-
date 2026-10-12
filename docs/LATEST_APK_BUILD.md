@@ -4,20 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.778+834` |
-| Tarih (UTC) | 2026-10-12 19:31 |
-| Commit | [`700ae1ad8b0d51eaa876656d328786855388708c`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/700ae1ad8b0d51eaa876656d328786855388708c) |
-| İş akışı | [Run 38295556167](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/38295556167) |
+| Sürüm | `1.0.779+835` |
+| Tarih (UTC) | 2026-10-12 21:57 |
+| Commit | [`ad2507c0c9546d88fd4a1f4b734f8d0f3a8c743f`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/ad2507c0c9546d88fd4a1f4b734f8d0f3a8c743f) |
+| İş akışı | [Run 38311303108](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/38311303108) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.778+834 (2026-10-12) — Bekleyen dal birleştirmeleri (P0 ses + PK TRTC)
+## 1.0.779+835 (2026-10-12) — Sesli oda arka plan / ön plan koltuk
 
-- **Psychic P0 hotfix dalı:** main ile birleştirildi — sesli odadan çıkışta erken TRTC/audio leave (400 ms)
-- **PK video:** `resolveLivePkTrtcRemoteUserId` + twoWay rejoin iyileştirmeleri (`pk-video-result-voice-live-dfca` cherry-pick)
-- **Zaten main'de:** `backend-parity-router` (STAGE16 PK yönlendirme); `features-visibility-hub` (admin/falcı araç kataloğu ekranları)
-- **Docs:** P1 cihaz test PASS kaydı (`feature/p1-device-test-pass`)
+- **Arka plan:** Uzun süre arka planda presence/TRTC düşünce ön plana dönüşte otomatik yeniden katılım, koltuk geri talebi ve TRTC yeniden bağlanma
+- **45 sn arka plan leave:** Oda ekranı açık kalsa bile oturum yeniden kurulur; RTC sayfası ses kanalını tekrar açar
+- **Uygulama kapanışı:** `detached` lifecycle’da sesli oda yerel presence kayıtları (`SharedPreferences`) temizlenir — hayalet oturum azaltılır
+- **SSE resync:** Listede görünmeyen kullanıcı için presence yeniden join + yetkili otomatik koltuk denemesi
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
