@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.774+830 (2026-10-12) — Sesli oda moderasyon + şifre + GirLive
+
+- **Şifreli oda:** `hasPassword` tüm oda tiplerinde giriş kapısı ve sahip join-request senkronu; «Odaya giriş kontrolü»nde şifre koy/kaldır
+- **Moderasyon:** Sağ panel komut sırası (hediye, koltuk, rol amblemi + 5 sn yanıp sönen bildirim); «Oda sesi kapat/aç»; «& Yetkili» kaldırıldı; çift «koltuğa al» yok
+- **PK:** Tek menü — odalarla PK, hediye savaşı, oda içi takım PK; sağ kenar hızlı menü
+- **Koltuk:** Yetkisiz dinleyici boş koltuğa oturamaz
+- **Oda komutları:** «Odadaki yetkililer» listesi; yasaklı kelime → GirLive otomatik moderasyon
+- **GirLive:** Bot sohbet satırları en fazla 5 sn görünür; autoMod açıkken mesaj sunucuya gider
+
 ## 1.0.773+829 (2026-10-11) — CI Play Store AAB
 
 - **CI:** `Build release APK` workflow artık aynı imza ile **release AAB** (`app-release.aab`) üretir; artifact adı `canlifal-release-aab-<sürüm>`
