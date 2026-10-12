@@ -4,18 +4,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.773+829` |
-| Tarih (UTC) | 2026-10-11 22:18 |
-| Commit | [`1821729095f44fcd209121733300440bcab9fab8`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/1821729095f44fcd209121733300440bcab9fab8) |
-| İş akışı | [Run 38178261367](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/38178261367) |
+| Sürüm | `1.0.776+832` |
+| Tarih (UTC) | 2026-10-12 14:09 |
+| Commit | [`0562604f2ab9de0f71257c80ecb2c0b41acb71f7`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/0562604f2ab9de0f71257c80ecb2c0b41acb71f7) |
+| İş akışı | [Run 38257891130](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/38257891130) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.773+829 (2026-10-11) — CI Play Store AAB
+## 1.0.774+830 (2026-10-12) — Sesli oda moderasyon + şifre + GirLive
 
-- **CI:** `Build release APK` workflow artık aynı imza ile **release AAB** (`app-release.aab`) üretir; artifact adı `canlifal-release-aab-<sürüm>`
-- **Build release AAB** workflow: `google-services.json` adımı APK ile hizalandı (bozuk base64 secret artık derlemeyi düşürmez)
+- **Şifreli oda:** `hasPassword` tüm oda tiplerinde giriş kapısı ve sahip join-request senkronu; «Odaya giriş kontrolü»nde şifre koy/kaldır
+- **Moderasyon:** Sağ panel komut sırası (hediye, koltuk, rol amblemi + 5 sn yanıp sönen bildirim); «Oda sesi kapat/aç»; «& Yetkili» kaldırıldı; çift «koltuğa al» yok
+- **PK:** Tek menü — odalarla PK, hediye savaşı, oda içi takım PK; sağ kenar hızlı menü
+- **Koltuk:** Yetkisiz dinleyici boş koltuğa oturamaz
+- **Oda komutları:** «Odadaki yetkililer» listesi; yasaklı kelime → GirLive otomatik moderasyon
+- **GirLive:** Bot sohbet satırları en fazla 5 sn görünür; autoMod açıkken mesaj sunucuya gider
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
