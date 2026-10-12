@@ -73,6 +73,7 @@ import '../domain/voice/voice_session_phase.dart';
 import 'providers/voice_room_diagnostic_provider.dart';
 import 'providers/voice_room_ui_provider.dart';
 import 'sheets/voice_room_management_panel.dart';
+import 'sheets/voice_pk_mode_picker_sheet.dart';
 import 'sheets/voice_room_sheets.dart';
 import 'utils/voice_music_access.dart';
 import 'utils/voice_room_pending_music_search_flow.dart';
@@ -1178,26 +1179,27 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   }
 
   Future<void> _openPkInvite(VoiceRoomEntity room) async {
-    final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
-    if (key.isEmpty) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Oda bilgisi yüklenemedi — PK başlatılamadı')),
-      );
-      return;
-    }
-    try {
-      await showPkStartSheet(
+    final live = ref.read(voiceRoomLiveProvider(_liveRoomKey));
+    final user = ref.read(authControllerProvider).valueOrNull;
+    final perms = VoiceRoomPermissions.forUser(
+      user: user,
+      room: room,
+      server: live.serverPermissions,
+    );
+    final isOwner = perms.isRoomOwner;
+    await runVoicePkModeSelection(
+      context,
+      ref,
+      room: room,
+      presence: live.presence,
+      isOwner: isOwner,
+      onGiftBattle: () => launchVoiceGiftBattle(
         context,
         ref,
-        args: PkSessionArgs(contextId: key, kind: PkContextKind.voice),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ApiException.userMessage(e))),
-      );
-    }
+        room: room,
+        presence: live.presence,
+      ),
+    );
   }
 
   Future<void> _pickBackground(BuildContext context, VoiceRoomEntity room) async {
@@ -1417,6 +1419,18 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Bu koltuk kilitli')),
+        );
+      }
+      return;
+    }
+    if (!perms.canAssignSeats && !perms.canTakeSeat) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Koltuğa geçmek için yetkili olmalısınız veya size ses verilmeli',
+            ),
+          ),
         );
       }
       return;

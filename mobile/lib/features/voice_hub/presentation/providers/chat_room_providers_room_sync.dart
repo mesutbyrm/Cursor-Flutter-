@@ -873,7 +873,7 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
 
   /// Oda sahibi odaya girdiğinde, çevrimdışıyken gelen bekleyen giriş
   /// isteklerini sunucudan çeker (SSE olayı kaçırılmış olabilir).
-  /// Yalnızca şifreli VIP odanın sahibi için çalışır; yetkiyi sunucu doğrular.
+  /// Yalnızca şifreli odanın sahibi için çalışır; yetkiyi sunucu doğrular.
   Future<void> _syncPendingJoinRequests() async {
     final room = _roomMeta;
     if (!room.isPasswordLockedRoom) return;

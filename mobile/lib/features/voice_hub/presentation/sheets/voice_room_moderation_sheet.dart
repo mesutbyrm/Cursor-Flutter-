@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
@@ -329,29 +331,50 @@ Future<void> showVoiceRoomModerationSheet({
   final owner = isOwner ?? effectivePerms.isRoomOwner;
   final allowMods = canAddModerators ?? !room.isFreeRoom;
 
-  await showModalBottomSheet<void>(
+  final container = ProviderScope.containerOf(context);
+  await showGeneralDialog<void>(
     context: context,
-    backgroundColor: const Color(0xFF1E1030),
-    isScrollControlled: true,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    builder: (ctx) => ProviderScope(
-      parent: ProviderScope.containerOf(ctx),
-      child: _VoiceRoomModerationSheet(
-        roomKey: roomKey,
-        targetUser: targetUser,
-        perms: effectivePerms,
-        isOwner: owner,
-        isTargetDj: isTargetDj,
-        canAddModerators: allowMods,
-        onGift: onGift,
-      ),
-    ),
+    barrierDismissible: true,
+    barrierLabel: 'Kullanıcı moderasyonu',
+    barrierColor: Colors.black.withValues(alpha: 0.55),
+    transitionDuration: const Duration(milliseconds: 280),
+    pageBuilder: (ctx, _, _) => const SizedBox.shrink(),
+    transitionBuilder: (ctx, anim, _, _) {
+      final slide = Tween<Offset>(
+        begin: const Offset(1, 0),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic));
+      final w = MediaQuery.sizeOf(ctx).width;
+      return SlideTransition(
+        position: slide,
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: Material(
+            color: const Color(0xFF1E1030),
+            child: SizedBox(
+              width: (w * 0.92).clamp(300.0, 420.0),
+              height: MediaQuery.sizeOf(ctx).height,
+              child: UncontrolledProviderScope(
+                container: container,
+                child: _VoiceRoomModerationSheet(
+                  roomKey: roomKey,
+                  targetUser: targetUser,
+                  perms: effectivePerms,
+                  isOwner: owner,
+                  isTargetDj: isTargetDj,
+                  canAddModerators: allowMods,
+                  onGift: onGift,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    },
   );
 }
 
-class _VoiceRoomModerationSheet extends ConsumerWidget {
+class _VoiceRoomModerationSheet extends ConsumerStatefulWidget {
   const _VoiceRoomModerationSheet({
     required this.roomKey,
     required this.targetUser,
@@ -371,7 +394,43 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
   final VoidCallback? onGift;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_VoiceRoomModerationSheet> createState() =>
+      _VoiceRoomModerationSheetState();
+}
+
+class _VoiceRoomModerationSheetState
+    extends ConsumerState<_VoiceRoomModerationSheet> {
+  String? _selectedRoleSymbol;
+  String? _roleFlashText;
+  Timer? _roleFlashTimer;
+
+  VoiceRoomModerationTarget get targetUser => widget.targetUser;
+  VoiceRoomPermissions get perms => widget.perms;
+  bool get isOwner => widget.isOwner;
+  bool get isTargetDj => widget.isTargetDj;
+  bool get canAddModerators => widget.canAddModerators;
+  String get roomKey => widget.roomKey;
+
+  @override
+  void dispose() {
+    _roleFlashTimer?.cancel();
+    super.dispose();
+  }
+
+  void _flashRoleGranted(String symbol, String label) {
+    setState(() {
+      _selectedRoleSymbol = symbol;
+      _roleFlashText =
+          '${targetUser.username} — $label yetkili oldunuz ($symbol)';
+    });
+    _roleFlashTimer?.cancel();
+    _roleFlashTimer = Timer(const Duration(seconds: 5), () {
+      if (mounted) setState(() => _roleFlashText = null);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final notifier = ref.read(voiceModerationProvider(roomKey).notifier);
     final state = ref.watch(voiceModerationProvider(roomKey));
     final roomMuted = ref.watch(
@@ -381,24 +440,28 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
     final errorMsg =
         state is AsyncError ? ApiException.userMessage(state.error) : null;
 
+    final roleLabel = _selectedRoleSymbol != null
+        ? 'Rol / Yetki\n$_selectedRoleSymbol'
+        : 'Rol / Yetki';
+
     final actions = <_ModBox>[
-      if (onGift != null)
+      if (widget.onGift != null)
         _ModBox(
           icon: Icons.card_giftcard_rounded,
           label: 'Hediye At',
           color: const Color(0xFFFFD54F),
           onTap: () {
             Navigator.pop(context);
-            onGift!();
+            widget.onGift!();
           },
         ),
       if (perms.canGiveVoice || isOwner)
         _ModBox(
           icon: targetUser.isSpeaker
               ? Icons.event_seat_outlined
-              : Icons.record_voice_over_rounded,
-          label: targetUser.isSpeaker ? 'Koltuktan indir' : 'Ses ver',
-          color: targetUser.isSpeaker ? Colors.orange : Colors.green,
+              : Icons.event_seat_rounded,
+          label: targetUser.isSpeaker ? 'Koltuktan indir' : 'Koltuğa al',
+          color: targetUser.isSpeaker ? Colors.orange : const Color(0xFF3B82F6),
           onTap: () {
             if (targetUser.isSpeaker) {
               _run(context, notifier, () async {
@@ -416,7 +479,7 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
       if (canAddModerators && (perms.canModerate || isOwner))
         _ModBox(
           icon: Icons.admin_panel_settings_outlined,
-          label: 'Rol / Yetki',
+          label: roleLabel,
           color: const Color(0xFF8B5CF6),
           onTap: () => _showRolePicker(context, ref, notifier),
         ),
@@ -434,24 +497,10 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
                 : 'Hata';
           }),
         ),
-      if (canAddModerators && (perms.canBanUsers || isOwner))
-        _ModBox(
-          icon: Icons.verified_user_rounded,
-          label: targetUser.isSop ? '& Yetkili Kaldır' : '& Yetkili',
-          color: const Color(0xFFFF6B35),
-          onTap: () => _run(context, notifier, () async {
-            final ok = targetUser.isSop
-                ? await notifier.removeSop(targetUser.id)
-                : await notifier.addSop(targetUser.id);
-            return ok
-                ? (targetUser.isSop ? 'Yetkili kaldırıldı' : 'Yetkili yapıldı')
-                : 'Hata';
-          }),
-        ),
       if (perms.canMuteRoom || isOwner)
         _ModBox(
           icon: roomMuted ? Icons.volume_up_rounded : Icons.volume_off_rounded,
-          label: roomMuted ? 'Sesi Aç' : 'Sesi Kapat',
+          label: roomMuted ? 'Oda sesi aç' : 'Oda sesi kapat',
           color: roomMuted ? Colors.teal : Colors.orange,
           onTap: () => _run(context, notifier, () async {
             final ok = await notifier.setRoomMuted(!roomMuted);
@@ -459,13 +508,6 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
                 ? (roomMuted ? 'Oda sesi açıldı' : 'Oda sesi kapatıldı')
                 : 'Hata';
           }),
-        ),
-      if (perms.canAssignSeats || isOwner)
-        _ModBox(
-          icon: Icons.event_seat_rounded,
-          label: 'Koltuğa al',
-          color: const Color(0xFF3B82F6),
-          onTap: () => _pickEmptySeatAndAssign(context, ref, roomKey, targetUser.id),
         ),
       if (perms.canManageDj || isOwner)
         _ModBox(
@@ -537,22 +579,33 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
         ),
     ];
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(16, 12, 16, MediaQuery.paddingOf(context).bottom + 16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.white24,
-              borderRadius: BorderRadius.circular(2),
+    final top = MediaQuery.paddingOf(context).top;
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(16, top + 8, 8, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Kullanıcı',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 17,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
+            Row(
+              children: [
               CircleAvatar(
                 radius: 22,
                 backgroundImage: targetUser.avatarUrl != null &&
@@ -597,60 +650,31 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
             const SizedBox(height: 8),
             Text(errorMsg, style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
           ],
-          if (canAddModerators && (perms.canModerate || isOwner)) ...[
+          if (_roleFlashText != null) ...[
             const SizedBox(height: 10),
-            _RoleQuickBar(
-              perms: perms,
-              isOwner: isOwner,
-              onPick: (sym) => _run(context, notifier, () async {
-                if (sym == '+') {
-                  final ok = await notifier.grantVoice(targetUser.id);
-                  return ok ? 'Ses verildi — koltuğa alındı' : 'Hata';
-                }
-                final ok =
-                    await notifier.grantRoleAndSeat(targetUser.id, sym);
-                return ok ? 'Yetki verildi ($sym)' : 'Hata';
-              }),
-            ),
+            _BlinkingRoleNotice(text: _roleFlashText!),
           ],
           const SizedBox(height: 14),
-          if (isLoading)
-            const Padding(
-              padding: EdgeInsets.all(24),
-              child: CircularProgressIndicator(color: Color(0xFF6C3FC5)),
-            )
-          else
-            LayoutBuilder(
-              builder: (context, constraints) {
-                const crossAxisCount = 3;
-                const spacing = 8.0;
-                const aspect = 1.05;
-                final gridHeight = ListPerf.nestedGridHeight(
-                  itemCount: actions.length,
-                  crossAxisCount: crossAxisCount,
-                  mainAxisSpacing: spacing,
-                  crossAxisSpacing: spacing,
-                  childAspectRatio: aspect,
-                  crossAxisExtent: constraints.maxWidth,
-                );
-                return SizedBox(
-                  height: gridHeight,
-                  child: GridView.builder(
-                    physics: const NeverScrollableScrollPhysics(),
+          Expanded(
+            child: isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF6C3FC5)),
+                  )
+                : GridView.builder(
+                    padding: EdgeInsets.zero,
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: crossAxisCount,
-                      mainAxisSpacing: spacing,
-                      crossAxisSpacing: spacing,
-                      childAspectRatio: aspect,
+                      crossAxisCount: 3,
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
+                      childAspectRatio: 1.05,
                     ),
                     itemCount: actions.length,
                     itemBuilder: (context, i) => actions[i],
                   ),
-                );
-              },
-            ),
+          ),
         ],
+      ),
       ),
     );
   }
@@ -668,12 +692,22 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             for (final e in const [
-              ('+', 'Voice'),
+              ('+', 'Konuşmacı'),
               ('@', 'Moderatör'),
               ('&', 'Yetkili'),
-              ('~', 'Founder'),
+              ('~', 'Kurucu'),
             ])
               ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: const Color(0xFF8B5CF6),
+                  child: Text(
+                    e.$1,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
                 title: Text('${e.$1} ${e.$2}'),
                 onTap: () => Navigator.pop(ctx, e.$1),
               ),
@@ -682,10 +716,27 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
       ),
     );
     if (picked == null || !context.mounted) return;
-    await _run(context, notifier, () async {
-      final ok = await notifier.grantRoleAndSeat(targetUser.id, picked);
-      return ok ? 'Yetki verildi ve koltuğa alındı' : 'Hata';
-    });
+    final label = switch (picked) {
+      '+' => 'Konuşmacı',
+      '@' => 'Moderatör',
+      '&' => 'Yetkili',
+      '~' => 'Kurucu',
+      _ => 'Yetki',
+    };
+    final ok = picked == '+'
+        ? await notifier.grantVoice(targetUser.id)
+        : await notifier.grantRoleAndSeat(targetUser.id, picked);
+    if (!context.mounted) return;
+    if (ok) {
+      _flashRoleGranted(picked, label);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$label yetkisi verildi ($picked)')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Yetki verilemedi')),
+      );
+    }
   }
 
   Future<void> _confirm(
@@ -729,6 +780,58 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
 }
 
 /// Hedef kullanıcının destekçi rozeti (tıklanan kişi başına tek fetch).
+class _BlinkingRoleNotice extends StatefulWidget {
+  const _BlinkingRoleNotice({required this.text});
+  final String text;
+
+  @override
+  State<_BlinkingRoleNotice> createState() => _BlinkingRoleNoticeState();
+}
+
+class _BlinkingRoleNoticeState extends State<_BlinkingRoleNotice>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 650),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: Tween<double>(begin: 0.35, end: 1).animate(_ctrl),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFF8B5CF6).withValues(alpha: 0.22),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFF8B5CF6)),
+        ),
+        child: Text(
+          widget.text,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+            fontSize: 13,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _TargetSupporterBadge extends ConsumerWidget {
   const _TargetSupporterBadge({required this.userId});
   final String userId;

@@ -255,6 +255,7 @@ class VoiceRoomLiveState {
     this.realtimeEvents = const [],
     this.musicLikeCount = 0,
     this.bannedWords = const [],
+    this.roomAutoModeration = true,
     this.seatSlots = const [],
     this.ownerId,
     this.roomTrtc,
@@ -294,6 +295,8 @@ class VoiceRoomLiveState {
   final List<VoiceRoomRealtimeEvent> realtimeEvents;
   final int musicLikeCount;
   final List<String> bannedWords;
+  /// GirLive Bot otomatik moderasyon — açıkken yasaklı kelime client'ta kesilmez.
+  final bool roomAutoModeration;
   /// Backend `GET /seats` — 15 koltuk (sıra korunur).
   final List<VoiceRoomSeatSlot> seatSlots;
   final String? ownerId;
@@ -364,6 +367,7 @@ class VoiceRoomLiveState {
     List<VoiceRoomRealtimeEvent>? realtimeEvents,
     int? musicLikeCount,
     List<String>? bannedWords,
+    bool? roomAutoModeration,
     List<VoiceRoomSeatSlot>? seatSlots,
     String? ownerId,
     bool clearOwnerId = false,
@@ -426,6 +430,7 @@ class VoiceRoomLiveState {
       realtimeEvents: realtimeEvents ?? this.realtimeEvents,
       musicLikeCount: musicLikeCount ?? this.musicLikeCount,
       bannedWords: bannedWords ?? this.bannedWords,
+      roomAutoModeration: roomAutoModeration ?? this.roomAutoModeration,
       seatSlots: seatSlots ?? this.seatSlots,
       ownerId: clearOwnerId ? null : (ownerId ?? this.ownerId),
       roomTrtc: clearRoomTrtc ? null : (roomTrtc ?? this.roomTrtc),
@@ -531,6 +536,7 @@ class VoiceRoomLiveController
   Timer? _kickWarningTimer;
   Timer? _seatRefreshDebounce;
   Timer? _sseRoomRefreshDebounce;
+  final _girliveEphemeralTimers = <String, Timer>{};
 
   /// Sunucudan (SSE `room_updated`) ya da kendi değişikliğimizden gelen son
   /// arka plan. Oda listesi önbelleği ([_roomMeta]) bayat kalabildiği için
@@ -1126,9 +1132,17 @@ class VoiceRoomLiveController
   Future<void> _loadBannedWords() async {
     if (_roomKey.isEmpty) return;
     try {
-      final words =
-          await ref.read(chatRoomRemoteProvider).fetchBannedWords(_roomKey);
-      state = state.copyWith(bannedWords: words);
+      final remote = ref.read(chatRoomRemoteProvider);
+      final words = await remote.fetchBannedWords(_roomKey);
+      var autoMod = state.roomAutoModeration;
+      try {
+        final map = await remote.fetchRoomSettings(_roomKey);
+        final room = map['room'];
+        final v =
+            room is Map ? room['autoModeration'] : map['autoModeration'];
+        if (v is bool) autoMod = v;
+      } catch (_) {}
+      state = state.copyWith(bannedWords: words, roomAutoModeration: autoMod);
     } catch (_) {}
   }
 
@@ -1159,6 +1173,20 @@ class VoiceRoomLiveController
     state = state.copyWith(
       messages: VoiceRoomMessageMerge.append(state.messages, msg),
     );
+    _scheduleGirLiveEphemeralMessage(msg.id);
+  }
+
+  void _scheduleGirLiveEphemeralMessage(String messageId) {
+    if (messageId.isEmpty) return;
+    _girliveEphemeralTimers[messageId]?.cancel();
+    _girliveEphemeralTimers[messageId] = Timer(const Duration(seconds: 5), () {
+      _girliveEphemeralTimers.remove(messageId);
+      if (_controllerDisposed) return;
+      final next =
+          state.messages.where((m) => m.id != messageId).toList(growable: false);
+      if (next.length == state.messages.length) return;
+      state = state.copyWith(messages: next);
+    });
   }
 
   void _appendSyntheticSystemMessage(
@@ -1343,6 +1371,10 @@ class VoiceRoomLiveController
     _rankingRefreshDebounce?.cancel();
     _roomSongBlocSyncTimer?.cancel();
     _autoSeatDebounce?.cancel();
+    for (final t in _girliveEphemeralTimers.values) {
+      t.cancel();
+    }
+    _girliveEphemeralTimers.clear();
     unawaited(_networkRecoverySub?.cancel());
     _networkRecoverySub = null;
   }
@@ -3219,6 +3251,7 @@ class VoiceRoomLiveController
     if (!perms.canModerate &&
         !perms.isRoomOwner &&
         !perms.isSiteAdmin &&
+        !state.roomAutoModeration &&
         state.bannedWords.isNotEmpty &&
         VoiceBannedWordFilter.containsBannedWord(trimmed, state.bannedWords)) {
       state = state.copyWith(error: 'Mesajınız yasaklı kelime içeriyor.');

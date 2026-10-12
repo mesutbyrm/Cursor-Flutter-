@@ -12,9 +12,12 @@ import '../providers/chat_room_providers.dart';
 import '../theme/voice_room_tokens.dart';
 import '../utils/voice_room_duyuru_access.dart';
 import '../utils/voice_room_permissions.dart';
+import '../../domain/entities/chat_room_presence.dart';
 import 'voice_moderation_user_picker_sheet.dart';
 import 'voice_room_management_panel.dart';
+import 'voice_room_moderation_sheet.dart';
 import 'voice_youtube_song_sheet.dart';
+import '../utils/voice_room_user_actions.dart';
 
 /// Sağ «‹» — Oda Komutları paneli (canlifal.com).
 Future<void> showVoiceRoomCommandsPanel(
@@ -406,6 +409,15 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
     }
     _wordCtrl.clear();
     await _loadWords();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Kelime eklendi — GirLive Bot otomatik moderasyon açıldı (uyarı / sustur / at)',
+        ),
+        duration: Duration(seconds: 4),
+      ),
+    );
   }
 
   Future<void> _removeWord(String w) async {
@@ -430,6 +442,8 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
     final modGrid = _modGridCards(jetonLabel);
     final canModerate = widget.perms.canModerate || widget.isOwner;
     final top = MediaQuery.paddingOf(context).top;
+    final live = ref.watch(voiceRoomLiveProvider(widget.room.liveKey));
+    final staff = _staffInRoom(live.presence, widget.room);
 
     return SafeArea(
       child: Column(
@@ -547,12 +561,79 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
                 if (canModerate) ...[
                   const SizedBox(height: 20),
                   _SectionHeader(
+                    icon: Icons.admin_panel_settings_rounded,
+                    title: 'ODADAKİ YETKİLİLER',
+                    color: VoiceRoomTokens.neonPurple,
+                  ),
+                  if (staff.isEmpty)
+                    Text(
+                      'Henüz atanmış yetkili yok.',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.white.withValues(alpha: 0.55),
+                      ),
+                    )
+                  else
+                    ...staff.map(
+                      (p) => ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        leading: CircleAvatar(
+                          radius: 18,
+                          child: Text(
+                            _staffBadge(p),
+                            style: const TextStyle(fontWeight: FontWeight.w900),
+                          ),
+                        ),
+                        title: Text(
+                          p.displayName,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        subtitle: Text(
+                          _staffRoleLabel(p),
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.6),
+                            fontSize: 11,
+                          ),
+                        ),
+                        trailing: const Icon(
+                          Icons.chevron_right_rounded,
+                          color: Colors.white38,
+                        ),
+                        onTap: () {
+                          if (!VoiceRoomUserActions.canOpenModerationSheet(
+                            widget.perms,
+                          )) {
+                            return;
+                          }
+                          final target =
+                              VoiceRoomModerationTarget.fromPresence(p);
+                          final isDj = widget.room.djUserIds.contains(p.id);
+                          Navigator.pop(context);
+                          showVoiceRoomModerationSheet(
+                            context: context,
+                            ref: ref,
+                            room: widget.room,
+                            targetUser: target,
+                            isOwnerOrMod: true,
+                            perms: widget.perms,
+                            isOwner: widget.isOwner,
+                            isTargetDj: isDj,
+                          );
+                        },
+                      ),
+                    ),
+                  const SizedBox(height: 20),
+                  _SectionHeader(
                     icon: Icons.block_rounded,
                     title: 'YASAKLI KELİMELER',
                     color: AppThemeColors.liveRed,
                   ),
                   Text(
-                    'Bu kelimeleri içeren mesajlar moderatörlere bildirilir.',
+                    'Eklenen kelimeler GirLive Bot ile denetlenir (uyarı, susturma, atma).',
                     style: TextStyle(
                       fontSize: 11,
                       color: Colors.white.withValues(alpha: 0.55),
@@ -619,6 +700,57 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
       ),
     );
   }
+}
+
+List<ChatRoomPresence> _staffInRoom(
+  List<ChatRoomPresence> presence,
+  VoiceRoomEntity room,
+) {
+  final ownerId = room.ownerId?.trim();
+  return presence.where((p) {
+    if (p.id.isEmpty) return false;
+    if (ownerId != null && ownerId.isNotEmpty && p.id == ownerId) return true;
+    final sym = p.roleSymbol?.trim();
+    if (sym == '@' || sym == '&' || sym == '~' || sym == '+') return true;
+    final role = (p.chatRole ?? '').toLowerCase();
+    return role == 'moderator' ||
+        role == 'mod' ||
+        role == 'op' ||
+        role == 'sop' ||
+        role == 'admin' ||
+        role == 'founder' ||
+        role == 'dj';
+  }).toList()
+    ..sort((a, b) => a.displayName.compareTo(b.displayName));
+}
+
+String _staffBadge(ChatRoomPresence p) {
+  final sym = p.roleSymbol?.trim();
+  if (sym != null && sym.isNotEmpty) return sym;
+  final role = (p.chatRole ?? '').toLowerCase();
+  return switch (role) {
+    'moderator' || 'mod' || 'op' => '@',
+    'sop' => '&',
+    'founder' => '~',
+    'dj' => 'DJ',
+    _ => '+',
+  };
+}
+
+String _staffRoleLabel(ChatRoomPresence p) {
+  final sym = p.roleSymbol?.trim();
+  if (sym == '@') return 'Moderatör';
+  if (sym == '&') return 'Yetkili';
+  if (sym == '~') return 'Kurucu';
+  if (sym == '+') return 'Konuşmacı';
+  final role = (p.chatRole ?? '').toLowerCase();
+  return switch (role) {
+    'moderator' || 'mod' || 'op' => 'Moderatör',
+    'sop' => 'Yetkili',
+    'founder' => 'Kurucu',
+    'dj' => 'DJ',
+    _ => 'Yetkili',
+  };
 }
 
 class _Cmd {

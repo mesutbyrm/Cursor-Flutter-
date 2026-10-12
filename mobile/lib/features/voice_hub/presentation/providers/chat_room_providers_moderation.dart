@@ -245,10 +245,20 @@ extension VoiceRoomModerationControls on VoiceRoomLiveController {
 
   Future<String?> addBannedWord(String word) async {
     try {
-      final words = await ref
-          .read(chatRoomRemoteProvider)
-          .addBannedWord(roomKey: _roomKey, word: word);
-      state = state.copyWith(bannedWords: words);
+      final remote = ref.read(chatRoomRemoteProvider);
+      final words =
+          await remote.addBannedWord(roomKey: _roomKey, word: word);
+      state = state.copyWith(
+        bannedWords: words,
+        roomAutoModeration: true,
+      );
+      try {
+        await remote.setAutoModeration(
+          roomKey: _roomKey,
+          alternateKey: _musicAlternateKey,
+          enabled: true,
+        );
+      } catch (_) {}
       return null;
     } catch (e) {
       return ApiException.userMessage(e);

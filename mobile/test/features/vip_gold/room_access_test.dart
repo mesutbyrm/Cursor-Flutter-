@@ -255,17 +255,15 @@ void main() {
     });
   });
 
-  group('şifre kapısı yalnızca VIP odada', () {
-    test('VIP + sunucu bayrağı → kilitli', () {
+  group('şifre kapısı — hasPassword', () {
+    test('şifre bayrağı açık → kilitli (VIP veya normal)', () {
       expect(_room().isPasswordLockedRoom, isTrue);
+      expect(_room(type: 'NORMAL').isPasswordLockedRoom, isTrue);
     });
-    test('normal oda şifreli sayılmaz', () {
-      expect(_room(type: 'NORMAL').isPasswordLockedRoom, isFalse);
-      expect(_room(type: 'FREE').isPasswordLockedRoom, isFalse);
-    });
-    test('VIP ama şifre yok → kilitsiz', () {
+    test('şifre yok → kilitsiz', () {
       expect(_room(hasPassword: false).isPasswordLockedRoom, isFalse);
       expect(_room(hasPassword: null).isPasswordLockedRoom, isFalse);
+      expect(_room(type: 'FREE', hasPassword: false).isPasswordLockedRoom, isFalse);
     });
   });
 

@@ -16,8 +16,7 @@ import '../../../auth/domain/entities/user_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../../pk/presentation/providers/pk_feature_enabled_provider.dart';
-import '../../../pk/presentation/widgets/pk_start_sheet.dart';
-import 'voice_in_room_pk_sheet.dart';
+import 'voice_pk_mode_picker_sheet.dart';
 import '../../../gifts/presentation/providers/gift_battle_providers.dart';
 import '../../../gifts/presentation/providers/gift_goal_providers.dart';
 import '../../domain/entities/chat_room_presence.dart';
@@ -1275,9 +1274,39 @@ class _VoiceRoomManagementPanelState
   }
 
   Widget _accessView(ScrollController scroll) {
+    final canEdit = isOwner || perms.canManageRoom || perms.isSiteAdmin;
+    final enabled = room.hasPassword == true;
     return ListView(
       controller: scroll,
       children: [
+        if (canEdit) ...[
+          SwitchListTile(
+            title: const Text('Odaya şifre koy'),
+            subtitle: Text(
+              enabled
+                  ? 'Açık — girişte şifre sorulur (3 deneme + istek)'
+                  : 'Kapalı — herkes girebilir',
+            ),
+            value: enabled,
+            onChanged: (v) async {
+              if (v) {
+                await _setRoomPassword();
+              } else {
+                final err = await _ctrl.setRoomPassword(password: null);
+                await _snack(err ?? 'Şifre kaldırıldı');
+              }
+            },
+          ),
+          if (enabled)
+            _hubTile(
+              Icons.key_rounded,
+              'Şifreyi değiştir',
+              'Yeni şifre belirle',
+              _setRoomPassword,
+              accent: VoiceRoomTokens.gold,
+            ),
+          const Divider(height: 24),
+        ],
         _hubTile(
           Icons.block_rounded,
           'Banlananlar',
@@ -1299,7 +1328,6 @@ class _VoiceRoomManagementPanelState
     final pk = ref.watch(pkBattleForRoomProvider(room));
     final pkLive = isPkBattleLive(pk);
     final pkFeatureOn = ref.watch(pkFeatureEnabledProvider);
-    final roomKey = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
     final jetonLabel = economyCurrencyLabel(ref, key: 'jeton');
     return ListView(
       controller: scroll,
@@ -1307,30 +1335,20 @@ class _VoiceRoomManagementPanelState
         if (pkFeatureOn)
           _hubTile(
             pkLive ? Icons.flash_on_rounded : Icons.sports_mma_rounded,
-            pkLive ? 'PK savaşı' : 'PK daveti',
-            pkLive ? 'Devam eden PK ekranına git' : 'Başka bir odayı PK\'ya davet et',
+            pkLive ? 'PK savaşı' : 'PK',
+            pkLive
+                ? 'Devam eden PK ekranına git'
+                : 'Odalarla PK · hediye savaşı · oda içi takım',
             () => _closeAndVoid(() {
-              if (pkLive) {
-                context.push('/voice-room/$roomKey/pk', extra: room);
-              } else if (widget.onPkInvite != null) {
-                widget.onPkInvite!();
-              } else {
-                openVoicePkInviteSheet(context, ref, room);
-              }
-            }),
-            accent: VoiceRoomTokens.neonPink,
-          ),
-        if (pkFeatureOn && isOwner && !pkLive)
-          _hubTile(
-            Icons.groups_rounded,
-            'Oda içi PK (takım)',
-            'Odadaki kullanıcılarla 2 takım, en fazla 4+4',
-            () => _closeAndVoid(() {
-              showVoiceInRoomPkSheet(
-                context,
-                ref,
-                room: room,
-                presence: _live.presence,
+              unawaited(
+                runVoicePkModeSelection(
+                  context,
+                  ref,
+                  room: room,
+                  presence: _live.presence,
+                  isOwner: isOwner,
+                  onGiftBattle: _startGiftBattle,
+                ),
               );
             }),
             accent: VoiceRoomTokens.neonPink,

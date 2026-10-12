@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../theme/voice_room_tokens.dart';
 
-/// Sol kenar açılır panel — Müzik · PK · İstek · Daha Fazla. Kapalıyken yalnız
-/// küçük bir tutamaç görünür; dokununca panel sola doğru açılır.
+/// Sağ kenar açılır panel — Müzik · PK · İstek · Daha Fazla. Kapalıyken yalnız
+/// küçük bir tutamaç görünür; dokununca panel sağa doğru (içeri) açılır.
 /// Yarışma kutuları (topSlot) sağ kenarda ayrı durur.
 class VoiceMockSideRail extends StatefulWidget {
   const VoiceMockSideRail({
@@ -53,22 +53,27 @@ class _VoiceMockSideRailState extends State<VoiceMockSideRail> {
               ),
             ),
           Positioned(
-            left: 0,
+            right: 0,
             top: 0,
             bottom: 0,
             child: Align(
-              alignment: const Alignment(-1, 0.32),
+              alignment: const Alignment(1, 0.32),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  _RailHandle(
+                    open: _open,
+                    badge: widget.requestPending && !_open,
+                    onTap: () => setState(() => _open = !_open),
+                  ),
                   AnimatedSize(
                     duration: const Duration(milliseconds: 200),
                     curve: Curves.easeOutCubic,
-                    alignment: Alignment.centerLeft,
+                    alignment: Alignment.centerRight,
                     child: _open
                         ? Container(
-                            margin: const EdgeInsets.only(left: 6),
+                            margin: const EdgeInsets.only(right: 6),
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
                               color: const Color(0xE6100824),
@@ -123,11 +128,6 @@ class _VoiceMockSideRailState extends State<VoiceMockSideRail> {
                           )
                         : const SizedBox.shrink(),
                   ),
-                  _RailHandle(
-                    open: _open,
-                    badge: widget.requestPending && !_open,
-                    onTap: () => setState(() => _open = !_open),
-                  ),
                 ],
               ),
             ),
@@ -163,7 +163,7 @@ class _RailHandle extends StatelessWidget {
           decoration: BoxDecoration(
             color: const Color(0xCC1B0F36),
             borderRadius: const BorderRadius.horizontal(
-              right: Radius.circular(14),
+              left: Radius.circular(14),
             ),
             border: Border.all(
               color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.7),
@@ -176,15 +176,15 @@ class _RailHandle extends StatelessWidget {
             children: [
               Icon(
                 open
-                    ? Icons.chevron_left_rounded
-                    : Icons.chevron_right_rounded,
+                    ? Icons.chevron_right_rounded
+                    : Icons.chevron_left_rounded,
                 color: Colors.white,
                 size: 24,
               ),
               if (badge)
                 const Positioned(
                   top: 4,
-                  right: 3,
+                  left: 3,
                   child: CircleAvatar(
                     radius: 4,
                     backgroundColor: Color(0xFFFF2D7A),
@@ -293,7 +293,7 @@ class _RailBtn extends StatelessWidget {
             if (badge)
               const Positioned(
                 top: 5,
-                right: 5,
+                left: 5,
                 child: CircleAvatar(
                   radius: 4,
                   backgroundColor: Color(0xFFFF2D7A),
