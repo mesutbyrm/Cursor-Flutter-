@@ -295,8 +295,9 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
     }
 
     // Diğer alanlar (center vb.) — alttan-hizalı banda alınır, sınırlı boyut.
-    // Arkada parlama (glow), girişte scale+fade, bitmeden önce fade-out.
+    // Sesli odada sarı/pembe glow kaldırıldı (hediye öncesi flaş).
     final holdMs = (config.durationMs - 320 - 450).clamp(0, 600000);
+    final skipGlow = widget.stage == GiftStageContext.voiceRoom;
     return GiftStageBand(
       stage: widget.stage,
       child: Align(
@@ -304,6 +305,7 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
         child: Stack(
           alignment: Alignment.center,
           children: [
+            if (!skipGlow)
             SizedBox(
               width: giftSize * 1.25,
               height: giftSize * 1.25,

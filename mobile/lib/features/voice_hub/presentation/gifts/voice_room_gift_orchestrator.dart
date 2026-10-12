@@ -1,13 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../gifts/domain/gift_entity.dart';
 import '../../../gifts/domain/gift_event_catalog_enricher.dart';
 import '../../../gifts/presentation/providers/gift_catalog_index_provider.dart';
 import '../../../gifts/presentation/sync/gift_session_controller.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../visual_fx/domain/fx_gift_display_item.dart';
-import '../../../visual_fx/domain/fx_gift_tier.dart';
-import '../../../visual_fx/presentation/providers/voice_room_gift_display_provider.dart';
 import '../providers/voice_recent_gifts_provider.dart';
 import '../providers/voice_seat_gift_flash_provider.dart';
 
@@ -56,17 +53,11 @@ void dispatchVoiceRoomGiftEvent({
   final event = enrichGiftEventFromCatalog(raw, catalog);
   if (!orchestrator.tryAccept(event)) return;
 
-  final featured = _isFeaturedGift(event, catalog);
-
   ref.read(giftSessionProvider(sessionKey).notifier).onVoiceGiftSent(
         event,
         source: source,
         userRole: userRole,
         isHost: isHost,
-      );
-  ref.read(voiceRoomGiftDisplayProvider.notifier).onGiftEvent(
-        event,
-        forceFeaturedBanner: featured,
       );
   ref.read(voiceRecentGiftsProvider.notifier).recordGifterOnly(event);
   ref.read(voiceSeatGiftFlashProvider(sessionKey).notifier).enqueue(event);
@@ -86,25 +77,12 @@ void dispatchVoiceRoomGiftEventRef({
   );
   final event = enrichGiftEventFromCatalog(raw, catalog);
   if (!orchestrator.tryAccept(event)) return;
-  final featured = _isFeaturedGift(event, catalog);
   ref.read(giftSessionProvider(sessionKey).notifier).onVoiceGiftSent(
         event,
         source: source,
       );
-  ref.read(voiceRoomGiftDisplayProvider.notifier).onGiftEvent(
-        event,
-        forceFeaturedBanner: featured,
-      );
   ref.read(voiceRecentGiftsProvider.notifier).recordGifterOnly(event);
   ref.read(voiceSeatGiftFlashProvider(sessionKey).notifier).enqueue(event);
-}
-
-bool _isFeaturedGift(LiveGiftEvent event, GiftEntity? catalog) {
-  if (catalog?.isFeatured == true) return true;
-  if (event.isFullscreen == true || event.visibleAsFullscreen == true) {
-    return true;
-  }
-  return FxGiftTier.fromJeton(event.jetonAmount).isBigGift;
 }
 
 String canonicalGiftEventId(LiveGiftEvent event) =>

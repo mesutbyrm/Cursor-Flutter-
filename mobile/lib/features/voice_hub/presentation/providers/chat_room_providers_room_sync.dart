@@ -275,6 +275,10 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
         return;
       case 'gift_sent':
       case 'giftsent':
+        _dispatchGiftFromRoomEvent(payload);
+        _refreshGiftGoalFromRoomSse();
+        _scheduleRankingRefreshFromSse();
+        return;
       case 'gift_ranking_updated':
       case 'giftrankingupdated':
         _refreshGiftGoalFromRoomSse();
@@ -367,6 +371,18 @@ extension VoiceRoomBackendSync on VoiceRoomLiveController {
     bumpGiftBoxRefresh(
       ref,
       (roomId: _roomKey, streamId: null),
+    );
+  }
+
+  void _dispatchGiftFromRoomEvent(Map<String, dynamic> payload) {
+    if (_roomKey.isEmpty) return;
+    final giftsRemote = LiveGiftsRemoteDataSource(ref.read(dioProvider));
+    dispatchGiftSsePayloadRef(
+      ref: ref,
+      sessionKey: _roomKey,
+      payload: payload,
+      giftsRemote: giftsRemote,
+      voiceRealtime: true,
     );
   }
 

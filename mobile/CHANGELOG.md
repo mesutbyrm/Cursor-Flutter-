@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.780+836 (2026-10-12) — Hediye anlık, PK inline, profil, çoklu hesap
+
+- Sesli oda hediyeleri `gift_sent` SSE ile anında işlenir; alıcı cüzdanı/profil hediye sayıları güncellenir
+- Koltuk altı çift satır, sarı glow ve büyük üst banner çoğaltması giderildi
+- Oda çıkış hediye özeti (süre, kim ne attı) daha tutarlı
+- PK bitince tam sayfa yerine inline sonuç; hızlı tekrar PK
+- Profil istatistikleri ve hediyeler (aldım / gönderdim) sekmeli
+- Ayarlar → kayıtlı hesaplar (en fazla 10, geçiş)
+
 ## 1.0.779+835 (2026-10-12) — Sesli oda arka plan / ön plan koltuk
 
 - **Arka plan:** Uzun süre arka planda presence/TRTC düşünce ön plana dönüşte otomatik yeniden katılım, koltuk geri talebi ve TRTC yeniden bağlanma

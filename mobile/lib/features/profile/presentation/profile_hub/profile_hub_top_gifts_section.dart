@@ -39,7 +39,7 @@ class ProfileHubTopGiftsSection extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      'En Çok Gönderilen Hediyeler',
+                      'Aldığım hediyeler',
                       style: TextStyle(
                         color: ProfilePremiumTheme.textOf(context),
                         fontWeight: FontWeight.w900,

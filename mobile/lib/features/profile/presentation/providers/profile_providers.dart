@@ -23,6 +23,8 @@ import '../../data/datasources/profile_remote_datasource.dart';
 import '../../../home/data/datasources/mobile_compound_remote_datasource.dart';
 import '../../domain/entities/daily_task_entity.dart';
 import '../../data/repositories/profile_repository_impl.dart';
+import '../../../gifts/presentation/providers/gift_insights_providers.dart';
+import '../../../gifts/domain/gift_history_item.dart';
 
 final profileRemoteProvider = Provider<ProfileRemoteDataSource>((ref) {
   return ProfileRemoteDataSource(
@@ -221,17 +223,86 @@ final watchAdCreditProvider = FutureProvider.autoDispose<int>((ref) async {
 
 final profileStatsProvider = FutureProvider<ProfileStatsEntity>((ref) async {
   ref.keepAlive();
-  return LoadingTimeout.run(
+  var stats = await LoadingTimeout.run(
     ref.watch(profileRepositoryProvider).myStats(),
     timeout: const Duration(seconds: 3),
     message: 'Profil istatistikleri yüklenemedi',
   );
+  if (stats.giftsSentCount == 0 && stats.giftsSentCoins == 0) {
+    try {
+      final sent = await ref
+          .read(giftInsightsRemoteProvider)
+          .fetchHistory(direction: 'sent', limit: 80);
+      var count = 0;
+      var coins = 0;
+      for (final item in sent) {
+        if (item.isRefunded) continue;
+        count++;
+        coins += item.amount;
+      }
+      if (count > 0 || coins > 0) {
+        stats = ProfileStatsEntity(
+          liveStreams: stats.liveStreams,
+          likes: stats.likes,
+          followers: stats.followers,
+          following: stats.following,
+          giftsReceivedCount: stats.giftsReceivedCount,
+          giftsReceivedCoins: stats.giftsReceivedCoins,
+          giftsSentCount: count,
+          giftsSentCoins: coins,
+          earningsJeton: stats.earningsJeton,
+          approvedTopUpTotal: stats.approvedTopUpTotal,
+          profileViews: stats.profileViews,
+        );
+      }
+    } catch (_) {}
+  }
+  return stats;
 });
 
 final giftsReceivedSummaryProvider =
     FutureProvider<List<GiftReceivedSummaryEntity>>((ref) async {
   ref.keepAlive();
   return ref.watch(profileRepositoryProvider).giftsReceivedSummary();
+});
+
+List<GiftReceivedSummaryEntity> _aggregateGiftHistory(
+  List<GiftHistoryItem> items,
+) {
+  final map = <String, GiftReceivedSummaryEntity>{};
+  for (final item in items) {
+    if (item.isRefunded) continue;
+    final key = item.giftName.trim().toLowerCase();
+    if (key.isEmpty) continue;
+    final prev = map[key];
+    if (prev == null) {
+      map[key] = GiftReceivedSummaryEntity(
+        name: item.giftName,
+        icon: item.giftIcon ?? '🎁',
+        count: 1,
+        coins: item.amount,
+      );
+    } else {
+      map[key] = GiftReceivedSummaryEntity(
+        name: prev.name,
+        icon: prev.icon,
+        count: prev.count + 1,
+        coins: prev.coins + item.amount,
+      );
+    }
+  }
+  final list = map.values.toList()
+    ..sort((a, b) => b.count.compareTo(a.count));
+  return list;
+}
+
+final giftsSentSummaryProvider =
+    FutureProvider<List<GiftReceivedSummaryEntity>>((ref) async {
+  ref.keepAlive();
+  final history = await ref
+      .read(giftInsightsRemoteProvider)
+      .fetchHistory(direction: 'sent', limit: 100);
+  return _aggregateGiftHistory(history);
 });
 
 final broadcastHistoryProvider =

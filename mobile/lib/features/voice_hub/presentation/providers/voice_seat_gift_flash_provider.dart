@@ -128,11 +128,13 @@ class VoiceSeatGiftFlashNotifier
     final keys = receiverKeys(userId: userId, displayName: displayName);
     if (keys.isEmpty) return const [];
     final out = <VoiceSeatGiftFlash>[];
-    final seen = <String>{};
+    final seenEventIds = <String>{};
     for (final f in state) {
-      if (f.expired || seen.contains(f.id)) continue;
+      if (f.expired) continue;
+      final eventId = f.id.contains(':') ? f.id.split(':').first : f.id;
+      if (seenEventIds.contains(eventId)) continue;
       if (keys.any((k) => f.receiverKey == k)) {
-        seen.add(f.id);
+        seenEventIds.add(eventId);
         out.add(f);
       }
     }
@@ -148,12 +150,13 @@ class VoiceSeatGiftFlashNotifier
 
   void enqueue(LiveGiftEvent ev) {
     if (state.any((f) => f.id.startsWith('${ev.id}:'))) return;
-    final keys = <String>{
-      if (ev.receiverId != null && ev.receiverId!.trim().isNotEmpty)
-        receiverKey(userId: ev.receiverId),
-      if (ev.receiverName.trim().isNotEmpty)
-        receiverKey(displayName: ev.receiverName),
-    };
+    final keys = <String>{};
+    final rid = ev.receiverId?.trim() ?? '';
+    if (rid.isNotEmpty) {
+      keys.add(receiverKey(userId: rid));
+    } else if (ev.receiverName.trim().isNotEmpty) {
+      keys.add(receiverKey(displayName: ev.receiverName));
+    }
     if (keys.isEmpty) return;
 
     final sender = ev.senderName.trim().isNotEmpty ? ev.senderName.trim() : 'Biri';

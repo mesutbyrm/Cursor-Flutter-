@@ -19,6 +19,7 @@ import '../../../../core/network/cookie_jar_provider.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/loading_timeout.dart';
 import '../../../../core/performance/network_perf.dart';
+import '../../../../core/auth/saved_accounts_store.dart';
 import '../../../../core/auth/session_user_cache.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../../fortune/data/fortune_birth_profile_store.dart';
@@ -260,6 +261,12 @@ class AuthController extends AsyncNotifier<UserEntity?> {
       grace: const Duration(seconds: 90),
     );
     await ref.read(sessionUserCacheProvider).write(user);
+    unawaited(
+      ref.read(savedAccountsStoreProvider).upsertFromSession(
+            user: user,
+            tokens: ref.read(tokenStorageProvider),
+          ),
+    );
     invalidateAuthenticatedShellData(ref, skipPresenceHeartbeat: true);
     unawaited(clearStaleVoicePresenceOnAuth(ref));
     if (PushDelivery.usesOneSignal) {
@@ -445,6 +452,33 @@ class AuthController extends AsyncNotifier<UserEntity?> {
         return resolved;
       });
       _clearGuestModeOnSuccess();
+    });
+  }
+
+  /// Kayıtlı hesaba geç — mevcut oturum token'ı saklanır.
+  Future<void> switchToSavedAccount(String userId) async {
+    await _runUserAction(() async {
+      final store = ref.read(savedAccountsStoreProvider);
+      final target = await store.byUserId(userId);
+      if (target == null) {
+        throw StateError('Hesap bulunamadı');
+      }
+      final current = state.valueOrNull;
+      final tokens = ref.read(tokenStorageProvider);
+      if (current != null) {
+        await store.upsertFromSession(user: current, tokens: tokens);
+      }
+      await tokens.writeTokens(
+        access: target.accessToken,
+        refresh: target.refreshToken,
+        userId: target.userId,
+      );
+      await refreshMe(force: true);
+      final user = state.valueOrNull;
+      if (user != null) {
+        await _afterAuthSuccess(user, previousUserId: current?.id);
+      }
+      ref.invalidate(savedAccountsListProvider);
     });
   }
 

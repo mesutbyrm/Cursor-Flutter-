@@ -8,23 +8,79 @@ class ProfileStatsEntity {
     this.following = 0,
     this.giftsReceivedCount = 0,
     this.giftsReceivedCoins = 0,
+    this.giftsSentCount = 0,
+    this.giftsSentCoins = 0,
     this.earningsJeton = 0,
     this.approvedTopUpTotal = 0,
     this.profileViews = 0,
   });
 
   factory ProfileStatsEntity.fromJson(Map<String, dynamic> json) {
-    final m = json['data'] is Map ? asJsonMap(json['data']) : json;
+    final root = json['data'] is Map ? asJsonMap(json['data']) : json;
+    final nested = root['stats'] is Map ? asJsonMap(root['stats']) : root;
+    final user = root['user'] is Map ? asJsonMap(root['user']) : const {};
+    final m = <String, dynamic>{...root, ...nested, ...user};
+
     return ProfileStatsEntity(
-      liveStreams: asInt(pick(m, ['liveStreams', 'live_streams'])),
-      likes: asInt(pick(m, ['likes', 'likesCount'])),
-      followers: asInt(pick(m, ['followers', 'followersCount'])),
-      following: asInt(pick(m, ['following', 'followingCount'])),
-      giftsReceivedCount: asInt(pick(m, ['giftsReceivedCount'])),
-      giftsReceivedCoins: asInt(pick(m, ['giftsReceivedCoins', 'earningsJeton'])),
-      earningsJeton: asInt(pick(m, ['earningsJeton', 'giftsReceivedCoins'])),
+      liveStreams: asInt(pick(m, [
+        'liveStreams',
+        'live_streams',
+        'broadcastCount',
+        'streamsCount',
+      ])),
+      likes: asInt(pick(m, [
+        'likes',
+        'likesCount',
+        'likeCount',
+        'totalLikes',
+      ])),
+      followers: asInt(pick(m, [
+        'followers',
+        'followersCount',
+        'followerCount',
+        'totalFollowers',
+      ])),
+      following: asInt(pick(m, [
+        'following',
+        'followingCount',
+        'totalFollowing',
+      ])),
+      giftsReceivedCount: asInt(pick(m, [
+        'giftsReceivedCount',
+        'receivedGiftsCount',
+        'gifts_received_count',
+        'receivedGiftCount',
+      ])),
+      giftsReceivedCoins: asInt(pick(m, [
+        'giftsReceivedCoins',
+        'receivedGiftsCoins',
+        'giftsReceivedJeton',
+        'giftEarnings',
+        'earningsJeton',
+      ])),
+      giftsSentCount: asInt(pick(m, [
+        'giftsSentCount',
+        'sentGiftsCount',
+        'gifts_sent_count',
+      ])),
+      giftsSentCoins: asInt(pick(m, [
+        'giftsSentCoins',
+        'sentGiftsCoins',
+        'giftsSentJeton',
+      ])),
+      earningsJeton: asInt(pick(m, [
+        'earningsJeton',
+        'giftsReceivedCoins',
+        'netEarnings',
+        'totalEarnings',
+      ])),
       approvedTopUpTotal: asInt(pick(m, ['approvedTopUpTotal'])),
-      profileViews: asInt(pick(m, ['profileViews', 'profile_views', 'viewCount'])),
+      profileViews: asInt(pick(m, [
+        'profileViews',
+        'profile_views',
+        'viewCount',
+        'visitorCount',
+      ])),
     );
   }
 
@@ -34,6 +90,8 @@ class ProfileStatsEntity {
   final int following;
   final int giftsReceivedCount;
   final int giftsReceivedCoins;
+  final int giftsSentCount;
+  final int giftsSentCoins;
   final int earningsJeton;
   final int approvedTopUpTotal;
   final int profileViews;
@@ -48,11 +106,22 @@ class GiftReceivedSummaryEntity {
   });
 
   factory GiftReceivedSummaryEntity.fromJson(Map<String, dynamic> json) {
+    final gift = json['gift'] is Map ? asJsonMap(json['gift']) : null;
     return GiftReceivedSummaryEntity(
-      name: pick(json, ['name', 'giftName'])?.toString() ?? 'Hediye',
-      icon: pick(json, ['icon', 'iconUrl'])?.toString() ?? '🎁',
-      count: asInt(pick(json, ['count', 'quantity'])),
-      coins: asInt(pick(json, ['coins', 'coinCost'])),
+      name: pick(json, ['name', 'giftName'])?.toString() ??
+          pick(gift ?? {}, ['name', 'giftName'])?.toString() ??
+          'Hediye',
+      icon: pick(json, ['icon', 'iconUrl', 'image', 'giftIcon'])?.toString() ??
+          pick(gift ?? {}, ['icon', 'iconUrl', 'image'])?.toString() ??
+          '🎁',
+      count: asInt(pick(json, ['count', 'quantity', 'total', 'times'])),
+      coins: asInt(pick(json, [
+        'coins',
+        'coinCost',
+        'jeton',
+        'totalCoins',
+        'amount',
+      ])),
     );
   }
 

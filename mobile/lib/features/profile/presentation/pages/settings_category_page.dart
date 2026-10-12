@@ -202,6 +202,13 @@ class SettingsCategoryPage extends ConsumerWidget {
                 onTap: () => context.push('/profile/edit'),
               ),
               SettingsTileCard(
+                icon: Icons.switch_account_rounded,
+                label: 'Kayıtlı hesaplar',
+                subtitle: 'En fazla 10 hesap, hızlı geçiş',
+                accent: CdsColors.accentCyan,
+                onTap: () => context.push('/settings/accounts'),
+              ),
+              SettingsTileCard(
                 icon: Icons.email_outlined,
                 label: 'E-posta Doğrulama',
                 subtitle: user?.email ?? 'Doğrulama kodu gönder',

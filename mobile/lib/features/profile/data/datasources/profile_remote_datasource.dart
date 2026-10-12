@@ -300,7 +300,12 @@ class ProfileRemoteDataSource {
         final res = await _dio.safeGet<Map<String, dynamic>>(path);
         final body = res.data ?? {};
         final data = body['data'] is Map ? asJsonMap(body['data']) : body;
-        final raw = data['summary'] ?? data['gifts'] ?? data['items'] ?? data;
+        final raw = data['summary'] ??
+            data['gifts'] ??
+            data['items'] ??
+            data['received'] ??
+            (body['items'] is List ? body['items'] : null) ??
+            data;
         if (raw is! List) continue;
         return raw
             .map((e) => GiftReceivedSummaryEntity.fromJson(asJsonMap(e)))
