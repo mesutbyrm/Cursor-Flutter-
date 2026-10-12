@@ -8,7 +8,8 @@ abstract final class VoiceRoomBackgroundRecoverySpec {
 
   static const leaveSourceBackground = 'app_background';
   static const leaveSourceDetached = 'app_detached';
+  static const foregroundRecoverSource = 'app_foreground';
 
   /// Ön plana dönünce controller çağrısı — koltuk/PK/müzik REST senkronu.
-  static const foregroundResyncMethod = 'resyncAfterSseReconnect';
+  static const foregroundResyncMethod = 'recoverAfterAppForeground';
 }

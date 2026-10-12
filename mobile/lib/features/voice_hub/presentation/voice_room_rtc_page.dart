@@ -136,7 +136,8 @@ class VoiceRoomRtcPage extends ConsumerStatefulWidget {
   ConsumerState<VoiceRoomRtcPage> createState() => _VoiceRoomRtcPageState();
 }
 
-class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
+class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage>
+    with WidgetsBindingObserver {
   VoiceRoomAudioCoordinator? _audio;
   final _messageCtrl = TextEditingController();
   final _chatScrollCtrl = ScrollController();
@@ -183,6 +184,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     if (widget.room.apiRoomKey.isNotEmpty) {
       _pinnedLiveRoomKey = widget.room.liveKey;
     }
@@ -572,7 +574,30 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_recoverRtcPageAfterForeground());
+    }
+  }
+
+  Future<void> _recoverRtcPageAfterForeground() async {
+    if (!mounted || _leaving || _liveRoomKey.isEmpty) return;
+    await ref
+        .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
+        .recoverAfterAppForeground(source: 'rtc_page_resumed');
+    if (!mounted || _leaving) return;
+    final audio = ref.read(voiceRoomAudioCoordinatorProvider);
+    if (!_audioReady || !audio.inChannel) {
+      setState(() => _audioReady = false);
+      unawaited(_joinAudioBackground());
+    } else {
+      unawaited(audio.ensureConnected());
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _detachTrtcPageHooks();
     for (final sub in _roomListenerSubs) {
       sub.close();

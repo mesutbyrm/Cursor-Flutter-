@@ -29,6 +29,7 @@ class VoiceRoomAudioCoordinator {
   bool get micOn => _trtc.micOn;
   bool get isSupported => _trtc.isSupported;
   bool get isReconnecting => _reconnecting;
+  bool get inChannel => _trtc.inChannel;
   TrtcRoomManager get trtcManager => _trtc.manager;
 
   Future<void>? _micOp;

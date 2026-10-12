@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/voice_room_background_recovery_spec.dart';
 import '../../providers/chat_room_providers.dart';
 import '../../providers/voice_room_session_registry.dart';
+import '../../utils/voice_room_foreground_recovery.dart';
+import '../../utils/voice_room_presence_persistence.dart';
 
 /// Uygulama arka plana geçince heartbeat durur; uzun süre sonra koltuk boşaltılır.
 class VoiceRoomSessionLifecycleHost extends ConsumerStatefulWidget {
@@ -72,10 +74,15 @@ class _VoiceRoomSessionLifecycleHostState
     if (!_backgrounded) return;
     _backgrounded = false;
     _cancelBackgroundTimer();
-    final liveKey = _activeLiveKey();
+    final liveKey = resolveForegroundVoiceRoomLiveKey(ref);
     if (liveKey == null) return;
-    final ctrl = ref.read(voiceRoomLiveProvider(liveKey).notifier);
-    unawaited(ctrl.resyncAfterSseReconnect());
+    unawaited(
+      ref
+          .read(voiceRoomLiveProvider(liveKey).notifier)
+          .recoverAfterAppForeground(
+            source: VoiceRoomBackgroundRecoverySpec.foregroundRecoverSource,
+          ),
+    );
   }
 
   @override
@@ -91,13 +98,20 @@ class _VoiceRoomSessionLifecycleHostState
         _cancelBackgroundTimer();
         final liveKey = _activeLiveKey();
         if (liveKey != null) {
-          unawaited(
-            ref.read(voiceRoomLiveProvider(liveKey).notifier).leaveRoomSession(
-                  source: VoiceRoomBackgroundRecoverySpec.leaveSourceDetached,
-                  awaitBackend: true,
-                  force: true,
-                ),
-          );
+          unawaited(() async {
+            try {
+              await ref
+                  .read(voiceRoomLiveProvider(liveKey).notifier)
+                  .leaveRoomSession(
+                    source: VoiceRoomBackgroundRecoverySpec.leaveSourceDetached,
+                    awaitBackend: true,
+                    force: true,
+                  );
+            } catch (_) {}
+            await VoiceRoomPresencePersistence.clear();
+          }());
+        } else {
+          unawaited(VoiceRoomPresencePersistence.clear());
         }
     }
   }

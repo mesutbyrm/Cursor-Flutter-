@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.779+835 (2026-10-12) — Sesli oda arka plan / ön plan koltuk
+
+- **Arka plan:** Uzun süre arka planda presence/TRTC düşünce ön plana dönüşte otomatik yeniden katılım, koltuk geri talebi ve TRTC yeniden bağlanma
+- **45 sn arka plan leave:** Oda ekranı açık kalsa bile oturum yeniden kurulur; RTC sayfası ses kanalını tekrar açar
+- **Uygulama kapanışı:** `detached` lifecycle’da sesli oda yerel presence kayıtları (`SharedPreferences`) temizlenir — hayalet oturum azaltılır
+- **SSE resync:** Listede görünmeyen kullanıcı için presence yeniden join + yetkili otomatik koltuk denemesi
+
 ## 1.0.778+834 (2026-10-12) — Bekleyen dal birleştirmeleri (P0 ses + PK TRTC)
 
 - **Psychic P0 hotfix dalı:** main ile birleştirildi — sesli odadan çıkışta erken TRTC/audio leave (400 ms)

@@ -21,5 +21,16 @@ void main() {
         450,
       );
     });
+
+    test('foreground recover source is stable', () {
+      expect(
+        VoiceRoomBackgroundRecoverySpec.foregroundRecoverSource,
+        'app_foreground',
+      );
+      expect(
+        VoiceRoomBackgroundRecoverySpec.foregroundResyncMethod,
+        'recoverAfterAppForeground',
+      );
+    });
   });
 }
