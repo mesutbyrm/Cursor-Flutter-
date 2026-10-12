@@ -4,7 +4,8 @@
 
 - **Psychic P0 hotfix dalı:** main ile birleştirildi — sesli odadan çıkışta erken TRTC/audio leave (400 ms)
 - **PK video:** `resolveLivePkTrtcRemoteUserId` + twoWay rejoin iyileştirmeleri (`pk-video-result-voice-live-dfca` cherry-pick)
-- **Zaten main'de:** `backend-parity-router` (STAGE16 PK yönlendirme)
+- **Zaten main'de:** `backend-parity-router` (STAGE16 PK yönlendirme); `features-visibility-hub` (admin/falcı araç kataloğu ekranları)
+- **Docs:** P1 cihaz test PASS kaydı (`feature/p1-device-test-pass`)
 
 ## 1.0.777+833 (2026-10-12) — Canlı PK + yayın ayarları + oturum özeti
 
