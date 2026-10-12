@@ -1482,6 +1482,13 @@ class VoiceRoomLiveController
           clearAudioMicPublishGate();
           ref.read(voiceRoomAudioCoordinatorProvider).setReconnectSuspended(true);
           ref.read(voiceRoomAudioCoordinatorProvider).setHeadphonesOn(false);
+          unawaited(
+            ref
+                .read(voiceRoomAudioCoordinatorProvider)
+                .leave()
+                .timeout(const Duration(milliseconds: 400))
+                .catchError((_) {}),
+          );
         },
         () async {
           VoiceRoomLifecycleTrace.lifecycle(

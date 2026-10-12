@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.778+834 (2026-10-12) — Bekleyen dal birleştirmeleri (P0 ses + erken audio leave)
+
+- **Psychic P0 hotfix dalı:** main ile birleştirildi — sesli odadan çıkışta erken TRTC/audio leave (400 ms); mevcut falcı/SSE düzeltmeleri korundu
+- **Not:** `backend-parity-router`, `features-visibility-hub`, `pk-video-result` ayrı merge/cherry-pick
+
 ## 1.0.777+833 (2026-10-12) — Canlı PK + yayın ayarları + oturum özeti
 
 - **Canlı PK:** `completed`/`ended` yalnızca süre dolduktan sonra bitmiş sayılır — kabul sonrası erken «berabere» ve anında kapanma düzeltildi; kabul/refresh merge guard
