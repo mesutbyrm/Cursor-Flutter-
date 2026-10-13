@@ -36,7 +36,7 @@ class _AdminComplaintsPageState extends ConsumerState<AdminComplaintsPage> {
     final ui = await AdminModuleUiStore.loadAll();
     final saved = AdminModuleUiStore.filterFor(ui, _uiModule);
     if (saved != null && saved.isNotEmpty && mounted) {
-      setState(() => _status = saved);
+      setState(() => _status = _normalizeStatusFilter(saved));
     }
   }
 
@@ -83,8 +83,7 @@ class _AdminComplaintsPageState extends ConsumerState<AdminComplaintsPage> {
                 children: [
                   for (final s in const [
                     'pending',
-                    'reviewing',
-                    'resolved',
+                    'reviewed',
                     'dismissed',
                     'all',
                   ])
@@ -155,10 +154,11 @@ class _AdminComplaintsPageState extends ConsumerState<AdminComplaintsPage> {
     );
   }
 
+  String _normalizeStatusFilter(String saved) => complaintStatusQueryForApi(saved);
+
   String _statusLabel(String s) => switch (s) {
         'pending' => 'Bekleyen',
-        'reviewing' => 'İncelemede',
-        'resolved' => 'Çözüldü',
+        'reviewed' => 'İncelendi',
         'dismissed' => 'Reddedildi',
         'all' => 'Tümü',
         _ => s,
@@ -229,12 +229,12 @@ class _ComplaintTile extends StatelessWidget {
                     onPressed: () => onAction(report, 'review'),
                     child: const Text('İncele'),
                   ),
-                if (report.status == 'pending' || report.status == 'reviewing')
+                if (report.status == 'pending')
                   TextButton(
                     onPressed: () => onAction(report, 'resolve'),
                     child: const Text('Çöz'),
                   ),
-                if (report.status == 'pending' || report.status == 'reviewing')
+                if (report.status == 'pending' || report.status == 'reviewed')
                   TextButton(
                     onPressed: () => onAction(report, 'dismiss'),
                     child: const Text('Reddet'),

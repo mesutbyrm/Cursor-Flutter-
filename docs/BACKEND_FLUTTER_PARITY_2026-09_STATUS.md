@@ -6,13 +6,14 @@
 
 ## Ortam notu (2026-10-13 — parity taraması)
 
-**Clone (tam):** `canlifal-backend/nextjs_space` @ **`cursor/mobile-parity-apis-dfca`** (773 route, mobil parity API’ler dahil).  
-**Üretim `main` (`591477e`):** 766 route — **9** kullanılan Flutter yolu henüz yok (sosyal-accounts, pk/me/history|stats|matches, test-push). Outbox: [`CANLIFAL_OUTBOX_FLUTTER_REHBER.md`](CANLIFAL_OUTBOX_FLUTTER_REHBER.md) §6.
+**Clone (PR #56):** `canlifal-backend/nextjs_space` @ **`main` → `79823e6`** (771 route).  
+**Önceki üretim (`591477e`):** sosyal-accounts / agency periods PR #56 ile `main`’e geldi; **9** kullanılan Flutter yolu hâlâ yok (PK me/*, agency wallet/transactions, test-push). Outbox: [`CANLIFAL_OUTBOX_FLUTTER_REHBER.md`](CANLIFAL_OUTBOX_FLUTTER_REHBER.md) §6.
 
-| Script | Tam backend (773) | Üretim main (766) |
-|--------|-------------------|-------------------|
-| `backend-route-parity.py --used-only` | **0** eksik | **9** eksik (Flutter 404/boş yedek) |
-| `backend-method-parity.py` | **690** ok · **0** bad | **NO_ROUTE** yalnızca §6 tablosu |
+| Script | PR #56 main (771) |
+|--------|-------------------|
+| `backend-route-parity.py canlifal-backend/nextjs_space --used-only` | **9** eksik (Flutter 404/boş yedek) |
+
+**Flutter 785+:** PR #56 — `MePermissions` groups list, admin şikayet `reviewed`, ajans `PATCH /api/agency` önceliği — bkz. [`PR56_FLUTTER_API_UYUMLULUK_RAPORU.md`](PR56_FLUTTER_API_UYUMLULUK_RAPORU.md).
 
 **Flutter 784+:** `pkMeMatches`, ajans `periods` + `wallet/transactions` birincil deneme; PK stats `{stats,data}` ayrıştırma testi.
 

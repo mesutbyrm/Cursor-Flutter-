@@ -1,6 +1,6 @@
 # Cross-source API / MCP / Flutter parity report
 
-> **Generated:** 2026-09-11 21:21 UTC (`scripts/generate_cross_source_parity_report.py`)
+> **Generated:** 2026-10-13 20:30 UTC (`scripts/generate_cross_source_parity_report.py`)
 
 ## 1. Kaynak önceliği (CURRENT)
 
@@ -27,59 +27,59 @@
 
 | Ölçüm | Adet |
 |-------|-----:|
-| `api_endpoints.dart` sabitleri | 291 |
-| Tüm `lib/` `/api/` literal | **311** |
-| OpenAPI ile normalize eşleşme | **197** |
-| Flutter-only (OpenAPI’de yok / farklı şablon) | **114** |
-| OpenAPI path Flutter’da hiç geçmiyor (yaklaşık) | **305** |
-| Kılavuzda geçen `/api/...` backtick | **206** |
+| `api_endpoints.dart` sabitleri | 372 |
+| Tüm `lib/` `/api/` literal | **407** |
+| OpenAPI ile normalize eşleşme | **246** |
+| Flutter-only (OpenAPI’de yok / farklı şablon) | **161** |
+| OpenAPI path Flutter’da hiç geçmiyor (yaklaşık) | **256** |
+| Kılavuzda geçen `/api/...` backtick | **212** |
 
 ### 3.1 Flutter-only gruplar (ilk 15)
 
 - `api/admin/site-animations` — **6** uç
-- `api/users/me` — **5** uç
+- `api/admin/agency-management` — **3** uç
 - `api/admin/users` — **3** uç
+- `api/agency/wallet` — **3** uç
 - `api/pk/me` — **3** uç
-- `api/user/cosmetics` — **3** uç
+- `api/users/me` — **3** uç
 - `api/admin/payment-requests` — **2** uç
-- `api/pk/admin` — **2** uç
+- `api/agency/members` — **2** uç
+- `api/auth/email` — **2** uç
+- `api/auth/phone` — **2** uç
+- `api/chat/rooms` — **2** uç
 - `api/short-videos/hashtags` — **2** uç
+- `api/user/account` — **2** uç
 - `/api/admin/` — **1** uç
-- `api/admin/chat` — **1** uç
-- `api/admin/mobile-auth` — **1** uç
-- `api/admin/payment-notifications` — **1** uç
-- `api/admin/payments` — **1** uç
-- `api/admin/voice-room-backgrounds` — **1** uç
-- `api/admin/voice-room-finance-audit` — **1** uç
+- `api/admin/cfc-arena` — **1** uç
 
 ### 3.2 Flutter-only örnek (ilk 25)
 
 ```
 /api/admin/
+/api/admin/agency-management/alerts
+/api/admin/agency-management/promises
+/api/admin/agency-management/reports
+/api/admin/cfc-arena
 /api/admin/chat/rooms/create-for-user
-/api/admin/mobile-auth
+/api/admin/complaints
+/api/admin/finance/summary
+/api/admin/girlive-bot
+/api/admin/health
+/api/admin/live-stats
+/api/admin/membership-features
+/api/admin/membership-tiers
 /api/admin/payment-notifications
 /api/admin/payment-requests
 /api/admin/payment-requests/dismiss-pending
 /api/admin/payments/stream
+/api/admin/platform-analytics
 /api/admin/site-animations
 /api/admin/site-animations/assign
 /api/admin/site-animations/bulk-assign
 /api/admin/site-animations/defaults
 /api/admin/site-animations/exit-defaults
 /api/admin/site-animations/stats
-/api/admin/users/credits
-/api/admin/users/grant-membership
-/api/admin/users/stats
-/api/admin/voice-room-backgrounds
-/api/admin/voice-room-finance-audit
-/api/admin/voice-room-settings
-/api/advisors
-/api/advisors/online
-/api/agency/invite-earnings
-/api/auth/
-/api/auth/google
-/api/auth/login
+/api/admin/social-accounts
 ```
 
 ## 4. MCP dokümantasyonu
@@ -88,7 +88,7 @@
 |-------|-----|
 | `MCP_REGISTRY` | ✅ |
 | `MCP_INTEGRATION_MATRIX` | ✅ |
-| `zip MCP_VE_ENTEGRASYONLAR` | ✅ |
+| `zip MCP_VE_ENTEGRASYONLAR` | ❌ |
 
 MCP araçları `endpoints_index.json` / OpenAPI ile aynı envanteri okur; **üretim API hızını etkilemez**.
 
@@ -96,13 +96,11 @@ MCP araçları `endpoints_index.json` / OpenAPI ile aynı envanteri okur; **üre
 
 | Dosya | Boyut (KB) |
 |-------|----------:|
-| `_zip_analysis/CURRENT_BACKEND_SOURCE_SET.md` | 3.1 |
-| `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` | 84.0 |
+| `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` | 87.4 |
 | `backend-docs/abacus-current/00_BASLA_BURADAN.md` | 5.7 |
 | `backend-docs/B1_12_API_MCP_FLUTTER_PARITY.md` | 19.8 |
 | `backend-docs/MCP_REGISTRY.md` | 2.1 |
 | `docs/MCP_INTEGRATION_MATRIX.md` | 1.8 |
-| `_zip_analysis/MCP_VE_ENTEGRASYONLAR.md` | 1.8 |
 | `backend-docs/abacus-current/priority2/CANLIFAL_HEDIYE_SISTEMI_DOKUMANTASYONU.md` | 46.8 |
 
 **`backend-docs/abacus-current/` toplam `.md`:** 38

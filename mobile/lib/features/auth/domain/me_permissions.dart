@@ -22,6 +22,9 @@ class MePermissions {
         ? asJsonMap(json['data'])
         : asJsonMap(json);
     final permsRaw = data['permissions'];
+    final perms = permsRaw is List
+        ? permsRaw.map((e) => e.toString()).toSet()
+        : <String>{};
     final groupsRaw = data['groups'];
     final groups = <String, List<String>>{};
     if (groupsRaw is Map) {
@@ -32,13 +35,19 @@ class MePermissions {
               list.map((x) => x.toString()).toList(growable: false);
         }
       }
+    } else if (groupsRaw is List && perms.isNotEmpty) {
+      // PR #56: `groups` = katalog (`finance`, `content`, …); izinleri anahtardan grupla.
+      for (final p in perms) {
+        final dot = p.indexOf('.');
+        if (dot <= 0) continue;
+        final g = p.substring(0, dot);
+        groups.putIfAbsent(g, () => []).add(p);
+      }
     }
     return MePermissions(
       role: data['role']?.toString() ?? 'user',
       isSuper: data['isSuper'] == true,
-      permissions: permsRaw is List
-          ? permsRaw.map((e) => e.toString()).toSet()
-          : const {},
+      permissions: perms,
       groups: groups,
     );
   }

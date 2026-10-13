@@ -709,11 +709,12 @@ class AdminRemoteDataSource {
     int limit = 50,
     String search = '',
   }) async {
+    final apiStatus = complaintStatusQueryForApi(status);
     final res = await _adminTimeout(
       _dio.safeGet<dynamic>(
         ApiEndpoints.adminComplaints,
         query: {
-          'status': status,
+          'status': apiStatus,
           'page': '$page',
           'limit': '$limit',
           if (search.trim().isNotEmpty) 'search': search.trim(),

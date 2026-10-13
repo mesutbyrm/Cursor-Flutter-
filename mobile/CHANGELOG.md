@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.785+841 (2026-10-13) — Web PR #56 Flutter uyumu
+
+- **Yetkiler:** `GET /api/me/permissions` — `groups` katalog listesi (PR #56) desteklenir
+- **Ajans:** profil güncelleme önce `PATCH /api/agency`, yedek `/api/agency/my`
+- **Admin şikayet:** API durumu `reviewed`; filtre ve sorgu eşlemesi
+- **Docs:** `PR56_FLUTTER_API_UYUMLULUK_RAPORU.md`
+
 ## 1.0.784+840 (2026-10-13) — Backend parity tamamlama (PK + ajans yedekleri)
 
 - **PK:** `GET /api/pk/me/matches` — aktif maçlarım; geçmiş yanıtında `data` alanı; stats sarmalayıcı testi

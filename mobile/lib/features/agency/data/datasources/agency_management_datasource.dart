@@ -228,7 +228,7 @@ class AgencyManagementDataSource {
       if (contactPhone != null && contactPhone.trim().isNotEmpty)
         'contactPhone': contactPhone.trim(),
     };
-    for (final path in [ApiEndpoints.agencyMy, ApiEndpoints.agencyRoot]) {
+    for (final path in [ApiEndpoints.agencyRoot, ApiEndpoints.agencyMy]) {
       try {
         return await _send('PATCH', path, data: data, ok: 'Ajans bilgileri güncellendi');
       } catch (_) {

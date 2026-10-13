@@ -1,5 +1,14 @@
 import '../../../core/util/json_util.dart';
 
+/// PR #56 backend: `pending` | `reviewed` | `dismissed` | `all`.
+String complaintStatusQueryForApi(String uiStatus) {
+  return switch (uiStatus) {
+    'reviewing' || 'resolved' => 'reviewed',
+    'pending' || 'reviewed' || 'dismissed' || 'all' => uiStatus,
+    _ => 'pending',
+  };
+}
+
 class AdminComplaintUser {
   const AdminComplaintUser({
     required this.id,
