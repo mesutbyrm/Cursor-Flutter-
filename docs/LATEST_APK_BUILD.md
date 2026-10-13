@@ -4,22 +4,17 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.780+836` |
-| Tarih (UTC) | 2026-10-13 00:58 |
-| Commit | [`9513263bdc3cca25964588eef14c448484ecb19f`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/9513263bdc3cca25964588eef14c448484ecb19f) |
-| İş akışı | [Run 38327796431](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/38327796431) |
+| Sürüm | `1.0.782+838` |
+| Tarih (UTC) | 2026-10-13 17:32 |
+| Commit | [`84478690dba953d1681755f1eba64abfc98bf969`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/84478690dba953d1681755f1eba64abfc98bf969) |
+| İş akışı | [Run 38436111430](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/38436111430) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.780+836 (2026-10-12) — Hediye anlık, PK inline, profil, çoklu hesap
+## 1.0.783+839 (2026-10-13) — PK router ana site (backend API parity)
 
-- Sesli oda hediyeleri `gift_sent` SSE ile anında işlenir; alıcı cüzdanı/profil hediye sayıları güncellenir
-- Koltuk altı çift satır, sarı glow ve büyük üst banner çoğaltması giderildi
-- Oda çıkış hediye özeti (süre, kim ne attı) daha tutarlı
-- PK bitince tam sayfa yerine inline sonuç; hızlı tekrar PK
-- Profil istatistikleri ve hediyeler (aldım / gönderdim) sekmeli
-- Ayarlar → kayıtlı hesaplar (en fazla 10, geçiş)
+- `/api/pk/me/history|stats` ve `/api/pk/stats/:id` yeniden **canlifal.com** (backend uçları ile hizalı)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
