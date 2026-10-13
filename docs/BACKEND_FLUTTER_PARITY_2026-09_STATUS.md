@@ -6,12 +6,14 @@
 
 ## Ortam notu (2026-10-13 — parity taraması)
 
-**Clone (PR #56):** `canlifal-backend/nextjs_space` @ **`main` → `79823e6`** (771 route).  
-**Önceki üretim (`591477e`):** sosyal-accounts / agency periods PR #56 ile `main`’e geldi; **9** kullanılan Flutter yolu hâlâ yok (PK me/*, agency wallet/transactions, test-push). Outbox: [`CANLIFAL_OUTBOX_FLUTTER_REHBER.md`](CANLIFAL_OUTBOX_FLUTTER_REHBER.md) §6.
+**Clone (güncel):** `canlifal-backend/nextjs_space` @ **`main` → `cb2fdec`** ([PR #57](https://github.com/mesutbyrm/canlifal/pull/57), 777 route, **used-only 0**).  
+**Üretim deploy:** Henüz eski commit — deploy öncesi smoke’ta yeni uçlar **404**, `me/permissions` **401** (Bearer/token). Deploy sonrası Bearer checklist: backend `docs/FLUTTER_BACKEND_GAP_REPORT.md` § smoke.
 
-| Script | PR #56 main (771) |
+| Script | PR #57 main (777) |
 |--------|-------------------|
-| `backend-route-parity.py canlifal-backend/nextjs_space --used-only` | **9** eksik (Flutter 404/boş yedek) |
+| `backend-route-parity.py canlifal-backend/nextjs_space --used-only` | **0** eksik |
+
+**PR #56 (`79823e6`):** 771 route, 9 eksik (PR #57 ile kapandı). Outbox: [`CANLIFAL_OUTBOX_FLUTTER_REHBER.md`](CANLIFAL_OUTBOX_FLUTTER_REHBER.md) §6.
 
 **Flutter 785+:** PR #56 — `MePermissions` groups list, admin şikayet `reviewed`, ajans `PATCH /api/agency` önceliği — bkz. [`PR56_FLUTTER_API_UYUMLULUK_RAPORU.md`](PR56_FLUTTER_API_UYUMLULUK_RAPORU.md).
 

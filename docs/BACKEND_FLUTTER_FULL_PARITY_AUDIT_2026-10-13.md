@@ -1,11 +1,23 @@
 # Backend ↔ Flutter tam parity denetimi
 
-> **Tarih:** 2026-10-13 UTC  
-> **Backend kaynağı:** `mesutbyrm/canlifal` → `nextjs_space`  
+> **Tarih:** 2026-10-13 UTC (güncelleme: PR #57 merge)  
+> **Backend kaynağı:** `mesutbyrm/canlifal` → `nextjs_space` @ **`cb2fdec`** ([PR #57](https://github.com/mesutbyrm/canlifal/pull/57))  
 > **Flutter:** `Cursor-Flutter-` / `mobile/` @ `1.0.785+841`  
-> **Betikler:** `scripts/backend-route-parity.py`, `scripts/backend-method-parity.py`
+> **Betikler:** `scripts/backend-route-parity.py`, `scripts/backend-method-parity.py`  
+> **Backend gap raporu:** `canlifal` → `docs/FLUTTER_BACKEND_GAP_REPORT.md`
 
-## Kaynak dallar
+## Güncel durum (PR #57 merge — deploy bekliyor)
+
+| | Route | `--used-only` eksik | method parity |
+|--|------:|--------------------:|---------------|
+| **Backend `main` @ `cb2fdec`** | **777** | **0** | `bad=0`, `ok=692` |
+| **canlifal.com (deploy öncesi smoke)** | — | Yeni uçlar **404** `ENDPOINT_NOT_FOUND`; `GET /api/me/permissions` **401** (Bearer yok / prod eski commit) | Deploy sonrası Bearer smoke zorunlu |
+
+**Build:** Yerel `yarn build` Abacus `schema.prisma` / `yarn.lock` symlink olmadan kırık; **Abacus CI** merge sonrası referans.
+
+---
+
+## Kaynak dallar (tarihsel)
 
 | Dal / commit | Route sayısı | Flutter `--used-only` eksik |
 |--------------|-------------:|----------------------------:|
