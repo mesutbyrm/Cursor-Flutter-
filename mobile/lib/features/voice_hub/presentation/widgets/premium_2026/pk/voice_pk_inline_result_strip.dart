@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../../domain/pk/pk_battle_remote_models.dart';
-import '../../../domain/pk/pk_opponent_room_filter.dart';
+import '../../../../domain/pk/pk_battle_remote_models.dart';
+import '../../../../domain/pk/pk_opponent_room_filter.dart';
 import '../../../../../live/domain/entities/voice_room_entity.dart';
 
 /// PK bittiğinde tam sayfa yerine PK ekranında kompakt sonuç şeridi.
