@@ -26,6 +26,7 @@ abstract final class ApiBackendRouter {
     if (_isMainLivePkPath(p)) return ApiBackendKind.main;
     if (_isVoiceRoomPkPath(p)) return ApiBackendKind.main;
     if (_isMainPkUserPath(p)) return ApiBackendKind.main;
+    if (_isMainPkStatsPath(p)) return ApiBackendKind.main;
     if (_isMainUnifiedPkPath(p)) return ApiBackendKind.main;
     if (_isGamesPkNamespacePath(p)) return ApiBackendKind.game;
     return ApiBackendKind.main;
@@ -60,12 +61,16 @@ abstract final class ApiBackendRouter {
     return segments[4] == 'pk';
   }
 
-  /// Oturum PK davetleri — üretimde ana site (`canlifal.com`), games değil.
-  ///
-  /// `/api/pk/me/history|stats|matches` ana sitede yok (591477e); games backend
-  /// veya yerel boş liste yedekleri kullanılır — [ApiBackendKind.game].
+  /// Oturum PK uçları — ana site (`canlifal.com`), SSE ile aynı DB.
   static bool _isMainPkUserPath(String path) {
-    return path == '/api/pk/me/invites';
+    return path == '/api/pk/me/invites' ||
+        path == '/api/pk/me/history' ||
+        path == '/api/pk/me/stats' ||
+        path == '/api/pk/me/matches';
+  }
+
+  static bool _isMainPkStatsPath(String path) {
+    return path.startsWith('/api/pk/stats/');
   }
 
   /// Ana sitedeki birleşik PK uçları (nextjs `app/api/pk/*`):

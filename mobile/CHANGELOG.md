@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.783+839 (2026-10-13) — PK router ana site (backend API parity)
+
+- `/api/pk/me/history|stats` ve `/api/pk/stats/:id` yeniden **canlifal.com** (backend uçları ile hizalı)
+
 ## 1.0.782+838 (2026-10-13) — Parity devam (ajans, ödeme, PK sabitleri)
 
 - Ajans: davet `POST /api/agency/members` + `username`; başvuru/ajansım yalnız `apply` / `my`

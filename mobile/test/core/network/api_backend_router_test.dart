@@ -122,22 +122,22 @@ void main() {
       );
     });
 
-    test('PK davet listesi ana backend; geçmiş/istatistik games (591477e)', () {
+    test('PK me/* ve stats ana backend (canlifal.com PKBattle)', () {
       expect(
         ApiBackendRouter.resolve('/api/pk/me/invites'),
         ApiBackendKind.main,
       );
       expect(
         ApiBackendRouter.resolve('/api/pk/me/history'),
-        ApiBackendKind.game,
+        ApiBackendKind.main,
       );
       expect(
         ApiBackendRouter.resolve('/api/pk/me/stats'),
-        ApiBackendKind.game,
+        ApiBackendKind.main,
       );
       expect(
-        ApiBackendRouter.resolve('/api/pk/me/matches'),
-        ApiBackendKind.game,
+        ApiBackendRouter.resolve('/api/pk/stats/user123'),
+        ApiBackendKind.main,
       );
     });
 
