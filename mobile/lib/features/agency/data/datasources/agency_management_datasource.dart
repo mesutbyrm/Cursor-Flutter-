@@ -192,20 +192,12 @@ class AgencyManagementDataSource {
         continue;
       }
     }
-    return _send(
-      'POST',
-      ApiEndpoints.agencyMembersRemove,
-      data: {
-        'userId': id,
-        if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
-      },
-      ok: 'Üye ajans kadrosundan çıkarıldı',
-    );
+    throw const ApiException('Üye çıkarılamadı. Üyelik kaydı kimliğini kontrol edin.');
   }
 
   /// Kapanmış dönem geçmişi — önce `/api/agency/periods`, yedek hak ediş listesi.
   Future<List<AgencyPeriodView>> fetchPeriods() async {
-    for (final path in [ApiEndpoints.agencyPeriods, ApiEndpoints.agencyAccruals]) {
+    for (final path in [ApiEndpoints.agencyAccruals, ApiEndpoints.agencyPeriods]) {
       try {
         final raw = await _get(path);
         final map = raw is Map ? asJsonMap(raw) : <String, dynamic>{};

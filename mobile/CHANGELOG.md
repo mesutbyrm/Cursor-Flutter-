@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.782+838 (2026-10-13) — Parity devam (ajans, ödeme, PK sabitleri)
+
+- Ajans: davet `POST /api/agency/members` + `username`; başvuru/ajansım yalnız `apply` / `my`
+- Ajans cüzdan hareketleri yalnız `GET /api/agency/wallet`; dönem önce `accruals`
+- Jeton ödeme: yalnız `POST /api/payments/requests` (legacy jeton path kaldırıldı)
+- PK `pkMeHistory` / `pkMeStats` endpoint sabitleri; admin sosyal 404 mesajı; test-push 404 açıklaması
+
 ## 1.0.781+837 (2026-10-13) — Backend parity + outbox rehberi (PR #49)
 
 - **Docs:** `CANLIFAL_OUTBOX_FLUTTER_REHBER.md` — durable SSE/push outbox, Flutter checklist

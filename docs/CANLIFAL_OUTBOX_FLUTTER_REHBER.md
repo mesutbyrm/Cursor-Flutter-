@@ -78,6 +78,8 @@ Script: `python3 scripts/backend-route-parity.py canlifal-backend/nextjs_space -
 | Sunucuda yok | `/api/social-accounts`, `/api/admin/social-accounts` | Boş liste / admin hata mesajı (781+) |
 | Sunucuda yok | `/api/agency/periods`, `/api/agency/wallet/transactions` | Yedek: `accruals`, `GET /api/agency/wallet` |
 | Sunucuda yok | `/api/agency/members/remove` | `DELETE /api/agency/members?memberId=` (781+) |
+| Sözleşme | `POST …/members/invite` + `userId` | `POST /api/agency/members` + `username` (782+) |
+| Sözleşme | `POST/GET /api/agency` kök | `apply` / `my` (782+) |
 | Sunucuda yok | `/api/pk/me/history\|stats\|matches` (ana site) | Router → **games**; istek yoksa boş (781+) |
 | Sunucuda yok | `/api/jeton/payment-request` | Birincil: `POST /api/payments/requests` |
 | Method | `PATCH /api/short-videos/{id}` | Backend yalnız GET/DELETE — düzenleme kapalı (781+) |

@@ -10,6 +10,7 @@ void main() {
     expect(ApiEndpoints.agencyWallet, '/api/agency/wallet');
     expect(ApiEndpoints.agencyWalletTransfer, '/api/agency/wallet/transfer');
     expect(ApiEndpoints.agencyWalletTransactions, '/api/agency/wallet/transactions');
+    expect(ApiEndpoints.agencyMembers, '/api/agency/members');
     expect(ApiEndpoints.agencyMembersInvite, '/api/agency/members/invite');
     expect(ApiEndpoints.agencyPurchase, '/api/agency/purchase');
     expect(ApiEndpoints.agencyPeriods, '/api/agency/periods');

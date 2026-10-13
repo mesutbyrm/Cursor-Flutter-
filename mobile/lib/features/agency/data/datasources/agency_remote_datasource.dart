@@ -12,7 +12,7 @@ class AgencyRemoteDataSource {
   final Dio _dio;
 
   Future<AgencyEntity?> fetchMyAgency() async {
-    for (final path in [ApiEndpoints.agencyRoot, ApiEndpoints.agencyMy]) {
+    for (final path in [ApiEndpoints.agencyMy]) {
       try {
         final res = await _dio.safeGet<dynamic>(path);
         final body = res.data;
@@ -51,12 +51,8 @@ class AgencyRemoteDataSource {
       if (contactPhone != null && contactPhone.isNotEmpty)
         'contactPhone': contactPhone,
     };
-    Response<dynamic> res;
-    try {
-      res = await _dio.safePost<dynamic>(ApiEndpoints.agencyRoot, data: body);
-    } catch (_) {
-      res = await _dio.safePost<dynamic>(ApiEndpoints.agencyApply, data: body);
-    }
+    final res =
+        await _dio.safePost<dynamic>(ApiEndpoints.agencyApply, data: body);
     final msg = asJsonMap(res.data)['message']?.toString();
     return (msg == null || msg.isEmpty)
         ? 'Ajans başvurunuz alındı. Admin onayı bekleniyor.'
@@ -187,21 +183,39 @@ class AgencyRemoteDataSource {
     }
   }
 
-  Future<bool> sendInvite(String userId) async {
-    if (userId.trim().isEmpty) return false;
-    final data = {'userId': userId.trim()};
-    for (final path in [
-      ApiEndpoints.agencyMembersInvite,
-      ApiEndpoints.agencyInvite,
-    ]) {
-      try {
-        await _dio.safePost<dynamic>(path, data: data);
-        return true;
-      } catch (_) {
-        continue;
-      }
+  /// Üye daveti — üretim: `POST /api/agency/members` `{ username }`.
+  Future<bool> sendInvite(String userIdOrUsername) async {
+    final raw = userIdOrUsername.trim();
+    if (raw.isEmpty) return false;
+    final username = await _resolveUsernameForAgencyInvite(raw);
+    if (username == null || username.isEmpty) return false;
+    try {
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.agencyMembers,
+        data: {'username': username},
+      );
+      return true;
+    } catch (_) {
+      return false;
     }
-    return false;
+  }
+
+  Future<String?> _resolveUsernameForAgencyInvite(String userIdOrUsername) async {
+    final key = userIdOrUsername.replaceFirst(RegExp(r'^@'), '').trim();
+    if (key.isEmpty) return null;
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.userPublic(key));
+      final body = res.data;
+      if (body is! Map) return null;
+      final map = asJsonMap(body);
+      final user = map['user'] is Map ? asJsonMap(map['user']) : map;
+      final u = _str(user, ['username']) ?? _str(map, ['username']);
+      if (u != null && u.isNotEmpty) return u;
+    } catch (_) {}
+    if (key.length <= 30 && !RegExp(r'^[a-z0-9]{22,}$').hasMatch(key)) {
+      return key;
+    }
+    return null;
   }
 
   AgencyEntity mapAgencyPublic(Map<String, dynamic> m) => _mapAgency(m);

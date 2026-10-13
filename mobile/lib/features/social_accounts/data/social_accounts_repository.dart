@@ -91,8 +91,18 @@ class SocialAccountsRepository {
 
   /// `GET /api/admin/social-accounts` — admin; tümü (kapalılar dahil).
   Future<List<SiteSocialAccount>> fetchAdmin() async {
-    final res = await _dio.safeGet<dynamic>(ApiEndpoints.adminSocialAccounts);
-    return _list(res.data);
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.adminSocialAccounts);
+      return _list(res.data);
+    } on ApiException catch (e) {
+      if (e.statusCode == 404 || e.statusCode == 405) {
+        throw ApiException(
+          'Sosyal hesap yönetimi sunucuda henüz yok. Backend güncellemesi gerekir.',
+          statusCode: e.statusCode,
+        );
+      }
+      rethrow;
+    }
   }
 
   /// `PUT /api/admin/social-accounts` — boş değer o hesabı kaldırır.

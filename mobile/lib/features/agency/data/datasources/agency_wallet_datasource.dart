@@ -238,30 +238,23 @@ class AgencyWalletDataSource {
     }
   }
 
-  /// Cüzdan hareketleri — önce ayrı uç, yedek `GET /api/agency/wallet`.
+  /// Cüzdan hareketleri — `GET /api/agency/wallet` (txns gövdesi).
   Future<List<Map<String, dynamic>>> fetchWalletTransactions({int limit = 50}) async {
-    for (final path in [
-      ApiEndpoints.agencyWalletTransactions,
-      ApiEndpoints.agencyWallet,
-    ]) {
-      try {
-        final res = await _dio.safeGet<dynamic>(
-          path,
-          query: {'limit': limit, 'page': 1},
-        );
-        final body = res.data;
-        if (body is! Map) continue;
-        final map = asJsonMap(body);
-        final data = map['data'] is Map ? asJsonMap(map['data']) : map;
-        final tx = AgencyWalletSnapshot._txnList(
-          data['transactions'] ?? data['items'] ?? data['txns'] ?? data,
-        );
-        if (tx.isNotEmpty || path == ApiEndpoints.agencyWallet) return tx;
-      } catch (_) {
-        continue;
-      }
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.agencyWallet,
+        query: {'limit': limit, 'page': 1},
+      );
+      final body = res.data;
+      if (body is! Map) return const [];
+      final map = asJsonMap(body);
+      final data = map['data'] is Map ? asJsonMap(map['data']) : map;
+      return AgencyWalletSnapshot._txnList(
+        data['transactions'] ?? data['items'] ?? data['txns'] ?? data,
+      );
+    } catch (_) {
+      return const [];
     }
-    return const [];
   }
 
   /// `POST /api/agency/wallet/transfer` — ajans bakiyesinden kullanıcıya Jeton.

@@ -302,9 +302,13 @@ abstract final class ApiEndpoints {
   static const agencyRoot = '/api/agency';
   static const agencyMy = '/api/agency/my';
   static const agencyApply = '/api/agency/apply';
+  /// @deprecated Üretim: `POST /api/agency/members` `{ username }`.
   static const agencyMembersInvite = '/api/agency/members/invite';
+  /// @deprecated Üretim: `DELETE /api/agency/members?memberId=`.
   static const agencyMembersRemove = '/api/agency/members/remove';
+  /// @deprecated Hareketler `GET /api/agency/wallet` içinde.
   static const agencyWalletTransactions = '/api/agency/wallet/transactions';
+  /// @deprecated Yedek: `GET /api/agency/accruals`.
   static const agencyPeriods = '/api/agency/periods';
   static const agencyMembers = '/api/agency/members';
   static const agencyInvite = '/api/agency/invite';
@@ -396,6 +400,10 @@ abstract final class ApiEndpoints {
 
   /// Kullanıcı profil paylaşımları — kılavuz §9.10.
   static String userPosts(String userId) => '/api/users/$userId/posts';
+
+  /// Profil (id veya kullanıcı adı) — ajans davet username çözümü.
+  static String userPublic(String userIdOrUsername) =>
+      '/api/users/${Uri.encodeComponent(userIdOrUsername.trim())}';
 
   /// Oturumlu kullanıcının takipçi / takip listesi.
   static const userFollowers = '/api/user/followers';
@@ -607,6 +615,11 @@ abstract final class ApiEndpoints {
 
   /// Bekleyen davetler — kılavuz §2.7.
   static const pkMeInvites = '/api/pk/me/invites';
+  /// Games backend veya boş yedek (ana sitede yok — 591477e).
+  static const pkMeHistory = '/api/pk/me/history';
+  static const pkMeStats = '/api/pk/me/stats';
+  static String pkStats(String userId) =>
+      '/api/pk/stats/${Uri.encodeComponent(userId.trim())}';
   static const pkLeaderboard = '/api/pk/leaderboard';
 
   /// PK maç detayı — kılavuz §2.8.

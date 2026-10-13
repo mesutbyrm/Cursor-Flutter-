@@ -200,7 +200,7 @@ class PkRoomRemoteDataSource {
   Future<List<PkHistoryEntry>> history({int page = 1, int limit = 30}) async {
     try {
       final res = await _dio.safeGet<dynamic>(
-        '/api/pk/me/history',
+        ApiEndpoints.pkMeHistory,
         query: {'page': page, 'limit': limit},
         forceRefresh: true,
       );
@@ -293,8 +293,8 @@ class PkRoomRemoteDataSource {
 
   Future<PkStats> stats({String? userId}) async {
     final path = userId == null || userId.trim().isEmpty
-        ? '/api/pk/me/stats'
-        : '/api/pk/stats/${userId.trim()}';
+        ? ApiEndpoints.pkMeStats
+        : ApiEndpoints.pkStats(userId.trim());
     try {
       final res = await _dio.safeGet<dynamic>(path, forceRefresh: true);
       final body = res.data;

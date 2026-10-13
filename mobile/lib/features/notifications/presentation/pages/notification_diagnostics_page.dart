@@ -95,11 +95,14 @@ class _NotificationDiagnosticsPageState
       final ok = m['ok'] == true;
       final reason = m['reason']?.toString();
       final resp = m['response'];
-      final text = ok
-          ? 'Sunucu bildirimi gönderdi. Birkaç saniye içinde telefonuna düşmeli.'
-          : 'Gönderilemedi (HTTP ${res.statusCode}): '
-              '${reason ?? m['error'] ?? 'bilinmeyen hata'}'
-              '${resp != null ? '\n$resp' : ''}';
+      final text = res.statusCode == 404 || res.statusCode == 405
+          ? 'Bu ortamda /api/notifications/test-push yok. '
+              'Yerel FCM testi veya üretim admin push ayarlarını kullanın.'
+          : ok
+              ? 'Sunucu bildirimi gönderdi. Birkaç saniye içinde telefonuna düşmeli.'
+              : 'Gönderilemedi (HTTP ${res.statusCode}): '
+                  '${reason ?? m['error'] ?? 'bilinmeyen hata'}'
+                  '${resp != null ? '\n$resp' : ''}';
       if (mounted) setState(() => _serverTestResult = text);
     } catch (e) {
       if (mounted) setState(() => _serverTestResult = 'İstek başarısız: $e');
