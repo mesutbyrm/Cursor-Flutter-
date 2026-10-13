@@ -615,9 +615,10 @@ abstract final class ApiEndpoints {
 
   /// Bekleyen davetler — kılavuz §2.7.
   static const pkMeInvites = '/api/pk/me/invites';
-  /// Games backend veya boş yedek (ana sitede yok — 591477e).
+  /// Oturum PK geçmişi / istatistik / aktif maçlarım (canlifal.com PKBattle).
   static const pkMeHistory = '/api/pk/me/history';
   static const pkMeStats = '/api/pk/me/stats';
+  static const pkMeMatches = '/api/pk/me/matches';
   static String pkStats(String userId) =>
       '/api/pk/stats/${Uri.encodeComponent(userId.trim())}';
   static const pkLeaderboard = '/api/pk/leaderboard';

@@ -15,4 +15,10 @@ void main() {
     expect(ApiEndpoints.agencyPurchase, '/api/agency/purchase');
     expect(ApiEndpoints.agencyPeriods, '/api/agency/periods');
   });
+
+  test('PK me parity paths', () {
+    expect(ApiEndpoints.pkMeHistory, '/api/pk/me/history');
+    expect(ApiEndpoints.pkMeStats, '/api/pk/me/stats');
+    expect(ApiEndpoints.pkMeMatches, '/api/pk/me/matches');
+  });
 }

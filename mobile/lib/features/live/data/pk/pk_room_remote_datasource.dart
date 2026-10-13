@@ -109,8 +109,18 @@ class PkRoomRemoteDataSource {
     return parsePkMatchList(res.data);
   }
 
-  /// Aktif maçlarım — `GET /api/pk/active` listesinden.
+  /// Aktif maçlarım — önce `GET /api/pk/me/matches`, yedek `GET /api/pk/active`.
   Future<List<PkRoomMatch>> myMatches() async {
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.pkMeMatches,
+        forceRefresh: true,
+      );
+      final list = parsePkMatchList(res.data);
+      if (list.isNotEmpty) return list;
+    } on ApiException catch (e) {
+      if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+    }
     return active();
   }
 
@@ -206,9 +216,8 @@ class PkRoomRemoteDataSource {
       );
       dynamic raw = res.data;
       if (raw is Map) {
-        raw = asJsonMap(raw)['history'] ??
-            asJsonMap(raw)['items'] ??
-            asJsonMap(raw)['data'];
+        final map = asJsonMap(raw);
+        raw = map['history'] ?? map['items'] ?? map['data'];
       }
       if (raw is! List) return const [];
       return [

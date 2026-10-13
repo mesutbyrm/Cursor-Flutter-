@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.784+840 (2026-10-13) — Backend parity tamamlama (PK + ajans yedekleri)
+
+- **PK:** `GET /api/pk/me/matches` — aktif maçlarım; geçmiş yanıtında `data` alanı; stats sarmalayıcı testi
+- **Ajans:** dönem geçmişi önce `/api/agency/periods`; cüzdan hareketleri önce `/api/agency/wallet/transactions`
+- **Docs:** `BACKEND_FLUTTER_PARITY_2026-09_STATUS.md` — tam backend 0 eksik / üretim main 9 eksik özeti
+
 ## 1.0.783+839 (2026-10-13) — PK router ana site (backend API parity)
 
 - `/api/pk/me/history|stats` ve `/api/pk/stats/:id` yeniden **canlifal.com** (backend uçları ile hizalı)

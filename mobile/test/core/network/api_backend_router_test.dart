@@ -136,6 +136,10 @@ void main() {
         ApiBackendKind.main,
       );
       expect(
+        ApiBackendRouter.resolve('/api/pk/me/matches'),
+        ApiBackendKind.main,
+      );
+      expect(
         ApiBackendRouter.resolve('/api/pk/stats/user123'),
         ApiBackendKind.main,
       );

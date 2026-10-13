@@ -4,14 +4,17 @@
 > **Flutter sürümü (kaynak):** `mobile/pubspec.yaml` → güncel `main`.  
 > **Tek entegrasyon kaynağı:** [`FLUTTER_ENTegrasyon_KILAVUZU.md`](FLUTTER_ENTegrasyon_KILAVUZU.md)
 
-## Ortam notu (2026-10-13 — backend `591477e1` / PR #49 outbox)
+## Ortam notu (2026-10-13 — parity taraması)
 
-**Clone:** `canlifal-backend/nextjs_space` @ **`591477e1`** (766 route). Outbox rehberi: [`CANLIFAL_OUTBOX_FLUTTER_REHBER.md`](CANLIFAL_OUTBOX_FLUTTER_REHBER.md).
+**Clone (tam):** `canlifal-backend/nextjs_space` @ **`cursor/mobile-parity-apis-dfca`** (773 route, mobil parity API’ler dahil).  
+**Üretim `main` (`591477e`):** 766 route — **9** kullanılan Flutter yolu henüz yok (sosyal-accounts, pk/me/history|stats|matches, test-push). Outbox: [`CANLIFAL_OUTBOX_FLUTTER_REHBER.md`](CANLIFAL_OUTBOX_FLUTTER_REHBER.md) §6.
 
-| Script | Sonuç |
-|--------|--------|
-| `backend-route-parity.py --used-only` | **11** kullanılan yol ana sitede yok (tablo outbox rehberi §6) |
-| `backend-method-parity.py` | **682** ok · **107** unresolved · **9** bad → Flutter **781+** ile shorts PATCH + ajans DELETE hizalandı |
+| Script | Tam backend (773) | Üretim main (766) |
+|--------|-------------------|-------------------|
+| `backend-route-parity.py --used-only` | **0** eksik | **9** eksik (Flutter 404/boş yedek) |
+| `backend-method-parity.py` | **690** ok · **0** bad | **NO_ROUTE** yalnızca §6 tablosu |
+
+**Flutter 784+:** `pkMeMatches`, ajans `periods` + `wallet/transactions` birincil deneme; PK stats `{stats,data}` ayrıştırma testi.
 
 **Önceki agent hattı (2026-09-29):** route **0** eksik · method **0 bad** · CI **651** yeşil.
 
