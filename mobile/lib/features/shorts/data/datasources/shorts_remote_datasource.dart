@@ -694,8 +694,7 @@ class ShortsRemoteDataSource {
     await _dio.safeDelete(ApiEndpoints.shortVideoDelete(videoId));
   }
 
-  /// `PATCH /api/short-videos/{id}` — sahibi veya admin; yalnız verilen
-  /// alanlar değişir (kapak, açıklama, görünürlük, yorum, düet, konum).
+  /// Video meta güncelleme — üretim backend (591477e) yalnızca GET/DELETE destekler.
   Future<ShortVideoEntity> updateVideo(
     String videoId, {
     String? description,
@@ -705,21 +704,11 @@ class ShortsRemoteDataSource {
     bool? allowDuet,
     String? locationName,
   }) async {
-    final res = await _dio.safePatch<dynamic>(
-      ApiEndpoints.shortVideoDelete(videoId),
-      data: {
-        if (description != null) 'description': description,
-        if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
-        if (visibility != null) 'visibility': visibility,
-        if (commentSetting != null) 'commentSetting': commentSetting,
-        if (allowDuet != null) 'allowDuet': allowDuet,
-        if (locationName != null) 'locationName': locationName,
-      },
+    throw const ApiException(
+      'Kısa video düzenleme sunucuda henüz desteklenmiyor. '
+      'Videoyu silip yeniden yükleyebilirsiniz.',
+      statusCode: 405,
     );
-    final m = _unwrap(res.data);
-    final raw = m != null ? pick(m, ['video', 'item']) : null;
-    if (raw is Map) return _videoFrom(asJsonMap(raw));
-    throw ApiException('Video güncelleme yanıtı okunamadı.');
   }
 
   Future<List<ShortVideoEntity>> fetchByUser(

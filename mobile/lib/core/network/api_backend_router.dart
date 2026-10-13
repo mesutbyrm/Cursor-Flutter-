@@ -61,12 +61,11 @@ abstract final class ApiBackendRouter {
   }
 
   /// Oturum PK davetleri — üretimde ana site (`canlifal.com`), games değil.
+  ///
+  /// `/api/pk/me/history|stats|matches` ana sitede yok (591477e); games backend
+  /// veya yerel boş liste yedekleri kullanılır — [ApiBackendKind.game].
   static bool _isMainPkUserPath(String path) {
-    if (path == '/api/pk/me/invites') return true;
-    if (path == '/api/pk/me/history') return true;
-    if (path == '/api/pk/me/stats') return true;
-    if (path == '/api/pk/me/matches') return true;
-    return false;
+    return path == '/api/pk/me/invites';
   }
 
   /// Ana sitedeki birleşik PK uçları (nextjs `app/api/pk/*`):

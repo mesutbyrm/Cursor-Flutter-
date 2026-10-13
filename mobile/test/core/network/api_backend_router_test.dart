@@ -122,18 +122,22 @@ void main() {
       );
     });
 
-    test('PK davet listesi ana backend (üretim /api/pk/me/*)', () {
+    test('PK davet listesi ana backend; geçmiş/istatistik games (591477e)', () {
       expect(
         ApiBackendRouter.resolve('/api/pk/me/invites'),
         ApiBackendKind.main,
       );
       expect(
         ApiBackendRouter.resolve('/api/pk/me/history'),
-        ApiBackendKind.main,
+        ApiBackendKind.game,
       );
       expect(
         ApiBackendRouter.resolve('/api/pk/me/stats'),
-        ApiBackendKind.main,
+        ApiBackendKind.game,
+      );
+      expect(
+        ApiBackendRouter.resolve('/api/pk/me/matches'),
+        ApiBackendKind.game,
       );
     });
 

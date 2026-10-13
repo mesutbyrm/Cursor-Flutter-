@@ -171,40 +171,80 @@ class AgencyManagementDataSource {
 
   Future<String> unblockUser(String userId) => _send('DELETE', ApiEndpoints.agencyBlocks, query: {'userId': userId});
 
-  /// PR #33 — üye çıkarma (engellemeden bağımsız).
-  Future<String> removeMember(String userId, {String? reason}) => _send(
-        'POST',
-        ApiEndpoints.agencyMembersRemove,
-        data: {
-          'userId': userId,
-          if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
-        },
-        ok: 'Üye ajans kadrosundan çıkarıldı',
-      );
-
-  /// `GET /api/agency/periods` — kapanmış dönem geçmişi.
-  Future<List<AgencyPeriodView>> fetchPeriods() async {
-    final raw = await _get(ApiEndpoints.agencyPeriods);
-    final map = raw is Map ? asJsonMap(raw) : <String, dynamic>{};
-    final list = asJsonList(map['periods'] ?? map['items'] ?? raw);
-    return list.map((e) => AgencyPeriodView.fromJson(asJsonMap(e))).toList();
+  /// Üye çıkarma — `DELETE /api/agency/members?memberId=` (agencyUser kaydı).
+  Future<String> removeMember(String memberOrUserId, {String? reason}) async {
+    final id = memberOrUserId.trim();
+    if (id.isEmpty) {
+      throw const ApiException('Üye kimliği gerekli');
+    }
+    for (final query in [
+      {'memberId': id},
+      {'userId': id},
+    ]) {
+      try {
+        return await _send(
+          'DELETE',
+          ApiEndpoints.agencyMembers,
+          query: query,
+          ok: 'Üye ajans kadrosundan çıkarıldı',
+        );
+      } catch (_) {
+        continue;
+      }
+    }
+    return _send(
+      'POST',
+      ApiEndpoints.agencyMembersRemove,
+      data: {
+        'userId': id,
+        if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
+      },
+      ok: 'Üye ajans kadrosundan çıkarıldı',
+    );
   }
 
-  /// `PATCH /api/agency` — ajans profil güncelleme.
+  /// Kapanmış dönem geçmişi — önce `/api/agency/periods`, yedek hak ediş listesi.
+  Future<List<AgencyPeriodView>> fetchPeriods() async {
+    for (final path in [ApiEndpoints.agencyPeriods, ApiEndpoints.agencyAccruals]) {
+      try {
+        final raw = await _get(path);
+        final map = raw is Map ? asJsonMap(raw) : <String, dynamic>{};
+        final list = asJsonList(
+          map['periods'] ?? map['items'] ?? map['accruals'] ?? map['data'] ?? raw,
+        );
+        if (list.isEmpty) continue;
+        return list.map((e) => AgencyPeriodView.fromJson(asJsonMap(e))).toList();
+      } catch (_) {
+        continue;
+      }
+    }
+    return const [];
+  }
+
+  /// Ajans profil güncelleme — `PATCH /api/agency/my` (üretim), yedek kök.
   Future<String> patchAgencyProfile({
     String? name,
     String? description,
     String? contactEmail,
     String? contactPhone,
-  }) =>
-      _send('PATCH', ApiEndpoints.agencyRoot, data: {
-        if (name != null && name.trim().isNotEmpty) 'name': name.trim(),
-        if (description != null) 'description': description.trim(),
-        if (contactEmail != null && contactEmail.trim().isNotEmpty)
-          'contactEmail': contactEmail.trim(),
-        if (contactPhone != null && contactPhone.trim().isNotEmpty)
-          'contactPhone': contactPhone.trim(),
-      }, ok: 'Ajans bilgileri güncellendi');
+  }) async {
+    final data = {
+      if (name != null && name.trim().isNotEmpty) 'name': name.trim(),
+      if (description != null) 'description': description.trim(),
+      if (contactEmail != null && contactEmail.trim().isNotEmpty)
+        'contactEmail': contactEmail.trim(),
+      if (contactPhone != null && contactPhone.trim().isNotEmpty)
+        'contactPhone': contactPhone.trim(),
+    };
+    for (final path in [ApiEndpoints.agencyMy, ApiEndpoints.agencyRoot]) {
+      try {
+        return await _send('PATCH', path, data: data, ok: 'Ajans bilgileri güncellendi');
+      } catch (_) {
+        continue;
+      }
+    }
+    throw const ApiException('Ajans bilgileri güncellenemedi');
+  }
 
   // ── Yönetici (RBAC; sunucu yetki denetler) ──────────────
   Future<List<AdminPromiseVersion>> adminPromises({String status = 'pending'}) async =>

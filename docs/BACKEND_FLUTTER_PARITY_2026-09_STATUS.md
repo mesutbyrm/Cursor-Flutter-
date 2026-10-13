@@ -4,11 +4,18 @@
 > **Flutter sürümü (kaynak):** `mobile/pubspec.yaml` → güncel `main`.  
 > **Tek entegrasyon kaynağı:** [`FLUTTER_ENTegrasyon_KILAVUZU.md`](FLUTTER_ENTegrasyon_KILAVUZU.md)
 
-## Ortam notu (2026-09-29)
+## Ortam notu (2026-10-13 — backend `591477e1` / PR #49 outbox)
 
-**Agent parity hattı:** route **0** eksik · method **0 bad** · CI **651** yeşil · `apk-latest` **651** derlemesi CI sırasında güncellenir ([Actions](https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml)).
+**Clone:** `canlifal-backend/nextjs_space` @ **`591477e1`** (766 route). Outbox rehberi: [`CANLIFAL_OUTBOX_FLUTTER_REHBER.md`](CANLIFAL_OUTBOX_FLUTTER_REHBER.md).
 
-`canlifal-backend/` — dal `docs/backend-flutter-parity-2026-09` (714 route). Son script:
+| Script | Sonuç |
+|--------|--------|
+| `backend-route-parity.py --used-only` | **11** kullanılan yol ana sitede yok (tablo outbox rehberi §6) |
+| `backend-method-parity.py` | **682** ok · **107** unresolved · **9** bad → Flutter **781+** ile shorts PATCH + ajans DELETE hizalandı |
+
+**Önceki agent hattı (2026-09-29):** route **0** eksik · method **0 bad** · CI **651** yeşil.
+
+`canlifal-backend/` — eski referans dal `docs/backend-flutter-parity-2026-09` (714 route). Eski script:
 
 | Script | Sonuç |
 |--------|--------|

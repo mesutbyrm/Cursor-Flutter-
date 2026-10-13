@@ -78,10 +78,15 @@ class SocialAccountsRepository {
     ].where((a) => a.platform.isNotEmpty).toList();
   }
 
-  /// `GET /api/social-accounts` — yalnız etkin hesaplar.
+  /// `GET /api/social-accounts` — yalnız etkin hesaplar (deploy yoksa boş).
   Future<List<SiteSocialAccount>> fetchPublic() async {
-    final res = await _dio.safeGet<dynamic>(ApiEndpoints.socialAccounts);
-    return _list(res.data).where((a) => a.url.startsWith('http')).toList();
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.socialAccounts);
+      return _list(res.data).where((a) => a.url.startsWith('http')).toList();
+    } on ApiException catch (e) {
+      if (e.statusCode == 404 || e.statusCode == 405) return const [];
+      rethrow;
+    }
   }
 
   /// `GET /api/admin/social-accounts` — admin; tümü (kapalılar dahil).

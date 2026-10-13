@@ -41,7 +41,7 @@ class _AgencyMembersPageState extends ConsumerState<AgencyMembersPage> {
     );
     if (reason == null || !mounted) return;
     await _run(() => ref.read(agencyManagementProvider).removeMember(
-          e.user.id,
+          e.id ?? e.user.id,
           reason: reason.isEmpty ? null : reason,
         ));
   }

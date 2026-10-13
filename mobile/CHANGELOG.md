@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.781+837 (2026-10-13) — Backend parity + outbox rehberi (PR #49)
+
+- **Docs:** `CANLIFAL_OUTBOX_FLUTTER_REHBER.md` — durable SSE/push outbox, Flutter checklist
+- **PK:** `/api/pk/me/history|stats` games yönlendirme; geçmiş/istatistik GET denemesi
+- **Ajans:** üye çıkarma `DELETE /api/agency/members`; cüzdan hareketleri `wallet` yedek; dönem `accruals` yedek; profil `PATCH /api/agency/my`
+- **Shorts:** sunucuda PATCH yok — düzenleme net hata mesajı
+- **Sosyal hesaplar:** `/api/social-accounts` 404 → boş liste
+
 ## 1.0.780+836 (2026-10-12) — Hediye anlık, PK inline, profil, çoklu hesap
 
 - Sesli oda hediyeleri `gift_sent` SSE ile anında işlenir; alıcı cüzdanı/profil hediye sayıları güncellenir

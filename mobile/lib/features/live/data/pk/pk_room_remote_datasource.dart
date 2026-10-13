@@ -196,9 +196,31 @@ class PkRoomRemoteDataSource {
     }
   }
 
-  /// PK geçmişi — üretimde ayrı history ucu yok; boş liste.
+  /// PK geçmişi — games backend `GET /api/pk/me/history`; yoksa boş liste.
   Future<List<PkHistoryEntry>> history({int page = 1, int limit = 30}) async {
-    return const [];
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        '/api/pk/me/history',
+        query: {'page': page, 'limit': limit},
+        forceRefresh: true,
+      );
+      dynamic raw = res.data;
+      if (raw is Map) {
+        raw = asJsonMap(raw)['history'] ??
+            asJsonMap(raw)['items'] ??
+            asJsonMap(raw)['data'];
+      }
+      if (raw is! List) return const [];
+      return [
+        for (final e in raw)
+          if (e is Map) PkHistoryEntry.fromJson(asJsonMap(e)),
+      ];
+    } on ApiException catch (e) {
+      if (e.statusCode == 404 || e.statusCode == 405) return const [];
+      rethrow;
+    } catch (_) {
+      return const [];
+    }
   }
 
   /// PK liderlik tablosu.
@@ -270,6 +292,17 @@ class PkRoomRemoteDataSource {
   }
 
   Future<PkStats> stats({String? userId}) async {
+    final path = userId == null || userId.trim().isEmpty
+        ? '/api/pk/me/stats'
+        : '/api/pk/stats/${userId.trim()}';
+    try {
+      final res = await _dio.safeGet<dynamic>(path, forceRefresh: true);
+      final body = res.data;
+      if (body is Map) return PkStats.fromJson(asJsonMap(body));
+    } on ApiException catch (e) {
+      if (e.statusCode == 404 || e.statusCode == 405) return const PkStats();
+      rethrow;
+    } catch (_) {}
     return const PkStats();
   }
 
