@@ -195,9 +195,9 @@ class AgencyManagementDataSource {
     throw const ApiException('Üye çıkarılamadı. Üyelik kaydı kimliğini kontrol edin.');
   }
 
-  /// Kapanmış dönem geçmişi — önce `/api/agency/periods`, yedek hak ediş listesi.
+  /// Kapanmış dönem geçmişi — `GET /api/agency/accruals` (üretim).
   Future<List<AgencyPeriodView>> fetchPeriods() async {
-    for (final path in [ApiEndpoints.agencyAccruals, ApiEndpoints.agencyPeriods]) {
+    for (final path in [ApiEndpoints.agencyAccruals]) {
       try {
         final raw = await _get(path);
         final map = raw is Map ? asJsonMap(raw) : <String, dynamic>{};

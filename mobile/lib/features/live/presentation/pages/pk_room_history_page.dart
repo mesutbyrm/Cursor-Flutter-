@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/config/env.dart';
 import '../../domain/pk/pk_room_models.dart';
 import '../providers/pk_room_providers.dart';
 
@@ -31,9 +32,18 @@ class PkRoomHistoryPage extends ConsumerWidget {
         ),
         data: (rows) {
           if (rows.isEmpty) {
-            return const Center(
-              child: Text('Henüz PK yapılmamış.',
-                  style: TextStyle(color: Color(0x99FFFFFF))),
+            final hint = Env.useSplitGamesApi
+                ? 'Henüz PK geçmişi yok veya oyun sunucusunda kayıt bulunamadı.'
+                : 'Henüz PK yapılmamış.';
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  hint,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Color(0x99FFFFFF)),
+                ),
+              ),
             );
           }
           final wins = rows.where((r) => r.isWin).length;
