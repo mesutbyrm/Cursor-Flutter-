@@ -4,17 +4,19 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.783+839` |
-| Tarih (UTC) | 2026-10-13 19:36 |
-| Commit | [`3a6f6302d964324daa76d532676773df0d7a7c81`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/3a6f6302d964324daa76d532676773df0d7a7c81) |
-| İş akışı | [Run 38453591524](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/38453591524) |
+| Sürüm | `1.0.784+840` |
+| Tarih (UTC) | 2026-10-13 21:03 |
+| Commit | [`88c3d0d180d72d232a8db3f4decd8299ca8d75e5`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/88c3d0d180d72d232a8db3f4decd8299ca8d75e5) |
+| İş akışı | [Run 38465062295](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/38465062295) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.783+839 (2026-10-13) — PK router ana site (backend API parity)
+## 1.0.784+840 (2026-10-13) — Backend parity tamamlama (PK + ajans yedekleri)
 
-- `/api/pk/me/history|stats` ve `/api/pk/stats/:id` yeniden **canlifal.com** (backend uçları ile hizalı)
+- **PK:** `GET /api/pk/me/matches` — aktif maçlarım; geçmiş yanıtında `data` alanı; stats sarmalayıcı testi
+- **Ajans:** dönem geçmişi önce `/api/agency/periods`; cüzdan hareketleri önce `/api/agency/wallet/transactions`
+- **Docs:** `BACKEND_FLUTTER_PARITY_2026-09_STATUS.md` — tam backend 0 eksik / üretim main 9 eksik özeti
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
