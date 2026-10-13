@@ -4,19 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.784+840` |
-| Tarih (UTC) | 2026-10-13 21:03 |
-| Commit | [`88c3d0d180d72d232a8db3f4decd8299ca8d75e5`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/88c3d0d180d72d232a8db3f4decd8299ca8d75e5) |
-| İş akışı | [Run 38465062295](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/38465062295) |
+| Sürüm | `1.0.785+841` |
+| Tarih (UTC) | 2026-10-13 23:15 |
+| Commit | [`bbd5ac18ae867f1b7dd761a38939117a559d79fe`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/bbd5ac18ae867f1b7dd761a38939117a559d79fe) |
+| İş akışı | [Run 38480605542](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/38480605542) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.784+840 (2026-10-13) — Backend parity tamamlama (PK + ajans yedekleri)
+## 1.0.785+841 (2026-10-13) — Web PR #56 Flutter uyumu
 
-- **PK:** `GET /api/pk/me/matches` — aktif maçlarım; geçmiş yanıtında `data` alanı; stats sarmalayıcı testi
-- **Ajans:** dönem geçmişi önce `/api/agency/periods`; cüzdan hareketleri önce `/api/agency/wallet/transactions`
-- **Docs:** `BACKEND_FLUTTER_PARITY_2026-09_STATUS.md` — tam backend 0 eksik / üretim main 9 eksik özeti
+- **Yetkiler:** `GET /api/me/permissions` — `groups` katalog listesi (PR #56) desteklenir
+- **Ajans:** profil güncelleme önce `PATCH /api/agency`, yedek `/api/agency/my`
+- **Admin şikayet:** API durumu `reviewed`; filtre ve sorgu eşlemesi
+- **Docs:** `PR56_FLUTTER_API_UYUMLULUK_RAPORU.md`
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
