@@ -6,6 +6,7 @@ import '../../../../../core/network/api_exception.dart';
 import '../../../../gifts/data/gift_client_price.dart';
 import '../../../../gifts/presentation/gift_send_failure.dart';
 import '../../../domain/pk/live_pk_side_resolver.dart';
+import '../../gifts/live_gift_send_apply.dart';
 import '../../gifts/providers/live_gift_providers.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import '../../../../../core/config/env.dart';
@@ -13,7 +14,6 @@ import '../../../../../core/theme/app_theme.dart';
 import '../../../domain/entities/live_gift_catalog.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
-import '../../../../gifts/presentation/sync/gift_session_controller.dart';
 import '../../../../gifts/presentation/widgets/gift_staff_finance_prompt.dart';
 import '../../../domain/entities/live_gift_type.dart';
 
@@ -239,15 +239,12 @@ class _PkGiftPickerBodyState extends ConsumerState<_PkGiftPickerBody> {
               score2: result.pkScore2!,
             );
       }
-      final ev = result.event;
-      if (ev != null) {
-        ref.read(giftSessionProvider(widget.streamId).notifier).onGiftSent(
-              ev,
-              source: 'api_response',
-              isHost: user?.id == target.userId,
-            );
-        ref.read(liveGiftControllerProvider).ingestLocalEvent(ev);
-      }
+      applyLiveGiftSendResult(
+        ref,
+        streamId: widget.streamId,
+        result: result,
+        isHost: user?.id == target.userId,
+      );
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(

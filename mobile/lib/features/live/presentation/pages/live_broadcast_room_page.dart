@@ -1098,8 +1098,24 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       ref.read(liveGiftControllerProvider).detach();
     } catch (_) {}
 
-    // Oturum özeti — provider verisi temizlenmeden önce tam ekran / sheet.
-    if (summary != null) {
+    Object? endStreamError;
+    if (widget.session.isHost && streamId.isNotEmpty) {
+      try {
+        await _endStreamOnServerWithRetry(streamId);
+        ref.read(liveRoomProvider(streamId).notifier).markStreamEnded();
+        unawaited(
+          ref.read(liveRemoteProvider).sendStreamMessage(
+                streamId: streamId,
+                content: 'Yayıncı yayını kapattı.',
+              ),
+        );
+      } catch (e) {
+        endStreamError = e;
+      }
+    }
+
+    // Oturum özeti — sunucu kapatma denemesinden sonra; provider hâlâ dolu.
+    if (summary != null || widget.session.isHost) {
       final rootCtx = rootNavigatorKey.currentContext ?? context;
       if (rootCtx.mounted) {
         if (widget.session.isHost) {
@@ -1109,9 +1125,23 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
             streamerName: widget.session.streamerName,
             summary: summary,
           );
-        } else if (summary.hasData) {
+        } else if (summary != null && summary.hasData) {
           await showSessionGiftSummarySheet(rootCtx, summary: summary);
         }
+      }
+    }
+
+    if (endStreamError != null) {
+      final rootCtx = rootNavigatorKey.currentContext ?? context;
+      if (rootCtx.mounted) {
+        ScaffoldMessenger.of(rootCtx).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Yayın sunucuda kapatılamadı; tekrar deneyin veya destek ile iletişime geçin.',
+            ),
+            duration: const Duration(seconds: 5),
+          ),
+        );
       }
     }
 
@@ -1127,14 +1157,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
 
     try {
       if (widget.session.isHost && streamId.isNotEmpty) {
-        unawaited(
-          ref.read(liveRemoteProvider).sendStreamMessage(
-                streamId: streamId,
-                content: 'Yayıncı yayını kapattı.',
-              ),
-        );
-        unawaited(_endStreamOnServerWithRetry(streamId));
-        ref.read(liveRoomProvider(streamId).notifier).markStreamEnded();
         await _leaveLiveSession(endReason: 'host_exit');
       } else {
         await _leaveLiveSession();
@@ -1164,20 +1186,24 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       }
     } finally {
       _leaving = false;
+      _leavingSince = null;
     }
   }
 
   Future<void> _endStreamOnServerWithRetry(String streamId) async {
     final repo = ref.read(liveRepositoryProvider);
+    Object? lastError;
     for (var attempt = 0; attempt < 3; attempt++) {
       try {
         await repo.endVideoStream(streamId);
         await HostLiveStreamRecovery.clear();
         return;
-      } catch (_) {
+      } catch (e) {
+        lastError = e;
         await Future<void>.delayed(Duration(seconds: 1 + attempt));
       }
     }
+    throw lastError ?? StateError('Yayın sunucuda kapatılamadı');
   }
 
   Future<void> _enterHostGracePeriod({required bool notifyViewers}) async {

@@ -109,14 +109,17 @@ class LiveGiftController extends ChangeNotifier {
         if (result.newBalance != null) coinBalance = result.newBalance;
         return result.luckyResult;
       }
-      if (result.newBalance != null) coinBalance = result.newBalance;
       if (result.pkScore1 != null && result.pkScore2 != null) {
         onPkScore?.call(streamId, result.pkScore1!, result.pkScore2!);
       }
 
+      if (result.newBalance != null) coinBalance = result.newBalance;
+      if (result.streamerBalance != null) {
+        streamerEarnings = result.streamerBalance;
+      }
       final ev = result.event;
       if (ev != null) {
-        _pushNotification(ev);
+        _realtime.publishRemote(ev);
       }
       await _sound?.playFor(gift.toEntity());
       return null;

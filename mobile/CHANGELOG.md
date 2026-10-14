@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.786+842 (2026-10-14) — Canlı yayın kapatma + hediye hattı
+
+- **Yayıncı çıkış:** `PATCH/POST end` sunucuda **önce** await; sonra yayın sonu özeti; kapatma hatasında SnackBar
+- **Hediye:** REST gönderim sonrası animasyon/leaderboard (`applyLiveGiftSendResult`); premium panel SSE hattına bağlandı
+- **`_leaving` kilidi:** çıkış sonrası `_leavingSince` sıfırlanır
+
 ## 1.0.785+841 (2026-10-13) — Web PR #56 Flutter uyumu
 
 - **Yetkiler:** `GET /api/me/permissions` — `groups` katalog listesi (PR #56) desteklenir

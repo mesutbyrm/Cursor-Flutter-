@@ -20,6 +20,7 @@ import '../../../gifts/presentation/widgets/gift_staff_finance_prompt.dart';
 import '../../domain/entities/live_gift_catalog.dart';
 import '../../domain/entities/live_gift_type.dart';
 import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
+import '../gifts/live_gift_send_apply.dart';
 import '../gifts/providers/live_gift_providers.dart';
 
 Future<void> showLiveGiftPicker(
@@ -174,6 +175,11 @@ Future<void> showLiveGiftPicker(
                                                 score2: result.pkScore2!,
                                               );
                                         }
+                                        applyLiveGiftSendResult(
+                                          ref,
+                                          streamId: streamId,
+                                          result: result,
+                                        );
                                         if (context.mounted) {
                                           ref.refreshWalletCache(force: true);
                                           Navigator.pop(context);
