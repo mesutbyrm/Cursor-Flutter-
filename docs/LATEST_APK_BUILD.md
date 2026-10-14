@@ -4,20 +4,19 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.785+841` |
-| Tarih (UTC) | 2026-10-13 23:49 |
-| Commit | [`60883e456b01dd47715597e8de6a92fbc18fe95d`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/60883e456b01dd47715597e8de6a92fbc18fe95d) |
-| İş akışı | [Run 38483990465](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/38483990465) |
+| Sürüm | `1.0.786+842` |
+| Tarih (UTC) | 2026-10-14 01:00 |
+| Commit | [`250cb19a0569a8b6550a361ae01fb423f7d2a522`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/250cb19a0569a8b6550a361ae01fb423f7d2a522) |
+| İş akışı | [Run 38491134125](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/38491134125) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.785+841 (2026-10-13) — Web PR #56 Flutter uyumu
+## 1.0.786+842 (2026-10-14) — Canlı yayın kapatma + hediye hattı
 
-- **Yetkiler:** `GET /api/me/permissions` — `groups` katalog listesi (PR #56) desteklenir
-- **Ajans:** profil güncelleme önce `PATCH /api/agency`, yedek `/api/agency/my`
-- **Admin şikayet:** API durumu `reviewed`; filtre ve sorgu eşlemesi
-- **Docs:** `PR56_FLUTTER_API_UYUMLULUK_RAPORU.md`
+- **Yayıncı çıkış:** `PATCH/POST end` sunucuda **önce** await; sonra yayın sonu özeti; kapatma hatasında SnackBar
+- **Hediye:** REST gönderim sonrası animasyon/leaderboard (`applyLiveGiftSendResult`); premium panel SSE hattına bağlandı
+- **`_leaving` kilidi:** çıkış sonrası `_leavingSince` sıfırlanır
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
