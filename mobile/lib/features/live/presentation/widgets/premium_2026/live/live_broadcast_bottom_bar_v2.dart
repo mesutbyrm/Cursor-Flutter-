@@ -11,6 +11,7 @@ class LiveBroadcastBottomBarV2 extends StatefulWidget {
     required this.chatController,
     required this.onSend,
     required this.isHost,
+    this.showPublisherRtc = false,
     this.trtc,
     this.onToggleCamera,
     this.onRtcStateChanged,
@@ -36,6 +37,8 @@ class LiveBroadcastBottomBarV2 extends StatefulWidget {
   final TextEditingController chatController;
   final VoidCallback onSend;
   final bool isHost;
+  /// Onaylı misafir yayıncı — mikrofon/kamera satırı (yayını bitirme yok).
+  final bool showPublisherRtc;
   final TrtcRoomManager? trtc;
   final VoidCallback? onToggleCamera;
   final VoidCallback? onRtcStateChanged;
@@ -174,7 +177,9 @@ class _LiveBroadcastBottomBarV2State extends State<LiveBroadcastBottomBarV2> {
             children: [
               // Host kontrolleri (Mic, Kamera, Kamera Çevir, Bitir).
               // Yazarken gizlenir: klavyenin üstünde yalnız mesaj satırı kalır.
-              if (widget.isHost && hasRtc && !_messageExpanded) ...[
+              if ((widget.isHost || widget.showPublisherRtc) &&
+                  hasRtc &&
+                  !_messageExpanded) ...[
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -205,7 +210,7 @@ class _LiveBroadcastBottomBarV2State extends State<LiveBroadcastBottomBarV2> {
                         color: AppThemeColors.liveRed,
                         onTap: widget.onEndPk,
                       ),
-                    if (widget.onEnd != null)
+                    if (widget.isHost && widget.onEnd != null)
                       _MiniControl(
                         icon: Icons.stop_circle_rounded,
                         label: 'Bitir',

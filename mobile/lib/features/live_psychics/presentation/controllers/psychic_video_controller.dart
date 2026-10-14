@@ -1672,11 +1672,9 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     if (ok) {
       invalidateWalletCacheFromRef(ref);
       await _syncRoomInfo();
-      final room = state.room;
-      state = state.copyWith(
-        remaining: state.remaining + Duration(minutes: choice.minutes),
-        room: room?.copyWith(maxMinutes: (room.maxMinutes) + choice.minutes),
-      );
+      if (!_disposed && !state.leaving && state.timerStarted) {
+        _startTimers();
+      }
     }
     return ok;
   }
@@ -1689,11 +1687,9 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     if (ok) {
       invalidateWalletCacheFromRef(ref);
       await _syncRoomInfo();
-      final room = state.room;
-      state = state.copyWith(
-        remaining: state.remaining + Duration(minutes: choice.minutes),
-        room: room?.copyWith(maxMinutes: room.maxMinutes + choice.minutes),
-      );
+      if (!_disposed && !state.leaving && state.timerStarted) {
+        _startTimers();
+      }
     }
     return ok;
   }

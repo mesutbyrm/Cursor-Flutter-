@@ -1132,6 +1132,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     }
 
     if (endStreamError != null) {
+      _leaving = false;
+      _leavingSince = null;
+      _streamEndUiHandled = false;
       final rootCtx = rootNavigatorKey.currentContext ?? context;
       if (rootCtx.mounted) {
         ScaffoldMessenger.of(rootCtx).showSnackBar(
@@ -1143,6 +1146,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
           ),
         );
       }
+      return;
     }
 
     if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
@@ -1496,9 +1500,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
 
   void _startHostFortunePoll(String streamId) {
     _fortunePoll?.cancel();
+    // Sunucu fal isteği için ayrı SSE tipi yayınlamıyor; SSE açıkken de
+    // yedek yoklama sık kalmalı (aksi halde yayıncı ~1 dk gecikme görüyordu).
     final interval = _liveSseConnected
-        ? const Duration(seconds: 60)
-        : const Duration(seconds: 6);
+        ? const Duration(seconds: 5)
+        : const Duration(seconds: 4);
     _fortunePoll = Timer.periodic(interval, (_) {
       if (!mounted) return;
       unawaited(
@@ -3464,6 +3470,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
             LiveBroadcastRoomChromeColumn(
               topInset: top,
               session: s,
+              coHostPublisher: _coHostUpgraded,
               streamId: streamId,
               hasStream: hasStream,
               embeddedInSwipe: widget.embeddedInSwipe,
@@ -3623,10 +3630,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               onSettings: s.isHost ? _openBroadcastSettings : null,
               onShare: hasStream ? _shareLive : null,
               multiLayoutActive: _resolveGuestLayout() != LiveGuestLayout.solo,
-              onRtcStateChanged: s.isHost
+              onRtcStateChanged: (s.isHost || _coHostUpgraded)
                   ? () => setState(() => _localPreviewKey = UniqueKey())
                   : null,
-              onToggleCamera: s.isHost
+              onToggleCamera: (s.isHost || _coHostUpgraded)
                   ? () {
                       _trtc.setCameraEnabled(!_trtc.cameraOn);
                       setState(() => _localPreviewKey = UniqueKey());

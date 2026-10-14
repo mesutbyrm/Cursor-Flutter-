@@ -142,14 +142,14 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
           );
       if (!mounted) return;
       // ref'i sayfa kapanmadan kullan (dispose sonrası ref erişimi hata verir).
-      ref.invalidate(profileExtendedProvider);
-      ref.invalidate(profileUserStatisticsProvider);
-      ref.invalidate(walletBalancesProvider);
-      unawaited(
-        ref.read(authControllerProvider.notifier).refreshMe(force: true).timeout(
-              const Duration(seconds: 12),
-              onTimeout: () => null,
-            ),
+      invalidateProfileData(ref);
+      await ref
+          .read(authControllerProvider.notifier)
+          .refreshMe(force: true)
+          .timeout(const Duration(seconds: 12), onTimeout: () => null);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profil kaydedildi')),
       );
       Navigator.of(context).pop(true);
     } catch (e) {

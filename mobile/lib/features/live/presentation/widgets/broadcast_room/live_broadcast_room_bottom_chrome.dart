@@ -9,6 +9,7 @@ class LiveBroadcastRoomBottomChrome extends StatelessWidget {
     super.key,
     required this.chatController,
     required this.isHost,
+    this.showPublisherRtc = false,
     required this.trtc,
     required this.commentsEnabled,
     required this.onGift,
@@ -34,6 +35,7 @@ class LiveBroadcastRoomBottomChrome extends StatelessWidget {
 
   final TextEditingController chatController;
   final bool isHost;
+  final bool showPublisherRtc;
   final TrtcRoomManager? trtc;
   final bool commentsEnabled;
   final VoidCallback? onGift;
@@ -67,6 +69,7 @@ class LiveBroadcastRoomBottomChrome extends StatelessWidget {
       child: LiveBroadcastBottomBarV2(
         chatController: chatController,
         isHost: isHost,
+        showPublisherRtc: showPublisherRtc,
         trtc: trtc,
         commentsEnabled: commentsEnabled,
         onGift: onGift,

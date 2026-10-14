@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.787+843 (2026-10-14) — Canlı / profil / GirLive / falcı süre
+
+- **Canlı fal isteği:** yayıncı yedek yoklama 5 sn (SSE açıkken 60 sn gecikme giderildi); SSE fal sinyali ayrıştırma genişletildi
+- **Misafir yayın:** onaylı misafirde mikrofon/kamera alt çubuğu (yayıncı «Bitir» yalnız host)
+- **Yayın kapatma:** sunucu `end` başarısızsa odadan çıkılmaz; kullanıcı tekrar deneyebilir
+- **Canlı falcı süre uzatma:** çift süre sayımı kaldırıldı; sunucu/SSE tek kaynak
+- **GirLive Bot:** yalnız «hoş geldin» satırı 5 sn geçici; moderasyon/duyuru kalıcı
+- **Profil kaydet:** hub invalidate + «Profil kaydedildi» geri bildirimi (**şehir** alanı üretimde `PATCH /api/user/profile` city desteği olmadan kaydedilmez — backend güncellemesi gerekir)
+
 ## 1.0.786+842 (2026-10-14) — Canlı yayın kapatma + hediye hattı
 
 - **Yayıncı çıkış:** `PATCH/POST end` sunucuda **önce** await; sonra yayın sonu özeti; kapatma hatasında SnackBar

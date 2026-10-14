@@ -59,6 +59,7 @@ class LiveBroadcastRoomChromeColumn extends ConsumerWidget {
     required this.onToggleCamera,
     required this.onSend,
     required this.onEnd,
+    this.coHostPublisher = false,
     this.moreBadgeCount = 0,
     this.likeLabel,
     this.onGuest,
@@ -119,6 +120,7 @@ class LiveBroadcastRoomChromeColumn extends ConsumerWidget {
   final VoidCallback? onToggleCamera;
   final VoidCallback onSend;
   final VoidCallback? onEnd;
+  final bool coHostPublisher;
   final int moreBadgeCount;
   final String? likeLabel;
   final VoidCallback? onGuest;
@@ -231,10 +233,12 @@ class LiveBroadcastRoomChromeColumn extends ConsumerWidget {
                     ? ref.watch(livePkOpponentMutedProvider(streamId!))
                     : false;
                 final opp = opponentUserId?.trim() ?? '';
+                final publisherRtc = s.isHost || coHostPublisher;
                 return LiveBroadcastRoomBottomChrome(
                   chatController: chatController,
                   isHost: s.isHost,
-                  trtc: s.isHost ? trtc : null,
+                  showPublisherRtc: coHostPublisher,
+                  trtc: publisherRtc ? trtc : null,
                   commentsEnabled: commentsEnabled,
                   onGift: onGift,
                   onTip: onTip,

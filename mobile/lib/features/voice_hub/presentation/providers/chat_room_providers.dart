@@ -43,6 +43,7 @@ import '../../data/datasources/chat_room_remote_datasource.dart';
 import '../../data/services/voice_room_debug_log.dart';
 import '../../data/services/voice_room_music_pipeline_log.dart';
 import '../../data/services/chat_room_sse_service.dart';
+import '../utils/voice_chat_message_filters.dart';
 import '../../data/services/voice_seat_rest_service.dart';
 import 'voice_gift_providers.dart';
 import '../../../gift_box/presentation/providers/gift_box_scope_providers.dart';
@@ -1174,7 +1175,10 @@ class VoiceRoomLiveController
     state = state.copyWith(
       messages: VoiceRoomMessageMerge.append(state.messages, msg),
     );
-    _scheduleGirLiveEphemeralMessage(msg.id);
+    // Yalnızca giriş selamı geçici; moderasyon / duyuru satırları sohbette kalsın.
+    if (VoiceChatMessageFilters.isBotWelcome(msg)) {
+      _scheduleGirLiveEphemeralMessage(msg.id);
+    }
   }
 
   void _scheduleGirLiveEphemeralMessage(String messageId) {

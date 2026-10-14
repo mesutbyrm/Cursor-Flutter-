@@ -397,6 +397,12 @@ class VideoStreamSseService {
       case 'coguestcamera':
         _onCoGuestCamera?.call(map);
         return;
+      case 'fal_request':
+      case 'live_fal_request':
+      case 'fortune_request':
+      case 'private_fal_request':
+        _dispatchStreamFortune(map);
+        return;
       case 'signal':
       case 'stream_signal':
       case 'streamSignal': {
@@ -418,10 +424,18 @@ class VideoStreamSseService {
             _dispatchGirLiveBot(innerMap);
             return;
           }
+          if (_fortuneEventTypes.contains(innerType)) {
+            _dispatchStreamFortune(innerMap);
+            return;
+          }
         }
         final signalType = (map['signalType'] ?? '').toString().toLowerCase();
         if (signalType == 'co_guest_camera') {
           _onCoGuestCamera?.call(map);
+          return;
+        }
+        if (_fortuneEventTypes.contains(signalType)) {
+          _dispatchStreamFortune(map);
           return;
         }
         break;
@@ -451,6 +465,14 @@ class VideoStreamSseService {
         if (GiftPayloadUtil.looksLikeGift(map)) {
           _onGift?.call(GiftPayloadUtil.unwrap(map));
         }
+    }
+  }
+
+  void _dispatchStreamFortune(Map<String, dynamic> map) {
+    _onStreamFortuneRequest?.call(map);
+    final session = parsePsychicSsePayload(map);
+    if (session != null && session.sessionId.isNotEmpty) {
+      _onFortuneRequest?.call(session);
     }
   }
 
