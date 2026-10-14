@@ -174,6 +174,7 @@ import '../../features/debug/presentation/api_monitor_page.dart';
 import '../../features/debug/presentation/pages/cf_diagnostics_page.dart';
 import '../../features/profile/presentation/pages/blocked_users_page.dart';
 import '../../features/profile/presentation/pages/active_devices_page.dart';
+import '../../features/auth/presentation/pages/add_account_page.dart';
 import '../../features/auth/presentation/pages/saved_accounts_page.dart';
 import '../../features/profile/presentation/pages/profile_transactions_page.dart';
 import '../../features/profile/presentation/pages/user_profile_page.dart';
@@ -1000,6 +1001,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings/accounts',
         builder: (context, state) => const SavedAccountsPage(),
+      ),
+      // Oturum açıkken ek hesap girişi — `/login` gibi auth girişlerinden farklı
+      // olarak oturumlu kullanıcı için yönlendirilmez.
+      GoRoute(
+        path: '/auth/add-account',
+        builder: (context, state) => const AddAccountPage(),
       ),
       GoRoute(
         path: '/settings/blocked',

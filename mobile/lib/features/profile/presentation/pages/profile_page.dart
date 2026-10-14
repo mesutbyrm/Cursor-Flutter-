@@ -159,7 +159,9 @@ class _ProfileScrollBody extends ConsumerWidget {
     final profileUser = sessionUser;
     final base = buildProfileScreenState(ref, profileUser);
     ProfileLoadPerf.prefetchOnOpen(ref, profileUser.id);
-    final onLogout = () => ref.read(authControllerProvider.notifier).logout();
+    Future<void> onLogout() => ref
+        .read(authControllerProvider.notifier)
+        .logout(switchToNextSaved: true);
     final staff = ref.watch(staffAccessProvider);
     final showPublisher =
         staff.showAdminPanel || staff.canManagePayments || staff.isStaffMember;

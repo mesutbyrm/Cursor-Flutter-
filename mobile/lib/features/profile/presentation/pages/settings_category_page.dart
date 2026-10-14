@@ -237,8 +237,10 @@ class SettingsCategoryPage extends ConsumerWidget {
                 destructive: true,
                 onTap: () async {
                   try {
-                    await ref.read(authControllerProvider.notifier).logout();
-                    if (context.mounted) context.go('/auth/login');
+                    await ref
+                        .read(authControllerProvider.notifier)
+                        .logout(switchToNextSaved: true);
+                    if (context.mounted) context.go('/feed');
                   } catch (e) {
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -577,8 +579,10 @@ class SettingsCategoryPage extends ConsumerWidget {
     if (ok != true || !context.mounted) return;
     try {
       await deleteMyAccount(ref, password: password);
-      await ref.read(authControllerProvider.notifier).logout();
-      if (context.mounted) context.go('/auth/login');
+      await ref
+          .read(authControllerProvider.notifier)
+          .logout(switchToNextSaved: true);
+      if (context.mounted) context.go('/feed');
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

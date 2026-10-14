@@ -7,7 +7,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/widgets/mock_ui_kit.dart';
 import '../providers/auth_providers.dart';
 
-/// Kayıtlı hesaplar (en fazla 10) — oturumlar arası geçiş.
+/// Kayıtlı hesaplar (en fazla [maxSavedAccounts]) — oturumlar arası geçiş.
 class SavedAccountsPage extends ConsumerWidget {
   const SavedAccountsPage({super.key});
 
@@ -40,10 +40,16 @@ class SavedAccountsPage extends ConsumerWidget {
             separatorBuilder: (_, _) => const SizedBox(height: 8),
             itemBuilder: (context, i) {
               if (i == list.length) {
+                final full = list.length >= maxSavedAccounts;
                 return OutlinedButton.icon(
-                  onPressed: () => context.push('/auth/login'),
+                  onPressed:
+                      full ? null : () => context.push('/auth/add-account'),
                   icon: const Icon(Icons.person_add_alt_1_rounded),
-                  label: const Text('Başka hesap ekle'),
+                  label: Text(
+                    full
+                        ? 'En fazla $maxSavedAccounts hesap eklenebilir'
+                        : 'Başka hesap ekle',
+                  ),
                 );
               }
               final entry = list[i];
@@ -52,7 +58,11 @@ class SavedAccountsPage extends ConsumerWidget {
                 icon: Icons.account_circle_rounded,
                 color: active ? Colors.green : Colors.blueGrey,
                 title: entry.label,
-                subtitle: active ? 'Aktif oturum' : entry.userId,
+                subtitle: active
+                    ? 'Aktif oturum'
+                    : (entry.username != null && entry.username!.isNotEmpty
+                        ? '@${entry.username}'
+                        : null),
                 value: active ? '✓' : null,
                 onTap: active
                     ? null

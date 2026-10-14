@@ -7,13 +7,16 @@ import '../network/token_storage.dart';
 import '../../features/auth/domain/entities/user_entity.dart';
 
 const _kSavedAccounts = 'saved_accounts_v1';
-const maxSavedAccounts = 10;
+
+/// Cihazda aynı anda tutulabilecek en fazla hesap (aktif hesap dahil).
+const maxSavedAccounts = 5;
 
 class SavedAccountEntry {
   const SavedAccountEntry({
     required this.userId,
     required this.label,
     required this.accessToken,
+    this.username,
     this.refreshToken,
     this.avatarUrl,
     this.lastUsedMs,
@@ -21,6 +24,7 @@ class SavedAccountEntry {
 
   final String userId;
   final String label;
+  final String? username;
   final String accessToken;
   final String? refreshToken;
   final String? avatarUrl;
@@ -29,6 +33,7 @@ class SavedAccountEntry {
   Map<String, dynamic> toJson() => {
         'userId': userId,
         'label': label,
+        if (username != null) 'username': username,
         'accessToken': accessToken,
         if (refreshToken != null) 'refreshToken': refreshToken,
         if (avatarUrl != null) 'avatarUrl': avatarUrl,
@@ -39,6 +44,7 @@ class SavedAccountEntry {
     return SavedAccountEntry(
       userId: json['userId']?.toString() ?? '',
       label: json['label']?.toString() ?? 'Hesap',
+      username: json['username']?.toString(),
       accessToken: json['accessToken']?.toString() ?? '',
       refreshToken: json['refreshToken']?.toString(),
       avatarUrl: json['avatarUrl']?.toString(),
@@ -49,6 +55,8 @@ class SavedAccountEntry {
   }
 }
 
+/// Cihazdaki kayıtlı oturumlar — hesaplar arası geçiş için token'ları saklar.
+/// Liste en son kullanılan önce sıralıdır.
 class SavedAccountsStore {
   SavedAccountsStore(this._storage);
 
@@ -69,12 +77,21 @@ class SavedAccountsStore {
     }
   }
 
+  /// Yeni bir hesap eklenebilir mi? Aktif hesap zaten listedeyse sayılır.
+  Future<bool> canAddAnother() async =>
+      (await readAll()).length < maxSavedAccounts;
+
+  /// Aktif oturumun güncel token'larını listeye yazar (en başa taşır).
   Future<void> upsertFromSession({
     required UserEntity user,
     required TokenStorage tokens,
   }) async {
     final access = tokens.peekAccess() ?? await tokens.readAccess();
-    if (access == null || access.isEmpty) return;
+    if (access == null ||
+        access.isEmpty ||
+        access == TokenStorage.sessionCookieMarker) {
+      return;
+    }
     final refresh = tokens.peekRefresh() ?? await tokens.readRefresh();
     final label = user.display.trim().isNotEmpty
         ? user.display.trim()
@@ -84,6 +101,7 @@ class SavedAccountsStore {
     final entry = SavedAccountEntry(
       userId: user.id,
       label: label,
+      username: user.username.isNotEmpty ? user.username : null,
       accessToken: access,
       refreshToken: refresh,
       avatarUrl: user.avatarUrl,
@@ -110,13 +128,13 @@ class SavedAccountsStore {
   }
 
   Future<void> remove(String userId) async {
-    final all = await readAll()
+    final all = (await readAll()).toList()
       ..removeWhere((e) => e.userId == userId);
     await _write(all);
   }
 
   Future<void> _write(List<SavedAccountEntry> entries) async {
-    final encoded = jsonEncode(entries.map((e) => e.toJson).toList());
+    final encoded = jsonEncode(entries.map((e) => e.toJson()).toList());
     await _storage.write(key: _kSavedAccounts, value: encoded);
   }
 }

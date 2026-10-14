@@ -169,8 +169,9 @@ class _ProfileAccountSecurityPageState
                       label: 'Tüm cihazlardan çıkış',
                       subtitle: 'Bu cihaz dahil tüm oturumlar kapanır',
                       destructive: true,
-                      onTap: () =>
-                          ref.read(authControllerProvider.notifier).logout(),
+                      onTap: () => ref
+                          .read(authControllerProvider.notifier)
+                          .logoutAllDevices(),
                     ),
                   ],
                 ),

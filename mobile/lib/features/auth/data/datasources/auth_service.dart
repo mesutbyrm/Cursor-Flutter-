@@ -261,9 +261,18 @@ class AuthService {
   }
 
   /// `POST /api/auth/logout` + `DELETE /api/user/device-token` + yerel temizlik.
+  /// Refresh token gövdede gönderilir; sunucu access ile birlikte onu da iptal
+  /// eder (aksi halde çıkılan hesabın refresh token'ı süresi dolana dek geçerli
+  /// kalır).
   Future<void> logout() async {
     try {
-      await _authedDio.safePost<dynamic>(ApiEndpoints.authLogout);
+      final refresh = _tokens.peekRefresh() ?? await _tokens.readRefresh();
+      await _authedDio.safePost<dynamic>(
+        ApiEndpoints.authLogout,
+        data: {
+          if (refresh != null && refresh.isNotEmpty) 'refreshToken': refresh,
+        },
+      );
     } catch (e) {
       debugPrint('Auth logout API: $e');
     }

@@ -7,7 +7,6 @@ import '../../../../core/theme/user_theme_sync_provider.dart';
 
 import '../../../../core/bootstrap/user_session_cleanup.dart';
 import '../../../../core/bootstrap/session_data_refresh.dart';
-import '../../../../core/bootstrap/user_session_cleanup.dart';
 import '../../../../core/bootstrap/app_startup_log.dart';
 import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/config/env.dart';
@@ -17,6 +16,7 @@ import '../../../../core/onesignal/onesignal_bootstrap.dart';
 import '../../../../core/push/push_delivery.dart';
 import '../../../../core/network/cookie_jar_provider.dart';
 import '../../../../core/network/dio_provider.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/loading_timeout.dart';
 import '../../../../core/performance/network_perf.dart';
 import '../../../../core/auth/saved_accounts_store.dart';
@@ -455,34 +455,174 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     });
   }
 
-  /// Kayıtlı hesaba geç — mevcut oturum token'ı saklanır.
+  /// Kayıtlı hesaba geç — mevcut oturumun token'ları saklanır. Hedef hesabın
+  /// oturumu artık geçersizse önceki hesap geri yüklenir ve hedef listeden
+  /// çıkarılır (ekranda bir hesap, istekte başka hesabın token'ı kalmaz).
   Future<void> switchToSavedAccount(String userId) async {
     await _runUserAction(() async {
       final store = ref.read(savedAccountsStoreProvider);
       final target = await store.byUserId(userId);
       if (target == null) {
-        throw StateError('Hesap bulunamadı');
+        throw const ApiException('Hesap bulunamadı');
       }
       final current = state.valueOrNull;
+      if (current?.id == target.userId) return;
       final tokens = ref.read(tokenStorageProvider);
       if (current != null) {
         await store.upsertFromSession(user: current, tokens: tokens);
       }
-      await tokens.writeTokens(
-        access: target.accessToken,
-        refresh: target.refreshToken,
-        userId: target.userId,
-      );
-      await refreshMe(force: true);
-      final user = state.valueOrNull;
-      if (user != null) {
-        await _afterAuthSuccess(user, previousUserId: current?.id);
+      final restore =
+          current == null ? null : await store.byUserId(current.id);
+
+      final user = await _activateSavedTokens(target);
+      if (user == null) {
+        await store.remove(target.userId);
+        await _restoreTokens(restore);
+        ref.invalidate(savedAccountsListProvider);
+        throw ApiException(
+          '${target.label} hesabının oturumu sona ermiş. '
+          'Hesabı yeniden ekleyin.',
+        );
       }
+      state = AsyncValue.data(user);
+      await _afterAuthSuccess(user, previousUserId: current?.id);
       ref.invalidate(savedAccountsListProvider);
     });
   }
 
-  Future<void> logout() async {
+  /// Yeni hesap ekle — mevcut hesap saklanır; giriş başarısız olursa aktif
+  /// oturum değişmez. Aktif hesap dahil en fazla [maxSavedAccounts] hesap.
+  Future<void> addAccountWithPassword(String identifier, String password) =>
+      _addAccount(
+        () => ref.read(authRepositoryProvider).login(
+              identifier: identifier,
+              password: password,
+            ),
+        timeoutMessage: 'Giriş zaman aşımına uğradı',
+      );
+
+  Future<void> addAccountWithGoogle() => _addAccount(
+        () => ref.read(authRepositoryProvider).loginWithGoogle(),
+        timeoutMessage: 'Google girişi zaman aşımına uğradı',
+      );
+
+  Future<void> addAccountWithApple() => _addAccount(
+        () => ref.read(authRepositoryProvider).loginWithApple(),
+        timeoutMessage: 'Apple girişi zaman aşımına uğradı',
+      );
+
+  Future<void> _addAccount(
+    Future<UserEntity> Function() signIn, {
+    required String timeoutMessage,
+  }) async {
+    await _runUserAction(() async {
+      final store = ref.read(savedAccountsStoreProvider);
+      final tokens = ref.read(tokenStorageProvider);
+      final current = state.valueOrNull;
+      if (current != null) {
+        await store.upsertFromSession(user: current, tokens: tokens);
+      }
+      if (!await store.canAddAnother()) {
+        throw const ApiException(
+          'En fazla $maxSavedAccounts hesap ekleyebilirsiniz. '
+          'Yeni hesap için önce bir hesabı kaldırın.',
+        );
+      }
+      final restore =
+          current == null ? null : await store.byUserId(current.id);
+
+      UserEntity? user;
+      try {
+        final u = await LoadingTimeout.run(
+          signIn(),
+          timeout: _actionTimeout,
+          message: timeoutMessage,
+        );
+        user = await _withSiteProfile(u);
+      } catch (_) {
+        // Başarısız girişte token yazılmaz; yine de önceki oturumu garanti et.
+        await _restoreTokens(restore);
+        rethrow;
+      }
+      if (user == null) {
+        await _restoreTokens(restore);
+        throw const ApiException('Giriş tamamlanamadı');
+      }
+      state = AsyncValue.data(user);
+      await _afterAuthSuccess(user, previousUserId: current?.id);
+      ref.invalidate(savedAccountsListProvider);
+      _clearGuestModeOnSuccess();
+    });
+  }
+
+  /// Kayıtlı token'ları etkinleştirir ve oturumun gerçekten o hesaba ait
+  /// olduğunu doğrular. Geçersizse null döner; [state]'e dokunmaz.
+  Future<UserEntity?> _activateSavedTokens(SavedAccountEntry target) async {
+    final tokens = ref.read(tokenStorageProvider);
+    await tokens.writeTokens(
+      access: target.accessToken,
+      refresh: target.refreshToken,
+      userId: target.userId,
+    );
+    // Süresi dolmuş access token yenilenirken genel "oturum bitti" çıkışı
+    // tetiklenmesin; sonuç burada doğrulanır.
+    AuthTokenRefreshCoordinator.instance.markSessionFresh(
+      grace: const Duration(seconds: 90),
+    );
+    try {
+      final user = await LoadingTimeout.run(
+        _resolvedUser(),
+        timeout: _actionTimeout,
+        message: 'Hesap doğrulanamadı',
+      );
+      if (user == null || user.id != target.userId) return null;
+      return user;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _restoreTokens(SavedAccountEntry? entry) async {
+    final tokens = ref.read(tokenStorageProvider);
+    if (entry == null) {
+      await tokens.clear();
+      return;
+    }
+    await tokens.writeTokens(
+      access: entry.accessToken,
+      refresh: entry.refreshToken,
+      userId: entry.userId,
+    );
+  }
+
+  /// Çıkış sonrası sıradaki kayıtlı hesaba geçer; geçersiz olanları atlar.
+  Future<void> _resumeNextSavedAccount() async {
+    final store = ref.read(savedAccountsStoreProvider);
+    for (final next in await store.readAll()) {
+      final user = await _activateSavedTokens(next);
+      if (user != null) {
+        state = AsyncValue.data(user);
+        await _afterAuthSuccess(user);
+        ref.invalidate(savedAccountsListProvider);
+        return;
+      }
+      await store.remove(next.userId);
+    }
+    await ref.read(tokenStorageProvider).clear();
+    ref.invalidate(savedAccountsListProvider);
+  }
+
+  /// Bu hesabın tüm cihazlardaki oturumlarını kapatır ve yerel durumu da
+  /// temizler. Diğer kayıtlı hesaplar etkilenmez; varsa sıradakine geçilir.
+  Future<void> logoutAllDevices() async {
+    await ref.read(authRemoteDataSourceProvider).logoutAllDevices();
+    await logout(switchToNextSaved: true);
+  }
+
+  /// Çıkış. Çıkılan hesap kayıtlı hesaplardan kaldırılır (token'ları sunucuda
+  /// iptal edilir). [switchToNextSaved] true ise — kullanıcının kendi çıkışı —
+  /// varsa sıradaki kayıtlı hesaba geçilir; oturum süresi dolduğunda geçilmez.
+  Future<void> logout({bool switchToNextSaved = false}) async {
     ref.read(authUserActionBusyProvider.notifier).state = false;
     ref.read(guestModeProvider.notifier).state = false;
     _sessionEpoch++;
@@ -498,7 +638,14 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     await ref.read(sessionUserCacheProvider).clear();
     await teardownRealtimeOnLogout(ref, userId: userId);
     await ref.read(authRepositoryProvider).logout();
+    if (userId != null) {
+      await ref.read(savedAccountsStoreProvider).remove(userId);
+      ref.invalidate(savedAccountsListProvider);
+    }
     state = const AsyncValue.data(null);
+    if (switchToNextSaved) {
+      await _resumeNextSavedAccount();
+    }
   }
 
   Future<void> refreshMe({bool force = false}) async {

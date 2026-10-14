@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.788+844 (2026-10-14) — Çoklu hesap (en fazla 5)
+
+- **Hesap değiştirici:** profilde `@kullanıcı_adı ▾` — dokununca kayıtlı hesaplar, tek dokunuşla geçiş, «Hesap ekle», «Hesapları yönet»
+- **Hesap ekle:** oturum açıkken yeni hesap (`/auth/add-account`; e-posta/kullanıcı adı, Google, Apple); mevcut hesap açık kalır; aktif dahil **en fazla 5 hesap**
+- **Kayıtlı hesaplar kaydedilmiyordu (düzeltme):** `SavedAccountsStore` JSON yazımı `toJson` çağırmadan fonksiyon referansı kodluyordu; liste hiç kalıcı olmuyordu
+- **Hesap geçişi güvenliği:** hedef hesabın oturumu sona ermişse önceki hesap geri yüklenir (ekranda bir hesap, istekte diğerinin token'ı kalmaz) ve hesap listeden çıkar
+- **Başarısız ek giriş:** mevcut oturumu düşürmez (önceden `AsyncError` ile oturum kapanmış görünüyordu)
+- **Çıkış:** çıkılan hesap listeden kaldırılır; kullanıcı çıkışında varsa sıradaki kayıtlı hesaba geçilir (oturum süresi dolunca geçilmez)
+- **Tüm cihazlardan çıkış (düzeltme):** güvenlik sayfasındaki buton yalnız yerel çıkış yapıyordu; cihazlar sayfası ise token silip oturum durumunu güncellemiyordu — ikisi de `logoutAllDevices` ile düzeltildi
+- **Çıkış sonrası rota (düzeltme):** olmayan `/auth/login` yerine `/feed`
+
 ## 1.0.787+843 (2026-10-14) — Canlı / profil / GirLive / falcı süre
 
 - **Canlı fal isteği:** yayıncı yedek yoklama 5 sn (SSE açıkken 60 sn gecikme giderildi); SSE fal sinyali ayrıştırma genişletildi

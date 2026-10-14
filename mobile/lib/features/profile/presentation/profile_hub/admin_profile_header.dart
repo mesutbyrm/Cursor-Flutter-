@@ -14,6 +14,7 @@ import '../../../admin/presentation/providers/admin_providers.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../auth/presentation/widgets/account_switcher.dart';
 import '../../../live/presentation/providers/live_streams_list_notifier.dart';
 import '../../../live/presentation/providers/voice_rooms_list_notifier.dart';
 import '../../domain/entities/profile_extended_entity.dart';
@@ -120,10 +121,8 @@ class AdminProfileHeader extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Flexible(
-              child: Text(
-                '@${user.username}',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              child: AccountSwitcherUsername(
+                username: user.username,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,

@@ -11,6 +11,7 @@ import '../../../../core/site_animation/presentation/widgets/site_animation_fram
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/mock_ui_kit.dart';
 import '../../../../core/widgets/user_avatar.dart';
+import '../../../auth/presentation/widgets/account_switcher.dart';
 import '../../../cosmetics/presentation/providers/cosmetics_providers.dart';
 import '../../../cosmetics/presentation/widgets/cosmetic_avatar_frame.dart';
 import '../../../cosmetics/presentation/widgets/cosmetic_name_label.dart';
@@ -167,10 +168,8 @@ class MockProfileHeader extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Flexible(
-              child: Text(
-                '@${user.username}',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              child: AccountSwitcherUsername(
+                username: user.username,
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w800,

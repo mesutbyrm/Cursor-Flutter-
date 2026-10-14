@@ -112,7 +112,7 @@ class _LogoutAllButton extends StatelessWidget {
     );
     if (ok != true || !context.mounted) return;
     try {
-      await ref.read(authRepositoryProvider).logoutAllDevices();
+      await ref.read(authControllerProvider.notifier).logoutAllDevices();
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Tüm oturumlar sonlandırıldı')),
