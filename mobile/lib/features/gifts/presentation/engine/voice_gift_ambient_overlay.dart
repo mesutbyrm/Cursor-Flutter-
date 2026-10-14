@@ -214,7 +214,7 @@ class _VoiceGiftAmbientOverlayState extends ConsumerState<VoiceGiftAmbientOverla
         config.animationType == GiftEngineAnimationType.webm;
     final isFullScreen = config.isFullScreen ||
         config.displayArea == GiftEngineDisplayArea.fullScreen ||
-        isVideo;
+        (isVideo && !config.hasExplicitDisplayArea);
     final layerOpacity = isFullScreen || isVideo ? 1.0 : 0.88;
 
     return Positioned.fill(
@@ -297,10 +297,13 @@ class _AmbientContent extends StatelessWidget {
           GiftEngineDisplayArea.seat => 0.32,
           GiftEngineDisplayArea.top || GiftEngineDisplayArea.bottom => 0.5,
           GiftEngineDisplayArea.fullScreen => 1.0,
+          GiftEngineDisplayArea.halfScreen => isFull ? 1.0 : 0.5,
           _ => isFull ? 1.0 : 0.72,
         };
+        final isHalf =
+            !isFull && config.displayArea == GiftEngineDisplayArea.halfScreen;
         final child = _buildMedia(
-          w * sizeFactor,
+          isHalf ? w : w * sizeFactor,
           h * sizeFactor,
           catalog,
         );
@@ -316,6 +319,9 @@ class _AmbientContent extends StatelessWidget {
             ),
           GiftEngineDisplayArea.seat => _seatAligned(context, child),
           GiftEngineDisplayArea.fullScreen => SizedBox(width: w, height: h, child: child),
+          GiftEngineDisplayArea.halfScreen when !isFull => Center(
+              child: SizedBox(width: w, height: h * 0.5, child: child),
+            ),
           _ => Center(
               child: SizedBox(
                 width: w,

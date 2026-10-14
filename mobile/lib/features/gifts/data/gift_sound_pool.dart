@@ -47,15 +47,33 @@ class GiftSoundPool {
     final key = catalog?.soundKey ?? event.soundKey;
     final rarity = catalog?.rarity ?? GiftRarity.common;
 
-    final played = await _playWithRetry(() async =>
-            await _playUrl(url) ||
-            await _playAsset(key) ||
-            await _playAsset(_rarityAsset(rarity))) ||
-        false;
-    if (!played) {
-      await _playSystem(rarity);
+    // Hediye müziği (varsa) ses efektiyle birlikte çalar.
+    final music = event.musicUrl;
+    if (music != null && music.startsWith('http') && music != url) {
+      unawaited(_playUrl(music));
+    }
+    final playedCustom = await _playWithRetry(() async => await _playUrl(url));
+    // Video hediyeler kendi sesini çalar; ek ses efekti yoksa genel ses eklenmez.
+    final isVideo = _isVideoEvent(event);
+    if (!playedCustom && !isVideo) {
+      final played = await _playWithRetry(() async =>
+              await _playAsset(key) ||
+              await _playAsset(_rarityAsset(rarity))) ||
+          false;
+      if (!played) {
+        await _playSystem(rarity);
+      }
     }
     _haptic(rarity);
+  }
+
+  static bool _isVideoEvent(LiveGiftEvent event) {
+    final type = event.assetType?.toLowerCase().trim();
+    if (type == 'video') return true;
+    final v = event.videoUrl?.trim();
+    if (v != null && v.isNotEmpty) return true;
+    final asset = (event.assetUrl ?? '').toLowerCase().split('?').first;
+    return asset.endsWith('.mp4') || asset.endsWith('.webm');
   }
 
   Future<bool> _playWithRetry(Future<bool> Function() play) async {

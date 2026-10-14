@@ -102,7 +102,7 @@ class GiftRepository {
         existing[g.id] = g;
       }
       merged = existing.values.toList()
-        ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+        ..sort((a, b) => a.price.compareTo(b.price));
     } else {
       merged = gifts;
     }

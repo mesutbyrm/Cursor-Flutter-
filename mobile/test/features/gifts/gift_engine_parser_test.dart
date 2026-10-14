@@ -47,4 +47,25 @@ void main() {
       GiftEngineAnimationType.webm,
     );
   });
+
+  test('HALF_SCREEN yarım ekran olarak parse edilir ve açık kabul edilir', () {
+    final config = GiftEngineParser.fromJson({
+      'displayArea': 'HALF_SCREEN',
+      'assetUrl': 'https://cdn.example.com/lion.mp4',
+      'animationDurationMs': 2400,
+    });
+    expect(config.displayArea, GiftEngineDisplayArea.halfScreen);
+    expect(config.hasExplicitDisplayArea, isTrue);
+    // Süre = video uzunluğu (sunucu gönderdi) — 10 sn'ye yükseltilmez.
+    expect(config.durationMs, 2400);
+  });
+
+  test('konum gönderilmeyen eski video kaydı tam ekrana yükseltilir', () {
+    final config = GiftEngineParser.fromJson({
+      'assetUrl': 'https://cdn.example.com/old.mp4',
+    });
+    expect(config.displayArea, GiftEngineDisplayArea.fullScreen);
+    expect(config.hasExplicitDisplayArea, isFalse);
+    expect(config.durationMs, 10000);
+  });
 }

@@ -59,4 +59,16 @@ void main() {
     );
     expect(merged.single.name, 'X');
   });
+
+  test('her zaman jeton fiyatına göre sıralar (sortOrder yok sayılır)', () {
+    final gifts = [
+      const GiftEntity(id: 'x', name: 'X', price: 100000, sortOrder: 1),
+      const GiftEntity(id: 'y', name: 'Y', price: 1, sortOrder: 99),
+      const GiftEntity(id: 'z', name: 'Z', price: 499, sortOrder: 0),
+    ];
+    expect(
+      GiftPlayableFilter.forContext(gifts, context: 'all').map((g) => g.id),
+      ['y', 'z', 'x'],
+    );
+  });
 }

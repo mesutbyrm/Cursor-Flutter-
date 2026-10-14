@@ -29,6 +29,8 @@ enum GiftEnginePriority {
 /// Backend display area — konum yalnızca backend değerine göre.
 enum GiftEngineDisplayArea {
   fullScreen,
+  /// Ekranın yarısına kadar (admin «Yarım ekran»).
+  halfScreen,
   center,
   seat,
   top,
@@ -40,6 +42,7 @@ enum GiftEngineDisplayArea {
       'FULLSCREEN' ||
       'fullscreen' =>
         GiftEngineDisplayArea.fullScreen,
+      'HALF_SCREEN' || 'HALFSCREEN' || 'HALF' => GiftEngineDisplayArea.halfScreen,
       'CENTER' || 'center' || 'ROOM_CENTER' || 'room_center' => GiftEngineDisplayArea.center,
       'SEAT' || 'seat' || 'ABOVE_SEAT' || 'above_seat' => GiftEngineDisplayArea.seat,
       'TOP' || 'top' || 'HEADER' || 'header' => GiftEngineDisplayArea.top,
@@ -142,6 +145,7 @@ class GiftEngineConfig extends Equatable {
     this.assetFormat,
     this.mediaWidth,
     this.mediaHeight,
+    this.hasExplicitDisplayArea = false,
   });
 
   final GiftEnginePriority priority;
@@ -163,6 +167,10 @@ class GiftEngineConfig extends Equatable {
   final String? assetFormat;
   final int? mediaWidth;
   final int? mediaHeight;
+
+  /// Sunucu (admin) görüntüleme türünü açıkça seçtiyse true — istemci
+  /// sezgisel olarak tam ekrana yükseltmez.
+  final bool hasExplicitDisplayArea;
 
   bool get isFullScreen =>
       displayArea == GiftEngineDisplayArea.fullScreen ||
@@ -190,6 +198,7 @@ class GiftEngineConfig extends Equatable {
   List<Object?> get props => [
         priority,
         displayArea,
+        hasExplicitDisplayArea,
         animationType,
         durationMs,
         queueGapMs,

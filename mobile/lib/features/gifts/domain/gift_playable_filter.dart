@@ -13,10 +13,11 @@ abstract final class GiftPlayableFilter {
       if (!seen.add(g.id)) continue;
       out.add(g);
     }
+    // Her zaman jeton fiyatına göre: 1 → 100K.
     out.sort((a, b) {
-      final so = a.sortOrder.compareTo(b.sortOrder);
-      if (so != 0) return so;
-      return a.price.compareTo(b.price);
+      final byPrice = a.price.compareTo(b.price);
+      if (byPrice != 0) return byPrice;
+      return a.name.compareTo(b.name);
     });
     return out;
   }

@@ -180,7 +180,10 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
     final isFullScreen = _wantsFullScreen(config);
     final giftSize = isFullScreen
         ? size.longestSide
-        : math.min(
+        : config.displayArea == GiftEngineDisplayArea.halfScreen
+            // Yarım ekran: ekran yüksekliğinin yarısı (genişlikle sınırlı).
+            ? math.min(size.height * 0.5, size.width)
+            : math.min(
             config.priority.sizeFactor(shortest),
             GiftStageMetrics.maxGiftHeight(context),
           );
@@ -220,6 +223,8 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
   /// sahnesi altında görünür kalır. Koltuk efektleri küçük kalır.
   bool _wantsFullScreen(GiftEngineConfig config) {
     if (config.displayArea == GiftEngineDisplayArea.fullScreen) return true;
+    // Admin yarım/küçük seçtiyse sezgisel tam ekran yükseltmesi yapılmaz.
+    if (config.hasExplicitDisplayArea) return false;
     if (widget.stage != GiftStageContext.liveStream) return false;
     if (config.displayArea == GiftEngineDisplayArea.seat) return false;
     return switch (config.animationType) {

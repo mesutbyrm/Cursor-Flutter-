@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.789+845 (2026-10-14) — Sade hediye kataloğu
+
+- **Görüntüleme türü:** admin «Tam ekran / Yarım ekran / Küçük (orta)» seçer; yeni `HALF_SCREEN` alanı ekranın yarısına kadar gösterilir. Admin açıkça seçtiyse video/animasyon artık zorla tam ekrana büyütülmez
+- **Süre = medya uzunluğu:** sunucu süre gönderdiyse (video/Lottie uzunluğu) kısa videolar 10 sn'ye uzatılmaz
+- **Ses:** video hediyeler kendi sesini çalar; ses efekti yoksa üstüne genel ses eklenmez. Hediye müziği (varsa) ses efektiyle birlikte çalar
+- **Sıralama:** hediye panelleri her zaman jeton fiyatına göre (1 → 100K)
+
 ## 1.0.788+844 (2026-10-14) — Çoklu hesap (en fazla 5)
 
 - **Hesap değiştirici:** profilde `@kullanıcı_adı ▾` — dokununca kayıtlı hesaplar, tek dokunuşla geçiş, «Hesap ekle», «Hesapları yönet»

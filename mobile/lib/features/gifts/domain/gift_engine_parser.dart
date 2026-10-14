@@ -129,6 +129,14 @@ abstract final class GiftEngineParser {
       }
     }
 
+    final explicitDurationMs = _int(render, [
+      'durationMs',
+      'duration_ms',
+      'displayDurationMs',
+      'display_duration_ms',
+      'animationDurationMs',
+      'animation_duration_ms',
+    ]);
     var durationMs = _int(render, [
           'durationMs',
           'duration_ms',
@@ -150,7 +158,13 @@ abstract final class GiftEngineParser {
     if (durationMs <= 0) {
       durationMs = 3000;
     }
-    if (isVideoAnim && durationMs <= 3000 && (event?.engineDurationMs ?? 0) <= 0) {
+    // Süre = medyanın uzunluğu. Sunucu süre göndermediyse (eski kayıt) video
+    // için güvenli varsayılan; video zaten bitince kendini kapatır.
+    final hasServerDuration = (explicitDurationMs ?? 0) > 0 ||
+        (event?.engineDurationMs ?? 0) > 0 ||
+        (event?.animationDurationMs ?? 0) > 0 ||
+        (event?.displayDurationMs ?? 0) > 0;
+    if (isVideoAnim && !hasServerDuration) {
       durationMs = 10000;
     }
 
@@ -178,6 +192,7 @@ abstract final class GiftEngineParser {
     return GiftEngineConfig(
       priority: priority,
       displayArea: displayArea,
+      hasExplicitDisplayArea: displayRaw != null,
       animationType: resolvedAnim,
       durationMs: durationMs.clamp(500, 30000),
       queueGapMs: queueGapMs.clamp(0, 5000),
