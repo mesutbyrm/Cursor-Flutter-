@@ -211,32 +211,34 @@ class _StatisticsCard extends ConsumerWidget {
         label: 'Fal Baktırdığım',
         value: '${detail.fortunesReceived}',
       ),
-      (
-        icon: Icons.chat_bubble_outline_rounded,
-        label: 'Fal Yorumlarım',
-        value: '${detail.fortuneComments}',
-      ),
-      (
-        icon: Icons.videocam_rounded,
-        label: 'Canlı Yayın İzlemem',
-        value: detail.liveWatchMinutes > 0
-            ? detail.liveWatchLabel
-            : '${stats.liveStreams} yayın',
-      ),
-      (
-        icon: Icons.favorite_border_rounded,
-        label: 'Beğendiğim Gönderiler',
-        value: '${detail.likedPosts > 0 ? detail.likedPosts : stats.likes}',
-      ),
-      (
-        icon: Icons.mode_comment_outlined,
-        label: 'Yorumlarım',
-        value: '${detail.commentsCount}',
-      ),
+      // Sunucunun gerçekten döndürdüğü sayılar (hep 0 kalan satırlar kaldırıldı).
       (
         icon: Icons.ios_share_rounded,
         label: 'Paylaşımlarım',
         value: '${detail.sharesCount}',
+      ),
+      (
+        icon: Icons.favorite_border_rounded,
+        label: 'Aldığım Beğeniler',
+        value:
+            '${detail.likesReceived > 0 ? detail.likesReceived : stats.likes}',
+      ),
+      (
+        icon: Icons.mode_comment_outlined,
+        label: 'Aldığım Yorumlar',
+        value: '${detail.commentsCount}',
+      ),
+      (
+        icon: Icons.videocam_rounded,
+        label: 'Canlı Yayınlarım',
+        value:
+            '${detail.streamsHosted > 0 ? detail.streamsHosted : stats.liveStreams}',
+      ),
+      (
+        icon: Icons.visibility_outlined,
+        label: 'Profil Ziyaretleri',
+        value:
+            '${detail.profileViews > 0 ? detail.profileViews : stats.profileViews}',
       ),
     ];
 

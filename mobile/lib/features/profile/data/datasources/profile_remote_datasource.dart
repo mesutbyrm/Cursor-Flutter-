@@ -208,8 +208,14 @@ class ProfileRemoteDataSource {
     return const ProfileUserStatisticsEntity();
   }
 
+  /// Günlük giriş serisi. Seri yalnızca `POST /api/daily-login` ile artar;
+  /// uygulama bunu hiç çağırmadığı için mobil kullanıcıda seri hep 0 kalıyordu.
+  /// Günde bir kez (sunucu aynı gün tekrarı reddeder) giriş kaydedilir.
   Future<int> fetchDailyStreak() async {
-    for (final path in [ApiEndpoints.userXp, ApiEndpoints.dailyMissions]) {
+    try {
+      await _dio.safePost<dynamic>(ApiEndpoints.dailyLogin);
+    } catch (_) {}
+    for (final path in [ApiEndpoints.dailyLogin, ApiEndpoints.userXp]) {
       try {
         final res = await _dio.safeGet<dynamic>(path);
         final body = res.data;

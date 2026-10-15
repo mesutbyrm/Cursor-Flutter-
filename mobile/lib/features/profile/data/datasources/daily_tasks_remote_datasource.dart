@@ -71,9 +71,10 @@ class DailyTasksRemoteDataSource {
   }
 
   Future<bool> claimDailyLogin() async {
+    // Önce giriş serisi (`/api/daily-login`); oyun ödülü ayrı bir tablodur.
     for (final path in [
-      ApiEndpoints.gamesDailyReward,
       ApiEndpoints.dailyLogin,
+      ApiEndpoints.gamesDailyReward,
     ]) {
       try {
         await _dio.safePost<dynamic>(path);
@@ -84,14 +85,37 @@ class DailyTasksRemoteDataSource {
   }
 
   Future<UserLevelEntity> fetchUserLevel() async {
+    var base = const UserLevelEntity();
     try {
       final res = await _dio.safeGet<dynamic>(ApiEndpoints.me);
       final body = res.data;
       if (body is Map) {
-        return UserLevelEntity.fromJson(Map<String, dynamic>.from(body));
+        base = UserLevelEntity.fromJson(Map<String, dynamic>.from(body));
       }
     } catch (_) {}
-    return const UserLevelEntity();
+    // `/api/me` toplam XP döndürür; çubuk «350 / 100» gibi hep dolu kalıyordu.
+    // Seviye içi ilerleme `/api/user/xp` → xpInCurrentLevel / xpForNextLevel.
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.userXp);
+      final body = res.data;
+      if (body is Map) {
+        final m = Map<String, dynamic>.from(body);
+        final d = m['data'] is Map ? Map<String, dynamic>.from(m['data'] as Map) : m;
+        final level = (d['level'] as num?)?.toInt();
+        final inLevel = (d['xpInCurrentLevel'] as num?)?.toInt();
+        final next = (d['xpForNextLevel'] as num?)?.toInt();
+        if (level != null && inLevel != null) {
+          return UserLevelEntity(
+            level: level < 1 ? 1 : level,
+            xp: inLevel < 0 ? 0 : inLevel,
+            xpToNext: (next != null && next > 0) ? next : 100,
+            vipTier: base.vipTier,
+            isVip: base.isVip,
+          );
+        }
+      }
+    } catch (_) {}
+    return base;
   }
 
   List<Map<String, dynamic>> _extractList(dynamic body) {

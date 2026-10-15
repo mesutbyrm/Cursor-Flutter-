@@ -29,7 +29,8 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
     final wallet = walletAsync.valueOrNull ?? state.wallet;
     final xpTarget = level.xpToNext > 0 ? level.xpToNext : 100;
     final xpProgress = (level.xp / xpTarget).clamp(0.0, 1.0);
-    final levelLoading = extAsync.isLoading &&
+    final levelLoading =
+        extAsync.isLoading &&
         extAsync.valueOrNull == null &&
         level.xp <= 0 &&
         level.level <= 1;
@@ -52,49 +53,57 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
             children: [
               Expanded(
                 flex: 2,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.shield_rounded,
-                          color: ProfilePremiumTheme.neonPurple,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Seviye ${level.level}',
-                          style: TextStyle(
-                            color: ProfilePremiumTheme.textOf(context),
-                            fontWeight: FontWeight.w900,
-                            fontSize: 14,
+                // Seviye → Görevler & ödüller (XP kazanma yolları).
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => context.push('/profile/growth'),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.shield_rounded,
+                            color: ProfilePremiumTheme.neonPurple,
+                            size: 18,
                           ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Seviye ${level.level}',
+                            style: TextStyle(
+                              color: ProfilePremiumTheme.textOf(context),
+                              fontWeight: FontWeight.w900,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(99),
+                        child: LinearProgressIndicator(
+                          value: levelLoading ? null : xpProgress,
+                          minHeight: 6,
+                          backgroundColor: ProfilePremiumTheme.insetOf(
+                            context,
+                            darkAlpha: 0.1,
+                          ),
+                          color: ProfilePremiumTheme.neonPurple,
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(99),
-                      child: LinearProgressIndicator(
-                        value: levelLoading ? null : xpProgress,
-                        minHeight: 6,
-                        backgroundColor: ProfilePremiumTheme.insetOf(context, darkAlpha: 0.1),
-                        color: ProfilePremiumTheme.neonPurple,
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      levelLoading
-                          ? '…'
-                          : '${profileFormatCount(level.xp)} / ${profileFormatCount(xpTarget)} XP',
-                      style: TextStyle(
-                        color: ProfilePremiumTheme.textMutedOf(context),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
+                      const SizedBox(height: 6),
+                      Text(
+                        levelLoading
+                            ? '…'
+                            : '${profileFormatCount(level.xp)} / ${profileFormatCount(xpTarget)} XP',
+                        style: TextStyle(
+                          color: ProfilePremiumTheme.textMutedOf(context),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -131,6 +140,16 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
                         label: 'Beğeni',
                         value: profileFormatCount(state.likes),
                         loading: levelLoading,
+                        onTap: () => _showInfo(
+                          context,
+                          icon: Icons.favorite_rounded,
+                          color: const Color(0xFFFF4D9D),
+                          title: '${profileFormatCount(state.likes)} beğeni',
+                          body:
+                              'Gönderilerinin aldığı toplam beğeni. Daha çok beğeni için paylaşım yap ve hikâye ekle.',
+                          action: 'Paylaşım yap',
+                          onAction: () => context.go('/social'),
+                        ),
                       ),
                     ),
                     Expanded(
@@ -140,6 +159,18 @@ class ProfileHubCurrencyCard extends ConsumerWidget {
                         label: 'Günlük Seri',
                         value: profileFormatCount(ext.dailyStreak),
                         loading: levelLoading,
+                        onTap: () => _showInfo(
+                          context,
+                          icon: Icons.local_fire_department_rounded,
+                          color: const Color(0xFFFF8A3D),
+                          title: ext.dailyStreak > 0
+                              ? '${ext.dailyStreak} gündür üst üste girdin 🔥'
+                              : 'Günlük serini başlat 🔥',
+                          body:
+                              'Her gün uygulamaya girdiğinde serin 1 artar ve XP/jeton ödülü kazanırsın. Bir gün girmezsen seri sıfırlanır.',
+                          action: 'Görevler & ödüller',
+                          onAction: () => context.push('/profile/growth'),
+                        ),
                       ),
                     ),
                   ],
@@ -164,8 +195,10 @@ class _MembershipSummaryRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ui = ref.watch(membershipControllerProvider);
     final catalogTier = catalogTierForMembership(info, ui.tiers);
-    final expiresAt =
-        ref.watch(walletBalancesProvider).valueOrNull?.membershipExpiresAt;
+    final expiresAt = ref
+        .watch(walletBalancesProvider)
+        .valueOrNull
+        ?.membershipExpiresAt;
     final title = buildMembershipHubSectionTitle(
       info: info,
       expiresAt: expiresAt,
@@ -179,11 +212,15 @@ class _MembershipSummaryRow extends ConsumerWidget {
       expiresAt: expiresAt,
     );
 
-    final leadingAccent = resolveMembershipHubSummaryRowLeadingAccent(info: info);
+    final leadingAccent = resolveMembershipHubSummaryRowLeadingAccent(
+      info: info,
+    );
     final leadingColor = switch (leadingAccent) {
-      MembershipHubSummaryRowLeadingAccent.paid => ProfilePremiumTheme.neonPurple,
+      MembershipHubSummaryRowLeadingAccent.paid =>
+        ProfilePremiumTheme.neonPurple,
       MembershipHubSummaryRowLeadingAccent.expired => Colors.orangeAccent,
-      MembershipHubSummaryRowLeadingAccent.standard => ProfilePremiumTheme.textMutedOf(context),
+      MembershipHubSummaryRowLeadingAccent.standard =>
+        ProfilePremiumTheme.textMutedOf(context),
     };
     final leadingIcon = switch (leadingAccent) {
       MembershipHubSummaryRowLeadingAccent.paid =>
@@ -202,11 +239,7 @@ class _MembershipSummaryRow extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
             children: [
-              Icon(
-                leadingIcon,
-                color: leadingColor,
-                size: 18,
-              ),
+              Icon(leadingIcon, color: leadingColor, size: 18),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -232,10 +265,7 @@ class _MembershipSummaryRow extends ConsumerWidget {
                 ),
               ),
               Text(
-                buildMembershipHubActionLabel(
-                  info: info,
-                  freeLabel: 'Yükselt',
-                ),
+                buildMembershipHubActionLabel(info: info, freeLabel: 'Yükselt'),
                 style: TextStyle(
                   color: ProfilePremiumTheme.neonPurple.withValues(alpha: 0.95),
                   fontWeight: FontWeight.w800,
@@ -255,6 +285,48 @@ class _MembershipSummaryRow extends ConsumerWidget {
   }
 }
 
+void _showInfo(
+  BuildContext context, {
+  required IconData icon,
+  required Color color,
+  required String title,
+  required String body,
+  required String action,
+  required VoidCallback onAction,
+}) {
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (ctx) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 40),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 8),
+            Text(body, textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                onAction();
+              },
+              child: Text(action),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
 class _CurrencyCell extends StatelessWidget {
   const _CurrencyCell({
     required this.icon,
@@ -264,6 +336,7 @@ class _CurrencyCell extends StatelessWidget {
     this.showPlus = false,
     this.onPlus,
     this.loading = false,
+    this.onTap,
   });
 
   final IconData icon;
@@ -273,9 +346,20 @@ class _CurrencyCell extends StatelessWidget {
   final bool showPlus;
   final VoidCallback? onPlus;
   final bool loading;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    final cell = _cell(context);
+    if (onTap == null) return cell;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: cell,
+    );
+  }
+
+  Widget _cell(BuildContext context) {
     return Column(
       children: [
         Icon(icon, color: color, size: 20),

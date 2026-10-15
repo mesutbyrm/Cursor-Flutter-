@@ -104,10 +104,20 @@ class ProfileUserStatisticsEntity {
     this.likedPosts = 0,
     this.commentsCount = 0,
     this.sharesCount = 0,
+    this.likesReceived = 0,
+    this.profileViews = 0,
+    this.streamsHosted = 0,
   });
 
   factory ProfileUserStatisticsEntity.fromJson(Map<String, dynamic> json) {
     final m = json['data'] is Map ? asJsonMap(json['data']) : json;
+    // `/api/user/statistics` iç içe döner: fortune.total, social.*, streams.*
+    // (önceden düz anahtar arandığı için tüm satırlar hep 0 görünüyordu).
+    Map<String, dynamic> sub(String k) =>
+        m[k] is Map ? asJsonMap(m[k]) : const <String, dynamic>{};
+    final fortune = sub('fortune');
+    final social = sub('social');
+    final streams = sub('streams');
     final watchRaw = pick(m, [
       'liveWatchMinutes',
       'liveWatchHours',
@@ -122,11 +132,12 @@ class ProfileUserStatisticsEntity {
 
     return ProfileUserStatisticsEntity(
       fortunesReceived: asInt(pick(m, [
-        'fortunesReceived',
-        'fortuneCount',
-        'fortunesCount',
-        'readingsCount',
-      ])),
+            'fortunesReceived',
+            'fortuneCount',
+            'fortunesCount',
+            'readingsCount',
+          ]) ??
+          fortune['total']),
       fortuneComments: asInt(pick(m, [
         'fortuneComments',
         'fortuneCommentsCount',
@@ -139,15 +150,20 @@ class ProfileUserStatisticsEntity {
         'postsLiked',
       ])),
       commentsCount: asInt(pick(m, [
-        'commentsCount',
-        'comments',
-        'totalComments',
-      ])),
+            'commentsCount',
+            'comments',
+            'totalComments',
+          ]) ??
+          social['commentsReceived']),
       sharesCount: asInt(pick(m, [
-        'sharesCount',
-        'postsShared',
-        'shareCount',
-      ])),
+            'sharesCount',
+            'postsShared',
+            'shareCount',
+          ]) ??
+          social['totalPosts']),
+      likesReceived: asInt(social['likesReceived']),
+      profileViews: asInt(social['profileViews']),
+      streamsHosted: asInt(streams['totalHosted']),
     );
   }
 
@@ -157,6 +173,9 @@ class ProfileUserStatisticsEntity {
   final int likedPosts;
   final int commentsCount;
   final int sharesCount;
+  final int likesReceived;
+  final int profileViews;
+  final int streamsHosted;
 
   String get liveWatchLabel {
     if (liveWatchMinutes <= 0) return '0 dk';

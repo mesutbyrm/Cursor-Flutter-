@@ -228,7 +228,8 @@ final profileStatsProvider = FutureProvider<ProfileStatsEntity>((ref) async {
   ref.keepAlive();
   var stats = await LoadingTimeout.run(
     ref.watch(profileRepositoryProvider).myStats(),
-    timeout: const Duration(seconds: 3),
+    // 3 sn yavaş bağlantıda zaman aşımına düşüp beğeni/sayıları 0 gösteriyordu.
+    timeout: const Duration(seconds: 10),
     message: 'Profil istatistikleri yüklenemedi',
   );
   if (stats.giftsSentCount == 0 && stats.giftsSentCoins == 0) {
