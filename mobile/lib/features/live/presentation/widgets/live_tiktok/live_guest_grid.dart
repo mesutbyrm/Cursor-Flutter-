@@ -26,6 +26,7 @@ class LiveGuestGrid extends ConsumerWidget {
     this.remoteUserId,
     this.onInviteSlot,
     this.onGuestAction,
+    this.onSlotTap,
     this.hostJetonEarned = 0,
   });
 
@@ -38,6 +39,9 @@ class LiveGuestGrid extends ConsumerWidget {
   final String? remoteUserId;
   final void Function(int slotIndex)? onInviteSlot;
   final void Function(int slotIndex, String action)? onGuestAction;
+
+  /// Dolu kutuya dokunma → misafir menüsü (hediye, ses/görüntü, aşağı al).
+  final void Function(LiveGuestSlot slot)? onSlotTap;
   final int hostJetonEarned;
 
   @override
@@ -54,7 +58,12 @@ class LiveGuestGrid extends ConsumerWidget {
     Widget cell(int i) {
       final slot = i < slots.length ? slots[i] : LiveGuestSlot(index: i);
       final remoteId = slot.rtcUserId ?? slot.userId ?? (i == 1 ? remoteUserId : null);
-      return _SlotCell(
+      final tap = onSlotTap;
+      final occupied = !slot.isEmpty || slot.index == 0;
+      return GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: tap != null && occupied ? () => tap(slot) : null,
+        child: _SlotCell(
         slot: slot,
         isHost: isHost,
         trtc: trtc,
@@ -68,6 +77,7 @@ class LiveGuestGrid extends ConsumerWidget {
         onAction: onGuestAction == null
             ? null
             : (action) => onGuestAction!(i, action),
+        ),
       );
     }
 

@@ -333,7 +333,9 @@ class TrtcRoomManager {
       onRemoteUserLeaveRoom: (userId, _) {
         _trtcLog('remote_leave', {'userId': userId});
         _trackRemoteUser(userId, joined: false);
-        stopRemoteView(userId);
+        // Görünüm bağlantısı korunur: misafir/yayıncı yeniden girince aynı
+        // (hâlâ ekrandaki) kutuda görüntü otomatik geri gelir — siyah kalmaz.
+        _stopRemoteNative(userId);
         final videoMap = Map<String, bool>.from(remoteVideoByUser.value);
         videoMap.remove(userId);
         remoteVideoByUser.value = videoMap;
@@ -382,7 +384,7 @@ class TrtcRoomManager {
           // 1:1 görüşmede view'i sökmek donma + sahte rejoin yaratır.
           remoteVideoAvailable.value = false;
           if (!_twoWayVideo) {
-            stopRemoteView(userId);
+            _stopRemoteNative(userId);
             _clearRemoteAnchor();
           }
         }
@@ -510,6 +512,7 @@ class TrtcRoomManager {
     } else {
       _device?.setAudioRoute(TXAudioRoute.speakerPhone);
     }
+    _rebindViewsAfterEnter(publishVideo: publishAsAnchor && !audioOnly);
   }
 
   void _setRemoteVideoState(String userId, bool available) {
@@ -695,7 +698,37 @@ class TrtcRoomManager {
     }
   }
 
+  /// Ekrandaki yerel önizleme görünümü — oda geçişinden (misafir yükseltme,
+  /// PK, yeniden bağlanma) sonra kamera bu görünüme yeniden bağlanır.
+  int? _localViewId;
+
+  void detachLocalView(int viewId) {
+    if (_localViewId == viewId) _localViewId = null;
+  }
+
+  void _stopRemoteNative(String userId) {
+    _cloud?.stopRemoteView(userId, TRTCVideoStreamType.big);
+    _trtcLog('remote_video', {'userId': userId, 'enabled': false});
+  }
+
+  /// enterRoom sonrası: ekranda kalan görünümleri yeniden bağla. Önceden
+  /// oda dışındayken oluşan / oda geçişinde silinen bağlantılar siyah kalıyordu.
+  void _rebindViewsAfterEnter({required bool publishVideo}) {
+    if (_audioOnly || _cloud == null) return;
+    final local = _localViewId;
+    if (publishVideo && local != null) {
+      _cloud!.startLocalPreview(true, local);
+      _cameraOn = true;
+      _trtcLog('local_video', {'viewId': local, 'enabled': true, 'rebind': true});
+    }
+    _remoteViewBindings.forEach((userId, viewId) {
+      if (userId == _localUserId) return;
+      _cloud!.startRemoteView(userId, TRTCVideoStreamType.big, viewId);
+    });
+  }
+
   void startLocalPreview(int viewId) {
+    _localViewId = viewId;
     if (_audioOnly) return;
     if (_cloud == null) return;
     if (!_inRoom && !_previewOnly) return;
@@ -714,8 +747,9 @@ class TrtcRoomManager {
 
   void startRemoteView(String userId, int viewId) {
     if (_audioOnly) return;
-    if (_cloud == null || !_inRoom) return;
+    // Bağlantı oda dışındayken de saklanır; giriş sonrası yeniden bağlanır.
     _remoteViewBindings[userId] = viewId;
+    if (_cloud == null || !_inRoom) return;
     _cloud!.startRemoteView(userId, TRTCVideoStreamType.big, viewId);
     _unmuteRemoteAudio(userId);
     _trtcLog('remote_video', {'userId': userId, 'viewId': viewId, 'enabled': true});
@@ -950,7 +984,9 @@ class TrtcRoomManager {
     remoteVideoAvailable.value = false;
     _expectedAnchorUserId = null;
     _clearRemoteAnchor();
-    _remoteViewBindings.clear();
+    // Görünüm bağlantıları (_remoteViewBindings / _localViewId) bilinçli olarak
+    // korunur: ekrandaki kutular oda geçişinden sonra yeniden bağlanır; kutu
+    // kapanınca kendi dispose'u bağlantıyı siler.
     _remoteUserIds.clear();
     _locallyMutedRemote.clear();
     remoteUserIdsNotifier.value = const [];
@@ -1111,15 +1147,32 @@ class TrtcRoomManager {
 }
 
 /// Yerel kamera önizlemesi.
-class TrtcLocalVideoView extends StatelessWidget {
+class TrtcLocalVideoView extends StatefulWidget {
   const TrtcLocalVideoView({super.key, required this.manager});
 
   final TrtcRoomManager manager;
 
   @override
+  State<TrtcLocalVideoView> createState() => _TrtcLocalVideoViewState();
+}
+
+class _TrtcLocalVideoViewState extends State<TrtcLocalVideoView> {
+  int? _viewId;
+
+  @override
+  void dispose() {
+    final id = _viewId;
+    if (id != null) widget.manager.detachLocalView(id);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return TRTCCloudVideoView(
-      onViewCreated: (viewId) => manager.startLocalPreview(viewId),
+      onViewCreated: (viewId) {
+        _viewId = viewId;
+        widget.manager.startLocalPreview(viewId);
+      },
     );
   }
 }

@@ -197,7 +197,7 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
         roomManager: _trtc,
       );
       if (_trtc.inRoom) {
-        await _trtcCoordinator!.leave();
+        await _trtcCoordinator!.leave(notifyServer: false);
       }
       await _trtcCoordinator!.join(
         roomId: trtcRoom,

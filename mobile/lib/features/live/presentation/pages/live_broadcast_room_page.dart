@@ -66,6 +66,7 @@ import '../providers/live_namespace_providers.dart';
 import '../../domain/utils/live_fortune_type_slug.dart';
 import '../../domain/utils/co_guest_camera_signal_util.dart';
 import '../../domain/utils/live_fortune_display_label.dart';
+import '../../domain/entities/live_guest_slot.dart';
 import '../gifts/live_gift_controller.dart';
 import '../gifts/providers/live_gift_providers.dart';
 import '../providers/live_host_rank_provider.dart';
@@ -346,7 +347,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     ref.read(liveGuestGridProvider.notifier)
       ..setLayout(layout)
       ..setHost(
-        userId: user.id,
+        // Yayıncı kutusu (slot 0) izleyici/misafir cihazında YAYINCIYI gösterir;
+        // önceden herkeste «kendisi» sayılıp misafir yayıncıyı göremiyordu.
+        userId: widget.session.isHost ? user.id : widget.session.hostUserId,
         name: widget.session.streamerName ?? user.display,
       );
     _remoteUidsListener ??= _onRemoteUidsChanged;
@@ -572,7 +575,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         if (anchor.pkSessionId != null) 'pkSessionId': anchor.pkSessionId,
       });
       _trtcCoordinator!.setReconnectSuspended(true);
-      await _trtcCoordinator!.leave();
+      await _trtcCoordinator!.leave(notifyServer: false);
       await _trtcCoordinator!.join(
         roomId: anchor.trtcRoomId,
         roomType: 'stream',
@@ -612,7 +615,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     for (var attempt = 0; attempt < 2; attempt++) {
       try {
         _trtcCoordinator!.setReconnectSuspended(true);
-        await _trtcCoordinator!.leave();
+        await _trtcCoordinator!.leave(notifyServer: false);
         await _trtcCoordinator!.join(
           roomId: streamId,
           roomType: 'stream',
@@ -646,9 +649,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       return;
     }
     if (_coHostUpgraded) {
-      // Onaylı misafir — kamera açık; mikrofon kullanıcı açana kadar kapalı.
+      // Onaylı misafir — kamera ve mikrofon açık (yayıncı kilitlediyse
+      // _applyHostMediaLocks yine kapatır).
       _trtc.setCameraEnabled(true);
-      _trtc.setMicEnabled(false);
+      _trtc.setMicEnabled(true);
       return;
     }
     _trtc.setMicEnabled(false);
@@ -1042,6 +1046,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     _streamEndUiHandled = true;
     if (_leaving) return;
     _leaving = true;
+    // Zaman damgası olmadan `_leaving` takılırsa çıkış (X / geri) hiç çalışmıyordu.
+    _leavingSince = DateTime.now();
     final summary = _buildSessionSummary();
     await _leaveLiveSession(endReason: endReason);
     markLiveStreamEnded(ref, streamId);
@@ -1903,7 +1909,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     try {
       _coHostUpgraded = true;
       _joinRequestPending = false;
-      await _trtcCoordinator?.leave();
+      await _trtcCoordinator?.leave(notifyServer: false);
       await _trtcCoordinator!.join(
         roomId: streamId,
         roomType: 'stream',
@@ -1921,13 +1927,15 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
             'userId': user.id,
             'displayName': user.display,
             'userName': user.display,
+            // Durumsuz kayıt onaylı filtresinden düşüp kutuyu «Boş» yapıyordu.
+            'status': 'approved',
           },
         ],
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Misafir yayınına geçildi — mikrofonu açmak için alttaki düğmeyi kullanın'),
+            content: Text('Misafir yayınına geçildi — kameran ve mikrofonun açık'),
           ),
         );
       }
@@ -1957,7 +1965,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     _coHostUpgraded = false;
     _trtcCoordinator?.setReconnectSuspended(true);
     try {
-      await _trtcCoordinator?.leave();
+      await _trtcCoordinator?.leave(notifyServer: false);
       await _trtcCoordinator!.join(
         roomId: streamId,
         roomType: 'stream',
@@ -2348,6 +2356,147 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
             ),
           );
         }
+    }
+  }
+
+  /// Kutudaki kişiye dokunma: herkes hediye gönderebilir / profile bakabilir;
+  /// yayıncı misafiri aşağı alır, sesini ve görüntüsünü kapatıp açar.
+  Future<void> _onGuestTileTap(LiveGuestSlot slot) async {
+    final me = ref.read(authControllerProvider).valueOrNull?.id;
+    final isHostSlot = slot.isHost || slot.index == 0;
+    final uid = (slot.userId ?? slot.rtcUserId ??
+            (isHostSlot ? widget.session.hostUserId : null))
+        ?.trim();
+    if (uid == null || uid.isEmpty) return;
+    final isSelf = me != null && uid == me;
+    final name = (slot.displayName?.trim().isNotEmpty == true
+            ? slot.displayName!.trim()
+            : null) ??
+        (isHostSlot ? widget.session.streamerName : null) ??
+        'Konuk';
+    final hostCanManage = widget.session.isHost && !isHostSlot && !isSelf;
+    if (isSelf) {
+      if (!widget.session.isHost && _coHostUpgraded) {
+        final leave = await showModalBottomSheet<bool>(
+          context: context,
+          backgroundColor: const Color(0xFF15121F),
+          showDragHandle: true,
+          builder: (ctx) => SafeArea(
+            child: ListTile(
+              leading: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+              title: const Text(
+                'Misafirlikten ayrıl',
+                style: TextStyle(color: Colors.white, fontSize: 16),
+              ),
+              onTap: () => Navigator.of(ctx).pop(true),
+            ),
+          ),
+        );
+        if (leave == true && mounted) await _leaveAsGuest();
+      }
+      return;
+    }
+
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: const Color(0xFF15121F),
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (ctx) {
+        Widget item(IconData icon, String label, String value,
+            {Color color = Colors.white}) {
+          return ListTile(
+            leading: Icon(icon, color: color),
+            title: Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            onTap: () => Navigator.of(ctx).pop(value),
+          );
+        }
+
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                child: Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              item(Icons.card_giftcard_rounded, 'Hediye gönder', 'gift',
+                  color: const Color(0xFFFFC94D)),
+              item(Icons.person_rounded, 'Profili gör', 'profile'),
+              if (hostCanManage) ...[
+                item(
+                  slot.mutedByHost ? Icons.mic_rounded : Icons.mic_off_rounded,
+                  slot.mutedByHost ? 'Sesini aç' : 'Sesini kapat',
+                  'mute',
+                ),
+                item(
+                  slot.cameraOn
+                      ? Icons.videocam_off_rounded
+                      : Icons.videocam_rounded,
+                  slot.cameraOn ? 'Görüntüsünü kapat' : 'Görüntüsünü aç',
+                  'cam',
+                ),
+                item(Icons.push_pin_rounded, 'Sabitle / sabitlemeyi kaldır',
+                    'pin'),
+                item(Icons.arrow_downward_rounded, 'Aşağı al (misafirlikten çıkar)',
+                    'kick',
+                    color: Colors.redAccent),
+              ],
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+    if (!mounted || action == null) return;
+    switch (action) {
+      case 'gift':
+        // Yayıncının kendi kutusu → normal panel (alıcı yayıncı).
+        final gifts = ref.read(liveGiftControllerProvider);
+        if (isHostSlot) {
+          gifts.setPanelOpen(true);
+        } else {
+          gifts.openPanelFor(userId: uid, name: name);
+        }
+      case 'profile':
+        context.push('/user/$uid');
+      case 'kick':
+        final ok = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Misafiri aşağı al'),
+            content: Text('$name yayından aşağı alınsın mı?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Vazgeç'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Aşağı al'),
+              ),
+            ],
+          ),
+        );
+        if (ok == true && mounted) _onGuestAction(slot.index, 'kick');
+      default:
+        _onGuestAction(slot.index, action);
     }
   }
 
@@ -3334,6 +3483,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                   onEndActivePk: _endActivePk,
                   onOpenControlCenter: _openControlCenter,
                   onGuestAction: _onGuestAction,
+                  onGuestTap: _onGuestTileTap,
                   chatVisibleForPk: _chatVisible,
                   pkOnBack: () => unawaited(_exitBroadcast(context)),
                   pkViewerCount: roomState.viewerCount,
@@ -3353,6 +3503,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                   onEndActivePk: _endActivePk,
                   onOpenControlCenter: _openControlCenter,
                   onGuestAction: _onGuestAction,
+                  onGuestTap: _onGuestTileTap,
                   chatVisibleForPk: _chatVisible,
                   pkOnBack: () => unawaited(_exitBroadcast(context)),
                   pkViewerCount: roomState.viewerCount,

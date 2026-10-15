@@ -325,20 +325,21 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
     // kalıyordu (ses geliyor, yayın kapatılamıyor).
     final endedAt = merged['endedAt']?.toString().trim() ?? '';
     final winnerId = merged['winnerId']?.toString().trim() ?? '';
+    final endReason = (merged['endReason'] ?? merged['endedReason'] ?? '')
+        .toString()
+        .trim();
+    // Sunucu bitiş kaydı (endedAt / kazanan / bitiş nedeni) varsa erken bitiş
+    // (rakip «PK bitir», yayın kapandı) kabul edilir; önceden süre dolmadıysa
+    // durum «active»e geri çevrilip PK ekranı ve yayın kapatma kilitleniyordu.
+    if (endedAt.isNotEmpty || winnerId.isNotEmpty || endReason.isNotEmpty) {
+      return;
+    }
     final endsAt =
         DateTime.tryParse(merged['endsAt']?.toString() ?? '')?.toUtc();
     final clock = livePkNow();
     if (endsAt != null && clock.isBefore(endsAt)) {
-      if (endedAt.isNotEmpty && winnerId.isEmpty) {
-        merged.remove('endedAt');
-      }
-      if (winnerId.isNotEmpty && !livePkBattleFinished(status: incStatus, battle: merged)) {
-        merged.remove('winnerId');
-      }
       merged['status'] = previous['status'];
-      return;
     }
-    if (endedAt.isNotEmpty || winnerId.isNotEmpty) return;
   }
 
   void _ensurePkEndsAt(Map<String, dynamic> battle) {

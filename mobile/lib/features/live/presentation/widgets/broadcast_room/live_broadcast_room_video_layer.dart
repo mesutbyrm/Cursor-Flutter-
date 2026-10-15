@@ -1,4 +1,5 @@
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
+import '../../../domain/entities/live_guest_slot.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -30,6 +31,7 @@ class LiveBroadcastRoomVideoLayer extends ConsumerWidget {
     required this.onEndActivePk,
     required this.onOpenControlCenter,
     required this.onGuestAction,
+    this.onGuestTap,
     this.chatVisibleForPk = true,
     this.pkOnBack,
     this.pkViewerCount = 0,
@@ -46,6 +48,7 @@ class LiveBroadcastRoomVideoLayer extends ConsumerWidget {
   final Future<void> Function(String streamId) onEndActivePk;
   final VoidCallback onOpenControlCenter;
   final void Function(int slotIndex, String action) onGuestAction;
+  final void Function(LiveGuestSlot slot)? onGuestTap;
   final bool chatVisibleForPk;
   final VoidCallback? pkOnBack;
   final int pkViewerCount;
@@ -225,6 +228,7 @@ class LiveBroadcastRoomVideoLayer extends ConsumerWidget {
           hostJetonEarned: hostJeton,
           onInviteSlot: s.isHost ? (_) => onOpenControlCenter() : null,
           onGuestAction: s.isHost ? onGuestAction : null,
+          onSlotTap: onGuestTap,
         );
       },
     );

@@ -44,6 +44,10 @@ class LiveGiftController extends ChangeNotifier {
   bool panelOpen = false;
   bool sending = false;
 
+  /// Panel belirli bir kişi (ör. misafir) için açıldıysa alıcı; `null` → yayıncı.
+  String? recipientUserId;
+  String? recipientName;
+
   void attach({
     required String streamId,
     required String receiverName,
@@ -67,7 +71,21 @@ class LiveGiftController extends ChangeNotifier {
   }
 
   void setPanelOpen(bool open) {
+    // Normal hediye düğmesi → alıcı yayıncı. Kapatmada alıcı korunur (gönderim
+    // paneli kapattıktan sonra yapılır).
+    if (open) {
+      recipientUserId = null;
+      recipientName = null;
+    }
     panelOpen = open;
+    notifyListeners();
+  }
+
+  /// Hediye panelini belirli bir alıcı (misafir) için açar.
+  void openPanelFor({required String userId, String? name}) {
+    recipientUserId = userId.trim().isEmpty ? null : userId.trim();
+    recipientName = name;
+    panelOpen = true;
     notifyListeners();
   }
 
@@ -85,6 +103,8 @@ class LiveGiftController extends ChangeNotifier {
   }) async {
     final streamId = _streamId;
     if (streamId == null || streamId.isEmpty || sending) return null;
+    final targetId = toUserId ?? recipientUserId;
+    final targetName = toUserId == null ? recipientName : null;
     panelOpen = false;
     sending = true;
     notifyListeners();
@@ -95,12 +115,12 @@ class LiveGiftController extends ChangeNotifier {
         streamId: streamId,
         giftTypeId: gift.id,
         senderName: senderName,
-        receiverName: _receiverName ?? 'Yayıncı',
+        receiverName: targetName ?? _receiverName ?? 'Yayıncı',
         giftName: name,
         unitPrice: gift.price,
         quantity: quantity,
         senderId: senderId,
-        toUserId: toUserId,
+        toUserId: targetId,
         pkMatchId: pkMatchId,
         isLucky: gift.isLucky,
         staffFinanceMode: staffFinanceMode,

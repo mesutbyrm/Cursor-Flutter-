@@ -158,6 +158,9 @@ class LiveGuestGridNotifier extends Notifier<LiveGuestGridState> {
         displayName: name,
         rtcUserId: _guestRtcUserId(g),
         jetonEarned: parseGuestJeton(g),
+        // Yayıncının ses/görüntü kilidi yenilemede sıfırlanmasın.
+        mutedByHost: g['mutedByHost'] == true,
+        cameraOn: !(g['videoOffByHost'] == true || g['isVideoOff'] == true),
         avatarUrl: (g['avatarUrl'] ?? g['userAvatar'] ?? g['avatar'] ?? g['image'])
             ?.toString(),
       );

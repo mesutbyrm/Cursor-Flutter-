@@ -114,6 +114,19 @@ class _PremiumGiftPanelState extends ConsumerState<PremiumGiftPanel> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
+                      if ((widget.controller.recipientName ?? '').isNotEmpty)
+                        Expanded(
+                          child: Text(
+                            '🎁 ${widget.controller.recipientName} için hediye',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
                       _CoinChip(coins: coins),
                       IconButton(
                         onPressed: widget.onClose,

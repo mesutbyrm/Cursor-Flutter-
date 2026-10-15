@@ -82,6 +82,9 @@ class TrtcLiveRoomCoordinator {
     bool useCompoundJoin = true,
     bool? publishLocal,
   }) async {
+    // leave()+join() oda geçişinde (PK, misafir yükseltme) heartbeat ve yeniden
+    // bağlanma kalıcı olarak kapalı kalıyordu.
+    if (!_connectionLostController.isClosed) _disposed = false;
     _roomId = roomId.trim();
     _roomType = roomType;
     _userId = userId;
@@ -211,7 +214,10 @@ class TrtcLiveRoomCoordinator {
     }
   }
 
-  Future<void> leave() async {
+  /// [notifyServer] `false` → yalnızca RTC odasından çıkılır (PK / misafir
+  /// oda geçişi). Sunucuya `leave-room` gönderilmez; aksi halde yayıncı kendi
+  /// yayınından «çıkmış» sayılıp yayın sunucuda bitiriliyordu.
+  Future<void> leave({bool notifyServer = true}) async {
     _disposed = true;
     _heartbeat?.cancel();
     _heartbeat = null;
@@ -222,7 +228,7 @@ class TrtcLiveRoomCoordinator {
     if (roomId != null) {
       LiveEventLog.leave(streamId: roomId, isHost: _isHost);
     }
-    if (roomId != null && roomType != null) {
+    if (notifyServer && roomId != null && roomType != null) {
       try {
         await _liveRoom.leaveRoom(roomId: roomId, roomType: roomType);
       } catch (err, st) {
