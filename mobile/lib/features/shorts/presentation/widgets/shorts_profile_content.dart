@@ -13,6 +13,7 @@ import '../../domain/repositories/shorts_repository.dart';
 import '../providers/shorts_providers.dart';
 import '../utils/shorts_count_format.dart';
 import '../../../profile/presentation/premium_2026/profile_theme.dart';
+import 'package:canlifal_social/core/providers/auth_selectors.dart';
 
 /// Doğrulanmış hesap rozeti — yalnızca `isVerified == true` iken gösterilir.
 class ShortsVerifiedBadge extends StatelessWidget {
@@ -54,7 +55,11 @@ class ShortsProfileStatsRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(shortVideoProfileStatsProvider(userId));
-    final hubStats = ref.watch(profileStatsProvider).valueOrNull;
+    // Oturum sahibinin (kendi) istatistikleri yalnız KENDİ profilinde yedek
+    // olarak kullanılır — başkasının profilinde kendi sayılarınız görünüyordu.
+    final myId = ref.watch(currentUserIdProvider);
+    final isSelf = myId != null && myId == userId;
+    final hubStats = isSelf ? ref.watch(profileStatsProvider).valueOrNull : null;
 
     int pick(int primary, int secondary, int tertiary) {
       if (primary > 0) return primary;

@@ -203,7 +203,7 @@ class UserProfilePage extends ConsumerWidget {
                       )
                     else
                       FilledButton.tonalIcon(
-                        onPressed: () => context.go('/profile'),
+                        onPressed: () => context.push('/profile/edit'),
                         style: FilledButton.styleFrom(
                           minimumSize: const Size.fromHeight(46),
                         ),

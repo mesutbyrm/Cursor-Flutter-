@@ -179,7 +179,7 @@ class ProfileAvatarService {
     try {
       return await _upload.uploadImageFile(
         file,
-        folder: 'avatars',
+        folder: 'avatar',
         isPublic: true,
       );
     } catch (_) {

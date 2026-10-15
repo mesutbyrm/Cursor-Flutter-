@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.794+850 (2026-10-15) — Sosyal, Fal & Tarot, Profil denetimi
+
+- **Fal & Tarot:** gerçek AI yorumu akıştan okunur (OpenAI delta biçimi); hata olursa sahte yorum gösterilmez, ücret iki kez düşmez, paylaşım iki kez yapılmaz
+- **Fal girişi:** rüya yorumu için rüya metni istenir; tarot, iskambil, evet/hayır, sarkaç, rün için isteğe bağlı soru; aşk uyumunda partner burcu seçilir
+- **Fal geçmişi:** başlıklar Türkçe, yorum metni ve soru görünür; profil kartı ilgili fala gider
+- **Sosyal:** bildirim/paylaşım linkleri doğru gönderiye açılır, misafir «Giriş yap» giriş ekranını açar, @etiket profile gider
+- **Gönderi menüsü:** Şikayet et ve Kullanıcıyı engelle eklendi; kendi yorumunu uzun basarak silme; yorum 500 karakter sınırı
+- **Video/konum:** gönderide video seçimi Shorts yüklemeye yönlendirir; konum açıklamaya eklenir
+- **Profil:** Kim Baktı listesi açılır; başka kullanıcının takipçi/takip/beğeni sayıları doğru; kendi istatistiklerin başka profilde görünmez
+- **Avatar yükleme:** profil klasörüne kaydedilir; «Profilimi düzenle» düzenleme sayfasını açar
+
 ## 1.0.793+849 (2026-10-15) — Eksik kontrolü
 
 - **GirLive selamı:** cihaz saati ileri olan telefonlarda «Hoş geldin» mesajı hemen kayboluyordu; süre sunucu saatine göre sayılır

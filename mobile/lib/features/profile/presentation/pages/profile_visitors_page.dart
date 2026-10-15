@@ -65,15 +65,26 @@ final profileVisitorsProvider =
   final data = res.data;
   List<dynamic> list;
   if (data is Map) {
-    list = (data['data'] as List?) ?? (data['visitors'] as List?) ?? [];
+    // Sunucu: `{success, data: {visitors: [...], total, hiddenCount}}` —
+    // önceden `data` Map iken List'e çevrilmeye çalışılıp sayfa çöküyordu.
+    final inner = data['data'];
+    if (inner is List) {
+      list = inner;
+    } else if (inner is Map && inner['visitors'] is List) {
+      list = inner['visitors'] as List;
+    } else if (data['visitors'] is List) {
+      list = data['visitors'] as List;
+    } else {
+      list = const [];
+    }
   } else if (data is List) {
     list = data;
   } else {
     list = const [];
   }
   return list
-      .whereType<Map<String, dynamic>>()
-      .map(ProfileVisitEntity.fromJson)
+      .whereType<Map>()
+      .map((e) => ProfileVisitEntity.fromJson(Map<String, dynamic>.from(e)))
       .toList();
 });
 

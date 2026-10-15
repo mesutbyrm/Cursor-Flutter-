@@ -129,6 +129,10 @@ class MobileUserProfileBundle {
         ? asJsonMap(json['relationship'])
         : <String, dynamic>{};
 
+    final followers =
+        _int(statsMap['followerCount']) ?? _int(statsMap['followers']) ?? 0;
+    final following =
+        _int(statsMap['followingCount']) ?? _int(statsMap['following']) ?? 0;
     return MobileUserProfileBundle(
       user: UserEntity(
         id: userMap['id']?.toString() ?? '',
@@ -138,18 +142,22 @@ class MobileUserProfileBundle {
         displayName: userMap['name']?.toString(),
         avatarUrl: _str(userMap, ['profileImageUrl', 'image', 'avatarUrl']),
         bio: userMap['bio']?.toString(),
-        followersCount: _int(statsMap['followerCount']) ?? 0,
-        followingCount: _int(statsMap['followingCount']) ?? 0,
+        followersCount: followers,
+        followingCount: following,
         isFollowing: rel['isFollowing'] == true,
-        isVerified: userMap['role']?.toString() == 'admin',
+        isVerified: const {'admin', 'yonetici', 'founder', 'kurucu'}
+            .contains((userMap['role'] ?? json['role'])?.toString()),
         coinBalance: _int(userMap['jetons']) ?? 0,
       ),
+      // Sunucu: stats {followers, following, videoCount, totalLikes}
+      // (+ yeni sürümde followerCount/followingCount/likeCount).
       stats: ProfileStatsEntity(
-        followers: _int(statsMap['followerCount']) ?? 0,
-        following: _int(statsMap['followingCount']) ?? 0,
-        likes: _int(statsMap['postCount']) ?? 0,
+        followers: followers,
+        following: following,
+        likes: _int(statsMap['likeCount']) ??
+            _int(statsMap['totalLikes']) ??
+            0,
         giftsReceivedCount: _int(statsMap['totalGiftsReceived']) ?? 0,
-        giftsReceivedCoins: _int(statsMap['totalGiftsSent']) ?? 0,
       ),
       extended: ProfileExtendedEntity.fromJson({
         ...userMap,
@@ -157,7 +165,8 @@ class MobileUserProfileBundle {
       }),
       isFollowing: rel['isFollowing'] == true,
       isFollowedBy: rel['isFollowedBy'] == true,
-      isOwnProfile: json['isOwnProfile'] == true,
+      isOwnProfile:
+          json['isOwnProfile'] == true || rel['isOwnProfile'] == true,
       raw: json,
     );
   }
