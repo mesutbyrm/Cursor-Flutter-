@@ -34,14 +34,29 @@ class _AdminGirLiveBotPageState extends ConsumerState<AdminGirLiveBotPage> {
   @override
   void dispose() {
     _intervalCtrl.dispose();
+    _wordsCtrl.dispose();
+    _whitelistCtrl.dispose();
     for (final c in _templateCtrls.values) {
       c.dispose();
     }
     super.dispose();
   }
 
+  final _wordsCtrl = TextEditingController();
+  final _whitelistCtrl = TextEditingController();
+  String _newWordSeverity = 'MEDIUM';
+
+  static const _severityLabels = <String, String>{
+    'LOW': 'Uyar',
+    'MEDIUM': 'Sustur',
+    'HIGH': 'Odadan at',
+    'CRITICAL': 'Yasakla',
+  };
+
   void _bindDraft(AdminGirLiveBotConfig cfg) {
     _draft = cfg;
+    _wordsCtrl.text = cfg.words.map((w) => '${w['word']}').join('\n');
+    _whitelistCtrl.text = cfg.whitelist.join('\n');
     final pm = cfg.publicMessages;
     _intervalCtrl.text = '${pm.minMessageIntervalSec}';
     for (final key in _templateKeys) {
@@ -63,7 +78,30 @@ class _AdminGirLiveBotPageState extends ConsumerState<AdminGirLiveBotPage> {
           int.tryParse(_intervalCtrl.text.trim()) ?? pm.minMessageIntervalSec,
       templates: templates,
     );
-    return base.copyWith(publicMessages: nextPm);
+    // Mevcut kelimelerin cezası korunur; yeni eklenenler seçili cezayı alır.
+    final existing = {
+      for (final w in base.words) '${w['word']}'.toLowerCase(): w,
+    };
+    final words = <Map<String, dynamic>>[];
+    final seen = <String>{};
+    for (final line in _wordsCtrl.text.split('\n')) {
+      final word = line.trim();
+      if (word.isEmpty || word.length > 64) continue;
+      if (!seen.add(word.toLowerCase())) continue;
+      words.add(
+        existing[word.toLowerCase()] ??
+            {'word': word, 'severity': _newWordSeverity, 'prefix': false},
+      );
+    }
+    final whitelist = [
+      for (final line in _whitelistCtrl.text.split('\n'))
+        if (line.trim().isNotEmpty) line.trim(),
+    ];
+    return base.copyWith(
+      publicMessages: nextPm,
+      words: words,
+      whitelist: whitelist,
+    );
   }
 
   Future<void> _save() async {
@@ -290,6 +328,52 @@ class _AdminGirLiveBotPageState extends ConsumerState<AdminGirLiveBotPage> {
                 ),
                 const SizedBox(height: 8),
               ],
+              const SizedBox(height: 16),
+              Text(
+                'Yasaklı kelimeler',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Varsayılan küfür listesine ek. Her satıra bir kelime. '
+                'Bot bu kelimeleri yazanı seçilen cezaya göre uyarır, susturur, '
+                'odadan atar veya yasaklar.',
+                style: TextStyle(fontSize: 12),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _wordsCtrl,
+                minLines: 3,
+                maxLines: 8,
+                decoration: const InputDecoration(
+                  labelText: 'Ek yasaklı kelimeler (her satıra bir)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                initialValue: _newWordSeverity,
+                decoration: const InputDecoration(
+                  labelText: 'Yeni eklenen kelimelerin cezası',
+                ),
+                items: [
+                  for (final e in _severityLabels.entries)
+                    DropdownMenuItem(value: e.key, child: Text(e.value)),
+                ],
+                onChanged: (v) {
+                  if (v != null) setState(() => _newWordSeverity = v);
+                },
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _whitelistCtrl,
+                minLines: 2,
+                maxLines: 6,
+                decoration: const InputDecoration(
+                  labelText: 'Güvenli kelimeler (yanlış uyarıyı önler)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
               const SizedBox(height: 16),
               FilledButton(
                 onPressed: _saving ? null : _save,

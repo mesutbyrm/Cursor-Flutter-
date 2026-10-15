@@ -50,6 +50,13 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
   String? _thumbnailCloudPath;
   String? _animationCloudPath;
   String? _soundCloudPath;
+  String? _musicUrl;
+  String? _musicCloudPath;
+  bool _musicChanged = false;
+  int? _assetDurationMs;
+
+  /// Görüntüleme türü: full = tam ekran, half = yarım ekran, small = küçük (orta).
+  String _displayMode = 'small';
   bool _imageChanged = false;
   bool _thumbnailChanged = false;
   bool _animationChanged = false;
@@ -57,7 +64,6 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
   String _animationType = 'image';
   bool _comboEnabled = false;
   bool _isPremium = false;
-  bool _isFullscreen = false;
   bool _isActive = true;
   bool _isHidden = false;
   bool _isFeatured = false;
@@ -94,7 +100,9 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
     _soundUrl = g?.soundUrl;
     _animationType = g?.animationType ?? 'image';
     _isPremium = g?.isPremium ?? false;
-    _isFullscreen = g?.isFullscreen ?? false;
+    _displayMode = (g?.isFullscreen ?? false)
+        ? 'full'
+        : ((g?.tier ?? '').toLowerCase() == 'big' ? 'half' : 'small');
     _isActive = g?.isActive ?? true;
     _comboEnabled = g?.comboEnabled ?? false;
     _isHidden = g?.isHidden ?? false;
@@ -149,6 +157,7 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
         final ms = await AdminGiftMediaProbe.durationMs(file);
         if (ms != null && ms > 0) {
           _durationMs.text = '$ms';
+          _assetDurationMs = ms;
         }
         final needsThumb = _imageCloudPath == null &&
             (!_isEdit || !_imageChanged || (_imageUrl?.trim().isEmpty ?? true));
@@ -189,6 +198,16 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
             _animationCloudPath = uploaded.cloudPath;
             _animationChanged = true;
             _animationType = _guessAnimationType(file!.path);
+            if (!isVideo) _assetDurationMs = null;
+            // İsim boşsa dosya adından; yeni hediyede video → tam ekran.
+            if (_nameTr.text.trim().isEmpty) {
+              _nameTr.text = _nameFromFile(file.path);
+            }
+            if (!_isEdit) _displayMode = isVideo ? 'full' : 'small';
+          case 'music':
+            _musicUrl = uploaded.previewUrl;
+            _musicCloudPath = uploaded.cloudPath;
+            _musicChanged = true;
           case 'sound':
             _soundUrl = uploaded.previewUrl;
             _soundCloudPath = uploaded.cloudPath;
@@ -204,6 +223,14 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
     } finally {
       if (mounted) setState(() => _uploadingKind = null);
     }
+  }
+
+  String _nameFromFile(String path) {
+    final base = path.split(RegExp(r'[\\/]')).last;
+    final noExt = base.contains('.') ? base.substring(0, base.lastIndexOf('.')) : base;
+    final words = noExt.replaceAll(RegExp(r'[_\-.]+'), ' ').trim();
+    if (words.isEmpty) return '';
+    return words[0].toUpperCase() + words.substring(1);
   }
 
   String _guessAnimationType(String path) {
@@ -262,7 +289,8 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
             !_animationChanged &&
             ((widget.gift?.cloudStoragePath?.trim().isNotEmpty ?? false) ||
                 (_animationUrl?.trim().isNotEmpty ?? false)));
-    final sortOrder = int.tryParse(_sortOrder.text.trim());
+    // Sıralama her zaman jeton fiyatına göre (sunucu); elle sıra yok.
+    const int? sortOrder = null;
     setState(() => _saving = true);
     final body = _isEdit
         ? AdminGiftDtoMapper.updateBody(
@@ -272,7 +300,7 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
             icon: _icon.text.trim().isNotEmpty ? _icon.text.trim() : null,
             category:
                 _category.text.trim().isNotEmpty ? _category.text.trim() : null,
-            tier: _tier.text.trim().isNotEmpty ? _tier.text.trim() : null,
+            tier: null,
             sortOrder: sortOrder,
             iconChanged: _imageChanged,
             iconImageCloudPath: _imageCloudPath,
@@ -293,7 +321,7 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
             effectColor: color.isNotEmpty ? color : null,
             comboEnabled: _comboEnabled,
             isPremium: _isPremium,
-            isFullscreen: _isFullscreen,
+            isFullscreen: _displayMode == 'full',
             isActive: _isActive,
             isHidden: _isHidden,
             isFeatured: _isFeatured,
@@ -308,7 +336,7 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
             icon: _icon.text.trim().isNotEmpty ? _icon.text.trim() : null,
             category:
                 _category.text.trim().isNotEmpty ? _category.text.trim() : null,
-            tier: _tier.text.trim().isNotEmpty ? _tier.text.trim() : null,
+            tier: null,
             sortOrder: sortOrder,
             iconImageCloudPath: _imageCloudPath,
             iconImageUrl: _imageUrl,
@@ -324,7 +352,7 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
             effectColor: color.isNotEmpty ? color : null,
             comboEnabled: _comboEnabled,
             isPremium: _isPremium,
-            isFullscreen: _isFullscreen,
+            isFullscreen: _displayMode == 'full',
             isActive: _isActive,
             isHidden: _isHidden,
             isFeatured: _isFeatured,
@@ -332,6 +360,15 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
             isNew: _isNew,
             isLucky: _isLucky,
           );
+    // Sade katalog: motor ayarları (süre, konum, parçacık, sıra) sunucuda
+    // dosyaya ve görüntüleme türüne göre otomatik hesaplanır.
+    body['displayMode'] = _displayMode;
+    if (_assetDurationMs != null) body['assetDurationMs'] = _assetDurationMs;
+    body.remove('animationDurationMs');
+    if (_musicChanged) {
+      body['musicCloudPath'] = _musicCloudPath;
+      body['musicUrl'] = _musicUrl;
+    }
     try {
       // Cüzdan yenilemesi kaydı engellemesin — zaman aşımında arka planda dene.
       unawaited(
@@ -486,25 +523,6 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
               extensions: ['mp4', 'webm', 'mov', 'svga', 'json', 'gif'],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: DropdownButtonFormField<String>(
-              value: AdminGiftAnimationTypes.all
-                      .any((e) => e.$1 == _animationType)
-                  ? _animationType
-                  : 'image',
-              dropdownColor: const Color(0xFF1A1030),
-              style: const TextStyle(color: Colors.white),
-              decoration: _inputDeco('Animasyon türü'),
-              items: [
-                for (final t in AdminGiftAnimationTypes.all)
-                  DropdownMenuItem(value: t.$1, child: Text(t.$2)),
-              ],
-              onChanged: (v) {
-                if (v != null) setState(() => _animationType = v);
-              },
-            ),
-          ),
           _uploadTile(
             label: 'Ses dosyası (MP3 / WAV)',
             hint: 'Hediye SFX',
@@ -515,10 +533,19 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
             onPickFile: () =>
                 _uploadFile(kind: 'sound', extensions: ['mp3', 'wav', 'm4a']),
           ),
+          _uploadTile(
+            label: 'Hediye müziği (MP3 / WAV)',
+            hint: 'İsteğe bağlı müzik',
+            url: _musicUrl,
+            kind: 'music',
+            uploading: _uploadingKind == 'music',
+            isAudio: true,
+            onPickFile: () =>
+                _uploadFile(kind: 'music', extensions: ['mp3', 'wav', 'm4a']),
+          ),
           const SizedBox(height: 8),
           _sectionTitle('Temel Bilgiler'),
           _field(_nameTr, 'Türkçe isim *'),
-          _field(_nameEn, 'İngilizce isim'),
           _field(_price, 'Jeton fiyatı *', number: true),
           _field(_icon, 'İkon (emoji yedek, ör. 💎)'),
           _chipField(
@@ -526,45 +553,43 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
             label: 'Kategori',
             presets: AdminGiftPresets.categories,
           ),
-          _chipField(
-            controller: _tier,
-            label: 'Kademe',
-            presets: AdminGiftPresets.tiers,
-          ),
           const SizedBox(height: 8),
-          _sectionTitle('Animasyon & Efekt'),
-          _field(_durationMs, 'Animasyon süresi (ms)', number: true),
-          _field(_effectColor, 'Efekt rengi (hex, ör. #FF6B6B)'),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final c in const [
-                '#FF6B6B',
-                '#FFD54F',
-                '#7C3AED',
-                '#3D7BFF',
-                '#66E36F',
-                '#FF3D77',
-              ])
-                ActionChip(
-                  label: Text(c, style: const TextStyle(fontSize: 11)),
-                  backgroundColor: _parseColor(c).withValues(alpha: 0.35),
-                  onPressed: () => setState(() => _effectColor.text = c),
-                ),
+          _sectionTitle('Görüntüleme türü'),
+          SegmentedButton<String>(
+            segments: const [
+              ButtonSegment(
+                value: 'full',
+                label: Text('Tam ekran'),
+                icon: Icon(Icons.fullscreen_rounded),
+              ),
+              ButtonSegment(
+                value: 'half',
+                label: Text('Yarım ekran'),
+                icon: Icon(Icons.crop_square_rounded),
+              ),
+              ButtonSegment(
+                value: 'small',
+                label: Text('Küçük'),
+                icon: Icon(Icons.center_focus_strong_rounded),
+              ),
             ],
+            selected: {_displayMode},
+            onSelectionChanged: (v) => setState(() => _displayMode = v.first),
           ),
-          const SizedBox(height: 12),
+          const Padding(
+            padding: EdgeInsets.only(top: 8, bottom: 12),
+            child: Text(
+              'Süre, animasyon ve konum dosyaya göre otomatik ayarlanır. '
+              'Parçacık efekti yalnızca küçük hediyelerde açıktır. '
+              'Hediyeler jeton fiyatına göre sıralanır.',
+              style: TextStyle(color: Color(0x99FFFFFF), fontSize: 12),
+            ),
+          ),
           _sectionTitle('Davranış'),
           _switchTile(
             'Premium hediye',
             _isPremium,
             (v) => setState(() => _isPremium = v),
-          ),
-          _switchTile(
-            'Tam ekran animasyon',
-            _isFullscreen,
-            (v) => setState(() => _isFullscreen = v),
           ),
           _switchTile(
             'Kombo (combo)',
@@ -580,7 +605,6 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
           _switchTile('Öne çıkan', _isFeatured, (v) => setState(() => _isFeatured = v)),
           _switchTile('Popüler', _isPopular, (v) => setState(() => _isPopular = v)),
           _switchTile('Gizli', _isHidden, (v) => setState(() => _isHidden = v)),
-          _field(_sortOrder, 'Sıralama (sortOrder)', number: true),
           _switchTile(
             'Durum: Aktif',
             _isActive,
@@ -818,11 +842,4 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
     );
   }
 
-  Color _parseColor(String hex) {
-    var h = hex.replaceAll('#', '');
-    if (h.length == 6) h = 'FF$h';
-    final v = int.tryParse(h, radix: 16);
-    if (v == null) return const Color(0xFF7C3AED);
-    return Color(v);
-  }
 }

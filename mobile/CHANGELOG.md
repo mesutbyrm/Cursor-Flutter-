@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.791+847 (2026-10-15) — Eksik kontrolü: admin hediye düzenleyici, GirLive ayarları, responsive
+
+- **Admin hediye düzenleyici (uygulama) sadeleşti:** Görüntüleme türü (Tam ekran / Yarım ekran / Küçük) seçimi; dosya yüklenince isim ve süre otomatik; hediye müziği yükleme; elle «Sıralama», «Kademe», «Animasyon süresi», «Efekt rengi», «Animasyon türü», «İngilizce isim» ve «Tam ekran» anahtarı kaldırıldı (sunucu otomatik ayarlar, sıra jeton fiyatına göre)
+- **GirLive Bot ayarları (düzeltme):** «Açık/Kapalı» sunucudaki iç içe `config` alanından okunmuyordu (hep açık görünüyordu); ek yasaklı kelime ve güvenli kelime listesi uygulamadan düzenlenebilir, yeni kelimelere ceza seçilir (Uyar / Sustur / Odadan at / Yasakla)
+- **Responsive:** canlı yayın alt çubuğu düğmeleri dar ekranda küçülür (mesaj kutusu ezilmez); kombo rozeti çentik altında kalmaz
+
 ## 1.0.790+846 (2026-10-15) — GirLive Bot, canlı falcı, hediye görünürlüğü, responsive
 
 - **GirLive Bot:** yasaklı kelimeler artık sunucuya ulaşıyor (istemci ön engeli kaldırıldı) → bot uyarır / susturur / atar; selam ve «@GirLive yardım/kurallar/jeton/hediye/pk» mesajlarına yanıt verir; sohbette bot resmi

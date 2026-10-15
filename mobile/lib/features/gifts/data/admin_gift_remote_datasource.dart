@@ -206,7 +206,7 @@ class AdminGiftRemoteDataSource {
     final folder = switch (kind) {
       'thumbnail' => 'gifts/thumbnails',
       'asset' => 'gifts/animations',
-      'sound' => 'gifts/sounds',
+      'sound' || 'music' => 'gifts/sounds',
       _ => 'gifts/icons',
     };
     final cancel = CancelToken();

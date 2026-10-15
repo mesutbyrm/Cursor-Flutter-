@@ -489,8 +489,9 @@ class _ComboBadgeState extends State<_ComboBadge>
   Widget build(BuildContext context) {
     if (widget.combo < 2) return const SizedBox.shrink();
     final label = 'x${widget.combo}';
-    final top =
-        widget.displayArea == GiftEngineDisplayArea.fullScreen ? 80.0 : 48.0;
+    // Çentik / durum çubuğu altında kalmasın.
+    final top = MediaQuery.paddingOf(context).top +
+        (widget.displayArea == GiftEngineDisplayArea.fullScreen ? 56.0 : 24.0);
     return Positioned(
       top: top,
       right: 24,

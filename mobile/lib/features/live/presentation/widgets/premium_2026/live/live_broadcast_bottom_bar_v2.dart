@@ -236,7 +236,20 @@ class _LiveBroadcastBottomBarV2State extends State<LiveBroadcastBottomBarV2> {
                   ),
                   if (!_messageExpanded) ...[
                     const SizedBox(width: 6),
-                    ..._actions(),
+                    // Dar ekranda düğmeler küçülür; mesaj kutusu en az %40 kalır.
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: MediaQuery.sizeOf(context).width * 0.58,
+                      ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: _actions(),
+                        ),
+                      ),
+                    ),
                   ],
                 ],
               ),

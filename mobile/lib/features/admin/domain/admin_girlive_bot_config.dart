@@ -5,7 +5,16 @@ class AdminGirLiveBotConfig {
     this.voiceRoomEnabled = true,
     this.liveStreamEnabled = true,
     this.publicMessages = const AdminGirLiveBotPublicMessages(),
+    this.words = const [],
+    this.whitelist = const [],
   });
+
+  /// Admin'in eklediği yasaklı kelimeler (varsayılan listeye ek):
+  /// `{word, severity: LOW|MEDIUM|HIGH|CRITICAL, prefix}`.
+  final List<Map<String, dynamic>> words;
+
+  /// Yanlış pozitifleri önleyen güvenli kelimeler.
+  final List<String> whitelist;
 
   /// Genel GirLive bot (PK, karşılama, moderasyon tetikleyicileri).
   final bool enabled;
@@ -26,8 +35,12 @@ class AdminGirLiveBotConfig {
     bool? voiceRoomEnabled,
     bool? liveStreamEnabled,
     AdminGirLiveBotPublicMessages? publicMessages,
+    List<Map<String, dynamic>>? words,
+    List<String>? whitelist,
   }) {
     return AdminGirLiveBotConfig(
+      words: words ?? this.words,
+      whitelist: whitelist ?? this.whitelist,
       enabled: enabled ?? this.enabled,
       voiceRoomEnabled: voiceRoomEnabled ?? this.voiceRoomEnabled,
       liveStreamEnabled: liveStreamEnabled ?? this.liveStreamEnabled,
@@ -40,11 +53,21 @@ class AdminGirLiveBotConfig {
         'voiceRoomEnabled': voiceRoomEnabled,
         'liveStreamEnabled': liveStreamEnabled,
         'publicMessages': publicMessages.toJson(),
+        'words': words,
+        'whitelist': whitelist,
       };
 
   factory AdminGirLiveBotConfig.fromJson(Map<String, dynamic>? json) {
-    final root = json ?? const <String, dynamic>{};
+    final raw = json ?? const <String, dynamic>{};
+    // Backend GET: `{ config: {enabled, words, whitelist, …}, publicMessages }`
+    // — `enabled` iç içe `config` altında; önceden hep varsayılan (açık) okunuyordu.
+    final root = <String, dynamic>{
+      if (raw['config'] is Map) ...Map<String, dynamic>.from(raw['config'] as Map),
+      ...raw,
+    };
     final pmRaw = root['publicMessages'];
+    final wordsRaw = root['words'];
+    final whitelistRaw = root['whitelist'];
     return AdminGirLiveBotConfig(
       enabled: _boolFromMap(
         root,
@@ -71,6 +94,16 @@ class AdminGirLiveBotConfig {
         ],
         defaultValue: true,
       ),
+      words: wordsRaw is List
+          ? [
+              for (final w in wordsRaw)
+                if (w is Map && '${w['word'] ?? ''}'.trim().isNotEmpty)
+                  Map<String, dynamic>.from(w),
+            ]
+          : const [],
+      whitelist: whitelistRaw is List
+          ? [for (final w in whitelistRaw) '$w'.trim()].where((w) => w.isNotEmpty).toList()
+          : const [],
       publicMessages: pmRaw is Map
           ? AdminGirLiveBotPublicMessages.fromJson(
               Map<String, dynamic>.from(pmRaw),
