@@ -1,3 +1,4 @@
+import 'package:canlifal_social/core/network/api_exception.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
@@ -83,7 +84,9 @@ class WalletCenterPage extends ConsumerWidget {
           body: wallet.isLoading && cached == null
               ? const Center(child: DiscoverAccentLoader())
               : wallet.hasError && cached == null
-                  ? Center(child: Text(wallet.error.toString()))
+                  ? Center(
+                      child: Text(ApiException.userMessage(wallet.error!)),
+                    )
                   : ListView(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
               children: [

@@ -1,3 +1,4 @@
+import 'package:canlifal_social/core/l10n/tr_labels.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
@@ -66,8 +67,8 @@ class _ProfileTransactionsPageState
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: DiscoverSubPage(
-          title: 'İşlemler',
-          subtitle: 'Ödeme talepleri ve site hareketleri',
+          title: 'Jeton Geçmişim',
+          subtitle: 'Jeton yüklemeleri, ödeme talepleri ve hareketler',
           onRefresh: _refresh,
           body: payments.when(
             loading: () => const Center(child: DiscoverAccentLoader()),
@@ -208,11 +209,12 @@ class _PaymentTile extends ConsumerWidget {
               ),
             ),
             Text(
-              row.status,
+              TrLabels.status(row.status),
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: row.status == 'approved'
+                color: row.status.toLowerCase() == 'approved' ||
+                        row.status.toLowerCase() == 'completed'
                     ? Colors.greenAccent
                     : AppThemeColors.accentPink,
               ),
@@ -255,7 +257,10 @@ class _ActivityTile extends ConsumerWidget {
               ),
             const SizedBox(height: 4),
             Text(
-              '$when · ${row.amount > 0 ? "${row.amount} $jetonLabel" : row.status}',
+              [
+                when,
+                if (row.amount > 0) '${row.amount} $jetonLabel',
+              ].where((e) => e.isNotEmpty).join(' · '),
               style: TextStyle(fontSize: 11, color: context.colors.onSurfaceMuted),
             ),
           ],

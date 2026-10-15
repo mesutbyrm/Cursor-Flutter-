@@ -126,7 +126,7 @@ class _GiftsGridState extends State<_GiftsGrid> {
           builder: (context, constraints) {
             const crossAxisCount = 3;
             const spacing = 12.0;
-            const aspect = 0.85;
+            const aspect = 0.72;
             const horizontalPad = 40.0;
             final gridHeight = ListPerf.nestedGridHeight(
               itemCount: visible,
@@ -156,37 +156,84 @@ class _GiftsGridState extends State<_GiftsGrid> {
                       itemCount: visible,
                       itemBuilder: (context, i) {
                         final g = items[i];
-                        final isUrl = g.icon.startsWith('http');
+                        final isImg = g.icon.startsWith('http') ||
+                            g.icon.startsWith('/');
                         return ListPerf.repaint(
                           ProfileGlass(
-                            padding: const EdgeInsets.all(10),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                            padding: const EdgeInsets.fromLTRB(8, 10, 8, 8),
+                            child: Stack(
+                              clipBehavior: Clip.none,
                               children: [
-                                if (isUrl)
-                                  CanlifalNetworkImage(
-                                    url: g.icon,
-                                    height: 36,
-                                    errorWidget: Text(g.name, maxLines: 1),
-                                  )
-                                else
-                                  Text(g.icon,
-                                      style: const TextStyle(fontSize: 32)),
-                                const SizedBox(height: 6),
-                                Text(
-                                  g.name,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    // Büyük hediye görseli (önceden 36 px).
+                                    SizedBox(
+                                      width: 64,
+                                      height: 64,
+                                      child: isImg
+                                          ? CanlifalNetworkImage(
+                                              url: g.icon,
+                                              width: 64,
+                                              height: 64,
+                                              fit: BoxFit.contain,
+                                              errorWidget: const Center(
+                                                child: Text('🎁',
+                                                    style:
+                                                        TextStyle(fontSize: 40)),
+                                              ),
+                                            )
+                                          : Center(
+                                              child: Text(
+                                                g.icon.length <= 4
+                                                    ? g.icon
+                                                    : '🎁',
+                                                style: const TextStyle(
+                                                    fontSize: 44),
+                                              ),
+                                            ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      g.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${g.count} adet',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppThemeColors.coinGold,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                Text(
-                                  'x${g.count}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w900,
-                                    color: AppThemeColors.accentPink,
+                                // Adet rozeti — aynı hediyeden kaç tane.
+                                Positioned(
+                                  top: -4,
+                                  right: -2,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 7, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: AppThemeColors.accentPink,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(
+                                      '×${g.count}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ],

@@ -1,3 +1,4 @@
+import 'package:canlifal_social/core/l10n/tr_labels.dart';
 import 'package:equatable/equatable.dart';
 
 import '../../../core/util/json_util.dart';
@@ -51,7 +52,7 @@ class WithdrawalRequest extends Equatable {
         'approved' || 'onaylandi' || 'onaylandı' => 'Onaylandı',
         'rejected' || 'reddedildi' => 'Reddedildi',
         'paid' || 'odendi' || 'ödendi' => 'Ödendi',
-        _ => status,
+        _ => TrLabels.status(status),
       };
 
   /// Yalnızca jeton henüz düşülmemiş (bekleyen) talepler iptal edilebilir.

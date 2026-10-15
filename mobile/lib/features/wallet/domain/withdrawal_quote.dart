@@ -43,9 +43,10 @@ class WithdrawalQuote {
       taxPercent: tax,
       taxAmount: _n(json['taxAmount']),
       netAmountTL: _n(json['netAmountTL']),
-      grossLabel: '${labels['gross'] ?? 'Toplam kazandığınız'}',
-      taxLabel: '${labels['tax'] ?? (tax > 0 ? 'Kesinti (%$tax)' : 'Kesinti yok')}',
-      netLabel: '${labels['net'] ?? 'Elinize geçecek tahmini tutar'}',
+      // Sunucu etiketleri İngilizce gelebiliyor — her zaman Türkçe metin.
+      grossLabel: 'Toplam kazandığınız',
+      taxLabel: tax > 0 ? 'Kesinti (%$tax)' : 'Kesinti yok',
+      netLabel: 'Elinize geçecek tahmini tutar',
     );
   }
 }

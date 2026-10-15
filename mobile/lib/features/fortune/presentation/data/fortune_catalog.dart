@@ -251,6 +251,20 @@ abstract final class FortuneCatalog {
   }
 
   static const _slugAliases = {
+    'iskambil-fali': 'iskambil',
+    'playing-cards': 'iskambil',
+    'playingcards': 'iskambil',
+    'pendul-fali': 'pendul',
+    'pendulum': 'pendul',
+    'runik-fali': 'runik',
+    'rune': 'runik',
+    'runestone': 'runik',
+    'daily_horoscope': 'gunluk-fal',
+    'astrology': 'yildiz-haritasi',
+    'palmistry': 'el-fali',
+    'cin': 'cin-fali',
+    'genie': 'cin-fali',
+    'katina-image': 'katina',
     'daily': 'gunluk-fal',
     'gunluk': 'gunluk-fal',
     'günlük-fal': 'gunluk-fal',

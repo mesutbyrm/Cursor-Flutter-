@@ -1,3 +1,5 @@
+import 'package:canlifal_social/core/l10n/tr_labels.dart';
+import '../providers/gift_catalog_index_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -69,7 +71,7 @@ class _GiftHistoryPageState extends ConsumerState<GiftHistoryPage> {
   }
 }
 
-class _HistoryRow extends StatelessWidget {
+class _HistoryRow extends ConsumerWidget {
   const _HistoryRow({required this.item});
   final GiftHistoryItem item;
 
@@ -80,7 +82,18 @@ class _HistoryRow extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Katalogdaki Türkçe ad (geçmiş uç noktası İngilizce ad döndürebiliyor).
+    final catalogName = lookupGiftCatalog(
+      ref.watch(allGiftCatalogByIdProvider),
+      item.giftId ?? '',
+    )?.name;
+    final giftName = (catalogName?.trim().isNotEmpty == true)
+        ? catalogName!.trim()
+        : TrLabels.giftName(item.giftName);
+    final who = item.counterpartyName.trim().isEmpty
+        ? 'Bilinmeyen kullanıcı'
+        : item.counterpartyName.trim();
     final sent = item.isSent;
     final refunded = item.isRefunded;
     return Container(
@@ -110,7 +123,7 @@ class _HistoryRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.giftName,
+                  giftName,
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
@@ -118,7 +131,11 @@ class _HistoryRow extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${sent ? 'Alıcı' : 'Gönderen'}: ${item.counterpartyName}',
+                  [
+                    '${sent ? 'Alıcı' : 'Gönderen'}: $who',
+                    if (item.at != null)
+                      TrLabels.dateTime(item.at!.toIso8601String()),
+                  ].join(' · '),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(color: Color(0x99FFFFFF), fontSize: 11.5),

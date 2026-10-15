@@ -1,3 +1,6 @@
+import 'package:canlifal_social/core/l10n/tr_labels.dart';
+import 'package:canlifal_social/features/gifts/domain/gift_entity.dart';
+import 'package:canlifal_social/features/gifts/presentation/providers/gift_catalog_index_provider.dart';
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -260,36 +263,69 @@ final profileStatsProvider = FutureProvider<ProfileStatsEntity>((ref) async {
   return stats;
 });
 
+/// Alınan hediyeler — aynı hediye tek satırda, toplam ADET ile.
+/// Önceden `/api/user/received-gifts` her gönderimi ayrı satır ve «×0»
+/// olarak döndürüyordu; insights geçmişi gruplanır, eski uç yedektir.
 final giftsReceivedSummaryProvider =
     FutureProvider<List<GiftReceivedSummaryEntity>>((ref) async {
   ref.keepAlive();
-  return ref.watch(profileRepositoryProvider).giftsReceivedSummary();
+  try {
+    final history = await ref
+        .read(giftInsightsRemoteProvider)
+        .fetchHistory(direction: 'received', limit: 200);
+    if (history.isNotEmpty) {
+      return _aggregateGiftHistory(
+        history,
+        ref.read(allGiftCatalogByIdProvider),
+      );
+    }
+  } catch (_) {}
+  final legacy =
+      await ref.watch(profileRepositoryProvider).giftsReceivedSummary();
+  return _aggregateSummaries(legacy);
 });
+
+List<GiftReceivedSummaryEntity> _aggregateSummaries(
+  List<GiftReceivedSummaryEntity> rows,
+) {
+  final map = <String, GiftReceivedSummaryEntity>{};
+  for (final r in rows) {
+    final name = TrLabels.giftName(r.name);
+    final key = name.toLowerCase();
+    final add = r.count > 0 ? r.count : 1;
+    final prev = map[key];
+    map[key] = GiftReceivedSummaryEntity(
+      name: name,
+      icon: prev?.icon ?? r.icon,
+      count: (prev?.count ?? 0) + add,
+      coins: (prev?.coins ?? 0) + r.coins,
+    );
+  }
+  return map.values.toList()..sort((a, b) => b.count.compareTo(a.count));
+}
 
 List<GiftReceivedSummaryEntity> _aggregateGiftHistory(
   List<GiftHistoryItem> items,
+  Map<String, GiftEntity> catalog,
 ) {
   final map = <String, GiftReceivedSummaryEntity>{};
   for (final item in items) {
     if (item.isRefunded) continue;
-    final key = item.giftName.trim().toLowerCase();
+    final cat = lookupGiftCatalog(catalog, item.giftId ?? '');
+    final name = (cat?.name.trim().isNotEmpty == true)
+        ? cat!.name.trim()
+        : TrLabels.giftName(item.giftName);
+    final key = (item.giftId?.trim().isNotEmpty == true)
+        ? item.giftId!.trim().toLowerCase()
+        : name.toLowerCase();
     if (key.isEmpty) continue;
     final prev = map[key];
-    if (prev == null) {
-      map[key] = GiftReceivedSummaryEntity(
-        name: item.giftName,
-        icon: item.giftIcon ?? '🎁',
-        count: 1,
-        coins: item.amount,
-      );
-    } else {
-      map[key] = GiftReceivedSummaryEntity(
-        name: prev.name,
-        icon: prev.icon,
-        count: prev.count + 1,
-        coins: prev.coins + item.amount,
-      );
-    }
+    map[key] = GiftReceivedSummaryEntity(
+      name: prev?.name ?? name,
+      icon: prev?.icon ?? item.giftIcon ?? '🎁',
+      count: (prev?.count ?? 0) + item.quantity,
+      coins: (prev?.coins ?? 0) + item.amount,
+    );
   }
   final list = map.values.toList()
     ..sort((a, b) => b.count.compareTo(a.count));
@@ -301,8 +337,8 @@ final giftsSentSummaryProvider =
   ref.keepAlive();
   final history = await ref
       .read(giftInsightsRemoteProvider)
-      .fetchHistory(direction: 'sent', limit: 100);
-  return _aggregateGiftHistory(history);
+      .fetchHistory(direction: 'sent', limit: 200);
+  return _aggregateGiftHistory(history, ref.read(allGiftCatalogByIdProvider));
 });
 
 final broadcastHistoryProvider =

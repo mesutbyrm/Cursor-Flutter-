@@ -1,3 +1,4 @@
+import 'package:canlifal_social/core/l10n/tr_labels.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
@@ -247,7 +248,7 @@ class _WithdrawalTile extends StatelessWidget {
                 ),
                 if (request.createdAt != null)
                   Text(
-                    request.createdAt!,
+                    TrLabels.dateTime(request.createdAt),
                     style: TextStyle(
                       fontSize: 11,
                       color: context.colors.onSurfaceMuted,

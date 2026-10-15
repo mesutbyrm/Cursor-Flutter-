@@ -59,13 +59,33 @@ class UserFortuneEntity extends Equatable {
     'istihare': 'İstihare',
     'katina': 'Katina Falı',
     'kursundokme': 'Kurşun Dökme',
+    // Sunucu üretim slug'ları
+    'tarot-fali': 'Tarot Falı',
+    'ask-uyumu': 'Aşk Uyumu',
+    'ruya-yorumu': 'Rüya Yorumu',
+    'burc-yorumu': 'Burç Yorumu',
+    'kahve-fali-image': 'Kahve Falı',
+    'katina-fali': 'Katina Falı',
+    'iskambil': 'İskambil Falı',
+    'iskambil-fali': 'İskambil Falı',
+    'pendul': 'Pandül Falı',
+    'pendul-fali': 'Pandül Falı',
+    'runik': 'Rün Falı',
+    'runik-fali': 'Rün Falı',
+    'cin-fali': 'Cin Falı',
+    'yildiz-haritasi': 'Yıldız Haritası',
+    'melek-kartlari-fali': 'Melek Kartları',
   };
 
   String get displayTitle {
     final key = (slug ?? '').isNotEmpty
         ? slug!
         : (backendKeyToSlug[type.toLowerCase()] ?? type);
-    return _titles[key] ?? (type.isNotEmpty ? type : 'Fal');
+    // İngilizce ham tür (ör. «dream») gösterilmesin.
+    return _titles[key] ??
+        _titles[backendKeyToSlug[type.toLowerCase()] ?? ''] ??
+        _titles[type.toLowerCase()] ??
+        'Fal';
   }
 
   String get displayBody =>

@@ -1,3 +1,4 @@
+import 'package:canlifal_social/core/l10n/tr_labels.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -69,12 +70,12 @@ class _TransactionTile extends ConsumerWidget {
                 Text(
                   transaction.description?.trim().isNotEmpty == true
                       ? transaction.description!.trim()
-                      : transaction.type,
+                      : TrLabels.transactionType(transaction.type),
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 if (transaction.createdAt != null)
                   Text(
-                    transaction.createdAt!.split('T').first,
+                    TrLabels.dateTime(transaction.createdAt),
                     style: TextStyle(
                       fontSize: 11,
                       color: context.colors.onSurfaceMuted,

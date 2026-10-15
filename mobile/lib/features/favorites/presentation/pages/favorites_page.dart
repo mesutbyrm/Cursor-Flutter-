@@ -9,7 +9,12 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
 import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
+import '../../../../core/images/canlifal_network_image.dart';
+import '../../../../core/l10n/tr_labels.dart';
+import '../../../fortune/domain/entities/user_fortune_entity.dart';
+import '../../../fortune/presentation/data/fortune_catalog.dart';
 import '../../../fortune/presentation/providers/fortune_api_providers.dart';
+import '../../../fortune/presentation/widgets/fortune_type_cover_image.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
@@ -48,15 +53,15 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage>
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Favoriler'),
+        title: const Text('Sakladıklarım'),
         actions: [
           IconButton(
-            tooltip: 'Site favorileri',
+            tooltip: 'Sitede aç',
             icon: const Icon(Icons.open_in_browser_rounded),
             onPressed: () => context.push(
               CanlifalWebRoute.location(
                 relativePath: '/favoriler',
-                title: 'Kayıtlı favoriler',
+                title: 'Sakladıklarım',
               ),
             ),
           ),
@@ -65,7 +70,7 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage>
           controller: _tabs,
           tabs: const [
             Tab(text: 'Fal geçmişim'),
-            Tab(text: 'Kayıtlılarım'),
+            Tab(text: 'Kaydettiklerim'),
           ],
           labelColor: palette.textPrimary,
           unselectedLabelColor: palette.textMuted,
@@ -165,14 +170,7 @@ class _FortuneHistoryTab extends ConsumerWidget {
                     : null;
                 return Card(
                   child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor:
-                          palette.colors.primary.withValues(alpha: 0.15),
-                      child: Icon(
-                        Icons.auto_awesome_rounded,
-                        color: palette.colors.primary,
-                      ),
-                    ),
+                    leading: FortuneThumb(slug: f.slug ?? f.type),
                     title: Text(
                       f.displayTitle,
                       style: TextStyle(
@@ -217,6 +215,9 @@ class _SavedFavoritesTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Kaydedilen fal → fal geçmişinden türü (küçük resim + Türkçe ad).
+    final fortunes =
+        ref.watch(fortuneHistoryProvider).valueOrNull ?? const <UserFortuneEntity>[];
     final palette = context.palette;
     final favorites = ref.watch(userFavoritesProvider);
 
@@ -243,7 +244,7 @@ class _SavedFavoritesTab extends ConsumerWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Henüz kayıtlı favoriniz yok.',
+                    'Henüz sakladığın bir şey yok.',
                     style: TextStyle(color: palette.textMuted),
                   ),
                 ],
@@ -263,6 +264,16 @@ class _SavedFavoritesTab extends ConsumerWidget {
             separatorBuilder: (_, _) => Divider(color: palette.divider),
             itemBuilder: (context, i) {
               final f = items[i];
+              final fortuneSlug = f.targetType == 'fortune'
+                  ? _fortuneSlugFor(f, fortunes)
+                  : null;
+              final fortuneTitle = fortuneSlug == null
+                  ? null
+                  : FortuneCatalog.bySlug(fortuneSlug)?.title;
+              final title = fortuneTitle ??
+                  (f.title?.trim().isNotEmpty == true
+                      ? f.title!.trim()
+                      : TrLabels.contentType(f.targetType));
               return Dismissible(
                 key: ValueKey(f.id),
                 direction: DismissDirection.endToStart,
@@ -278,19 +289,32 @@ class _SavedFavoritesTab extends ConsumerWidget {
                   ref.invalidate(userFavoritesProvider);
                 },
                 child: ListTile(
-                  leading: Icon(
-                    _iconForType(f.targetType),
-                    color: palette.colors.primary,
-                  ),
+                  leading: fortuneSlug != null
+                      ? FortuneThumb(slug: fortuneSlug)
+                      : (f.imageUrl?.trim().isNotEmpty == true
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: CanlifalNetworkImage(
+                                url: f.imageUrl!,
+                                width: 48,
+                                height: 48,
+                              ),
+                            )
+                          : Icon(
+                              _iconForType(f.targetType),
+                              color: palette.colors.primary,
+                            )),
                   title: Text(
-                    f.title ?? f.targetId,
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                       color: palette.textPrimary,
                     ),
                   ),
                   subtitle: Text(
-                    f.targetType,
+                    TrLabels.contentType(f.targetType),
                     style: TextStyle(color: palette.textMuted, fontSize: 12),
                   ),
                   onTap: () => _openFavorite(context, ref, f),
@@ -301,6 +325,29 @@ class _SavedFavoritesTab extends ConsumerWidget {
         );
       },
     );
+  }
+
+  String? _fortuneSlugFor(
+    UserFavoriteEntity f,
+    List<UserFortuneEntity> fortunes,
+  ) {
+    for (final x in fortunes) {
+      if (x.id == f.targetId) {
+        final s = (x.slug?.isNotEmpty == true) ? x.slug! : x.type;
+        if (s.isNotEmpty) return s;
+      }
+    }
+    // URL (/fallar/tarot-fali/...) veya başlıktan tür tahmini.
+    final hay = '${f.url ?? ''} ${f.title ?? ''}'.toLowerCase();
+    for (final t in FortuneCatalog.types) {
+      if (hay.contains(t.slug) || hay.contains(t.title.toLowerCase())) {
+        return t.slug;
+      }
+    }
+    for (final e in UserFortuneEntity.backendKeyToSlug.entries) {
+      if (hay.contains(e.value)) return e.value;
+    }
+    return 'kahve-fali';
   }
 
   IconData _iconForType(String type) {
@@ -365,5 +412,32 @@ class _SavedFavoritesTab extends ConsumerWidget {
           );
         }
     }
+  }
+}
+
+/// Fal türünün küçük kapak resmi (48 px).
+class FortuneThumb extends StatelessWidget {
+  const FortuneThumb({super.key, required this.slug});
+
+  final String slug;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = FortuneCatalog.bySlug(slug) ??
+        FortuneCatalog.bySlug(UserFortuneEntity.backendKeyToSlug[slug] ?? '');
+    final resolved = t?.slug ?? 'kahve-fali';
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: SizedBox(
+        width: 48,
+        height: 48,
+        child: FortuneTypeCoverImage(
+          slug: resolved,
+          accent: t?.accent ?? const Color(0xFF8B5CF6),
+          imageWidth: 160,
+          showOverlay: false,
+        ),
+      ),
+    );
   }
 }

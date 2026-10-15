@@ -9,7 +9,9 @@ class GiftHistoryItem {
     required this.counterpartyName,
     required this.giftName,
     this.giftIcon,
+    this.giftId,
     this.amount = 0,
+    this.quantity = 1,
     this.status = 'sent',
     this.context,
     this.at,
@@ -20,8 +22,8 @@ class GiftHistoryItem {
       id: (pick(json, ['id', 'eventId']) ?? '').toString(),
       direction:
           (pick(json, ['direction', 'type']) ?? 'sent').toString().toLowerCase(),
-      counterpartyName: (pick(json, [
-                'counterparty',
+      counterpartyName: (_counterpartyName(json['counterparty']) ??
+              pick(json, [
                 'counterpartyName',
                 'otherName',
                 'receiverName',
@@ -33,7 +35,12 @@ class GiftHistoryItem {
           .toString(),
       giftName: (pick(json, ['giftName', 'gift', 'name']) ?? 'hediye').toString(),
       giftIcon: pick(json, ['giftIcon', 'icon', 'iconUrl', 'image'])?.toString(),
-      amount: asInt(pick(json, ['amount', 'coins', 'quantity', 'count'])),
+      giftId: pick(json, ['giftId', 'giftTypeId', 'giftSlug'])?.toString(),
+      amount: asInt(pick(json, ['amount', 'coins'])),
+      quantity: () {
+        final q = asInt(pick(json, ['quantity', 'count', 'qty']));
+        return q > 0 ? q : 1;
+      }(),
       status: (pick(json, ['status']) ?? 'sent').toString().toLowerCase(),
       context: pick(json, ['context'])?.toString(),
       at: DateTime.tryParse(
@@ -47,11 +54,26 @@ class GiftHistoryItem {
   final String counterpartyName;
   final String giftName;
   final String? giftIcon;
+  final String? giftId;
   final int amount;
+
+  /// Aynı gönderimdeki adet (ör. 10× Gül).
+  final int quantity;
   final String status; // sent | received | refunded | cancelled
   final String? context;
   final DateTime? at;
 
   bool get isSent => direction == 'sent';
+
+  /// `counterparty` nesne olarak gelir; Map.toString isim yerine yazılıyordu.
+  static String? _counterpartyName(Object? raw) {
+    if (raw is Map) {
+      final m = raw.map((k, v) => MapEntry(k.toString(), v));
+      final n = pick(m, ['name', 'displayName', 'username'])?.toString();
+      return (n != null && n.trim().isNotEmpty) ? n.trim() : null;
+    }
+    if (raw is String && raw.trim().isNotEmpty) return raw.trim();
+    return null;
+  }
   bool get isRefunded => status == 'refunded' || status == 'cancelled';
 }

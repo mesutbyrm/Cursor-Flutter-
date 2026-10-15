@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
 import '../../../../core/economy/presentation/providers/economy_providers.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
@@ -86,10 +87,10 @@ class ProfileHubTopGiftsSection extends ConsumerWidget {
                       ),
                       Text(
                         '×${profileFormatCount(gift.count)}',
-                        style: TextStyle(
-                          color: ProfilePremiumTheme.textOf(context),
+                        style: const TextStyle(
+                          color: AppThemeColors.accentPink,
                           fontWeight: FontWeight.w900,
-                          fontSize: 14,
+                          fontSize: 18,
                         ),
                       ),
                     ],
@@ -110,11 +111,11 @@ class _GiftIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isUrl = icon.startsWith('http');
+    final isUrl = icon.startsWith('http') || icon.startsWith('/');
   final isEmoji = !isUrl && icon.length <= 4;
     return Container(
-      width: 36,
-      height: 36,
+      width: 52,
+      height: 52,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: ProfilePremiumTheme.insetOf(context, darkAlpha: 0.08),
@@ -124,12 +125,12 @@ class _GiftIcon extends StatelessWidget {
           ? ClipOval(
               child: CanlifalNetworkImage(
                 url: icon,
-                width: 36,
-                height: 36,
-                fit: BoxFit.cover,
+                width: 52,
+                height: 52,
+                fit: BoxFit.contain,
               ),
             )
-          : Text(isEmoji ? icon : '🎁', style: const TextStyle(fontSize: 18)),
+          : Text(isEmoji ? icon : '🎁', style: const TextStyle(fontSize: 28)),
     );
   }
 }

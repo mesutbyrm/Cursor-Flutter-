@@ -1,3 +1,4 @@
+import 'package:canlifal_social/core/l10n/tr_labels.dart';
 import '../../../core/util/json_util.dart';
 
 class CfcPaymentRequestEntity {
@@ -99,6 +100,6 @@ class CfcPaymentRequestEntity {
         'papara' => 'Papara',
         'bank_transfer' => 'Havale/EFT',
         'havale' => 'Havale/EFT',
-        _ => m,
+        _ => TrLabels.paymentMethod(m),
       };
 }
