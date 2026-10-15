@@ -40,8 +40,7 @@ class VoiceRoomBottomActionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
-    final useBlur =
-        !kIsWeb && defaultTargetPlatform != TargetPlatform.android;
+    final useBlur = !kIsWeb && defaultTargetPlatform != TargetPlatform.android;
 
     final bar = Container(
       padding: EdgeInsets.fromLTRB(4, 8, 4, 10 + bottom),
@@ -52,62 +51,77 @@ class VoiceRoomBottomActionBar extends StatelessWidget {
           color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.28),
         ),
       ),
-      child: Row(
-        children: [
-          _SpeakerAction(
-            headphonesOn: headphonesOn,
-            onTap: onToggleAudioOutput,
-          ),
-          if (showSettings) _SettingsAction(onTap: onSettings),
-          if (showSpeakRequest && onSpeakRequest != null)
-            _SpeakRequestAction(
-              pending: speakRequestPending,
-              onTap: onSpeakRequest!,
-            ),
-          Expanded(
-            child: Center(
-              child: _CenterMicButton(
-                micOn: micOn,
-                enabled: micEnabled,
-                onTap: onMicToggle,
-              ),
-            ),
-          ),
-          _SideAction(
-            emoji: '🎁',
-            label: 'Hediye',
-            color: AppThemeColors.coinGold,
-            onTap: onGift,
-          ),
-          _SideAction(
-            emoji: '📨',
-            label: 'Davet',
-            onTap: onInvite,
-          ),
-        ],
+      // Dar telefonlarda (<340 dp) taşmasın: tüm çubuk orantılı küçülür.
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          const minW = 340.0;
+          final row = _buildRow();
+          if (!constraints.maxWidth.isFinite || constraints.maxWidth >= minW) {
+            return row;
+          }
+          return FittedBox(
+            fit: BoxFit.scaleDown,
+            child: SizedBox(width: minW, child: row),
+          );
+        },
       ),
     );
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
-        child: useBlur
-            ? BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: bar,
-              )
-            : bar,
+    return Align(
+      alignment: Alignment.bottomCenter,
+      heightFactor: 1,
+      child: ConstrainedBox(
+        // Tablette çubuk ekran boyunca yayılmasın.
+        constraints: const BoxConstraints(maxWidth: 560),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: useBlur
+                ? BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                    child: bar,
+                  )
+                : bar,
+          ),
+        ),
       ),
+    );
+  }
+
+  Widget _buildRow() {
+    return Row(
+      children: [
+        _SpeakerAction(headphonesOn: headphonesOn, onTap: onToggleAudioOutput),
+        if (showSettings) _SettingsAction(onTap: onSettings),
+        if (showSpeakRequest && onSpeakRequest != null)
+          _SpeakRequestAction(
+            pending: speakRequestPending,
+            onTap: onSpeakRequest!,
+          ),
+        Expanded(
+          child: Center(
+            child: _CenterMicButton(
+              micOn: micOn,
+              enabled: micEnabled,
+              onTap: onMicToggle,
+            ),
+          ),
+        ),
+        _SideAction(
+          emoji: '🎁',
+          label: 'Hediye',
+          color: AppThemeColors.coinGold,
+          onTap: onGift,
+        ),
+        _SideAction(emoji: '📨', label: 'Davet', onTap: onInvite),
+      ],
     );
   }
 }
 
 class _SpeakRequestAction extends StatelessWidget {
-  const _SpeakRequestAction({
-    required this.pending,
-    required this.onTap,
-  });
+  const _SpeakRequestAction({required this.pending, required this.onTap});
 
   final bool pending;
   final VoidCallback onTap;
@@ -165,7 +179,11 @@ class _SettingsAction extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.settings_rounded, color: VoiceRoomTokens.neonBlue, size: 24),
+              Icon(
+                Icons.settings_rounded,
+                color: VoiceRoomTokens.neonBlue,
+                size: 24,
+              ),
               const SizedBox(height: 2),
               Text(
                 'Ayarlar',
@@ -185,10 +203,7 @@ class _SettingsAction extends StatelessWidget {
 }
 
 class _SpeakerAction extends StatelessWidget {
-  const _SpeakerAction({
-    required this.headphonesOn,
-    required this.onTap,
-  });
+  const _SpeakerAction({required this.headphonesOn, required this.onTap});
 
   final bool headphonesOn;
   final VoidCallback onTap;
@@ -330,10 +345,7 @@ class _CenterMicButtonState extends State<_CenterMicButton>
                 gradient: widget.enabled
                     ? VoiceRoomTokens.micFabGradient
                     : LinearGradient(
-                        colors: [
-                          Colors.grey.shade700,
-                          Colors.grey.shade900,
-                        ],
+                        colors: [Colors.grey.shade700, Colors.grey.shade900],
                       ),
                 boxShadow: glow > 0
                     ? VoiceRoomTokens.neonGlow(

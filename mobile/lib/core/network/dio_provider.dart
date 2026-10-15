@@ -23,6 +23,7 @@ import 'json_content_type_guard_interceptor.dart';
 import 'payment_request_interceptor.dart';
 import 'token_storage.dart';
 import 'voice_room_api_log_interceptor.dart';
+import 'server_clock.dart';
 import 'cf_diagnostic_dio_interceptor.dart';
 
 bool _isPublicAuthPath(String path) {
@@ -65,6 +66,7 @@ Dio _createApiDio(Ref ref, {required Dio tokenRefreshDio}) {
 
   // `/api/...` → `/api/v1/...` (FLUTTER_BACKEND_ENTEGRASYON_PROMPT.md).
   dio.interceptors.add(ApiVersionInterceptor());
+  dio.interceptors.add(ServerClockInterceptor());
   // Backend seçimi — her istek doğru origin'e gider.
   dio.interceptors.add(BackendRoutingInterceptor());
   dio.interceptors.add(CookieManager(cookieJar));

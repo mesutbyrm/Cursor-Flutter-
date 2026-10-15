@@ -21,6 +21,7 @@ import '../../domain/entities/live_gift_catalog.dart';
 import '../../domain/entities/live_gift_type.dart';
 import '../../../voice_hub/presentation/providers/staff_entrance_marquee_provider.dart';
 import '../gifts/live_gift_send_apply.dart';
+import 'package:canlifal_social/core/ui/responsive/grid_columns.dart';
 import '../gifts/providers/live_gift_providers.dart';
 
 Future<void> showLiveGiftPicker(
@@ -117,8 +118,8 @@ Future<void> showLiveGiftPicker(
                               controller: scroll,
                               padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                               gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 3,
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: responsiveGridColumns(context, min: 3, tileWidth: 110),
                                     mainAxisSpacing: 10,
                                     crossAxisSpacing: 10,
                                     childAspectRatio: 0.82,

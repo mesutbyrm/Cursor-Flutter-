@@ -1736,29 +1736,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage>
               VoiceRoomMusicBackgroundLayer(roomKey: _liveRoomKey),
               VoiceRoomHiddenAudioPlayer(roomKey: _liveRoomKey),
             ],
-            Consumer(
-              builder: (context, ref, _) {
-                final activeGift = ref.watch(
-                  giftSessionProvider(sessionKey).select((s) => s.activeAnimation),
-                );
-                final giftsOn = ref.watch(
-                  voiceRoomUiProvider.select((s) => s.giftAnimationsEnabled),
-                );
-                return IgnorePointer(
-                  child: GiftEngineOverlay(
-                    event: activeGift,
-                    enabled: giftsOn,
-                    stage: GiftStageContext.voiceRoom,
-                    sessionKey: sessionKey,
-                    onFinished: (id) {
-                      ref
-                          .read(giftSessionProvider(sessionKey).notifier)
-                          .dequeueAnimation(id);
-                    },
-                  ),
-                );
-              },
-            ),
             Column(
               children: [
                 Expanded(
@@ -2187,6 +2164,31 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage>
                   ),
                 ),
               ],
+            ),
+            // Hediye animasyonu koltuk/sohbet katmanının ÜSTÜNDE (dokunmayı
+            // engellemez) — bazı ekranlarda koltuklar hediyeyi örtüyordu.
+            Consumer(
+              builder: (context, ref, _) {
+                final activeGift = ref.watch(
+                  giftSessionProvider(sessionKey).select((s) => s.activeAnimation),
+                );
+                final giftsOn = ref.watch(
+                  voiceRoomUiProvider.select((s) => s.giftAnimationsEnabled),
+                );
+                return IgnorePointer(
+                  child: GiftEngineOverlay(
+                    event: activeGift,
+                    enabled: giftsOn,
+                    stage: GiftStageContext.voiceRoom,
+                    sessionKey: sessionKey,
+                    onFinished: (id) {
+                      ref
+                          .read(giftSessionProvider(sessionKey).notifier)
+                          .dequeueAnimation(id);
+                    },
+                  ),
+                );
+              },
             ),
             VoiceGiftHudOverlays(
               sessionKey: sessionKey,

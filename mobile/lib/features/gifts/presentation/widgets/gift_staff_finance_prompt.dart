@@ -18,7 +18,7 @@ Future<GiftStaffFinanceMode?> showGiftStaffFinanceModeDialog(
         title: const Text('Jeton türü'),
         content: const Text(
           'Bu hediye için hangi jeton türünü kullanmak istiyorsunuz?\n\n'
-          '• Staff jeton: Alıcıya jeton düşmez (tanıtım / moderasyon).\n'
+          '• Personel jetonu: Alıcıya jeton düşmez (tanıtım / moderasyon).\n'
           '• Gerçek jeton: Alıcı normal şekilde kredilenir.',
         ),
         actions: [
@@ -28,7 +28,7 @@ Future<GiftStaffFinanceMode?> showGiftStaffFinanceModeDialog(
           ),
           FilledButton.tonal(
             onPressed: () => Navigator.pop(ctx, GiftStaffFinanceMode.staff),
-            child: const Text('Staff jeton'),
+            child: const Text('Personel jetonu'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, GiftStaffFinanceMode.real),

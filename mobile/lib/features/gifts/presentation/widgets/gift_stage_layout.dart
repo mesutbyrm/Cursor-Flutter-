@@ -26,12 +26,24 @@ abstract final class GiftStageMetrics {
       GiftStageContext.voiceRoom => 0.22,
       GiftStageContext.liveStream => 0.20,
     };
-    final bottomInset = switch (stage) {
-      GiftStageContext.voiceRoom => 210.0,
-      GiftStageContext.liveStream => 240.0,
+    // Alt boşluk ekran yüksekliğine oranlı (küçük telefon / tablet / yatay);
+    // sabit 210-240 px küçük ekranlarda bandı yok ediyordu (negatif yükseklik).
+    final bottomRatio = switch (stage) {
+      GiftStageContext.voiceRoom => 0.26,
+      GiftStageContext.liveStream => 0.29,
     };
-    final h = MediaQuery.sizeOf(context).height;
-    return EdgeInsets.fromLTRB(12, h * topInset, 12, bottomInset);
+    final size = MediaQuery.sizeOf(context);
+    final h = size.height;
+    final top = h * topInset;
+    var bottom = (h * bottomRatio).clamp(120.0, 300.0);
+    // Band en az ekranın %30'u kadar yüksek kalsın.
+    final minBand = h * 0.30;
+    if (h - top - bottom < minBand) {
+      bottom = max(0.0, h - top - minBand);
+    }
+    // Tablette hediye yatayda aşırı yayılmasın: ortada makul genişlik.
+    final side = size.width > 700 ? (size.width - 700) / 2 + 12 : 12.0;
+    return EdgeInsets.fromLTRB(side, top, side, bottom);
   }
 
   /// Hediye animasyonunun tavan yüksekliği — büyük ama tam ekran değil (~%60).

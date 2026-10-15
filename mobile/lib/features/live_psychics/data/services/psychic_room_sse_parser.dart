@@ -21,6 +21,17 @@ class PsychicRoomSseRoomUpdate extends PsychicRoomSseEvent {
   final PsychicRoomEntity room;
 }
 
+/// Süre uzatıldı (`time_extended`) — kısmi olay; oda bilgisinin tamamı değil.
+class PsychicRoomSseTimeExtended extends PsychicRoomSseEvent {
+  const PsychicRoomSseTimeExtended({
+    required this.addedMinutes,
+    required this.newMaxMinutes,
+  });
+
+  final int addedMinutes;
+  final int newMaxMinutes;
+}
+
 class PsychicRoomSseSessionEnded extends PsychicRoomSseEvent {
   const PsychicRoomSseSessionEnded(this.status);
 
@@ -157,6 +168,22 @@ PsychicRoomSseEvent? parseSessionRoomSsePayload(
       type: signalType,
       data: signalData,
     );
+  }
+  // Sunucunun ham olayı (`{addedMinutes, newMaxMinutes}`) — iç içe tam oda
+  // bilgisi gelirse aşağıdaki oda güncellemesi kullanılır.
+  if (type == 'time_extended' && map['room'] is! Map) {
+    final src = merged;
+    final added = int.tryParse('${src['addedMinutes'] ?? 0}') ?? 0;
+    final newMax = int.tryParse(
+          '${src['newMaxMinutes'] ?? src['maxMinutes'] ?? 0}',
+        ) ??
+        0;
+    if (added > 0 || newMax > 0) {
+      return PsychicRoomSseTimeExtended(
+        addedMinutes: added,
+        newMaxMinutes: newMax,
+      );
+    }
   }
   if (type == 'timer_started' || type == 'time_extended') {
     return PsychicRoomSseRoomUpdate(

@@ -9,8 +9,9 @@ void main() {
     expect(LiveChatGuard.validate(''), isNotNull);
   });
 
-  test('rejects profanity', () {
-    expect(LiveChatGuard.validate('bu bir test amk'), isNotNull);
+  test('profanity is left to server moderation (GirLive Bot)', () {
+    // İstemci engellerse mesaj sunucuya gitmez ve bot uyaramaz/atamaz.
+    expect(LiveChatGuard.validate('bu bir test amk'), isNull);
   });
 
   test('allows clean message', () {

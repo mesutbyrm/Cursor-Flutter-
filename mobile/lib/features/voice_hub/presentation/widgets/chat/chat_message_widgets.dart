@@ -15,6 +15,7 @@ import '../../../domain/entities/chat_room_message.dart';
 import '../../theme/voice_room_tokens.dart';
 import '../../utils/voice_staff_chat_style.dart';
 import '../voice_room/voice_room_chat_message_actions.dart';
+import 'package:canlifal_social/features/voice_hub/girlive/girlive_bot_avatar.dart';
 import 'voice_staff_chat_avatar.dart';
 
 /// Sohbet satırı — RepaintBoundary ile izole çizim.
@@ -167,7 +168,10 @@ class _ChatMessageBody extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               if (showAvatar && user != null) ...[
-                UserAvatarWidget(url: _effectiveImage, radius: 16),
+                if (GirLiveBotAvatar.isBot(name: user.name, userId: user.id))
+                  GirLiveBotAvatar.circle(radius: 16)
+                else
+                  UserAvatarWidget(url: _effectiveImage, radius: 16),
                 const SizedBox(width: 8),
               ],
               Flexible(

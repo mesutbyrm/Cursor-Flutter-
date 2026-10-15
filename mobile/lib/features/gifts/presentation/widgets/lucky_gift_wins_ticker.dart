@@ -53,7 +53,7 @@ class LuckyGiftWinsTicker extends ConsumerWidget {
     final gift = (e.giftName ?? 'Talih Kutusu').trim();
     final currencyLabel = economyCurrencyLabel(ref, key: 'cfc');
     if (e.isJackpot) {
-      return '🎰 JACKPOT! $user — $gift ×${e.multiplier} → ${e.wonJetons} $currencyLabel!';
+      return '🎰 BÜYÜK İKRAMİYE! $user — $gift ×${e.multiplier} → ${e.wonJetons} $currencyLabel!';
     }
     return '🍀 $user — $gift ×${e.multiplier} → ${e.wonJetons} $currencyLabel';
   }

@@ -21,6 +21,7 @@ import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../providers/voice_gift_providers.dart';
+import 'package:canlifal_social/core/ui/responsive/grid_columns.dart';
 import 'premium_2026/voice_premium_gift_panel_2026.dart';
 
 final voiceRoomGiftTypesProvider = FutureProvider.autoDispose((ref) async {
@@ -129,8 +130,8 @@ Future<void> showVoiceRoomGiftPickerLegacy(
                           controller: scroll,
                           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                           gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: responsiveGridColumns(context, min: 3, tileWidth: 110),
                             mainAxisSpacing: 10,
                             crossAxisSpacing: 10,
                             childAspectRatio: 0.82,

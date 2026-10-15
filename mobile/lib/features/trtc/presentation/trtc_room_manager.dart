@@ -897,8 +897,13 @@ class TrtcRoomManager {
     }
   }
 
+  /// Ön ↔ arka kamera. Önceden `_cameraOn` (hep true) gönderildiği için
+  /// kamera hiç arkaya dönmüyordu.
   void switchCamera() {
-    _device?.switchCamera(_cameraOn);
+    final device = _device;
+    if (device == null) return;
+    final front = device.isFrontCamera();
+    device.switchCamera(!front);
   }
 
   Future<void> leave() {

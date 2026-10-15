@@ -280,10 +280,11 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                   ),
                 ),
               ),
-            if (state.rtcReady && session.isClient && state.timerStarted)
+            // Kamera çevirme — hem falcı hem danışan (ön ↔ arka).
+            if (state.rtcReady && state.timerStarted)
               Positioned(
-                top: MediaQuery.paddingOf(context).top + 72 + 140 - 28,
-                right: 16,
+                top: MediaQuery.paddingOf(context).top + 72 + 140 - 32,
+                right: 14,
                 child: Material(
                   color: Colors.black54,
                   shape: const CircleBorder(),
@@ -291,11 +292,12 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                     onTap: ctrl.switchCamera,
                     customBorder: const CircleBorder(),
                     child: const Padding(
-                      padding: EdgeInsets.all(6),
+                      padding: EdgeInsets.all(9),
                       child: Icon(
                         Icons.cameraswitch_rounded,
                         color: Colors.white,
-                        size: 18,
+                        size: 24,
+                        semanticLabel: 'Kamerayı çevir',
                       ),
                     ),
                   ),
@@ -507,23 +509,53 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                 children: [
                   if (state.messages.isNotEmpty)
                     ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 120),
+                      // Ekran yüksekliğine göre — küçük telefonda da tablette de okunur.
+                      constraints: BoxConstraints(
+                        maxHeight: (MediaQuery.sizeOf(context).height * 0.26)
+                            .clamp(140.0, 260.0),
+                      ),
                       child: ProfileGlass(
-                        padding: const EdgeInsets.all(8),
-                        borderRadius: 14,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
+                        borderRadius: 16,
                         child: ListView.builder(
+                          // En yeni mesaj her zaman altta ve görünür.
+                          reverse: true,
                           itemCount: state.messages.length,
                           itemBuilder: (_, i) {
-                            final msg = state.messages[i];
+                            final msg =
+                                state.messages[state.messages.length - 1 - i];
                             return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 2),
-                              child: Text(
-                                '${msg.isMine ? 'Sen' : msg.senderName}: ${msg.text}',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: msg.isMine
-                                      ? AppThemeColors.accentCyan
-                                      : Colors.white70,
+                              padding: const EdgeInsets.symmetric(vertical: 3),
+                              child: Text.rich(
+                                TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text:
+                                          '${msg.isMine ? 'Sen' : msg.senderName}: ',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        color: msg.isMine
+                                            ? AppThemeColors.accentCyan
+                                            : const Color(0xFFFFD54F),
+                                      ),
+                                    ),
+                                    TextSpan(text: msg.text),
+                                  ],
+                                ),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  height: 1.3,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.black87,
+                                      blurRadius: 4,
+                                    ),
+                                  ],
                                 ),
                               ),
                             );
@@ -537,11 +569,16 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                       Expanded(
                         child: TextField(
                           controller: chat,
-                          style: const TextStyle(color: Colors.white),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
                           decoration: InputDecoration(
                             hintText: 'Mesaj yaz…',
                             hintStyle: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.45),
+                              fontSize: 16,
+                              color: Colors.white.withValues(alpha: 0.6),
                             ),
                             filled: true,
                             fillColor: Colors.black.withValues(alpha: 0.45),

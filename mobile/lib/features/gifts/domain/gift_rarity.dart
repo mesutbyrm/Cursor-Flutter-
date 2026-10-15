@@ -19,11 +19,11 @@ enum GiftRarity {
   }
 
   String get label => switch (this) {
-        GiftRarity.common => 'Common',
-        GiftRarity.rare => 'Rare',
-        GiftRarity.epic => 'Epic',
-        GiftRarity.legendary => 'Legendary',
-        GiftRarity.mythic => 'Mythic',
+        GiftRarity.common => 'Sıradan',
+        GiftRarity.rare => 'Nadir',
+        GiftRarity.epic => 'Epik',
+        GiftRarity.legendary => 'Efsanevi',
+        GiftRarity.mythic => 'Mitik',
       };
 
   Color get glowColor => switch (this) {

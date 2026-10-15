@@ -181,11 +181,15 @@ class _GiftMediaWidgetState extends State<GiftMediaWidget> {
       return _thumbnailOrEmoji(spec);
     }
 
+    // Bazı Android kod çözücüleri boyutu 0x0 bildirir — görünmez kalmasın.
+    final vs = c.value.size;
+    final videoW = vs.width > 0 ? vs.width : (spec.mediaWidth?.toDouble() ?? 720);
+    final videoH = vs.height > 0 ? vs.height : (spec.mediaHeight?.toDouble() ?? 720);
     final videoChild = FittedBox(
       fit: widget.fit,
       child: SizedBox(
-        width: c.value.size.width,
-        height: c.value.size.height,
+        width: videoW,
+        height: videoH,
         child: VideoPlayer(c),
       ),
     );
@@ -304,7 +308,10 @@ class _GiftMediaWidgetState extends State<GiftMediaWidget> {
   }
 
   Widget _emojiFallback() {
-    final size = widget.width ?? widget.height ?? 48;
+    // Tam ekranda genişlik `double.infinity` gelir — sonsuz font boyutu
+    // çizim hatasıyla hediyeyi tamamen gizliyordu.
+    var size = widget.width ?? widget.height ?? 48;
+    if (!size.isFinite || size <= 0) size = 160;
     return Center(
       child: Text(
         widget.fallbackEmoji,

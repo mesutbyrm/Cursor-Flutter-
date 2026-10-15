@@ -33,7 +33,7 @@ abstract final class PremiumGiftCatalog2026 {
     ),
     _PremiumDef(
       id: 'galaksi',
-      displayName: 'Galaxy',
+      displayName: 'Galaksi',
       emoji: '🌌',
       rarity: GiftRarity.legendary,
       animationKind: GiftAnimationKind.svga,

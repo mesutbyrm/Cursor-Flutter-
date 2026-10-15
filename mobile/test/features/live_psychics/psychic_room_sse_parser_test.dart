@@ -43,6 +43,26 @@ void main() {
       expect(room.remainingSeconds, greaterThan(0));
     });
 
+    test('raw time_extended (backend shape) → time extended event', () {
+      final event = parseSessionRoomSsePayload(
+        {'addedMinutes': 5, 'newMaxMinutes': 15, 'by': 'user'},
+        sessionId: 'sess_raw',
+      );
+      expect(event, isA<PsychicRoomSseTimeExtended>());
+      final ext = event as PsychicRoomSseTimeExtended;
+      expect(ext.addedMinutes, 5);
+      expect(ext.newMaxMinutes, 15);
+    });
+
+    test('tip_received from server SSE', () {
+      final event = parseSessionRoomSsePayload(
+        {'type': 'tip_received', 'id': 't1', 'tipId': 't1', 'amount': 50, 'senderName': 'Ali'},
+        sessionId: 'sess_tip',
+      );
+      expect(event, isA<PsychicRoomSseTip>());
+      expect((event as PsychicRoomSseTip).amount, 50);
+    });
+
     test('session_ended from actualMinutesUsed', () {
       final event = parseSessionRoomSsePayload(
         {

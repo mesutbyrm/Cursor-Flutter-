@@ -19,6 +19,7 @@ import '../../../live/domain/entities/live_gift_event.dart';
 import '../engine/voice_gift_ambient_overlay.dart';
 import 'gift_hourly_reset.dart';
 import 'gift_session_state.dart';
+import '../../../../core/network/server_clock.dart';
 import 'gift_sync_log.dart';
 
 /// Gift Engine oturum kontrolcüsü — ses → animasyon → jeton sırası.
@@ -285,9 +286,13 @@ class GiftSessionController extends AutoDisposeFamilyNotifier<GiftSessionState, 
     // REST yanıtı veya local-* id ile client-side animasyon yok.
     final canAnimate = _animatedSources.contains(source);
     final joinedMs = _joinTimestampMs;
+    // Olay zamanı SUNUCU saatinde; giriş anı cihaz saatinde. Saati ileri olan
+    // telefonlarda her hediye «girişten önce» sayılıp gösterilmiyordu —
+    // karşılaştırma sunucu saatine çevrilerek yapılır.
     final beforeJoin = joinedMs != null &&
         event.eventTimestampMs > 0 &&
-        event.eventTimestampMs < joinedMs - _joinGraceMs;
+        event.eventTimestampMs <
+            ServerClock.toServerMs(joinedMs) - _joinGraceMs;
     final animate = canAnimate && !beforeJoin;
 
     final jeton = event.jetonAmount;

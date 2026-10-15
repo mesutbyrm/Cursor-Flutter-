@@ -34,6 +34,7 @@ class PsychicRoomSseService {
   void Function()? _onConnected;
   void Function(PsychicChatMessage message)? _onMessage;
   void Function(PsychicRoomEntity room)? _onRoomUpdate;
+  void Function(int addedMinutes, int newMaxMinutes)? _onTimeExtended;
   void Function(PsychicSessionStatus status)? _onSessionEnded;
   void Function(int amount, String? fromName, String? eventId)? _onTipReceived;
   void Function(String type, Map<String, dynamic>? data)? _onSignal;
@@ -51,6 +52,7 @@ class PsychicRoomSseService {
     void Function()? onConnected,
     void Function(PsychicChatMessage message)? onMessage,
     void Function(PsychicRoomEntity room)? onRoomUpdate,
+    void Function(int addedMinutes, int newMaxMinutes)? onTimeExtended,
     void Function(PsychicSessionStatus status)? onSessionEnded,
     void Function(int amount, String? fromName, String? eventId)? onTipReceived,
     void Function(String type, Map<String, dynamic>? data)? onSignal,
@@ -66,6 +68,7 @@ class PsychicRoomSseService {
     _onConnected = onConnected;
     _onMessage = onMessage;
     _onRoomUpdate = onRoomUpdate;
+    _onTimeExtended = onTimeExtended;
     _onSessionEnded = onSessionEnded;
     _onTipReceived = onTipReceived;
     _onSignal = onSignal;
@@ -209,6 +212,11 @@ class PsychicRoomSseService {
         case PsychicRoomSseConnected(:final room):
         case PsychicRoomSseRoomUpdate(:final room):
           _onRoomUpdate?.call(room);
+        case PsychicRoomSseTimeExtended(
+            :final addedMinutes,
+            :final newMaxMinutes,
+          ):
+          _onTimeExtended?.call(addedMinutes, newMaxMinutes);
         case PsychicRoomSseSessionEnded(:final status):
           _onSessionEnded?.call(status);
         case PsychicRoomSseMessage(:final message):

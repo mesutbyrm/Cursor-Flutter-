@@ -44,7 +44,7 @@ class LivePkTopSupportersPanel extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'TOP DESTEKÇİLER',
+              'EN İYİ DESTEKÇİLER',
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.65),
                 fontSize: 9,

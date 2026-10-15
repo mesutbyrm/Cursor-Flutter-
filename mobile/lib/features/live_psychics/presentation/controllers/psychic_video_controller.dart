@@ -829,7 +829,12 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
         final from = data['fromName']?.toString() ??
             data['senderName']?.toString() ??
             data['from']?.toString();
-        _onTipReceived(amount, from, eventId: id);
+        _onTipReceived(
+          amount,
+          from,
+          eventId: data['tipId']?.toString() ?? id,
+          viaSignal: true,
+        );
       }
     }
   }
@@ -1092,6 +1097,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
           },
           onMessage: _onSseChatMessage,
           onRoomUpdate: _onSseRoomUpdate,
+          onTimeExtended: _onSseTimeExtended,
           onSessionEnded: (status) {
             if (_disposed || state.leaving) return;
             unawaited(_handleRemoteSessionEnded(status));
@@ -1139,8 +1145,36 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     }
   }
 
-  void _onTipReceived(int amount, String? fromName, {String? eventId}) {
+  /// Aynı bahşiş hem anlık SSE'den hem (eski istemcinin) sinyalinden gelebilir;
+  /// farklı kanaldan 20 sn içinde gelen aynı tutar bir kez sayılır.
+  final List<({int amount, DateTime at, bool viaSignal})> _recentTips = [];
+
+  bool _isCrossChannelDuplicateTip(int amount, bool viaSignal) {
+    final now = DateTime.now();
+    _recentTips.removeWhere(
+      (t) => now.difference(t.at) > const Duration(seconds: 20),
+    );
+    final idx = _recentTips.indexWhere(
+      (t) => t.amount == amount && t.viaSignal != viaSignal,
+    );
+    if (idx >= 0) {
+      _recentTips.removeAt(idx);
+      return true;
+    }
+    _recentTips.add((amount: amount, at: now, viaSignal: viaSignal));
+    return false;
+  }
+
+  void _onTipReceived(
+    int amount,
+    String? fromName, {
+    String? eventId,
+    bool viaSignal = false,
+  }) {
     if (amount <= 0) return;
+    if (!session.isClient && _isCrossChannelDuplicateTip(amount, viaSignal)) {
+      return;
+    }
     final id = eventId?.trim();
     if (id != null && id.isNotEmpty) {
       if (!_seenTipEventIds.add(id)) return;
@@ -1225,6 +1259,13 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       return;
     }
     final wasTimerStarted = state.timerStarted;
+    // Kısmi olaylar (`timer_started` / eski `time_extended`) `timerStarted`
+    // taşımaz; başlamış seansı «başlamadı»ya çevirip ekranı kapatmasın.
+    if (wasTimerStarted && !info.timerStarted) {
+      final prevMax = state.room?.maxMinutes ?? session.durationMinutes;
+      if (info.maxMinutes > prevMax) _onSseTimeExtended(0, info.maxMinutes);
+      return;
+    }
     var remaining = state.remaining;
     if (info.timerStarted) {
       remaining = Duration(seconds: info.remainingSeconds);
@@ -1694,6 +1735,25 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     return ok;
   }
 
+  /// Süre uzatıldı (SSE) — ekran kapanmadan kalan süreye eklenir.
+  void _onSseTimeExtended(int addedMinutes, int newMaxMinutes) {
+    if (_disposed || state.leaving) return;
+    final room = state.room;
+    final prevMax = room?.maxMinutes ?? session.durationMinutes;
+    final nextMax = newMaxMinutes > 0 ? newMaxMinutes : prevMax + addedMinutes;
+    final added = nextMax - prevMax;
+    if (added <= 0) return;
+    state = state.copyWith(
+      room: room?.copyWith(maxMinutes: nextMax),
+      remaining: state.remaining + Duration(minutes: added),
+      timeUpPending: false,
+      lowTimeWarningPending: false,
+    );
+    if (state.timerStarted) _startTimers();
+  }
+
+  bool _timeUpRunning = false;
+
   Future<void> _onTimeUp() async {
     _tick?.cancel();
     _signalPoll?.cancel();
@@ -1702,7 +1762,31 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       state = state.copyWith(timeUpPending: true);
       return;
     }
-    await leave(silent: true);
+    if (_timeUpRunning) return;
+    _timeUpRunning = true;
+    try {
+      // Danışan son anda süre uzatabilir — falcı ekranı hemen kapanmasın.
+      final deadline = DateTime.now().add(const Duration(seconds: 45));
+      while (!_disposed && !state.leaving && DateTime.now().isBefore(deadline)) {
+        await Future<void>.delayed(const Duration(seconds: 3));
+        if (_disposed || state.leaving) return;
+        try {
+          await _syncRoomInfo();
+        } catch (err, st) {
+          CfDiag.swallowed(err, st, CfCategory.fortune, 'psychic_time_up_sync');
+        }
+        if (_disposed || state.leaving) return;
+        final r = state.room;
+        if (r != null && r.timerStarted && r.remainingSeconds > 0) {
+          _startTimers();
+          return;
+        }
+      }
+      if (_disposed || state.leaving) return;
+      await leave(silent: true);
+    } finally {
+      _timeUpRunning = false;
+    }
   }
 
   Future<void> handleClientTimeUp(BuildContext context) async {

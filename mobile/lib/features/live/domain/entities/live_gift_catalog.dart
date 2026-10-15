@@ -22,7 +22,7 @@ class LiveGiftCatalog {
     'gul': 'Gül',
     'yildiz': 'Yıldız',
     'araba': 'Spor araba',
-    'galaksi': 'Galaxy',
+    'galaksi': 'Galaksi',
     'aslan': 'Aslan',
     'yat': 'Yat',
   };

@@ -9,6 +9,7 @@ import '../../../../domain/live_chat_gift_merge.dart';
 
 import '../../broadcast_room/live_room_chat_message.dart';
 import '../live_vip_chat_badge.dart';
+import 'package:canlifal_social/features/voice_hub/girlive/girlive_bot_avatar.dart';
 import '../../../../../voice_hub/presentation/utils/voice_chat_message_filters.dart';
 
 /// Canlı yorum akışı — opak baloncuklar (liste içinde blur yok).
@@ -177,18 +178,24 @@ class _ChatBubble extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 14,
-                backgroundColor: AppThemeColors.accentPurple,
-                child: Text(
-                  initial,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
+              if (GirLiveBotAvatar.isBot(
+                name: message.user,
+                userId: message.userId,
+              ))
+                GirLiveBotAvatar.circle(radius: 14)
+              else
+                CircleAvatar(
+                  radius: 14,
+                  backgroundColor: AppThemeColors.accentPurple,
+                  child: Text(
+                    initial,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
-              ),
               const SizedBox(width: 8),
               Flexible(
                 child: Column(

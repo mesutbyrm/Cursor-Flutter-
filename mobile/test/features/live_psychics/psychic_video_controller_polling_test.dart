@@ -126,6 +126,7 @@ class _FakeSse extends PsychicRoomSseService {
     void Function()? onConnected,
     void Function(PsychicChatMessage message)? onMessage,
     void Function(PsychicRoomEntity room)? onRoomUpdate,
+    void Function(int addedMinutes, int newMaxMinutes)? onTimeExtended,
     void Function(PsychicSessionStatus status)? onSessionEnded,
     void Function(int amount, String? fromName, String? eventId)? onTipReceived,
     void Function(String type, Map<String, dynamic>? data)? onSignal,

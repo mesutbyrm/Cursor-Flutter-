@@ -153,13 +153,14 @@ class LivePremiumTopBar extends StatelessWidget {
             const SizedBox(width: 8),
             _TopGiftersRow(gifters: topGifters, onTap: onViewersTap),
             const SizedBox(width: 6),
-            _ViewerPill(
-              count: session.viewerCount,
-              onTap: onViewersTap,
-            ),
+            _ViewerPill(count: session.viewerCount, onTap: onViewersTap),
             IconButton(
               onPressed: onClose,
-              icon: const Icon(Icons.close_rounded, size: 22, color: Colors.white),
+              icon: const Icon(
+                Icons.close_rounded,
+                size: 22,
+                color: Colors.white,
+              ),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
             ),
@@ -197,37 +198,51 @@ class LivePremiumTopBar extends StatelessWidget {
               ],
             ),
           ),
+        // Dar telefonda çipler taşmasın: sol grup yatay kaydırılabilir.
         Row(
           children: [
-            if (networkQualityBadge != null) ...[
-              networkQualityBadge!,
-              const SizedBox(width: 6),
-            ],
-            if (onPopularTap != null) ...[
-              _GlassChip(
-                icon: Icons.emoji_events_rounded,
-                iconColor: const Color(0xFFFFC107),
-                label: 'Saatlik Sıralama',
-                onTap: onPopularTap,
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (networkQualityBadge != null) ...[
+                      networkQualityBadge!,
+                      const SizedBox(width: 6),
+                    ],
+                    if (onPopularTap != null) ...[
+                      _GlassChip(
+                        icon: Icons.emoji_events_rounded,
+                        iconColor: const Color(0xFFFFC107),
+                        label: 'Saatlik Sıralama',
+                        onTap: onPopularTap,
+                      ),
+                      const SizedBox(width: 6),
+                    ],
+                    _GlassChip(
+                      icon: Icons.local_fire_department_rounded,
+                      iconColor: const Color(0xFFFF6B35),
+                      label: popularRank != null
+                          ? 'Popüler No. $popularRank'
+                          : 'Popüler',
+                      onTap: onPopularTap,
+                    ),
+                    if ((leagueLabel ?? '').isNotEmpty) ...[
+                      const SizedBox(width: 6),
+                      _GlassChip(
+                        icon: Icons.diamond_rounded,
+                        iconColor: const Color(0xFF7C4DFF),
+                        label: leagueLabel!,
+                        onTap: onLeagueTap,
+                      ),
+                    ],
+                  ],
+                ),
               ),
-              const SizedBox(width: 6),
-            ],
-            _GlassChip(
-              icon: Icons.local_fire_department_rounded,
-              iconColor: const Color(0xFFFF6B35),
-              label: popularRank != null ? 'Popüler No. $popularRank' : 'Popüler',
-              onTap: onPopularTap,
             ),
-            if ((leagueLabel ?? '').isNotEmpty) ...[
-              const SizedBox(width: 6),
-              _GlassChip(
-                icon: Icons.diamond_rounded,
-                iconColor: const Color(0xFF7C4DFF),
-                label: leagueLabel!,
-                onTap: onLeagueTap,
-              ),
-            ],
-            const Spacer(),
+            const SizedBox(width: 6),
             if (onDiscoverTap != null)
               _GlassChip(
                 icon: Icons.explore_rounded,
@@ -496,10 +511,7 @@ class _TopGiftersRow extends StatelessWidget {
             for (var i = 0; i < top.length; i++)
               Positioned(
                 left: i * 16.0,
-                child: _TopGifterAvatar(
-                  sender: top[i],
-                  rank: i + 1,
-                ),
+                child: _TopGifterAvatar(sender: top[i], rank: i + 1),
               ),
           ],
         ),
@@ -536,7 +548,8 @@ class _TopGifterAvatar extends StatelessWidget {
                 child: SizedBox(
                   width: 26,
                   height: 26,
-                  child: sender.avatarUrl != null && sender.avatarUrl!.isNotEmpty
+                  child:
+                      sender.avatarUrl != null && sender.avatarUrl!.isNotEmpty
                       ? CanlifalNetworkImage(
                           url: sender.avatarUrl!,
                           fit: BoxFit.cover,
@@ -561,10 +574,7 @@ class _TopGifterAvatar extends StatelessWidget {
             Positioned(
               top: -6,
               right: -2,
-              child: Text(
-                '👑',
-                style: TextStyle(fontSize: 9, color: crown),
-              ),
+              child: Text('👑', style: TextStyle(fontSize: 9, color: crown)),
             ),
           ],
         ),

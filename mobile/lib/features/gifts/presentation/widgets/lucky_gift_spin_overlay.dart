@@ -126,7 +126,7 @@ class _LuckyGiftSpinOverlayState extends ConsumerState<_LuckyGiftSpinOverlay>
                   )
                 else ...[
                   Text(
-                    r.isJackpot ? '👑 JACKPOT!' : (r.icon ?? '🍀'),
+                    r.isJackpot ? '👑 BÜYÜK İKRAMİYE!' : (r.icon ?? '🍀'),
                     style: TextStyle(
                       fontSize: r.isJackpot ? 48 : 56,
                     ),

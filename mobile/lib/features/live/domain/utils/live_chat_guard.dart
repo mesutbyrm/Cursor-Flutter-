@@ -38,10 +38,9 @@ class LiveChatGuard {
       _lastMessage = text;
     }
 
-    if (_containsProfanity(text)) {
-      return 'Mesajınız topluluk kurallarına aykırı ifadeler içeriyor';
-    }
-
+    // Küfür/yasaklı kelime denetimi SUNUCUDA (GirLive Bot) yapılır: bot uyarır,
+    // susturur veya atar. İstemcide engellemek mesajı sunucuya hiç
+    // ulaştırmadığı için botun işlem yapmasını önlüyordu.
     return null;
   }
 
@@ -58,14 +57,6 @@ class LiveChatGuard {
       out = out.replaceAll(pattern, '*' * word.length);
     }
     return out;
-  }
-
-  static bool _containsProfanity(String text) {
-    final lower = text.toLowerCase();
-    for (final word in _profanity) {
-      if (lower.contains(word)) return true;
-    }
-    return false;
   }
 
   /// Testler için sıfırla.

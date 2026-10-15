@@ -31,6 +31,7 @@ import '../../providers/staff_entrance_marquee_provider.dart';
 import '../../providers/voice_gift_providers.dart';
 import '../../utils/voice_gift_pk_sync.dart';
 import '../voice_room_gift_sheet.dart';
+import 'package:canlifal_social/core/ui/responsive/grid_columns.dart';
 import '../../../../gift_box/presentation/widgets/gift_box_panel_section.dart';
 
 /// TikTok Live — blur panel, 8 premium hediye, combo, sıralama.
@@ -491,8 +492,8 @@ class _GiftsTab extends StatelessWidget {
         Expanded(
           child: GridView.builder(
             padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 4,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: responsiveGridColumns(context, min: 4, tileWidth: 92),
               mainAxisSpacing: 10,
               crossAxisSpacing: 8,
               childAspectRatio: 0.74,

@@ -174,11 +174,11 @@ class PkAnimatedScoreBar extends ConsumerWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              _StreakChip(label: '${state.left.winStreak}x WIN', color: VoiceRoomTokens.neonPink),
+              _StreakChip(label: '${state.left.winStreak} GALİBİYET', color: VoiceRoomTokens.neonPink),
               const Spacer(),
               const PkVsEmblem(size: 56, pulse: true),
               const Spacer(),
-              _StreakChip(label: '${state.right.winStreak}x WIN', color: VoiceRoomTokens.neonBlue),
+              _StreakChip(label: '${state.right.winStreak} GALİBİYET', color: VoiceRoomTokens.neonBlue),
             ],
           ),
         ],

@@ -20,22 +20,35 @@ class CdsFullscreenGiftGate extends ChangeNotifier {
   static final instance = CdsFullscreenGiftGate._();
 
   String? _activeEventId;
+  DateTime? _acquiredAt;
+
+  /// En uzun hediye 30 sn; bırakılmayan (ör. ekran kapanırken dispose
+  /// edilemeyen) kilit bundan sonra geçersiz sayılır. Aksi halde bazı
+  /// cihazlarda tek bir takılı hediye sonraki TÜM hediyeleri gizliyordu.
+  static const staleAfter = Duration(seconds: 35);
+
+  bool get _stale {
+    final at = _acquiredAt;
+    return at != null && DateTime.now().difference(at) > staleAfter;
+  }
 
   bool tryAcquire(String eventId) {
-    if (_activeEventId != null && _activeEventId != eventId) {
+    if (_activeEventId != null && _activeEventId != eventId && !_stale) {
       return false;
     }
     _activeEventId = eventId;
+    _acquiredAt = DateTime.now();
     return true;
   }
 
   void release(String eventId) {
     if (_activeEventId == eventId) {
       _activeEventId = null;
+      _acquiredAt = null;
       notifyListeners();
     }
   }
 
   bool isBlocked(String eventId) =>
-      _activeEventId != null && _activeEventId != eventId;
+      _activeEventId != null && _activeEventId != eventId && !_stale;
 }

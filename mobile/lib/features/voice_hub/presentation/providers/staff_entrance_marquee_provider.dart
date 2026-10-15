@@ -71,7 +71,7 @@ class StaffEntranceMarqueeNotifier extends Notifier<StaffEntranceMarqueeState> {
     final gift = giftName.trim().isEmpty ? 'Talih Kutusu' : giftName.trim();
     final jetonLabel = economyCurrencyLabelRead(ref, key: 'jeton');
     enqueue(
-      '👑 JACKPOT! $user $gift ile ×$multiplier kazandı — $wonJetons $jetonLabel!',
+      '👑 BÜYÜK İKRAMİYE! $user $gift ile ×$multiplier kazandı — $wonJetons $jetonLabel!',
     );
   }
 
