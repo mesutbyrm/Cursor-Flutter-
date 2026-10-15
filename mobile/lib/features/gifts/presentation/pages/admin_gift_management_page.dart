@@ -566,7 +566,8 @@ class _GiftRow extends ConsumerWidget {
       builder: (ctx) => AlertDialog(
         title: const Text('Hediyeyi sil'),
         content: Text(
-          '"${gift.name}" silinecek. Depodaki dosyalar da silinir.',
+          '"${gift.name}" uygulamadan tamamen kaldırılacak; tüm sürümlerde '
+          'hediye panelinden düşer. Geçmiş gönderim kayıtları korunur.',
         ),
         actions: [
           TextButton(

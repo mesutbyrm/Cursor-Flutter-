@@ -9,6 +9,7 @@ import '../../theme/voice_room_tokens.dart';
 import '../../utils/voice_chat_message_filters.dart';
 import '../../utils/voice_room_chat_scroll.dart';
 import '../chat/chat_message_widgets.dart';
+import 'package:canlifal_social/core/network/server_clock.dart';
 import '../voice_room/voice_room_chat_new_message_chip.dart';
 
 /// Web tarzı şeffaf sohbet — arka plan üzerinde yüzen mesajlar.
@@ -74,7 +75,9 @@ class _VoiceWebChatOverlayState extends State<VoiceWebChatOverlay> {
   Timer? _welcomeTimer;
 
   bool _welcomeExpired(ChatRoomMessage m) {
-    final now = DateTime.now();
+    // Mesaj zamanı sunucu saatinde — saati ileri telefonda selam hemen
+    // kaybolmasın diye «şimdi» de sunucu saatine göre alınır.
+    final now = DateTime.fromMillisecondsSinceEpoch(ServerClock.nowMs());
     final seen = _welcomeFirstSeen.putIfAbsent(
       m.id,
       () => VoiceChatMessageFilters.welcomeClockStart(m.createdAt, now),

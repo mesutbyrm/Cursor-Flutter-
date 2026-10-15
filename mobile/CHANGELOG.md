@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.793+849 (2026-10-15) — Eksik kontrolü
+
+- **GirLive selamı:** cihaz saati ileri olan telefonlarda «Hoş geldin» mesajı hemen kayboluyordu; süre sunucu saatine göre sayılır
+- **Admin hediye silme:** onay metni düzeltildi («uygulamadan tamamen kaldırılır; geçmiş gönderim kayıtları korunur»)
+
 ## 1.0.792+848 (2026-10-15) — Kalan eksikler: bahşiş tek bildirim, koltuk ölçüleri
 
 - **Bahşiş:** falcıya bildirimi sunucu yazar (anlık SSE + aynı kimlikli sinyal); danışan uygulaması ayrıca sinyal göndermez → çift bildirim yok
