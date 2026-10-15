@@ -15,6 +15,7 @@ import '../providers/social_create_post_provider.dart';
 import '../utils/social_post_location_helper.dart';
 import '../widgets/social_mention_picker_sheet.dart';
 import '../widgets/social_local_video_preview.dart';
+import 'package:go_router/go_router.dart';
 
 /// Instagram tarzı yeni gönderi — görsel/video önizleme + açıklama + Paylaş.
 class SocialCreatePostPage extends ConsumerStatefulWidget {
@@ -78,24 +79,16 @@ class _SocialCreatePostPageState extends ConsumerState<SocialCreatePostPage> {
     }
   }
 
+  /// Sosyal akış yalnız metin/foto destekler; video Kısa Videolar'dan
+  /// paylaşılır (önceden video seçilip gönderilince hata veriyordu).
   Future<void> _pickVideo() async {
-    try {
-      final file = await _picker.pickVideo(
-        source: ImageSource.gallery,
-        maxDuration: const Duration(minutes: 3),
-      );
-      if (file != null && mounted) {
-        setState(() {
-          _videoPath = file.path;
-          _imagePath = null;
-        });
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Video seçilemedi: $e')),
-      );
-    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Video paylaşımı Kısa Videolar bölümünden yapılır.'),
+      ),
+    );
+    context.push('/shorts/upload');
   }
 
   void _insertText(String snippet) {
@@ -154,7 +147,10 @@ class _SocialCreatePostPageState extends ConsumerState<SocialCreatePostPage> {
     try {
       await ref.read(socialCreatePostProvider.notifier).submit(
             CreateSocialPostInput(
-              caption: _caption.text.trim(),
+              // Konum etiketi gönderi metnine eklenir (sunucuda ayrı alan yok).
+              caption: _locationLabel != null && _locationLabel!.trim().isNotEmpty
+                  ? '${_caption.text.trim()}\n📍 ${_locationLabel!.trim()}'.trim()
+                  : _caption.text.trim(),
               imagePath: _imagePath,
               videoPath: _videoPath,
             ),

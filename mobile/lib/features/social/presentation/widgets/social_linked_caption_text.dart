@@ -45,12 +45,8 @@ class _SocialLinkedCaptionTextState extends State<SocialLinkedCaptionText> {
           '/shorts/hashtag/${Uri.encodeComponent(token.value)}',
         );
       case SocialCaptionTokenKind.mention:
-        context.push(
-          Uri(
-            path: '/search',
-            queryParameters: {'q': '@${token.value}'},
-          ).toString(),
-        );
+        // @kullanıcı → doğrudan profil (sunucu kullanıcı adını da çözer).
+        context.push('/user/${Uri.encodeComponent(token.value)}');
       case SocialCaptionTokenKind.text:
         break;
     }

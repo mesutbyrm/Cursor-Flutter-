@@ -17,6 +17,7 @@ import '../../providers/social_create_post_provider.dart';
 import '../social_mention_picker_sheet.dart';
 import '../social_local_video_preview.dart';
 import '../../utils/social_post_location_helper.dart';
+import 'package:go_router/go_router.dart';
 
 /// Sosyal akış üstü — aynı sayfada paylaşım (metin, foto, video, duygu, #, @).
 class SocialFeedComposer extends ConsumerStatefulWidget {
@@ -85,25 +86,16 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
     }
   }
 
+  /// Sosyal akış yalnız metin/foto destekler; video Kısa Videolar'dan
+  /// paylaşılır (önceden video seçilip gönderilince hata veriyordu).
   Future<void> _pickVideo() async {
-    try {
-      final file = await _picker.pickVideo(
-        source: ImageSource.gallery,
-        maxDuration: const Duration(minutes: 3),
-      );
-      if (file != null && mounted) {
-        setState(() {
-          _videoPath = file.path;
-          _imagePath = null;
-          _expanded = true;
-        });
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Video seçilemedi: $e')));
-    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Video paylaşımı Kısa Videolar bölümünden yapılır.'),
+      ),
+    );
+    context.push('/shorts/upload');
   }
 
   void _insertText(String snippet) {
@@ -180,7 +172,10 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
           .read(socialCreatePostProvider.notifier)
           .submit(
             CreateSocialPostInput(
-              caption: caption,
+              // Konum etiketi gönderi metnine eklenir (sunucuda ayrı alan yok).
+              caption: _locationLabel != null && _locationLabel!.trim().isNotEmpty
+                  ? '$caption\n📍 ${_locationLabel!.trim()}'.trim()
+                  : caption,
               imagePath: _imagePath,
               videoPath: _videoPath,
             ),

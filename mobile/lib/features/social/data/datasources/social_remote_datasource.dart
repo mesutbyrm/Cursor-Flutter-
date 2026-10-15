@@ -314,6 +314,14 @@ class SocialRemoteDataSource {
     return _parseComments(res.data);
   }
 
+  /// Kendi yorumunu sil — `DELETE /api/social/posts/{postId}/comments?commentId=`.
+  Future<void> deleteComment(String postId, String commentId) async {
+    await _dio.safeDelete<dynamic>(
+      ApiEndpoints.socialPostComments(postId),
+      query: {'commentId': commentId},
+    );
+  }
+
   Future<SocialCommentEntity> addComment(String postId, String text) async {
     final content = text.trim();
     if (content.isEmpty) {

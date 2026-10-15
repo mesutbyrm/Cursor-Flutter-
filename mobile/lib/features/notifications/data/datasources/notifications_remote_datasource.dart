@@ -79,6 +79,7 @@ class NotificationsRemoteDataSource {
       ])?.toString(),
       targetId: pick(json, [
         'targetId',
+        'postId',
         'entityId',
         'refId',
         'referenceId',

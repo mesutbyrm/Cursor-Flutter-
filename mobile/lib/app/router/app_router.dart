@@ -319,16 +319,31 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/sosyal',
         redirect: (context, state) {
-          final postId = state.uri.queryParameters['post']?.trim();
+          // Web/OneSignal linki `?postId=`, uygulama paylaşımı `?post=`.
+          final postId = (state.uri.queryParameters['post'] ??
+                  state.uri.queryParameters['postId'])
+              ?.trim();
           if (postId != null && postId.isNotEmpty) {
             return '/social/post/${Uri.encodeComponent(postId)}';
           }
           return '/social';
         },
       ),
+      // Misafir «Giriş yap»: misafir modundan çıkılır → oturum açma ekranı
+      // (AuthFlowApp) gösterilir. Önceden yalnız /feed'e atıyordu.
       GoRoute(
         path: '/login',
-        redirect: (context, state) => '/feed',
+        redirect: (context, state) {
+          _leaveGuestModeForLogin(ref);
+          return '/feed';
+        },
+      ),
+      GoRoute(
+        path: '/auth/login',
+        redirect: (context, state) {
+          _leaveGuestModeForLogin(ref);
+          return '/feed';
+        },
       ),
       GoRoute(
         path: '/register',
@@ -1992,3 +2007,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+
+/// Oturum yokken misafir modunu kapatır (giriş ekranı açılır).
+void _leaveGuestModeForLogin(Ref ref) {
+  final signedIn = ref.read(authControllerProvider).valueOrNull != null;
+  if (signedIn) return;
+  Future.microtask(() => ref.read(guestModeProvider.notifier).state = false);
+}

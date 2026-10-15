@@ -29,6 +29,9 @@ import 'social_post_caption.dart';
 import 'social_post_comments_sheet.dart';
 import 'social_post_video_player.dart';
 import 'double_tap_heart.dart';
+import 'package:canlifal_social/features/messages/presentation/providers/messages_providers.dart';
+import 'package:canlifal_social/features/moderation/domain/entities/report_target.dart';
+import 'package:canlifal_social/features/moderation/presentation/utils/open_report_flow.dart';
 
 /// CanlıFal Sosyal akış kartı — fal rozeti, otomatik paylaşım, etkileşim.
 class SocialInstagramPostCard extends ConsumerStatefulWidget {
@@ -52,6 +55,7 @@ class _SocialInstagramPostCardState
     extends ConsumerState<SocialInstagramPostCard> {
   late bool _liked;
   late int _likeCount;
+  static final Set<String> _viewedPostIds = <String>{};
   var _likeBurst = 0;
   var _doubleTapHearts = 0;
 
@@ -63,6 +67,8 @@ class _SocialInstagramPostCardState
     if (postId.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
+        // Oturum başına bir kez — kaydırıp geri gelince görüntülenme şişmesin.
+        if (!_viewedPostIds.add(postId)) return;
         ref.read(socialNotifierProvider.notifier).registerView(postId);
         ref.read(socialRemoteProvider).registerPostView(postId);
       });
@@ -97,6 +103,49 @@ class _SocialInstagramPostCardState
   bool get _hasMedia =>
       post.mediaUrl != null && post.mediaUrl!.trim().isNotEmpty;
 
+  void _reportPost(BuildContext context) {
+    openReportFlow(
+      context,
+      ReportTarget(
+        type: ReportTargetType.post,
+        targetId: post.id,
+        ownerUserId: post.author.id,
+        displayTitle: 'Gönderi',
+      ),
+    );
+  }
+
+  Future<void> _blockAuthor(BuildContext context) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Kullanıcıyı engelle'),
+        content: Text(
+          '${post.author.display} engellensin mi? Birbirinizin gönderilerini '
+          'görmez, mesajlaşamaz ve yorum yapamazsınız.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Vazgeç')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Engelle')),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    try {
+      await ref.read(messagesRemoteProvider).blockUser(post.author.id);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${post.author.display} engellendi')),
+      );
+      widget.onDeleted?.call();
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
+    }
+  }
+
   void _openAuthorTimeline(BuildContext context) {
     context.push(buildSocialUserProfileRoute(post.author.id), extra: post.id);
   }
@@ -128,6 +177,8 @@ class _SocialInstagramPostCardState
       onProfile: () => _openAuthorTimeline(context),
       onShare: () => _sharePost(context),
       onDelete: isMine ? () => _deletePost(context) : null,
+      onReport: isMine || myId == null ? null : () => _reportPost(context),
+      onBlock: isMine || myId == null ? null : () => _blockAuthor(context),
     );
     Widget actions({bool onMedia = false}) =>
         _buildActions(context, likeCount, onMedia: onMedia);
@@ -343,7 +394,7 @@ class _SocialInstagramPostCardState
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Silinemedi: $e')));
+        ).showSnackBar(SnackBar(content: Text('Silinemedi: ${ApiException.userMessage(e)}')));
       }
     }
   }
@@ -437,6 +488,8 @@ class _PostHeader extends StatelessWidget {
     required this.onProfile,
     required this.onShare,
     this.onDelete,
+    this.onReport,
+    this.onBlock,
     this.onMedia = false,
   });
 
@@ -446,6 +499,8 @@ class _PostHeader extends StatelessWidget {
   final VoidCallback onProfile;
   final VoidCallback onShare;
   final VoidCallback? onDelete;
+  final VoidCallback? onReport;
+  final VoidCallback? onBlock;
 
   @override
   Widget build(BuildContext context) {
@@ -560,6 +615,8 @@ class _PostHeader extends StatelessWidget {
               _PostMenuAction.profile => onProfile(),
               _PostMenuAction.share => onShare(),
               _PostMenuAction.delete => onDelete?.call(),
+              _PostMenuAction.report => onReport?.call(),
+              _PostMenuAction.block => onBlock?.call(),
             },
             itemBuilder: (_) => [
               const PopupMenuItem(
@@ -576,6 +633,22 @@ class _PostHeader extends StatelessWidget {
                   title: Text('Paylaş'),
                 ),
               ),
+              if (onReport != null)
+                const PopupMenuItem(
+                  value: _PostMenuAction.report,
+                  child: ListTile(
+                    leading: Icon(Icons.flag_outlined),
+                    title: Text('Şikayet et'),
+                  ),
+                ),
+              if (onBlock != null)
+                const PopupMenuItem(
+                  value: _PostMenuAction.block,
+                  child: ListTile(
+                    leading: Icon(Icons.block_rounded),
+                    title: Text('Kullanıcıyı engelle'),
+                  ),
+                ),
               if (onDelete != null)
                 PopupMenuItem(
                   value: _PostMenuAction.delete,
@@ -642,7 +715,7 @@ class _PostHeader extends StatelessWidget {
   }
 }
 
-enum _PostMenuAction { profile, share, delete }
+enum _PostMenuAction { profile, share, delete, report, block }
 
 class _CoViewersBar extends StatelessWidget {
   const _CoViewersBar({

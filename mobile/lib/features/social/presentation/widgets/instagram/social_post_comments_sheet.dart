@@ -179,6 +179,12 @@ class _SocialPostCommentsSheetState
                   Expanded(
                     child: TextField(
                       controller: _controller,
+                      // Sunucu sınırı 500 karakter.
+                      maxLength: 500,
+                      buildCounter: (_, {required currentLength, required isFocused, maxLength}) =>
+                          currentLength > 400
+                              ? Text('$currentLength/500', style: const TextStyle(fontSize: 11))
+                              : null,
                       style: TextStyle(color: context.colors.onSurface),
                       decoration: InputDecoration(
                         hintText: 'Yorum yaz…',
@@ -219,6 +225,30 @@ class _SocialPostCommentsSheetState
         ),
       ),
     );
+  }
+
+  Future<void> _confirmDeleteComment(String commentId) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Yorumu sil'),
+        content: const Text('Bu yorum kalıcı olarak silinsin mi?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Vazgeç')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Sil')),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    try {
+      await ref.read(socialRemoteProvider).deleteComment(widget.postId, commentId);
+      ref.invalidate(postCommentsProvider(widget.postId));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
+    }
   }
 
   Widget _buildCommentsList(BuildContext context) {
@@ -283,7 +313,9 @@ class _SocialPostCommentsSheetState
                 context.push(buildSocialUserProfileRoute(id));
               }
 
-              final content = Row(
+              final myId = ref.read(authControllerProvider).valueOrNull?.id;
+              final isMine = myId != null && myId == c.author.id;
+              final row = Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   GestureDetector(
@@ -318,6 +350,12 @@ class _SocialPostCommentsSheetState
                     ),
                   ),
                 ],
+              );
+              // Kendi yorumuna uzun bas → sil.
+              final content = GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onLongPress: isMine ? () => _confirmDeleteComment(c.id) : null,
+                child: row,
               );
               if (i < 6) {
                 return CanlifalEntranceFadeSlide(

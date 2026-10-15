@@ -57,7 +57,12 @@ Future<void> _navigateFromNotificationImpl(
     return;
   }
 
-  final path = n.targetPath?.trim();
+  var path = n.targetPath?.trim();
+  // Sunucu bildirim bağlantısı uygulama şemasıyla gelir (canlifal://post/<id>);
+  // önceden «/canlifal://post/…» diye olmayan bir rotaya gidiliyordu.
+  if (path != null && path.startsWith('canlifal://')) {
+    path = appRouteFromCanlifalUri(path);
+  }
   if (path != null && path.isNotEmpty) {
     if (path == '/' || path == '/index' || path == '/home') {
       final fallback = _routeFromTypeAndText(
@@ -394,4 +399,30 @@ String _adminPaymentPath(AppNotificationEntity n) {
     return '/admin?focusRequest=$requestId';
   }
   return '/admin';
+}
+
+
+/// `canlifal://<tür>/<değer>` → uygulama rotası (backend lib/deeplink.ts).
+String appRouteFromCanlifalUri(String raw) {
+  final uri = Uri.tryParse(raw);
+  if (uri == null) return '/feed';
+  final type = uri.host.toLowerCase();
+  final value = uri.pathSegments.isNotEmpty
+      ? Uri.decodeComponent(uri.pathSegments.first)
+      : '';
+  final v = Uri.encodeComponent(value);
+  if (value.isEmpty) return '/feed';
+  return switch (type) {
+    'post' => '/social/post/$v',
+    'profile' || 'user' => '/user/$v',
+    'message' => '/chat/$v',
+    'chatroom' || 'room' => '/voice-room/$v',
+    'video' || 'short' => '/shorts?videoId=$v',
+    'teller' => '/canli-falcilar',
+    'stream' => '/live',
+    'page' => '/legal/$v',
+    'dream' || 'dreamdict' => '/dreams-hub',
+    'blog' => '/blog-hub',
+    _ => '/feed',
+  };
 }
