@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.792+848 (2026-10-15) — Kalan eksikler: bahşiş tek bildirim, koltuk ölçüleri
+
+- **Bahşiş:** falcıya bildirimi sunucu yazar (anlık SSE + aynı kimlikli sinyal); danışan uygulaması ayrıca sinyal göndermez → çift bildirim yok
+- **Sesli oda koltukları:** koltuk boyutu ekran genişliğine göre (dar telefonda taşmaz, tablette küçük kalmaz)
+- **Koltuk hediye efekti:** konumu koltuk ızgarasıyla aynı ölçüye ve güvenli alana göre hesaplanır
+
 ## 1.0.791+847 (2026-10-15) — Eksik kontrolü: admin hediye düzenleyici, GirLive ayarları, responsive
 
 - **Admin hediye düzenleyici (uygulama) sadeleşti:** Görüntüleme türü (Tam ekran / Yarım ekran / Küçük) seçimi; dosya yüklenince isim ve süre otomatik; hediye müziği yükleme; elle «Sıralama», «Kademe», «Animasyon süresi», «Efekt rengi», «Animasyon türü», «İngilizce isim» ve «Tam ekran» anahtarı kaldırıldı (sunucu otomatik ayarlar, sıra jeton fiyatına göre)

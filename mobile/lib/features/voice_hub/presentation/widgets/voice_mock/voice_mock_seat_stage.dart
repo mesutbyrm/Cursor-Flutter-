@@ -303,7 +303,10 @@ class VoiceMockSeat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = isHost ? 56.0 : 52.0;
+    // Ekran genişliğine göre: dar telefonda taşmaz, tablette küçük kalmaz.
+    final screenW = MediaQuery.sizeOf(context).width.clamp(280.0, 900.0);
+    final base = ((screenW - 12) / 4 * 0.56).clamp(44.0, 84.0);
+    final size = isHost ? base + 4 : base;
     final box = size + _pad;
     final u = user;
 

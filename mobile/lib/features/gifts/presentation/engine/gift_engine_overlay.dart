@@ -347,18 +347,23 @@ class _GiftEngineOverlayState extends ConsumerState<GiftEngineOverlay> {
   }
 
   Widget _seatPositioned(BuildContext context, int? seatIndex, Widget child) {
+    // Koltuk ızgarasıyla aynı ölçü (voice_mock_seat_stage): 4 sütun, koltuk
+    // boyutu ekran genişliğine göre; efekt koltuğun ortasına hizalanır.
     final idx = seatIndex ?? 0;
-    final w = MediaQuery.sizeOf(context).width;
+    final mq = MediaQuery.of(context);
+    final screenW = mq.size.width.clamp(280.0, 900.0);
     const cols = 4;
+    final cellW = (screenW - 12) / cols;
+    final seat = (cellW * 0.56).clamp(44.0, 84.0) + 20;
     final col = idx % cols;
     final row = idx ~/ cols;
-    final left = 16 + col * (w - 32) / cols;
-    final top = 120.0 + row * 88;
+    final left = 6 + col * cellW + (cellW - seat) / 2;
+    final top = mq.padding.top + 96 + row * (seat + 34);
     return Positioned(
       left: left,
       top: top,
-      width: 72,
-      height: 72,
+      width: seat,
+      height: seat,
       child: child,
     );
   }

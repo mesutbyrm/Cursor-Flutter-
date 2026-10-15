@@ -1668,22 +1668,8 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       invalidateWalletCacheFromRef(ref);
       state = state.copyWith(tipThankYouAmount: amount);
       _scheduleTipThankYouDismiss();
-      final tellerUid = session.tellerUserId ??
-          state.room?.tellerUserId ??
-          session.psychic.userId;
-      unawaited(
-        ref.read(livePsychicsRepositoryProvider).sendRoomSignal(
-              sessionId: session.sessionId,
-              type: 'tip',
-              data: {
-                'amount': amount,
-                'senderName':
-                    ref.read(authControllerProvider).valueOrNull?.display,
-                'senderId': ref.read(authControllerProvider).valueOrNull?.id,
-              },
-              receiverId: tellerUid,
-            ),
-      );
+      // Falcı bildirimini sunucu yazar (anlık SSE + aynı kimlikli sinyal);
+      // istemcinin ayrıca sinyal göndermesi çift bildirime yol açıyordu.
     }
     return ok;
   }
