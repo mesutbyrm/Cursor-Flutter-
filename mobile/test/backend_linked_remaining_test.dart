@@ -56,8 +56,11 @@ void main() {
       expect(item.effectKind, CosmeticEffectKind.rainbowText);
     });
 
-    test('profil efekti ve rozetin backend ucu yok', () {
-      expect(CosmeticsEquipRemoteDataSource.endpointFor(CosmeticSlot.profileEffect), isNull);
+    test('profil efekti sunucuda (/api/profile-effect), rozetin ucu yok', () {
+      expect(
+        CosmeticsEquipRemoteDataSource.endpointFor(CosmeticSlot.profileEffect),
+        '/api/profile-effect',
+      );
       expect(CosmeticsEquipRemoteDataSource.endpointFor(CosmeticSlot.badge), isNull);
       expect(
         CosmeticsEquipRemoteDataSource.endpointFor(CosmeticSlot.chatBubble),

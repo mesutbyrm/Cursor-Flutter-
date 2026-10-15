@@ -6,6 +6,7 @@ import '../../../../core/util/json_util.dart';
 import '../../vip_gold/domain/vip_tier.dart';
 import '../domain/cosmetic_effect_kind.dart';
 import '../domain/cosmetic_item.dart';
+import '../domain/cosmetic_name_style.dart';
 import '../domain/cosmetic_slot.dart';
 import '../domain/user_cosmetic_loadout.dart';
 
@@ -23,7 +24,8 @@ class CosmeticsEquipRemoteDataSource {
         CosmeticSlot.nameEffect => ApiEndpoints.nameEffects,
         CosmeticSlot.entranceAnimation => ApiEndpoints.entranceEffects,
         CosmeticSlot.avatarAccessory => ApiEndpoints.avatarAccessories,
-        CosmeticSlot.profileEffect || CosmeticSlot.badge => null,
+        CosmeticSlot.profileEffect => ApiEndpoints.profileEffect,
+        CosmeticSlot.badge => null,
       };
 
   static const syncedSlots = [
@@ -33,7 +35,24 @@ class CosmeticsEquipRemoteDataSource {
     CosmeticSlot.nameEffect,
     CosmeticSlot.entranceAnimation,
     CosmeticSlot.avatarAccessory,
+    CosmeticSlot.profileEffect,
   ];
+
+  /// Web profil efekti anahtarı → uygulama parçacık türü.
+  static CosmeticEffectKind profileEffectKind(String key) =>
+      switch (key.toLowerCase()) {
+        'stars' => CosmeticEffectKind.particleStars,
+        'sparkles' => CosmeticEffectKind.particleGoldDust,
+        'hearts' => CosmeticEffectKind.particleHearts,
+        'snow' => CosmeticEffectKind.particleSnow,
+        'bubbles' => CosmeticEffectKind.particleMoon,
+        'confetti' => CosmeticEffectKind.particleDiamonds,
+        'fire' => CosmeticEffectKind.particleRoses,
+        'rainbow' => CosmeticEffectKind.particleButterflies,
+        'lightning' => CosmeticEffectKind.particleSmoke,
+        'aurora' => CosmeticEffectKind.particleGalaxy,
+        _ => CosmeticEffectKind.particleStars,
+      };
 
   /// `createCosmeticPublicHandlers` zarfı: `{success, data: {items, selected}}`;
   /// profil çerçevesi: `{frames, currentFrameId}`.
@@ -51,6 +70,18 @@ class CosmeticsEquipRemoteDataSource {
 
   static CosmeticItem itemFromBackend(CosmeticSlot slot, Map<String, dynamic> m) {
     final isName = slot == CosmeticSlot.nameEffect;
+    if (slot == CosmeticSlot.profileEffect) {
+      final key = (m['key'] ?? m['id'])?.toString() ?? '';
+      return CosmeticItem(
+        id: key,
+        slot: slot,
+        name: m['name']?.toString() ?? slot.labelTr,
+        effectKind: profileEffectKind(key),
+        requiredTier: VipTier.fromMembership(m['tier']?.toString()),
+        sortOrder: asInt(m['sortOrder']),
+        active: m['isActive'] != false,
+      );
+    }
     final key = m['key']?.toString() ?? '';
     final asset = (m['assetUrl'] ?? m['imageUrl'])?.toString();
     return CosmeticItem(
@@ -65,6 +96,13 @@ class CosmeticsEquipRemoteDataSource {
       requiredTier: VipTier.fromMembership(m['tier']?.toString()),
       sortOrder: asInt(m['sortOrder']),
       active: m['isActive'] != false && m['tier']?.toString() != 'admin_only',
+      // Sitedeki isim stilleri (önceden hepsi aynı «parlama» görünüyordu).
+      nameStyle: isName ? CosmeticNameStyle.parse(m['cssPreset']) : null,
+      assetType: m['assetType']?.toString(),
+      durationMs: (m['durationMs'] as num?)?.toInt(),
+      accessorySlot: slot == CosmeticSlot.avatarAccessory
+          ? m['slot']?.toString()
+          : null,
     );
   }
 

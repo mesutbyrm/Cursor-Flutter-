@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'cosmetic_asset_image.dart';
 import '../../domain/cosmetic_effect_kind.dart';
 import '../../domain/cosmetic_item.dart';
 import 'cosmetic_frame_painter.dart';
@@ -48,6 +49,33 @@ class _CosmeticAvatarFrameState extends State<CosmeticAvatarFrame>
     final item = widget.item;
     if (item == null || item.effectKind == CosmeticEffectKind.plain) {
       return widget.child;
+    }
+
+    // Sitedeki görsel çerçeve: avatar ortada, çerçeve görseli üstte
+    // (web `framed-avatar`: çerçeve = avatar × 1.35).
+    final img = item.imageUrl;
+    if (item.effectKind == CosmeticEffectKind.imageOverlay && img != null) {
+      final inner = widget.size / 1.35;
+      return SizedBox(
+        width: widget.size,
+        height: widget.size,
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.center,
+          children: [
+            SizedBox(
+              width: inner,
+              height: inner,
+              child: ClipOval(child: FittedBox(child: widget.child)),
+            ),
+            Positioned.fill(
+              child: IgnorePointer(
+                child: CosmeticAssetImage(url: img, fit: BoxFit.contain),
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     final colors = item.colors

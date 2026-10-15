@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'cosmetic_asset_image.dart';
 import '../../domain/cosmetic_effect_kind.dart';
 import '../../domain/cosmetic_item.dart';
 
@@ -62,7 +63,55 @@ abstract final class CosmeticChatBubbleStyle {
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       );
 
+  /// Balon — sitedeki balon görseli varsa onu arka plan olarak kullanır.
+  static Widget bubble(
+    CosmeticItem? item, {
+    required Widget child,
+    EdgeInsets padding =
+        const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+  }) {
+    final img = item?.imageUrl;
+    if (item != null &&
+        item.effectKind == CosmeticEffectKind.imageOverlay &&
+        img != null) {
+      return Stack(
+        children: [
+          Positioned.fill(
+            child: CosmeticAssetImage(url: img, fit: BoxFit.fill),
+          ),
+          Padding(
+            padding: padding + const EdgeInsets.symmetric(horizontal: 4),
+            child: DefaultTextStyle.merge(
+              style: const TextStyle(
+                color: Colors.white,
+                shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
+              ),
+              child: child,
+            ),
+          ),
+        ],
+      );
+    }
+    return Container(
+      padding: padding,
+      decoration: decoration(item),
+      child: child,
+    );
+  }
+
   static Widget preview(CosmeticItem item) {
+    if (item.effectKind == CosmeticEffectKind.imageOverlay &&
+        item.imageUrl != null) {
+      return bubble(
+        item,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: const Text(
+          'Merhaba!',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+        ),
+      );
+    }
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),

@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'cosmetic_asset_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../domain/cosmetic_effect_kind.dart';
@@ -11,7 +12,15 @@ class CosmeticEntranceOverlay extends StatefulWidget {
     required this.userName,
     required this.effectKind,
     this.onFinished,
+    this.imageUrl,
+    this.assetType,
+    this.durationMs,
   });
+
+  /// Sitedeki giriş efekti görseli / animasyonu ve süresi.
+  final String? imageUrl;
+  final String? assetType;
+  final int? durationMs;
 
   final String userName;
   final CosmeticEffectKind effectKind;
@@ -31,7 +40,11 @@ class _CosmeticEntranceOverlayState extends State<CosmeticEntranceOverlay>
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2800),
+      duration: Duration(
+        milliseconds: (widget.durationMs ?? 0) > 0
+            ? widget.durationMs!.clamp(1500, 8000)
+            : 2800,
+      ),
     )..forward().then((_) {
         if (mounted) widget.onFinished?.call();
       });
@@ -69,18 +82,26 @@ class _CosmeticEntranceOverlayState extends State<CosmeticEntranceOverlay>
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          _iconFor(widget.effectKind),
-                          size: 72,
-                          color: _colorFor(widget.effectKind),
-                          shadows: [
-                            Shadow(
-                              color: _colorFor(widget.effectKind)
-                                  .withValues(alpha: 0.8),
-                              blurRadius: 24,
-                            ),
-                          ],
-                        ),
+                        if (widget.imageUrl != null)
+                          CosmeticAssetImage(
+                            url: widget.imageUrl!,
+                            assetType: widget.assetType,
+                            width: 220,
+                            height: 160,
+                          )
+                        else
+                          Icon(
+                            _iconFor(widget.effectKind),
+                            size: 72,
+                            color: _colorFor(widget.effectKind),
+                            shadows: [
+                              Shadow(
+                                color: _colorFor(widget.effectKind)
+                                    .withValues(alpha: 0.8),
+                                blurRadius: 24,
+                              ),
+                            ],
+                          ),
                         const SizedBox(height: 14),
                         Text(
                           widget.userName,

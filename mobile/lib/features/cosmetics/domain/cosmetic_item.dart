@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../vip_gold/domain/vip_tier.dart';
 import 'cosmetic_effect_kind.dart';
+import 'cosmetic_name_style.dart';
 import 'cosmetic_slot.dart';
 
 class CosmeticItem extends Equatable {
@@ -18,6 +19,10 @@ class CosmeticItem extends Equatable {
     this.colors = const [],
     this.sortOrder = 0,
     this.active = true,
+    this.nameStyle,
+    this.assetType,
+    this.durationMs,
+    this.accessorySlot,
   });
 
   factory CosmeticItem.fromJson(Map<String, dynamic> json) {
@@ -33,6 +38,7 @@ class CosmeticItem extends Equatable {
     final type = renderMap['type']?.toString() ??
         json['effectType']?.toString() ??
         json['type']?.toString();
+    final image = (json['assetUrl'] ?? json['imageUrl'])?.toString();
     final tierRaw = json['requiredMembership']?.toString() ??
         json['tier']?.toString() ??
         json['minTier']?.toString();
@@ -47,19 +53,30 @@ class CosmeticItem extends Equatable {
       id: json['id']?.toString() ?? '',
       slot: slot,
       name: json['name']?.toString() ?? 'Efekt',
-      effectKind:
-          CosmeticEffectKindX.parse(type) ?? CosmeticEffectKind.neonGlow,
+      // Sitedeki profil çerçeveleri yalnızca görsel (imageUrl) taşır; önceden
+      // neon halka çiziliyordu, görselin kendisi gösterilmiyordu.
+      effectKind: CosmeticEffectKindX.parse(type) ??
+          ((image != null && image.trim().isNotEmpty)
+              ? CosmeticEffectKind.imageOverlay
+              : CosmeticEffectKind.neonGlow),
       previewUrl: json['previewUrl']?.toString() ?? json['imageUrl']?.toString(),
       assetUrl: json['assetUrl']?.toString() ??
           (json['asset'] is Map
               ? (json['asset'] as Map)['url']?.toString()
-              : null),
+              : null) ??
+          json['imageUrl']?.toString(),
       requiredTier: VipTier.fromMembership(tierRaw),
       requiredRole: json['requiredRole']?.toString(),
       animated: json['animated'] != false,
       colors: colors,
       sortOrder: (json['sortOrder'] as num?)?.toInt() ?? 0,
       active: json['active'] != false && json['isActive'] != false,
+      nameStyle: CosmeticNameStyle.parse(json['cssPreset']),
+      assetType: json['assetType']?.toString(),
+      durationMs: (json['durationMs'] as num?)?.toInt(),
+      accessorySlot: slot == CosmeticSlot.avatarAccessory
+          ? json['accessorySlot']?.toString()
+          : null,
     );
   }
 
@@ -75,6 +92,22 @@ class CosmeticItem extends Equatable {
   final List<ColorSpec> colors;
   final int sortOrder;
   final bool active;
+
+  /// İsim efekti — sitedeki `cssPreset` stili (renk/geçiş/parlama/kontur/ışıltı).
+  final CosmeticNameStyle? nameStyle;
+
+  /// Giriş efekti medya türü (lottie/svga/gif/video/image) ve süresi.
+  final String? assetType;
+  final int? durationMs;
+
+  /// Avatar aksesuarı konumu: hat / crown / glasses / wings / mask / other.
+  final String? accessorySlot;
+
+  /// Görsel tabanlı kozmetik mi (çerçeve/balon/mikrofon/aksesuar/giriş görseli)?
+  String? get imageUrl {
+    final a = (assetUrl ?? previewUrl)?.trim();
+    return (a == null || a.isEmpty) ? null : a;
+  }
 
   bool isUnlockedFor({
     required VipTier tier,
@@ -92,7 +125,7 @@ class CosmeticItem extends Equatable {
 
   @override
   List<Object?> get props =>
-      [id, slot, name, effectKind, previewUrl, requiredTier, active];
+      [id, slot, name, effectKind, previewUrl, requiredTier, active, nameStyle];
 }
 
 class ColorSpec extends Equatable {

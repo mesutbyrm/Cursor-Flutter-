@@ -6,6 +6,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/cosmetic_item.dart';
 import '../../domain/cosmetic_slot.dart';
 import '../providers/cosmetics_providers.dart';
+import 'cosmetic_asset_image.dart';
 import 'cosmetic_avatar_frame.dart';
 import 'cosmetic_chat_bubble.dart';
 import 'cosmetic_entrance_overlay.dart';
@@ -18,9 +19,18 @@ class CosmeticProfilePreviewPanel extends ConsumerStatefulWidget {
   const CosmeticProfilePreviewPanel({
     super.key,
     required this.activeSlot,
+    this.overrides = const {},
+    this.entranceToken = 0,
   });
 
   final CosmeticSlot activeSlot;
+
+  /// Canlı önizleme: listede dokunulan (henüz uygulanmamış) öğeler. Anahtar
+  /// varsa değer kullanılır (`null` = varsayılan).
+  final Map<CosmeticSlot, CosmeticItem?> overrides;
+
+  /// Değişince giriş efekti otomatik oynatılır (giriş önizlemesi).
+  final int entranceToken;
 
   @override
   ConsumerState<CosmeticProfilePreviewPanel> createState() =>
@@ -30,10 +40,28 @@ class CosmeticProfilePreviewPanel extends ConsumerStatefulWidget {
 class _CosmeticProfilePreviewPanelState
     extends ConsumerState<CosmeticProfilePreviewPanel> {
   var _showEntrance = false;
+  var _entranceRun = 0;
 
   void _playEntrance() {
-    setState(() => _showEntrance = true);
+    setState(() {
+      _showEntrance = true;
+      _entranceRun++;
+    });
   }
+
+  @override
+  void didUpdateWidget(covariant CosmeticProfilePreviewPanel old) {
+    super.didUpdateWidget(old);
+    if (widget.entranceToken != old.entranceToken &&
+        widget.overrides[CosmeticSlot.entranceAnimation] != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _playEntrance();
+      });
+    }
+  }
+
+  CosmeticItem? _pick(CosmeticSlot s, CosmeticItem? equipped) =>
+      widget.overrides.containsKey(s) ? widget.overrides[s] : equipped;
 
   @override
   Widget build(BuildContext context) {
@@ -42,12 +70,20 @@ class _CosmeticProfilePreviewPanelState
     final username = user?.username ?? 'kullanici';
     final avatarUrl = user?.avatarUrl;
 
-    final frame = ref.watch(resolvedProfileFrameProvider);
-    final nameFx = ref.watch(resolvedNameEffectProvider);
-    final profileFx = ref.watch(resolvedProfileEffectProvider);
-    final entrance = ref.watch(resolvedEntranceEffectProvider);
-    final bubble = ref.watch(resolvedChatBubbleProvider);
-    final mic = ref.watch(resolvedMicrophoneFrameProvider);
+    final frame = _pick(
+        CosmeticSlot.profileFrame, ref.watch(resolvedProfileFrameProvider));
+    final nameFx = _pick(
+        CosmeticSlot.nameEffect, ref.watch(resolvedNameEffectProvider));
+    final profileFx = _pick(
+        CosmeticSlot.profileEffect, ref.watch(resolvedProfileEffectProvider));
+    final entrance = _pick(CosmeticSlot.entranceAnimation,
+        ref.watch(resolvedEntranceEffectProvider));
+    final bubble = _pick(
+        CosmeticSlot.chatBubble, ref.watch(resolvedChatBubbleProvider));
+    final mic = _pick(CosmeticSlot.microphoneFrame,
+        ref.watch(resolvedMicrophoneFrameProvider));
+    final accessory = _pick(CosmeticSlot.avatarAccessory,
+        ref.watch(resolvedAvatarAccessoryProvider));
 
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 8, 12, 4),
@@ -100,6 +136,8 @@ class _CosmeticProfilePreviewPanelState
                                 child: _ProfileFxHost(effect: profileFx),
                               ),
                             ),
+                          if (accessory?.imageUrl != null)
+                            _AccessoryOverlay(item: accessory!, size: 88),
                         ],
                       ),
                     ),
@@ -153,8 +191,12 @@ class _CosmeticProfilePreviewPanelState
           if (_showEntrance && entrance != null)
             Positioned.fill(
               child: CosmeticEntranceOverlay(
+                key: ValueKey('entrance-${entrance.id}-$_entranceRun'),
                 userName: display,
                 effectKind: entrance.effectKind,
+                imageUrl: entrance.imageUrl,
+                assetType: entrance.assetType,
+                durationMs: entrance.durationMs,
                 onFinished: () {
                   if (mounted) setState(() => _showEntrance = false);
                 },
@@ -257,9 +299,8 @@ class _ContextPreview extends StatelessWidget {
     return switch (slot) {
       CosmeticSlot.chatBubble => Align(
           alignment: Alignment.centerLeft,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: CosmeticChatBubbleStyle.decoration(bubble),
+          child: CosmeticChatBubbleStyle.bubble(
+            bubble,
             child: const Text(
               'Sohbette böyle görünür 💬',
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
@@ -332,11 +373,55 @@ class _ContextPreview extends StatelessWidget {
           ),
         ),
       _ => Text(
-          'Seçiminiz profilinizde anında uygulanır.',
+          'Bir öğeye dokun → burada nasıl göründüğünü gör → «Uygula».',
           style: TextStyle(
             fontSize: 11,
             color: Colors.white.withValues(alpha: 0.65),
           ),
+        ),
+    };
+  }
+}
+
+/// Avatar aksesuarı (şapka/taç üstte, gözlük ortada, kanat arkada).
+class _AccessoryOverlay extends StatelessWidget {
+  const _AccessoryOverlay({required this.item, required this.size});
+
+  final CosmeticItem item;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final slot = (item.accessorySlot ?? 'other').toLowerCase();
+    final img = CosmeticAssetImage(url: item.imageUrl!, fit: BoxFit.contain);
+    return switch (slot) {
+      'hat' || 'crown' => Positioned(
+          top: -size * 0.38,
+          left: size * 0.18,
+          width: size * 0.64,
+          height: size * 0.5,
+          child: IgnorePointer(child: img),
+        ),
+      'glasses' || 'mask' => Positioned(
+          top: size * (slot == 'mask' ? 0.42 : 0.3),
+          left: size * 0.2,
+          width: size * 0.6,
+          height: size * 0.3,
+          child: IgnorePointer(child: img),
+        ),
+      'wings' => Positioned(
+          top: -size * 0.1,
+          left: -size * 0.35,
+          width: size * 1.7,
+          height: size * 1.2,
+          child: IgnorePointer(child: Opacity(opacity: 0.9, child: img)),
+        ),
+      _ => Positioned(
+          top: -size * 0.12,
+          right: -size * 0.12,
+          width: size * 0.42,
+          height: size * 0.42,
+          child: IgnorePointer(child: img),
         ),
     };
   }

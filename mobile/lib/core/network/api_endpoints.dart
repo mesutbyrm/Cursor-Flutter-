@@ -681,6 +681,8 @@ abstract final class ApiEndpoints {
   static const nameEffects = '/api/name-effects';
   static const entranceEffects = '/api/entrance-effects';
   static const avatarAccessories = '/api/avatar-accessories';
+  /// Profil efekti seçimi (parçacık arka plan) — web profile-effects anahtarları.
+  static const String profileEffect = '/api/profile-effect';
 
   static const paymentConfig = '/api/payments/config';
   static const paymentMethods = '/api/payments/methods';

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../domain/cosmetic_effect_kind.dart';
 import '../../domain/cosmetic_item.dart';
+import '../../domain/cosmetic_name_style.dart';
 
 /// Backend / katalog isim efektleri — gradient, neon, shine.
 class CosmeticNameLabel extends StatefulWidget {
@@ -49,6 +50,8 @@ class _CosmeticNameLabelState extends State<CosmeticNameLabel>
           fontSize: 18,
           color: Colors.white,
         );
+    final css = widget.item?.nameStyle;
+    if (css != null) return _cssStyled(css, base);
     final kind = widget.item?.effectKind;
     if (kind == null || kind == CosmeticEffectKind.plain) {
       return Text(
@@ -142,5 +145,68 @@ class _CosmeticNameLabelState extends State<CosmeticNameLabel>
         ],
       _ => const [Colors.white, Color(0xFFB832FF), Colors.white],
     };
+  }
+
+  /// Sitedeki `cssPreset` isim stilleri — web ile aynı görünüm.
+  Widget _cssStyled(CosmeticNameStyle css, TextStyle base) {
+    Text text(TextStyle st) => Text(
+          widget.text,
+          maxLines: widget.maxLines,
+          overflow: TextOverflow.ellipsis,
+          style: st,
+        );
+    final plain = base.copyWith(shadows: const []);
+    switch (css.mode) {
+      case CosmeticNameStyleMode.solid:
+        return text(plain.copyWith(color: css.colors.first));
+      case CosmeticNameStyleMode.glow:
+        final g = css.accent ?? css.colors.first;
+        return text(plain.copyWith(
+          color: css.colors.first,
+          shadows: [
+            Shadow(color: g, blurRadius: 6),
+            Shadow(color: g, blurRadius: 14),
+          ],
+        ));
+      case CosmeticNameStyleMode.outline:
+        final stroke = css.accent ?? Colors.black;
+        return Stack(
+          children: [
+            text(plain.copyWith(
+              foreground: Paint()
+                ..style = PaintingStyle.stroke
+                ..strokeWidth = 2
+                ..color = stroke,
+              color: null,
+            )),
+            text(plain.copyWith(color: css.colors.first)),
+          ],
+        );
+      case CosmeticNameStyleMode.gradient:
+        return ShaderMask(
+          blendMode: BlendMode.srcIn,
+          shaderCallback: (b) =>
+              LinearGradient(colors: css.colors).createShader(b),
+          child: text(plain.copyWith(color: Colors.white)),
+        );
+      case CosmeticNameStyleMode.shine:
+        // Web `cfShine`: geniş geçiş soldan sağa kayar.
+        return AnimatedBuilder(
+          animation: _ctrl,
+          builder: (context, _) {
+            final t = _ctrl.value;
+            return ShaderMask(
+              blendMode: BlendMode.srcIn,
+              shaderCallback: (b) => LinearGradient(
+                colors: [...css.colors, css.colors.first],
+                begin: Alignment(-3 + t * 4, 0),
+                end: Alignment(-1 + t * 4, 0),
+                tileMode: TileMode.mirror,
+              ).createShader(b),
+              child: text(plain.copyWith(color: Colors.white)),
+            );
+          },
+        );
+    }
   }
 }

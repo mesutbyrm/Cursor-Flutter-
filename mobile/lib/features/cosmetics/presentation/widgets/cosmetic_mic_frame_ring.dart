@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'cosmetic_asset_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../domain/cosmetic_effect_kind.dart';
@@ -46,6 +47,28 @@ class _CosmeticMicFrameRingState extends State<CosmeticMicFrameRing>
   @override
   Widget build(BuildContext context) {
     if (!widget.micOpen) return widget.child;
+
+    // Sitedeki mikrofon çerçevesi görseli.
+    final img = widget.item.imageUrl;
+    if (widget.item.effectKind == CosmeticEffectKind.imageOverlay &&
+        img != null) {
+      final outer = widget.size * 1.35;
+      return SizedBox(
+        width: outer,
+        height: outer,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            widget.child,
+            Positioned.fill(
+              child: IgnorePointer(
+                child: CosmeticAssetImage(url: img, fit: BoxFit.contain),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     final colors = _ringColors(widget.item.effectKind);
     return SizedBox(

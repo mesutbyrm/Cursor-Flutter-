@@ -40,10 +40,11 @@ final mergedCosmeticCatalogProvider =
   final List<CosmeticItem>? remote = switch (slot) {
     CosmeticSlot.profileFrame => ref.watch(profileFramesCatalogProvider).valueOrNull,
     CosmeticSlot.badge => ref.watch(membershipBadgesCatalogProvider).valueOrNull,
-    CosmeticSlot.profileEffect => null,
     _ => ref.watch(remoteSlotCatalogProvider(slot)).valueOrNull,
   };
   if (remote == null || remote.isEmpty) return local;
+  // Profil efekti sunucuda kayıtlı (web ile aynı); yerel örnekler karışmasın.
+  if (slot == CosmeticSlot.profileEffect) return remote;
   final ids = remote.map((e) => e.id).toSet();
   return [...remote, ...local.where((e) => !ids.contains(e.id))];
 });
@@ -216,6 +217,15 @@ final resolvedMicrophoneFrameProvider = Provider<CosmeticItem?>((ref) {
     CosmeticSlot.microphoneFrame,
     ref.watch(cosmeticLoadoutProvider).valueOrNull,
     ref.watch(mergedCosmeticCatalogProvider(CosmeticSlot.microphoneFrame)),
+  );
+});
+
+final resolvedAvatarAccessoryProvider = Provider<CosmeticItem?>((ref) {
+  if (!_cosmeticSlotAllowed(ref, CosmeticSlot.avatarAccessory)) return null;
+  return _resolveEquipped(
+    CosmeticSlot.avatarAccessory,
+    ref.watch(cosmeticLoadoutProvider).valueOrNull,
+    ref.watch(mergedCosmeticCatalogProvider(CosmeticSlot.avatarAccessory)),
   );
 });
 
