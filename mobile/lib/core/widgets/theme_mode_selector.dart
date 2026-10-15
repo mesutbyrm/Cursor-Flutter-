@@ -5,21 +5,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/theme_mode_provider.dart';
 import '../providers/amoled_dark_provider.dart';
+import '../providers/girlive_theme_provider.dart';
 import '../theme/user_theme_sync_provider.dart';
 import '../theme/app_spacing.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:canlifal_social/features/profile/presentation/widgets/premium/profile_glass.dart';
 
-enum _DarkThemeChoice { standard, amoled }
+enum _DarkThemeChoice { standard, amoled, girlive }
 
-/// Ayarlar — yalnızca Koyu ve AMOLED Koyu tema seçimi.
+/// Ayarlar — Koyu, AMOLED Koyu ve GirLive Tema (TikTok tarzı) seçimi.
 class ThemeModeSelector extends ConsumerWidget {
   const ThemeModeSelector({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final amoled = ref.watch(amoledDarkProvider);
-    final selected = amoled ? _DarkThemeChoice.amoled : _DarkThemeChoice.standard;
+    final girlive = ref.watch(girliveThemeProvider);
+    final selected = girlive
+        ? _DarkThemeChoice.girlive
+        : (amoled ? _DarkThemeChoice.amoled : _DarkThemeChoice.standard);
     final c = context.colors;
 
     return ProfileGlass(
@@ -50,8 +54,13 @@ class ThemeModeSelector extends ConsumerWidget {
               ),
               ButtonSegment(
                 value: _DarkThemeChoice.amoled,
-                label: Text('AMOLED Koyu'),
+                label: Text('AMOLED'),
                 icon: Icon(Icons.contrast_rounded, size: 18),
+              ),
+              ButtonSegment(
+                value: _DarkThemeChoice.girlive,
+                label: Text('GirLive'),
+                icon: Icon(Icons.music_note_rounded, size: 18),
               ),
             ],
             selected: {selected},
@@ -61,14 +70,22 @@ class ThemeModeSelector extends ConsumerWidget {
               await ref
                   .read(amoledDarkProvider.notifier)
                   .setEnabled(pick == _DarkThemeChoice.amoled);
+              await ref
+                  .read(girliveThemeProvider.notifier)
+                  .setEnabled(pick == _DarkThemeChoice.girlive);
               unawaited(ref.read(userThemeSyncProvider).pushCurrent());
             },
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            selected == _DarkThemeChoice.amoled
-                ? 'Saf siyah arka plan — OLED ekranlarda daha az pil tüketimi.'
-                : 'Cam efektli koyu tema — gece ve yayın için optimize.',
+            switch (selected) {
+              _DarkThemeChoice.amoled =>
+                'Saf siyah arka plan — OLED ekranlarda daha az pil tüketimi.',
+              _DarkThemeChoice.girlive =>
+                'GirLive Tema — TikTok tarzı siyah zemin, pembe-kırmızı ve turkuaz vurgular.',
+              _DarkThemeChoice.standard =>
+                'Cam efektli koyu tema — gece ve yayın için optimize.',
+            },
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: c.onSurfaceMuted,
                   height: 1.35,

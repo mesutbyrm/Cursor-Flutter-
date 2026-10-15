@@ -25,7 +25,9 @@ class UserThemeSyncNotifier {
     try {
       final remote =
           await _ref.read(userThemeRemoteDataSourceProvider).fetchTheme();
-      if (remote == null) return;
+      if (remote == null || !UserThemeSync.isAppTheme(remote)) return;
+      // GirLive Tema yerel seçimdir; sunucudaki koyu/AMOLED onu ezmesin.
+      if (ThemePreferences.loadGirLiveTheme()) return;
       final parsed = UserThemeSync.fromServerTheme(remote);
       await ThemePreferences.saveThemeMode(parsed.mode);
       await ThemePreferences.saveAmoledDark(parsed.amoled);

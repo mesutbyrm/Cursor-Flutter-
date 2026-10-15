@@ -12,6 +12,7 @@ import '../core/l10n/app_localizations_config.dart';
 import '../core/economy/presentation/providers/economy_providers.dart';
 import '../core/providers/theme_mode_provider.dart';
 import '../core/providers/amoled_dark_provider.dart';
+import '../core/providers/girlive_theme_provider.dart';
 import '../core/network/user_online_presence_provider.dart';
 import '../core/push/push_lifecycle_listener.dart';
 import '../core/scroll/modern_social_scroll_behavior.dart';
@@ -112,7 +113,10 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
     final guest = ref.watch(guestModeProvider);
     final themeMode = ref.watch(themeModeProvider);
     final amoledDark = ref.watch(amoledDarkProvider);
-    final darkTheme = amoledDark ? AppTheme.amoled() : AppTheme.dark();
+    final girlive = ref.watch(girliveThemeProvider);
+    final darkTheme = girlive
+        ? AppTheme.girlive()
+        : (amoledDark ? AppTheme.amoled() : AppTheme.dark());
 
     final bootstrapDone =
         !authLoading || authHasValue || _bootstrapCapReached;

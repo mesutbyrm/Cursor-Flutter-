@@ -16,6 +16,7 @@ class AppTheme {
   static ThemeData? _lightCache;
   static ThemeData? _darkCache;
   static ThemeData? _amoledCache;
+  static ThemeData? _girliveCache;
 
   // Geriye dönük sabitler (yeni kod: context.colors)
   static const Color background = CanlifalBrandColors.ink;
@@ -32,6 +33,9 @@ class AppTheme {
   static ThemeData amoled() =>
       _amoledCache ??= _build(AppThemeColors.amoled, CanlifalTokens.dark);
 
+  static ThemeData girlive() =>
+      _girliveCache ??= _build(AppThemeColors.girlive, CanlifalTokens.dark);
+
   static ThemeData light() =>
       _lightCache ??= _build(AppThemeColors.light, CanlifalTokens.light);
 
@@ -41,6 +45,7 @@ class AppTheme {
     _lightCache = null;
     _darkCache = null;
     _amoledCache = null;
+    _girliveCache = null;
   }
 
   static ThemeData _build(AppThemeColors c, CanlifalTokens tokens) {
@@ -48,7 +53,9 @@ class AppTheme {
     final isDark = c.isDark;
     final p26 = isDark ? Premium2026Tokens.dark : Premium2026Tokens.light;
     // Koyu zeminde düz mor küçük metinde zayıf kalır; metin vurgusu açık ton.
-    final accentText = isDark ? CanlifalBrandColors.violetBright : c.primary;
+    final accentText = identical(c, AppThemeColors.girlive)
+        ? c.primary
+        : (isDark ? CanlifalBrandColors.violetBright : c.primary);
     final cardBorder = isDark
         ? Colors.white.withValues(alpha: 0.06)
         : c.outlineVariant;

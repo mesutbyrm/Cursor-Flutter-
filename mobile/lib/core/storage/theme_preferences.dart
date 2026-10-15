@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 abstract final class ThemePreferences {
   static const _key = 'app_theme_mode';
   static const _amoledKey = 'app_amoled_dark';
+  static const _girliveKey = 'app_girlive_theme';
 
   static SharedPreferences? _prefs;
 
@@ -41,6 +42,20 @@ abstract final class ThemePreferences {
     } catch (_) {
       return false;
     }
+  }
+
+  static bool loadGirLiveTheme() {
+    try {
+      if (_prefs == null) return false;
+      return _store.getBool(_girliveKey) ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<void> saveGirLiveTheme(bool enabled) async {
+    await init();
+    await _store.setBool(_girliveKey, enabled);
   }
 
   static Future<void> saveAmoledDark(bool enabled) async {

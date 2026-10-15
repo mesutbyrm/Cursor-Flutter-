@@ -22,6 +22,13 @@ abstract final class UserThemeSync {
     };
   }
 
+  /// Uygulama temasına ait değer mi? Sunucu web temalarını da (`mystical`,
+  /// `facebook`) döndürür; bunlar uygulamadaki seçimi SIFIRLAMAMALI.
+  static bool isAppTheme(String? raw) {
+    final t = (raw ?? '').trim().toLowerCase();
+    return const {'light', 'dark', 'amoled', 'amoled-dark', 'oled'}.contains(t);
+  }
+
   static Future<void> pullFromServer(UserThemeRemoteDataSource ds) async {
     final remote = await ds.fetchTheme();
     if (remote == null) return;

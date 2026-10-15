@@ -165,6 +165,51 @@ class AppThemeColors {
     useGlassBlur: true,
   );
 
+  /// GirLive Tema — TikTok tarzı: saf siyah zemin, düz (camsız) koyu yüzeyler,
+  /// TikTok pembe-kırmızısı (#FE2C55) ana vurgu ve turkuaz (#25F4EE) ikincil.
+  static const AppThemeColors girlive = AppThemeColors(
+    brightness: Brightness.dark,
+    scaffoldBackground: Color(0xFF000000),
+    surface: Color(0xFF121212),
+    surfaceElevated: Color(0xFF1E1E1E),
+    surfaceContainer: Color(0xFF161616),
+    onSurface: Color(0xFFFFFFFF),
+    onSurfaceVariant: Color(0xFFE1E1E3),
+    onSurfaceMuted: Color(0xFF8A8B91),
+    primary: Color(0xFFFE2C55),
+    onPrimary: Colors.white,
+    secondary: Color(0xFF25F4EE),
+    onSecondary: Color(0xFF000000),
+    outline: Color(0xFF2F2F33),
+    outlineVariant: Color(0xFF242428),
+    divider: Color(0xFF1F1F23),
+    glassFill: Color(0xF0161616),
+    glassFillElevated: Color(0xFA1E1E1E),
+    glassBorder: Color(0x14FFFFFF),
+    glassHighlight: Color(0x0DFFFFFF),
+    dialogBackground: Color(0xFF1E1E1E),
+    bottomSheetBackground: Color(0xFF161616),
+    snackBarBackground: Color(0xFF2A2A2E),
+    barrier: Color(0xA6000000),
+    brandGradient: LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [Color(0xFF25F4EE), Color(0xFFFE2C55)],
+    ),
+    cardShadow: [
+      BoxShadow(color: Color(0x80000000), blurRadius: 16, offset: Offset(0, 6)),
+    ],
+    elevatedShadow: [
+      BoxShadow(
+        color: Color(0x40FE2C55),
+        blurRadius: 22,
+        spreadRadius: -8,
+        offset: Offset(0, 10),
+      ),
+    ],
+    useGlassBlur: false,
+  );
+
   /// Modern, profesyonel açık tema.
   static const AppThemeColors light = AppThemeColors(
     brightness: Brightness.light,
