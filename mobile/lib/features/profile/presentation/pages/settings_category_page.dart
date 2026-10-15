@@ -15,7 +15,7 @@ import '../../../../core/widgets/theme_mode_selector.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../providers/account_privacy_providers.dart';
 import '../providers/profile_providers.dart';
-import '../../../fortune/presentation/widgets/fortune_auto_share_setting_tile.dart';
+import '../../../../core/network/dio_provider.dart';
 import '../premium_2026/profile_membership_helpers.dart';
 import '../widgets/vip_privacy_settings_section.dart';
 
@@ -41,7 +41,6 @@ class SettingsCategoryData {
   /// Ayrı bir sayfası olan kategoriler doğrudan oraya gider.
   String get route => switch (slug) {
         'bildirimler' => '/settings/notifications',
-        'muzik' => '/settings/voice-audio',
         'yardim' => '/profile/help',
         'hakkinda' => '/profile/about',
         _ => '/settings/c/$slug',
@@ -52,7 +51,7 @@ const settingsCategories = <SettingsCategoryData>[
   SettingsCategoryData(
     slug: 'hesap',
     title: 'Hesap',
-    subtitle: 'Hesap bilgileri, güvenlik, telefon',
+    subtitle: 'Hesap bilgileri, e-posta, kayıtlı hesaplar',
     icon: Icons.person_rounded,
     accent: Color(0xFF6B7080),
   ),
@@ -71,13 +70,6 @@ const settingsCategories = <SettingsCategoryData>[
     accent: Color(0xFF22C55E),
   ),
   SettingsCategoryData(
-    slug: 'dil',
-    title: 'Dil ve Bölge',
-    subtitle: 'Türkçe',
-    icon: Icons.language_rounded,
-    accent: Color(0xFF7C5CFF),
-  ),
-  SettingsCategoryData(
     slug: 'gorunum',
     title: 'Görünüm',
     subtitle: 'Tema, karanlık mod, performans',
@@ -94,42 +86,28 @@ const settingsCategories = <SettingsCategoryData>[
   SettingsCategoryData(
     slug: 'canli',
     title: 'Canlı Yayın',
-    subtitle: 'Yayın tercihleri',
+    subtitle: 'Davetler, yayın geçmişi ve istatistikler',
     icon: Icons.videocam_rounded,
     accent: Color(0xFF5B5BF6),
   ),
   SettingsCategoryData(
     slug: 'sesli',
     title: 'Sesli Odalar',
-    subtitle: 'Oda ayarları',
+    subtitle: 'Giriş efekti, ses ve müzik ayarları',
     icon: Icons.mic_rounded,
     accent: Color(0xFF14B8A6),
   ),
   SettingsCategoryData(
-    slug: 'muzik',
-    title: 'Müzik',
-    subtitle: 'Ses ve müzik ayarları',
-    icon: Icons.music_note_rounded,
-    accent: Color(0xFFE11D9A),
-  ),
-  SettingsCategoryData(
-    slug: 'video',
-    title: 'Video',
-    subtitle: 'Video kalitesi, otomatik oynatma',
-    icon: Icons.play_circle_rounded,
-    accent: Color(0xFF10B981),
-  ),
-  SettingsCategoryData(
     slug: 'veri',
     title: 'Veri Kullanımı',
-    subtitle: 'Mobil veri ve indirme ayarları',
+    subtitle: 'Önbellek temizleme',
     icon: Icons.bar_chart_rounded,
     accent: Color(0xFF3B82F6),
   ),
   SettingsCategoryData(
     slug: 'erisilebilirlik',
     title: 'Erişilebilirlik',
-    subtitle: 'Yazı boyutu, kontrast',
+    subtitle: 'Animasyonları azalt',
     icon: Icons.accessibility_new_rounded,
     accent: Color(0xFF2D8CFF),
   ),
@@ -211,17 +189,40 @@ class SettingsCategoryPage extends ConsumerWidget {
               SettingsTileCard(
                 icon: Icons.email_outlined,
                 label: 'E-posta Doğrulama',
-                subtitle: user?.email ?? 'Doğrulama kodu gönder',
+                subtitle: user?.email ?? 'Doğrulama bağlantısı gönder',
                 accent: CdsColors.accentCyan,
-                onTap: () {
+                onTap: () async {
                   final email = user?.email;
+                  final messenger = ScaffoldMessenger.of(context);
                   if (email == null || !email.contains('@')) {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       const SnackBar(content: Text('E-posta bilgisi bulunamadı')),
                     );
                     return;
                   }
-                  context.push('/auth/otp-verify', extra: email);
+                  // Doğrulama bağlantısı e-postaya gönderilir (kod ekranı
+                  // e-posta doğrulamasıyla çalışmıyordu).
+                  try {
+                    final res = await ref.read(dioProvider).safePost<dynamic>(
+                          '/api/auth/email/send-verification',
+                        );
+                    final data = res.data;
+                    final already =
+                        data is Map && data['alreadyVerified'] == true;
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          already
+                              ? 'E-posta adresin zaten doğrulanmış ✓'
+                              : 'Doğrulama bağlantısı $email adresine gönderildi. Gelen kutunu (ve spam klasörünü) kontrol et.',
+                        ),
+                      ),
+                    );
+                  } catch (e) {
+                    messenger.showSnackBar(
+                      SnackBar(content: Text(ApiException.userMessage(e))),
+                    );
+                  }
                 },
               ),
               SettingsTileCard(
@@ -250,14 +251,6 @@ class SettingsCategoryPage extends ConsumerWidget {
                 },
               ),
             ],
-          ),
-          const SettingsSectionHeader(
-            'Fal & Paylaşım',
-            icon: Icons.auto_awesome_rounded,
-          ),
-          const SettingsPanel(
-            padding: EdgeInsets.zero,
-            child: FortuneAutoShareSettingTile(),
           ),
         ];
       case 'gizlilik':
@@ -299,30 +292,6 @@ class SettingsCategoryPage extends ConsumerWidget {
             subtitle: 'Hesabın kalıcı olarak silinir',
             danger: true,
             onTap: () => _confirmDeleteAccount(context, ref),
-          ),
-        ];
-      case 'dil':
-        return [
-          SettingsPanel(
-            title: 'Uygulama dili',
-            icon: Icons.language_rounded,
-            accent: cat.accent,
-            child: const Text(
-              'Türkçe (Türkiye)',
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
-            ),
-          ),
-          const SizedBox(height: 10),
-          SettingsPanel(
-            child: Text(
-              'Şu anda uygulama yalnızca Türkçe arayüzle yayınlanıyor. '
-              'Ek diller eklendiğinde seçim burada yapılacak.',
-              style: TextStyle(
-                fontSize: 12.5,
-                height: 1.4,
-                color: context.colors.onSurfaceMuted,
-              ),
-            ),
           ),
         ];
       case 'gorunum':
@@ -439,34 +408,6 @@ class SettingsCategoryPage extends ConsumerWidget {
             ],
           ),
         ];
-      case 'video':
-        return [
-          SettingsPanel(
-            title: 'Video kalitesi',
-            icon: Icons.high_quality_rounded,
-            accent: cat.accent,
-            child: Text(
-              'Yayın görüntü kalitesi bağlantı durumuna göre otomatik '
-              'uyarlanır. Manuel kalite ve otomatik oynatma seçimi henüz '
-              'sunulmuyor.',
-              style: TextStyle(
-                fontSize: 12.5,
-                height: 1.4,
-                color: context.colors.onSurfaceMuted,
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          SettingsToggleTile(
-            icon: Icons.speed_rounded,
-            label: 'Performans modu',
-            subtitle: 'Blur ve dekoratif animasyonları azaltarak akıcılığı artırır.',
-            accent: CdsColors.success,
-            value: ref.watch(cdsFxProvider).performanceMode,
-            onChanged: (v) =>
-                ref.read(cdsFxProvider.notifier).setPerformanceMode(v),
-          ),
-        ];
       case 'veri':
         return [
           SettingsTileGrid(
@@ -479,16 +420,6 @@ class SettingsCategoryPage extends ConsumerWidget {
                 onTap: () => _clearCache(context),
               ),
             ],
-          ),
-          const SizedBox(height: 10),
-          SettingsToggleTile(
-            icon: Icons.speed_rounded,
-            label: 'Performans modu',
-            subtitle: 'Ağır görsel efektleri azaltır, veri ve pil tüketimini düşürür.',
-            accent: CdsColors.success,
-            value: ref.watch(cdsFxProvider).performanceMode,
-            onChanged: (v) =>
-                ref.read(cdsFxProvider.notifier).setPerformanceMode(v),
           ),
         ];
       case 'erisilebilirlik':

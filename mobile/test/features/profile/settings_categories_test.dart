@@ -65,9 +65,12 @@ void main() {
     addTearDown(t.view.reset);
   }
 
-  test('14 kategori, benzersiz slug ve rota', () {
-    expect(settingsCategories.length, 14);
-    expect(settingsCategories.map((c) => c.slug).toSet().length, 14);
+  test('11 kategori (işlevsiz Dil/Video/Müzik kaldırıldı), benzersiz slug ve rota', () {
+    expect(settingsCategories.length, 11);
+    expect(settingsCategories.map((c) => c.slug).toSet().length, 11);
+    for (final removed in ['dil', 'video', 'muzik']) {
+      expect(settingsCategoryBySlug(removed), isNull);
+    }
     expect(settingsCategoryBySlug('hesap')?.route, '/settings/c/hesap');
     expect(settingsCategoryBySlug('bildirimler')?.route, '/settings/notifications');
     expect(settingsCategoryBySlug('yok'), isNull);
@@ -101,7 +104,7 @@ void main() {
 
   testWidgets('Tüm kategori sayfaları taşmadan açılır', (tester) async {
     small(tester);
-    for (final slug in ['hesap', 'gizlilik', 'dil', 'gorunum', 'cuzdan', 'canli', 'sesli', 'video', 'veri', 'erisilebilirlik']) {
+    for (final slug in ['hesap', 'gizlilik', 'gorunum', 'cuzdan', 'canli', 'sesli', 'veri', 'erisilebilirlik']) {
       await tester.pumpWidget(_app(SettingsCategoryPage(slug: slug), scale: 1.3));
       // Gizlilik sayfası ağ sağlayıcısı beklerken sürekli animasyon çizer.
       await tester.pump(const Duration(milliseconds: 400));
