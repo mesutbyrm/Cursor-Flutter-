@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -15,6 +17,7 @@ class LiveBroadcastRoomGiftOverlays extends ConsumerWidget {
     required this.streamId,
     required this.activeGift,
     this.clipToVideoRegion = false,
+    this.belowSeatsTopFraction,
   });
 
   final String streamId;
@@ -23,11 +26,16 @@ class LiveBroadcastRoomGiftOverlays extends ConsumerWidget {
   /// PK split: yalnızca hediye kuyruk paneli konumu etkilenir (animasyon tam ekran).
   final bool clipToVideoRegion;
 
+  /// Misafir/PK bölünmüş sahnede hediye animasyonu koltukların (üst yarı)
+  /// ALTINDA, alt bölgede oynar; koltuklar, isimler ve butonlar görünür kalır.
+  /// `null` → tam ekran (tek yayıncı).
+  final double? belowSeatsTopFraction;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(liveBroadcastSettingsProvider);
-    // Hediye animasyonları PK'da da TAM EKRAN oynar (şeffaf katman; PK sahnesi
-    // altında görünür kalır). Yalnızca kuyruk paneli PK'da aşağı konumlanır.
+    // Tek yayıncıda hediye tam ekran (sohbet/butonların altında); misafir veya
+    // PK bölünmüş sahnede koltukların altındaki bölgede oynar.
     Widget giftStack({required Widget child}) => Positioned.fill(child: child);
 
     return Stack(
@@ -36,8 +44,9 @@ class LiveBroadcastRoomGiftOverlays extends ConsumerWidget {
         giftStack(
           child: GiftEngineSeatEffectsOverlay(event: activeGift),
         ),
-        giftStack(
-          child: IgnorePointer(
+        _giftRegion(
+          context,
+          IgnorePointer(
             child: GiftEngineOverlay(
               event: activeGift,
               enabled: settings.giftsEnabled,
@@ -57,6 +66,32 @@ class LiveBroadcastRoomGiftOverlays extends ConsumerWidget {
           maxWidth: clipToVideoRegion ? 220 : 270,
         ),
       ],
+    );
+  }
+
+  Widget _giftRegion(BuildContext context, Widget child) {
+    final frac = belowSeatsTopFraction;
+    if (frac == null) return Positioned.fill(child: child);
+    final mq = MediaQuery.of(context);
+    final top = mq.size.height * frac;
+    final region = Size(mq.size.width, math.max(0, mq.size.height - top));
+    return Positioned(
+      top: top,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: ClipRect(
+        // Hediye motoru ekran boyutunu MediaQuery'den okur; alt bölgeye göre
+        // ölçeklensin ve üst güvenli alan boşluğu tekrar eklenmesin.
+        child: MediaQuery(
+          data: mq.copyWith(
+            size: region,
+            padding: mq.padding.copyWith(top: 0),
+            viewPadding: mq.viewPadding.copyWith(top: 0),
+          ),
+          child: child,
+        ),
+      ),
     );
   }
 }

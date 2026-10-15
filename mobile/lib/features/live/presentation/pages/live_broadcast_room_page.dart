@@ -3391,6 +3391,14 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 streamId: streamId!,
                 activeGift: activeGift,
                 clipToVideoRegion: pkImmersive,
+                belowSeatsTopFraction: _isSplitStage(
+                  s,
+                  pkStatus,
+                  hasCoGuests: hasCoGuests,
+                  pkBattle: pkState?.battle,
+                )
+                    ? 0.5
+                    : null,
               ),
             if (hasStream && s.isHost)
               LiveBroadcastRoomHostOverlays(

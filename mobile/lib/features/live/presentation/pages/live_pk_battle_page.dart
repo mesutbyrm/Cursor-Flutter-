@@ -536,6 +536,20 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
                     ],
                   ),
                 ),
+                // Hediye animasyonu videoların üstünde ama skor, sohbet ve
+                // butonların ALTINDA — sayfadaki her şey görünür kalır.
+                if (!finished)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: GiftEngineOverlay(
+                        event: activeGift,
+                        stage: GiftStageContext.liveStream,
+                        onFinished: (id) => ref
+                            .read(giftSessionProvider(streamId).notifier)
+                            .dequeueAnimation(id),
+                      ),
+                    ),
+                  ),
                 if (pending)
                   Positioned(
                     left: 12,
@@ -738,17 +752,6 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
                     toLeft: _lastGiftSideLeft,
                   ),
                   GiftEngineSeatEffectsOverlay(event: activeGift),
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      child: GiftEngineOverlay(
-                        event: activeGift,
-                        stage: GiftStageContext.liveStream,
-                        onFinished: (id) => ref
-                            .read(giftSessionProvider(streamId).notifier)
-                            .dequeueAnimation(id),
-                      ),
-                    ),
-                  ),
                 ],
               ],
             );
