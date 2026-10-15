@@ -504,7 +504,7 @@ class _FortuneCard extends StatelessWidget {
         : '';
 
     return GestureDetector(
-      onTap: () => context.push('/fortune/detail/${fortune.id}'),
+      onTap: () => context.push('/fortune/history/${fortune.id}'),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(18),
         child: Stack(

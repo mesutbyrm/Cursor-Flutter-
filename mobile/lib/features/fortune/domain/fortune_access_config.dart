@@ -30,7 +30,13 @@ class FortuneAccessConfig {
       jetonCost: jetonRaw != null ? asInt(jetonRaw) : 10,
       adCreditsPerAd: creditsRaw != null ? asInt(creditsRaw) : 1,
       dailyAdLimit: limitRaw != null ? asInt(limitRaw) : 20,
-      adsEnabled: pick(json, ['adsEnabled', 'adEnabled', 'rewardedAdsEnabled']) != false,
+      adsEnabled: pick(json, [
+            'adsEnabled',
+            'adEnabled',
+            'rewardedAdsEnabled',
+            'adRewardEnabled',
+          ]) !=
+          false,
       adRequired: pick(json, ['adRequired', 'requireAd', 'fortuneAdRequired']) == true,
       premiumUnlimited: pick(json, ['premiumUnlimited', 'unlimitedPremiumFortune']) != false,
     );

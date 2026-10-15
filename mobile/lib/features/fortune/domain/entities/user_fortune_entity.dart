@@ -25,11 +25,51 @@ class UserFortuneEntity extends Equatable {
   final String? luckyColor;
   final DateTime? createdAt;
 
-  String get displayTitle =>
-      type.isNotEmpty ? type : (slug ?? 'Fal');
+  /// Sunucu fal türü anahtarı (`coffee`, `dream`…) → uygulama katalog slug'ı.
+  static const backendKeyToSlug = <String, String>{
+    'coffee': 'kahve-fali',
+    'tarot': 'tarot',
+    'dream': 'ruya-tabiri',
+    'horoscope': 'gunluk-fal',
+    'daily_horoscope': 'gunluk-fal',
+    'love': 'ask-fali',
+    'palm': 'el-fali',
+    'angel': 'melek-kartlari',
+    'numerology': 'numeroloji',
+    'aura': 'aura-analizi',
+    'yesno': 'evet-hayir',
+    'birthchart': 'dogum-haritasi',
+    'istikhara': 'istihare',
+    'katina': 'katina',
+    'kursundokme': 'kursundokme',
+  };
+
+  static const _titles = <String, String>{
+    'kahve-fali': 'Kahve Falı',
+    'tarot': 'Tarot Falı',
+    'ruya-tabiri': 'Rüya Tabiri',
+    'gunluk-fal': 'Burç Yorumu',
+    'ask-fali': 'Aşk Falı',
+    'el-fali': 'El Falı',
+    'melek-kartlari': 'Melek Kartları',
+    'numeroloji': 'Numeroloji',
+    'aura-analizi': 'Aura Analizi',
+    'evet-hayir': 'Evet / Hayır',
+    'dogum-haritasi': 'Doğum Haritası',
+    'istihare': 'İstihare',
+    'katina': 'Katina Falı',
+    'kursundokme': 'Kurşun Dökme',
+  };
+
+  String get displayTitle {
+    final key = (slug ?? '').isNotEmpty
+        ? slug!
+        : (backendKeyToSlug[type.toLowerCase()] ?? type);
+    return _titles[key] ?? (type.isNotEmpty ? type : 'Fal');
+  }
 
   String get displayBody =>
-      answer ?? summary ?? detail ?? question ?? '';
+      answer ?? detail ?? summary ?? question ?? '';
 
   @override
   List<Object?> get props =>

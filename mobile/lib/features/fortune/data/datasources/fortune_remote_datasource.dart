@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_endpoints.dart';
@@ -38,6 +40,9 @@ class FortuneRemoteDataSource {
       if (paymentMethod != null && paymentMethod.isNotEmpty)
         'paymentMethod': paymentMethod,
       if (jetonCost != null && jetonCost > 0) 'jetonCost': jetonCost,
+      // Reklam izlenerek açılan fallarda sunucu ücret düşmez (`adWatched`).
+      if (paymentMethod == 'ad_credit' || paymentMethod == 'ad_reward')
+        'adWatched': true,
       if (input != null && input.isNotEmpty) ...{
         'question': input,
         'text': input,
@@ -164,6 +169,21 @@ class FortuneRemoteDataSource {
         jetonCost: jetonCost,
       ),
     );
+    // Fal uçları SSE akışı döner; normal POST'ta gövde metin olarak gelir.
+    if (res.data is String) {
+      final text = FortuneSseService.textFromStreamBody(res.data as String);
+      if (text.trim().isEmpty) {
+        throw const ApiException(
+          'Fal yorumu alınamadı. Lütfen tekrar deneyin.',
+          statusCode: 502,
+        );
+      }
+      return FortuneReadingResult(
+        type: type,
+        summary: text.split('\n').first.trim(),
+        detail: text,
+      );
+    }
     final map = _unwrapMap(res.data);
     final summary =
         pick(map, [
@@ -305,14 +325,34 @@ class FortuneRemoteDataSource {
 
   UserFortuneEntity _row(dynamic json) {
     final m = json is Map ? asJsonMap(json) : <String, dynamic>{};
+    final type = pick(m, ['type', 'fortuneType', 'slug'])?.toString() ?? '';
+    // Sunucu: `{fortuneType, inputData, aiResponse}` — metin aiResponse'ta.
+    String? question = pick(m, ['question', 'title'])?.toString();
+    final input = m['inputData'];
+    if (question == null && input != null) {
+      final raw = input.toString().trim();
+      if (raw.startsWith('{')) {
+        try {
+          final decoded = jsonDecode(raw);
+          if (decoded is Map) {
+            question = pick(Map<String, dynamic>.from(decoded), [
+              'question', 'dreamDescription', 'description', 'name',
+            ])?.toString();
+          }
+        } catch (_) {}
+      } else if (raw.isNotEmpty) {
+        question = raw;
+      }
+    }
     return UserFortuneEntity(
       id: pick(m, ['id', '_id'])?.toString() ?? '',
-      type: pick(m, ['type', 'fortuneType', 'slug'])?.toString() ?? '',
-      slug: pick(m, ['slug'])?.toString(),
-      question: pick(m, ['question', 'title'])?.toString(),
+      type: type,
+      slug: pick(m, ['slug'])?.toString() ??
+          UserFortuneEntity.backendKeyToSlug[type.toLowerCase()],
+      question: question,
       answer: pick(m, ['answer', 'result'])?.toString(),
       summary: pick(m, ['summary'])?.toString(),
-      detail: pick(m, ['detail'])?.toString(),
+      detail: pick(m, ['detail', 'aiResponse', 'content'])?.toString(),
       luckyNumber: _optionalInt(pick(m, ['luckyNumber'])),
       luckyColor: pick(m, ['luckyColor'])?.toString(),
       createdAt: DateTime.tryParse(

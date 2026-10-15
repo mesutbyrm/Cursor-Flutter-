@@ -12,9 +12,10 @@ class FortuneAccessRemoteDataSource {
   final Dio _dio;
 
   Future<FortuneAccessConfig?> fetchSettings() async {
+    // Önce ayarlar (`costs`, `adRewardEnabled`); ip-status yalnız kullanım sayacı.
     for (final path in [
-      ApiEndpoints.fortuneAccessIpStatus,
       ApiEndpoints.fortuneAccessSettings,
+      ApiEndpoints.fortuneAccessIpStatus,
     ]) {
       try {
         final res = await _dio.safeGet<dynamic>(path);

@@ -25,7 +25,7 @@ import '../widgets/fortune_zodiac_hub_card.dart';
 import 'fortune_ambient_audio.dart';
 import 'fortune_fullscreen_ad_gate.dart';
 import 'fortune_reading_service.dart';
-import 'fortune_share_handler.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
 
 /// Fal okuma akışı — premium yükleme, yapılandırılmış AI yorum, sonuç sayfası.
 class FortuneReadingCoordinator {
@@ -57,6 +57,14 @@ class FortuneReadingCoordinator {
       if (images == null || !images.isValidFor(type)) return null;
     }
     if (!context.mounted) return null;
+
+    // Yorum için gereken kullanıcı girdisi (rüya metni, soru, partner burcu).
+    // Önceden hiç sorulmuyordu → AI'ya boş istek gidiyordu.
+    if (userInput.trim().isEmpty) {
+      final prompted = await _promptForInput(context, type);
+      if (prompted == null || !context.mounted) return null;
+      userInput = prompted;
+    }
 
     final authed = ref.read(authControllerProvider).valueOrNull;
     FortuneAccessGrant? accessGrant;
@@ -235,12 +243,15 @@ class FortuneReadingCoordinator {
         }
       } else {
         await Future<void>.delayed(const Duration(milliseconds: 1400));
-        result = _service.generate(
-          type,
-          userInput: userInput,
-          yesNoChoice: resolvedYesNo,
-          imageHint: imageHint,
-        );
+        // Misafir: örnek (yerel) yorum — sonuç ekranında «örnek» olarak işaretli.
+        result = _service
+            .generate(
+              type,
+              userInput: userInput,
+              yesNoChoice: resolvedYesNo,
+              imageHint: imageHint,
+            )
+            .copyWith(isLocalFallback: true);
         if (images != null && FortuneImageCaptureConfig.requiresCapture(type)) {
           result = result.copyWith(
             detail:
@@ -269,23 +280,20 @@ class FortuneReadingCoordinator {
         }
         return null;
       }
-      result = _service
-          .generate(
-            type,
-            userInput: userInput,
-            yesNoChoice: resolvedYesNo,
-            imageHint: imageHint,
-          )
-          .copyWith(isLocalFallback: true);
+      // Gerçek AI yorumu alınamadıysa sahte yorum gösterilmez; kullanıcıya
+      // anlaşılır hata gösterilir (tekrar deneyebilir).
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Canlı yorum API geçici yanıt vermedi, hazır yorum gösterildi: $msg',
+              msg.trim().isNotEmpty
+                  ? 'Fal yorumu alınamadı: $msg'
+                  : 'Fal yorumu alınamadı. Lütfen tekrar deneyin.',
             ),
           ),
         );
       }
+      return null;
     } finally {
       dismissLoading();
     }
@@ -300,12 +308,14 @@ class FortuneReadingCoordinator {
       ref.invalidate(fortuneHistoryProvider);
       unawaited(_saveLastFortune(ref, type));
 
-      // Backend auto-fortune (web parity) — FortuneShareHandler.
+      // Otomatik sosyal paylaşımı sunucu (fal kaydıyla birlikte) zaten
+      // yapıyor; istemcinin ayrıca paylaşması gönderiyi iki kez yayınlıyordu.
+      // Bakiye: ücret fal isteğinde düşer — cüzdanı şimdi yenile.
       unawaited(
         ref
-            .read(fortuneShareHandlerProvider)
-            .autoShareIfEnabled(finalResult)
-            .catchError((_) => false),
+            .read(walletBalancesProvider.notifier)
+            .refresh(force: true)
+            .then((_) {}, onError: (_) {}),
       );
     }
 
@@ -369,6 +379,133 @@ class FortuneReadingCoordinator {
     } catch (_) {
       return null;
     }
+  }
+
+  static const _zodiacTr = [
+    'Koç', 'Boğa', 'İkizler', 'Yengeç', 'Aslan', 'Başak',
+    'Terazi', 'Akrep', 'Yay', 'Oğlak', 'Kova', 'Balık',
+  ];
+
+  /// `null` = kullanıcı vazgeçti; `''` = girdisiz devam.
+  static Future<String?> _promptForInput(
+    BuildContext context,
+    FortuneTypeEntity type,
+  ) async {
+    final kind = type.kind;
+    final needsDream = kind == FortuneSessionKind.dreamText;
+    final askQuestion = kind == FortuneSessionKind.tarotCards ||
+        kind == FortuneSessionKind.playingCards ||
+        kind == FortuneSessionKind.yesNo ||
+        kind == FortuneSessionKind.pendulum ||
+        kind == FortuneSessionKind.runeStone;
+    final needsPartner = kind == FortuneSessionKind.loveHeart;
+    if (!needsDream && !askQuestion && !needsPartner) return '';
+
+    if (needsPartner) {
+      return showModalBottomSheet<String>(
+        context: context,
+        showDragHandle: true,
+        builder: (ctx) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Partnerinin burcu',
+                  style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final sign in _zodiacTr)
+                      ActionChip(
+                        label: Text(sign),
+                        onPressed: () => Navigator.pop(ctx, sign),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    final controller = TextEditingController();
+    final result = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+            16,
+            0,
+            16,
+            16 + MediaQuery.viewInsetsOf(ctx).bottom,
+          ),
+          child: StatefulBuilder(
+            builder: (ctx, setSheet) {
+              final text = controller.text.trim();
+              final canSend = needsDream ? text.length >= 10 : true;
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    needsDream ? 'Rüyanı anlat' : 'Sorunu yaz',
+                    style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    needsDream
+                        ? 'Ne kadar ayrıntılı anlatırsan yorum o kadar isabetli olur.'
+                        : 'İsteğe bağlı — sorunu yazarsan yorum ona göre yapılır.',
+                    style: Theme.of(ctx).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: controller,
+                    autofocus: true,
+                    minLines: needsDream ? 4 : 2,
+                    maxLines: 8,
+                    maxLength: 1000,
+                    textCapitalization: TextCapitalization.sentences,
+                    onChanged: (_) => setSheet(() {}),
+                    decoration: InputDecoration(
+                      hintText: needsDream
+                          ? 'Rüyamda…'
+                          : 'Örn: Önümüzdeki aylarda işimde değişiklik olacak mı?',
+                      border: const OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  FilledButton(
+                    onPressed: canSend ? () => Navigator.pop(ctx, text) : null,
+                    child: const Text('Falıma bak'),
+                  ),
+                  if (!needsDream)
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, ''),
+                      child: const Text('Sorusuz devam et'),
+                    ),
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
+    controller.dispose();
+    return result;
   }
 
   static Future<({String text, String? fortuneId})?> _streamWithGuards({

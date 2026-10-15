@@ -134,9 +134,9 @@ class ProfileHubServicesRow extends ConsumerWidget {
         hint: vipGoldHint,
       ),
       ...defaults.map((d) {
-      final count = history
-          .where((h) => (h.slug ?? h.type).contains(d.slug))
-          .length;
+      final count = d.slug == 'kahve'
+          ? history.length
+          : history.where((h) => (h.slug ?? h.type).contains(d.slug)).length;
       return _ServiceItem(
         title: d.title,
         icon: d.icon,
@@ -226,7 +226,8 @@ class _ServiceCard extends StatelessWidget {
               return;
             }
             if (item.slug == 'kahve' || item.title.contains('Geçmiş')) {
-              context.push('/fortune/ready');
+              // Fal geçmişi (kayıtlı AI yorumları).
+              context.push('/favorites');
             } else {
               context.push('/fortune/${item.slug}');
             }

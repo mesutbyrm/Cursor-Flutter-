@@ -163,7 +163,7 @@ class FortuneSseService {
                 await controller.close();
                 return;
               }
-              final piece = map['content']?.toString() ?? '';
+              final piece = pieceOf(map);
               if (piece.isNotEmpty) {
                 acc.write(piece);
                 controller.add(FortuneStreamChunk(content: acc.toString()));
@@ -190,6 +190,14 @@ class FortuneSseService {
       } else {
         final tail = buffer.toString().trim();
         final fromJson = _parseJsonFortuneBody(tail);
+        // Bazı uçlar (ör. kurşun dökme) SSE değil düz metin akıtır.
+        if (fromJson == null && tail.isNotEmpty && !tail.startsWith('{') && !tail.startsWith('data:')) {
+          controller.add(
+            FortuneStreamChunk(content: tail, fortuneId: fortuneId, done: true),
+          );
+          await controller.close();
+          return;
+        }
         if (fromJson != null) {
           controller.add(
             FortuneStreamChunk(
@@ -240,5 +248,45 @@ class FortuneSseService {
     } catch (_) {
       return null;
     }
+  }
+
+  /// Akış parçasındaki metin: `content` (normalleştirilmiş sunucu) veya
+  /// OpenAI biçimi `choices[0].delta.content` / `message.content`.
+  static String pieceOf(Map<String, dynamic> map) {
+    final direct = map['content'];
+    if (direct is String) return direct;
+    final choices = map['choices'];
+    if (choices is List && choices.isNotEmpty && choices.first is Map) {
+      final c = Map<String, dynamic>.from(choices.first as Map);
+      final delta = c['delta'];
+      if (delta is Map && delta['content'] is String) {
+        return delta['content'] as String;
+      }
+      final message = c['message'];
+      if (message is Map && message['content'] is String) {
+        return message['content'] as String;
+      }
+    }
+    return '';
+  }
+
+  /// Akışın tamamı tek seferde (ör. normal POST yanıtı) geldiyse metni çıkarır:
+  /// SSE `data:` satırları birleştirilir; SSE değilse düz metin döner.
+  static String textFromStreamBody(String body) {
+    final raw = body.trim();
+    if (raw.isEmpty) return '';
+    if (!raw.contains('data:')) return raw.startsWith('{') ? '' : raw;
+    final out = StringBuffer();
+    for (final line in raw.split('\n')) {
+      final l = line.trim();
+      if (!l.startsWith('data:')) continue;
+      final payload = l.substring(5).trim();
+      if (payload.isEmpty || payload == '[DONE]') continue;
+      try {
+        final decoded = jsonDecode(payload);
+        if (decoded is Map) out.write(pieceOf(Map<String, dynamic>.from(decoded)));
+      } catch (_) {}
+    }
+    return out.toString();
   }
 }
