@@ -4,28 +4,18 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.812+868` |
-| Tarih (UTC) | 2026-10-16 17:41 |
-| Commit | [`1ac06ac634d6eb6cf3429ff1e787da2d7ffb8750`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/1ac06ac634d6eb6cf3429ff1e787da2d7ffb8750) |
-| İş akışı | [Run 38937862023](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/38937862023) |
+| Sürüm | `1.0.814+870` |
+| Tarih (UTC) | 2026-10-16 22:00 |
+| Commit | [`c004e406e7449674dabfe4e7134f52068b72cd43`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/c004e406e7449674dabfe4e7134f52068b72cd43) |
+| İş akışı | [Run 38970290516](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/38970290516) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.812+868 (2026-10-16) — Yönetim işlemleri sunucuyla uyumlu
+## 1.0.815+871 (2026-10-16) — Kod temizliği
 
-Mobil yönetim panelindeki birçok işlem sunucuya yanlış biçimde gidiyor, ya hiç çalışmıyor ya da «kaydedildi» görünüp hiçbir şey yapmıyordu. Düzeltilenler:
-- **Ban / ban kaldırma**, yayın açma ve oda açma izinleri, keşfette gizleme ve öncelik: artık gerçekten uygulanır (web panelindeki Kullanıcı 360 işlemleriyle aynı)
-- **Rol değiştirme ve üyelik verme:** sunucunun yetki kontrollü işlemleri üzerinden; biyografi alanı (kaydedilmiyordu) kaldırıldı
-- **Canlı falcı ekleme** ve **kullanıcı adına sesli oda açma** çalışır
-- **CFC Arena:** yarışma oluşturma ve başlat / duraklat / bitir çalışır
-- **Sosyal medya hesapları:** kaydetme çalışır (sitede desteklenen 5 platform)
-- **Site animasyonları:** ekleme, düzenleme, açma/kapama, kullanıcıya atama / kaldırma ve süreli toplu atama çalışır; hatalar artık «yerelde kaydedildi» gibi gizlenmez
-- **Sesli oda gelir ayarları:** sunucunun gerçekten kullandığı ayarlara (site komisyonu, oda sahibi payı, müzik payı, oda kapasiteleri) bağlandı
-- **Ödeme onayı:** profil kartından ve bildirim sekmesinden jeton bildirimleri de onaylanır; toplu kapatma CFC taleplerini de kapatır
-- **Hediye düzenleme** web'de kapatılan sesli oda / canlı yayın görünürlüğünü artık yeniden açmaz; yüklenen dosyalar doğru klasöre gider
-- **Üyelik matrisi:** açma/kapama hücre önceliğini sıfırlamaz
-- Sunucuda karşılığı olmayan GirLive Bot oda/yayın anahtarları ve PK Moderasyon girişi kaldırıldı
+- **Kullanılmayan kod kaldırıldı:** 20 eski yönetim ekranının rotası ve uygulamada hiçbir yerden açılmayan 51 dosya silindi (~11.600 satır). Bu ekranlar zaten Yönetim Paneli'ne yönlendiriliyordu; bazıları (Denetim Kayıtları, Kullanıcı Oturumları) gerçek değil sahte örnek veri gösteriyordu.
+- **Kontrol:** Uygulamanın kullandığı 557 sunucu adresinin tamamı ve istek türleri (GET/POST/PATCH/DELETE) sunucuyla karşılaştırıldı; uyumsuzluk yok.
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
