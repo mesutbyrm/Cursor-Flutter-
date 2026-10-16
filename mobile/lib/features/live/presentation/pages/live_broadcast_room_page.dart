@@ -763,7 +763,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       _trtc.networkQuality.removeListener(_networkQualityListener!);
     }
     _chat.dispose();
-    if (!_leaving) {
+    if (!_leaving && !_streamEndUiHandled) {
       if (widget.session.isHost &&
           widget.session.streamId?.isNotEmpty == true) {
         unawaited(HostLiveStreamRecovery.save(widget.session));
@@ -1050,8 +1050,16 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     // Zaman damgası olmadan `_leaving` takılırsa çıkış (X / geri) hiç çalışmıyordu.
     _leavingSince = DateTime.now();
     final summary = _buildSessionSummary();
-    await _leaveLiveSession(endReason: endReason);
+    // Ekran beklemeden kapanır: RTC/SSE temizliği arka planda sürer (önceden
+    // temizlik bitene kadar — 30 sn'ye kadar — donuk odada bekleniyordu).
+    final leaving = _leaveLiveSession(endReason: endReason);
     markLiveStreamEnded(ref, streamId);
+    if (widget.embeddedInSwipe && !widget.active) {
+      // Kaydırma akışında ekranda olmayan komşu yayın bittiyse sessizce
+      // ayrıl; görünen yayını ve akışı kapatma.
+      unawaited(leaving);
+      return;
+    }
     if (!mounted) return;
     if (showEndedDialog) {
       final rootCtx = rootNavigatorKey.currentContext;
@@ -1072,7 +1080,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     } else {
       context.go('/feed');
     }
-    _leaving = false;
+    // `_leaving` true kalır: dispose «yeniden başlat» kaydı oluşturmasın.
+    await leaving;
   }
 
   /// Yetkili izleyici (admin/yönetici/moderatör) kapatınca: yayından çık
@@ -1173,8 +1182,17 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       }
     }
 
-    // Oturum özeti — sunucu kapatma denemesinden sonra; provider hâlâ dolu.
-    if (summary != null || widget.session.isHost) {
+    // Yayıncı: kamera/mikrofon ve RTC HEMEN kapanır (özet penceresi açıkken
+    // izleyiciler yayını görmeye devam ediyordu). Sunucu kapatması başarısız
+    // olsa da odadan çıkılır; RTC'den ayrılan yayıncının yayını sunucuda
+    // (TRTC bildirimi / görüntü yok zaman aşımı) kapanır.
+    Future<void>? hostLeave;
+    if (widget.session.isHost && streamId.isNotEmpty) {
+      hostLeave = _leaveLiveSession(endReason: 'host_exit');
+    }
+
+    // Oturum özeti — yalnız yayın sunucuda kapandıysa.
+    if (endStreamError == null && (summary != null || widget.session.isHost)) {
       final rootCtx = rootNavigatorKey.currentContext ?? context;
       if (rootCtx.mounted) {
         if (widget.session.isHost) {
@@ -1191,21 +1209,17 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     }
 
     if (endStreamError != null) {
-      _leaving = false;
-      _leavingSince = null;
-      _streamEndUiHandled = false;
       final rootCtx = rootNavigatorKey.currentContext ?? context;
       if (rootCtx.mounted) {
         ScaffoldMessenger.of(rootCtx).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text(
-              'Yayın sunucuda kapatılamadı; tekrar deneyin veya destek ile iletişime geçin.',
+              'Yayından çıkıldı. Bağlantı sorunu nedeniyle yayının kapanması birkaç dakika sürebilir.',
             ),
-            duration: const Duration(seconds: 5),
+            duration: Duration(seconds: 5),
           ),
         );
       }
-      return;
     }
 
     if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
@@ -1219,8 +1233,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     }
 
     try {
-      if (widget.session.isHost && streamId.isNotEmpty) {
-        await _leaveLiveSession(endReason: 'host_exit');
+      if (hostLeave != null) {
+        await hostLeave;
       } else {
         await _leaveLiveSession();
       }
@@ -3511,6 +3525,18 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         body: Stack(
           fit: StackFit.expand,
           children: [
+            // PK'da hediye ARKADA tam ekran oynar; yayıncı panelleri ve PK
+            // sohbeti hediye süresince yarı şeffaf olur (hediye net görünür).
+            if (hasStream && pkImmersive)
+              ColoredBox(
+                color: Colors.black,
+                child: LiveBroadcastRoomGiftOverlays(
+                  streamId: streamId!,
+                  activeGift: activeGift,
+                  clipToVideoRegion: true,
+                  belowSeatsTopFraction: null,
+                ),
+              ),
             // PK veya misafir modunda ekran üst/alt bölünür: üst yarı video/PK
             // alanı, alt yarı hediye + chat. Normal yayında tam ekran video.
             if (_isSplitStage(
@@ -3550,7 +3576,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               )
             else
               Positioned.fill(
-                child: LiveBroadcastRoomVideoLayer(
+                child: AnimatedOpacity(
+                  opacity: pkImmersive && activeGift != null ? 0.4 : 1,
+                  duration: const Duration(milliseconds: 260),
+                  child: LiveBroadcastRoomVideoLayer(
                   session: s,
                   phase: _phase,
                   trtc: _trtc,
@@ -3566,6 +3595,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                   chatVisibleForPk: _chatVisible,
                   pkOnBack: () => unawaited(_exitBroadcast(context)),
                   pkViewerCount: roomState.viewerCount,
+                ),
                 ),
               ),
             if (_isSplitStage(
@@ -3596,7 +3626,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               emojiRainToken: 0,
               applauseToken: interaction.applauseToken,
             ),
-            if (hasStream)
+            if (hasStream && !pkImmersive)
               LiveBroadcastRoomGiftOverlays(
                 streamId: streamId!,
                 activeGift: activeGift,

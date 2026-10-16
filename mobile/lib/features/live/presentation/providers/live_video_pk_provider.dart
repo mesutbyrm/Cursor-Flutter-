@@ -389,12 +389,10 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
         (isLivePkOutcomeOnlyStatus(mergedStatus) &&
             !livePkBattleFinished(status: mergedStatus, battle: merged));
     if (!stillRunning) {
-      state = state.copyWith(battle: merged, clearError: true);
-      syncLivePkHomeTransitionFromBattle(ref, battle: merged, streamId: arg);
-      _stopPolling();
-      if (livePkBattleFinished(status: mergedStatus, battle: merged)) {
-        _scheduleEndedCleanup(merged['id']?.toString() ?? '');
-      }
+      // PK bitti (süre doldu, erken bitirildi, iptal/ret): tüm taraflar
+      // hemen tekli yayına döner; savaş verisi temizlenir ki süre dolunca
+      // split ekran yeniden açılmasın.
+      forceExitPk();
       return;
     }
     final matchId = merged['id']?.toString() ?? merged['battleId']?.toString();

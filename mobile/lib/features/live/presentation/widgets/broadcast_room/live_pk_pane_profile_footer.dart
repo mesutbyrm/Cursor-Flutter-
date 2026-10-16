@@ -16,7 +16,12 @@ class LivePkPaneProfileFooter extends ConsumerStatefulWidget {
     this.showFollow = false,
     this.showScore = true,
     this.followAccent = const Color(0xFFFF2D7A),
+    this.onOpenStream,
   });
+
+  /// Rakip yayıncının adına / fotoğrafına dokununca (izleyici için):
+  /// onay sorulur, «Evet» ile o yayına geçilir.
+  final VoidCallback? onOpenStream;
 
   final String displayName;
   final String? avatarUrl;
@@ -102,7 +107,10 @@ class _LivePkPaneProfileFooterState extends ConsumerState<LivePkPaneProfileFoote
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: widget.onOpenStream,
+              child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 _avatar(name),
@@ -161,6 +169,7 @@ class _LivePkPaneProfileFooterState extends ConsumerState<LivePkPaneProfileFoote
                   ),
                 ),
               ],
+            ),
             ),
             // "X PK" yazısı kaldırıldı — skor zaten skor barında görünüyor.
             if (widget.showScore) ...[

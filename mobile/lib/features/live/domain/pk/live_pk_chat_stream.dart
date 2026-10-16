@@ -15,12 +15,17 @@ String resolveLivePkChatStreamId(Map<String, dynamic>? battle) {
   return opponent ?? '';
 }
 
-/// Mesaj gönderimi / SSE için kullanılacak oda (PK'da her iki yayıncı aynı oda).
+/// Mesaj gönderimi / SSE için kullanılacak oda.
+///
+/// PK'da her yayının sohbeti ayrıdır: A'yı izleyen yalnız A'nın sohbetini,
+/// B'yi izleyen yalnız B'nin sohbetini görür ve oraya yazar. (Önceden iki
+/// taraf da challenger'ın odasına yönlendiriliyordu.) İzlenen yayın kimliği
+/// boşsa eski davranışa düşülür.
 String livePkEffectiveChatStreamId({
   required Map<String, dynamic>? battle,
   required String myStreamId,
 }) {
-  final unified = resolveLivePkChatStreamId(battle);
-  if (unified.isNotEmpty) return unified;
-  return myStreamId.trim();
+  final mine = myStreamId.trim();
+  if (mine.isNotEmpty) return mine;
+  return resolveLivePkChatStreamId(battle);
 }

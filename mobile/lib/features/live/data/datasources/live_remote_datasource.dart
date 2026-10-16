@@ -592,8 +592,10 @@ class LiveRemoteDataSource {
   Future<LiveStreamEntity?> fetchStream(String streamId) async {
     if (!Env.useMobileAuth) return null;
     try {
+      // Önbellek atlanır: bitmiş yayın 12 sn boyunca «canlı» görünmesin.
       final res = await _dio.safeGet<dynamic>(
         ApiEndpoints.videoStream(streamId),
+        forceRefresh: true,
       );
       final body = res.data;
       if (body is Map<String, dynamic>) {

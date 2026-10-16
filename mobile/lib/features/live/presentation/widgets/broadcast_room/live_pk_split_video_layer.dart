@@ -3,11 +3,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../trtc/presentation/trtc_room_manager.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../domain/entities/live_broadcast_session.dart';
+import '../../../domain/entities/live_stream_entity.dart';
 import '../../../domain/entities/live_stream_viewer.dart';
 import '../../../domain/pk/live_pk_side_resolver.dart';
 import '../../providers/live_pk_ui_providers.dart';
@@ -112,6 +114,60 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
     _outcomeFx.dispose();
     _disconnectBridge();
     super.dispose();
+  }
+
+  /// İzleyici, rakip yayıncının adına dokununca: onay sorulur, «Evet» ile
+  /// o yayına geçilir (mevcut yayından çıkılır). Yayıncının kendisi ve
+  /// izlenen yayının kendi paneli için null (dokunma bir şey yapmaz).
+  VoidCallback? _switchToPaneCallback(LivePkPaneModel pane) {
+    if (widget.session.isHost || pane.isLocalPane) return null;
+    final targetId = pane.streamId?.trim() ?? '';
+    final currentId = widget.session.streamId?.trim() ?? '';
+    if (targetId.isEmpty || targetId == currentId) return null;
+    return () => _confirmSwitch(targetId, pane.label);
+  }
+
+  Future<void> _confirmSwitch(String targetStreamId, String label) async {
+    final name = label.trim().isNotEmpty ? label.trim() : 'diğer yayıncının';
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Yayına geç'),
+        content: Text('$name yayınına geçmek istiyor musun?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Hayır'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Evet'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    LiveStreamEntity? target;
+    for (final s in ref.read(liveStreamsProvider).valueOrNull ??
+        const <LiveStreamEntity>[]) {
+      if (s.id == targetStreamId) target = s;
+    }
+    try {
+      target ??= await ref.read(liveRemoteProvider).fetchStream(targetStreamId);
+    } catch (_) {}
+    if (!mounted) return;
+    if (target == null || !target.isLive) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bu yayın artık aktif değil')),
+      );
+      return;
+    }
+    // Mevcut oda sayfası yeni yayınla değiştirilir; eski oda dispose
+    // sırasında RTC/SSE bağlantılarını kapatır.
+    GoRouter.of(context).pushReplacement(
+      '/live/room',
+      extra: LiveBroadcastSession.fromStream(target),
+    );
   }
 
   void _disconnectBridge() {
@@ -528,6 +584,7 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                             avatarUrl: layout.left.avatarUrl,
                             chipTopInset: chipTop,
                             profileFooter: LivePkPaneProfileFooter(
+                              onOpenStream: _switchToPaneCallback(layout.left),
                               displayName: layout.left.label,
                               avatarUrl: layout.left.avatarUrl,
                               userId: layout.left.userId,
@@ -622,6 +679,7 @@ class _LivePkSplitVideoLayerState extends ConsumerState<LivePkSplitVideoLayer>
                                   )
                                 : null,
                             profileFooter: LivePkPaneProfileFooter(
+                              onOpenStream: _switchToPaneCallback(layout.right),
                               displayName: layout.right.label,
                               avatarUrl: layout.right.avatarUrl,
                               userId: layout.right.userId,

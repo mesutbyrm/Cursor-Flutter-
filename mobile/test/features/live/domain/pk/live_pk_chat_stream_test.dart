@@ -24,11 +24,21 @@ void main() {
   });
 
   group('livePkEffectiveChatStreamId', () {
-    test('uses unified room when battle has host stream', () {
+    test('PK sırasında her yayın kendi sohbetini kullanır', () {
+      expect(
+        livePkEffectiveChatStreamId(
+          battle: {'liveStreamId': 'host-1', 'opponentLiveStreamId': 'my-own'},
+          myStreamId: 'my-own',
+        ),
+        'my-own',
+      );
+    });
+
+    test('izlenen yayın bilinmiyorsa PK odasına düşer', () {
       expect(
         livePkEffectiveChatStreamId(
           battle: {'liveStreamId': 'host-1'},
-          myStreamId: 'my-own',
+          myStreamId: '',
         ),
         'host-1',
       );

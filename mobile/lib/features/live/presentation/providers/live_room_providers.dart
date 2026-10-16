@@ -177,8 +177,8 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
         .read(siteAnimationProvider(SiteAnimationContext.liveStream.overlayId)
             .notifier)
         .clearQueue();
+    final remote = ref.read(liveRemoteProvider);
     try {
-      final remote = ref.read(liveRemoteProvider);
       final boot = await NetworkPerf.parallel([
         remote.joinVideoStream(streamId),
         remote.fetchStreamMessages(streamId),
@@ -186,30 +186,33 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
       state = state.copyWith(viewerCount: boot[0] as int, clearError: true);
       _mergeMessages(boot[1] as List<LiveStreamChatMessage>);
       _startRealtime(streamId);
-      _poll = Timer.periodic(const Duration(seconds: 20), (_) async {
-        if (state.streamEnded) return;
-        try {
-          if (!state.sseConnected) {
-            final poll = await NetworkPerf.parallel([
-              remote.fetchStreamMessages(streamId),
-              remote.fetchStream(streamId),
-            ]);
-            _mergeMessages(poll[0] as List<LiveStreamChatMessage>);
-            final meta = poll[1] as LiveStreamEntity?;
-            if (meta != null && !meta.isLive) {
-              state = state.copyWith(streamEnded: true);
-            }
-          } else {
-            final meta = await remote.fetchStream(streamId);
-            if (meta != null && !meta.isLive) {
-              state = state.copyWith(streamEnded: true);
-            }
-          }
-        } catch (_) {}
-      });
     } catch (e) {
       state = state.copyWith(error: ApiException.userMessage(e));
     }
+    // Yedek durum kontrolü katılım başarısız olsa da çalışır (önceden katılım
+    // hata verince izleyici yayının bittiğini hiç öğrenemiyordu). Açılışta
+    // bir kez hemen, sonra 10 sn'de bir.
+    Future<void> checkEnded() async {
+      if (state.streamEnded) return;
+      try {
+        final meta = await remote.fetchStream(streamId);
+        if (meta != null && !meta.isLive) {
+          state = state.copyWith(streamEnded: true);
+        }
+      } catch (_) {}
+    }
+
+    unawaited(checkEnded());
+    _poll?.cancel();
+    _poll = Timer.periodic(const Duration(seconds: 10), (_) async {
+      if (state.streamEnded) return;
+      if (!state.sseConnected) {
+        try {
+          _mergeMessages(await remote.fetchStreamMessages(streamId));
+        } catch (_) {}
+      }
+      await checkEnded();
+    });
   }
 
   void _startRealtime(String streamId) {

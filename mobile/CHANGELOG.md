@@ -1,5 +1,21 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.816+872 (2026-10-16) — Canlı yayın kapanışı ve PK
+
+- **Yayın kapatma:**
+  - Yayıncı «Kapat» dediğinde kamera, mikrofon ve yayın bağlantısı hemen kapanıyor. Önceden özet penceresi açıkken izleyiciler yayını görmeye devam ediyordu.
+  - Sunucu bağlantısı hata verse bile yayıncı odadan çıkıyor; önceden odada takılı kalıyordu.
+  - Bitmiş yayın için «yayına devam et» önerisi artık çıkmıyor.
+- **İzleyici:**
+  - Yayın bittiğinde izleyici ekranı beklemeden kapanıyor.
+  - Yayının bitip bitmediği önbellek kullanılmadan 10 sn'de bir kontrol ediliyor. Bu kontrol yayına katılım hata verse bile çalışıyor.
+  - Kaydırma akışında ekranda olmayan bir yayın bittiğinde izlenen yayın ve akış artık kapanmıyor.
+- **PK:**
+  - PK bittiği anda yayıncılar ve izleyiciler doğrudan tekli yayına dönüyor. Önceden ekran 7-8 sn bölünmüş kalıyordu; erken bitişte süre dolunca bölünmüş ekran geri geliyordu.
+  - Sohbet ayrı: A'yı izleyen yalnız A'nın sohbetini, B'yi izleyen yalnız B'nin sohbetini görüyor ve oraya yazıyor.
+  - İzlerken rakip yayıncının adına ya da fotoğrafına dokununca «… yayınına geçmek istiyor musun?» sorusu çıkıyor; «Evet» ile o yayına geçiliyor.
+  - Hediye arkada tam ekran oynuyor; hediye süresince yayıncı panelleri ve sohbet yarı şeffaf oluyor.
+
 ## 1.0.815+871 (2026-10-16) — Kod temizliği
 
 - **Kullanılmayan kod kaldırıldı:** 20 eski yönetim ekranının rotası ve uygulamada hiçbir yerden açılmayan 51 dosya silindi (~11.600 satır). Bu ekranlar zaten Yönetim Paneli'ne yönlendiriliyordu; bazıları (Denetim Kayıtları, Kullanıcı Oturumları) gerçek değil sahte örnek veri gösteriyordu.

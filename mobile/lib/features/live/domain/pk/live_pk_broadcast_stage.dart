@@ -73,12 +73,15 @@ bool livePkBattleFinished({
   return livePkClockAllowsFinish(battle, clock);
 }
 
-/// Aktif veya bitti — split video + skor çubuğu (tam ekran sonuç overlay yok).
+/// Yalnız başlarken / aktifken split video + skor çubuğu. PK bittiği anda
+/// (yayıncı, rakip ve izleyiciler için) doğrudan tekli yayına dönülür;
+/// önceden sonuç ekranı için split 7-8 sn açık kalıyor, erken bitişte ise
+/// süre dolunca split geri geliyordu.
 bool isLivePkBroadcastStage(Map<String, dynamic>? battle, String? status) {
   if (!livePkHasDualStreams(battle)) return false;
   if (isLivePkStartingStatus(status)) return true;
   if (isLivePkActiveStatus(status)) return true;
-  return livePkBattleFinished(status: status, battle: battle);
+  return false;
 }
 
 String livePkOutcomeStatusLabel({
