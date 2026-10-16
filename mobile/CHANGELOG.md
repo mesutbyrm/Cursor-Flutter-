@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.803+859 (2026-10-16) — Video paylaşımı
+
+- **Sosyal akış videoları:** sağdaki düğmelere **Paylaş** eklendi (WhatsApp, Telegram, bağlantı kopyala…); paylaşım sayısı görünür
+- **Video bildirimleri:** paylaşım ve yorum yanıtı bildirimine dokununca ilgili video açılır
+
 ## 1.0.802+858 (2026-10-16) — Bildirim düzeltmeleri
 
 - **Profil ziyareti bildirimi:** göz ikonu ve «Profil ziyareti» etiketi; dokununca ziyaret edenin profili (kullanıcı adı yoksa «Kim Baktı» listesi) açılır

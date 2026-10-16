@@ -18,6 +18,7 @@ import '../../../../shorts/domain/entities/short_video_entity.dart';
 import '../../../../shorts/presentation/providers/shorts_providers.dart';
 import '../../../../shorts/presentation/utils/short_video_player_util.dart';
 import '../../../../shorts/presentation/widgets/short_comments_sheet.dart';
+import '../../../../shorts/presentation/widgets/short_share_sheet.dart';
 import '../../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
 import '../../models/social_feed_item.dart';
 import '../../services/social_feed_ad_service.dart';
@@ -284,6 +285,24 @@ class _ShortReelState extends ConsumerState<_ShortReel> {
     }
   }
 
+  Future<void> _share() async {
+    await showShortShareSheet(
+      context,
+      videoId: _v.id,
+      description: _v.description,
+      video: _v,
+      ref: ref,
+      onShared: () async {
+        try {
+          final n = await ref.read(shortsRepositoryProvider).recordShare(_v.id);
+          if (mounted) {
+            setState(() => _v = _v.copyWith(sharesCount: n > 0 ? n : _v.sharesCount + 1));
+          }
+        } catch (_) {}
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = _c;
@@ -371,6 +390,11 @@ class _ShortReelState extends ConsumerState<_ShortReel> {
                       if (mounted) setState(() => _v = _v.copyWith(commentsCount: n));
                     },
                   ),
+                ),
+                _Rail(
+                  icon: Icons.reply_rounded,
+                  label: formatSocialCount(_v.sharesCount),
+                  onTap: _share,
                 ),
                 _Rail(
                   icon: Icons.open_in_full_rounded,

@@ -296,6 +296,8 @@ String? _routeFromTypeAndText(
       return '/social';
     case 'short_video_like':
     case 'short_video_comment':
+    case 'short_video_share':
+    case 'short_video_reply':
     case 'short_video_follow':
     case 'shorts_like':
     case 'shorts_comment':
