@@ -31,9 +31,6 @@ import '../../features/fortune/presentation/pages/fortune_result_page.dart';
 import '../../features/fortune/presentation/pages/fortune_session_page.dart';
 import '../../features/fortune/presentation/pages/fortune_ready_readings_page.dart';
 
-import '../../features/admin/presentation/pages/admin_panel_page.dart';
-import '../../features/admin/presentation/pages/admin_entrance_effects_page.dart';
-import '../../features/admin/presentation/pages/admin_visual_fx_page.dart';
 import '../../features/admin/presentation/pages/admin_site_animations_hub_page.dart';
 import '../../features/admin/presentation/pages/admin_site_animations_library_page.dart';
 import '../../features/admin/presentation/pages/admin_site_animations_editor_page.dart';
@@ -44,19 +41,13 @@ import '../../features/admin/presentation/pages/admin_site_animations_reward_pag
 import '../../features/admin/presentation/pages/admin_site_animations_preview_page.dart';
 import '../../features/admin/domain/admin_site_animation.dart';
 import '../../features/admin/presentation/pages/admin_voice_room_backgrounds_page.dart';
-import '../../features/admin/presentation/pages/admin_gift_collection_hub_page.dart';
 import '../../features/admin/presentation/providers/staff_access_provider.dart';
 import '../../features/profile/presentation/providers/profile_providers.dart' show walletBalancesProvider;
 import '../../features/admin/presentation/pages/admin_live_stats_page.dart';
 import '../../features/admin/presentation/pages/admin_management_center_page.dart';
 import '../../features/admin/presentation/navigation/admin_nav.dart';
 import '../../features/admin/presentation/pages/admin_hub_page.dart';
-import '../../features/admin/presentation/pages/admin_home_tab.dart';
 import '../../features/admin/presentation/pages/admin_moderation_queue_page.dart';
-import '../../features/admin/presentation/pages/admin_activity_monitoring_page.dart';
-import '../../features/admin/presentation/pages/admin_activity_log_page.dart';
-import '../../features/admin/presentation/pages/admin_fraud_detection_page.dart';
-import '../../features/admin/presentation/pages/admin_bulk_operations_page.dart';
 import '../../features/admin/presentation/pages/admin_membership_management_page.dart';
 import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
 import '../../features/admin/presentation/pages/admin_live_streams_page.dart';
@@ -67,21 +58,10 @@ import '../../features/admin/presentation/pages/admin_finance_summary_page.dart'
 import '../../features/admin/presentation/pages/admin_girlive_bot_page.dart';
 import '../../features/admin/presentation/pages/admin_sub_pages.dart';
 import '../../features/admin/presentation/pages/admin_user_command_center_page.dart';
-import '../../features/admin/presentation/pages/admin_live_broadcasts_control_page.dart';
 import '../../features/admin/presentation/pages/admin_system_health_page.dart';
-import '../../features/admin/presentation/pages/admin_team_management_page.dart';
-import '../../features/admin/presentation/pages/admin_system_config_page.dart';
 import '../../features/social_accounts/presentation/admin_social_accounts_page.dart';
 import '../../features/wallet_transfer/presentation/wallet_transfer_page.dart';
 import '../../features/admin/presentation/pages/admin_advanced_reporting_page.dart';
-import '../../features/admin/presentation/pages/admin_preferences_page.dart';
-import '../../features/admin/presentation/pages/admin_notification_manager_page.dart';
-import '../../features/admin/presentation/pages/admin_audit_logs_page.dart';
-import '../../features/admin/presentation/pages/admin_user_sessions_page.dart';
-import '../../features/admin/presentation/pages/admin_security_dashboard_page.dart';
-import '../../features/admin/presentation/pages/admin_feature_flags_page.dart';
-import '../../features/admin/presentation/pages/admin_email_templates_page.dart';
-import '../../features/admin/presentation/pages/admin_features_catalog_page.dart';
 import '../../features/admin/presentation/pages/admin_cfc_arena_page.dart';
 import '../../features/admin_web/presentation/pages/admin_web_panel_page.dart';
 import '../../features/fortune/presentation/pages/fortune_tarot_hub_page.dart';
@@ -783,36 +763,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AdminManagementCenterPage(),
       ),
       GoRoute(
-        path: '/admin/home',
-        builder: (context, state) => const AdminHomeTab(),
-      ),
-      GoRoute(
-        path: '/admin/tools',
-        builder: (context, state) => const AdminFeaturesCatalogPage(),
-      ),
-      GoRoute(
         path: '/admin/cfc-arena',
         builder: (context, state) => const AdminCfcArenaPage(),
       ),
       GoRoute(
         path: '/admin/moderation',
         builder: (context, state) => const AdminModerationQueuePage(),
-      ),
-      GoRoute(
-        path: '/admin/activity-monitoring',
-        builder: (context, state) => const AdminActivityMonitoringPage(),
-      ),
-      GoRoute(
-        path: '/admin/activity-log',
-        builder: (context, state) => const AdminActivityLogPage(),
-      ),
-      GoRoute(
-        path: '/admin/fraud-detection',
-        builder: (context, state) => const AdminFraudDetectionPage(),
-      ),
-      GoRoute(
-        path: '/admin/bulk-operations',
-        builder: (context, state) => const AdminBulkOperationsPage(),
       ),
       GoRoute(
         path: '/admin/dashboard',
@@ -831,20 +787,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AdminVoiceRoomFinancePage(),
       ),
       GoRoute(
-        path: '/admin/live-broadcasts-control',
-        builder: (context, state) => const AdminLiveBroadcastsControlPage(),
-      ),
-      GoRoute(
         path: '/admin/system-health',
         builder: (context, state) => const AdminSystemHealthPage(),
-      ),
-      GoRoute(
-        path: '/admin/team-management',
-        builder: (context, state) => const AdminTeamManagementPage(),
-      ),
-      GoRoute(
-        path: '/admin/system-config',
-        builder: (context, state) => const AdminSystemConfigPage(),
       ),
       GoRoute(
         path: '/hediye-yolla',
@@ -860,10 +804,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin/advanced-reporting',
         builder: (context, state) => const AdminAdvancedReportingPage(),
-      ),
-      GoRoute(
-        path: '/admin/panel',
-        builder: (context, state) => const AdminPanelPage(),
       ),
       GoRoute(
         path: '/admin/web',
@@ -1197,13 +1137,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         ],
       ),
       GoRoute(
-        path: '/admin/collections',
-        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
-          key: state.pageKey,
-          child: const AdminGiftCollectionHubPage(),
-        ),
-      ),
-      GoRoute(
         path: '/admin/voice-backgrounds',
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
@@ -1211,24 +1144,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
-        path: '/admin/entrance-effects',
-        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
-          key: state.pageKey,
-          child: const AdminEntranceEffectsPage(),
-        ),
-      ),
-      GoRoute(
         path: '/admin/membership-management',
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
           child: const AdminMembershipManagementPage(),
-        ),
-      ),
-      GoRoute(
-        path: '/admin/visual-fx',
-        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
-          key: state.pageKey,
-          child: const AdminVisualFxPage(),
         ),
       ),
       GoRoute(
@@ -1311,55 +1230,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             },
           ),
         ],
-      ),
-      GoRoute(
-        path: '/admin/preferences',
-        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
-          key: state.pageKey,
-          child: const AdminPreferencesPage(),
-        ),
-      ),
-      GoRoute(
-        path: '/admin/notification-manager',
-        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
-          key: state.pageKey,
-          child: const AdminNotificationManagerPage(),
-        ),
-      ),
-      GoRoute(
-        path: '/admin/audit-logs',
-        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
-          key: state.pageKey,
-          child: const AdminAuditLogsPage(),
-        ),
-      ),
-      GoRoute(
-        path: '/admin/user-sessions',
-        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
-          key: state.pageKey,
-          child: const AdminUserSessionsPage(),
-        ),
-      ),
-      GoRoute(
-        path: '/admin/security',
-        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
-          key: state.pageKey,
-          child: const AdminSecurityDashboardPage(),
-        ),
-      ),
-      GoRoute(
-        path: '/admin/feature-flags',
-        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
-          key: state.pageKey,
-          child: const AdminFeatureFlagsPage(),
-        ),
-      ),
-      GoRoute(
-        path: '/admin/email-templates',
-        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
-          key: state.pageKey,
-          child: const AdminEmailTemplatesPage(),
-        ),
       ),
       GoRoute(
         path: '/pk/leaderboard',

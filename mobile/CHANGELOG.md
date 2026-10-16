@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.815+871 (2026-10-16) — Kod temizliği
+
+- **Kullanılmayan kod kaldırıldı:** 20 eski yönetim ekranının rotası ve uygulamada hiçbir yerden açılmayan 51 dosya silindi (~11.600 satır). Bu ekranlar zaten Yönetim Paneli'ne yönlendiriliyordu; bazıları (Denetim Kayıtları, Kullanıcı Oturumları) gerçek değil sahte örnek veri gösteriyordu.
+- **Kontrol:** Uygulamanın kullandığı 557 sunucu adresinin tamamı ve istek türleri (GET/POST/PATCH/DELETE) sunucuyla karşılaştırıldı; uyumsuzluk yok.
+
 ## 1.0.814+870 (2026-10-16) — Yönetim: üyeliği kaldır
 
 - **Yönetim paneli:** «Üyelik ver» ekranına **«Üyeliği kaldır (temel seviyeye düşür)»** düğmesi eklendi. İşlem onay ister, sunucuda yetki kontrolünden geçer ve denetim kaydına yazılır. Önceden üyelik yalnızca verilebiliyor, geri alınamıyordu.
