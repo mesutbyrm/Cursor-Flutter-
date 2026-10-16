@@ -11,7 +11,6 @@ import '../../../../core/performance/scroll_perf.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
-import '../../../shell/presentation/widgets/branch_quick_actions.dart';
 import '../../../voice_hub/presentation/voice_rooms_body.dart';
 import '../providers/live_streams_list_notifier.dart';
 import '../providers/live_providers.dart';
@@ -19,8 +18,8 @@ import '../../../../core/performance/lazy_screen_section.dart';
 import '../utils/open_live_stream.dart';
 import '../widgets/live_discover_category_chips.dart';
 import '../widgets/live_stream_list_tile.dart';
+import '../../../social/presentation/widgets/reels/social_live_badge.dart';
 import '../navigation/live_pk_home_transition_bridge.dart';
-import '../../../shorts/presentation/widgets/shorts_hub_strip.dart';
 
 class LivePage extends ConsumerStatefulWidget {
   const LivePage({super.key});
@@ -112,15 +111,7 @@ class _LivePageState extends ConsumerState<LivePage>
                 ),
               ],
             ),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 0, 16, 4),
-              child: ShortsHubStrip(
-                title: 'Kısa Videolar',
-                emoji: '🎬',
-                padding: EdgeInsets.zero,
-                bottomSpacing: 4,
-              ),
-            ),
+            const SizedBox(height: 4),
             DiscoverSegmentedTabs(
               controller: _tab,
               tabs: const [
@@ -178,10 +169,7 @@ class _VoiceTabState extends State<_VoiceTab> with AutomaticKeepAliveClientMixin
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: LiveVoiceBranchQuickActions(),
-        ),
+        SizedBox(height: 8),
         Expanded(
           child: VoiceRoomsBody(embeddedInLiveShellTab: true),
         ),
@@ -205,10 +193,8 @@ class _LiveStreamsTabState extends ConsumerState<_LiveStreamsTab> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: LiveStreamsBranchQuickActions(),
-        ),
+        const SizedBox(height: 10),
+        const _LiveSummaryBar(),
         const SizedBox(height: 8),
         LazyScreenSection(
           delay: LazyLoadPerf.liveCategories,
@@ -232,6 +218,55 @@ class _LiveStreamsTabState extends ConsumerState<_LiveStreamsTab> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Üst özet: kaç yayın açık, toplam kaç kişi izliyor (yanıp sönen CANLI).
+class _LiveSummaryBar extends ConsumerWidget {
+  const _LiveSummaryBar();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lives = (ref.watch(liveStreamsListNotifierProvider).valueOrNull ?? const [])
+        .where((s) => s.isLive)
+        .toList();
+    final viewers = lives.fold<int>(0, (a, s) => a + s.viewerCount);
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            colors: [
+              const Color(0xFFFE2C55).withValues(alpha: 0.16),
+              scheme.primary.withValues(alpha: 0.10),
+            ],
+          ),
+          border: Border.all(color: const Color(0xFFFE2C55).withValues(alpha: 0.25)),
+        ),
+        child: Row(
+          children: [
+            const SocialLiveBadge(fontSize: 11),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                lives.isEmpty
+                    ? 'Şu an açık yayın yok — sohbet odalarına göz at'
+                    : '${lives.length} canlı yayın · ${formatSocialCount(viewers)} kişi izliyor',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: scheme.onSurface,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

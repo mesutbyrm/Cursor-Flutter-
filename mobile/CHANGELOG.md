@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.805+861 (2026-10-16) — Canlı sayfası sadeleşti
+
+- **Canlı:** Kısa Videolar şeridi ve hızlı işlem kutuları kaldırıldı; üstte «🔴 X canlı yayın · Y kişi izliyor» özet şeridi
+
 ## 1.0.804+860 (2026-10-16) — Sosyal akış iyileştirmeleri
 
 - **Video kaldığı yerden devam eder:** yorumlar / paylaş penceresi açılıp kapanınca video baştan başlamıyor, duraklayıp devam ediyor
