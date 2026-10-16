@@ -5,8 +5,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/network/dio_provider.dart';
 import '../../../feed/domain/entities/post_entity.dart';
 import '../providers/social_reels_provider.dart';
+import '../services/social_feed_ad_service.dart';
 import '../widgets/reels/social_reel_item.dart';
 
 /// GirLive Sosyal — TikTok tarzı tam ekran akış.
@@ -236,8 +238,31 @@ class _ReelsFeedState extends ConsumerState<_ReelsFeed>
   final _pages = PageController();
   var _index = 0;
 
+  /// Son reklamın gösterildiği sayfa; her 5 paylaşımdan sonra 1 tam ekran
+  /// reklam (yalnız ileri kaydırırken, aynı yerde tekrar çıkmaz).
+  var _lastAdIndex = 0;
+  var _adShowing = false;
+
   @override
   bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(SocialFeedAdService.instance.preload(ref.read(dioProvider)));
+  }
+
+  Future<void> _maybeShowAd(int i) async {
+    if (_adShowing || i <= _lastAdIndex) return;
+    if (i - _lastAdIndex < SocialFeedAdService.interval) return;
+    _lastAdIndex = i;
+    setState(() => _adShowing = true);
+    try {
+      await SocialFeedAdService.instance.showIfReady(ref.read(dioProvider));
+    } finally {
+      if (mounted) setState(() => _adShowing = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -251,6 +276,7 @@ class _ReelsFeedState extends ConsumerState<_ReelsFeed>
   Future<void> _refresh() async {
     await _notifier.refresh();
     if (_pages.hasClients) _pages.jumpToPage(0);
+    _lastAdIndex = 0;
     if (mounted) setState(() => _index = 0);
   }
 
@@ -308,13 +334,15 @@ class _ReelsFeedState extends ConsumerState<_ReelsFeed>
         onPageChanged: (i) {
           setState(() => _index = i);
           if (i >= posts.length - 3) unawaited(_notifier.loadMore());
+          if (widget.visible) unawaited(_maybeShowAd(i));
         },
         itemBuilder: (context, i) {
           final PostEntity p = posts[i];
           return SocialReelItem(
             key: ValueKey('reel-${widget.feed}-${p.id}'),
             post: p,
-            active: widget.visible && i == idx,
+            // Reklam açıkken video durur.
+            active: widget.visible && !_adShowing && i == idx,
             topInset: widget.topInset,
             bottomInset: widget.bottomInset,
             onChanged: _notifier.updatePost,

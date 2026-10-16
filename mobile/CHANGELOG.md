@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.798+854 (2026-10-16) — GirLive Sosyal reklam
+
+- **Tam ekran reklam:** GirLive Sosyal akışında her 5 paylaşımdan sonra 1 tam ekran geçiş reklamı (AdMob); reklam açıkken video durur, kapanınca akış kaldığı yerden devam eder
+- Reklam birimi admin panelinden yönetilir: Reklam Yerleşimleri → «GirLive Sosyal Akış Reklamı» (özel kod = AdMob geçiş reklamı birim kimliği); üyelik hedeflemesi ve günlük gösterim sınırı uygulanır
+
 ## 1.0.797+853 (2026-10-16) — GirLive Sosyal TikTok tarzı
 
 - **Yeni GirLive Sosyal:** eski üst bar kaldırıldı; TikTok gibi üstte solda **Canlı**, yanında **Keşfet** ve **Takip Ettiğin** (aynı yazı tipi ve renk), sağda arama ve paylaşım
