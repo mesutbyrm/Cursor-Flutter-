@@ -133,7 +133,8 @@ void main() {
           'fileName': file.path.split(Platform.pathSeparator).last,
           'contentType': 'image/png',
           'isPublic': true,
-          'folder': 'gifts/icons',
+          // Sunucunun tanıdığı klasör anahtarı (alt yol gift/uploads'a düşüyordu).
+          'folder': 'gifts',
           'fileSize': 4,
         });
         expect(putRequest?.method, 'PUT');

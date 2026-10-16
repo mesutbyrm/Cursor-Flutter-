@@ -128,6 +128,31 @@ class AdminRemoteDataSource {
     return normalizeAdminUserMap(_unwrapMap(res.data));
   }
 
+  /// Kullanıcı yönetim işlemi — `POST /api/admin/users/{id}/manage`.
+  /// Sunucu kritik işlemlerde `confirm: true` ister (onay arayüzde alınır);
+  /// her işlem denetim kaydına yazılır.
+  Future<void> manageUser(
+    String userId,
+    String action, [
+    Map<String, dynamic> extra = const {},
+  ]) async {
+    final uid = userId.trim();
+    if (uid.isEmpty) throw const ApiException('Kullanıcı kimliği bulunamadı.');
+    final res = await _adminTimeout(
+      _dio.safePost<dynamic>(
+        ApiEndpoints.adminUserManage(uid),
+        data: {'action': action, 'confirm': true, ...extra},
+      ),
+    );
+    final data = res.data;
+    if (data is Map && data['success'] == false) {
+      final err = data['error'];
+      throw ApiException(
+        err is Map ? (err['message']?.toString() ?? 'İşlem yapılamadı') : '$err',
+      );
+    }
+  }
+
   Future<Map<String, dynamic>> updateUser(
     String userId,
     Map<String, dynamic> patch,
@@ -523,10 +548,13 @@ class AdminRemoteDataSource {
         ApiEndpoints.adminLiveTellers,
         data: {
           'userId': userId,
-          if (displayName != null && displayName.isNotEmpty)
-            'displayName': displayName,
+          // Sunucu displayName'i zorunlu tutar; isVerified mantıksal değer
+          // olmalı (önceden metin gönderiliyor, kayıt 500 ile düşüyordu).
+          'displayName': (displayName != null && displayName.trim().isNotEmpty)
+              ? displayName.trim()
+              : 'Falcı',
           if (bio != null && bio.isNotEmpty) 'bio': bio,
-          'isVerified': isVerified ? 'true' : 'false',
+          'isVerified': isVerified,
         },
       ),
     );
@@ -579,43 +607,20 @@ class AdminRemoteDataSource {
     required String title,
     String? description,
   }) async {
-    final bodies = <Map<String, dynamic>>[
-      {
-        'userId': userId,
-        'title': title,
-        if (description != null && description.isNotEmpty)
-          'description': description,
-      },
-      {
-        'ownerUserId': userId,
-        'name': title,
-        if (description != null && description.isNotEmpty)
-          'description': description,
-      },
-    ];
-
-    ApiException? last;
-    for (final body in bodies) {
-      try {
-        final res = await _adminTimeout(
-          _dio.safePost<dynamic>(
-            ApiEndpoints.adminChatRoomsCreateForUser,
-            data: body,
-          ),
-        );
-        return _unwrapMap(res.data);
-      } on ApiException catch (e) {
-        last = e;
-        if (e.statusCode == 400 || e.statusCode == 422) continue;
-        if (e.statusCode == 404 || e.statusCode == 405) break;
-        rethrow;
-      }
-    }
-    throw last ??
-        const ApiException(
-          'Adına oda açma uç noktası henüz üretimde yok.',
-          statusCode: 404,
-        );
+    // Sunucu sözleşmesi: `{userId, name, description?}` (ikisi de zorunlu).
+    // Önceden `title` / `ownerUserId` gönderiliyor ve her zaman 400 dönüyordu.
+    final res = await _adminTimeout(
+      _dio.safePost<dynamic>(
+        ApiEndpoints.adminChatRoomsCreateForUser,
+        data: {
+          'userId': userId,
+          'name': title,
+          if (description != null && description.isNotEmpty)
+            'description': description,
+        },
+      ),
+    );
+    return _unwrapMap(res.data);
   }
 
   Future<List<Map<String, dynamic>>> fetchPendingPaymentsForUser(

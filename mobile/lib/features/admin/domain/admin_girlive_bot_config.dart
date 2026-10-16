@@ -50,8 +50,7 @@ class AdminGirLiveBotConfig {
 
   Map<String, dynamic> toJson() => {
         'enabled': enabled,
-        'voiceRoomEnabled': voiceRoomEnabled,
-        'liveStreamEnabled': liveStreamEnabled,
+        // Sunucu yalnız tek bir `enabled` anahtarı bilir; oda / yayın ayrımı yok.
         'publicMessages': publicMessages.toJson(),
         'words': words,
         'whitelist': whitelist,

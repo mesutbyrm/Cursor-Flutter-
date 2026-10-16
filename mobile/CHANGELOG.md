@@ -1,5 +1,20 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.812+868 (2026-10-16) — Yönetim işlemleri sunucuyla uyumlu
+
+Mobil yönetim panelindeki birçok işlem sunucuya yanlış biçimde gidiyor, ya hiç çalışmıyor ya da «kaydedildi» görünüp hiçbir şey yapmıyordu. Düzeltilenler:
+- **Ban / ban kaldırma**, yayın açma ve oda açma izinleri, keşfette gizleme ve öncelik: artık gerçekten uygulanır (web panelindeki Kullanıcı 360 işlemleriyle aynı)
+- **Rol değiştirme ve üyelik verme:** sunucunun yetki kontrollü işlemleri üzerinden; biyografi alanı (kaydedilmiyordu) kaldırıldı
+- **Canlı falcı ekleme** ve **kullanıcı adına sesli oda açma** çalışır
+- **CFC Arena:** yarışma oluşturma ve başlat / duraklat / bitir çalışır
+- **Sosyal medya hesapları:** kaydetme çalışır (sitede desteklenen 5 platform)
+- **Site animasyonları:** ekleme, düzenleme, açma/kapama, kullanıcıya atama / kaldırma ve süreli toplu atama çalışır; hatalar artık «yerelde kaydedildi» gibi gizlenmez
+- **Sesli oda gelir ayarları:** sunucunun gerçekten kullandığı ayarlara (site komisyonu, oda sahibi payı, müzik payı, oda kapasiteleri) bağlandı
+- **Ödeme onayı:** profil kartından ve bildirim sekmesinden jeton bildirimleri de onaylanır; toplu kapatma CFC taleplerini de kapatır
+- **Hediye düzenleme** web'de kapatılan sesli oda / canlı yayın görünürlüğünü artık yeniden açmaz; yüklenen dosyalar doğru klasöre gider
+- **Üyelik matrisi:** açma/kapama hücre önceliğini sıfırlamaz
+- Sunucuda karşılığı olmayan GirLive Bot oda/yayın anahtarları ve PK Moderasyon girişi kaldırıldı
+
 ## 1.0.811+867 (2026-10-16) — Admin jeton/CFC düzeltmesi
 
 - **Önemli:** admin «Jeton yükle» işlemi kullanıcıya jeton yerine CFC yüklüyordu, «Çıkar» işlemi de düşmek yerine ekliyordu. Artık doğru para birimi ve yön gönderiliyor; düşme bakiyeyi eksiye indiremez (sunucu)

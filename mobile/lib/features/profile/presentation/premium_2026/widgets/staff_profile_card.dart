@@ -40,11 +40,6 @@ class StaffProfileCard extends ConsumerWidget {
         label: 'Moderasyon',
         onTap: () => context.push('/admin/moderation'),
       ));
-      items.add((
-        icon: Icons.sports_martial_arts_rounded,
-        label: 'PK Moderasyon',
-        onTap: () => context.push('/pk/moderation'),
-      ));
     }
     if (access.canManageVoiceRooms) {
       items.add((

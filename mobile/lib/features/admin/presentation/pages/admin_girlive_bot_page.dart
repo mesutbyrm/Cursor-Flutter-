@@ -200,20 +200,6 @@ class _AdminGirLiveBotPageState extends ConsumerState<AdminGirLiveBotPage> {
                 value: d.enabled,
                 onChanged: (v) => setDraft(d.copyWith(enabled: v)),
               ),
-              SwitchListTile(
-                title: const Text('Sesli odalarda bot'),
-                value: d.voiceRoomEnabled,
-                onChanged: d.enabled
-                    ? (v) => setDraft(d.copyWith(voiceRoomEnabled: v))
-                    : null,
-              ),
-              SwitchListTile(
-                title: const Text('Canlı yayında bot'),
-                value: d.liveStreamEnabled,
-                onChanged: d.enabled
-                    ? (v) => setDraft(d.copyWith(liveStreamEnabled: v))
-                    : null,
-              ),
               const Divider(height: 28),
               Text(
                 'Herkese açık mesajlar',

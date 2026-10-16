@@ -37,16 +37,15 @@ class SiteSocialAccount {
   final bool enabled;
 }
 
-/// Sunucu `lib/social-accounts.ts` ile aynı sıra.
+/// Sunucu `lib/site-social-accounts.ts` `SOCIAL_PLATFORMS` ile aynı liste ve
+/// sıra. Sunucu bilmediği platformu reddettiği için (400) önceden eklenen
+/// Telegram / WhatsApp / Web sitesi kaydetmeyi tamamen bozuyordu.
 const kSocialPlatforms = <(String, String)>[
   ('instagram', 'Instagram'),
   ('tiktok', 'TikTok'),
   ('youtube', 'YouTube'),
   ('x', 'X (Twitter)'),
   ('facebook', 'Facebook'),
-  ('telegram', 'Telegram'),
-  ('whatsapp', 'WhatsApp'),
-  ('website', 'Web sitesi'),
 ];
 
 String socialPlatformLabel(String id) =>
@@ -114,7 +113,8 @@ class SocialAccountsRepository {
       data: {
         'accounts': [
           for (final r in rows)
-            {'platform': r.platform, 'value': r.value.trim(), 'enabled': r.enabled},
+            if (kSocialPlatforms.any((p) => p.$1 == r.platform))
+              {'platform': r.platform, 'value': r.value.trim(), 'enabled': r.enabled},
         ],
       },
     );

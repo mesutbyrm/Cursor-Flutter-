@@ -92,7 +92,9 @@ void main() {
   test('yetkiye göre görünürlük', () {
     expect(visibleAdminNav(_access(), webAccess: false), isEmpty);
     final mod = _labels(_access(moderate: true, reports: true), web: false);
-    expect(mod, containsAll(['PK Moderasyonu', 'Şikayet Yönetimi']));
+    expect(mod, contains('Şikayet Yönetimi'));
+    // Sunucuda karşılığı olmayan PK moderasyonu menüde yok.
+    expect(mod, isNot(contains('PK Moderasyonu')));
     expect(mod, isNot(contains('Kullanıcı Yönetimi')));
     expect(mod, isNot(contains('Hediye Kataloğu')));
     // Web paneli erişimi olmayan yetkili web sayfalarını görmez.
@@ -137,7 +139,7 @@ void main() {
     await tester.enterText(find.byType(TextField), 'şikayet');
     await tester.pump();
     expect(find.text('Şikayet Yönetimi'), findsOneWidget);
-    expect(find.text('PK Moderasyonu'), findsNothing);
+    expect(find.text('Yayın İstatistikleri'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

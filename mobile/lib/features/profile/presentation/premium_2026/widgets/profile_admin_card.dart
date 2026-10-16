@@ -154,6 +154,7 @@ class _ProfileAdminPaymentQueue extends ConsumerWidget {
         action: action,
         requestType: resolvePaymentRequestType(row),
         reviewNote: action == 'approve' ? 'Onaylandı' : 'Reddedildi',
+        requestRow: row,
       );
       ref.invalidate(adminPaymentRequestsProvider);
       ref.invalidate(adminPaymentNotificationsProvider);

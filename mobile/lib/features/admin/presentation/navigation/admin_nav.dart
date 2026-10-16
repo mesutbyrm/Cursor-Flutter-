@@ -287,13 +287,6 @@ List<AdminNavGroup> adminNavGroups(StaffAccess a) {
           route: '/admin/live-stats',
           nativeVisible: a.canManageLiveStreams || a.canViewReports,
         ),
-        AdminNavItem(
-          label: 'PK Moderasyonu',
-          description: 'PK savaşlarını izle & müdahale et',
-          icon: Icons.sports_mma_rounded,
-          route: '/pk/moderation',
-          nativeVisible: a.canModerate,
-        ),
         const AdminNavItem(
           label: 'Yayın Resimleri',
           description: 'Yayın arka plan görselleri',

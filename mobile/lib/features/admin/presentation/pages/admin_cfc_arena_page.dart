@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -175,18 +177,29 @@ class _AdminCfcArenaPageState extends ConsumerState<AdminCfcArenaPage> {
       final now = DateTime.now().toUtc();
       final ends = now.add(const Duration(days: 30));
       final fmt = DateFormat("yyyy-MM-dd'T'HH:mm:ss'.000Z'");
-      await ref.read(cfcArenaRepositoryProvider).adminMutate({
+      final repo = ref.read(cfcArenaRepositoryProvider);
+      // Web paneliyle aynı: puanlama ölçütü zorunlu; oluşturulan yarışma
+      // taslak başlar, ardından «start» ile yayına alınır. Önceden ölçüt
+      // gönderilmediği için oluşturma her zaman 400 dönüyordu.
+      final created = await repo.adminMutate({
         'action': 'create',
         'name': name,
         'description': _descCtrl.text.trim(),
         'type': _type,
         'scope': _scope,
-        'status': 'active',
+        'scoringMetrics': jsonEncode([
+          {'metric': 'gifts_received', 'label': 'Hediye performansı', 'weight': 100},
+        ]),
         'isPublic': true,
         'isFeatured': _featured,
         'startsAt': fmt.format(now),
         'endsAt': fmt.format(ends),
       });
+      final data = created['data'];
+      final newId = data is Map ? data['id']?.toString() : null;
+      if (newId != null && newId.isNotEmpty) {
+        await repo.adminMutate({'action': 'start', 'contestId': newId});
+      }
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Yarışma oluşturuldu / güncellendi')),
@@ -215,11 +228,22 @@ class _AdminCfcArenaPageState extends ConsumerState<AdminCfcArenaPage> {
       _ => 'active',
     };
     try {
-      await ref.read(cfcArenaRepositoryProvider).adminMutate({
-        'action': 'updateStatus',
-        'contestId': contestId,
-        'status': status,
-      });
+      final repo = ref.read(cfcArenaRepositoryProvider);
+      // Sunucu durum makinesi: start (taslak) / resume (duraklatılmış),
+      // pause, complete. Önceden bilinmeyen «updateStatus» gönderiliyordu.
+      if (action == 'activate') {
+        try {
+          await repo.adminMutate({'action': 'start', 'contestId': contestId});
+        } on ApiException catch (e) {
+          if (e.statusCode != 409) rethrow;
+          await repo.adminMutate({'action': 'resume', 'contestId': contestId});
+        }
+      } else {
+        await repo.adminMutate({
+          'action': action == 'pause' ? 'pause' : 'complete',
+          'contestId': contestId,
+        });
+      }
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Durum: $status')),

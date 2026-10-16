@@ -69,7 +69,7 @@ class _AdminVoiceRoomSettingsPanelState
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
           children: [
             const Text(
-              'Voice Room Settings',
+              'Sesli Oda Gelir Ayarları',
               style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
             ),
             const SizedBox(height: 4),
@@ -86,19 +86,21 @@ class _AdminVoiceRoomSettingsPanelState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _field('giftReceiverPercent', 'Gift Receiver %', data),
-                  _field('roomOwnerPercent', 'Room Owner %', data),
-                  _field('siteCommissionPercent', 'Site Commission %', data),
+                  // Sunucunun gelir hesabında kullandığı ayarlar
+                  // (lib/voice-room-revenue.ts) — web paneliyle aynı anahtarlar.
+                  _field('vr_platform_percent', 'Hediye site komisyonu %', data),
+                  _field(
+                    'vr_owner_share_guest_gift',
+                    'Misafire gelen hediyede oda sahibi payı % (komisyon sonrası)',
+                    data,
+                  ),
                   const Divider(height: 24),
-                  _field('musicOwnerPercent', 'Music Owner % (Normal)', data),
-                  _field('musicSitePercent', 'Music Site % (Normal)', data),
-                  _field('vipMusicOwnerPercent', 'VIP Music Owner %', data),
-                  _field('vipMusicSitePercent', 'VIP Music Site %', data),
-                  _field('musicRequestCost', 'Müzik isteği (jeton)', data),
+                  _field('vr_music_owner_percent', 'Müzik isteği — oda sahibi % (Normal oda)', data),
+                  _field('vr_vip_music_owner_percent', 'Müzik isteği — oda sahibi % (VIP oda)', data),
                   const Divider(height: 24),
-                  _field('freeRoomMaxUsers', 'Ücretsiz oda max kişi', data),
-                  _field('normalRoomMaxUsers', 'Normal oda max kişi', data),
-                  _field('vipRoomMaxUsers', 'VIP oda max kişi', data),
+                  _field('vr_free_room_max_users', 'Ücretsiz oda en fazla kişi', data),
+                  _field('vr_normal_room_max_users', 'Normal oda en fazla kişi', data),
+                  _field('vr_vip_room_max_users', 'VIP oda en fazla kişi', data),
                 ],
               ),
             ),

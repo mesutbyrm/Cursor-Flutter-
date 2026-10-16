@@ -682,33 +682,25 @@ class ChatRoomRemoteDataSource {
     });
   }
 
-  /// Admin kataloğuna arka plan ekle — üretim uçları sırayla denenir.
-  Future<void> registerVoiceRoomBackground(String imageUrl) async {
+  /// Admin kataloğuna arka plan ekle — `POST /api/admin/voice-room-backgrounds`
+  /// (web panelindeki Oda Arka Planları ile aynı uç). Sunucu `name` ve
+  /// `backgroundUrl` ister; önceden `url` / `imageUrl` gönderildiği için kayıt
+  /// her zaman başarısız oluyordu.
+  Future<void> registerVoiceRoomBackground(String imageUrl, {String? name}) async {
     final url = imageUrl.trim();
     if (url.isEmpty) {
       throw const ApiException('Görsel adresi boş');
     }
-    final payloads = [
-      {'url': url, 'imageUrl': url},
-      {'background': url, 'imageUrl': url},
-      {'imageUrl': url},
-    ];
-    Object? lastError;
-    for (final path in [
+    final fileName = Uri.tryParse(url)?.pathSegments.lastOrNull ?? '';
+    final label = (name?.trim().isNotEmpty ?? false)
+        ? name!.trim()
+        : (fileName.isNotEmpty
+            ? fileName.replaceAll(RegExp(r'\.[a-zA-Z0-9]+$'), '')
+            : 'Oda arka planı');
+    await _dio.safePost<dynamic>(
       ApiEndpoints.adminVoiceRoomBackgrounds,
-      backgroundsPath(),
-    ]) {
-      for (final body in payloads) {
-        try {
-          await _dio.safePost<dynamic>(path, data: body);
-          return;
-        } on Object catch (e) {
-          lastError = e;
-        }
-      }
-    }
-    if (lastError != null) throw lastError!;
-    throw const ApiException('Arka plan kaydedilemedi');
+      data: {'name': label, 'backgroundUrl': url},
+    );
   }
 
   Future<List<Map<String, dynamic>>> fetchVoiceUsers(

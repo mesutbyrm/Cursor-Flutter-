@@ -49,8 +49,8 @@ class AdminSiteAnimationListNotifier
   Future<AdminSiteAnimation> save(AdminSiteAnimation item, {bool create = false}) async {
     final remote = ref.read(adminSiteAnimationRemoteProvider);
     final saved = create
-        ? await remote.create(item.toJson())
-        : await remote.update(item.id, item.toJson());
+        ? await remote.create(item.toApiJson())
+        : await remote.update(item.id, item.toApiJson());
     await ref.read(siteAnimationCatalogDataSourceProvider).syncFromAdminLocal();
     ref.invalidate(siteAnimationCatalogProvider);
     await refresh();

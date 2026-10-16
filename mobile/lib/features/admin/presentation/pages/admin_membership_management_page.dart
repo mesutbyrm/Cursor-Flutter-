@@ -69,6 +69,15 @@ class _AdminMembershipManagementPageState
   ) async {
     if (tierKey.isEmpty || featureKey.isEmpty) return;
     final dio = ref.read(dioProvider);
+    // Mevcut hücre önceliği korunur; gönderilmezse sunucu 0'a sıfırlıyordu.
+    Object? priority;
+    for (final r in _rows) {
+      if (r['tierKey']?.toString() == tierKey &&
+          r['featureKey']?.toString() == featureKey) {
+        priority = r['priority'];
+        break;
+      }
+    }
     try {
       await dio.safePut<dynamic>(
         ApiEndpoints.adminMembershipFeatures,
@@ -78,6 +87,7 @@ class _AdminMembershipManagementPageState
               'tierKey': tierKey,
               'featureKey': featureKey,
               'enabled': enabled,
+              if (priority is num) 'priority': priority,
             },
           ],
         },

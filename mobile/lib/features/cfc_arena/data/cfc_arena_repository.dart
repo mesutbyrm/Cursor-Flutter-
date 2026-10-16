@@ -25,8 +25,12 @@ class CfcArenaRepository {
     return parseCfcContestList(res.data);
   }
 
-  Future<void> adminMutate(Map<String, dynamic> body) async {
-    await _dio.safePost<dynamic>(ApiEndpoints.adminCfcArena, data: body);
+  /// `POST /api/admin/cfc-arena` — yanıt gövdesini döner (ör. oluşturulan
+  /// yarışma `data.id`).
+  Future<Map<String, dynamic>> adminMutate(Map<String, dynamic> body) async {
+    final res = await _dio.safePost<dynamic>(ApiEndpoints.adminCfcArena, data: body);
+    final d = res.data;
+    return d is Map ? Map<String, dynamic>.from(d) : const {};
   }
 
   /// `GET /api/cfc-arena/{id}` — yarışma + `leaderboard` (katılımcı ve puan).

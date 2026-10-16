@@ -215,12 +215,9 @@ class AdminGiftRemoteDataSource {
     final fileName = file.path.split(Platform.pathSeparator).last;
     final contentType = _contentType(fileName);
     final fileSize = await file.length();
-    final folder = switch (kind) {
-      'thumbnail' => 'gifts/thumbnails',
-      'asset' => 'gifts/animations',
-      'sound' || 'music' => 'gifts/sounds',
-      _ => 'gifts/icons',
-    };
+    // Sunucunun izin verdiği klasör anahtarı (`/api/upload/presigned`);
+    // `gifts/icons` gibi alt yollar tanınmayıp `gift/uploads`'a düşüyordu.
+    const folder = 'gifts';
     final cancel = CancelToken();
     final res = await _withTimeout(
       () => _dio.safePost<dynamic>(

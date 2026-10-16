@@ -12,8 +12,10 @@ final adminVoiceRoomSettingsProvider =
   }
   final dio = ref.watch(dioProvider);
   try {
+    // Gelir paylaşımını belirleyen `vr_*` ayarları platform ayarlarındadır
+    // (`lib/voice-room-revenue.ts`); web panelindeki ayarlarla aynı kaynak.
     final res = await dio
-        .safeGet<dynamic>(ApiEndpoints.adminVoiceRoomSettings)
+        .safeGet<dynamic>(ApiEndpoints.adminPlatformSettings, forceRefresh: true)
         .timeout(const Duration(seconds: 8), onTimeout: () => throw ApiException('timeout', statusCode: 408));
     return _unwrapMap(res.data);
   } on ApiException catch (e) {
@@ -32,11 +34,19 @@ Map<String, dynamic> _unwrapMap(dynamic data) {
   return const {};
 }
 
+/// Her `vr_*` anahtarı `POST /api/admin/settings {key, value}` ile yazılır.
+/// Önceden `/api/admin/voice-room-settings`'e camelCase alanlar gönderiliyor,
+/// sunucu hiçbirini okumuyor ama «kaydedildi» görünüyordu.
 Future<void> saveAdminVoiceRoomSettings(
   WidgetRef ref,
   Map<String, dynamic> patch,
 ) async {
   final dio = ref.read(dioProvider);
-  await dio.safePost<dynamic>(ApiEndpoints.adminVoiceRoomSettings, data: patch);
+  for (final e in patch.entries) {
+    await dio.safePost<dynamic>(
+      ApiEndpoints.adminPlatformSettings,
+      data: {'key': e.key, 'value': '${e.value}'},
+    );
+  }
   ref.invalidate(adminVoiceRoomSettingsProvider);
 }

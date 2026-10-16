@@ -58,53 +58,34 @@ class AdminSiteAnimationRemoteDataSource {
     return AdminSiteAnimationStats.fromList(items);
   }
 
+  /// `POST` — gövde [AdminSiteAnimation.toApiJson] biçiminde olmalı.
+  /// Hata yerelde «kaydedildi» gibi gösterilmez (önceden 403/404 yerel
+  /// kopyaya yazılıp başarı sanılıyordu).
   Future<AdminSiteAnimation> create(Map<String, dynamic> body) async {
-    try {
-      final res = await _dio.safePost<dynamic>(
-        ApiEndpoints.adminSiteAnimations,
-        data: body,
-      );
-      return AdminSiteAnimation.fromJson(asJsonMap(_unwrapMap(res.data)));
-    } on ApiException catch (e) {
-      if (e.statusCode != 404 && e.statusCode != 403) rethrow;
-    }
-    final item = AdminSiteAnimation.fromJson(body);
-    final items = await _loadLocalOrSeed();
-    final next = [...items, item.copyWith(isActive: true)];
-    await _saveLocal(next);
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.adminSiteAnimations,
+      data: body,
+    );
+    final created = AdminSiteAnimation.fromJson(asJsonMap(_unwrapMap(res.data)));
     await _syncRuntimeCatalog();
-    return item;
+    return created;
   }
 
   Future<AdminSiteAnimation> update(
     String id,
     Map<String, dynamic> patch,
   ) async {
-    try {
-      final res = await _dio.safePatch<dynamic>(
-        ApiEndpoints.adminSiteAnimation(id),
-        data: patch,
-      );
-      return AdminSiteAnimation.fromJson(asJsonMap(_unwrapMap(res.data)));
-    } on ApiException catch (e) {
-      if (e.statusCode != 404 && e.statusCode != 403) rethrow;
-    }
-    final items = await _loadLocalOrSeed();
-    final idx = items.indexWhere((a) => a.id == id);
-    if (idx < 0) throw ApiException('Animasyon bulunamadı.', statusCode: 404);
-    final merged = AdminSiteAnimation.fromJson({
-      ...items[idx].toJson(),
-      ...patch,
-      'id': id,
-    });
-    final next = [...items]..[idx] = merged;
-    await _saveLocal(next);
+    final res = await _dio.safePatch<dynamic>(
+      ApiEndpoints.adminSiteAnimation(id),
+      data: patch,
+    );
+    final updated = AdminSiteAnimation.fromJson(asJsonMap(_unwrapMap(res.data)));
     await _syncRuntimeCatalog();
-    return merged;
+    return updated;
   }
 
   Future<void> setActive(String id, bool active) =>
-      update(id, {'isActive': active});
+      update(id, {'status': active ? 'active' : 'inactive'});
 
   Future<Map<AdminSiteAnimationMembership, String>> fetchDefaults() async {
     try {
@@ -136,27 +117,22 @@ class AdminSiteAnimationRemoteDataSource {
   Future<void> saveDefaults(
     Map<AdminSiteAnimationMembership, String> defaults,
   ) async {
-    final body = {for (final e in defaults.entries) e.key.name: e.value};
-    try {
-      // Backend: `POST {membershipTier, category, animationId}` (seviye başına upsert).
-      for (final e in defaults.entries) {
-        final tier = _backendTier(e.key);
-        if (tier == null) continue;
-        await _dio.safePost<dynamic>(
-          ApiEndpoints.adminSiteAnimationDefaults,
-          data: {
-            'membershipTier': tier,
-            'category': 'entrance',
-            'animationId': e.value,
-          },
-        );
-      }
-      return;
-    } on ApiException catch (e) {
-      if (e.statusCode != 404 && e.statusCode != 403) rethrow;
+    // Backend: `POST {membershipTier, category, animationId}` (seviye başına
+    // upsert). Hata yerel kayda düşürülmez — önceden bir kısmı sunucuya bir
+    // kısmı telefona yazılıp başarı gibi görünüyordu.
+    _ensureServerIds(defaults.values);
+    for (final e in defaults.entries) {
+      final tier = _backendTier(e.key);
+      if (tier == null) continue;
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.adminSiteAnimationDefaults,
+        data: {
+          'membershipTier': tier,
+          'category': 'entrance',
+          'animationId': e.value,
+        },
+      );
     }
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_defaultsKey, jsonEncode(body));
     await _syncRuntimeCatalog();
   }
 
@@ -182,27 +158,22 @@ class AdminSiteAnimationRemoteDataSource {
   Future<void> saveExitDefaults(
     Map<AdminSiteAnimationMembership, String> defaults,
   ) async {
-    final body = {for (final e in defaults.entries) e.key.name: e.value};
-    try {
-      // Backend: `POST {membershipTier, category, animationId}` (seviye başına upsert).
-      for (final e in defaults.entries) {
-        final tier = _backendTier(e.key);
-        if (tier == null) continue;
-        await _dio.safePost<dynamic>(
-          ApiEndpoints.adminSiteAnimationExitDefaults,
-          data: {
-            'membershipTier': tier,
-            'category': 'exit',
-            'animationId': e.value,
-          },
-        );
-      }
-      return;
-    } on ApiException catch (e) {
-      if (e.statusCode != 404 && e.statusCode != 403) rethrow;
+    // Backend: `POST {membershipTier, category, animationId}` (seviye başına
+    // upsert). Hata yerel kayda düşürülmez — önceden bir kısmı sunucuya bir
+    // kısmı telefona yazılıp başarı gibi görünüyordu.
+    _ensureServerIds(defaults.values);
+    for (final e in defaults.entries) {
+      final tier = _backendTier(e.key);
+      if (tier == null) continue;
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.adminSiteAnimationExitDefaults,
+        data: {
+          'membershipTier': tier,
+          'category': 'exit',
+          'animationId': e.value,
+        },
+      );
     }
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_exitDefaultsKey, jsonEncode(body));
     await _syncRuntimeCatalog();
   }
 
@@ -227,38 +198,39 @@ class AdminSiteAnimationRemoteDataSource {
     return _parseAssignments(user);
   }
 
+  /// Sunucu kategorisi (atama slotu → `Animation.category`).
+  static String slotCategory(AdminSiteAnimationSlot slot) => switch (slot) {
+        AdminSiteAnimationSlot.profileFrame => 'profile_frame',
+        AdminSiteAnimationSlot.mic => 'microphone',
+        _ => slot.name,
+      };
+
+  /// Web paneliyle aynı sözleşme: `{animationId, target:{type:'user',userId},
+  /// duration, endDate}`; kaldırma `DELETE ?userId=&category=`. Önceden
+  /// `userId`/`slot`/`expiresAt` gönderildiği için atama hep 400 dönüyordu.
   Future<void> assignAnimation({
     required String userId,
     required AdminSiteAnimationSlot slot,
     required String? animationId,
     DateTime? expiresAt,
   }) async {
-    try {
-      await _dio.safePost<dynamic>(
-        ApiEndpoints.adminSiteAnimationAssign,
-        data: {
-          'userId': userId,
-          'slot': slot.name,
-          'animationId': animationId,
-          if (expiresAt != null) 'expiresAt': expiresAt.toIso8601String(),
-        },
+    if (animationId == null || animationId.isEmpty) {
+      await _dio.safeDelete<dynamic>(
+        ApiEndpoints.adminAnimationAssignments,
+        query: {'userId': userId, 'category': slotCategory(slot)},
       );
+      await _syncRuntimeCatalog();
       return;
-    } on ApiException catch (e) {
-      if (e.statusCode != 404 && e.statusCode != 403) rethrow;
     }
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_assignmentsKey);
-    final root = raw != null
-        ? Map<String, dynamic>.from(jsonDecode(raw) as Map)
-        : <String, dynamic>{};
-    final user = Map<String, dynamic>.from(asJsonMap(root[userId]));
-    user[slot.name] = animationId;
-    if (expiresAt != null) {
-      user['${slot.name}_expiresAt'] = expiresAt.toIso8601String();
-    }
-    root[userId] = user;
-    await prefs.setString(_assignmentsKey, jsonEncode(root));
+    await _dio.safePost<dynamic>(
+      ApiEndpoints.adminSiteAnimationAssign,
+      data: {
+        'animationId': animationId,
+        'target': {'type': 'user', 'userId': userId},
+        'duration': expiresAt != null ? 'custom' : 'permanent',
+        if (expiresAt != null) 'endDate': expiresAt.toUtc().toIso8601String(),
+      },
+    );
     await _syncRuntimeCatalog();
   }
 
@@ -268,28 +240,18 @@ class AdminSiteAnimationRemoteDataSource {
     required String animationId,
     DateTime? expiresAt,
   }) async {
-    try {
-      await _dio.safePost<dynamic>(
-        ApiEndpoints.adminSiteAnimationBulkAssign,
-        data: {
-          'userIds': userIds,
-          'slot': slot.name,
-          'animationId': animationId,
-          if (expiresAt != null) 'expiresAt': expiresAt.toIso8601String(),
-        },
-      );
-      return;
-    } on ApiException catch (e) {
-      if (e.statusCode != 404 && e.statusCode != 403) rethrow;
-    }
-    for (final uid in userIds) {
-      await assignAnimation(
-        userId: uid,
-        slot: slot,
-        animationId: animationId,
-        expiresAt: expiresAt,
-      );
-    }
+    // Süre `duration`/`endDate` ile (önceden `expiresAt` okunmadığı için
+    // süreli atamalar kalıcı oluyordu).
+    await _dio.safePost<dynamic>(
+      ApiEndpoints.adminSiteAnimationBulkAssign,
+      data: {
+        'userIds': userIds,
+        'animationId': animationId,
+        'duration': expiresAt != null ? 'custom' : 'permanent',
+        if (expiresAt != null) 'endDate': expiresAt.toUtc().toIso8601String(),
+      },
+    );
+    await _syncRuntimeCatalog();
   }
 
   Future<List<AdminSiteAnimation>> _loadLocalOrSeed() async {
@@ -304,12 +266,16 @@ class AdminSiteAnimationRemoteDataSource {
     return AdminSiteAnimationSeedCatalog.all();
   }
 
-  Future<void> _saveLocal(List<AdminSiteAnimation> items) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      _prefsKey,
-      jsonEncode(items.map((e) => e.toJson()).toList()),
-    );
+  /// Yerel örnek katalog kimlikleri sunucuda yoktur (sunucu 404 / 500 verir).
+  void _ensureServerIds(Iterable<String> ids) {
+    final local = AdminSiteAnimationSeedCatalog.all().map((a) => a.id).toSet();
+    if (ids.any(local.contains)) {
+      throw const ApiException(
+        'Seçilen animasyonlardan bazıları yalnız örnek katalogda; önce '
+        'Animasyon Kütüphanesi\'ne ekleyip sunucudaki animasyonu seçin.',
+        statusCode: 400,
+      );
+    }
   }
 
   Future<void> _syncRuntimeCatalog() async {

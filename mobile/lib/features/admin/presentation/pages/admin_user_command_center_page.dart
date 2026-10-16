@@ -981,39 +981,45 @@ class _PermissionsTab extends ConsumerWidget {
               SwitchListTile(
                 title: const Text('Canlı yayın açabilir'),
                 value: detail.canOpenLiveStream ?? true,
-                onChanged: (v) => _patchFlag(
+                onChanged: (v) => _manage(
                   ref,
                   context,
-                  {'canOpenLiveStream': v, 'canBroadcast': v},
+                  'broadcast_toggle',
+                  {'enabled': v},
                 ),
               ),
               SwitchListTile(
                 title: const Text('Sesli oda açabilir'),
                 value: detail.canOpenVoiceRoom ?? true,
-                onChanged: (v) => _patchFlag(
+                onChanged: (v) => _manage(
                   ref,
                   context,
-                  {'canOpenVoiceRoom': v, 'canCreateRoom': v},
+                  'room_toggle',
+                  {'enabled': v},
                 ),
               ),
               AdminDiscoveryPermissionsCard(
                 hiddenFromDiscovery: detail.hiddenFromDiscovery,
                 discoveryPriority: detail.discoveryPriority,
                 canDecreasePriority: detail.discoveryPriority > 0,
-                onHiddenChanged: (v) => _patchFlag(
+                onHiddenChanged: (v) => _manage(
                   ref,
                   context,
-                  {'hiddenFromDiscovery': v},
+                  v ? 'discovery_hide' : 'discovery_show',
                 ),
-                onPriorityDecrease: () => _patchFlag(
+                onPriorityDecrease: () => detail.discoveryPriority - 1 <= 0
+                    ? _manage(ref, context, 'discovery_priority_unset')
+                    : _manage(
+                        ref,
+                        context,
+                        'discovery_priority_set',
+                        {'priority': detail.discoveryPriority - 1},
+                      ),
+                onPriorityIncrease: () => _manage(
                   ref,
                   context,
-                  {'discoveryPriority': detail.discoveryPriority - 1},
-                ),
-                onPriorityIncrease: () => _patchFlag(
-                  ref,
-                  context,
-                  {'discoveryPriority': detail.discoveryPriority + 1},
+                  'discovery_priority_set',
+                  {'priority': detail.discoveryPriority + 1},
                 ),
               ),
             ],
@@ -1036,13 +1042,17 @@ class _PermissionsTab extends ConsumerWidget {
     );
   }
 
-  Future<void> _patchFlag(
+  /// Web panelindeki Kullanıcı 360 ile aynı işlem uç noktası. Önceden bu
+  /// ayarlar düz PATCH ile gönderiliyor, sunucu okumuyor ama «Güncellendi»
+  /// görünüyordu.
+  Future<void> _manage(
     WidgetRef ref,
     BuildContext context,
-    Map<String, dynamic> patch,
-  ) async {
+    String action, [
+    Map<String, dynamic> extra = const {},
+  ]) async {
     try {
-      await ref.read(adminRemoteProvider).updateUser(detail.userId, patch);
+      await ref.read(adminRemoteProvider).manageUser(detail.userId, action, extra);
       onSaved();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1060,11 +1070,12 @@ class _PermissionsTab extends ConsumerWidget {
 
   Future<void> _toggleBan(WidgetRef ref, BuildContext context) async {
     try {
-      await ref.read(adminRemoteProvider).updateUser(
+      // Önceden düz PATCH gönderiliyordu; sunucu okumadığı için ban
+      // uygulanmıyordu.
+      await ref.read(adminRemoteProvider).manageUser(
         detail.userId,
-        detail.isBanned
-            ? {'isBanned': false, 'banned': false}
-            : {'isBanned': true, 'banReason': 'admin_action'},
+        detail.isBanned ? 'unban' : 'ban',
+        {'reason': 'Mobil yönetim paneli'},
       );
       onSaved();
     } catch (e) {

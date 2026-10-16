@@ -290,7 +290,10 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
         if (n != null) dismissed = n.toInt();
       } catch (_) {}
 
-      if (dismissed == 0) {
+      // Toplu uç yalnız ödeme bildirimlerini kapatır; bekleyen CFC talepleri
+      // kalıyordu. Liste tazelenip kalan her bekleyen talep tek tek kapatılır.
+      {
+        ref.invalidate(adminPaymentRequestsProvider);
         final rows = await ref.read(adminPaymentRequestsProvider.future);
         for (final row in rows) {
           final id = resolvePaymentRequestId(row);

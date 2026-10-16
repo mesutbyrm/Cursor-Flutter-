@@ -43,16 +43,21 @@ void main() {
     final saved = await repo.saveAdmin([
       (platform: 'tiktok', value: ' @canlifal ', enabled: true),
       (platform: 'x', value: '', enabled: false),
+      (platform: 'telegram', value: '@kanal', enabled: true),
     ]);
     expect(sent?.method, 'PUT');
     expect(sent?.path, '/api/admin/social-accounts');
     final accounts = (sent?.data as Map)['accounts'] as List;
     expect(accounts.first, {'platform': 'tiktok', 'value': '@canlifal', 'enabled': true});
+    // Sunucunun bilmediği platform gönderilmez (önceden tüm kaydı 400 ile bozuyordu).
+    expect(accounts.map((a) => (a as Map)['platform']), isNot(contains('telegram')));
     expect(saved.single.value, '@canlifal');
   });
 
   test('platform etiketi ve simgesi', () {
-    expect(socialPlatformLabel('whatsapp'), 'WhatsApp');
+    expect(socialPlatformLabel('youtube'), 'YouTube');
+    expect(kSocialPlatforms.map((p) => p.$1),
+        ['instagram', 'tiktok', 'youtube', 'x', 'facebook']);
     expect(socialPlatformLabel('bilinmeyen'), 'bilinmeyen');
   });
 }

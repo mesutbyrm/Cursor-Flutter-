@@ -146,6 +146,12 @@ abstract final class AdminGiftDtoMapper {
       isNew: isNew,
       isLucky: isLucky,
     );
+    // Görünürlük yalnız oluştururken varsayılanla gönderilir; düzenlemede
+    // gönderilirse web panelinden kapatılmış sesli oda / canlı yayın
+    // görünürlüğü her mobil kayıtta yeniden açılıyordu.
+    body
+      ..remove('visibleInVoiceRoom')
+      ..remove('visibleInLiveStream');
     if (!assetChanged && hasExistingAsset) {
       body.remove('cloudStoragePath');
       body.remove('assetUrl');

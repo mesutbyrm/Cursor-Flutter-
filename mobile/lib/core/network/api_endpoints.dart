@@ -692,6 +692,10 @@ abstract final class ApiEndpoints {
   /// Admin ödeme bildirimi (PaymentNotification) onay / ret — `{action, notificationId}`.
   static const adminPaymentsAction = '/api/admin/payments';
 
+  /// Platform ayarları (web paneli Platform Ayarları ile aynı): GET düz nesne,
+  /// POST `{key, value}`.
+  static const adminPlatformSettings = '/api/admin/settings';
+
   /// Ödeme itirazı (destek talebi) — `GET` mevcut talep, `POST {message}`.
   static String paymentNotificationDispute(String notificationId) =>
       '/api/payments/notifications/$notificationId/dispute';
@@ -737,6 +741,11 @@ abstract final class ApiEndpoints {
   static const adminWithdrawals = '/api/admin/withdrawals';
 
   static String adminUser(String userId) => '/api/admin/users/$userId';
+
+  /// İşlem tabanlı kullanıcı yönetimi (web panelindeki Kullanıcı 360 ile aynı):
+  /// `POST {action, confirm: true, ...}` — ban, unban, role_change,
+  /// broadcast_toggle, room_toggle, discovery_hide/show, discovery_priority_set/unset.
+  static String adminUserManage(String userId) => '/api/admin/users/$userId/manage';
 
   /// Admin — canlı falcı yönetimi (OpenAPI admin/live-tellers).
   static const adminLiveTellers = '/api/admin/live-tellers';
@@ -797,6 +806,8 @@ abstract final class ApiEndpoints {
   static const adminSiteAnimationExitDefaults =
       '/api/admin/site-animations/exit-defaults';
   static const adminSiteAnimationAssign = '/api/admin/site-animations/assign';
+  /// Animasyon ataması kaldırma — `DELETE ?userId=&category=` (ana uç).
+  static const adminAnimationAssignments = '/api/admin/animations/assignments';
   static const adminSiteAnimationBulkAssign =
       '/api/admin/site-animations/bulk-assign';
   static String adminSiteAnimation(String id) =>

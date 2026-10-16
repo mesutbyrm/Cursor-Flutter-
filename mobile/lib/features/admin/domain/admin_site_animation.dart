@@ -76,7 +76,11 @@ enum AdminSiteAnimationCategory {
         AdminSiteAnimationCategory.entrance,
       'exit' || 'cikis' || 'çıkış' || 'member_left' =>
         AdminSiteAnimationCategory.exit,
-      'transition' || 'gecis' || 'geçiş' || 'seat_change' =>
+      'transition' ||
+      'page_transition' ||
+      'gecis' ||
+      'geçiş' ||
+      'seat_change' =>
         AdminSiteAnimationCategory.transition,
       'profile' || 'profil' || 'profile_animation' =>
         AdminSiteAnimationCategory.profile,
@@ -117,7 +121,8 @@ enum AdminSiteAnimationCategory {
       'oda_geneli' ||
       'room' =>
         AdminSiteAnimationCategory.roomWide,
-      'mic' || 'mikrofon' => AdminSiteAnimationCategory.mic,
+      'mic' || 'microphone' || 'mikrofon' => AdminSiteAnimationCategory.mic,
+      'level_up' => AdminSiteAnimationCategory.reward,
       'host' => AdminSiteAnimationCategory.host,
       _ => null,
     };
@@ -183,7 +188,8 @@ enum AdminSiteAnimationAnchor {
     return switch (raw?.toUpperCase()) {
       'TOP_CENTER' || 'TOPCENTER' => AdminSiteAnimationAnchor.topCenter,
       'SEAT' => AdminSiteAnimationAnchor.seat,
-      'CENTER' => AdminSiteAnimationAnchor.center,
+      'CENTER' || 'BOTTOM_LEFT' || 'BOTTOM_RIGHT' || 'TOP_RIGHT' =>
+        AdminSiteAnimationAnchor.center,
       'CUSTOM' => AdminSiteAnimationAnchor.custom,
       _ => AdminSiteAnimationAnchor.topLeft,
     };
@@ -198,6 +204,7 @@ enum AdminSiteAnimationRarity {
 
   static AdminSiteAnimationRarity parse(String? raw) {
     return switch (raw?.toLowerCase()) {
+      // Sunucu: normal | rare | epic | legendary
       'rare' => AdminSiteAnimationRarity.rare,
       'epic' => AdminSiteAnimationRarity.epic,
       'legendary' => AdminSiteAnimationRarity.legendary,
@@ -374,10 +381,13 @@ class AdminSiteAnimation extends Equatable {
           ) ??
           AdminSiteAnimationCategory.entrance,
       membership: AdminSiteAnimationMembership.parse(
-            json['membership']?.toString(),
+            (json['membership'] ?? json['membershipLevel'])?.toString(),
           ) ??
-          AdminSiteAnimationMembership.normal,
+          (json.containsKey('membershipLevel')
+              ? AdminSiteAnimationMembership.all
+              : AdminSiteAnimationMembership.normal),
       animationType: json['animationType']?.toString() ??
+          json['type']?.toString() ??
           json['assetType']?.toString() ??
           'native',
       assetUrl: json['assetUrl']?.toString() ?? json['animationUrl']?.toString(),
@@ -387,13 +397,31 @@ class AdminSiteAnimation extends Equatable {
       durationMs: _int(json['durationMs'] ?? json['duration'], 3000),
       priority: _int(json['priority'], 50),
       rarity: AdminSiteAnimationRarity.parse(json['rarity']?.toString()),
-      context: json['context']?.toString() ?? 'voice_room',
-      anchor: AdminSiteAnimationAnchor.parse(json['anchor']?.toString()),
-      scale: _double(json['scale'], 1),
+      context: json['context']?.toString() ??
+          (json['contexts'] is List && (json['contexts'] as List).isNotEmpty
+              ? (json['contexts'] as List).first.toString()
+              : 'voice_room'),
+      anchor: AdminSiteAnimationAnchor.parse(
+        (json['position'] ?? json['anchor'])?.toString(),
+      ),
+      scale: switch (json['scale']) {
+        'small' => 0.75,
+        'large' => 1.35,
+        'medium' => 1.0,
+        final v => _double(v, 1),
+      },
       cooldownMs: _int(json['cooldownMs'] ?? json['cooldown'], 0),
-      isActive: json['isActive'] != false && json['active'] != false,
-      description: json['description']?.toString(),
-      previewMp4Key: json['previewMp4Key']?.toString(),
+      isActive: json['status'] != null
+          ? json['status'] == 'active'
+          : json['isActive'] != false && json['active'] != false,
+      description: json['description']?.toString() ??
+          (json['metadata'] is Map
+              ? (json['metadata'] as Map)['description']?.toString()
+              : null),
+      previewMp4Key: json['previewMp4Key']?.toString() ??
+          (json['metadata'] is Map
+              ? (json['metadata'] as Map)['previewMp4Key']?.toString()
+              : null),
     );
   }
 
@@ -436,6 +464,90 @@ class AdminSiteAnimation extends Equatable {
         if (description != null) 'description': description,
         if (previewMp4Key != null) 'previewMp4Key': previewMp4Key,
       };
+
+  /// Sunucu sözleşmesi (`/api/admin/animations` → `coerceAnimationPayload`,
+  /// web paneliyle aynı). [toJson] eski yerel biçimdir; sunucu `type`, `status`,
+  /// `membershipLevel`, `position`/`anchor`, `scale` (small/medium/large),
+  /// `rarity` (normal/...), snake_case `category` ve `contexts[]` bekler —
+  /// önceden oluşturma ve düzenleme her zaman 400 dönüyordu.
+  Map<String, dynamic> toApiJson() {
+    const types = {'lottie', 'svga', 'gif', 'video', 'image', 'apng'};
+    final rawType = animationType.toLowerCase().trim();
+    final type = types.contains(rawType)
+        ? rawType
+        : switch (rawType) {
+            'mp4' || 'webm' || 'mov' => 'video',
+            'json' => 'lottie',
+            'png' || 'jpg' || 'jpeg' || 'webp' => 'image',
+            _ => 'image',
+          };
+    final apiCategory = switch (category) {
+      AdminSiteAnimationCategory.entrance => 'entrance',
+      AdminSiteAnimationCategory.exit => 'exit',
+      AdminSiteAnimationCategory.transition => 'page_transition',
+      AdminSiteAnimationCategory.profile => 'profile',
+      AdminSiteAnimationCategory.profileFrame => 'profile_frame',
+      AdminSiteAnimationCategory.avatarEffect => 'avatar',
+      AdminSiteAnimationCategory.vipEffect ||
+      AdminSiteAnimationCategory.goldEffect ||
+      AdminSiteAnimationCategory.diamondEffect =>
+        'vip',
+      AdminSiteAnimationCategory.gift => 'gift',
+      AdminSiteAnimationCategory.reward => 'level_up',
+      AdminSiteAnimationCategory.seat => 'seat',
+      AdminSiteAnimationCategory.mic => 'microphone',
+      AdminSiteAnimationCategory.host => 'host',
+      _ => 'system',
+    };
+    final membershipLevel = switch (membership) {
+      AdminSiteAnimationMembership.normal => 'basic',
+      AdminSiteAnimationMembership.gold => 'gold',
+      AdminSiteAnimationMembership.premium => 'premium',
+      AdminSiteAnimationMembership.diamond => 'diamond',
+      AdminSiteAnimationMembership.vip => 'vip',
+      AdminSiteAnimationMembership.svip => 'svip',
+      AdminSiteAnimationMembership.admin => 'admin',
+      AdminSiteAnimationMembership.host || AdminSiteAnimationMembership.all => null,
+    };
+    final (position, apiAnchor) = switch (anchor) {
+      AdminSiteAnimationAnchor.topLeft => ('top_left', 'room'),
+      AdminSiteAnimationAnchor.topCenter => ('top_center', 'room'),
+      AdminSiteAnimationAnchor.seat => ('seat', 'seat'),
+      AdminSiteAnimationAnchor.center ||
+      AdminSiteAnimationAnchor.custom =>
+        ('center', 'room'),
+    };
+    const contexts = {
+      'voice_room', 'live_stream', 'social', 'profile', 'game_room', 'chat',
+      'gift', 'login', 'logout', 'mic', 'seat', 'host',
+    };
+    final ctx = context
+        .replaceAllMapped(RegExp('[A-Z]'), (m) => '_${m[0]!.toLowerCase()}')
+        .toLowerCase();
+    return {
+      'name': name,
+      'category': apiCategory,
+      'type': type,
+      if (assetUrl != null) 'assetUrl': assetUrl,
+      if (previewUrl != null) 'previewUrl': previewUrl,
+      if (soundUrl != null) 'soundUrl': soundUrl,
+      'membershipLevel': membershipLevel,
+      'durationMs': durationMs,
+      'priority': priority,
+      'cooldownMs': cooldownMs,
+      'rarity': rarity == AdminSiteAnimationRarity.common ? 'normal' : rarity.name,
+      'position': position,
+      'anchor': apiAnchor,
+      'scale': scale < 0.85 ? 'small' : (scale > 1.15 ? 'large' : 'medium'),
+      'status': isActive ? 'active' : 'inactive',
+      if (contexts.contains(ctx)) 'contexts': [ctx],
+      if (description != null || previewMp4Key != null)
+        'metadata': {
+          if (description != null) 'description': description,
+          if (previewMp4Key != null) 'previewMp4Key': previewMp4Key,
+        },
+    };
+  }
 
   AdminSiteAnimation copyWith({
     String? name,

@@ -32,14 +32,13 @@ class AdminUserManageSheet {
     final nameCtrl = TextEditingController(
       text: (detail['displayName'] ?? detail['name'] ?? '').toString(),
     );
-    final bioCtrl = TextEditingController(
-      text: (detail['bio'] ?? '').toString(),
-    );
     final emailCtrl = TextEditingController(
       text: (detail['email'] ?? '').toString(),
     );
     var role = (detail['role'] ?? 'user').toString();
     var membership = (detail['membership'] ?? 'basic').toString();
+    final initialRole = role;
+    final initialMembership = membership;
     final access = ref.read(staffAccessProvider);
     final canAssignAdmin = access.isFounder;
 
@@ -176,15 +175,6 @@ class AdminUserManageSheet {
                       border: OutlineInputBorder(),
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: bioCtrl,
-                    maxLines: 2,
-                    decoration: const InputDecoration(
-                      labelText: 'Bio',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     value: role,
@@ -259,17 +249,28 @@ class AdminUserManageSheet {
                         return;
                       }
                       try {
-                        await ref.read(adminRemoteProvider).updateUser(
-                              userId,
-                              {
-                                'displayName': nameCtrl.text.trim(),
-                                'name': nameCtrl.text.trim(),
-                                'email': emailCtrl.text.trim(),
-                                'bio': bioCtrl.text.trim(),
-                                'role': role,
-                                'membership': membership,
-                              },
-                            );
+                        final remote = ref.read(adminRemoteProvider);
+                        final email = emailCtrl.text.trim();
+                        // Profil alanları düz güncelleme; rol ve üyelik sunucunun
+                        // yetki/hiyerarşi kontrollü uçlarından (web paneliyle aynı).
+                        await remote.updateUser(userId, {
+                          'name': nameCtrl.text.trim(),
+                          if (email.isNotEmpty) 'email': email,
+                        });
+                        if (role != initialRole) {
+                          await remote.manageUser(userId, 'role_change', {
+                            'role': role,
+                          });
+                        }
+                        if (membership != initialMembership &&
+                            membership != 'basic') {
+                          await remote.grantMembership(
+                            userId: userId,
+                            tier: membership,
+                            duration: 'monthly',
+                            reason: 'Mobil yönetim paneli',
+                          );
+                        }
                         if (ctx.mounted) {
                           Navigator.pop(ctx);
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -300,7 +301,6 @@ class AdminUserManageSheet {
     );
 
     nameCtrl.dispose();
-    bioCtrl.dispose();
     emailCtrl.dispose();
   }
 }

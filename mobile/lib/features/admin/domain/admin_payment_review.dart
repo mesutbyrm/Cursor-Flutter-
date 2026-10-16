@@ -172,6 +172,33 @@ Future<void> reviewAdminPaymentRequest(
     throw const ApiException('Ödeme talebi kimliği bulunamadı.');
   }
 
+  // Jeton ödeme bildirimi (PaymentNotification: `productType` / `paymentMethod`
+  // alanları) — onay `POST /api/admin/payments`; CFC PATCH ucu bu kimliği
+  // bulamayıp 404 dönüyordu.
+  final isNotificationRow = requestRow != null &&
+      (requestRow.containsKey('productType') ||
+          requestRow.containsKey('paymentMethod'));
+  // Satır bilgisi yoksa (ör. profil kartı, bildirim sekmesi) türü bilinemez:
+  // önce ödeme bildirimi ucu denenir, kayıt yoksa (404) CFC talebine geçilir.
+  // Önceden doğrudan CFC ucuna gidip jeton bildirimlerinde 404 alınıyordu.
+  if (isNotificationRow || requestRow == null) {
+    final note = reviewNote?.trim();
+    try {
+      await dio.safePost<dynamic>(
+        ApiEndpoints.adminPaymentsAction,
+        data: {
+          'action': action == 'approve' ? 'approve' : 'reject',
+          'notificationId': id,
+          'confirm': true,
+          if (note != null && note.isNotEmpty) 'adminNote': note,
+        },
+      );
+      return;
+    } on ApiException catch (e) {
+      if (isNotificationRow || e.statusCode != 404) rethrow;
+    }
+  }
+
   final resolvedType = resolvePaymentRequestTypeForReview(
     uiRequestType: requestType,
     requestRow: requestRow,
@@ -181,25 +208,6 @@ Future<void> reviewAdminPaymentRequest(
       'Ödeme türü belirlenemedi. Listeyi yenileyip tekrar deneyin.',
     );
   }
-  // Jeton ödeme bildirimi (PaymentNotification: `productType` / `paymentMethod`
-  // alanları) — onay `POST /api/admin/payments`; CFC PATCH ucu bu kimliği
-  // bulamayıp 404 dönüyordu.
-  if (requestRow != null &&
-      (requestRow.containsKey('productType') ||
-          requestRow.containsKey('paymentMethod'))) {
-    final note = reviewNote?.trim();
-    await dio.safePost<dynamic>(
-      ApiEndpoints.adminPaymentsAction,
-      data: {
-        'action': action == 'approve' ? 'approve' : 'reject',
-        'notificationId': id,
-        'confirm': true,
-        if (note != null && note.isNotEmpty) 'adminNote': note,
-      },
-    );
-    return;
-  }
-
   final isJeton = resolvedType == 'jeton';
   // Üretim PATCH yalnızca `/api/admin/cfc-payment-requests` (jeton + CFC).
   // `/api/admin/payment-requests` yalnız GET — PATCH yedeği 405 dönüyordu.
