@@ -123,6 +123,18 @@ class AdminGiftRemoteDataSource {
     }
   }
 
+  /// Tek hediye — `GET /api/admin/gifts/{id}` (düzenleme ekranı için).
+  Future<AdminGiftType> getGift(String id) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.adminGift(id),
+      forceRefresh: true,
+      options: _adminOptions(null),
+    );
+    final gift = _parseOne(res.data);
+    if (gift == null) throw const ApiException('Hediye bulunamadı');
+    return gift;
+  }
+
   /// Hediye güncelle (kısmi). body = UpdateGiftTypeDto alanları.
   Future<AdminGiftType?> updateGift(
     String id,

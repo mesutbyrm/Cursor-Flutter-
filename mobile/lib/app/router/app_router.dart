@@ -49,6 +49,7 @@ import '../../features/admin/presentation/providers/staff_access_provider.dart';
 import '../../features/profile/presentation/providers/profile_providers.dart' show walletBalancesProvider;
 import '../../features/admin/presentation/pages/admin_live_stats_page.dart';
 import '../../features/admin/presentation/pages/admin_management_center_page.dart';
+import '../../features/admin/presentation/navigation/admin_nav.dart';
 import '../../features/admin/presentation/pages/admin_hub_page.dart';
 import '../../features/admin/presentation/pages/admin_home_tab.dart';
 import '../../features/admin/presentation/pages/admin_moderation_queue_page.dart';
@@ -303,6 +304,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           AppStartupLog.route(loc, '/feed', reason: 'admin yetkisi yok');
           return '/feed';
         }
+        // Eski hub'lar ve çalışmayan ekranlar → tek Yönetim Paneli.
+        if (adminRetiredPaths.contains(path)) return '/admin/center';
       }
 
       final target = AuthRedirect.targetFor(
@@ -866,7 +869,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/admin/web',
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
-          child: const AdminWebPanelPage(),
+          child: AdminWebPanelPage(
+            path: state.uri.queryParameters['path'],
+            title: state.uri.queryParameters['title'],
+          ),
         ),
       ),
       GoRoute(
@@ -899,10 +905,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin/finance-summary',
         builder: (context, state) => const AdminFinanceSummaryPage(),
-      ),
-      GoRoute(
-        path: '/admin/moderation',
-        builder: (context, state) => const AdminModerationPage(),
       ),
       GoRoute(
         path: '/gift-send',
@@ -1185,8 +1187,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               final gift = state.extra;
               return AppPageTransitions.fadeSlide(
                 key: state.pageKey,
-                child: AdminGiftEditorPage(
-                  gift: gift is AdminGiftType ? gift : null,
+                child: AdminGiftEditRoutePage(
+                  giftId: state.pathParameters['giftId'] ?? '',
+                  initial: gift is AdminGiftType ? gift : null,
                 ),
               );
             },

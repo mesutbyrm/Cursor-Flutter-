@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/images/canlifal_network_image.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/api_http_cache.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../domain/admin_gift_stats.dart';
 import '../../domain/admin_gift_type.dart';
@@ -566,8 +568,9 @@ class _GiftRow extends ConsumerWidget {
       builder: (ctx) => AlertDialog(
         title: const Text('Hediyeyi sil'),
         content: Text(
-          '"${gift.name}" uygulamadan tamamen kaldırılacak; tüm sürümlerde '
-          'hediye panelinden düşer. Geçmiş gönderim kayıtları korunur.',
+          '"${gift.name}" tamamen kaldırılacak: videosu, görseli, sesi ve '
+          'müziği sunucudan silinir, tüm uygulamalarda hediye panelinden düşer. '
+          'Bu işlem geri alınamaz.',
         ),
         actions: [
           TextButton(
@@ -584,7 +587,21 @@ class _GiftRow extends ConsumerWidget {
     if (ok != true) return;
     try {
       await ref.read(adminGiftRemoteProvider).deleteGift(gift.id);
+      // Hediye panellerinin önbelleği de temizlensin; aksi halde silinen
+      // hediye bir süre daha görünüyordu.
+      await Future.wait([
+        ApiHttpCache.invalidatePath('/api/video-streams/gifts'),
+        ApiHttpCache.invalidatePath(ApiEndpoints.giftsTypes),
+        ApiHttpCache.invalidatePath('/api/gifts/catalog'),
+        ApiHttpCache.invalidatePath('/api/gifts/version'),
+      ]);
+      await invalidateAllGiftCatalogs(ref);
       ref.invalidate(adminGiftListProvider);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('"${gift.name}" ve tüm dosyaları silindi')),
+        );
+      }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(

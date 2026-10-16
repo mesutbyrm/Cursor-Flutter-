@@ -6,6 +6,7 @@ import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../domain/admin_pending_counts.dart';
 import '../providers/admin_pending_counts_provider.dart';
+import '../navigation/admin_nav.dart';
 
 /// PR #40 — yatay bekleyen iş şeridi (`GET /api/admin/pending-counts`).
 class AdminPendingOpsBar extends ConsumerWidget {
@@ -52,28 +53,28 @@ class AdminPendingOpsBar extends ConsumerWidget {
     final items = <({String label, int n, String route, Color color})>[
       if (counts.pendingPayments > 0)
         (
-          label: 'Jeton/CFC',
+          label: 'Jeton Talepleri',
           n: counts.pendingPayments,
-          route: '/admin/panel',
+          route: '/admin',
           color: AppThemeColors.liveRed,
         ),
       if (counts.cfcPaymentRequests > 0)
         (
-          label: 'CFC talep',
+          label: 'CFC Talepleri',
           n: counts.cfcPaymentRequests,
-          route: '/admin/panel',
+          route: '/admin',
           color: AppThemeColors.diamondBlue,
         ),
       if (counts.pendingWithdrawals > 0)
         (
-          label: 'Çekim',
+          label: 'Para Çekme',
           n: counts.pendingWithdrawals,
-          route: '/admin/panel',
+          route: adminWebRoute('/admin/withdrawals', 'Çekim & Ödüller'),
           color: AppThemeColors.accentCyan,
         ),
       if (counts.pendingReports > 0)
         (
-          label: 'Şikâyet',
+          label: 'Şikayetler',
           n: counts.pendingReports,
           route: '/admin/complaints',
           color: AppThemeColors.accentPink,
@@ -82,21 +83,21 @@ class AdminPendingOpsBar extends ConsumerWidget {
         (
           label: 'Doğrulama',
           n: counts.pendingVerifications,
-          route: '/admin/users',
+          route: adminWebRoute('/admin/verification', 'Doğrulama Talepleri'),
           color: AppThemeColors.accentPurple,
         ),
       if (counts.pendingTellerApplications > 0)
         (
-          label: 'Falcı başv.',
+          label: 'Falcı Başvuru',
           n: counts.pendingTellerApplications,
-          route: '/admin/users',
+          route: adminWebRoute('/admin/live-tellers', 'Canlı Falcı Yönetimi'),
           color: AppThemeColors.coinGold,
         ),
       if (counts.pendingAgencyApplications > 0)
         (
-          label: 'Ajans başv.',
+          label: 'Ajans Başvuru',
           n: counts.pendingAgencyApplications,
-          route: '/admin/ajans-yonetimi',
+          route: adminWebRoute('/admin/ajanslar', 'Ajans Listesi'),
           color: const Color(0xFF10B981),
         ),
     ];

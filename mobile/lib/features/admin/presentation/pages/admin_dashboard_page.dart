@@ -175,7 +175,7 @@ class AdminDashboardPage extends ConsumerWidget {
                       ],
                     ),
                     const SizedBox(height: 22),
-                    _SectionLabel('Jeton & CFC Yönetimi'),
+                    // Tüm yönetim işlemleri tek yerde: Yönetim Paneli.
                     _ActionGrid(items: [
                       _AdminAction(
                         icon: Icons.payments_rounded,
@@ -184,83 +184,10 @@ class AdminDashboardPage extends ConsumerWidget {
                         onTap: () => context.push('/admin'),
                       ),
                       _AdminAction(
-                        icon: Icons.add_circle_outline_rounded,
-                        label: 'Jeton yükle',
-                        onTap: () => context.push('/admin/panel'),
+                        icon: Icons.admin_panel_settings_rounded,
+                        label: 'Yönetim Paneli',
+                        onTap: () => context.push('/admin/center'),
                       ),
-                      _AdminAction(
-                        icon: Icons.toll_outlined,
-                        label: 'CFC yükle',
-                        onTap: () => context.push('/admin/panel'),
-                      ),
-                      _AdminAction(
-                        icon: Icons.history_rounded,
-                        label: 'İşlem geçmişi',
-                        onTap: () => context.push('/admin/reports'),
-                      ),
-                    ]),
-                    const SizedBox(height: 22),
-                    _SectionLabel('Bildirim Yönetimi'),
-                    _ActionGrid(items: [
-                      _AdminAction(
-                        icon: Icons.notifications_active_rounded,
-                        label: 'Ödeme bildirimleri',
-                        onTap: () => context.push('/admin'),
-                      ),
-                    ]),
-                    const SizedBox(height: 22),
-                    _SectionLabel('Sesli Oda & Yayın'),
-                    _ActionGrid(items: [
-                      if (access.canManageVoiceRooms)
-                        _AdminAction(
-                          icon: Icons.meeting_room_rounded,
-                          label: 'Sesli odalar',
-                          onTap: () => context.push('/admin/voice-rooms'),
-                        ),
-                      if (access.canManagePayments || access.canManageVoiceRooms)
-                        _AdminAction(
-                          icon: Icons.receipt_long_rounded,
-                          label: 'Oda finans denetimi',
-                          onTap: () => context.push('/admin/voice-finance'),
-                        ),
-                      if (access.canManageLiveStreams)
-                        _AdminAction(
-                          icon: Icons.live_tv_rounded,
-                          label: 'Canlı yayınlar',
-                          onTap: () => context.push('/admin/live-streams'),
-                        ),
-                      _AdminAction(
-                        icon: Icons.gavel_rounded,
-                        label: 'Moderasyon',
-                        onTap: () => context.push('/admin/moderation'),
-                      ),
-                    ]),
-                    const SizedBox(height: 22),
-                    _SectionLabel('Kullanıcı & Sistem'),
-                    _ActionGrid(items: [
-                      if (access.canManageUsers)
-                        _AdminAction(
-                          icon: Icons.people_alt_rounded,
-                          label: 'Kullanıcılar',
-                          onTap: () => context.push('/admin/users'),
-                        ),
-                      if (access.canViewReports)
-                        _AdminAction(
-                          icon: Icons.analytics_rounded,
-                          label: 'Raporlar',
-                          onTap: () => context.push('/admin/reports'),
-                        ),
-                      _AdminAction(
-                        icon: Icons.dashboard_customize_rounded,
-                        label: 'Klasik panel',
-                        onTap: () => context.push('/admin/panel'),
-                      ),
-                      if (access.canManageGifts)
-                        _AdminAction(
-                          icon: Icons.card_giftcard_rounded,
-                          label: 'Hediyeler',
-                          onTap: () => context.push('/admin/gifts'),
-                        ),
                     ]),
                   ],
                 ),

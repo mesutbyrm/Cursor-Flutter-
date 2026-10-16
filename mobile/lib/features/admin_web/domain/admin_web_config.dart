@@ -11,8 +11,17 @@ abstract final class AdminWebConfig {
   /// Mobil istemci bayrağı — sunucu middleware için.
   static const mobileClientQuery = 'canlifal_mobile=1';
 
-  static Uri adminEntryUri({String? accessToken}) {
-    final base = Uri.parse('$origin$adminPath?$mobileClientQuery');
+  /// Yalnız `/admin` altındaki web sayfaları açılabilir (ör. `/admin/withdrawals`).
+  static String safeAdminPath(String? path) {
+    final p = (path ?? '').trim();
+    if (p == adminPath || p.startsWith('$adminPath/')) {
+      if (!p.contains('..') && !p.contains('//')) return p;
+    }
+    return adminPath;
+  }
+
+  static Uri adminEntryUri({String? accessToken, String? path}) {
+    final base = Uri.parse('$origin${safeAdminPath(path)}?$mobileClientQuery');
     if (accessToken == null || accessToken.isEmpty) return base;
     return base.replace(
       queryParameters: {

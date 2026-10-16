@@ -242,48 +242,6 @@ class AdminProfileHeader extends ConsumerWidget {
             ),
           ],
         ),
-        const SizedBox(height: 18),
-        Text(
-          'Hızlı İşlemler',
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w800,
-            color: c.onSurface,
-          ),
-        ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            if (access.canManageUsers)
-              _Quick(
-                icon: Icons.groups_rounded,
-                color: const Color(0xFF8B5CF6),
-                label: 'Kullanıcılar',
-                onTap: () => context.push('/admin/users'),
-              ),
-            if (access.canManageLiveStreams)
-              _Quick(
-                icon: Icons.videocam_rounded,
-                color: const Color(0xFFEF4444),
-                label: 'Aktif Yayınlar',
-                onTap: () => context.push('/admin/live-streams'),
-              ),
-            if (access.canViewReports)
-              _Quick(
-                icon: Icons.assignment_rounded,
-                color: const Color(0xFFA855F7),
-                label: 'Raporlar',
-                onTap: () => context.push('/admin/reports'),
-              ),
-            if (access.canManageNotifications)
-              _Quick(
-                icon: Icons.campaign_rounded,
-                color: const Color(0xFF22A6F2),
-                label: 'Duyuru Gönder',
-                onTap: () => context.push('/admin/notification-manager'),
-              ),
-          ],
-        ),
       ],
     );
   }
@@ -561,58 +519,3 @@ class _InfoCard extends StatelessWidget {
   }
 }
 
-class _Quick extends StatelessWidget {
-  const _Quick({
-    required this.icon,
-    required this.color,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final Color color;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 3),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(14),
-            onTap: onTap,
-            child: Ink(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                color: mockCardColor(context),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: mockCardBorder(context)),
-              ),
-              child: Column(
-                children: [
-                  MockIconSquare(icon: icon, color: color, size: 34),
-                  const SizedBox(height: 6),
-                  Text(
-                    label,
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w600,
-                      color: c.onSurface,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

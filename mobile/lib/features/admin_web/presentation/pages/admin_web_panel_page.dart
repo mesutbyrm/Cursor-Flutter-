@@ -22,7 +22,13 @@ import '../providers/admin_web_access_provider.dart';
 
 /// Tam ekran mobil admin paneli — WebView + JWT SSO.
 class AdminWebPanelPage extends ConsumerStatefulWidget {
-  const AdminWebPanelPage({super.key});
+  const AdminWebPanelPage({super.key, this.path, this.title});
+
+  /// Açılacak web admin sayfası (ör. `/admin/withdrawals`); boşsa `/admin`.
+  final String? path;
+
+  /// Üst bar başlığı (menüdeki bölüm adı).
+  final String? title;
 
   @override
   ConsumerState<AdminWebPanelPage> createState() => _AdminWebPanelPageState();
@@ -48,7 +54,7 @@ class _AdminWebPanelPageState extends ConsumerState<AdminWebPanelPage> {
         tokenStorage: ref.read(tokenStorageProvider),
         cookieJar: ref.read(cookieJarProvider),
       );
-      final payload = await sso.prepareSession();
+      final payload = await sso.prepareSession(path: widget.path);
       await _initWebView(payload);
     } catch (e) {
       if (mounted) {
@@ -317,7 +323,7 @@ class _AdminWebPanelPageState extends ConsumerState<AdminWebPanelPage> {
                 progress: _progress,
                 onClose: () => context.pop(),
                 onRefresh: _reload,
-                onNativeAdmin: () => context.push('/admin/panel'),
+                onNativeAdmin: () => context.go('/admin/center'),
               ),
               if (_loginWall)
                 MaterialBanner(
@@ -326,7 +332,7 @@ class _AdminWebPanelPageState extends ConsumerState<AdminWebPanelPage> {
                   ),
                   actions: [
                     TextButton(
-                      onPressed: () => context.push('/admin/panel'),
+                      onPressed: () => context.go('/admin/center'),
                       child: const Text('Yerel panel'),
                     ),
                     TextButton(onPressed: _reload, child: const Text('Yenile')),

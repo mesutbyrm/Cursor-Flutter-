@@ -4,163 +4,141 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/mock_ui_kit.dart';
-import '../../../auth/domain/me_permissions.dart';
-import '../../../auth/presentation/providers/me_permissions_provider.dart';
+import '../../../admin_web/presentation/providers/admin_web_access_provider.dart';
+import '../navigation/admin_nav.dart';
+import '../providers/admin_panel_providers.dart';
+import '../providers/admin_pending_counts_provider.dart';
 import '../providers/staff_access_provider.dart';
+import '../widgets/admin_credit_sheet.dart';
+import '../widgets/admin_membership_sheet.dart';
+import '../widgets/admin_pending_ops_bar.dart';
+import '../widgets/admin_stats_list_sheet.dart';
+import '../widgets/admin_user_picker.dart';
+import 'admin_panel_page.dart' show AdminCreditKind, AdminStatsKind;
 
-/// Yönetim Merkezi kartı tanımı. Görünürlük [StaffAccess] yetkilerinden gelir;
-/// rota mevcut admin ekranlarına gider (yeni uç eklenmez).
-class AdminCenterEntry {
-  const AdminCenterEntry({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.accent,
-    required this.route,
-    required this.visible,
-    this.danger = false,
-  });
-
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final Color accent;
-  final String route;
-  final bool visible;
-  final bool danger;
+/// Görünür menü grupları: yetkiye göre süzülmüş, boş gruplar atılmış.
+List<({AdminNavGroup group, List<(AdminNavItem, AdminNavTarget)> items})>
+    visibleAdminNav(StaffAccess access, {required bool webAccess, String query = ''}) {
+  final q = query.trim().toLowerCase();
+  final out =
+      <({AdminNavGroup group, List<(AdminNavItem, AdminNavTarget)> items})>[];
+  for (final g in adminNavGroups(access)) {
+    final items = <(AdminNavItem, AdminNavTarget)>[];
+    for (final item in g.items) {
+      final target = item.resolve(webAccess: webAccess);
+      if (target == null) continue;
+      if (q.isNotEmpty &&
+          !item.label.toLowerCase().contains(q) &&
+          !item.description.toLowerCase().contains(q) &&
+          !g.title.toLowerCase().contains(q)) {
+        continue;
+      }
+      items.add((item, target));
+    }
+    if (items.isNotEmpty) out.add((group: g, items: items));
+  }
+  return out;
 }
 
-/// Yetkiye göre görünen Yönetim Merkezi kartları.
-List<AdminCenterEntry> adminCenterEntries(
-  StaffAccess a, {
-  MePermissions? serverPerms,
-}) {
-  bool sp(String p) => serverPerms?.can(p) ?? false;
-  return [
-    AdminCenterEntry(
-      title: 'Kullanıcı Yönetimi',
-      subtitle: 'Kullanıcılar, roller, ban',
-      icon: Icons.groups_rounded,
-      accent: const Color(0xFF3B82F6),
-      route: '/admin/users',
-      visible: a.canManageUsers,
-    ),
-    AdminCenterEntry(
-      title: 'Canlı Yayın Yönetimi',
-      subtitle: 'Aktif yayınlar, kontrol',
-      icon: Icons.live_tv_rounded,
-      accent: const Color(0xFFFF3D71),
-      route: '/admin/live-streams',
-      visible: a.canManageLiveStreams,
-    ),
-    AdminCenterEntry(
-      title: 'Sesli Oda Yönetimi',
-      subtitle: 'Aktif odalar, raporlar',
-      icon: Icons.graphic_eq_rounded,
-      accent: const Color(0xFF8E6BFF),
-      route: '/admin/voice-rooms',
-      visible: a.canManageVoiceRooms,
-    ),
-    AdminCenterEntry(
-      title: 'PK Yönetimi',
-      subtitle: 'PK savaşları, raporlar',
-      icon: Icons.sports_mma_rounded,
-      accent: const Color(0xFFFF7A45),
-      route: '/admin/moderation',
-      visible: a.canModerate,
-    ),
-    AdminCenterEntry(
-      title: 'Hediye / Jeton',
-      subtitle: 'Hediye, jeton, işlemler',
-      icon: Icons.card_giftcard_rounded,
-      accent: const Color(0xFFFFB020),
-      route: '/admin/gifts',
-      visible: a.canManageGifts,
-    ),
-    AdminCenterEntry(
-      title: 'Şikayetler',
-      subtitle: 'Kullanıcı ve içerik',
-      icon: Icons.report_gmailerrorred_rounded,
-      accent: const Color(0xFFFF5A5F),
-      route: '/admin/complaints',
-      visible: a.canViewReports || sp('moderation.report.handle'),
-    ),
-    AdminCenterEntry(
-      title: 'Finans Özeti',
-      subtitle: 'Gelir, harcama, net',
-      icon: Icons.account_balance_rounded,
-      accent: const Color(0xFF22C55E),
-      route: '/admin/finance-summary',
-      visible: a.canManagePayments || sp('finance.report.view'),
-    ),
-    AdminCenterEntry(
-      title: 'Bildirim Gönder',
-      subtitle: 'Kullanıcıya duyuru',
-      icon: Icons.campaign_rounded,
-      accent: const Color(0xFF19C37D),
-      route: '/admin/notification-manager',
-      visible: a.canManageNotifications,
-    ),
-    AdminCenterEntry(
-      title: 'İstatistikler',
-      subtitle: 'Detaylı analizler',
-      icon: Icons.insights_rounded,
-      accent: const Color(0xFF7C5CFF),
-      route: '/admin/dashboard',
-      visible: a.canViewReports || a.showAdminPanel,
-    ),
-    AdminCenterEntry(
-      title: 'Ajans Yönetimi',
-      subtitle: 'Vaat onayı, şüpheli işlem, performans',
-      icon: Icons.apartment_rounded,
-      accent: const Color(0xFF10B981),
-      route: '/admin/ajans-yonetimi',
-      visible: a.isSiteAdmin,
-    ),
-    AdminCenterEntry(
-      title: 'Sosyal Medya',
-      subtitle: 'Resmi hesaplar ve bağlantılar',
-      icon: Icons.share_rounded,
-      accent: const Color(0xFFEC4899),
-      route: '/admin/social-accounts',
-      visible: a.isSiteAdmin,
-    ),
-    AdminCenterEntry(
-      title: 'GirLive Bot',
-      subtitle: 'Herkese açık bot mesajları',
-      icon: Icons.smart_toy_outlined,
-      accent: const Color(0xFF6366F1),
-      route: '/admin/girlive-bot',
-      visible: a.isSiteAdmin || a.isFounder,
-    ),
-    AdminCenterEntry(
-      title: 'Sistem Ayarları',
-      subtitle: 'Genel ayarlar',
-      icon: Icons.settings_suggest_rounded,
-      accent: const Color(0xFF94A3B8),
-      route: '/admin/system-config',
-      visible: a.isSiteAdmin,
-    ),
-    AdminCenterEntry(
-      title: 'Acil Durum',
-      subtitle: 'Sistemi bakım moduna al',
-      icon: Icons.warning_amber_rounded,
-      accent: const Color(0xFFFF3B30),
-      route: '/admin/system-config',
-      visible: a.isSiteAdmin,
-      danger: true,
-    ),
-  ];
-}
-
-/// Yönetim Merkezi — yalnızca yetkili staff görür; normal kullanıcıya
-/// "yetkiniz yok" ekranı gösterilir (sunucu uçları ayrıca 401/403 döner).
-class AdminManagementCenterPage extends ConsumerWidget {
+/// Yönetim Paneli — uygulamadaki TEK yönetim menüsü.
+///
+/// Web yönetim paneliyle (canlifal.com/admin) aynı gruplar ve aynı başlıklar;
+/// her işlev yalnızca bir kez bulunur. Uygulamada çalışan ekranı olan madde
+/// yerel ekranda, diğerleri web panelindeki aynı sayfada (uygulama içinde)
+/// açılır.
+class AdminManagementCenterPage extends ConsumerStatefulWidget {
   const AdminManagementCenterPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AdminManagementCenterPage> createState() =>
+      _AdminManagementCenterPageState();
+}
+
+class _AdminManagementCenterPageState
+    extends ConsumerState<AdminManagementCenterPage> {
+  final _search = TextEditingController();
+  var _query = '';
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  void _refresh() {
+    ref.invalidate(adminPendingCountsProvider);
+    ref.invalidate(adminPanelBadgeCountsProvider);
+  }
+
+  Future<void> _open(AdminNavItem item, AdminNavTarget t) async {
+    if (t.route != null) {
+      await context.push(t.route!);
+    } else if (t.webPath != null) {
+      await context.push(adminWebRoute(t.webPath!, item.label));
+    } else if (t.action != null) {
+      await _runAction(t.action!);
+    }
+    if (mounted) _refresh();
+  }
+
+  Future<void> _runAction(AdminNavAction action) async {
+    switch (action) {
+      case AdminNavAction.creditJeton:
+      case AdminNavAction.creditCfc:
+        final user = await AdminUserPicker.show(context, ref);
+        if (user == null || !mounted) return;
+        await AdminCreditSheet.show(
+          context,
+          ref: ref,
+          user: user,
+          kind: action == AdminNavAction.creditJeton
+              ? AdminCreditKind.jeton
+              : AdminCreditKind.cfc,
+        );
+      case AdminNavAction.grantMembership:
+        final user = await AdminUserPicker.show(context, ref);
+        if (user == null || !mounted) return;
+        await AdminMembershipSheet.show(context, ref: ref, user: user);
+      case AdminNavAction.todayStats:
+        await _showTodayStats();
+    }
+  }
+
+  Future<void> _showTodayStats() async {
+    const kinds = <(AdminStatsKind, String, IconData)>[
+      (AdminStatsKind.todayMembers, 'Bugün üye olanlar', Icons.person_add_alt_1_rounded),
+      (AdminStatsKind.todayJetonBuyers, 'Bugün jeton alanlar', Icons.monetization_on_outlined),
+      (AdminStatsKind.roomOpeners, 'Oda açanlar', Icons.meeting_room_outlined),
+      (AdminStatsKind.broadcasters, 'Yayın yapanlar', Icons.live_tv_rounded),
+      (AdminStatsKind.topEarners, 'En çok kazananlar', Icons.emoji_events_outlined),
+      (AdminStatsKind.topGiftSenders, 'En çok hediye atanlar', Icons.card_giftcard_rounded),
+    ];
+    final kind = await showModalBottomSheet<AdminStatsKind>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            for (final k in kinds)
+              ListTile(
+                leading: Icon(k.$3),
+                title: Text(k.$2),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => Navigator.pop(ctx, k.$1),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (kind == null || !mounted) return;
+    await AdminStatsListSheet.show(context, ref: ref, kind: kind);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final access = ref.watch(staffAccessProvider);
+    final webAccess = ref.watch(adminWebAccessProvider);
     final c = context.colors;
 
     Widget body;
@@ -183,46 +161,91 @@ class AdminManagementCenterPage extends ConsumerWidget {
         ),
       );
     } else {
-      final perms = ref.watch(mePermissionsProvider).valueOrNull;
-      final entries = adminCenterEntries(access, serverPerms: perms)
-          .where((e) => e.visible)
-          .toList();
-      body = LayoutBuilder(
-        builder: (context, box) {
-          final cols = box.maxWidth >= 900 ? 3 : 2;
-          const gap = 10.0;
-          final w = (box.maxWidth - 32 - gap * (cols - 1)) / cols;
-          return SingleChildScrollView(
-            padding: const EdgeInsetsDirectional.fromSTEB(16, 4, 16, 40),
-            child: Wrap(
-              spacing: gap,
-              runSpacing: gap,
-              children: [
-                for (final e in entries)
-                  SizedBox(
-                    width: w,
-                    child: _CenterCard(
-                      entry: e,
-                      onTap: () => context.push(e.route),
-                    ),
-                  ),
-              ],
+      final groups = visibleAdminNav(access, webAccess: webAccess, query: _query);
+      body = RefreshIndicator(
+        onRefresh: () async => _refresh(),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 40),
+          children: [
+            Text(
+              'Platform yönetimi ve kontrol merkezi',
+              style: TextStyle(color: c.onSurfaceMuted, fontSize: 12.5),
             ),
-          );
-        },
+            const SizedBox(height: 12),
+            TextField(
+              controller: _search,
+              onChanged: (v) => setState(() => _query = v),
+              decoration: InputDecoration(
+                hintText: 'Ayar veya bölüm ara...',
+                prefixIcon: const Icon(Icons.search_rounded),
+                suffixIcon: _query.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: const Icon(Icons.close_rounded),
+                        onPressed: () {
+                          _search.clear();
+                          setState(() => _query = '');
+                        },
+                      ),
+                isDense: true,
+                filled: true,
+                fillColor: mockCardColor(context),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(color: mockCardBorder(context)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(color: mockCardBorder(context)),
+                ),
+              ),
+            ),
+            if (_query.isEmpty && access.canManagePayments) ...[
+              const SizedBox(height: 14),
+              _SectionHeader(emoji: '⏳', title: 'Bekleyen İşlemler'),
+              const SizedBox(height: 8),
+              const AdminPendingOpsBar(),
+            ],
+            if (groups.isEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 40),
+                child: Center(
+                  child: Text(
+                    'Sonuç bulunamadı',
+                    style: TextStyle(color: c.onSurfaceMuted),
+                  ),
+                ),
+              ),
+            for (final g in groups) ...[
+              const SizedBox(height: 18),
+              _SectionHeader(emoji: g.group.emoji, title: g.group.title),
+              const SizedBox(height: 8),
+              _GroupCard(
+                children: [
+                  for (var i = 0; i < g.items.length; i++)
+                    _NavTile(
+                      item: g.items[i].$1,
+                      target: g.items[i].$2,
+                      showDivider: i < g.items.length - 1,
+                      onTap: () => _open(g.items[i].$1, g.items[i].$2),
+                    ),
+                ],
+              ),
+            ],
+          ],
+        ),
       );
     }
 
     return MockScaffold(
-      title: 'Yönetim Merkezi',
+      title: 'Yönetim Paneli',
       startAligned: true,
       actions: [
-        if (access.canManageLiveStreams || access.canViewReports)
+        if (access.canAccessAdminHome)
           IconButton(
-            tooltip: 'Yayın İstatistikleri',
-            icon: const Icon(Icons.bar_chart_rounded),
-            color: const Color(0xFF8B8CFF),
-            onPressed: () => context.push('/admin/live-stats'),
+            tooltip: 'Yenile',
+            icon: const Icon(Icons.refresh_rounded),
+            onPressed: _refresh,
           ),
       ],
       body: body,
@@ -230,88 +253,90 @@ class AdminManagementCenterPage extends ConsumerWidget {
   }
 }
 
-class _CenterCard extends StatefulWidget {
-  const _CenterCard({required this.entry, required this.onTap});
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.emoji, required this.title});
 
-  final AdminCenterEntry entry;
-  final VoidCallback onTap;
+  final String emoji;
+  final String title;
 
   @override
-  State<_CenterCard> createState() => _CenterCardState();
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(emoji, style: const TextStyle(fontSize: 16)),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: 15,
+            color: context.colors.onSurface,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
-class _CenterCardState extends State<_CenterCard> {
-  var _down = false;
+class _GroupCard extends StatelessWidget {
+  const _GroupCard({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: mockCardColor(context),
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: mockCardBorder(context)),
+      ),
+      child: Column(children: children),
+    );
+  }
+}
+
+class _NavTile extends StatelessWidget {
+  const _NavTile({
+    required this.item,
+    required this.target,
+    required this.showDivider,
+    required this.onTap,
+  });
+
+  final AdminNavItem item;
+  final AdminNavTarget target;
+  final bool showDivider;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final e = widget.entry;
-    final radius = BorderRadius.circular(16);
-    const danger = Color(0xFFFF3B30);
-    return AnimatedScale(
-      scale: _down ? 0.97 : 1,
-      duration: const Duration(milliseconds: 110),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: radius,
-          onTap: widget.onTap,
-          onHighlightChanged: (v) => setState(() => _down = v),
-          splashColor: e.accent.withValues(alpha: 0.14),
-          child: Ink(
-            decoration: BoxDecoration(
-              borderRadius: radius,
-              color: e.danger
-                  ? Color.alphaBlend(
-                      danger.withValues(alpha: 0.16),
-                      mockCardColor(context),
-                    )
-                  : mockCardColor(context),
-              border: Border.all(
-                color: e.danger
-                    ? danger.withValues(alpha: 0.55)
-                    : mockCardBorder(context),
-              ),
-            ),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 104),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    MockIconSquare(icon: e.icon, color: e.accent, size: 38),
-                    const SizedBox(height: 10),
-                    Text(
-                      e.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 13.5,
-                        height: 1.2,
-                        color: c.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      e.subtitle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11,
-                        height: 1.25,
-                        color: c.onSurfaceMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+    return Column(
+      children: [
+        ListTile(
+          onTap: onTap,
+          leading: Icon(item.icon, color: c.primary),
+          title: Text(
+            item.label,
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+          ),
+          subtitle: Text(
+            item.description,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 12, color: c.onSurfaceMuted),
+          ),
+          trailing: Icon(
+            target.isWeb ? Icons.language_rounded : Icons.chevron_right_rounded,
+            size: 20,
+            color: c.onSurfaceMuted,
           ),
         ),
-      ),
+        if (showDivider)
+          Divider(height: 1, indent: 56, color: mockCardBorder(context)),
+      ],
     );
   }
 }

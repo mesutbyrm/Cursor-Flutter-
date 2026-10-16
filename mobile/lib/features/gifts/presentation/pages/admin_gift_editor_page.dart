@@ -843,3 +843,46 @@ class _AdminGiftEditorPageState extends ConsumerState<AdminGiftEditorPage> {
   }
 
 }
+
+
+/// `/admin/gifts/:giftId/edit` — hediye her zaman kimliğiyle düzenlenir.
+///
+/// Sayfa geçiş verisi (`extra`) kaybolursa (uygulama arka plandan dönünce,
+/// yönlendirme yeniden çalışınca) önceden düzenleyici «Hediye Ekle» modunda
+/// açılıyor ve kaydet ikinci bir hediye oluşturuyordu. Artık hediye sunucudan
+/// yüklenir; bu rota asla yeni hediye oluşturmaz.
+class AdminGiftEditRoutePage extends ConsumerWidget {
+  const AdminGiftEditRoutePage({super.key, required this.giftId, this.initial});
+
+  final String giftId;
+  final AdminGiftType? initial;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ready = initial;
+    if (ready != null && ready.id == giftId) {
+      return AdminGiftEditorPage(gift: ready);
+    }
+    return FutureBuilder<AdminGiftType>(
+      future: ref.read(adminGiftRemoteProvider).getGift(giftId),
+      builder: (context, snap) {
+        final gift = snap.data;
+        if (gift != null) return AdminGiftEditorPage(gift: gift);
+        return Scaffold(
+          appBar: AppBar(title: const Text('Hediyeyi Düzenle')),
+          body: Center(
+            child: snap.hasError
+                ? Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      ApiException.userMessage(snap.error!),
+                      textAlign: TextAlign.center,
+                    ),
+                  )
+                : const CircularProgressIndicator(),
+          ),
+        );
+      },
+    );
+  }
+}

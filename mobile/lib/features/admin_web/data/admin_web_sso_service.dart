@@ -18,7 +18,7 @@ class AdminWebSsoService {
   final TokenStorage _tokens;
   final CookieJar _cookieJar;
 
-  Future<AdminWebSsoPayload> prepareSession() async {
+  Future<AdminWebSsoPayload> prepareSession({String? path}) async {
     final access = await _tokens.readAccess();
     if (access == null || access.isEmpty) {
       throw StateError('Oturum bulunamadı');
@@ -30,7 +30,7 @@ class AdminWebSsoService {
     return AdminWebSsoPayload(
       bootstrapHtml: bootstrap,
       accessToken: access,
-      targetUrl: AdminWebConfig.adminEntryUri(accessToken: access).toString(),
+      targetUrl: AdminWebConfig.adminEntryUri(accessToken: access, path: path).toString(),
       requestHeaders: {
         'Authorization': 'Bearer $access',
         'X-Canlifal-Mobile': '1',

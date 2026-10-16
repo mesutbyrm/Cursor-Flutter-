@@ -493,7 +493,7 @@ class AdminUserRow extends StatelessWidget {
       case 'reports':
         await context.push('/admin/reports');
       case 'activity':
-        await context.push('/admin/activity-log');
+        await context.push('/admin/reports');
       default:
         // Profil / Ban / Mute / Rol: komuta merkezi ekranında (yetki kontrollü).
         await _open(context, id);

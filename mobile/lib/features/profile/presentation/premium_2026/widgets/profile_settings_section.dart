@@ -310,7 +310,7 @@ class _AdminWebSettingsRow extends ConsumerWidget {
         _SettingsRow(
           icon: Icons.admin_panel_settings_outlined,
           label: 'Yönetim Paneli',
-          onTap: () => context.push('/admin/web'),
+          onTap: () => context.push('/admin/center'),
         ),
       ],
     );

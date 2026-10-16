@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.808+864 (2026-10-16) — Tek Yönetim Paneli + hediye düzeltmeleri
+
+- **Yönetim Paneli tek yerde:** web yönetim paneliyle aynı gruplar ve başlıklar (Genel, Profil & Kullanıcı, Sesli Odalar, Canlı Yayın, Sosyal & İçerik, Keşif & Analitik, Ajans & Falcı, Finans & Jeton, Hediye & Ödül, Animasyon & Görünüm, Sistem & Yönetim); her işlev yalnız bir kez, arama kutusu ve Bekleyen İşlemler çubuğu
+- Uygulamada çalışan ekranı olanlar uygulamada, diğerleri web panelindeki aynı sayfada (uygulama içinde) açılır
+- Eski hub'lar (Admin Paneli, Admin Ana Sekme, Tüm Admin Araçları) ve sunucuda karşılığı olmayan / sahte veri gösteren ekranlar kaldırıldı; eski bağlantılar Yönetim Paneli'ne yönlenir
+- Profildeki admin kartında tekrar eden kısayollar kaldırıldı; tek giriş: Yönetim Paneli
+- **Hediye düzenleme:** düzenleme ekranı hediyeyi kimliğiyle sunucudan yükler; artık yanlışlıkla ikinci hediye oluşturmaz
+- **Hediye silme:** silinen hediye tüm hediye panellerinden hemen kalkar; uyarı metni güncellendi
+
 ## 1.0.807+863 (2026-10-16) — Uç nokta temizliği
 
 - Sunucuda olmayan, kullanılmayan iki ajans uç sabiti (üye davet / çıkarma) kaldırıldı; ilgili test güncellendi

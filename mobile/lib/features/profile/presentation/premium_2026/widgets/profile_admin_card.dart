@@ -8,7 +8,6 @@ import '../../../../../core/theme/app_theme_colors.dart';
 import '../../../../admin/domain/admin_payment_review.dart';
 import '../../../../admin/presentation/providers/admin_providers.dart';
 import '../../../../admin/presentation/providers/staff_access_provider.dart';
-import '../../../../admin_web/presentation/providers/admin_web_access_provider.dart';
 import '../../providers/profile_providers.dart';
 import '../../widgets/premium/profile_glass.dart';
 import '../profile_theme.dart';
@@ -25,7 +24,6 @@ class ProfileAdminCard extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
-    final webAdmin = ref.watch(adminWebAccessProvider);
 
     final pending = ref.watch(adminPendingPaymentsCountProvider);
 
@@ -37,73 +35,15 @@ class ProfileAdminCard extends ConsumerWidget {
       }
     });
 
+    // Tüm yönetim işlemleri tek yerde (Yönetim Paneli); burada ayrı ayrı
+    // kısayol tutulmaz. Bekleyen ödemeler aşağıda doğrudan onaylanabilir.
     final items = <({IconData icon, String label, VoidCallback onTap, int badge})>[
       (
-        icon: Icons.dashboard_customize_rounded,
-        label: 'Admin Kontrol Merkezi',
-        badge: pending,
-        onTap: () => context.push('/admin/dashboard'),
-      ),
-      (
         icon: Icons.admin_panel_settings_rounded,
-        label: webAdmin ? 'Yönetim Paneli' : 'Klasik Panel',
-        badge: 0,
-        onTap: () => context.push(webAdmin ? '/admin/web' : '/admin/panel'),
-      ),
-      (
-        icon: Icons.payments_rounded,
-        label: 'Ödeme İstekleri',
+        label: 'Yönetim Paneli',
         badge: pending,
-        onTap: () => context.push('/admin'),
+        onTap: () => context.push('/admin/center'),
       ),
-      if (access.canManageUsers)
-        (
-          icon: Icons.people_alt_rounded,
-          label: 'Kullanıcı Yönetimi',
-          badge: 0,
-          onTap: () => context.push('/admin/users'),
-        ),
-      if (access.canManageLiveStreams)
-        (
-          icon: Icons.live_tv_rounded,
-          label: 'Yayın Yönetimi',
-          badge: 0,
-          onTap: () => context.push('/admin/live-streams'),
-        ),
-      if (access.canManageVoiceRooms)
-        (
-          icon: Icons.meeting_room_rounded,
-          label: 'Sesli Odalar',
-          badge: 0,
-          onTap: () => context.push('/admin/voice-rooms'),
-        ),
-      (
-        icon: Icons.business_rounded,
-        label: 'Ajans Yönetimi',
-        badge: 0,
-        onTap: () => context.push('/ajans/dashboard'),
-      ),
-      if (access.canViewReports)
-        (
-          icon: Icons.analytics_rounded,
-          label: 'Raporlar',
-          badge: 0,
-          onTap: () => context.push('/admin/reports'),
-        ),
-      if (access.canModerate)
-        (
-          icon: Icons.gavel_rounded,
-          label: 'Moderasyon',
-          badge: 0,
-          onTap: () => context.push('/admin/moderation'),
-        ),
-      if (access.canManageGifts)
-        (
-          icon: Icons.card_giftcard_rounded,
-          label: 'Hediye Yönetimi',
-          badge: 0,
-          onTap: () => context.push('/admin/gifts'),
-        ),
     ];
 
     return Column(
@@ -152,10 +92,10 @@ class ProfileAdminCard extends ConsumerWidget {
                 LayoutBuilder(
                   builder: (context, constraints) {
                     const spacing = 10.0;
-                    const cols = 3;
+                    final cols = items.length.clamp(1, 3);
                     final tileW =
                         (constraints.maxWidth - spacing * (cols - 1)) / cols;
-                    final tileH = tileW / 0.92;
+                    final tileH = cols == 1 ? 84.0 : tileW / 0.92;
                     return Wrap(
                       spacing: spacing,
                       runSpacing: spacing,
