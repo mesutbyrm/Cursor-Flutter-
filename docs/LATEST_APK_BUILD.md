@@ -4,24 +4,18 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.796+852` |
-| Tarih (UTC) | 2026-10-16 00:06 |
-| Commit | [`dd343f5ba2f156e79e3e05ebf42f16a44aa2299d`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/dd343f5ba2f156e79e3e05ebf42f16a44aa2299d) |
-| İş akışı | [Run 38824538501](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/38824538501) |
+| Sürüm | `1.0.798+854` |
+| Tarih (UTC) | 2026-10-16 11:09 |
+| Commit | [`8f42cf76ae7c65e1f01a8a74126a1e80d3581a70`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/8f42cf76ae7c65e1f01a8a74126a1e80d3581a70) |
+| İş akışı | [Run 38888989838](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/38888989838) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.796+852 (2026-10-15) — Profil, kozmetik, Diamond, GirLive Tema
+## 1.0.798+854 (2026-10-16) — GirLive Sosyal reklam
 
-- **Türkçe:** Cüzdanım, Para Çek, Jeton Geçmişim ve Hediye Geçmişim artık sunucudan gelen işlem türlerini, durumları, tarihleri ve hediye adlarını Türkçe gösterir
-- **Sakladıklarım:** fal kayıtları falın küçük resmi ve Türkçe adıyla görünür; başlık «Sakladıklarım»
-- **Hediyeler:** alınan/gönderilen hediyeler büyük görselle, aynı hediyeler tek satırda ve «×adet» rozetiyle gösterilir
-- **Profil:** Günlük Seri artık sayılır (her gün girişte kaydedilir), Seviye çubuğu seviye içi XP'yi gösterir; Seviye, Beğeni ve Seri dokununca açılır; hep 0 gösteren istatistik satırları gerçek verilerle değiştirildi
-- **Ayarlar:** işlevi olmayan Dil, Video, Müzik (tekrar) kategorileri ve çalışmayan «otomatik fal paylaşımı» kaldırıldı; e-posta doğrulama bağlantıyı e-postana gönderir
-- **Diamond üyelik:** yanlış görsel yerine taçlı elmas kalkan amblemi (diğer seviyelerle aynı tarzda, daha görkemli)
-- **Kozmetik:** sitedeki isim stilleri (renk, geçiş, parlama, kontur, ışıltı), çerçeve, balon, mikrofon, aksesuar ve giriş görselleri gerçek haliyle görünür; bir öğeye dokununca üstte **canlı önizleme**, «Uygula» ile kaydedilir; kilitli öğeler de önizlenebilir; profil efekti artık sunucuya kaydedilir
-- **GirLive Tema:** Ayarlar → Görünüm'de TikTok tarzı siyah, pembe-kırmızı ve turkuaz tema
+- **Tam ekran reklam:** GirLive Sosyal akışında her 5 paylaşımdan sonra 1 tam ekran geçiş reklamı (AdMob); reklam açıkken video durur, kapanınca akış kaldığı yerden devam eder
+- Reklam birimi admin panelinden yönetilir: Reklam Yerleşimleri → «GirLive Sosyal Akış Reklamı» (özel kod = AdMob geçiş reklamı birim kimliği); üyelik hedeflemesi ve günlük gösterim sınırı uygulanır
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
