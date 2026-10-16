@@ -14,6 +14,7 @@ class LiveStreamEntity extends Equatable {
     this.tags = const [],
     this.isPkLive = false,
     this.isVipHost = false,
+    this.hostAvatarUrl,
   });
 
   final String id;
@@ -30,6 +31,9 @@ class LiveStreamEntity extends Equatable {
   final List<String> tags;
   final bool isPkLive;
   final bool isVipHost;
+
+  /// Yayıncının profil resmi (Sosyal → Canlı listesi).
+  final String? hostAvatarUrl;
 
   bool get isFortuneStream {
     final cat = (category ?? '').toLowerCase();
@@ -54,5 +58,6 @@ class LiveStreamEntity extends Equatable {
         tags,
         isPkLive,
         isVipHost,
+        hostAvatarUrl,
       ];
 }

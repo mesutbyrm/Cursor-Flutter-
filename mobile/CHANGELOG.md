@@ -1,5 +1,18 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.801+857 (2026-10-16) — Yeni GirLive Sosyal
+
+- **Üst bar:** Canlı · Keşfet · Video · Takipte, sağda yeni ＋ (TikTok tarzı) ve arama
+- **Canlı:** yayındaki kişiler profil resmi, izleyici sayısı ve yanıp sönen CANLI ile; dokununca yayına girilir. Yayın yoksa aktif sesli odalar önerilir
+- **Keşfet:** Instagram Keşfet gibi ızgara — en çok izlenen canlılar, trend videolar, en çok beğenilen paylaşımlar ve dolu sesli odalar; dokununca tam ekran akış (paylaşımlar arasında trend videolar ve açık canlı yayınlar)
+- **Fal paylaşımları:** falın görseli arka planda (Tarot → tarot görseli), yorum ekranda; «Devamını oku» ile tüm açılım
+- **Video:** yalnız videolar tam ekran (sesli, dokununca durur, çift dokunuş beğenir)
+- **Takipte:** takip ettiklerinin «Videolar» veya «Paylaşımlar»ı
+- **Reklam:** her 5 içerikten sonra geçiş reklamı; yoksa site tanıtımı (sesli odalar, canlı yayın, Gold, jeton, CFC, paylaşım)
+- **Yeni gönderi ekranı:** yeniden tasarlandı (renkli eylem düğmeleri, önerilen etiketler, karakter sayacı); konum artık iki kez eklenmiyor
+- **Fal paylaşımı:** otomatik başlık ve hashtag'ler (#TarotFalı #Fal #GirLive #CanlıFal)
+- **Paylaşım bildirimi:** gönderi paylaşılınca sahibine «X gönderini paylaştı»
+
 ## 1.0.800+856 (2026-10-16) — Bildirim tercihleri hesapta, Kim Baktı
 
 - **Bildirim ayarları:** Mesajlar / Canlı yayın başlatanlar / Günlük fal / Diğer tercihleri artık hesaba kaydedilir; kapattığın kanalın bildirimi sunucudan hiç gelmez (uygulama kapalıyken de) ve tercih tüm cihazlarında geçerli olur

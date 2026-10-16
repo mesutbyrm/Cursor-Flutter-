@@ -124,7 +124,7 @@ class SocialFeedAdService {
 
   /// Hazır reklam varsa tam ekran gösterir; kapanınca tamamlanır.
   /// Gösterilemezse hemen `false` döner (akış engellenmez).
-  Future<bool> showIfReady(Dio dio) async {
+  Future<bool> showIfReady(Dio dio, {bool ignoreInterval = false}) async {
     final ad = _ad;
     if (ad == null) {
       unawaited(preload(dio));

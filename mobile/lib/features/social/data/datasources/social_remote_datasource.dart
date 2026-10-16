@@ -248,6 +248,24 @@ class SocialRemoteDataSource {
     return m;
   }
 
+  /// Fal paylaşımı açıklaması: başlık + yorum + otomatik hashtag'ler.
+  /// Ör. «🔮 Tarot Falı baktırdım ✨ … #TarotFalı #Fal #GirLive #CanlıFal».
+  static String buildFortuneShareCaption({
+    required String title,
+    required String body,
+  }) {
+    final t = title.trim().isEmpty ? 'Fal' : title.trim();
+    final words = t
+        .split(RegExp(r'[^0-9A-Za-zÇĞİÖŞÜçğıöşü]+'))
+        .where((w) => w.isNotEmpty)
+        .map((w) => w[0].toUpperCase() + w.substring(1));
+    final tag = words.isEmpty ? '#Fal' : '#${words.join()}';
+    final tags = <String>{tag, '#Fal', '#GirLive', '#CanlıFal'}.join(' ');
+    final text = body.trim();
+    if (text.startsWith('🔮')) return text; // zaten biçimlenmiş
+    return '🔮 $t baktırdım ✨\n\n$text\n\n$tags';
+  }
+
   /// Fal paylaşımı — kanonik `POST /api/social/posts`.
   Future<PostDto> shareFortuneAuto(ShareFortuneInput input) async {
     // `/api/social/posts/auto-fortune` backend'de yok (`[postId]` ucuna düşüp
@@ -258,9 +276,13 @@ class SocialRemoteDataSource {
   Future<PostDto> _shareFortuneViaCanonicalPost(ShareFortuneInput input) async {
     final summary = input.summary.trim();
     final detail = input.detail?.trim() ?? '';
-    final caption = detail.isNotEmpty && detail.length > summary.length
+    final body = detail.isNotEmpty && detail.length > summary.length
         ? detail
         : (detail.isNotEmpty ? '$summary\n\n$detail' : summary);
+    final caption = buildFortuneShareCaption(
+      title: input.fortuneType ?? input.fortuneSlug,
+      body: body,
+    );
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.socialPosts,
       data: {

@@ -179,10 +179,23 @@ class LiveRemoteDataSource {
             tags: tags,
             isPkLive: isPk,
             isVipHost: isVip,
+            hostAvatarUrl: _hostAvatar(map),
           );
         })
         .where((s) => s.id.isNotEmpty)
         .toList();
+  }
+
+  String? _hostAvatar(Map<String, dynamic> map) {
+    final u = pick(map, ['user', 'streamer', 'host']);
+    final fromUser = u is Map
+        ? pick(asJsonMap(u), ['image', 'avatarUrl', 'avatar', 'photoUrl'])
+        : null;
+    final v = (fromUser ??
+            pick(map, ['hostImage', 'hostAvatar', 'streamerAvatar', 'avatarUrl']))
+        ?.toString()
+        .trim();
+    return (v == null || v.isEmpty) ? null : v;
   }
 
   List<String> _parseTags(Map<String, dynamic> map) {
@@ -1152,6 +1165,7 @@ class LiveRemoteDataSource {
       viewerCount: room.viewerCount,
       isLive: room.isLive,
       hostUserId: room.hostId,
+      hostAvatarUrl: room.hostImage,
     );
   }
 

@@ -148,7 +148,10 @@ class _SocialCreatePostPageState extends ConsumerState<SocialCreatePostPage> {
       await ref.read(socialCreatePostProvider.notifier).submit(
             CreateSocialPostInput(
               // Konum etiketi gönderi metnine eklenir (sunucuda ayrı alan yok).
-              caption: _locationLabel != null && _locationLabel!.trim().isNotEmpty
+              // Konum metne bir kez eklenir (önceden iki kez «📍» çıkıyordu).
+              caption: _locationLabel != null &&
+                      _locationLabel!.trim().isNotEmpty &&
+                      !_caption.text.contains('📍')
                   ? '${_caption.text.trim()}\n📍 ${_locationLabel!.trim()}'.trim()
                   : _caption.text.trim(),
               imagePath: _imagePath,
@@ -170,77 +173,252 @@ class _SocialCreatePostPageState extends ConsumerState<SocialCreatePostPage> {
     }
   }
 
+  static const _suggestTags = [
+    '#GirLive',
+    '#Keşfet',
+    '#Fal',
+    '#Tarot',
+    '#KahveFalı',
+    '#Günaydın',
+    '#Aşk',
+    '#Burç',
+  ];
+
   @override
   Widget build(BuildContext context) {
     final me = ref.watch(authControllerProvider).valueOrNull;
     final top = MediaQuery.paddingOf(context).top;
+    final len = _caption.text.characters.length;
+
+    Widget action(IconData icon, String label, List<Color> colors, VoidCallback? onTap) {
+      return GestureDetector(
+        onTap: onTap,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: colors,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: colors.first.withValues(alpha: 0.35),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Icon(icon, color: Colors.white, size: 24),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+                color: context.colors.onSurface,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
           Container(
-            padding: EdgeInsets.fromLTRB(8, top + 6, 12, 10),
-            decoration: BoxDecoration(
-              color: context.scaffoldBg,
-              border: Border(
-                bottom: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.08),
-                ),
-              ),
-            ),
+            padding: EdgeInsets.fromLTRB(4, top + 6, 12, 10),
             child: Row(
               children: [
-                TextButton(
+                IconButton(
+                  tooltip: 'Kapat',
                   onPressed: _submitting
                       ? null
                       : () => Navigator.of(context).maybePop(),
-                  child: Text(
-                    'İptal',
-                    style: TextStyle(
-                      color: context.colors.onSurface,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  icon: const Icon(Icons.close_rounded, size: 26),
                 ),
-                Expanded(
+                const Expanded(
                   child: Text(
                     'Yeni gönderi',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 17,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 19),
                   ),
                 ),
-                TextButton(
-                  onPressed: _canShare ? _submit : null,
-                  child: _submitting
-                      ? SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(
-                          'Paylaş',
-                          style: TextStyle(
-                            color: _canShare
-                                ? AppThemeColors.accentPink
-                                : context.colors.onSurfaceMuted,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 16,
-                          ),
+                AnimatedOpacity(
+                  duration: const Duration(milliseconds: 180),
+                  opacity: _canShare ? 1 : 0.45,
+                  child: GestureDetector(
+                    onTap: _canShare ? _submit : null,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFE2C55), Color(0xFFB832FF)],
                         ),
+                        borderRadius: BorderRadius.circular(22),
+                        boxShadow: _canShare
+                            ? const [
+                                BoxShadow(
+                                  color: Color(0x66FE2C55),
+                                  blurRadius: 14,
+                                  offset: Offset(0, 4),
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: _submitting
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'Paylaş',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 15,
+                              ),
+                            ),
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 28),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Yazar + görünürlük
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: [Color(0xFF25F4EE), Color(0xFFFE2C55)],
+                          ),
+                        ),
+                        child: UserAvatar(url: me?.avatarUrl, radius: 22),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              me?.display ?? 'Sen',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: context.colors.primary.withValues(alpha: 0.14),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '🌍 Herkese açık · Keşfet\'te görünebilir',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: context.colors.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  // Açıklama kartı
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(14, 6, 14, 8),
+                    decoration: BoxDecoration(
+                      color: context.colors.surfaceElevated,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: context.colors.outlineVariant),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        TextField(
+                          controller: _caption,
+                          minLines: 4,
+                          maxLines: 10,
+                          maxLength: 2200,
+                          style: const TextStyle(fontSize: 16.5, height: 1.45),
+                          decoration: InputDecoration(
+                            hintText: 'Ne paylaşmak istersin? @kişi ve #etiket ekleyebilirsin…',
+                            hintStyle: TextStyle(color: context.colors.onSurfaceMuted),
+                            border: InputBorder.none,
+                            counterText: '',
+                          ),
+                          onChanged: (_) => setState(() {}),
+                        ),
+                        Row(
+                          children: [
+                            if (_locationLabel != null)
+                              Flexible(
+                                child: InputChip(
+                                  avatar: const Icon(Icons.location_on_rounded, size: 16),
+                                  label: Text(
+                                    _locationLabel!,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  onDeleted: () => setState(() => _locationLabel = null),
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                              ),
+                            const Spacer(),
+                            Text(
+                              '$len/2200',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                color: len > 2000
+                                    ? AppThemeColors.accentPink
+                                    : context.colors.onSurfaceMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  // Önerilen etiketler
+                  SizedBox(
+                    height: 34,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _suggestTags.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 8),
+                      itemBuilder: (context, i) => ActionChip(
+                        label: Text(_suggestTags[i]),
+                        visualDensity: VisualDensity.compact,
+                        onPressed: () => _insertText('${_suggestTags[i]} '),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   _MediaPreview(
                     imagePath: _imagePath,
                     videoPath: _videoPath,
@@ -252,77 +430,65 @@ class _SocialCreatePostPageState extends ConsumerState<SocialCreatePostPage> {
                       _videoPath = null;
                     }),
                   ),
-                  SizedBox(height: 20),
-                  if (_locationLabel != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Chip(
-                        avatar: const Icon(Icons.location_on_rounded, size: 18),
-                        label: Text(_locationLabel!),
-                        onDeleted: () => setState(() => _locationLabel = null),
-                      ),
+                  const SizedBox(height: 22),
+                  Text(
+                    'Gönderine ekle',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                      color: context.colors.onSurfaceVariant,
                     ),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  ),
+                  const SizedBox(height: 14),
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    runSpacing: 16,
+                    spacing: 12,
                     children: [
-                      UserAvatar(url: me?.avatarUrl, radius: 20),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: TextField(
-                          controller: _caption,
-                          maxLines: 8,
-                          maxLength: 2200,
-                          style: TextStyle(
-                            fontSize: 16,
-                            height: 1.45,
-                          ),
-                          decoration: InputDecoration(
-                            hintText: 'Bir açıklama yaz…',
-                            hintStyle: TextStyle(
-                              color: context.colors.onSurfaceMuted
-                                  .withValues(alpha: 0.9),
-                            ),
-                            border: InputBorder.none,
-                            counterStyle: TextStyle(
-                              color: context.colors.onSurfaceMuted,
-                              fontSize: 11,
-                            ),
-                          ),
-                          onChanged: (_) => setState(() {}),
-                        ),
-                      ),
+                      action(Icons.photo_library_rounded, 'Galeri',
+                          const [Color(0xFF22C55E), Color(0xFF0EA5E9)],
+                          () => _pickImage(ImageSource.gallery)),
+                      action(Icons.photo_camera_rounded, 'Kamera',
+                          const [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                          () => _pickImage(ImageSource.camera)),
+                      action(Icons.videocam_rounded, 'Video',
+                          const [Color(0xFFFE2C55), Color(0xFFFF8A00)], _pickVideo),
+                      action(
+                          Icons.location_on_rounded,
+                          _locationLoading ? 'Konum…' : 'Konum',
+                          const [Color(0xFFF59E0B), Color(0xFFEF4444)],
+                          _locationLoading ? null : _addLocation),
+                      action(Icons.alternate_email_rounded, 'Etiketle',
+                          const [Color(0xFF06B6D4), Color(0xFF3B82F6)], _pickMention),
+                      action(Icons.tag_rounded, 'Hashtag',
+                          const [Color(0xFFEC4899), Color(0xFFB832FF)],
+                          () => _insertText('#')),
                     ],
                   ),
-                  SizedBox(height: 16),
-                  _OptionTile(
-                    icon: Icons.photo_outlined,
-                    label: 'Galeriden seç',
-                    onTap: () => _pickImage(ImageSource.gallery),
-                  ),
-                  _OptionTile(
-                    icon: Icons.photo_camera_outlined,
-                    label: 'Fotoğraf çek',
-                    onTap: () => _pickImage(ImageSource.camera),
-                  ),
-                  _OptionTile(
-                    icon: Icons.videocam_outlined,
-                    label: 'Video seç',
-                    onTap: _pickVideo,
-                  ),
-                  _OptionTile(
-                    icon: Icons.location_on_outlined,
-                    label: _locationLoading ? 'Konum alınıyor…' : 'Konum ekle',
-                    onTap: _locationLoading ? null : _addLocation,
-                  ),
-                  _OptionTile(
-                    icon: Icons.tag_faces_outlined,
-                    label: 'Kişileri etiketle',
-                    onTap: _pickMention,
-                  ),
-                  _OptionTile(
-                    icon: Icons.tag_rounded,
-                    label: 'Hashtag ekle',
-                    onTap: () => _insertText('#'),
+                  const SizedBox(height: 22),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: context.colors.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.auto_awesome_rounded, color: context.colors.primary),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'İpucu: Görselli ve etiketli paylaşımlar Keşfet\'te daha çok görünür. '
+                            'Kısa videolar için «Video»ya dokun.',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              height: 1.35,
+                              color: context.colors.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -488,34 +654,3 @@ class _PickChip extends StatelessWidget {
   }
 }
 
-class _OptionTile extends StatelessWidget {
-  const _OptionTile({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, color: context.colors.onSurface),
-      title: Text(
-        label,
-        style: TextStyle(
-          fontWeight: FontWeight.w600,
-          color: context.colors.onSurface,
-        ),
-      ),
-      trailing: Icon(
-        Icons.chevron_right_rounded,
-        color: context.colors.onSurfaceMuted.withValues(alpha: 0.6),
-      ),
-      onTap: onTap,
-    );
-  }
-}

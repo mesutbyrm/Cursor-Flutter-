@@ -26,6 +26,7 @@ import '../../utils/social_user_profile_route.dart';
 import '../instagram/double_tap_heart.dart';
 import '../instagram/social_post_comments_sheet.dart';
 import '../instagram/social_post_video_player.dart' show socialPostLooksLikeVideo;
+import 'social_fortune_page.dart';
 
 /// GirLive Sosyal — tek paylaşım, tam ekran (TikTok tarzı).
 /// Video, görsel ve yazı paylaşımları ekrana sığdırılır; sağda eylem rayı,
@@ -235,6 +236,13 @@ class _SocialReelItemState extends ConsumerState<SocialReelItem> {
       ),
     );
     widget.onChanged(post.copyWith(shareCount: post.shareCount + 1));
+    // Sahibine «X gönderini paylaştı» bildirimi (sunucu).
+    unawaited(
+      ref
+          .read(dioProvider)
+          .safePost<dynamic>('/api/social/posts/${post.id}/share')
+          .then((_) {}, onError: (_) {}),
+    );
   }
 
   Future<void> _openComments() async {
@@ -400,7 +408,7 @@ class _SocialReelItemState extends ConsumerState<SocialReelItem> {
             bottom: widget.bottomInset + 14,
             child: _InfoBlock(
               post: post,
-              text: _hasMedia ? _text : '',
+              text: _hasMedia && !post.isFortunePost ? _text : '',
               expanded: _captionOpen,
               onToggle: () => setState(() => _captionOpen = !_captionOpen),
               onAuthor: _openProfile,
@@ -413,6 +421,16 @@ class _SocialReelItemState extends ConsumerState<SocialReelItem> {
 
   Widget _content() {
     if (_isVideo) return _videoView();
+    // Fal paylaşımı: falın görseli arka planda, yorumun tamamı okunabilir.
+    if (post.isFortunePost) {
+      return SocialFortunePage(
+        post: post,
+        text: _text,
+        imageUrl: _hasMedia ? post.mediaUrl!.trim() : null,
+        topInset: widget.topInset,
+        bottomInset: widget.bottomInset,
+      );
+    }
     if (_hasMedia) return _ImageFill(url: post.mediaUrl!.trim());
     return _TextPage(
       post: post,
