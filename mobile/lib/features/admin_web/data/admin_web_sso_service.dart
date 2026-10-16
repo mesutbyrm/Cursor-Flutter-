@@ -26,7 +26,7 @@ class AdminWebSsoService {
 
     await applyPersistCookiesToWebView(_cookieJar, AdminWebConfig.origin);
 
-    final bootstrap = _buildBootstrapHtml(access);
+    final bootstrap = _buildBootstrapHtml(access, path: path);
     return AdminWebSsoPayload(
       bootstrapHtml: bootstrap,
       accessToken: access,
@@ -39,9 +39,12 @@ class AdminWebSsoService {
     );
   }
 
-  String _buildBootstrapHtml(String access) {
+  String _buildBootstrapHtml(String access, {String? path}) {
     final tokenJson = jsonEncode(access);
-    final adminUrl = AdminWebConfig.adminUri.toString();
+    // Menüde seçilen web sayfası (ör. /admin/withdrawals); önceden her zaman
+    // /admin açılıyordu.
+    final adminUrl =
+        '${AdminWebConfig.origin}${AdminWebConfig.safeAdminPath(path)}';
     return '''
 <!DOCTYPE html>
 <html lang="tr">

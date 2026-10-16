@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.809+865 (2026-10-16) — Yönetim Paneli web sayfaları
+
+- Yönetim Paneli'nde web'de açılan maddeler (ör. Çekim & Ödüller, Blog) artık doğrudan o sayfayı açar; önceden her zaman web panelinin ana sayfası açılıyordu
+
 ## 1.0.808+864 (2026-10-16) — Tek Yönetim Paneli + hediye düzeltmeleri
 
 - **Yönetim Paneli tek yerde:** web yönetim paneliyle aynı gruplar ve başlıklar (Genel, Profil & Kullanıcı, Sesli Odalar, Canlı Yayın, Sosyal & İçerik, Keşif & Analitik, Ajans & Falcı, Finans & Jeton, Hediye & Ödül, Animasyon & Görünüm, Sistem & Yönetim); her işlev yalnız bir kez, arama kutusu ve Bekleyen İşlemler çubuğu
