@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.807+863 (2026-10-16) — Uç nokta temizliği
+
+- Sunucuda olmayan, kullanılmayan iki ajans uç sabiti (üye davet / çıkarma) kaldırıldı; ilgili test güncellendi
+
 ## 1.0.806+862 (2026-10-16) — Jeton ödemesi, beğeni ve izleme geçmişi
 
 - **Jeton ödeme bildirimi düzeldi:** jeton alımı artık tek bir jeton talebi oluşturur, tutar doğru (ör. 1000 TL → 2000 jeton). Admine ayrıca alakasız «CFC» talebi ve yanlış tutarlı ikinci jeton talebi düşmez

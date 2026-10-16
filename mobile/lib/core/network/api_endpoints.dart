@@ -302,10 +302,6 @@ abstract final class ApiEndpoints {
   static const agencyRoot = '/api/agency';
   static const agencyMy = '/api/agency/my';
   static const agencyApply = '/api/agency/apply';
-  /// @deprecated Üretim: `POST /api/agency/members` `{ username }`.
-  static const agencyMembersInvite = '/api/agency/members/invite';
-  /// @deprecated Üretim: `DELETE /api/agency/members?memberId=`.
-  static const agencyMembersRemove = '/api/agency/members/remove';
   /// @deprecated Hareketler `GET /api/agency/wallet` içinde.
   static const agencyWalletTransactions = '/api/agency/wallet/transactions';
   /// @deprecated Yedek: `GET /api/agency/accruals`.
