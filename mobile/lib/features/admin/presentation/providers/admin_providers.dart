@@ -297,12 +297,24 @@ bool isPaymentNotificationType(String? type) {
   return paymentNotificationTypes.contains(type.toLowerCase());
 }
 
+/// Ödeme bildirimi satırı (PaymentNotification): `amount` = TL,
+/// `requestedAmount` = adet. CFC talebinde `amount` = adet.
+bool _isNotificationRow(Map<String, dynamic> r) =>
+    r.containsKey('productType') || r.containsKey('paymentMethod');
+
+Object? _rowCoins(Map<String, dynamic> r) => _isNotificationRow(r)
+    ? (r['requestedAmount'] ?? r['correctedAmount'])
+    : (r['coins'] ?? r['amount']);
+
+Object? _rowPrice(Map<String, dynamic> r) =>
+    _isNotificationRow(r) ? r['amount'] : r['priceTry'];
+
 String paymentRequestSummary(Map<String, dynamic> r) {
   final type = resolvePaymentRequestType(r);
-  final method = (r['method'] ?? '').toString();
+  final method = (r['method'] ?? r['paymentMethod'] ?? '').toString();
   if (type == 'jeton') {
-    final coins = r['coins'] ?? r['amount'];
-    final price = r['priceTry'];
+    final coins = _rowCoins(r);
+    final price = _rowPrice(r);
     final priceStr = price != null ? ' · ₺$price' : '';
     return '$coins jeton$priceStr · ${_methodTr(method)}';
   }
@@ -312,9 +324,9 @@ String paymentRequestSummary(Map<String, dynamic> r) {
 String paymentRequestDetailLine(Map<String, dynamic> r) {
   final type = resolvePaymentRequestType(r);
   if (type == 'jeton') {
-    final coins = r['coins'] ?? r['amount'] ?? '—';
-    final price = r['priceTry'] ?? '—';
-    final method = _methodTr((r['method'] ?? '').toString());
+    final coins = _rowCoins(r) ?? '—';
+    final price = _rowPrice(r) ?? '—';
+    final method = _methodTr((r['method'] ?? r['paymentMethod'] ?? '').toString());
     return 'Tutar: ₺$price · Jeton: $coins · $method';
   }
   return paymentRequestSummary(r);

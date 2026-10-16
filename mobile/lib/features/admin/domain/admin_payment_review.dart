@@ -70,6 +70,8 @@ Map<String, dynamic> mergeAdminPaymentRequestRow(
 
 /// Jeton mu CFC mi — `requestType` yoksa alanlardan çıkar.
 String resolvePaymentRequestType(Map<String, dynamic> row) {
+  final product = row['productType']?.toString().toLowerCase().trim();
+  if (product == 'jeton' || product == 'cfc') return product!;
   final reqType = row['requestType']?.toString().toLowerCase().trim();
   if (reqType == 'jeton') return 'jeton';
   if (reqType == 'cfc') return 'cfc';
@@ -179,6 +181,25 @@ Future<void> reviewAdminPaymentRequest(
       'Ödeme türü belirlenemedi. Listeyi yenileyip tekrar deneyin.',
     );
   }
+  // Jeton ödeme bildirimi (PaymentNotification: `productType` / `paymentMethod`
+  // alanları) — onay `POST /api/admin/payments`; CFC PATCH ucu bu kimliği
+  // bulamayıp 404 dönüyordu.
+  if (requestRow != null &&
+      (requestRow.containsKey('productType') ||
+          requestRow.containsKey('paymentMethod'))) {
+    final note = reviewNote?.trim();
+    await dio.safePost<dynamic>(
+      ApiEndpoints.adminPaymentsAction,
+      data: {
+        'action': action == 'approve' ? 'approve' : 'reject',
+        'notificationId': id,
+        'confirm': true,
+        if (note != null && note.isNotEmpty) 'adminNote': note,
+      },
+    );
+    return;
+  }
+
   final isJeton = resolvedType == 'jeton';
   // Üretim PATCH yalnızca `/api/admin/cfc-payment-requests` (jeton + CFC).
   // `/api/admin/payment-requests` yalnız GET — PATCH yedeği 405 dönüyordu.

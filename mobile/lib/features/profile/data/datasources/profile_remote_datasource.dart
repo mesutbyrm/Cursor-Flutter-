@@ -169,7 +169,8 @@ class ProfileRemoteDataSource {
   Future<ProfileStatsEntity> myStats() async {
     for (final path in [ApiEndpoints.userStats, ApiEndpoints.userStatistics]) {
       try {
-        final res = await _dio.safeGet<Map<String, dynamic>>(path);
+        // Önbelleği atla: beğeni / takip sonrası profil sayıları güncel gelsin.
+        final res = await _dio.safeGet<Map<String, dynamic>>(path, forceRefresh: true);
         return ProfileStatsEntity.fromJson(res.data ?? {});
       } catch (_) {}
     }
@@ -694,12 +695,34 @@ class WalletRemoteDataSource {
       'method': body['method'],
     });
 
-    final paths = <String>[ApiEndpoints.paymentRequests];
+    // Jeton alımı (üyelik hariç) → `POST /api/payments/notify`: tek jeton
+    // ödeme bildirimi, tutar TL (ör. 2000 jeton = 1000 TL). Önceden CFC ucuna
+    // gidip admine hem «2000 CFC» hem «2000 jeton / 2000 TL» düşüyordu.
+    final priceTry = body['priceTry'];
+    final useNotify = body['requestType'] == 'jeton' &&
+        body['tierId'] == null &&
+        body['membershipTier'] == null &&
+        priceTry is num &&
+        priceTry > 0;
+    final postBody = useNotify
+        ? <String, dynamic>{
+            'paymentMethod': body['method'],
+            'amount': priceTry,
+            'productType': 'jeton',
+            'requestedAmount': body['coins'],
+            if (body['senderInfo'] != null) 'senderName': body['senderInfo'],
+            if (body['notes'] != null) 'notes': body['notes'],
+            if (body['receiptUrl'] != null) 'proofUrl': body['receiptUrl'],
+          }
+        : body;
+    final paths = <String>[
+      useNotify ? ApiEndpoints.paymentNotify : ApiEndpoints.paymentRequests,
+    ];
 
     ApiException? lastError;
     for (final path in paths) {
       try {
-        final res = await _postPaymentRequest(path, body);
+        final res = await _postPaymentRequest(path, postBody);
         final code = res.statusCode ?? 0;
         final data = res.data;
 
@@ -762,10 +785,9 @@ class WalletRemoteDataSource {
           throw ApiException(msg, statusCode: code);
         }
 
-        if (_paymentRequestAccepted(data, code)) {
-          _triggerAdminPaymentNotification(body);
-          return;
-        }
+        // Sunucu adminleri zaten bilgilendirir; ek «gölge» bildirim
+        // gönderilmez (admin aynı ödeme için iki talep görüyordu).
+        if (_paymentRequestAccepted(data, code)) return;
 
         if (data is String) {
           final s = data.trim();
@@ -794,10 +816,7 @@ class WalletRemoteDataSource {
           }
         }
 
-        if (code >= 200 && code < 300) {
-          _triggerAdminPaymentNotification(body);
-          return;
-        }
+        if (code >= 200 && code < 300) return;
       } on ApiException catch (e) {
         if (e.statusCode == 404 || e.statusCode == 405) {
           lastError = e;
@@ -810,33 +829,6 @@ class WalletRemoteDataSource {
     throw lastError ??
         const ApiException(
           'Ödeme bildirimi sunucuya ulaşamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.',
-        );
-  }
-
-  void _triggerAdminPaymentNotification(Map<String, dynamic> body) {
-    _dio
-        .post<dynamic>(
-          ApiEndpoints.adminPaymentNotifications,
-          data: {
-            'type': body['requestType'] == 'jeton'
-                ? 'jeton_payment_request'
-                : 'cfc_payment_request',
-            'requestType': body['requestType'] ?? body['type'],
-            'coins': body['coins'],
-            'amount': body['amount'],
-            'method': body['method'],
-            if (body['packageTitle'] != null)
-              'packageTitle': body['packageTitle'],
-            if (body['source'] != null) 'source': body['source'],
-            if (body['senderInfo'] != null) 'senderInfo': body['senderInfo'],
-          },
-        )
-        .catchError(
-          (Object _) => Response<dynamic>(
-            requestOptions: RequestOptions(
-              path: ApiEndpoints.adminPaymentNotifications,
-            ),
-          ),
         );
   }
 

@@ -693,6 +693,9 @@ abstract final class ApiEndpoints {
   /// Ödeme bildirimlerim — `GET ?page=&limit=&status=` (düz dizi döner).
   static const paymentNotify = '/api/payments/notify';
 
+  /// Admin ödeme bildirimi (PaymentNotification) onay / ret — `{action, notificationId}`.
+  static const adminPaymentsAction = '/api/admin/payments';
+
   /// Ödeme itirazı (destek talebi) — `GET` mevcut talep, `POST {message}`.
   static String paymentNotificationDispute(String notificationId) =>
       '/api/payments/notifications/$notificationId/dispute';

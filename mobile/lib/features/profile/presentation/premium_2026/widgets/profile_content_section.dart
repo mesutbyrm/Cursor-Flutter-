@@ -16,6 +16,7 @@ import '../../../../shorts/domain/repositories/shorts_repository.dart';
 import '../../../../shorts/presentation/providers/shorts_providers.dart';
 import '../../../../shorts/presentation/studio/short_studio_providers.dart';
 import '../../../../shorts/presentation/widgets/shorts_profile_content.dart';
+import '../../../../social/data/watch_history_store.dart';
 import '../../../../social/presentation/providers/social_providers.dart';
 import '../../../../social/presentation/utils/story_navigation.dart';
 import '../../../../feed/domain/entities/post_entity.dart';
@@ -744,15 +745,130 @@ class _BroadcastCard extends StatelessWidget {
   }
 }
 
+/// İzlediklerim: sosyal akışta görülen tüm paylaşımlar ve videolar
+/// (cihaz geçmişi, en yeni üstte) + sunucudaki izlenen kısa videolar.
 class _WatchedTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final watched = ref.watch(viewedShortsProvider);
+    final local = ref.watch(watchHistoryProvider).valueOrNull ?? const [];
 
-    return watched.when(
-      loading: () => const _ContentSkeleton(),
-      error: (_, _) => const _EmptyMessage('İzleme geçmişi yüklenemedi'),
-      data: (videos) => _ShortsGrid(videos: videos),
+    if (watched.isLoading && local.isEmpty) return const _ContentSkeleton();
+    final shorts = watched.valueOrNull ?? const <ShortVideoEntity>[];
+    final seen = local.map((e) => e.key).toSet();
+    final entries = <WatchHistoryEntry>[
+      ...local,
+      for (final v in shorts)
+        if (!seen.contains('short:${v.id}'))
+          WatchHistoryEntry(
+            key: 'short:${v.id}',
+            route: '/shorts?videoId=${v.id}',
+            kind: 'video',
+            at: DateTime.fromMillisecondsSinceEpoch(0),
+            thumbUrl: v.thumbnailUrl,
+            title: v.description,
+          ),
+    ];
+    if (entries.isEmpty) {
+      return _EmptyMessage(
+        watched.hasError ? 'İzleme geçmişi yüklenemedi' : 'Henüz izlenen paylaşım yok',
+      );
+    }
+    return _WatchedGrid(entries: entries);
+  }
+}
+
+class _WatchedGrid extends StatelessWidget {
+  const _WatchedGrid({required this.entries});
+
+  final List<WatchHistoryEntry> entries;
+
+  static IconData _icon(String kind) => switch (kind) {
+        'video' => Icons.play_circle_fill_rounded,
+        'fortune' => Icons.auto_awesome_rounded,
+        'text' => Icons.notes_rounded,
+        _ => Icons.image_rounded,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const crossAxisCount = 3;
+        const spacing = 8.0;
+        const aspect = 9 / 14;
+        final gridHeight = ListPerf.nestedGridHeight(
+          itemCount: entries.length,
+          crossAxisCount: crossAxisCount,
+          mainAxisSpacing: spacing,
+          crossAxisSpacing: spacing,
+          childAspectRatio: aspect,
+          crossAxisExtent: constraints.maxWidth,
+        );
+        return SizedBox(
+          height: gridHeight,
+          child: GridView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            addRepaintBoundaries: false,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: spacing,
+              mainAxisSpacing: spacing,
+              childAspectRatio: aspect,
+            ),
+            itemCount: entries.length,
+            itemBuilder: (context, index) {
+              final e = entries[index];
+              final thumb = e.thumbUrl;
+              return GestureDetector(
+                onTap: () => context.push(e.route),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: e.kind == 'fortune'
+                                ? const [Color(0xFF6D28D9), Color(0xFFDB2777)]
+                                : const [Color(0xFF1A0F3D), Color(0xFF2A1B5C)],
+                          ),
+                        ),
+                        child: thumb != null && thumb.isNotEmpty
+                            ? CanlifalNetworkImage(url: thumb, fit: BoxFit.cover)
+                            : Padding(
+                                padding: const EdgeInsets.all(8),
+                                child: Center(
+                                  child: Text(
+                                    e.title ?? '',
+                                    maxLines: 5,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                      ),
+                      Positioned(
+                        right: 6,
+                        top: 6,
+                        child: Icon(_icon(e.kind), size: 18, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
@@ -902,66 +1018,6 @@ class _DraftsTab extends ConsumerWidget {
               ),
             );
           },
-        );
-      },
-    );
-  }
-}
-
-class _ShortsGrid extends StatelessWidget {
-  const _ShortsGrid({required this.videos});
-
-  final List<ShortVideoEntity> videos;
-
-  @override
-  Widget build(BuildContext context) {
-    if (videos.isEmpty) {
-      return const _EmptyMessage('Henüz izlenen video yok');
-    }
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const crossAxisCount = 3;
-        const spacing = 8.0;
-        const aspect = 9 / 14;
-        final gridHeight = ListPerf.nestedGridHeight(
-          itemCount: videos.length,
-          crossAxisCount: crossAxisCount,
-          mainAxisSpacing: spacing,
-          crossAxisSpacing: spacing,
-          childAspectRatio: aspect,
-          crossAxisExtent: constraints.maxWidth,
-        );
-        return SizedBox(
-          height: gridHeight,
-          child: GridView.builder(
-            physics: const NeverScrollableScrollPhysics(),
-            addRepaintBoundaries: false,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossAxisCount,
-              crossAxisSpacing: spacing,
-              mainAxisSpacing: spacing,
-              childAspectRatio: aspect,
-            ),
-            itemCount: videos.length,
-            itemBuilder: (context, index) {
-              final video = videos[index];
-              final thumb = video.thumbnailUrl;
-              return GestureDetector(
-                onTap: () => context.push('/shorts?videoId=${video.id}'),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
-                  child: DecoratedBox(
-                    decoration: const BoxDecoration(color: Color(0xFF1A0F3D)),
-                    child: thumb != null && thumb.isNotEmpty
-                        ? CanlifalNetworkImage(url: thumb, fit: BoxFit.cover)
-                        : const Center(
-                            child: Icon(Icons.play_circle_outline_rounded),
-                          ),
-                  ),
-                ),
-              );
-            },
-          ),
         );
       },
     );

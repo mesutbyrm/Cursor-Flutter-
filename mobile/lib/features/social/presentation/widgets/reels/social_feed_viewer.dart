@@ -24,6 +24,7 @@ import '../../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
 import '../../models/social_feed_item.dart';
 import '../../services/social_feed_ad_service.dart';
 import '../instagram/double_tap_heart.dart';
+import '../../../data/watch_history_store.dart';
 import 'social_house_ad.dart';
 import 'social_live_badge.dart';
 import 'social_reel_item.dart';
@@ -199,6 +200,8 @@ class _ShortReel extends ConsumerStatefulWidget {
 
 class _ShortReelState extends ConsumerState<_ShortReel> {
   VideoPlayerController? _c;
+  Timer? _viewTimer;
+  var _viewSent = false;
   var _loading = false;
   var _paused = false;
   var _heart = 0;
@@ -218,12 +221,35 @@ class _ShortReelState extends ConsumerState<_ShortReel> {
 
   @override
   void dispose() {
+    _viewTimer?.cancel();
     _c?.dispose();
     super.dispose();
   }
 
+  /// Ekranda 1 sn kalan video izlenmiş sayılır: izlenme +1 ve «İzlediklerim».
+  void _countView() {
+    _viewTimer = null;
+    if (!mounted || !widget.active) return;
+    unawaited(WatchHistoryStore.add(WatchHistoryEntry(
+      key: 'short:${_v.id}',
+      route: '/shorts?videoId=${_v.id}',
+      kind: 'video',
+      at: DateTime.now(),
+      thumbUrl: _v.thumbnailUrl,
+      title: _v.description,
+    )));
+    if (_viewSent || ref.read(currentUserIdProvider) == null) return;
+    _viewSent = true;
+    final pos = _c?.value.position.inMilliseconds ?? 0;
+    unawaited(ref
+        .read(shortsRepositoryProvider)
+        .recordView(_v.id, watchedSec: pos >= 1000 ? pos / 1000 : 1)
+        .then((_) => ref.invalidate(viewedShortsProvider), onError: (_) {}));
+  }
+
   void _sync() {
     if (widget.active) {
+      _viewTimer ??= Timer(const Duration(seconds: 1), _countView);
       _paused = false;
       if (_c == null) {
         unawaited(_init());
@@ -231,9 +257,13 @@ class _ShortReelState extends ConsumerState<_ShortReel> {
         unawaited(_c!.play());
       }
     } else if (widget.current && _c != null) {
+      _viewTimer?.cancel();
+      _viewTimer = null;
       // Alt pencere (yorumlar, paylaş) açık: duraklat, kaldığı yerden sürsün.
       unawaited(_c!.pause());
     } else {
+      _viewTimer?.cancel();
+      _viewTimer = null;
       final c = _c;
       _c = null;
       if (c != null) {

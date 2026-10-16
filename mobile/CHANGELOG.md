@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.806+862 (2026-10-16) — Jeton ödemesi, beğeni ve izleme geçmişi
+
+- **Jeton ödeme bildirimi düzeldi:** jeton alımı artık tek bir jeton talebi oluşturur, tutar doğru (ör. 1000 TL → 2000 jeton). Admine ayrıca alakasız «CFC» talebi ve yanlış tutarlı ikinci jeton talebi düşmez
+- **Mobil admin:** jeton ödeme bildirimleri doğru adet / TL ile görünür ve onaylanınca jeton yüklenir (önceden onaylanamıyordu)
+- **İzlenme:** akışta ekrana gelen her video 1 sn sonra izlenmiş sayılır
+- **İzlediklerim:** videolar + fotoğraf / yazı / fal paylaşımları, en son görülen en üstte
+- **Profil Beğeni sayısı:** her açılışta güncel gelir (sunucu tarafı toplam: gönderi + video beğenileri)
+
 ## 1.0.805+861 (2026-10-16) — Canlı sayfası sadeleşti
 
 - **Canlı:** Kısa Videolar şeridi ve hızlı işlem kutuları kaldırıldı; üstte «🔴 X canlı yayın · Y kişi izliyor» özet şeridi

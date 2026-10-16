@@ -27,6 +27,7 @@ import '../instagram/double_tap_heart.dart';
 import '../instagram/social_post_comments_sheet.dart';
 import '../instagram/social_post_video_player.dart' show socialPostLooksLikeVideo;
 import 'social_fortune_page.dart';
+import '../../../data/watch_history_store.dart';
 
 /// GirLive Sosyal — tek paylaşım, tam ekran (TikTok tarzı).
 /// Video, görsel ve yazı paylaşımları ekrana sığdırılır; sağda eylem rayı,
@@ -118,6 +119,7 @@ class _SocialReelItemState extends ConsumerState<SocialReelItem> {
   void _onActiveChanged() {
     if (widget.active) {
       _registerView();
+      _addToHistory();
       if (_isVideo) {
         _userPaused = false;
         if (_video == null) {
@@ -133,6 +135,27 @@ class _SocialReelItemState extends ConsumerState<SocialReelItem> {
       // Ekrandan çıkan video durur ve bellek boşaltılır.
       _disposeVideo();
     }
+  }
+
+  /// Her geçişte «İzlediklerim»e eklenir (tekrar görülen en üste taşınır).
+  void _addToHistory() {
+    if (post.id.isEmpty || ref.read(currentUserIdProvider) == null) return;
+    final kind = post.isFortunePost
+        ? 'fortune'
+        : _isVideo
+            ? 'video'
+            : _hasMedia
+                ? 'image'
+                : 'text';
+    final title = _text.length > 80 ? '${_text.substring(0, 80)}…' : _text;
+    unawaited(WatchHistoryStore.add(WatchHistoryEntry(
+      key: 'post:${post.id}',
+      route: '/social/post/${post.id}',
+      kind: kind,
+      at: DateTime.now(),
+      thumbUrl: kind == 'image' ? post.mediaUrl?.trim() : null,
+      title: title.isEmpty ? null : title,
+    )));
   }
 
   void _registerView() {
