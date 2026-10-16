@@ -4,17 +4,17 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.803+859` |
-| Tarih (UTC) | 2026-10-16 14:32 |
-| Commit | [`12333e787995f7500e9029317834c74b114106e0`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/12333e787995f7500e9029317834c74b114106e0) |
-| İş akışı | [Run 38913463129](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/38913463129) |
+| Sürüm | `1.0.805+861` |
+| Tarih (UTC) | 2026-10-16 14:58 |
+| Commit | [`ad185bf49e5a70969ef23578ec848bc47d59318a`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/ad185bf49e5a70969ef23578ec848bc47d59318a) |
+| İş akışı | [Run 38915506814](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/38915506814) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.805+861 (2026-10-16) — Canlı sayfası sadeleşti
+## 1.0.807+863 (2026-10-16) — Uç nokta temizliği
 
-- **Canlı:** Kısa Videolar şeridi ve hızlı işlem kutuları kaldırıldı; üstte «🔴 X canlı yayın · Y kişi izliyor» özet şeridi
+- Sunucuda olmayan, kullanılmayan iki ajans uç sabiti (üye davet / çıkarma) kaldırıldı; ilgili test güncellendi
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
