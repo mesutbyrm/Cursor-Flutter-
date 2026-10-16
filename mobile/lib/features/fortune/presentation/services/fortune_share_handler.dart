@@ -55,6 +55,7 @@ class FortuneShareHandler {
               fortuneId: result.recordId,
               visualAnalysis: result.visualAnalysis,
               visibility: mode.apiVisibility,
+              username: me.username,
             ),
           );
       final detail = result.detail.trim();

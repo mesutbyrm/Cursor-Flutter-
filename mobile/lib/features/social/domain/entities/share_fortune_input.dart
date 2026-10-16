@@ -9,6 +9,7 @@ class ShareFortuneInput {
     this.fortuneId,
     this.visualAnalysis,
     this.visibility,
+    this.username,
   });
 
   final String fortuneSlug;
@@ -19,4 +20,7 @@ class ShareFortuneInput {
   final String? fortuneId;
   final String? visualAnalysis;
   final String? visibility;
+
+  /// Paylaşanın kullanıcı adı — açıklamada «@kullanıcı» olarak geçer.
+  final String? username;
 }

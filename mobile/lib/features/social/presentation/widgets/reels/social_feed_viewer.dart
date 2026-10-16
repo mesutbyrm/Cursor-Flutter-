@@ -11,6 +11,7 @@ import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/network/dio_provider.dart';
 import '../../../../../core/providers/auth_selectors.dart';
 import '../../../../../core/widgets/user_avatar.dart';
+import '../../../../feed/domain/entities/post_entity.dart';
 import '../../../../live/domain/entities/live_stream_entity.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../live/presentation/utils/open_live_stream.dart';
@@ -61,6 +62,7 @@ class _SocialFeedViewerState extends ConsumerState<SocialFeedViewer>
       PageController(initialPage: widget.initialIndex);
   late int _index = widget.initialIndex;
   final Set<String> _removed = {};
+  final Map<String, PostEntity> _patched = {};
   var _adShowing = false;
 
   @override
@@ -124,21 +126,25 @@ class _SocialFeedViewerState extends ConsumerState<SocialFeedViewer>
       },
       itemBuilder: (context, i) {
         final it = items[i];
-        final active = widget.visible && !_adShowing && i == idx;
+        final current = i == idx;
+        final active = widget.visible && !_adShowing && current;
         return switch (it) {
           PostFeedItem(:final post) => SocialReelItem(
               key: ValueKey(it.key),
-              post: post,
+              post: _patched[it.key] ?? post,
               active: active,
+              current: current,
               topInset: widget.topInset,
               bottomInset: widget.bottomInset,
-              onChanged: (_) {},
+              // Beğeni / yorum / paylaşım sayıları sayfada güncel kalsın.
+              onChanged: (p) => setState(() => _patched[it.key] = p),
               onRemoved: () => setState(() => _removed.add(it.key)),
             ),
           ShortFeedItem(:final video) => _ShortReel(
               key: ValueKey(it.key),
               video: video,
               active: active,
+              current: current,
               bottomInset: widget.bottomInset,
             ),
           LiveFeedItem(:final stream) => _LiveReel(
@@ -177,10 +183,14 @@ class _ShortReel extends ConsumerStatefulWidget {
     required this.video,
     required this.active,
     required this.bottomInset,
+    this.current = false,
   });
 
   final ShortVideoEntity video;
   final bool active;
+
+  /// Seçili sayfa; seçili ama [active] değilse video duraklatılır.
+  final bool current;
   final double bottomInset;
 
   @override
@@ -203,7 +213,7 @@ class _ShortReelState extends ConsumerState<_ShortReel> {
   @override
   void didUpdateWidget(covariant _ShortReel old) {
     super.didUpdateWidget(old);
-    if (old.active != widget.active) _sync();
+    if (old.active != widget.active || old.current != widget.current) _sync();
   }
 
   @override
@@ -220,6 +230,9 @@ class _ShortReelState extends ConsumerState<_ShortReel> {
       } else {
         unawaited(_c!.play());
       }
+    } else if (widget.current && _c != null) {
+      // Alt pencere (yorumlar, paylaş) açık: duraklat, kaldığı yerden sürsün.
+      unawaited(_c!.pause());
     } else {
       final c = _c;
       _c = null;

@@ -40,9 +40,14 @@ class SocialReelItem extends ConsumerStatefulWidget {
     required this.bottomInset,
     required this.onChanged,
     required this.onRemoved,
+    this.current,
   });
 
   final PostEntity post;
+
+  /// Akışta seçili sayfa mı. Seçili ama [active] değilse (alt pencere açık,
+  /// başka sekme) video duraklatılır, baştan başlamaz.
+  final bool? current;
 
   /// Ekranda görünen sayfa mı (video yalnızca bu sırada oynar).
   final bool active;
@@ -97,7 +102,9 @@ class _SocialReelItemState extends ConsumerState<SocialReelItem> {
       _likes = post.likesCount;
       _disposeVideo();
     }
-    if (old.active != widget.active || old.post.id != post.id) {
+    if (old.active != widget.active ||
+        old.current != widget.current ||
+        old.post.id != post.id) {
       _onActiveChanged();
     }
   }
@@ -119,6 +126,9 @@ class _SocialReelItemState extends ConsumerState<SocialReelItem> {
           unawaited(_video!.play());
         }
       }
+    } else if ((widget.current ?? false) && _video != null) {
+      // Üstüne alt pencere açıldı: duraklat, kapanınca kaldığı yerden devam.
+      unawaited(_video!.pause());
     } else {
       // Ekrandan çıkan video durur ve bellek boşaltılır.
       _disposeVideo();

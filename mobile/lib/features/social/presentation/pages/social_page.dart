@@ -51,16 +51,26 @@ class _SocialPageState extends ConsumerState<SocialPage>
   final _tabs = PageController(initialPage: 1);
   var _tab = 1;
   var _appActive = true;
+  var _visible = true;
+  Timer? _livePoll;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Canlı sekmesi açıkken liste 30 sn'de bir tazelenir: yeni yayınlar
+    // görünür, bitenler kalkar (eski veri ekranda kalır, titreme olmaz).
+    _livePoll = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted && _tab == 0 && _visible) {
+        unawaited(ref.read(liveStreamsListNotifierProvider.notifier).refresh());
+      }
+    });
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _livePoll?.cancel();
     _tabs.dispose();
     super.dispose();
   }
@@ -114,6 +124,7 @@ class _SocialPageState extends ConsumerState<SocialPage>
     final visible = TickerMode.of(context) &&
         (ModalRoute.of(context)?.isCurrent ?? true) &&
         _appActive;
+    _visible = visible;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
@@ -124,7 +135,11 @@ class _SocialPageState extends ConsumerState<SocialPage>
           children: [
             PageView(
               controller: _tabs,
-              onPageChanged: (i) => setState(() => _tab = i),
+              onPageChanged: (i) {
+                setState(() => _tab = i);
+                // Canlı'ya geçince liste tazelenir (yeni açılan / biten yayınlar).
+                if (i == 0) unawaited(_refreshTab(0));
+              },
               children: [
                 _LiveTab(topInset: topInset, bottomInset: bottomInset,
                     onExplore: () => _selectTab(1)),
@@ -876,7 +891,8 @@ class _ExploreViewerPage extends StatelessWidget {
             SocialFeedViewer(
               items: items,
               initialIndex: initialIndex,
-              visible: TickerMode.of(context),
+              visible: TickerMode.of(context) &&
+                  (ModalRoute.of(context)?.isCurrent ?? true),
               topInset: mq.padding.top,
               bottomInset: mq.padding.bottom + 12,
             ),

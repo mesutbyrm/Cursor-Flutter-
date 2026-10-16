@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.804+860 (2026-10-16) — Sosyal akış iyileştirmeleri
+
+- **Video kaldığı yerden devam eder:** yorumlar / paylaş penceresi açılıp kapanınca video baştan başlamıyor, duraklayıp devam ediyor
+- **Sayılar anında güncellenir:** tam ekran akışta beğeni, yorum ve paylaşım sayıları işlemden hemen sonra değişir
+- **Canlı sekmesi güncel:** sekmeye geçince ve açıkken 30 sn'de bir yenilenir; yeni yayınlar görünür, bitenler kalkar
+- **Keşfet tam ekran:** üstüne pencere açılınca video duraklar
+- **Fal paylaşımı:** açıklamada paylaşanın @kullanıcı adı yer alır; hazır biçimli metinlerde de hashtag'ler eklenir
+
 ## 1.0.803+859 (2026-10-16) — Video paylaşımı
 
 - **Sosyal akış videoları:** sağdaki düğmelere **Paylaş** eklendi (WhatsApp, Telegram, bağlantı kopyala…); paylaşım sayısı görünür

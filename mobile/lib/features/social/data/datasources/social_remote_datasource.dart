@@ -248,11 +248,12 @@ class SocialRemoteDataSource {
     return m;
   }
 
-  /// Fal paylaşımı açıklaması: başlık + yorum + otomatik hashtag'ler.
-  /// Ör. «🔮 Tarot Falı baktırdım ✨ … #TarotFalı #Fal #GirLive #CanlıFal».
+  /// Fal paylaşımı açıklaması: @kullanıcı + başlık + yorum + otomatik hashtag'ler.
+  /// Ör. «🔮 @ayse Tarot Falı baktırdı ✨ … #TarotFalı #Fal #GirLive #CanlıFal».
   static String buildFortuneShareCaption({
     required String title,
     required String body,
+    String? username,
   }) {
     final t = title.trim().isEmpty ? 'Fal' : title.trim();
     final words = t
@@ -262,8 +263,13 @@ class SocialRemoteDataSource {
     final tag = words.isEmpty ? '#Fal' : '#${words.join()}';
     final tags = <String>{tag, '#Fal', '#GirLive', '#CanlıFal'}.join(' ');
     final text = body.trim();
-    if (text.startsWith('🔮')) return text; // zaten biçimlenmiş
-    return '🔮 $t baktırdım ✨\n\n$text\n\n$tags';
+    // Zaten biçimlenmiş metin: başlık satırı tekrar eklenmez, hashtag'ler eksikse eklenir.
+    if (text.startsWith('🔮')) {
+      return text.contains('#GirLive') ? text : '$text\n\n$tags';
+    }
+    final u = (username ?? '').trim().replaceFirst(RegExp('^@'), '');
+    final head = u.isEmpty ? '🔮 $t baktırdım ✨' : '🔮 @$u $t baktırdı ✨';
+    return '$head\n\n$text\n\n$tags';
   }
 
   /// Fal paylaşımı — kanonik `POST /api/social/posts`.
@@ -282,6 +288,7 @@ class SocialRemoteDataSource {
     final caption = buildFortuneShareCaption(
       title: input.fortuneType ?? input.fortuneSlug,
       body: body,
+      username: input.username,
     );
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.socialPosts,
