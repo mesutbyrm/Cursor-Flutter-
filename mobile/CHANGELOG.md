@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.797+853 (2026-10-16) — GirLive Sosyal TikTok tarzı
+
+- **Yeni GirLive Sosyal:** eski üst bar kaldırıldı; TikTok gibi üstte solda **Canlı**, yanında **Keşfet** ve **Takip Ettiğin** (aynı yazı tipi ve renk), sağda arama ve paylaşım
+- **Tam ekran akış:** her kaydırmada tek paylaşım; video, görsel ve yazı paylaşımları ekrana sığdırılır (dikey video tam ekran, yatay video/görsel kırpılmadan, arka planda bulanık kopya; yazılar renkli zeminde büyük)
+- **Keşfet:** Sosyal her açıldığında herkesin yaptığı paylaşımlar gösterilir; **Takip Ettiğin:** takip ettiklerin
+- Video ekrandayken sesli oynar, dokununca durur; çift dokunuş beğenir; sağda profil, beğeni, yorum, paylaş ve menü (şikayet/engelle/sil)
+- Varsayılan akış artık tüm paylaşımlar (önceden yalnız takip edilenler gelebiliyordu)
+
 ## 1.0.796+852 (2026-10-15) — Profil, kozmetik, Diamond, GirLive Tema
 
 - **Türkçe:** Cüzdanım, Para Çek, Jeton Geçmişim ve Hediye Geçmişim artık sunucudan gelen işlem türlerini, durumları, tarihleri ve hediye adlarını Türkçe gösterir

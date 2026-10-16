@@ -89,7 +89,8 @@ class SocialRemoteDataSource {
     int page = 1,
     String? authorId,
     String? currentUserId,
-    String feed = 'following',
+    // Varsayılan tüm paylaşımlar; «following» yalnız takip edilenler + kendin.
+    String feed = 'all',
     bool forceRefresh = false,
   }) async {
     final res = await _dio.safeGet<dynamic>(
