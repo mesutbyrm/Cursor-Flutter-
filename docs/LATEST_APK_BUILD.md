@@ -4,18 +4,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.798+854` |
-| Tarih (UTC) | 2026-10-16 11:31 |
-| Commit | [`24d978a109b0d752d55476e29cae5c85cca86a2c`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/24d978a109b0d752d55476e29cae5c85cca86a2c) |
-| İş akışı | [Run 38889918039](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/38889918039) |
+| Sürüm | `1.0.799+855` |
+| Tarih (UTC) | 2026-10-16 12:11 |
+| Commit | [`efd2b18841c0ef9fd8551fb127a9bf23ea77d23d`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/efd2b18841c0ef9fd8551fb127a9bf23ea77d23d) |
+| İş akışı | [Run 38896104546](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/38896104546) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.798+854 (2026-10-16) — GirLive Sosyal reklam
+## 1.0.799+855 (2026-10-16) — Eksik kontrolü
 
-- **Tam ekran reklam:** GirLive Sosyal akışında her 5 paylaşımdan sonra 1 tam ekran geçiş reklamı (AdMob); reklam açıkken video durur, kapanınca akış kaldığı yerden devam eder
-- Reklam birimi admin panelinden yönetilir: Reklam Yerleşimleri → «GirLive Sosyal Akış Reklamı» (özel kod = AdMob geçiş reklamı birim kimliği); üyelik hedeflemesi ve günlük gösterim sınırı uygulanır
+- **Yardım & Destek:** mesaj artık destek talebi olarak yönetime düşer (önceden «destek» kullanıcısına özel mesaj atılıyordu; o yol yalnız yedek)
+- **Tüm cihazlardan çıkış:** yanlışlıkla dokunmaya karşı onay sorulur
+- **Başka kullanıcının profili:** «Engelle» düğmesi eklendi
+- **GirLive Sosyal:** yorum yazınca/silince sayaç hemen güncellenir; yeni paylaşım yapınca Keşfet akışı yenilenir
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
