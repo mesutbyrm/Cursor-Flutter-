@@ -108,7 +108,14 @@ class _SocialPageState extends ConsumerState<SocialPage>
                 onLive: () => context.go('/live'),
                 onTab: _selectTab,
                 onSearch: () => context.push('/search'),
-                onCreate: () => context.push('/social/create'),
+                onCreate: () async {
+                  await context.push('/social/create');
+                  // Yeni paylaşım akışın başında görünsün.
+                  if (mounted) {
+                    unawaited(
+                        ref.read(socialReelsProvider('all').notifier).refresh());
+                  }
+                },
               ),
             ),
           ],

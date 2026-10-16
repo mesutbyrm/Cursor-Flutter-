@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.799+855 (2026-10-16) — Eksik kontrolü
+
+- **Yardım & Destek:** mesaj artık destek talebi olarak yönetime düşer (önceden «destek» kullanıcısına özel mesaj atılıyordu; o yol yalnız yedek)
+- **Tüm cihazlardan çıkış:** yanlışlıkla dokunmaya karşı onay sorulur
+- **Başka kullanıcının profili:** «Engelle» düğmesi eklendi
+- **GirLive Sosyal:** yorum yazınca/silince sayaç hemen güncellenir; yeni paylaşım yapınca Keşfet akışı yenilenir
+
 ## 1.0.798+854 (2026-10-16) — GirLive Sosyal reklam
 
 - **Tam ekran reklam:** GirLive Sosyal akışında her 5 paylaşımdan sonra 1 tam ekran geçiş reklamı (AdMob); reklam açıkken video durur, kapanınca akış kaldığı yerden devam eder

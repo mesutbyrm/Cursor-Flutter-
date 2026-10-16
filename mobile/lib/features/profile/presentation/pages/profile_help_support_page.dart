@@ -62,18 +62,31 @@ class _ProfileHelpSupportPageState extends ConsumerState<ProfileHelpSupportPage>
 
     setState(() => _sending = true);
     try {
-      final supportId = await _resolveSupportUserId();
-      if (supportId == null) {
-        throw const ApiException(
-          'Destek hesabı bulunamadı. Lütfen daha sonra tekrar deneyin.',
+      // Destek talebi sistemi (admin «Destek Talepleri» ekranına düşer);
+      // eski sürümlerdeki gibi «destek» kullanıcısına mesaj yalnızca yedek.
+      var sent = false;
+      try {
+        final subject = text.length > 60 ? '${text.substring(0, 57)}…' : text;
+        await ref.read(dioProvider).safePost<dynamic>(
+          '/api/support/tickets',
+          data: {
+            'subject': subject.length < 3 ? 'Destek talebi' : subject,
+            'message': text.length < 3 ? 'Destek talebi: $text' : text,
+            'category': 'general',
+          },
         );
+        sent = true;
+      } catch (_) {}
+      if (!sent) {
+        final supportId = await _resolveSupportUserId();
+        if (supportId == null) {
+          throw const ApiException(
+            'Destek hesabı bulunamadı. Lütfen daha sonra tekrar deneyin.',
+          );
+        }
+        await MessagesRemoteDataSource(ref.read(dioProvider))
+            .send(supportId, 'Destek talebi — @${user.username}\n\n$text');
       }
-
-      final fullMessage =
-          'Destek talebi — @${user.username}\n\n$text';
-
-      await MessagesRemoteDataSource(ref.read(dioProvider))
-          .send(supportId, fullMessage);
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

@@ -1,6 +1,7 @@
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/features/messages/presentation/providers/messages_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -39,6 +40,47 @@ class UserProfilePage extends ConsumerWidget {
       title: 'Profil',
       subtitle: 'Kısa videolar ve paylaşımlar',
       actions: [
+        if (!isSelf && me != null)
+          DiscoverIconButton(
+            icon: Icons.block_rounded,
+            tooltip: 'Engelle',
+            onPressed: () async {
+              final ok = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Kullanıcıyı engelle'),
+                  content: const Text(
+                    'Engellenen kişiyle mesajlaşamaz, birbirinizin gönderilerini '
+                    'görmez ve yorum yapamazsınız.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text('Vazgeç'),
+                    ),
+                    FilledButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text('Engelle'),
+                    ),
+                  ],
+                ),
+              );
+              if (ok != true || !context.mounted) return;
+              try {
+                await ref.read(messagesRemoteProvider).blockUser(userId);
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Kullanıcı engellendi')),
+                );
+                context.pop();
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(ApiException.userMessage(e))),
+                );
+              }
+            },
+          ),
         DiscoverIconButton(
           icon: Icons.flag_outlined,
           tooltip: 'Bildir',

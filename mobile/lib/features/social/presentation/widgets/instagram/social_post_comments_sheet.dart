@@ -24,15 +24,20 @@ class SocialPostCommentsSheet extends ConsumerStatefulWidget {
     super.key,
     required this.postId,
     this.initialCount = 0,
+    this.onCountDelta,
   });
 
   final String postId;
   final int initialCount;
 
+  /// Yorum eklenince +1, silinince -1 (tam ekran akış sayacı için).
+  final ValueChanged<int>? onCountDelta;
+
   static Future<void> show(
     BuildContext context, {
     required String postId,
     int initialCount = 0,
+    ValueChanged<int>? onCountDelta,
   }) {
     final container = ProviderScope.containerOf(context);
     final authed = container.read(authControllerProvider).valueOrNull;
@@ -48,6 +53,7 @@ class SocialPostCommentsSheet extends ConsumerStatefulWidget {
       child: SocialPostCommentsSheet(
         postId: postId,
         initialCount: initialCount,
+        onCountDelta: onCountDelta,
       ),
     );
   }
@@ -89,6 +95,7 @@ class _SocialPostCommentsSheetState
     setState(() => _sending = true);
     try {
       await ref.read(socialRepositoryProvider).addComment(widget.postId, text);
+      widget.onCountDelta?.call(1);
       syncSocialPostCommentAdded(
         feed: ref.read(socialNotifierProvider.notifier),
         invalidateDetail: (id) => ref.invalidate(postDetailProvider(id)),
@@ -242,6 +249,7 @@ class _SocialPostCommentsSheetState
     if (ok != true || !mounted) return;
     try {
       await ref.read(socialRemoteProvider).deleteComment(widget.postId, commentId);
+      widget.onCountDelta?.call(-1);
       ref.invalidate(postCommentsProvider(widget.postId));
     } catch (e) {
       if (!mounted) return;

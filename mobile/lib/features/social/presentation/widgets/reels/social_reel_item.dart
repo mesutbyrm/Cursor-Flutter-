@@ -242,6 +242,13 @@ class _SocialReelItemState extends ConsumerState<SocialReelItem> {
       context,
       postId: post.id,
       initialCount: post.commentsCount,
+      onCountDelta: (d) {
+        if (!mounted) return;
+        final p = widget.post;
+        widget.onChanged(
+          p.copyWith(commentsCount: (p.commentsCount + d).clamp(0, 1 << 31)),
+        );
+      },
     );
   }
 
