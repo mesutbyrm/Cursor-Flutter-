@@ -69,7 +69,7 @@ class AdminProfileHeader extends ConsumerWidget {
           child: Row(
             children: [
               Image.asset(
-                'assets/brand/canlifal_logo_horizontal.png',
+                'assets/brand/canlifal_logo.webp',
                 height: 26,
                 errorBuilder: (_, _, _) => Text(
                   'CanlıFal',

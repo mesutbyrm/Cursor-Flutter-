@@ -2,7 +2,6 @@
 
 | Dosya | Kullanım |
 |-------|----------|
-| `canlifal_app_icon.png` | Giriş / kayıt + Android launcher (kare, şeffaf veya mor arka plan) |
-| `canlifal_logo_horizontal.png` | Yedek / yatay kullanım (aynı ikon kopyası) |
+| `canlifal_logo.webp` | Uygulama içi logo (giriş / kayıt, profil başlığı); 512×512, şeffaf |
 
-Kendi logolarınızı eklemek için aynı dosya adlarıyla değiştirin; arka plan **şeffaf** olmalı.
+Android launcher ikonları `android/app/src/main/res/mipmap-*` altındadır.

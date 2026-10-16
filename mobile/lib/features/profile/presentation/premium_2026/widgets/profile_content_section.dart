@@ -499,7 +499,7 @@ class _FortuneCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final title = fortune.summary?.trim().isNotEmpty == true
         ? fortune.summary!
-        : fortune.type;
+        : fortune.displayTitle;
     final date = fortune.createdAt != null
         ? DateFormat('d MMM yyyy', 'tr').format(fortune.createdAt!.toLocal())
         : '';
@@ -511,22 +511,29 @@ class _FortuneCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF5B21B6), Color(0xFF190A36)],
+            // Bakılan fal türünün görseli + okunurluk için alt karartma.
+            Image.asset(
+              fortune.assetImage,
+              fit: BoxFit.cover,
+              cacheWidth: 480,
+              errorBuilder: (_, _, _) => const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF5B21B6), Color(0xFF190A36)],
+                  ),
                 ),
               ),
             ),
-            Positioned(
-              right: -22,
-              top: -18,
-              child: Icon(
-                Icons.auto_awesome_rounded,
-                size: 86,
-                color: Colors.white.withValues(alpha: 0.10),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0x22000000), Color(0xCC0B0418)],
+                  stops: [0.25, 1],
+                ),
               ),
             ),
             Positioned(
@@ -540,7 +547,7 @@ class _FortuneCard extends StatelessWidget {
                   border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
                 ),
                 child: Text(
-                  fortune.type,
+                  fortune.displayTitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(

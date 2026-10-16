@@ -19,6 +19,7 @@ class PremiumHomeGlassCard extends StatelessWidget {
     this.accentColor = DiscoverPremiumVisual.primary,
     this.onTap,
     this.shimmer = false,
+    this.alive = false,
   });
 
   final String title;
@@ -33,7 +34,25 @@ class PremiumHomeGlassCard extends StatelessWidget {
   final VoidCallback? onTap;
   final bool shimmer;
 
+  /// Kapak görseli yavaşça nefes alır (yakınlaşıp uzaklaşır) ve parlar —
+  /// «canlı» görsel. Hareket azaltma açıksa durağan kalır.
+  final bool alive;
+
   static const radius = DiscoverPremiumVisual.cardRadius;
+
+  Widget _maybeAlive(BuildContext context, Widget cover) {
+    if (!alive || MediaQuery.of(context).disableAnimations) return cover;
+    return cover
+        .animate(onPlay: (c) => c.repeat(reverse: true))
+        .scaleXY(
+          begin: 1.0,
+          end: 1.08,
+          duration: 3600.ms,
+          curve: Curves.easeInOut,
+        )
+        .moveY(begin: 0, end: -4, duration: 3600.ms, curve: Curves.easeInOut)
+        .saturate(begin: 1.0, end: 1.25, duration: 3600.ms);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,12 +65,15 @@ class PremiumHomeGlassCard extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              HomeMysticCover(
-                slug: coverSlug,
-                accent: accentColor,
-                networkUrl: networkUrl,
-                assetOverride: coverAsset,
-                thumbnailWidth: 480,
+              _maybeAlive(
+                context,
+                HomeMysticCover(
+                  slug: coverSlug,
+                  accent: accentColor,
+                  networkUrl: networkUrl,
+                  assetOverride: coverAsset,
+                  thumbnailWidth: 480,
+                ),
               ),
               DecoratedBox(
                 decoration: BoxDecoration(

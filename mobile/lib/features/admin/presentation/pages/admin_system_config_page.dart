@@ -387,7 +387,7 @@ class _FeatureFlagCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  name ?? 'Unknown',
+                  name ?? 'Bilinmiyor',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
@@ -457,7 +457,7 @@ class _ApiKeyCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  name ?? 'Unknown',
+                  name ?? 'Bilinmiyor',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 12,

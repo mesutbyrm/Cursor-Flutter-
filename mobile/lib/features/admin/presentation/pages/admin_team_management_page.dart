@@ -319,7 +319,7 @@ class _TeamMemberCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  role ?? 'Unknown',
+                  role ?? 'Bilinmiyor',
                   style: TextStyle(
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
@@ -423,7 +423,7 @@ class _ActivityCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      action ?? 'Unknown action',
+                      action ?? 'Bilinmeyen işlem',
                       style: TextStyle(
                         fontSize: 11,
                         color: context.colors.onSurfaceMuted,

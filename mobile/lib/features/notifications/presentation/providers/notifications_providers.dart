@@ -8,6 +8,7 @@ import '../../domain/repositories/notifications_repository.dart';
 import '../../data/datasources/notifications_remote_datasource.dart';
 import '../../data/repositories/notifications_repository_impl.dart';
 import 'notifications_list_notifier.dart';
+import '../../../inbox/domain/inbox_notification_filters.dart';
 import '../../../inbox/domain/system_notifications_read_sync.dart';
 
 final notificationsRemoteProvider =
@@ -29,13 +30,30 @@ final notificationsListProvider =
   return ref.watch(notificationsRepositoryProvider).fetch();
 });
 
-/// Backend unread count — `GET /api/notifications?unreadOnly=true` (yedek: messages)
+/// Okunmamış SİSTEM bildirimi sayısı (rozet).
+///
+/// Sunucunun ham sayacı DM/sohbet bildirimlerini de sayar; ancak Sistem
+/// Mesajları ekranı yalnız sistem bildirimlerini okundu yapar (DM'ler
+/// konuşma listesinde ayrıca sayılır). Ham sayaç kullanılınca ekrandan
+/// çıkınca rozet geri geliyordu. Bu yüzden okunmamışlar sayfalanıp yalnız
+/// sistem bildirimleri sayılır; liste alınamazsa ham sayaca düşülür.
 final notificationsUnreadApiProvider = FutureProvider<int?>((ref) async {
   final userId = ref.watch(
     authControllerProvider.select((a) => a.valueOrNull?.id),
   );
   if (userId == null || userId.isEmpty) return 0;
-  return ref.watch(notificationsRemoteProvider).fetchUnreadCount();
+  final remote = ref.watch(notificationsRemoteProvider);
+  try {
+    var count = 0;
+    for (var page = 1; page <= 3; page++) {
+      final rows = await remote.fetchUnreadPage(page);
+      count += filterSystemNotifications(rows.where((n) => !n.read)).length;
+      if (rows.length < NotificationsRemoteDataSource.unreadPageSize) break;
+    }
+    return count;
+  } catch (_) {
+    return remote.fetchUnreadCount();
+  }
 });
 
 /// Okunmamış bildirim sayısı (üst bar rozeti).
@@ -49,7 +67,7 @@ final notificationsUnreadCountProvider = Provider<int>((ref) {
   final items = fromNotifier.valueOrNull?.all ??
       fromList.valueOrNull ??
       const <AppNotificationEntity>[];
-  return items.where((n) => !n.read).length;
+  return filterSystemNotifications(items.where((n) => !n.read)).length;
 });
 
 /// Bildirim rozeti sıfırlama — liste + sunucu senkronu.

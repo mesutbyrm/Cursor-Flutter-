@@ -329,7 +329,7 @@ class _BulkOperationCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      operationType ?? 'Unknown',
+                      operationType ?? 'Bilinmiyor',
                       style: TextStyle(
                         fontSize: 11,
                         color: context.colors.onSurfaceMuted,

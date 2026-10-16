@@ -48,8 +48,9 @@ class SocialPage extends ConsumerStatefulWidget {
 class _SocialPageState extends ConsumerState<SocialPage>
     with WidgetsBindingObserver {
   static const _tabLabels = ['Canlı', 'Keşfet', 'Video', 'Takipte'];
-  final _tabs = PageController(initialPage: 1);
-  var _tab = 1;
+  // İlk açılışta Video akışı (videolar + paylaşımlar, yüklenme saatine göre).
+  final _tabs = PageController(initialPage: 2);
+  var _tab = 2;
   var _appActive = true;
   var _visible = true;
   Timer? _livePoll;
@@ -929,36 +930,41 @@ class _VideoTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final shortsAsync = ref.watch(shortsFeedProvider(ShortsFeedTab.forYou));
     final shorts = shortsAsync.valueOrNull ?? const <ShortVideoEntity>[];
-    // Sosyal akışta paylaşılan videolar da (görsel/yazı hariç).
-    final videoPosts = (ref.watch(socialReelsProvider('all')).valueOrNull ?? const <PostEntity>[])
+    final postsAsync = ref.watch(socialReelsProvider('all'));
+    // Video ve paylaşımlar birlikte, yüklenme saatine göre (en yeni önce):
+    // her kaydırmada sıradaki içerik video ise video, değilse paylaşım.
+    final posts = (postsAsync.valueOrNull ?? const <PostEntity>[])
         .where((p) =>
-            (p.mediaUrl ?? '').trim().isNotEmpty &&
-            socialPostLooksLikeVideo(postType: p.postType, mediaUrl: p.mediaUrl))
+            (p.mediaUrl ?? '').trim().isNotEmpty ||
+            (p.caption ?? '').trim().isNotEmpty ||
+            p.isFortunePost)
         .toList();
-    if (shorts.isEmpty && videoPosts.isEmpty && shortsAsync.isLoading) {
+    if (shorts.isEmpty && posts.isEmpty &&
+        (shortsAsync.isLoading || postsAsync.isLoading)) {
       return const Center(
           child: CircularProgressIndicator(color: Colors.white70, strokeWidth: 2));
     }
-    final items = <SocialFeedItem>[];
-    var vp = 0;
-    for (var i = 0; i < shorts.length; i++) {
-      items.add(ShortFeedItem(shorts[i]));
-      if (i % 3 == 2 && vp < videoPosts.length) items.add(PostFeedItem(videoPosts[vp++]));
-    }
-    while (vp < videoPosts.length) {
-      items.add(PostFeedItem(videoPosts[vp++]));
-    }
+    final items = sortFeedByNewest([
+      for (final v in shorts) ShortFeedItem(v),
+      for (final p in posts) PostFeedItem(p),
+    ]);
     return SocialFeedViewer(
       items: withAdSlots(items),
       visible: visible,
       topInset: topInset,
       bottomInset: bottomInset,
-      onLoadMore: () =>
-          ref.read(shortsFeedProvider(ShortsFeedTab.forYou).notifier).loadMore(),
-      onRefresh: () =>
+      onLoadMore: () {
+        ref.read(shortsFeedProvider(ShortsFeedTab.forYou).notifier).loadMore();
+        ref.read(socialReelsProvider('all').notifier).loadMore();
+      },
+      onRefresh: () async {
+        await Future.wait([
           ref.read(shortsFeedProvider(ShortsFeedTab.forYou).notifier).refresh(),
+          ref.read(socialReelsProvider('all').notifier).refresh(),
+        ]);
+      },
       emptyBuilder: (_) => const Center(
-        child: Text('Henüz video yok', style: TextStyle(color: Colors.white70)),
+        child: Text('Henüz paylaşım yok', style: TextStyle(color: Colors.white70)),
       ),
     );
   }

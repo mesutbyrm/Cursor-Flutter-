@@ -983,19 +983,18 @@ class LiveRemoteDataSource {
   }
 
   Future<void> endVideoStream(String streamId) async {
+    // `/end` yayını tam kapatır (izleyicilere "yayın bitti" olayı, PK,
+    // misafirlik) ve yetkililere de açıktır; eski sunucularda PATCH'e düşülür.
     try {
-      await _dio.safePatch<dynamic>(
-        ApiEndpoints.videoStream(streamId),
-        data: const {'status': 'ended'},
-      );
+      await _dio.safePost<dynamic>(ApiEndpoints.videoStreamEnd(streamId));
       return;
     } on ApiException catch (e) {
-      // 401/403 yetki sorunudur; yedek uç da aynı yanıtı verir. Diğer hatalarda
-      // (404/405/5xx) yedek `/end` denenir.
-      if (e.statusCode == 401 || e.statusCode == 403) rethrow;
+      if (e.statusCode == 401) rethrow;
     } catch (_) {}
-    // `/api/video-streams/{id}` DELETE desteklemez (GET/PATCH); yedek `/end`.
-    await _dio.safePost<dynamic>(ApiEndpoints.videoStreamEnd(streamId));
+    await _dio.safePatch<dynamic>(
+      ApiEndpoints.videoStream(streamId),
+      data: const {'status': 'ended'},
+    );
   }
 
   VoiceRoomEntity _mapVoiceRoom(Map<String, dynamic> json) {

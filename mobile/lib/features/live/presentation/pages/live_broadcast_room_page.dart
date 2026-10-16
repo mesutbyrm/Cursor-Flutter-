@@ -77,6 +77,7 @@ import '../providers/live_invite_dedup_provider.dart';
 import '../providers/live_co_guest_camera_signal_provider.dart';
 import '../providers/live_pk_invite_signal_provider.dart';
 import '../providers/live_providers.dart';
+import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../providers/co_broadcast_provider.dart';
 import '../providers/pending_co_broadcast_join_provider.dart';
 import '../providers/live_beauty_provider.dart';
@@ -1072,6 +1073,58 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
       context.go('/feed');
     }
     _leaving = false;
+  }
+
+  /// Yetkili izleyici (admin/yönetici/moderatör) kapatınca: yayından çık
+  /// veya yayını herkes için sonlandır.
+  Future<void> _onCloseTapped(BuildContext context) async {
+    final s = widget.session;
+    final streamId = s.streamId?.trim() ?? '';
+    final access = ref.read(staffAccessProvider);
+    if (s.isHost || streamId.isEmpty || !access.canManageLiveStreams) {
+      return _exitBroadcast(context);
+    }
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.logout_rounded),
+              title: const Text('Yayından çık'),
+              onTap: () => Navigator.pop(ctx, 'leave'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.stop_circle_rounded, color: Colors.redAccent),
+              title: const Text('Yayını kapat (yönetici)'),
+              subtitle: const Text('Yayın herkes için sonlandırılır'),
+              onTap: () => Navigator.pop(ctx, 'end'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!context.mounted || choice == null) return;
+    if (choice == 'end') {
+      try {
+        await ref.read(liveRemoteProvider).endVideoStream(streamId);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Yayın kapatıldı')),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(ApiException.userMessage(e))),
+          );
+        }
+        return;
+      }
+    }
+    if (context.mounted) await _exitBroadcast(context);
   }
 
   Future<void> _exitBroadcast(
@@ -3471,7 +3524,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 left: 0,
                 right: 0,
                 height: MediaQuery.sizeOf(context).height * 0.5,
-                child: LiveBroadcastRoomVideoLayer(
+                // Hediye oynarken misafir görüntüleri şeffaflaşır; hediye
+                // (sesli odadaki gibi) tam ekranda net görünür.
+                child: AnimatedOpacity(
+                  opacity: activeGift != null ? 0.35 : 1,
+                  duration: const Duration(milliseconds: 260),
+                  child: LiveBroadcastRoomVideoLayer(
                   session: s,
                   phase: _phase,
                   trtc: _trtc,
@@ -3487,6 +3545,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                   chatVisibleForPk: _chatVisible,
                   pkOnBack: () => unawaited(_exitBroadcast(context)),
                   pkViewerCount: roomState.viewerCount,
+                ),
                 ),
               )
             else
@@ -3542,14 +3601,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                 streamId: streamId!,
                 activeGift: activeGift,
                 clipToVideoRegion: pkImmersive,
-                belowSeatsTopFraction: _isSplitStage(
-                  s,
-                  pkStatus,
-                  hasCoGuests: hasCoGuests,
-                  pkBattle: pkState?.battle,
-                )
-                    ? 0.5
-                    : null,
+                // Misafirlikte de hediye tam ekran oynar (koltuklar şeffaflaşır).
+                belowSeatsTopFraction: null,
               ),
             if (hasStream && s.isHost)
               LiveBroadcastRoomHostOverlays(
@@ -3608,20 +3661,16 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                     builder: (context, box) => LivePremiumChatFeed(
                       key: const ValueKey('guest-split-chat'),
                       maxHeight: box.maxHeight.isFinite ? box.maxHeight : 200,
-                      fadeAfter: const Duration(seconds: 40),
                       canModerate: s.isHost,
                       onMessageLongPress: s.isHost
                           ? (m) => unawaited(_onChatModeration(m))
                           : null,
-                      messages: chatRoomState.messages.isEmpty
-                          ? const [
-                              LiveRoomChatMessage(
-                                user: 'Sistem',
-                                text: 'Canlı yayına hoş geldin',
-                                isSystem: true,
-                              ),
-                            ]
-                          : chatRoomState.messages,
+                      // Misafirlikte sohbette yalnız kullanıcı mesajları
+                      // (katıldı / hediye / sistem satırları gösterilmez).
+                      messages: [
+                        for (final m in chatRoomState.messages)
+                          if (!m.isSystem) m,
+                      ],
                     ),
                   ),
                 ),
@@ -3680,7 +3729,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               following: interaction.following,
               followLoading: interaction.followLoading,
               onFollow: _onFollow,
-              onClose: () => unawaited(_exitBroadcast(context)),
+              onClose: () => unawaited(_onCloseTapped(context)),
               onViewersTap: hasStream
                   ? () => showLiveViewersSheet(
                         context,

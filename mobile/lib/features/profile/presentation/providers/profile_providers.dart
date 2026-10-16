@@ -12,6 +12,7 @@ import '../../../auth/domain/entities/user_entity.dart';
 import '../../../wallet/domain/cfc_payment_request_entity.dart';
 import '../../../wallet/domain/wallet_balances.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../shorts/presentation/providers/shorts_providers.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 import '../../domain/entities/profile_extended_entity.dart';
 import '../../domain/entities/profile_stats_entity.dart';
@@ -260,6 +261,24 @@ final profileStatsProvider = FutureProvider<ProfileStatsEntity>((ref) async {
         );
       }
     } catch (_) {}
+  }
+  // Beğeni 0 geliyorsa (eski sunucu yalnız gönderi beğenisini sayıyordu)
+  // kısa video + gönderi beğenilerinden yedek toplam alınır.
+  if (stats.likes == 0) {
+    var likes = 0;
+    try {
+      final ext = await ref.read(profileRepositoryProvider).userStatistics();
+      likes = ext.likesReceived;
+    } catch (_) {}
+    try {
+      final me = ref.read(authControllerProvider).valueOrNull?.id;
+      if (me != null && me.isNotEmpty) {
+        final shorts =
+            await ref.read(shortsRepositoryProvider).fetchProfileStats(me);
+        likes += shorts.totalLikes;
+      }
+    } catch (_) {}
+    if (likes > 0) stats = stats.withLikes(likes);
   }
   return stats;
 });

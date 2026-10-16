@@ -7,14 +7,14 @@ void main() {
   test('home quick access maps legacy tile to premium path', () {
     expect(
       PremiumAssetPaths.homeQuickAccess('home-kesfet.webp'),
-      'assets/images/premium/home/discover_icon.webp',
+      'assets/tiles/home-kesfet.webp',
     );
   });
 
   test('fortune slug resolves premium file', () {
     expect(
       PremiumAssetPaths.fortuneFromSlug('kahve-fali'),
-      'assets/images/premium/fortune/kahve-fali.webp',
+      'assets/fortune/kahve-fali.webp',
     );
   });
 

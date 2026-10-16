@@ -460,7 +460,7 @@ class _HighRiskTransactionCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      transactionType ?? 'Unknown',
+                      transactionType ?? 'Bilinmiyor',
                       style: TextStyle(
                         fontSize: 11,
                         color: context.colors.onSurfaceMuted,

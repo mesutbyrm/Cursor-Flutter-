@@ -275,7 +275,7 @@ List<AdminNavGroup> adminNavGroups(StaffAccess a) {
       items: [
         AdminNavItem(
           label: 'Canlı Yayın Yönetimi',
-          description: 'Aktif yayınlar & kontrol',
+          description: 'Aktif yayınları izle, moderasyon yap, yayını kapat',
           icon: Icons.live_tv_rounded,
           route: '/admin/live-streams',
           nativeVisible: a.canManageLiveStreams,

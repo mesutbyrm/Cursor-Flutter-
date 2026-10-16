@@ -1,18 +1,17 @@
-/// Premium 2026 görsel yolları — önce `assets/images/premium/`, yoksa legacy.
+/// Premium 2026 görsel yolları.
+///
+/// Eskiden `assets/images/premium/` altında aynı görsellerin birebir
+/// kopyaları vardı (~7 MB); uygulama boyutunu küçültmek için kopyalar
+/// silindi ve tüm yollar tek kaynağa (`assets/tiles`, `assets/fortune`,
+/// `assets/zodiac`, `assets/membership`) yönlendirildi.
 abstract final class PremiumAssetPaths {
-  static const premiumRoot = 'assets/images/premium';
-  static const premiumHome = '$premiumRoot/home';
-  static const premiumFortune = '$premiumRoot/fortune';
-  static const premiumZodiac = '$premiumRoot/zodiac';
-  static const premiumMembership = '$premiumRoot/membership';
+  static const premiumHome = 'assets/tiles';
+  static const premiumFortune = 'assets/fortune';
+  static const premiumZodiac = 'assets/zodiac';
+  static const premiumMembership = 'assets/membership';
 
-  static String homeQuickAccess(String legacyTileFile) {
-    final premium = _homePremiumByLegacy[legacyTileFile];
-    if (premium != null) {
-      return '$premiumHome/$premium';
-    }
-    return 'assets/tiles/$legacyTileFile';
-  }
+  static String homeQuickAccess(String legacyTileFile) =>
+      'assets/tiles/$legacyTileFile';
 
   static String fortune(String fileName) => '$premiumFortune/$fileName';
 
@@ -32,19 +31,6 @@ abstract final class PremiumAssetPaths {
 
   static String legacyMembership(String tierId) =>
       'assets/membership/${tierId.trim().toLowerCase()}.webp';
-
-  static const _homePremiumByLegacy = <String, String>{
-    'home-kesfet.webp': 'discover_icon.webp',
-    'home-tanis-kaynas.webp': 'meet_mingle_icon.webp',
-    'home-gold-uyelik.webp': 'gold_membership_icon.webp',
-    'home-canli-falcilar.webp': 'live_psychics_icon.webp',
-    'home-tum-ozellikler.webp': 'all_features_icon.webp',
-    'home-falci.webp': 'psychic_panel_icon.webp',
-    'home-ajans.webp': 'agency_icon.webp',
-    'home-yayinci.webp': 'publisher_icon.webp',
-    'home-jeton-al.webp': 'buy_tokens_icon.webp',
-    'home-hediye-yolla.webp': 'send_gift_icon.webp',
-  };
 
   static const _fortuneFileBySlug = <String, String>{
     'tarot': 'tarot.webp',

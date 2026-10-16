@@ -1198,10 +1198,15 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     if (session.isClient) return;
 
     final total = state.sessionTipsTotal + amount;
+    final who = (fromName ?? '').trim().isNotEmpty ? fromName!.trim() : 'Danışan';
     state = state.copyWith(
       tipReceivedAmount: amount,
       tipReceivedFrom: fromName,
       sessionTipsTotal: total,
+      messages: [
+        ...state.messages,
+        _systemChat('💝 $who sana bahşiş verdi · $amount Jeton'),
+      ],
     );
     _scheduleTipReceivedDismiss();
   }
@@ -1237,6 +1242,15 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       dismissTipReceivedOverlay();
     });
   }
+
+  PsychicChatMessage _systemChat(String text) => PsychicChatMessage(
+        id: 'local-${DateTime.now().microsecondsSinceEpoch}',
+        senderId: '',
+        senderName: '',
+        text: text,
+        createdAt: DateTime.now(),
+        isSystem: true,
+      );
 
   void _onSseChatMessage(PsychicChatMessage msg) {
     if (_disposed || state.leaving) return;
@@ -1666,7 +1680,13 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
         );
     if (ok) {
       invalidateWalletCacheFromRef(ref);
-      state = state.copyWith(tipThankYouAmount: amount);
+      state = state.copyWith(
+        tipThankYouAmount: amount,
+        messages: [
+          ...state.messages,
+          _systemChat('💝 ${session.psychic.name} adlı falcıya $amount Jeton bahşiş verdin'),
+        ],
+      );
       _scheduleTipThankYouDismiss();
       // Falcı bildirimini sunucu yazar (anlık SSE + aynı kimlikli sinyal);
       // istemcinin ayrıca sinyal göndermesi çift bildirime yol açıyordu.

@@ -88,6 +88,37 @@ class UserFortuneEntity extends Equatable {
         'Fal';
   }
 
+  static const _assetAliases = <String, String>{
+    'tarot-fali': 'tarot',
+    'ask-uyumu': 'ask-fali',
+    'ruya-yorumu': 'ruya-tabiri',
+    'burc-yorumu': 'gunluk-fal',
+    'kahve-fali-image': 'kahve-fali',
+    'katina-fali': 'katina',
+    'iskambil-fali': 'iskambil',
+    'pendul-fali': 'pendul',
+    'runik-fali': 'runik',
+    'melek-kartlari-fali': 'melek-kartlari',
+  };
+
+  static const _assets = <String>{
+    'ask-fali', 'aura-analizi', 'cin-fali', 'dogum-haritasi', 'el-fali',
+    'evet-hayir', 'gunluk-fal', 'iskambil', 'istihare', 'kahve-fali',
+    'katina', 'kursundokme', 'melek-kartlari', 'numeroloji', 'pendul',
+    'runik', 'ruya-tabiri', 'tarot', 'yildiz-haritasi',
+  };
+
+  /// Bakılan fal türünün görseli (`assets/fortune/<tür>.webp`).
+  String get assetImage {
+    for (final raw in [slug, backendKeyToSlug[type.toLowerCase()], type]) {
+      final k = (raw ?? '').trim().toLowerCase();
+      if (k.isEmpty) continue;
+      final key = _assetAliases[k] ?? k;
+      if (_assets.contains(key)) return 'assets/fortune/$key.webp';
+    }
+    return 'assets/fortune/gunluk-fal.webp';
+  }
+
   String get displayBody =>
       answer ?? detail ?? summary ?? question ?? '';
 

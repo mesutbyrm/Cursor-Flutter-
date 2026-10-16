@@ -1,11 +1,12 @@
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/images/canlifal_network_image.dart';
 import '../../../../feed/domain/entities/post_entity.dart';
 import '../../../../fortune/presentation/data/fortune_catalog.dart';
 import '../../../../fortune/presentation/widgets/fortune_type_cover_image.dart';
+import '../../providers/fortune_type_counts_provider.dart';
 import '../social_linked_caption_text.dart';
 
 /// Fal paylaşımı tam ekran: falın türüne ait görsel (Tarot → tarot görseli)
@@ -97,29 +98,30 @@ class SocialFortunePage extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         // Arka plan: kullanıcının görseli (ör. kahve fincanı) ya da fal türü görseli.
+        // Ekran çözünürlüğünde (en çok 2048 px) çözülür: net görünür, büyük
+        // görsellerde bellek taşması (çökme) olmaz.
         if (img != null)
           CanlifalNetworkImage(url: img, fit: BoxFit.cover)
         else
           FortuneTypeCoverImage(
             slug: type.slug,
             accent: type.accent,
-            imageWidth: 900,
+            imageWidth: 1600,
             showOverlay: false,
           ),
-        // Okunabilirlik: hafif bulanık koyu perde.
-        BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 2.5, sigmaY: 2.5),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.black.withValues(alpha: 0.35),
-                  Colors.black.withValues(alpha: 0.55),
-                  Colors.black.withValues(alpha: 0.82),
-                ],
-              ),
+        // Okunabilirlik: bulanıklık YOK (görsel bozuk görünüyordu); yalnız
+        // altta yoğunlaşan koyu geçiş.
+        DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.black.withValues(alpha: 0.15),
+                Colors.black.withValues(alpha: 0.40),
+                Colors.black.withValues(alpha: 0.80),
+              ],
+              stops: const [0, 0.5, 1],
             ),
           ),
         ),
@@ -195,12 +197,59 @@ class SocialFortunePage extends StatelessWidget {
                       ),
                     ),
                   ),
+                  _FortuneTypeCountLine(slug: type.slug, title: type.title),
                 ],
               );
             },
           ),
         ),
       ],
+    );
+  }
+}
+
+/// «🔮 1.245 kişi Tarot Falı baktırdı» — bu fal grubuna baktıran toplam kişi.
+class _FortuneTypeCountLine extends ConsumerWidget {
+  const _FortuneTypeCountLine({required this.slug, required this.title});
+
+  final String slug;
+  final String title;
+
+  static String _fmt(int n) {
+    final s = n.toString();
+    final b = StringBuffer();
+    for (var i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) b.write('.');
+      b.write(s[i]);
+    }
+    return b.toString();
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final n = ref.watch(fortuneTypeCountsProvider).valueOrNull?[slug] ?? 0;
+    if (n <= 0) return const SizedBox.shrink();
+    final label = title == 'Fal' ? 'bu falı' : title;
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.groups_rounded, color: Color(0xFFFFD54F), size: 18),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              '${_fmt(n)} kişi $label baktırdı',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                shadows: [Shadow(color: Colors.black87, blurRadius: 8)],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -21,8 +21,8 @@ class CanlifalBrandLogo extends StatelessWidget {
   final double? height;
   final double? size;
 
-  static const _horizontalAsset = 'assets/brand/canlifal_logo_horizontal.png';
-  static const _iconAsset = 'assets/brand/canlifal_app_icon.png';
+  static const _horizontalAsset = 'assets/brand/canlifal_logo.webp';
+  static const _iconAsset = 'assets/brand/canlifal_logo.webp';
 
   @override
   Widget build(BuildContext context) {

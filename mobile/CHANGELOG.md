@@ -1,5 +1,35 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.813+869 (2026-10-16) — Bildirim rozeti, canlı yayın, sosyal akış, profil, boyut
+
+- **Bildirim rozeti:** Bildirimler görüldükten sonra rozet artık sıfırlanıyor. Sayaç, okundu yapılmayan mesaj bildirimlerini de sayıyordu.
+- **Yönetim — yayın kapatma:**
+  - Yetkili kişi bir yayındayken kapat (X) düğmesine basınca «Yayından çık / Yayını kapat (yönetici)» seçeneği çıkıyor.
+  - Kapatılan yayının yayıncısı ve izleyicileri «yayın bitti» bilgisini alıyor.
+- **Canlı falcı sohbeti:**
+  - Siyah kutu kaldırıldı. Yazılar şeffaf ve gölgeli; kamera ve arka plan görünüyor.
+  - Yazı tipi daha okunaklı; ekrandaki «Mik» etiketi «Mikrofon» oldu.
+  - Bahşişte sohbete «… sana bahşiş verdi» satırı ekleniyor.
+- **Canlı yayın misafirlik:**
+  - Hediyeler tam ekranda oynuyor; hediye sırasında misafir görüntüleri şeffaflaşıyor.
+  - Sohbette yalnız kullanıcı mesajları görünüyor ve mesajlar koltukların altına kadar uzanıyor.
+- **Sosyal:**
+  - İlk açılış Video sekmesi.
+  - Videolar ve paylaşımlar yüklenme saatine göre, en yeni önce, karışık sıralanıyor.
+  - Fal paylaşımı arka planı artık bulanık değil, net.
+  - Fal paylaşımlarında «N kişi Tarot Falı baktırdı» satırı gösteriliyor.
+- **Profil:**
+  - Fal aktivitelerinde bakılan fal türünün görseli ve Türkçe adı gösteriliyor.
+  - Beğeni sayısı yedek kaynaklardan da toplanıyor.
+  - Profil düzenlemede kaydedilen bilgiler artık önbellekten eski haliyle geri gelmiyor.
+- **Ana sayfa:**
+  - Tüm Özellikler kutuları, Ajanslar kartındaki gibi canlı 3D görsellerle gösteriliyor.
+  - Gold üyelik kartlarındaki görseller hareketli.
+- **Boyut:**
+  - Kopya görseller (~7 MB), kullanılmayan açılış görseli (2,4 MB) ve iki aynı 2,1 MB logo kaldırıldı; logo 512 px WebP oldu.
+  - APK yalnız telefon işlemcileri (arm, arm64) için derleniyor; emülatör (x64) desteği çıkarıldı.
+- **Türkçe:** Yönetim ekranlarında kalan «Unknown» yazıları «Bilinmiyor» oldu.
+
 ## 1.0.812+868 (2026-10-16) — Yönetim işlemleri sunucuyla uyumlu
 
 Mobil yönetim panelindeki birçok işlem sunucuya yanlış biçimde gidiyor, ya hiç çalışmıyor ya da «kaydedildi» görünüp hiçbir şey yapmıyordu. Düzeltilenler:

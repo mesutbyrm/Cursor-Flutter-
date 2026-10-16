@@ -1,3 +1,4 @@
+import '../../domain/entities/psychic_room_entity.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -514,52 +515,24 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                         maxHeight: (MediaQuery.sizeOf(context).height * 0.26)
                             .clamp(140.0, 260.0),
                       ),
-                      child: ProfileGlass(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 8,
-                        ),
-                        borderRadius: 16,
+                      // Şeffaf sohbet: kutu yok, kamera / arka plan görünür.
+                      // Üst kenar yumuşakça kaybolur; yazılar gölgeyle okunur.
+                      child: ShaderMask(
+                        shaderCallback: (rect) => const LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Colors.transparent, Colors.white],
+                          stops: [0, 0.22],
+                        ).createShader(rect),
+                        blendMode: BlendMode.dstIn,
                         child: ListView.builder(
                           // En yeni mesaj her zaman altta ve görünür.
                           reverse: true,
+                          padding: EdgeInsets.zero,
                           itemCount: state.messages.length,
-                          itemBuilder: (_, i) {
-                            final msg =
-                                state.messages[state.messages.length - 1 - i];
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 3),
-                              child: Text.rich(
-                                TextSpan(
-                                  children: [
-                                    TextSpan(
-                                      text:
-                                          '${msg.isMine ? 'Sen' : msg.senderName}: ',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w800,
-                                        color: msg.isMine
-                                            ? AppThemeColors.accentCyan
-                                            : const Color(0xFFFFD54F),
-                                      ),
-                                    ),
-                                    TextSpan(text: msg.text),
-                                  ],
-                                ),
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  height: 1.3,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                  shadows: [
-                                    Shadow(
-                                      color: Colors.black87,
-                                      blurRadius: 4,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
+                          itemBuilder: (_, i) => _PsychicChatLine(
+                            msg: state.messages[state.messages.length - 1 - i],
+                          ),
                         ),
                       ),
                     ),
@@ -578,13 +551,21 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                             hintText: 'Mesaj yaz…',
                             hintStyle: TextStyle(
                               fontSize: 16,
-                              color: Colors.white.withValues(alpha: 0.6),
+                              color: Colors.white.withValues(alpha: 0.7),
                             ),
                             filled: true,
-                            fillColor: Colors.black.withValues(alpha: 0.45),
+                            fillColor: Colors.white.withValues(alpha: 0.14),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
+                              borderRadius: BorderRadius.circular(24),
+                              borderSide: BorderSide(
+                                color: Colors.white.withValues(alpha: 0.25),
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),
+                              borderSide: BorderSide(
+                                color: Colors.white.withValues(alpha: 0.25),
+                              ),
                             ),
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 12,
@@ -618,7 +599,7 @@ class _PsychicVideoSessionScreenState extends ConsumerState<PsychicVideoSessionS
                           icon: ctrl.micOn
                               ? Icons.mic_rounded
                               : Icons.mic_off_rounded,
-                          label: 'Mik',
+                          label: 'Mikrofon',
                           onTap: ctrl.toggleMic,
                         ),
                         _ControlBtn(
@@ -730,6 +711,66 @@ class _ControlBtn extends StatelessWidget {
         const SizedBox(height: 4),
         Text(label, style: const TextStyle(fontSize: 10, color: Colors.white70)),
       ],
+    );
+  }
+}
+
+
+/// Şeffaf sohbet satırı: ad renkli, metin beyaz; arka plan yok, gölge var.
+class _PsychicChatLine extends StatelessWidget {
+  const _PsychicChatLine({required this.msg});
+
+  final PsychicChatMessage msg;
+
+  static const _shadows = [
+    Shadow(color: Color(0xCC000000), blurRadius: 6),
+    Shadow(color: Color(0x99000000), offset: Offset(0, 1), blurRadius: 2),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    if (msg.isSystem) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Text(
+          msg.text,
+          style: const TextStyle(
+            fontSize: 15,
+            height: 1.3,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.2,
+            color: Color(0xFFFFD54F),
+            shadows: _shadows,
+          ),
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(
+              text: '${msg.isMine ? 'Sen' : msg.senderName}  ',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                color: msg.isMine
+                    ? AppThemeColors.accentCyan
+                    : const Color(0xFFFFD54F),
+              ),
+            ),
+            TextSpan(text: msg.text),
+          ],
+        ),
+        style: const TextStyle(
+          fontSize: 16,
+          height: 1.35,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.15,
+          color: Colors.white,
+          shadows: _shadows,
+        ),
+      ),
     );
   }
 }

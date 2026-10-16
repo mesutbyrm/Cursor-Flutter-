@@ -84,3 +84,29 @@ List<SocialFeedItem> interleaveFeed({
   }
   return out;
 }
+
+
+/// Video + paylaşım akışı: yüklenme saatine göre en yeni önce. Saati
+/// bilinmeyenler sona, kendi aralarında gelen sırayla kalır.
+List<SocialFeedItem> sortFeedByNewest(List<SocialFeedItem> items) {
+  DateTime? at(SocialFeedItem i) => switch (i) {
+        PostFeedItem(:final post) => post.createdAt,
+        ShortFeedItem(:final video) => video.createdAt,
+        _ => null,
+      };
+  final indexed = [for (var i = 0; i < items.length; i++) (i, items[i])];
+  indexed.sort((a, b) {
+    final ta = at(a.$2);
+    final tb = at(b.$2);
+    if (ta != null && tb != null) {
+      final c = tb.compareTo(ta);
+      if (c != 0) return c;
+    } else if (ta != null) {
+      return -1;
+    } else if (tb != null) {
+      return 1;
+    }
+    return a.$1.compareTo(b.$1);
+  });
+  return [for (final e in indexed) e.$2];
+}

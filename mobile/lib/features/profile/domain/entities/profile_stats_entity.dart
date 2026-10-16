@@ -84,6 +84,21 @@ class ProfileStatsEntity {
     );
   }
 
+  /// Aynı istatistik, yalnız beğeni sayısı değiştirilmiş.
+  ProfileStatsEntity withLikes(int value) => ProfileStatsEntity(
+        liveStreams: liveStreams,
+        likes: value,
+        followers: followers,
+        following: following,
+        giftsReceivedCount: giftsReceivedCount,
+        giftsReceivedCoins: giftsReceivedCoins,
+        giftsSentCount: giftsSentCount,
+        giftsSentCoins: giftsSentCoins,
+        earningsJeton: earningsJeton,
+        approvedTopUpTotal: approvedTopUpTotal,
+        profileViews: profileViews,
+      );
+
   final int liveStreams;
   final int likes;
   final int followers;

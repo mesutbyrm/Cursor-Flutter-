@@ -129,6 +129,7 @@ class GoldSection extends ConsumerWidget {
                 height: _cardH,
                 accentColor: theme.accent,
                 shimmer: theme.shimmer,
+                alive: true,
                 onTap: () {
                   context.push('/premium-membership?plan=${_tierKey(pkg)}');
                 },

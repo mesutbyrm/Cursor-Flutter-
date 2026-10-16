@@ -181,7 +181,9 @@ class ProfileRemoteDataSource {
     Object? lastError;
     for (final path in [ApiEndpoints.userSiteProfile, ApiEndpoints.me]) {
       try {
-        final res = await _dio.safeGet<dynamic>(path);
+        // Önbellek atlanır: profil kaydedildikten sonra eski değerler
+        // (5 dk önbellek) geri gelip «kaydetmiyor» gibi görünüyordu.
+        final res = await _dio.safeGet<dynamic>(path, forceRefresh: true);
         final body = res.data;
         if (body is Map) {
           final map = asJsonMap(body);

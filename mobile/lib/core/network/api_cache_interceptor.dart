@@ -65,6 +65,7 @@ class ApiCacheInterceptor extends Interceptor {
       unawaited(ApiHttpCache.store(key, response, ttl));
       ApiHttpCache.completeInflight(key, response);
     }
+    _invalidateAfterProfileWrite(response.requestOptions);
     handler.next(response);
   }
 
@@ -87,5 +88,20 @@ class ApiCacheInterceptor extends Interceptor {
       ApiHttpCache.failInflight(key, err);
     }
     handler.next(err);
+  }
+
+  /// Profil yazıldıktan sonra (PATCH /api/me, /api/user/profile …) önbellekte
+  /// kalan eski profil yanıtları silinir; yoksa «kaydettim» denip eski
+  /// değerler geri geliyordu.
+  static void _invalidateAfterProfileWrite(RequestOptions options) {
+    if (options.method.toUpperCase() == 'GET') return;
+    final path = ApiCachePolicy.normalizedPath(options.path);
+    if (path == '/api/me' ||
+        path.startsWith('/api/me/') ||
+        path.startsWith('/api/user/') ||
+        path.startsWith('/api/profile')) {
+      unawaited(ApiHttpCache.invalidatePath('/api/me'));
+      unawaited(ApiHttpCache.invalidatePath('/api/user'));
+    }
   }
 }

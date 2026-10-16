@@ -118,6 +118,7 @@ class PsychicChatMessage extends Equatable {
     required this.text,
     this.createdAt,
     this.isMine = false,
+    this.isSystem = false,
   });
 
   final String id;
@@ -127,6 +128,10 @@ class PsychicChatMessage extends Equatable {
   final DateTime? createdAt;
   final bool isMine;
 
+  /// Bahşiş vb. yerel bilgi satırı (gönderen adı gösterilmez).
+  final bool isSystem;
+
   @override
-  List<Object?> get props => [id, senderId, senderName, text, createdAt, isMine];
+  List<Object?> get props =>
+      [id, senderId, senderName, text, createdAt, isMine, isSystem];
 }
