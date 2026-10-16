@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.811+867 (2026-10-16) — Admin jeton/CFC düzeltmesi
+
+- **Önemli:** admin «Jeton yükle» işlemi kullanıcıya jeton yerine CFC yüklüyordu, «Çıkar» işlemi de düşmek yerine ekliyordu. Artık doğru para birimi ve yön gönderiliyor; düşme bakiyeyi eksiye indiremez (sunucu)
+- **Gösterge Paneli:** toplam kullanıcı, dolaşımdaki jeton/CFC ve aktif yayın kartları web panelindeki kaynaktan gelir (önceden 0 görünüyordu)
+
 ## 1.0.810+866 (2026-10-16) — Web yönetim sayfalarına güvenli otomatik giriş
 
 - Yönetim Paneli'nde web'de açılan sayfalar artık ayrıca giriş istemez: uygulama oturumundan güvenli, kısa süreli (2 saat) web yönetim oturumu açılır (yalnız yönetim rolleri)

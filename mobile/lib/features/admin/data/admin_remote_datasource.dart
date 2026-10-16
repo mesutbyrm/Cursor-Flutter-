@@ -158,72 +158,21 @@ class AdminRemoteDataSource {
     }
 
     final note = reason?.trim();
-    final action = add ? 'add' : 'subtract';
-    final types = type == 'jeton'
-        ? <String>['jeton', 'coins', 'coin']
-        : <String>['cfc', type];
-
-    ApiException? lastError;
-    for (final creditType in types) {
-      final bodies = <Map<String, dynamic>>[
-        {
+    // Sunucu sözleşmesi (`POST /api/admin/credits`, web paneliyle aynı):
+    // `currency`: jeton | credits (CFC), `amount`: işaretli (eksi = düş).
+    // Önceden `type` / `action` gönderiliyordu; sunucu bunları okumadığı için
+    // «jeton yükle» CFC yüklüyor, «çıkar» ekleme yapıyordu.
+    await _adminTimeout(
+      _dio.safePost<dynamic>(
+        ApiEndpoints.adminCredits,
+        data: {
           'userId': uid,
-          'type': creditType,
-          'amount': amount,
-          'action': action,
-          if (note != null && note.isNotEmpty) 'reason': note,
-          if (note != null && note.isNotEmpty) 'note': note,
-        },
-        {
-          'userId': uid,
-          'type': creditType,
-          'amount': amount,
-          'operation': action,
+          'currency': type == 'jeton' ? 'jeton' : 'credits',
+          'amount': add ? amount : -amount,
           if (note != null && note.isNotEmpty) 'reason': note,
         },
-        {
-          'userId': uid,
-          'creditType': creditType,
-          'amount': amount,
-          'action': action,
-          if (note != null && note.isNotEmpty) 'note': note,
-        },
-      ];
-
-      for (final body in bodies) {
-        try {
-          await _adminTimeout(
-            _dio.safePatch<dynamic>(
-              ApiEndpoints.adminUsersCredits,
-              data: body,
-            ),
-          );
-          return;
-        } on ApiException catch (e) {
-          lastError = e;
-          if (e.statusCode == 404 || e.statusCode == 405) break;
-          if (e.statusCode == 400 || e.statusCode == 422) continue;
-          if (e.statusCode == 401 || e.statusCode == 403) rethrow;
-        }
-
-        try {
-          await _adminTimeout(
-            _dio.safePost<dynamic>(
-              ApiEndpoints.adminCredits,
-              data: body,
-            ),
-          );
-          return;
-        } on ApiException catch (e) {
-          lastError = e;
-          if (e.statusCode == 404 || e.statusCode == 405) continue;
-          if (e.statusCode == 400 || e.statusCode == 422) continue;
-          if (e.statusCode == 401 || e.statusCode == 403) rethrow;
-        }
-      }
-    }
-
-    throw lastError ?? const ApiException('Jeton/CFC güncellenemedi.');
+      ),
+    );
   }
 
   Future<void> grantMembership({
@@ -321,11 +270,42 @@ class AdminRemoteDataSource {
       }
     }
 
+    Map<String, dynamic>? statistics;
+    Future<void> loadStatistics() async {
+      try {
+        final res = await _adminTimeout(
+          _dio.safeGet<dynamic>(ApiEndpoints.adminStatistics, forceRefresh: true),
+        );
+        if (res.data is Map) statistics = _unwrapMap(res.data);
+      } on ApiException catch (e) {
+        if (e.statusCode != 403 && e.statusCode != 404) rethrow;
+      }
+    }
+
     await Future.wait([
       merge(ApiEndpoints.adminUsersStats, null),
       merge(ApiEndpoints.adminFinance, null),
       merge(ApiEndpoints.adminWithdrawals, {'status': 'pending', 'limit': '50'}),
+      loadStatistics(),
     ]);
+
+    // Web yönetim panelinin gösterge kartlarıyla aynı kaynak
+    // (`/api/admin/statistics`): toplam kullanıcı, dolaşımdaki jeton/CFC,
+    // aktif yayın. `/api/admin/users/stats` sunucuda yok; önceden bu kartlar 0'dı.
+    final st = statistics;
+    if (st != null) {
+      Map<String, dynamic> sub(String k) =>
+          st[k] is Map ? Map<String, dynamic>.from(st[k] as Map) : const {};
+      final economy = sub('economy');
+      final streams = sub('streams');
+      void put(String key, Object? value) {
+        if (value is num && merged[key] == null) merged[key] = value;
+      }
+      put('totalUsers', st['totalUsers'] ?? sub('users')['total']);
+      put('totalJeton', economy['jetonInCirculation']);
+      put('totalCfc', economy['cfcInCirculation']);
+      put('activeLiveStreams', streams['active']);
+    }
 
     return merged;
   }
