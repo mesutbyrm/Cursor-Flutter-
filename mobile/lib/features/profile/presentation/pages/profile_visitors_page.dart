@@ -116,10 +116,23 @@ class ProfileVisitorsPage extends ConsumerWidget {
                 )
               : async.when(
             loading: () => const Center(child: DiscoverAccentLoader()),
-            error: (e, _) => DiscoverEmptyState(
-              icon: Icons.error_outline_rounded,
-              message: ApiException.userMessage(e),
-            ),
+            error: (e, _) {
+              // Sunucu üyeliği yetersiz bulursa (403) teknik hata yerine
+              // anlaşılır «üyelik gerekir» ekranı.
+              final code = e is ApiException ? e.statusCode : null;
+              if (code == 403 || code == 402) {
+                return MembershipCapabilityLockedBody(
+                  capabilityKey: MembershipCapabilityKeys.profileVisitors,
+                  title: 'Kim Baktı — Premium',
+                  message:
+                      'Profilini kimlerin ziyaret ettiğini görmek için Premium veya üzeri üyelik gerekir.',
+                );
+              }
+              return DiscoverEmptyState(
+                icon: Icons.error_outline_rounded,
+                message: ApiException.userMessage(e),
+              );
+            },
             data: (visitors) {
               final capped = visitorLimit != null && visitorLimit > 0
                   ? visitors.take(visitorLimit).toList()

@@ -17,9 +17,9 @@ import '../widgets/notification_permission_banner.dart';
 /// Kanal bazlı bildirim tercihleri — Mesajlar, Canlı yayın başlatanlar,
 /// Günlük fal önerisi, Diğer.
 ///
-/// Tercihler bu cihazda saklanır ve uygulanır (backend'de bildirim tercihi
-/// ucu yoktur). Sistem düzeyinde de kanal bazlı yönetim için Android'in
-/// "Bildirim ayarları" ekranına kısayol vardır.
+/// Tercihler hesaba kaydedilir (`/api/user/notification-settings`): sunucu
+/// kapatılan kanalın push bildirimini hiç göndermez, tercih tüm cihazlarda
+/// geçerli olur. Cihazda da saklanır (çevrimdışı / eski sunucu yedeği).
 class NotificationChannelSettingsPage extends ConsumerStatefulWidget {
   const NotificationChannelSettingsPage({super.key});
 
@@ -39,14 +39,41 @@ class _NotificationChannelSettingsPageState
     unawaited(_load());
   }
 
+  static const _endpoint = '/api/user/notification-settings';
+
   Future<void> _load() async {
     final all = await _prefs.loadAll();
     if (mounted) setState(() => _values = all);
+    // Hesaptaki tercih (başka cihazda değiştirilmiş olabilir) yereli günceller.
+    try {
+      final res = await ref.read(dioProvider).safeGet<dynamic>(
+            _endpoint,
+            forceRefresh: true,
+          );
+      final body = res.data;
+      final data = body is Map && body['data'] is Map ? body['data'] as Map : null;
+      if (data == null) return;
+      final merged = {...all};
+      for (final c in AppNotificationChannel.values) {
+        final v = data[c.name];
+        if (v is bool && v != merged[c]) {
+          merged[c] = v;
+          await _prefs.setEnabled(c, v);
+        }
+      }
+      if (mounted) setState(() => _values = merged);
+    } catch (_) {}
   }
 
   Future<void> _toggle(AppNotificationChannel c, bool v) async {
     setState(() => _values = {...?_values, c: v});
     await _prefs.setEnabled(c, v);
+    unawaited(
+      ref
+          .read(dioProvider)
+          .safePut<dynamic>(_endpoint, data: {c.name: v})
+          .then((_) {}, onError: (_) {}),
+    );
     if (c == AppNotificationChannel.dailyFortune) {
       // Günlük fal önerisi kapanınca zamanlanmış hatırlatıcı da iptal edilir;
       // açılınca günde bir kez yeniden planlanır.

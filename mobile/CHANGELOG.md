@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.800+856 (2026-10-16) — Bildirim tercihleri hesapta, Kim Baktı
+
+- **Bildirim ayarları:** Mesajlar / Canlı yayın başlatanlar / Günlük fal / Diğer tercihleri artık hesaba kaydedilir; kapattığın kanalın bildirimi sunucudan hiç gelmez (uygulama kapalıyken de) ve tercih tüm cihazlarında geçerli olur
+- **Kim Baktı:** üyeliği yetmeyen kullanıcıya teknik hata yerine «Premium üyelik gerekir» ekranı
+
 ## 1.0.799+855 (2026-10-16) — Eksik kontrolü
 
 - **Yardım & Destek:** mesaj artık destek talebi olarak yönetime düşer (önceden «destek» kullanıcısına özel mesaj atılıyordu; o yol yalnız yedek)

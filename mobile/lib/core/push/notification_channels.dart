@@ -68,8 +68,9 @@ enum AppNotificationChannel {
 
 /// Kanal tercihleri — cihazda (SharedPreferences) tutulur.
 ///
-/// NOT: Backend'de bildirim tercihi saklayan bir uç yoktur (kontrol edildi);
-/// tercihler bu cihazda uygulanır. Arka plan isolate'ında da okunabilir.
+/// Ayarlar sayfası tercihi ayrıca hesaba kaydeder
+/// (`/api/user/notification-settings`); sunucu kapalı kanalın push'unu
+/// göndermez. Cihazdaki kopya arka plan isolate'ında da okunabilir.
 class NotificationChannelPrefs {
   const NotificationChannelPrefs();
 
