@@ -152,6 +152,11 @@ Kullanıcı **`Psychic P0 PASS`** yazana kadar `RELEASE READY: NO`. PASS → che
 Kullanıcı mesajlarına cevap verirken **en sonda** şu sabit indirme bağlantısını ekle; sürümü `mobile/pubspec.yaml` → `version:` satırından yaz:
 
 - **İndir:** https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk
+- **Kopyalanabilir link (zorunlu, kullanıcı isteği):** linki her yanıtta ayrıca tek başına bir kod bloğu içinde ver ki telefondan tek dokunuşla kopyalanabilsin:
+
+  ```
+  https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk
+  ```
 - **404 / eski build:** [Build release APK](https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml) → `main` → `apk-latest` güncellenir
 - Ayrıntı: [`APK_DOWNLOAD.md`](APK_DOWNLOAD.md)
 
