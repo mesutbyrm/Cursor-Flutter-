@@ -163,6 +163,67 @@ class AdminMembershipSheet {
                           )
                         : const Text('Üyelik ver'),
                   ),
+                  const SizedBox(height: 8),
+                  // Üyeliği temel (ücretsiz) seviyeye düşür — sunucuda
+                  // `gold_revoke` (yetki + denetim kaydı).
+                  OutlinedButton.icon(
+                    onPressed: busy
+                        ? null
+                        : () async {
+                            final ok = await showDialog<bool>(
+                              context: ctx,
+                              builder: (d) => AlertDialog(
+                                title: const Text('Üyeliği kaldır'),
+                                content: Text(
+                                  '$label kullanıcısının üyeliği temel seviyeye düşürülecek. Emin misiniz?',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(d, false),
+                                    child: const Text('Vazgeç'),
+                                  ),
+                                  FilledButton(
+                                    onPressed: () => Navigator.pop(d, true),
+                                    child: const Text('Kaldır'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (ok != true || !ctx.mounted) return;
+                            setState(() => busy = true);
+                            try {
+                              await ref.read(adminRemoteProvider).manageUser(
+                                userId,
+                                'gold_revoke',
+                                {
+                                  if (noteCtrl.text.trim().isNotEmpty)
+                                    'reason': noteCtrl.text.trim(),
+                                },
+                              );
+                              if (!ctx.mounted) return;
+                              Navigator.pop(ctx);
+                              messenger.showSnackBar(
+                                const SnackBar(
+                                  content: Text('Üyelik temel seviyeye düşürüldü'),
+                                ),
+                              );
+                            } catch (e) {
+                              if (ctx.mounted) setState(() => busy = false);
+                              messenger.showSnackBar(
+                                SnackBar(
+                                  content: Text(ApiException.userMessage(e)),
+                                  backgroundColor: Colors.red.shade800,
+                                ),
+                              );
+                            }
+                          },
+                    icon: const Icon(Icons.remove_circle_outline_rounded),
+                    label: const Text('Üyeliği kaldır (temel seviyeye düşür)'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.redAccent,
+                      minimumSize: const Size.fromHeight(44),
+                    ),
+                  ),
                 ],
               ),
             );

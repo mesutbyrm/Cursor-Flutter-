@@ -1,5 +1,9 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.814+870 (2026-10-16) — Yönetim: üyeliği kaldır
+
+- **Yönetim paneli:** «Üyelik ver» ekranına **«Üyeliği kaldır (temel seviyeye düşür)»** düğmesi eklendi. İşlem onay ister, sunucuda yetki kontrolünden geçer ve denetim kaydına yazılır. Önceden üyelik yalnızca verilebiliyor, geri alınamıyordu.
+
 ## 1.0.813+869 (2026-10-16) — Bildirim rozeti, canlı yayın, sosyal akış, profil, boyut
 
 - **Bildirim rozeti:** Bildirimler görüldükten sonra rozet artık sıfırlanıyor. Sayaç, okundu yapılmayan mesaj bildirimlerini de sayıyordu.
