@@ -94,6 +94,31 @@ abstract final class StaffRoles {
     return u == 'admin' || u == 'siteadmin' || u == 'yonetim';
   }
 
+  /// Site `middleware.ts` ile aynı: `/admin` web sayfalarına girebilen roller.
+  static const webAdminPageRoles = <String>{
+    'admin',
+    'yonetici',
+    'kurucu',
+    'moderator',
+    'finans',
+    'ajans_admin',
+    'destek',
+    'icerik_moderator',
+  };
+
+  /// Uygulama içi web yönetim sayfaları — sitedeki kuralla aynı roller.
+  /// (Her sayfa ve API ayrıca kendi yetki kontrolünü yapar.)
+  static bool canOpenWebAdmin({
+    String? role,
+    String? username,
+    bool? walletIsAdmin,
+  }) {
+    if (isStrictWebAdmin(role: role, username: username, walletIsAdmin: walletIsAdmin)) {
+      return true;
+    }
+    return webAdminPageRoles.contains(role?.toLowerCase().trim() ?? '');
+  }
+
   static String labelTr(String role) {
     return switch (role.toLowerCase()) {
       'admin' => 'Site Admin',

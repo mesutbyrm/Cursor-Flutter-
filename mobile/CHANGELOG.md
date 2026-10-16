@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.810+866 (2026-10-16) — Web yönetim sayfalarına güvenli otomatik giriş
+
+- Yönetim Paneli'nde web'de açılan sayfalar artık ayrıca giriş istemez: uygulama oturumundan güvenli, kısa süreli (2 saat) web yönetim oturumu açılır (yalnız yönetim rolleri)
+- Web yönetim sayfalarına erişim sitedeki rollerle aynı: Kurucu, Moderatör, Finans, Destek, Ajans Admin ve İçerik Moderatörü de kendi yetkisindeki web sayfalarını açabilir
+
 ## 1.0.809+865 (2026-10-16) — Yönetim Paneli web sayfaları
 
 - Yönetim Paneli'nde web'de açılan maddeler (ör. Çekim & Ödüller, Blog) artık doğrudan o sayfayı açar; önceden her zaman web panelinin ana sayfası açılıyordu

@@ -296,7 +296,7 @@ class _AdminWebPanelPageState extends ConsumerState<AdminWebPanelPage> {
             child: DiscoverEmptyState(
               icon: Icons.lock_outline_rounded,
               message:
-                  'Yönetim paneli yalnızca Admin ve Süper Admin hesapları içindir.',
+                  'Bu sayfa yalnızca yönetim ekibi hesapları içindir.',
               actionLabel: 'Geri',
               action: () => context.pop(),
             ),

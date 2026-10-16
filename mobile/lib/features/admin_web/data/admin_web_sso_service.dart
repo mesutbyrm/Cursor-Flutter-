@@ -98,7 +98,21 @@ class AdminWebSsoService {
     return send.call(this, body);
   };
 
-  window.location.replace(${jsonEncode(adminUrl)});
+  // Güvenli oturum köprüsü: mobil oturumla web yönetim oturumu açılır
+  // (aynı kaynak POST; yalnız yönetim rolleri). Yanıt gelmezse yine sayfaya
+  // geçilir — o durumda web sayfasında giriş yapılabilir.
+  var target = ${jsonEncode(adminUrl)};
+  var done = false;
+  function go() { if (done) return; done = true; window.location.replace(target); }
+  setTimeout(go, 6000);
+  try {
+    origFetch.call(window, '/api/auth/mobile-web-session', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', 'X-Canlifal-Mobile': '1' },
+      body: JSON.stringify({ token: token })
+    }).then(go, go);
+  } catch (e) { go(); }
 })();
 </script>
 </body>
