@@ -6,6 +6,12 @@ import 'package:flutter/material.dart';
   if (t.contains('short') || t.contains('shorts') || t.contains('reels')) {
     return (Icons.play_circle_fill_rounded, const Color(0xFFFF4081));
   }
+  if (t.contains('profile_view') || t.contains('visit') || t.contains('ziyaret')) {
+    return (Icons.visibility_rounded, const Color(0xFF25F4EE));
+  }
+  if (t == 'share' || t.contains('paylas') || t.contains('paylaş')) {
+    return (Icons.reply_rounded, const Color(0xFF22C55E));
+  }
   if (t.contains('like') || t.contains('begeni') || t.contains('beğeni')) {
     return (Icons.favorite_rounded, const Color(0xFFFF3B6B));
   }
@@ -102,6 +108,12 @@ String inboxSystemCategoryLabel(String? type) {
   }
   if (t.contains('follow') || t.contains('takip')) {
     return 'Takip';
+  }
+  if (t.contains('profile_view') || t.contains('visit') || t.contains('ziyaret')) {
+    return 'Profil ziyareti';
+  }
+  if (t == 'share' || t.contains('paylas') || t.contains('paylaş')) {
+    return 'Paylaşım';
   }
   if (t.contains('like') || t.contains('begeni') || t.contains('beğeni')) {
     return 'Beğeni';

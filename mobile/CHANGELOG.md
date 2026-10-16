@@ -1,5 +1,10 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.802+858 (2026-10-16) — Bildirim düzeltmeleri
+
+- **Profil ziyareti bildirimi:** göz ikonu ve «Profil ziyareti» etiketi; dokununca ziyaret edenin profili (kullanıcı adı yoksa «Kim Baktı» listesi) açılır
+- **Paylaşım bildirimi:** kendi ikonu ve «Paylaşım» etiketi; dokununca paylaşılan gönderi açılır
+
 ## 1.0.801+857 (2026-10-16) — Yeni GirLive Sosyal
 
 - **Üst bar:** Canlı · Keşfet · Video · Takipte, sağda yeni ＋ (TikTok tarzı) ve arama

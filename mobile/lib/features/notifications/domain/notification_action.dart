@@ -286,6 +286,14 @@ String? _routeFromTypeAndText(
         return '/user/${n.targetId}';
       }
       return '/social';
+    case 'profile_view':
+      // Ziyaretçinin kullanıcı adı yoksa «Kim Baktı» listesi açılır.
+      return '/profile/visitors';
+    case 'share':
+      if (n.targetId != null && n.targetId!.isNotEmpty) {
+        return '/social/post/${n.targetId}';
+      }
+      return '/social';
     case 'short_video_like':
     case 'short_video_comment':
     case 'short_video_follow':
