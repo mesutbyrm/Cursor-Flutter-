@@ -4,31 +4,34 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.820+876` |
-| Tarih (UTC) | 2026-10-17 15:05 |
-| Commit | [`aaa5c4db01e517e8bfa57cf31b36090128ef8959`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/aaa5c4db01e517e8bfa57cf31b36090128ef8959) |
-| İş akışı | [Run 39040675265](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/39040675265) |
+| Sürüm | `1.0.821+877` |
+| Tarih (UTC) | 2026-10-17 16:10 |
+| Commit | [`4f87c4b9fbab28f9d3d45f75f49bafd8f9a538ff`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/4f87c4b9fbab28f9d3d45f75f49bafd8f9a538ff) |
+| İş akışı | [Run 39046318786](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/39046318786) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.820+876 (2026-10-17) — DJ istek bandı, armağan, öne geç, alkış
+## 1.0.822+878 (2026-10-17) — Müzik istekleri: kontrol sonrası düzeltmeler
 
-- **İstek penceresi:** `!istek şarkı` yazınca kısa bir pencere açılır:
-  - Şarkıyı odadaki birine armağan edebilirsin (isteğe bağlı).
-  - Mesaj ekleyebilirsin (isteğe bağlı, en çok 100 karakter).
-  - **⚡ Öne geç** (20 jeton) seçeneğiyle sıranın başına geçersin.
-- **İstek sırası paneli:**
-  - Öne geçenler en üstte.
-  - DJ her isteğin armağanını ve mesajını görür; isteği çalar ya da reddeder.
-  - İsteyen kişi bekleyen isteğini iptal edebilir.
-  - Panelden yeni şarkı da istenebilir.
-- **Alkış ve hediye:**
-  - Çalan şarkıya 👏 alkış yapılabilir; kişi başı bir kez, sayısı bantta görünür.
-  - 🎁 ile şarkıyı çalan DJ'e hediye gönderilir.
-- **Müzik bandı:** Koltuklar dolunca kare kart yerine koltukların altında tam genişlikte iki satırlık kayan bant çıkar.
-  - 1. satır: DJ, çalan şarkı, isteyen, kime armağan edildiği, alkış sayısı
-  - 2. satır: isteyenin mesajı, sıradakiler, «İyi dinlemeler 🎶»
+- **!istek açılır penceresi DJ'lere de gidiyor:** Sunucu, odadan çıkmış oda sahibini hâlâ «odada» sayıyordu; bu yüzden pencere DJ'lere hiç gitmiyordu. Artık yalnız gerçekten odada olanlar sayılıyor.
+- **Kuyruk panelinden «Çal»:** Dosya seçildikten sonra şarkı hiç çalmıyordu; düzeltildi.
+- **Jeton güvenliği:**
+  - Dosya açılamazsa (desteklenmeyen biçim vb.) jeton kesilmiyor; istek beklemede kalıyor.
+  - Uzun süre yanıtlanmayan istekler de iade ediliyor.
+  - İade, istek durumuyla birlikte tek işlemde yapılıyor; yarıda kalıp kaybolmuyor.
+- **DJ mikrofonu:**
+  - Koltukta ama mikrofonu kapalı DJ de müziği yayına verebiliyor.
+  - Müzik çalarken mikrofon kapatılınca müzik kesilmiyor.
+  - Odadan çıkınca istek «çalıyor» olarak takılı kalmıyor.
+- **Panelden istek kutusu:**
+  - Şarkı başlayınca kutu hemen çıkıyor, bitince iki koltuk geri geliyor.
+  - Kutuyu «Kapat»tan sonra gelen yeni şarkılar yine duyuluyor.
+- **Fiyat ve hatalar:**
+  - Videolu istek de 10 jeton olarak kontrol ediliyor; öne geçerken 20 jeton bakiyesi kontrol ediliyor.
+  - «Yetersiz jeton» gibi hatalar artık «yetkiniz yok» diye gizlenmiyor.
+  - Ücretsiz odalarda «10 jeton» yazmıyor.
+- **Bulut dosyası:** Seçilen dosya açılamazsa (bulut dosyası) uyarı gösteriliyor.
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
