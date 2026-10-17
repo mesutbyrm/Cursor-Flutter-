@@ -1684,6 +1684,16 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage>
         perms.isRoomOwner ||
         perms.isSiteAdmin ||
         isDj;
+    // Müzik bandı / kartı: çalan DJ'e hediye penceresini o kişi seçili aç.
+    void giftToUser(String userId) {
+      final presence = ref.read(voiceRoomLiveProvider(_liveRoomKey)).presence;
+      ChatRoomPresence? receiver;
+      for (final p in presence) {
+        if (p.id == userId) receiver = p;
+      }
+      _openGiftShop(context, room: room, presence: presence, receiver: receiver);
+    }
+
     final bgUrl = live.backgroundUrl ?? room.backgroundImageUrl;
     final metrics = VoiceRoomResponsiveMetrics.of(context);
     final keyboardOpen = metrics.keyboardOpen;
@@ -1964,6 +1974,15 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage>
                                   roomKey: _liveRoomKey,
                                   myUserId: user?.id,
                                   canHandle: isOwner || isDj,
+                                  onGiftToUser: giftToUser,
+                                )
+                              : null,
+                          musicBanner: showMusicRequestFab && _liveRoomKey.isNotEmpty
+                              ? VoiceRoomMusicTickerBanner(
+                                  roomKey: _liveRoomKey,
+                                  myUserId: user?.id,
+                                  canHandle: isOwner || isDj,
+                                  onGiftToUser: giftToUser,
                                 )
                               : null,
                           mergedDjIds: mergedDjIds,
@@ -2393,6 +2412,7 @@ class _VoiceRoomRtcSeatStage extends ConsumerWidget {
     required this.liveRoomKey,
     required this.room,
     this.musicCard,
+    this.musicBanner,
     required this.mergedDjIds,
     required this.selfUserId,
     required this.micMuted,
@@ -2407,6 +2427,7 @@ class _VoiceRoomRtcSeatStage extends ConsumerWidget {
   final String liveRoomKey;
   final VoiceRoomEntity room;
   final Widget? musicCard;
+  final Widget? musicBanner;
   final List<String> mergedDjIds;
   final String? selfUserId;
   final bool micMuted;
@@ -2435,6 +2456,7 @@ class _VoiceRoomRtcSeatStage extends ConsumerWidget {
       roomKey: liveRoomKey,
       room: room,
       extraCell: musicCard,
+      extraWide: musicBanner,
       seatSlots: seatSlice.seatSlots,
       presence: seatSlice.presence,
       configuredSeatCount: configuredSeatCount ?? room.seatCount,

@@ -18,14 +18,27 @@ class DjRequestRemoteDataSource {
     return DjRequestsSnapshot.fromJson(res.data);
   }
 
-  Future<void> create(String roomId, String query) async {
+  Future<void> create(
+    String roomId,
+    String query, {
+    String? message,
+    String? giftToUserId,
+    bool priority = false,
+  }) async {
     await _dio.safePost<dynamic>(
       ApiEndpoints.chatRoomDjRequest(roomId),
-      data: {'query': query},
+      data: {
+        'query': query,
+        if (message != null && message.trim().isNotEmpty) 'message': message.trim(),
+        if (giftToUserId != null && giftToUserId.isNotEmpty)
+          'giftToUserId': giftToUserId,
+        if (priority) 'priority': true,
+      },
     );
   }
 
-  /// [action]: play | reject | cancel | done
+  /// [action]: play | reject | cancel | done | clap
+
   Future<void> act(String roomId, String requestId, String action) async {
     await _dio.safePatch<dynamic>(
       ApiEndpoints.chatRoomDjRequest(roomId),

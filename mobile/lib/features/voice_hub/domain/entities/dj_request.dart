@@ -9,6 +9,11 @@ class DjRequest {
     required this.userName,
     this.handlerId,
     this.handlerName,
+    this.message,
+    this.giftToId,
+    this.giftToName,
+    this.priority = false,
+    this.claps = 0,
     this.createdAtMs = 0,
     this.updatedAtMs = 0,
   });
@@ -22,6 +27,14 @@ class DjRequest {
   final String userName;
   final String? handlerId;
   final String? handlerName;
+  /// İsteyenin mesajı.
+  final String? message;
+  /// Şarkının armağan edildiği kişi.
+  final String? giftToId;
+  final String? giftToName;
+  /// Öne geç (çift ücret).
+  final bool priority;
+  final int claps;
   final int createdAtMs;
   final int updatedAtMs;
 
@@ -47,6 +60,11 @@ class DjRequest {
       userName: raw['userName']?.toString() ?? 'Biri',
       handlerId: opt(raw['handlerId']),
       handlerName: opt(raw['handlerName']),
+      message: opt(raw['message']),
+      giftToId: opt(raw['giftToId']),
+      giftToName: opt(raw['giftToName']),
+      priority: raw['priority'] == true,
+      claps: asInt(raw['claps']),
       createdAtMs: asInt(raw['createdAtMs']),
       updatedAtMs: asInt(raw['updatedAtMs']),
     );

@@ -14,6 +14,10 @@ final djRequestRemoteProvider = Provider<DjRequestRemoteDataSource>(
 /// Odanın DJ istekleri (!istek). SSE DJ olayındaki `djRequests` ile anında,
 /// ayrıca 15 sn'de bir sunucudan güncellenir (süre aşımı iadeleri de böyle
 /// tetiklenir).
+/// `!istek şarkı` yazılınca istek penceresini açtırır (şarkı adı).
+final voiceRoomDjComposeProvider =
+    StateProvider.family<String?, String>((ref, roomKey) => null);
+
 final voiceRoomDjRequestsProvider = NotifierProvider.autoDispose
     .family<VoiceRoomDjRequestsController, DjRequestsSnapshot, String>(
   VoiceRoomDjRequestsController.new,
@@ -57,9 +61,20 @@ class VoiceRoomDjRequestsController
   }
 
   /// Hata mesajı ya da `null`.
-  Future<String?> create(String query) async {
+  Future<String?> create(
+    String query, {
+    String? message,
+    String? giftToUserId,
+    bool priority = false,
+  }) async {
     try {
-      await ref.read(djRequestRemoteProvider).create(_roomKey, query);
+      await ref.read(djRequestRemoteProvider).create(
+            _roomKey,
+            query,
+            message: message,
+            giftToUserId: giftToUserId,
+            priority: priority,
+          );
       unawaited(refresh());
       return null;
     } catch (e) {
@@ -67,7 +82,7 @@ class VoiceRoomDjRequestsController
     }
   }
 
-  /// [action]: play | reject | cancel | done — hata mesajı ya da `null`.
+  /// [action]: play | reject | cancel | done | clap — hata mesajı ya da `null`.
   Future<String?> act(String requestId, String action) async {
     try {
       await ref.read(djRequestRemoteProvider).act(_roomKey, requestId, action);

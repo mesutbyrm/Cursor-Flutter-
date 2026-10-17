@@ -44,4 +44,23 @@ void main() {
     expect(snap.pending, isEmpty);
     expect(snap.playing, isNull);
   });
+
+  test('DjRequest parses gift, message, priority and claps', () {
+    final r = DjRequest.fromJson({
+      'id': 'r9',
+      'status': 'playing',
+      'query': 'Müslüm Gürses Nilüfer',
+      'userId': 'u1',
+      'userName': 'Ayşe',
+      'message': 'Canım arkadaşıma',
+      'giftToId': 'u5',
+      'giftToName': 'mehmet',
+      'priority': true,
+      'claps': 7,
+    })!;
+    expect(r.message, 'Canım arkadaşıma');
+    expect(r.giftToName, 'mehmet');
+    expect(r.priority, isTrue);
+    expect(r.claps, 7);
+  });
 }

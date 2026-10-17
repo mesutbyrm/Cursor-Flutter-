@@ -890,6 +890,16 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                         roomKey: _liveRoomKey,
                         myUserId: user?.id,
                         canHandle: canControlMusic,
+                        onGiftToUser: (id) {
+                          final presence = ref
+                              .read(voiceRoomLiveProvider(_liveRoomKey))
+                              .presence;
+                          ChatRoomPresence? receiver;
+                          for (final p in presence) {
+                            if (p.id == id) receiver = p;
+                          }
+                          _openGiftShop(room, presence, receiver: receiver);
+                        },
                       ),
                     ),
                   // Aktif hediye savaşı — canlı skor + geri sayım.

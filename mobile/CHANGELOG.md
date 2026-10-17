@@ -1,5 +1,23 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.820+876 (2026-10-17) — DJ istek bandı, armağan, öne geç, alkış
+
+- **İstek penceresi:** `!istek şarkı` yazınca kısa bir pencere açılır:
+  - Şarkıyı odadaki birine armağan edebilirsin (isteğe bağlı).
+  - Mesaj ekleyebilirsin (isteğe bağlı, en çok 100 karakter).
+  - **⚡ Öne geç** (20 jeton) seçeneğiyle sıranın başına geçersin.
+- **İstek sırası paneli:**
+  - Öne geçenler en üstte.
+  - DJ her isteğin armağanını ve mesajını görür; isteği çalar ya da reddeder.
+  - İsteyen kişi bekleyen isteğini iptal edebilir.
+  - Panelden yeni şarkı da istenebilir.
+- **Alkış ve hediye:**
+  - Çalan şarkıya 👏 alkış yapılabilir; kişi başı bir kez, sayısı bantta görünür.
+  - 🎁 ile şarkıyı çalan DJ'e hediye gönderilir.
+- **Müzik bandı:** Koltuklar dolunca kare kart yerine koltukların altında tam genişlikte iki satırlık kayan bant çıkar.
+  - 1. satır: DJ, çalan şarkı, isteyen, kime armağan edildiği, alkış sayısı
+  - 2. satır: isteyenin mesajı, sıradakiler, «İyi dinlemeler 🎶»
+
 ## 1.0.819+875 (2026-10-17) — Sesli odada DJ müziği
 
 - **Müzik artık DJ'in telefonundan:**

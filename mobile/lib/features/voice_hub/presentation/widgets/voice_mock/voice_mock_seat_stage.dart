@@ -86,10 +86,14 @@ class VoiceMockSeatStage extends StatelessWidget {
     this.selfUserId,
     this.remoteTrtcUserId,
     this.extraCell,
+    this.extraWide,
   });
 
   /// Izgaranın sonuna eklenen ek hücre (ör. müzik koltuğu kartı).
   final Widget? extraCell;
+  /// Son satırda boş yer yoksa (koltuklar dolu) [extraCell] yerine
+  /// koltukların altında tam genişlikte gösterilir (ör. müzik bandı).
+  final Widget? extraWide;
   final String roomKey;
   final VoiceRoomEntity room;
   final List<VoiceRoomSeatSlot> seatSlots;
@@ -158,12 +162,14 @@ class VoiceMockSeatStage extends StatelessWidget {
         [for (final s in rows[r]) cell(s, host: false)],
     ];
     final extra = extraCell;
-    if (extra != null) {
-      if (grid.last.length < 4) {
-        grid.last.add(extra);
-      } else {
-        grid.add([extra]);
-      }
+    final wide = extraWide;
+    Widget? below;
+    if (extra != null && grid.last.length < 4) {
+      grid.last.add(extra);
+    } else if (wide != null) {
+      below = wide;
+    } else if (extra != null) {
+      grid.add([extra]);
     }
 
     return Padding(
@@ -175,6 +181,7 @@ class VoiceMockSeatStage extends StatelessWidget {
             if (r > 0) const SizedBox(height: 6),
             rowOf(grid[r]),
           ],
+          ?below,
         ],
       ),
     );
@@ -197,11 +204,8 @@ class VoiceMockStageSeat extends ConsumerWidget {
     this.trtcReady = false,
     this.selfUserId,
     this.remoteTrtcUserId,
-    this.extraCell,
   });
 
-  /// Izgaranın sonuna eklenen ek hücre (ör. müzik koltuğu kartı).
-  final Widget? extraCell;
   final String roomKey;
   final VoiceRoomEntity room;
   final int seatIndex;

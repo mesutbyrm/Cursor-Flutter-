@@ -3229,13 +3229,10 @@ class VoiceRoomLiveController
           );
           return;
         }
-        final err = await ref
-            .read(voiceRoomDjRequestsProvider(_roomKey).notifier)
-            .create(song.trim());
-        if (!_sessionActive) return;
-        state = err != null
-            ? state.copyWith(error: err)
-            : state.copyWith(clearError: true, clearMusicRequestFlash: true);
+        // İstek penceresi (armağan, mesaj, öne geç) sayfada açılır.
+        ref.read(voiceRoomDjComposeProvider(_roomKey).notifier).state =
+            song.trim();
+        state = state.copyWith(clearError: true, clearMusicRequestFlash: true);
         return;
       }
       VoiceRoomDebugLog.log('music.istek.search', {'song': song ?? '', 'room': _roomKey});
