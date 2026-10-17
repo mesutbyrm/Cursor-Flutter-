@@ -39,6 +39,7 @@ import '../utils/voice_room_key_resolver.dart';
 import '../providers/voice_session_phase_provider.dart';
 import '../../domain/voice/voice_session_phase.dart';
 import '../providers/voice_room_ui_provider.dart';
+import '../widgets/voice_room/voice_room_queue_music_box.dart';
 import '../widgets/voice_room/voice_room_dj_request_widgets.dart';
 import '../widgets/voice_room/voice_room_rtc_shell_widgets.dart';
 import '../widgets/voice_room/voice_room_connection_overlays.dart';
@@ -818,7 +819,11 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
             VoiceRoomLifecycleHost(roomKey: roomKey),
             VoiceCosmicBackground(imageUrl: bgUrl),
             if (_liveRoomKey.isNotEmpty)
-              VoiceRoomDjRequestHost(roomKey: _liveRoomKey, myUserId: user?.id),
+              VoiceRoomDjRequestHost(
+                roomKey: _liveRoomKey,
+                myUserId: user?.id,
+                canHandle: canControlMusic,
+              ),
             Consumer(
               builder: (context, ref, _) {
                 final activeGift = ref.watch(
@@ -884,6 +889,11 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     user: user,
                     isMicMuted: _isMicMuted,
                   ),
+                  if (_liveRoomKey.isNotEmpty && live.dj.nowPlaying != null)
+                    VoiceRoomQueueMusicBox(
+                      roomKey: _liveRoomKey,
+                      canControl: canControlMusic,
+                    ),
                   if (showMusicRequestFab && _liveRoomKey.isNotEmpty)
                     Center(
                       child: VoiceRoomMusicSeatCard(

@@ -13,7 +13,7 @@ final djRequestRemoteProvider = Provider<DjRequestRemoteDataSource>(
 
 /// Odanın DJ istekleri (!istek). SSE DJ olayındaki `djRequests` ile anında,
 /// ayrıca 15 sn'de bir sunucudan güncellenir (süre aşımı iadeleri de böyle
-/// tetiklenir).
+/// tetiklenir). Yedek yoklama 8 sn.
 /// `!istek şarkı` yazılınca istek penceresini açtırır (şarkı adı).
 final voiceRoomDjComposeProvider =
     StateProvider.family<String?, String>((ref, roomKey) => null);
@@ -34,7 +34,7 @@ class VoiceRoomDjRequestsController
   DjRequestsSnapshot build(String roomKey) {
     _poll?.cancel();
     if (roomKey.isNotEmpty) {
-      _poll = Timer.periodic(const Duration(seconds: 15), (_) => refresh());
+      _poll = Timer.periodic(const Duration(seconds: 8), (_) => refresh());
       Future<void>.microtask(refresh);
     }
     ref.onDispose(() => _poll?.cancel());

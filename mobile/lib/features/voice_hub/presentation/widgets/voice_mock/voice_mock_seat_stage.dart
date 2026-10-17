@@ -87,7 +87,12 @@ class VoiceMockSeatStage extends StatelessWidget {
     this.remoteTrtcUserId,
     this.extraCell,
     this.extraWide,
+    this.musicBox,
   });
+
+  /// Sağ panelden istenen şarkı çalarken son iki (boş) koltuğun yerini alan
+  /// dikdörtgen kutu; o koltuklar doluysa yeni satırda gösterilir.
+  final Widget? musicBox;
 
   /// Izgaranın sonuna eklenen ek hücre (ör. müzik koltuğu kartı).
   final Widget? extraCell;
@@ -110,12 +115,27 @@ class VoiceMockSeatStage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final guests = voiceMockGuestSeatNumbers(
+    var guests = voiceMockGuestSeatNumbers(
       room: room,
       seatSlots: seatSlots,
       presence: presence,
       configuredSeatCount: configuredSeatCount,
     );
+    final box = musicBox;
+    var boxReplacesSeats = false;
+    if (box != null && guests.length >= 2) {
+      final layout = VoiceRoomSeatLayout(
+        room: room,
+        presence: presence,
+        seatSlots: seatSlots,
+      ).build();
+      final a = guests[guests.length - 2];
+      final b = guests[guests.length - 1];
+      if (layout[a] == null && layout[b] == null) {
+        guests = guests.sublist(0, guests.length - 2);
+        boxReplacesSeats = true;
+      }
+    }
     // İlk satır: sahip + 3 misafir; sonrakiler 4'erli.
     final rows = <List<int>>[];
     var i = 0;
@@ -141,17 +161,31 @@ class VoiceMockSeatStage extends StatelessWidget {
           remoteTrtcUserId: remoteTrtcUserId,
         );
 
-    Widget rowOf(List<Widget> cells, {int slots = 4}) => Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (var c = 0; c < slots; c++)
-              Expanded(
-                child: c < cells.length
-                    ? Center(child: cells[c])
-                    : const SizedBox.shrink(),
-              ),
-          ],
-        );
+    // Kutu iki koltuk genişliğinde (flex 2); diğer hücreler 1.
+    int flexOf(Widget w) => identical(w, box) ? 2 : 1;
+    Widget rowOf(List<Widget> cells, {int slots = 4}) {
+      var used = 0;
+      for (final c in cells) {
+        used += flexOf(c);
+      }
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final c in cells)
+            Expanded(flex: flexOf(c), child: Center(child: c)),
+          for (var k = used; k < slots; k++)
+            const Expanded(child: SizedBox.shrink()),
+        ],
+      );
+    }
+
+    int used(List<Widget> row) {
+      var n = 0;
+      for (final c in row) {
+        n += flexOf(c);
+      }
+      return n;
+    }
 
     final grid = <List<Widget>>[
       [
@@ -161,10 +195,17 @@ class VoiceMockSeatStage extends StatelessWidget {
       for (var r = 1; r < rows.length; r++)
         [for (final s in rows[r]) cell(s, host: false)],
     ];
+    if (box != null) {
+      if (boxReplacesSeats && used(grid.last) <= 2) {
+        grid.last.add(box);
+      } else {
+        grid.add([box]);
+      }
+    }
     final extra = extraCell;
     final wide = extraWide;
     Widget? below;
-    if (extra != null && grid.last.length < 4) {
+    if (extra != null && used(grid.last) < 4) {
       grid.last.add(extra);
     } else if (wide != null) {
       below = wide;

@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.821+877 (2026-10-17) — Panelden istek kutuda çalar, !istek açılır penceresi
+
+- **!istek açılır penceresi:**
+  - İstek artık oda sahibine ya da DJ'lere kesin gidiyor; odada kimse görünmüyorsa oda sahibi ve tüm DJ'lere gider.
+  - Açılır pencere yetkili DJ'de yedek olarak da açılıyor.
+  - Bekleyen istekler 8 saniyede bir kontrol ediliyor.
+- **Sağ panelden müzik isteği:** İstek gelince son iki boş koltuğun yerine dikdörtgen bir müzik kutusu çıkar ve şarkı orada çalar.
+  - Videolu istekte video kutunun içinde oynar.
+  - Sesli istekte kutuda kapak ve şarkı adı görünür.
+  - Yetkili DJ ya da oda sahibi kutuya dokununca Durdur / Devam / Sonraki / Kapat seçenekleri açılır.
+- **Fiyat:** Tüm istekler (sesli ve videolu) 10 jeton, ⚡ öne geçmek 20 jeton. Öne geçen istek sıranın başına geçer. Panelden istekte «Normal mi, öne mi?» diye sorulur.
+
 ## 1.0.820+876 (2026-10-17) — DJ istek bandı, armağan, öne geç, alkış
 
 - **İstek penceresi:** `!istek şarkı` yazınca kısa bir pencere açılır:

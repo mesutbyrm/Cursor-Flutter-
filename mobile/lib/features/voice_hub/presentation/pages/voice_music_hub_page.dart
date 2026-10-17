@@ -260,7 +260,8 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
     final withVideo = await showMusicModePickerSheet(
       context,
       audioCost: djState.musicRequestCost,
-      videoCost: djState.videoRequestCost,
+      // Tüm istekler aynı ücret; yalnız öne geçmek iki kat.
+      videoCost: djState.musicRequestCost,
       songTitle: hit.title,
     );
     if (!mounted) return;
@@ -269,6 +270,36 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
       return;
     }
     final isDjFree = widget.perms.canManageDj || djState.canPlayMusic;
+    var jumpQueue = false;
+    if (!isDjFree) {
+      final base = djState.musicRequestCost > 0 ? djState.musicRequestCost : 10;
+      final choice = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Sıraya mı, öne mi?'),
+          content: Text(
+            'Normal istek $base jeton. ⚡ Öne geçersen ${base * 2} jeton '
+            'ödersin ve sıranın başına geçersin.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text('Normal ($base)'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text('⚡ Öne geç (${base * 2})'),
+            ),
+          ],
+        ),
+      );
+      if (!mounted) return;
+      if (choice == null) {
+        setState(() => _submitting = false);
+        return;
+      }
+      jumpQueue = choice;
+    }
     final messenger = ScaffoldMessenger.of(context);
     final songTitle = hit.title;
     deferVoiceMusicSubmit(
@@ -280,7 +311,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
             thumbUrl: hit.thumbUrl,
             videoId: hit.videoId,
             giftTo: _giftMode ? _giftCtrl.text.trim() : null,
-            priority: !isDjFree,
+            priority: jumpQueue,
             withVideo: withVideo,
           ),
       onComplete: (queueHint) {

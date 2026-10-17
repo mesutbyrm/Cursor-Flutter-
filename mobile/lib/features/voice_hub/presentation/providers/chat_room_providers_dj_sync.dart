@@ -43,8 +43,7 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
       reqs.applyDjPayload(payload);
       if (!identical(map, payload)) reqs.applyDjPayload(map);
     }
-    // Müzik yalnız DJ telefonundan yayına karışır: uygulama içi oynatma yok.
-    if (VoiceRoomDjLocalMusic.enabled) return;
+    if (VoiceRoomDjLocalMusic.blockInAppPlayback) return;
     final signal = voiceSseMusicSignal(map);
     if (signal == VoiceSseMusicSignal.stopped) {
       await _handleMusicStoppedFromSse();
@@ -227,7 +226,7 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
     final music = ref.read(roomMusicServiceProvider);
     music.bindRoom(key);
 
-    if (VoiceRoomDjLocalMusic.enabled) {
+    if (VoiceRoomDjLocalMusic.blockInAppPlayback) {
       _live._lastDjPlaybackSignature =
           _live._djPlaybackSignature(dj, muted: muted);
       return dj;

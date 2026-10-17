@@ -98,10 +98,15 @@ class VoiceRoomDjRequestHost extends ConsumerStatefulWidget {
     super.key,
     required this.roomKey,
     required this.myUserId,
+    this.canHandle = false,
   });
 
   final String roomKey;
   final String? myUserId;
+  /// Sayfanın yetki bilgisi (oda sahibi / DJ). Sunucu hedef listesi boşsa ya
+  /// da bu kullanıcıyı içermiyorsa ama oda sahibi odada değilse yedek olarak
+  /// kullanılır.
+  final bool canHandle;
 
   @override
   ConsumerState<VoiceRoomDjRequestHost> createState() =>
@@ -122,7 +127,9 @@ class _VoiceRoomDjRequestHostState
       _seen.addAll(snap.pending.map((e) => e.id));
       return;
     }
-    if (_dialogOpen || !snap.isHandler(widget.myUserId)) {
+    final target = snap.isHandler(widget.myUserId) ||
+        (widget.canHandle && snap.handlerIds.isEmpty);
+    if (_dialogOpen || !target) {
       _seen.addAll(snap.pending.map((e) => e.id));
       return;
     }

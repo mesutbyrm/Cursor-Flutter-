@@ -77,6 +77,7 @@ import 'sheets/voice_pk_mode_picker_sheet.dart';
 import 'sheets/voice_room_sheets.dart';
 import 'utils/voice_room_pending_music_search_flow.dart';
 import 'providers/voice_room_live_side_effect_slices.dart';
+import 'widgets/voice_room/voice_room_queue_music_box.dart';
 import 'widgets/voice_room/voice_room_dj_request_widgets.dart';
 import 'widgets/voice_room/voice_room_staff_join_banner.dart';
 import 'widgets/voice_room/voice_room_gold_entrance_host.dart';
@@ -1733,7 +1734,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage>
             ),
             VoiceCosmicBackground(imageUrl: bgUrl),
             if (_liveRoomKey.isNotEmpty)
-              VoiceRoomDjRequestHost(roomKey: _liveRoomKey, myUserId: user?.id),
+              VoiceRoomDjRequestHost(
+                roomKey: _liveRoomKey,
+                myUserId: user?.id,
+                canHandle: isOwner || isDj,
+              ),
             // Hediye animasyonu arka planın üstünde, koltuk/sohbet/butonların
             // ALTINDA oynar — koltuklar ve sayfadaki her şey görünür kalır.
             Consumer(
@@ -1975,6 +1980,12 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage>
                                   myUserId: user?.id,
                                   canHandle: isOwner || isDj,
                                   onGiftToUser: giftToUser,
+                                )
+                              : null,
+                          musicBox: _liveRoomKey.isNotEmpty && live.dj.nowPlaying != null
+                              ? VoiceRoomQueueMusicBox(
+                                  roomKey: _liveRoomKey,
+                                  canControl: isOwner || isDj,
                                 )
                               : null,
                           musicBanner: showMusicRequestFab && _liveRoomKey.isNotEmpty
@@ -2413,6 +2424,7 @@ class _VoiceRoomRtcSeatStage extends ConsumerWidget {
     required this.room,
     this.musicCard,
     this.musicBanner,
+    this.musicBox,
     required this.mergedDjIds,
     required this.selfUserId,
     required this.micMuted,
@@ -2428,6 +2440,7 @@ class _VoiceRoomRtcSeatStage extends ConsumerWidget {
   final VoiceRoomEntity room;
   final Widget? musicCard;
   final Widget? musicBanner;
+  final Widget? musicBox;
   final List<String> mergedDjIds;
   final String? selfUserId;
   final bool micMuted;
@@ -2457,6 +2470,7 @@ class _VoiceRoomRtcSeatStage extends ConsumerWidget {
       room: room,
       extraCell: musicCard,
       extraWide: musicBanner,
+      musicBox: musicBox,
       seatSlots: seatSlice.seatSlots,
       presence: seatSlice.presence,
       configuredSeatCount: configuredSeatCount ?? room.seatCount,

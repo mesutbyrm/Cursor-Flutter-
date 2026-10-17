@@ -2218,14 +2218,14 @@ class VoiceRoomLiveController
   }
 
   void _syncRoomVideo(ChatRoomDjState dj, {RoomPlaybackSync? sync}) {
-    if (_roomKey.isEmpty || VoiceRoomDjLocalMusic.enabled) return;
+    if (_roomKey.isEmpty || VoiceRoomDjLocalMusic.blockInAppPlayback) return;
     ref
         .read(roomVideoControllerProvider(_roomKey).notifier)
         .applyDjState(dj, sync: sync);
   }
 
   void _applyRoomVideoPayload(Map<String, dynamic> payload) {
-    if (_roomKey.isEmpty || VoiceRoomDjLocalMusic.enabled) return;
+    if (_roomKey.isEmpty || VoiceRoomDjLocalMusic.blockInAppPlayback) return;
     ref
         .read(roomVideoControllerProvider(_roomKey).notifier)
         .applyDjPayload(payload);
@@ -3185,14 +3185,9 @@ class VoiceRoomLiveController
     unawaited(_stopTyping());
 
     if (VoiceMusicSync.isKapatCommand(trimmed)) {
-      if (VoiceRoomDjLocalMusic.enabled) {
-        final mixer = ref.read(voiceRoomTrtcMusicMixerProvider);
-        if (!mixer.localMusicActive) {
-          state = state.copyWith(
-            error: 'Müziği yalnız çalan DJ kendi telefonundan kapatabilir.',
-          );
-          return;
-        }
+      final mixer = ref.read(voiceRoomTrtcMusicMixerProvider);
+      if (VoiceRoomDjLocalMusic.enabled && mixer.localMusicActive) {
+        // DJ'in telefonundan çaldığı istek → yerel karıştırmayı durdur.
         mixer.stopLocalFile();
         final playing = ref.read(voiceRoomDjRequestsProvider(_roomKey)).playing;
         if (playing != null) {
@@ -4073,7 +4068,7 @@ class VoiceRoomLiveController
     String? duration,
     String? giftTo,
     String? note,
-    bool priority = true,
+    bool priority = false,
     bool djMusicControl = false,
     bool withVideo = false,
   }) async {

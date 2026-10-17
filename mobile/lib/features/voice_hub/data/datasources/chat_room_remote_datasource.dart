@@ -2128,7 +2128,7 @@ class ChatRoomRemoteDataSource {
     String? giftTo,
     String? dedication,
     String? note,
-    bool priority = true,
+    bool priority = false,
     bool skipPayment = false,
     bool djMusicControl = false,
     bool withVideo = false,
@@ -2451,7 +2451,7 @@ class ChatRoomRemoteDataSource {
       videoId: hit.videoId,
       thumbUrl: hit.thumbUrl,
       duration: hit.duration,
-      priority: true,
+      priority: false,
     );
   }
 
