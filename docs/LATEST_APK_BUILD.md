@@ -4,24 +4,31 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.818+874` |
-| Tarih (UTC) | 2026-10-17 13:13 |
-| Commit | [`d356fd43bcd02b124936eb763e3b054df418c9b8`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/d356fd43bcd02b124936eb763e3b054df418c9b8) |
-| İş akışı | [Run 39033871134](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/39033871134) |
+| Sürüm | `1.0.819+875` |
+| Tarih (UTC) | 2026-10-17 14:38 |
+| Commit | [`081f84e2bca8f9d29c51626664e19171d9d6a7cc`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/081f84e2bca8f9d29c51626664e19171d9d6a7cc) |
+| İş akışı | [Run 39039541638](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/39039541638) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.818+874 (2026-10-17) — Sesli oda müzik isteği
+## 1.0.820+876 (2026-10-17) — DJ istek bandı, armağan, öne geç, alkış
 
-- **Videolu istek:** Video artık yarım ekranda bozuk bir dikdörtgen değil; tüm arka planı kaplıyor ve %50 karartmalı, böylece koltuklar ve sohbet okunuyor.
-- **Erken kesilme:**
-  - Geç katılan da şarkıyı sunucudaki konumdan dinliyor.
-  - Konum iki kez sayılmadığı için video artık ileri atlamıyor.
-  - Her sunucu olayında müzik yeniden başlatılmıyor.
-  - «Parça bitti» bildirimi kuyruğu iki kez ilerletmiyor.
-  - Normal kullanıcının isteği çalan şarkıyı yarıda kesmiyor, sıraya giriyor.
-- **Donma:** Müzik isteyenin ekranı artık donmuyor. Video oynatıcı ağır çizim modunda çalışmıyor ve tekrar tekrar yüklenmiyor; «bitti» olayı her parça için bir kez işleniyor.
+- **İstek penceresi:** `!istek şarkı` yazınca kısa bir pencere açılır:
+  - Şarkıyı odadaki birine armağan edebilirsin (isteğe bağlı).
+  - Mesaj ekleyebilirsin (isteğe bağlı, en çok 100 karakter).
+  - **⚡ Öne geç** (20 jeton) seçeneğiyle sıranın başına geçersin.
+- **İstek sırası paneli:**
+  - Öne geçenler en üstte.
+  - DJ her isteğin armağanını ve mesajını görür; isteği çalar ya da reddeder.
+  - İsteyen kişi bekleyen isteğini iptal edebilir.
+  - Panelden yeni şarkı da istenebilir.
+- **Alkış ve hediye:**
+  - Çalan şarkıya 👏 alkış yapılabilir; kişi başı bir kez, sayısı bantta görünür.
+  - 🎁 ile şarkıyı çalan DJ'e hediye gönderilir.
+- **Müzik bandı:** Koltuklar dolunca kare kart yerine koltukların altında tam genişlikte iki satırlık kayan bant çıkar.
+  - 1. satır: DJ, çalan şarkı, isteyen, kime armağan edildiği, alkış sayısı
+  - 2. satır: isteyenin mesajı, sıradakiler, «İyi dinlemeler 🎶»
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
