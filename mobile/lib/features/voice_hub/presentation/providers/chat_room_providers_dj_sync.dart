@@ -4,6 +4,10 @@ part of 'chat_room_providers.dart';
 mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, String> {
   VoiceRoomLiveController get _live => this as VoiceRoomLiveController;
 
+  /// SSE'de görülen son çalan parça — yeni parça gelince «Kapat» ile
+  /// susturulmuş cihaz yeniden dinler (sunucu `music_started` göndermiyor).
+  String? _djLastNowPlayingKey;
+
   void _syncRoomSongBloc() {
     final key = _live._roomKey;
     if (key.isEmpty) return;
@@ -48,6 +52,17 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
     if (signal == VoiceSseMusicSignal.stopped) {
       await _handleMusicStoppedFromSse();
       return;
+    }
+    final sseNowPlaying = map['nowPlaying'];
+    final npKey = sseNowPlaying is Map
+        ? (sseNowPlaying['videoId'] ?? sseNowPlaying['id'] ?? sseNowPlaying['title'])
+            ?.toString()
+        : null;
+    if (npKey != null && npKey.isNotEmpty && npKey != _djLastNowPlayingKey) {
+      if (_djLastNowPlayingKey != null) {
+        ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
+      }
+      _djLastNowPlayingKey = npKey;
     }
     if (signal == VoiceSseMusicSignal.started) {
       ref.read(voiceRoomMusicSessionProvider.notifier).onMusicStartedFromServer();

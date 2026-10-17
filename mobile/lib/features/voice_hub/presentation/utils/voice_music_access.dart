@@ -43,9 +43,9 @@ abstract final class VoiceMusicAccess {
   static int audioRequestCost(ChatRoomDjState dj) =>
       dj.musicRequestCost > 0 ? dj.musicRequestCost : 10;
 
-  /// Videolu istek — 20 jeton (sunucu yoksa varsayılan).
-  static int videoRequestCost(ChatRoomDjState dj) =>
-      dj.videoRequestCost > 0 ? dj.videoRequestCost : 20;
+  /// Videolu istek — sesli ile aynı ücret (sunucu tüm istekleri tek fiyatla
+  /// alır; yalnız «öne geç» iki kat).
+  static int videoRequestCost(ChatRoomDjState dj) => audioRequestCost(dj);
 
   static bool canAffordRequest({
     required ChatRoomDjState dj,

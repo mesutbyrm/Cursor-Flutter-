@@ -2202,7 +2202,11 @@ class ChatRoomRemoteDataSource {
             usedEndpoint,
             data: songRequestBody,
           );
-        } on Object {
+        } on ApiException catch (e) {
+          // Yalnız uç nokta yoksa eski yollara düş. «Yetersiz jeton», «müzik
+          // kapalı» gibi gerçek hatalar kullanıcıya olduğu gibi gösterilir
+          // (önceden yutuluyor, DJ'lerde ödeme atlanıyordu).
+          if (e.statusCode != 404 && e.statusCode != 405) rethrow;
           usedEndpoint = ApiEndpoints.chatRoomMusicQueue(key);
           try {
             res = await _dio.safePost<dynamic>(usedEndpoint, data: legacyBody);

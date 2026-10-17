@@ -4101,9 +4101,8 @@ class VoiceRoomLiveController
         final jeton = VoiceMusicAccess.jetonFromBalances(
           ref.read(walletBalancesProvider).valueOrNull,
         );
-        final requiredCost = withVideo
-            ? state.dj.videoRequestCost
-            : state.dj.musicRequestCost;
+        // Tek fiyat; öne geç iki kat.
+        final requiredCost = state.dj.musicRequestCost * (priority ? 2 : 1);
         if (!VoiceMusicAccess.canRequestSongs(
               dj: state.dj,
               perms: _permissions(),

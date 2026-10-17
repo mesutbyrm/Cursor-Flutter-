@@ -233,6 +233,13 @@ class VoiceTrtcEngine {
       return;
     }
     _publishMic = false;
+    if (_manager.localMusicActive) {
+      // DJ müziği çalarken mikrofon kapanırsa yayın sürer: yalnız mikrofon
+      // sesi 0'a iner, müzik dinleyicilere gitmeye devam eder.
+      _manager.setMicEnabled(false);
+      _checkAudioInvariant();
+      return;
+    }
     // Yakalama + yayın hemen durur; ardından dinleyici rolüne geçilir.
     _manager.stopLocalAudioPublish();
     final switched = await _manager.setAnchorPublishing(false);

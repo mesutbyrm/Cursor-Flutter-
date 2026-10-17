@@ -1,5 +1,26 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.822+878 (2026-10-17) — Müzik istekleri: kontrol sonrası düzeltmeler
+
+- **!istek açılır penceresi DJ'lere de gidiyor:** Sunucu, odadan çıkmış oda sahibini hâlâ «odada» sayıyordu; bu yüzden pencere DJ'lere hiç gitmiyordu. Artık yalnız gerçekten odada olanlar sayılıyor.
+- **Kuyruk panelinden «Çal»:** Dosya seçildikten sonra şarkı hiç çalmıyordu; düzeltildi.
+- **Jeton güvenliği:**
+  - Dosya açılamazsa (desteklenmeyen biçim vb.) jeton kesilmiyor; istek beklemede kalıyor.
+  - Uzun süre yanıtlanmayan istekler de iade ediliyor.
+  - İade, istek durumuyla birlikte tek işlemde yapılıyor; yarıda kalıp kaybolmuyor.
+- **DJ mikrofonu:**
+  - Koltukta ama mikrofonu kapalı DJ de müziği yayına verebiliyor.
+  - Müzik çalarken mikrofon kapatılınca müzik kesilmiyor.
+  - Odadan çıkınca istek «çalıyor» olarak takılı kalmıyor.
+- **Panelden istek kutusu:**
+  - Şarkı başlayınca kutu hemen çıkıyor, bitince iki koltuk geri geliyor.
+  - Kutuyu «Kapat»tan sonra gelen yeni şarkılar yine duyuluyor.
+- **Fiyat ve hatalar:**
+  - Videolu istek de 10 jeton olarak kontrol ediliyor; öne geçerken 20 jeton bakiyesi kontrol ediliyor.
+  - «Yetersiz jeton» gibi hatalar artık «yetkiniz yok» diye gizlenmiyor.
+  - Ücretsiz odalarda «10 jeton» yazmıyor.
+- **Bulut dosyası:** Seçilen dosya açılamazsa (bulut dosyası) uyarı gösteriliyor.
+
 ## 1.0.821+877 (2026-10-17) — Panelden istek kutuda çalar, !istek açılır penceresi
 
 - **!istek açılır penceresi:**

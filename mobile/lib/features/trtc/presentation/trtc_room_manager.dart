@@ -1101,8 +1101,10 @@ class TrtcRoomManager {
   /// DJ yerel müzik dosyasını TRTC yayınına karıştırır.
   ///
   /// Dinleyiciler müziği DJ'in sesi gibi duyar (tek kaynak → senkron sorunu
-  /// yok). Mikrofon kapalıysa yerel ses yalnız müzik için açılır ve mikrofon
-  /// sesi 0'a çekilir. Hata varsa Türkçe mesaj döner; başarıda `null`.
+  /// yok). DJ koltukta ama mikrofonu kapalıysa yalnız müzik için yayına geçilir
+  /// (mikrofon sesi 0). Çalma gerçekten başlayınca (TRTC `onStart` 0) `null`
+  /// döner; dosya açılamazsa Türkçe hata mesajı döner — böylece istek ücreti
+  /// yalnız şarkı yayına girince kesinleşir.
   Future<String?> startLocalMusic(
     String filePath, {
     void Function()? onFinished,
@@ -1112,39 +1114,47 @@ class TrtcRoomManager {
     if (!isSupported || cloud == null || !_inRoom) {
       return 'Odaya ses bağlantısı yok; birkaç saniye sonra tekrar dene.';
     }
-    if (!_isHost) {
-      return 'Müziği yayına vermek için önce bir koltuğa otur.';
-    }
     final path = filePath.trim();
     if (path.isEmpty) return 'Müzik dosyası seçilmedi.';
 
+    if (_localMusicActive) stopLocalMusic(notify: true);
     stopPublishedMusic();
-    if (!_micOn) {
+
+    if (!_isHost) {
+      // Koltukta, mikrofonu kapalı DJ: yayıncı rolüne geç, mikrofonu 0'la.
+      final ok = await setAnchorPublishing(true);
+      if (!ok || !_isHost) {
+        return 'Müziği yayına vermek için önce bir koltuğa otur.';
+      }
+      cloud.setAudioCaptureVolume(0);
+      _micOn = false;
+      _musicOnlyCapture = true;
+    } else if (!_micOn) {
       cloud.startLocalAudio(VoiceAudioSettingsStore.current.quality);
       cloud.muteLocalAudio(false);
       cloud.setAudioCaptureVolume(0);
       _musicOnlyCapture = true;
     }
+
+    final started = Completer<int>();
+    _localMusicOnFinished = onFinished;
     final effect = cloud.getAudioEffectManager();
     effect.setMusicObserver(
       voiceRoomMusicId,
       TXMusicPlayObserver(
         onStart: (id, code) {
-          if (code != 0) {
+          if (!started.isCompleted) started.complete(code);
+          if (code != 0 && _localMusicActive) {
+            // Başladıktan sonra gelen hata: bitmiş say, sunucuya bildir.
             _trtcLog('local_music_start_failed', {'code': code});
-            _endLocalMusic();
-            onError?.call(
-              code == -4008
-                  ? 'Bu dosya biçimi desteklenmiyor (mp3, m4a, aac, wav, ogg).'
-                  : 'Müzik dosyası açılamadı (kod $code).',
-            );
+            stopLocalMusic(notify: true);
+            onError?.call(_musicErrorText(code));
           }
         },
         onPlayProgress: (_, __, ___) {},
         onComplete: (id, code) {
           if (!_localMusicActive) return;
-          _endLocalMusic();
-          onFinished?.call();
+          stopLocalMusic(notify: true);
         },
       ),
     );
@@ -1159,17 +1169,41 @@ class TrtcRoomManager {
     );
     effect.setMusicPublishVolume(voiceRoomMusicId, 90);
     effect.setMusicPlayoutVolume(voiceRoomMusicId, 70);
+
+    // TRTC bazı cihazlarda onStart'ı geç / hiç vermeyebilir: 4 sn bekle.
+    final code = await started.future.timeout(
+      const Duration(seconds: 4),
+      onTimeout: () => 0,
+    );
+    if (code != 0) {
+      _trtcLog('local_music_start_failed', {'code': code});
+      _localMusicOnFinished = null;
+      stopPublishedMusic();
+      _localMusicActive = true; // _endLocalMusic temizliği için
+      _endLocalMusic();
+      return _musicErrorText(code);
+    }
     _publishedMusicPlaying = true;
     _localMusicActive = true;
     _trtcLog('local_music_start', {'musicOnly': _musicOnlyCapture});
     return null;
   }
 
+  static String _musicErrorText(int code) => code == -4008
+      ? 'Bu dosya biçimi desteklenmiyor (mp3, m4a, aac, wav, ogg).'
+      : 'Müzik dosyası açılamadı (kod $code). Başka bir dosya dene.';
+
+  void Function()? _localMusicOnFinished;
+
   /// DJ yerel müziğini durdurur; yalnız müzik için açılan sesi kapatır.
-  void stopLocalMusic() {
+  /// [notify]: bitti bilgisini (sunucuya «done») çağırana iletir.
+  void stopLocalMusic({bool notify = true}) {
     if (!_localMusicActive) return;
     stopPublishedMusic();
+    final cb = _localMusicOnFinished;
+    _localMusicOnFinished = null;
     _endLocalMusic();
+    if (notify) cb?.call();
   }
 
   void _endLocalMusic() {

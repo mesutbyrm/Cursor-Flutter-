@@ -21,41 +21,51 @@ void _toast(BuildContext context, String message) {
 
 /// DJ: telefondan müzik dosyası seçer, yayına karıştırır ve isteği «çalıyor»
 /// yapar (jeton bu anda kesilir). Dosya seçilmezse istek beklemede kalır.
+///
+/// Sağlayıcılar ve bildirim alanı dosya seçiciden ÖNCE alınır: liste
+/// panelinden çağrıldığında panel kapanmış olur, `context` geçersizleşir.
 Future<void> djPlayRequest(
   BuildContext context,
   WidgetRef ref, {
   required String roomKey,
   required DjRequest request,
 }) async {
+  final messenger = ScaffoldMessenger.maybeOf(context);
+  final ctrl = ref.read(voiceRoomDjRequestsProvider(roomKey).notifier);
+  final mixer = ref.read(voiceRoomTrtcMusicMixerProvider);
+  void toast(String m) {
+    messenger?.hideCurrentSnackBar();
+    messenger?.showSnackBar(SnackBar(content: Text(m)));
+  }
+
   final picked = await FilePicker.platform.pickFiles(
     type: FileType.audio,
     allowMultiple: false,
   );
-  final path = picked?.files.single.path;
-  if (path == null || path.isEmpty) return;
-  if (!context.mounted) return;
+  if (picked == null || picked.files.isEmpty) return; // vazgeçti
+  final path = picked.files.single.path;
+  if (path == null || path.isEmpty) {
+    toast('Bu dosya açılamadı. Telefondaki bir müzik dosyasını seç '
+        '(bulut dosyaları desteklenmiyor).');
+    return;
+  }
 
-  final ctrl = ref.read(voiceRoomDjRequestsProvider(roomKey).notifier);
-  final mixer = ref.read(voiceRoomTrtcMusicMixerProvider);
   final err = await mixer.playLocalFile(
     path,
     onFinished: () => unawaited(ctrl.act(request.id, 'done')),
-    onError: (m) {
-      unawaited(ctrl.act(request.id, 'done'));
-      if (context.mounted) _toast(context, m);
-    },
+    onError: toast,
   );
   if (err != null) {
-    if (context.mounted) _toast(context, err);
+    toast(err);
     return;
   }
   final actErr = await ctrl.act(request.id, 'play');
   if (actErr != null) {
     mixer.stopLocalFile();
-    if (context.mounted) _toast(context, actErr);
+    toast(actErr);
     return;
   }
-  if (context.mounted) _toast(context, '🎶 Yayında: ${request.query}');
+  toast('🎶 Yayında: ${request.query}');
 }
 
 Future<void> djRejectRequest(
@@ -64,11 +74,12 @@ Future<void> djRejectRequest(
   required String roomKey,
   required DjRequest request,
 }) async {
+  final messenger = ScaffoldMessenger.maybeOf(context);
   final err = await ref
       .read(voiceRoomDjRequestsProvider(roomKey).notifier)
       .act(request.id, 'reject');
-  if (!context.mounted) return;
-  _toast(context, err ?? 'İstek reddedildi, jeton iade edildi.');
+  messenger?.hideCurrentSnackBar();
+  messenger?.showSnackBar(SnackBar(content: Text(err ?? 'İstek reddedildi, jeton iade edildi.')));
 }
 
 Future<void> djClapRequest(
@@ -77,11 +88,12 @@ Future<void> djClapRequest(
   required String roomKey,
   required DjRequest request,
 }) async {
+  final messenger = ScaffoldMessenger.maybeOf(context);
   final err = await ref
       .read(voiceRoomDjRequestsProvider(roomKey).notifier)
       .act(request.id, 'clap');
-  if (!context.mounted) return;
-  _toast(context, err ?? '👏 Alkışladın!');
+  messenger?.hideCurrentSnackBar();
+  messenger?.showSnackBar(SnackBar(content: Text(err ?? '👏 Alkışladın!')));
 }
 
 String _presenceName(ChatRoomPresence p) {
@@ -332,7 +344,8 @@ class _DjComposeSheetState extends ConsumerState<_DjComposeSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final base = widget.baseCost > 0 ? widget.baseCost : 10;
+    // Odanın gerçek ücreti (0 = ücretsiz oda).
+    final base = widget.baseCost < 0 ? 0 : widget.baseCost;
     final cost = _priority ? base * 2 : base;
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -393,7 +406,7 @@ class _DjComposeSheetState extends ConsumerState<_DjComposeSheet> {
               onChanged: (v) => setState(() => _priority = v),
               activeThumbColor: const Color(0xFFFFC107),
               title: Text(
-                '⚡ Öne geç (${base * 2} jeton)',
+                base > 0 ? '⚡ Öne geç (${base * 2} jeton)' : '⚡ Öne geç',
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
@@ -414,7 +427,9 @@ class _DjComposeSheetState extends ConsumerState<_DjComposeSheet> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.send_rounded),
-              label: Text('Gönder · $cost jeton (çalınmazsa iade)'),
+              label: Text(
+                cost > 0 ? 'Gönder · $cost jeton (çalınmazsa iade)' : 'Gönder',
+              ),
             ),
           ],
         ),

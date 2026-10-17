@@ -1982,12 +1982,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage>
                                   onGiftToUser: giftToUser,
                                 )
                               : null,
-                          musicBox: _liveRoomKey.isNotEmpty && live.dj.nowPlaying != null
-                              ? VoiceRoomQueueMusicBox(
-                                  roomKey: _liveRoomKey,
-                                  canControl: isOwner || isDj,
-                                )
-                              : null,
+                          musicBoxCanControl: isOwner || isDj,
                           musicBanner: showMusicRequestFab && _liveRoomKey.isNotEmpty
                               ? VoiceRoomMusicTickerBanner(
                                   roomKey: _liveRoomKey,
@@ -2424,7 +2419,7 @@ class _VoiceRoomRtcSeatStage extends ConsumerWidget {
     required this.room,
     this.musicCard,
     this.musicBanner,
-    this.musicBox,
+    this.musicBoxCanControl = false,
     required this.mergedDjIds,
     required this.selfUserId,
     required this.micMuted,
@@ -2440,7 +2435,8 @@ class _VoiceRoomRtcSeatStage extends ConsumerWidget {
   final VoiceRoomEntity room;
   final Widget? musicCard;
   final Widget? musicBanner;
-  final Widget? musicBox;
+  /// Sağ panel isteği kutusu: yetkili DJ / sahip dokununca kontrol eder.
+  final bool musicBoxCanControl;
   final List<String> mergedDjIds;
   final String? selfUserId;
   final bool micMuted;
@@ -2465,12 +2461,21 @@ class _VoiceRoomRtcSeatStage extends ConsumerWidget {
         (s) => s.roomSeatCount,
       ),
     );
+    // Panelden istenen şarkı çalarken (ve bitince) ızgara hemen güncellenir.
+    final hasQueueSong = ref.watch(
+      voiceRoomLiveProvider(liveRoomKey).select((s) => s.dj.nowPlaying != null),
+    );
     return VoiceMockSeatStage(
       roomKey: liveRoomKey,
       room: room,
       extraCell: musicCard,
       extraWide: musicBanner,
-      musicBox: musicBox,
+      musicBox: hasQueueSong && liveRoomKey.isNotEmpty
+          ? VoiceRoomQueueMusicBox(
+              roomKey: liveRoomKey,
+              canControl: musicBoxCanControl,
+            )
+          : null,
       seatSlots: seatSlice.seatSlots,
       presence: seatSlice.presence,
       configuredSeatCount: configuredSeatCount ?? room.seatCount,

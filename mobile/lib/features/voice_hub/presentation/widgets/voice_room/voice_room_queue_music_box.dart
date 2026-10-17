@@ -134,10 +134,11 @@ class VoiceRoomQueueMusicBox extends ConsumerWidget {
   void _openControls(BuildContext context, WidgetRef ref) {
     final ctrl = ref.read(voiceRoomLiveProvider(roomKey).notifier);
     final playing = ref.read(voiceRoomLiveProvider(roomKey)).dj.playing;
+    // Kutu şarkı bitince ağaçtan çıkabilir: bildirim alanı baştan alınır.
+    final messenger = ScaffoldMessenger.maybeOf(context);
     void toast(String? err, String ok) {
-      final m = ScaffoldMessenger.maybeOf(context);
-      m?.hideCurrentSnackBar();
-      m?.showSnackBar(SnackBar(content: Text(err ?? ok)));
+      messenger?.hideCurrentSnackBar();
+      messenger?.showSnackBar(SnackBar(content: Text(err ?? ok)));
     }
 
     showModalBottomSheet<void>(

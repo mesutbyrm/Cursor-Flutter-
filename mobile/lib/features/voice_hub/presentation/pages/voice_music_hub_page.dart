@@ -269,10 +269,11 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
       setState(() => _submitting = false);
       return;
     }
-    final isDjFree = widget.perms.canManageDj || djState.canPlayMusic;
     var jumpQueue = false;
-    if (!isDjFree) {
-      final base = djState.musicRequestCost > 0 ? djState.musicRequestCost : 10;
+    // Sunucu personel dışında herkesten (DJ dahil) ücret alır; ücretsiz odada
+    // soru sorulmaz.
+    final base = djState.musicRequestCost;
+    if (base > 0) {
       final choice = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
@@ -299,6 +300,15 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
         return;
       }
       jumpQueue = choice;
+      if (jumpQueue && jeton < base * 2 && !widget.perms.isSiteAdmin) {
+        final msg = economyInsufficientJetonMessage(ref, required: base * 2);
+        setState(() {
+          _submitting = false;
+          _error = msg;
+        });
+        unawaited(showInsufficientJetonDialog(context, message: msg, ref: ref));
+        return;
+      }
     }
     final messenger = ScaffoldMessenger.of(context);
     final songTitle = hit.title;
