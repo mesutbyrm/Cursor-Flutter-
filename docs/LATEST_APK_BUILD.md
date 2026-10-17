@@ -4,29 +4,24 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.816+872` |
-| Tarih (UTC) | 2026-10-16 23:34 |
-| Commit | [`21076112e01ce3f6a5f2d6edf72b2cad0f67a103`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/21076112e01ce3f6a5f2d6edf72b2cad0f67a103) |
-| İş akışı | [Run 38979588290](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/38979588290) |
+| Sürüm | `1.0.817+873` |
+| Tarih (UTC) | 2026-10-17 11:21 |
+| Commit | [`c5cd1503989c98eea057abd1f79d30ec6e181d85`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/c5cd1503989c98eea057abd1f79d30ec6e181d85) |
+| İş akışı | [Run 39026709610](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/39026709610) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.816+872 (2026-10-16) — Canlı yayın kapanışı ve PK
+## 1.0.818+874 (2026-10-17) — Sesli oda müzik isteği
 
-- **Yayın kapatma:**
-  - Yayıncı «Kapat» dediğinde kamera, mikrofon ve yayın bağlantısı hemen kapanıyor. Önceden özet penceresi açıkken izleyiciler yayını görmeye devam ediyordu.
-  - Sunucu bağlantısı hata verse bile yayıncı odadan çıkıyor; önceden odada takılı kalıyordu.
-  - Bitmiş yayın için «yayına devam et» önerisi artık çıkmıyor.
-- **İzleyici:**
-  - Yayın bittiğinde izleyici ekranı beklemeden kapanıyor.
-  - Yayının bitip bitmediği önbellek kullanılmadan 10 sn'de bir kontrol ediliyor. Bu kontrol yayına katılım hata verse bile çalışıyor.
-  - Kaydırma akışında ekranda olmayan bir yayın bittiğinde izlenen yayın ve akış artık kapanmıyor.
-- **PK:**
-  - PK bittiği anda yayıncılar ve izleyiciler doğrudan tekli yayına dönüyor. Önceden ekran 7-8 sn bölünmüş kalıyordu; erken bitişte süre dolunca bölünmüş ekran geri geliyordu.
-  - Sohbet ayrı: A'yı izleyen yalnız A'nın sohbetini, B'yi izleyen yalnız B'nin sohbetini görüyor ve oraya yazıyor.
-  - İzlerken rakip yayıncının adına ya da fotoğrafına dokununca «… yayınına geçmek istiyor musun?» sorusu çıkıyor; «Evet» ile o yayına geçiliyor.
-  - Hediye arkada tam ekran oynuyor; hediye süresince yayıncı panelleri ve sohbet yarı şeffaf oluyor.
+- **Videolu istek:** Video artık yarım ekranda bozuk bir dikdörtgen değil; tüm arka planı kaplıyor ve %50 karartmalı, böylece koltuklar ve sohbet okunuyor.
+- **Erken kesilme:**
+  - Geç katılan da şarkıyı sunucudaki konumdan dinliyor.
+  - Konum iki kez sayılmadığı için video artık ileri atlamıyor.
+  - Her sunucu olayında müzik yeniden başlatılmıyor.
+  - «Parça bitti» bildirimi kuyruğu iki kez ilerletmiyor.
+  - Normal kullanıcının isteği çalan şarkıyı yarıda kesmiyor, sıraya giriyor.
+- **Donma:** Müzik isteyenin ekranı artık donmuyor. Video oynatıcı ağır çizim modunda çalışmıyor ve tekrar tekrar yüklenmiyor; «bitti» olayı her parça için bir kez işleniyor.
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
