@@ -130,12 +130,15 @@ class SocialFortunePage extends StatelessWidget {
           child: LayoutBuilder(
             builder: (context, box) {
               // Ekrana sığan satır sayısı; taşarsa «Devamını oku».
-              final maxLines = ((box.maxHeight - 90) / 26).floor().clamp(4, 40);
+              // Başlık + «Devamını oku» + alttaki sayaç kartı için yer ayrılır.
+              final maxLines = ((box.maxHeight - 190) / 26).floor().clamp(4, 40);
               return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
+                  // Fal türü başlığı üstte, tam ortada.
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: type.accent.withValues(alpha: 0.85),
@@ -151,12 +154,13 @@ class SocialFortunePage extends StatelessWidget {
                       '🔮 ${type.title}',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 15,
+                        fontSize: 17,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  ),
+                  const SizedBox(height: 18),
                   Flexible(
                     child: SocialLinkedCaptionText(
                       text: text.isEmpty ? '…' : text,
@@ -197,7 +201,13 @@ class SocialFortunePage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  _FortuneTypeCountLine(slug: type.slug, title: type.title),
+                  const Spacer(),
+                  // Alttaki boşluk: bu fala kaç kişinin baktırdığı.
+                  _FortuneTypeCountLine(
+                    slug: type.slug,
+                    title: type.title,
+                    accent: type.accent,
+                  ),
                 ],
               );
             },
@@ -208,12 +218,18 @@ class SocialFortunePage extends StatelessWidget {
   }
 }
 
-/// «🔮 1.245 kişi Tarot Falı baktırdı» — bu fal grubuna baktıran toplam kişi.
+/// «👥 1.245 kişi Tarot Falı baktırdı» — paylaşımın altındaki boşluğu dolduran
+/// kart. Sayı yüklenmediyse / sıfırsa davet metni gösterilir (alan boş kalmaz).
 class _FortuneTypeCountLine extends ConsumerWidget {
-  const _FortuneTypeCountLine({required this.slug, required this.title});
+  const _FortuneTypeCountLine({
+    required this.slug,
+    required this.title,
+    required this.accent,
+  });
 
   final String slug;
   final String title;
+  final Color accent;
 
   static String _fmt(int n) {
     final s = n.toString();
@@ -228,24 +244,61 @@ class _FortuneTypeCountLine extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final n = ref.watch(fortuneTypeCountsProvider).valueOrNull?[slug] ?? 0;
-    if (n <= 0) return const SizedBox.shrink();
     final label = title == 'Fal' ? 'bu falı' : title;
-    return Padding(
-      padding: const EdgeInsets.only(top: 12),
+    final hasCount = n > 0;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: LinearGradient(
+          colors: [
+            accent.withValues(alpha: 0.55),
+            Colors.black.withValues(alpha: 0.35),
+          ],
+        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+      ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.groups_rounded, color: Color(0xFFFFD54F), size: 18),
-          const SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              '${_fmt(n)} kişi $label baktırdı',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
-                shadows: [Shadow(color: Colors.black87, blurRadius: 8)],
-              ),
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.black.withValues(alpha: 0.35),
+            ),
+            child: Icon(
+              hasCount ? Icons.groups_rounded : Icons.auto_awesome_rounded,
+              color: const Color(0xFFFFD54F),
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  hasCount ? '${_fmt(n)} kişi' : 'Sen de baktır',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                Text(
+                  hasCount
+                      ? '$label baktırdı'
+                      : '$label seni bekliyor',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.85),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

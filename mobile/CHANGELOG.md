@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.817+873 (2026-10-17) — PK sohbeti ve fal paylaşımı
+
+- **Sesli oda PK:** «Destekle» düğmesi kaldırıldı; «Hediye» artık mesaj yazma alanının hemen solunda.
+- **Fal paylaşımı:**
+  - Fal türü başlığı (ör. «Tarot») ekranın üstünde, tam ortada.
+  - Alttaki boşlukta bu fala kaç kişinin baktırdığını gösteren kart var. Sayı yoksa «Sen de baktır» yazıyor.
+
 ## 1.0.816+872 (2026-10-16) — Canlı yayın kapanışı ve PK
 
 - **Yayın kapatma:**

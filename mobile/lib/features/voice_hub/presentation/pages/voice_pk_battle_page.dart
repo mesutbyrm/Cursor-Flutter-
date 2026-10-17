@@ -16,7 +16,6 @@ import '../widgets/pk/voice_pk_invite_action_card.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/pk/pk_battle_mode.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
-import '../../domain/pk_room/pk_wire_event.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../domain/pk/pk_battle_state.dart';
 import '../../domain/pk/pk_opponent_room_filter.dart';
@@ -36,7 +35,6 @@ import '../../../gifts/presentation/sync/gift_session_controller.dart';
 import '../../../gifts/presentation/widgets/gift_stage_layout.dart';
 import '../widgets/premium/voice_gift_stage_overlays.dart';
 import '../widgets/premium_2026/voice_cosmic_background.dart';
-import '../widgets/premium_2026/pk/pk_action_bottom_bar.dart';
 import '../widgets/premium_2026/pk/pk_animated_score_bar.dart';
 import '../widgets/premium_2026/pk/pk_floating_reactions.dart';
 import '../widgets/premium_2026/pk/pk_gift_explosion_flash.dart';
@@ -153,7 +151,6 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
     ref.read(pkBattleProvider.notifier).applyGift(event, toLeft: toLeft);
   }
 
-  var _supporting = false;
 
   ChatRoomPresence? _self(VoiceRoomLiveState live) {
     final me = ref.read(authControllerProvider).valueOrNull?.id;
@@ -174,52 +171,24 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
   /// "Destekle": sunucu BULUNDUĞUN odanın tarafına +3 yazar ve iki odaya anında
   /// yayınlar. Taraf istemciden seçilmez (oda-vs-oda); yalnızca oda içi takım
   /// PK'sında desteklenen takım seçilir.
-  Future<void> _onPkSupport() async {
-    if (_supporting) return;
-    final remote = ref.read(pkBattleRemoteProvider);
-    if (remote == null || !remote.isActive) return;
-    _supporting = true;
-    final r = widget.room;
-    final roomKey = r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
-    final battleId = remote.effectiveId;
-    try {
-      final res = await ref.read(chatRoomRemoteProvider).supportPk(
-            roomKey: roomKey,
-            alternateKey: r.slug != roomKey ? r.slug : null,
-            battleId: battleId,
-            side: remote.isInRoomUser ? (_supportToLeft ? 1 : 2) : null,
-          );
-      if (!mounted) return;
-      // Anında yansıt: sunucunun kesin skoru (SSE aynı değeri iki odaya da taşır).
-      ref.read(pkBattleRemoteProvider.notifier).applyScorePatch(
-            PkWireEvent(
-              kind: PkWireKind.score,
-              battleId: battleId,
-              raw: {
-                'battleId': battleId,
-                'score1': res.score1,
-                'score2': res.score2,
-              },
-            ),
-          );
-      ref.read(pkBattleProvider.notifier).pulseReaction();
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            duration: const Duration(milliseconds: 900),
-            content: Text('+${res.added > 0 ? res.added : 3} puan!'),
-          ),
-        );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ApiException.userMessage(e))),
-      );
-    } finally {
-      _supporting = false;
-    }
+
+  void _openPkGiftPicker() {
+    final pkState = ref.read(pkBattleProvider);
+    final seated = <ChatRoomPresence>[
+      ...pkState.left.members,
+      ...pkState.right.members,
+    ];
+    final initial =
+        _supportToLeft ? pkState.left.leader : pkState.right.leader;
+    showVoiceRoomGiftPicker(
+      context,
+      ref,
+      room: widget.room,
+      seatedUsers: seated,
+      initialReceiver: initial,
+    );
   }
+
 
   void _showInlineResultIfNeeded({
     required PkBattleState pk,
@@ -661,31 +630,13 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                       ),
                     ),
                   ),
-                PkActionBottomBar(
-                  onSupport: _onPkSupport,
-                  onGift: () {
-                    final pkState = ref.read(pkBattleProvider);
-                    final seated = <ChatRoomPresence>[
-                      ...pkState.left.members,
-                      ...pkState.right.members,
-                    ];
-                    final initial = _supportToLeft
-                        ? pkState.left.leader
-                        : pkState.right.leader;
-                    showVoiceRoomGiftPicker(
-                      context,
-                      ref,
-                      room: widget.room,
-                      seatedUsers: seated,
-                      initialReceiver: initial,
-                    );
-                  },
-                ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
                   child: _PkQuickChat(
                     room: widget.room,
                     showMessages: _chatOpen,
+                    // «Destekle» kaldırıldı; Hediye mesaj alanının yanında.
+                    onGift: _openPkGiftPicker,
                   ),
                 ),
               ],
@@ -862,9 +813,16 @@ class _PkHeader extends StatelessWidget {
 }
 
 class _PkQuickChat extends ConsumerStatefulWidget {
-  const _PkQuickChat({required this.room, this.showMessages = false});
+  const _PkQuickChat({
+    required this.room,
+    this.showMessages = false,
+    this.onGift,
+  });
 
   final VoiceRoomEntity room;
+
+  /// Mesaj alanının solundaki Hediye düğmesi.
+  final VoidCallback? onGift;
 
   /// Son mesaj listesini göster (üst sağdaki sohbet ikonu). Yazma alanı her
   /// zaman görünür.
@@ -936,6 +894,35 @@ class _PkQuickChatState extends ConsumerState<_PkQuickChat> {
           ),
           child: Row(
             children: [
+              if (widget.onGift != null)
+                Padding(
+                  padding: const EdgeInsets.only(left: 6, top: 4, bottom: 4),
+                  child: Material(
+                    shape: const CircleBorder(),
+                    clipBehavior: Clip.antiAlias,
+                    child: Ink(
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [Color(0xFFFF2D7A), Color(0xFFB832FF)],
+                        ),
+                      ),
+                      child: InkWell(
+                        onTap: widget.onGift,
+                        child: const SizedBox(
+                          width: 46,
+                          height: 46,
+                          child: Icon(
+                            Icons.card_giftcard_rounded,
+                            color: Colors.white,
+                            size: 24,
+                            semanticLabel: 'Hediye',
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               Expanded(
                 child: TextField(
                   controller: _ctrl,
