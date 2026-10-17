@@ -4,34 +4,19 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.822+878` |
-| Tarih (UTC) | 2026-10-17 16:48 |
-| Commit | [`b8edccf50ad782b99ec4fa360c4935bb2256390a`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/b8edccf50ad782b99ec4fa360c4935bb2256390a) |
-| İş akışı | [Run 39049149545](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/39049149545) |
+| Sürüm | `1.0.823+879` |
+| Tarih (UTC) | 2026-10-17 17:45 |
+| Commit | [`d8334a51f38020cd8f6c0a564485f2df742b6dad`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/d8334a51f38020cd8f6c0a564485f2df742b6dad) |
+| İş akışı | [Run 39053185611](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/39053185611) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.822+878 (2026-10-17) — Müzik istekleri: kontrol sonrası düzeltmeler
+## 1.0.823+879 (2026-10-17) — Müzik isteği 404 ve 3-5 sn'de kesilme
 
-- **!istek açılır penceresi DJ'lere de gidiyor:** Sunucu, odadan çıkmış oda sahibini hâlâ «odada» sayıyordu; bu yüzden pencere DJ'lere hiç gitmiyordu. Artık yalnız gerçekten odada olanlar sayılıyor.
-- **Kuyruk panelinden «Çal»:** Dosya seçildikten sonra şarkı hiç çalmıyordu; düzeltildi.
-- **Jeton güvenliği:**
-  - Dosya açılamazsa (desteklenmeyen biçim vb.) jeton kesilmiyor; istek beklemede kalıyor.
-  - Uzun süre yanıtlanmayan istekler de iade ediliyor.
-  - İade, istek durumuyla birlikte tek işlemde yapılıyor; yarıda kalıp kaybolmuyor.
-- **DJ mikrofonu:**
-  - Koltukta ama mikrofonu kapalı DJ de müziği yayına verebiliyor.
-  - Müzik çalarken mikrofon kapatılınca müzik kesilmiyor.
-  - Odadan çıkınca istek «çalıyor» olarak takılı kalmıyor.
-- **Panelden istek kutusu:**
-  - Şarkı başlayınca kutu hemen çıkıyor, bitince iki koltuk geri geliyor.
-  - Kutuyu «Kapat»tan sonra gelen yeni şarkılar yine duyuluyor.
-- **Fiyat ve hatalar:**
-  - Videolu istek de 10 jeton olarak kontrol ediliyor; öne geçerken 20 jeton bakiyesi kontrol ediliyor.
-  - «Yetersiz jeton» gibi hatalar artık «yetkiniz yok» diye gizlenmiyor.
-  - Ücretsiz odalarda «10 jeton» yazmıyor.
-- **Bulut dosyası:** Seçilen dosya açılamazsa (bulut dosyası) uyarı gösteriliyor.
+- **«İstenilen kaynak bulunamadı (404)»:** Canlı sunucu yeni DJ isteği özelliğini henüz bilmiyorsa `!istek` artık hata vermiyor. Şarkı normal istek olarak kuyruğa girip kutuda çalıyor.
+- **Şarkı 3-5 sn çalıp duruyordu:** Oynatıcı parça yeni başlamışken «bitti» derse artık sıra ilerletilmiyor. Sunucu tarafında da erken «bitti» bildirimi, DJ'den gelse bile şarkıyı kesmiyor.
+- **Kayan bant:** Sağ panelden istenip kutuda çalan şarkı, isteyen kişi, armağan, not ve sıradakiler de bantta ve müzik kartında görünüyor.
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
