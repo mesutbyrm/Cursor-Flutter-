@@ -127,6 +127,15 @@ class _ChatMessageBody extends ConsumerWidget {
     final isPremiumChat = isStaff || VoiceStaffChatStyle.isGoldOrAdminChatUser(user);
     final showIstek = _isIstekLine(message.content);
 
+    // GirLive Bot: `showAvatar` kapalı olsa da yetkili/premium dalına düşse de
+    // her zaman bot resmiyle, ayrı bir satır olarak çizilir.
+    if (GirLiveBotAvatar.isBot(name: user?.name, userId: user?.id)) {
+      return _BotChatLine(
+        content: message.content,
+        onLongPress: () => _showMessageActions(context),
+      );
+    }
+
     if (isPremiumChat) {
       return _StaffChatLine(
         name: name,
@@ -227,6 +236,63 @@ String _hhmm(DateTime t) {
   final l = t.toLocal();
   String two(int v) => v.toString().padLeft(2, '0');
   return '${two(l.hour)}:${two(l.minute)}';
+}
+
+/// GirLive Bot satırı — bot profil resmi + «BOT» rozeti.
+class _BotChatLine extends StatelessWidget {
+  const _BotChatLine({required this.content, this.onLongPress});
+
+  final String content;
+  final VoidCallback? onLongPress;
+
+  @override
+  Widget build(BuildContext context) {
+    const accent = Color(0xFFB18CFF);
+    return GestureDetector(
+      onLongPress: onLongPress,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(4, 4, 12, 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFF7C3AED).withValues(alpha: 0.28),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: accent.withValues(alpha: 0.45)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              GirLiveBotAvatar.circle(radius: 16),
+              const SizedBox(width: 8),
+              Flexible(
+                child: RichText(
+                  text: TextSpan(
+                    style: const TextStyle(
+                      fontSize: 13,
+                      height: 1.3,
+                      color: Colors.white,
+                    ),
+                    children: [
+                      const TextSpan(
+                        text: 'GirLive Bot  ',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 13,
+                          color: accent,
+                        ),
+                      ),
+                      TextSpan(text: content),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _StaffChatLine extends StatelessWidget {

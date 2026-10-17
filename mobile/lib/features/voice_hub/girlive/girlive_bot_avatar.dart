@@ -4,11 +4,17 @@ import 'package:flutter/material.dart';
 abstract final class GirLiveBotAvatar {
   static const asset = 'assets/brand/girlive_bot.png';
 
-  /// Mesaj sahibi GirLive Bot mu? (ad veya kullanıcı kimliği üzerinden)
+  static String _squash(String? v) =>
+      (v ?? '').toLowerCase().replaceAll(RegExp(r'[\s_\-]+'), '');
+
+  /// Mesaj sahibi GirLive Bot mu?
+  ///
+  /// Yalnızca kimlik ya da görünen ad BİREBİR bot olduğunda true döner
+  /// (`girlive-bot`, `girlive_bot`, `GirLive Bot`). Adında «girlive» geçen sıradan
+  /// bir kullanıcı (ör. «girlivehayran») bot resmi taşıyamaz.
   static bool isBot({String? name, String? userId}) {
-    final n = (name ?? '').toLowerCase();
-    final id = (userId ?? '').toLowerCase();
-    return n.contains('girlive') || id == 'girlive-bot';
+    const bot = 'girlivebot';
+    return _squash(userId) == bot || _squash(name) == bot;
   }
 
   static Widget circle({required double radius}) {

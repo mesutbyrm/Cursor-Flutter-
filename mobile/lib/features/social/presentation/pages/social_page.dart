@@ -122,6 +122,10 @@ class _SocialPageState extends ConsumerState<SocialPage>
     final mq = MediaQuery.of(context);
     final topInset = mq.padding.top;
     final bottomInset = mq.padding.bottom + 88;
+    // Tam ekran akış (Video / Takipte): alt navigasyon kabukta
+    // `bottomNavigationBar` olduğundan sayfa zaten çubuğun üstünde biter.
+    // Çubuk payı tekrar eklenirse altta koyu boş bant kalır.
+    final reelBottomInset = mq.padding.bottom + 12;
     final visible = TickerMode.of(context) &&
         (ModalRoute.of(context)?.isCurrent ?? true) &&
         _appActive;
@@ -148,12 +152,12 @@ class _SocialPageState extends ConsumerState<SocialPage>
                 _VideoTab(
                   visible: visible && _tab == 2,
                   topInset: topInset,
-                  bottomInset: bottomInset,
+                  bottomInset: reelBottomInset,
                 ),
                 _FollowingTab(
                   visible: visible && _tab == 3,
                   topInset: topInset,
-                  bottomInset: bottomInset,
+                  bottomInset: reelBottomInset,
                   onExplore: () => _selectTab(1),
                 ),
               ],

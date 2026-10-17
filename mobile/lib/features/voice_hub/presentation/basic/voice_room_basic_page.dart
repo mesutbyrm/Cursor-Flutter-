@@ -81,8 +81,7 @@ import '../sheets/voice_room_management_panel.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../widgets/voice_room/voice_room_center_music_panel.dart';
 import '../widgets/voice_room/voice_room_music_background_layer.dart';
-import '../widgets/voice_room/voice_room_video_close_bar.dart';
-import '../widgets/voice_room/voice_room_music_queue_mini_card.dart';
+import '../widgets/voice_room/voice_room_music_mini_video.dart';
 import '../widgets/voice_room/voice_room_side_action_rail.dart';
 import '../../../gifts/presentation/widgets/gift_battle_strip.dart';
 import '../../../gifts/presentation/widgets/first_gifter_badge.dart';
@@ -653,7 +652,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     );
     final isOwner = perms.isRoomOwner || perms.isSiteAdmin;
     final showMusicRequestFab = live.dj.musicEnabled;
-    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
     final sessionKey =
         room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
     final bgUrl = live.backgroundUrl ?? room.backgroundImageUrl;
@@ -828,7 +826,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
             VoiceRoomLifecycleHost(roomKey: roomKey),
             VoiceCosmicBackground(imageUrl: bgUrl),
             if (_liveRoomKey.isNotEmpty) ...[
-              VoiceRoomMusicBackgroundLayer(roomKey: _liveRoomKey),
               VoiceRoomHiddenAudioPlayer(roomKey: _liveRoomKey),
             ],
             Consumer(
@@ -901,6 +898,11 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     liveRoomKey: _liveRoomKey,
                     canControlMusic: canControlMusic,
                     canCloseMusic: canCloseMusic,
+                  ),
+                  VoiceRoomMusicMiniVideo(
+                    liveKey: _liveRoomKey,
+                    canControlMusic: canControlMusic,
+                    canStopMusic: canCloseMusic,
                   ),
                   // Aktif hediye savaşı — canlı skor + geri sayım.
                   GiftBattleStrip(
@@ -997,8 +999,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
             ),
             VoiceGiftHudOverlays(sessionKey: sessionKey),
             if (_liveRoomKey.isNotEmpty)
-              VoiceRoomVideoCloseBar(roomKey: _liveRoomKey),
-            if (_liveRoomKey.isNotEmpty)
               Consumer(
                 builder: (context, ref, _) {
                   final muted = ref.watch(
@@ -1032,19 +1032,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
               // haftalık yarışma ise bu sayfada hiç görünmüyordu.
               topSlot: const VoiceRoomCompetitionRailSlot(),
             ),
-            if (!keyboardOpen && showMusicRequestFab)
-              Align(
-                alignment: Alignment.bottomRight,
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 118, right: 4),
-                  child: VoiceRoomMusicQueueMiniCard(
-                    dj: live.dj,
-                    liveKey: _liveRoomKey,
-                    canControlMusic: canControlMusic,
-                    canStopMusic: canCloseMusic,
-                  ),
-                ),
-              ),
             if (_showVipEntrance && user != null)
               Builder(
                 builder: (context) {

@@ -82,7 +82,8 @@ import '../../../trtc/data/datasources/live_room_remote_datasource.dart';
 import '../../../trtc/domain/entities/live_join_room_result.dart';
 import '../../../trtc/presentation/providers/trtc_providers.dart';
 import '../../domain/voice_music_sync.dart';
-import '../../domain/utils/voice_banned_word_filter.dart';
+import '../../girlive/girlive_bot_guard.dart';
+import '../../girlive/girlive_word_bank.dart';
 import '../../domain/voice_official_join.dart';
 import 'voice_room_session_registry.dart';
 import '../audio/voice_room_music_audio_session.dart';
@@ -3284,14 +3285,30 @@ class VoiceRoomLiveController
         return;
       }
     }
+    // GirLive Bot bekçisi: internetten alınıp bellekte tutulan yasaklı kelime
+    // listesi + odanın kendi (admin/yönetici) kelimeleri. İhlalde bot yalnızca
+    // gönderene uyarı satırı gösterir; tekrarında kısa süre susturur.
+    // Sunucu otomatik moderasyonu açık olsa da bu ek koruma çalışır.
     if (!perms.canModerate &&
         !perms.isRoomOwner &&
         !perms.isSiteAdmin &&
-        !state.roomAutoModeration &&
-        state.bannedWords.isNotEmpty &&
-        VoiceBannedWordFilter.containsBannedWord(trimmed, state.bannedWords)) {
-      state = state.copyWith(error: 'Mesajınız yasaklı kelime içeriyor.');
-      return;
+        !trimmed.startsWith('!')) {
+      unawaited(GirLiveWordBank.instance.ensureLoaded());
+      final verdict = GirLiveBotGuard.instance.evaluate(
+        roomKey: _roomKey,
+        text: trimmed,
+        roomWords: state.bannedWords,
+      );
+      if (!verdict.allowed) {
+        final notice = verdict.notice;
+        if (notice != null && notice.isNotEmpty) {
+          ref
+              .read(girLiveRulesNoticeProvider.notifier)
+              .show(notice, roomKey: _roomKey);
+        }
+        state = state.copyWith(error: verdict.error);
+        return;
+      }
     }
     final optimisticId = 'local-${DateTime.now().millisecondsSinceEpoch}';
     final optimistic = user != null

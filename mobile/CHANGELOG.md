@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## Yayınlanmamış — Reels, GirLive Bot, müzik mini ekranı
+
+- **Reels:** Video/fal kartı altındaki siyah boşluk giderildi (alt menü iki kez hesaplanıyordu).
+- **Fal kartı:** Bu fal türüne bakmamış izleyiciye «Sen de baktır», kaç kişinin baktığı ve son 5 bakanın profil resimleri gösterilir.
+- **GirLive Bot:** Sohbette bot avatarı; yasaklı kelimede uyarı (1/3, 2/3), tekrarında 5 dk susturma. Kelime listesi internetten alınıp bellekte/önbellekte tutulur; oda yöneticisinin eklediği kelimeler de uygulanır.
+- **Müzik isteği:** Video tam ekran yerine koltukların altında sağda küçük kare pencerede oynar; dokununca Durdur / Kapat; altında sıradaki istekler listelenir.
+
 ## 1.0.818+874 (2026-10-17) — Sesli oda müzik isteği
 
 - **Videolu istek:** Video artık yarım ekranda bozuk bir dikdörtgen değil; tüm arka planı kaplıyor ve %50 karartmalı, böylece koltuklar ve sohbet okunuyor.
