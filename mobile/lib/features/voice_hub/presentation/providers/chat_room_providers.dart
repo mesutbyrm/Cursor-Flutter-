@@ -2561,6 +2561,16 @@ class VoiceRoomLiveController
         now.difference(lastAt) < const Duration(seconds: 30)) {
       return;
     }
+    // Parça yeni başladıysa «bitti» oynatıcı hatasıdır: sırayı ilerletme
+    // (önceden şarkı 3-5 sn'de herkes için kesiliyordu).
+    final seenAt = _djNowPlayingSeenAt;
+    if (seenAt != null && now.difference(seenAt) < const Duration(seconds: 25)) {
+      VoiceRoomDebugLog.log('music.track_complete.too_early', {
+        'videoId': endedVideoId,
+        'ms': now.difference(seenAt).inMilliseconds,
+      });
+      return;
+    }
     _trackCompleteVideoId = endedVideoId;
     _trackCompleteAt = now;
     try {

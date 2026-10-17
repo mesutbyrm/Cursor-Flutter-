@@ -321,6 +321,22 @@ class _DjComposeSheetState extends ConsumerState<_DjComposeSheet> {
           priority: _priority,
         );
     if (!mounted) return;
+    if (err == VoiceRoomDjRequestsController.unavailable) {
+      // Sunucu henüz DJ isteğini bilmiyor: şarkı normal istek olarak
+      // kuyruğa girer ve kutuda çalar.
+      final fallbackErr = await ref
+          .read(voiceRoomLiveProvider(widget.roomKey).notifier)
+          .requestMusicByQuery(song);
+      if (!mounted) return;
+      setState(() => _sending = false);
+      if (fallbackErr != null) {
+        _toast(context, fallbackErr);
+        return;
+      }
+      Navigator.of(context).pop();
+      _toast(context, '🎵 Şarkı isteğin kuyruğa eklendi.');
+      return;
+    }
     setState(() => _sending = false);
     if (err != null) {
       _toast(context, err);
@@ -494,11 +510,18 @@ class VoiceRoomMusicSeatCard extends ConsumerWidget {
     final screenW = MediaQuery.sizeOf(context).width.clamp(280.0, 900.0);
     final side = ((screenW - 12) / 4 * 0.86).clamp(70.0, 140.0);
 
+    final queueNp = ref.watch(
+      voiceRoomLiveProvider(roomKey).select((s) => s.dj.nowPlaying),
+    );
+    final queueBy = queueNp?.requestedBy?.displayName.trim();
     final line = playing != null
         ? '🎶 ${playing.query}  •  isteyen ${playing.userName}'
             '${playing.giftToName != null ? '  •  🎁 @${playing.giftToName}' : ''}'
             '${playing.handlerName != null ? '  •  DJ ${playing.handlerName}' : ''}'
-        : '🎵 !istek şarkıcı şarkı yaz, DJ çalsın';
+        : queueNp != null
+            ? '🎶 ${queueNp.title}'
+                '${queueBy != null && queueBy.isNotEmpty ? '  •  isteyen @$queueBy' : ''}'
+            : '🎵 !istek şarkıcı şarkı yaz, DJ çalsın';
 
     return GestureDetector(
       onTap: () => _openRequestSheet(
@@ -596,6 +619,10 @@ class VoiceRoomMusicTickerBanner extends ConsumerWidget {
     final snap = ref.watch(voiceRoomDjRequestsProvider(roomKey));
     final p = snap.playing;
 
+    // DJ isteği çalmıyorsa sağ panelden istenip kutuda çalan şarkı gösterilir.
+    final dj = ref.watch(voiceRoomLiveProvider(roomKey).select((s) => s.dj));
+    final queueNp = dj.nowPlaying;
+    final queueBy = queueNp?.requestedBy?.displayName.trim();
     final top = p != null
         ? [
             if (p.handlerName != null) '🎧 DJ ${p.handlerName}',
@@ -604,11 +631,26 @@ class VoiceRoomMusicTickerBanner extends ConsumerWidget {
             if (p.giftToName != null) '🎁 @${p.giftToName} için',
             if (p.claps > 0) '👏 ${p.claps}',
           ].join('   •   ')
-        : '🎵 Şu an istek çalmıyor — «!istek şarkıcı şarkı» yaz, DJ çalsın';
+        : queueNp != null
+            ? [
+                '🎶 ${queueNp.title}',
+                if (queueBy != null && queueBy.isNotEmpty) '🙋 isteyen @$queueBy',
+                if (queueNp.giftTo?.trim().isNotEmpty == true)
+                  '🎁 ${queueNp.giftTo!.trim()} için',
+              ].join('   •   ')
+            : '🎵 Şu an istek çalmıyor — «!istek şarkıcı şarkı» yaz, DJ çalsın';
     final queue = _queueLine(snap);
+    final panelQueue = [
+      for (final q in dj.musicQueue.take(5))
+        if (q.id != queueNp?.id)
+          '${q.title}${q.requestedBy != null ? ' (@${q.requestedBy!.displayName})' : ''}',
+    ];
     final bottom = [
       if (p?.message != null) '💬 @${p!.userName}: «${p.message}»',
+      if (p == null && queueNp?.note?.trim().isNotEmpty == true)
+        '💬 «${queueNp!.note!.trim()}»',
       if (queue.isNotEmpty) queue,
+      if (panelQueue.isNotEmpty) '⏭️ Sırada: ${panelQueue.join('  ·  ')}',
       'İyi dinlemeler 🎶',
     ].join('   •   ');
 

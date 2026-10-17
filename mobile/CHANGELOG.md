@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.823+879 (2026-10-17) — Müzik isteği 404 ve 3-5 sn'de kesilme
+
+- **«İstenilen kaynak bulunamadı (404)»:** Canlı sunucu yeni DJ isteği özelliğini henüz bilmiyorsa `!istek` artık hata vermiyor. Şarkı normal istek olarak kuyruğa girip kutuda çalıyor.
+- **Şarkı 3-5 sn çalıp duruyordu:** Oynatıcı parça yeni başlamışken «bitti» derse artık sıra ilerletilmiyor. Sunucu tarafında da erken «bitti» bildirimi, DJ'den gelse bile şarkıyı kesmiyor.
+- **Kayan bant:** Sağ panelden istenip kutuda çalan şarkı, isteyen kişi, armağan, not ve sıradakiler de bantta ve müzik kartında görünüyor.
+
 ## 1.0.822+878 (2026-10-17) — Müzik istekleri: kontrol sonrası düzeltmeler
 
 - **!istek açılır penceresi DJ'lere de gidiyor:** Sunucu, odadan çıkmış oda sahibini hâlâ «odada» sayıyordu; bu yüzden pencere DJ'lere hiç gitmiyordu. Artık yalnız gerçekten odada olanlar sayılıyor.

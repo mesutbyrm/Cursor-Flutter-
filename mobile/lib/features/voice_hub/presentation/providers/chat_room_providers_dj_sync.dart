@@ -7,6 +7,9 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
   /// SSE'de görülen son çalan parça — yeni parça gelince «Kapat» ile
   /// susturulmuş cihaz yeniden dinler (sunucu `music_started` göndermiyor).
   String? _djLastNowPlayingKey;
+  /// Yeni parçanın bu cihazda ilk görüldüğü an (erken «bitti» süzgeci).
+  DateTime? _djNowPlayingSeenAt;
+  String? _djPlaybackVideoKey;
 
   void _syncRoomSongBloc() {
     final key = _live._roomKey;
@@ -63,6 +66,7 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
         ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
       }
       _djLastNowPlayingKey = npKey;
+      _djNowPlayingSeenAt = DateTime.now();
     }
     if (signal == VoiceSseMusicSignal.started) {
       ref.read(voiceRoomMusicSessionProvider.notifier).onMusicStartedFromServer();
@@ -264,6 +268,10 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
       currentVideoId: sync?.currentVideoId,
       nowPlayingUrl: effectiveDj.nowPlaying?.youtubeUrl,
     );
+    if (videoId != null && videoId != _djPlaybackVideoKey) {
+      _djPlaybackVideoKey = videoId;
+      _djNowPlayingSeenAt = DateTime.now();
+    }
     final shouldPlay = (sync?.isPlaying ?? effectiveDj.playing) &&
         _live._hasDjPlayableSource(effectiveDj, sync: sync, videoId: videoId);
     final sig = _live._djPlaybackSignature(effectiveDj, muted: muted);

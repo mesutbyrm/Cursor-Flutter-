@@ -46,6 +46,9 @@ class VoiceRoomDjRequestsController
     _busy = true;
     try {
       state = await ref.read(djRequestRemoteProvider).fetch(_roomKey);
+    } on ApiException catch (e) {
+      // Sunucuda uç nokta yok (henüz yayına alınmadı): boşuna yoklama.
+      if (e.statusCode == 404 || e.statusCode == 405) _poll?.cancel();
     } catch (_) {
       // Ağ hatası: mevcut durum korunur, sonraki turda yeniden denenir.
     } finally {
@@ -59,6 +62,10 @@ class VoiceRoomDjRequestsController
         (payload['data'] is Map ? (payload['data'] as Map)['djRequests'] : null);
     if (raw is Map) state = DjRequestsSnapshot.fromJson(raw);
   }
+
+  /// Sunucuda `dj-request` uç noktası yoksa (henüz yayına alınmadı) [create]
+  /// bunu döner; çağıran eski «şarkı isteği» yoluna düşer.
+  static const unavailable = '__dj_request_unavailable__';
 
   /// Hata mesajı ya da `null`.
   Future<String?> create(
@@ -78,6 +85,9 @@ class VoiceRoomDjRequestsController
       unawaited(refresh());
       return null;
     } catch (e) {
+      if (e is ApiException && (e.statusCode == 404 || e.statusCode == 405)) {
+        return unavailable;
+      }
       return _message(e, 'İstek gönderilemedi');
     }
   }
