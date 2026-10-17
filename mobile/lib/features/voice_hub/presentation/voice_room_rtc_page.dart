@@ -112,9 +112,8 @@ import 'widgets/premium_2026/voice_web_chat_overlay.dart';
 import 'widgets/voice_room/voice_room_rtc_shell_widgets.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/voice_room/voice_room_center_music_panel.dart';
-import 'widgets/voice_room/voice_room_music_queue_mini_card.dart';
+import 'widgets/voice_room/voice_room_music_mini_video.dart';
 import 'widgets/voice_room/voice_room_bottom_dock.dart';
-import 'widgets/voice_room/voice_room_video_close_bar.dart';
 import 'widgets/voice_room_error_boundary.dart';
 import 'widgets/voice_room/voice_room_competition_rail_slot.dart';
 import 'sheets/voice_youtube_song_sheet.dart';
@@ -1733,7 +1732,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage>
             ),
             VoiceCosmicBackground(imageUrl: bgUrl),
             if (_liveRoomKey.isNotEmpty) ...[
-              VoiceRoomMusicBackgroundLayer(roomKey: _liveRoomKey),
               VoiceRoomHiddenAudioPlayer(roomKey: _liveRoomKey),
             ],
             // Hediye animasyonu arka planın üstünde, koltuk/sohbet/butonların
@@ -2005,6 +2003,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage>
                           canControlMusic: canControlMusic,
                           canCloseMusic: canCloseMusic,
                         ),
+                        VoiceRoomMusicMiniVideo(
+                          liveKey: _liveRoomKey,
+                          canControlMusic: canControlMusic,
+                          canStopMusic: canCloseMusic,
+                        ),
                         _VoiceRoomStaffBannerWidget(
                           liveRoomKey: _liveRoomKey,
                         ),
@@ -2255,21 +2258,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage>
               // Yarışma kutuları düğmelerin üstünde durur.
               topSlot: const VoiceRoomCompetitionRailSlot(),
             ),
-            if (!keyboardOpen && showMusicRequestFab)
-              Align(
-                alignment: Alignment.bottomRight,
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 190, right: 4),
-                  child: VoiceRoomMusicQueueMiniCard(
-                    dj: live.dj,
-                    liveKey: _liveRoomKey,
-                    canControlMusic: canControlMusic,
-                    canStopMusic: canCloseMusic,
-                  ),
-                ),
-              ),
-            if (_liveRoomKey.isNotEmpty)
-              VoiceRoomVideoCloseBar(roomKey: _liveRoomKey),
             if (_liveRoomKey.isNotEmpty)
               BlocProvider.value(
                 value: ref.read(roomSongBlocProvider(_liveRoomKey)),

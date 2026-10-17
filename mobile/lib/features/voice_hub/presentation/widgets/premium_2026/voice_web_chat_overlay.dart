@@ -10,6 +10,7 @@ import '../../utils/voice_chat_message_filters.dart';
 import '../../utils/voice_room_chat_scroll.dart';
 import '../chat/chat_message_widgets.dart';
 import 'package:canlifal_social/core/network/server_clock.dart';
+import 'package:canlifal_social/features/voice_hub/girlive/girlive_bot_avatar.dart';
 import '../voice_room/voice_room_chat_new_message_chip.dart';
 
 /// Web tarzı şeffaf sohbet — arka plan üzerinde yüzen mesajlar.
@@ -429,12 +430,8 @@ class _GirLiveNoticeLine extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
-            Icons.smart_toy_rounded,
-            color: Color(0xFFB18CFF),
-            size: 16,
-          ),
-          const SizedBox(width: 6),
+          GirLiveBotAvatar.circle(radius: 12),
+          const SizedBox(width: 8),
           Expanded(
             child: Text.rich(
               TextSpan(

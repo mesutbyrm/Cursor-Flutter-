@@ -1,12 +1,19 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../../core/images/canlifal_network_image.dart';
+import '../../../../../core/providers/auth_selectors.dart';
+import '../../../../../core/widgets/user_avatar.dart';
+import '../../../../auth/domain/entities/user_entity.dart';
 import '../../../../feed/domain/entities/post_entity.dart';
 import '../../../../fortune/presentation/data/fortune_catalog.dart';
+import '../../../../fortune/presentation/providers/fortune_api_providers.dart';
 import '../../../../fortune/presentation/widgets/fortune_type_cover_image.dart';
 import '../../providers/fortune_type_counts_provider.dart';
+import '../../providers/social_providers.dart';
+import '../instagram/social_fortune_scene_card.dart';
 import '../social_linked_caption_text.dart';
 
 /// Fal paylaşımı tam ekran: falın türüne ait görsel (Tarot → tarot görseli)
@@ -204,6 +211,7 @@ class SocialFortunePage extends StatelessWidget {
                   const Spacer(),
                   // Alttaki boşluk: bu fala kaç kişinin baktırdığı.
                   _FortuneTypeCountLine(
+                    post: post,
                     slug: type.slug,
                     title: type.title,
                     accent: type.accent,
@@ -218,15 +226,20 @@ class SocialFortunePage extends StatelessWidget {
   }
 }
 
-/// «👥 1.245 kişi Tarot Falı baktırdı» — paylaşımın altındaki boşluğu dolduran
-/// kart. Sayı yüklenmediyse / sıfırsa davet metni gösterilir (alan boş kalmaz).
+/// Paylaşımın altındaki kart.
+///
+/// * Bu fal türüne kaç kişinin baktığı + son 5 kişinin profil resmi.
+/// * Kullanıcı bu fal türüne HENÜZ baktırmadıysa «Sen de baktır» (dokununca
+///   falı açar); baktırdıysa yalnız sayı ve avatarlar gösterilir.
 class _FortuneTypeCountLine extends ConsumerWidget {
   const _FortuneTypeCountLine({
+    required this.post,
     required this.slug,
     required this.title,
     required this.accent,
   });
 
+  final PostEntity post;
   final String slug;
   final String title;
   final Color accent;
@@ -243,10 +256,43 @@ class _FortuneTypeCountLine extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final n = ref.watch(fortuneTypeCountsProvider).valueOrNull?[slug] ?? 0;
+    final kind = fortuneSceneSlugFor(post.fortuneType ?? post.fortuneSlug) ??
+        fortuneSceneSlugFor(slug) ??
+        slug;
+    final me = ref.watch(currentUserIdProvider);
+
+    // Toplam: sunucu genel istatistiği; yoksa gönderi / akıştan türetilen sayı.
+    final byType = ref.watch(fortuneTypeCountsProvider).valueOrNull?[slug] ?? 0;
+    final n = byType > 0 ? byType : ref.watch(fortuneViewCountProvider(post));
+
+    // Son bakanlar (en çok 5, ben hariç tutulmaz; kendi avatarım da görünür).
+    final viewers = ref.watch(fortuneCoViewersProvider(post));
+
+    // Ben bu fal türüne baktırdım mı? Fal geçmişi → kendi paylaşımım → bakanlar.
+    final history = ref.watch(fortuneHistoryProvider).valueOrNull ?? const [];
+    final mine = me != null &&
+        (post.author.id == me ||
+            viewers.any((u) => u.id == me) ||
+            history.any((f) =>
+                (fortuneSceneSlugFor(f.slug ?? f.type) ?? f.type) == kind));
+
     final label = title == 'Fal' ? 'bu falı' : title;
-    final hasCount = n > 0;
-    return Container(
+    final invite = !mine;
+
+    final String headline;
+    final String sub;
+    if (invite) {
+      headline = 'Sen de baktır';
+      sub = n > 0 ? '${_fmt(n)} kişi $label baktırdı' : '$label seni bekliyor';
+    } else if (n > 0) {
+      headline = '${_fmt(n)} kişi baktırdı';
+      sub = 'Sen de baktırdın ✓';
+    } else {
+      headline = 'Sen de baktırdın ✓';
+      sub = label;
+    }
+
+    final card = Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
@@ -261,19 +307,22 @@ class _FortuneTypeCountLine extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.black.withValues(alpha: 0.35),
-            ),
-            child: Icon(
-              hasCount ? Icons.groups_rounded : Icons.auto_awesome_rounded,
-              color: const Color(0xFFFFD54F),
-              size: 22,
-            ),
-          ),
+          if (viewers.isEmpty)
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.black.withValues(alpha: 0.35),
+              ),
+              child: Icon(
+                n > 0 ? Icons.groups_rounded : Icons.auto_awesome_rounded,
+                color: const Color(0xFFFFD54F),
+                size: 22,
+              ),
+            )
+          else
+            _ViewerAvatars(users: viewers.take(5).toList(growable: false)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -281,7 +330,9 @@ class _FortuneTypeCountLine extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  hasCount ? '${_fmt(n)} kişi' : 'Sen de baktır',
+                  headline,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -289,9 +340,9 @@ class _FortuneTypeCountLine extends ConsumerWidget {
                   ),
                 ),
                 Text(
-                  hasCount
-                      ? '$label baktırdı'
-                      : '$label seni bekliyor',
+                  sub,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.85),
                     fontSize: 13,
@@ -301,6 +352,50 @@ class _FortuneTypeCountLine extends ConsumerWidget {
               ],
             ),
           ),
+          if (invite)
+            const Icon(Icons.chevron_right_rounded, color: Colors.white70),
+        ],
+      ),
+    );
+
+    if (!invite) return card;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => context.push('/fortune/$slug'),
+      child: card,
+    );
+  }
+}
+
+/// Üst üste binen küçük profil resimleri (en çok 5).
+class _ViewerAvatars extends StatelessWidget {
+  const _ViewerAvatars({required this.users});
+
+  final List<UserEntity> users;
+
+  static const _r = 15.0;
+  static const _step = 22.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final width = _step * (users.length - 1) + _r * 2 + 4;
+    return SizedBox(
+      width: width,
+      height: _r * 2 + 4,
+      child: Stack(
+        children: [
+          for (var i = 0; i < users.length; i++)
+            Positioned(
+              left: i * _step,
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: UserAvatar(url: users[i].avatarUrl, radius: _r),
+              ),
+            ),
         ],
       ),
     );
