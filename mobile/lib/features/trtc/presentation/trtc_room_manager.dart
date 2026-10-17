@@ -843,8 +843,13 @@ class TrtcRoomManager {
     }
     if (!_inRoom && !_previewOnly) return;
     if (enabled) {
+      _musicOnlyCapture = false;
       _startLocalAudio();
       _cloud?.muteLocalAudio(false);
+    } else if (_localMusicActive) {
+      // DJ müziği çalarken mikrofon kapanırsa yayın sürer, yalnız ses 0 olur.
+      _cloud?.setAudioCaptureVolume(0);
+      _musicOnlyCapture = true;
     } else {
       _cloud?.muteLocalAudio(true);
       _cloud?.stopLocalAudio();
@@ -870,6 +875,7 @@ class TrtcRoomManager {
         return false;
       }
       if (!on) {
+        if (_localMusicActive) stopLocalMusic();
         cloud.muteLocalAudio(true);
         cloud.stopLocalAudio();
         _micOn = false;
@@ -1084,6 +1090,106 @@ class TrtcRoomManager {
       'url': path.length > 64 ? '${path.substring(0, 64)}…' : path,
       'startMs': startMs,
     });
+  }
+
+  /// DJ'in telefonundaki müzik dosyası (yerel MP3) yayına karışıyor mu.
+  var _localMusicActive = false;
+  /// Müzik için yerel ses yalnız bu amaçla açıldı (mikrofon kapalı, sesi 0).
+  var _musicOnlyCapture = false;
+  bool get localMusicActive => _localMusicActive;
+
+  /// DJ yerel müzik dosyasını TRTC yayınına karıştırır.
+  ///
+  /// Dinleyiciler müziği DJ'in sesi gibi duyar (tek kaynak → senkron sorunu
+  /// yok). Mikrofon kapalıysa yerel ses yalnız müzik için açılır ve mikrofon
+  /// sesi 0'a çekilir. Hata varsa Türkçe mesaj döner; başarıda `null`.
+  Future<String?> startLocalMusic(
+    String filePath, {
+    void Function()? onFinished,
+    void Function(String message)? onError,
+  }) async {
+    final cloud = _cloud;
+    if (!isSupported || cloud == null || !_inRoom) {
+      return 'Odaya ses bağlantısı yok; birkaç saniye sonra tekrar dene.';
+    }
+    if (!_isHost) {
+      return 'Müziği yayına vermek için önce bir koltuğa otur.';
+    }
+    final path = filePath.trim();
+    if (path.isEmpty) return 'Müzik dosyası seçilmedi.';
+
+    stopPublishedMusic();
+    if (!_micOn) {
+      cloud.startLocalAudio(VoiceAudioSettingsStore.current.quality);
+      cloud.muteLocalAudio(false);
+      cloud.setAudioCaptureVolume(0);
+      _musicOnlyCapture = true;
+    }
+    final effect = cloud.getAudioEffectManager();
+    effect.setMusicObserver(
+      voiceRoomMusicId,
+      TXMusicPlayObserver(
+        onStart: (id, code) {
+          if (code != 0) {
+            _trtcLog('local_music_start_failed', {'code': code});
+            _endLocalMusic();
+            onError?.call(
+              code == -4008
+                  ? 'Bu dosya biçimi desteklenmiyor (mp3, m4a, aac, wav, ogg).'
+                  : 'Müzik dosyası açılamadı (kod $code).',
+            );
+          }
+        },
+        onPlayProgress: (_, __, ___) {},
+        onComplete: (id, code) {
+          if (!_localMusicActive) return;
+          _endLocalMusic();
+          onFinished?.call();
+        },
+      ),
+    );
+    effect.startPlayMusic(
+      AudioMusicParam(
+        id: voiceRoomMusicId,
+        path: path,
+        publish: true,
+        loopCount: 0,
+        startTimeMS: 0,
+      ),
+    );
+    effect.setMusicPublishVolume(voiceRoomMusicId, 90);
+    effect.setMusicPlayoutVolume(voiceRoomMusicId, 70);
+    _publishedMusicPlaying = true;
+    _localMusicActive = true;
+    _trtcLog('local_music_start', {'musicOnly': _musicOnlyCapture});
+    return null;
+  }
+
+  /// DJ yerel müziğini durdurur; yalnız müzik için açılan sesi kapatır.
+  void stopLocalMusic() {
+    if (!_localMusicActive) return;
+    stopPublishedMusic();
+    _endLocalMusic();
+  }
+
+  void _endLocalMusic() {
+    _localMusicActive = false;
+    _publishedMusicPlaying = false;
+    final cloud = _cloud;
+    try {
+      cloud?.getAudioEffectManager().setMusicObserver(voiceRoomMusicId, null);
+    } catch (_) {}
+    if (_musicOnlyCapture) {
+      _musicOnlyCapture = false;
+      if (!_micOn && cloud != null) {
+        cloud.muteLocalAudio(true);
+        cloud.stopLocalAudio();
+      }
+      if (cloud != null) {
+        cloud.setAudioCaptureVolume(VoiceAudioSettingsStore.current.captureVolume);
+      }
+    }
+    _trtcLog('local_music_end', {});
   }
 
   void pausePublishedMusic() {

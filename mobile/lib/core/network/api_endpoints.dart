@@ -436,6 +436,10 @@ abstract final class ApiEndpoints {
   /// DJ müzik durumu — `GET/POST /api/chat/rooms/{roomId}/music`.
   static String chatRoomMusic(String roomId) => '/api/chat/rooms/$roomId/music';
 
+  /// DJ isteği (!istek) — `GET/POST/PATCH /api/chat/rooms/{roomId}/dj-request`.
+  static String chatRoomDjRequest(String roomId) =>
+      '/api/chat/rooms/$roomId/dj-request';
+
   /// Şarkı isteği — `POST /api/chat/rooms/{roomId}/song-request`.
   static String chatRoomSongRequest(String roomId) =>
       '/api/chat/rooms/$roomId/song-request';

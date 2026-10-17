@@ -38,6 +38,13 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
   Future<void> _applyDjRealtimePayload(Map<String, dynamic> payload) async {
     final key = _live._roomKey;
     final map = unwrapVoiceSseDjPayload(payload);
+    if (key.isNotEmpty) {
+      final reqs = ref.read(voiceRoomDjRequestsProvider(key).notifier);
+      reqs.applyDjPayload(payload);
+      if (!identical(map, payload)) reqs.applyDjPayload(map);
+    }
+    // Müzik yalnız DJ telefonundan yayına karışır: uygulama içi oynatma yok.
+    if (VoiceRoomDjLocalMusic.enabled) return;
     final signal = voiceSseMusicSignal(map);
     if (signal == VoiceSseMusicSignal.stopped) {
       await _handleMusicStoppedFromSse();
@@ -219,6 +226,12 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
     final session = ref.read(voiceRoomMusicSessionProvider);
     final music = ref.read(roomMusicServiceProvider);
     music.bindRoom(key);
+
+    if (VoiceRoomDjLocalMusic.enabled) {
+      _live._lastDjPlaybackSignature =
+          _live._djPlaybackSignature(dj, muted: muted);
+      return dj;
+    }
 
     if (session.userDismissedPlayer) {
       _live._lastDjPlaybackSignature =
@@ -502,6 +515,8 @@ mixin VoiceRoomDjSyncMixin on AutoDisposeFamilyNotifier<VoiceRoomLiveState, Stri
     RoomPlaybackSync? sync,
     required ChatRoomDjState dj,
   }) async {
+    // DJ yerel müziği karıştırıcıyı kendisi yönetir; YouTube senkronu dokunmaz.
+    if (VoiceRoomDjLocalMusic.enabled) return;
     if (!_live._canControlMusic()) {
       ref.read(voiceRoomTrtcMusicMixerProvider).stop();
       return;

@@ -54,6 +54,8 @@ abstract final class VoiceChatMessageFilters {
 
     if (message.kind == ChatMessageKind.gift) return false;
 
+    // DJ isteği kaydı (sunucu verisi) sohbette görünmez; duyurusu ayrıca gelir.
+    if (content.trimLeft().startsWith('[DJ_REQ]')) return false;
     if (_isSongRequestAnnouncement(content)) return true;
 
     if (_isTechnicalMusicLine(content)) return false;

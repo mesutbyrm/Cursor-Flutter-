@@ -1,11 +1,23 @@
 # Sürüm notları — canlifal_social
 
-## Yayınlanmamış — Reels, GirLive Bot, müzik mini ekranı
+## 1.0.819+875 (2026-10-17) — Sesli odada DJ müziği
+
+- **Müzik artık DJ'in telefonundan:**
+  - Oda sahibi ya da DJ telefonundaki şarkıyı seçer, şarkı yayına karışır. Odadaki herkes onu DJ'in sesi gibi duyar.
+  - Mikrofon kapalıyken de yalnız müzik yayına gider.
+  - Uygulama içi YouTube oynatma ve alttaki müzik oynatıcı kaldırıldı. Donma, senkron kayması ve «kapattım geri geldi» sorunu ortadan kalkar.
+- **!istek şarkıcı şarkı:**
+  - İstek gönderilince 10 jeton bloke edilir.
+  - Oda sahibi odadaysa ona, değilse aktif DJ'lere açılır pencere gider: «Çal» ya da «Reddet».
+  - DJ çalarsa jeton kesilir. Reddederse ya da 5 dakika içinde çalmazsa jeton iade edilir. İsteyen kişi bekleyen isteğini iptal edebilir.
+- **Müzik koltuğu:** Koltukların arasında kare bir kart var. Çalan şarkı ve isteyen kişi sağdan sola kayan yazıyla görünür; bekleyen istek sayısı da kartta yazar. DJ karta dokununca istek listesini açar.
+- **!kapat:** Çalan DJ müziği durdurur.
+
+## 1.0.819+875 (devam) — Reels, fal kartı, GirLive Bot
 
 - **Reels:** Video/fal kartı altındaki siyah boşluk giderildi (alt menü iki kez hesaplanıyordu).
 - **Fal kartı:** Bu fal türüne bakmamış izleyiciye «Sen de baktır», kaç kişinin baktığı ve son 5 bakanın profil resimleri gösterilir.
 - **GirLive Bot:** Sohbette bot avatarı; yasaklı kelimede uyarı (1/3, 2/3), tekrarında 5 dk susturma. Kelime listesi internetten alınıp bellekte/önbellekte tutulur; oda yöneticisinin eklediği kelimeler de uygulanır.
-- **Müzik isteği:** Video tam ekran yerine koltukların altında sağda küçük kare pencerede oynar; dokununca Durdur / Kapat; altında sıradaki istekler listelenir.
 
 ## 1.0.818+874 (2026-10-17) — Sesli oda müzik isteği
 

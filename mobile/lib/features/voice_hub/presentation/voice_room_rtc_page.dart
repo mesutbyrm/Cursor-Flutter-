@@ -75,9 +75,9 @@ import 'providers/voice_room_ui_provider.dart';
 import 'sheets/voice_room_management_panel.dart';
 import 'sheets/voice_pk_mode_picker_sheet.dart';
 import 'sheets/voice_room_sheets.dart';
-import 'utils/voice_music_access.dart';
 import 'utils/voice_room_pending_music_search_flow.dart';
 import 'providers/voice_room_live_side_effect_slices.dart';
+import 'widgets/voice_room/voice_room_dj_request_widgets.dart';
 import 'widgets/voice_room/voice_room_staff_join_banner.dart';
 import 'widgets/voice_room/voice_room_gold_entrance_host.dart';
 import 'theme/voice_room_tokens.dart';
@@ -99,7 +99,6 @@ import '../../gifts/presentation/sync/gift_session_controller.dart';
 import 'widgets/premium/voice_gift_stage_overlays.dart';
 import 'widgets/premium/voice_glass.dart';
 import 'widgets/premium_2026/voice_cosmic_background.dart';
-import 'widgets/voice_room/voice_room_music_background_layer.dart';
 import 'sheets/voice_room_commands_panel.dart';
 import 'widgets/premium_2026/voice_room_persistent_duyuru.dart';
 import '../../visual_fx/presentation/widgets/fx_voice_room_overlay_host.dart';
@@ -111,9 +110,6 @@ import 'widgets/voice_room/voice_room_connection_overlays.dart';
 import 'widgets/premium_2026/voice_web_chat_overlay.dart';
 import 'widgets/voice_room/voice_room_rtc_shell_widgets.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
-import 'widgets/voice_room/voice_room_center_music_panel.dart';
-import 'widgets/voice_room/voice_room_music_mini_video.dart';
-import 'widgets/voice_room/voice_room_bottom_dock.dart';
 import 'widgets/voice_room_error_boundary.dart';
 import 'widgets/voice_room/voice_room_competition_rail_slot.dart';
 import 'sheets/voice_youtube_song_sheet.dart';
@@ -1688,11 +1684,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage>
         perms.isRoomOwner ||
         perms.isSiteAdmin ||
         isDj;
-    final canCloseMusic = VoiceMusicAccess.canStopMusic(
-      user: user,
-      perms: perms,
-      nowPlaying: live.dj.nowPlaying,
-    );
     final bgUrl = live.backgroundUrl ?? room.backgroundImageUrl;
     final metrics = VoiceRoomResponsiveMetrics.of(context);
     final keyboardOpen = metrics.keyboardOpen;
@@ -1731,9 +1722,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage>
               roomKey: _liveRoomKey.isNotEmpty ? _liveRoomKey : widget.room.id,
             ),
             VoiceCosmicBackground(imageUrl: bgUrl),
-            if (_liveRoomKey.isNotEmpty) ...[
-              VoiceRoomHiddenAudioPlayer(roomKey: _liveRoomKey),
-            ],
+            if (_liveRoomKey.isNotEmpty)
+              VoiceRoomDjRequestHost(roomKey: _liveRoomKey, myUserId: user?.id),
             // Hediye animasyonu arka planın üstünde, koltuk/sohbet/butonların
             // ALTINDA oynar — koltuklar ve sayfadaki her şey görünür kalır.
             Consumer(
@@ -1969,6 +1959,13 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage>
                         _VoiceRoomRtcSeatStage(
                           liveRoomKey: _liveRoomKey,
                           room: room,
+                          musicCard: showMusicRequestFab && _liveRoomKey.isNotEmpty
+                              ? VoiceRoomMusicSeatCard(
+                                  roomKey: _liveRoomKey,
+                                  myUserId: user?.id,
+                                  canHandle: isOwner || isDj,
+                                )
+                              : null,
                           mergedDjIds: mergedDjIds,
                           selfUserId: user?.id,
                           micMuted: _isMicMuted,
@@ -1996,17 +1993,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage>
                               internalSeatIndex: seatIndex,
                             ),
                           ),
-                        ),
-                        VoiceRoomCenterMusicPanel(
-                          room: room,
-                          liveRoomKey: _liveRoomKey,
-                          canControlMusic: canControlMusic,
-                          canCloseMusic: canCloseMusic,
-                        ),
-                        VoiceRoomMusicMiniVideo(
-                          liveKey: _liveRoomKey,
-                          canControlMusic: canControlMusic,
-                          canStopMusic: canCloseMusic,
                         ),
                         _VoiceRoomStaffBannerWidget(
                           liveRoomKey: _liveRoomKey,
@@ -2097,13 +2083,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage>
                             ),
                           ),
                         ),
-                              if (!keyboardOpen)
-                                VoiceRoomBottomDock(
-                                  room: room,
-                                  session: room,
-                                  canControlMusic: canControlMusic,
-                                  canStopMusic: canCloseMusic,
-                                ),
                                       ],
                                     );
                                   },
@@ -2413,6 +2392,7 @@ class _VoiceRoomRtcSeatStage extends ConsumerWidget {
   const _VoiceRoomRtcSeatStage({
     required this.liveRoomKey,
     required this.room,
+    this.musicCard,
     required this.mergedDjIds,
     required this.selfUserId,
     required this.micMuted,
@@ -2426,6 +2406,7 @@ class _VoiceRoomRtcSeatStage extends ConsumerWidget {
 
   final String liveRoomKey;
   final VoiceRoomEntity room;
+  final Widget? musicCard;
   final List<String> mergedDjIds;
   final String? selfUserId;
   final bool micMuted;
@@ -2453,6 +2434,7 @@ class _VoiceRoomRtcSeatStage extends ConsumerWidget {
     return VoiceMockSeatStage(
       roomKey: liveRoomKey,
       room: room,
+      extraCell: musicCard,
       seatSlots: seatSlice.seatSlots,
       presence: seatSlice.presence,
       configuredSeatCount: configuredSeatCount ?? room.seatCount,

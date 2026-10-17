@@ -74,7 +74,30 @@ class VoiceRoomTrtcMusicMixer {
     }
   }
 
+  /// DJ yerel müziği (telefondaki dosya) — hata mesajı ya da `null`.
+  Future<String?> playLocalFile(
+    String path, {
+    void Function()? onFinished,
+    void Function(String message)? onError,
+  }) async {
+    final mgr = _manager;
+    if (mgr == null) {
+      return 'Müzik yalnız sesli oda ekranındayken yayına verilebilir.';
+    }
+    _lastVideoId = null;
+    _lastStreamUrl = null;
+    _paused = false;
+    return mgr.startLocalMusic(path, onFinished: onFinished, onError: onError);
+  }
+
+  bool get localMusicActive => _manager?.localMusicActive ?? false;
+
+  void stopLocalFile() => _manager?.stopLocalMusic();
+
   void stop() {
+    if (_manager?.localMusicActive == true) {
+      _manager?.stopLocalMusic();
+    }
     _lastVideoId = null;
     _lastStreamUrl = null;
     _paused = false;

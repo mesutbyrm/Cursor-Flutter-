@@ -156,6 +156,8 @@ import 'voice_room_mention_notice_provider.dart';
 import 'voice_room_ranking_provider.dart';
 import 'voice_room_rank_celebration_provider.dart';
 import '../../domain/voice_vip_pin.dart';
+import '../utils/voice_room_dj_local_music.dart';
+import 'voice_room_dj_requests_provider.dart';
 part 'chat_room_providers_music.dart';
 part 'chat_room_providers_playback.dart';
 part 'chat_room_providers_moderation.dart';
@@ -2216,14 +2218,14 @@ class VoiceRoomLiveController
   }
 
   void _syncRoomVideo(ChatRoomDjState dj, {RoomPlaybackSync? sync}) {
-    if (_roomKey.isEmpty) return;
+    if (_roomKey.isEmpty || VoiceRoomDjLocalMusic.enabled) return;
     ref
         .read(roomVideoControllerProvider(_roomKey).notifier)
         .applyDjState(dj, sync: sync);
   }
 
   void _applyRoomVideoPayload(Map<String, dynamic> payload) {
-    if (_roomKey.isEmpty) return;
+    if (_roomKey.isEmpty || VoiceRoomDjLocalMusic.enabled) return;
     ref
         .read(roomVideoControllerProvider(_roomKey).notifier)
         .applyDjPayload(payload);
@@ -3183,6 +3185,23 @@ class VoiceRoomLiveController
     unawaited(_stopTyping());
 
     if (VoiceMusicSync.isKapatCommand(trimmed)) {
+      if (VoiceRoomDjLocalMusic.enabled) {
+        final mixer = ref.read(voiceRoomTrtcMusicMixerProvider);
+        if (!mixer.localMusicActive) {
+          state = state.copyWith(
+            error: 'Müziği yalnız çalan DJ kendi telefonundan kapatabilir.',
+          );
+          return;
+        }
+        mixer.stopLocalFile();
+        final playing = ref.read(voiceRoomDjRequestsProvider(_roomKey)).playing;
+        if (playing != null) {
+          unawaited(ref
+              .read(voiceRoomDjRequestsProvider(_roomKey).notifier)
+              .act(playing.id, 'done'));
+        }
+        return;
+      }
       if (!_canStopMusic()) {
         state = state.copyWith(
           error:
@@ -3201,6 +3220,22 @@ class VoiceRoomLiveController
       final song = VoiceMusicSync.parseIstekSongTitle(trimmed);
       if (song == null && !VoiceMusicSync.isBareIstekCommand(trimmed)) {
         state = state.copyWith(error: 'Kullanım: !istek veya !istek Sanatçı - Şarkı');
+        return;
+      }
+      if (VoiceRoomDjLocalMusic.enabled) {
+        if (song == null || song.trim().isEmpty) {
+          state = state.copyWith(
+            error: 'Kullanım: !istek Şarkıcı Şarkı (ör. !istek Tarkan Kuzu Kuzu)',
+          );
+          return;
+        }
+        final err = await ref
+            .read(voiceRoomDjRequestsProvider(_roomKey).notifier)
+            .create(song.trim());
+        if (!_sessionActive) return;
+        state = err != null
+            ? state.copyWith(error: err)
+            : state.copyWith(clearError: true, clearMusicRequestFlash: true);
         return;
       }
       VoiceRoomDebugLog.log('music.istek.search', {'song': song ?? '', 'room': _roomKey});

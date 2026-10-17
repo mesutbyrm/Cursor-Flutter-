@@ -39,6 +39,7 @@ import '../utils/voice_room_key_resolver.dart';
 import '../providers/voice_session_phase_provider.dart';
 import '../../domain/voice/voice_session_phase.dart';
 import '../providers/voice_room_ui_provider.dart';
+import '../widgets/voice_room/voice_room_dj_request_widgets.dart';
 import '../widgets/voice_room/voice_room_rtc_shell_widgets.dart';
 import '../widgets/voice_room/voice_room_connection_overlays.dart';
 import '../widgets/voice_room/voice_room_loading_skeleton.dart';
@@ -68,7 +69,6 @@ import '../../../vip_gold/presentation/providers/user_room_profile_provider.dart
 import '../../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
 import 'voice_room_basic_moderation_section.dart';
 import 'voice_room_basic_premium_section.dart';
-import '../utils/voice_music_access.dart';
 import '../providers/voice_room_live_side_effect_slices.dart';
 import '../utils/voice_room_pending_music_search_flow.dart';
 import '../utils/voice_room_mic_speak_gate.dart';
@@ -79,9 +79,6 @@ import '../../music/presentation/widgets/room_song_mini_player.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../sheets/voice_room_management_panel.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
-import '../widgets/voice_room/voice_room_center_music_panel.dart';
-import '../widgets/voice_room/voice_room_music_background_layer.dart';
-import '../widgets/voice_room/voice_room_music_mini_video.dart';
 import '../widgets/voice_room/voice_room_side_action_rail.dart';
 import '../../../gifts/presentation/widgets/gift_battle_strip.dart';
 import '../../../gifts/presentation/widgets/first_gifter_badge.dart';
@@ -639,11 +636,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final user = ref.read(authControllerProvider).valueOrNull;
     final perms = _permissions(user, live, room);
     final canControlMusic = _canControlMusic(live, room, user, perms);
-    final canCloseMusic = VoiceMusicAccess.canStopMusic(
-      user: user,
-      perms: perms,
-      nowPlaying: live.dj.nowPlaying,
-    );
     final canSpeak = VoiceRoomSpeakAccess.canSpeak(
       user: user,
       perms: perms,
@@ -825,9 +817,8 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
           children: [
             VoiceRoomLifecycleHost(roomKey: roomKey),
             VoiceCosmicBackground(imageUrl: bgUrl),
-            if (_liveRoomKey.isNotEmpty) ...[
-              VoiceRoomHiddenAudioPlayer(roomKey: _liveRoomKey),
-            ],
+            if (_liveRoomKey.isNotEmpty)
+              VoiceRoomDjRequestHost(roomKey: _liveRoomKey, myUserId: user?.id),
             Consumer(
               builder: (context, ref, _) {
                 final activeGift = ref.watch(
@@ -893,17 +884,14 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     user: user,
                     isMicMuted: _isMicMuted,
                   ),
-                  VoiceRoomCenterMusicPanel(
-                    room: room,
-                    liveRoomKey: _liveRoomKey,
-                    canControlMusic: canControlMusic,
-                    canCloseMusic: canCloseMusic,
-                  ),
-                  VoiceRoomMusicMiniVideo(
-                    liveKey: _liveRoomKey,
-                    canControlMusic: canControlMusic,
-                    canStopMusic: canCloseMusic,
-                  ),
+                  if (showMusicRequestFab && _liveRoomKey.isNotEmpty)
+                    Center(
+                      child: VoiceRoomMusicSeatCard(
+                        roomKey: _liveRoomKey,
+                        myUserId: user?.id,
+                        canHandle: canControlMusic,
+                      ),
+                    ),
                   // Aktif hediye savaşı — canlı skor + geri sayım.
                   GiftBattleStrip(
                     context: 'voice_room',

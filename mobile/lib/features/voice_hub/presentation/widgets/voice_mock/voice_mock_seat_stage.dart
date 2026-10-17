@@ -85,8 +85,11 @@ class VoiceMockSeatStage extends StatelessWidget {
     this.trtcReady = false,
     this.selfUserId,
     this.remoteTrtcUserId,
+    this.extraCell,
   });
 
+  /// Izgaranın sonuna eklenen ek hücre (ör. müzik koltuğu kartı).
+  final Widget? extraCell;
   final String roomKey;
   final VoiceRoomEntity room;
   final List<VoiceRoomSeatSlot> seatSlots;
@@ -146,18 +149,31 @@ class VoiceMockSeatStage extends StatelessWidget {
           ],
         );
 
+    final grid = <List<Widget>>[
+      [
+        cell(1, host: true),
+        for (final s in rows.first) cell(s, host: false),
+      ],
+      for (var r = 1; r < rows.length; r++)
+        [for (final s in rows[r]) cell(s, host: false)],
+    ];
+    final extra = extraCell;
+    if (extra != null) {
+      if (grid.last.length < 4) {
+        grid.last.add(extra);
+      } else {
+        grid.add([extra]);
+      }
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          rowOf([
-            cell(1, host: true),
-            for (final s in rows.first) cell(s, host: false),
-          ]),
-          for (var r = 1; r < rows.length; r++) ...[
-            const SizedBox(height: 6),
-            rowOf([for (final s in rows[r]) cell(s, host: false)]),
+          for (var r = 0; r < grid.length; r++) ...[
+            if (r > 0) const SizedBox(height: 6),
+            rowOf(grid[r]),
           ],
         ],
       ),
@@ -181,8 +197,11 @@ class VoiceMockStageSeat extends ConsumerWidget {
     this.trtcReady = false,
     this.selfUserId,
     this.remoteTrtcUserId,
+    this.extraCell,
   });
 
+  /// Izgaranın sonuna eklenen ek hücre (ör. müzik koltuğu kartı).
+  final Widget? extraCell;
   final String roomKey;
   final VoiceRoomEntity room;
   final int seatIndex;
