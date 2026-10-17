@@ -922,11 +922,25 @@ class ChatRoomRemoteDataSource {
   }
 
   /// Şarkı bitti → `DELETE /music` (mevcut şarkıyı kapatır, sıradakine geçer).
+  ///
+  /// [endedVideoId]: biten parça — sunucu yalnız hâlâ o parça çalıyorsa
+  /// ilerletir; birden çok dinleyicinin «bitti» bildirimi çift atlatmaz.
   Future<void> completeMusicQueue(
     String roomKey, {
     String? alternateKey,
+    String? endedVideoId,
   }) async {
-    await skipMusicQueue(roomKey: roomKey, alternateKey: alternateKey);
+    final ended = endedVideoId?.trim() ?? '';
+    if (ended.isEmpty) {
+      await skipMusicQueue(roomKey: roomKey, alternateKey: alternateKey);
+      return;
+    }
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      await _dio.safeDelete<dynamic>(
+        musicPath(key),
+        query: {'endedVideoId': ended},
+      );
+    });
   }
 
   Future<void> skipMusicQueue({

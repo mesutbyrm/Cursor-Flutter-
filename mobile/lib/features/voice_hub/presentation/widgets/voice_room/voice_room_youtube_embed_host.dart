@@ -19,14 +19,12 @@ class VoiceRoomYoutubeEmbedHost extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final child = YoutubeVideoBackground(
+    // Konumlandırmayı çağıran yapar (Positioned burada değil): iç içe
+    // Positioned geçersizdi, video ekranın yarısında bozuk dikdörtgen kalıyordu.
+    return YoutubeVideoBackground(
       roomKey: roomKey,
       compact: compact,
       fillBackground: fillBackground,
     );
-    if (fillBackground && !compact) {
-      return Positioned.fill(child: child);
-    }
-    return child;
   }
 }

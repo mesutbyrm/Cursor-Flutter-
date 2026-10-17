@@ -21,13 +21,15 @@ class VoiceRoomMusicBackgroundLayer extends ConsumerWidget {
     );
     if (!video) return const SizedBox.shrink();
 
-    return RepaintBoundary(
+    // Tam ekran video + %50 karartma: koltuklar ve sohbet okunur kalır.
+    return Positioned.fill(
       child: IgnorePointer(
-        child: Positioned.fill(
-          child: VoiceRoomYoutubeEmbedHost(
-            roomKey: roomKey,
-            fillBackground: true,
-          ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            VoiceRoomYoutubeEmbedHost(roomKey: roomKey, fillBackground: true),
+            const ColoredBox(color: Color(0x80000000)),
+          ],
         ),
       ),
     );

@@ -58,8 +58,10 @@ class RoomVideoController extends AutoDisposeFamilyNotifier<RoomVideoState, Stri
       title: np?.title,
       thumbUrl: np?.thumbUrl,
       isPlaying: playing,
-      positionMs: sync?.currentPositionMs ?? 0,
-      trackStartedAtMs: sync?.trackStartedAtMs,
+      positionMs: sync?.resolvedPositionMs() ?? 0,
+      trackStartedAtMs: sync != null && playing
+          ? DateTime.now().millisecondsSinceEpoch
+          : null,
       nowPlaying: np,
       audioOnly: true,
     );
@@ -74,6 +76,17 @@ class RoomVideoController extends AutoDisposeFamilyNotifier<RoomVideoState, Stri
       state = const RoomVideoState();
       _stopTicker();
       return;
+    }
+    // Senkron bilgisi olmayan güncelleme (ör. yalnız DJ durumu) aynı parçada
+    // konumu 0'a çekmesin — aksi halde video başa sarıyor / kesiliyordu.
+    if (next.videoId == state.videoId &&
+        next.isPlaying &&
+        next.trackStartedAtMs == null &&
+        next.positionMs == 0) {
+      next = next.copyWith(
+        positionMs: state.resolvedPositionMs(),
+        trackStartedAtMs: DateTime.now().millisecondsSinceEpoch,
+      );
     }
     final changed = state.videoId != next.videoId ||
         state.audioOnly != next.audioOnly ||
@@ -110,11 +123,15 @@ class RoomVideoController extends AutoDisposeFamilyNotifier<RoomVideoState, Stri
       _stopTicker();
       return;
     }
+    // Konum «şimdi» anına sabitlenir: resolvedPositionMs zaten başlangıçtan
+    // geçen süreyi içerir; çapa olarak parça başlangıcı verilirse süre iki kez
+    // eklenip video ileri atlıyor / erken bitiyordu.
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
     state = state.copyWith(
       videoId: videoId,
       isPlaying: sync.isPlaying,
       positionMs: sync.resolvedPositionMs(),
-      trackStartedAtMs: sync.trackStartedAtMs,
+      trackStartedAtMs: sync.isPlaying ? nowMs : null,
       clearTrackStartedAt: !sync.isPlaying,
     );
     _syncTicker(sync.isPlaying);

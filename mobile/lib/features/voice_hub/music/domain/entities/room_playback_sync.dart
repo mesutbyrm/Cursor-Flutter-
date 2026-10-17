@@ -48,10 +48,16 @@ class RoomPlaybackSync extends Equatable {
 
   factory RoomPlaybackSync.fromPayload(Map<String, dynamic> map) {
     final flat = unwrapVoiceSseDjPayload(map);
-    final pos = flat['currentPosition'] ?? flat['positionMs'];
-    final started = flat['startedAt'] ?? flat['startedAtMs'];
-    final elapsedRaw = flat['elapsedSeconds'];
     final np = flat['nowPlaying'];
+    final npMap = np is Map ? np : const {};
+    final pos = flat['currentPosition'] ?? flat['positionMs'];
+    // Sunucu başlangıç zamanını çoğu olayda `nowPlaying` içinde yollar; yalnız
+    // üst seviyeye bakılınca geç katılan herkes 0. saniyeden başlıyordu.
+    final started = flat['startedAt'] ??
+        flat['startedAtMs'] ??
+        npMap['startedAt'] ??
+        npMap['startedAtMs'];
+    final elapsedRaw = flat['elapsedSeconds'] ?? npMap['elapsedSeconds'];
     String? videoId = flat['currentVideoId']?.toString() ??
         flat['videoId']?.toString();
     if ((videoId == null || videoId.isEmpty) && np is Map) {

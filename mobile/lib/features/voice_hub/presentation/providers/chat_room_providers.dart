@@ -559,6 +559,10 @@ class VoiceRoomLiveController
   final _pollPaused = false;
   var _pollTick = 0;
   String? _lastDjPlaybackSignature;
+  /// Parça bitti bildirimi tekilleştirme: aynı parça için ikinci bildirim
+  /// (WebView + just_audio, tekrar eden `ended`) kuyruğu iki kez ilerletmez.
+  String? _trackCompleteVideoId;
+  DateTime? _trackCompleteAt;
   /// Yerel müzik isteği sonrası SSE/kuyruk sync'i kısa süre atla (ANR önleme).
   DateTime? _localMusicRequestGraceUntil;
   /// DJ oynatma — eşzamanlı çağrıları sıraya al, son isteği birleştir (ANR önleme).
@@ -2235,7 +2239,9 @@ class VoiceRoomLiveController
     return '${effective.playing}|$videoId|${effective.nowPlaying?.id}|'
         '${effective.nowPlaying?.isVideoRequest == true}|'
         '${effective.musicEnabled}|$muted|'
-        '${effective.musicUrl?.trim() ?? ''}';
+        // Yalnız URL'nin varlığı: `start=` parametresi her SSE'de değiştiği için
+        // tam URL imzada olunca müzik her olayda yeniden başlatılıp kesiliyordu.
+        '${effective.musicUrl?.trim().isNotEmpty == true}';
   }
 
   void clearOpenCommandsPanel() {
@@ -2540,6 +2546,20 @@ class VoiceRoomLiveController
   }
 
   Future<void> _onDjTrackComplete() async {
+    final fromVideo =
+        ref.read(roomVideoControllerProvider(_roomKey)).videoId?.trim() ?? '';
+    final endedVideoId = fromVideo.isNotEmpty
+        ? fromVideo
+        : (state.dj.nowPlaying?.resolvedVideoId?.trim() ?? '');
+    final now = DateTime.now();
+    final lastAt = _trackCompleteAt;
+    if (_trackCompleteVideoId == endedVideoId &&
+        lastAt != null &&
+        now.difference(lastAt) < const Duration(seconds: 30)) {
+      return;
+    }
+    _trackCompleteVideoId = endedVideoId;
+    _trackCompleteAt = now;
     try {
       VoiceRoomDebugLog.log('music.track_complete.advance');
       final videoCtrl = ref.read(roomVideoControllerProvider(_roomKey).notifier);
@@ -2548,7 +2568,11 @@ class VoiceRoomLiveController
       }
       await ref
           .read(chatRoomRemoteProvider)
-          .completeMusicQueue(_roomKey, alternateKey: _musicAlternateKey);
+          .completeMusicQueue(
+            _roomKey,
+            alternateKey: _musicAlternateKey,
+            endedVideoId: endedVideoId,
+          );
       await refresh(includeDj: true);
       var dj = state.dj;
       final hasQueue = dj.musicQueue.isNotEmpty;

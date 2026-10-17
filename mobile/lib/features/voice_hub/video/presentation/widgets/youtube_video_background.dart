@@ -46,13 +46,43 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
   var _endingHandled = false;
   var _disposed = false;
   var _visualOnlyActive = false;
-  Timer? _endingResetTimer;
+  var _loadInFlight = false;
+  /// `ended` bu parça için bir kez işlenir (tekrar eden olay döngü yaratmasın).
+  String? _endedVideoId;
   Future<void>? _ensureWebViewFuture;
+  ProviderSubscription<RoomVideoState>? _videoSub;
+
+  @override
+  void initState() {
+    super.initState();
+    // Dinleyici build içinde değil, bir kez kurulur; her yeniden çizimde
+    // oynatıcı senkronu tetiklenmez (istek sahibinde donma sebebiydi).
+    _videoSub = ref.listenManual<RoomVideoState>(
+      roomVideoControllerProvider(widget.roomKey),
+      (prev, next) {
+        if (_disposed) return;
+        if (!next.hasActiveVideo) {
+          if (_loadedVideoId != null || _webView != null) {
+            _teardownPlayer();
+            if (mounted) setState(() {});
+          }
+          return;
+        }
+        unawaited(_syncPlayback(next));
+      },
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _disposed) return;
+      final v = ref.read(roomVideoControllerProvider(widget.roomKey));
+      if (v.hasActiveVideo) unawaited(_syncPlayback(v));
+    });
+  }
 
   @override
   void dispose() {
     _disposed = true;
-    _endingResetTimer?.cancel();
+    _videoSub?.close();
+    _videoSub = null;
     _controller = null;
     _webView = null;
     super.dispose();
@@ -104,17 +134,11 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
       onMessageReceived: _onBridgeMessage,
     );
 
-    late final PlatformWebViewWidgetCreationParams widgetParams;
-    if (WebViewPlatform.instance is AndroidWebViewPlatform) {
-      widgetParams = AndroidWebViewWidgetCreationParams(
-        controller: controller.platform,
-        displayWithHybridComposition: true,
-      );
-    } else {
-      widgetParams = PlatformWebViewWidgetCreationParams(
-        controller: controller.platform,
-      );
-    }
+    // Hybrid composition KAPALI: tam ekran video + üstteki animasyonlarla
+    // birlikte ana iş parçacığını kilitliyor (ANR) ve görüntüyü bozuyordu.
+    final widgetParams = PlatformWebViewWidgetCreationParams(
+      controller: controller.platform,
+    );
 
     _controller = controller;
     _webView = WebViewWidget.fromPlatformCreationParams(
@@ -149,7 +173,10 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
 
   Future<void> _onVideoEnded() async {
     if (_endingHandled) return;
+    final vid = _loadedVideoId;
+    if (vid != null && _endedVideoId == vid) return;
     _endingHandled = true;
+    _endedVideoId = vid;
     VoiceRoomDebugLog.log('roomVideo.ended', {'room': widget.roomKey});
     try {
       await ref
@@ -158,10 +185,7 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
     } catch (e) {
       VoiceRoomDebugLog.log('roomVideo.ended.fail', {'error': '$e'});
     }
-    _endingResetTimer?.cancel();
-    _endingResetTimer = Timer(const Duration(milliseconds: 800), () {
-      if (!_disposed) _endingHandled = false;
-    });
+    if (!_disposed) _endingHandled = false;
   }
 
   Future<bool> _runCmd(Map<String, dynamic> cmd) async {
@@ -237,20 +261,24 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
     final startSec = (video.resolvedPositionMs() / 1000).floor();
     final visualOnly = video.showsVideo;
 
-    if (_loadedVideoId != videoId) {
+    if (_loadInFlight) return;
+
+    if (_loadedVideoId != videoId || _webView == null) {
       _loadedVideoId = videoId;
       _loadedPlaybackSig = sig;
       _lastSeekSec = startSec;
       _endingHandled = false;
-      await _loadInitialVideo(videoId, playing, startSec, visualOnly: visualOnly);
-      return;
-    }
-
-    if (_webView == null) {
-      await _loadInitialVideo(videoId, playing, startSec, visualOnly: visualOnly);
-      _loadedVideoId = videoId;
-      _loadedPlaybackSig = sig;
-      _lastSeekSec = startSec;
+      _loadInFlight = true;
+      try {
+        await _loadInitialVideo(
+          videoId,
+          playing,
+          startSec,
+          visualOnly: visualOnly,
+        );
+      } finally {
+        _loadInFlight = false;
+      }
       return;
     }
 
@@ -289,126 +317,54 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
     _playerReady = false;
     _loadFailed = false;
     _endingHandled = false;
+    _loadInFlight = false;
   }
 
   @override
   Widget build(BuildContext context) {
     final video = ref.watch(roomVideoControllerProvider(widget.roomKey));
-    if (!video.hasActiveVideo) {
-      if (_loadedVideoId != null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            _teardownPlayer();
-            setState(() {});
-          }
-        });
-      }
-      return const SizedBox.shrink();
-    }
-
-    ref.listen<RoomVideoState>(roomVideoControllerProvider(widget.roomKey),
-        (prev, next) {
-      if (!next.hasActiveVideo) {
-        _teardownPlayer();
-        if (mounted) setState(() {});
-        return;
-      }
-      unawaited(_syncPlayback(next));
-    });
+    if (!video.hasActiveVideo) return const SizedBox.shrink();
 
     final videoId = YoutubeVideoId.normalize(video.videoId);
     if (videoId == null) return const SizedBox.shrink();
 
-    if (_loadedVideoId == null || _webView == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) unawaited(_syncPlayback(video));
-      });
-    }
-
     final web = _webView;
-    if (web == null) {
-      if (video.audioOnly) {
-        return const SizedBox(width: 1, height: 1);
-      }
-      // Video henüz hazır değil — sınırlı yükseklikli şerit thumb (Column güvenli).
-      final w = MediaQuery.sizeOf(context).width;
-      return SizedBox(
-        width: double.infinity,
-        height: (w * 9 / 16).clamp(140.0, 230.0),
-        child: _thumbFallback(video),
-      );
-    }
+    final fill = widget.fillBackground && !widget.compact;
 
     if (video.audioOnly) {
+      if (web == null) return const SizedBox(width: 1, height: 1);
       return RepaintBoundary(
         child: IgnorePointer(
           child: Opacity(
             opacity: 0.01,
-            child: SizedBox(
-              width: 1,
-              height: 1,
-              child: web,
-            ),
+            child: SizedBox(width: 1, height: 1, child: web),
           ),
         ),
       );
     }
 
-    // Video isteği (!istek video): arka planda tam ekran veya koltuk altı şerit.
-    final width = MediaQuery.sizeOf(context).width;
-    final stripHeight = (width * 9 / 16).clamp(140.0, 230.0);
-    final videoChild = RepaintBoundary(
+    // Video isteği: WebView tam boyutta; kırpma («cover») HTML içinde yapılır.
+    final layer = RepaintBoundary(
       child: IgnorePointer(
         child: ClipRect(
           child: Stack(
             fit: StackFit.expand,
             children: [
-              if (_loadFailed) _thumbFallback(video),
-              FittedBox(
-                fit: BoxFit.cover,
-                clipBehavior: Clip.hardEdge,
-                alignment: Alignment.center,
-                child: SizedBox(
-                  width: width,
-                  height: width * 9 / 16,
-                  child: web,
-                ),
-              ),
+              if (web == null || _loadFailed) _thumbFallback(video),
+              ?web,
             ],
           ),
         ),
       ),
     );
 
-    if (widget.fillBackground && !widget.compact) {
-      return SizedBox.expand(child: videoChild);
-    }
+    if (fill) return SizedBox.expand(child: layer);
 
-    return RepaintBoundary(
-      child: IgnorePointer(
-        child: SizedBox(
-          width: double.infinity,
-          height: stripHeight,
-          child: ClipRect(
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                if (_loadFailed) _thumbFallback(video),
-                FittedBox(
-                  fit: BoxFit.cover,
-                  clipBehavior: Clip.hardEdge,
-                  alignment: Alignment.center,
-                  child: SizedBox(
-                    width: width,
-                    height: width * 9 / 16,
-                    child: web,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+    final width = MediaQuery.sizeOf(context).width;
+    return SizedBox(
+      width: double.infinity,
+      height: (width * 9 / 16).clamp(140.0, 230.0),
+      child: layer,
     );
   }
 

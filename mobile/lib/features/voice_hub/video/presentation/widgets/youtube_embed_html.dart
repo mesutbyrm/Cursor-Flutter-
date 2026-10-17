@@ -26,9 +26,14 @@ abstract final class YoutubeEmbedHtml {
       margin: 0; padding: 0; width: 100%; height: 100%;
       background: #000; overflow: hidden;
     }
+    /* «cover»: 16:9 oynatıcı ekranı tamamen kaplar, taşan kenarlar kırpılır
+       (Flutter tarafında FittedBox ölçeklemesi platform görünümünü bozuyordu). */
     #player {
-      position: fixed; inset: 0;
-      width: 100%; height: 100%;
+      position: fixed; top: 50%; left: 50%;
+      width: 100vw; height: 56.25vw;
+      min-width: 177.78vh; min-height: 100vh;
+      transform: translate(-50%, -50%);
+      pointer-events: none; border: 0;
     }
   </style>
 </head>

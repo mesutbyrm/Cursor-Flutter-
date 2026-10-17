@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.818+874 (2026-10-17) — Sesli oda müzik isteği
+
+- **Videolu istek:** Video artık yarım ekranda bozuk bir dikdörtgen değil; tüm arka planı kaplıyor ve %50 karartmalı, böylece koltuklar ve sohbet okunuyor.
+- **Erken kesilme:**
+  - Geç katılan da şarkıyı sunucudaki konumdan dinliyor.
+  - Konum iki kez sayılmadığı için video artık ileri atlamıyor.
+  - Her sunucu olayında müzik yeniden başlatılmıyor.
+  - «Parça bitti» bildirimi kuyruğu iki kez ilerletmiyor.
+  - Normal kullanıcının isteği çalan şarkıyı yarıda kesmiyor, sıraya giriyor.
+- **Donma:** Müzik isteyenin ekranı artık donmuyor. Video oynatıcı ağır çizim modunda çalışmıyor ve tekrar tekrar yüklenmiyor; «bitti» olayı her parça için bir kez işleniyor.
+
 ## 1.0.817+873 (2026-10-17) — PK sohbeti ve fal paylaşımı
 
 - **Sesli oda PK:** «Destekle» düğmesi kaldırıldı; «Hediye» artık mesaj yazma alanının hemen solunda.
